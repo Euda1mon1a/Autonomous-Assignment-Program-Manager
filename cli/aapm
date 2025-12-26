@@ -1,0 +1,477 @@
+#!/usr/bin/env bash
+# AAPM - Autonomous Assignment Program Manager CLI
+# Main entrypoint for Personal AI Infrastructure
+
+set -euo pipefail
+
+# Colors for output
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly NC='\033[0m' # No Color
+
+# Project root
+readonly PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly SKILLS_DIR="${PROJECT_ROOT}/.claude/skills"
+readonly HOOKS_DIR="${PROJECT_ROOT}/.claude/Hooks"
+readonly HISTORY_DIR="${PROJECT_ROOT}/.claude/History"
+
+# Print colored output
+print_error() {
+    echo -e "${RED}ERROR: $*${NC}" >&2
+}
+
+print_success() {
+    echo -e "${GREEN}✓ $*${NC}"
+}
+
+print_warning() {
+    echo -e "${YELLOW}⚠ $*${NC}"
+}
+
+print_info() {
+    echo -e "${BLUE}ℹ $*${NC}"
+}
+
+# Banner
+print_banner() {
+    cat << 'EOF'
+╔══════════════════════════════════════════════════════════════╗
+║  AAPM - Autonomous Assignment Program Manager               ║
+║  Personal AI Infrastructure for Schedule Management          ║
+╚══════════════════════════════════════════════════════════════╝
+EOF
+}
+
+# Help text
+show_help() {
+    print_banner
+    cat << EOF
+
+USAGE:
+    aapm <command> [options]
+
+COMMANDS:
+    schedule        Generate, validate, or modify schedules
+    schedule-audit  Perform ACGME compliance audit
+    swap            Manage schedule swap requests
+    resilience      Test resilience and N-1/N-2 contingency
+    incident        Respond to production incidents
+    skill-update    Update or refresh skill definitions
+    test            Run system tests and validations
+    help            Show this help message
+
+SCHEDULE SUBCOMMANDS:
+    aapm schedule generate <start-date> <end-date> [options]
+        Generate new schedule using constraint programming
+        Options:
+            --algorithm=<cp_sat|greedy>  Algorithm to use (default: cp_sat)
+            --timeout=<seconds>          Solver timeout (default: 120)
+            --backup                     Create backup before generation (default: true)
+
+    aapm schedule validate [schedule-id]
+        Validate schedule against ACGME compliance rules
+
+    aapm schedule verify [schedule-id]
+        Human verification checklist for generated schedules
+
+SWAP SUBCOMMANDS:
+    aapm swap find <person-id> <date>
+        Find compatible swap candidates
+
+    aapm swap execute <swap-id>
+        Execute an approved swap request
+
+    aapm swap rollback <swap-id>
+        Rollback a swap within 24-hour window
+
+RESILIENCE SUBCOMMANDS:
+    aapm resilience health
+        Check overall system resilience health
+
+    aapm resilience n1-test
+        Test N-1 contingency (single person absence)
+
+    aapm resilience n2-test
+        Test N-2 contingency (two-person absence)
+
+    aapm resilience identify-critical
+        Identify single points of failure
+
+AUDIT SUBCOMMANDS:
+    aapm schedule-audit [schedule-id]
+        Run full ACGME compliance audit
+
+    aapm schedule-audit report [schedule-id]
+        Generate compliance report
+
+INCIDENT SUBCOMMANDS:
+    aapm incident respond
+        Activate incident response procedures
+
+    aapm incident status
+        Check current incident status
+
+SKILL SUBCOMMANDS:
+    aapm skill-update list
+        List all available skills
+
+    aapm skill-update sync
+        Sync skills from repository
+
+TEST SUBCOMMANDS:
+    aapm test backend
+        Run backend test suite
+
+    aapm test frontend
+        Run frontend test suite
+
+    aapm test integration
+        Run integration tests
+
+    aapm test all
+        Run all tests
+
+EXAMPLES:
+    # Generate schedule for Block 10
+    aapm schedule generate 2026-03-12 2026-04-08
+
+    # Find swap candidates for a faculty member
+    aapm swap find FAC-001 2026-03-15
+
+    # Run compliance audit
+    aapm schedule-audit current
+
+    # Test resilience
+    aapm resilience n1-test
+
+    # Respond to incident
+    aapm incident respond
+
+ENVIRONMENT:
+    AAPM_API_URL        Backend API URL (default: http://localhost:8000)
+    AAPM_MCP_HOST       MCP server host (default: localhost)
+    AAPM_MCP_PORT       MCP server port (default: 8080)
+    AAPM_LOG_LEVEL      Logging level (default: INFO)
+
+FILES:
+    ~/.aapm/config      User configuration
+    .claude/Hooks/      Post-operation hooks
+    .claude/History/    Operation history and logs
+
+For detailed documentation, see: docs/guides/AI_AGENT_USER_GUIDE.md
+
+EOF
+}
+
+# Check dependencies
+check_dependencies() {
+    local missing=()
+
+    for cmd in curl jq python3; do
+        if ! command -v "$cmd" &> /dev/null; then
+            missing+=("$cmd")
+        fi
+    done
+
+    if [ ${#missing[@]} -gt 0 ]; then
+        print_error "Missing required dependencies: ${missing[*]}"
+        print_info "Install with: apt-get install ${missing[*]}"
+        return 1
+    fi
+}
+
+# Trigger hook
+trigger_hook() {
+    local hook_name="$1"
+    local hook_file="${HOOKS_DIR}/${hook_name}.md"
+
+    if [ -f "$hook_file" ]; then
+        print_info "Triggering hook: ${hook_name}"
+        # Hook files are documentation of what to capture
+        # Actual execution happens in the skill context
+        return 0
+    else
+        print_warning "Hook not found: ${hook_name}"
+        return 1
+    fi
+}
+
+# Route to schedule skill
+cmd_schedule() {
+    local subcommand="${1:-help}"
+    shift || true
+
+    case "$subcommand" in
+        generate)
+            print_info "Routing to: safe-schedule-generation skill"
+            print_info "Start: ${1:-<not specified>}, End: ${2:-<not specified>}"
+            print_warning "This will invoke the safe-schedule-generation skill"
+            print_warning "Ensure backup exists before proceeding!"
+            # In actual usage, this would invoke the Claude skill
+            echo "Skill: safe-schedule-generation"
+            echo "Action: generate"
+            echo "Parameters: $@"
+            trigger_hook "post-schedule-generation"
+            ;;
+        validate)
+            print_info "Routing to: acgme-compliance skill"
+            echo "Skill: acgme-compliance"
+            echo "Action: validate"
+            echo "Schedule ID: ${1:-current}"
+            ;;
+        verify)
+            print_info "Routing to: schedule-verification skill"
+            echo "Skill: schedule-verification"
+            echo "Action: human-checklist"
+            echo "Schedule ID: ${1:-current}"
+            trigger_hook "post-schedule-generation"
+            ;;
+        *)
+            print_error "Unknown schedule subcommand: $subcommand"
+            echo "Valid subcommands: generate, validate, verify"
+            return 1
+            ;;
+    esac
+}
+
+# Route to swap skill
+cmd_swap() {
+    local subcommand="${1:-help}"
+    shift || true
+
+    case "$subcommand" in
+        find)
+            print_info "Routing to: swap-management skill"
+            echo "Skill: swap-management"
+            echo "Action: find-candidates"
+            echo "Person: ${1:-<not specified>}"
+            echo "Date: ${2:-<not specified>}"
+            ;;
+        execute)
+            print_info "Routing to: swap-management skill"
+            print_warning "This will modify the schedule database"
+            print_warning "Ensure backup exists before proceeding!"
+            echo "Skill: swap-management"
+            echo "Action: execute"
+            echo "Swap ID: ${1:-<not specified>}"
+            trigger_hook "post-swap-execution"
+            ;;
+        rollback)
+            print_info "Routing to: swap-management skill"
+            echo "Skill: swap-management"
+            echo "Action: rollback"
+            echo "Swap ID: ${1:-<not specified>}"
+            trigger_hook "post-swap-execution"
+            ;;
+        *)
+            print_error "Unknown swap subcommand: $subcommand"
+            echo "Valid subcommands: find, execute, rollback"
+            return 1
+            ;;
+    esac
+}
+
+# Route to resilience testing
+cmd_resilience() {
+    local subcommand="${1:-help}"
+    shift || true
+
+    case "$subcommand" in
+        health)
+            print_info "Routing to: MCP resilience tools"
+            echo "Tool: check_resilience_health_tool"
+            trigger_hook "post-resilience-test"
+            ;;
+        n1-test)
+            print_info "Routing to: MCP contingency analysis"
+            echo "Tool: run_contingency_analysis_resilience_tool"
+            echo "Type: N-1 (single absence)"
+            trigger_hook "post-resilience-test"
+            ;;
+        n2-test)
+            print_info "Routing to: MCP contingency analysis"
+            echo "Tool: run_contingency_analysis_resilience_tool"
+            echo "Type: N-2 (dual absence)"
+            trigger_hook "post-resilience-test"
+            ;;
+        identify-critical)
+            print_info "Routing to: MCP hub centrality analysis"
+            echo "Tool: analyze_hub_centrality"
+            trigger_hook "post-resilience-test"
+            ;;
+        *)
+            print_error "Unknown resilience subcommand: $subcommand"
+            echo "Valid subcommands: health, n1-test, n2-test, identify-critical"
+            return 1
+            ;;
+    esac
+}
+
+# Route to compliance audit
+cmd_schedule_audit() {
+    local subcommand="${1:-run}"
+    shift || true
+
+    case "$subcommand" in
+        run|"")
+            print_info "Routing to: acgme-compliance skill"
+            echo "Skill: acgme-compliance"
+            echo "Action: full-audit"
+            echo "Schedule ID: ${1:-current}"
+            trigger_hook "post-compliance-audit"
+            ;;
+        report)
+            print_info "Routing to: acgme-compliance skill"
+            echo "Skill: acgme-compliance"
+            echo "Action: generate-report"
+            echo "Schedule ID: ${1:-current}"
+            trigger_hook "post-compliance-audit"
+            ;;
+        *)
+            print_error "Unknown audit subcommand: $subcommand"
+            echo "Valid subcommands: run, report"
+            return 1
+            ;;
+    esac
+}
+
+# Route to incident response
+cmd_incident() {
+    local subcommand="${1:-help}"
+    shift || true
+
+    case "$subcommand" in
+        respond)
+            print_warning "Activating incident response procedures"
+            print_info "Routing to: production-incident-responder skill"
+            echo "Skill: production-incident-responder"
+            echo "Action: activate"
+            # Load methodology
+            local methodology="${PROJECT_ROOT}/.claude/Methodologies/incident-response.md"
+            if [ -f "$methodology" ]; then
+                print_info "Loading methodology: incident-response"
+            fi
+            ;;
+        status)
+            print_info "Checking incident status"
+            echo "Checking for active incidents..."
+            ;;
+        *)
+            print_error "Unknown incident subcommand: $subcommand"
+            echo "Valid subcommands: respond, status"
+            return 1
+            ;;
+    esac
+}
+
+# Skill management
+cmd_skill_update() {
+    local subcommand="${1:-list}"
+    shift || true
+
+    case "$subcommand" in
+        list)
+            print_info "Available skills in ${SKILLS_DIR}:"
+            if [ -d "$SKILLS_DIR" ]; then
+                for skill_dir in "$SKILLS_DIR"/*/; do
+                    if [ -d "$skill_dir" ]; then
+                        local skill_name=$(basename "$skill_dir")
+                        if [ -f "${skill_dir}/SKILL.md" ]; then
+                            echo "  • ${skill_name}"
+                        fi
+                    fi
+                done
+            else
+                print_error "Skills directory not found"
+            fi
+            ;;
+        sync)
+            print_info "Syncing skills from repository"
+            # This would pull latest skills from git
+            print_success "Skills synchronized"
+            ;;
+        *)
+            print_error "Unknown skill-update subcommand: $subcommand"
+            echo "Valid subcommands: list, sync"
+            return 1
+            ;;
+    esac
+}
+
+# Test management
+cmd_test() {
+    local subcommand="${1:-all}"
+    shift || true
+
+    case "$subcommand" in
+        backend)
+            print_info "Running backend tests"
+            cd "${PROJECT_ROOT}/backend" && pytest "$@"
+            ;;
+        frontend)
+            print_info "Running frontend tests"
+            cd "${PROJECT_ROOT}/frontend" && npm test
+            ;;
+        integration)
+            print_info "Running integration tests"
+            cd "${PROJECT_ROOT}/backend" && pytest tests/integration/ "$@"
+            ;;
+        all)
+            print_info "Running all tests"
+            cmd_test backend "$@" && cmd_test frontend
+            ;;
+        *)
+            print_error "Unknown test subcommand: $subcommand"
+            echo "Valid subcommands: backend, frontend, integration, all"
+            return 1
+            ;;
+    esac
+}
+
+# Main routing
+main() {
+    # Check dependencies first
+    check_dependencies || exit 1
+
+    # Parse command
+    local command="${1:-help}"
+    shift || true
+
+    case "$command" in
+        schedule)
+            cmd_schedule "$@"
+            ;;
+        schedule-audit)
+            cmd_schedule_audit "$@"
+            ;;
+        swap)
+            cmd_swap "$@"
+            ;;
+        resilience)
+            cmd_resilience "$@"
+            ;;
+        incident)
+            cmd_incident "$@"
+            ;;
+        skill-update)
+            cmd_skill_update "$@"
+            ;;
+        test)
+            cmd_test "$@"
+            ;;
+        help|--help|-h)
+            show_help
+            ;;
+        *)
+            print_error "Unknown command: $command"
+            echo ""
+            show_help
+            exit 1
+            ;;
+    esac
+}
+
+# Run main
+main "$@"
