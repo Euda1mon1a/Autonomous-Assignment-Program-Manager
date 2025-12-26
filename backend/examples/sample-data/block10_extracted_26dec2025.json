@@ -1,0 +1,60 @@
+{
+  "metadata": {
+    "block_number": 10,
+    "start_date": "2026-03-12",
+    "end_date": "2026-04-08",
+    "extracted_by": "Claude macOS via AppleScript",
+    "extracted_date": "2025-12-26",
+    "source_file": "Current AY 25-26 pulled 22DEC2025.xlsx"
+  },
+  "fmit_faculty": [
+    {"week": 1, "start_date": "2026-03-12", "end_date": "2026-03-18", "faculty": "Chu"},
+    {"week": 2, "start_date": "2026-03-19", "end_date": "2026-03-25", "faculty": "Faculty-J-Last"},
+    {"week": 3, "start_date": "2026-03-26", "end_date": "2026-04-01", "faculty": "Chu"},
+    {"week": 4, "start_date": "2026-04-02", "end_date": "2026-04-08", "faculty": "Faculty-D-Last"}
+  ],
+  "resident_rotations": {
+    "pgy1": [
+      {"name": "PGY1-B-Last", "rotation": "FMC", "rotation_code": "C", "notes": null},
+      {"name": "PGY1-C-Last", "rotation": "Peds Ward", "rotation_code": "PedW", "notes": "Peds NF"},
+      {"name": "Travis", "rotation": "Kapiolani L&D", "rotation_code": "KAP", "notes": null},
+      {"name": "PGY1-F-Last", "rotation": "Peds NF", "rotation_code": "PedNF", "notes": "Peds Ward"},
+      {"name": "PGY1-D-Last", "rotation": "Procedures", "rotation_code": "PR", "notes": null},
+      {"name": "PGY1-A-Last", "rotation": "Internal Medicine", "rotation_code": "IMW", "notes": null}
+    ],
+    "pgy2": [
+      {"name": "PGY2-C-Last", "rotation": "FMIT 2", "rotation_code": "FMIT", "notes": "On inpatient team"},
+      {"name": "Cook", "rotation": "Sports Medicine", "rotation_code": "SM", "notes": null},
+      {"name": "PGY2-D-Last", "rotation": "Elective: Ultrasound", "rotation_code": "US", "notes": null},
+      {"name": "PGY2-F-Last", "rotation": "L&D Night Float", "rotation_code": "NF", "notes": "L&D specific"},
+      {"name": "PGY2-B-Last", "rotation": "Surgical Experience", "rotation_code": "SURG", "notes": null},
+      {"name": "Thomas", "rotation": "Gyn Clinic", "rotation_code": "GYN", "notes": null}
+    ],
+    "pgy3": [
+      {"name": "PGY3-E-Last", "rotation": "Hilo", "rotation_code": "HILO", "notes": "Off-island"},
+      {"name": "PGY3-D-Last", "rotation": "Night Float", "rotation_code": "NF", "notes": "MS: Endo"},
+      {"name": "PGY3-C-Last", "rotation": "FMC", "rotation_code": "C", "notes": null},
+      {"name": "PGY3-B-Last", "rotation": "FMIT 2", "rotation_code": "FMIT", "notes": "On inpatient team"},
+      {"name": "You", "rotation": "Elective: Neuro", "rotation_code": "NEURO", "notes": "NF"}
+    ],
+    "graduating_pgy3": [
+      {"name": "Doria", "rotation": null, "rotation_code": null, "notes": "Outprocessing/terminal leave"},
+      {"name": "Doyle", "rotation": null, "rotation_code": null, "notes": "Outprocessing/terminal leave"},
+      {"name": "Evans", "rotation": null, "rotation_code": null, "notes": "Outprocessing/terminal leave"},
+      {"name": "Giblin", "rotation": null, "rotation_code": null, "notes": "Outprocessing/terminal leave"},
+      {"name": "Idelkope", "rotation": null, "rotation_code": null, "notes": "Outprocessing/terminal leave"},
+      {"name": "Kerby", "rotation": null, "rotation_code": null, "notes": "Outprocessing/terminal leave"},
+      {"name": "Machado", "rotation": null, "rotation_code": null, "notes": "Outprocessing/terminal leave"}
+    ]
+  },
+  "fmit_team": {
+    "residents": ["PGY2-C-Last", "PGY3-B-Last"],
+    "pgy_levels": {"PGY2-C-Last": 2, "PGY3-B-Last": 3}
+  },
+  "notes": [
+    "Block 10 dates: Mar 12 - Apr 8, 2026",
+    "FMIT faculty rotate weekly",
+    "Graduating PGY-3s have empty schedules (terminal leave)",
+    "Some residents have dual assignments (e.g., PGY1-C-Last: Peds Ward + Peds NF)"
+  ]
+}
