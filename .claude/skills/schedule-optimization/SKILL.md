@@ -7,13 +7,19 @@ description: Multi-objective schedule optimization expertise using constraint pr
 
 Expert knowledge for generating and optimizing medical residency schedules using constraint programming and multi-objective optimization.
 
-## Solver Status (2025-12-24) - ALL FIXED
+## Solver Status (2025-12-24, Updated 2025-12-26)
 
 | Issue | Status | Fix Applied |
 |-------|--------|-------------|
 | Greedy template selection | FIXED | Selects template with fewest assignments |
 | CP-SAT no template balance | FIXED | Added template_balance_penalty to objective |
-| Template filtering missing | FIXED | `_get_rotation_templates()` defaults to `activity_type="clinic"` |
+| Template filtering missing | FIXED | `_get_rotation_templates()` defaults to `activity_type="outpatient"` |
+
+**NOTE (2025-12-26):** The template filtering was initially set to `"clinic"` which was incorrect.
+PR #442 was not merged because this issue was caught during evaluation. The correct filter
+is `"outpatient"` because that matches the elective/selective templates that use half-day
+scheduling. The `"clinic"` activity_type is specifically for FM Clinic which has its own
+capacity and supervision constraint logic.
 
 See `backend/app/scheduling/solvers.py` header for implementation details.
 
@@ -30,7 +36,16 @@ See `backend/app/scheduling/solvers.py` header for implementation details.
 are handled separately and should NOT be passed to the solver.
 
 If solver assigns everyone to NF/PC/inpatient, check that templates are filtered
-to `activity_type == "clinic"` in `engine._get_rotation_templates()`.
+to `activity_type == "outpatient"` in `engine._get_rotation_templates()`.
+
+**Activity Types Clarification:**
+| Activity Type | Templates | For Solver? |
+|---------------|-----------|-------------|
+| `outpatient` | Neurology, ID, Palliative, PedsSub, etc. | YES - half-day electives |
+| `clinic` | Family Medicine Clinic (FMC) | NO - has separate capacity constraints |
+| `inpatient` | FMIT, IM, EM, L&D | NO - block-assigned |
+| `night_float` | NF, NICU+NF, etc. | NO - block-assigned |
+| `procedure` | Procedures Rotation | Depends on configuration |
 
 ### Night Float (NF) Half-Block Mirrored Pairing
 
