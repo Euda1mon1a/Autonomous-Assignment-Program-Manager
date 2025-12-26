@@ -9,6 +9,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Personal AI Infrastructure (PAI) - December 2025
+
+**Major AI-Assisted Development Platform:**
+- **34 Agent Skills** organized by tier for specialized scheduling tasks
+  - Tier 1 (10 skills): Core development (test-writer, code-review, database-migration, etc.)
+  - Tier 2 (8 skills): Scheduling-specific (acgme-compliance, swap-management, schedule-optimization)
+  - Tier 3 (10 skills): Advanced operations (production-incident-responder, security-audit)
+  - Tier 4 (6 skills): Experimental (solver-control, constraint-preflight)
+- **27 Slash Commands** for rapid task execution
+  - Scheduling: `/generate-schedule`, `/verify-schedule`, `/optimize-schedule`, `/check-constraints`
+  - Quality: `/write-tests`, `/review-code`, `/fix-code`, `/quality-check`
+  - Operations: `/docker-help`, `/incident`, `/solver`, `/swap`
+- **4 Operational Modes**: Interactive, Autonomous, Review, Emergency
+- **Multi-Agent Orchestration**: Parallel task execution with up to 10 terminals
+
+**Documentation:**
+- `docs/guides/AI_AGENT_USER_GUIDE.md`: Comprehensive AI interface guide
+- `docs/development/AGENT_SKILLS.md`: Complete skills reference
+- `docs/development/SLASH_COMMANDS.md`: Command reference
+- `.claude/skills/*/SKILL.md`: Individual skill documentation
+
+#### MCP Server Expansion (December 2025)
+
+**Expanded from 4 to 34 MCP Tools:**
+- **Scheduling Tools (10)**: `generate_schedule`, `validate_schedule`, `detect_conflicts`, `optimize_schedule`, etc.
+- **Resilience Tools (12)**: `run_contingency_analysis`, `check_utilization_threshold`, `get_defense_level`, `analyze_homeostasis`, etc.
+- **Swap Tools (6)**: `analyze_swap_candidates`, `execute_swap`, `find_swap_matches`, etc.
+- **Analytics Tools (6)**: `get_schedule_metrics`, `get_compliance_summary`, `get_workload_distribution`, etc.
+
+**Backend Integration:**
+- 7 tools fully integrated with backend APIs
+- 10 placeholder implementations with graceful fallback
+- Response mapping between MCP and backend formats
+- See `docs/planning/MCP_PLACEHOLDER_IMPLEMENTATION_PLAN.md` for implementation roadmap
+
+#### Docker Security Hardening (December 2025)
+
+**Production-Ready Container Security:**
+- **Non-root Users**: All containers run as non-privileged users
+- **Multi-stage Builds**: Reduced image sizes, removed build dependencies
+- **Read-only Filesystems**: Where applicable
+- **Secret Management**: Improved `.env` handling
+- **Health Checks**: Container-level health monitoring
+
+**Files Changed:**
+- `docker-compose.yml`: Security-hardened service definitions
+- `backend/Dockerfile`: Multi-stage build with non-root user
+- `frontend/Dockerfile`: Optimized Next.js production build
+- `mcp-server/Dockerfile`: Minimal Python image
+
+#### Solver Operational Controls (December 2025)
+
+**Kill-Switch & Progress Monitoring:**
+- **Solver Kill-Switch**: Abort runaway schedule generation via Celery task revocation
+- **Progress Monitoring**: Real-time progress updates during long-running solves
+- **Prometheus Metrics**: Solver execution time, constraint violations, optimization scores
+- **Timeout Protection**: Configurable solver timeouts (default: 5 minutes)
+
+**Files:**
+- `backend/app/scheduling/solver_control.py`: Kill-switch implementation
+- `.claude/skills/solver-control/SKILL.md`: Solver management skill
+
+#### Cross-Disciplinary Research (December 2025)
+
+**10+ Bridge Specifications for Resilience Framework:**
+- `docs/bridges/forestry-burnout-fire-index.md`: CFFDRS adaptation for burnout prediction
+- `docs/bridges/telecommunications-erlang-coverage.md`: Queuing theory for specialist staffing
+- `docs/bridges/epidemiology-sir-burnout.md`: SIR models for burnout spread
+- `docs/bridges/seismic-sta-lta-detection.md`: Early warning algorithms
+- `docs/bridges/materials-science-creep-fatigue.md`: Larson-Miller parameter adaptation
+- `docs/bridges/semiconductor-spc-monitoring.md`: Western Electric rules for schedule quality
+- `docs/bridges/power-grid-n1-contingency.md`: N-1/N-2 analysis
+- `docs/bridges/chemistry-le-chatelier.md`: Equilibrium analysis
+
 #### Immutable Assignment Preservation (2025-12-26)
 
 **Core Engine Enhancement:**
