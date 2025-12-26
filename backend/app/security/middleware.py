@@ -71,7 +71,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         csp_status = (
             "enabled (API-only)"
             if self.api_only
-            else "enabled" if self.enable_csp else "disabled"
+            else "enabled"
+            if self.enable_csp
+            else "disabled"
         )
         logger.info(
             f"Security headers middleware initialized: mode={mode}, CSP={csp_status}"

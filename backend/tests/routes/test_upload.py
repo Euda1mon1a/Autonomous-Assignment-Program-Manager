@@ -229,7 +229,9 @@ class TestUploadRoutes:
         """Test getting file URL."""
         file_id = str(uuid4())
 
-        mock_upload_service.get_file_url.return_value = f"http://storage.local/{file_id}"
+        mock_upload_service.get_file_url.return_value = (
+            f"http://storage.local/{file_id}"
+        )
 
         response = client_with_mock_upload.get(
             f"/api/upload/{file_id}/url",

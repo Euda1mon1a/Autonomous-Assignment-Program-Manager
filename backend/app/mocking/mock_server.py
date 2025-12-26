@@ -912,14 +912,14 @@ class MockVerifier:
             assert actual == times, f"Expected {times} calls to {path}, got {actual}"
 
         if at_least is not None:
-            assert (
-                actual >= at_least
-            ), f"Expected at least {at_least} calls to {path}, got {actual}"
+            assert actual >= at_least, (
+                f"Expected at least {at_least} calls to {path}, got {actual}"
+            )
 
         if at_most is not None:
-            assert (
-                actual <= at_most
-            ), f"Expected at most {at_most} calls to {path}, got {actual}"
+            assert actual <= at_most, (
+                f"Expected at most {at_most} calls to {path}, got {actual}"
+            )
 
     def assert_called_with(
         self,

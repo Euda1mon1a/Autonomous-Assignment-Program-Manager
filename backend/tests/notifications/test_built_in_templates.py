@@ -302,6 +302,6 @@ class TestBuiltInTemplates:
         )
 
         for var in template.variables:
-            assert (
-                f"{{{{ {var}" in combined or f"{{{{{var}" in combined
-            ), f"Variable {var} not found in template"
+            assert f"{{{{ {var}" in combined or f"{{{{{var}" in combined, (
+                f"Variable {var} not found in template"
+            )

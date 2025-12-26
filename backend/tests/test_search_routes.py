@@ -342,9 +342,7 @@ class TestRotationsSearchEndpoint:
 
             assert response.status_code in [200, 401]
 
-    def test_rotations_search_by_category(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_rotations_search_by_category(self, client: TestClient, auth_headers: dict):
         """Test rotations search filtered by category."""
         with patch("app.api.routes.search.SearchService") as mock_service:
             mock_instance = MagicMock()
@@ -629,9 +627,7 @@ class TestSearchEdgeCases:
 class TestSearchIntegration:
     """Integration tests for search functionality."""
 
-    def test_search_endpoints_accessible(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_search_endpoints_accessible(self, client: TestClient, auth_headers: dict):
         """Test all search endpoints are accessible."""
         with patch("app.api.routes.search.SearchService") as mock_service:
             mock_instance = MagicMock()

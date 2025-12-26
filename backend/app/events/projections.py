@@ -278,9 +278,9 @@ class ScheduleProjection(EventProjection):
         elif isinstance(event, ScheduleUpdatedEvent):
             if event.schedule_id in self.schedules:
                 self.schedules[event.schedule_id].update(event.changes)
-                self.schedules[event.schedule_id][
-                    "updated_at"
-                ] = event.metadata.timestamp
+                self.schedules[event.schedule_id]["updated_at"] = (
+                    event.metadata.timestamp
+                )
 
     async def reset(self):
         """Reset schedule data."""
@@ -328,17 +328,17 @@ class AssignmentProjection(EventProjection):
         elif isinstance(event, AssignmentUpdatedEvent):
             if event.assignment_id in self.assignments:
                 self.assignments[event.assignment_id].update(event.changes)
-                self.assignments[event.assignment_id][
-                    "updated_at"
-                ] = event.metadata.timestamp
+                self.assignments[event.assignment_id]["updated_at"] = (
+                    event.metadata.timestamp
+                )
 
         elif isinstance(event, AssignmentDeletedEvent):
             if event.assignment_id in self.assignments:
                 if event.soft_delete:
                     self.assignments[event.assignment_id]["status"] = "deleted"
-                    self.assignments[event.assignment_id][
-                        "deleted_at"
-                    ] = event.metadata.timestamp
+                    self.assignments[event.assignment_id]["deleted_at"] = (
+                        event.metadata.timestamp
+                    )
                 else:
                     del self.assignments[event.assignment_id]
 
