@@ -1,0 +1,195 @@
+{
+  "fetched_at": "2025-12-25T20:46:40.568434",
+  "table_name": "holidays",
+  "table_id": "tblYGGeV5S9eGnihg",
+  "record_count": 11,
+  "records": [
+    {
+      "id": "rec0k8aPfkfPyv3GU",
+      "createdTime": "2025-04-30T22:28:08.000Z",
+      "fields": {
+        "holiday": "Labor Day",
+        "federalHolidayID": "rec0k8aPfkfPyv3GU",
+        "attendingInpatientScheduleWeek": "9",
+        "holidayDate": "2025-09-01",
+        "monday": true,
+        "attendingInpatientSchedule": [
+          "recoaSzjatk8fTCry"
+        ],
+        "blocksLink": [
+          "recldLCwxBq8qUpNY"
+        ]
+      }
+    },
+    {
+      "id": "rec1J7pvwZpiLWOa1",
+      "createdTime": "2025-04-30T22:28:08.000Z",
+      "fields": {
+        "holiday": "Martin Luther King Jr. Day",
+        "federalHolidayID": "rec1J7pvwZpiLWOa1",
+        "attendingInpatientScheduleWeek": "29",
+        "holidayDate": "2026-01-19",
+        "monday": true,
+        "attendingInpatientSchedule": [
+          "recT3xMwyBUBTdfD0"
+        ],
+        "blocksLink": [
+          "recO8nXpj7mKdnOC2"
+        ]
+      }
+    },
+    {
+      "id": "recE6toTZY3Ovh9Uk",
+      "createdTime": "2025-04-30T22:28:08.000Z",
+      "fields": {
+        "holiday": "New Year's Day",
+        "federalHolidayID": "recE6toTZY3Ovh9Uk",
+        "attendingInpatientScheduleWeek": "26",
+        "holidayDate": "2026-01-01",
+        "thursday": true,
+        "attendingInpatientSchedule": [
+          "rectM76wFJdogBbh0"
+        ],
+        "blocksLink": [
+          "rec4QEhUx2W3VpbJg"
+        ]
+      }
+    },
+    {
+      "id": "recJ3Pbkqvy3zlpfV",
+      "createdTime": "2025-04-30T22:28:08.000Z",
+      "fields": {
+        "holiday": "Thanksgiving Day",
+        "federalHolidayID": "recJ3Pbkqvy3zlpfV",
+        "attendingInpatientScheduleWeek": "21",
+        "holidayDate": "2025-11-27",
+        "thursday": true,
+        "attendingInpatientSchedule": [
+          "reclumKwwN5DfcAKJ"
+        ],
+        "blocksLink": [
+          "recheHoNFIphdOOkc"
+        ]
+      }
+    },
+    {
+      "id": "recJrLcYMw2rSoM43",
+      "createdTime": "2025-04-30T22:28:08.000Z",
+      "fields": {
+        "holiday": "Juneteenth",
+        "federalHolidayID": "recJrLcYMw2rSoM43",
+        "attendingInpatientScheduleWeek": "51",
+        "holidayDate": "2026-06-19",
+        "friday": true,
+        "attendingInpatientSchedule": [
+          "recqEI0XgCBm2Idmn"
+        ],
+        "blocksLink": [
+          "recWQEZ1WZ8lvXReP"
+        ]
+      }
+    },
+    {
+      "id": "recWhR9Yjd6WyV2gb",
+      "createdTime": "2025-04-30T22:28:08.000Z",
+      "fields": {
+        "holiday": "Columbus Day",
+        "federalHolidayID": "recWhR9Yjd6WyV2gb",
+        "attendingInpatientScheduleWeek": "15",
+        "holidayDate": "2025-10-13",
+        "monday": true,
+        "attendingInpatientSchedule": [
+          "recCrnrzyaeXe0MQa"
+        ],
+        "blocksLink": [
+          "recxSe9VbRMwt4DqQ"
+        ]
+      }
+    },
+    {
+      "id": "recYNk9sRmdPPJxe9",
+      "createdTime": "2025-04-30T22:28:08.000Z",
+      "fields": {
+        "holiday": "Independence Day",
+        "federalHolidayID": "recYNk9sRmdPPJxe9",
+        "attendingInpatientScheduleWeek": "1",
+        "holidayDate": "2025-07-04",
+        "friday": true,
+        "attendingInpatientSchedule": [
+          "recD92XBYiA3sLJGf"
+        ],
+        "blocksLink": [
+          "recyCXLCOdygmwkaB"
+        ]
+      }
+    },
+    {
+      "id": "reca0KjjDHeOgXm0Z",
+      "createdTime": "2025-04-30T22:28:08.000Z",
+      "fields": {
+        "holiday": "Memorial Day",
+        "federalHolidayID": "reca0KjjDHeOgXm0Z",
+        "attendingInpatientScheduleWeek": "47",
+        "holidayDate": "2026-05-25",
+        "monday": true,
+        "attendingInpatientSchedule": [
+          "recPl3fFOebaUXVMB"
+        ],
+        "blocksLink": [
+          "rectoByFjGEhCHnP0"
+        ]
+      }
+    },
+    {
+      "id": "recarXcXzrBb8oOZV",
+      "createdTime": "2025-04-30T22:28:08.000Z",
+      "fields": {
+        "holiday": "Veterans Day",
+        "federalHolidayID": "recarXcXzrBb8oOZV",
+        "attendingInpatientScheduleWeek": "19",
+        "holidayDate": "2025-11-11",
+        "tuesday": true,
+        "attendingInpatientSchedule": [
+          "reclPtHwfLSwfQi4T"
+        ],
+        "blocksLink": [
+          "reciDYU7hTsmjgAaT"
+        ]
+      }
+    },
+    {
+      "id": "recirCIjVwz50YemR",
+      "createdTime": "2025-04-30T22:28:08.000Z",
+      "fields": {
+        "holiday": "HOLIDAY Day",
+        "federalHolidayID": "recirCIjVwz50YemR",
+        "attendingInpatientScheduleWeek": "25",
+        "holidayDate": "2025-12-25",
+        "thursday": true,
+        "attendingInpatientSchedule": [
+          "rectACv3yxa8uxOSP"
+        ],
+        "blocksLink": [
+          "rec4QEhUx2W3VpbJg"
+        ]
+      }
+    },
+    {
+      "id": "recyz9TL7kuyoh1Vp",
+      "createdTime": "2025-04-30T22:28:08.000Z",
+      "fields": {
+        "holiday": "Washington's Birthday",
+        "federalHolidayID": "recyz9TL7kuyoh1Vp",
+        "attendingInpatientScheduleWeek": "33",
+        "holidayDate": "2026-02-16",
+        "monday": true,
+        "attendingInpatientSchedule": [
+          "rec66RVtYFOQMGoMt"
+        ],
+        "blocksLink": [
+          "rec9KG7LgejhaAdDP"
+        ]
+      }
+    }
+  ]
+}
