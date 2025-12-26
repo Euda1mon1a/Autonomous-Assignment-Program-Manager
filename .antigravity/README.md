@@ -21,6 +21,7 @@
 | **A. Autopilot** | ACTIVE | Single agent, autonomous with guardrails |
 | **B. Manager View** | FUTURE | Parallel agents (5 max) - not yet activated |
 | **C. Auto Triggers** | FUTURE | Webhook/scheduled triggers - not yet activated |
+| **D. Hybrid Orchestration** | CONCEPT | Opus tactician + Qwen squad - for evaluation |
 
 ---
 
