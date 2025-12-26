@@ -208,6 +208,24 @@ EOF
 | Work hours | Reset at midnight LOCAL, not UTC |
 | Race conditions | Need `with_for_update()` |
 | Test isolation | Check conftest fixtures |
+| activity_type mismatch | `"clinic"` ≠ `"outpatient"` - check seed data for canonical values |
+| Doc/code mismatch | Comments may say "outpatient" while code uses "clinic" - verify both |
+
+### Lesson Learned: PR #442 (2025-12-26)
+
+**Issue:** Code comment said "OUTPATIENT HALF-DAY OPTIMIZATION" but filter used `"clinic"`.
+
+**Root cause:** The activity_type values in seed data distinguish:
+- `"outpatient"` = elective/selective rotations (Neurology, ID, etc.)
+- `"clinic"` = FM Clinic only (has separate capacity constraints)
+
+**Prevention:** When fixing filters, always verify against:
+1. Seed data (`scripts/seed_templates.py`)
+2. Database model comments
+3. BLOCK_10_ROADMAP canonical activity_type list
+
+**Lesson:** Evaluate PRs fully before merging. This PR was caught during evaluation
+and prevented a production bug where the solver would find zero templates.
 
 ## Context Management
 

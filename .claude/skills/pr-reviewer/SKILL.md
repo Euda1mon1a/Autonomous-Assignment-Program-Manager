@@ -101,6 +101,8 @@ pytest --cov=app --cov-fail-under=70
 - [ ] Complex logic commented
 - [ ] API docs updated if needed
 - [ ] CHANGELOG updated for features
+- [ ] **Code/comment consistency** - verify comments match actual behavior
+- [ ] **Seed data alignment** - filter values match canonical data sources
 
 ## Review Decision Matrix
 
@@ -342,6 +344,19 @@ async def get_schedule(
 ```
 ````
 
+## Lesson Learned: PR #442 (2025-12-26)
+
+**What happened:** A fix changed a filter from one value to another, but the new value
+was also incorrect because comments/docs said "outpatient" while code used "clinic".
+
+**Prevention checklist for filter/constant changes:**
+- [ ] Verify value against seed data (`scripts/seed_templates.py`)
+- [ ] Check if comments describe different behavior than code implements
+- [ ] Cross-reference with canonical data source (e.g., BLOCK_10_ROADMAP)
+- [ ] Confirm the filter will actually find matching records
+
+**Key insight:** Always ask "will this filter find what we expect?" and verify empirically.
+
 ## Escalation Rules
 
 **Request human review when:**
@@ -353,6 +368,7 @@ async def get_schedule(
 5. Complex business logic unclear
 6. Performance-critical code
 7. Third-party integration changes
+8. **Filter/constant value changes** - verify against canonical data sources
 
 **Can approve automatically:**
 
