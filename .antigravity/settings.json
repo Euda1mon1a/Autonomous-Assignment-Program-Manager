@@ -45,6 +45,13 @@
     "note": "Webhook and scheduled triggers - not yet activated"
   },
 
+  "hybridOrchestration": {
+    "enabled": false,
+    "status": "FUTURE_D",
+    "configFile": "./FUTURE_D_HYBRID_MODEL_ORCHESTRATION.md",
+    "note": "Opus tactician + Qwen squad - concept for evaluation"
+  },
+
   "models": {
     "default": "claude-sonnet-4-5",
     "thinking": "claude-sonnet-4-5-thinking",
