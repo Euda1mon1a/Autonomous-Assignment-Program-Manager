@@ -11,7 +11,8 @@ export function createTestQueryClient() {
       queries: {
         retry: false,
         gcTime: 0,
-        staleTime: 0,
+        // Keep staleTime > 0 to prevent immediate refetches that would ignore cached data
+        staleTime: 5 * 60 * 1000, // 5 minutes
       },
       mutations: {
         retry: false,
