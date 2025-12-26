@@ -1,15 +1,16 @@
 # Residency Scheduler
 
-> **Last Updated:** 2025-12-18
+> **Last Updated:** 2025-12-26
 
 <p align="center">
-  <strong>A comprehensive medical residency scheduling system with ACGME compliance validation</strong>
+  <strong>A comprehensive medical residency scheduling system with ACGME compliance validation and AI-assisted development infrastructure</strong>
 </p>
 
 <p align="center">
   <a href="#features">Features</a> •
   <a href="#tech-stack">Tech Stack</a> •
   <a href="#quick-start">Quick Start</a> •
+  <a href="#ai-assisted-development">AI Development</a> •
   <a href="#documentation">Documentation</a> •
   <a href="#contributing">Contributing</a>
 </p>
@@ -22,11 +23,39 @@ Residency Scheduler is a production-ready, full-stack application designed to au
 
 ### Key Capabilities
 
-- **Automated Schedule Generation** - Constraint-based algorithm that generates compliant schedules
+- **Automated Schedule Generation** - Constraint-based algorithm with solver kill-switch and progress monitoring
 - **ACGME Compliance Monitoring** - Real-time validation against 80-hour rule, 1-in-7 rule, and supervision ratios
 - **Emergency Coverage System** - Handle military deployments, TDY assignments, and medical emergencies
 - **Role-Based Access Control** - Secure multi-user system with admin, coordinator, and faculty roles
-- **Export Functionality** - Generate Excel reports for external use
+- **Block Schedule Import/Export** - CLI-based Excel parsing, markdown export, and data sanitization
+- **AI-Assisted Development** - 34 agent skills, 27 slash commands, and Personal AI Infrastructure (PAI)
+- **MCP Server Integration** - 34 Model Context Protocol tools for AI assistant scheduling operations
+
+---
+
+## What's New (December 2025)
+
+### Major Additions
+
+**Personal AI Infrastructure (PAI)** - Complete AI agent framework with 34 skills, 27 slash commands, 4 operational modes, and multi-agent orchestration. Based on Kai Patterns for consistent, safe AI-assisted development.
+
+**Solver Operational Controls** - Redis-backed kill-switch for aborting runaway solvers, real-time progress monitoring, partial result capture, and Prometheus metrics integration.
+
+**Block Schedule Import/Export** - CLI-based Excel parsing with fuzzy matching, markdown export for human-readable summaries, and PII sanitization for military medical data.
+
+**MCP Server Integration** - 34 Model Context Protocol tools enabling AI assistants to validate schedules, detect conflicts, analyze swaps, and manage background tasks.
+
+**Docker Security Hardening** - Non-root user execution, multi-stage builds, read-only filesystems, Docker secrets, and production security controls.
+
+**Cross-Disciplinary Research** - 10+ bridge specifications connecting resilience concepts from forestry, telecommunications, epidemiology, game theory, and materials science.
+
+### Recent Changes (427 commits since Dec 18)
+
+- Added FMIT recovery constraints and activity type categorization
+- Implemented schedule verification scripts with 12 automated checks
+- Created 10 service specifications for advanced features (signal processing, game theory, control theory)
+- Expanded documentation with research directory and architecture bridges
+- Added session documentation for handoff continuity
 
 ---
 
@@ -92,11 +121,79 @@ Built-in system resilience inspired by cross-industry best practices:
 
 See [Resilience Framework](docs/guides/resilience-framework.md) for detailed documentation.
 
+### Solver Operational Controls
+- **Kill-Switch**: Redis-backed abort mechanism for runaway solver jobs
+- **Progress Monitoring**: Real-time tracking of solver iterations, objective scores, and violations
+- **Partial Result Capture**: Saves best-solution-so-far before termination
+- **Constraint Metrics**: Prometheus integration with 8 resilience gauges and 5 operational counters
+- **Profiling**: Phase-based timing (pre-processing, solving, post-processing) with memory tracking
+
+### Block Schedule Import/Export
+- **CLI Import**: Parse Excel block schedules with fuzzy-tolerant matching for column shifts and name variations
+- **Markdown Export**: Auto-generate human-readable schedule summaries with confidence indicators
+- **Excel Export**: Legacy format support with AM/PM columns, color-coded rotations, and holiday highlighting
+- **Data Sanitization**: PII protection with OPSEC/PERSEC compliance for military medical data
+
+### Schedule Verification
+- **Automated Verification Script**: 12 verification checks (FMIT patterns, call requirements, Night Float headcount)
+- **Human Verification Skill**: Interactive AI-assisted checklist for manual spot-checking
+- **Constraint Pre-Flight**: Validates constraint registration and weight hierarchy before commits
+- **CLI Integration**: `/verify-schedule [block]` slash command for quick verification
+
 ### Dashboard & Reporting
 - Schedule summary with compliance status
 - Upcoming absences widget
 - Quick action buttons
 - Month-by-month compliance visualization
+
+---
+
+## AI-Assisted Development
+
+### Personal AI Infrastructure (PAI)
+
+The project includes a comprehensive AI agent framework based on Kai Patterns:
+
+- **34 Specialized Skills** across 8 tiers - Core scheduling, compliance validation, resilience scoring, swap execution, development, and testing skills
+- **4 Operational Modes** - SAFE_AUDIT (read-only), SUPERVISED_EXECUTION (with approval), EXPERIMENTAL_PLANNING (sandbox), EMERGENCY_OVERRIDE (crisis response)
+- **Multi-Agent Orchestration** - ORCHESTRATOR coordinates up to 5 parallel agents with task decomposition and conflict resolution
+- **Constitutions & Constraints** - Foundational rules enforcing ACGME compliance, security, and operational safety
+- **Telemetry & Observability** - AI infrastructure metrics tracking skill usage, safety validations, and agent effectiveness
+
+See [Personal AI Infrastructure](docs/PERSONAL_INFRASTRUCTURE.md) for complete documentation.
+
+### Slash Commands (27 Available)
+
+| Category | Commands |
+|----------|----------|
+| **Development** | `/run-tests`, `/write-tests`, `/lint-fix`, `/fix-code`, `/review-code`, `/quality-check` |
+| **Debugging** | `/debug`, `/debug-explore`, `/debug-tdd`, `/debug-scheduling` |
+| **Scheduling** | `/generate-schedule`, `/optimize-schedule`, `/verify-schedule`, `/check-compliance`, `/swap`, `/solver` |
+| **Infrastructure** | `/db-migrate`, `/docker-help`, `/health-check` |
+| **Documentation** | `/export-pdf`, `/export-xlsx`, `/changelog`, `/document-session` |
+| **Operations** | `/review-pr`, `/incident`, `/security`, `/check-constraints` |
+
+### Agent Skills (34 Available)
+
+| Tier | Skills |
+|------|--------|
+| **Core Scheduling** | SCHEDULING, COMPLIANCE_VALIDATION, SWAP_EXECUTION, RESILIENCE_SCORING, MCP_ORCHESTRATION |
+| **Development** | test-writer, code-review, automated-code-fixer, systematic-debugger, lint-monorepo |
+| **Infrastructure** | database-migration, docker-containerization, fastapi-production, frontend-development |
+| **Operations** | production-incident-responder, security-audit, solver-control, safe-schedule-generation |
+| **Utilities** | pdf, xlsx, changelog-generator, schedule-verification |
+
+### MCP Server (34 Tools)
+
+AI assistants can interact with the scheduling system through Model Context Protocol:
+
+- **Core Scheduling** (5 tools): validate_schedule, detect_conflicts, analyze_swap_candidates, run_contingency_analysis
+- **Resilience Patterns** (13 tools): utilization threshold, defense level, N-1/N-2 analysis, fallback schedules
+- **Background Tasks** (4 tools): start_background_task, get_task_status, cancel_task, list_active_tasks
+- **Deployment/CI** (7 tools): validate_deployment, run_security_scan, promote_to_production, rollback
+- **Empirical Testing** (5 tools): benchmark_solvers, benchmark_constraints, ablation_study
+
+See [MCP Admin Guide](docs/admin-manual/mcp-admin-guide.md) for complete documentation.
 
 ---
 
@@ -130,12 +227,21 @@ See [Resilience Framework](docs/guides/resilience-framework.md) for detailed doc
 | Redis | - | Message broker & result backend |
 | Prometheus | - | Metrics and monitoring |
 
+### MCP Server (AI Integration)
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| FastMCP | 0.2.0+ | Model Context Protocol framework |
+| httpx | 0.25.0+ | Async HTTP client for API calls |
+
 ### Infrastructure
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | PostgreSQL | 15 | Primary database |
-| Docker | Latest | Containerization |
+| Docker | Latest | Containerization (with security hardening) |
 | Docker Compose | Latest | Multi-container orchestration |
+| Nginx | Latest | Reverse proxy with TLS 1.2+ |
+| Prometheus | Latest | Metrics collection |
+| Grafana | Latest | Dashboard visualization |
 
 ### Testing
 | Technology | Purpose |
@@ -233,6 +339,9 @@ residency-scheduler/
 │   │   ├── schemas/             # Pydantic validation schemas
 │   │   ├── services/            # Business logic layer
 │   │   ├── scheduling/          # Scheduling engine & validator
+│   │   │   ├── solver_control.py    # Kill-switch & progress monitoring
+│   │   │   ├── profiler.py          # Performance instrumentation
+│   │   │   └── constraints/         # Constraint system
 │   │   ├── resilience/          # Resilience framework
 │   │   │   ├── utilization.py   # 80% threshold monitoring
 │   │   │   ├── defense_in_depth.py  # 5-level safety system
@@ -258,9 +367,24 @@ residency-scheduler/
 │   ├── e2e/                     # Playwright E2E tests
 │   ├── Dockerfile
 │   └── package.json
+├── mcp-server/                  # MCP Server (AI Integration)
+│   └── src/scheduler_mcp/       # 34 scheduling tools
+├── .claude/                     # AI Infrastructure (PAI)
+│   ├── commands/                # 27 slash commands
+│   ├── skills/                  # 34 agent skills
+│   ├── Agents/                  # Agent personas (ORCHESTRATOR, etc.)
+│   ├── PromptTemplates/         # Reusable workflow templates
+│   └── Methodologies/           # Decision frameworks
 ├── docs/                        # Project documentation
+│   ├── architecture/            # System design
+│   │   └── bridges/             # Cross-disciplinary integrations
+│   ├── specs/                   # Service specifications
+│   ├── research/                # Advanced research topics
+│   └── schedules/               # Sanitized test data
+├── scripts/                     # CLI tools & utilities
 ├── docker-compose.yml           # Production configuration
 ├── docker-compose.dev.yml       # Development configuration
+├── docker-compose.prod.yml      # Security-hardened production
 └── README.md
 ```
 
@@ -299,6 +423,7 @@ residency-scheduler/
 | [Getting Started](docs/getting-started/index.md) | Installation and quickstart |
 | [macOS Deploy Guide](docs/getting-started/macos-deploy.md) | Complete macOS Terminal deployment |
 | [Configuration](docs/getting-started/configuration.md) | Environment setup |
+| [Schedule Generation Runbook](docs/guides/SCHEDULE_GENERATION_RUNBOOK.md) | Step-by-step schedule generation |
 
 ### Technical Reference
 | Document | Description |
@@ -306,7 +431,34 @@ residency-scheduler/
 | [Architecture Overview](ARCHITECTURE.md) | System design and data flow |
 | [API Documentation](docs/api/index.md) | REST API reference |
 | [Resilience Framework](docs/guides/resilience-framework.md) | Cross-industry resilience concepts |
+| [Solver Algorithm](docs/architecture/SOLVER_ALGORITHM.md) | Scheduling engine internals |
 | [Development Setup](docs/development/setup.md) | Local development environment |
+
+### AI-Assisted Development
+| Document | Description |
+|----------|-------------|
+| [Personal AI Infrastructure (PAI)](docs/PERSONAL_INFRASTRUCTURE.md) | Complete AI agent framework |
+| [AI Agent User Guide](docs/guides/AI_AGENT_USER_GUIDE.md) | Skills, MCP tools, and setup |
+| [Agent Skills Reference](docs/development/AGENT_SKILLS.md) | Complete skill catalog |
+| [MCP Admin Guide](docs/admin-manual/mcp-admin-guide.md) | MCP server administration |
+| [AI Rules of Engagement](docs/development/AI_RULES_OF_ENGAGEMENT.md) | Core AI agent rules |
+| [AI Interface Guide](docs/admin-manual/ai-interface-guide.md) | Web vs CLI comparison |
+
+### Advanced Architecture
+| Document | Description |
+|----------|-------------|
+| [Cross-Disciplinary Bridges](docs/architecture/bridges/) | 10+ integration specifications |
+| [Service Specifications](docs/specs/) | Implementation-ready service designs |
+| [Mathematical Unification](docs/architecture/MATHEMATICAL_UNIFICATION.md) | Common foundations across domains |
+| [Control Theory Tuning](docs/architecture/CONTROL_THEORY_TUNING_GUIDE.md) | PID controller calibration |
+
+### Research & Innovation
+| Document | Description |
+|----------|-------------|
+| [Research Directory](docs/research/) | Exotic concepts from diverse fields |
+| [Signal Processing](docs/research/SIGNAL_PROCESSING_SCHEDULE_ANALYSIS.md) | Schedule pattern analysis |
+| [Game Theory](docs/research/GAME_THEORY_FORMAL_PROOFS.md) | Strategic mechanisms for fairness |
+| [Complex Systems](docs/research/) | Emergence and resilience |
 
 ### Operations
 | Document | Description |
@@ -314,14 +466,8 @@ residency-scheduler/
 | [Admin Manual](docs/admin-manual/README.md) | System administration guide |
 | [Security Scanning](docs/operations/SECURITY_SCANNING.md) | Security tools and practices |
 | [Metrics & Monitoring](docs/operations/metrics.md) | Prometheus metrics reference |
+| [Load Testing](docs/operations/LOAD_TESTING.md) | Performance validation |
 | [Deployment](docs/operations/DEPLOYMENT_PROMPT.md) | Production deployment |
-
-### AI-Assisted Development
-| Document | Description |
-|----------|-------------|
-| [AI Assistant Guardrails](docs/development/ai-assistant-guardrails.md) | Safe multi-AI workflow guide |
-| [AI Rules of Engagement](docs/development/AI_RULES_OF_ENGAGEMENT.md) | Core AI agent rules |
-| [AI Interface Guide](docs/admin-manual/ai-interface-guide.md) | Web vs CLI comparison |
 
 ### Planning & Status
 | Document | Description |
@@ -329,6 +475,13 @@ residency-scheduler/
 | [Roadmap](ROADMAP.md) | Feature roadmap and milestones |
 | [Strategic Decisions](STRATEGIC_DECISIONS.md) | Key project decisions |
 | [Human TODO](HUMAN_TODO.md) | Tasks requiring human action |
+
+### Reference Materials
+| Document | Description |
+|----------|-------------|
+| [Schedule Abbreviations](docs/reference/SCHEDULE_ABBREVIATIONS.md) | Activity code reference |
+| [Debugging Workflow](docs/development/DEBUGGING_WORKFLOW.md) | Systematic debugging guide |
+| [CI/CD Troubleshooting](docs/development/CI_CD_TROUBLESHOOTING.md) | Error codes and fixes |
 
 ### Archived Documentation
 Historical session logs, implementation summaries, and reports are preserved in [docs/archived/](docs/archived/README.md).
