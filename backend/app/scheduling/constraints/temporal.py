@@ -71,7 +71,7 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "clinic"
+            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
         }
 
         if not clinic_template_ids:
@@ -118,7 +118,7 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "clinic"
+            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
         }
 
         if not clinic_template_ids:
@@ -161,7 +161,7 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "clinic"
+            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
         }
 
         if not clinic_template_ids:
@@ -252,7 +252,7 @@ class WednesdayPMSingleFacultyConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "clinic"
+            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
         }
         if not clinic_template_ids:
             return
@@ -294,7 +294,7 @@ class WednesdayPMSingleFacultyConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "clinic"
+            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
         }
         if not clinic_template_ids:
             return
@@ -334,7 +334,7 @@ class WednesdayPMSingleFacultyConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "clinic"
+            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
         }
 
         # Early return if no clinic templates
@@ -422,7 +422,7 @@ class InvertedWednesdayConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "clinic"
+            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
         }
         if not clinic_template_ids:
             return
@@ -505,7 +505,7 @@ class InvertedWednesdayConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "clinic"
+            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
         }
         if not clinic_template_ids:
             return
@@ -586,7 +586,7 @@ class InvertedWednesdayConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "clinic"
+            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
         }
 
         # Early return if no clinic templates
