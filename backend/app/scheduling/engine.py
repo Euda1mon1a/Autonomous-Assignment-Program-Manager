@@ -1144,7 +1144,8 @@ class SchedulingEngine:
         )
 
     def _get_rotation_templates(
-        self, template_ids: list[UUID] | None = None,
+        self,
+        template_ids: list[UUID] | None = None,
         activity_type: str | None = "outpatient",
     ) -> list[RotationTemplate]:
         """
@@ -1273,7 +1274,8 @@ class SchedulingEngine:
 
             # Find available faculty (not on leave AND not already assigned to this block)
             available = [
-                f for f in faculty
+                f
+                for f in faculty
                 if self._is_available(f.id, block_id)
                 and (f.id, block_id) not in faculty_occupied_slots
             ]
@@ -1285,7 +1287,9 @@ class SchedulingEngine:
 
             # Determine primary rotation template from resident assignments in this block
             # Faculty should be assigned the same rotation as the residents they supervise
-            primary_template_id = self._get_primary_template_for_block(block_assignments)
+            primary_template_id = self._get_primary_template_for_block(
+                block_assignments
+            )
 
             for fac in selected:
                 assignment = Assignment(
@@ -1337,7 +1341,9 @@ class SchedulingEngine:
         # Find most common template
         # If there's a tie, we'll prefer clinical templates (inpatient, etc.)
         max_count = max(template_counts.values())
-        candidates = [tid for tid, count in template_counts.items() if count == max_count]
+        candidates = [
+            tid for tid, count in template_counts.items() if count == max_count
+        ]
 
         if len(candidates) == 1:
             return candidates[0]

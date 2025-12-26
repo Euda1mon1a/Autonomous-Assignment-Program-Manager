@@ -76,7 +76,10 @@ class TestJobsRoutes:
         mock_monitor = MagicMock()
         mock_monitor.get_active_tasks.return_value = [{"task_id": "1"}]
         mock_monitor.get_scheduled_tasks.return_value = []
-        mock_monitor.get_reserved_tasks.return_value = [{"task_id": "2"}, {"task_id": "3"}]
+        mock_monitor.get_reserved_tasks.return_value = [
+            {"task_id": "2"},
+            {"task_id": "3"},
+        ]
         mock_monitor.get_worker_stats.return_value = {
             "total_workers": 4,
             "online_workers": 4,
@@ -503,7 +506,9 @@ class TestJobsRoutes:
         ]
         mock_history_service.return_value = mock_history
 
-        response = client.get("/api/jobs/history/failures?limit=10", headers=auth_headers)
+        response = client.get(
+            "/api/jobs/history/failures?limit=10", headers=auth_headers
+        )
         assert response.status_code == 200
 
     @patch("app.api.routes.jobs.JobHistoryService")

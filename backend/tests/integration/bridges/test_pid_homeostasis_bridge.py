@@ -34,6 +34,7 @@ from dataclasses import dataclass, field
 @dataclass
 class PIDConfig:
     """Configuration for a PID controller."""
+
     name: str
     setpoint: float
     Kp: float  # Proportional gain
@@ -48,6 +49,7 @@ class PIDConfig:
 @dataclass
 class PIDState:
     """State of a PID controller."""
+
     id: uuid4
     config: PIDConfig
 
@@ -93,7 +95,7 @@ class PIDState:
         self.integral = np.clip(
             self.integral,
             self.config.integral_limits[0],
-            self.config.integral_limits[1]
+            self.config.integral_limits[1],
         )
         I = self.config.Ki * self.integral
 
@@ -110,15 +112,13 @@ class PIDState:
 
         # Apply output limits
         control_signal = np.clip(
-            raw_control,
-            self.config.output_limits[0],
-            self.config.output_limits[1]
+            raw_control, self.config.output_limits[0], self.config.output_limits[1]
         )
 
         # Track saturation
         integral_saturated = (
-            abs(self.integral - self.config.integral_limits[1]) < 0.01 or
-            abs(self.integral - self.config.integral_limits[0]) < 0.01
+            abs(self.integral - self.config.integral_limits[1]) < 0.01
+            or abs(self.integral - self.config.integral_limits[0]) < 0.01
         )
         output_saturated = abs(raw_control - control_signal) > 0.001
 
@@ -131,9 +131,9 @@ class PIDState:
 
         # Trim history
         if len(self.error_history) > self.max_history_size:
-            self.error_history = self.error_history[-self.max_history_size:]
+            self.error_history = self.error_history[-self.max_history_size :]
         if len(self.control_history) > self.max_history_size:
-            self.control_history = self.control_history[-self.max_history_size:]
+            self.control_history = self.control_history[-self.max_history_size :]
 
         # Check for oscillations
         if self._is_oscillating():
@@ -161,8 +161,9 @@ class PIDState:
 
         recent_errors = [e for _, e in self.error_history[-window:]]
         sign_changes = sum(
-            1 for i in range(1, len(recent_errors))
-            if recent_errors[i] * recent_errors[i-1] < 0
+            1
+            for i in range(1, len(recent_errors))
+            if recent_errors[i] * recent_errors[i - 1] < 0
         )
 
         # Oscillating if more than half the intervals change sign
@@ -207,7 +208,7 @@ class TestPIDController:
             Kp=10.0,
             Ki=0.0,  # Disable integral
             Kd=0.0,  # Disable derivative
-            output_limits=(-1.0, 1.0)
+            output_limits=(-1.0, 1.0),
         )
         controller = PIDState(id=uuid4(), config=config)
 
@@ -215,21 +216,26 @@ class TestPIDController:
         result = controller.update(0.85)
 
         # P = Kp × error = 10.0 × (-0.10) = -1.0
-        assert result["P"] == pytest.approx(-1.0, abs=0.01), \
+        assert result["P"] == pytest.approx(-1.0, abs=0.01), (
             f"Expected P=-1.0, got {result['P']}"
-        assert result["I"] == pytest.approx(0.0, abs=0.01), \
+        )
+        assert result["I"] == pytest.approx(0.0, abs=0.01), (
             "Integral term should be zero when Ki=0"
-        assert result["D"] == pytest.approx(0.0, abs=0.01), \
+        )
+        assert result["D"] == pytest.approx(0.0, abs=0.01), (
             "Derivative term should be zero when Kd=0"
-        assert result["control_signal"] == pytest.approx(-1.0, abs=0.01), \
+        )
+        assert result["control_signal"] == pytest.approx(-1.0, abs=0.01), (
             "Control signal should equal P term when I and D are disabled"
+        )
 
         # Test proportional scaling with different error
         result2 = controller.update(0.80)  # Error = 0.75 - 0.80 = -0.05
 
         # P = 10.0 × (-0.05) = -0.5
-        assert result2["P"] == pytest.approx(-0.5, abs=0.01), \
+        assert result2["P"] == pytest.approx(-0.5, abs=0.01), (
             f"Expected P=-0.5, got {result2['P']}"
+        )
         assert result2["control_signal"] == pytest.approx(-0.5, abs=0.01)
 
     def test_integral_accumulation(self):
@@ -245,11 +251,11 @@ class TestPIDController:
         config = PIDConfig(
             name="test_integral",
             setpoint=0.75,
-            Kp=0.0,   # Disable proportional
-            Ki=1.0,   # Only integral
-            Kd=0.0,   # Disable derivative
+            Kp=0.0,  # Disable proportional
+            Ki=1.0,  # Only integral
+            Kd=0.0,  # Disable derivative
             output_limits=(-1.0, 1.0),
-            integral_limits=(-10.0, 10.0)
+            integral_limits=(-10.0, 10.0),
         )
         controller = PIDState(id=uuid4(), config=config)
 
@@ -260,7 +266,7 @@ class TestPIDController:
 
         for step in range(5):
             # Set time to simulate 1-day intervals
-            controller.previous_time = datetime.now() - timedelta(days=5-step)
+            controller.previous_time = datetime.now() - timedelta(days=5 - step)
             result = controller.update(0.70)  # Error = 0.75 - 0.70 = +0.05
 
             errors_observed.append(result["error"])
@@ -268,18 +274,22 @@ class TestPIDController:
             control_signals.append(result["control_signal"])
 
         # Integral should accumulate positive error
-        assert controller.integral > 0, \
+        assert controller.integral > 0, (
             f"Integral should accumulate for persistent positive error, got {controller.integral}"
+        )
 
         # Integral should increase over time
-        assert integrals_observed[-1] > integrals_observed[0], \
+        assert integrals_observed[-1] > integrals_observed[0], (
             "Integral should grow with persistent error"
+        )
 
         # Control signal should be positive (I term only)
-        assert result["I"] > 0, \
+        assert result["I"] > 0, (
             f"I term should be positive for accumulated positive error, got {result['I']}"
-        assert result["control_signal"] > 0, \
+        )
+        assert result["control_signal"] > 0, (
             "Control signal should be positive to correct persistent positive error"
+        )
 
         # Integral eliminates steady-state error
         # After 5 days of error=0.05, integral ≈ 0.05 × 5 = 0.25
@@ -288,8 +298,9 @@ class TestPIDController:
 
         # Verify integral grows monotonically for persistent same-sign error
         for i in range(1, len(integrals_observed)):
-            assert integrals_observed[i] >= integrals_observed[i-1], \
+            assert integrals_observed[i] >= integrals_observed[i - 1], (
                 f"Integral should grow monotonically, but decreased at step {i}"
+            )
 
     def test_derivative_anticipation(self):
         """
@@ -306,8 +317,8 @@ class TestPIDController:
             setpoint=0.75,
             Kp=10.0,
             Ki=0.0,
-            Kd=5.0,   # Strong derivative
-            output_limits=(-1.0, 1.0)
+            Kd=5.0,  # Strong derivative
+            output_limits=(-1.0, 1.0),
         )
         controller = PIDState(id=uuid4(), config=config)
 
@@ -325,13 +336,15 @@ class TestPIDController:
         # Error changed from -0.10 to -0.01, derivative = (-0.01 - (-0.10)) / dt = +0.09 / dt
         # For dt = 0.5 days, derivative ≈ 0.18 per day
         # D = Kd × derivative = 5.0 × 0.18 = 0.9 (positive, opposes correction)
-        assert result2["D"] > 0, \
+        assert result2["D"] > 0, (
             f"D term should be positive when error is decreasing, got {result2['D']}"
+        )
 
         # Derivative should reduce total control signal magnitude
         # When error decreases rapidly, D opposes P to prevent overshoot
-        assert abs(result2["control_signal"]) < abs(result2["P"]), \
+        assert abs(result2["control_signal"]) < abs(result2["P"]), (
             "Derivative should reduce control signal magnitude to dampen response"
+        )
 
         # Step 3: Verify derivative is zero for constant error
         controller.previous_time = datetime.now() - timedelta(days=1)
@@ -339,8 +352,9 @@ class TestPIDController:
         result4 = controller.update(0.76)  # Same error again
 
         # Derivative should be near zero for constant error
-        assert abs(result4["D"]) < 0.1, \
+        assert abs(result4["D"]) < 0.1, (
             f"D term should be near zero for constant error, got {result4['D']}"
+        )
 
     def test_anti_windup(self):
         """
@@ -359,40 +373,48 @@ class TestPIDController:
             Ki=1.0,
             Kd=0.0,
             output_limits=(-0.2, 0.2),
-            integral_limits=(-5.0, 5.0)
+            integral_limits=(-5.0, 5.0),
         )
         controller = PIDState(id=uuid4(), config=config)
 
         # Simulate sustained large error over many time steps
         for day in range(20):
-            controller.previous_time = datetime.now() - timedelta(days=20-day)
+            controller.previous_time = datetime.now() - timedelta(days=20 - day)
             result = controller.update(0.50)  # Error = 0.75 - 0.50 = +0.25 (large)
 
         # Integral should be clamped to upper limit
-        assert controller.integral <= 5.0, \
+        assert controller.integral <= 5.0, (
             f"Integral should be clamped to 5.0, got {controller.integral}"
-        assert controller.integral == pytest.approx(5.0, abs=0.1), \
+        )
+        assert controller.integral == pytest.approx(5.0, abs=0.1), (
             "Integral should saturate at upper limit for persistent large error"
+        )
 
         # Saturation flag should be set
-        assert result["integral_saturated"] is True, \
+        assert result["integral_saturated"] is True, (
             "integral_saturated flag should be True when clamped"
+        )
 
         # Saturation count should be incremented
-        assert controller.saturation_count > 0, \
+        assert controller.saturation_count > 0, (
             "Saturation count should track number of saturated updates"
+        )
 
         # Test lower limit saturation
         controller.reset()
         for day in range(20):
-            controller.previous_time = datetime.now() - timedelta(days=20-day)
-            result = controller.update(0.95)  # Error = 0.75 - 0.95 = -0.20 (large negative)
+            controller.previous_time = datetime.now() - timedelta(days=20 - day)
+            result = controller.update(
+                0.95
+            )  # Error = 0.75 - 0.95 = -0.20 (large negative)
 
         # Integral should be clamped to lower limit
-        assert controller.integral >= -5.0, \
+        assert controller.integral >= -5.0, (
             f"Integral should be clamped to -5.0, got {controller.integral}"
-        assert controller.integral == pytest.approx(-5.0, abs=0.1), \
+        )
+        assert controller.integral == pytest.approx(-5.0, abs=0.1), (
             "Integral should saturate at lower limit for persistent large negative error"
+        )
 
     def test_step_response(self):
         """
@@ -415,7 +437,7 @@ class TestPIDController:
             Ki=0.5,
             Kd=2.0,
             output_limits=(-0.2, 0.2),
-            integral_limits=(-5.0, 5.0)
+            integral_limits=(-5.0, 5.0),
         )
         controller = PIDState(id=uuid4(), config=config)
 
@@ -442,23 +464,24 @@ class TestPIDController:
             utilization_values.append(current_util)
 
             # Advance time
-            controller.previous_time = datetime.now() - timedelta(days=30-day)
+            controller.previous_time = datetime.now() - timedelta(days=30 - day)
 
         # Check convergence to setpoint
         final_util = utilization_values[-1]
-        assert final_util == pytest.approx(0.80, abs=0.02), \
+        assert final_util == pytest.approx(0.80, abs=0.02), (
             f"System should converge to setpoint 0.80, got {final_util}"
+        )
 
         # Check for acceptable overshoot (< 10%)
         max_util = max(utilization_values)
         overshoot = max_util - 0.80
-        assert overshoot < 0.08, \
-            f"Overshoot should be < 8%, got {overshoot * 100:.1f}%"
+        assert overshoot < 0.08, f"Overshoot should be < 8%, got {overshoot * 100:.1f}%"
 
         # Check steady-state error (< 2%)
         steady_state_error = abs(final_util - 0.80)
-        assert steady_state_error < 0.02, \
+        assert steady_state_error < 0.02, (
             f"Steady-state error should be < 2%, got {steady_state_error * 100:.1f}%"
+        )
 
         # Check rise time (time to reach 90% of step)
         target_90_percent = 0.75 + 0.9 * (0.80 - 0.75)  # 0.795
@@ -469,8 +492,7 @@ class TestPIDController:
                 break
 
         assert rise_time is not None, "System should reach 90% of setpoint"
-        assert rise_time < 15, \
-            f"Rise time should be < 15 days, got {rise_time} days"
+        assert rise_time < 15, f"Rise time should be < 15 days, got {rise_time} days"
 
     def test_disturbance_rejection(self):
         """
@@ -490,7 +512,7 @@ class TestPIDController:
             Ki=0.8,
             Kd=1.5,
             output_limits=(-0.1, 0.1),
-            integral_limits=(-10.0, 10.0)
+            integral_limits=(-10.0, 10.0),
         )
         controller = PIDState(id=uuid4(), config=config)
 
@@ -505,7 +527,9 @@ class TestPIDController:
 
         for day, disturbance in enumerate(disturbances):
             # Update controller
-            controller.previous_time = datetime.now() - timedelta(days=len(disturbances)-day)
+            controller.previous_time = datetime.now() - timedelta(
+                days=len(disturbances) - day
+            )
             result = controller.update(current_coverage)
             errors.append(result["error"])
 
@@ -517,35 +541,39 @@ class TestPIDController:
 
         # Find maximum deviation during disturbance
         max_deviation = max(abs(0.95 - cov) for cov in coverage_values)
-        assert max_deviation > 0.05, \
-            "Disturbance should cause noticeable deviation"
+        assert max_deviation > 0.05, "Disturbance should cause noticeable deviation"
 
         # Find recovery time: time to get back within 2% of setpoint
         recovery_day = None
-        for day, cov in enumerate(coverage_values[11:], start=11):  # Start after disturbance
+        for day, cov in enumerate(
+            coverage_values[11:], start=11
+        ):  # Start after disturbance
             if abs(cov - 0.95) < 0.02:
                 recovery_day = day
                 break
 
-        assert recovery_day is not None, \
-            "System should recover from disturbance"
-        assert recovery_day < 20, \
+        assert recovery_day is not None, "System should recover from disturbance"
+        assert recovery_day < 20, (
             f"Recovery time should be < 10 days, got {recovery_day - 10} days"
+        )
 
         # Verify final convergence
         final_coverage = coverage_values[-1]
-        assert final_coverage == pytest.approx(0.95, abs=0.02), \
+        assert final_coverage == pytest.approx(0.95, abs=0.02), (
             f"System should return to setpoint after disturbance, got {final_coverage}"
+        )
 
         # Verify no sustained oscillation after disturbance
         # Check last 10 values for sign changes (oscillation indicator)
         late_errors = [0.95 - cov for cov in coverage_values[-10:]]
         sign_changes = sum(
-            1 for i in range(1, len(late_errors))
-            if late_errors[i] * late_errors[i-1] < 0
+            1
+            for i in range(1, len(late_errors))
+            if late_errors[i] * late_errors[i - 1] < 0
         )
-        assert sign_changes < 5, \
+        assert sign_changes < 5, (
             f"System should not oscillate after recovery, got {sign_changes} sign changes"
+        )
 
 
 class TestPIDIntegration:
@@ -560,7 +588,7 @@ class TestPIDIntegration:
             Ki=0.5,
             Kd=2.0,
             output_limits=(-0.2, 0.2),
-            integral_limits=(-5.0, 5.0)
+            integral_limits=(-5.0, 5.0),
         )
         controller = PIDState(id=uuid4(), config=config)
 
@@ -571,12 +599,14 @@ class TestPIDIntegration:
         assert result["error"] == pytest.approx(-0.07, abs=0.001)
 
         # Control signal should be negative (reduce utilization)
-        assert result["control_signal"] < 0, \
+        assert result["control_signal"] < 0, (
             "Should signal to reduce utilization when above target"
+        )
 
         # P term dominates for immediate response
-        assert abs(result["P"]) > abs(result["I"]), \
+        assert abs(result["P"]) > abs(result["I"]), (
             "P term should dominate for immediate correction"
+        )
 
     def test_coverage_emergency_response(self):
         """Test PID responds aggressively to coverage gaps."""
@@ -586,7 +616,7 @@ class TestPIDIntegration:
             Kp=12.0,  # High gain for critical metric
             Ki=0.8,
             Kd=1.5,
-            output_limits=(-0.1, 0.1)
+            output_limits=(-0.1, 0.1),
         )
         controller = PIDState(id=uuid4(), config=config)
 
@@ -597,10 +627,12 @@ class TestPIDIntegration:
         assert result["error"] == pytest.approx(0.10, abs=0.001)
 
         # Control signal should be positive and near maximum (recruit backup)
-        assert result["control_signal"] > 0, \
+        assert result["control_signal"] > 0, (
             "Should signal to increase coverage when below target"
-        assert result["control_signal"] == pytest.approx(0.1, abs=0.01), \
+        )
+        assert result["control_signal"] == pytest.approx(0.1, abs=0.01), (
             "Should saturate at output limit for large coverage gap"
+        )
 
         # Output should be saturated for such a large error
         assert result["output_saturated"] is True
@@ -613,7 +645,7 @@ class TestPIDIntegration:
             Kp=5.0,
             Ki=0.3,
             Kd=1.0,
-            output_limits=(-0.15, 0.15)
+            output_limits=(-0.15, 0.15),
         )
         controller = PIDState(id=uuid4(), config=config)
 
@@ -624,5 +656,6 @@ class TestPIDIntegration:
         assert result["error"] == pytest.approx(-0.18, abs=0.001)
 
         # Control signal should trigger redistribution
-        assert abs(result["control_signal"]) > 0.05, \
+        assert abs(result["control_signal"]) > 0.05, (
             "Should signal workload redistribution for high imbalance"
+        )

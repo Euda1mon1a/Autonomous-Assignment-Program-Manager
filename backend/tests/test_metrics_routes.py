@@ -124,7 +124,9 @@ class TestMetricsExportEndpoint:
     def test_export_success(self, client: TestClient):
         """Test successful metrics export."""
         with patch("app.api.routes.metrics.generate_latest") as mock_generate:
-            mock_generate.return_value = b"# HELP test_metric Test\n# TYPE test_metric counter\ntest_metric 1\n"
+            mock_generate.return_value = (
+                b"# HELP test_metric Test\n# TYPE test_metric counter\ntest_metric 1\n"
+            )
 
             response = client.get("/api/metrics/export")
 
@@ -134,7 +136,9 @@ class TestMetricsExportEndpoint:
     def test_export_prometheus_not_installed(self, client: TestClient):
         """Test export when prometheus_client is not installed."""
         with patch("app.api.routes.metrics.generate_latest") as mock_generate:
-            mock_generate.side_effect = ImportError("No module named 'prometheus_client'")
+            mock_generate.side_effect = ImportError(
+                "No module named 'prometheus_client'"
+            )
             with patch("app.api.routes.metrics.REGISTRY") as mock_registry:
                 # Need to mock the actual import
                 pass

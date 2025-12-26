@@ -56,9 +56,7 @@ class TestUploadFileEndpoint:
 
             assert response.status_code in [201, 401]
 
-    def test_upload_image_with_processing(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_upload_image_with_processing(self, client: TestClient, auth_headers: dict):
         """Test image upload with processing options."""
         with patch("app.api.routes.upload.get_upload_service") as mock_get_service:
             mock_service = MagicMock()
@@ -73,7 +71,9 @@ class TestUploadFileEndpoint:
             mock_get_service.return_value = mock_service
 
             # Create a simple PNG-like content
-            files = {"file": ("image.png", b"\x89PNG\r\n\x1a\n" + b"\x00" * 100, "image/png")}
+            files = {
+                "file": ("image.png", b"\x89PNG\r\n\x1a\n" + b"\x00" * 100, "image/png")
+            }
             data = {
                 "process_images": "true",
                 "generate_thumbnails": "true",
@@ -101,7 +101,9 @@ class TestUploadFileEndpoint:
             }
             mock_get_service.return_value = mock_service
 
-            files = {"file": ("document.pdf", b"%PDF-1.4" + b"\x00" * 100, "application/pdf")}
+            files = {
+                "file": ("document.pdf", b"%PDF-1.4" + b"\x00" * 100, "application/pdf")
+            }
             data = {
                 "description": "Test document",
                 "tags": "test,document",
@@ -216,7 +218,9 @@ class TestFileUrlEndpoint:
         """Test successful URL retrieval."""
         with patch("app.api.routes.upload.get_upload_service") as mock_get_service:
             mock_service = MagicMock()
-            mock_service.get_file_url.return_value = "https://storage.example.com/file123"
+            mock_service.get_file_url.return_value = (
+                "https://storage.example.com/file123"
+            )
             mock_service.storage_backend = MagicMock()
             mock_get_service.return_value = mock_service
 
@@ -232,7 +236,9 @@ class TestFileUrlEndpoint:
         """Test URL retrieval with custom expiration."""
         with patch("app.api.routes.upload.get_upload_service") as mock_get_service:
             mock_service = MagicMock()
-            mock_service.get_file_url.return_value = "https://storage.example.com/file123"
+            mock_service.get_file_url.return_value = (
+                "https://storage.example.com/file123"
+            )
             mock_service.storage_backend = MagicMock()
             mock_get_service.return_value = mock_service
 
@@ -446,9 +452,7 @@ class TestUploadValidation:
 class TestUploadIntegration:
     """Integration tests for upload functionality."""
 
-    def test_upload_endpoints_accessible(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_upload_endpoints_accessible(self, client: TestClient, auth_headers: dict):
         """Test all upload endpoints respond appropriately."""
         file_id = str(uuid4())
         upload_id = str(uuid4())

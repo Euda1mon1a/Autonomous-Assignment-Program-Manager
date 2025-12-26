@@ -785,7 +785,9 @@ class GameTheoryService:
                 "outcome": (
                     "win"
                     if match.winner() == config_player
-                    else "loss" if match.winner() else "tie"
+                    else "loss"
+                    if match.winner()
+                    else "tie"
                 ),
             }
 

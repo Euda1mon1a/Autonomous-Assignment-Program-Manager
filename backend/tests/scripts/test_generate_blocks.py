@@ -86,9 +86,9 @@ class TestCalculateBlockDates:
             next_start, _ = calculate_block_dates(block_num + 1, academic_start)
 
             # Next block should start the day after current block ends
-            assert next_start == current_end + timedelta(
-                days=1
-            ), f"Gap between Block {block_num} and Block {block_num + 1}"
+            assert next_start == current_end + timedelta(days=1), (
+                f"Gap between Block {block_num} and Block {block_num + 1}"
+            )
 
     def test_academic_year_covers_365_days(self):
         """Academic year should cover July 1 - June 30 inclusive."""

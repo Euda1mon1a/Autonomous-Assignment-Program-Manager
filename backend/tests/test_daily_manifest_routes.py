@@ -106,9 +106,7 @@ class TestDailyManifestEndpoint:
             assert "generated_at" in data
             assert isinstance(data["locations"], list)
 
-    def test_daily_manifest_future_date(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_daily_manifest_future_date(self, client: TestClient, auth_headers: dict):
         """Test daily manifest for a future date."""
         from datetime import timedelta
 
@@ -121,9 +119,7 @@ class TestDailyManifestEndpoint:
         # Should work for future dates
         assert response.status_code in [200, 401]
 
-    def test_daily_manifest_past_date(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_daily_manifest_past_date(self, client: TestClient, auth_headers: dict):
         """Test daily manifest for a past date."""
         from datetime import timedelta
 
@@ -214,9 +210,7 @@ class TestDailyManifestEdgeCases:
         # Should return 422 for invalid date format
         assert response.status_code in [401, 422]
 
-    def test_daily_manifest_empty_day(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_daily_manifest_empty_day(self, client: TestClient, auth_headers: dict):
         """Test daily manifest for a day with no assignments."""
         from datetime import timedelta
 
@@ -237,15 +231,11 @@ class TestDailyManifestEdgeCases:
         test_date = date.today().isoformat()
 
         # POST should not be allowed
-        response = client.post(
-            f"/api/assignments/daily-manifest?date={test_date}"
-        )
+        response = client.post(f"/api/assignments/daily-manifest?date={test_date}")
         assert response.status_code in [401, 405]
 
         # PUT should not be allowed
-        response = client.put(
-            f"/api/assignments/daily-manifest?date={test_date}"
-        )
+        response = client.put(f"/api/assignments/daily-manifest?date={test_date}")
         assert response.status_code in [401, 405]
 
 
@@ -257,9 +247,7 @@ class TestDailyManifestEdgeCases:
 class TestDailyManifestIntegration:
     """Integration tests for daily manifest functionality."""
 
-    def test_daily_manifest_json_response(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_daily_manifest_json_response(self, client: TestClient, auth_headers: dict):
         """Test daily manifest returns valid JSON."""
         response = client.get(
             f"/api/assignments/daily-manifest?date={date.today().isoformat()}",
@@ -272,9 +260,7 @@ class TestDailyManifestIntegration:
             data = response.json()
             assert isinstance(data, dict)
 
-    def test_daily_manifest_performance(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_daily_manifest_performance(self, client: TestClient, auth_headers: dict):
         """Test daily manifest responds quickly."""
         import time
 

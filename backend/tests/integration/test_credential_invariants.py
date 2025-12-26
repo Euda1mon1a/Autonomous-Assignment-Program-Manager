@@ -135,9 +135,7 @@ def is_eligible(
     return True, penalty, []
 
 
-def predict_next_block_failures(
-    db: Session, current_block_number: int
-) -> list[dict]:
+def predict_next_block_failures(db: Session, current_block_number: int) -> list[dict]:
     """
     Predict which faculty will have hard credential failures in next block.
 
@@ -491,9 +489,7 @@ class TestHardCredentialEnforcement:
 
         # ASSERT
         assert eligible is False, "Expired credential should block assignment"
-        assert any(
-            "N95_Fit" in m for m in missing
-        ), "Expired N95 should be in missing"
+        assert any("N95_Fit" in m for m in missing), "Expired N95 should be in missing"
 
 
 # ============================================================================
@@ -844,13 +840,11 @@ class TestDashboardHardFailurePrediction:
         assert any(
             "BLS" in cred for cred in faculty_prediction["failing_credentials"]
         ), "BLS should be in failing credentials"
-        assert (
-            assignment.id in faculty_prediction["affected_assignments"]
-        ), "Assignment should be affected"
+        assert assignment.id in faculty_prediction["affected_assignments"], (
+            "Assignment should be affected"
+        )
 
-    def test_dashboard_no_failures_when_all_valid(
-        self, db: Session, cert_types: dict
-    ):
+    def test_dashboard_no_failures_when_all_valid(self, db: Session, cert_types: dict):
         """Test dashboard shows no failures when all credentials valid."""
         # SETUP
         faculty = Person(
@@ -919,9 +913,9 @@ class TestDashboardHardFailurePrediction:
         faculty_prediction = next(
             (p for p in predictions if p["person_id"] == faculty.id), None
         )
-        assert (
-            faculty_prediction is None
-        ), "Faculty with valid credentials should not be in predictions"
+        assert faculty_prediction is None, (
+            "Faculty with valid credentials should not be in predictions"
+        )
 
     def test_dashboard_multiple_faculty_predictions(
         self, db: Session, cert_types: dict

@@ -262,9 +262,7 @@ def test_1_in_7_rule_overnight_shifts(
     # Assign 6 consecutive days (12 blocks: days 1-6, AM+PM)
     for day in range(6):
         current_date = week_start + timedelta(days=day)
-        day_blocks = [
-            b for b in blocks if b.date == current_date and not b.is_weekend
-        ]
+        day_blocks = [b for b in blocks if b.date == current_date and not b.is_weekend]
         for block in day_blocks:
             create_assignment_for_block(db, test_resident, block)
 
@@ -357,9 +355,9 @@ def test_supervision_ratio_fractional_fte(db: Session, acgme_validator: ACGMEVal
     for i in range(4):
         resident = Person(
             id=uuid4(),
-            name=f"Dr. PGY1 Resident {i+1}",
+            name=f"Dr. PGY1 Resident {i + 1}",
             type="resident",
-            email=f"pgy1.{i+1}@hospital.org",
+            email=f"pgy1.{i + 1}@hospital.org",
             pgy_level=1,
         )
         db.add(resident)
@@ -423,9 +421,7 @@ def test_supervision_ratio_fractional_fte(db: Session, acgme_validator: ACGMEVal
     assert len(supervision_violations) == 0
 
 
-def test_supervision_ratio_violation(
-    db: Session, acgme_validator: ACGMEValidator
-):
+def test_supervision_ratio_violation(db: Session, acgme_validator: ACGMEValidator):
     """
     Test supervision ratio violation with insufficient faculty.
 
@@ -441,9 +437,9 @@ def test_supervision_ratio_violation(
     for i in range(6):
         resident = Person(
             id=uuid4(),
-            name=f"Dr. PGY1 Resident {i+1}",
+            name=f"Dr. PGY1 Resident {i + 1}",
             type="resident",
-            email=f"pgy1.{i+1}@hospital.org",
+            email=f"pgy1.{i + 1}@hospital.org",
             pgy_level=1,
         )
         db.add(resident)
@@ -454,9 +450,9 @@ def test_supervision_ratio_violation(
     for i in range(2):
         fac = Person(
             id=uuid4(),
-            name=f"Dr. Faculty {i+1}",
+            name=f"Dr. Faculty {i + 1}",
             type="faculty",
-            email=f"faculty.{i+1}@hospital.org",
+            email=f"faculty.{i + 1}@hospital.org",
             fte=1.0,
             performs_procedures=True,
         )
@@ -538,8 +534,7 @@ def test_rolling_4_week_window_boundary(
     week_1_blocks = [
         b
         for b in blocks
-        if week_start <= b.date < week_start + timedelta(days=7)
-        and not b.is_weekend
+        if week_start <= b.date < week_start + timedelta(days=7) and not b.is_weekend
     ]
     for i, block in enumerate(week_1_blocks[:12]):
         create_assignment_for_block(db, test_resident, block)
@@ -665,9 +660,9 @@ def test_supervision_ratio_mixed_pgy_levels(
     for i in range(2):
         resident = Person(
             id=uuid4(),
-            name=f"Dr. PGY1 Resident {i+1}",
+            name=f"Dr. PGY1 Resident {i + 1}",
             type="resident",
-            email=f"pgy1.{i+1}@hospital.org",
+            email=f"pgy1.{i + 1}@hospital.org",
             pgy_level=1,
         )
         db.add(resident)
@@ -678,9 +673,9 @@ def test_supervision_ratio_mixed_pgy_levels(
     for i in range(4):
         resident = Person(
             id=uuid4(),
-            name=f"Dr. PGY2 Resident {i+1}",
+            name=f"Dr. PGY2 Resident {i + 1}",
             type="resident",
-            email=f"pgy2.{i+1}@hospital.org",
+            email=f"pgy2.{i + 1}@hospital.org",
             pgy_level=2,
         )
         db.add(resident)
@@ -691,9 +686,9 @@ def test_supervision_ratio_mixed_pgy_levels(
     for i in range(2):
         fac = Person(
             id=uuid4(),
-            name=f"Dr. Faculty {i+1}",
+            name=f"Dr. Faculty {i + 1}",
             type="faculty",
-            email=f"faculty.{i+1}@hospital.org",
+            email=f"faculty.{i + 1}@hospital.org",
             fte=1.0,
             performs_procedures=True,
         )

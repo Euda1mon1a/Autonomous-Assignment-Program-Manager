@@ -695,7 +695,9 @@ def analyze_single_file(
 @router.post("/import/block", response_model=BlockParseResponse)
 def parse_block_schedule_endpoint(
     file: UploadFile = File(..., description="Excel schedule file"),
-    block_number: int = Form(..., description="Block number to parse (1-13)", ge=1, le=13),
+    block_number: int = Form(
+        ..., description="Block number to parse (1-13)", ge=1, le=13
+    ),
     known_people: str | None = Form(
         None, description="JSON array of known person names for fuzzy matching"
     ),
@@ -1023,7 +1025,9 @@ def find_swap_candidates_json(
 
     requester = db.query(Person).filter(Person.id == person_uuid).first()
     if not requester:
-        raise HTTPException(status_code=404, detail=f"Person {request.person_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Person {request.person_id} not found"
+        )
 
     # Get the target assignment if specified
     target_assignment = None
@@ -1036,15 +1040,15 @@ def find_swap_candidates_json(
             raise HTTPException(status_code=400, detail="Invalid assignment_id format")
 
         target_assignment = (
-            db.query(Assignment)
-            .filter(Assignment.id == assignment_uuid)
-            .first()
+            db.query(Assignment).filter(Assignment.id == assignment_uuid).first()
         )
         if not target_assignment:
             raise HTTPException(
                 status_code=404, detail=f"Assignment {request.assignment_id} not found"
             )
-        target_block = db.query(Block).filter(Block.id == target_assignment.block_id).first()
+        target_block = (
+            db.query(Block).filter(Block.id == target_assignment.block_id).first()
+        )
 
     elif request.block_id:
         try:
@@ -1054,7 +1058,9 @@ def find_swap_candidates_json(
 
         target_block = db.query(Block).filter(Block.id == block_uuid).first()
         if not target_block:
-            raise HTTPException(status_code=404, detail=f"Block {request.block_id} not found")
+            raise HTTPException(
+                status_code=404, detail=f"Block {request.block_id} not found"
+            )
 
         # Find the requester's assignment for this block
         target_assignment = (
@@ -1104,7 +1110,9 @@ def find_swap_candidates_json(
         db.query(Assignment, Block, Person, RotationTemplate)
         .join(Block, Assignment.block_id == Block.id)
         .join(Person, Assignment.person_id == Person.id)
-        .outerjoin(RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id)
+        .outerjoin(
+            RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
+        )
         .filter(
             Assignment.person_id != person_uuid,
             Person.type == requester.type,  # Same type (faculty/resident)

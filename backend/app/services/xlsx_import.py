@@ -1440,8 +1440,8 @@ class ParsedBlockAssignment:
     date: date
     template: str  # R1, R2, R3, C19, etc.
     role: str  # PGY 1, PGY 2, PGY 3, FAC
-    slot_am: Optional[str] = None  # Value in AM column
-    slot_pm: Optional[str] = None  # Value in PM column
+    slot_am: str | None = None  # Value in AM column
+    slot_pm: str | None = None  # Value in PM column
     row_idx: int = 0
     confidence: float = 1.0  # Lower if fuzzy matched
 
@@ -1452,8 +1452,8 @@ class ParsedFMITWeek:
 
     block_number: int
     week_number: int
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
+    start_date: date | None = None
+    end_date: date | None = None
     faculty_name: str = ""
     is_holiday_call: bool = False
 
@@ -1463,8 +1463,8 @@ class BlockParseResult:
     """Result of parsing a block schedule sheet."""
 
     block_number: int
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
+    start_date: date | None = None
+    end_date: date | None = None
     assignments: list[ParsedBlockAssignment] = field(default_factory=list)
     residents: list[dict] = field(default_factory=list)  # {name, template, role}
     fmit_schedule: list[ParsedFMITWeek] = field(default_factory=list)
@@ -1512,20 +1512,32 @@ class BlockScheduleParser:
 
     # Known rotation templates
     VALID_TEMPLATES = {
-        "R1", "R2", "R3",  # Resident rotations
-        "C19", "Ca9", "CP",  # Clinic/faculty
-        "TY", "PSYCH", "IPAP",  # Transitional/specialty
+        "R1",
+        "R2",
+        "R3",  # Resident rotations
+        "C19",
+        "Ca9",
+        "CP",  # Clinic/faculty
+        "TY",
+        "PSYCH",
+        "IPAP",  # Transitional/specialty
         "NF",  # Night float
     }
 
     # Known roles
     VALID_ROLES = {
-        "PGY 1", "PGY 2", "PGY 3",
-        "FAC", "FLT 1", "FLT 2", "FLT 3",
-        "CP", "IPAP",
+        "PGY 1",
+        "PGY 2",
+        "PGY 3",
+        "FAC",
+        "FLT 1",
+        "FLT 2",
+        "FLT 3",
+        "CP",
+        "IPAP",
     }
 
-    def __init__(self, known_people: Optional[list[str]] = None):
+    def __init__(self, known_people: list[str] | None = None):
         """
         Initialize parser.
 
@@ -1534,13 +1546,15 @@ class BlockScheduleParser:
                           Format: "Last, First" or full name variants.
         """
         self.known_people = known_people or []
-        self._name_cache: dict[str, tuple[str, float]] = {}  # raw -> (matched, confidence)
+        self._name_cache: dict[
+            str, tuple[str, float]
+        ] = {}  # raw -> (matched, confidence)
 
     def parse_block_sheet(
         self,
         filepath: str | Path,
         sheet_name: str,
-        expected_block: Optional[int] = None,
+        expected_block: int | None = None,
     ) -> BlockParseResult:
         """
         Parse a single block schedule sheet.
@@ -1603,13 +1617,15 @@ class BlockScheduleParser:
                 )
 
             # Add to roster
-            result.residents.append({
-                "name": matched_name or raw_name,
-                "template": row_info["template"],
-                "role": row_info["role"],
-                "row": row_info["row"],
-                "confidence": confidence,
-            })
+            result.residents.append(
+                {
+                    "name": matched_name or raw_name,
+                    "template": row_info["template"],
+                    "role": row_info["role"],
+                    "row": row_info["row"],
+                    "confidence": confidence,
+                }
+            )
 
             # Extract daily assignments if we have date columns
             if date_cols:
@@ -1622,16 +1638,18 @@ class BlockScheduleParser:
                     if not cell_val and not pm_val:
                         continue
 
-                    result.assignments.append(ParsedBlockAssignment(
-                        person_name=matched_name or raw_name,
-                        date=assign_date,
-                        template=row_info["template"],
-                        role=row_info["role"],
-                        slot_am=cell_val,
-                        slot_pm=pm_val if pm_val != cell_val else None,
-                        row_idx=row_info["row"],
-                        confidence=confidence,
-                    ))
+                    result.assignments.append(
+                        ParsedBlockAssignment(
+                            person_name=matched_name or raw_name,
+                            date=assign_date,
+                            template=row_info["template"],
+                            role=row_info["role"],
+                            slot_am=cell_val,
+                            slot_pm=pm_val if pm_val != cell_val else None,
+                            row_idx=row_info["row"],
+                            confidence=confidence,
+                        )
+                    )
 
         return result
 
@@ -1717,12 +1735,14 @@ class BlockScheduleParser:
             if template and template not in self.VALID_TEMPLATES:
                 logger.debug(f"Row {row_idx}: Unknown template '{template}'")
 
-            persons.append({
-                "row": row_idx,
-                "name": name_str,
-                "template": template,
-                "role": role,
-            })
+            persons.append(
+                {
+                    "row": row_idx,
+                    "name": name_str,
+                    "template": template,
+                    "role": role,
+                }
+            )
 
         return persons
 
@@ -1768,7 +1788,7 @@ class BlockScheduleParser:
         self._name_cache[raw_name] = (raw_name, 1.0)
         return raw_name, 1.0
 
-    def _get_cell_value(self, ws: Worksheet, row: int, col: int) -> Optional[str]:
+    def _get_cell_value(self, ws: Worksheet, row: int, col: int) -> str | None:
         """Get cell value, handling merged cells gracefully."""
         try:
             cell = ws.cell(row=row, column=col)
@@ -1828,7 +1848,7 @@ class BlockScheduleParser:
 def parse_block_schedule(
     filepath: str | Path,
     block_number: int,
-    known_people: Optional[list[str]] = None,
+    known_people: list[str] | None = None,
 ) -> BlockParseResult:
     """
     Convenience function to parse a specific block.
@@ -1861,7 +1881,9 @@ def parse_block_schedule(
     # Fuzzy match sheet name
     for sheet in wb.sheetnames:
         if str(block_number) in sheet:
-            return parser.parse_block_sheet(filepath, sheet, expected_block=block_number)
+            return parser.parse_block_sheet(
+                filepath, sheet, expected_block=block_number
+            )
 
     raise ValueError(
         f"Could not find sheet for Block {block_number}. Available: {wb.sheetnames}"
@@ -1912,10 +1934,12 @@ def parse_fmit_attending(
                 for week_num, col in enumerate([3, 4, 5, 6], start=1):
                     faculty = ws.cell(row=faculty_row, column=col).value
                     if faculty and str(faculty).strip():
-                        results.append(ParsedFMITWeek(
-                            block_number=block_num,
-                            week_number=week_num,
-                            faculty_name=str(faculty).strip(),
-                        ))
+                        results.append(
+                            ParsedFMITWeek(
+                                block_number=block_num,
+                                week_number=week_num,
+                                faculty_name=str(faculty).strip(),
+                            )
+                        )
 
     return results

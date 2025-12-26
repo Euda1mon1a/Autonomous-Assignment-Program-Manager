@@ -148,7 +148,9 @@ class TestChangelogRoutes:
         client: TestClient,
     ):
         """Test generating changelog from stored versions."""
-        mock_generator.generate_from_versions.return_value = "# API Changelog\n\n## Changes"
+        mock_generator.generate_from_versions.return_value = (
+            "# API Changelog\n\n## Changes"
+        )
 
         response = client.post(
             "/api/changelog/generate",

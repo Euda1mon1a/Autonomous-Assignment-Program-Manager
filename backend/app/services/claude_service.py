@@ -102,7 +102,7 @@ class ClaudeService:
         self,
         request: ClaudeCodeRequest,
         user_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Execute a task without streaming (returns complete result).
         """

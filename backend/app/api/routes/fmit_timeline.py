@@ -626,7 +626,9 @@ async def get_gantt_data(
             progress = (
                 100.0
                 if week.status == "completed"
-                else 50.0 if week.status == "in_progress" else 0.0
+                else 50.0
+                if week.status == "in_progress"
+                else 0.0
             )
 
             # Custom styling based on workload

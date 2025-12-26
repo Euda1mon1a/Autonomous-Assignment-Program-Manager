@@ -69,9 +69,7 @@ class BlockParseResponse(BaseModel):
     warnings: list[str] = Field(
         default_factory=list, description="Parsing warnings (low confidence matches)"
     )
-    errors: list[str] = Field(
-        default_factory=list, description="Parsing errors"
-    )
+    errors: list[str] = Field(default_factory=list, description="Parsing errors")
     total_residents: int = Field(0, description="Total resident count")
     total_assignments: int = Field(0, description="Total assignment count")
 
@@ -84,12 +82,38 @@ class BlockParseResponse(BaseModel):
                 "end_date": "2025-04-08",
                 "total_residents": 25,
                 "residents_by_template": {
-                    "R3": [{"name": "Doria, Russell", "template": "R3", "role": "PGY 3", "row": 11, "confidence": 1.0}],
-                    "R2": [{"name": "Connolly, Laura", "template": "R2", "role": "PGY 3", "row": 19, "confidence": 1.0}],
+                    "R3": [
+                        {
+                            "name": "Doria, Russell",
+                            "template": "R3",
+                            "role": "PGY 3",
+                            "row": 11,
+                            "confidence": 1.0,
+                        }
+                    ],
+                    "R2": [
+                        {
+                            "name": "Connolly, Laura",
+                            "template": "R2",
+                            "role": "PGY 3",
+                            "row": 19,
+                            "confidence": 1.0,
+                        }
+                    ],
                 },
                 "fmit_schedule": [
-                    {"block_number": 10, "week_number": 1, "faculty_name": "Chu", "is_holiday_call": False},
-                    {"block_number": 10, "week_number": 2, "faculty_name": "Bevis", "is_holiday_call": False},
+                    {
+                        "block_number": 10,
+                        "week_number": 1,
+                        "faculty_name": "Chu",
+                        "is_holiday_call": False,
+                    },
+                    {
+                        "block_number": 10,
+                        "week_number": 2,
+                        "faculty_name": "Bevis",
+                        "is_holiday_call": False,
+                    },
                 ],
                 "warnings": [],
                 "errors": [],

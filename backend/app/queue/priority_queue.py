@@ -1114,7 +1114,9 @@ class PriorityQueueManager:
             "status": (
                 "healthy"
                 if health_score >= 80
-                else "degraded" if health_score >= 50 else "unhealthy"
+                else "degraded"
+                if health_score >= 50
+                else "unhealthy"
             ),
             "health_score": round(health_score, 2),
             "total_jobs": total_jobs,

@@ -174,9 +174,7 @@ class TestTableStatisticsEndpoint:
 
         assert response.status_code in [401, 403]
 
-    def test_table_stats_requires_admin(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_table_stats_requires_admin(self, client: TestClient, auth_headers: dict):
         """Test that table statistics requires admin role."""
         with patch("app.api.routes.db_admin.IndexAdvisor") as mock_advisor_class:
             mock_advisor = MagicMock()
@@ -234,9 +232,7 @@ class TestQueryStatisticsEndpoint:
 
         assert response.status_code in [401, 403]
 
-    def test_query_stats_requires_admin(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_query_stats_requires_admin(self, client: TestClient, auth_headers: dict):
         """Test that query statistics requires admin role."""
         response = client.get(
             "/api/db-admin/queries/stats?request_id=test-123",

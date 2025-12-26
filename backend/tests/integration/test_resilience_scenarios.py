@@ -79,9 +79,9 @@ def faculty_without_pals(db: Session) -> list[Person]:
     for i in range(5):
         fac = Person(
             id=uuid4(),
-            name=f"Dr. Faculty {i+1}",
+            name=f"Dr. Faculty {i + 1}",
             type="faculty",
-            email=f"faculty{i+1}@hospital.org",
+            email=f"faculty{i + 1}@hospital.org",
             performs_procedures=(i % 2 == 0),
             specialties=["General", "Sports Medicine"],
         )
@@ -128,9 +128,9 @@ def balanced_faculty_pool(db: Session) -> list[Person]:
     for i in range(8):
         fac = Person(
             id=uuid4(),
-            name=f"Dr. Faculty {i+1:02d}",
+            name=f"Dr. Faculty {i + 1:02d}",
             type="faculty",
-            email=f"faculty{i+1:02d}@hospital.org",
+            email=f"faculty{i + 1:02d}@hospital.org",
             performs_procedures=True,
             specialties=["General"],
         )
@@ -285,7 +285,9 @@ def test_n1_single_point_of_failure(
         None,
     )
 
-    assert pals_expert_vuln is not None, "PALS expert should be identified as vulnerable"
+    assert pals_expert_vuln is not None, (
+        "PALS expert should be identified as vulnerable"
+    )
     assert pals_expert_vuln.severity == "critical", (
         f"Expected 'critical' severity, got '{pals_expert_vuln.severity}'"
     )
@@ -306,11 +308,14 @@ def test_n1_single_point_of_failure(
         current_utilization=0.75,
     )
 
-    assert report.n1_pass is False, "N-1 analysis should fail with critical vulnerability"
+    assert report.n1_pass is False, (
+        "N-1 analysis should fail with critical vulnerability"
+    )
 
     # Check for cross-training recommendation
     cross_train_recommendations = [
-        rec for rec in report.recommended_actions
+        rec
+        for rec in report.recommended_actions
         if "cross-train" in rec.lower() or "backup" in rec.lower()
     ]
     assert len(cross_train_recommendations) > 0, (
@@ -409,11 +414,14 @@ def test_n2_cascading_failure(
     )
 
     # Should recommend mitigation strategies
-    assert len(report.recommended_actions) > 0, "Should provide mitigation recommendations"
+    assert len(report.recommended_actions) > 0, (
+        "Should provide mitigation recommendations"
+    )
 
     # Check for sacrifice hierarchy or load shedding recommendations
     sacrifice_recommendations = [
-        rec for rec in report.recommended_actions
+        rec
+        for rec in report.recommended_actions
         if "sacrifice" in rec.lower() or "reduce load" in rec.lower()
     ]
     # Note: May or may not recommend sacrifice depending on specific scenario
@@ -456,8 +464,18 @@ def test_utilization_threshold_transitions(
     test_scenarios = [
         (60, 75.0, UtilizationLevel.GREEN, "75% utilization - Healthy (GREEN)"),
         (63.2, 79.0, UtilizationLevel.GREEN, "79% utilization - Still GREEN"),
-        (64, 80.0, UtilizationLevel.YELLOW, "80% utilization - Warning threshold (YELLOW)"),
-        (68, 85.0, UtilizationLevel.ORANGE, "85% utilization - Above threshold (ORANGE)"),
+        (
+            64,
+            80.0,
+            UtilizationLevel.YELLOW,
+            "80% utilization - Warning threshold (YELLOW)",
+        ),
+        (
+            68,
+            85.0,
+            UtilizationLevel.ORANGE,
+            "85% utilization - Above threshold (ORANGE)",
+        ),
         (72, 90.0, UtilizationLevel.RED, "90% utilization - Critical (RED)"),
         (76, 95.0, UtilizationLevel.BLACK, "95% utilization - Emergency (BLACK)"),
     ]
@@ -561,7 +579,9 @@ def test_defense_level_escalation(
     for coverage, expected, desc in escalation_sequence:
         current_level = defense_in_depth.get_recommended_level(coverage)
 
-        assert current_level == expected, f"{desc}: Expected {expected.name}, got {current_level.name}"
+        assert current_level == expected, (
+            f"{desc}: Expected {expected.name}, got {current_level.name}"
+        )
 
         # Verify escalation (level value increases)
         if previous_level is not None:
@@ -584,7 +604,9 @@ def test_defense_level_escalation(
     for coverage, expected, desc in de_escalation_sequence:
         current_level = defense_in_depth.get_recommended_level(coverage)
 
-        assert current_level == expected, f"{desc}: Expected {expected.name}, got {current_level.name}"
+        assert current_level == expected, (
+            f"{desc}: Expected {expected.name}, got {current_level.name}"
+        )
 
         # Verify de-escalation (level value decreases)
         if previous_level is not None:
@@ -615,7 +637,9 @@ def test_defense_level_escalation(
             success = defense_in_depth.activate_action(level, first_action.name)
 
             # ASSERT: Activation succeeded
-            assert success is True, f"Failed to activate {first_action.name} at {level.name}"
+            assert success is True, (
+                f"Failed to activate {first_action.name} at {level.name}"
+            )
 
             # ASSERT: Activation count incremented
             assert first_action.activation_count == initial_count + 1, (
@@ -714,8 +738,7 @@ def test_redundancy_check_n_plus_2_rule(
 
         # ASSERT: Status matches expected
         assert status.status == expected_status, (
-            f"{description}: Expected status '{expected_status}', "
-            f"got '{status.status}'"
+            f"{description}: Expected status '{expected_status}', got '{status.status}'"
         )
 
         # ASSERT: Redundancy level calculated correctly
@@ -760,8 +783,7 @@ def test_cascade_simulation_with_no_failures(
     assert cascade.is_catastrophic is False, "Should not be catastrophic"
 
     assert cascade.total_failures == 1, (
-        "Should only have initial failure, "
-        f"got {cascade.total_failures} total failures"
+        f"Should only have initial failure, got {cascade.total_failures} total failures"
     )
 
 

@@ -246,9 +246,24 @@ class TestScheduleVoxelTransformer:
     def sample_data(self):
         """Create sample assignment/person/block data."""
         persons = [
-            {"id": str(uuid4()), "name": "Dr. Smith", "type": "faculty", "pgy_level": None},
-            {"id": str(uuid4()), "name": "Resident A", "type": "resident", "pgy_level": 1},
-            {"id": str(uuid4()), "name": "Resident B", "type": "resident", "pgy_level": 2},
+            {
+                "id": str(uuid4()),
+                "name": "Dr. Smith",
+                "type": "faculty",
+                "pgy_level": None,
+            },
+            {
+                "id": str(uuid4()),
+                "name": "Resident A",
+                "type": "resident",
+                "pgy_level": 1,
+            },
+            {
+                "id": str(uuid4()),
+                "name": "Resident B",
+                "type": "resident",
+                "pgy_level": 2,
+            },
         ]
 
         blocks = [

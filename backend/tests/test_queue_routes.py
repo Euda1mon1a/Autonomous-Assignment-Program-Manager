@@ -645,15 +645,14 @@ class TestPeriodicTaskEndpoint:
 class TestQueueIntegration:
     """Integration tests for queue management."""
 
-    def test_queue_endpoints_accessible(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_queue_endpoints_accessible(self, client: TestClient, auth_headers: dict):
         """Test queue endpoints respond appropriately."""
-        with patch("app.api.routes.queue.QueueManager") as mock_qm, patch(
-            "app.api.routes.queue.WorkerManager"
-        ) as mock_wm, patch("app.api.routes.queue.TaskScheduler") as mock_ts, patch(
-            "app.api.routes.queue.get_task_status"
-        ) as mock_status:
+        with (
+            patch("app.api.routes.queue.QueueManager") as mock_qm,
+            patch("app.api.routes.queue.WorkerManager") as mock_wm,
+            patch("app.api.routes.queue.TaskScheduler") as mock_ts,
+            patch("app.api.routes.queue.get_task_status") as mock_status,
+        ):
             # Setup mocks
             mock_qm_instance = MagicMock()
             mock_qm_instance.get_queue_stats.return_value = {"queues": {}}

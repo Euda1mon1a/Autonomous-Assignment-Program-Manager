@@ -370,9 +370,9 @@ def test_utilization_threshold_escalation(
 
         # Verify 80% threshold triggers warning
         if metrics.utilization_rate >= 0.80:
-            assert (
-                metrics.level.value >= UtilizationLevel.ORANGE.value
-            ), "80% threshold should trigger at least ORANGE level"
+            assert metrics.level.value >= UtilizationLevel.ORANGE.value, (
+                "80% threshold should trigger at least ORANGE level"
+            )
 
 
 @pytest.mark.resilience
@@ -401,9 +401,9 @@ def test_utilization_calculation_response_time(
     end = time.perf_counter()
     avg_time_ms = ((end - start) / iterations) * 1000
 
-    assert (
-        avg_time_ms < 100
-    ), f"Utilization calculation too slow: {avg_time_ms:.2f}ms (expected <100ms)"
+    assert avg_time_ms < 100, (
+        f"Utilization calculation too slow: {avg_time_ms:.2f}ms (expected <100ms)"
+    )
 
 
 @pytest.mark.resilience
@@ -478,9 +478,9 @@ def test_n1_analysis_performance(
     assert duration < 5.0, f"N-1 analysis too slow: {duration:.2f}s (expected <5s)"
 
     # Should identify some vulnerabilities in high-load scenario
-    assert (
-        len(vulnerabilities) > 0
-    ), "Should identify vulnerabilities in high-load scenario"
+    assert len(vulnerabilities) > 0, (
+        "Should identify vulnerabilities in high-load scenario"
+    )
 
 
 @pytest.mark.resilience
@@ -544,9 +544,9 @@ def test_contingency_report_generation(
     end = time.perf_counter()
     duration = end - start
 
-    assert (
-        duration < 30.0
-    ), f"Contingency report generation too slow: {duration:.2f}s (expected <30s)"
+    assert duration < 30.0, (
+        f"Contingency report generation too slow: {duration:.2f}s (expected <30s)"
+    )
 
     # Verify report structure
     assert report.n1_vulnerabilities is not None
@@ -586,9 +586,9 @@ def test_centrality_calculation_performance(
     end = time.perf_counter()
     duration = end - start
 
-    assert (
-        duration < 5.0
-    ), f"Centrality calculation too slow: {duration:.2f}s (expected <5s)"
+    assert duration < 5.0, (
+        f"Centrality calculation too slow: {duration:.2f}s (expected <5s)"
+    )
 
     # Verify results
     assert len(centrality_scores) == len(large_faculty_pool)
@@ -680,9 +680,9 @@ async def test_concurrent_contingency_analyses(
     # Verify results are consistent (same input should give same output)
     first_result = results[0]
     for result in results[1:]:
-        assert len(result) == len(
-            first_result
-        ), "Concurrent analyses produced inconsistent results"
+        assert len(result) == len(first_result), (
+            "Concurrent analyses produced inconsistent results"
+        )
 
 
 # ============================================================================
@@ -726,9 +726,9 @@ def test_crisis_detection_latency(
     end = time.perf_counter()
     detection_time = end - start
 
-    assert (
-        detection_time < 5.0
-    ), f"Crisis detection too slow: {detection_time:.2f}s (expected <5s)"
+    assert detection_time < 5.0, (
+        f"Crisis detection too slow: {detection_time:.2f}s (expected <5s)"
+    )
 
     # Should detect degraded or critical status
     assert health_report.overall_status in [
@@ -738,9 +738,9 @@ def test_crisis_detection_latency(
     ], f"Should detect crisis, got status: {health_report.overall_status}"
 
     # Should have immediate actions
-    assert (
-        len(health_report.immediate_actions) > 0
-    ), "Should recommend immediate actions in crisis"
+    assert len(health_report.immediate_actions) > 0, (
+        "Should recommend immediate actions in crisis"
+    )
 
 
 @pytest.mark.resilience
@@ -799,24 +799,24 @@ def test_load_shedding_decision_latency(sacrifice_hierarchy: SacrificeHierarchy)
     end = time.perf_counter()
     decision_time_ms = (end - start) * 1000
 
-    assert (
-        decision_time_ms < 500
-    ), f"Load shedding too slow: {decision_time_ms:.2f}ms (expected <500ms)"
+    assert decision_time_ms < 500, (
+        f"Load shedding too slow: {decision_time_ms:.2f}ms (expected <500ms)"
+    )
 
     # Verify shedding logic
     assert len(kept) + len(sacrificed) == len(all_activities)
 
     # Kept activities should fit in capacity
     kept_hours = sum(a.faculty_hours for a in kept)
-    assert (
-        kept_hours <= available_capacity
-    ), f"Kept activities ({kept_hours}h) exceed capacity ({available_capacity}h)"
+    assert kept_hours <= available_capacity, (
+        f"Kept activities ({kept_hours}h) exceed capacity ({available_capacity}h)"
+    )
 
     # Most critical activities should be kept
     kept_categories = {a.category for a in kept}
-    assert (
-        ActivityCategory.PATIENT_SAFETY in kept_categories
-    ), "Patient safety must never be sacrificed"
+    assert ActivityCategory.PATIENT_SAFETY in kept_categories, (
+        "Patient safety must never be sacrificed"
+    )
 
 
 @pytest.mark.resilience
@@ -848,9 +848,9 @@ def test_sacrifice_hierarchy_consistency(sacrifice_hierarchy: SacrificeHierarchy
     # All results should be identical
     first_result = results[0]
     for result in results[1:]:
-        assert (
-            result == first_result
-        ), "Sacrifice hierarchy produced inconsistent results"
+        assert result == first_result, (
+            "Sacrifice hierarchy produced inconsistent results"
+        )
 
 
 # ============================================================================
@@ -894,9 +894,9 @@ def test_feedback_loop_correction_latency(homeostasis_monitor: HomeostasisMonito
     end = time.perf_counter()
     correction_time_ms = (end - start) * 1000
 
-    assert (
-        correction_time_ms < 100
-    ), f"Feedback correction too slow: {correction_time_ms:.2f}ms"
+    assert correction_time_ms < 100, (
+        f"Feedback correction too slow: {correction_time_ms:.2f}ms"
+    )
 
     # Should trigger correction
     assert len(corrections) > 0, "Should trigger correction for deviation"
@@ -950,14 +950,14 @@ def test_multiple_simultaneous_perturbations(homeostasis_monitor: HomeostasisMon
     end = time.perf_counter()
     equilibrium_time_ms = (end - start) * 1000
 
-    assert (
-        equilibrium_time_ms < 500
-    ), f"Multi-perturbation correction too slow: {equilibrium_time_ms:.2f}ms"
+    assert equilibrium_time_ms < 500, (
+        f"Multi-perturbation correction too slow: {equilibrium_time_ms:.2f}ms"
+    )
 
     # Should trigger corrections for all deviations
-    assert (
-        len(corrections) >= 3
-    ), f"Should trigger multiple corrections, got {len(corrections)}"
+    assert len(corrections) >= 3, (
+        f"Should trigger multiple corrections, got {len(corrections)}"
+    )
 
 
 @pytest.mark.resilience
@@ -988,9 +988,9 @@ def test_allostatic_load_calculation(homeostasis_monitor: HomeostasisMonitor):
     end = time.perf_counter()
     calculation_time_ms = (end - start) * 1000
 
-    assert (
-        calculation_time_ms < 50
-    ), f"Allostatic load calculation too slow: {calculation_time_ms:.2f}ms"
+    assert calculation_time_ms < 50, (
+        f"Allostatic load calculation too slow: {calculation_time_ms:.2f}ms"
+    )
 
     # Verify metrics structure
     assert metrics.total_allostatic_load >= 0.0
@@ -1040,12 +1040,12 @@ def test_zone_failure_isolation(blast_radius_manager: BlastRadiusManager):
     )
 
     # These zones should not be affected by education zone failure
-    assert (
-        inpatient_report.status != "BLACK"
-    ), "Inpatient zone should not be affected by education zone failure"
-    assert (
-        outpatient_report.status != "BLACK"
-    ), "Outpatient zone should not be affected by education zone failure"
+    assert inpatient_report.status != "BLACK", (
+        "Inpatient zone should not be affected by education zone failure"
+    )
+    assert outpatient_report.status != "BLACK", (
+        "Outpatient zone should not be affected by education zone failure"
+    )
 
 
 @pytest.mark.resilience
@@ -1064,9 +1064,9 @@ def test_containment_response_time(blast_radius_manager: BlastRadiusManager):
     end = time.perf_counter()
     response_time_ms = (end - start) * 1000
 
-    assert (
-        response_time_ms < 100
-    ), f"Containment activation too slow: {response_time_ms:.2f}ms"
+    assert response_time_ms < 100, (
+        f"Containment activation too slow: {response_time_ms:.2f}ms"
+    )
 
     # Verify containment is active
     assert blast_radius_manager.global_containment == ContainmentLevel.MODERATE
@@ -1146,9 +1146,9 @@ def test_full_resilience_check_under_load(
     # Total time should be reasonable
     total_time = sum(timings.values())
 
-    assert (
-        total_time < 45.0
-    ), f"Full resilience check too slow: {total_time:.2f}s. Breakdown: {timings}"
+    assert total_time < 45.0, (
+        f"Full resilience check too slow: {total_time:.2f}s. Breakdown: {timings}"
+    )
 
     # Verify reports are complete
     assert health_report.overall_status in [
@@ -1232,15 +1232,15 @@ def test_resilience_metrics_tracking():
     metrics["recovery_time"] = recovery_end - recovery_start
 
     # Verify all metrics are reasonable
-    assert (
-        metrics["escalation_time"] < 1.0
-    ), f"Escalation too slow: {metrics['escalation_time']:.2f}s"
-    assert (
-        metrics["analysis_duration"] < 5.0
-    ), f"Analysis too slow: {metrics['analysis_duration']:.2f}s"
-    assert (
-        metrics["recovery_time"] < 0.5
-    ), f"Recovery too slow: {metrics['recovery_time']:.2f}s"
+    assert metrics["escalation_time"] < 1.0, (
+        f"Escalation too slow: {metrics['escalation_time']:.2f}s"
+    )
+    assert metrics["analysis_duration"] < 5.0, (
+        f"Analysis too slow: {metrics['analysis_duration']:.2f}s"
+    )
+    assert metrics["recovery_time"] < 0.5, (
+        f"Recovery too slow: {metrics['recovery_time']:.2f}s"
+    )
 
     print("\nResilience Performance Metrics:")
     print(f"  Escalation time: {metrics['escalation_time'] * 1000:.2f}ms")

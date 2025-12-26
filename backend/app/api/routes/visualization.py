@@ -407,7 +407,9 @@ def get_3d_voxel_grid(
     start_date: date = Query(..., description="Start date for voxel grid"),
     end_date: date = Query(..., description="End date for voxel grid"),
     person_ids: list[UUID] | None = Query(None, description="Filter by person IDs"),
-    activity_types: list[str] | None = Query(None, description="Filter by activity types"),
+    activity_types: list[str] | None = Query(
+        None, description="Filter by activity types"
+    ),
     include_violations: bool = Query(True, description="Include ACGME violation data"),
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -457,10 +459,14 @@ def get_3d_voxel_grid(
         )
 
     # Fetch blocks in date range
-    blocks_query = select(Block).where(
-        Block.date >= start_date,
-        Block.date <= end_date,
-    ).order_by(Block.date, Block.time_of_day)
+    blocks_query = (
+        select(Block)
+        .where(
+            Block.date >= start_date,
+            Block.date <= end_date,
+        )
+        .order_by(Block.date, Block.time_of_day)
+    )
 
     blocks_result = db.execute(blocks_query)
     blocks = blocks_result.scalars().all()
@@ -483,7 +489,9 @@ def get_3d_voxel_grid(
     persons_query = select(Person)
     if person_ids:
         persons_query = persons_query.where(Person.id.in_(person_ids))
-    persons_query = persons_query.order_by(Person.type.desc(), Person.pgy_level, Person.name)
+    persons_query = persons_query.order_by(
+        Person.type.desc(), Person.pgy_level, Person.name
+    )
 
     persons_result = db.execute(persons_query)
     persons = persons_result.scalars().all()
@@ -549,10 +557,7 @@ def get_3d_voxel_grid(
             continue
 
         # Find person name
-        person_name = next(
-            (p.name for p in persons if p.id == a.person_id),
-            "Unknown"
-        )
+        person_name = next((p.name for p in persons if p.id == a.person_id), "Unknown")
 
         assignment_dict = {
             "id": str(a.id),
@@ -618,18 +623,18 @@ def get_3d_conflicts(
         if voxel.get("state", {}).get("is_conflict"):
             pos = voxel.get("position", {})
             conflict_positions.add((pos.get("x"), pos.get("y")))
-            conflicts.append({
-                "position": pos,
-                "identity": voxel.get("identity"),
-                "details": voxel.get("state", {}).get("violation_details", []),
-            })
+            conflicts.append(
+                {
+                    "position": pos,
+                    "identity": voxel.get("identity"),
+                    "details": voxel.get("state", {}).get("violation_details", []),
+                }
+            )
 
     return {
         "total_conflicts": len(conflict_positions),
         "conflict_voxels": conflicts,
-        "conflict_positions": [
-            {"x": x, "y": y} for x, y in conflict_positions
-        ],
+        "conflict_positions": [{"x": x, "y": y} for x, y in conflict_positions],
         "date_range": grid_response.get("date_range"),
     }
 
@@ -683,19 +688,23 @@ def get_3d_coverage_gaps(
         coverage_at_time = sum(1 for y in range(y_size) if (x, y) in occupied)
 
         if coverage_at_time == 0:
-            gaps.append({
-                "x": x,
-                "time_label": x_labels[x] if x < len(x_labels) else f"Block {x}",
-                "coverage_count": 0,
-                "severity": "critical",  # No one assigned
-            })
+            gaps.append(
+                {
+                    "x": x,
+                    "time_label": x_labels[x] if x < len(x_labels) else f"Block {x}",
+                    "coverage_count": 0,
+                    "severity": "critical",  # No one assigned
+                }
+            )
         elif coverage_at_time < y_size * 0.2:  # Less than 20% coverage
-            gaps.append({
-                "x": x,
-                "time_label": x_labels[x] if x < len(x_labels) else f"Block {x}",
-                "coverage_count": coverage_at_time,
-                "severity": "warning",
-            })
+            gaps.append(
+                {
+                    "x": x,
+                    "time_label": x_labels[x] if x < len(x_labels) else f"Block {x}",
+                    "coverage_count": coverage_at_time,
+                    "severity": "warning",
+                }
+            )
 
     return {
         "total_gaps": len([g for g in gaps if g["severity"] == "critical"]),
