@@ -27,12 +27,28 @@ from app.db.session import SessionLocal
 from app.models.block import Block
 
 
+def get_first_thursday(reference_date: date) -> date:
+    """
+    Find the first Thursday on or after the reference date.
+
+    Blocks always start on Thursday and end on Wednesday (28 days).
+
+    Args:
+        reference_date: Date to start searching from (e.g., July 1)
+
+    Returns:
+        The first Thursday on or after reference_date
+    """
+    days_until_thursday = (3 - reference_date.weekday()) % 7
+    return reference_date + timedelta(days=days_until_thursday)
+
+
 def calculate_block_dates(block_number: int, academic_year_start: date) -> tuple[date, date]:
     """
     Calculate start and end dates for a given block number.
 
-    Each block is 4 weeks (28 days).
-    Academic year typically starts July 1.
+    Each block is 4 weeks (28 days), starting Thursday and ending Wednesday.
+    Academic year starts July 1, but Block 1 begins on the first Thursday.
 
     Args:
         block_number: Block number (1-13)
@@ -41,7 +57,9 @@ def calculate_block_dates(block_number: int, academic_year_start: date) -> tuple
     Returns:
         Tuple of (block_start, block_end) dates
     """
-    block_start = academic_year_start + timedelta(days=(block_number - 1) * 28)
+    # Blocks start on first Thursday of the academic year
+    block_1_start = get_first_thursday(academic_year_start)
+    block_start = block_1_start + timedelta(days=(block_number - 1) * 28)
     block_end = block_start + timedelta(days=27)
 
     academic_year_end = date(academic_year_start.year + 1, 6, 30)
