@@ -4,6 +4,8 @@
 
   "permissions": {
     "allow": [
+      "Skill",
+      "Task",
       "Read",
       "Glob",
       "Grep",
