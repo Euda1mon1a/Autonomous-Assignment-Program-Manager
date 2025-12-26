@@ -89,9 +89,9 @@ class TestAccessControlMatrix:
         """Admin role has all permissions on all resources."""
         for resource in ResourceType:
             for action in PermissionAction:
-                assert acm.has_permission(
-                    UserRole.ADMIN, resource, action
-                ), f"Admin should have {action} on {resource}"
+                assert acm.has_permission(UserRole.ADMIN, resource, action), (
+                    f"Admin should have {action} on {resource}"
+                )
 
     # ========================================================================
     # Coordinator Permissions

@@ -60,7 +60,7 @@ class ErlangN1Bridge:
         self,
         target_wait_time: float = 0.25,  # 15 min in hours
         avg_service_time: float = 2.0,  # 2 hour shifts
-        margin_thresholds: Optional[dict] = None,
+        margin_thresholds: dict | None = None,
     ):
         """Initialize Erlang-N1 Bridge."""
         self.calculator = ErlangCCalculator()
@@ -623,10 +623,13 @@ class TestPrioritizationLogic:
 
         # Verify sorted by margin ascending (lowest first)
         for i in range(len(prioritized) - 1):
-            if prioritized[i].margin_score >= 0 and prioritized[i + 1].margin_score >= 0:
-                assert (
-                    prioritized[i].margin_score <= prioritized[i + 1].margin_score
-                ), f"Not sorted: {prioritized[i].margin_score} > {prioritized[i+1].margin_score}"
+            if (
+                prioritized[i].margin_score >= 0
+                and prioritized[i + 1].margin_score >= 0
+            ):
+                assert prioritized[i].margin_score <= prioritized[i + 1].margin_score, (
+                    f"Not sorted: {prioritized[i].margin_score} > {prioritized[i + 1].margin_score}"
+                )
 
     def test_prioritization_tie_breaking_by_impact(self, bridge):
         """Test that ties in margin are broken by affected_blocks."""
@@ -667,14 +670,14 @@ class TestPrioritizationLogic:
         prioritized = bridge.get_prioritized_vulnerabilities(all_results)
 
         # Margins should be equal
-        assert (
-            abs(prioritized[0].margin_score - prioritized[1].margin_score) < 0.01
-        ), "Margins should be equal"
+        assert abs(prioritized[0].margin_score - prioritized[1].margin_score) < 0.01, (
+            "Margins should be equal"
+        )
 
         # Higher impact should come first
-        assert (
-            prioritized[0].affected_blocks >= prioritized[1].affected_blocks
-        ), "Higher impact should be prioritized"
+        assert prioritized[0].affected_blocks >= prioritized[1].affected_blocks, (
+            "Higher impact should be prioritized"
+        )
 
 
 class TestLoadIncrease:

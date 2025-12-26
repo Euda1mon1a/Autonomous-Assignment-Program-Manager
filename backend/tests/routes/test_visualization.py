@@ -125,7 +125,10 @@ class TestVisualizationRoutes:
         rotation_id = uuid4()
         mock_service = MagicMock()
         mock_service.generate_unified_heatmap.return_value = MagicMock(
-            data=[[1, 2]], x_labels=["2025-01-01"], y_labels=["Person"], title="Filtered"
+            data=[[1, 2]],
+            x_labels=["2025-01-01"],
+            y_labels=["Person"],
+            title="Filtered",
         )
         mock_service_class.return_value = mock_service
 
@@ -313,7 +316,9 @@ class TestVisualizationRoutes:
     ):
         """Test heatmap image handles export errors."""
         mock_service = MagicMock()
-        mock_service.generate_unified_heatmap.return_value = MagicMock(data=[[1, 2]], title="Test")
+        mock_service.generate_unified_heatmap.return_value = MagicMock(
+            data=[[1, 2]], title="Test"
+        )
         mock_service.export_heatmap_image.side_effect = Exception("Export failed")
         mock_service_class.return_value = mock_service
 

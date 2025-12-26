@@ -280,9 +280,7 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get(
-            f"/api/credentials/check/{person_id}/{procedure_id}"
-        )
+        response = client.get(f"/api/credentials/check/{person_id}/{procedure_id}")
         assert response.status_code == 200
 
         data = response.json()
@@ -306,9 +304,7 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get(
-            f"/api/credentials/check/{person_id}/{procedure_id}"
-        )
+        response = client.get(f"/api/credentials/check/{person_id}/{procedure_id}")
         assert response.status_code == 200
 
         data = response.json()

@@ -563,9 +563,9 @@ class SidecarConfig(BaseModel):
 
         # Add TLS configuration if enabled
         if self.mtls_config.is_enabled():
-            config["static_resources"]["clusters"][0][
-                "transport_socket"
-            ] = self._get_tls_config()
+            config["static_resources"]["clusters"][0]["transport_socket"] = (
+                self._get_tls_config()
+            )
 
         return config
 

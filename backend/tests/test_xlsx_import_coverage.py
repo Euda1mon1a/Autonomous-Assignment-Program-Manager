@@ -44,9 +44,9 @@ class TestSlotTypeClassification:
             "Inpatient",
         ]
         for value in fmit_values:
-            assert (
-                importer.classify_slot(value) == SlotType.FMIT
-            ), f"Failed for: {value}"
+            assert importer.classify_slot(value) == SlotType.FMIT, (
+                f"Failed for: {value}"
+            )
 
     def test_classify_clinic_variants(self, importer):
         """Should correctly classify clinic slot type variants."""
@@ -62,9 +62,9 @@ class TestSlotTypeClassification:
             "sports",
         ]
         for value in clinic_values:
-            assert (
-                importer.classify_slot(value) == SlotType.CLINIC
-            ), f"Failed for: {value}"
+            assert importer.classify_slot(value) == SlotType.CLINIC, (
+                f"Failed for: {value}"
+            )
 
     def test_classify_off_variants(self, importer):
         """Should correctly classify off/unavailable slot variants."""
@@ -80,25 +80,25 @@ class TestSlotTypeClassification:
         """Should correctly classify vacation/leave variants."""
         vacation_values = ["vac", "vacation", "lv", "leave", "al"]
         for value in vacation_values:
-            assert (
-                importer.classify_slot(value) == SlotType.VACATION
-            ), f"Failed for: {value}"
+            assert importer.classify_slot(value) == SlotType.VACATION, (
+                f"Failed for: {value}"
+            )
 
     def test_classify_conference_variants(self, importer):
         """Should correctly classify conference variants."""
         conference_values = ["conf", "conference", "cme", "mtg"]
         for value in conference_values:
-            assert (
-                importer.classify_slot(value) == SlotType.CONFERENCE
-            ), f"Failed for: {value}"
+            assert importer.classify_slot(value) == SlotType.CONFERENCE, (
+                f"Failed for: {value}"
+            )
 
     def test_classify_admin_variants(self, importer):
         """Should correctly classify admin variants."""
         admin_values = ["admin", "adm", "office"]
         for value in admin_values:
-            assert (
-                importer.classify_slot(value) == SlotType.ADMIN
-            ), f"Failed for: {value}"
+            assert importer.classify_slot(value) == SlotType.ADMIN, (
+                f"Failed for: {value}"
+            )
 
     def test_classify_unknown_value(self, importer):
         """Should return UNKNOWN for truly unrecognized values."""
@@ -161,9 +161,9 @@ class TestSlotTypeClassification:
         }
         for code, expected in real_codes.items():
             result = importer.classify_slot(code)
-            assert (
-                result == expected
-            ), f"Code '{code}' classified as {result}, expected {expected}"
+            assert result == expected, (
+                f"Code '{code}' classified as {result}, expected {expected}"
+            )
 
     def test_classify_case_insensitive(self, importer):
         """Should be case-insensitive in classification."""

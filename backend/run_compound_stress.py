@@ -124,7 +124,9 @@ def print_single_result(result, config):
             fmit = (
                 "FM"
                 if s.fmit_covered and not s.fmit_turfed_to_ob
-                else "OB" if s.fmit_turfed_to_ob else "❌"
+                else "OB"
+                if s.fmit_turfed_to_ob
+                else "❌"
             )
             print(
                 f"   Day {day:3d}: {s.faculty_count}F/{s.screener_dedicated}S | "

@@ -376,12 +376,12 @@ class RabbitMQAdapter(MessageQueueAdapter):
             await self._channel.set_qos(prefetch_count=self.config.prefetch_count)
 
             # Declare default exchange
-            self._exchanges[self.config.exchange] = (
-                await self._channel.declare_exchange(
-                    self.config.exchange,
-                    type=self.config.exchange_type,
-                    durable=True,
-                )
+            self._exchanges[
+                self.config.exchange
+            ] = await self._channel.declare_exchange(
+                self.config.exchange,
+                type=self.config.exchange_type,
+                durable=True,
             )
 
             # Declare dead letter exchange and queue

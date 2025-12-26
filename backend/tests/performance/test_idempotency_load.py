@@ -82,22 +82,22 @@ class TestScheduleGenerationIdempotencyLoad:
 
         # All requests should succeed (200 or 207 for partial success)
         success_codes = [r.status_code for r in responses]
-        assert all(
-            code in [200, 207] for code in success_codes
-        ), f"Some requests failed: {success_codes}"
+        assert all(code in [200, 207] for code in success_codes), (
+            f"Some requests failed: {success_codes}"
+        )
 
         # All responses should return the same run ID
         run_ids = [r.json().get("run_id") for r in responses]
         unique_ids = set(run_ids)
-        assert (
-            len(unique_ids) == 1
-        ), f"Expected 1 unique run ID, got {len(unique_ids)}: {unique_ids}"
+        assert len(unique_ids) == 1, (
+            f"Expected 1 unique run ID, got {len(unique_ids)}: {unique_ids}"
+        )
 
         # Database should have exactly 1 new schedule run
         final_count = db.query(ScheduleRun).count()
-        assert (
-            final_count == initial_count + 1
-        ), f"Expected 1 new schedule run, database has {final_count - initial_count}"
+        assert final_count == initial_count + 1, (
+            f"Expected 1 new schedule run, database has {final_count - initial_count}"
+        )
 
         # Verify idempotency record exists and is completed
         idem_record = (
@@ -113,9 +113,9 @@ class TestScheduleGenerationIdempotencyLoad:
             r for r in responses if r.headers.get("X-Idempotency-Replayed") == "true"
         ]
         # After the first request, all others should be replayed
-        assert (
-            len(replayed_responses) >= 90
-        ), f"Expected ~99 replayed responses, got {len(replayed_responses)}"
+        assert len(replayed_responses) >= 90, (
+            f"Expected ~99 replayed responses, got {len(replayed_responses)}"
+        )
 
     def test_schedule_generation_network_retry_simulation(
         self,

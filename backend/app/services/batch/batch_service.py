@@ -86,9 +86,9 @@ class BatchService:
 
             # If dry run, return validation results without processing
             if request.dry_run:
-                _batch_operations[operation_id][
-                    "status"
-                ] = BatchOperationStatus.COMPLETED
+                _batch_operations[operation_id]["status"] = (
+                    BatchOperationStatus.COMPLETED
+                )
                 return BatchResponse(
                     operation_id=operation_id,
                     operation_type=BatchOperationType.CREATE,
@@ -216,9 +216,9 @@ class BatchService:
 
             # If dry run, return validation results without processing
             if request.dry_run:
-                _batch_operations[operation_id][
-                    "status"
-                ] = BatchOperationStatus.COMPLETED
+                _batch_operations[operation_id]["status"] = (
+                    BatchOperationStatus.COMPLETED
+                )
                 return BatchResponse(
                     operation_id=operation_id,
                     operation_type=BatchOperationType.UPDATE,
@@ -343,9 +343,9 @@ class BatchService:
 
             # If dry run, return validation results without processing
             if request.dry_run:
-                _batch_operations[operation_id][
-                    "status"
-                ] = BatchOperationStatus.COMPLETED
+                _batch_operations[operation_id]["status"] = (
+                    BatchOperationStatus.COMPLETED
+                )
                 return BatchResponse(
                     operation_id=operation_id,
                     operation_type=BatchOperationType.DELETE,

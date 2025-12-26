@@ -91,9 +91,9 @@ def residents_pool(db: Session) -> list[Person]:
         for i in range(3):  # 3 residents per PGY level = 9 total
             resident = Person(
                 id=uuid4(),
-                name=f"Dr. Resident PGY{pgy}-{i+1}",
+                name=f"Dr. Resident PGY{pgy}-{i + 1}",
                 type="resident",
-                email=f"resident.pgy{pgy}.{i+1}@hospital.org",
+                email=f"resident.pgy{pgy}.{i + 1}@hospital.org",
                 pgy_level=pgy,
             )
             db.add(resident)
@@ -111,9 +111,9 @@ def faculty_pool(db: Session) -> list[Person]:
     for i in range(5):
         fac = Person(
             id=uuid4(),
-            name=f"Dr. Faculty {i+1}",
+            name=f"Dr. Faculty {i + 1}",
             type="faculty",
-            email=f"faculty.{i+1}@hospital.org",
+            email=f"faculty.{i + 1}@hospital.org",
             performs_procedures=(i < 2),  # First 2 can do procedures
             specialties=["General", "Sports Medicine"] if i == 0 else ["General"],
         )
@@ -241,9 +241,11 @@ def test_no_feasible_solution(
     )
 
     # Verify no assignments persisted to database
-    assignments_count = db.query(Assignment).filter(
-        Assignment.block_id.in_([b.id for b in blocks_one_week])
-    ).count()
+    assignments_count = (
+        db.query(Assignment)
+        .filter(Assignment.block_id.in_([b.id for b in blocks_one_week]))
+        .count()
+    )
     assert assignments_count == 0, (
         "No assignments should be saved when solution is infeasible"
     )
@@ -315,9 +317,11 @@ def test_multi_objective_optimization(
     # Verify workload balance (medium priority objective)
     # Get assignments by resident and check distribution
     assignments_by_resident = {}
-    all_assignments = db.query(Assignment).filter(
-        Assignment.block_id.in_([b.id for b in blocks_one_week])
-    ).all()
+    all_assignments = (
+        db.query(Assignment)
+        .filter(Assignment.block_id.in_([b.id for b in blocks_one_week]))
+        .all()
+    )
 
     for assignment in all_assignments:
         if assignment.person_id not in assignments_by_resident:
@@ -431,9 +435,11 @@ def test_incremental_generation(
     )
 
     # Record checksums of baseline assignments
-    baseline_assignments = db.query(Assignment).filter(
-        Assignment.block_id.in_([b.id for b in baseline_blocks])
-    ).all()
+    baseline_assignments = (
+        db.query(Assignment)
+        .filter(Assignment.block_id.in_([b.id for b in baseline_blocks]))
+        .all()
+    )
 
     baseline_checksums = {
         a.id: (a.person_id, a.rotation_template_id, a.block_id)
@@ -483,25 +489,33 @@ def test_incremental_generation(
     )
 
     # ASSERT PHASE 1: Verify blocks 1-10 unchanged
-    current_baseline = db.query(Assignment).filter(
-        Assignment.block_id.in_([b.id for b in baseline_blocks])
-    ).all()
+    current_baseline = (
+        db.query(Assignment)
+        .filter(Assignment.block_id.in_([b.id for b in baseline_blocks]))
+        .all()
+    )
 
     for assignment in current_baseline:
         assert assignment.id in baseline_checksums, (
             f"Unexpected new assignment in baseline blocks: {assignment.id}"
         )
         original = baseline_checksums[assignment.id]
-        current = (assignment.person_id, assignment.rotation_template_id, assignment.block_id)
+        current = (
+            assignment.person_id,
+            assignment.rotation_template_id,
+            assignment.block_id,
+        )
         assert current == original, (
             f"Assignment {assignment.id} changed during incremental generation: "
             f"was {original}, now {current}"
         )
 
     # ASSERT PHASE 2: Verify block 11 created
-    block_11_assignments = db.query(Assignment).filter(
-        Assignment.block_id.in_([b.id for b in block_11_blocks])
-    ).all()
+    block_11_assignments = (
+        db.query(Assignment)
+        .filter(Assignment.block_id.in_([b.id for b in block_11_blocks]))
+        .all()
+    )
 
     assert len(block_11_assignments) > 0, "Block 11 should have new assignments"
 

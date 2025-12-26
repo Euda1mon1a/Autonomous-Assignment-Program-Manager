@@ -121,7 +121,9 @@ class TestSessionRoutes:
             "count": 1,
         }
 
-        response = client_with_mock_manager.get("/api/sessions/me", headers=auth_headers)
+        response = client_with_mock_manager.get(
+            "/api/sessions/me", headers=auth_headers
+        )
         assert response.status_code == 200
 
     def test_get_my_sessions_empty(
@@ -137,7 +139,9 @@ class TestSessionRoutes:
             "count": 0,
         }
 
-        response = client_with_mock_manager.get("/api/sessions/me", headers=auth_headers)
+        response = client_with_mock_manager.get(
+            "/api/sessions/me", headers=auth_headers
+        )
         assert response.status_code == 200
 
     # ========================================================================

@@ -173,7 +173,10 @@ def swap_week_blocks(db: Session) -> dict:
 
 @pytest.fixture
 def one_to_one_swap_scenario(
-    db: Session, swap_faculty_pair: dict, swap_week_blocks: dict, rotation_templates: dict
+    db: Session,
+    swap_faculty_pair: dict,
+    swap_week_blocks: dict,
+    rotation_templates: dict,
 ) -> dict:
     """
     Create complete scenario for one-to-one swap testing.
@@ -416,7 +419,10 @@ def test_swap_execution_rollback(db: Session, one_to_one_swap_scenario: dict):
     swap_record = db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()
     assert swap_record.status == SwapStatus.ROLLED_BACK
     assert swap_record.rolled_back_at is not None
-    assert swap_record.rollback_reason == "Faculty member had family emergency, need to revert"
+    assert (
+        swap_record.rollback_reason
+        == "Faculty member had family emergency, need to revert"
+    )
 
     # ASSERT - Original assignments restored
     db.expire_all()
@@ -647,7 +653,10 @@ def test_rollback_nonexistent_swap(db: Session):
 
 
 def test_execute_absorb_swap(
-    db: Session, swap_faculty_pair: dict, swap_week_blocks: dict, rotation_templates: dict
+    db: Session,
+    swap_faculty_pair: dict,
+    swap_week_blocks: dict,
+    rotation_templates: dict,
 ):
     """
     Test absorb-type swap where one faculty gives away shift.
@@ -731,7 +740,10 @@ def test_execute_absorb_swap(
 
 
 def test_absorb_swap_rollback(
-    db: Session, swap_faculty_pair: dict, swap_week_blocks: dict, rotation_templates: dict
+    db: Session,
+    swap_faculty_pair: dict,
+    swap_week_blocks: dict,
+    rotation_templates: dict,
 ):
     """
     Test rollback of absorb swap.
@@ -807,7 +819,9 @@ def test_absorb_swap_rollback(
 # ============================================================================
 
 
-def test_swap_with_explicit_executed_by(db: Session, swap_faculty_pair: dict, admin_user):
+def test_swap_with_explicit_executed_by(
+    db: Session, swap_faculty_pair: dict, admin_user
+):
     """
     Test swap execution tracking who performed the swap.
 

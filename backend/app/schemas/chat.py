@@ -12,7 +12,7 @@ class StreamUpdate(BaseModel):
         ..., description="Update type: text, code, artifact, status, error"
     )
     content: str = Field(..., description="The update content")
-    metadata: Optional[Dict[str, Any]] = Field(
+    metadata: dict[str, Any] | None = Field(
         None, description="Additional metadata for the update"
     )
 
@@ -22,7 +22,7 @@ class CodeBlock(BaseModel):
 
     language: str
     code: str
-    filename: Optional[str] = None
+    filename: str | None = None
 
 
 class ChatArtifact(BaseModel):
@@ -34,7 +34,7 @@ class ChatArtifact(BaseModel):
         description="Artifact type: schedule, analysis, report, configuration",
     )
     title: str
-    data: Dict[str, Any]
+    data: dict[str, Any]
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -46,9 +46,9 @@ class ChatMessage(BaseModel):
     content: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     is_streaming: bool = False
-    error: Optional[str] = None
-    code_blocks: Optional[List[CodeBlock]] = None
-    artifacts: Optional[List[ChatArtifact]] = None
+    error: str | None = None
+    code_blocks: list[CodeBlock] | None = None
+    artifacts: list[ChatArtifact] | None = None
 
 
 class ConstraintContext(BaseModel):
@@ -58,7 +58,7 @@ class ConstraintContext(BaseModel):
     max_consecutive_days: int = 7
     min_rest_days: int = 1
     min_rotation_length: int = 4
-    custom_rules: Optional[List[str]] = None
+    custom_rules: list[str] | None = None
 
 
 class ResidentContext(BaseModel):
@@ -66,9 +66,9 @@ class ResidentContext(BaseModel):
 
     id: str
     name: str
-    preferred_rotations: Optional[List[str]] = None
-    restrictions: Optional[List[str]] = None
-    absences: Optional[List[Dict[str, Any]]] = None
+    preferred_rotations: list[str] | None = None
+    restrictions: list[str] | None = None
+    absences: list[dict[str, Any]] | None = None
 
 
 class RotationContext(BaseModel):
@@ -76,7 +76,7 @@ class RotationContext(BaseModel):
 
     id: str
     name: str
-    residents: List[str]
+    residents: list[str]
     start_date: datetime
     end_date: datetime
 
@@ -86,7 +86,7 @@ class ScheduleContext(BaseModel):
 
     academic_year: str
     weeks: int
-    rotations: List[RotationContext]
+    rotations: list[RotationContext]
 
 
 class ClaudeCodeExecutionContext(BaseModel):
@@ -95,9 +95,9 @@ class ClaudeCodeExecutionContext(BaseModel):
     program_id: str
     admin_id: str
     session_id: str
-    current_schedule: Optional[ScheduleContext] = None
-    constraints: Optional[ConstraintContext] = None
-    residents: Optional[List[ResidentContext]] = None
+    current_schedule: ScheduleContext | None = None
+    constraints: ConstraintContext | None = None
+    residents: list[ResidentContext] | None = None
 
 
 class ClaudeCodeRequest(BaseModel):
@@ -108,7 +108,7 @@ class ClaudeCodeRequest(BaseModel):
         description="Task type: generate_schedule, analyze_violations, optimize_fairness, validate_compliance, export_report, custom",
     )
     context: ClaudeCodeExecutionContext
-    parameters: Optional[Dict[str, Any]] = None
+    parameters: dict[str, Any] | None = None
     user_query: str
 
 
@@ -117,10 +117,10 @@ class ClaudeCodeResponse(BaseModel):
 
     success: bool
     message: str
-    result: Optional[Dict[str, Any]] = None
-    artifacts: Optional[List[ChatArtifact]] = None
-    next_actions: Optional[List[str]] = None
-    error: Optional[str] = None
+    result: dict[str, Any] | None = None
+    artifacts: list[ChatArtifact] | None = None
+    next_actions: list[str] | None = None
+    error: str | None = None
 
 
 class ChatSession(BaseModel):
@@ -128,7 +128,7 @@ class ChatSession(BaseModel):
 
     id: str
     title: str
-    messages: List[ChatMessage] = []
+    messages: list[ChatMessage] = []
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     program_id: str

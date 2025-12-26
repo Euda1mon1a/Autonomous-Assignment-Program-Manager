@@ -364,7 +364,11 @@ class TestDailyManifest:
 
         # Find Main Clinic location
         main_clinic = next(
-            (loc for loc in data["locations"] if loc["clinic_location"] == "Main Clinic"),
+            (
+                loc
+                for loc in data["locations"]
+                if loc["clinic_location"] == "Main Clinic"
+            ),
             None,
         )
         assert main_clinic is not None

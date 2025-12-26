@@ -184,9 +184,7 @@ class TestGetQualifiedFaculty:
             }
             mock_controller.return_value = mock_instance
 
-            response = client.get(
-                f"/api/credentials/qualified-faculty/{procedure_id}"
-            )
+            response = client.get(f"/api/credentials/qualified-faculty/{procedure_id}")
 
             assert response.status_code == 200
             mock_instance.get_qualified_faculty.assert_called_once_with(procedure_id)
@@ -210,9 +208,7 @@ class TestCheckQualification:
             }
             mock_controller.return_value = mock_instance
 
-            response = client.get(
-                f"/api/credentials/check/{person_id}/{procedure_id}"
-            )
+            response = client.get(f"/api/credentials/check/{person_id}/{procedure_id}")
 
             assert response.status_code == 200
             data = response.json()
@@ -233,9 +229,7 @@ class TestCheckQualification:
             }
             mock_controller.return_value = mock_instance
 
-            response = client.get(
-                f"/api/credentials/check/{person_id}/{procedure_id}"
-            )
+            response = client.get(f"/api/credentials/check/{person_id}/{procedure_id}")
 
             assert response.status_code == 200
             data = response.json()
@@ -298,9 +292,7 @@ class TestGetCredentialById:
 class TestCreateCredential:
     """Tests for POST /api/credentials endpoint."""
 
-    def test_create_credential_success(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_create_credential_success(self, client: TestClient, auth_headers: dict):
         """Test creating a credential with authentication."""
         with patch(
             "app.api.routes.credentials.CredentialController"
@@ -347,9 +339,7 @@ class TestCreateCredential:
 class TestUpdateCredential:
     """Tests for PUT /api/credentials/{credential_id} endpoint."""
 
-    def test_update_credential_success(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_update_credential_success(self, client: TestClient, auth_headers: dict):
         """Test updating a credential."""
         credential_id = uuid4()
 
@@ -376,9 +366,7 @@ class TestUpdateCredential:
 class TestDeleteCredential:
     """Tests for DELETE /api/credentials/{credential_id} endpoint."""
 
-    def test_delete_credential_success(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_delete_credential_success(self, client: TestClient, auth_headers: dict):
         """Test deleting a credential."""
         credential_id = uuid4()
 
@@ -401,9 +389,7 @@ class TestDeleteCredential:
 class TestSuspendCredential:
     """Tests for POST /api/credentials/{credential_id}/suspend endpoint."""
 
-    def test_suspend_credential_success(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_suspend_credential_success(self, client: TestClient, auth_headers: dict):
         """Test suspending a credential."""
         credential_id = uuid4()
 
@@ -452,9 +438,7 @@ class TestSuspendCredential:
 class TestActivateCredential:
     """Tests for POST /api/credentials/{credential_id}/activate endpoint."""
 
-    def test_activate_credential_success(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_activate_credential_success(self, client: TestClient, auth_headers: dict):
         """Test activating a credential."""
         credential_id = uuid4()
 
@@ -479,9 +463,7 @@ class TestActivateCredential:
 class TestVerifyCredential:
     """Tests for POST /api/credentials/{credential_id}/verify endpoint."""
 
-    def test_verify_credential_success(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_verify_credential_success(self, client: TestClient, auth_headers: dict):
         """Test verifying a credential."""
         credential_id = uuid4()
 

@@ -305,10 +305,7 @@ class TestCallSpacingConstraint:
         iso3 = week3_mon.isocalendar()
 
         # Same year, adjacent week numbers = consecutive
-        is_consecutive = (
-            iso2[0] == iso3[0]
-            and iso3[1] == iso2[1] + 1
-        )
+        is_consecutive = iso2[0] == iso3[0] and iso3[1] == iso2[1] + 1
         assert is_consecutive is True
 
     def test_non_consecutive_weeks(self):
@@ -323,10 +320,7 @@ class TestCallSpacingConstraint:
         iso4 = week4_mon.isocalendar()
 
         # Same year but week 2 and week 4 are not adjacent
-        is_consecutive = (
-            iso2[0] == iso4[0]
-            and iso4[1] == iso2[1] + 1
-        )
+        is_consecutive = iso2[0] == iso4[0] and iso4[1] == iso2[1] + 1
         assert is_consecutive is False
 
     def test_year_boundary_weeks(self):
@@ -354,11 +348,7 @@ class TestCallSpacingConstraint:
         assert iso_1[1] == 1  # Week 1 of 2025
 
         # Year rollover detection
-        is_consecutive = (
-            iso_52[0] + 1 == iso_1[0]
-            and iso_52[1] >= 52
-            and iso_1[1] == 1
-        )
+        is_consecutive = iso_52[0] + 1 == iso_1[0] and iso_52[1] >= 52 and iso_1[1] == 1
         assert is_consecutive is True
 
 

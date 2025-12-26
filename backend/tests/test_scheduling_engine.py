@@ -597,8 +597,13 @@ class TestFacultyAssignment:
         assignments_by_block: dict = {}
         for assignment in engine.assignments:
             if assignment.block_id not in assignments_by_block:
-                assignments_by_block[assignment.block_id] = {"primary": [], "supervising": []}
-            assignments_by_block[assignment.block_id][assignment.role].append(assignment)
+                assignments_by_block[assignment.block_id] = {
+                    "primary": [],
+                    "supervising": [],
+                }
+            assignments_by_block[assignment.block_id][assignment.role].append(
+                assignment
+            )
 
         # For each block with both residents and faculty, verify template alignment
         for block_id, block_assignments in assignments_by_block.items():
@@ -609,12 +614,15 @@ class TestFacultyAssignment:
                 continue
 
             # Get the most common template from resident assignments
-            resident_templates = [a.rotation_template_id for a in primary if a.rotation_template_id]
+            resident_templates = [
+                a.rotation_template_id for a in primary if a.rotation_template_id
+            ]
             if not resident_templates:
                 continue
 
             # Find most common resident template
             from collections import Counter
+
             template_counts = Counter(resident_templates)
             most_common_template = template_counts.most_common(1)[0][0]
 

@@ -323,7 +323,9 @@ class TestRateLimitEdgeCases:
         # Should still process (validation may or may not be strict)
         assert response.status_code in [200, 401, 403, 422, 503]
 
-    def test_custom_limit_with_zero_values(self, client: TestClient, auth_headers: dict):
+    def test_custom_limit_with_zero_values(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test setting custom limit with zero values."""
         response = client.post(
             "/api/rate-limit/custom",
@@ -343,7 +345,9 @@ class TestRateLimitEdgeCases:
         # May be rejected as invalid or accepted
         assert response.status_code in [200, 400, 401, 403, 422, 503]
 
-    def test_custom_limit_with_negative_ttl(self, client: TestClient, auth_headers: dict):
+    def test_custom_limit_with_negative_ttl(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test setting custom limit with negative TTL."""
         response = client.post(
             "/api/rate-limit/custom",

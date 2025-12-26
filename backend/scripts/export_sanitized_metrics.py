@@ -32,6 +32,7 @@ def get_db_session():
     """Get database session - adapt based on your configuration."""
     try:
         from app.db.session import SessionLocal
+
         return SessionLocal()
     except ImportError:
         print("WARNING: Database session not available. Using mock data.")
@@ -91,9 +92,10 @@ def export_schedule_metrics(db, block_number: int = None) -> dict:
 
         # Coverage metrics
         total_blocks = db.query(func.count(Block.id)).filter(date_filter).scalar() or 0
-        assigned_blocks = db.query(func.count(Assignment.id)).join(Block).filter(
-            date_filter
-        ).scalar() or 0
+        assigned_blocks = (
+            db.query(func.count(Assignment.id)).join(Block).filter(date_filter).scalar()
+            or 0
+        )
 
         coverage_pct = (assigned_blocks / total_blocks * 100) if total_blocks > 0 else 0
 
@@ -104,9 +106,13 @@ def export_schedule_metrics(db, block_number: int = None) -> dict:
         }
 
         # Workload distribution (anonymized)
-        hours_query = db.query(
-            func.count(Assignment.id).label("count")
-        ).join(Block).filter(date_filter).group_by(Assignment.person_id).all()
+        hours_query = (
+            db.query(func.count(Assignment.id).label("count"))
+            .join(Block)
+            .filter(date_filter)
+            .group_by(Assignment.person_id)
+            .all()
+        )
 
         if hours_query:
             counts = [r.count for r in hours_query]
@@ -132,10 +138,12 @@ def export_schedule_metrics(db, block_number: int = None) -> dict:
             metrics["workload"]["gini_coefficient"] = _calculate_gini(counts)
 
         # PGY level distribution (anonymized)
-        pgy_query = db.query(
-            Person.pgy_level,
-            func.count(Person.id)
-        ).filter(Person.pgy_level.isnot(None)).group_by(Person.pgy_level).all()
+        pgy_query = (
+            db.query(Person.pgy_level, func.count(Person.id))
+            .filter(Person.pgy_level.isnot(None))
+            .group_by(Person.pgy_level)
+            .all()
+        )
 
         metrics["pgy_distribution"] = {
             f"PGY{level}": count for level, count in pgy_query if level
@@ -144,12 +152,14 @@ def export_schedule_metrics(db, block_number: int = None) -> dict:
         # Rotation type distribution
         from app.models.rotation_template import RotationTemplate
 
-        rotation_query = db.query(
-            RotationTemplate.name,
-            func.count(Assignment.id)
-        ).join(Assignment).join(Block).filter(date_filter).group_by(
-            RotationTemplate.name
-        ).all()
+        rotation_query = (
+            db.query(RotationTemplate.name, func.count(Assignment.id))
+            .join(Assignment)
+            .join(Block)
+            .filter(date_filter)
+            .group_by(RotationTemplate.name)
+            .all()
+        )
 
         metrics["rotation_distribution"] = {
             name: count for name, count in rotation_query
@@ -186,14 +196,15 @@ def export_violation_summary(db, block_number: int = None) -> dict:
         # This is a placeholder - adapt to your schema
         from app.models.constraint_violation import ConstraintViolation
 
-        query = db.query(
-            ConstraintViolation.violation_type,
-            ConstraintViolation.severity,
-            func.count(ConstraintViolation.id)
-        ).group_by(
-            ConstraintViolation.violation_type,
-            ConstraintViolation.severity
-        ).all()
+        query = (
+            db.query(
+                ConstraintViolation.violation_type,
+                ConstraintViolation.severity,
+                func.count(ConstraintViolation.id),
+            )
+            .group_by(ConstraintViolation.violation_type, ConstraintViolation.severity)
+            .all()
+        )
 
         for vtype, severity, count in query:
             if vtype in violations["violations_by_type"]:
@@ -308,22 +319,26 @@ Examples:
     )
 
     parser.add_argument(
-        "--block", "-b",
+        "--block",
+        "-b",
         type=int,
         help="Block number to analyze (1-13)",
     )
     parser.add_argument(
-        "--all", "-a",
+        "--all",
+        "-a",
         action="store_true",
         help="Analyze all blocks",
     )
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         type=str,
         help="Output file path (default: stdout)",
     )
     parser.add_argument(
-        "--mock", "-m",
+        "--mock",
+        "-m",
         action="store_true",
         help="Generate mock data without database",
     )

@@ -505,9 +505,9 @@ class TranscriptionFactorScheduler:
 
     def __init__(self):
         self.transcription_factors: dict[UUID, TranscriptionFactor] = {}
-        self.promoters: dict[UUID, PromoterArchitecture] = (
-            {}
-        )  # constraint_id -> promoter
+        self.promoters: dict[
+            UUID, PromoterArchitecture
+        ] = {}  # constraint_id -> promoter
         self.edges: dict[UUID, RegulatoryEdge] = {}
         self.detected_loops: list[RegulatoryLoop] = []
 

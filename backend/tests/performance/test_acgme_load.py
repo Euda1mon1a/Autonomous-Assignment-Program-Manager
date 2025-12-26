@@ -473,9 +473,9 @@ class TestConcurrentValidation:
 
         # Check for consistency (all runs should find same number of violations)
         violation_counts = [r["violations"] for r in results]
-        assert (
-            len(set(violation_counts)) == 1
-        ), f"Inconsistent validation results: {violation_counts}"
+        assert len(set(violation_counts)) == 1, (
+            f"Inconsistent validation results: {violation_counts}"
+        )
 
         # Log individual timings
         durations = [r["duration"] for r in results]
@@ -633,9 +633,9 @@ class TestValidationMemoryEfficiency:
         print(f"Speedup: {speedup:.1f}x")
 
         # Should be at least 2x faster for 4x less data
-        assert (
-            speedup >= 2.0
-        ), f"Incremental validation not scaling properly: {speedup:.1f}x speedup"
+        assert speedup >= 2.0, (
+            f"Incremental validation not scaling properly: {speedup:.1f}x speedup"
+        )
 
         # Both should complete successfully
         assert full_result is not None

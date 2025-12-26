@@ -243,9 +243,7 @@ class TestProfilingRoutes:
         mock_sql.get_failed_queries.return_value = []
         mock_sql.get_query_stats.return_value = {}
 
-        response = client.get(
-            "/api/profiling/queries?slow_only=true&threshold_ms=100"
-        )
+        response = client.get("/api/profiling/queries?slow_only=true&threshold_ms=100")
         assert response.status_code == 200
 
     # ========================================================================
@@ -353,9 +351,7 @@ class TestProfilingRoutes:
         mock_detector.detect_trace_bottlenecks.return_value = []
         mock_detector_class.return_value = mock_detector
 
-        response = client.get(
-            "/api/profiling/bottlenecks?sql_threshold_ms=100"
-        )
+        response = client.get("/api/profiling/bottlenecks?sql_threshold_ms=100")
         assert response.status_code == 200
 
         data = response.json()

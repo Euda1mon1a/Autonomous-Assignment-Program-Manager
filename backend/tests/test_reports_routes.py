@@ -525,15 +525,14 @@ class TestReportsIntegration:
         self, client: TestClient, auth_headers: dict, db: Session
     ):
         """Test all report endpoints are accessible."""
-        with patch(
-            "app.api.routes.reports.ScheduleReportTemplate"
-        ) as mock_schedule, patch(
-            "app.api.routes.reports.ComplianceReportTemplate"
-        ) as mock_compliance, patch(
-            "app.api.routes.reports.AnalyticsReportTemplate"
-        ) as mock_analytics, patch(
-            "app.api.routes.reports.FacultySummaryReportTemplate"
-        ) as mock_faculty:
+        with (
+            patch("app.api.routes.reports.ScheduleReportTemplate") as mock_schedule,
+            patch("app.api.routes.reports.ComplianceReportTemplate") as mock_compliance,
+            patch("app.api.routes.reports.AnalyticsReportTemplate") as mock_analytics,
+            patch(
+                "app.api.routes.reports.FacultySummaryReportTemplate"
+            ) as mock_faculty,
+        ):
             # Configure all mocks
             for mock_class in [
                 mock_schedule,

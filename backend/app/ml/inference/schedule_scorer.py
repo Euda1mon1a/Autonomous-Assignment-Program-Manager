@@ -397,7 +397,9 @@ class ScheduleScorer:
                 "winner": (
                     "schedule_a"
                     if a_score > b_score
-                    else "schedule_b" if b_score > a_score else "tie"
+                    else "schedule_b"
+                    if b_score > a_score
+                    else "tie"
                 ),
             }
 

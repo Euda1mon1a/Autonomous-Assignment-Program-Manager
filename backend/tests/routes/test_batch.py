@@ -102,12 +102,8 @@ class TestBatchRoutes:
                 succeeded=2,
                 failed=0,
                 results=[
-                    BatchOperationResult(
-                        index=0, success=True, assignment_id=uuid4()
-                    ),
-                    BatchOperationResult(
-                        index=1, success=True, assignment_id=uuid4()
-                    ),
+                    BatchOperationResult(index=0, success=True, assignment_id=uuid4()),
+                    BatchOperationResult(index=1, success=True, assignment_id=uuid4()),
                 ],
                 dry_run=False,
                 created_at=datetime.utcnow(),
@@ -207,7 +203,9 @@ class TestBatchRoutes:
                 total=1,
                 succeeded=1,
                 failed=0,
-                results=[BatchOperationResult(index=0, success=True, assignment_id=uuid4())],
+                results=[
+                    BatchOperationResult(index=0, success=True, assignment_id=uuid4())
+                ],
                 warnings=["ACGME: Approaching 80-hour limit"],
                 dry_run=False,
                 created_at=datetime.utcnow(),
@@ -270,9 +268,21 @@ class TestBatchRoutes:
             headers=auth_headers,
             json={
                 "assignments": [
-                    {"block_id": str(uuid4()), "person_id": str(uuid4()), "role": "primary"},
-                    {"block_id": str(uuid4()), "person_id": str(uuid4()), "role": "primary"},
-                    {"block_id": str(uuid4()), "person_id": str(uuid4()), "role": "primary"},
+                    {
+                        "block_id": str(uuid4()),
+                        "person_id": str(uuid4()),
+                        "role": "primary",
+                    },
+                    {
+                        "block_id": str(uuid4()),
+                        "person_id": str(uuid4()),
+                        "role": "primary",
+                    },
+                    {
+                        "block_id": str(uuid4()),
+                        "person_id": str(uuid4()),
+                        "role": "primary",
+                    },
                 ],
                 "rollback_on_error": False,
             },
@@ -304,7 +314,9 @@ class TestBatchRoutes:
                 failed=2,
                 results=[
                     BatchOperationResult(index=0, success=False, error="Invalid block"),
-                    BatchOperationResult(index=1, success=False, error="Invalid person"),
+                    BatchOperationResult(
+                        index=1, success=False, error="Invalid person"
+                    ),
                 ],
                 errors=["Batch operation failed: all items failed validation"],
                 dry_run=False,
@@ -318,8 +330,16 @@ class TestBatchRoutes:
             headers=auth_headers,
             json={
                 "assignments": [
-                    {"block_id": str(uuid4()), "person_id": str(uuid4()), "role": "primary"},
-                    {"block_id": str(uuid4()), "person_id": str(uuid4()), "role": "primary"},
+                    {
+                        "block_id": str(uuid4()),
+                        "person_id": str(uuid4()),
+                        "role": "primary",
+                    },
+                    {
+                        "block_id": str(uuid4()),
+                        "person_id": str(uuid4()),
+                        "role": "primary",
+                    },
                 ]
             },
         )
@@ -346,7 +366,9 @@ class TestBatchRoutes:
         )
         assert response.status_code == 422
 
-    def test_batch_create_empty_assignments(self, client: TestClient, auth_headers: dict):
+    def test_batch_create_empty_assignments(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test batch create with empty assignments list."""
         response = client.post(
             "/api/batch/create",
@@ -650,7 +672,9 @@ class TestBatchRoutes:
                 failed=2,
                 results=[
                     BatchOperationResult(
-                        index=0, success=False, error="Rolled back due to error in item 1"
+                        index=0,
+                        success=False,
+                        error="Rolled back due to error in item 1",
                     ),
                     BatchOperationResult(
                         index=1, success=False, error="Assignment not found"
@@ -822,7 +846,9 @@ class TestBatchRoutes:
         )
         assert response.status_code == 422
 
-    def test_batch_update_missing_updated_at(self, client: TestClient, auth_headers: dict):
+    def test_batch_update_missing_updated_at(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test batch update requires updated_at for optimistic locking."""
         response = client.put(
             "/api/batch/update",
@@ -857,7 +883,9 @@ class TestBatchRoutes:
                 total=1,
                 succeeded=1,
                 failed=0,
-                results=[BatchOperationResult(index=0, success=True, assignment_id=uuid4())],
+                results=[
+                    BatchOperationResult(index=0, success=True, assignment_id=uuid4())
+                ],
                 dry_run=False,
                 created_at=datetime.utcnow(),
             )
@@ -901,7 +929,9 @@ class TestBatchRoutes:
                 total=1,
                 succeeded=1,
                 failed=0,
-                results=[BatchOperationResult(index=0, success=True, assignment_id=uuid4())],
+                results=[
+                    BatchOperationResult(index=0, success=True, assignment_id=uuid4())
+                ],
                 dry_run=False,
                 created_at=datetime.utcnow(),
                 completed_at=datetime.utcnow(),

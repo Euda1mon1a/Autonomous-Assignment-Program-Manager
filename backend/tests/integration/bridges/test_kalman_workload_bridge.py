@@ -26,12 +26,15 @@ import pytest
 # If the implementation doesn't exist yet, these tests serve as specifications
 try:
     from app.resilience.kalman_filters import WorkloadKalmanFilter
+
     IMPLEMENTATION_EXISTS = True
 except ImportError:
     IMPLEMENTATION_EXISTS = False
+
     # Create a mock for development
     class WorkloadKalmanFilter:
         """Mock implementation for testing purposes."""
+
         def __init__(self, person_id, initial_hours=60.0, **kwargs):
             self.person_id = person_id
             self.x = np.array([initial_hours, 0.0, 0.0])
@@ -43,7 +46,9 @@ except ImportError:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented")
+@pytest.mark.skipif(
+    not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented"
+)
 class TestKalmanConsistentMeasurements:
     """Test Kalman filter with consistent, low-noise measurements."""
 
@@ -68,9 +73,10 @@ class TestKalmanConsistentMeasurements:
         # Simulate 10 weeks of consistent measurements
         for week in range(10):
             measurements = {
-                "scheduled_hours": true_workload + np.random.normal(0, 0.2),  # Very low noise
-                "self_reported": true_workload + np.random.normal(0, 0.5),   # Low noise
-                "call_volume": true_workload + np.random.normal(0, 0.3),     # Low noise
+                "scheduled_hours": true_workload
+                + np.random.normal(0, 0.2),  # Very low noise
+                "self_reported": true_workload + np.random.normal(0, 0.5),  # Low noise
+                "call_volume": true_workload + np.random.normal(0, 0.3),  # Low noise
             }
             estimate = kf.update(measurements)
 
@@ -83,7 +89,9 @@ class TestKalmanConsistentMeasurements:
             f"Uncertainty {estimate.uncertainty_std:.2f} should converge to < 1.0 after 10 consistent measurements"
         )
 
-        assert estimate.measurement_residual is not None, "Should have measurement residual"
+        assert estimate.measurement_residual is not None, (
+            "Should have measurement residual"
+        )
         assert abs(estimate.measurement_residual) < 0.5, (
             f"Residual {estimate.measurement_residual:.2f} should be small with consistent data"
         )
@@ -118,8 +126,8 @@ class TestKalmanConsistentMeasurements:
         # Use windowed comparison to handle potential numerical instability
         window_size = 3
         for i in range(window_size, len(uncertainties)):
-            avg_early = np.mean(uncertainties[i-window_size:i])
-            avg_late = np.mean(uncertainties[i:i+window_size])
+            avg_early = np.mean(uncertainties[i - window_size : i])
+            avg_late = np.mean(uncertainties[i : i + window_size])
             # Allow for small increases due to numerical effects
             assert avg_late <= avg_early * 1.1, (
                 f"Uncertainty should generally decrease over time (week {i})"
@@ -127,7 +135,9 @@ class TestKalmanConsistentMeasurements:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented")
+@pytest.mark.skipif(
+    not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented"
+)
 class TestKalmanNoisyMeasurements:
     """Test Kalman filter's ability to smooth noisy measurements."""
 
@@ -152,8 +162,9 @@ class TestKalmanNoisyMeasurements:
 
         for week in range(20):
             measurements = {
-                "scheduled_hours": true_workload + np.random.normal(0, 0.3),  # Low noise
-                "self_reported": true_workload + np.random.normal(0, 5.0),    # HIGH noise
+                "scheduled_hours": true_workload
+                + np.random.normal(0, 0.3),  # Low noise
+                "self_reported": true_workload + np.random.normal(0, 5.0),  # HIGH noise
             }
             estimate = kf.update(measurements)
             estimates.append(estimate.estimated_hours)
@@ -185,16 +196,19 @@ class TestKalmanNoisyMeasurements:
         kf1 = WorkloadKalmanFilter(
             person_id=uuid4(),
             initial_hours=60.0,
-            measurement_noise_scheduled=0.05,   # Low noise
+            measurement_noise_scheduled=0.05,  # Low noise
             measurement_noise_self_report=5.0,  # High noise
         )
 
         # Give 5 measurements to stabilize
         for _ in range(5):
-            kf1.update({
-                "scheduled_hours": 65.0 + np.random.normal(0, 0.2),
-                "self_reported": 75.0 + np.random.normal(0, 3.0),  # Consistently higher
-            })
+            kf1.update(
+                {
+                    "scheduled_hours": 65.0 + np.random.normal(0, 0.2),
+                    "self_reported": 75.0
+                    + np.random.normal(0, 3.0),  # Consistently higher
+                }
+            )
 
         estimate1 = kf1.history[-1]
 
@@ -209,7 +223,9 @@ class TestKalmanNoisyMeasurements:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented")
+@pytest.mark.skipif(
+    not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented"
+)
 class TestKalmanAdaptation:
     """Test Kalman filter's ability to adapt to sudden changes."""
 
@@ -289,7 +305,9 @@ class TestKalmanAdaptation:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented")
+@pytest.mark.skipif(
+    not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented"
+)
 class TestKalmanMissingData:
     """Test Kalman filter's predict-only mode when measurements are missing."""
 
@@ -399,7 +417,9 @@ class TestKalmanMissingData:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented")
+@pytest.mark.skipif(
+    not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented"
+)
 class TestKalmanConfidenceIntervals:
     """Test Kalman filter confidence interval calibration."""
 
@@ -434,7 +454,11 @@ class TestKalmanConfidenceIntervals:
                 estimate = kf.update(measurements)
 
             # Check if true value is within 95% CI
-            if estimate.confidence_95_lower <= true_workload <= estimate.confidence_95_upper:
+            if (
+                estimate.confidence_95_lower
+                <= true_workload
+                <= estimate.confidence_95_upper
+            ):
                 coverage_count += 1
 
         coverage_rate = coverage_count / trials
@@ -484,7 +508,9 @@ class TestKalmanConfidenceIntervals:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented")
+@pytest.mark.skipif(
+    not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented"
+)
 class TestKalmanGainCalculation:
     """Test Kalman gain calculation and mathematical correctness."""
 
@@ -522,15 +548,19 @@ class TestKalmanGainCalculation:
 
         # Manually compute expected Kalman gain
         # Build observation matrices for available measurements
-        H_obs = np.array([
-            kf.H[0],  # scheduled_hours
-            kf.H[1],  # self_reported
-        ])
+        H_obs = np.array(
+            [
+                kf.H[0],  # scheduled_hours
+                kf.H[1],  # self_reported
+            ]
+        )
 
-        R_obs = np.array([
-            [kf.R[0, 0], 0.0],
-            [0.0, kf.R[1, 1]],
-        ])
+        R_obs = np.array(
+            [
+                [kf.R[0, 0], 0.0],
+                [0.0, kf.R[1, 1]],
+            ]
+        )
 
         # K = P_pred @ H^T @ inv(H @ P_pred @ H^T + R)
         S = H_obs @ P_pred @ H_obs.T + R_obs  # Innovation covariance
@@ -542,7 +572,7 @@ class TestKalmanGainCalculation:
             K_expected,
             rtol=1e-5,
             atol=1e-8,
-            err_msg="Kalman gain should match theoretical formula"
+            err_msg="Kalman gain should match theoretical formula",
         )
 
     def test_kalman_gain_weighting(self):
@@ -637,7 +667,9 @@ class TestKalmanGainCalculation:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented")
+@pytest.mark.skipif(
+    not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented"
+)
 class TestKalmanIntegration:
     """Integration tests for complete workflows."""
 
@@ -661,8 +693,18 @@ class TestKalmanIntegration:
 
         # Simulate realistic scenario
         true_workload_pattern = [
-            65, 66, 67, 68, 70, 72,  # Gradual increase (deployment season)
-            73, 72, 70, 68, 66, 65,  # Gradual decrease (return to normal)
+            65,
+            66,
+            67,
+            68,
+            70,
+            72,  # Gradual increase (deployment season)
+            73,
+            72,
+            70,
+            68,
+            66,
+            65,  # Gradual decrease (return to normal)
         ]
 
         for week, true_hours in enumerate(true_workload_pattern, 1):
@@ -677,13 +719,19 @@ class TestKalmanIntegration:
 
             # Call volume: Available 75% of time, medium noise
             if np.random.random() < 0.75:
-                measurements["call_volume"] = true_hours * 0.7 + np.random.normal(0, 2.0)
+                measurements["call_volume"] = true_hours * 0.7 + np.random.normal(
+                    0, 2.0
+                )
 
             estimate = kf.update(measurements)
 
             # Sanity checks each week
-            assert estimate.estimated_hours > 0, f"Week {week}: Estimate should be positive"
-            assert estimate.uncertainty_std > 0, f"Week {week}: Uncertainty should be positive"
+            assert estimate.estimated_hours > 0, (
+                f"Week {week}: Estimate should be positive"
+            )
+            assert estimate.uncertainty_std > 0, (
+                f"Week {week}: Uncertainty should be positive"
+            )
             assert estimate.confidence_95_lower < estimate.confidence_95_upper, (
                 f"Week {week}: CI bounds should be ordered"
             )
@@ -714,7 +762,9 @@ class TestKalmanIntegration:
         for _ in range(10):
             kf.update({"scheduled_hours": actual_hours})
 
-        utilization, lower, upper = kf.get_utilization_estimate(target_hours=target_hours)
+        utilization, lower, upper = kf.get_utilization_estimate(
+            target_hours=target_hours
+        )
 
         expected_utilization = actual_hours / target_hours
 
@@ -759,7 +809,9 @@ class TestKalmanIntegration:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented")
+@pytest.mark.skipif(
+    not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented"
+)
 class TestKalmanEdgeCases:
     """Test edge cases and error handling."""
 

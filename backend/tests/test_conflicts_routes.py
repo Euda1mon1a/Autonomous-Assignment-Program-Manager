@@ -157,18 +157,17 @@ class TestConflictTimelineEndpoint:
 
     def test_timeline_success(self, client: TestClient, auth_headers: dict):
         """Test successful conflict timeline."""
-        with patch("app.api.routes.conflicts.ConflictAnalyzer") as mock_analyzer, patch(
-            "app.api.routes.conflicts.ConflictVisualizer"
-        ) as mock_visualizer:
+        with (
+            patch("app.api.routes.conflicts.ConflictAnalyzer") as mock_analyzer,
+            patch("app.api.routes.conflicts.ConflictVisualizer") as mock_visualizer,
+        ):
             mock_analyzer_instance = MagicMock()
             mock_analyzer_instance.analyze_schedule = AsyncMock(return_value=[])
             mock_analyzer.return_value = mock_analyzer_instance
 
             mock_viz_instance = MagicMock()
             mock_viz_instance.generate_timeline = AsyncMock(
-                return_value=MagicMock(
-                    model_dump=lambda: {"days": [], "entries": []}
-                )
+                return_value=MagicMock(model_dump=lambda: {"days": [], "entries": []})
             )
             mock_visualizer.return_value = mock_viz_instance
 
@@ -195,9 +194,10 @@ class TestConflictHeatmapEndpoint:
 
     def test_heatmap_success(self, client: TestClient, auth_headers: dict):
         """Test successful heatmap generation."""
-        with patch("app.api.routes.conflicts.ConflictAnalyzer") as mock_analyzer, patch(
-            "app.api.routes.conflicts.ConflictVisualizer"
-        ) as mock_visualizer:
+        with (
+            patch("app.api.routes.conflicts.ConflictAnalyzer") as mock_analyzer,
+            patch("app.api.routes.conflicts.ConflictVisualizer") as mock_visualizer,
+        ):
             mock_analyzer_instance = MagicMock()
             mock_analyzer_instance.analyze_schedule = AsyncMock(return_value=[])
             mock_analyzer.return_value = mock_analyzer_instance
@@ -231,9 +231,10 @@ class TestConflictGanttEndpoint:
 
     def test_gantt_success(self, client: TestClient, auth_headers: dict):
         """Test successful Gantt chart generation."""
-        with patch("app.api.routes.conflicts.ConflictAnalyzer") as mock_analyzer, patch(
-            "app.api.routes.conflicts.ConflictVisualizer"
-        ) as mock_visualizer:
+        with (
+            patch("app.api.routes.conflicts.ConflictAnalyzer") as mock_analyzer,
+            patch("app.api.routes.conflicts.ConflictVisualizer") as mock_visualizer,
+        ):
             mock_analyzer_instance = MagicMock()
             mock_analyzer_instance.analyze_schedule = AsyncMock(return_value=[])
             mock_analyzer.return_value = mock_analyzer_instance
@@ -265,9 +266,10 @@ class TestConflictDistributionEndpoint:
 
     def test_distribution_success(self, client: TestClient, auth_headers: dict):
         """Test successful distribution chart generation."""
-        with patch("app.api.routes.conflicts.ConflictAnalyzer") as mock_analyzer, patch(
-            "app.api.routes.conflicts.ConflictVisualizer"
-        ) as mock_visualizer:
+        with (
+            patch("app.api.routes.conflicts.ConflictAnalyzer") as mock_analyzer,
+            patch("app.api.routes.conflicts.ConflictVisualizer") as mock_visualizer,
+        ):
             mock_analyzer_instance = MagicMock()
             mock_analyzer_instance.analyze_schedule = AsyncMock(return_value=[])
             mock_analyzer.return_value = mock_analyzer_instance
@@ -301,9 +303,10 @@ class TestPersonImpactEndpoint:
 
     def test_person_impact_success(self, client: TestClient, auth_headers: dict):
         """Test successful person impact analysis."""
-        with patch("app.api.routes.conflicts.ConflictAnalyzer") as mock_analyzer, patch(
-            "app.api.routes.conflicts.ConflictVisualizer"
-        ) as mock_visualizer:
+        with (
+            patch("app.api.routes.conflicts.ConflictAnalyzer") as mock_analyzer,
+            patch("app.api.routes.conflicts.ConflictVisualizer") as mock_visualizer,
+        ):
             mock_analyzer_instance = MagicMock()
             mock_analyzer_instance.analyze_schedule = AsyncMock(return_value=[])
             mock_analyzer.return_value = mock_analyzer_instance
@@ -410,9 +413,10 @@ class TestConflictsIntegration:
         today = date.today()
         base_params = f"start_date={today}&end_date={today + timedelta(days=7)}"
 
-        with patch("app.api.routes.conflicts.ConflictAnalyzer") as mock_analyzer, patch(
-            "app.api.routes.conflicts.ConflictVisualizer"
-        ) as mock_visualizer:
+        with (
+            patch("app.api.routes.conflicts.ConflictAnalyzer") as mock_analyzer,
+            patch("app.api.routes.conflicts.ConflictVisualizer") as mock_visualizer,
+        ):
             # Set up mocks
             mock_analyzer_instance = MagicMock()
             mock_analyzer_instance.analyze_schedule = AsyncMock(return_value=[])

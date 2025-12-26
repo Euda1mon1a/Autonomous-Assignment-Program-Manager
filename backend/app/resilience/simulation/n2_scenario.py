@@ -79,9 +79,9 @@ class N2ContingencyScenario:
     def __init__(self, config: N2ScenarioConfig):
         self.config = config
         self._faculty: list[dict] = []  # Each: {id, zones, skills}
-        self._zones: list[dict] = (
-            []
-        )  # Each: {id, faculty, min_coverage, required_skills}
+        self._zones: list[
+            dict
+        ] = []  # Each: {id, faculty, min_coverage, required_skills}
         self._results: list[N2IterationResult] = []
         self._rng = Random(config.seed)
 

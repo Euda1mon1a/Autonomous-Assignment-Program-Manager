@@ -253,9 +253,9 @@ class TestGreedySolver:
         # Verify no block has more than max_residents for any template
         for template_id, block_counts in template_block_counts.items():
             for block_id, count in block_counts.items():
-                assert (
-                    count <= 1
-                ), f"Template {template_id} has {count} residents in block {block_id} (max: 1)"
+                assert count <= 1, (
+                    f"Template {template_id} has {count} residents in block {block_id} (max: 1)"
+                )
 
 
 # ============================================================================

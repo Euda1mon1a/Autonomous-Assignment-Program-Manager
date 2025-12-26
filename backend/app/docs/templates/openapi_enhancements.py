@@ -169,11 +169,7 @@ class OpenAPIEnhancer:
                                                 "content"
                                             ][content_type][
                                                 "example"
-                                            ] = self.custom_examples[
-                                                key
-                                            ][
-                                                "response"
-                                            ]
+                                            ] = self.custom_examples[key]["response"]
 
         # Add error codes documentation
         if self.error_codes:
@@ -229,9 +225,7 @@ class OpenAPIEnhancer:
         examples = {}
 
         # Python example
-        examples[
-            "python"
-        ] = f"""import requests
+        examples["python"] = f"""import requests
 
 url = "http://localhost:8000{path}"
 headers = {{
@@ -244,9 +238,7 @@ print(response.json())
 """
 
         # JavaScript/Node.js example
-        examples[
-            "javascript"
-        ] = f"""const axios = require('axios');
+        examples["javascript"] = f"""const axios = require('axios');
 
 const url = 'http://localhost:8000{path}';
 const config = {{
@@ -262,18 +254,14 @@ axios.{method.lower()}(url, config)
 """
 
         # cURL example
-        examples[
-            "curl"
-        ] = f"""curl -X {method.upper()} \\
+        examples["curl"] = f"""curl -X {method.upper()} \\
   'http://localhost:8000{path}' \\
   -H 'Authorization: Bearer YOUR_TOKEN_HERE' \\
   -H 'Content-Type: application/json'
 """
 
         # TypeScript example
-        examples[
-            "typescript"
-        ] = f"""import axios from 'axios';
+        examples["typescript"] = f"""import axios from 'axios';
 
 interface ApiResponse {{
   // Define your response type here

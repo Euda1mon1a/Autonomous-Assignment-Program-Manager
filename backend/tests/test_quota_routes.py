@@ -41,7 +41,10 @@ class TestQuotaStatusEndpoint:
             mock_manager.get_usage_summary.return_value = {
                 "user_id": str(uuid4()),
                 "policy_type": "standard",
-                "reset_times": {"daily": "2025-12-21T00:00:00", "monthly": "2026-01-01T00:00:00"},
+                "reset_times": {
+                    "daily": "2025-12-21T00:00:00",
+                    "monthly": "2026-01-01T00:00:00",
+                },
                 "resources": {
                     "api": {
                         "limits": {"daily": 1000, "monthly": 25000},
@@ -284,9 +287,7 @@ class TestRecordUsageEndpoint:
 class TestQuotaIntegration:
     """Integration tests for quota management."""
 
-    def test_quota_endpoints_accessible(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_quota_endpoints_accessible(self, client: TestClient, auth_headers: dict):
         """Test quota endpoints respond appropriately."""
         with patch("app.api.routes.quota.get_quota_manager") as mock_get_manager:
             mock_manager = MagicMock()

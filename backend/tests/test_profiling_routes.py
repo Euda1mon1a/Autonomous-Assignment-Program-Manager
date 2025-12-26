@@ -33,11 +33,13 @@ class TestProfilingStatusEndpoint:
 
     def test_status_success(self, client: TestClient):
         """Test successful profiling status retrieval."""
-        with patch("app.api.routes.profiling.cpu_profiler") as mock_cpu, \
-             patch("app.api.routes.profiling.memory_profiler") as mock_mem, \
-             patch("app.api.routes.profiling.sql_collector") as mock_sql, \
-             patch("app.api.routes.profiling.request_collector") as mock_req, \
-             patch("app.api.routes.profiling.trace_collector") as mock_trace:
+        with (
+            patch("app.api.routes.profiling.cpu_profiler") as mock_cpu,
+            patch("app.api.routes.profiling.memory_profiler") as mock_mem,
+            patch("app.api.routes.profiling.sql_collector") as mock_sql,
+            patch("app.api.routes.profiling.request_collector") as mock_req,
+            patch("app.api.routes.profiling.trace_collector") as mock_trace,
+        ):
             mock_cpu.enabled = True
             mock_cpu.results = []
             mock_mem.enabled = True
@@ -55,11 +57,13 @@ class TestProfilingStatusEndpoint:
 
     def test_status_response_structure(self, client: TestClient):
         """Test profiling status response has correct structure."""
-        with patch("app.api.routes.profiling.cpu_profiler") as mock_cpu, \
-             patch("app.api.routes.profiling.memory_profiler") as mock_mem, \
-             patch("app.api.routes.profiling.sql_collector") as mock_sql, \
-             patch("app.api.routes.profiling.request_collector") as mock_req, \
-             patch("app.api.routes.profiling.trace_collector") as mock_trace:
+        with (
+            patch("app.api.routes.profiling.cpu_profiler") as mock_cpu,
+            patch("app.api.routes.profiling.memory_profiler") as mock_mem,
+            patch("app.api.routes.profiling.sql_collector") as mock_sql,
+            patch("app.api.routes.profiling.request_collector") as mock_req,
+            patch("app.api.routes.profiling.trace_collector") as mock_trace,
+        ):
             mock_cpu.enabled = True
             mock_cpu.results = []
             mock_mem.enabled = True
@@ -89,11 +93,13 @@ class TestProfilingStartEndpoint:
 
     def test_start_session_success(self, client: TestClient):
         """Test starting a profiling session."""
-        with patch("app.api.routes.profiling.cpu_profiler") as mock_cpu, \
-             patch("app.api.routes.profiling.memory_profiler") as mock_mem, \
-             patch("app.api.routes.profiling.sql_collector") as mock_sql, \
-             patch("app.api.routes.profiling.request_collector") as mock_req, \
-             patch("app.api.routes.profiling.trace_collector") as mock_trace:
+        with (
+            patch("app.api.routes.profiling.cpu_profiler") as mock_cpu,
+            patch("app.api.routes.profiling.memory_profiler") as mock_mem,
+            patch("app.api.routes.profiling.sql_collector") as mock_sql,
+            patch("app.api.routes.profiling.request_collector") as mock_req,
+            patch("app.api.routes.profiling.trace_collector") as mock_trace,
+        ):
             response = client.post(
                 "/api/profiling/start",
                 json={
@@ -112,11 +118,13 @@ class TestProfilingStartEndpoint:
 
     def test_start_session_partial_config(self, client: TestClient):
         """Test starting session with partial configuration."""
-        with patch("app.api.routes.profiling.cpu_profiler"), \
-             patch("app.api.routes.profiling.memory_profiler"), \
-             patch("app.api.routes.profiling.sql_collector"), \
-             patch("app.api.routes.profiling.request_collector"), \
-             patch("app.api.routes.profiling.trace_collector"):
+        with (
+            patch("app.api.routes.profiling.cpu_profiler"),
+            patch("app.api.routes.profiling.memory_profiler"),
+            patch("app.api.routes.profiling.sql_collector"),
+            patch("app.api.routes.profiling.request_collector"),
+            patch("app.api.routes.profiling.trace_collector"),
+        ):
             response = client.post(
                 "/api/profiling/start",
                 json={
@@ -135,11 +143,13 @@ class TestProfilingStartEndpoint:
 
     def test_start_session_default_config(self, client: TestClient):
         """Test starting session with default configuration."""
-        with patch("app.api.routes.profiling.cpu_profiler"), \
-             patch("app.api.routes.profiling.memory_profiler"), \
-             patch("app.api.routes.profiling.sql_collector"), \
-             patch("app.api.routes.profiling.request_collector"), \
-             patch("app.api.routes.profiling.trace_collector"):
+        with (
+            patch("app.api.routes.profiling.cpu_profiler"),
+            patch("app.api.routes.profiling.memory_profiler"),
+            patch("app.api.routes.profiling.sql_collector"),
+            patch("app.api.routes.profiling.request_collector"),
+            patch("app.api.routes.profiling.trace_collector"),
+        ):
             response = client.post(
                 "/api/profiling/start",
                 json={},
@@ -153,11 +163,13 @@ class TestProfilingStopEndpoint:
 
     def test_stop_session_success(self, client: TestClient):
         """Test stopping a profiling session."""
-        with patch("app.api.routes.profiling.cpu_profiler") as mock_cpu, \
-             patch("app.api.routes.profiling.memory_profiler") as mock_mem, \
-             patch("app.api.routes.profiling.sql_collector") as mock_sql, \
-             patch("app.api.routes.profiling.request_collector") as mock_req, \
-             patch("app.api.routes.profiling.trace_collector") as mock_trace:
+        with (
+            patch("app.api.routes.profiling.cpu_profiler") as mock_cpu,
+            patch("app.api.routes.profiling.memory_profiler") as mock_mem,
+            patch("app.api.routes.profiling.sql_collector") as mock_sql,
+            patch("app.api.routes.profiling.request_collector") as mock_req,
+            patch("app.api.routes.profiling.trace_collector") as mock_trace,
+        ):
             mock_cpu.results = [MagicMock()]
             mock_mem.results = [MagicMock()]
             mock_sql.get_count.return_value = 100
@@ -177,14 +189,16 @@ class TestProfilingReportEndpoint:
 
     def test_report_json_format(self, client: TestClient):
         """Test getting profiling report in JSON format."""
-        with patch("app.api.routes.profiling.cpu_profiler") as mock_cpu, \
-             patch("app.api.routes.profiling.memory_profiler") as mock_mem, \
-             patch("app.api.routes.profiling.sql_collector") as mock_sql, \
-             patch("app.api.routes.profiling.request_collector") as mock_req, \
-             patch("app.api.routes.profiling.trace_collector") as mock_trace, \
-             patch("app.api.routes.profiling.performance_analyzer") as mock_analyzer, \
-             patch("app.api.routes.profiling.bottleneck_detector") as mock_detector, \
-             patch("app.api.routes.profiling.performance_reporter") as mock_reporter:
+        with (
+            patch("app.api.routes.profiling.cpu_profiler") as mock_cpu,
+            patch("app.api.routes.profiling.memory_profiler") as mock_mem,
+            patch("app.api.routes.profiling.sql_collector") as mock_sql,
+            patch("app.api.routes.profiling.request_collector") as mock_req,
+            patch("app.api.routes.profiling.trace_collector") as mock_trace,
+            patch("app.api.routes.profiling.performance_analyzer") as mock_analyzer,
+            patch("app.api.routes.profiling.bottleneck_detector") as mock_detector,
+            patch("app.api.routes.profiling.performance_reporter") as mock_reporter,
+        ):
             mock_cpu.results = []
             mock_mem.results = []
             mock_sql.items = []
@@ -204,14 +218,16 @@ class TestProfilingReportEndpoint:
 
     def test_report_html_format(self, client: TestClient):
         """Test getting profiling report in HTML format."""
-        with patch("app.api.routes.profiling.cpu_profiler") as mock_cpu, \
-             patch("app.api.routes.profiling.memory_profiler") as mock_mem, \
-             patch("app.api.routes.profiling.sql_collector") as mock_sql, \
-             patch("app.api.routes.profiling.request_collector") as mock_req, \
-             patch("app.api.routes.profiling.trace_collector") as mock_trace, \
-             patch("app.api.routes.profiling.performance_analyzer") as mock_analyzer, \
-             patch("app.api.routes.profiling.bottleneck_detector") as mock_detector, \
-             patch("app.api.routes.profiling.performance_reporter") as mock_reporter:
+        with (
+            patch("app.api.routes.profiling.cpu_profiler") as mock_cpu,
+            patch("app.api.routes.profiling.memory_profiler") as mock_mem,
+            patch("app.api.routes.profiling.sql_collector") as mock_sql,
+            patch("app.api.routes.profiling.request_collector") as mock_req,
+            patch("app.api.routes.profiling.trace_collector") as mock_trace,
+            patch("app.api.routes.profiling.performance_analyzer") as mock_analyzer,
+            patch("app.api.routes.profiling.bottleneck_detector") as mock_detector,
+            patch("app.api.routes.profiling.performance_reporter") as mock_reporter,
+        ):
             mock_cpu.results = []
             mock_mem.results = []
             mock_sql.items = []
@@ -361,10 +377,12 @@ class TestProfilingBottlenecksEndpoint:
 
     def test_bottlenecks_success(self, client: TestClient):
         """Test detecting performance bottlenecks."""
-        with patch("app.api.routes.profiling.sql_collector") as mock_sql, \
-             patch("app.api.routes.profiling.request_collector") as mock_req, \
-             patch("app.api.routes.profiling.trace_collector") as mock_trace, \
-             patch("app.api.routes.profiling.BottleneckDetector") as mock_detector_class:
+        with (
+            patch("app.api.routes.profiling.sql_collector") as mock_sql,
+            patch("app.api.routes.profiling.request_collector") as mock_req,
+            patch("app.api.routes.profiling.trace_collector") as mock_trace,
+            patch("app.api.routes.profiling.BottleneckDetector") as mock_detector_class,
+        ):
             mock_sql.items = []
             mock_req.items = []
             mock_trace.items = []
@@ -383,10 +401,12 @@ class TestProfilingBottlenecksEndpoint:
 
     def test_bottlenecks_with_thresholds(self, client: TestClient):
         """Test bottleneck detection with custom thresholds."""
-        with patch("app.api.routes.profiling.sql_collector") as mock_sql, \
-             patch("app.api.routes.profiling.request_collector") as mock_req, \
-             patch("app.api.routes.profiling.trace_collector") as mock_trace, \
-             patch("app.api.routes.profiling.BottleneckDetector") as mock_detector_class:
+        with (
+            patch("app.api.routes.profiling.sql_collector") as mock_sql,
+            patch("app.api.routes.profiling.request_collector") as mock_req,
+            patch("app.api.routes.profiling.trace_collector") as mock_trace,
+            patch("app.api.routes.profiling.BottleneckDetector") as mock_detector_class,
+        ):
             mock_sql.items = []
             mock_req.items = []
             mock_trace.items = []
@@ -432,8 +452,10 @@ class TestProfilingFlamegraphEndpoint:
 
     def test_flamegraph_cpu_success(self, client: TestClient):
         """Test flamegraph generation with CPU data."""
-        with patch("app.api.routes.profiling.cpu_profiler") as mock_cpu, \
-             patch("app.api.routes.profiling.flame_graph_generator") as mock_fg:
+        with (
+            patch("app.api.routes.profiling.cpu_profiler") as mock_cpu,
+            patch("app.api.routes.profiling.flame_graph_generator") as mock_fg,
+        ):
             mock_profile = MagicMock()
             mock_cpu.results = [mock_profile]
             mock_fg.generate_from_profile.return_value = {
@@ -454,14 +476,18 @@ class TestProfilingAnalyzeEndpoint:
 
     def test_analyze_success(self, client: TestClient):
         """Test analyzing profiling data."""
-        with patch("app.api.routes.profiling.cpu_profiler") as mock_cpu, \
-             patch("app.api.routes.profiling.memory_profiler") as mock_mem, \
-             patch("app.api.routes.profiling.sql_collector") as mock_sql, \
-             patch("app.api.routes.profiling.request_collector") as mock_req, \
-             patch("app.api.routes.profiling.trace_collector") as mock_trace, \
-             patch("app.api.routes.profiling.PerformanceAnalyzer") as mock_analyzer_class, \
-             patch("app.api.routes.profiling.BottleneckDetector") as mock_detector_class, \
-             patch("app.api.routes.profiling.query_analyzer") as mock_qa:
+        with (
+            patch("app.api.routes.profiling.cpu_profiler") as mock_cpu,
+            patch("app.api.routes.profiling.memory_profiler") as mock_mem,
+            patch("app.api.routes.profiling.sql_collector") as mock_sql,
+            patch("app.api.routes.profiling.request_collector") as mock_req,
+            patch("app.api.routes.profiling.trace_collector") as mock_trace,
+            patch(
+                "app.api.routes.profiling.PerformanceAnalyzer"
+            ) as mock_analyzer_class,
+            patch("app.api.routes.profiling.BottleneckDetector") as mock_detector_class,
+            patch("app.api.routes.profiling.query_analyzer") as mock_qa,
+        ):
             mock_cpu.results = []
             mock_mem.results = []
             mock_sql.items = []
@@ -496,14 +522,18 @@ class TestProfilingAnalyzeEndpoint:
 
     def test_analyze_default_thresholds(self, client: TestClient):
         """Test analyzing with default thresholds."""
-        with patch("app.api.routes.profiling.cpu_profiler") as mock_cpu, \
-             patch("app.api.routes.profiling.memory_profiler") as mock_mem, \
-             patch("app.api.routes.profiling.sql_collector") as mock_sql, \
-             patch("app.api.routes.profiling.request_collector") as mock_req, \
-             patch("app.api.routes.profiling.trace_collector") as mock_trace, \
-             patch("app.api.routes.profiling.PerformanceAnalyzer") as mock_analyzer_class, \
-             patch("app.api.routes.profiling.BottleneckDetector") as mock_detector_class, \
-             patch("app.api.routes.profiling.query_analyzer") as mock_qa:
+        with (
+            patch("app.api.routes.profiling.cpu_profiler") as mock_cpu,
+            patch("app.api.routes.profiling.memory_profiler") as mock_mem,
+            patch("app.api.routes.profiling.sql_collector") as mock_sql,
+            patch("app.api.routes.profiling.request_collector") as mock_req,
+            patch("app.api.routes.profiling.trace_collector") as mock_trace,
+            patch(
+                "app.api.routes.profiling.PerformanceAnalyzer"
+            ) as mock_analyzer_class,
+            patch("app.api.routes.profiling.BottleneckDetector") as mock_detector_class,
+            patch("app.api.routes.profiling.query_analyzer") as mock_qa,
+        ):
             mock_cpu.results = []
             mock_mem.results = []
             mock_sql.items = []
@@ -532,12 +562,14 @@ class TestProfilingClearEndpoint:
 
     def test_clear_success(self, client: TestClient):
         """Test clearing profiling data."""
-        with patch("app.api.routes.profiling.cpu_profiler") as mock_cpu, \
-             patch("app.api.routes.profiling.memory_profiler") as mock_mem, \
-             patch("app.api.routes.profiling.sql_collector") as mock_sql, \
-             patch("app.api.routes.profiling.request_collector") as mock_req, \
-             patch("app.api.routes.profiling.trace_collector") as mock_trace, \
-             patch("app.api.routes.profiling.profiler_context") as mock_ctx:
+        with (
+            patch("app.api.routes.profiling.cpu_profiler") as mock_cpu,
+            patch("app.api.routes.profiling.memory_profiler") as mock_mem,
+            patch("app.api.routes.profiling.sql_collector") as mock_sql,
+            patch("app.api.routes.profiling.request_collector") as mock_req,
+            patch("app.api.routes.profiling.trace_collector") as mock_trace,
+            patch("app.api.routes.profiling.profiler_context") as mock_ctx,
+        ):
             response = client.delete("/api/profiling/clear")
 
             assert response.status_code == 200
@@ -562,14 +594,16 @@ class TestProfilingIntegration:
 
     def test_profiling_workflow(self, client: TestClient):
         """Test complete profiling workflow: start -> stop -> report."""
-        with patch("app.api.routes.profiling.cpu_profiler") as mock_cpu, \
-             patch("app.api.routes.profiling.memory_profiler") as mock_mem, \
-             patch("app.api.routes.profiling.sql_collector") as mock_sql, \
-             patch("app.api.routes.profiling.request_collector") as mock_req, \
-             patch("app.api.routes.profiling.trace_collector") as mock_trace, \
-             patch("app.api.routes.profiling.performance_analyzer") as mock_analyzer, \
-             patch("app.api.routes.profiling.bottleneck_detector") as mock_detector, \
-             patch("app.api.routes.profiling.performance_reporter") as mock_reporter:
+        with (
+            patch("app.api.routes.profiling.cpu_profiler") as mock_cpu,
+            patch("app.api.routes.profiling.memory_profiler") as mock_mem,
+            patch("app.api.routes.profiling.sql_collector") as mock_sql,
+            patch("app.api.routes.profiling.request_collector") as mock_req,
+            patch("app.api.routes.profiling.trace_collector") as mock_trace,
+            patch("app.api.routes.profiling.performance_analyzer") as mock_analyzer,
+            patch("app.api.routes.profiling.bottleneck_detector") as mock_detector,
+            patch("app.api.routes.profiling.performance_reporter") as mock_reporter,
+        ):
             mock_cpu.enabled = True
             mock_cpu.results = []
             mock_mem.enabled = True
@@ -608,11 +642,13 @@ class TestProfilingIntegration:
 
     def test_profiling_endpoints_accessible(self, client: TestClient):
         """Test profiling endpoints are accessible."""
-        with patch("app.api.routes.profiling.cpu_profiler") as mock_cpu, \
-             patch("app.api.routes.profiling.memory_profiler") as mock_mem, \
-             patch("app.api.routes.profiling.sql_collector") as mock_sql, \
-             patch("app.api.routes.profiling.request_collector") as mock_req, \
-             patch("app.api.routes.profiling.trace_collector") as mock_trace:
+        with (
+            patch("app.api.routes.profiling.cpu_profiler") as mock_cpu,
+            patch("app.api.routes.profiling.memory_profiler") as mock_mem,
+            patch("app.api.routes.profiling.sql_collector") as mock_sql,
+            patch("app.api.routes.profiling.request_collector") as mock_req,
+            patch("app.api.routes.profiling.trace_collector") as mock_trace,
+        ):
             mock_cpu.enabled = True
             mock_cpu.results = []
             mock_mem.enabled = True

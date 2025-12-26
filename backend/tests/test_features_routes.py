@@ -153,18 +153,22 @@ class TestFeatureFlagStatsEndpoint:
 
     def test_stats_requires_admin(self, client: TestClient, auth_headers: dict):
         """Test that stats requires admin role."""
-        with patch("app.api.routes.features.FeatureFlagService") as mock_service_class, \
-             patch("app.api.routes.features._get_flags_by_environment") as mock_env:
+        with (
+            patch("app.api.routes.features.FeatureFlagService") as mock_service_class,
+            patch("app.api.routes.features._get_flags_by_environment") as mock_env,
+        ):
             mock_service = MagicMock()
-            mock_service.get_stats = AsyncMock(return_value={
-                "total_flags": 10,
-                "enabled_flags": 7,
-                "disabled_flags": 3,
-                "percentage_rollout_flags": 2,
-                "variant_flags": 1,
-                "recent_evaluations": 1000,
-                "unique_users": 50,
-            })
+            mock_service.get_stats = AsyncMock(
+                return_value={
+                    "total_flags": 10,
+                    "enabled_flags": 7,
+                    "disabled_flags": 3,
+                    "percentage_rollout_flags": 2,
+                    "variant_flags": 1,
+                    "recent_evaluations": 1000,
+                    "unique_users": 50,
+                }
+            )
             mock_service_class.return_value = mock_service
             mock_env.return_value = {}
 
@@ -369,10 +373,12 @@ class TestBulkEvaluateEndpoint:
             mock_service = MagicMock()
             mock_flag = MagicMock()
             mock_flag.flag_type = "boolean"
-            mock_service.evaluate_flags_bulk = AsyncMock(return_value={
-                "feature1": (True, None, "Enabled"),
-                "feature2": (False, None, "Disabled"),
-            })
+            mock_service.evaluate_flags_bulk = AsyncMock(
+                return_value={
+                    "feature1": (True, None, "Enabled"),
+                    "feature2": (False, None, "Disabled"),
+                }
+            )
             mock_service.get_flag = AsyncMock(return_value=mock_flag)
             mock_service_class.return_value = mock_service
 
@@ -507,15 +513,17 @@ class TestFeaturesIntegration:
         with patch("app.api.routes.features.FeatureFlagService") as mock_service_class:
             mock_service = MagicMock()
             mock_service.list_flags = AsyncMock(return_value=[])
-            mock_service.get_stats = AsyncMock(return_value={
-                "total_flags": 0,
-                "enabled_flags": 0,
-                "disabled_flags": 0,
-                "percentage_rollout_flags": 0,
-                "variant_flags": 0,
-                "recent_evaluations": 0,
-                "unique_users": 0,
-            })
+            mock_service.get_stats = AsyncMock(
+                return_value={
+                    "total_flags": 0,
+                    "enabled_flags": 0,
+                    "disabled_flags": 0,
+                    "percentage_rollout_flags": 0,
+                    "variant_flags": 0,
+                    "recent_evaluations": 0,
+                    "unique_users": 0,
+                }
+            )
             mock_service.get_flag = AsyncMock(return_value=None)
             mock_service_class.return_value = mock_service
 

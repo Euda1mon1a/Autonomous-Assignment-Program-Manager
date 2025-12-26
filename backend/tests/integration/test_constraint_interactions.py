@@ -133,7 +133,9 @@ class PreferenceConstraint(SoftConstraint):
                 continue
 
             # Get block to check session
-            block = next((b for b in context.blocks if b.id == assignment.block_id), None)
+            block = next(
+                (b for b in context.blocks if b.id == assignment.block_id), None
+            )
             if not block:
                 continue
 
@@ -152,7 +154,10 @@ class PreferenceConstraint(SoftConstraint):
                         message=f"Assignment does not match preference (prefers {preferred.value})",
                         person_id=person_id,
                         block_id=assignment.block_id,
-                        details={"preferred": preferred.value, "actual": block.session.value},
+                        details={
+                            "preferred": preferred.value,
+                            "actual": block.session.value,
+                        },
                     )
                 )
 
@@ -250,7 +255,9 @@ class TestConstraintInteractions:
 
         # Verify assignment exists (conflict should be caught before creation in real system)
         assignments_in_db = db.query(Assignment).filter_by(person_id=resident.id).all()
-        assert len(assignments_in_db) == 1, "Assignment exists (conflict detected post-creation)"
+        assert len(assignments_in_db) == 1, (
+            "Assignment exists (conflict detected post-creation)"
+        )
 
     def test_soft_constraint_zero_weight(self, db):
         """
@@ -374,7 +381,8 @@ class TestConstraintInteractions:
                         id=uuid4(),
                         date=block_date,
                         session=session,
-                        block_number=(week * 7 + day) * 2 + (0 if session == Session.AM else 1),
+                        block_number=(week * 7 + day) * 2
+                        + (0 if session == Session.AM else 1),
                         academic_year=2025,
                     )
                     blocks.append(block)
@@ -420,7 +428,9 @@ class TestConstraintInteractions:
                     weight=3.0,  # Warning level
                     priority=ConstraintPriority.HIGH,
                 )
-                self.credentials = credentials  # {person_id: {credential_type: expiration_date}}
+                self.credentials = (
+                    credentials  # {person_id: {credential_type: expiration_date}}
+                )
 
             def add_to_cpsat(self, model, variables, context):
                 pass
@@ -445,7 +455,10 @@ class TestConstraintInteractions:
 
                     # Get date range for this person's assignments
                     dates = [
-                        b.date for a in person_assigns for b in context.blocks if b.id == a.block_id
+                        b.date
+                        for a in person_assigns
+                        for b in context.blocks
+                        if b.id == a.block_id
                     ]
                     if not dates:
                         continue
@@ -457,7 +470,9 @@ class TestConstraintInteractions:
                     for cred_type, expiration in self.credentials[person_id].items():
                         # Credential expires during assignment period
                         if assign_start < expiration < assign_end:
-                            from app.scheduling.constraints.base import ConstraintViolation
+                            from app.scheduling.constraints.base import (
+                                ConstraintViolation,
+                            )
 
                             violations.append(
                                 ConstraintViolation(
@@ -472,7 +487,9 @@ class TestConstraintInteractions:
                                         "expiration_date": expiration.isoformat(),
                                         "assignment_start": assign_start.isoformat(),
                                         "assignment_end": assign_end.isoformat(),
-                                        "days_until_expiration": (expiration - assign_start).days,
+                                        "days_until_expiration": (
+                                            expiration - assign_start
+                                        ).days,
                                     },
                                 )
                             )
@@ -485,7 +502,9 @@ class TestConstraintInteractions:
                 )
 
         credential_data = {faculty.id: {"BLS": bls_expiration}}
-        credential_constraint = CredentialExpiringConstraint(credentials=credential_data)
+        credential_constraint = CredentialExpiringConstraint(
+            credentials=credential_data
+        )
 
         # Build context
         context = SchedulingContext(
@@ -502,8 +521,12 @@ class TestConstraintInteractions:
         result = credential_constraint.validate(assignments, context)
 
         # ASSERT: Should be valid but with warnings
-        assert result.satisfied is True, "Assignment valid at start (credential not yet expired)"
-        assert len(result.violations) > 0, "Should have warning about mid-block expiration"
+        assert result.satisfied is True, (
+            "Assignment valid at start (credential not yet expired)"
+        )
+        assert len(result.violations) > 0, (
+            "Should have warning about mid-block expiration"
+        )
         assert result.penalty > 0.0, "Should have penalty for expiring credential"
 
         violation = result.violations[0]
@@ -547,7 +570,8 @@ class TestConstraintInteractions:
                     id=uuid4(),
                     date=call_start_date + timedelta(days=day_offset),
                     session=session,
-                    block_number=(14 + day_offset) * 2 + (0 if session == Session.AM else 1),
+                    block_number=(14 + day_offset) * 2
+                    + (0 if session == Session.AM else 1),
                     academic_year=2025,
                 )
                 call_blocks.append(block)
@@ -614,20 +638,28 @@ class TestConstraintInteractions:
                 from sqlalchemy.orm import Session
 
                 db_session = Session.object_session(context.blocks[0])
-                absences = db_session.query(Absence).filter(Absence.is_blocking == True).all()
+                absences = (
+                    db_session.query(Absence).filter(Absence.is_blocking == True).all()
+                )
 
                 # Check each assignment against absences
                 for assignment in assignments:
                     # Get block date
-                    block = next((b for b in context.blocks if b.id == assignment.block_id), None)
+                    block = next(
+                        (b for b in context.blocks if b.id == assignment.block_id), None
+                    )
                     if not block:
                         continue
 
                     # Check if person has leave on this date
-                    person_absences = [a for a in absences if a.person_id == assignment.person_id]
+                    person_absences = [
+                        a for a in absences if a.person_id == assignment.person_id
+                    ]
                     for absence in person_absences:
                         if absence.start_date <= block.date <= absence.end_date:
-                            from app.scheduling.constraints.base import ConstraintViolation
+                            from app.scheduling.constraints.base import (
+                                ConstraintViolation,
+                            )
 
                             violations.append(
                                 ConstraintViolation(
@@ -647,7 +679,9 @@ class TestConstraintInteractions:
                                 )
                             )
 
-                return ConstraintResult(satisfied=len(violations) == 0, violations=violations)
+                return ConstraintResult(
+                    satisfied=len(violations) == 0, violations=violations
+                )
 
         leave_constraint = LeaveConflictConstraint()
 
@@ -787,5 +821,7 @@ class TestConstraintInteractions:
         assert len(result.violations) > 0
 
         # Check that penalty is from preference constraint
-        pref_violations = [v for v in result.violations if v.constraint_name == "ShiftPreference"]
+        pref_violations = [
+            v for v in result.violations if v.constraint_name == "ShiftPreference"
+        ]
         assert len(pref_violations) > 0

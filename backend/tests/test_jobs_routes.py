@@ -47,11 +47,10 @@ class TestJobsDashboard:
 
     def test_dashboard_success(self, client: TestClient, auth_headers: dict):
         """Test getting dashboard overview."""
-        with patch(
-            "app.api.routes.jobs.CeleryMonitorService"
-        ) as mock_monitor, patch(
-            "app.api.routes.jobs.JobStatsService"
-        ) as mock_stats:
+        with (
+            patch("app.api.routes.jobs.CeleryMonitorService") as mock_monitor,
+            patch("app.api.routes.jobs.JobStatsService") as mock_stats,
+        ):
             # Mock monitor service
             mock_monitor_instance = MagicMock()
             mock_monitor_instance.get_active_tasks.return_value = []
@@ -109,9 +108,7 @@ class TestActiveTasks:
                 data = response.json()
                 assert isinstance(data, list)
 
-    def test_active_tasks_filter_by_queue(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_active_tasks_filter_by_queue(self, client: TestClient, auth_headers: dict):
         """Test filtering active tasks by queue."""
         with patch("app.api.routes.jobs.CeleryMonitorService") as mock_monitor:
             mock_instance = MagicMock()
@@ -244,9 +241,7 @@ class TestWorkerEndpoints:
                 data = response.json()
                 assert "healthy" in data
 
-    def test_worker_utilization_success(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_worker_utilization_success(self, client: TestClient, auth_headers: dict):
         """Test getting worker utilization."""
         with patch("app.api.routes.jobs.JobStatsService") as mock_stats:
             mock_instance = MagicMock()
@@ -344,9 +339,7 @@ class TestStatisticsEndpoints:
                 data = response.json()
                 assert "totalRetries" in data
 
-    def test_performance_metrics_success(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_performance_metrics_success(self, client: TestClient, auth_headers: dict):
         """Test getting performance metrics."""
         with patch("app.api.routes.jobs.JobStatsService") as mock_stats:
             mock_instance = MagicMock()
@@ -369,9 +362,7 @@ class TestStatisticsEndpoints:
                 data = response.json()
                 assert "p50RuntimeSeconds" in data
 
-    def test_throughput_metrics_success(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_throughput_metrics_success(self, client: TestClient, auth_headers: dict):
         """Test getting throughput metrics."""
         with patch("app.api.routes.jobs.JobStatsService") as mock_stats:
             mock_instance = MagicMock()
@@ -538,9 +529,7 @@ class TestJobsIntegration:
             response = client.get(endpoint)
             assert response.status_code in [401, 403], f"Failed for {endpoint}"
 
-    def test_jobs_endpoints_return_json(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_jobs_endpoints_return_json(self, client: TestClient, auth_headers: dict):
         """Test that jobs endpoints return JSON."""
         with patch("app.api.routes.jobs.CeleryMonitorService") as mock_monitor:
             mock_instance = MagicMock()
