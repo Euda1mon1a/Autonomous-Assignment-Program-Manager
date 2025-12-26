@@ -35,6 +35,11 @@ numpy==2.3.5
 scipy==1.15.3  # Sparse matrix operations, Erlang C queuing calculations
 python-dateutil==2.9.0.post0
 
+# Signal Processing & Time Series Analysis
+PyWavelets>=1.4.0  # Wavelet transforms for multi-resolution schedule decomposition
+statsmodels>=0.14.0  # STL decomposition, ARIMA forecasting, time series analysis
+ruptures>=1.1.0  # Change point detection (PELT algorithm) for regime shifts
+
 # Machine Learning
 scikit-learn>=1.3.0
 joblib>=1.3.0  # Model serialization

@@ -104,6 +104,22 @@ The complex systems research explores:
 
 ## 🧬 Other Research Areas
 
+### Signal Processing (NEW)
+- [Signal Processing for Schedule Analysis](./SIGNAL_PROCESSING_SCHEDULE_ANALYSIS.md) 🎯 **HIGH PRIORITY**
+
+Comprehensive signal processing techniques for schedule pattern detection and anomaly identification. Covers:
+- **Fourier Analysis** - Detect periodic rotation cycles, harmonic relationships (FFT, power spectral density)
+- **Wavelet Analysis** - Multi-resolution decomposition for transient event detection (deployment surges, coverage gaps)
+- **Filtering** - Trend extraction and noise removal (Butterworth, Chebyshev filters)
+- **Time-Series Decomposition** - STL, ARIMA forecasting, change point detection (CUSUM, PELT)
+- **Anomaly Detection** - Z-score, Isolation Forests, ensemble methods
+
+**Expected Impact:**
+- 2-4 week advance warning of schedule breakdown
+- Automatic pattern recognition for rotation cycles
+- 95%+ anomaly detection accuracy with <5% false positives
+- Real-time monitoring with <100ms latency
+
 ### Control Theory
 - [Exotic Control Theory for Scheduling](./exotic-control-theory-for-scheduling.md)
 - [Control Theory Quick Reference](./control-theory-quick-reference.md)
@@ -178,6 +194,7 @@ By looking to fields like **game theory, epidemiology, ecology, and physics**, w
 
 | Research Area | Status | Integration Priority | Complexity |
 |---------------|--------|---------------------|------------|
+| **Signal Processing** | ✅ Research Complete | ⭐⭐⭐ HIGH | Medium-High |
 | **Complex Systems** | ✅ Research Complete | ⭐⭐⭐ HIGH | Medium |
 | **Game Theory** | ✅ Research Complete | ⭐⭐⭐ HIGH | Medium-High |
 | **Stigmergy** | ✅ Implemented | - | Deployed |
@@ -293,6 +310,6 @@ Questions about other research areas:
 
 ---
 
-**Last Updated:** 2025-12-21
+**Last Updated:** 2025-12-26
 
 *Research is ongoing. Check back for updates as new concepts are explored and validated.*
