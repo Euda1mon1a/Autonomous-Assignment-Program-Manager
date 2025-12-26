@@ -52,6 +52,125 @@
 
 ---
 
+## Feature Requests - Pending Investigation
+
+### Resident Call Types
+**Priority:** Medium
+**Added:** 2025-12-26
+**Status:** Awaiting resident input
+
+Two new resident call types need to be captured in the scheduling system:
+
+| Call Type | Full Name | Status | Notes |
+|-----------|-----------|--------|-------|
+| **Resident NF Call** | Night Float Call (?) | Needs definition | Investigate with residents |
+| **Resident LND Call** | Labor and Delivery Call (?) | Needs definition | Investigate with residents |
+
+**Questions to clarify with residents:**
+- [ ] What are the exact duties/responsibilities for each call type?
+- [ ] What are the shift times (start/end)?
+- [ ] Which PGY levels are eligible for each?
+- [ ] Are there supervision requirements?
+- [ ] How do these interact with ACGME work hour limits?
+- [ ] Are there specific days/rotations when these apply?
+- [ ] How do these relate to existing NF (Night Float) assignments?
+
+**Implementation considerations (once defined):**
+- Add to `RotationTemplate` or as separate assignment types
+- Create scheduling constraints
+- Update ACGME compliance checks if needed
+- Add to solver if applicable
+
+---
+
+## UI/UX Improvements (2025-12-26)
+
+> Findings from Comet Assistant GUI exploration session
+
+### 1. Schedule Grid - Frozen Headers/Columns
+**Priority:** High
+**Page:** `/schedule` (Block View)
+**Status:** To implement
+
+**Issues:**
+- [ ] Top header row (dates) disappears when scrolling vertically through residents
+- [ ] First column (resident name/PGY) disappears when scrolling horizontally
+
+**Implementation:**
+```css
+/* Sticky header row */
+th { position: sticky; top: 0; background-color: ...; z-index: 1; }
+
+/* Sticky first column */
+td:first-child, th:first-child { position: sticky; left: 0; z-index: 2; }
+```
+
+**Additional UX suggestions:**
+- Add subtle row/column hover highlight for scanning dense schedules
+- Ensure scroll container is on grid (not whole page)
+
+---
+
+### 2. Heatmap Page - Add Block Navigation
+**Priority:** High
+**Page:** `/heatmap`
+**Status:** To implement
+
+**Current state:** Only manual date pickers (From/To)
+
+**Requested:** Match Schedule page block navigation pattern:
+```
+[◀ Previous Block] [Next Block ▶] [Today] [This Block] Block: [Mar 12 - Apr 8, 2026]
+```
+
+**Proposed layout:**
+```
+Current:  From: [date] To: [date] Group by: [dropdown] ☑ Include FMIT [Filters]
+
+Proposed: [◀ Prev] [Next ▶] [Today] [This Block] Block: [Date Range]
+          From: [date] To: [date] Group by: [dropdown] ☑ Include FMIT [Filters]
+```
+
+**Benefits:**
+- Consistency with Schedule page UX
+- One-click block selection vs manual date entry
+- Quick navigation through 730 blocks
+
+---
+
+### 3. Heatmap Backend Bug - group_by Validation
+**Priority:** Medium
+**Page:** `/heatmap`
+**Status:** Bug - needs fix
+
+**Issue:** Backend rejects "Daily" and "Weekly" `group_by` values, only accepts "person" or "rotation"
+
+**Files to investigate:**
+- Backend endpoint handling heatmap requests
+- Schema validation for group_by parameter
+
+---
+
+### 4. Daily Manifest - Empty State UX
+**Priority:** Medium
+**Page:** `/daily-manifest`
+**Status:** UX improvement needed
+
+**Current behavior:** Shows "Error Loading Manifest - Not Found" when no schedule data exists
+
+**Issues:**
+- [ ] Poor error message - doesn't explain the actual problem
+- [ ] No empty state guidance for users
+- [ ] Date picker allows selecting dates with no schedule data
+
+**Recommended fixes:**
+- [ ] Better error message: "No schedule assignments for this date"
+- [ ] Empty state with CTA: "No schedule data available. Generate a schedule or import data to get started"
+- [ ] Disable/gray out dates with no schedule data
+- [ ] Show data availability indicator (e.g., "Schedule available: Mar 16 - Apr 12, 2026")
+
+---
+
 ## Slack Integration Setup
 
 - [ ] **Test Slack Webhook Connection**
@@ -215,4 +334,4 @@ The following links in `README.md` point to non-existent files:
 
 ---
 
-*Last updated: 2025-12-25*
+*Last updated: 2025-12-26*
