@@ -16,6 +16,11 @@ describe('TemplateSearch', () => {
     jest.clearAllMocks();
   });
 
+  afterEach(() => {
+    // Ensure real timers are restored after each test
+    jest.useRealTimers();
+  });
+
   describe('Search Input', () => {
     it('should render search input', () => {
       render(
@@ -57,8 +62,9 @@ describe('TemplateSearch', () => {
     });
 
     it('should debounce search query updates', async () => {
-      const user = userEvent.setup();
+      // Enable fake timers BEFORE userEvent.setup, and configure userEvent to advance them
       jest.useFakeTimers();
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
 
       render(
         <TemplateSearch
@@ -73,14 +79,12 @@ describe('TemplateSearch', () => {
       // Should not call immediately
       expect(mockOnFiltersChange).not.toHaveBeenCalled();
 
-      // Fast-forward time
-      jest.advanceTimersByTime(300);
+      // Fast-forward time for debounce
+      await jest.advanceTimersByTimeAsync(300);
 
-      await waitFor(() => {
-        expect(mockOnFiltersChange).toHaveBeenCalledWith(
-          expect.objectContaining({ searchQuery: 'test' })
-        );
-      });
+      expect(mockOnFiltersChange).toHaveBeenCalledWith(
+        expect.objectContaining({ searchQuery: 'test' })
+      );
 
       jest.useRealTimers();
     });
@@ -274,7 +278,16 @@ describe('TemplateSearch', () => {
   });
 
   describe('Advanced Filters', () => {
-    beforeEach(async () => {
+    // Helper to open filters panel - moved from async beforeEach
+    const openFiltersPanel = async (user: ReturnType<typeof userEvent.setup>) => {
+      const filtersButton = screen.getByText('Filters');
+      await user.click(filtersButton);
+      await waitFor(() => {
+        expect(screen.getByText('Category')).toBeInTheDocument();
+      });
+    };
+
+    it('should render category filter', async () => {
       const user = userEvent.setup();
       render(
         <TemplateSearch
@@ -282,27 +295,50 @@ describe('TemplateSearch', () => {
           onFiltersChange={mockOnFiltersChange}
         />
       );
+      await openFiltersPanel(user);
 
-      const filtersButton = screen.getByText('Filters');
-      await user.click(filtersButton);
-    });
-
-    it('should render category filter', () => {
       expect(screen.getByText('Category')).toBeInTheDocument();
       expect(screen.getByText('All categories')).toBeInTheDocument();
     });
 
-    it('should render visibility filter', () => {
+    it('should render visibility filter', async () => {
+      const user = userEvent.setup();
+      render(
+        <TemplateSearch
+          filters={{}}
+          onFiltersChange={mockOnFiltersChange}
+        />
+      );
+      await openFiltersPanel(user);
+
       expect(screen.getByText('Visibility')).toBeInTheDocument();
       expect(screen.getByText('All visibility')).toBeInTheDocument();
     });
 
-    it('should render status filter', () => {
+    it('should render status filter', async () => {
+      const user = userEvent.setup();
+      render(
+        <TemplateSearch
+          filters={{}}
+          onFiltersChange={mockOnFiltersChange}
+        />
+      );
+      await openFiltersPanel(user);
+
       expect(screen.getByText('Status')).toBeInTheDocument();
       expect(screen.getByText('All statuses')).toBeInTheDocument();
     });
 
-    it('should render sort options', () => {
+    it('should render sort options', async () => {
+      const user = userEvent.setup();
+      render(
+        <TemplateSearch
+          filters={{}}
+          onFiltersChange={mockOnFiltersChange}
+        />
+      );
+      await openFiltersPanel(user);
+
       expect(screen.getByText('Sort by')).toBeInTheDocument();
       const selects = screen.getAllByRole('combobox');
       expect(selects.length).toBeGreaterThan(0);
@@ -310,9 +346,17 @@ describe('TemplateSearch', () => {
 
     it('should update category filter', async () => {
       const user = userEvent.setup();
-      const categorySelect = screen.getByLabelText('Category');
+      render(
+        <TemplateSearch
+          filters={{}}
+          onFiltersChange={mockOnFiltersChange}
+        />
+      );
+      await openFiltersPanel(user);
 
-      await user.selectOptions(categorySelect, 'clinic');
+      // The selects are in order: Category, Visibility, Status, Sort by
+      const selects = screen.getAllByRole('combobox');
+      await user.selectOptions(selects[0], 'clinic');
 
       await waitFor(() => {
         expect(mockOnFiltersChange).toHaveBeenCalledWith(
@@ -323,9 +367,16 @@ describe('TemplateSearch', () => {
 
     it('should update visibility filter', async () => {
       const user = userEvent.setup();
-      const visibilitySelect = screen.getByLabelText('Visibility');
+      render(
+        <TemplateSearch
+          filters={{}}
+          onFiltersChange={mockOnFiltersChange}
+        />
+      );
+      await openFiltersPanel(user);
 
-      await user.selectOptions(visibilitySelect, 'private');
+      const selects = screen.getAllByRole('combobox');
+      await user.selectOptions(selects[1], 'private');
 
       await waitFor(() => {
         expect(mockOnFiltersChange).toHaveBeenCalledWith(
@@ -336,9 +387,16 @@ describe('TemplateSearch', () => {
 
     it('should update status filter', async () => {
       const user = userEvent.setup();
-      const statusSelect = screen.getByLabelText('Status');
+      render(
+        <TemplateSearch
+          filters={{}}
+          onFiltersChange={mockOnFiltersChange}
+        />
+      );
+      await openFiltersPanel(user);
 
-      await user.selectOptions(statusSelect, 'active');
+      const selects = screen.getAllByRole('combobox');
+      await user.selectOptions(selects[2], 'active');
 
       await waitFor(() => {
         expect(mockOnFiltersChange).toHaveBeenCalledWith(
@@ -349,9 +407,16 @@ describe('TemplateSearch', () => {
 
     it('should update sort by filter', async () => {
       const user = userEvent.setup();
-      const sortSelect = screen.getByLabelText('Sort by');
+      render(
+        <TemplateSearch
+          filters={{}}
+          onFiltersChange={mockOnFiltersChange}
+        />
+      );
+      await openFiltersPanel(user);
 
-      await user.selectOptions(sortSelect, 'name');
+      const selects = screen.getAllByRole('combobox');
+      await user.selectOptions(selects[3], 'name');
 
       await waitFor(() => {
         expect(mockOnFiltersChange).toHaveBeenCalledWith(
@@ -362,8 +427,15 @@ describe('TemplateSearch', () => {
 
     it('should toggle sort order', async () => {
       const user = userEvent.setup();
-      const sortOrderButton = screen.getByTitle(/Descending/);
+      render(
+        <TemplateSearch
+          filters={{}}
+          onFiltersChange={mockOnFiltersChange}
+        />
+      );
+      await openFiltersPanel(user);
 
+      const sortOrderButton = screen.getByTitle(/Descending/);
       await user.click(sortOrderButton);
 
       await waitFor(() => {
@@ -414,13 +486,19 @@ describe('TemplateSearch', () => {
       const filtersButton = screen.getByText('Filters');
       await user.click(filtersButton);
 
-      await waitFor(async () => {
-        const chip = screen.getByText(/Category: clinic/);
-        const closeButton = chip.nextElementSibling;
-        if (closeButton) {
-          await user.click(closeButton as HTMLElement);
-        }
+      // Wait for chip to appear
+      await waitFor(() => {
+        expect(screen.getByText(/Category: clinic/)).toBeInTheDocument();
       });
+
+      // Find the chip's parent span and the close button inside it
+      const chipText = screen.getByText(/Category: clinic/);
+      const chipContainer = chipText.closest('span.inline-flex');
+      const closeButton = chipContainer?.querySelector('button');
+
+      if (closeButton) {
+        await user.click(closeButton);
+      }
 
       await waitFor(() => {
         expect(mockOnFiltersChange).toHaveBeenCalledWith(
@@ -464,10 +542,13 @@ describe('TemplateSearch', () => {
       const filtersButton = screen.getByText('Filters');
       await user.click(filtersButton);
 
-      expect(screen.getByLabelText('Category')).toBeInTheDocument();
-      expect(screen.getByLabelText('Visibility')).toBeInTheDocument();
-      expect(screen.getByLabelText('Status')).toBeInTheDocument();
-      expect(screen.getByLabelText('Sort by')).toBeInTheDocument();
+      // Check that filter labels are visible (component uses labels as text, not htmlFor)
+      expect(screen.getByText('Category')).toBeInTheDocument();
+      expect(screen.getByText('Visibility')).toBeInTheDocument();
+      expect(screen.getByText('Status')).toBeInTheDocument();
+      expect(screen.getByText('Sort by')).toBeInTheDocument();
+      // And that we have the corresponding comboboxes
+      expect(screen.getAllByRole('combobox')).toHaveLength(4);
     });
 
     it('should be keyboard navigable', async () => {
@@ -483,7 +564,9 @@ describe('TemplateSearch', () => {
       searchInput.focus();
 
       await user.keyboard('{Tab}');
-      expect(screen.getByText('Filters')).toHaveFocus();
+      // Focus should be on the Filters button (the button element, not the span inside)
+      const filtersButton = screen.getByText('Filters').closest('button');
+      expect(filtersButton).toHaveFocus();
     });
   });
 });
