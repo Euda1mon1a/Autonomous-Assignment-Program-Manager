@@ -192,6 +192,25 @@ class SchedulingEngine:
                     "off-site assignments (Hilo/Kapiolani/Okinawa)"
                 )
 
+            # Step 1.5e: Load recovery assignments (Post-Call)
+            # Note: PC is also enforced by NightFloatPostCallConstraint
+            recovery_assignments = self._load_recovery_assignments()
+            preserve_ids.update({a.id for a in recovery_assignments})
+            if recovery_assignments:
+                logger.info(
+                    f"Preserving {len(recovery_assignments)} "
+                    "recovery assignments (Post-Call)"
+                )
+
+            # Step 1.5f: Load education assignments (FMO, GME, Lectures)
+            education_assignments = self._load_education_assignments()
+            preserve_ids.update({a.id for a in education_assignments})
+            if education_assignments:
+                logger.info(
+                    f"Preserving {len(education_assignments)} "
+                    "education assignments (FMO/GME/Lectures)"
+                )
+
             # NOTE: Deletion deferred until after successful solve (see Step 5.5)
             # This prevents data loss if the solver fails
 
@@ -222,6 +241,8 @@ class SchedulingEngine:
                 + resident_inpatient_assignments
                 + absence_assignments
                 + offsite_assignments
+                + recovery_assignments
+                + education_assignments
             )
             context = self._build_context(
                 residents,
@@ -1052,6 +1073,72 @@ class SchedulingEngine:
                 Block.date >= self.start_date,
                 Block.date <= self.end_date,
                 RotationTemplate.activity_type == "off",
+            )
+            .all()
+        )
+
+    def _load_recovery_assignments(self) -> list[Assignment]:
+        """
+        Load recovery/post-call assignments for the date range.
+
+        Post-call recovery days follow Night Float or FMIT for both
+        residents and faculty. These are mandatory rest periods.
+
+        Detection logic:
+            - template.activity_type == 'recovery'
+            - Includes: Post-Call Recovery (PCR)
+
+        Business Rules:
+            - Post-call is mandatory after night duty (ACGME)
+            - Applies to both residents and faculty after FMIT
+            - Cannot be scheduled for clinical duties during recovery
+
+        Returns:
+            List of Assignment objects for recovery periods
+        """
+        return (
+            self.db.query(Assignment)
+            .join(Block, Assignment.block_id == Block.id)
+            .join(
+                RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
+            )
+            .filter(
+                Block.date >= self.start_date,
+                Block.date <= self.end_date,
+                RotationTemplate.activity_type == "recovery",
+            )
+            .all()
+        )
+
+    def _load_education_assignments(self) -> list[Assignment]:
+        """
+        Load education/orientation assignments for the date range.
+
+        Education blocks include orientation (FMO), GME days, and lectures.
+        These are protected academic time that cannot be preempted.
+
+        Detection logic:
+            - template.activity_type == 'education'
+            - Includes: FMO, GME AM/PM, Lecture AM/PM
+
+        Business Rules:
+            - Block 0/1 orientation (FMO) is mandatory for interns
+            - GME days are protected academic time
+            - Weekly didactics/lectures are required
+
+        Returns:
+            List of Assignment objects for education periods
+        """
+        return (
+            self.db.query(Assignment)
+            .join(Block, Assignment.block_id == Block.id)
+            .join(
+                RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
+            )
+            .filter(
+                Block.date >= self.start_date,
+                Block.date <= self.end_date,
+                RotationTemplate.activity_type == "education",
             )
             .all()
         )
