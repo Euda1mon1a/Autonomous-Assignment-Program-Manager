@@ -1,0 +1,873 @@
+{
+  "fetched_at": "2025-12-25T20:46:40.568434",
+  "table_name": "blocks",
+  "table_id": "tblWHxncXVwlxXV4i",
+  "record_count": 14,
+  "records": [
+    {
+      "id": "rec4QEhUx2W3VpbJg",
+      "createdTime": "2025-04-23T21:57:10.000Z",
+      "fields": {
+        "blockNumber": "7",
+        "startBlockLink": "12/18/2025",
+        "endBlockLink": "1/14/2026",
+        "academicWeek": "25, 26, 27, 28",
+        "residencyBlockScheduleLink": [
+          "recBt0z6eiemPZeWL",
+          "recc1BfgynBe4u1I2",
+          "recH4usJpJnpWSFHb",
+          "rectDJbc2aJyTwEC4",
+          "rec7g1mxXkxcmRfjt",
+          "recnzjaButWz6KYQP",
+          "rec06WmgymClGZpNY",
+          "recIPvsWzzNMitw3V",
+          "recUOGE5e6b9fxTUg",
+          "recoW4xquX7G7ACZ8",
+          "recmIG6g7TbsOZzMv",
+          "recLYj1GewGw2EcO9",
+          "recwqs5gPFihwpIbw",
+          "recvSBj4S6MyKO74U",
+          "recvCsC6baReMCMHu",
+          "recbPEA0XQyAnzjsV",
+          "rec1xLEgHRLGxH5R8"
+        ],
+        "blockID": "rec4QEhUx2W3VpbJg",
+        "leave": [
+          "recZTPo13eWlsXXdL",
+          "recEPHExEn1YGWcI1",
+          "recP4CYRDfErgnFiT",
+          "rec1w39jdIOCLCvYI",
+          "recGMctzDRFq96kZ3",
+          "recdcDN7azvdwiABJ",
+          "recdkMWObmLHnTtzn",
+          "recsVIiHgk1YAWCvx",
+          "recVFL4IpKuOvI7qX",
+          "recN4YcDBSlQScN07",
+          "recsJYvXFhlnMAW3E"
+        ],
+        "weeksOfBlocks": [
+          "rec7EmC590vIgSb9S",
+          "rechoW2bVHJsvmxHl",
+          "recijfj0HmBmfL9Ip",
+          "recwBtmNm8VJrUAO0"
+        ],
+        "dayOfWeekOfBlocks": "Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record",
+        "holidays": [
+          "recirCIjVwz50YemR",
+          "recE6toTZY3Ovh9Uk"
+        ],
+        "attendingInpatientSchedule": [
+          "rectACv3yxa8uxOSP",
+          "rectM76wFJdogBbh0",
+          "recUJ47OdVC5X9HJA",
+          "recHWEMYpGPL6b3oX"
+        ],
+        "startDateDirect": "2025-12-18",
+        "endDateDirect": "2026-01-14",
+        "facultyAbsences": [
+          "recJSqu0uw3Y2Q4lU",
+          "recxswu5U6ObSC1UP",
+          "rec1TravACyQCyYlX",
+          "recrOVz7smujUWMCh",
+          "recF2v7AFP4ca9bga",
+          "rec2sL4sDRvvO0CsS"
+        ]
+      }
+    },
+    {
+      "id": "rec9KG7LgejhaAdDP",
+      "createdTime": "2025-04-23T21:57:10.000Z",
+      "fields": {
+        "blockNumber": "9",
+        "startBlockLink": "2/12/2026",
+        "endBlockLink": "3/11/2026",
+        "academicWeek": "33, 34, 35, 36",
+        "residencyBlockScheduleLink": [
+          "recJFGWL5lOpdAb4G",
+          "recC1ehmQ5EuTwekK",
+          "recAZTy01x3DmpeBx",
+          "recH5gnEYLljh05qD",
+          "recWaYTJ9ChE8ul6E",
+          "rec4KsjbthEcCXi68",
+          "recUddNZx922ONQiP",
+          "recjYXo1DjbbfPXfi",
+          "recGmRiOnv2taFIuX",
+          "recyUc7lFGGVw8aa2",
+          "recbYkoIOCKE8FWUV",
+          "rec11iZO6S3MZ9KF2",
+          "rec4Ug2EjHX3fDfof",
+          "recemTE2XFHMSH8rM",
+          "recm56xKseXsmyhc7",
+          "reczuBtGa4FZAsf5h",
+          "reckXdKnWjo7uKuPP"
+        ],
+        "blockID": "rec9KG7LgejhaAdDP",
+        "leave": [
+          "receYyxHN8EQOdMIo",
+          "recFxajyqpMXesv76",
+          "recXhpKm9rKfRvhNV",
+          "recbAeL2P8xXjy4MX",
+          "recmAb934QPqWheoD"
+        ],
+        "weeksOfBlocks": [
+          "reckL4nuk1uZdFKK7",
+          "recNNARlbpF0ZAvzU",
+          "reczfCrngdwoxvES1",
+          "recoERlHbZPgWRMbf"
+        ],
+        "dayOfWeekOfBlocks": "Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record",
+        "holidays": [
+          "recyz9TL7kuyoh1Vp"
+        ],
+        "attendingInpatientSchedule": [
+          "rec66RVtYFOQMGoMt",
+          "recvJwSP1CmffV88f",
+          "rec88588lspxZ3qcH",
+          "recyov1oBKLAP6Ovs"
+        ],
+        "startDateDirect": "2026-02-12",
+        "endDateDirect": "2026-03-11",
+        "facultyAbsences": [
+          "recZu9XUo1H7VBGrm",
+          "recChSsBetQtvAYGK",
+          "recbZWB4a82knyMum",
+          "rec52Vl687jXmEtsM",
+          "rec1q83KzinxPT0GH",
+          "rec4mFscUhhluJAPU"
+        ]
+      }
+    },
+    {
+      "id": "recHQVwPtmZwHBnGx",
+      "createdTime": "2025-04-23T21:57:10.000Z",
+      "fields": {
+        "blockNumber": "10",
+        "startBlockLink": "3/12/2026",
+        "endBlockLink": "4/8/2026",
+        "academicWeek": "37, 38, 39, 40",
+        "residencyBlockScheduleLink": [
+          "recRTQVvgENcWvirO",
+          "recRSdERANe58QD7Z",
+          "rec98ueRAhaITB6i1",
+          "rec7JXkzZMNs5TNNx",
+          "receqhJ4BVbMSq8SP",
+          "rec5beSG6arUYbvbB",
+          "recLIOIExtlUTPVQJ",
+          "recJUZpiwYKs7nL1P",
+          "recHhEZed0V2aDVYq",
+          "rec0h8z6bIAPYHGVy",
+          "recooWnvsA6pfHdti",
+          "recgyNmGBrCwKsMtr",
+          "rec9BFoErlQ6HEEQt",
+          "recZNJbAeEFCMxfl0",
+          "recSTJpWuTkVW4N1m",
+          "rec054sMeBkwzix9l"
+        ],
+        "blockID": "recHQVwPtmZwHBnGx",
+        "leave": [
+          "reci2y6zyWkDTWNJo",
+          "recKSYFMUi5uuICzV",
+          "recsiKy2oFXXjaO4z"
+        ],
+        "weeksOfBlocks": [
+          "reciDdMTnrkzN6kqi",
+          "recwSgpzNpZclFwPz",
+          "reckeHPOmddcKPyjW",
+          "recVH2lHU7HkeUAfs"
+        ],
+        "dayOfWeekOfBlocks": "Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record",
+        "attendingInpatientSchedule": [
+          "recajHEj96v3TJb36",
+          "rectc6uHyCUNIKyd6",
+          "rec8xzhjc8WAphwWB",
+          "recaGkSVdeZ2Ke5IY"
+        ],
+        "startDateDirect": "2026-03-12",
+        "endDateDirect": "2026-04-08",
+        "facultyAbsences": [
+          "recZu9XUo1H7VBGrm",
+          "recNPYkS7eN6EYACB",
+          "recfXJouf37W9nfjZ",
+          "recbZWB4a82knyMum",
+          "rec52Vl687jXmEtsM",
+          "recp3hk2rWAKqMfXF",
+          "rec4mFscUhhluJAPU"
+        ]
+      }
+    },
+    {
+      "id": "recO8nXpj7mKdnOC2",
+      "createdTime": "2025-04-23T21:57:10.000Z",
+      "fields": {
+        "blockNumber": "8",
+        "startBlockLink": "1/15/2026",
+        "endBlockLink": "2/11/2026",
+        "academicWeek": "29, 30, 31, 32",
+        "residencyBlockScheduleLink": [
+          "reccVKvZCVS465ugg",
+          "recsQI4Hm3VUL1fSw",
+          "recCvjEBxDLUgM0Zw",
+          "recLfO27MTlf0rPv7",
+          "rectGnrQnrXr0di1O",
+          "recz67lSXpxgskvGe",
+          "recqYFWb0DsM20ug0",
+          "rec8ighFFj119tYG5",
+          "recp3U1i3BZJFehuz",
+          "recWJF71qOskh5EYn",
+          "recW39fvCFczVLeD6",
+          "recxSI5954V3QMFuE",
+          "rec6bxa0dJrmjWxvE",
+          "recuW4Ns9eb9CcDN5",
+          "rec4XwoJ4Oh6sUA26",
+          "rec1oL4CAgLHIPCYj",
+          "recgwW5W2SKb0BMjM"
+        ],
+        "blockID": "recO8nXpj7mKdnOC2",
+        "leave": [
+          "recIG9TqWoUUyZTnG",
+          "recniik1nv9Cwmvfz",
+          "recHSmiwJdLBlUXOt",
+          "recph5kZm5R2E5gWo",
+          "recKDBRDpEub5HW49",
+          "recUlCrilNnQ9Uitx",
+          "recIC4BC4Gv3W3U99",
+          "recsJYvXFhlnMAW3E"
+        ],
+        "weeksOfBlocks": [
+          "recu20xxxaaqQcUPO",
+          "recxiNhkLcM7ZE2mB",
+          "recLxLsL5BqIV0nXE",
+          "recImfImqOW3kc8ZU"
+        ],
+        "dayOfWeekOfBlocks": "Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record",
+        "holidays": [
+          "rec1J7pvwZpiLWOa1"
+        ],
+        "attendingInpatientSchedule": [
+          "recT3xMwyBUBTdfD0",
+          "recWx94aNVtZlpcSz",
+          "recech13z1PLdrftS",
+          "recADfMIzHEXCqiGb"
+        ],
+        "startDateDirect": "2026-01-15",
+        "endDateDirect": "2026-02-11"
+      }
+    },
+    {
+      "id": "recWQEZ1WZ8lvXReP",
+      "createdTime": "2025-04-23T21:57:10.000Z",
+      "fields": {
+        "blockNumber": "13",
+        "startBlockLink": "6/4/2026",
+        "endBlockLink": "6/30/2026",
+        "academicWeek": "49, 50, 51, 52",
+        "residencyBlockScheduleLink": [
+          "recUzGjOl5xqzNSWd",
+          "recISRHXzrOrZkozL",
+          "recLLik030EDdmO0h",
+          "recAtA9Po2klBPO5M",
+          "recS8EssW1HGjYwnK",
+          "rec0Me524wtvbOoL4",
+          "rec1m5iedLEfdxkd3",
+          "rec4JOSz9TmmUYI1B",
+          "reca6CovyNBGMCtZO",
+          "recDg01nTHRwpnuPO",
+          "rec1u6klINIFE6tEE",
+          "recAxF6yZ0AEaacg0",
+          "recBZXvFBdJy3JwZL",
+          "recb4pv3qxnc7U7Vo",
+          "recu26kP9QInB2sLO",
+          "recqdoJ8JaSdAGa56",
+          "recTJkihM7pTRpwRc"
+        ],
+        "blockID": "recWQEZ1WZ8lvXReP",
+        "leave": [
+          "recDq7wlbD7iYr6L1",
+          "recllP9iK2Pxnqkqs",
+          "reckmXV3KWqmaW5do",
+          "recz7c8zId2sa6Exa",
+          "recJXbVg2QhnDTS0c",
+          "recyjP4PZQUOnOyTI"
+        ],
+        "weeksOfBlocks": [
+          "recEqlXhjo36YHLuo",
+          "recXDIxdgVgvK9f09",
+          "recAEtv5r2SSCZpsl",
+          "recA7eJr83UKZVBmc"
+        ],
+        "dayOfWeekOfBlocks": "Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record",
+        "holidays": [
+          "recJrLcYMw2rSoM43"
+        ],
+        "attendingInpatientSchedule": [
+          "recafgXmSrKPCnnML",
+          "recW5ZMn7b8igoSKX",
+          "recqEI0XgCBm2Idmn",
+          "recxpMsKSPNFa96cA"
+        ],
+        "startDateDirect": "2026-06-04",
+        "endDateDirect": "2026-06-30"
+      }
+    },
+    {
+      "id": "recba9vit0iwjDvyd",
+      "createdTime": "2025-04-23T21:57:10.000Z",
+      "fields": {
+        "blockNumber": "2",
+        "startBlockLink": "7/31/2025",
+        "endBlockLink": "8/27/2025",
+        "academicWeek": "5, 6, 7, 8",
+        "residencyBlockScheduleLink": [
+          "recNVSGb2dhImUCoI",
+          "recB485ZYZYbbYnfo",
+          "rechXoz8N3WQkkzJq",
+          "recCzoNiDZ1OQUZlc",
+          "recDAAkHmOS57w3yc",
+          "recqhMGQ2W3QmZLtA",
+          "recYhSqoE01BCtupf",
+          "recHrDQNvZmBU8910",
+          "recl6d6AvQ2u1JXhI",
+          "recQtvkWeYYyMpXBF",
+          "recfuhveQOcnWHb40",
+          "recR34Rz5bwPLN0KT",
+          "recmV3UE6BsnBQh4p",
+          "rec1iRvCqMNF6Y7i0",
+          "recRrWNIOX0CJtK6o",
+          "recjYWo43gvmZVHNP",
+          "recwokQhCxdEDSh8V"
+        ],
+        "blockID": "recba9vit0iwjDvyd",
+        "leave": [
+          "recgg1LxzdddHuLhX",
+          "rec2iqlfOaJuWM24a",
+          "recterAsnjU3e2f99",
+          "recAeBme1s1Ao8VNF",
+          "reccAv2OEauCgW8v3",
+          "recwb0wjhFSEvnBrm",
+          "recOiIfQ93mjoA4EJ",
+          "recV9dvHQm1hmw87m",
+          "rece2kpv50RFYry44",
+          "receHpAHOBggfbCZZ",
+          "recGMvR9VQ9lAz0QA",
+          "rec3sp4f1TFMohvCb",
+          "recMJVbmABObHIiDs",
+          "recQKw8sLXBvCjeVr",
+          "reclsF1pPvHCztsxG",
+          "recpkec1cv64TK5E4",
+          "rec0sG1Ka9xHEcWn0"
+        ],
+        "weeksOfBlocks": [
+          "reclXLqPsmNyh9HKY",
+          "reccqW0iteEqfuRkX",
+          "receytjZYm8QQVRxQ",
+          "recZkq9Aqd8TAQfuq"
+        ],
+        "dayOfWeekOfBlocks": "Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record",
+        "attendingInpatientSchedule": [
+          "recXLkQTMeMNPnTeH",
+          "rech1votQ8aNlKj4Q",
+          "recKV6uR8ZZVmJSOi",
+          "reca5Eoodvg5M6JBj"
+        ],
+        "startDateDirect": "2025-07-31",
+        "endDateDirect": "2025-08-27",
+        "facultyAbsences": [
+          "recX7EP7MPt8Bp7gG",
+          "recG2fmbqmArh2aB2",
+          "recoe0zbD0B4oXtK3",
+          "recqcDfoUSx2A526g",
+          "rec5izs8M6zWPAVEs",
+          "recm1TswbssEeByI4",
+          "rec42Fo9zCrURQbgD",
+          "recTBksZx5CjGWZ5o",
+          "recgffTuYood7kNVx",
+          "recFYPRTXy8DaJxoC",
+          "recbAD12YofFr77ej",
+          "recenkUy39SSMkcnV"
+        ]
+      }
+    },
+    {
+      "id": "recheHoNFIphdOOkc",
+      "createdTime": "2025-04-23T21:57:10.000Z",
+      "fields": {
+        "blockNumber": "6",
+        "startBlockLink": "11/20/2025",
+        "endBlockLink": "12/17/2025",
+        "academicWeek": "21, 22, 23, 24",
+        "residencyBlockScheduleLink": [
+          "recm0laeKdNAO14rL",
+          "recqDL3b8mreoI512",
+          "rech97I2E4Kv7zXWf",
+          "recsezaVgmyJEr2tl",
+          "rec9v2RpmolaDlo7m",
+          "rec6Gg8sRwkNGRev6",
+          "rec1sSyVBb7drC5SM",
+          "rechwmvcVnW1cIWyH",
+          "rec7th8eZFYf3fXIy",
+          "recGfg4ng3rZZRFOM",
+          "rec2JLrbI2FEyRbNv",
+          "recIsR8gNBRCY5knb",
+          "recBJkvG8yNBHfnuz",
+          "rec4QJD9KqY0BPKbY",
+          "recYEYYdQIb0T4mg0",
+          "rec653Zji9dcOZ3VV",
+          "recqYLt4FzoGpflEe"
+        ],
+        "blockID": "recheHoNFIphdOOkc",
+        "leave": [
+          "recXyvRSvBcQ381oJ",
+          "recf2EdyAvcJ1IryZ",
+          "recbSraZyhTvffCgx",
+          "recskXqQU1nlVw2KB",
+          "rec23c6YeLTg2Chmt",
+          "reci8cYBCK8tfLQYG",
+          "recpgyduW8bzplVKT",
+          "recZifURlhG6xwCCr",
+          "recBD7Wnm7ZX7UAYP",
+          "recfQIUfIr2C7kJWK",
+          "recoGArTIxa6YBhKV",
+          "reckYO9kp15Hfs6uP",
+          "recrhACdgNbHaD36l",
+          "reco9oGnHSDthx8q9"
+        ],
+        "weeksOfBlocks": [
+          "recdORzISs5WnBXS6",
+          "recs1WUjEQCwBZyNL",
+          "recxHjoAO7PgKgIZi",
+          "recO6WiMPFdCIsMTD"
+        ],
+        "dayOfWeekOfBlocks": "Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record",
+        "holidays": [
+          "recJ3Pbkqvy3zlpfV"
+        ],
+        "attendingInpatientSchedule": [
+          "reclumKwwN5DfcAKJ",
+          "recPQtZdGEUs5DyID",
+          "recAFbeDA6Okg06Xe",
+          "reclZUpkuB8W6KwQ3"
+        ],
+        "startDateDirect": "2025-11-20",
+        "endDateDirect": "2025-12-17",
+        "facultyAbsences": [
+          "recCS1GF8e2Vac0fo",
+          "recrLw5l9Hl7fMP1A",
+          "recxP1PvusBqyvdAs",
+          "recQGq6pBrJW49eDX",
+          "recAvZE5wXt2YXHF1",
+          "recikeL40KAHQyrG2",
+          "rechzqMrsazxQCt5g"
+        ]
+      }
+    },
+    {
+      "id": "reciDYU7hTsmjgAaT",
+      "createdTime": "2025-04-23T21:57:10.000Z",
+      "fields": {
+        "blockNumber": "5",
+        "startBlockLink": "10/23/2025",
+        "endBlockLink": "11/19/2025",
+        "academicWeek": "17, 18, 19, 20",
+        "residencyBlockScheduleLink": [
+          "reczTZol8axhuwZWz",
+          "rec8x6JjJ0G70aUk6",
+          "rec4UdUEs7H0Dt8u8",
+          "recrLJv3RJKPeUtE6",
+          "recJY3w3P5AYvsmlW",
+          "recoMqfZ4EpulPhHn",
+          "rechkz6DI0EzDLRMA",
+          "reclu5hewjISitoNX",
+          "recbrBcIU6Qq0WAJ7",
+          "rec0Nu4WGb81k6j5D",
+          "recPtu87aIsasDgxa",
+          "recXSKGbNUrPV6Kfj",
+          "recDNtWmLrFf04Hqn",
+          "recircjE0ZyJF2atK",
+          "reccGPm6oFLAFikPS",
+          "recA3wNprhPnYRXxN",
+          "recj1DeiiTKngHw6x"
+        ],
+        "blockID": "reciDYU7hTsmjgAaT",
+        "leave": [
+          "recHCypTL53mMQpC1",
+          "recqe5ZxpdMnrn5qi",
+          "recyTFKmDj6lsxeKw",
+          "rec4CcqVVNRLKdkt6",
+          "recGHx8z0Ks6zwpIV",
+          "recWmIlsZ88fhOjIZ",
+          "recC9Uf6gj8ZyXifE"
+        ],
+        "weeksOfBlocks": [
+          "reccyAXvBcoT61p3U",
+          "rec9bxFuF7RCOaB9w",
+          "rec7ZpXsy4JgCgIlp",
+          "reccIzmNSqP22ZwSq"
+        ],
+        "dayOfWeekOfBlocks": "Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record",
+        "holidays": [
+          "recarXcXzrBb8oOZV"
+        ],
+        "attendingInpatientSchedule": [
+          "recyl6n2SVspgVCSp",
+          "recPSQLHaUSLYC4u4",
+          "reclPtHwfLSwfQi4T",
+          "recQOhCGQKnlBrooR"
+        ],
+        "startDateDirect": "2025-10-23",
+        "endDateDirect": "2025-11-19",
+        "facultyAbsences": [
+          "recCS1GF8e2Vac0fo",
+          "recngvkQNYvqVHGjo",
+          "recC0u0iz4z5tmDMG",
+          "recl6NufhPEr8crQI"
+        ]
+      }
+    },
+    {
+      "id": "recldLCwxBq8qUpNY",
+      "createdTime": "2025-04-23T21:57:10.000Z",
+      "fields": {
+        "blockNumber": "3",
+        "startBlockLink": "8/28/2025",
+        "endBlockLink": "9/24/2025",
+        "academicWeek": "9, 10, 11, 12",
+        "residencyBlockScheduleLink": [
+          "recFgMxNxPL3p4Bxt",
+          "recD2UHRFNd1TzYyr",
+          "recqCd5ODdlsLDLgb",
+          "recFs4BMjPqbENhqw",
+          "recyP6jJMCHsH2lWP",
+          "recVePxML9kyMAQq2",
+          "recd0wcwTGCeMtPyQ",
+          "recCKK1EM3QDNnqZ1",
+          "rec63ncOiJa7fpb85",
+          "recF9RfLZtknD8NZ9",
+          "recW7Dt1vBZz2euVD",
+          "recmr4QMTFXMy63Kz",
+          "recN9J2xT7aocAhlo",
+          "recH8aXQNiqV0551C",
+          "rec1AWiAYuRh9HxqR",
+          "reca5gxczIsGh14Fi",
+          "recuDE99wmsAuBhvX"
+        ],
+        "blockID": "recldLCwxBq8qUpNY",
+        "leave": [
+          "recZR76dVJcnnHei8",
+          "receXnvRbjNJ3qOHu",
+          "recdNHFdCtFZFYJf4",
+          "recVONKUMf1QEHuLM",
+          "recOpv6RNeSOIv4Iw",
+          "recdKJjfXaM2E9R07",
+          "recA2nYLhaHinXhf1",
+          "recC7I1td2ZtcaSfi",
+          "recmeE0CE5CNaidyT"
+        ],
+        "weeksOfBlocks": [
+          "rectlpB6MpeJCaE4V",
+          "rec5dmOB8c2qzg3Jb",
+          "recmbNCnbOoHRzQub",
+          "recSdr9Kl0N3dVqcV"
+        ],
+        "dayOfWeekOfBlocks": "Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record",
+        "holidays": [
+          "rec0k8aPfkfPyv3GU"
+        ],
+        "attendingInpatientSchedule": [
+          "recoaSzjatk8fTCry",
+          "recWQuaZw5DcLZwVc",
+          "recsdq3i9mLh32oTu",
+          "recbkTmQHQWEgzTWw"
+        ],
+        "startDateDirect": "2025-08-28",
+        "endDateDirect": "2025-09-24",
+        "facultyAbsences": [
+          "recG2fmbqmArh2aB2",
+          "recoe0zbD0B4oXtK3",
+          "recUs4gdSl5lP3Pk7",
+          "rec9QrU4mo8HFnyEt",
+          "recAzNx07S8xGAodG",
+          "recSeMHmEVFqS8QYK",
+          "recw4noM42VwcLXVm",
+          "recCHPUK7Z7llXO4O",
+          "rec1iI8xEeDZXfFXb",
+          "recE1O31BwYSTqSY4",
+          "recwTenx8l9g6uP4r",
+          "rec79jkerFnsZi8SP",
+          "receOy2TjGRBteti0",
+          "recl6NufhPEr8crQI"
+        ]
+      }
+    },
+    {
+      "id": "rectoByFjGEhCHnP0",
+      "createdTime": "2025-04-23T21:57:10.000Z",
+      "fields": {
+        "blockNumber": "12",
+        "startBlockLink": "5/7/2026",
+        "endBlockLink": "6/3/2026",
+        "academicWeek": "45, 46, 47, 48",
+        "residencyBlockScheduleLink": [
+          "rec7sRvOM53L4jSFN",
+          "recNUQMMyTDy9kcL9",
+          "recuIw9t5ximanusA",
+          "rec1Ue4DOt4zZg7C9",
+          "recThJzdIhcIsKyqS",
+          "recgurtzFGhPWtq4h",
+          "recoccIgNcDHiD1k7",
+          "recKCo3C4UDyu9JGq",
+          "recshH2nyCtUBIQQ0",
+          "recic9rktZVLwtpYN",
+          "rec4b1kbrUAtzbcqf",
+          "recPKgSiEzov6KoKx",
+          "recClro4TU1XvsIed",
+          "recJ8QfAOsd7Z6QSY",
+          "rectW0q73d9TOCD6J",
+          "reciywozDDHOX0okJ"
+        ],
+        "blockID": "rectoByFjGEhCHnP0",
+        "leave": [
+          "recI5ueaQlBOZz6ZG",
+          "recSnBdD6Ppwbw4v8",
+          "recBZ7hFMVHfPzQfE",
+          "rec7hu3KvcsZ7y0xa",
+          "recwSkc6m9snEIH8y"
+        ],
+        "weeksOfBlocks": [
+          "recYHgn9mhnBaY5Qu",
+          "recRkp1uQB2xMQJCw",
+          "recgTBTPKFi84k3r4",
+          "recdBqwfwd8XpnS8p"
+        ],
+        "dayOfWeekOfBlocks": "Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record",
+        "holidays": [
+          "reca0KjjDHeOgXm0Z"
+        ],
+        "attendingInpatientSchedule": [
+          "rec4ERc00ZQmoYlPW",
+          "recifDPkz00qH9SbR",
+          "recPl3fFOebaUXVMB",
+          "recC1h4HP93uGIsdd"
+        ],
+        "startDateDirect": "2026-05-07",
+        "endDateDirect": "2026-06-03",
+        "facultyAbsences": [
+          "rec5n9OgetnuNdPnJ",
+          "recOXvuDZm9p351fk"
+        ]
+      }
+    },
+    {
+      "id": "recu3bPbL0lRt2yZ2",
+      "createdTime": "2025-08-27T08:29:12.000Z",
+      "fields": {
+        "blockNumber": "Academic Year 26-27",
+        "startBlockLink": "7/1/2026",
+        "endBlockLink": "6/30/2027",
+        "blockID": "recu3bPbL0lRt2yZ2",
+        "startDateDirect": "2026-07-01",
+        "endDateDirect": "2027-06-30",
+        "facultyAbsences": [
+          "recRTYxRdOa7PCt8O",
+          "recsZRGxwRg5RvGH5",
+          "reck1c1lfec2qH3Pi"
+        ]
+      }
+    },
+    {
+      "id": "recukCPK15uxoCGtJ",
+      "createdTime": "2025-04-23T21:57:10.000Z",
+      "fields": {
+        "blockNumber": "11",
+        "startBlockLink": "4/9/2026",
+        "endBlockLink": "5/6/2026",
+        "academicWeek": "41, 42, 43, 44",
+        "residencyBlockScheduleLink": [
+          "rec8prxGk6bOiXseO",
+          "recy4N4HeXpN5b5Jw",
+          "recoHy1HCfqp4EnM8",
+          "recPKdl9F20NmygG9",
+          "rec9dzizdVEAyZSir",
+          "recxqUaK6ILvIEmBm",
+          "receNTRd91NZx84Q7",
+          "recG3ML9dlQfU4Ct0",
+          "recfOsABusZjtC2eB",
+          "recVgytwPbuMCWMNi",
+          "rec92aJZ0lxEqWLcv",
+          "recdf99PI6c0n5Pax",
+          "recnoBKM5YUItByy4",
+          "recKMJPJFJgIcSIuA",
+          "recuIe66LYVIEG0QA",
+          "recS42I07ovwYmF3N"
+        ],
+        "blockID": "recukCPK15uxoCGtJ",
+        "leave": [
+          "recpBU6PNSs22f5aX",
+          "rec1CYX9NKgU2U4LH",
+          "recSYRjt3Bm6aJNZv",
+          "recwC37uLTTSKXwng",
+          "recDOqLe9fxDPY6iU"
+        ],
+        "weeksOfBlocks": [
+          "recxU0oHUqRCa8cXm",
+          "rectcZiO692hLj7nQ",
+          "recfTutCQilr2rRZT",
+          "rec9bQ23meHhzxDmt"
+        ],
+        "dayOfWeekOfBlocks": "Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record",
+        "attendingInpatientSchedule": [
+          "recwz2HYBYGvqFgxt",
+          "recEZ6QH9JwTvRxpF",
+          "recN4lDMwOsh535tv",
+          "rece3ttctOAD6rYz5"
+        ],
+        "startDateDirect": "2026-04-09",
+        "endDateDirect": "2026-05-06",
+        "facultyAbsences": [
+          "recQ7yWIeQHz0EDnH"
+        ]
+      }
+    },
+    {
+      "id": "recxSe9VbRMwt4DqQ",
+      "createdTime": "2025-04-23T21:57:10.000Z",
+      "fields": {
+        "blockNumber": "4",
+        "startBlockLink": "9/25/2025",
+        "endBlockLink": "10/22/2025",
+        "academicWeek": "13, 14, 15, 16",
+        "residencyBlockScheduleLink": [
+          "recbg0xYNn0xZmvYd",
+          "reccib1cyZQuOoF4W",
+          "recnR4e2ejiBrW4at",
+          "rec4cy11YOvsUk0yp",
+          "recLVWe8IzouKixlN",
+          "recwot0ZEO6JWtPNZ",
+          "recnBbPMKtEoC8PmH",
+          "recSZdGDP16gLGRXk",
+          "recjPQ7NBV0CCatlF",
+          "recXvQWVqnhgNK5Qr",
+          "recnTVbgLykEKowvz",
+          "rec19Jm3y57Al4WSM",
+          "rec9QcIussLlWfkGa",
+          "recuGAFZgk2shB6DY",
+          "rec3Xk4bOY6hV2Ppr",
+          "rec9YtRZaIdsz0Ob1",
+          "recqMSiaDd5umyAVX"
+        ],
+        "blockID": "recxSe9VbRMwt4DqQ",
+        "leave": [
+          "recdVIlkXa2Q5KtRy",
+          "recBs2sCuKmCmpUOs",
+          "recHKoHEvYH6iIkUL",
+          "recTiyIgfMMfT4PHm",
+          "rec3norCmvbzi7dJr",
+          "recVONKUMf1QEHuLM",
+          "rec76XnEkWEti9Yto",
+          "recC5tSZh3MIVEeT3",
+          "recfbWBiM6x2CBvx1",
+          "recNo6uV2evq6OSeJ",
+          "rec2qciaqpEHDSl8o"
+        ],
+        "weeksOfBlocks": [
+          "recGQZmXQggDnJ5ta",
+          "recdDWoMgtlAI6vbA",
+          "recQrrphBp2ieRI2f",
+          "recIF3cWn9AD4hqlK"
+        ],
+        "dayOfWeekOfBlocks": "Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record",
+        "holidays": [
+          "recWhR9Yjd6WyV2gb"
+        ],
+        "attendingInpatientSchedule": [
+          "recGNin3xHFj7a4CC",
+          "recQ8JmWccfRjzc0T",
+          "recCrnrzyaeXe0MQa",
+          "recPW1TNWFpBDIWF7"
+        ],
+        "startDateDirect": "2025-09-25",
+        "endDateDirect": "2025-10-22",
+        "facultyAbsences": [
+          "recG2fmbqmArh2aB2",
+          "recoe0zbD0B4oXtK3",
+          "recovrPifICTQ9thC",
+          "recjOO3WGgmzJ6HS6",
+          "recC0u0iz4z5tmDMG",
+          "reccQTxaoVGyDWQwQ",
+          "recuKboIAMVr8yxnu",
+          "recP3TyoOPYewpi6K",
+          "recl6NufhPEr8crQI"
+        ]
+      }
+    },
+    {
+      "id": "recyCXLCOdygmwkaB",
+      "createdTime": "2025-04-23T21:57:10.000Z",
+      "fields": {
+        "blockNumber": "1",
+        "startBlockLink": "7/1/2025",
+        "endBlockLink": "7/30/2025",
+        "academicWeek": "1, 2, 3, 4",
+        "residencyBlockScheduleLink": [
+          "recpN0TowKakjc1tt",
+          "recpfzRZdQ4Pvx9fH",
+          "recLB2am6XWXCkGgu",
+          "recr8IXk3KxfNnfpk",
+          "recu3Dy320nvjDLcJ",
+          "recFHkUlpxjksOWV5",
+          "rec7CGEfYbqICvG69",
+          "recvwaNcVOadRhZNE",
+          "recKZCZ99FTE2Nluq",
+          "recH9wwaQGciAYsq9",
+          "recfX4oj2zyUse0ys",
+          "recYqofZRRGxMDil5",
+          "recWb18ul5mn6qs2m",
+          "recsETOq5dFb2IvZO",
+          "rec6ZYhz0ogEHh167"
+        ],
+        "blockID": "recyCXLCOdygmwkaB",
+        "leave": [
+          "recgg1LxzdddHuLhX",
+          "rec2iqlfOaJuWM24a",
+          "recFKkWSG1WhxAcm2",
+          "recfze7imLiSPiJs5",
+          "recE0mInrvssbMXv6",
+          "reclD9kDDkflcvQFe",
+          "recByNj61SPbrz4Yq",
+          "rec5ehVuAn5gluZGj",
+          "recsFUB4SHBWdMNFM",
+          "recCNeyAfheBecJ4o"
+        ],
+        "weeksOfBlocks": [
+          "reck99O55J0W19ISx",
+          "reciuYdY0AAgQ0gll",
+          "recF196KkQoeCICsC",
+          "recyu0PJatE8UeqZz"
+        ],
+        "dayOfWeekOfBlocks": "Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record, Unnamed record",
+        "holidays": [
+          "recYNk9sRmdPPJxe9"
+        ],
+        "attendingInpatientSchedule": [
+          "recD92XBYiA3sLJGf",
+          "recW61BH6FnF9y1KZ",
+          "recUoxdGFRzuWgHLj",
+          "recvQM6gBWz5YSBAt"
+        ],
+        "startDateDirect": "2025-07-01",
+        "endDateDirect": "2025-07-30",
+        "facultyAbsences": [
+          "recaTpWKXa6usjyoN",
+          "recKgznW7SKHJDO0l",
+          "reccuN0pBEJ9z9KOD",
+          "reciX9Q7LgCntNt6J",
+          "recX7EP7MPt8Bp7gG",
+          "recKZ8Ep7f2OkMOqL",
+          "recG2fmbqmArh2aB2",
+          "recoe0zbD0B4oXtK3",
+          "recWmn2moCKQPCKYg",
+          "recm1TswbssEeByI4"
+        ]
+      }
+    }
+  ]
+}
