@@ -60,7 +60,7 @@ from .call_equity import (
     TuesdayCallPreferenceConstraint,
     WeekdayCallEquityConstraint,
 )
-from .fmit import PostFMITSundayBlockingConstraint
+from .fmit import PostFMITRecoveryConstraint, PostFMITSundayBlockingConstraint
 from .inpatient import ResidentInpatientHeadcountConstraint
 
 logger = logging.getLogger(__name__)
@@ -296,6 +296,7 @@ class ConstraintManager:
 
         # Block 10 hard constraints - inpatient headcount and post-FMIT blocking
         manager.add(ResidentInpatientHeadcountConstraint())
+        manager.add(PostFMITRecoveryConstraint())  # Faculty Friday PC after FMIT
         manager.add(PostFMITSundayBlockingConstraint())
 
         # Soft constraints (optimization)
@@ -364,6 +365,7 @@ class ConstraintManager:
 
         # Block 10 hard constraints - inpatient headcount and post-FMIT blocking
         manager.add(ResidentInpatientHeadcountConstraint())
+        manager.add(PostFMITRecoveryConstraint())  # Faculty Friday PC after FMIT
         manager.add(PostFMITSundayBlockingConstraint())
 
         # Soft constraints (optimization)

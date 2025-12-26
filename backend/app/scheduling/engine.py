@@ -183,6 +183,34 @@ class SchedulingEngine:
                         "absence assignments (Leave/Weekend)"
                     )
 
+            # Step 1.5d: Load off-site assignments (Hilo, Kapiolani, Okinawa)
+            offsite_assignments = self._load_offsite_assignments()
+            preserve_ids.update({a.id for a in offsite_assignments})
+            if offsite_assignments:
+                logger.info(
+                    f"Preserving {len(offsite_assignments)} "
+                    "off-site assignments (Hilo/Kapiolani/Okinawa)"
+                )
+
+            # Step 1.5e: Load recovery assignments (Post-Call)
+            # Note: PC is also enforced by NightFloatPostCallConstraint
+            recovery_assignments = self._load_recovery_assignments()
+            preserve_ids.update({a.id for a in recovery_assignments})
+            if recovery_assignments:
+                logger.info(
+                    f"Preserving {len(recovery_assignments)} "
+                    "recovery assignments (Post-Call)"
+                )
+
+            # Step 1.5f: Load education assignments (FMO, GME, Lectures)
+            education_assignments = self._load_education_assignments()
+            preserve_ids.update({a.id for a in education_assignments})
+            if education_assignments:
+                logger.info(
+                    f"Preserving {len(education_assignments)} "
+                    "education assignments (FMO/GME/Lectures)"
+                )
+
             # NOTE: Deletion deferred until after successful solve (see Step 5.5)
             # This prevents data loss if the solver fails
 
@@ -207,12 +235,22 @@ class SchedulingEngine:
                 }
 
             # Step 4: Create scheduling context (with resilience data if available)
+            # Combine all preserved assignments to pass to context as immutable
+            preserved_assignments = (
+                fmit_assignments
+                + resident_inpatient_assignments
+                + absence_assignments
+                + offsite_assignments
+                + recovery_assignments
+                + education_assignments
+            )
             context = self._build_context(
                 residents,
                 faculty,
                 blocks,
                 templates,
                 include_resilience=check_resilience,
+                existing_assignments=preserved_assignments,
             )
 
             # Step 5: Run solver
@@ -230,12 +268,14 @@ class SchedulingEngine:
             self._delete_existing_assignments(preserve_ids)
 
             # Step 6: Convert solver results to assignments
+            # Pass preserved_assignments to filter out conflicts with immutable slots
             self._create_assignments_from_result(
-                solver_result, residents, templates, run.id
+                solver_result, residents, templates, run.id, preserved_assignments
             )
 
             # Step 7: Assign faculty supervision
-            self._assign_faculty(faculty, blocks, run.id)
+            # Pass preserved_assignments so faculty with FMIT/absences are excluded
+            self._assign_faculty(faculty, blocks, run.id, preserved_assignments)
 
             # Step 8: Add assignments to session (but don't commit yet)
             for assignment in self.assignments:
@@ -406,6 +446,7 @@ class SchedulingEngine:
         blocks: list[Block],
         templates: list[RotationTemplate],
         include_resilience: bool = True,
+        existing_assignments: list[Assignment] | None = None,
     ) -> SchedulingContext:
         """
         Build scheduling context from database objects.
@@ -416,6 +457,8 @@ class SchedulingEngine:
             blocks: List of Block objects for the schedule period
             templates: List of RotationTemplate objects
             include_resilience: Whether to populate resilience data
+            existing_assignments: Immutable assignments (inpatient, FMIT, absences)
+                                 that solver must not overwrite
 
         Returns:
             SchedulingContext with all data needed for constraint evaluation
@@ -429,6 +472,7 @@ class SchedulingEngine:
             availability=self.availability_matrix,
             start_date=self.start_date,
             end_date=self.end_date,
+            existing_assignments=existing_assignments or [],
         )
 
         # Populate resilience data if available and requested
@@ -691,7 +735,8 @@ class SchedulingEngine:
                 constraint_manager=self.constraint_manager,
                 timeout_seconds=timeout_seconds,
             )
-            return solver.solve(context)
+            # Pass existing_assignments from context as immutable constraints
+            return solver.solve(context, context.existing_assignments or None)
         except Exception as e:
             logger.error(f"Solver error: {e}")
             return SolverResult(
@@ -707,9 +752,26 @@ class SchedulingEngine:
         residents: list[Person],
         templates: list[RotationTemplate],
         run_id: UUID,
+        existing_assignments: list[Assignment] | None = None,
     ):
-        """Convert solver results to Assignment objects."""
+        """Convert solver results to Assignment objects.
+
+        Filters out any solver-generated assignments that conflict with
+        immutable existing assignments (inpatient, FMIT, absences).
+        """
+        # Build set of (person_id, block_id) pairs that are already assigned
+        occupied_slots: set[tuple[UUID, UUID]] = set()
+        if existing_assignments:
+            for a in existing_assignments:
+                occupied_slots.add((a.person_id, a.block_id))
+
+        skipped = 0
         for person_id, block_id, template_id in result.assignments:
+            # Skip if this person+block is already occupied by an immutable assignment
+            if (person_id, block_id) in occupied_slots:
+                skipped += 1
+                continue
+
             assignment = Assignment(
                 block_id=block_id,
                 person_id=person_id,
@@ -718,6 +780,12 @@ class SchedulingEngine:
                 schedule_run_id=run_id,
             )
             self.assignments.append(assignment)
+
+        if skipped > 0:
+            logger.info(
+                f"Skipped {skipped} solver assignments that conflicted with "
+                "immutable existing assignments"
+            )
 
     def _ensure_blocks_exist(self, commit: bool = True) -> list[Block]:
         """Ensure half-day blocks exist for the date range."""
@@ -976,6 +1044,105 @@ class SchedulingEngine:
             .all()
         )
 
+    def _load_offsite_assignments(self) -> list[Assignment]:
+        """
+        Load off-site assignments (Hilo, Kapiolani, Okinawa) for the date range.
+
+        These assignments represent rotations at different hospitals/locations
+        and should be preserved so the solver doesn't double-book people.
+
+        Detection logic:
+            - template.activity_type == 'off'
+            - Includes: Hilo, Kapiolani, Okinawa, OFF AM/PM
+
+        Business Rules:
+            - People on off-site rotations are physically elsewhere
+            - Cannot be assigned to main site during off-site rotation
+            - Similar to inpatient pre-loading pattern
+
+        Returns:
+            List of Assignment objects for off-site rotations
+        """
+        return (
+            self.db.query(Assignment)
+            .join(Block, Assignment.block_id == Block.id)
+            .join(
+                RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
+            )
+            .filter(
+                Block.date >= self.start_date,
+                Block.date <= self.end_date,
+                RotationTemplate.activity_type == "off",
+            )
+            .all()
+        )
+
+    def _load_recovery_assignments(self) -> list[Assignment]:
+        """
+        Load recovery/post-call assignments for the date range.
+
+        Post-call recovery days follow Night Float or FMIT for both
+        residents and faculty. These are mandatory rest periods.
+
+        Detection logic:
+            - template.activity_type == 'recovery'
+            - Includes: Post-Call Recovery (PCR)
+
+        Business Rules:
+            - Post-call is mandatory after night duty (ACGME)
+            - Applies to both residents and faculty after FMIT
+            - Cannot be scheduled for clinical duties during recovery
+
+        Returns:
+            List of Assignment objects for recovery periods
+        """
+        return (
+            self.db.query(Assignment)
+            .join(Block, Assignment.block_id == Block.id)
+            .join(
+                RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
+            )
+            .filter(
+                Block.date >= self.start_date,
+                Block.date <= self.end_date,
+                RotationTemplate.activity_type == "recovery",
+            )
+            .all()
+        )
+
+    def _load_education_assignments(self) -> list[Assignment]:
+        """
+        Load education/orientation assignments for the date range.
+
+        Education blocks include orientation (FMO), GME days, and lectures.
+        These are protected academic time that cannot be preempted.
+
+        Detection logic:
+            - template.activity_type == 'education'
+            - Includes: FMO, GME AM/PM, Lecture AM/PM
+
+        Business Rules:
+            - Block 0/1 orientation (FMO) is mandatory for interns
+            - GME days are protected academic time
+            - Weekly didactics/lectures are required
+
+        Returns:
+            List of Assignment objects for education periods
+        """
+        return (
+            self.db.query(Assignment)
+            .join(Block, Assignment.block_id == Block.id)
+            .join(
+                RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
+            )
+            .filter(
+                Block.date >= self.start_date,
+                Block.date <= self.end_date,
+                RotationTemplate.activity_type == "education",
+            )
+            .all()
+        )
+
     def _get_rotation_templates(
         self, template_ids: list[UUID] | None = None,
         activity_type: str | None = "outpatient",
@@ -1014,7 +1181,13 @@ class SchedulingEngine:
 
         return query.all()
 
-    def _assign_faculty(self, faculty: list[Person], blocks: list[Block], run_id: UUID):
+    def _assign_faculty(
+        self,
+        faculty: list[Person],
+        blocks: list[Block],
+        run_id: UUID,
+        preserved_assignments: list[Assignment] | None = None,
+    ):
         """
         Assign faculty supervision based on ACGME supervision ratios.
 
@@ -1057,6 +1230,22 @@ class SchedulingEngine:
             faculty assignment is a post-processing step that depends on
             resident assignments being finalized first.
         """
+        # Build set of (faculty_id, block_id) pairs that are already assigned
+        # Faculty with FMIT/absences OR solver-assigned cannot supervise clinic
+        faculty_occupied_slots: set[tuple[UUID, UUID]] = set()
+        faculty_ids = {f.id for f in faculty}
+
+        # Check preserved assignments (FMIT, absences, etc.)
+        if preserved_assignments:
+            for a in preserved_assignments:
+                if a.person_id in faculty_ids:
+                    faculty_occupied_slots.add((a.person_id, a.block_id))
+
+        # Also check assignments created by solver in this session
+        for a in self.assignments:
+            if a.person_id in faculty_ids:
+                faculty_occupied_slots.add((a.person_id, a.block_id))
+
         # Group assignments by block
         assignments_by_block = {}
         for assignment in self.assignments:
@@ -1082,8 +1271,12 @@ class SchedulingEngine:
             required = (pgy1_count + 1) // 2 + (other_count + 3) // 4
             required = max(1, required) if residents_in_block else 0
 
-            # Find available faculty
-            available = [f for f in faculty if self._is_available(f.id, block_id)]
+            # Find available faculty (not on leave AND not already assigned to this block)
+            available = [
+                f for f in faculty
+                if self._is_available(f.id, block_id)
+                and (f.id, block_id) not in faculty_occupied_slots
+            ]
 
             # Assign faculty (balance load)
             selected = sorted(available, key=lambda f: faculty_assignments[f.id])[

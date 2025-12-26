@@ -9,6 +9,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Immutable Assignment Preservation (2025-12-26)
+
+**Core Engine Enhancement:**
+- **6 Preserved Assignment Types**: Solver now respects pre-seeded immutable assignments
+  - `inpatient`: FMIT, Night Float, ICU, L&D, NICU
+  - `off`: Hilo, Kapiolani, Okinawa (off-site hospitals)
+  - `education`: FMO orientation, GME, Lectures
+  - `absence`: Leave, Weekend
+  - `recovery`: Post-Call Recovery
+  - Only `outpatient` and `procedures` are solver-managed
+
+**New Engine Loaders:**
+- `_load_fmit_assignments()`: Faculty FMIT teaching weeks
+- `_load_resident_inpatient_assignments()`: All resident inpatient rotations
+- `_load_absence_assignments()`: Leave, Weekend, TDY
+- `_load_offsite_assignments()`: Hilo, Kapiolani, Okinawa
+- `_load_recovery_assignments()`: Post-Call Recovery
+- `_load_education_assignments()`: FMO, GME, Lectures
+
+**Safety Improvements:**
+- Deferred deletion: Old assignments deleted AFTER successful solve (not before)
+- Conflict filtering: `_create_assignments_from_result()` skips occupied slots
+- Faculty supervision: Excludes faculty with FMIT/absences from clinic assignments
+
+**Documentation:**
+- `docs/sessions/SESSION_2025-12-26_IMMUTABLE_ASSIGNMENTS.md`: Full session summary
+- `docs/architecture/ACTIVITY_TYPES.md`: 7 activity types reference
+- `docs/architecture/FMIT_CONSTRAINTS.md`: FMIT constraint documentation
+- `docs/architecture/ENGINE_ASSIGNMENT_FLOW.md`: Preserved assignment flow
+- `docs/development/SLASH_COMMANDS.md`: 18 slash commands reference
+
+**New Slash Commands (18):**
+- `/generate-schedule`, `/verify-schedule`, `/optimize-schedule`, `/check-constraints`
+- `/debug`, `/debug-explore`, `/debug-tdd`
+- `/write-tests`, `/review-code`, `/review-pr`, `/fix-code`, `/quality-check`
+- `/export-pdf`, `/export-xlsx`
+- `/docker-help`, `/incident`, `/solver`, `/swap`, `/changelog`, `/document-session`
+
+**New Skills:**
+- `session-documentation`: Comprehensive session documentation generator
+
+**Seeding Scripts:**
+- `scripts/seed_rotation_templates.py`: 55 rotation templates by activity type
+- `scripts/seed_inpatient_rotations.py`: Block-by-block inpatient assignment loader
+
+### Fixed
+
+#### Missing PostFMITRecoveryConstraint (2025-12-26)
+
+**Bug Discovery:** `PostFMITRecoveryConstraint` existed in `fmit.py` but was NOT registered in the default constraint manager, causing faculty to not get their Friday recovery day blocked after FMIT weeks.
+
+**Fix:** Added to `backend/app/scheduling/constraints/manager.py`:
+```python
+manager.add(PostFMITRecoveryConstraint())  # Faculty Friday PC after FMIT
+manager.add(PostFMITSundayBlockingConstraint())
+```
+
+**Verification:** Constraint correctly applies only to faculty (not residents) based on template name matching ("FMIT AM/PM" vs "Family Medicine Inpatient Team Intern/Resident").
+
 #### Block 10 Scheduling Complete (2025-12-25/26)
 
 **Milestone: Block 10 schedule generation fully operational**
