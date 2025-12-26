@@ -840,7 +840,9 @@ class ContingencyAnalyzer:
                         "risk_level": (
                             "critical"
                             if cascade.is_catastrophic
-                            else "high" if cascade.cascade_length > 1 else "medium"
+                            else "high"
+                            if cascade.cascade_length > 1
+                            else "medium"
                         ),
                     }
                 )

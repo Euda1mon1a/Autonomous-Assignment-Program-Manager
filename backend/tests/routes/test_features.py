@@ -436,9 +436,7 @@ class TestFeatureRoutes:
     ):
         """Test updating non-existent flag."""
         mock_service = MagicMock()
-        mock_service.update_flag = AsyncMock(
-            side_effect=ValueError("Flag not found")
-        )
+        mock_service.update_flag = AsyncMock(side_effect=ValueError("Flag not found"))
         mock_service_class.return_value = mock_service
 
         response = client.put(
@@ -516,9 +514,7 @@ class TestFeatureRoutes:
         mock_service.evaluate_flag = AsyncMock(
             return_value=(True, None, "flag enabled")
         )
-        mock_service.get_flag = AsyncMock(
-            return_value=MagicMock(flag_type="boolean")
-        )
+        mock_service.get_flag = AsyncMock(return_value=MagicMock(flag_type="boolean"))
         mock_service_class.return_value = mock_service
 
         response = client.post(
@@ -544,9 +540,7 @@ class TestFeatureRoutes:
         mock_service.evaluate_flag = AsyncMock(
             return_value=(False, None, "flag disabled")
         )
-        mock_service.get_flag = AsyncMock(
-            return_value=MagicMock(flag_type="boolean")
-        )
+        mock_service.get_flag = AsyncMock(return_value=MagicMock(flag_type="boolean"))
         mock_service_class.return_value = mock_service
 
         response = client.post(
@@ -571,9 +565,7 @@ class TestFeatureRoutes:
         mock_service.evaluate_flag = AsyncMock(
             return_value=(True, "treatment", "variant selected")
         )
-        mock_service.get_flag = AsyncMock(
-            return_value=MagicMock(flag_type="variant")
-        )
+        mock_service.get_flag = AsyncMock(return_value=MagicMock(flag_type="variant"))
         mock_service_class.return_value = mock_service
 
         response = client.post(
@@ -600,9 +592,7 @@ class TestFeatureRoutes:
         mock_service.evaluate_flag = AsyncMock(
             return_value=(True, None, "context matched")
         )
-        mock_service.get_flag = AsyncMock(
-            return_value=MagicMock(flag_type="boolean")
-        )
+        mock_service.get_flag = AsyncMock(return_value=MagicMock(flag_type="boolean"))
         mock_service_class.return_value = mock_service
 
         response = client.post(
@@ -721,9 +711,7 @@ class TestFeatureRoutes:
     ):
         """Test enabling non-existent flag."""
         mock_service = MagicMock()
-        mock_service.update_flag = AsyncMock(
-            side_effect=ValueError("Flag not found")
-        )
+        mock_service.update_flag = AsyncMock(side_effect=ValueError("Flag not found"))
         mock_service_class.return_value = mock_service
 
         response = client.post(
@@ -769,9 +757,7 @@ class TestFeatureRoutes:
     ):
         """Test disabling non-existent flag."""
         mock_service = MagicMock()
-        mock_service.update_flag = AsyncMock(
-            side_effect=ValueError("Flag not found")
-        )
+        mock_service.update_flag = AsyncMock(side_effect=ValueError("Flag not found"))
         mock_service_class.return_value = mock_service
 
         response = client.post(

@@ -137,5 +137,7 @@ class ApplicationSettings(Base):
             "freeze_horizon_days": self.freeze_horizon_days,
             "freeze_scope": self.freeze_scope,
             "alembic_version": self.alembic_version,
-            "schema_timestamp": self.schema_timestamp.isoformat() if self.schema_timestamp else None,
+            "schema_timestamp": self.schema_timestamp.isoformat()
+            if self.schema_timestamp
+            else None,
         }

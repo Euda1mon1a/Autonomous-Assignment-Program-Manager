@@ -79,7 +79,10 @@ class TestBatchCreateEndpoint:
                 failed=0,
                 results=[
                     MagicMock(
-                        dict=lambda: {"assignment_id": str(uuid4()), "status": "created"}
+                        dict=lambda: {
+                            "assignment_id": str(uuid4()),
+                            "status": "created",
+                        }
                     )
                 ],
                 errors=[],
@@ -489,9 +492,7 @@ class TestBatchValidation:
 class TestBatchIntegration:
     """Integration tests for batch operations."""
 
-    def test_batch_endpoints_accessible(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_batch_endpoints_accessible(self, client: TestClient, auth_headers: dict):
         """Test all batch endpoints respond appropriately."""
         with patch("app.api.routes.batch.BatchService") as mock_service:
             mock_instance = MagicMock()
@@ -504,8 +505,12 @@ class TestBatchIntegration:
                 results=[],
                 errors=[],
             )
-            mock_instance.update_batch.return_value = mock_instance.create_batch.return_value
-            mock_instance.delete_batch.return_value = mock_instance.create_batch.return_value
+            mock_instance.update_batch.return_value = (
+                mock_instance.create_batch.return_value
+            )
+            mock_instance.delete_batch.return_value = (
+                mock_instance.create_batch.return_value
+            )
             mock_instance.get_batch_status.return_value = None
             mock_service.return_value = mock_instance
 
@@ -546,7 +551,10 @@ class TestBatchIntegration:
                 failed=0,
                 results=[
                     MagicMock(
-                        dict=lambda: {"assignment_id": str(uuid4()), "status": "created"}
+                        dict=lambda: {
+                            "assignment_id": str(uuid4()),
+                            "status": "created",
+                        }
                     )
                 ],
                 errors=[],
