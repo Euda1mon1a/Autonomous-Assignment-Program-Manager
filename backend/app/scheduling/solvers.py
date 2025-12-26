@@ -13,7 +13,7 @@ These solvers are designed for OUTPATIENT HALF-DAY OPTIMIZATION only.
 Block-assigned rotations (FMIT, NF, inpatient) are handled separately and
 should NOT be passed to these solvers.
 
-IMPORTANT: The engine._get_rotation_templates() must filter to activity_type="clinic"
+IMPORTANT: The engine._get_rotation_templates() must filter to activity_type="outpatient"
 before passing templates to solvers. If NF/PC/inpatient templates are included,
 solvers will incorrectly assign residents to them.
 
@@ -36,11 +36,11 @@ KNOWN ISSUES (2025-12-24) - ALL FIXED:
 
 4. TEMPLATE FILTERING - Engine Issue (engine.py:874-905):
    Previously returned ALL templates without filtering.
-   STATUS: FIXED - _get_rotation_templates() now defaults to activity_type="clinic".
+   STATUS: FIXED - _get_rotation_templates() now defaults to activity_type="outpatient".
    Block-assigned rotations (NF, PC, FMIT, inpatient) excluded by default.
 
 All four fixes applied 2025-12-24. Solvers should now:
-- Only receive clinic templates (outpatient half-day optimization)
+- Only receive outpatient templates (half-day optimization)
 - Distribute assignments evenly across available rotation types
 - Balance both resident workload AND template variety
 """

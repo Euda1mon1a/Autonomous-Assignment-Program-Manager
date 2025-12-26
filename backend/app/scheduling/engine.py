@@ -927,21 +927,21 @@ class SchedulingEngine:
 
     def _get_rotation_templates(
         self, template_ids: list[UUID] | None = None,
-        activity_type: str | None = "clinic",
+        activity_type: str | None = "outpatient",
     ) -> list[RotationTemplate]:
         """
         Get rotation templates for solver optimization.
 
         Args:
             template_ids: Optional list of specific template IDs to include
-            activity_type: Filter by activity type (default: "clinic").
+            activity_type: Filter by activity type (default: "outpatient").
                           Use None to get all templates.
 
         Returns:
             List of RotationTemplate objects matching the criteria.
 
         Note:
-            By default, only clinic templates are returned because the solvers
+            By default, only outpatient templates are returned because the solvers
             are designed for OUTPATIENT HALF-DAY OPTIMIZATION only.
             Block-assigned rotations (FMIT, NF, Inpatient, NICU) should NOT
             be passed to the solver - they are pre-assigned separately.

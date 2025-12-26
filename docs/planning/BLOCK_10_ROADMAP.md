@@ -46,7 +46,14 @@
 ╠══════════════════════════════════════════════════════════════════╣
 ║  ROOT CAUSE #2: No NF headcount constraint                       ║
 ║  - All 29 people assigned to Night Float (should be 1-2)         ║
-║  - ✅ RESOLVED: ResidentInpatientHeadcountConstraint added       ║
+║  - ✅ TRULY RESOLVED (2025-12-25):                               ║
+║    - Original fix: ResidentInpatientHeadcountConstraint added    ║
+║    - Bug persisted: Container had old code (no activity_type     ║
+║      filter, no _load_resident_inpatient_assignments method)     ║
+║    - True fix: Deploy updated engine.py with:                    ║
+║      1. activity_type filter default: "clinic" → "outpatient"    ║
+║      2. _load_resident_inpatient_assignments() preservation      ║
+║    - Verified: 80 assignments, 20 rotation types, 0 violations   ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║  ROOT CAUSE #3: NF/PC need pre-solver assignment                 ║
 ║  - Cannot be optimized freely - based on inpatient schedule      ║
