@@ -227,5 +227,5 @@ For production, use `.env` with strong secrets!
 ***REMOVED******REMOVED*** Need More Help?
 
 - Full guide: [DOCKER_LOCAL_SETUP.md](./DOCKER_LOCAL_SETUP.md)
-- Project guidelines: [CLAUDE.md](./CLAUDE.md)
-- Main docs: [README.md](./README.md)
+- Project guidelines: [CLAUDE.md](../../CLAUDE.md)
+- Main docs: [README.md](../../README.md)
