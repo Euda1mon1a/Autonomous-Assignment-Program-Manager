@@ -85,7 +85,7 @@ class FacultyRoleClinicConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "clinic"
+            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
         }
 
         if not clinic_template_ids:
@@ -139,7 +139,7 @@ class FacultyRoleClinicConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "clinic"
+            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
         }
 
         if not clinic_template_ids:
@@ -195,7 +195,7 @@ class FacultyRoleClinicConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "clinic"
+            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
         }
 
         # Count clinic assignments by faculty and week
@@ -297,7 +297,7 @@ class SMFacultyClinicConstraint(HardConstraint):
             t.id
             for t in context.templates
             if hasattr(t, "activity_type")
-            and t.activity_type == "clinic"
+            and t.activity_type == "outpatient"
             and (
                 not hasattr(t, "requires_specialty")
                 or t.requires_specialty != "Sports Medicine"
@@ -346,7 +346,7 @@ class SMFacultyClinicConstraint(HardConstraint):
             t.id
             for t in context.templates
             if hasattr(t, "activity_type")
-            and t.activity_type == "clinic"
+            and t.activity_type == "outpatient"
             and (
                 not hasattr(t, "requires_specialty")
                 or t.requires_specialty != "Sports Medicine"
@@ -407,7 +407,7 @@ class SMFacultyClinicConstraint(HardConstraint):
 
             is_regular_clinic = (
                 hasattr(template, "activity_type")
-                and template.activity_type == "clinic"
+                and template.activity_type == "outpatient"
                 and (
                     not hasattr(template, "requires_specialty")
                     or template.requires_specialty != "Sports Medicine"

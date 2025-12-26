@@ -107,6 +107,7 @@ class SchedulingEngine:
         check_resilience: bool = True,
         preserve_fmit: bool = True,
         preserve_resident_inpatient: bool = True,
+        preserve_absence: bool = True,
     ) -> dict:
         """
         Generate a complete schedule.
@@ -120,6 +121,8 @@ class SchedulingEngine:
             preserve_fmit: Preserve existing FMIT faculty assignments (default True)
             preserve_resident_inpatient: Preserve existing resident inpatient assignments
                                         (FMIT, NF, NICU) - prevents over-assignment bug
+            preserve_absence: Preserve existing absence assignments (Leave, Weekend)
+                             so solver skips people with scheduled time off
 
         Returns:
             Dictionary with status, assignments, validation results, and resilience info
@@ -167,6 +170,17 @@ class SchedulingEngine:
                     logger.info(
                         f"Preserving {len(resident_inpatient_assignments)} "
                         "resident inpatient assignments (FMIT/NF/NICU)"
+                    )
+
+            # Step 1.5c: Load absence assignments if preserving them
+            absence_assignments = []
+            if preserve_absence:
+                absence_assignments = self._load_absence_assignments()
+                preserve_ids.update({a.id for a in absence_assignments})
+                if absence_assignments:
+                    logger.info(
+                        f"Preserving {len(absence_assignments)} "
+                        "absence assignments (Leave/Weekend)"
                     )
 
             # NOTE: Deletion deferred until after successful solve (see Step 5.5)
@@ -921,6 +935,39 @@ class SchedulingEngine:
                 Block.date <= self.end_date,
                 Person.type == "resident",
                 RotationTemplate.activity_type == "inpatient",
+            )
+            .all()
+        )
+
+    def _load_absence_assignments(self) -> list[Assignment]:
+        """
+        Load absence assignments (Leave, Weekend, TDY blocks) for the date range.
+
+        These assignments represent scheduled time off and should be preserved
+        so the solver skips assigning new work to people with absences.
+
+        Detection logic:
+            - template.activity_type == 'absence'
+            - Includes: Leave AM/PM, Weekend AM/PM
+
+        Business Rules:
+            - People with absence assignments should not receive new assignments
+            - Absences are visible on schedule (not hidden)
+            - Similar to inpatient pre-loading pattern
+
+        Returns:
+            List of Assignment objects for absence-type rotations
+        """
+        return (
+            self.db.query(Assignment)
+            .join(Block, Assignment.block_id == Block.id)
+            .join(
+                RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
+            )
+            .filter(
+                Block.date >= self.start_date,
+                Block.date <= self.end_date,
+                RotationTemplate.activity_type == "absence",
             )
             .all()
         )
