@@ -120,7 +120,7 @@ class FMITWeekBlockingConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "clinic"
+            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
         }
 
         for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
@@ -165,7 +165,7 @@ class FMITWeekBlockingConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "clinic"
+            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
         }
 
         constraint_count = 0
@@ -235,7 +235,7 @@ class FMITWeekBlockingConstraint(HardConstraint):
                 if (
                     template
                     and hasattr(template, "activity_type")
-                    and template.activity_type == "clinic"
+                    and template.activity_type == "outpatient"
                 ):
                     violations.append(
                         ConstraintViolation(
