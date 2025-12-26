@@ -52,6 +52,37 @@
 
 ---
 
+## Feature Requests - Pending Investigation
+
+### Resident Call Types
+**Priority:** Medium
+**Added:** 2025-12-26
+**Status:** Awaiting resident input
+
+Two new resident call types need to be captured in the scheduling system:
+
+| Call Type | Full Name | Status | Notes |
+|-----------|-----------|--------|-------|
+| **Resident NF Call** | Night Float Call (?) | Needs definition | Investigate with residents |
+| **Resident LND Call** | Labor and Delivery Call (?) | Needs definition | Investigate with residents |
+
+**Questions to clarify with residents:**
+- [ ] What are the exact duties/responsibilities for each call type?
+- [ ] What are the shift times (start/end)?
+- [ ] Which PGY levels are eligible for each?
+- [ ] Are there supervision requirements?
+- [ ] How do these interact with ACGME work hour limits?
+- [ ] Are there specific days/rotations when these apply?
+- [ ] How do these relate to existing NF (Night Float) assignments?
+
+**Implementation considerations (once defined):**
+- Add to `RotationTemplate` or as separate assignment types
+- Create scheduling constraints
+- Update ACGME compliance checks if needed
+- Add to solver if applicable
+
+---
+
 ## Slack Integration Setup
 
 - [ ] **Test Slack Webhook Connection**
@@ -215,4 +246,4 @@ The following links in `README.md` point to non-existent files:
 
 ---
 
-*Last updated: 2025-12-25*
+*Last updated: 2025-12-26*
