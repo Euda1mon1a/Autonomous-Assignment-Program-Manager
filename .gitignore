@@ -106,6 +106,12 @@ docs/data/*.json
 !docs/data/sanitized_*.json
 docs/data/pii_mapping*.json
 docs/data/*_pii_mapping*.json
+
+# De-sanitized schedule files (contain real names - local only)
+docs/schedules/block_schedule.json
+docs/schedules/faculty.json
+docs/schedules/faculty_inpatient_schedule.json
+docs/schedules/residents.json
 *.dump
 *.sql
 !backend/alembic/**/*.sql

@@ -17,6 +17,7 @@ import os
 import sys
 from datetime import date, timedelta
 from pathlib import Path
+from typing import Optional
 
 import requests
 
@@ -123,7 +124,7 @@ def is_inpatient_rotation(rotation_name: str) -> bool:
     return any(kw.lower() in rotation_name.lower() for kw in INPATIENT_KEYWORDS)
 
 
-def get_inpatient_template(templates: dict, rotation_name: str) -> dict | None:
+def get_inpatient_template(templates: dict, rotation_name: str) -> Optional[dict]:
     """Find the appropriate inpatient template for a rotation."""
     rotation_lower = rotation_name.lower()
 
@@ -132,13 +133,15 @@ def get_inpatient_template(templates: dict, rotation_name: str) -> dict | None:
         return templates[rotation_name]
 
     # Map rotation names to template names
-    if "fmit" in rotation_lower:
+    if "fmit" in rotation_lower or "family medicine inpatient" in rotation_lower:
         # FMIT assignments use FMIT AM/PM templates
         return templates.get("FMIT AM") or templates.get("FMIT PM")
-    elif "night float" in rotation_lower:
+    elif "night float" in rotation_lower or "night" in rotation_lower:
         return templates.get("Night Float AM") or templates.get("Night Float PM")
     elif "nicu" in rotation_lower or "neonatal" in rotation_lower:
         return templates.get("NICU")
+    elif "labor and delivery" in rotation_lower:
+        return templates.get("Night Float AM") or templates.get("Night Float PM")
 
     return None
 
