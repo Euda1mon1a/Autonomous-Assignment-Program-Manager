@@ -64,6 +64,7 @@ services:
       SECRET_KEY: ${SECRET_KEY}
       DEBUG: "false"
       CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000"]}
+      RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-false}
     ports:
       - "8000:8000"
     networks:
