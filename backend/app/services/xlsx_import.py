@@ -1,22 +1,39 @@
 """
-Excel import service for clinic schedules.
+Excel import service for clinic schedules and block rotation schedules.
 
-Parses external clinic schedule Excel files and detects conflicts
-with FMIT/inpatient rotations. Supports simulation mode for conflict
-analysis without database writes.
+Two main parsers:
+1. ClinicScheduleImporter - Parses clinic day schedules, detects conflicts
+2. BlockScheduleParser - Fuzzy-tolerant parser for block rotation sheets
+
+Block schedule parsing handles human-induced drift:
+- Column shifts from copy/paste
+- Row insertions/deletions
+- Name typos and variations
+- Merged cells
+- Missing/malformed data
+
+Uses semantic anchors rather than hard-coded positions.
 """
 
 import io
+import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
+from difflib import SequenceMatcher
 from enum import Enum
+from pathlib import Path
+from typing import Optional
+import logging
 
 from openpyxl import load_workbook
+from openpyxl.cell import MergedCell
 from openpyxl.worksheet.worksheet import Worksheet
 from sqlalchemy.orm import Session
 
 from app.models.absence import Absence as AbsenceModel
 from app.models.person import Person
+
+logger = logging.getLogger(__name__)
 
 
 class SlotType(Enum):
@@ -1408,3 +1425,497 @@ def absence_to_external_conflict(absence: AbsenceModel) -> ExternalConflict | No
         conflict_type=conflict_type,
         description=description,
     )
+
+
+# =============================================================================
+# BLOCK SCHEDULE PARSER - Fuzzy-tolerant parsing for rotation spreadsheets
+# =============================================================================
+
+
+@dataclass
+class ParsedBlockAssignment:
+    """A single assignment extracted from block schedule spreadsheet."""
+
+    person_name: str
+    date: date
+    template: str  # R1, R2, R3, C19, etc.
+    role: str  # PGY 1, PGY 2, PGY 3, FAC
+    slot_am: Optional[str] = None  # Value in AM column
+    slot_pm: Optional[str] = None  # Value in PM column
+    row_idx: int = 0
+    confidence: float = 1.0  # Lower if fuzzy matched
+
+
+@dataclass
+class ParsedFMITWeek:
+    """FMIT attending assignment for a week."""
+
+    block_number: int
+    week_number: int
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    faculty_name: str = ""
+    is_holiday_call: bool = False
+
+
+@dataclass
+class BlockParseResult:
+    """Result of parsing a block schedule sheet."""
+
+    block_number: int
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    assignments: list[ParsedBlockAssignment] = field(default_factory=list)
+    residents: list[dict] = field(default_factory=list)  # {name, template, role}
+    fmit_schedule: list[ParsedFMITWeek] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+
+    def get_residents_by_template(self) -> dict[str, list[dict]]:
+        """Group residents by rotation template."""
+        by_template: dict[str, list[dict]] = {}
+        for r in self.residents:
+            t = r.get("template", "")
+            if t not in by_template:
+                by_template[t] = []
+            by_template[t].append(r)
+        return by_template
+
+
+class BlockScheduleParser:
+    """
+    Fuzzy-tolerant parser for block schedule Excel files.
+
+    Handles the chaos of human-edited spreadsheets:
+    - Finds anchors by content (TEMPLATE, PROVIDER), not position
+    - Discovers date columns by finding datetime values
+    - Extracts person rows by "Last, First" pattern
+    - Fuzzy matches names against known people list
+    - Handles merged cells gracefully
+
+    Example usage:
+        parser = BlockScheduleParser(known_people=["Doria, Russell", "Evans, Amber"])
+        result = parser.parse_block_sheet("schedule.xlsx", "Block 10")
+        for r in result.residents:
+            print(f"{r['template']}: {r['name']} ({r['role']})")
+    """
+
+    # Patterns for finding column headers
+    HEADER_PATTERNS = {
+        "template": re.compile(r"^template$", re.I),
+        "role": re.compile(r"^role$", re.I),
+        "provider": re.compile(r"^provider$", re.I),
+    }
+
+    # Name pattern: "Last, First" or "Last, First Middle"
+    NAME_PATTERN = re.compile(r"^([A-Z][a-z-]+),\s+([A-Z][a-z-]+)", re.I)
+
+    # Known rotation templates
+    VALID_TEMPLATES = {
+        "R1", "R2", "R3",  # Resident rotations
+        "C19", "Ca9", "CP",  # Clinic/faculty
+        "TY", "PSYCH", "IPAP",  # Transitional/specialty
+        "NF",  # Night float
+    }
+
+    # Known roles
+    VALID_ROLES = {
+        "PGY 1", "PGY 2", "PGY 3",
+        "FAC", "FLT 1", "FLT 2", "FLT 3",
+        "CP", "IPAP",
+    }
+
+    def __init__(self, known_people: Optional[list[str]] = None):
+        """
+        Initialize parser.
+
+        Args:
+            known_people: List of known person names for fuzzy matching.
+                          Format: "Last, First" or full name variants.
+        """
+        self.known_people = known_people or []
+        self._name_cache: dict[str, tuple[str, float]] = {}  # raw -> (matched, confidence)
+
+    def parse_block_sheet(
+        self,
+        filepath: str | Path,
+        sheet_name: str,
+        expected_block: Optional[int] = None,
+    ) -> BlockParseResult:
+        """
+        Parse a single block schedule sheet.
+
+        Args:
+            filepath: Path to Excel file
+            sheet_name: Name of sheet to parse (e.g., "Block 10")
+            expected_block: If provided, validate block number matches
+
+        Returns:
+            BlockParseResult with assignments and any warnings/errors
+        """
+        wb = load_workbook(filepath, data_only=True)
+
+        if sheet_name not in wb.sheetnames:
+            raise ValueError(
+                f"Sheet '{sheet_name}' not found. Available: {wb.sheetnames}"
+            )
+
+        ws = wb[sheet_name]
+
+        # Extract block number from sheet name or content
+        block_num = self._extract_block_number(sheet_name, ws)
+        if expected_block and block_num != expected_block:
+            logger.warning(
+                f"Block mismatch: expected {expected_block}, found {block_num}"
+            )
+
+        result = BlockParseResult(block_number=block_num)
+
+        # Step 1: Find anchor positions (TEMPLATE, ROLE, PROVIDER columns)
+        anchors = self._find_anchors(ws)
+        if not anchors.get("provider_col"):
+            result.errors.append("Could not find PROVIDER column header")
+            return result
+
+        # Step 2: Find date columns by scanning for datetime values
+        date_cols = self._find_date_columns(ws)
+        if not date_cols:
+            result.warnings.append("Could not find date columns - roster-only mode")
+
+        # Update date range
+        if date_cols:
+            all_dates = sorted(date_cols.values())
+            result.start_date = all_dates[0]
+            result.end_date = all_dates[-1]
+
+        # Step 3: Find person rows and extract roster
+        person_rows = self._find_person_rows(ws, anchors)
+
+        for row_info in person_rows:
+            raw_name = row_info["name"]
+
+            # Fuzzy match name
+            matched_name, confidence = self._match_name(raw_name)
+            if confidence < 0.8:
+                result.warnings.append(
+                    f"Row {row_info['row']}: Low confidence name match "
+                    f"'{raw_name}' -> '{matched_name}' ({confidence:.0%})"
+                )
+
+            # Add to roster
+            result.residents.append({
+                "name": matched_name or raw_name,
+                "template": row_info["template"],
+                "role": row_info["role"],
+                "row": row_info["row"],
+                "confidence": confidence,
+            })
+
+            # Extract daily assignments if we have date columns
+            if date_cols:
+                for col_idx, assign_date in date_cols.items():
+                    cell_val = self._get_cell_value(ws, row_info["row"], col_idx)
+                    # Check adjacent column for PM value
+                    pm_val = self._get_cell_value(ws, row_info["row"], col_idx + 1)
+
+                    # Skip if both empty
+                    if not cell_val and not pm_val:
+                        continue
+
+                    result.assignments.append(ParsedBlockAssignment(
+                        person_name=matched_name or raw_name,
+                        date=assign_date,
+                        template=row_info["template"],
+                        role=row_info["role"],
+                        slot_am=cell_val,
+                        slot_pm=pm_val if pm_val != cell_val else None,
+                        row_idx=row_info["row"],
+                        confidence=confidence,
+                    ))
+
+        return result
+
+    def _find_anchors(self, ws: Worksheet) -> dict:
+        """Find column positions of key headers by content matching."""
+        anchors: dict = {}
+
+        # Scan first 10 rows for headers
+        for row_idx in range(1, 11):
+            for col_idx in range(1, 20):
+                cell_val = self._get_cell_value(ws, row_idx, col_idx)
+                if not cell_val:
+                    continue
+
+                cell_str = str(cell_val).strip()
+
+                for key, pattern in self.HEADER_PATTERNS.items():
+                    if pattern.match(cell_str):
+                        anchors[f"{key}_col"] = col_idx
+                        anchors[f"{key}_row"] = row_idx
+                        logger.debug(
+                            f"Found {key} anchor at row={row_idx}, col={col_idx}"
+                        )
+
+        return anchors
+
+    def _find_date_columns(self, ws: Worksheet) -> dict[int, date]:
+        """
+        Find columns containing dates.
+
+        Scans first few rows for datetime values, returns {col_idx: date}.
+        """
+        date_cols: dict[int, date] = {}
+
+        # Scan first 5 rows, columns 1-100
+        for row_idx in range(1, 6):
+            for col_idx in range(1, 100):
+                try:
+                    cell = ws.cell(row=row_idx, column=col_idx)
+
+                    # Skip merged cells
+                    if isinstance(cell, MergedCell):
+                        continue
+
+                    val = cell.value
+                    if isinstance(val, datetime):
+                        date_cols[col_idx] = val.date()
+                    elif isinstance(val, date) and not isinstance(val, datetime):
+                        date_cols[col_idx] = val
+                except Exception:
+                    continue
+
+        return date_cols
+
+    def _find_person_rows(self, ws: Worksheet, anchors: dict) -> list[dict]:
+        """Find rows containing person data based on name pattern."""
+        persons = []
+
+        # Use discovered anchors or sensible defaults
+        provider_col = anchors.get("provider_col", 4)
+        template_col = anchors.get("template_col", provider_col - 2)
+        role_col = anchors.get("role_col", provider_col - 1)
+        header_row = anchors.get("provider_row", 6)
+
+        # Scan rows after header
+        for row_idx in range(header_row + 1, min(ws.max_row + 1, 200)):
+            name_val = self._get_cell_value(ws, row_idx, provider_col)
+
+            if not name_val:
+                continue
+
+            # Check if it looks like a name (Last, First pattern)
+            name_str = str(name_val).strip().replace("*", "")
+            if not self.NAME_PATTERN.match(name_str):
+                continue
+
+            template = str(
+                self._get_cell_value(ws, row_idx, template_col) or ""
+            ).strip()
+            role = str(self._get_cell_value(ws, row_idx, role_col) or "").strip()
+
+            # Log unknown templates for debugging
+            if template and template not in self.VALID_TEMPLATES:
+                logger.debug(f"Row {row_idx}: Unknown template '{template}'")
+
+            persons.append({
+                "row": row_idx,
+                "name": name_str,
+                "template": template,
+                "role": role,
+            })
+
+        return persons
+
+    def _match_name(self, raw_name: str) -> tuple[str, float]:
+        """
+        Fuzzy match a name against known people.
+
+        Returns:
+            (matched_name, confidence) where confidence is 0.0-1.0
+        """
+        if not self.known_people:
+            return raw_name, 1.0
+
+        # Check cache
+        if raw_name in self._name_cache:
+            return self._name_cache[raw_name]
+
+        # Normalize for comparison
+        normalized = raw_name.lower().replace(",", "").replace("*", "").strip()
+
+        best_match = None
+        best_score = 0.0
+
+        for known in self.known_people:
+            known_norm = known.lower().replace(",", "").strip()
+
+            # Exact match
+            if normalized == known_norm:
+                self._name_cache[raw_name] = (known, 1.0)
+                return known, 1.0
+
+            # Fuzzy match using SequenceMatcher
+            score = SequenceMatcher(None, normalized, known_norm).ratio()
+            if score > best_score:
+                best_score = score
+                best_match = known
+
+        if best_match and best_score >= 0.7:
+            self._name_cache[raw_name] = (best_match, best_score)
+            return best_match, best_score
+
+        # No good match - return original
+        self._name_cache[raw_name] = (raw_name, 1.0)
+        return raw_name, 1.0
+
+    def _get_cell_value(self, ws: Worksheet, row: int, col: int) -> Optional[str]:
+        """Get cell value, handling merged cells gracefully."""
+        try:
+            cell = ws.cell(row=row, column=col)
+
+            if isinstance(cell, MergedCell):
+                # Find the parent cell of the merge range
+                for merge_range in ws.merged_cells.ranges:
+                    if cell.coordinate in merge_range:
+                        parent_cell = ws.cell(
+                            row=merge_range.min_row,
+                            column=merge_range.min_col,
+                        )
+                        val = parent_cell.value
+                        if val is None:
+                            return None
+                        if isinstance(val, (datetime, date)):
+                            return val.isoformat()
+                        return str(val).strip() if str(val).strip() else None
+                return None
+
+            val = cell.value
+            if val is None:
+                return None
+
+            if isinstance(val, (datetime, date)):
+                return val.isoformat()
+
+            return str(val).strip() if str(val).strip() else None
+
+        except Exception as e:
+            logger.warning(f"Error reading cell ({row}, {col}): {e}")
+            return None
+
+    def _extract_block_number(self, sheet_name: str, ws: Worksheet) -> int:
+        """Extract block number from sheet name or cell content."""
+        # Try sheet name first: "Block 10", "Block10", "10"
+        match = re.search(r"block\s*(\d+)", sheet_name, re.I)
+        if match:
+            return int(match.group(1))
+
+        # Just a number
+        match = re.search(r"^(\d+)", sheet_name.strip())
+        if match:
+            return int(match.group(1))
+
+        # Try cells A1, B1, B2 for block number
+        for row, col in [(1, 1), (1, 2), (2, 2)]:
+            val = self._get_cell_value(ws, row, col)
+            if val:
+                match = re.search(r"^(\d+)$", str(val).strip())
+                if match:
+                    return int(match.group(1))
+
+        return 0  # Unknown
+
+
+def parse_block_schedule(
+    filepath: str | Path,
+    block_number: int,
+    known_people: Optional[list[str]] = None,
+) -> BlockParseResult:
+    """
+    Convenience function to parse a specific block.
+
+    Args:
+        filepath: Path to Excel file
+        block_number: Block to parse (1-13)
+        known_people: Optional list of known names for fuzzy matching
+
+    Returns:
+        BlockParseResult with residents and assignments
+    """
+    parser = BlockScheduleParser(known_people=known_people)
+
+    # Try common sheet name patterns
+    sheet_names = [
+        f"Block {block_number}",
+        f"Block{block_number}",
+        f"{block_number}",
+        f"{block_number} with formatting",
+        f"{block_number} with formatting (2)",
+    ]
+
+    wb = load_workbook(filepath, data_only=True)
+
+    for name in sheet_names:
+        if name in wb.sheetnames:
+            return parser.parse_block_sheet(filepath, name, expected_block=block_number)
+
+    # Fuzzy match sheet name
+    for sheet in wb.sheetnames:
+        if str(block_number) in sheet:
+            return parser.parse_block_sheet(filepath, sheet, expected_block=block_number)
+
+    raise ValueError(
+        f"Could not find sheet for Block {block_number}. Available: {wb.sheetnames}"
+    )
+
+
+def parse_fmit_attending(
+    filepath: str | Path,
+    sheet_name: str = "FMIT Attending (2025-2026)",
+) -> list[ParsedFMITWeek]:
+    """
+    Parse FMIT attending schedule sheet.
+
+    The FMIT sheet typically has structure:
+    - Column 0: Block number
+    - Column 1: Date range
+    - Columns 2-5: Week 1-4 faculty names
+    - Faculty names in row AFTER the dates row
+
+    Returns:
+        List of ParsedFMITWeek assignments
+    """
+    wb = load_workbook(filepath, data_only=True)
+
+    if sheet_name not in wb.sheetnames:
+        # Try to find it by partial match
+        for name in wb.sheetnames:
+            if "fmit" in name.lower():
+                sheet_name = name
+                break
+        else:
+            raise ValueError(f"FMIT sheet not found. Available: {wb.sheetnames}")
+
+    ws = wb[sheet_name]
+    results = []
+
+    # Scan for block rows
+    for row_idx in range(1, ws.max_row + 1):
+        col0_val = ws.cell(row=row_idx, column=1).value
+
+        # Check if this is a block header row (has block number)
+        if col0_val and str(col0_val).strip().isdigit():
+            block_num = int(str(col0_val).strip())
+
+            # Faculty names are in the next row, columns 3-6
+            faculty_row = row_idx + 1
+            if faculty_row <= ws.max_row:
+                for week_num, col in enumerate([3, 4, 5, 6], start=1):
+                    faculty = ws.cell(row=faculty_row, column=col).value
+                    if faculty and str(faculty).strip():
+                        results.append(ParsedFMITWeek(
+                            block_number=block_num,
+                            week_number=week_num,
+                            faculty_name=str(faculty).strip(),
+                        ))
+
+    return results
