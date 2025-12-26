@@ -8,23 +8,29 @@
 
 ## Concept Overview
 
-Claude Code CLI (Opus 4.5) directly manages Qwen instances via integrated terminal:
+Three-tier architecture separating strategic planning from tactical execution:
 
 ```
 YOU
   │
-  ▼
-CLAUDE CODE CLI (Opus 4.5) ← Integrated terminal, tactician role
+  ↓ (strategic planning, conversation)
+CLAUDE CODE WEB (Opus 4.5) ← Planning layer
   │
-  │  Spawns/manages via Bash:
+  ↓ (execution handoff)
+ANTIGRAVITY IDE (Opus 4.5) ← Tactician with integrated terminal
   │
-  ├──► qwen "run pytest backend/tests/" &
-  ├──► qwen "run npm test" &
-  ├──► qwen "run ruff check . --fix" &
-  └──► qwen "grep -r 'pattern' backend/" &
+  │  Spawns/manages Qwen terminals:
+  │
+  ├──► qwen terminal 1: pytest backend/tests/
+  ├──► qwen terminal 2: npm run lint
+  ├──► qwen terminal 3: ruff check . --fix
+  └──► qwen terminal 4: grep -r 'pattern' backend/
 ```
 
-**Analogy:** Squad leader in the field directing operators, not a separate command layer.
+**Roles:**
+- **Claude Code Web**: Strategic planning with user, high-level decomposition
+- **Antigravity Opus 4.5**: Tactical execution, manages Qwen squad
+- **Qwen instances**: Skill-blind operators for parallelized grunt work
 
 ---
 
@@ -93,39 +99,47 @@ Incoming Task
 ### Parallel Test Execution
 
 ```
-Opus Tactician: "Run backend and frontend tests in parallel"
+Claude Web: "We need to verify all tests pass before the PR"
+     ↓
+Antigravity Opus: Decomposes, spawns Qwen terminals
 
-→ Qwen #1: cd backend && pytest -v
-→ Qwen #2: cd frontend && npm test
-→ Qwen #3: cd frontend && npm run type-check
-→ Qwen #4: cd frontend && npm run lint
+→ Qwen terminal 1: cd backend && pytest -v
+→ Qwen terminal 2: cd frontend && npm test
+→ Qwen terminal 3: cd frontend && npm run type-check
+→ Qwen terminal 4: cd frontend && npm run lint
 
-← Opus synthesizes results, applies code-review skill if failures
+← Antigravity synthesizes results, applies code-review skill if failures
+← Reports summary to Claude Web for user communication
 ```
 
 ### Bulk Linting/Formatting
 
 ```
-Opus Tactician: "Format and lint the entire codebase"
+Claude Web: "Clean up the codebase before release"
+     ↓
+Antigravity Opus: Decomposes, spawns Qwen terminals
 
-→ Qwen #1: ruff check backend/ --fix
-→ Qwen #2: ruff format backend/
-→ Qwen #3: cd frontend && npm run lint:fix
-→ Qwen #4: mypy backend/app/ --ignore-missing-imports
+→ Qwen terminal 1: ruff check backend/ --fix
+→ Qwen terminal 2: ruff format backend/
+→ Qwen terminal 3: cd frontend && npm run lint:fix
+→ Qwen terminal 4: mypy backend/app/ --ignore-missing-imports
 
-← Opus reviews output, commits if clean
+← Antigravity reviews output, commits if clean
 ```
 
 ### Exploration with Synthesis
 
 ```
-Opus Tactician: "Find all ACGME validation usages and assess coverage"
+Claude Web: "Assess ACGME validation coverage in the codebase"
+     ↓
+Antigravity Opus: Decomposes, spawns Qwen terminals
 
-→ Qwen #1: grep -r "ACGMEValidator" backend/
-→ Qwen #2: grep -r "acgme" backend/tests/
-→ Qwen #3: grep -r "80.hour\|1.in.7" backend/
+→ Qwen terminal 1: grep -r "ACGMEValidator" backend/
+→ Qwen terminal 2: grep -r "acgme" backend/tests/
+→ Qwen terminal 3: grep -r "80.hour\|1.in.7" backend/
 
-← Opus synthesizes findings using acgme-compliance skill
+← Antigravity synthesizes findings using acgme-compliance skill
+← Reports analysis to Claude Web for strategic discussion
 ```
 
 ---
@@ -155,21 +169,22 @@ Key features (v0.5.0):
 
 ## Implementation Approach
 
-Claude Code CLI uses Bash tool to spawn and manage Qwen instances:
+Antigravity IDE (Opus 4.5) manages Qwen terminals directly:
 
 ```bash
-# Parallel execution pattern
+# Antigravity spawns parallel Qwen terminals
 qwen "cd backend && pytest tests/unit/" &
 qwen "cd frontend && npm run lint" &
 qwen "ruff check backend/ --fix" &
-wait  # Claude monitors and synthesizes results
+wait  # Antigravity monitors and synthesizes results
 ```
 
-Key points:
-- No SDK wrapper needed - direct CLI invocation
-- Claude Code monitors stdout/stderr from Qwen processes
-- Claude applies skills to synthesize/review Qwen outputs
-- Qwen handles execution; Claude handles reasoning
+**Key points:**
+- Claude Code Web plans strategy with user
+- Antigravity Opus 4.5 receives objectives, decomposes into parallel tasks
+- Antigravity spawns/monitors Qwen terminals for skill-free operations
+- Antigravity applies skills to synthesize/review Qwen outputs
+- Qwen handles fast execution; Opus handles reasoning
 
 ---
 
