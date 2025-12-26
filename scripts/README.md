@@ -125,7 +125,48 @@ Validates system state before deployment.
 
 Fixes npm audit issues in the frontend.
 
-<<<<<<< HEAD
+## Verification Scripts
+
+### verify_schedule.py
+
+Human-facing schedule verification script. Runs 12 checks against the database and generates visible PASS/FAIL reports.
+
+**Usage:**
+```bash
+# From backend directory
+cd backend
+python ../scripts/verify_schedule.py --block 10 --start 2026-03-10 --end 2026-04-06
+
+# Via Docker
+docker compose exec backend python ../scripts/verify_schedule.py --block 10
+
+# Without saving report
+python ../scripts/verify_schedule.py --block 10 --no-save
+```
+
+**Checks Performed:**
+1. FMIT faculty pattern (no back-to-back)
+2. FMIT mandatory Fri+Sat call
+3. Post-FMIT Sunday blocking
+4. Night Float headcount = 1
+5. FMIT resident headcount (1 per PGY)
+6. Call spacing (no back-to-back weeks)
+7. PGY-specific clinic days
+8. Absence conflicts
+9. Weekend coverage
+10. ACGME compliance
+
+**Output:** Markdown report saved to `docs/reports/schedule-verification-block{N}-{date}.md`
+
+### verify_constraints.py
+
+Pre-flight verification for scheduling constraints. Ensures constraints are implemented, exported, and registered.
+
+**Usage:**
+```bash
+python scripts/verify_constraints.py
+```
+
 ## Excel Tools
 
 ### excel/CSVAutoExport.bas
@@ -163,8 +204,6 @@ python scripts/import_excel.py absences.xlsx --verbose
 
 See docstring in script for supported formats and abbreviations.
 
-=======
->>>>>>> origin/docs/session-14-summary
 ## Running Scripts
 
 Most Python scripts require the backend environment:

@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### Block 10 Scheduling Complete (2025-12-25/26)
+
+**Milestone: Block 10 schedule generation fully operational**
+- **87 assignments** generated with **0 ACGME violations** and **112.5% coverage**
+- All 25 scheduling constraints active and verified
+
+**New Constraints Implemented:**
+- `ResidentInpatientHeadcountConstraint` (Hard): Enforces FMIT=1 per PGY level, NF=1 concurrent
+- `PostFMITSundayBlockingConstraint` (Hard): Blocks Sunday call after FMIT week
+- `CallSpacingConstraint` (Soft, weight=8.0): Penalizes back-to-back call weeks
+- `FMITResidentClinicDayConstraint` (Hard): PGY-specific clinic days (relies on pre-loading)
+
+**Engine Enhancements:**
+- `preserve_resident_inpatient` parameter: Protects resident FMIT/NF/NICU assignments
+- `preserve_absence` parameter: Protects Leave/Weekend assignments from solver
+- `_load_resident_inpatient_assignments()`: Loads inpatient assignments before solving
+- `_load_absence_assignments()`: Loads absence records as unavailability
+
+**Test Coverage:**
+- 64+ new constraint tests across 4 test files
+- `test_constraint_registration.py`: Verifies all constraints registered in manager
+- `test_fmit_constraints.py`: 32 tests for FMIT timeline and blocking
+- `test_call_equity_constraints.py`: 32 tests for call spacing and equity
+- `test_phase4_constraints.py`: 20+ tests for SM alignment and post-call
+
+**Documentation:**
+- `BLOCK_SCHEDULE_ARCHITECTURE.md`: Comprehensive 313-line architecture guide
+- Time hierarchy: 730 half-day slots → 13 blocks → 1 Academic Year
+- Solver architecture with 3D boolean variables documented
+
+**Merged PRs:** #440-#445
+
 ### Fixed
 
 #### Security & Bug Fixes (Session 13 - 2025-12-21)
@@ -374,11 +408,7 @@ Fixes for bugs identified in Codex review of Session 13 PRs (#312):
 
 #### Comprehensive Security Hardening (Session 6 - 2025-12-17)
 - **Path Traversal Prevention**: New `file_security.py` module with path validation, backup ID sanitization
-<<<<<<< HEAD
 - **httpOnly Cookie Authentication**: Migrated JWT from localStorage to secure httpOnly cookies
-=======
-- **httpOnly PGY2-01ie Authentication**: Migrated JWT from localStorage to secure httpOnly cookies
->>>>>>> origin/docs/session-14-summary
 - **File Upload Validation**: Size limits, extension checks, magic byte verification for Excel uploads
 - **Password Strength Enforcement**: 12+ chars, 3/4 complexity types, common password blacklist
 - **Admin Authorization**: Added `require_admin()` to 13 endpoints across 5 route files

@@ -2,7 +2,7 @@
 
 > **Complete reference for AI Agent Skills in the Residency Scheduler**
 >
-> Last Updated: 2025-12-25
+> Last Updated: 2025-12-26
 
 ---
 
@@ -82,6 +82,8 @@ All skills are located in `.claude/skills/`:
 │   └── SKILL.md
 ├── schedule-optimization/      # Multi-objective optimization
 │   └── SKILL.md
+├── schedule-verification/      # Human verification checklist
+│   └── SKILL.md
 ├── security-audit/             # Security auditing
 │   └── SKILL.md
 ├── swap-management/            # Shift swap workflows
@@ -108,6 +110,7 @@ All skills are located in `.claude/skills/`:
 |-------|-------------|------------------|
 | `acgme-compliance` | ACGME regulatory expertise | Schedule validation, compliance checks |
 | `schedule-optimization` | Multi-objective optimization | Schedule generation, workload balancing |
+| `schedule-verification` | Human verification checklist | Post-generation schedule review |
 | `swap-management` | Shift swap workflows | Swap requests, partner matching |
 
 ### Development Skills
@@ -435,6 +438,48 @@ gh pr merge <number> --squash
 | Soft | Fairness (0.25), preferences (0.20), continuity (0.20), resilience (0.20), efficiency (0.15) |
 
 **Uses**: Google OR-Tools CP-SAT solver
+
+---
+
+### schedule-verification
+
+**Purpose**: Human verification checklist for generated schedules. Ensures schedules make operational sense before deployment.
+
+**Activates When**:
+- After schedule generation completes
+- Before deploying a new schedule to production
+- When reviewing any academic block schedule
+- When a human asks "does this schedule make sense?"
+- After constraint changes to verify behavior
+
+**Verification Checks**:
+| Check | What to Verify |
+|-------|----------------|
+| FMIT faculty pattern | No back-to-back FMIT weeks |
+| FMIT mandatory call | Fri+Sat call during FMIT week |
+| Post-FMIT Sunday | No Sunday call after FMIT week |
+| Night Float headcount | Exactly 1 resident on NF |
+| FMIT resident headcount | 1 per PGY level (3 total) |
+| Call spacing | No back-to-back call weeks |
+| PGY clinic days | PGY-1→Wed AM, PGY-2→Tue PM, PGY-3→Mon PM |
+| Absence conflicts | No assignments during leave/TDY |
+| Weekend coverage | Inpatient coverage exists |
+| ACGME compliance | 0 violations |
+
+**MANDATORY Reporting**:
+Every time this skill runs, it MUST:
+1. Print visible PASS/FAIL for each check
+2. Show actual data found (not just "checked")
+3. Generate summary table
+4. Save report to `docs/reports/schedule-verification-{block}-{date}.md`
+
+**CLI Tool**:
+```bash
+cd backend
+python ../scripts/verify_schedule.py --block 10 --start 2026-03-10 --end 2026-04-06
+```
+
+**Integration**: Works with `acgme-compliance` skill and generates reports to `docs/reports/`.
 
 ---
 
