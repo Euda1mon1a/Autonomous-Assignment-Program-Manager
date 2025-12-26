@@ -166,6 +166,155 @@ docker-compose build --no-cache
 docker-compose up -d
 ```
 
+---
+
+***REMOVED******REMOVED******REMOVED*** Containers Unhealthy After Database Rebuild
+
+**Symptoms:**
+- `celery-beat` shows "unhealthy"
+- `mcp-server` is in a restart loop
+- Database was rebuilt but containers still fail
+
+**Root Cause:** Containers were built with old environment values baked into image layers. Rebuilding the database doesn't update container images.
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Diagnosing the Issue
+
+```bash
+***REMOVED*** Check container health status
+docker compose ps --format "table {{.Name}}\t{{.Status}}"
+
+***REMOVED*** Expected healthy output:
+***REMOVED*** NAME                              STATUS
+***REMOVED*** residency-scheduler-backend       Up 2 hours (healthy)
+***REMOVED*** residency-scheduler-db            Up 2 hours (healthy)
+***REMOVED*** residency-scheduler-redis         Up 2 hours (healthy)
+***REMOVED*** residency-scheduler-celery-worker Up 2 hours (healthy)
+```
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Issue 1: celery-beat Unhealthy
+
+**Common Causes:**
+
+| Cause | Symptom | Fix |
+|-------|---------|-----|
+| Stale scheduler file | Beat refuses to start | Delete `celerybeat-schedule` |
+| Redis password mismatch | Connection refused | Rebuild with correct `.env` |
+| Database schema mismatch | Migration errors in logs | Run migrations |
+
+**Fix:**
+
+```bash
+***REMOVED*** Clear stale scheduler file
+docker compose exec celery-beat rm -f /app/celerybeat-schedule
+
+***REMOVED*** Restart
+docker compose restart celery-beat
+
+***REMOVED*** Check logs
+docker compose logs --tail=20 celery-beat
+```
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Issue 2: mcp-server Restart Loop
+
+**Root Cause:** The MCP server is configured to run in **stdio mode** by default, but inside a Docker container with no interactive input, it exits immediately.
+
+**Fix Options:**
+
+```bash
+***REMOVED*** Option A: Run in HTTP mode (add to docker-compose.yml under mcp-server)
+command: ["--host", "0.0.0.0", "--port", "8080"]
+
+***REMOVED*** Option B: Just stop it if not needed for schedule generation
+docker compose stop mcp-server
+```
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Issue 3: Environment Variable Mismatch
+
+**Symptoms:**
+- Containers start but can't connect to Redis/DB
+- "Authentication failed" in logs
+- Worked before database rebuild
+
+**Diagnosis:**
+
+```bash
+***REMOVED*** Check what env vars Docker Compose sees
+docker compose config | grep -A5 "environment:"
+
+***REMOVED*** Verify .env file exists and has required vars
+cat .env | grep -E '^(DB_PASSWORD|REDIS_PASSWORD|SECRET_KEY)=' | wc -l
+***REMOVED*** Should output: 3
+```
+
+**Fix - Full Rebuild with Fresh Environment:**
+
+```bash
+***REMOVED*** 1. Stop everything and remove volumes
+docker compose down -v
+
+***REMOVED*** 2. Verify .env has correct values
+cat .env | head -20
+
+***REMOVED*** 3. Rebuild ALL containers (clears cached layers)
+docker compose build --no-cache
+
+***REMOVED*** 4. Start fresh
+docker compose up -d
+
+***REMOVED*** 5. Verify health
+docker compose ps
+```
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Required Environment Variables
+
+| Variable | Purpose | Validation |
+|----------|---------|------------|
+| `DB_PASSWORD` | PostgreSQL password | Must match in all containers |
+| `REDIS_PASSWORD` | Redis authentication | Must match in all containers |
+| `SECRET_KEY` | JWT signing | Min 32 characters |
+
+**Generate new secrets if needed:**
+
+```bash
+***REMOVED*** Generate secure values
+python -c "import secrets; print(f'SECRET_KEY={secrets.token_urlsafe(64)}')"
+python -c "import secrets; print(f'REDIS_PASSWORD={secrets.token_urlsafe(32)}')"
+python -c "import secrets; print(f'DB_PASSWORD={secrets.token_urlsafe(32)}')"
+```
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Complete Recovery Procedure
+
+When containers are persistently unhealthy after DB changes:
+
+```bash
+***REMOVED*** 1. Full teardown (preserves .env)
+docker compose down -v
+docker system prune -f
+
+***REMOVED*** 2. Verify .env is correct
+cat .env
+
+***REMOVED*** 3. Rebuild from scratch
+docker compose build --no-cache
+
+***REMOVED*** 4. Start services
+docker compose up -d
+
+***REMOVED*** 5. Wait for health checks (30-60 seconds)
+sleep 60
+
+***REMOVED*** 6. Verify all healthy
+docker compose ps
+
+***REMOVED*** 7. Run database migrations
+docker compose exec backend alembic upgrade head
+
+***REMOVED*** 8. Final health check
+curl -s http://localhost:8000/api/v1/health/ready | python -m json.tool
+```
+
+---
+
 ***REMOVED******REMOVED******REMOVED*** Out of Disk Space
 
 ```bash
