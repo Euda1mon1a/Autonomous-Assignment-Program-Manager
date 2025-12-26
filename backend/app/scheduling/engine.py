@@ -183,6 +183,15 @@ class SchedulingEngine:
                         "absence assignments (Leave/Weekend)"
                     )
 
+            # Step 1.5d: Load off-site assignments (Hilo, Kapiolani, Okinawa)
+            offsite_assignments = self._load_offsite_assignments()
+            preserve_ids.update({a.id for a in offsite_assignments})
+            if offsite_assignments:
+                logger.info(
+                    f"Preserving {len(offsite_assignments)} "
+                    "off-site assignments (Hilo/Kapiolani/Okinawa)"
+                )
+
             # NOTE: Deletion deferred until after successful solve (see Step 5.5)
             # This prevents data loss if the solver fails
 
@@ -212,6 +221,7 @@ class SchedulingEngine:
                 fmit_assignments
                 + resident_inpatient_assignments
                 + absence_assignments
+                + offsite_assignments
             )
             context = self._build_context(
                 residents,
@@ -1009,6 +1019,39 @@ class SchedulingEngine:
                 Block.date >= self.start_date,
                 Block.date <= self.end_date,
                 RotationTemplate.activity_type == "absence",
+            )
+            .all()
+        )
+
+    def _load_offsite_assignments(self) -> list[Assignment]:
+        """
+        Load off-site assignments (Hilo, Kapiolani, Okinawa) for the date range.
+
+        These assignments represent rotations at different hospitals/locations
+        and should be preserved so the solver doesn't double-book people.
+
+        Detection logic:
+            - template.activity_type == 'off'
+            - Includes: Hilo, Kapiolani, Okinawa, OFF AM/PM
+
+        Business Rules:
+            - People on off-site rotations are physically elsewhere
+            - Cannot be assigned to main site during off-site rotation
+            - Similar to inpatient pre-loading pattern
+
+        Returns:
+            List of Assignment objects for off-site rotations
+        """
+        return (
+            self.db.query(Assignment)
+            .join(Block, Assignment.block_id == Block.id)
+            .join(
+                RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
+            )
+            .filter(
+                Block.date >= self.start_date,
+                Block.date <= self.end_date,
+                RotationTemplate.activity_type == "off",
             )
             .all()
         )
