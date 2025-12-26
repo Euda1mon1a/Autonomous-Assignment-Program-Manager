@@ -13,13 +13,18 @@ both this project's MIT license AND the licenses of all dependencies listed belo
 
 | License Type | Count | Notes |
 |--------------|-------|-------|
-| MIT | ~40+ | Fully permissive, compatible |
-| BSD (2/3-clause) | ~15+ | Fully permissive, compatible |
-| Apache 2.0 | ~5 | Permissive, requires NOTICE preservation |
+| MIT | ~60+ | Fully permissive, compatible |
+| BSD (2/3-clause) | ~20+ | Fully permissive, compatible |
+| Apache 2.0 | ~20+ | Permissive, requires NOTICE preservation |
 | ISC | ~10+ | Fully permissive, compatible |
 | PSF | 1 | Python Software Foundation License |
+| MPL 2.0 | 1 | File-level copyleft, compatible |
+| LGPL 3.0 | 2 | Used as optional/standalone tools |
+| AGPL 3.0 | 2 | Used as standalone tools, not embedded |
 
-No copyleft (GPL/AGPL/LGPL) dependencies are used in this project.
+**Note on copyleft dependencies:**
+- LGPL dependencies (psycopg2, cairosvg) are used as dynamically-linked libraries
+- AGPL dependencies (k6, Grafana) are used as standalone tools, not embedded in code
 
 ---
 
@@ -43,6 +48,43 @@ No copyleft (GPL/AGPL/LGPL) dependencies are used in this project.
 - License: Apache License 2.0
 - URL: https://github.com/trallnag/prometheus-fastapi-instrumentator
 
+**asyncpg**
+- Copyright: MagicStack Inc.
+- License: Apache License 2.0
+- URL: https://github.com/MagicStack/asyncpg
+
+**boto3** (AWS SDK for Python)
+- Copyright: Amazon Web Services
+- License: Apache License 2.0
+- URL: https://github.com/boto/boto3
+
+**watchdog**
+- Copyright: Yesudeep Mangalapilly
+- License: Apache License 2.0
+- URL: https://github.com/gorakhargosh/watchdog
+
+**freezegun**
+- Copyright: Steve Pulec
+- License: Apache License 2.0
+- URL: https://github.com/spulec/freezegun
+
+**python-multipart**
+- Copyright: Andrew Dunham
+- License: Apache License 2.0
+- URL: https://github.com/andrew-d/python-multipart
+
+**pymoo** (Multi-Objective Optimization)
+- Copyright: Julian Blank
+- License: Apache License 2.0
+- URL: https://github.com/anyoptimization/pymoo
+
+**OpenTelemetry** (opentelemetry-*)
+- Copyright: OpenTelemetry Authors
+- License: Apache License 2.0
+- URL: https://github.com/open-telemetry/opentelemetry-python
+- Packages: opentelemetry-api, opentelemetry-sdk, opentelemetry-instrumentation-*,
+  opentelemetry-exporter-*
+
 ### MIT License
 
 **FastAPI**
@@ -60,30 +102,20 @@ No copyleft (GPL/AGPL/LGPL) dependencies are used in this project.
 - License: MIT
 - URL: https://github.com/pydantic/pydantic
 
+**pydantic-settings**
+- Copyright: Samuel Colvin
+- License: MIT
+- URL: https://github.com/pydantic/pydantic-settings
+
 **Alembic**
 - Copyright: Michael Bayer
 - License: MIT
 - URL: https://github.com/sqlalchemy/alembic
 
-**Uvicorn**
-- Copyright: Tom Christie
-- License: BSD 3-Clause
-- URL: https://github.com/encode/uvicorn
-
 **python-jose**
 - Copyright: Michael Davis
 - License: MIT
 - URL: https://github.com/mpdavis/python-jose
-
-**passlib**
-- Copyright: Assurance Technologies, LLC
-- License: BSD
-- URL: https://github.com/glic3rern/passlib
-
-**Celery**
-- Copyright: Ask Solem & Contributors
-- License: BSD 3-Clause
-- URL: https://github.com/celery/celery
 
 **Redis-py**
 - Copyright: Redis Inc.
@@ -94,16 +126,6 @@ No copyleft (GPL/AGPL/LGPL) dependencies are used in this project.
 - Copyright: Delgan
 - License: MIT
 - URL: https://github.com/Delgan/loguru
-
-**HTTPX**
-- Copyright: Tom Christie
-- License: BSD 3-Clause
-- URL: https://github.com/encode/httpx
-
-**python-dotenv**
-- Copyright: Saurabh Kumar
-- License: BSD 3-Clause
-- URL: https://github.com/theskumar/python-dotenv
 
 **Pytest**
 - Copyright: Holger Krekel and pytest contributors
@@ -120,7 +142,132 @@ No copyleft (GPL/AGPL/LGPL) dependencies are used in this project.
 - License: MIT
 - URL: https://github.com/astral-sh/ruff
 
+**isort**
+- Copyright: Timothy Crosley
+- License: MIT
+- URL: https://github.com/PyCQA/isort
+
+**Plotly**
+- Copyright: Plotly, Inc.
+- License: MIT
+- URL: https://github.com/plotly/plotly.py
+
+**openpyxl**
+- Copyright: Eric Gazoni, Charlie Clark
+- License: MIT
+- URL: https://github.com/theorchard/openpyxl
+
+**python-docx**
+- Copyright: Steve Canny
+- License: MIT
+- URL: https://github.com/python-openxml/python-docx
+
+**pyspc** (Statistical Process Control)
+- Copyright: Carlos Moyano
+- License: MIT
+- URL: https://github.com/carloscinelli/pyspc
+
+**pyworkforce** (Erlang C Queuing)
+- Copyright: pyworkforce contributors
+- License: MIT
+- URL: https://github.com/rodrigo-arenas/pyworkforce
+
+**manufacturing** (Six Sigma Cp/Cpk)
+- Copyright: manufacturing contributors
+- License: MIT
+- URL: https://github.com/slightlynybbled/manufacturing
+
+**python-magic**
+- Copyright: Adam Hupp
+- License: MIT
+- URL: https://github.com/ahupp/python-magic
+
+**fastapi-pagination**
+- Copyright: Yurii Karabas
+- License: MIT
+- URL: https://github.com/uriyyo/fastapi-pagination
+
+**fastapi-cache2**
+- Copyright: long2ice
+- License: MIT
+- URL: https://github.com/long2ice/fastapi-cache
+
+**slowapi**
+- Copyright: Laurent Savaete
+- License: MIT
+- URL: https://github.com/laurentS/slowapi
+
+**APScheduler**
+- Copyright: Alex Grönholm
+- License: MIT
+- URL: https://github.com/agronholm/apscheduler
+
+**croniter**
+- Copyright: Matsumoto Taichi
+- License: MIT
+- URL: https://github.com/kiorky/croniter
+
+**kaleido** (Static Image Export)
+- Copyright: Plotly, Inc.
+- License: MIT
+- URL: https://github.com/plotly/Kaleido
+
+**axelrod** (Game Theory)
+- Copyright: Vince Knight and contributors
+- License: MIT
+- URL: https://github.com/Axelrod-Python/Axelrod
+
+**factory-boy**
+- Copyright: Mark Sandstrom
+- License: MIT
+- URL: https://github.com/FactoryBoy/factory_boy
+
+**Faker**
+- Copyright: Daniele Faraglia
+- License: MIT
+- URL: https://github.com/joke2k/faker
+
+**PyWavelets**
+- Copyright: The PyWavelets Developers
+- License: MIT
+- URL: https://github.com/PyWavelets/pywt
+
+**strawberry-graphql**
+- Copyright: Patrick Arminio
+- License: MIT
+- URL: https://github.com/strawberry-graphql/strawberry
+
+**FastMCP** (Model Context Protocol)
+- Copyright: FastMCP Contributors
+- License: MIT
+- URL: https://github.com/jlowin/fastmcp
+
 ### BSD License (2-Clause or 3-Clause)
+
+**Uvicorn**
+- Copyright: Tom Christie
+- License: BSD 3-Clause
+- URL: https://github.com/encode/uvicorn
+
+**passlib**
+- Copyright: Assurance Technologies, LLC
+- License: BSD
+- URL: https://github.com/glic3rern/passlib
+
+**Celery**
+- Copyright: Ask Solem & Contributors
+- License: BSD 3-Clause
+- URL: https://github.com/celery/celery
+
+**HTTPX**
+- Copyright: Tom Christie
+- License: BSD 3-Clause
+- URL: https://github.com/encode/httpx
+
+**python-dotenv**
+- Copyright: Saurabh Kumar
+- License: BSD 3-Clause
+- URL: https://github.com/theskumar/python-dotenv
 
 **NumPy**
 - Copyright: NumPy Developers
@@ -148,32 +295,15 @@ No copyleft (GPL/AGPL/LGPL) dependencies are used in this project.
 - URL: https://github.com/GiulioRossetti/ndlib
 - Usage: SIR epidemic models for burnout contagion analysis
 
-**Plotly**
-- Copyright: Plotly, Inc.
-- License: MIT
-- URL: https://github.com/plotly/plotly.py
-
 **ReportLab**
 - Copyright: ReportLab Europe Ltd
 - License: BSD 3-Clause
 - URL: https://www.reportlab.com/
 
-**openpyxl**
-- Copyright: Eric Gazoni, Charlie Clark
-- License: MIT
-- URL: https://github.com/theorchard/openpyxl
-
-**python-docx**
-- Copyright: Steve Canny
-- License: MIT
-- URL: https://github.com/python-openxml/python-docx
-
 **iCalendar**
 - Copyright: Plone Foundation
 - License: BSD 2-Clause
 - URL: https://github.com/collective/icalendar
-
-### Other Permissive Licenses
 
 **PuLP**
 - Copyright: COIN-OR Foundation
@@ -185,20 +315,61 @@ No copyleft (GPL/AGPL/LGPL) dependencies are used in this project.
 - License: BSD 3-Clause
 - URL: https://github.com/Pyomo/pyomo
 
-**pymoo**
-- Copyright: Julian Blank
-- License: Apache License 2.0
-- URL: https://github.com/anyoptimization/pymoo
+**scikit-learn**
+- Copyright: scikit-learn developers
+- License: BSD 3-Clause
+- URL: https://github.com/scikit-learn/scikit-learn
 
-**pyspc**
-- Copyright: Carlos Moyano
-- License: MIT
-- URL: https://github.com/carloscinelli/pyspc
+**joblib**
+- Copyright: Gael Varoquaux
+- License: BSD 3-Clause
+- URL: https://github.com/joblib/joblib
 
-**pyworkforce**
-- Copyright: pyworkforce contributors
-- License: MIT
-- URL: https://github.com/rodrigo-arenas/pyworkforce
+**statsmodels**
+- Copyright: statsmodels developers
+- License: BSD 3-Clause
+- URL: https://github.com/statsmodels/statsmodels
+
+**ruptures** (Change Point Detection)
+- Copyright: Charles Truong
+- License: BSD 2-Clause
+- URL: https://github.com/deepcharles/ruptures
+
+**SQLAlchemy-Utils**
+- Copyright: Konsta Vesterinen
+- License: BSD 3-Clause
+- URL: https://github.com/kvesteri/sqlalchemy-utils
+
+**SQLAlchemy-Continuum**
+- Copyright: Konsta Vesterinen
+- License: BSD 3-Clause
+- URL: https://github.com/kvesteri/sqlalchemy-continuum
+
+**Jinja2**
+- Copyright: Armin Ronacher
+- License: BSD 3-Clause
+- URL: https://github.com/pallets/jinja
+
+**email-validator**
+- Copyright: Joshua Tauberer
+- License: CC0 1.0 (Public Domain)
+- URL: https://github.com/JoshData/python-email-validator
+
+### Mozilla Public License 2.0
+
+**Hypothesis**
+- Copyright: David R. MacIver
+- License: MPL 2.0
+- URL: https://github.com/HypothesisWorks/hypothesis
+- Note: MPL 2.0 is file-level copyleft, compatible with MIT
+
+### LGPL License
+
+**psycopg2-binary**
+- Copyright: Federico Di Gregorio
+- License: LGPL 3.0
+- URL: https://github.com/psycopg/psycopg2
+- Note: Used as a dynamically-linked library; LGPL allows this use in MIT projects
 
 ---
 
@@ -241,11 +412,6 @@ No copyleft (GPL/AGPL/LGPL) dependencies are used in this project.
 - License: MIT
 - URL: https://github.com/framer/motion
 
-**Lucide React**
-- Copyright: Lucide Contributors
-- License: ISC
-- URL: https://github.com/lucide-icons/lucide
-
 **Recharts**
 - Copyright: Recharts Group
 - License: MIT
@@ -260,6 +426,18 @@ No copyleft (GPL/AGPL/LGPL) dependencies are used in this project.
 - Copyright: Claudéric Demers
 - License: MIT
 - URL: https://github.com/clauderic/dnd-kit
+
+**undici**
+- Copyright: Node.js contributors
+- License: MIT
+- URL: https://github.com/nodejs/undici
+
+### ISC License
+
+**Lucide React**
+- Copyright: Lucide Contributors
+- License: ISC
+- URL: https://github.com/lucide-icons/lucide
 
 ### Development Dependencies
 
@@ -283,7 +461,7 @@ No copyleft (GPL/AGPL/LGPL) dependencies are used in this project.
 - License: Apache License 2.0
 - URL: https://github.com/microsoft/playwright
 
-**Testing Library** (@testing-library/react, @testing-library/jest-dom)
+**Testing Library** (@testing-library/react, @testing-library/jest-dom, @testing-library/user-event)
 - Copyright: Kent C. Dodds
 - License: MIT
 - URL: https://github.com/testing-library
@@ -297,6 +475,95 @@ No copyleft (GPL/AGPL/LGPL) dependencies are used in this project.
 - Copyright: Andrey Sitnik
 - License: MIT
 - URL: https://github.com/postcss/postcss
+
+**jest-junit**
+- Copyright: jest-junit contributors
+- License: Apache License 2.0
+- URL: https://github.com/jest-community/jest-junit
+
+---
+
+## Agent ADK Dependencies (Google ADK Integration)
+
+### Apache License 2.0
+
+**@google/adk** (Agent Development Kit)
+- Copyright: Google LLC
+- License: Apache License 2.0
+- URL: https://github.com/google/adk-node
+
+**@google/adk-devtools**
+- Copyright: Google LLC
+- License: Apache License 2.0
+- URL: https://github.com/google/adk-node
+
+**@google-cloud/vertexai**
+- Copyright: Google LLC
+- License: Apache License 2.0
+- URL: https://github.com/googleapis/nodejs-vertexai
+
+### MIT License
+
+**Zod**
+- Copyright: Colin McDonnell
+- License: MIT
+- URL: https://github.com/colinhacks/zod
+
+**Vitest**
+- Copyright: Anthony Fu
+- License: MIT
+- URL: https://github.com/vitest-dev/vitest
+
+---
+
+## Documentation Dependencies
+
+### BSD License
+
+**MkDocs**
+- Copyright: Tom Christie
+- License: BSD 2-Clause
+- URL: https://github.com/mkdocs/mkdocs
+
+### MIT License
+
+**MkDocs Material**
+- Copyright: Martin Donath
+- License: MIT
+- URL: https://github.com/squidfunk/mkdocs-material
+
+**pymdown-extensions**
+- Copyright: Isaac Muse
+- License: MIT
+- URL: https://github.com/facelessuser/pymdown-extensions
+
+### HPND License
+
+**Pillow**
+- Copyright: Jeffrey A. Clark (Alex) and contributors
+- License: HPND (Historical Permission Notice and Disclaimer)
+- URL: https://github.com/python-pillow/Pillow
+- Note: HPND is a permissive license compatible with MIT
+
+### LGPL License
+
+**CairoSVG**
+- Copyright: Kozea
+- License: LGPL 3.0
+- URL: https://github.com/Kozea/CairoSVG
+- Note: Optional dependency for social card generation; used as standalone tool
+
+---
+
+## Load Testing Dependencies
+
+### AGPL License
+
+**k6**
+- Copyright: Grafana Labs
+- License: AGPL 3.0
+- URL: https://github.com/grafana/k6
+- Note: Used as a standalone load testing tool, not embedded in application code
 
 ---
 
@@ -336,6 +603,11 @@ The full text of each license type can be found at:
 - **Apache License 2.0**: https://www.apache.org/licenses/LICENSE-2.0
 - **ISC License**: https://opensource.org/licenses/ISC
 - **PostgreSQL License**: https://www.postgresql.org/about/licence/
+- **MPL 2.0**: https://www.mozilla.org/en-US/MPL/2.0/
+- **LGPL 3.0**: https://www.gnu.org/licenses/lgpl-3.0.html
+- **AGPL 3.0**: https://www.gnu.org/licenses/agpl-3.0.html
+- **HPND**: https://opensource.org/licenses/HPND
+- **CC0 1.0**: https://creativecommons.org/publicdomain/zero/1.0/
 
 ---
 
@@ -346,10 +618,14 @@ Apache-licensed dependencies:
 
 ```
 This product includes software developed by:
-- Google LLC (OR-Tools)
+- Google LLC (OR-Tools, ADK, Vertex AI, k6)
 - Microsoft Corporation (TypeScript, Playwright)
+- Amazon Web Services (boto3)
+- MagicStack Inc. (asyncpg)
+- OpenTelemetry Authors (opentelemetry-*)
 - Vercel, Inc. (contributions to various packages)
 - Sentry (sentry-sdk)
+- Grafana Labs (k6, Grafana)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use these files except in compliance with the License.
@@ -371,10 +647,11 @@ limitations under the License.
 When adding new dependencies to the project:
 
 1. Check the license of the new dependency
-2. Verify it is compatible with MIT (avoid GPL/AGPL/LGPL)
+2. Verify it is compatible with MIT (prefer permissive licenses)
 3. Add an entry to the appropriate section above
 4. For Apache 2.0 dependencies, update the NOTICE section if required
+5. For copyleft licenses (GPL/AGPL/LGPL), document usage pattern to ensure compliance
 
 ---
 
-*Last updated: 2025-12-21*
+*Last updated: 2025-12-26*
