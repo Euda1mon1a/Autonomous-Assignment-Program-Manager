@@ -132,13 +132,15 @@ def get_inpatient_template(templates: dict, rotation_name: str) -> dict | None:
         return templates[rotation_name]
 
     # Map rotation names to template names
-    if "fmit" in rotation_lower:
+    if "fmit" in rotation_lower or "family medicine inpatient" in rotation_lower:
         # FMIT assignments use FMIT AM/PM templates
         return templates.get("FMIT AM") or templates.get("FMIT PM")
-    elif "night float" in rotation_lower:
+    elif "night float" in rotation_lower or "night" in rotation_lower:
         return templates.get("Night Float AM") or templates.get("Night Float PM")
     elif "nicu" in rotation_lower or "neonatal" in rotation_lower:
         return templates.get("NICU")
+    elif "labor and delivery" in rotation_lower:
+        return templates.get("Night Float AM") or templates.get("Night Float PM")
 
     return None
 
