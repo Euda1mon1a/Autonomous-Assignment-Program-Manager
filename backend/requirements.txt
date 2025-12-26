@@ -32,8 +32,7 @@ strawberry-graphql[fastapi]==0.219.2
 ***REMOVED*** Data Processing
 pandas==2.3.3
 numpy==2.3.5
-scipy==1.15.3  ***REMOVED*** Sparse matrix operations for tensegrity solver
-scipy==1.15.3  ***REMOVED*** Scientific computing for Erlang C queuing calculations
+scipy==1.15.3  ***REMOVED*** Sparse matrix operations, Erlang C queuing calculations
 python-dateutil==2.9.0.post0
 
 ***REMOVED*** Machine Learning
@@ -42,13 +41,12 @@ joblib>=1.3.0  ***REMOVED*** Model serialization
 
 ***REMOVED*** Graph Analysis (for resilience hub vulnerability analysis)
 networkx>=3.0
-ndlib>=5.1.0  ***REMOVED*** Network diffusion library for burnout contagion modeling
+ndlib>=5.1.0  ***REMOVED*** Network diffusion library for burnout contagion modeling (SIR on graphs)
 
 ***REMOVED*** Cross-Disciplinary Engineering Analytics
 ***REMOVED*** Libraries from manufacturing, epidemiology, and industrial engineering for resilience analysis
 pyspc>=0.1.0  ***REMOVED*** Statistical Process Control charts with Western Electric rules
 manufacturing>=1.2.0  ***REMOVED*** Six Sigma Cp/Cpk process capability analysis
-ndlib>=5.1.0  ***REMOVED*** Network diffusion/epidemiology models (SIR on graphs)
 pyworkforce>=0.2.0  ***REMOVED*** Erlang C queuing theory for workforce optimization
 
 ***REMOVED*** Constraint Programming & Optimization

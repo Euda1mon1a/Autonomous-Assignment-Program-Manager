@@ -15,9 +15,9 @@ class RotationTemplateBase(BaseModel):
     clinic_location: str | None = None
     max_residents: int | None = None
     requires_specialty: str | None = None
-    requires_procedure_credential: bool = False
-    supervision_required: bool = True
-    max_supervision_ratio: int = 4
+    requires_procedure_credential: bool | None = False
+    supervision_required: bool | None = True
+    max_supervision_ratio: int | None = 4
 
 
 class RotationTemplateCreate(RotationTemplateBase):
