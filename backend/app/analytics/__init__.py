@@ -6,6 +6,14 @@ from app.analytics.api import (
     APIAnalyticsService,
     get_api_analytics_service,
 )
+from app.analytics.arima_forecast import (
+    ARIMAConfig,
+    ARIMAForecaster,
+    WorkloadSeries,
+    auto_select_arima_order,
+    check_stationarity,
+    forecast_workload,
+)
 from app.analytics.engine import AnalyticsEngine
 from app.analytics.metrics import (
     calculate_acgme_compliance_rate,
@@ -52,9 +60,12 @@ __all__ = [
     # Classes
     "AnalyticsEngine",
     "APIAnalyticsService",
+    "ARIMAConfig",
+    "ARIMAForecaster",
     "ReportGenerator",
     "StabilityMetrics",
     "StabilityMetricsComputer",
+    "WorkloadSeries",
     # Factory functions
     "get_analytics_engine",
     "get_api_analytics_service",
@@ -66,4 +77,8 @@ __all__ = [
     "calculate_fairness_index",
     "calculate_preference_satisfaction",
     "compute_stability_metrics",
+    # ARIMA forecasting functions
+    "auto_select_arima_order",
+    "check_stationarity",
+    "forecast_workload",
 ]
