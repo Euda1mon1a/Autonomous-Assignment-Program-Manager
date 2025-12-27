@@ -30,6 +30,8 @@ class RotationTemplate(Base):
         String(255), nullable=False
     )  ***REMOVED*** "clinic", "inpatient", "procedure", "conference"
     abbreviation = Column(String(10))  ***REMOVED*** For Excel export: "C", "FMIT", "LEC"
+    font_color = Column(String(50))  ***REMOVED*** Tailwind color class for text
+    background_color = Column(String(50))  ***REMOVED*** Tailwind color class for background
 
     ***REMOVED*** Leave eligibility
     ***REMOVED*** True = scheduled leave is allowed on this rotation (most electives, clinic)
