@@ -16,6 +16,7 @@ class FacultyRoleSchema(str, Enum):
     DEPT_CHIEF = "dept_chief"
     SPORTS_MED = "sports_med"
     CORE = "core"
+    ADJUNCT = "adjunct"
 
 
 class PersonBase(BaseModel):

@@ -4,7 +4,7 @@ import { useState, FormEvent, useEffect } from 'react';
 import { Modal } from '@/components/Modal';
 import { Input, Select } from '@/components/forms';
 import { useUpdatePerson } from '@/lib/hooks';
-import { PersonType, type Person, type PersonUpdate } from '@/types/api';
+import { PersonType, FacultyRole, type Person, type PersonUpdate } from '@/types/api';
 
 interface EditPersonModalProps {
   isOpen: boolean;
@@ -30,11 +30,22 @@ const pgyOptions = [
   { value: '3', label: 'PGY-3' },
 ];
 
+const facultyRoleOptions = [
+  { value: FacultyRole.CORE, label: 'Core Faculty' },
+  { value: FacultyRole.PD, label: 'Program Director' },
+  { value: FacultyRole.APD, label: 'Associate Program Director' },
+  { value: FacultyRole.OIC, label: 'Officer in Charge' },
+  { value: FacultyRole.DEPT_CHIEF, label: 'Department Chief' },
+  { value: FacultyRole.SPORTS_MED, label: 'Sports Medicine' },
+  { value: FacultyRole.ADJUNCT, label: 'Adjunct Faculty' },
+];
+
 export function EditPersonModal({ isOpen, onClose, person }: EditPersonModalProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [type, setType] = useState<PersonType>(PersonType.RESIDENT);
   const [pgyLevel, setPgyLevel] = useState('1');
+  const [facultyRole, setFacultyRole] = useState<FacultyRole>(FacultyRole.CORE);
   const [performsProcedures, setPerformsProcedures] = useState(false);
   const [specialties, setSpecialties] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
@@ -48,6 +59,7 @@ export function EditPersonModal({ isOpen, onClose, person }: EditPersonModalProp
       setEmail(person.email || '');
       setType(person.type);
       setPgyLevel(person.pgy_level?.toString() || '1');
+      setFacultyRole(person.faculty_role || FacultyRole.CORE);
       setPerformsProcedures(person.performs_procedures);
       setSpecialties(person.specialties?.join(', ') || '');
     }
@@ -87,6 +99,7 @@ export function EditPersonModal({ isOpen, onClose, person }: EditPersonModalProp
       type,
       email: email.trim() || undefined,
       pgy_level: type === PersonType.RESIDENT ? parseInt(pgyLevel) : undefined,
+      faculty_role: type === PersonType.FACULTY ? facultyRole : undefined,
       performs_procedures: performsProcedures,
       specialties: specialties ? specialties.split(',').map(s => s.trim()).filter(Boolean) : undefined,
     };
@@ -147,6 +160,15 @@ export function EditPersonModal({ isOpen, onClose, person }: EditPersonModalProp
             onChange={(e) => setPgyLevel(e.target.value)}
             options={pgyOptions}
             error={errors.pgy_level}
+          />
+        )}
+
+        {type === PersonType.FACULTY && (
+          <Select
+            label="Faculty Role"
+            value={facultyRole}
+            onChange={(e) => setFacultyRole(e.target.value as FacultyRole)}
+            options={facultyRoleOptions}
           />
         )}
 
