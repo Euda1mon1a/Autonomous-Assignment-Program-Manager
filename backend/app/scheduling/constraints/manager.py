@@ -67,6 +67,7 @@ from .call_equity import (
 )
 from .fmit import PostFMITRecoveryConstraint, PostFMITSundayBlockingConstraint
 from .inpatient import ResidentInpatientHeadcountConstraint
+from .overnight_call import OvernightCallGenerationConstraint
 
 logger = logging.getLogger(__name__)
 
@@ -304,6 +305,9 @@ class ConstraintManager:
         manager.add(PostFMITRecoveryConstraint())  # Faculty Friday PC after FMIT
         manager.add(PostFMITSundayBlockingConstraint())
 
+        # Overnight call generation - creates call_assignments variables for Sun-Thurs
+        manager.add(OvernightCallGenerationConstraint())
+
         # Faculty primary duty constraints (Airtable-driven)
         # Uses primary_duties.json for per-faculty clinic min/max and availability
         manager.add(FacultyPrimaryDutyClinicConstraint())
@@ -378,6 +382,9 @@ class ConstraintManager:
         manager.add(ResidentInpatientHeadcountConstraint())
         manager.add(PostFMITRecoveryConstraint())  # Faculty Friday PC after FMIT
         manager.add(PostFMITSundayBlockingConstraint())
+
+        # Overnight call generation - creates call_assignments variables for Sun-Thurs
+        manager.add(OvernightCallGenerationConstraint())
 
         # Faculty primary duty constraints (Airtable-driven)
         manager.add(FacultyPrimaryDutyClinicConstraint())

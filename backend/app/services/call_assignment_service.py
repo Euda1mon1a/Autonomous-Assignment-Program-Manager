@@ -1,0 +1,388 @@
+"""Call assignment service for business logic."""
+
+import logging
+from datetime import date
+from uuid import UUID
+
+from sqlalchemy import delete, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from app.models.call_assignment import CallAssignment
+from app.models.person import Person
+from app.schemas.call_assignment import CallAssignmentCreate, CallAssignmentUpdate
+
+logger = logging.getLogger(__name__)
+
+
+class CallAssignmentService:
+    """Service for call assignment business logic using async SQLAlchemy 2.0 patterns."""
+
+    def __init__(self, db: AsyncSession):
+        """
+        Initialize the call assignment service.
+
+        Args:
+            db: Async database session
+        """
+        self.db = db
+
+    async def get_call_assignment(self, call_id: UUID) -> CallAssignment | None:
+        """
+        Get a single call assignment by ID with eager loading.
+
+        Args:
+            call_id: Call assignment ID
+
+        Returns:
+            CallAssignment or None if not found
+
+        N+1 Optimization: Uses selectinload to eagerly fetch related Person entity,
+        preventing N+1 queries when accessing call_assignment.person.
+        """
+        stmt = (
+            select(CallAssignment)
+            .options(selectinload(CallAssignment.person))
+            .where(CallAssignment.id == call_id)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_call_assignments(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        person_id: UUID | None = None,
+        call_type: str | None = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> dict:
+        """
+        Get paginated list of call assignments with optional filters.
+
+        Args:
+            skip: Number of records to skip
+            limit: Maximum number of records to return
+            person_id: Filter by person ID
+            call_type: Filter by call type ('overnight', 'weekend', 'backup')
+            start_date: Filter by start date (inclusive)
+            end_date: Filter by end date (inclusive)
+
+        Returns:
+            Dict with 'items' (list of CallAssignments) and 'total' (count)
+
+        N+1 Optimization: Uses selectinload to eagerly fetch Person relationships.
+        """
+        # Build base query
+        stmt = select(CallAssignment).options(selectinload(CallAssignment.person))
+
+        # Apply filters
+        if person_id:
+            stmt = stmt.where(CallAssignment.person_id == person_id)
+        if call_type:
+            stmt = stmt.where(CallAssignment.call_type == call_type)
+        if start_date:
+            stmt = stmt.where(CallAssignment.date >= start_date)
+        if end_date:
+            stmt = stmt.where(CallAssignment.date <= end_date)
+
+        # Get total count
+        count_stmt = select(CallAssignment)
+        if person_id:
+            count_stmt = count_stmt.where(CallAssignment.person_id == person_id)
+        if call_type:
+            count_stmt = count_stmt.where(CallAssignment.call_type == call_type)
+        if start_date:
+            count_stmt = count_stmt.where(CallAssignment.date >= start_date)
+        if end_date:
+            count_stmt = count_stmt.where(CallAssignment.date <= end_date)
+
+        count_result = await self.db.execute(count_stmt)
+        total = len(count_result.scalars().all())
+
+        # Apply pagination and execute
+        stmt = stmt.order_by(CallAssignment.date.desc()).offset(skip).limit(limit)
+        result = await self.db.execute(stmt)
+        call_assignments = result.scalars().all()
+
+        return {"items": list(call_assignments), "total": total}
+
+    async def get_call_assignments_by_date_range(
+        self,
+        start_date: date,
+        end_date: date,
+    ) -> list[CallAssignment]:
+        """
+        Get all call assignments within a date range.
+
+        Args:
+            start_date: Start date (inclusive)
+            end_date: End date (inclusive)
+
+        Returns:
+            List of CallAssignments in the date range
+
+        N+1 Optimization: Eagerly loads Person relationships.
+        """
+        stmt = (
+            select(CallAssignment)
+            .options(selectinload(CallAssignment.person))
+            .where(
+                CallAssignment.date >= start_date,
+                CallAssignment.date <= end_date,
+            )
+            .order_by(CallAssignment.date)
+        )
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_call_assignments_by_person(
+        self,
+        person_id: UUID,
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> list[CallAssignment]:
+        """
+        Get all call assignments for a specific person, optionally filtered by date range.
+
+        Args:
+            person_id: Person ID
+            start_date: Optional start date filter (inclusive)
+            end_date: Optional end date filter (inclusive)
+
+        Returns:
+            List of CallAssignments for the person
+        """
+        stmt = (
+            select(CallAssignment)
+            .options(selectinload(CallAssignment.person))
+            .where(CallAssignment.person_id == person_id)
+        )
+
+        if start_date:
+            stmt = stmt.where(CallAssignment.date >= start_date)
+        if end_date:
+            stmt = stmt.where(CallAssignment.date <= end_date)
+
+        stmt = stmt.order_by(CallAssignment.date)
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def create_call_assignment(
+        self,
+        assignment_data: CallAssignmentCreate,
+    ) -> dict:
+        """
+        Create a new call assignment.
+
+        Args:
+            assignment_data: Validated call assignment data
+
+        Returns:
+            Dict with:
+            - call_assignment: The created CallAssignment
+            - error: Error message if creation failed
+        """
+        # Check if person exists
+        person_stmt = select(Person).where(Person.id == assignment_data.person_id)
+        person_result = await self.db.execute(person_stmt)
+        person = person_result.scalar_one_or_none()
+
+        if not person:
+            return {
+                "call_assignment": None,
+                "error": f"Person with ID {assignment_data.person_id} not found",
+            }
+
+        # Check for duplicate (same person, date, and call_type)
+        duplicate_stmt = select(CallAssignment).where(
+            CallAssignment.date == assignment_data.date,
+            CallAssignment.person_id == assignment_data.person_id,
+            CallAssignment.call_type == assignment_data.call_type,
+        )
+        duplicate_result = await self.db.execute(duplicate_stmt)
+        existing = duplicate_result.scalar_one_or_none()
+
+        if existing:
+            return {
+                "call_assignment": None,
+                "error": "Call assignment already exists for this person, date, and type",
+            }
+
+        # Create the call assignment
+        call_assignment = CallAssignment(
+            date=assignment_data.date,
+            person_id=assignment_data.person_id,
+            call_type=assignment_data.call_type.value,
+            is_weekend=assignment_data.is_weekend,
+            is_holiday=assignment_data.is_holiday,
+        )
+
+        self.db.add(call_assignment)
+        await self.db.flush()
+        await self.db.refresh(call_assignment)
+
+        logger.info(
+            f"Created call assignment {call_assignment.id} for person {person.name} "
+            f"on {assignment_data.date}"
+        )
+
+        return {"call_assignment": call_assignment, "error": None}
+
+    async def update_call_assignment(
+        self,
+        call_id: UUID,
+        update_data: CallAssignmentUpdate,
+    ) -> dict:
+        """
+        Update an existing call assignment.
+
+        Args:
+            call_id: Call assignment ID
+            update_data: Updated call assignment data
+
+        Returns:
+            Dict with:
+            - call_assignment: The updated CallAssignment
+            - error: Error message if update failed
+        """
+        # Get existing call assignment
+        stmt = select(CallAssignment).where(CallAssignment.id == call_id)
+        result = await self.db.execute(stmt)
+        call_assignment = result.scalar_one_or_none()
+
+        if not call_assignment:
+            return {"call_assignment": None, "error": "Call assignment not found"}
+
+        # Check if person exists if being updated
+        if update_data.person_id:
+            person_stmt = select(Person).where(Person.id == update_data.person_id)
+            person_result = await self.db.execute(person_stmt)
+            person = person_result.scalar_one_or_none()
+
+            if not person:
+                return {
+                    "call_assignment": None,
+                    "error": f"Person with ID {update_data.person_id} not found",
+                }
+
+        # Update fields
+        update_dict = update_data.model_dump(exclude_unset=True)
+        for field, value in update_dict.items():
+            if field == "call_type" and value is not None:
+                # Handle enum conversion
+                setattr(call_assignment, field, value.value)
+            elif value is not None:
+                setattr(call_assignment, field, value)
+
+        await self.db.flush()
+        await self.db.refresh(call_assignment)
+
+        logger.info(f"Updated call assignment {call_id}")
+
+        return {"call_assignment": call_assignment, "error": None}
+
+    async def delete_call_assignment(self, call_id: UUID) -> dict:
+        """
+        Delete a call assignment.
+
+        Args:
+            call_id: Call assignment ID
+
+        Returns:
+            Dict with:
+            - success: True if deleted, False otherwise
+            - error: Error message if deletion failed
+        """
+        # Check if exists
+        stmt = select(CallAssignment).where(CallAssignment.id == call_id)
+        result = await self.db.execute(stmt)
+        call_assignment = result.scalar_one_or_none()
+
+        if not call_assignment:
+            return {"success": False, "error": "Call assignment not found"}
+
+        # Delete
+        await self.db.delete(call_assignment)
+        await self.db.flush()
+
+        logger.info(f"Deleted call assignment {call_id}")
+
+        return {"success": True, "error": None}
+
+    async def bulk_create_call_assignments(
+        self,
+        assignments: list[CallAssignmentCreate],
+    ) -> dict:
+        """
+        Bulk create multiple call assignments (used by solver).
+
+        Args:
+            assignments: List of call assignment data to create
+
+        Returns:
+            Dict with:
+            - created: List of created CallAssignments
+            - errors: List of error messages for failed creations
+            - count: Number of successfully created assignments
+        """
+        created = []
+        errors = []
+
+        for assignment_data in assignments:
+            result = await self.create_call_assignment(assignment_data)
+
+            if result["error"]:
+                errors.append(
+                    f"Failed to create assignment for {assignment_data.person_id} "
+                    f"on {assignment_data.date}: {result['error']}"
+                )
+            else:
+                created.append(result["call_assignment"])
+
+        # Commit all at once
+        await self.db.flush()
+
+        logger.info(
+            f"Bulk created {len(created)} call assignments with {len(errors)} errors"
+        )
+
+        return {
+            "created": created,
+            "errors": errors,
+            "count": len(created),
+        }
+
+    async def clear_call_assignments_in_range(
+        self,
+        start_date: date,
+        end_date: date,
+    ) -> dict:
+        """
+        Clear all call assignments within a date range (for schedule regeneration).
+
+        Args:
+            start_date: Start date (inclusive)
+            end_date: End date (inclusive)
+
+        Returns:
+            Dict with:
+            - deleted: Number of call assignments deleted
+            - error: Error message if deletion failed
+        """
+        # Delete all call assignments in range
+        stmt = delete(CallAssignment).where(
+            CallAssignment.date >= start_date,
+            CallAssignment.date <= end_date,
+        )
+
+        result = await self.db.execute(stmt)
+        deleted_count = result.rowcount
+
+        await self.db.flush()
+
+        logger.info(
+            f"Cleared {deleted_count} call assignments from {start_date} to {end_date}"
+        )
+
+        return {"deleted": deleted_count, "error": None}
