@@ -2,16 +2,11 @@
   "$schema": "https://modelcontextprotocol.io/schema/mcp.json",
   "mcpServers": {
     "residency-scheduler": {
-      "description": "Medical residency scheduling MCP server with ACGME compliance validation",
-      "command": "python",
-      "args": ["-m", "scheduler_mcp.server"],
-      "cwd": "${workspaceFolder}/mcp-server",
+      "description": "Medical residency scheduling MCP server (Docker)",
+      "command": "docker",
+      "args": ["compose", "exec", "-T", "mcp-server", "python", "-m", "scheduler_mcp.server"],
       "env": {
-        "DATABASE_URL": "${env:DATABASE_URL}",
-        "REDIS_URL": "${env:REDIS_URL}",
-        "API_BASE_URL": "${env:API_BASE_URL}",
-        "LOG_LEVEL": "INFO",
-        "PYTHONPATH": "${workspaceFolder}/mcp-server/src"
+        "LOG_LEVEL": "INFO"
       },
       "transport": "stdio",
       "autoStart": false,
@@ -46,17 +41,6 @@
           "redact_pii": true
         }
       },
-      "validation": {
-        "validateEnvVars": true,
-        "requiredEnvVars": [
-          "DATABASE_URL"
-        ],
-        "optionalEnvVars": [
-          "REDIS_URL",
-          "API_BASE_URL",
-          "LOG_LEVEL"
-        ]
-      },
       "metadata": {
         "version": "0.1.0",
         "healthCheck": {
@@ -71,6 +55,22 @@
           "swap-matching"
         ]
       }
+    },
+    "residency-scheduler-local": {
+      "description": "Medical residency scheduling MCP server (local Python - requires pip install)",
+      "command": "python",
+      "args": ["-m", "scheduler_mcp.server"],
+      "cwd": "${workspaceFolder}/mcp-server/src",
+      "env": {
+        "DATABASE_URL": "${env:DATABASE_URL}",
+        "REDIS_URL": "${env:REDIS_URL}",
+        "API_BASE_URL": "http://localhost:8000",
+        "LOG_LEVEL": "INFO",
+        "PYTHONPATH": "${workspaceFolder}/mcp-server/src"
+      },
+      "transport": "stdio",
+      "autoStart": false,
+      "disabled": true
     }
   },
   "global": {

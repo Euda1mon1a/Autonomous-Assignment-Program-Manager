@@ -1,17 +1,12 @@
 {
   "mcpServers": {
     "residency-scheduler": {
-      "description": "Medical residency scheduling MCP server with ACGME compliance validation",
+      "description": "Medical residency scheduling MCP server (Docker)",
       "command": {
-        "path": "python",
-        "args": ["-m", "scheduler_mcp.server"],
-        "cwd": "mcp-server",
+        "path": "docker",
+        "args": ["compose", "exec", "-T", "mcp-server", "python", "-m", "scheduler_mcp.server"],
         "env": {
-          "DATABASE_URL": "$DATABASE_URL",
-          "REDIS_URL": "$REDIS_URL",
-          "API_BASE_URL": "$API_BASE_URL",
-          "LOG_LEVEL": "INFO",
-          "PYTHONPATH": "mcp-server/src"
+          "LOG_LEVEL": "INFO"
         }
       },
       "transport": {
@@ -47,6 +42,26 @@
           "intervalMs": 60000
         }
       }
+    },
+    "residency-scheduler-local": {
+      "description": "Medical residency scheduling MCP server (local - requires pip install)",
+      "command": {
+        "path": "python",
+        "args": ["-m", "scheduler_mcp.server"],
+        "cwd": "mcp-server/src",
+        "env": {
+          "DATABASE_URL": "$DATABASE_URL",
+          "REDIS_URL": "$REDIS_URL",
+          "API_BASE_URL": "http://localhost:8000",
+          "LOG_LEVEL": "INFO",
+          "PYTHONPATH": "mcp-server/src"
+        }
+      },
+      "transport": {
+        "type": "stdio"
+      },
+      "autoStart": false,
+      "disabled": true
     }
   },
   "settings": {
