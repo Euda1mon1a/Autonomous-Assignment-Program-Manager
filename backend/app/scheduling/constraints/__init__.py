@@ -95,6 +95,12 @@ from .fmit import (
     is_sun_thurs,
 )
 
+# Overnight call generation constraint
+from .overnight_call import (
+    OvernightCallGenerationConstraint,
+    is_overnight_call_night,
+)
+
 # Constraint manager
 from .manager import ConstraintManager
 
@@ -175,6 +181,9 @@ __all__ = [
     "PostFMITSundayBlockingConstraint",
     "get_fmit_week_dates",
     "is_sun_thurs",
+    # Overnight call generation
+    "OvernightCallGenerationConstraint",
+    "is_overnight_call_night",
     # Equity constraints
     "ContinuityConstraint",
     "EquityConstraint",

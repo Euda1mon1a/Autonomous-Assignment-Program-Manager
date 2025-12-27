@@ -8,6 +8,13 @@ from app.schemas.assignment import (
 )
 from app.schemas.auth import Token, TokenData, UserCreate, UserLogin, UserResponse
 from app.schemas.block import BlockCreate, BlockListResponse, BlockResponse
+from app.schemas.call_assignment import (
+    CallAssignmentCreate,
+    CallAssignmentListResponse,
+    CallAssignmentResponse,
+    CallAssignmentUpdate,
+    CallTypeSchema,
+)
 from app.schemas.certification import (
     CertificationTypeCreate,
     CertificationTypeListResponse,
@@ -126,6 +133,12 @@ __all__ = [
     "BlockCreate",
     "BlockResponse",
     "BlockListResponse",
+    # Call assignment schemas
+    "CallTypeSchema",
+    "CallAssignmentCreate",
+    "CallAssignmentUpdate",
+    "CallAssignmentResponse",
+    "CallAssignmentListResponse",
     "RotationTemplateCreate",
     "RotationTemplateUpdate",
     "RotationTemplateResponse",

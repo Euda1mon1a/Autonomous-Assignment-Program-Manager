@@ -12,6 +12,7 @@ from app.api.routes import (
     batch,
     blocks,
     calendar,
+    call_assignments,
     certifications,
     changelog,
     conflict_resolution,
@@ -79,6 +80,9 @@ api_router.include_router(
 )
 api_router.include_router(batch.router, prefix="/batch", tags=["batch"])
 api_router.include_router(absences.router, prefix="/absences", tags=["absences"])
+api_router.include_router(
+    call_assignments.router, prefix="/call-assignments", tags=["call-assignments"]
+)
 api_router.include_router(schedule.router, prefix="/schedule", tags=["schedule"])
 api_router.include_router(settings.router, prefix="/settings", tags=["settings"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
