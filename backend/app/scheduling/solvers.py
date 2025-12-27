@@ -80,6 +80,7 @@ class SolverResult:
         statistics: dict = None,
         explanations: dict = None,  # person_id, block_id -> DecisionExplanation
         random_seed: int = None,
+        call_assignments: list[tuple[UUID, UUID, str]] = None,  # (person_id, block_id, call_type)
     ):
         self.success = success
         self.assignments = assignments
@@ -92,6 +93,7 @@ class SolverResult:
             explanations or {}
         )  # (person_id, block_id) -> explanation dict
         self.random_seed = random_seed
+        self.call_assignments = call_assignments or []  # (person_id, block_id, call_type)
 
     def __repr__(self):
         return f"SolverResult(success={self.success}, assignments={len(self.assignments)}, status={self.status})"
@@ -272,11 +274,41 @@ class PuLPSolver(BaseSolver):
                 if rotation_vars:
                     f_2d[f_i, b_i] = pulp.lpSum(rotation_vars)
 
+        # ==================================================
+        # OVERNIGHT CALL DECISION VARIABLES
+        # call[f_i, b_i, "overnight"] = 1 if faculty f on call for block b's date
+        # Only Sun-Thurs nights (weekday 0,1,2,3,6)
+        # ==================================================
+        call = {}
+        call_eligible = getattr(context, "call_eligible_faculty", [])
+        call_idx = getattr(context, "call_eligible_faculty_idx", {})
+
+        if call_eligible:
+            call_dates_processed = set()
+            for block in workday_blocks:
+                # Only Sun-Thurs nights (Sun=6, Mon=0, Tue=1, Wed=2, Thu=3)
+                if block.date.weekday() not in (0, 1, 2, 3, 6):
+                    continue
+                # Only one variable per date (not per block/session)
+                if block.date in call_dates_processed:
+                    continue
+                call_dates_processed.add(block.date)
+
+                b_i = context.block_idx[block.id]
+                for fac in call_eligible:
+                    f_i = call_idx.get(fac.id)
+                    if f_i is not None:
+                        call[f_i, b_i, "overnight"] = pulp.LpVariable(
+                            f"call_{f_i}_{b_i}",
+                            cat=pulp.LpBinary,
+                        )
+
         variables = {
             "assignments": x_2d,  # For legacy constraints (residents)
             "template_assignments": x,  # For rotation-specific constraints (residents)
             "faculty_assignments": f_2d,  # Faculty 2D view
             "faculty_template_assignments": f,  # Faculty 3D view
+            "call_assignments": call,  # Overnight call assignments
         }
 
         # ==================================================
@@ -462,6 +494,33 @@ class PuLPSolver(BaseSolver):
                         )
                         faculty_assignment_count += 1
 
+        # ==================================================
+        # EXTRACT SOLUTION - Overnight Call Assignments
+        # ==================================================
+        call_assignments_result = []
+        if call_eligible and call:
+            for (f_i, b_i, call_type), var in call.items():
+                if pulp.value(var) == 1:
+                    # Find the faculty and block for this variable
+                    faculty_id = None
+                    block_id = None
+                    for fac in call_eligible:
+                        if call_idx.get(fac.id) == f_i:
+                            faculty_id = fac.id
+                            break
+                    for block in workday_blocks:
+                        if context.block_idx[block.id] == b_i:
+                            block_id = block.id
+                            break
+                    if faculty_id and block_id:
+                        call_assignments_result.append(
+                            (faculty_id, block_id, call_type)
+                        )
+
+            logger.info(
+                f"PuLP found {len(call_assignments_result)} overnight call assignments"
+            )
+
         logger.info(
             f"PuLP found {len(assignments)} assignments "
             f"({len(assignments) - faculty_assignment_count} residents, "
@@ -482,10 +541,12 @@ class PuLPSolver(BaseSolver):
                 "total_templates": len(context.templates),
                 "resident_assignments": len(assignments) - faculty_assignment_count,
                 "faculty_assignments": faculty_assignment_count,
+                "call_assignments": len(call_assignments_result),
                 "coverage_rate": (
                     len(assignments) / len(workday_blocks) if workday_blocks else 0
                 ),
             },
+            call_assignments=call_assignments_result,
         )
 
 
@@ -755,11 +816,44 @@ class CPSATSolver(BaseSolver):
                         f_2d[f_i, b_i].Not()
                     )
 
+        # ==================================================
+        # OVERNIGHT CALL DECISION VARIABLES
+        # call[f_i, b_i, "overnight"] = 1 if faculty f on call for block b's date
+        # Only Sun-Thurs nights (weekday 0,1,2,3,6)
+        # ==================================================
+        call = {}
+        call_eligible = getattr(context, "call_eligible_faculty", [])
+        call_idx = getattr(context, "call_eligible_faculty_idx", {})
+
+        if call_eligible:
+            # Track dates already processed (one call per date, not per block)
+            call_dates_processed = set()
+            for block in workday_blocks:
+                # Only Sun-Thurs nights (Mon=0, Tue=1, Wed=2, Thu=3, Sun=6)
+                if block.date.weekday() not in (0, 1, 2, 3, 6):
+                    continue
+                if block.date in call_dates_processed:
+                    continue
+                call_dates_processed.add(block.date)
+
+                b_i = context.block_idx[block.id]
+                for faculty in call_eligible:
+                    f_i = call_idx.get(faculty.id)
+                    if f_i is not None:
+                        call[f_i, b_i, "overnight"] = model.NewBoolVar(
+                            f"call_{f_i}_{b_i}"
+                        )
+            logger.info(
+                f"Created {len(call)} call variables for {len(call_eligible)} "
+                f"eligible faculty across {len(call_dates_processed)} nights"
+            )
+
         variables = {
             "assignments": x_2d,  # For legacy constraints (residents)
             "template_assignments": x,  # For rotation-specific constraints (residents)
             "faculty_assignments": f_2d,  # Faculty 2D view
             "faculty_template_assignments": f,  # Faculty 3D view
+            "call_assignments": call,  # Overnight call variables
         }
 
         # ==================================================
@@ -972,6 +1066,36 @@ class CPSATSolver(BaseSolver):
                         )
                         faculty_assignment_count += 1
 
+        # ==================================================
+        # EXTRACT SOLUTION - Overnight Call Assignments
+        # ==================================================
+        call_assignments_result = []
+        call_eligible = getattr(context, "call_eligible_faculty", [])
+        call_idx = getattr(context, "call_eligible_faculty_idx", {})
+
+        if call_eligible and call:
+            for (f_i, b_i, call_type), var in call.items():
+                if solver.Value(var) == 1:
+                    # Find the faculty and block for this variable
+                    faculty_id = None
+                    block_id = None
+                    for fac in call_eligible:
+                        if call_idx.get(fac.id) == f_i:
+                            faculty_id = fac.id
+                            break
+                    for block in workday_blocks:
+                        if context.block_idx[block.id] == b_i:
+                            block_id = block.id
+                            break
+                    if faculty_id and block_id:
+                        call_assignments_result.append(
+                            (faculty_id, block_id, call_type)
+                        )
+
+            logger.info(
+                f"CP-SAT found {len(call_assignments_result)} overnight call assignments"
+            )
+
         logger.info(
             f"CP-SAT found {len(assignments)} assignments "
             f"({len(assignments) - faculty_assignment_count} residents, "
@@ -992,12 +1116,14 @@ class CPSATSolver(BaseSolver):
                 "total_templates": len(context.templates),
                 "resident_assignments": len(assignments) - faculty_assignment_count,
                 "faculty_assignments": faculty_assignment_count,
+                "call_assignments": len(call_assignments_result),
                 "coverage_rate": (
                     len(assignments) / len(workday_blocks) if workday_blocks else 0
                 ),
                 "branches": solver.NumBranches(),
                 "conflicts": solver.NumConflicts(),
             },
+            call_assignments=call_assignments_result,
         )
 
     @staticmethod

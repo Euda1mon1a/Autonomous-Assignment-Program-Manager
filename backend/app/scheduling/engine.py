@@ -37,7 +37,8 @@ logger = get_logger(__name__)
 from app.models.absence import Absence
 from app.models.assignment import Assignment
 from app.models.block import Block
-from app.models.person import Person
+from app.models.call_assignment import CallAssignment
+from app.models.person import Person, FacultyRole
 from app.models.rotation_template import RotationTemplate
 from app.models.schedule_run import ScheduleRun
 from app.resilience.service import ResilienceConfig, ResilienceService
@@ -273,6 +274,12 @@ class SchedulingEngine:
                 solver_result, residents, templates, run.id, preserved_assignments
             )
 
+            # Step 6.5: Create call assignments from solver results
+            # Creates CallAssignment records for overnight call (Sun-Thurs)
+            call_assignments = self._create_call_assignments_from_result(
+                solver_result, context
+            )
+
             # Step 7: Assign faculty supervision
             # Pass preserved_assignments so faculty with FMIT/absences are excluded
             self._assign_faculty(faculty, blocks, run.id, preserved_assignments)
@@ -384,6 +391,7 @@ class SchedulingEngine:
                 "message": f"Generated {len(self.assignments)} assignments using {algorithm}",
                 "total_assigned": len(self.assignments),
                 "total_blocks": len(blocks),
+                "total_call_assignments": len(call_assignments),
                 "validation": validation,
                 "run_id": run.id,
                 "solver_stats": solver_result.statistics,
@@ -463,6 +471,9 @@ class SchedulingEngine:
         Returns:
             SchedulingContext with all data needed for constraint evaluation
         """
+        # Get call-eligible faculty (excludes adjuncts)
+        call_eligible = self._get_call_eligible_faculty(faculty)
+
         # Build base context
         context = SchedulingContext(
             residents=residents,
@@ -473,6 +484,7 @@ class SchedulingEngine:
             start_date=self.start_date,
             end_date=self.end_date,
             existing_assignments=existing_assignments or [],
+            call_eligible_faculty=call_eligible,
         )
 
         # Populate resilience data if available and requested
@@ -787,6 +799,55 @@ class SchedulingEngine:
                 "immutable existing assignments"
             )
 
+    def _create_call_assignments_from_result(
+        self,
+        result: SolverResult,
+        context: SchedulingContext,
+    ) -> list[CallAssignment]:
+        """
+        Convert solver call results to CallAssignment objects.
+
+        Creates CallAssignment records from the solver's call_assignments output.
+        Each assignment maps a faculty member to a specific date for overnight call.
+
+        Args:
+            result: SolverResult containing call_assignments list
+            context: SchedulingContext with block lookup data
+
+        Returns:
+            List of CallAssignment objects created
+        """
+        call_assignments = []
+
+        if not result.call_assignments:
+            return call_assignments
+
+        # Build block lookup for date extraction
+        block_by_id = {b.id: b for b in context.blocks}
+
+        for person_id, block_id, call_type in result.call_assignments:
+            block = block_by_id.get(block_id)
+            if not block:
+                logger.warning(f"Block {block_id} not found for call assignment")
+                continue
+
+            call_assignment = CallAssignment(
+                date=block.date,
+                person_id=person_id,
+                call_type=call_type,
+                is_weekend=(block.date.weekday() == 6),  # Sunday
+                is_holiday=False,  # Could be enhanced to check holiday calendar
+            )
+            self.db.add(call_assignment)
+            call_assignments.append(call_assignment)
+
+        if call_assignments:
+            logger.info(
+                f"Created {len(call_assignments)} overnight call assignments"
+            )
+
+        return call_assignments
+
     def _ensure_blocks_exist(self, commit: bool = True) -> list[Block]:
         """Ensure half-day blocks exist for the date range."""
         blocks = []
@@ -940,6 +1001,24 @@ class SchedulingEngine:
     def _get_faculty(self) -> list[Person]:
         """Get all faculty members."""
         return self.db.query(Person).filter(Person.type == "faculty").all()
+
+    def _get_call_eligible_faculty(self, faculty: list[Person]) -> list[Person]:
+        """
+        Get faculty eligible for solver-generated overnight call.
+
+        Adjunct faculty are excluded because they are manually added to call
+        rather than auto-scheduled by the solver.
+
+        Args:
+            faculty: List of all faculty members
+
+        Returns:
+            List of faculty eligible for overnight call (excludes adjuncts)
+        """
+        return [
+            f for f in faculty
+            if f.faculty_role != FacultyRole.ADJUNCT.value
+        ]
 
     def _load_fmit_assignments(self) -> list[Assignment]:
         """

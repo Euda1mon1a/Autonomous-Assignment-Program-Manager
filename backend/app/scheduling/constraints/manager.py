@@ -58,7 +58,12 @@ from .temporal import (
     WednesdayPMSingleFacultyConstraint,
 )
 
-# Block 10 constraints - call equity and inpatient headcount
+# Block 10 constraints - call coverage, equity, and inpatient headcount
+from .call_coverage import (
+    AdjunctCallExclusionConstraint,
+    CallAvailabilityConstraint,
+    OvernightCallCoverageConstraint,
+)
 from .call_equity import (
     CallSpacingConstraint,
     SundayCallEquityConstraint,
@@ -304,6 +309,11 @@ class ConstraintManager:
         manager.add(PostFMITRecoveryConstraint())  # Faculty Friday PC after FMIT
         manager.add(PostFMITSundayBlockingConstraint())
 
+        # Call coverage constraints (overnight Sun-Thurs)
+        manager.add(OvernightCallCoverageConstraint())
+        manager.add(AdjunctCallExclusionConstraint())
+        manager.add(CallAvailabilityConstraint())
+
         # Faculty primary duty constraints (Airtable-driven)
         # Uses primary_duties.json for per-faculty clinic min/max and availability
         manager.add(FacultyPrimaryDutyClinicConstraint())
@@ -378,6 +388,11 @@ class ConstraintManager:
         manager.add(ResidentInpatientHeadcountConstraint())
         manager.add(PostFMITRecoveryConstraint())  # Faculty Friday PC after FMIT
         manager.add(PostFMITSundayBlockingConstraint())
+
+        # Call coverage constraints (overnight Sun-Thurs)
+        manager.add(OvernightCallCoverageConstraint())
+        manager.add(AdjunctCallExclusionConstraint())
+        manager.add(CallAvailabilityConstraint())
 
         # Faculty primary duty constraints (Airtable-driven)
         manager.add(FacultyPrimaryDutyClinicConstraint())

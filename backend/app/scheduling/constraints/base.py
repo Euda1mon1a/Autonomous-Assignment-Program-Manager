@@ -233,6 +233,17 @@ class SchedulingContext:
     # Target utilization for buffer constraint (default 80%)
     target_utilization: float = 0.80
 
+    # =========================================================================
+    # Call Assignment Data (for overnight call generation)
+    # =========================================================================
+
+    # Faculty eligible for solver-generated overnight call (excludes adjuncts)
+    call_eligible_faculty: list = field(default_factory=list)
+    call_eligible_faculty_idx: dict[UUID, int] = field(default_factory=dict)
+
+    # Existing call assignments (for incremental scheduling)
+    existing_call_assignments: list = field(default_factory=list)
+
     def __post_init__(self: "SchedulingContext") -> None:
         """
         Build lookup dictionaries and indices for fast constraint evaluation.
@@ -256,6 +267,12 @@ class SchedulingContext:
         self.blocks_by_date = defaultdict(list)
         for block in self.blocks:
             self.blocks_by_date[block.date].append(block)
+
+        # Build call-eligible faculty index if provided
+        if self.call_eligible_faculty:
+            self.call_eligible_faculty_idx = {
+                f.id: i for i, f in enumerate(self.call_eligible_faculty)
+            }
 
     def has_resilience_data(self: "SchedulingContext") -> bool:
         """
