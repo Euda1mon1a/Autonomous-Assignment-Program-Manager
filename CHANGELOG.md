@@ -9,6 +9,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Faculty Outpatient Scheduling Improvements (December 2025)
+
+**Adjunct Faculty Role:**
+- Added `ADJUNCT` role to `FacultyRole` enum for external/adjunct faculty
+- Adjunct faculty have `weekly_clinic_limit = 0` (not auto-scheduled)
+- Excluded from `FacultyOutpatientAssignmentService` auto-scheduling
+- Can still be manually pre-loaded to FMIT via block schedule
+- Full frontend support in Add/Edit Person modals with faculty role dropdown
+
+**Frontend Person Management:**
+- Added `FacultyRole` enum to frontend TypeScript types
+- Added `faculty_role` field to `Person`, `PersonCreate`, `PersonUpdate` interfaces
+- Added faculty role dropdown to `AddPersonModal` (shown when type = faculty)
+- Added faculty role dropdown to `EditPersonModal` with pre-population
+
+### Fixed
+
+#### Supervision Calculation Bug (December 2025) - CRITICAL
+
+**Problem:** Faculty supervision calculation overcounted required faculty in mixed PGY scenarios by applying ceiling operations separately to each PGY group.
+
+**Solution:** Switched to fractional supervision load approach:
+- PGY-1: 0.5 supervision load each (1:2 ratio)
+- PGY-2/3: 0.25 supervision load each (1:4 ratio)
+- Sum all loads THEN apply ceiling
+
+**Example:** 1 PGY-1 + 1 PGY-2 now correctly requires 1 faculty (not 2).
+
+**Files Fixed:**
+- `backend/app/services/faculty_outpatient_service.py`
+- `backend/app/scheduling/engine.py`
+- `backend/app/scheduling/constraints/acgme.py`
+
+**Tests Added:**
+- `test_calculate_required_faculty_fractional_load()` in `test_constraints.py`
+
+**Documentation Updated:**
+- Fixed supervision example in `docs/architecture/FACULTY_SCHEDULING_SPECIFICATION.md`
+- Updated diagnostic report at `docs/planning/FACULTY_OUTPATIENT_DIAGNOSTIC_REPORT.md`
+
+### Added
+
 #### Personal AI Infrastructure (PAI) - December 2025
 
 **Major AI-Assisted Development Platform:**
