@@ -1,17 +1,22 @@
 # MCP Server IDE Setup Guide
 
-This guide explains how to set up and use the Residency Scheduler MCP server with VSCode and Zed editors for local AI-assisted development.
+This guide explains how to set up and use the Residency Scheduler MCP server with VSCode, Zed, and Claude Code CLI.
+
+> **Last Updated:** 2025-12-27
 
 ## Table of Contents
 
 1. [Overview](#overview)
 2. [Prerequisites](#prerequisites)
-3. [VSCode Setup](#vscode-setup)
-4. [Zed Setup](#zed-setup)
-5. [Environment Configuration](#environment-configuration)
-6. [Usage](#usage)
-7. [Troubleshooting](#troubleshooting)
-8. [Security Considerations](#security-considerations)
+3. [Quick Start (Docker - Recommended)](#quick-start-docker---recommended)
+4. [Claude Code CLI Setup](#claude-code-cli-setup)
+5. [VSCode Setup](#vscode-setup)
+6. [Zed Setup](#zed-setup)
+7. [Local Python Setup (Alternative)](#local-python-setup-alternative)
+8. [Environment Configuration](#environment-configuration)
+9. [Usage](#usage)
+10. [Troubleshooting](#troubleshooting)
+11. [Security Considerations](#security-considerations)
 
 ---
 
@@ -24,54 +29,251 @@ The Residency Scheduler MCP (Model Context Protocol) server provides AI assistan
 - **Conflict Detection**: Identification of scheduling conflicts with auto-resolution suggestions
 - **Contingency Analysis**: Impact assessment for faculty absences and emergencies
 - **Swap Matching**: Intelligent matching for schedule swap requests
+- **Resilience Framework**: 13 tools for N-1/N-2 analysis, utilization thresholds, defense levels
 
 ### Architecture
 
 ```
-IDE (VSCode/Zed)
+IDE (VSCode/Zed/Claude Code)
     ↓
-MCP Client (built into IDE)
+MCP Client (stdio transport)
     ↓
-MCP Server (scheduler_mcp.server)
+Docker Container (mcp-server)
     ↓
-PostgreSQL Database / FastAPI Backend
+FastAPI Backend → PostgreSQL Database
 ```
+
+### Tool Count
+
+| Category | Tools |
+|----------|-------|
+| Core Scheduling | 5 |
+| Resilience Framework | 13 |
+| Background Tasks | 4 |
+| Deployment | 7 |
+| Empirical Testing | 5 |
+| Resources | 2 |
+| **Total** | **36** |
 
 ---
 
 ## Prerequisites
 
-### System Requirements
+### For Docker Method (Recommended)
+
+- Docker and Docker Compose installed
+- Project cloned locally
+
+### For Local Python Method (Alternative)
 
 - Python 3.10 or later
 - PostgreSQL 15+ (running and accessible)
-- Redis (optional, for enhanced features)
+- Redis (optional, for Celery tasks)
 
-### Python Environment
+---
 
-1. **Install the MCP server package:**
-   ```bash
-   cd mcp-server
-   pip install -e .
-   ```
+## Quick Start (Docker - Recommended)
 
-2. **Verify installation:**
-   ```bash
-   python -m scheduler_mcp.server --help
-   ```
+The recommended approach is to run MCP via Docker, which includes all dependencies.
 
-   You should see the help message with available options.
+### Step 1: Start Docker Services
 
-3. **Test database connection:**
-   ```bash
-   # Set DATABASE_URL environment variable
-   export DATABASE_URL="postgresql://scheduler:your_password@localhost:5432/residency_scheduler"
+```bash
+cd /path/to/Autonomous-Assignment-Program-Manager
+docker compose up -d
+```
 
-   # Run a quick test
-   python -m scheduler_mcp.server
-   ```
+### Step 2: Verify MCP Server is Running
 
-   The server should start without errors and display initialization messages.
+```bash
+# Check container status
+docker compose ps mcp-server
+
+# Verify MCP tools are loaded
+docker compose exec -T mcp-server python -c \
+  "from scheduler_mcp.server import mcp; print(f'Tools: {len(mcp._tools)}')"
+
+# Expected output: Tools: 36 (or similar)
+```
+
+### Step 3: Test Backend Connectivity
+
+```bash
+docker compose exec -T mcp-server curl -s http://backend:8000/health
+```
+
+Now your MCP server is ready for IDE integration!
+
+---
+
+## Claude Code CLI Setup
+
+Claude Code uses the `.mcp.json` file at the project root.
+
+### Configuration (Already Set Up)
+
+The project includes a pre-configured `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "residency-scheduler": {
+      "command": "docker",
+      "args": [
+        "compose", "exec", "-T", "mcp-server",
+        "python", "-m", "scheduler_mcp.server"
+      ],
+      "env": {
+        "LOG_LEVEL": "INFO"
+      },
+      "transport": "stdio"
+    }
+  }
+}
+```
+
+### Usage with Claude Code
+
+Once Docker is running, Claude Code can use MCP tools like:
+- `validate_schedule` - ACGME compliance check
+- `detect_conflicts` - Find scheduling conflicts
+- `run_contingency_analysis` - N-1/N-2 testing
+- `check_utilization_threshold` - Resilience check
+
+### Session Startup
+
+See `.claude/SESSION_STARTUP_TODOS.md` for the complete startup checklist.
+
+---
+
+## VSCode Setup
+
+### Step 1: Ensure Docker is Running
+
+```bash
+docker compose up -d
+docker compose ps  # Verify all services are "Up"
+```
+
+### Step 2: Configuration (Already Set Up)
+
+The project includes `.vscode/mcp.json` pre-configured for Docker:
+
+```json
+{
+  "mcpServers": {
+    "residency-scheduler": {
+      "command": "docker",
+      "args": ["compose", "exec", "-T", "mcp-server", "python", "-m", "scheduler_mcp.server"],
+      "transport": "stdio"
+    }
+  }
+}
+```
+
+### Step 3: Start the MCP Server
+
+1. **Open Command Palette**: `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux)
+2. **Type**: `MCP: Start Server`
+3. **Select**: `residency-scheduler`
+
+### Step 4: Verify Connection
+
+Check the MCP panel for available tools and resources.
+
+---
+
+## Zed Setup
+
+### Step 1: Ensure Docker is Running
+
+```bash
+docker compose up -d
+```
+
+### Step 2: Configuration (Already Set Up)
+
+The project includes `.zed/mcp.json` pre-configured for Docker:
+
+```json
+{
+  "mcpServers": {
+    "residency-scheduler": {
+      "command": {
+        "path": "docker",
+        "args": ["compose", "exec", "-T", "mcp-server", "python", "-m", "scheduler_mcp.server"]
+      },
+      "transport": { "type": "stdio" }
+    }
+  }
+}
+```
+
+### Step 3: Start the MCP Server
+
+1. **Open Command Palette**: `Cmd+Shift+P`
+2. **Type**: `mcp start`
+3. **Select**: `residency-scheduler`
+
+---
+
+## Local Python Setup (Alternative)
+
+If you prefer running MCP locally without Docker (e.g., for development):
+
+### Step 1: Install Dependencies
+
+```bash
+cd mcp-server
+pip install -e .
+```
+
+### Step 2: Verify Installation
+
+```bash
+python -m scheduler_mcp.server --help
+```
+
+### Step 3: Configure Environment
+
+```bash
+export API_BASE_URL="http://localhost:8000"
+export LOG_LEVEL="INFO"
+```
+
+### Step 4: Enable Local Config
+
+Edit `.mcp.json` and swap which server is disabled:
+
+```json
+{
+  "mcpServers": {
+    "residency-scheduler": {
+      "disabled": true,
+      ...docker config...
+    },
+    "residency-scheduler-local": {
+      "disabled": false,  // Enable this
+      "command": "python",
+      "args": ["-m", "scheduler_mcp.server"],
+      "cwd": "mcp-server/src",
+      ...
+    }
+  }
+}
+```
+
+### Step 5: Ensure Backend is Running
+
+The local MCP server connects to the backend API, so ensure it's running:
+
+```bash
+# Option A: Docker backend
+docker compose up -d backend db redis
+
+# Option B: Local backend
+cd backend && uvicorn app.main:app --reload
+```
 
 ---
 

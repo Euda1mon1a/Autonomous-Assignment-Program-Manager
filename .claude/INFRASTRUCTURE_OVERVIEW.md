@@ -1,7 +1,18 @@
 # Personal AI Infrastructure Overview
 
 **Created:** 2025-12-26
+**Updated:** 2025-12-27
 **Purpose:** Comprehensive guide to the AAPM AI Infrastructure
+
+---
+
+## Quick Start for New Sessions
+
+**IMPORTANT:** Before doing any work, complete the startup checklist:
+
+1. **Read:** `.claude/SESSION_STARTUP_TODOS.md` - Environment setup
+2. **Read:** `.claude/MCP_USAGE_TODOS.md` - How to use MCP tools
+3. **Verify:** Docker running, MCP server healthy, Backend API responsive
 
 ---
 

@@ -127,13 +127,15 @@ python -m scheduler_mcp.server
 
 ### Claude Code Integration
 
-**Option 1: Docker exec (stdio transport)**
+The project includes pre-configured `.mcp.json` for Claude Code CLI.
+
+**Default: Docker exec (stdio transport)**
 ```json
 {
   "mcpServers": {
     "residency-scheduler": {
       "command": "docker",
-      "args": ["exec", "-i", "residency-scheduler-mcp",
+      "args": ["compose", "exec", "-T", "mcp-server",
                "python", "-m", "scheduler_mcp.server"],
       "transport": "stdio"
     }
@@ -141,17 +143,23 @@ python -m scheduler_mcp.server
 }
 ```
 
-**Option 2: HTTP transport (development)**
+**Alternative: Local Python (disabled by default)**
 ```json
 {
   "mcpServers": {
-    "residency-scheduler": {
-      "url": "http://localhost:8080",
-      "transport": "http"
+    "residency-scheduler-local": {
+      "command": "python",
+      "args": ["-m", "scheduler_mcp.server"],
+      "cwd": "mcp-server/src",
+      "disabled": true
     }
   }
 }
 ```
+
+**Claude Code Resources:**
+- `.claude/SESSION_STARTUP_TODOS.md` - Startup checklist
+- `.claude/MCP_USAGE_TODOS.md` - MCP tool usage patterns
 
 ## Development
 
