@@ -228,12 +228,18 @@ Constraint (ABC)
   │   ├─ AvailabilityConstraint
   │   ├─ EightyHourRuleConstraint
   │   ├─ OneInSevenRuleConstraint
-  │   └─ SupervisionRatioConstraint
+  │   ├─ SupervisionRatioConstraint
+  │   ├─ OvernightCallGenerationConstraint (call)
+  │   ├─ PostFMITRecoveryConstraint (FMIT)
+  │   └─ ResidentInpatientHeadcountConstraint
   │
   └─ SoftConstraint (optimization objectives)
       ├─ EquityConstraint
       ├─ ContinuityConstraint
       ├─ CoverageConstraint
+      ├─ SundayCallEquityConstraint (call)
+      ├─ WeekdayCallEquityConstraint (call)
+      ├─ CallSpacingConstraint (call)
       ├─ HubProtectionConstraint (resilience)
       ├─ UtilizationBufferConstraint (resilience)
       └─ PreferenceTrailConstraint (stigmergy)
@@ -254,6 +260,8 @@ Constraint (ABC)
 | **1-in-7 Rule** | CRITICAL | At least one 24-hour period off every 7 days |
 | **Supervision Ratios** | CRITICAL | PGY-1: 1:2, PGY-2/3: 1:4 faculty-to-resident ratios |
 | **Capacity** | CRITICAL | At most 1 rotation per block per person |
+| **Overnight Call** | HIGH | Exactly one faculty assigned per night (Sun-Thurs) |
+| **FMIT Blocking** | HIGH | FMIT faculty blocked from Sun-Thurs call during FMIT week |
 
 **80-Hour Rule Enforcement:**
 - Max blocks ≤ 53 per 28-day window
@@ -272,6 +280,9 @@ Constraint (ABC)
 | **Equity** | 10 | Balance workload across residents |
 | **Template Balance** | 5 | Distribute across rotation types |
 | **Continuity** | Tunable | Prefer consecutive assignments |
+| **Sunday Call Equity** | 10 | Balance Sunday call burden across faculty |
+| **Weekday Call Equity** | 5 | Balance Mon-Thurs call across faculty |
+| **Call Spacing** | 8 | Prevent back-to-back overnight calls |
 | **Hub Protection** | Resilience | Don't over-assign critical faculty |
 | **Utilization Buffer** | Resilience | Keep utilization < 80% |
 
@@ -555,6 +566,9 @@ blocks = (
 | `backend/app/scheduling/solvers.py` | Solver implementations |
 | `backend/app/scheduling/constraints/manager.py` | Constraint composition |
 | `backend/app/scheduling/constraints/acgme.py` | ACGME rules |
+| `backend/app/scheduling/constraints/overnight_call.py` | Overnight call generation (Sun-Thurs) |
+| `backend/app/scheduling/constraints/call_equity.py` | Call equity constraints |
+| `backend/app/scheduling/constraints/fmit.py` | FMIT blocking and call rules |
 | `backend/app/scheduling/constraints/resilience.py` | Resilience constraints |
 | `backend/app/scheduling/validator.py` | ACGME compliance validation |
 | `backend/app/scheduling/optimizer.py` | Complexity estimation & preprocessing |
