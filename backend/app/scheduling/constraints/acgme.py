@@ -547,8 +547,13 @@ class SupervisionRatioConstraint(HardConstraint):
         """
         Calculate required faculty for given resident counts.
 
-        Uses ceiling division to ensure adequate supervision even with
-        partial ratios (e.g., 3 PGY-1 residents require 2 faculty).
+        Uses fractional supervision load approach:
+        - PGY-1: 0.5 supervision load each (1:2 ratio)
+        - PGY-2/3: 0.25 supervision load each (1:4 ratio)
+
+        Sums all loads THEN applies ceiling to avoid overcounting in
+        mixed PGY scenarios. For example:
+        - 1 PGY-1 + 1 PGY-2 = 0.5 + 0.25 = ceil(0.75) = 1 faculty (not 2)
 
         Args:
             pgy1_count: Number of PGY-1 residents
@@ -557,9 +562,9 @@ class SupervisionRatioConstraint(HardConstraint):
         Returns:
             int: Minimum number of faculty required, or 0 if no residents
         """
-        from_pgy1 = (pgy1_count + self.PGY1_RATIO - 1) // self.PGY1_RATIO
-        from_other = (other_count + self.OTHER_RATIO - 1) // self.OTHER_RATIO
-        return max(1, from_pgy1 + from_other) if (pgy1_count + other_count) > 0 else 0
+        # Integer math: PGY-1 = 2 units, PGY-2/3 = 1 unit (4 units = 1 faculty)
+        supervision_units = (pgy1_count * 2) + other_count
+        return (supervision_units + 3) // 4 if supervision_units > 0 else 0
 
     def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
         """Supervision ratio is typically handled post-hoc for residents."""

@@ -260,11 +260,15 @@ Thursday (last day of FMIT)
 
 ```
 Clinic session with:
-  - 3 PGY-1 residents → ceil(3/2) = 2 faculty needed
-  - 2 PGY-2 residents → ceil(2/4) = 1 faculty needed
-  - 2 PGY-3 residents → ceil(2/4) = 1 faculty needed
+  - 3 PGY-1 residents → 3 × 0.5 = 1.5 supervision load (1:2 ratio)
+  - 2 PGY-2 residents → 2 × 0.25 = 0.5 supervision load (1:4 ratio)
+  - 2 PGY-3 residents → 2 × 0.25 = 0.5 supervision load (1:4 ratio)
 
-Total faculty required: max(1, 2+1+1) = 4 faculty for AT
+Total supervision load: 1.5 + 0.5 + 0.5 = 2.5
+Faculty required: ceil(2.5) = 3 faculty for AT
+
+Note: Summing fractional loads BEFORE ceiling avoids overcounting
+in mixed PGY scenarios.
 ```
 
 ---
