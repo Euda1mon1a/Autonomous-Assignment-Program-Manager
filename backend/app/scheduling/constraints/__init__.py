@@ -45,6 +45,13 @@ from .base import (
     SoftConstraint,
 )
 
+# Call coverage constraints
+from .call_coverage import (
+    AdjunctCallExclusionConstraint,
+    CallAvailabilityConstraint,
+    OvernightCallCoverageConstraint,
+)
+
 # Call equity and preference constraints
 from .call_equity import (
     CallSpacingConstraint,
@@ -184,6 +191,10 @@ __all__ = [
     "PostCallAutoAssignmentConstraint",
     # Night Float post-call constraints
     "NightFloatPostCallConstraint",
+    # Call coverage constraints
+    "AdjunctCallExclusionConstraint",
+    "CallAvailabilityConstraint",
+    "OvernightCallCoverageConstraint",
     # Call equity and preference constraints
     "CallSpacingConstraint",
     "DeptChiefWednesdayPreferenceConstraint",
