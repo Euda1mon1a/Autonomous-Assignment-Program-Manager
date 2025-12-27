@@ -1,22 +1,53 @@
 ***REMOVED*** MCP Server Setup for Claude Code IDE
 
+> **Updated:** 2025-12-27
+
 ***REMOVED******REMOVED*** Overview
 
 This document describes the Model Context Protocol (MCP) server integration for the Residency Scheduler application with Claude Code IDE.
+
+***REMOVED******REMOVED*** Quick Start (Docker - Recommended)
+
+```bash
+***REMOVED*** 1. Start all services
+docker compose up -d
+
+***REMOVED*** 2. Verify MCP server
+docker compose exec -T mcp-server python -c \
+  "from scheduler_mcp.server import mcp; print('MCP OK')"
+
+***REMOVED*** 3. Claude Code automatically connects via .mcp.json
+```
 
 ***REMOVED******REMOVED*** Configuration Files
 
 ***REMOVED******REMOVED******REMOVED*** 1. `.mcp.json` (Project Root)
 
-Defines the MCP server configuration:
-- **Server Name**: `residency-scheduler`
-- **Command**: `python -m scheduler_mcp.server`
-- **Working Directory**: `mcp-server/src`
-- **Environment Variables**:
-  - `API_BASE_URL`: http://localhost:8000 (FastAPI backend)
-  - `PYTHONPATH`: mcp-server/src
-  - `LOG_LEVEL`: INFO
-- **Transport**: stdio (standard input/output)
+Defines the MCP server configuration with Docker-first approach:
+
+```json
+{
+  "mcpServers": {
+    "residency-scheduler": {
+      "command": "docker",
+      "args": ["compose", "exec", "-T", "mcp-server", "python", "-m", "scheduler_mcp.server"],
+      "env": { "LOG_LEVEL": "INFO" },
+      "transport": "stdio"
+    },
+    "residency-scheduler-local": {
+      "command": "python",
+      "args": ["-m", "scheduler_mcp.server"],
+      "cwd": "mcp-server/src",
+      "disabled": true
+    }
+  }
+}
+```
+
+**Key Points:**
+- Primary server uses Docker (no local Python deps needed)
+- Local fallback available but disabled by default
+- Transport: stdio (standard input/output)
 
 ***REMOVED******REMOVED******REMOVED*** 2. `.claude/settings.json`
 
@@ -144,21 +175,24 @@ To add a new tool with backend service integration:
 
 ***REMOVED******REMOVED*** Prerequisites
 
-***REMOVED******REMOVED******REMOVED*** 1. FastAPI Backend Running
+***REMOVED******REMOVED******REMOVED*** Option A: Docker (Recommended)
 
-MCP server requires the FastAPI backend to be healthy:
+Just have Docker and Docker Compose installed:
 ```bash
-docker-compose up -d backend
-curl http://localhost:8000/health
+docker compose up -d
 ```
 
-***REMOVED******REMOVED******REMOVED*** 2. Python Dependencies
+All dependencies (Python, fastmcp, httpx, etc.) are included in the container.
 
-MCP server dependencies must be installed:
+***REMOVED******REMOVED******REMOVED*** Option B: Local Python (For MCP Development Only)
+
+If you need to modify the MCP server code:
 ```bash
 cd mcp-server
-pip install -r requirements.txt
+pip install -e .
 ```
+
+Then enable the local config in `.mcp.json` by swapping `disabled` flags.
 
 ***REMOVED******REMOVED******REMOVED*** 3. Claude Code IDE
 
@@ -166,10 +200,17 @@ Must be using Claude Code CLI or IDE with MCP support.
 
 ***REMOVED******REMOVED*** Testing the Setup
 
-***REMOVED******REMOVED******REMOVED*** 1. Basic Import Test
+***REMOVED******REMOVED******REMOVED*** 1. Docker Test (Recommended)
 ```bash
-cd mcp-server/src
-python -c "from scheduler_mcp.server import mcp; print('OK')"
+***REMOVED*** Start services
+docker compose up -d
+
+***REMOVED*** Test MCP server
+docker compose exec -T mcp-server python -c \
+  "from scheduler_mcp.server import mcp; print(f'Tools: {len(mcp._tools)}')"
+
+***REMOVED*** Test backend connectivity
+docker compose exec -T mcp-server curl -s http://backend:8000/health
 ```
 
 ***REMOVED******REMOVED******REMOVED*** 2. Full Integration Test
@@ -177,35 +218,42 @@ python -c "from scheduler_mcp.server import mcp; print('OK')"
 ./scripts/test-mcp-integration.sh
 ```
 
-***REMOVED******REMOVED******REMOVED*** 3. Manual MCP Server Start
-```bash
-***REMOVED*** Terminal 1: Start backend
-docker-compose up backend
+***REMOVED******REMOVED******REMOVED*** 3. Claude Code Test
 
-***REMOVED*** Terminal 2: Start MCP server
-./scripts/start-mcp.sh
-```
-
-***REMOVED******REMOVED******REMOVED*** 4. Claude Code Test
-
-In Claude Code IDE:
+With Docker running, Claude Code automatically connects. Test with:
 ```
 Ask Claude: "Use the MCP tool to check ACGME compliance for PGY-1 residents this week"
 ```
 
-Claude should have access to MCP tools and be able to query the backend.
+Claude should have access to 36 MCP tools and be able to query the backend.
 
 ***REMOVED******REMOVED*** Troubleshooting
 
-***REMOVED******REMOVED******REMOVED*** MCP Server Won't Start
+***REMOVED******REMOVED******REMOVED*** Docker Container Not Running
 
-**Error**: `ModuleNotFoundError: No module named 'scheduler_mcp'`
+**Error**: MCP tools not available
 
 **Fix**:
 ```bash
-export PYTHONPATH=/home/user/Autonomous-Assignment-Program-Manager/mcp-server/src
-cd mcp-server/src
-python -m scheduler_mcp.server
+***REMOVED*** Check status
+docker compose ps
+
+***REMOVED*** Start if needed
+docker compose up -d
+
+***REMOVED*** Check logs
+docker compose logs mcp-server
+```
+
+***REMOVED******REMOVED******REMOVED*** MCP Server Won't Start (Local Python)
+
+**Error**: `ModuleNotFoundError: No module named 'fastmcp'`
+
+**Cause**: Running local Python without dependencies installed
+
+**Fix**: Use Docker (recommended) or install deps:
+```bash
+cd mcp-server && pip install -e .
 ```
 
 ***REMOVED******REMOVED******REMOVED*** Backend Not Healthy
@@ -214,26 +262,17 @@ python -m scheduler_mcp.server
 
 **Fix**:
 ```bash
-docker-compose logs backend
-docker-compose restart backend
-```
-
-***REMOVED******REMOVED******REMOVED*** Permission Denied on Scripts
-
-**Error**: `Permission denied: ./scripts/start-mcp.sh`
-
-**Fix**:
-```bash
-chmod +x scripts/start-mcp.sh scripts/test-mcp-integration.sh
+docker compose logs backend
+docker compose restart backend
 ```
 
 ***REMOVED******REMOVED******REMOVED*** Claude Code Doesn't See MCP Server
 
 **Check**:
-1. `.mcp.json` exists in project root
-2. `.claude/settings.json` has `"enableAllProjectMcpServers": true`
-3. Restart Claude Code IDE
-4. Check Claude Code logs for MCP server connection
+1. Docker is running: `docker compose ps`
+2. `.mcp.json` exists in project root
+3. MCP server healthy: `docker compose exec -T mcp-server python -c "from scheduler_mcp.server import mcp; print('OK')"`
+4. Restart Claude Code if needed
 
 ***REMOVED******REMOVED*** Security Notes
 
