@@ -45,7 +45,15 @@ from .base import (
     SoftConstraint,
 )
 
-***REMOVED*** Call equity and preference constraints
+***REMOVED*** Overnight call coverage constraints (hard)
+from .call_coverage import (
+    AdjunctCallExclusionConstraint,
+    CallAvailabilityConstraint,
+    OvernightCallCoverageConstraint,
+    OVERNIGHT_CALL_DAYS,
+)
+
+***REMOVED*** Call equity and preference constraints (soft)
 from .call_equity import (
     CallSpacingConstraint,
     DeptChiefWednesdayPreferenceConstraint,
@@ -184,7 +192,12 @@ __all__ = [
     "PostCallAutoAssignmentConstraint",
     ***REMOVED*** Night Float post-call constraints
     "NightFloatPostCallConstraint",
-    ***REMOVED*** Call equity and preference constraints
+    ***REMOVED*** Overnight call coverage constraints (hard)
+    "AdjunctCallExclusionConstraint",
+    "CallAvailabilityConstraint",
+    "OvernightCallCoverageConstraint",
+    "OVERNIGHT_CALL_DAYS",
+    ***REMOVED*** Call equity and preference constraints (soft)
     "CallSpacingConstraint",
     "DeptChiefWednesdayPreferenceConstraint",
     "SundayCallEquityConstraint",
