@@ -158,6 +158,50 @@ The roster shows 24-hour coverage:
 
 ---
 
+## How Call is Assigned
+
+### Automated Overnight Call (Sun-Thu)
+
+Overnight call for Sunday through Thursday nights is **automatically generated** by the scheduling solver. The system:
+
+1. **Ensures Coverage**: Every night has exactly one faculty on call
+2. **Excludes Adjuncts**: Adjunct faculty are not auto-assigned (can be added manually)
+3. **Respects Availability**: Honors approved leave and absences
+4. **Balances Distribution**: Optimizes equity across faculty
+
+### FMIT Weekend Coverage (Fri-Sat)
+
+Friday and Saturday nights are covered by the **FMIT (Faculty Managing Inpatient Teaching)** faculty member who is on their inpatient rotation that week. This is pre-assigned when FMIT weeks are scheduled.
+
+### Manual Adjustments
+
+Coordinators can manually adjust call assignments through:
+- **Create**: Add new call assignments
+- **Update**: Modify existing assignments
+- **Delete**: Remove assignments (use sparingly)
+
+---
+
+## Reports
+
+### Coverage Report
+
+Administrators can view coverage gaps:
+- Total expected nights vs. covered nights
+- Coverage percentage
+- List of uncovered dates requiring attention
+
+### Equity Report
+
+View call distribution fairness:
+- Sunday calls tracked separately (considered hardest)
+- Mon-Thu weekday call statistics
+- Per-faculty breakdown with totals
+
+Access reports via **Schedule** > **Call Reports**.
+
+---
+
 ## Best Practices
 
 !!! tip "Bookmark This Page"
@@ -170,6 +214,10 @@ The roster shows 24-hour coverage:
 !!! tip "Verify Before Paging"
     Confirm the date - make sure you're looking at the correct day.
 
+!!! tip "Review Coverage Reports"
+    Coordinators should check the coverage report weekly to identify
+    gaps before they become problems.
+
 ---
 
 ## Related Documentation
@@ -177,3 +225,4 @@ The roster shows 24-hour coverage:
 - **[Daily Manifest](daily-manifest.md)** - Who is where today
 - **[Schedule Management](schedule.md)** - Full schedule view
 - **[People Management](people.md)** - Contact information updates
+- **[FMIT Scheduling](../architecture/FMIT_CONSTRAINTS.md)** - How FMIT weeks work
