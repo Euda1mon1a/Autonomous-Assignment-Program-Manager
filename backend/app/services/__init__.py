@@ -10,6 +10,11 @@ from app.services.auth_service import AuthService
 from app.services.block_service import BlockService
 from app.services.conflict_alert_service import ConflictAlertService
 from app.services.conflict_auto_detector import ConflictAutoDetector, ConflictInfo
+from app.services.faculty_outpatient_service import (
+    FacultyAssignmentSummary,
+    FacultyOutpatientAssignmentService,
+    FacultyOutpatientResult,
+)
 from app.services.faculty_preference_service import FacultyPreferenceService
 from app.services.fmit_scheduler_service import FMITSchedulerService
 from app.services.leave_providers import (
@@ -58,4 +63,8 @@ __all__ = [
     # Phase 5 services
     "FMITSchedulerService",
     "SwapRequestService",
+    # Faculty outpatient scheduling
+    "FacultyOutpatientAssignmentService",
+    "FacultyOutpatientResult",
+    "FacultyAssignmentSummary",
 ]

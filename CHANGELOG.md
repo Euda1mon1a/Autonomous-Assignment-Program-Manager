@@ -83,6 +83,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `docs/bridges/power-grid-n1-contingency.md`: N-1/N-2 analysis
 - `docs/bridges/chemistry-le-chatelier.md`: Equilibrium analysis
 
+#### Session 15 - Custom Rotation Colors & Mid-Block Splits (2025-12-26)
+
+**Custom Rotation Template Colors:**
+- Added `font_color` and `background_color` fields to rotation templates
+- Schedule cells render with database-defined inline styles
+- Automatic fallback to activity-type colors when not customized
+- Files changed: `rotation_template.py` (model), `ScheduleCell.tsx`, `api.ts` (TypeScript types)
+
+**Mid-Block Rotation Split Utility:**
+- New `split_combined_rotations.py` script for processing combined rotations
+- Splits NF+DERM, NF+FMIT, NF+CARD into proper half-block assignments
+- Inserts Post-Call (PC) recovery day at mid-block (day 15)
+- Ensures Post-Call constraints trigger correctly at mid-block transitions
+
+**Database Migration:**
+- Added merge migration to unify block0 and main alembic heads
+
 #### Immutable Assignment Preservation (2025-12-26)
 
 **Core Engine Enhancement:**

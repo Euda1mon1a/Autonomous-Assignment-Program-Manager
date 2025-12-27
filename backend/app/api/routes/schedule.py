@@ -1197,3 +1197,103 @@ def find_swap_candidates_json(
         top_candidate_id=top_candidate_id,
         message=f"Found {len(candidates)} swap candidates",
     )
+
+
+# ============================================================================
+# Faculty Outpatient Assignment Generation
+# ============================================================================
+
+
+@router.post("/faculty-outpatient/generate")
+def generate_faculty_outpatient(
+    block_number: int,
+    regenerate: bool = True,
+    include_clinic: bool = True,
+    include_supervision: bool = True,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Generate faculty PRIMARY clinic and SUPERVISION assignments for a block.
+
+    This generates:
+    1. Faculty clinic sessions - Based on role limits (PD=0, APD=2, Core=4/week)
+    2. Faculty supervision - ACGME-compliant supervision of resident assignments
+
+    Args:
+        block_number: Block number (1-13 for academic year)
+        regenerate: If True, clear existing faculty outpatient assignments first
+        include_clinic: Generate faculty primary clinic assignments
+        include_supervision: Generate faculty supervision assignments
+
+    Returns:
+        Generation result with assignment counts and faculty summaries
+
+    Note:
+        This endpoint modifies the database. Ensure backup before use.
+        Use the safe-schedule-generation skill pre-flight checklist.
+    """
+    from app.services.faculty_outpatient_service import FacultyOutpatientAssignmentService
+
+    logger.info(
+        f"Generating faculty outpatient assignments for block {block_number}",
+        extra={
+            "user": current_user.username,
+            "block_number": block_number,
+            "regenerate": regenerate,
+        },
+    )
+
+    try:
+        service = FacultyOutpatientAssignmentService(db)
+        result = service.generate_faculty_outpatient_assignments(
+            block_number=block_number,
+            regenerate=regenerate,
+            include_clinic=include_clinic,
+            include_supervision=include_supervision,
+        )
+
+        if not result.success:
+            logger.warning(f"Faculty outpatient generation failed: {result.message}")
+            raise HTTPException(status_code=400, detail=result.message)
+
+        logger.info(
+            f"Faculty outpatient generation complete: "
+            f"{result.total_clinic_assignments} clinic + "
+            f"{result.total_supervision_assignments} supervision assignments"
+        )
+
+        return {
+            "success": result.success,
+            "message": result.message,
+            "block_number": result.block_number,
+            "block_start": str(result.block_start),
+            "block_end": str(result.block_end),
+            "total_clinic_assignments": result.total_clinic_assignments,
+            "total_supervision_assignments": result.total_supervision_assignments,
+            "cleared_count": result.cleared_count,
+            "faculty_summaries": [
+                {
+                    "faculty_id": str(s.faculty_id),
+                    "faculty_name": s.faculty_name,
+                    "faculty_role": s.faculty_role,
+                    "clinic_sessions": s.clinic_sessions,
+                    "supervision_sessions": s.supervision_sessions,
+                    "total_sessions": s.total_sessions,
+                }
+                for s in result.faculty_summaries
+            ],
+            "warnings": result.warnings,
+            "errors": result.errors,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Use repr to avoid format string issues with loguru
+        logger.error("Faculty outpatient generation error: {}", repr(e), exc_info=True)
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Faculty outpatient generation failed: {repr(e)}",
+        )
