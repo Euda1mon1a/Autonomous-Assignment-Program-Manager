@@ -88,6 +88,16 @@ RESTful conventions, authentication, and error handling.
 Axelrod tournament-based configuration testing.
 </div>
 
+<div class="feature-card" markdown>
+### :material-hospital-building: [Clinic Constraints](clinic-constraints.md)
+Clinic scheduling rules and capacity management.
+</div>
+
+<div class="feature-card" markdown>
+### :material-account-tie: [Primary Duty Constraints](primary-duty-constraints.md)
+Airtable-driven faculty clinic scheduling rules.
+</div>
+
 </div>
 
 ---
