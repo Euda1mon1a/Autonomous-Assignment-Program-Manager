@@ -840,10 +840,13 @@ class CPSATSolver(BaseSolver):
         if call_eligible:
             # Track dates already processed (one call per date, not per block)
             call_dates_processed = set()
-            for block in workday_blocks:
+            call_blocks = [
+                block
+                for block in context.blocks
+                if block.date.weekday() in (0, 1, 2, 3, 6)
+            ]
+            for block in call_blocks:
                 # Only Sun-Thurs nights (Mon=0, Tue=1, Wed=2, Thu=3, Sun=6)
-                if block.date.weekday() not in (0, 1, 2, 3, 6):
-                    continue
                 if block.date in call_dates_processed:
                     continue
                 call_dates_processed.add(block.date)
