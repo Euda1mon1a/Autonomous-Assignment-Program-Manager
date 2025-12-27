@@ -93,7 +93,7 @@ from .resources import (
     get_compliance_summary,
     get_schedule_status,
 )
-from .tools import (
+from .scheduling_tools import (
     ConflictDetectionRequest,
     ConflictDetectionResult,
     ContingencyAnalysisResult,
@@ -151,7 +151,7 @@ logger = logging.getLogger(__name__)
 mcp = FastMCP(
     "Residency Scheduler",
     version="0.1.0",
-    description=(
+    instructions=(
         "MCP server for medical residency scheduling with ACGME compliance, "
         "conflict detection, and workforce optimization"
     ),
