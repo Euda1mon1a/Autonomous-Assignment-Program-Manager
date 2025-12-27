@@ -17,24 +17,25 @@ Comprehensive reference of all REST API endpoints in the Residency Scheduler.
 4. [People Management](#people-management)
 5. [Blocks & Calendar](#blocks--calendar)
 6. [Assignments](#assignments)
-7. [Absences & Leave](#absences--leave)
-8. [Schedule Generation](#schedule-generation)
-9. [Swaps & Exchanges](#swaps--exchanges)
-10. [Rotation Templates](#rotation-templates)
-11. [Procedures](#procedures)
-12. [Credentials](#credentials)
-13. [Certifications](#certifications)
-14. [Settings](#settings)
-15. [Analytics & Reporting](#analytics--reporting)
-16. [Resilience Framework](#resilience-framework)
-17. [Audit & Compliance](#audit--compliance)
-18. [Search](#search)
-19. [Exports](#exports)
-20. [Conflict Resolution](#conflict-resolution)
-21. [Portal & Dashboard](#portal--dashboard)
-22. [Specialized Routes](#specialized-routes)
-23. [Response Codes](#response-codes)
-24. [Authentication Requirements](#authentication-requirements)
+7. [Call Assignments](#call-assignments)
+8. [Absences & Leave](#absences--leave)
+9. [Schedule Generation](#schedule-generation)
+10. [Swaps & Exchanges](#swaps--exchanges)
+11. [Rotation Templates](#rotation-templates)
+12. [Procedures](#procedures)
+13. [Credentials](#credentials)
+14. [Certifications](#certifications)
+15. [Settings](#settings)
+16. [Analytics & Reporting](#analytics--reporting)
+17. [Resilience Framework](#resilience-framework)
+18. [Audit & Compliance](#audit--compliance)
+19. [Search](#search)
+20. [Exports](#exports)
+21. [Conflict Resolution](#conflict-resolution)
+22. [Portal & Dashboard](#portal--dashboard)
+23. [Specialized Routes](#specialized-routes)
+24. [Response Codes](#response-codes)
+25. [Authentication Requirements](#authentication-requirements)
 
 ---
 
@@ -181,6 +182,75 @@ See [Authentication](authentication.md) for full details.
 | `person_id` | uuid | Filter by person |
 | `rotation_id` | uuid | Filter by rotation |
 | `activity_type` | string | Filter by activity type |
+
+---
+
+## Call Assignments
+
+**Prefix:** `/api/v1/call-assignments`
+
+Endpoints for managing overnight and weekend faculty call assignments. Solver-generated call assignments emerge from constraint optimization during schedule generation.
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/call-assignments` | Bearer | List call assignments with filters |
+| GET | `/call-assignments/{call_id}` | Bearer | Get call assignment by ID |
+| POST | `/call-assignments` | Scheduler | Create call assignment |
+| PUT | `/call-assignments/{call_id}` | Scheduler | Update call assignment |
+| DELETE | `/call-assignments/{call_id}` | Scheduler | Delete call assignment |
+| POST | `/call-assignments/bulk` | Admin | Bulk create (used by solver) |
+| GET | `/call-assignments/by-person/{person_id}` | Bearer | Get calls for specific person |
+| GET | `/call-assignments/by-date/{date}` | Bearer | Get calls for specific date |
+| GET | `/call-assignments/reports/coverage` | Admin | Coverage gap analysis |
+| GET | `/call-assignments/reports/equity` | Admin | Distribution equity report |
+
+### Query Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `start_date` | date | Filter by start date (inclusive) |
+| `end_date` | date | Filter by end date (inclusive) |
+| `person_id` | uuid | Filter by person |
+| `call_type` | string | Filter by type: `overnight`, `weekend`, `backup` |
+| `skip` | int | Pagination offset (default: 0) |
+| `limit` | int | Max records (default: 100, max: 1000) |
+
+### Call Types
+
+| Type | Description | Days |
+|------|-------------|------|
+| `overnight` | Sun-Thu overnight call | Sun PM → Mon AM through Thu PM → Fri AM |
+| `weekend` | Fri-Sat FMIT coverage | Fri PM → Sun PM (FMIT faculty) |
+| `backup` | Emergency backup coverage | Any day as needed |
+
+### Coverage Report Response
+
+```json
+{
+  "start_date": "2025-01-01",
+  "end_date": "2025-01-31",
+  "total_expected_nights": 22,
+  "covered_nights": 20,
+  "coverage_percentage": 90.91,
+  "gaps": ["2025-01-15", "2025-01-22"]
+}
+```
+
+### Equity Report Response
+
+```json
+{
+  "start_date": "2025-01-01",
+  "end_date": "2025-01-31",
+  "faculty_count": 8,
+  "total_overnight_calls": 22,
+  "sunday_call_stats": {"min": 0, "max": 2, "mean": 0.75, "stdev": 0.5},
+  "weekday_call_stats": {"min": 2, "max": 4, "mean": 2.75, "stdev": 0.71},
+  "distribution": [
+    {"person_id": "...", "name": "Dr. Smith", "sunday_calls": 2, "weekday_calls": 3, "total_calls": 5}
+  ]
+}
+```
 
 ---
 

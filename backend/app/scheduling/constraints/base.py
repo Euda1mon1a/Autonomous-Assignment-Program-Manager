@@ -199,6 +199,10 @@ class SchedulingContext:
     # Existing assignments (for incremental scheduling)
     existing_assignments: list = field(default_factory=list)
 
+    # Call-eligible faculty (excludes adjuncts for solver-generated call)
+    call_eligible_faculty: list = field(default_factory=list)
+    call_eligible_faculty_idx: dict[UUID, int] = field(default_factory=dict)
+
     # Date range
     start_date: date | None = None
     end_date: date | None = None
@@ -252,6 +256,9 @@ class SchedulingContext:
         self.faculty_idx = {f.id: i for i, f in enumerate(self.faculty)}
         self.block_idx = {b.id: i for i, b in enumerate(self.blocks)}
         self.template_idx = {t.id: i for i, t in enumerate(self.templates)}
+        self.call_eligible_faculty_idx = {
+            f.id: i for i, f in enumerate(self.call_eligible_faculty)
+        }
 
         self.blocks_by_date = defaultdict(list)
         for block in self.blocks:
