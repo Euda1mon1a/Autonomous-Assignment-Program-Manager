@@ -74,6 +74,15 @@ from .faculty_role import (
     SMFacultyClinicConstraint,
 )
 
+***REMOVED*** Faculty primary duty constraints (Airtable-driven)
+from .primary_duty import (
+    FacultyClinicEquitySoftConstraint,
+    FacultyDayAvailabilityConstraint,
+    FacultyPrimaryDutyClinicConstraint,
+    PrimaryDutyConfig,
+    load_primary_duties_config,
+)
+
 ***REMOVED*** FMIT constraints
 from .fmit import (
     FMITContinuityTurfConstraint,
@@ -151,6 +160,12 @@ __all__ = [
     ***REMOVED*** Faculty role constraints
     "FacultyRoleClinicConstraint",
     "SMFacultyClinicConstraint",
+    ***REMOVED*** Faculty primary duty constraints
+    "FacultyPrimaryDutyClinicConstraint",
+    "FacultyDayAvailabilityConstraint",
+    "FacultyClinicEquitySoftConstraint",
+    "PrimaryDutyConfig",
+    "load_primary_duties_config",
     ***REMOVED*** FMIT constraints
     "FMITContinuityTurfConstraint",
     "FMITMandatoryCallConstraint",
