@@ -40,25 +40,55 @@ for each block:
 
 **Rule:** Wednesday morning clinic sessions should be staffed by interns (PGY-1) only, with rare exceptions.
 
-**Rationale:** Wednesday morning is the continuity clinic day for interns. This is their protected time for longitudinal patient care and should not be disrupted by PGY-2/3 assignments.
+### 3. FacultyPrimaryDutyClinicConstraint (Hard Constraint)
+
+**Status:** Implemented (2025-12-27)
+
+**Rule:** Faculty clinic assignments must respect per-faculty min/max half-days per week defined in Airtable primary duty configuration.
+
+**Rationale:** Different faculty members have different clinical responsibilities based on their primary duty (role + individual adjustments). The Airtable configuration provides more granular control than role-based defaults.
 
 **Implementation:**
-- Identifies blocks where `date.weekday() == 2` (Wednesday) AND `time_of_day == 'AM'`
-- Only allows PGY-1 residents as primary assignments
-- Faculty supervision still required per supervision ratios
+- Loads configuration from `docs/schedules/sanitized_primary_duties.json`
+- Enforces `Clinic Minimum Half-Days Per Week` (coverage requirement)
+- Enforces `Clinic Maximum Half-Days Per Week` (capacity limit)
+- Evaluated per calendar week (Monday-Sunday)
 
-```python
-# Pseudocode
-for each block where block.date.weekday() == 2 and block.time_of_day == 'AM':
-    for each resident assignment:
-        assert resident.pgy_level == 1
-```
+See [primary-duty-constraints.md](primary-duty-constraints.md) for full documentation.
+
+### 4. FacultyDayAvailabilityConstraint (Hard Constraint)
+
+**Status:** Implemented (2025-12-27)
+
+**Rule:** Faculty can only be assigned to clinic on their available days, as defined in Airtable primary duty configuration.
+
+**Rationale:** Faculty have administrative duties, teaching commitments, or other obligations that make them unavailable on certain days of the week.
+
+**Implementation:**
+- Reads `availableMonday` through `availableFriday` flags from primary duty config
+- Blocks clinic assignments on unavailable days
+- Priority: CRITICAL (violations make schedule infeasible)
+
+See [primary-duty-constraints.md](primary-duty-constraints.md) for full documentation.
+
+### 5. FacultyClinicEquitySoftConstraint (Soft Constraint)
+
+**Status:** Implemented (2025-12-27)
+
+**Rule:** Optimize toward target clinic coverage (midpoint of min/max from primary duty config).
+
+**Implementation:**
+- Calculates target as `(min + max) // 2`
+- Penalizes deviation from target (soft constraint with weight 15.0)
+- Does not make schedule infeasible
+
+See [primary-duty-constraints.md](primary-duty-constraints.md) for full documentation.
 
 ---
 
 ## Planned Constraints (Phase 2)
 
-### 3. ClinicContinuityConstraint (Hard Constraint)
+### 6. ClinicContinuityConstraint (Hard Constraint)
 
 **Status:** Planned
 
