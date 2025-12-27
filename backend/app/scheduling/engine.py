@@ -1268,8 +1268,11 @@ class SchedulingEngine:
             pgy1_count = sum(1 for r in residents_in_block if r.pgy_level == 1)
             other_count = len(residents_in_block) - pgy1_count
 
-            # 1:2 for PGY-1, 1:4 for others
-            required = (pgy1_count + 1) // 2 + (other_count + 3) // 4
+            # Calculate supervision using fractional load approach
+            # PGY-1: 2 units (0.5 load = 1:2 ratio), PGY-2/3: 1 unit (0.25 load = 1:4 ratio)
+            # Sum loads THEN ceiling (4 units = 1 faculty)
+            supervision_units = (pgy1_count * 2) + other_count
+            required = (supervision_units + 3) // 4 if supervision_units > 0 else 0
             required = max(1, required) if residents_in_block else 0
 
             # Find available faculty (not on leave AND not already assigned to this block)

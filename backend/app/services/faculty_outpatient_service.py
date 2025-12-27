@@ -310,6 +310,7 @@ class FacultyOutpatientAssignmentService:
         Excludes faculty who have:
         - FMIT assignments during this period
         - Blocking absences (leave, TDY, etc.)
+        - ADJUNCT role (not auto-scheduled, can be pre-loaded to FMIT manually)
         """
         all_faculty = (
             self.db.query(Person)
@@ -358,8 +359,12 @@ class FacultyOutpatientAssignmentService:
         absent_faculty_ids = {a.person_id for a in absences}
 
         # Filter to available faculty
+        # Exclude faculty on FMIT/absences AND adjunct faculty (not auto-scheduled)
         excluded = fmit_faculty_ids | absent_faculty_ids
-        available = [f for f in all_faculty if f.id not in excluded]
+        available = [
+            f for f in all_faculty
+            if f.id not in excluded and f.role_enum != FacultyRole.ADJUNCT
+        ]
 
         return available
 
@@ -527,8 +532,12 @@ class FacultyOutpatientAssignmentService:
             )
             other_count = len(block_assignments) - pgy1_count
 
-            # Calculate required faculty: ceil(PGY1/2) + ceil(others/4)
-            required = ceil(pgy1_count / 2) + ceil(other_count / 4)
+            # Calculate required faculty using fractional supervision load
+            # PGY-1: 0.5 supervision load each (1:2 ratio)
+            # PGY-2/3: 0.25 supervision load each (1:4 ratio)
+            # Sum loads THEN ceiling to avoid overcounting in mixed PGY scenarios
+            supervision_load = (pgy1_count * 0.5) + (other_count * 0.25)
+            required = ceil(supervision_load) if supervision_load > 0 else 0
             required = max(1, required) if block_assignments else 0
 
             if required == 0:

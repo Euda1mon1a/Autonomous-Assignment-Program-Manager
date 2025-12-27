@@ -35,11 +35,7 @@ This document defines the complete scheduling parameters for faculty roles, FMIT
 
 ---
 
-<<<<<<< HEAD
 ## Faculty Roles and Clinic Requirements
-=======
-#***REMOVED*** Roles and Clinic Requirements
->>>>>>> origin/docs/session-14-summary
 
 ### Role Definitions
 
@@ -51,6 +47,7 @@ This document defines the complete scheduling parameters for faculty roles, FMIT
 | **Department Chief** | 1 | - | Yes | ~6 weeks | Administrative duties |
 | **Sports Medicine** | 0 | 4 | Yes | ~6 weeks | SM clinic only, no regular clinic |
 | **Core Faculty** | Max 4 | - | Yes | ~6 weeks | Max 16 half-days per block |
+| **Adjunct** | 0 | - | Yes (manual) | N/A | Not auto-scheduled; pre-loaded to FMIT manually |
 
 ### Clinic Flexibility Rules
 
@@ -260,11 +257,15 @@ Thursday (last day of FMIT)
 
 ```
 Clinic session with:
-  - 3 PGY-1 residents → ceil(3/2) = 2 faculty needed
-  - 2 PGY-2 residents → ceil(2/4) = 1 faculty needed
-  - 2 PGY-3 residents → ceil(2/4) = 1 faculty needed
+  - 3 PGY-1 residents → 3 × 0.5 = 1.5 supervision load (1:2 ratio)
+  - 2 PGY-2 residents → 2 × 0.25 = 0.5 supervision load (1:4 ratio)
+  - 2 PGY-3 residents → 2 × 0.25 = 0.5 supervision load (1:4 ratio)
 
-Total faculty required: max(1, 2+1+1) = 4 faculty for AT
+Total supervision load: 1.5 + 0.5 + 0.5 = 2.5
+Faculty required: ceil(2.5) = 3 faculty for AT
+
+Note: Summing fractional loads BEFORE ceiling avoids overcounting
+in mixed PGY scenarios.
 ```
 
 ---
@@ -535,9 +536,10 @@ Rotation templates require dedicated analysis:
 ### Data Model Changes
 
 1. **Add `faculty_role` field to Person model**
-   - Enum values: `PD`, `APD`, `OIC`, `DEPT_CHIEF`, `SPORTS_MED`, `CORE`
+   - Enum values: `PD`, `APD`, `OIC`, `DEPT_CHIEF`, `SPORTS_MED`, `CORE`, `ADJUNCT`
    - Required for faculty type persons
    - Migration needed
+   - **Note:** `ADJUNCT` role has `weekly_clinic_limit = 0` and is excluded from auto-scheduling
 
 2. **Add call tracking fields**
    - `sunday_call_count` for separate Sunday equity

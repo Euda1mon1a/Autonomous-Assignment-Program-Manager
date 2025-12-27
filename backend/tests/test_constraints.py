@@ -315,14 +315,44 @@ class TestSupervisionRatioConstraint:
         # 3 PGY-1 = 2 faculty
         assert constraint.calculate_required_faculty(3, 0) == 2
 
+        # 4 PGY-1 = 2 faculty
+        assert constraint.calculate_required_faculty(4, 0) == 2
+
         # 4 PGY-2/3 = 1 faculty (1:4 ratio)
         assert constraint.calculate_required_faculty(0, 4) == 1
 
         # 5 PGY-2/3 = 2 faculty
         assert constraint.calculate_required_faculty(0, 5) == 2
 
-        # Mixed: 2 PGY-1 + 4 PGY-2/3 = 1 + 1 = 2 faculty
+        # Mixed: 2 PGY-1 + 4 PGY-2/3:
+        # 2 × 0.5 + 4 × 0.25 = 1 + 1 = 2 → ceil(2) = 2 faculty
         assert constraint.calculate_required_faculty(2, 4) == 2
+
+    def test_calculate_required_faculty_fractional_load(self):
+        """Test fractional load approach for mixed PGY scenarios.
+
+        This tests the fix for the supervision overcounting bug.
+        The correct formula sums fractional loads THEN applies ceiling:
+        - PGY-1: 0.5 load each (1:2 ratio)
+        - PGY-2/3: 0.25 load each (1:4 ratio)
+        """
+        constraint = SupervisionRatioConstraint()
+
+        # 1 PGY-1 + 1 PGY-2: 0.5 + 0.25 = 0.75 → ceil = 1 (not 2)
+        assert constraint.calculate_required_faculty(1, 1) == 1
+
+        # 1 PGY-1 + 2 PGY-2: 0.5 + 0.5 = 1.0 → ceil = 1 (not 2)
+        assert constraint.calculate_required_faculty(1, 2) == 1
+
+        # 1 PGY-1 + 3 PGY-2: 0.5 + 0.75 = 1.25 → ceil = 2
+        assert constraint.calculate_required_faculty(1, 3) == 2
+
+        # 2 PGY-1 + 2 PGY-2: 1.0 + 0.5 = 1.5 → ceil = 2
+        assert constraint.calculate_required_faculty(2, 2) == 2
+
+        # 3 PGY-1 + 2 PGY-2 + 2 PGY-3: 1.5 + 0.5 + 0.5 = 2.5 → ceil = 3
+        # (This is the example from the docs)
+        assert constraint.calculate_required_faculty(3, 4) == 3
 
     def test_validate_adequate_supervision(self, sample_context):
         """Test validation with adequate faculty supervision."""

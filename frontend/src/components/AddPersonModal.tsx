@@ -5,7 +5,7 @@ import { Modal } from './Modal';
 import { Input, Select } from './forms';
 import { useCreatePerson } from '@/lib/hooks';
 import { validateRequired, validateEmail, validateMinLength, validatePgyLevel } from '@/lib/validation';
-import { PersonType, type PersonCreate } from '@/types/api';
+import { PersonType, FacultyRole, type PersonCreate } from '@/types/api';
 
 interface AddPersonModalProps {
   isOpen: boolean;
@@ -35,11 +35,22 @@ const pgyOptions = [
   { value: '8', label: 'PGY-8' },
 ];
 
+const facultyRoleOptions = [
+  { value: FacultyRole.CORE, label: 'Core Faculty' },
+  { value: FacultyRole.PD, label: 'Program Director' },
+  { value: FacultyRole.APD, label: 'Associate Program Director' },
+  { value: FacultyRole.OIC, label: 'Officer in Charge' },
+  { value: FacultyRole.DEPT_CHIEF, label: 'Department Chief' },
+  { value: FacultyRole.SPORTS_MED, label: 'Sports Medicine' },
+  { value: FacultyRole.ADJUNCT, label: 'Adjunct Faculty' },
+];
+
 export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [type, setType] = useState<PersonType>(PersonType.RESIDENT);
   const [pgyLevel, setPgyLevel] = useState('1');
+  const [facultyRole, setFacultyRole] = useState<FacultyRole>(FacultyRole.CORE);
   const [performsProcedures, setPerformsProcedures] = useState(false);
   const [specialties, setSpecialties] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
@@ -92,6 +103,7 @@ export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
       type,
       ...(email && { email: email.trim() }),
       ...(type === PersonType.RESIDENT && { pgy_level: parseInt(pgyLevel) }),
+      ...(type === PersonType.FACULTY && { faculty_role: facultyRole }),
       performs_procedures: performsProcedures,
       ...(specialties && { specialties: specialties.split(',').map(s => s.trim()).filter(Boolean) }),
     };
@@ -110,6 +122,7 @@ export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
     setEmail('');
     setType(PersonType.RESIDENT);
     setPgyLevel('1');
+    setFacultyRole(FacultyRole.CORE);
     setPerformsProcedures(false);
     setSpecialties('');
     setErrors({});
@@ -157,6 +170,15 @@ export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
             onChange={(e) => setPgyLevel(e.target.value)}
             options={pgyOptions}
             error={errors.pgy_level}
+          />
+        )}
+
+        {type === PersonType.FACULTY && (
+          <Select
+            label="Faculty Role"
+            value={facultyRole}
+            onChange={(e) => setFacultyRole(e.target.value as FacultyRole)}
+            options={facultyRoleOptions}
           />
         )}
 
