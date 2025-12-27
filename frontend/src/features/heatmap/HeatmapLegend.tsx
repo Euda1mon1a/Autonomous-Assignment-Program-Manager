@@ -108,20 +108,20 @@ export function HeatmapLegend({
         <p className="text-xs text-gray-500">
           {viewMode === 'coverage' && (
             <>
-              Shows rotation coverage percentage over time. Green indicates full coverage,
-              yellow indicates partial coverage, and red indicates gaps.
+              Shows rotation coverage percentage. Green = full coverage, yellow = partial,
+              red = low coverage, black = critical gap requiring immediate attention.
             </>
           )}
           {viewMode === 'workload' && (
             <>
-              Shows workload distribution across people. Green indicates light workload,
-              yellow indicates moderate workload, and red indicates heavy workload.
+              Shows workload distribution. Blue = light, yellow = moderate, red = heavy,
+              black = critical overload requiring intervention.
             </>
           )}
           {viewMode === 'custom' && (
             <>
-              Custom visualization showing filtered data. Adjust filters to explore
-              different aspects of the schedule.
+              Custom visualization. Intensity scale: cool colors (low) → warm (high) →
+              black (critical). Adjust filters to explore the schedule.
             </>
           )}
         </p>
