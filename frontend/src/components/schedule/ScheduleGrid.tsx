@@ -21,6 +21,8 @@ interface ScheduleGridProps {
 interface ProcessedAssignment {
   abbreviation: string
   activityType: string
+  fontColor?: string
+  backgroundColor?: string
   templateName?: string
   role?: string
   notes?: string
@@ -115,6 +117,8 @@ export function ScheduleGrid({ startDate, endDate }: ScheduleGridProps) {
           template?.name?.substring(0, 3).toUpperCase() ||
           '???',
         activityType: template?.activity_type || 'default',
+        fontColor: template?.font_color || undefined,
+        backgroundColor: template?.background_color || undefined,
         templateName: template?.name,
         role: assignment.role,
         notes: assignment.notes || undefined,
