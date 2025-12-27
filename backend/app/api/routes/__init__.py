@@ -37,6 +37,7 @@ from app.api.routes import (
     people,
     portal,
     procedures,
+    qubo_templates,
     quota,
     rate_limit,
     reports,
@@ -122,6 +123,9 @@ api_router.include_router(
     tags=["scheduling-catalyst"],
 )
 api_router.include_router(ml.router, prefix="/ml", tags=["ml"])
+api_router.include_router(
+    qubo_templates.router, prefix="/qubo-templates", tags=["qubo-templates"]
+)
 # FMIT scheduling routes
 api_router.include_router(swap.router)  # prefix="/swaps" defined in router
 api_router.include_router(leave.router)  # prefix="/leave" defined in router
