@@ -4,7 +4,6 @@ Export schedules and data from Residency Scheduler.
 
 ---
 
-<<<<<<< HEAD
 ## Import/Export Page
 
 For a unified import/export experience:
@@ -17,8 +16,6 @@ For a unified import/export experience:
 
 ---
 
-=======
->>>>>>> origin/docs/session-14-summary
 ## Excel Export
 
 Export schedules to Excel:

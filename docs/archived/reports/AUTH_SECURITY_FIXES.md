@@ -168,11 +168,7 @@ Token Refresh:
 Logout:
   User → POST /logout
        → Access token blacklisted
-<<<<<<< HEAD
        → Cookie deleted
-=======
-       → PGY2-01ie deleted
->>>>>>> origin/docs/session-14-summary
 ```
 
 ---

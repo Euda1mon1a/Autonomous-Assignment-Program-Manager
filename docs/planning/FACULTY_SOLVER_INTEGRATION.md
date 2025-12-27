@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 # Faculty Solver Integration (REQUIRED)
-=======
-***REMOVED*** Solver Integration (REQUIRED)
->>>>>>> origin/docs/session-14-summary
 
 > **Last Updated:** 2025-12-22
 > **Status:** Phase 1 Complete (Core Infrastructure)
