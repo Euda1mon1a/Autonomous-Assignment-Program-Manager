@@ -209,25 +209,27 @@ export const GROUP_BY_LABELS: Record<HeatmapGroupBy, string> = {
 
 /**
  * Default color scales
+ * Uses consistent intensity scale: cool (low) → warm (high) → black (critical)
+ * Aligns with resilience framework: GREEN → YELLOW → ORANGE → RED → BLACK
  */
 export const DEFAULT_COLOR_SCALES = {
   coverage: {
     min: 0,
     max: 100,
-    colors: ['#ef4444', '#fbbf24', '#22c55e'], // red -> yellow -> green
-    labels: ['Low', 'Medium', 'High'],
+    colors: ['#1e1b4b', '#ef4444', '#fbbf24', '#22c55e'], // black(0%) -> red -> yellow -> green(100%)
+    labels: ['Gap', 'Low', 'Partial', 'Full'],
   },
   workload: {
     min: 0,
     max: 80,
-    colors: ['#22c55e', '#fbbf24', '#ef4444'], // green -> yellow -> red
-    labels: ['Light', 'Moderate', 'Heavy'],
+    colors: ['#3b82f6', '#fbbf24', '#ef4444', '#1e1b4b'], // blue(0) -> yellow -> red -> black(80+)
+    labels: ['Light', 'Moderate', 'Heavy', 'Critical'],
   },
   custom: {
     min: 0,
     max: 100,
-    colors: ['#3b82f6', '#8b5cf6', '#ec4899'], // blue -> purple -> pink
-    labels: ['Low', 'Medium', 'High'],
+    colors: ['#3b82f6', '#fbbf24', '#ef4444', '#1e1b4b'], // blue -> yellow -> red -> black
+    labels: ['Low', 'Medium', 'High', 'Critical'],
   },
 };
 

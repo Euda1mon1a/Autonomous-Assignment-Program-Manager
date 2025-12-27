@@ -110,6 +110,25 @@ Custom heatmap with filters:
 GET /api/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31&person_ids=1,2&rotation_ids=5,6&include_fmit=true&group_by=week
 ```
 
+### Color Scale Design Philosophy
+
+The heatmap uses a **consistent intensity scale** where higher intensity = warmer colors, with black representing critical states. This aligns with the resilience framework's defense levels: GREEN → YELLOW → ORANGE → RED → BLACK.
+
+**Key Principle**: Users under stress should not have to mentally invert scales. "Hot" colors always mean "needs attention."
+
+| View Mode | Low End | High End | Critical |
+|-----------|---------|----------|----------|
+| **Coverage** | Black (0% gap) | Green (100% full) | Black at 0% indicates critical gap |
+| **Workload** | Blue (light load) | Red (heavy) | Black (>80% critical overload) |
+| **Custom** | Blue (low) | Red (high) | Black (critical) |
+
+Color values used:
+- Black (critical): `#1e1b4b`
+- Red (high/gap): `#ef4444`
+- Yellow (warning/partial): `#fbbf24`
+- Green (good/full): `#22c55e`
+- Blue (light): `#3b82f6`
+
 ### API Response Format
 
 Heatmap data structure:
@@ -122,8 +141,8 @@ Heatmap data structure:
     "color_scale": {
       "min": 0,
       "max": 100,
-      "colors": ["#ef4444", "#fbbf24", "#22c55e"],
-      "labels": ["Low", "Medium", "High"]
+      "colors": ["#1e1b4b", "#ef4444", "#fbbf24", "#22c55e"],  // black→red→yellow→green for coverage
+      "labels": ["Gap", "Low", "Partial", "Full"]
     },
     "annotations": [
       {"x": 0, "y": 0, "text": "80%", "font": {"color": "white", "size": 10}}
