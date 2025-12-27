@@ -40,6 +40,11 @@ from .capacity import (
 )
 from .equity import ContinuityConstraint, EquityConstraint
 from .night_float_post_call import NightFloatPostCallConstraint
+from .primary_duty import (
+    FacultyClinicEquitySoftConstraint,
+    FacultyDayAvailabilityConstraint,
+    FacultyPrimaryDutyClinicConstraint,
+)
 from .resilience import (
     HubProtectionConstraint,
     N1VulnerabilityConstraint,
@@ -299,10 +304,16 @@ class ConstraintManager:
         manager.add(PostFMITRecoveryConstraint())  # Faculty Friday PC after FMIT
         manager.add(PostFMITSundayBlockingConstraint())
 
+        # Faculty primary duty constraints (Airtable-driven)
+        # Uses primary_duties.json for per-faculty clinic min/max and availability
+        manager.add(FacultyPrimaryDutyClinicConstraint())
+        manager.add(FacultyDayAvailabilityConstraint())
+
         # Soft constraints (optimization)
         manager.add(CoverageConstraint(weight=1000.0))
         manager.add(EquityConstraint(weight=10.0))
         manager.add(ContinuityConstraint(weight=5.0))
+        manager.add(FacultyClinicEquitySoftConstraint(weight=15.0))
 
         # Block 10 soft constraints - call equity (weight hierarchy documented)
         # Weight order: Sunday (10) > CallSpacing (8) > Weekday (5) > Tuesday (2)
@@ -368,10 +379,15 @@ class ConstraintManager:
         manager.add(PostFMITRecoveryConstraint())  # Faculty Friday PC after FMIT
         manager.add(PostFMITSundayBlockingConstraint())
 
+        # Faculty primary duty constraints (Airtable-driven)
+        manager.add(FacultyPrimaryDutyClinicConstraint())
+        manager.add(FacultyDayAvailabilityConstraint())
+
         # Soft constraints (optimization)
         manager.add(CoverageConstraint(weight=1000.0))
         manager.add(EquityConstraint(weight=10.0))
         manager.add(ContinuityConstraint(weight=5.0))
+        manager.add(FacultyClinicEquitySoftConstraint(weight=15.0))
 
         # Block 10 soft constraints - call equity
         manager.add(SundayCallEquityConstraint(weight=10.0))
