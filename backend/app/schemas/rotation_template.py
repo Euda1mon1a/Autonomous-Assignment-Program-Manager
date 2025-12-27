@@ -12,6 +12,8 @@ class RotationTemplateBase(BaseModel):
     name: str
     activity_type: str  # 'clinic', 'inpatient', 'procedure', 'conference'
     abbreviation: str | None = None
+    font_color: str | None = None
+    background_color: str | None = None
     clinic_location: str | None = None
     max_residents: int | None = None
     requires_specialty: str | None = None
@@ -32,6 +34,8 @@ class RotationTemplateUpdate(BaseModel):
     name: str | None = None
     activity_type: str | None = None
     abbreviation: str | None = None
+    font_color: str | None = None
+    background_color: str | None = None
     clinic_location: str | None = None
     max_residents: int | None = None
     requires_specialty: str | None = None

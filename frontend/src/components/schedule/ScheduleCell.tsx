@@ -45,6 +45,8 @@ function getActivityColor(activityType: string | undefined | null): string {
 interface CellAssignment {
   abbreviation: string
   activityType: string
+  fontColor?: string
+  backgroundColor?: string
   templateName?: string
   role?: string
   notes?: string
@@ -67,9 +69,47 @@ export function ScheduleCell({
   isToday,
   timeOfDay,
 }: ScheduleCellProps) {
-  // Memoize the color class calculation
-  const colorClass = useMemo(() => {
-    return assignment ? getActivityColor(assignment.activityType) : ''
+  // Map Tailwind color names to hex values
+  const tailwindToHex: Record<string, string> = {
+    'black': '#000000',
+    'white': '#ffffff',
+    'gray-100': '#f3f4f6',
+    'gray-200': '#e5e7eb',
+    'gray-400': '#9ca3af',
+    'gray-800': '#1f2937',
+    'red-500': '#ef4444',
+    'green-100': '#dcfce7',
+    'green-500': '#22c55e',
+    'green-800': '#166534',
+    'blue-300': '#93c5fd',
+    'sky-500': '#0ea5e9',
+    'purple-700': '#7c3aed',
+    'amber-100': '#fef3c7',
+    'amber-800': '#92400e',
+    'yellow-300': '#fde047',
+    'emerald-200': '#a7f3d0',
+  }
+
+  // Memoize the color class and style calculation
+  const { colorClass, customStyle } = useMemo(() => {
+    if (!assignment) return { colorClass: '', customStyle: undefined }
+
+    // Use custom colors from database if available
+    if (assignment.fontColor && assignment.backgroundColor) {
+      const textHex = tailwindToHex[assignment.fontColor] || assignment.fontColor
+      const bgHex = tailwindToHex[assignment.backgroundColor] || assignment.backgroundColor
+      return {
+        colorClass: 'border',
+        customStyle: {
+          color: textHex,
+          backgroundColor: bgHex,
+          borderColor: bgHex === '#ffffff' ? '#e5e7eb' : bgHex === '#000000' ? '#374151' : bgHex,
+        }
+      }
+    }
+
+    // Fall back to activity-type-based colors
+    return { colorClass: getActivityColor(assignment.activityType), customStyle: undefined }
   }, [assignment])
 
   // Base cell styles
@@ -121,6 +161,7 @@ export function ScheduleCell({
           ${colorClass}
           cursor-default transition-all hover:scale-105 hover:shadow-sm
         `}
+        style={customStyle}
         title={tooltipContent}
       >
         {assignment.abbreviation}
