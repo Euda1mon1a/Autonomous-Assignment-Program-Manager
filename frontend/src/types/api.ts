@@ -44,6 +44,26 @@ export enum PersonType {
 }
 
 /**
+ * Faculty role types with specific scheduling constraints
+ */
+export enum FacultyRole {
+  /** Program Director: 0 clinic, avoid Tue call */
+  PD = 'pd',
+  /** Associate Program Director: 2/week, avoid Tue call */
+  APD = 'apd',
+  /** Officer in Charge: 2/week */
+  OIC = 'oic',
+  /** Department Chief: 1/week, prefers Wed call */
+  DEPT_CHIEF = 'dept_chief',
+  /** Sports Medicine: 0 regular clinic, 4 SM clinic/week */
+  SPORTS_MED = 'sports_med',
+  /** Core Faculty: max 4/week */
+  CORE = 'core',
+  /** Adjunct Faculty: not auto-scheduled, can be pre-loaded to FMIT */
+  ADJUNCT = 'adjunct'
+}
+
+/**
  * Time periods for scheduling blocks
  */
 export enum TimeOfDay {
@@ -159,6 +179,8 @@ export interface Person {
   specialties: string[] | null;
   /** Primary duty assignment */
   primary_duty: string | null;
+  /** Faculty role (for faculty only) */
+  faculty_role: FacultyRole | null;
   /** Timestamp when the record was created */
   created_at: DateTimeString;
   /** Timestamp when the record was last updated */
@@ -183,6 +205,8 @@ export interface PersonCreate {
   specialties?: string[];
   /** Primary duty assignment */
   primary_duty?: string;
+  /** Faculty role (for faculty only) */
+  faculty_role?: FacultyRole;
 }
 
 /**
@@ -203,6 +227,8 @@ export interface PersonUpdate {
   specialties?: string[];
   /** Primary duty assignment */
   primary_duty?: string;
+  /** Faculty role (for faculty only) */
+  faculty_role?: FacultyRole;
 }
 
 // ============================================================================
