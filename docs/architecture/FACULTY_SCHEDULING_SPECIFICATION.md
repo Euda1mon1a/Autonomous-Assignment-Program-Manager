@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 # Faculty Scheduling Specification
-=======
-***REMOVED*** Scheduling Specification
->>>>>>> origin/docs/session-14-summary
 
 > **Version:** 1.1
 > **Created:** 2025-12-19
@@ -96,11 +92,7 @@ FMIT Week: Friday (start) → Thursday (end)
            Independent of 4-week block boundaries
 ```
 
-<<<<<<< HEAD
 ### Faculty FMIT Constraints
-=======
-##***REMOVED*** FMIT Constraints
->>>>>>> origin/docs/session-14-summary
 
 | Constraint | Rule |
 |------------|------|
@@ -169,9 +161,40 @@ Week 2 (Post-FMIT):
 
 ### Call Eligibility
 
-- **Eligible for Sun-Thurs call**: All faculty NOT currently on FMIT
+- **Eligible for Sun-Thurs call**: All faculty NOT currently on FMIT (excluding ADJUNCT)
 - **Fri-Sat call**: Exclusively FMIT attending
 - **Post-FMIT Friday**: Not eligible for any call
+- **ADJUNCT faculty**: NOT auto-scheduled for call (manually assigned only)
+
+### Overnight Call Generation (Solver Implementation)
+
+The system automatically generates overnight call assignments for Sunday through Thursday nights using the `OvernightCallGenerationConstraint` hard constraint.
+
+| Aspect | Implementation |
+|--------|----------------|
+| **Constraint Type** | Hard (must have exactly one faculty per night) |
+| **Coverage Nights** | Sunday-Thursday only |
+| **Excluded Faculty** | ADJUNCT role (not auto-scheduled) |
+| **FMIT Blocking** | Faculty on FMIT blocked during their FMIT week |
+| **Post-FMIT Blocking** | Faculty blocked from Sunday call after FMIT week ends |
+| **Absence Respect** | Faculty with blocking absences excluded |
+
+**Solver Variables:**
+```
+call_assignments[(faculty_idx, block_idx, "overnight")] = BoolVar
+```
+
+**Constraint Logic:**
+```
+For each night (Sun-Thurs):
+  sum(call_vars for eligible faculty) == 1
+```
+
+**Integration with Equity Constraints:**
+- `SundayCallEquityConstraint` (weight=10): Balances Sunday call burden
+- `WeekdayCallEquityConstraint` (weight=5): Balances Mon-Thurs call
+- `CallSpacingConstraint` (weight=8): Prevents back-to-back calls
+- `TuesdayCallPreferenceConstraint` (weight=2): PD/APD avoid Tuesday
 
 ---
 
@@ -547,17 +570,20 @@ Rotation templates require dedicated analysis:
 
 ### New Constraints Required
 
-| Constraint | Type | Priority |
-|------------|------|----------|
-| `FacultyRoleClinicConstraint` | Hard | High |
-| `FMITWeekBlockingConstraint` | Hard | High |
-| `FMITCallConstraint` | Hard | High |
-| `PostFMITRecoveryConstraint` | Hard | High |
-| `PostCallAutoAssignmentConstraint` | Hard | High |
-| `SMResidentFacultyAlignmentConstraint` | Hard | High |
-| `SundayCallEquityConstraint` | Soft | Medium |
-| `TuesdayCallPreferenceConstraint` | Soft | Low |
-| `DeptChiefWednesdayPreferenceConstraint` | Soft | Low |
+| Constraint | Type | Priority | Status |
+|------------|------|----------|--------|
+| `FacultyRoleClinicConstraint` | Hard | High | ✅ Implemented |
+| `FMITWeekBlockingConstraint` | Hard | High | ✅ Implemented |
+| `FMITCallConstraint` | Hard | High | ✅ Implemented |
+| `PostFMITRecoveryConstraint` | Hard | High | ✅ Implemented |
+| `PostCallAutoAssignmentConstraint` | Hard | High | ✅ Implemented |
+| `SMResidentFacultyAlignmentConstraint` | Hard | High | ✅ Implemented |
+| `OvernightCallGenerationConstraint` | Hard | High | ✅ Implemented |
+| `SundayCallEquityConstraint` | Soft | Medium | ✅ Implemented |
+| `WeekdayCallEquityConstraint` | Soft | Medium | ✅ Implemented |
+| `CallSpacingConstraint` | Soft | Medium | ✅ Implemented |
+| `TuesdayCallPreferenceConstraint` | Soft | Low | ✅ Implemented |
+| `DeptChiefWednesdayPreferenceConstraint` | Soft | Low | ✅ Implemented |
 
 ### Validation Rules
 
