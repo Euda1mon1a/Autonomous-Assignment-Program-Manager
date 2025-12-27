@@ -1,18 +1,21 @@
 # MCP IDE Integration Guide
 
 > **Created:** 2025-12-18
-> **Purpose:** Local AI-assisted development with VSCode and Zed editors
+> **Updated:** 2025-12-27
+> **Purpose:** Local AI-assisted development with VSCode, Zed, and Claude Code CLI
 > **Status:** Ready for use
 
 ---
 
 ## Overview
 
-This document provides an overview of the Model Context Protocol (MCP) server integration for the Residency Scheduler application. The MCP server enables AI assistants to interact with scheduling data and tools through your IDE.
+This document provides an overview of the Model Context Protocol (MCP) server integration for the Residency Scheduler application. The MCP server enables AI assistants to interact with scheduling data and tools through your IDE or CLI.
 
-> **Which Claude tool should I use?** This guide covers IDE-integrated Claude (VSCode, Zed, Antigravity).
+> **Which Claude tool should I use?** This guide covers IDE-integrated Claude (VSCode, Zed) and Claude Code CLI.
 > For help choosing between Claude for macOS (chat app), Claude Code (CLI), or IDE integration,
 > see [Choosing Your Claude Interface](./guides/AI_AGENT_USER_GUIDE.md#choosing-your-claude-interface).
+
+> **Quick Start:** The recommended approach is Docker. Just run `docker compose up -d` and the MCP configs are pre-configured to use Docker exec.
 
 ## What Was Created
 
@@ -55,7 +58,28 @@ Located in `/home/user/Autonomous-Assignment-Program-Manager/mcp-server/`:
 
 ## Quick Start
 
-### Prerequisites
+### Option A: Docker (Recommended)
+
+This is the recommended approach - no local Python dependencies needed.
+
+1. **Start Docker Services**
+   ```bash
+   cd /home/user/Autonomous-Assignment-Program-Manager
+   docker compose up -d
+   ```
+
+2. **Verify MCP Server is Running**
+   ```bash
+   docker compose ps mcp-server
+   docker compose exec -T mcp-server python -c \
+     "from scheduler_mcp.server import mcp; print('MCP OK')"
+   ```
+
+3. **Start Using** - The IDE configs are pre-configured to use Docker.
+
+### Option B: Local Python (Alternative)
+
+Only use this if you need to develop/modify the MCP server itself.
 
 1. **Install MCP Server Package**
    ```bash
@@ -65,37 +89,35 @@ Located in `/home/user/Autonomous-Assignment-Program-Manager/mcp-server/`:
 
 2. **Configure Environment Variables**
    ```bash
-   # Copy template
    cp .env.example .env
-
-   # Edit with your credentials
-   nano .env
+   nano .env  # Set API_BASE_URL=http://localhost:8000
    ```
 
-   Required: `DATABASE_URL`
-
-3. **Verify Database is Running**
-   ```bash
-   # Using Docker
-   docker-compose up -d db
-
-   # Or check PostgreSQL service
-   sudo systemctl status postgresql
-   ```
+3. **Enable Local Config in `.mcp.json`**
+   - Set `residency-scheduler.disabled: true`
+   - Set `residency-scheduler-local.disabled: false`
 
 ### Using in VSCode
 
-1. **Install recommended extensions** (prompted automatically)
+1. **Ensure Docker is running**: `docker compose up -d`
 2. **Open Command Palette**: `Cmd+Shift+P` or `Ctrl+Shift+P`
 3. **Run**: `MCP: Start Server`
 4. **Select**: `residency-scheduler`
 
 ### Using in Zed
 
-1. **Ensure Zed is up-to-date**
+1. **Ensure Docker is running**: `docker compose up -d`
 2. **Open Command Palette**: `Cmd+Shift+P` or `Ctrl+Shift+P`
 3. **Run**: `mcp start`
 4. **Select**: `residency-scheduler`
+
+### Using with Claude Code CLI
+
+1. **Ensure Docker is running**: `docker compose up -d`
+2. **Claude Code automatically reads** `.mcp.json` from the project root
+3. **MCP tools become available** in your Claude Code session
+
+See `.claude/SESSION_STARTUP_TODOS.md` for the complete startup checklist.
 
 ---
 
@@ -204,27 +226,48 @@ Both IDE configurations use environment variable substitution:
 | `API_BASE_URL` | No | Main API endpoint | `http://localhost:8000` |
 | `LOG_LEVEL` | No | Logging verbosity | `INFO`, `DEBUG`, `WARNING` |
 
-### VSCode Configuration (`.vscode/mcp.json`)
+### Claude Code Configuration (`.mcp.json`)
 
 ```json
 {
   "mcpServers": {
     "residency-scheduler": {
+      "command": "docker",
+      "args": ["compose", "exec", "-T", "mcp-server", "python", "-m", "scheduler_mcp.server"],
+      "env": { "LOG_LEVEL": "INFO" },
+      "transport": "stdio"
+    },
+    "residency-scheduler-local": {
       "command": "python",
       "args": ["-m", "scheduler_mcp.server"],
-      "cwd": "${workspaceFolder}/mcp-server",
-      "env": {
-        "DATABASE_URL": "${env:DATABASE_URL}",
-        ...
-      }
+      "cwd": "mcp-server/src",
+      "disabled": true
     }
   }
 }
 ```
 
 **Key Features:**
-- Workspace-relative paths using `${workspaceFolder}`
-- Environment variable substitution with `${env:VAR_NAME}`
+- Docker-first approach (dependencies included)
+- Local fallback option (disabled by default)
+- stdio transport for CLI integration
+
+### VSCode Configuration (`.vscode/mcp.json`)
+
+```json
+{
+  "mcpServers": {
+    "residency-scheduler": {
+      "command": "docker",
+      "args": ["compose", "exec", "-T", "mcp-server", "python", "-m", "scheduler_mcp.server"],
+      "transport": "stdio"
+    }
+  }
+}
+```
+
+**Key Features:**
+- Docker-based execution (no local deps needed)
 - Built-in security features (read-only, approval required)
 - Automatic health checks every 60 seconds
 
@@ -235,22 +278,17 @@ Both IDE configurations use environment variable substitution:
   "mcpServers": {
     "residency-scheduler": {
       "command": {
-        "path": "python",
-        "args": ["-m", "scheduler_mcp.server"],
-        "cwd": "mcp-server",
-        "env": {
-          "DATABASE_URL": "$DATABASE_URL",
-          ...
-        }
-      }
+        "path": "docker",
+        "args": ["compose", "exec", "-T", "mcp-server", "python", "-m", "scheduler_mcp.server"]
+      },
+      "transport": { "type": "stdio" }
     }
   }
 }
 ```
 
 **Key Features:**
-- Project-relative paths
-- Shell environment variable substitution
+- Docker-based execution
 - Data protection enabled
 - Audit logging active
 
@@ -487,7 +525,19 @@ Already configured in `.vscode/extensions.json`:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 0.2.0 | 2025-12-27 | Docker-first approach, Claude Code CLI support, TODO checklists |
 | 0.1.0 | 2025-12-18 | Initial release with VSCode and Zed support |
+
+## Claude Code Specific Resources
+
+For Claude Code CLI users, additional resources are available:
+
+| File | Purpose |
+|------|---------|
+| `.claude/SESSION_STARTUP_TODOS.md` | Session startup checklist |
+| `.claude/MCP_USAGE_TODOS.md` | How to use MCP tools step-by-step |
+| `.claude/SKILL_INDEX.md` | 34 skills with routing rules |
+| `.claude/INFRASTRUCTURE_OVERVIEW.md` | PAI architecture overview |
 
 ---
 
