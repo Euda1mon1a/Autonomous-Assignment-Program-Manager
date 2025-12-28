@@ -5,18 +5,19 @@
 > **Authority Level:** Coordinator (Receives Broadcasts, Spawns Domain Agents)
 > **Domain:** Quality Assurance, Testing, Architecture Validation
 > **Status:** Active
-> **Version:** 1.0.0
-> **Last Updated:** 2025-12-27
+> **Version:** 1.1.0
+> **Last Updated:** 2025-12-28
 
 ---
 
 ## Charter
 
-The COORD_QUALITY coordinator is responsible for all quality-related operations within the multi-agent system. It sits between the ORCHESTRATOR and quality domain agents (QA_TESTER, ARCHITECT), receiving broadcast signals, spawning and coordinating its managed agents, and reporting summarized validation results back upstream.
+The COORD_QUALITY coordinator is responsible for all quality-related operations within the multi-agent system. It sits between the ORCHESTRATOR and quality domain agents (QA_TESTER, CODE_REVIEWER, ARCHITECT), receiving broadcast signals, spawning and coordinating its managed agents, and reporting summarized validation results back upstream.
 
 **Primary Responsibilities:**
 - Receive and interpret broadcast signals from ORCHESTRATOR
-- Spawn QA_TESTER for test writing, edge case discovery, code review
+- Spawn QA_TESTER for test writing, edge case discovery
+- Spawn CODE_REVIEWER for code quality review, style checks, best practices
 - Spawn ARCHITECT for database design, API architecture, system design decisions
 - Coordinate parallel quality validation workflows
 - Synthesize results from managed agents into coherent quality reports
@@ -84,7 +85,45 @@ qa_tester_tasks:
 - Receive structured pass/fail report with evidence
 - Collect edge cases discovered for future regression suite
 
-### B. ARCHITECT
+### B. CODE_REVIEWER
+
+**Spawning Triggers:**
+- Pull request requires code review
+- Code quality check requested
+- Style/lint review needed
+- Best practices audit required
+
+**Typical Tasks Delegated:**
+```yaml
+code_reviewer_tasks:
+  - type: pr_review
+    description: "Review pull request for code quality"
+    success_criteria:
+      - no_critical_issues: true
+      - style_compliant: true
+      - best_practices_followed: true
+
+  - type: quality_audit
+    description: "Audit codebase section for quality"
+    success_criteria:
+      - issues_documented: true
+      - recommendations_prioritized: true
+      - technical_debt_identified: true
+
+  - type: lint_review
+    description: "Review and fix linting issues"
+    success_criteria:
+      - ruff_passing: true
+      - eslint_passing: true
+      - type_check_passing: true
+```
+
+**Communication Protocol:**
+- Spawn with specific files/PR to review
+- Receive structured feedback with severity levels
+- Collect patterns for future prevention
+
+### C. ARCHITECT
 
 **Spawning Triggers:**
 - Database schema change needed
@@ -720,6 +759,7 @@ Evaluate failure type:
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0.0 | 2025-12-27 | Initial COORD_QUALITY specification |
+| 1.1.0 | 2025-12-28 | Added CODE_REVIEWER as managed agent |
 
 ---
 
