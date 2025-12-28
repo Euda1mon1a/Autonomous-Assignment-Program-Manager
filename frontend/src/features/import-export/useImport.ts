@@ -1,9 +1,14 @@
 /**
  * React hook for handling bulk imports
+ *
+ * Supports CSV, JSON, and Excel (.xlsx) file imports.
+ * Excel files are parsed via backend API first, with client-side
+ * fallback using SheetJS if the backend is unavailable.
  */
 
 import { useState, useCallback, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import * as XLSX from 'xlsx';
 import { post, ApiError } from '@/lib/api';
 import type {
   ImportDataType,
@@ -20,6 +25,7 @@ import {
   parseCSV,
   parseJSON,
   readFileAsText,
+  readFileAsArrayBuffer,
   normalizeColumns,
 } from './utils';
 import {
@@ -27,6 +33,25 @@ import {
   findDuplicates,
   findOverlappingAbsences,
 } from './validation';
+
+// ============================================================================
+// Backend XLSX Parse Response Type
+// ============================================================================
+
+interface BackendXlsxResponse {
+  success: boolean;
+  rows: Record<string, unknown>[];
+  columns: string[];
+  total_rows: number;
+  sheet_name: string;
+  warnings: string[];
+}
+
+interface BackendXlsxError {
+  success: boolean;
+  error: string;
+  error_code: string;
+}
 
 // ============================================================================
 // Default Options
@@ -70,6 +95,10 @@ interface ImportState {
   preview: ImportPreviewResult | null;
   progress: ImportProgress;
   options: ImportOptions;
+  /** True if xlsx was parsed client-side instead of via backend */
+  xlsxFallbackUsed: boolean;
+  /** Warnings from xlsx parsing (backend or client) */
+  xlsxWarnings: string[];
 }
 
 // ============================================================================
@@ -98,6 +127,8 @@ export function useImport(hookOptions: UseImportOptions = {}) {
       errors: [],
     },
     options: DEFAULT_IMPORT_OPTIONS,
+    xlsxFallbackUsed: false,
+    xlsxWarnings: [],
   });
 
   // ============================================================================
@@ -113,31 +144,141 @@ export function useImport(hookOptions: UseImportOptions = {}) {
   }, [hookOptions]);
 
   // ============================================================================
-  // Parse File
+  // Parse XLSX via Backend API
+  // ============================================================================
+
+  const parseXlsxViaBackend = useCallback(async (file: File): Promise<{
+    rows: Record<string, unknown>[];
+    warnings: string[];
+  }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Use fetch directly for FormData upload
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+    const response = await fetch(`${apiBase}/imports/parse-xlsx`, {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' })) as BackendXlsxError;
+      throw new Error(errorData.error || `Backend error: ${response.status}`);
+    }
+
+    const data = await response.json() as BackendXlsxResponse;
+
+    if (!data.success) {
+      throw new Error((data as unknown as BackendXlsxError).error || 'Backend parsing failed');
+    }
+
+    return {
+      rows: data.rows,
+      warnings: data.warnings || [],
+    };
+  }, []);
+
+  // ============================================================================
+  // Parse XLSX Client-Side (Fallback)
+  // ============================================================================
+
+  const parseXlsxClientSide = useCallback(async (file: File): Promise<{
+    rows: Record<string, unknown>[];
+    warnings: string[];
+  }> => {
+    const warnings: string[] = [
+      'Using client-side Excel parsing (backend unavailable). Some features like color detection may not work.',
+    ];
+
+    const arrayBuffer = await readFileAsArrayBuffer(file);
+    const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
+
+    // Use first sheet
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) {
+      throw new Error('No sheets found in Excel file');
+    }
+
+    const worksheet = workbook.Sheets[sheetName];
+    if (!worksheet) {
+      throw new Error(`Failed to read sheet: ${sheetName}`);
+    }
+
+    // Convert to JSON with headers from first row
+    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, {
+      header: undefined, // Use first row as headers
+      defval: null, // Default value for empty cells
+      raw: false, // Convert dates to strings
+    });
+
+    if (rows.length === 0) {
+      warnings.push('No data rows found in Excel file');
+    }
+
+    return { rows, warnings };
+  }, []);
+
+  // ============================================================================
+  // Parse File (Main Entry Point)
   // ============================================================================
 
   const parseFile = useCallback(async (file: File): Promise<Record<string, unknown>[]> => {
     const format = detectFileFormat(file);
-    const content = await readFileAsText(file);
 
-    setState(prev => ({ ...prev, file, format }));
+    setState(prev => ({
+      ...prev,
+      file,
+      format,
+      xlsxFallbackUsed: false,
+      xlsxWarnings: [],
+    }));
 
     if (format === 'csv') {
+      const content = await readFileAsText(file);
       return parseCSV(content);
     }
 
     if (format === 'json') {
+      const content = await readFileAsText(file);
       return parseJSON(content);
     }
 
     if (format === 'xlsx') {
-      // For Excel files, we need to use a library like xlsx
-      // For now, we'll show a message to convert to CSV
-      throw new Error('Excel files (.xlsx) are not yet fully supported. Please convert to CSV format.');
+      // Try backend first, fall back to client-side
+      let rows: Record<string, unknown>[];
+      let warnings: string[] = [];
+      let usedFallback = false;
+
+      try {
+        const result = await parseXlsxViaBackend(file);
+        rows = result.rows;
+        warnings = result.warnings;
+      } catch (backendError) {
+        // Backend failed, try client-side fallback
+        console.warn(
+          'Backend xlsx parsing failed, using client-side fallback:',
+          backendError instanceof Error ? backendError.message : backendError
+        );
+
+        usedFallback = true;
+        const result = await parseXlsxClientSide(file);
+        rows = result.rows;
+        warnings = result.warnings;
+      }
+
+      // Update state with fallback info
+      setState(prev => ({
+        ...prev,
+        xlsxFallbackUsed: usedFallback,
+        xlsxWarnings: warnings,
+      }));
+
+      return rows;
     }
 
     throw new Error(`Unsupported file format: ${format}`);
-  }, []);
+  }, [parseXlsxViaBackend, parseXlsxClientSide]);
 
   // ============================================================================
   // Preview Import
@@ -398,6 +539,8 @@ export function useImport(hookOptions: UseImportOptions = {}) {
         errors: [],
       },
       options: DEFAULT_IMPORT_OPTIONS,
+      xlsxFallbackUsed: false,
+      xlsxWarnings: [],
     });
   }, [hookOptions.dataType]);
 
@@ -434,6 +577,10 @@ export function useImport(hookOptions: UseImportOptions = {}) {
     options: state.options,
     isLoading: importMutation.isPending || ['parsing', 'validating', 'importing'].includes(state.progress.status),
     isError: state.progress.status === 'error',
+    /** True if xlsx was parsed client-side (backend was unavailable) */
+    xlsxFallbackUsed: state.xlsxFallbackUsed,
+    /** Warnings from xlsx parsing */
+    xlsxWarnings: state.xlsxWarnings,
 
     // Actions
     previewImport,
