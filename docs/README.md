@@ -213,7 +213,7 @@ Historical documentation retained for reference.
 [Troubleshooting Guide](troubleshooting.md) - Common issues and solutions
 
 ### :material-history: Changelog
-[Changelog](changelog.md) - Version history and release notes
+[Changelog](../CHANGELOG.md) - Version history and release notes
 
 ### :material-clipboard-text: Task Templates
 Located in [tasks/templates/](tasks/templates/):
