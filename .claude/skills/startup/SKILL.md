@@ -1,3 +1,8 @@
+---
+name: startup
+description: Review essential documentation and context at session start. Use when beginning a new session to load AI rules, git state, and pending tasks.
+---
+
 # Session Startup Skill
 
 > **Purpose:** Review essential documentation and context at the start of each session

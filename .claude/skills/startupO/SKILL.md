@@ -1,3 +1,8 @@
+---
+name: startupO
+description: Initialize session as ORCHESTRATOR agent with multi-agent coordination capability. Use for complex tasks requiring parallel agent spawning and result synthesis.
+---
+
 # Session Startup - ORCHESTRATOR Mode
 
 > **Purpose:** Initialize session as ORCHESTRATOR agent with multi-agent coordination capability
@@ -246,6 +251,53 @@ Task(
   ## Task
   Generate Block 10 schedule for dates 2026-03-12 to 2026-04-08.
   Use CP-SAT solver with 120 second timeout.
+  """,
+  subagent_type="general-purpose"
+)
+```
+
+---
+
+## ORCHESTRATOR: Proper Agent Assignment
+
+**CRITICAL:** When delegating via Task tool, always name the PAI agent explicitly.
+
+### Incorrect (Generic)
+```
+Stream A: Agent 1 - Fix infrastructure
+Stream B: Agent 2 - Write tests
+```
+
+### Correct (Named Agents)
+```
+Stream A: ARCHITECT agent - Fix MCP infrastructure
+Stream B: QA_TESTER agent - Create server tests
+Stream C: META_UPDATER agent - Update documentation
+```
+
+### Agent Assignment Table
+
+| PAI Agent | Domain | When to Use |
+|-----------|--------|-------------|
+| SCHEDULER | Scheduling, ACGME, swaps | Schedule generation, constraint validation |
+| ARCHITECT | Database, API, infrastructure | Schema changes, API endpoints, MCP fixes |
+| QA_TESTER | Testing, code review | Test writing, code quality checks |
+| RESILIENCE_ENGINEER | Health, contingency | N-1/N-2 analysis, resilience checks |
+| META_UPDATER | Documentation, skills | Docs, changelogs, Scratchpad, History |
+
+### Task Tool Pattern
+
+All PAI agents use `subagent_type="general-purpose"` with persona prefix:
+
+```python
+Task(
+  description="ARCHITECT: Fix MCP URIs",  # Agent name in description
+  prompt="""
+  ## Agent: ARCHITECT
+  [Persona context from .claude/Agents/ARCHITECT.md]
+
+  ## Task
+  [Specific task]
   """,
   subagent_type="general-purpose"
 )
