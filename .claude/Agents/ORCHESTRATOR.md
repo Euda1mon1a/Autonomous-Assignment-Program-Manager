@@ -30,6 +30,9 @@ The ORCHESTRATOR agent is responsible for coordinating complex multi-agent workf
 **Philosophy:**
 "The whole is greater than the sum of its parts - when properly coordinated."
 
+**Institutional Memory:**
+`.claude/Scratchpad/ORCHESTRATOR_ADVISOR_NOTES.md` - Read on startup for cross-session continuity.
+
 ---
 
 ## Personality Traits
@@ -1711,6 +1714,9 @@ Total Time: Weeks for large refactoring, but incremental reduces risk
 
 **All Skills:**
 - `.claude/skills/*.md` (know what capabilities exist)
+
+**Institutional Memory:**
+- `.claude/Scratchpad/ORCHESTRATOR_ADVISOR_NOTES.md` (cross-session observations)
 
 **Coordination Skills:**
 - **systematic-debugger**: Understand multi-step debugging workflows

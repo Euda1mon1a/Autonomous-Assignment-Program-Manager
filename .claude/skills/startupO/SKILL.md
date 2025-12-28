@@ -51,7 +51,10 @@ CLAUDE.md                                    # Project guidelines
 docs/development/AI_RULES_OF_ENGAGEMENT.md   # Git/PR workflow
 HUMAN_TODO.md                                # Current priorities
 .claude/Agents/ORCHESTRATOR.md               # Full ORCHESTRATOR spec (skim)
+.claude/Scratchpad/ORCHESTRATOR_ADVISOR_NOTES.md  # Cross-session advisor notes
 ```
+
+> **Note:** The advisor notes file contains persistent observations about the user's communication style, decision-making patterns, and effective interaction approaches. This institutional memory compounds across sessions.
 
 ### 2. Check Git Context
 
@@ -471,6 +474,7 @@ Ready to orchestrate. What's the task?
 ## Related Files
 
 - `.claude/Agents/ORCHESTRATOR.md` - Full ORCHESTRATOR specification
+- `.claude/Scratchpad/ORCHESTRATOR_ADVISOR_NOTES.md` - Cross-session institutional memory
 - `.claude/CONSTITUTION.md` - Foundational rules
 - `.claude/skills/startup/SKILL.md` - Basic startup (non-orchestrator)
 - `.claude/skills/check-codex/SKILL.md` - Codex feedback checking (rate-limiting step before merge)
