@@ -51,7 +51,7 @@ def setup_telemetry(app: FastAPI) -> bool:
         return False
 
     try:
-        # Initialize tracer
+        # Initialize tracer with exporter configuration
         config = TracerConfig(
             service_name=settings.TELEMETRY_SERVICE_NAME,
             service_version=settings.APP_VERSION,
@@ -61,6 +61,10 @@ def setup_telemetry(app: FastAPI) -> bool:
             enable_sqlalchemy=settings.TELEMETRY_TRACE_SQLALCHEMY,
             enable_redis=settings.TELEMETRY_TRACE_REDIS,
             enable_http=settings.TELEMETRY_TRACE_HTTP,
+            exporter_type=settings.TELEMETRY_EXPORTER_TYPE,
+            exporter_endpoint=settings.TELEMETRY_EXPORTER_ENDPOINT,
+            exporter_insecure=settings.TELEMETRY_EXPORTER_INSECURE,
+            exporter_headers=settings.TELEMETRY_EXPORTER_HEADERS,
         )
 
         initialize_tracer(config)
@@ -70,17 +74,21 @@ def setup_telemetry(app: FastAPI) -> bool:
             f"environment={settings.TELEMETRY_ENVIRONMENT}"
         )
 
-        # Add exporter
-        exporter_config = ExporterConfig(
-            exporter_type=ExporterType(settings.TELEMETRY_EXPORTER_TYPE),
-            endpoint=settings.TELEMETRY_EXPORTER_ENDPOINT,
-            service_name=settings.TELEMETRY_SERVICE_NAME,
-            headers=settings.TELEMETRY_EXPORTER_HEADERS,
-            insecure=settings.TELEMETRY_EXPORTER_INSECURE,
-        )
+        # Note: Exporter is now configured directly in TracerConfig and initialized
+        # during initialize_tracer(). The code below provides an alternative approach
+        # using the ExporterFactory if additional exporters are needed.
 
-        processor = create_span_processor(exporter_config)
-        get_tracer_manager().add_span_processor(processor)
+        # Add additional exporter if needed (for multi-exporter setup)
+        # exporter_config = ExporterConfig(
+        #     exporter_type=ExporterType(settings.TELEMETRY_EXPORTER_TYPE),
+        #     endpoint=settings.TELEMETRY_EXPORTER_ENDPOINT,
+        #     service_name=settings.TELEMETRY_SERVICE_NAME,
+        #     headers=settings.TELEMETRY_EXPORTER_HEADERS,
+        #     insecure=settings.TELEMETRY_EXPORTER_INSECURE,
+        # )
+        #
+        # processor = create_span_processor(exporter_config)
+        # get_tracer_manager().add_span_processor(processor)
 
         logger.info(
             f"Trace exporter configured: "

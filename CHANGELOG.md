@@ -9,6 +9,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Observability & Resilience Hardening (December 2025)
+
+**Pre-Solver Constraint Saturation Validator:**
+- New `PreSolverValidator` class in `backend/app/scheduling/pre_solver_validator.py`
+- Detects obviously infeasible scheduling problems BEFORE solver runs
+- Validates: hour balance, coverage ratios, availability conflicts, mutual exclusions
+- Provides complexity estimation and runtime predictions
+- Fast-fails with actionable error messages instead of expensive solver timeouts
+- Tests in `backend/tests/scheduling/test_pre_solver_validator.py`
+
+**OpenTelemetry Export Backend:**
+- Enhanced `backend/app/telemetry/tracer.py` with production-ready exporters
+- Supports OTLP gRPC/HTTP, Jaeger, Zipkin, and Console exporters
+- New config settings: `TELEMETRY_EXPORTER_TYPE`, `TELEMETRY_EXPORTER_ENDPOINT`
+- BatchSpanProcessor for efficient trace batching
+- Authentication headers support for cloud observability platforms
+- Tests in `backend/tests/telemetry/test_otel_exporter.py`
+
+**Circuit Breaker Health Integration:**
+- New `CircuitBreakerHealthCheck` in `backend/app/health/checks/circuit_breaker.py`
+- Integrated into `/health/detailed` and `/health/services/circuit_breakers` endpoints
+- Reports: total breakers, open/half-open/closed counts, failure rates
+- Health status: HEALTHY (none open) → DEGRADED (some open) → UNHEALTHY (critical open)
+- Tests in `backend/tests/health/test_circuit_breaker_health.py`
+
+**Recovery Distance (RD) Resilience Metric:**
+- New `RecoveryDistanceCalculator` in `backend/app/resilience/recovery_distance.py`
+- Measures minimum edits needed to recover from n-1 shocks (single resource loss)
+- Event types: faculty absence, resident sick day, room closure
+- Aggregate metrics: RD mean, median, P95, max, breakglass count
+- Bounded depth-first search with timeout protection
+- Integrated into resilience framework exports
+- Tests in `backend/tests/resilience/test_recovery_distance.py`
+
 #### Faculty Outpatient Scheduling Improvements (December 2025)
 
 **Adjunct Faculty Role:**

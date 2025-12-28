@@ -20,6 +20,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from app.health.checks.celery import CeleryHealthCheck
+from app.health.checks.circuit_breaker import CircuitBreakerHealthCheck
 from app.health.checks.database import DatabaseHealthCheck
 from app.health.checks.redis import RedisHealthCheck
 
@@ -96,6 +97,7 @@ class HealthAggregator:
         self.database_check = DatabaseHealthCheck(timeout=timeout)
         self.redis_check = RedisHealthCheck(timeout=timeout)
         self.celery_check = CeleryHealthCheck(timeout=timeout)
+        self.circuit_breaker_check = CircuitBreakerHealthCheck(timeout=timeout)
 
     async def check_liveness(self) -> dict[str, Any]:
         """
@@ -179,6 +181,9 @@ class HealthAggregator:
             ),
             "celery": asyncio.create_task(
                 self._check_with_timeout("celery", self.celery_check)
+            ),
+            "circuit_breakers": asyncio.create_task(
+                self._check_with_timeout("circuit_breakers", self.circuit_breaker_check)
             ),
         }
 
@@ -364,7 +369,7 @@ class HealthAggregator:
         Check health of a specific service.
 
         Args:
-            service_name: Name of service to check (database, redis, celery)
+            service_name: Name of service to check (database, redis, celery, circuit_breakers)
 
         Returns:
             HealthCheckResult for the requested service
@@ -378,6 +383,10 @@ class HealthAggregator:
             return await self._check_with_timeout(service_name, self.redis_check)
         elif service_name == "celery":
             return await self._check_with_timeout(service_name, self.celery_check)
+        elif service_name == "circuit_breakers":
+            return await self._check_with_timeout(
+                service_name, self.circuit_breaker_check
+            )
         else:
             raise ValueError(f"Unknown service: {service_name}")
 

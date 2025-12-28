@@ -6,6 +6,7 @@ the Residency Scheduler application.
 """
 
 import logging
+from typing import Optional
 
 from opentelemetry import trace
 from opentelemetry.baggage.propagation import W3CBaggagePropagator
@@ -42,6 +43,10 @@ class TracerConfig:
         enable_sqlalchemy: Enable SQLAlchemy instrumentation
         enable_redis: Enable Redis instrumentation
         enable_http: Enable HTTP client instrumentation
+        exporter_type: Type of exporter (otlp_grpc, otlp_http, jaeger, zipkin, console)
+        exporter_endpoint: Endpoint URL for the exporter
+        exporter_insecure: Use insecure connection (no TLS)
+        exporter_headers: Custom headers for authentication
     """
 
     def __init__(
@@ -54,6 +59,10 @@ class TracerConfig:
         enable_sqlalchemy: bool = True,
         enable_redis: bool = True,
         enable_http: bool = True,
+        exporter_type: str = "otlp_grpc",
+        exporter_endpoint: str = "http://localhost:4317",
+        exporter_insecure: bool = True,
+        exporter_headers: dict[str, str] | None = None,
     ):
         self.service_name = service_name
         self.service_version = service_version
@@ -63,6 +72,10 @@ class TracerConfig:
         self.enable_sqlalchemy = enable_sqlalchemy
         self.enable_redis = enable_redis
         self.enable_http = enable_http
+        self.exporter_type = exporter_type
+        self.exporter_endpoint = exporter_endpoint
+        self.exporter_insecure = exporter_insecure
+        self.exporter_headers = exporter_headers or {}
 
 
 class TracerManager:
@@ -116,6 +129,16 @@ class TracerManager:
             sampler=sampler,
         )
 
+        # Add OTLP exporter if configured
+        exporter = self._create_exporter()
+        if exporter:
+            span_processor = BatchSpanProcessor(exporter)
+            self._tracer_provider.add_span_processor(span_processor)
+            logger.info(
+                f"{self.config.exporter_type.upper()} span exporter enabled: "
+                f"endpoint={self.config.exporter_endpoint}"
+            )
+
         # Add console exporter for debugging if enabled
         if self.config.console_export:
             console_processor = BatchSpanProcessor(ConsoleSpanExporter())
@@ -153,6 +176,98 @@ class TracerManager:
         else:
             # Use parent-based sampling with ratio-based root sampling
             return ParentBasedTraceIdRatio(self.config.sampling_rate)
+
+    def _create_exporter(self):
+        """
+        Create span exporter based on configuration.
+
+        Returns:
+            SpanExporter: Configured exporter, or None if no exporter configured
+
+        Raises:
+            ValueError: If exporter type is unsupported
+        """
+        exporter_type = self.config.exporter_type.lower()
+
+        if exporter_type == "console":
+            # Console exporter is handled separately
+            return None
+
+        elif exporter_type == "otlp_grpc":
+            try:
+                from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+                    OTLPSpanExporter,
+                )
+
+                return OTLPSpanExporter(
+                    endpoint=self.config.exporter_endpoint,
+                    insecure=self.config.exporter_insecure,
+                    headers=tuple(self.config.exporter_headers.items())
+                    if self.config.exporter_headers
+                    else None,
+                )
+            except ImportError as e:
+                logger.warning(
+                    f"OTLP gRPC exporter not available: {e}. "
+                    "Install with: pip install opentelemetry-exporter-otlp-proto-grpc"
+                )
+                return None
+
+        elif exporter_type == "otlp_http":
+            try:
+                from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+                    OTLPSpanExporter,
+                )
+
+                return OTLPSpanExporter(
+                    endpoint=self.config.exporter_endpoint,
+                    headers=self.config.exporter_headers,
+                )
+            except ImportError as e:
+                logger.warning(
+                    f"OTLP HTTP exporter not available: {e}. "
+                    "Install with: pip install opentelemetry-exporter-otlp-proto-http"
+                )
+                return None
+
+        elif exporter_type == "jaeger":
+            try:
+                from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+
+                return JaegerExporter(
+                    agent_host_name=self.config.exporter_endpoint.split("://")[1].split(
+                        ":"
+                    )[0],
+                    agent_port=int(
+                        self.config.exporter_endpoint.split(":")[-1]
+                        if ":" in self.config.exporter_endpoint
+                        else "6831"
+                    ),
+                )
+            except ImportError as e:
+                logger.warning(
+                    f"Jaeger exporter not available: {e}. "
+                    "Install with: pip install opentelemetry-exporter-jaeger"
+                )
+                return None
+
+        elif exporter_type == "zipkin":
+            try:
+                from opentelemetry.exporter.zipkin.json import ZipkinExporter
+
+                return ZipkinExporter(endpoint=self.config.exporter_endpoint)
+            except ImportError as e:
+                logger.warning(
+                    f"Zipkin exporter not available: {e}. "
+                    "Install with: pip install opentelemetry-exporter-zipkin-json"
+                )
+                return None
+
+        else:
+            raise ValueError(
+                f"Unsupported exporter type: {exporter_type}. "
+                f"Supported types: otlp_grpc, otlp_http, jaeger, zipkin, console"
+            )
 
     def _setup_propagators(self):
         """

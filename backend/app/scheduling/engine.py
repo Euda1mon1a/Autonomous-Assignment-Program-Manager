@@ -46,6 +46,7 @@ from app.scheduling.constraints import (
     ConstraintManager,
     SchedulingContext,
 )
+from app.scheduling.pre_solver_validator import PreSolverValidator
 from app.scheduling.solvers import (
     SolverFactory,
     SolverResult,
@@ -253,6 +254,52 @@ class SchedulingEngine:
                 include_resilience=check_resilience,
                 existing_assignments=preserved_assignments,
             )
+
+            # Step 4.5: Pre-solver validation
+            # Check constraint saturation before invoking expensive solver
+            pre_validator = PreSolverValidator()
+            validation_result = pre_validator.validate_saturation(context)
+
+            if not validation_result.feasible:
+                # Problem is obviously infeasible - fail fast
+                logger.error(
+                    f"Pre-solver validation failed: {len(validation_result.issues)} issues detected"
+                )
+                for issue in validation_result.issues:
+                    logger.error(f"  - {issue}")
+                for recommendation in validation_result.recommendations:
+                    logger.info(f"  Recommendation: {recommendation}")
+
+                self._update_run_status(
+                    run, "failed", 0, 0, time.time() - start_time
+                )
+                self.db.commit()
+
+                return {
+                    "status": "failed",
+                    "message": f"Pre-solver validation failed: {len(validation_result.issues)} issues",
+                    "total_assigned": 0,
+                    "total_blocks": len(blocks),
+                    "validation": self._empty_validation(),
+                    "run_id": run.id,
+                    "pre_solver_validation": {
+                        "feasible": False,
+                        "issues": validation_result.issues,
+                        "recommendations": validation_result.recommendations,
+                        "statistics": validation_result.statistics,
+                    },
+                }
+
+            # Log pre-solver validation results
+            logger.info(
+                f"Pre-solver validation passed: "
+                f"complexity={validation_result.statistics.get('complexity_level', 'UNKNOWN')}, "
+                f"{validation_result.statistics.get('num_variables', 0):,} variables, "
+                f"estimated runtime: {validation_result.statistics.get('estimated_runtime', 'unknown')}"
+            )
+            if validation_result.warnings:
+                for warning in validation_result.warnings:
+                    logger.warning(f"Pre-solver warning: {warning}")
 
             # Step 5: Run solver
             solver_result = self._run_solver(algorithm, context, timeout_seconds)

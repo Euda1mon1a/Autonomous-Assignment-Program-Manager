@@ -53,7 +53,7 @@ Pre-computed backup schedules for instant crisis response.
 
 ## Cross-Disciplinary Extensions
 
-Building on the core resilience framework, the system incorporates advanced monitoring techniques from seven additional industries:
+Building on the core resilience framework, the system incorporates advanced monitoring techniques from eight additional industries:
 
 ### 1. SPC Monitoring (Semiconductor Manufacturing)
 
@@ -83,7 +83,11 @@ Adapts wildfire risk indices (FWI) to measure burnout risk based on workload, fa
 
 Models cumulative stress damage over time, similar to metal fatigue under sustained load. Tracks how repeated high-workload periods degrade resilience even when individual shifts comply with ACGME rules.
 
-**For detailed implementation:** See [Cross-Disciplinary Resilience Extensions](../guides/cross-disciplinary-resilience.md)
+### 8. Recovery Distance (Operations Research)
+
+Measures schedule resilience by calculating the minimum number of edits needed to recover from n-1 shocks (single resource loss). Lower recovery distance indicates more robust schedules that can absorb disruptions with minimal manual intervention.
+
+**For detailed implementation:** See [Cross-Disciplinary Resilience Extensions](cross-disciplinary-resilience.md)
 
 ---
 
