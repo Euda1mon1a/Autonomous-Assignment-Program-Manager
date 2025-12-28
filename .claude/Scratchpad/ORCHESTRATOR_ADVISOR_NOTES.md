@@ -402,28 +402,48 @@ logging.basicConfig(
 
 ---
 
-### Session 008 Handoff — READY FOR PICKUP
+### Session 009: 2025-12-28 — Settings Syntax Fix
 
-**Blocking Issue:** MCP connection not working
+**Context:** User encountered Claude Code startup error due to invalid `Bash(*)` syntax from PR #507.
 
-**Quick Debug Commands:**
-```bash
-# Test exec command manually
-docker compose exec -T -e MCP_TRANSPORT=stdio mcp-server python -m scheduler_mcp.server
+**Work Completed:**
+- Fixed `.claude/settings.json`: `Bash(*)` → `Bash`
+- Created PR #510: https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager/pull/510
 
-# Check if port 8080 is exposed
-docker compose ps mcp-server
+**Root Cause:**
+- Claude Code permission syntax requires `Bash` (no parentheses) for blanket allow
+- `Bash(pattern:*)` format is for specific command patterns only
 
-# View MCP server logs
-docker compose logs mcp-server --tail 50
-```
+**Session Duration:** ~5 minutes (quick hotfix)
 
-**Fallback Plan:** If STDIO transport continues to fail, switch to SSE/HTTP transport by:
-1. Expose port 8080 in `docker-compose.yml`
-2. Update `.mcp.json` to use `"transport": "sse"` with `"url": "http://localhost:8080/mcp"`
+**Delegation Assessment:**
+- Direct execution appropriate for trivial hotfix
+- PR creation: Done directly (justified: single-line fix, user waiting)
+
+---
+
+### Session 009 Handoff — READY FOR MERGE
+
+**PR Ready:** #510 - Settings Bash syntax fix
+
+**After Merge:**
+1. Restart Claude Code - settings should load without error
+2. MCP tools available (27/33 working from Session 008)
+3. Ready for feature work
+
+**Current Priorities (from HUMAN_TODO.md):**
+| Priority | Task |
+|----------|------|
+| High | Schedule Grid: Frozen headers/columns |
+| High | Heatmap: Block navigation |
+| Medium | Daily Manifest: Empty state UX |
+| Medium | Faculty assignments missing `rotation_template_id` |
+
+**Stale Files to Clean:**
+- `.claude/Scratchpad/2025-12-28_06-30_persona_loading_implementation.md` (untracked, can delete)
 
 ---
 
 *File created: 2025-12-27*
-*Last updated: 2025-12-28*
+*Last updated: 2025-12-28 (Session 009)*
 *Maintained by: ORCHESTRATOR*
