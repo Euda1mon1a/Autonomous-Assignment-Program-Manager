@@ -38,6 +38,9 @@ export function HeatmapControls({
   const startDateObj = useMemo(() => parseISO(dateRange.start), [dateRange.start]);
   const endDateObj = useMemo(() => parseISO(dateRange.end), [dateRange.end]);
 
+  // Helper to validate Date objects
+  const isValidDate = (d: Date): boolean => d instanceof Date && !isNaN(d.getTime());
+
   // Navigate to previous 4-week block
   const handlePreviousBlock = useCallback(() => {
     const newStart = subDays(startDateObj, 28);
@@ -211,7 +214,9 @@ export function HeatmapControls({
           <div className="flex items-center gap-2 text-sm">
             <span className="text-gray-600">Block:</span>
             <span className="font-medium text-gray-900 bg-gray-100 px-3 py-1 rounded">
-              {format(startDateObj, 'MMM d')} - {format(endDateObj, 'MMM d, yyyy')}
+              {isValidDate(startDateObj) && isValidDate(endDateObj)
+                ? `${format(startDateObj, 'MMM d')} - ${format(endDateObj, 'MMM d, yyyy')}`
+                : 'Select dates'}
             </span>
           </div>
         </div>
