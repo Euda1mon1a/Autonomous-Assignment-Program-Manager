@@ -80,7 +80,7 @@ export function HeatmapControls({
 
   const clearFilters = () => {
     onFiltersChange({
-      group_by: 'day',
+      group_by: 'person',
       include_fmit: true,
     });
   };
@@ -120,7 +120,7 @@ export function HeatmapControls({
           <RotateCw className="w-4 h-4 text-gray-500" />
           <label className="text-sm font-medium text-gray-700">Group by:</label>
           <select
-            value={filters.group_by || 'day'}
+            value={filters.group_by || 'person'}
             onChange={(e) => handleGroupByChange(e.target.value as HeatmapGroupBy)}
             className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={isLoading}
