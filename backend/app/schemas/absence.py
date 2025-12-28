@@ -129,3 +129,15 @@ class AbsenceResponse(AbsenceBase):
 
     class Config:
         from_attributes = True
+
+
+class AbsenceListResponse(BaseModel):
+    """Schema for paginated absence list response."""
+
+    items: list[AbsenceResponse]
+    total: int
+    page: int | None = None
+    page_size: int | None = None
+
+    class Config:
+        from_attributes = True
