@@ -12,6 +12,7 @@ Provides health check infrastructure for:
 
 from app.health.aggregator import HealthAggregator, HealthCheckResult, HealthStatus
 from app.health.checks.celery import CeleryHealthCheck
+from app.health.checks.circuit_breaker import CircuitBreakerHealthCheck
 from app.health.checks.database import DatabaseHealthCheck
 from app.health.checks.external import ExternalServiceHealthCheck
 from app.health.checks.redis import RedisHealthCheck
@@ -23,5 +24,6 @@ __all__ = [
     "DatabaseHealthCheck",
     "RedisHealthCheck",
     "CeleryHealthCheck",
+    "CircuitBreakerHealthCheck",
     "ExternalServiceHealthCheck",
 ]

@@ -918,6 +918,12 @@ Cross-industry best practices organized in tiers:
 - **Seismic Detection**: STA/LTA algorithm for burnout precursors
 - **Burnout Fire Index**: Multi-temporal danger rating from forestry CFFDRS
 - **Creep/Fatigue**: Larson-Miller parameter from materials science
+- **Recovery Distance**: Minimum edits to recover from n-1 shocks (operations research)
+
+**Observability & Hardening:**
+- **Pre-Solver Validation**: Detects infeasible constraints before solver runs
+- **OpenTelemetry Export**: OTLP/Jaeger/Zipkin trace export for distributed tracing
+- **Circuit Breaker Health**: Breaker status integrated into `/health` endpoint
 
 See `docs/architecture/cross-disciplinary-resilience.md` for detailed documentation.
 

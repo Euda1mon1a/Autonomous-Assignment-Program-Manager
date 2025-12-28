@@ -1,7 +1,7 @@
 ***REMOVED*** Security Pattern Audit
 
-> **Audit Date:** 2025-12-24
-> **Scope:** Backend security implementation review
+> **Audit Date:** 2025-12-28 (Updated)
+> **Scope:** Backend security implementation review + Dependency vulnerability analysis
 > **Status:** Comprehensive review completed
 
 ---
@@ -346,6 +346,75 @@ class KeyGenerationRequest(BaseModel):
 | CORS misconfiguration | Medium |
 | Session fixation | Medium |
 | Parameter pollution | Low |
+
+---
+
+***REMOVED******REMOVED*** 12. Dependency Vulnerability Analysis (December 2025)
+
+***REMOVED******REMOVED******REMOVED*** CVE-2023-30533 & CVE-2024-22363 (SheetJS xlsx)
+
+**Trivy Alert:** `xlsx@0.18.5` - Prototype Pollution & ReDoS vulnerabilities
+
+**Analysis Date:** 2025-12-28
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Investigation Results
+
+| Check | Result |
+|-------|--------|
+| `frontend/package.json` | No `xlsx` dependency |
+| `frontend/package-lock.json` | No `xlsx` entries found |
+| `backend/requirements.txt` | Uses `openpyxl` (Python), not SheetJS |
+| `agent-adk/package.json` | No `xlsx` dependency |
+| Source code search | No SheetJS imports anywhere |
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Verdict: **FALSE POSITIVE / STALE REFERENCE**
+
+The JavaScript SheetJS (`xlsx`) library is **not used** in this codebase. All Excel handling uses:
+
+| Component | Library | Language |
+|-----------|---------|----------|
+| Backend Excel parsing | `openpyxl==3.1.5` | Python |
+| Backend Excel export | `openpyxl==3.1.5` | Python |
+| Frontend "Excel" export | TSV workaround (no library) | TypeScript |
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Frontend Excel Export Implementation
+
+The frontend `useExport.ts` creates a **TSV file with .xls extension** as a workaround:
+
+```typescript
+// frontend/src/features/import-export/useExport.ts:194-201
+const tsvContent = content.replace(/,/g, '\t');  // CSV → TSV
+const blob = new Blob(['\ufeff' + tsvContent], {
+  type: 'application/vnd.ms-excel;charset=utf-8;',
+});
+```
+
+This works because Excel can open TSV files, but it's **not a real .xlsx file**. For true Excel output, the backend API (`/export/schedule/xlsx`) is used.
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Possible Alert Sources
+
+1. **Docker image layer cache** - Old build with stale `node_modules`
+2. **CI/CD cache** - Previous dependency snapshot
+3. **Stale lock file** - Old `package-lock.json` reference
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Remediation Steps
+
+```bash
+***REMOVED*** Regenerate lock files
+cd frontend && rm -rf node_modules package-lock.json && npm install
+
+***REMOVED*** Rebuild Docker without cache
+docker-compose build --no-cache frontend
+```
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Related Codex Review Findings
+
+If an `/api/routes/imports.py` endpoint is added:
+
+| Issue | Severity | Fix |
+|-------|----------|-----|
+| `.xls` accepted but `openpyxl` only supports `.xlsx` | P2 | Remove `.xls` from allowed extensions or add `xlrd` |
+| Sheet listing endpoint missing size validation | P2 | Reuse `validate_excel_upload()` with 10MB limit |
 
 ---
 
