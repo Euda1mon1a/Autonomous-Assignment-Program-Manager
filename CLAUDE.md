@@ -842,6 +842,39 @@ These rules apply to Claude Code, Codex, and any AI agent working in this repo.
 - All changes destined for GitHub must go through a PR.
 - No direct commits or pushes to `main` / `origin/main` unless explicitly approved.
 
+### Permission Tiers (Updated 2025-12-27)
+
+AI agents operate with three permission tiers defined in `.claude/settings.json`:
+
+**Tier 1: Autonomous (99% AI, User Just Merges PR)**
+
+| Operation | Autonomous |
+|-----------|------------|
+| `git add`, `commit`, `push` | Yes (feature branches) |
+| `gh pr create/close/view` | Yes |
+| Read/edit code, tests, docs | Yes |
+| Run tests and linters | Yes |
+
+**Tier 2: Review-Required (User Approves, AI Executes)**
+
+| Operation | Approval |
+|-----------|----------|
+| `git merge`, `rebase`, `reset` | Ask |
+| `alembic` migrations | Ask |
+| `docker-compose up/down/restart` | Ask |
+| Edit security/config files | Ask |
+
+**Tier 3: User-Only (AI Cannot Touch)**
+
+| Operation | Blocked |
+|-----------|---------|
+| `git push origin main/master` | Denied |
+| `git push --force` | Denied |
+| `DROP TABLE`, `TRUNCATE` | Denied |
+| Read `.env` files | Denied |
+
+**Enforcement:** GitHub branch protection guards main. AI can push freely but merges require human click.
+
 ### Environment Detection (Required)
 
 Before making changes, AI agents MUST:
