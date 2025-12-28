@@ -14,7 +14,7 @@
       "NotebookEdit",
       "WebFetch",
       "WebSearch",
-      "Bash(*)",
+      "Bash",
       "mcp__*"
     ],
 
