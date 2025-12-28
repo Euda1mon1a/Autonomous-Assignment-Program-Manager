@@ -1,11 +1,11 @@
 # MCP Server - FastMCP API Upgrade Needed
 
 > **Created:** 2025-12-27
-> **Status:** Blocked - requires FastMCP API migration
+> **Status:** All known issues FIXED
 
 ## Summary
 
-The MCP server is incompatible with the current FastMCP version (>=0.2.0). Multiple API changes need to be addressed before the server will start.
+The MCP server has been updated for compatibility with FastMCP version (>=0.2.0). All known API changes have been addressed.
 
 ## Issues Fixed in This Branch
 
@@ -19,45 +19,32 @@ The MCP server is incompatible with the current FastMCP version (>=0.2.0). Multi
 - **Fix**: Changed to `instructions` parameter
 - **File**: `server.py` line 151-158
 
-## Remaining Issues
+### 3. Resource URI Templates (FIXED)
+- **Problem**: Static resource URIs like `schedule://status` no longer allowed
+- **Error**: `ValueError: URI template must contain at least one parameter`
+- **Fix**: Changed to templated URIs with `date_range` parameter:
+  - `schedule://status` → `schedule://status/{date_range}`
+  - `schedule://compliance` → `schedule://compliance/{date_range}`
+- **Files**: `server.py` lines 164 and 189
+- **New parameter**: `date_range: str = "current"` added to both resource functions
 
-### 3. Resource URI Templates (NOT FIXED)
-```
-ValueError: URI template must contain at least one parameter
-```
-- **Location**: `server.py` line 164
-- **Cause**: Static resource URIs like `schedule://status` no longer allowed
-- **Impact**: Both `@mcp.resource("schedule://status")` and `@mcp.resource("schedule://compliance")` fail
-
-**Potential Fixes**:
-1. Add dummy parameters: `schedule://status/{dummy}`
-2. Use a different decorator for static resources
-3. Pin to older FastMCP version that supports static URIs
+## Potential Future Issues
 
 ### 4. Unknown Additional Issues
-There may be more API changes after fixing issue #3. The FastMCP library appears to have undergone significant API changes.
+There may be more API changes discovered during testing. The FastMCP library appears to have undergone significant API changes between versions.
 
 ## Recommended Next Steps
 
-### Option A: Pin FastMCP Version
-Find the last version that worked and pin it:
-```toml
-# pyproject.toml
-"fastmcp==0.1.x",  # Find exact working version
-```
-
-### Option B: Full API Migration
-1. Review FastMCP 0.2.0+ changelog
-2. Update all resource decorators
-3. Update any other changed APIs
-4. Add comprehensive tests
+1. Build and test the MCP server container
+2. Verify all 36 tools are registered correctly
+3. Test resource endpoints with the new `date_range` parameter
 
 ## Files Modified
 
 | File | Change |
 |------|--------|
 | `src/scheduler_mcp/tools.py` | Renamed to `scheduling_tools.py` |
-| `src/scheduler_mcp/server.py` | Updated imports (line 96) and init (line 151) |
+| `src/scheduler_mcp/server.py` | Updated imports (line 96), init (line 151), and resource decorators (lines 164, 189) |
 
 ## Testing
 

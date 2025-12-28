@@ -186,6 +186,73 @@ After Phase 2:
 
 ---
 
+## Persona-Aware Delegation
+
+When spawning agents via Task tool, include persona context for better results.
+
+### Reading Agent Personas
+
+Before delegating, read the agent spec:
+```
+Read .claude/Agents/SCHEDULER.md
+```
+
+### Prompt Template for Persona-Aware Tasks
+
+```
+Task(
+  prompt="""
+  ## Agent Persona: SCHEDULER
+
+  **Charter:** [paste from SCHEDULER.md]
+  **Constraints:** [paste from SCHEDULER.md]
+
+  ---
+
+  ## Task
+  [Your actual task here]
+  """,
+  subagent_type="general-purpose"
+)
+```
+
+### Quick Reference: Agent Routing
+
+| Task Type | Agent | Key Sections to Include |
+|-----------|-------|------------------------|
+| Schedule generation | SCHEDULER | Charter, ACGME expertise |
+| Database changes | ARCHITECT | Charter, SQL constraints |
+| Test writing | QA_TESTER | Charter, Test philosophy |
+| Resilience analysis | RESILIENCE_ENGINEER | Charter, Framework knowledge |
+| Documentation | META_UPDATER | Charter, Style guidelines |
+
+### Example: Persona-Aware Schedule Task
+
+```python
+# Instead of generic:
+Task(prompt="Generate Block 10 schedule", subagent_type="general-purpose")
+
+# Use persona-enriched:
+Task(
+  prompt="""
+  ## Agent: SCHEDULER
+  You are the SCHEDULER agent. Your charter is to handle all scheduling operations
+  with ACGME compliance as the top priority.
+
+  ## Constraints
+  - Never violate ACGME work hour limits
+  - Always verify backup exists before writes
+
+  ## Task
+  Generate Block 10 schedule for dates 2026-03-12 to 2026-04-08.
+  Use CP-SAT solver with 120 second timeout.
+  """,
+  subagent_type="general-purpose"
+)
+```
+
+---
+
 ## Synthesis Patterns
 
 When collecting results from multiple agents:

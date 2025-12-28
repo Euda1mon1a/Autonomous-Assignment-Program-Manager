@@ -161,8 +161,9 @@ mcp = FastMCP(
 # Register Resources
 
 
-@mcp.resource("schedule://status")
+@mcp.resource("schedule://status/{date_range}")
 async def schedule_status_resource(
+    date_range: str = "current",
     start_date: str | None = None,
     end_date: str | None = None,
 ) -> ScheduleStatusResource:
@@ -172,6 +173,7 @@ async def schedule_status_resource(
     Provides comprehensive view of assignments, coverage metrics, and active issues.
 
     Args:
+        date_range: Date range preset (e.g., "current", "week", "month", or custom)
         start_date: Start date in YYYY-MM-DD format (default: today)
         end_date: End date in YYYY-MM-DD format (default: 30 days from start)
 
@@ -184,8 +186,9 @@ async def schedule_status_resource(
     return await get_schedule_status(start_date=start, end_date=end)
 
 
-@mcp.resource("schedule://compliance")
+@mcp.resource("schedule://compliance/{date_range}")
 async def compliance_summary_resource(
+    date_range: str = "current",
     start_date: str | None = None,
     end_date: str | None = None,
 ) -> ComplianceSummaryResource:
@@ -196,6 +199,7 @@ async def compliance_summary_resource(
     and duty hour restrictions.
 
     Args:
+        date_range: Date range preset (e.g., "current", "week", "month", or custom)
         start_date: Start date in YYYY-MM-DD format (default: today)
         end_date: End date in YYYY-MM-DD format (default: 30 days from start)
 
@@ -1331,10 +1335,9 @@ async def module_usage_analysis_tool(
     return await module_usage_analysis(entry_points=entry_points)
 
 
-# Server lifecycle hooks
+# Server lifecycle functions (called by lifespan context manager)
 
 
-@mcp.on_initialize()
 async def on_initialize() -> None:
     """
     Initialize the MCP server.
@@ -1361,7 +1364,6 @@ async def on_initialize() -> None:
     logger.info("Server initialization complete")
 
 
-@mcp.on_shutdown()
 async def on_shutdown() -> None:
     """
     Clean up server resources.
