@@ -53,8 +53,10 @@ export type ActivityType = 'residency' | 'fmit' | 'both';
 
 /**
  * Group by options for heatmap
+ * Note: Backend only supports 'person' and 'rotation' groupings.
+ * Time-based groupings (day/week) are not implemented.
  */
-export type HeatmapGroupBy = 'day' | 'week' | 'person' | 'rotation';
+export type HeatmapGroupBy = 'person' | 'rotation';
 
 /**
  * Heatmap filters
@@ -201,8 +203,6 @@ export const VIEW_MODE_LABELS: Record<HeatmapViewMode, string> = {
  * Display labels for group by options
  */
 export const GROUP_BY_LABELS: Record<HeatmapGroupBy, string> = {
-  day: 'Daily',
-  week: 'Weekly',
   person: 'By Person',
   rotation: 'By Rotation',
 };
