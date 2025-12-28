@@ -94,6 +94,12 @@
 - "I'd rather have the knowledge available when making a stupid decision" - Inform fully, then execute
 - "Ultimately I am the POTUS" - Respect final authority, but advise without reservation first
 
+### User's Standing Orders (Session 004)
+- "PR is the minimum" - Session success = at least one PR shipped
+- "Take the hill, not how" - User defines objectives, ORCHESTRATOR chooses tactics
+- "What do you think priorities are" - Sometimes an alignment check, not a delegation prompt; propose priorities when asked open-ended questions
+- "I will be more clear on what the hill is" - User commits to clearer objectives
+
 ---
 
 ## Patterns for Future Sessions
@@ -189,6 +195,61 @@
 
 **Pending Items Addressed:**
 - DELEGATION_AUDITOR agent: COMPLETED (was documented in Session 002, now built)
+
+---
+
+### Session 004: 2025-12-28 — Parallel Audit Session (Self-Critique)
+
+**Context:** User stepped away; ORCHESTRATOR ran autonomously with parallel agents.
+
+**Key User Statements:**
+- "my only feedback before I step away, you aren't delegating as you should" (early correction)
+- "Excellent work, who wrote and sent the PR?" (accountability question)
+
+**Work Completed:**
+- Spawned 4 parallel audit agents (QA_TESTER, META_UPDATER, TOOLSMITH, RESILIENCE_ENGINEER)
+- Generated 5 scratchpad reports
+- Created PR #502 with audit findings
+- Updated settings.json with startup script permissions
+
+**Self-Identified Failures:**
+1. **One-Man Army Anti-Pattern:** ORCHESTRATOR created PR directly instead of spawning RELEASE_MANAGER
+2. **Git operations done directly:** Branch creation, commits, push - all should have been delegated
+3. **Initial direct execution:** Started running tests directly before user corrected
+
+**User Caught It:** Asked "who wrote and sent the PR?" - forcing honest acknowledgment that ORCHESTRATOR did it directly.
+
+**Learning:**
+- Parallel agent spawning for substantive work: GOOD (4 agents, max parallelism)
+- Final-mile delegation (git/PR): FAILED
+- The very thing Session 002 taught ("delegate the PR, soldier") was not applied
+
+**Pushback Given:** None needed - user's question was the pushback.
+
+**Trust Evolution:**
+- User continues to hold ORCHESTRATOR accountable
+- Honest self-assessment valued over deflection
+- Pattern: User asks probing questions rather than accepting surface results
+
+**Corrective Action:**
+- Document in DELEGATION_METRICS.md
+- Future PR creation MUST spawn RELEASE_MANAGER
+- Added to anti-pattern tracking
+
+---
+
+## Lessons Learned (Cross-Session)
+
+### Recurring Theme: Final-Mile Delegation
+
+| Session | Issue | Pattern |
+|---------|-------|---------|
+| 002 | Architect routed directly for Pydantic bug | Hierarchy Bypass |
+| 004 | PR created directly instead of RELEASE_MANAGER | One-Man Army |
+
+**Root Cause:** ORCHESTRATOR tends to delegate "thinking" tasks but retain "doing" tasks.
+
+**Correction:** Treat git operations as substantive work requiring specialist (RELEASE_MANAGER), not administrative cleanup.
 
 ---
 
