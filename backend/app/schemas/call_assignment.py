@@ -19,7 +19,7 @@ class CallType(str, Enum):
 class CallAssignmentBase(BaseModel):
     """Base schema for call assignment data."""
 
-    date: date = Field(..., description="Date of the call assignment")
+    call_date: date = Field(..., description="Date of the call assignment")
     person_id: UUID = Field(..., description="Faculty member assigned to call")
     call_type: str = Field(
         default="overnight",
@@ -42,7 +42,7 @@ class CallAssignmentCreate(CallAssignmentBase):
 class CallAssignmentUpdate(BaseModel):
     """Schema for updating an existing call assignment."""
 
-    date: date | None = None
+    call_date: date | None = None
     person_id: UUID | None = None
     call_type: str | None = None
     is_weekend: bool | None = None
@@ -63,7 +63,7 @@ class CallAssignmentResponse(BaseModel):
     """Schema for call assignment response."""
 
     id: UUID
-    date: date
+    call_date: date
     person_id: UUID
     call_type: str
     is_weekend: bool
