@@ -220,4 +220,4 @@ nav:
       - Testing: development/testing.md
       - Code Style: development/code-style.md
   - Troubleshooting: troubleshooting.md
-  - Changelog: changelog.md
+  - Changelog: ../CHANGELOG.md
