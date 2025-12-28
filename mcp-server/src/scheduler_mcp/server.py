@@ -1494,30 +1494,40 @@ Environment Variables:
   DATABASE_URL     PostgreSQL connection string
   API_BASE_URL     Optional: Main application API URL
   LOG_LEVEL        Logging level (DEBUG, INFO, WARNING, ERROR)
+  MCP_TRANSPORT    Transport mode: stdio, http, sse (default: stdio)
+  MCP_HOST         Host to bind for HTTP/SSE (default: 127.0.0.1)
+  MCP_PORT         Port to bind for HTTP/SSE (default: 8080)
 
 Examples:
-  # Run with database connection
-  DATABASE_URL=postgresql://user:pass@localhost/scheduler scheduler-mcp
+  # Run with STDIO transport (default, for Claude Desktop/IDE)
+  scheduler-mcp
+
+  # Run with HTTP transport (for Docker containers)
+  MCP_TRANSPORT=http scheduler-mcp --host 0.0.0.0 --port 8080
 
   # Run with debug logging
   LOG_LEVEL=DEBUG scheduler-mcp
-
-  # Run with API integration
-  API_BASE_URL=http://localhost:8000 scheduler-mcp
         """,
     )
 
     parser.add_argument(
         "--host",
-        default="localhost",
-        help="Host to bind to (default: localhost)",
+        default=os.getenv("MCP_HOST", "127.0.0.1"),
+        help="Host to bind to for HTTP/SSE transport (default: 127.0.0.1)",
     )
 
     parser.add_argument(
         "--port",
         type=int,
-        default=8080,
-        help="Port to bind to (default: 8080)",
+        default=int(os.getenv("MCP_PORT", "8080")),
+        help="Port to bind to for HTTP/SSE transport (default: 8080)",
+    )
+
+    parser.add_argument(
+        "--transport",
+        default=os.getenv("MCP_TRANSPORT", "stdio"),
+        choices=["stdio", "http", "sse", "streamable-http"],
+        help="Transport mode (default: stdio, use http for Docker)",
     )
 
     parser.add_argument(
@@ -1532,11 +1542,20 @@ Examples:
     # Configure logging level
     logging.getLogger().setLevel(getattr(logging, args.log_level))
 
-    logger.info(f"Starting MCP server on {args.host}:{args.port}")
+    logger.info(f"Transport: {args.transport.upper()}")
+    if args.transport != "stdio":
+        logger.info(f"Starting MCP server on {args.host}:{args.port}")
     logger.info(f"Log level: {args.log_level}")
 
-    # Run the server
-    mcp.run()
+    # Run the server with appropriate transport
+    if args.transport == "stdio":
+        mcp.run(transport="stdio")
+    else:
+        mcp.run(
+            transport=args.transport,
+            host=args.host,
+            port=args.port,
+        )
 
 
 if __name__ == "__main__":

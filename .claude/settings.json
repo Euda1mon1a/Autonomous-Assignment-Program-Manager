@@ -104,7 +104,9 @@
       "Edit(.antigravity/**)",
       "Edit(.claude/skills/**)",
       "Edit(.claude/Agents/**)",
-      "Edit(.claude/Scratchpad/**)"
+      "Edit(.claude/Scratchpad/**)",
+      "Write(.claude/Agents/**)",
+      "Write(.claude/Scratchpad/**)"
     ],
     "ask": [
       "Bash(git merge:*)",

@@ -205,7 +205,7 @@ class CallAssignmentService:
 
         # Check for duplicate (same person, date, and call_type)
         duplicate_stmt = select(CallAssignment).where(
-            CallAssignment.date == assignment_data.date,
+            CallAssignment.date == assignment_data.call_date,
             CallAssignment.person_id == assignment_data.person_id,
             CallAssignment.call_type == assignment_data.call_type,
         )
@@ -220,7 +220,7 @@ class CallAssignmentService:
 
         # Create the call assignment
         call_assignment = CallAssignment(
-            date=assignment_data.date,
+            date=assignment_data.call_date,
             person_id=assignment_data.person_id,
             call_type=assignment_data.call_type,
             is_weekend=assignment_data.is_weekend,
@@ -235,7 +235,7 @@ class CallAssignmentService:
 
         logger.info(
             f"Created call assignment {call_assignment.id} for person {person.name} "
-            f"on {assignment_data.date}"
+            f"on {assignment_data.call_date}"
         )
 
         return {"call_assignment": call_assignment, "error": None}
@@ -369,7 +369,7 @@ class CallAssignmentService:
             if result["error"]:
                 errors.append(
                     f"Failed to create assignment for {assignment_data.person_id} "
-                    f"on {assignment_data.date}: {result['error']}"
+                    f"on {assignment_data.call_date}: {result['error']}"
                 )
             else:
                 created.append(result["call_assignment"])
