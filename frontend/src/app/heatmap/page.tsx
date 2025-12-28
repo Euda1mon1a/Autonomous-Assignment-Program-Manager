@@ -18,7 +18,7 @@ export default function HeatmapPage() {
   const [filters, setFilters] = useState<HeatmapFilters>({
     start_date: defaultDateRange.start,
     end_date: defaultDateRange.end,
-    group_by: 'day',
+    group_by: 'person',
   })
   const [_viewMode, setViewMode] = useState<HeatmapViewMode>('coverage')
 
