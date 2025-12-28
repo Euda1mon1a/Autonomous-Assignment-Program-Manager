@@ -178,6 +178,8 @@ class CallAssignmentService:
     async def create_call_assignment(
         self,
         assignment_data: CallAssignmentCreate,
+        *,
+        commit: bool = True,
     ) -> dict:
         """
         Create a new call assignment.
@@ -227,6 +229,8 @@ class CallAssignmentService:
 
         self.db.add(call_assignment)
         await self.db.flush()
+        if commit:
+            await self.db.commit()
         await self.db.refresh(call_assignment)
 
         logger.info(
@@ -280,6 +284,7 @@ class CallAssignmentService:
                 setattr(call_assignment, field, value)
 
         await self.db.flush()
+        await self.db.commit()
         await self.db.refresh(call_assignment)
 
         logger.info(f"Updated call assignment {call_id}")
@@ -309,6 +314,7 @@ class CallAssignmentService:
         # Delete
         await self.db.delete(call_assignment)
         await self.db.flush()
+        await self.db.commit()
 
         logger.info(f"Deleted call assignment {call_id}")
 
@@ -337,13 +343,17 @@ class CallAssignmentService:
             dates = [a.date for a in assignments]
             min_date = min(dates)
             max_date = max(dates)
-            await self.clear_call_assignments_in_range(min_date, max_date)
+            await self.clear_call_assignments_in_range(
+                min_date,
+                max_date,
+                commit=False,
+            )
 
         created = []
         errors = []
 
         for assignment_data in assignments:
-            result = await self.create_call_assignment(assignment_data)
+            result = await self.create_call_assignment(assignment_data, commit=False)
 
             if result["error"]:
                 errors.append(
@@ -355,6 +365,9 @@ class CallAssignmentService:
 
         # Commit all at once
         await self.db.flush()
+        await self.db.commit()
+        for assignment in created:
+            await self.db.refresh(assignment)
 
         logger.info(
             f"Bulk created {len(created)} call assignments with {len(errors)} errors"
@@ -370,6 +383,8 @@ class CallAssignmentService:
         self,
         start_date: date,
         end_date: date,
+        *,
+        commit: bool = True,
     ) -> dict:
         """
         Clear all call assignments within a date range (for schedule regeneration).
@@ -393,6 +408,8 @@ class CallAssignmentService:
         deleted_count = result.rowcount
 
         await self.db.flush()
+        if commit:
+            await self.db.commit()
 
         logger.info(
             f"Cleared {deleted_count} call assignments from {start_date} to {end_date}"
