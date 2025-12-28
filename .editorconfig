@@ -1,0 +1,59 @@
+***REMOVED*** EditorConfig for Residency Scheduler
+***REMOVED*** https://editorconfig.org
+
+root = true
+
+***REMOVED*** Default settings for all files
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+***REMOVED*** Python files
+[*.py]
+indent_size = 4
+max_line_length = 100
+
+***REMOVED*** TypeScript/JavaScript files
+[*.{ts,tsx,js,jsx}]
+indent_size = 2
+
+***REMOVED*** JSON files
+[*.json]
+indent_size = 2
+
+***REMOVED*** YAML files
+[*.{yml,yaml}]
+indent_size = 2
+
+***REMOVED*** Markdown files
+[*.md]
+trim_trailing_whitespace = false
+indent_size = 2
+
+***REMOVED*** HTML files
+[*.html]
+indent_size = 2
+
+***REMOVED*** CSS/SCSS files
+[*.{css,scss}]
+indent_size = 2
+
+***REMOVED*** Shell scripts
+[*.sh]
+indent_size = 2
+
+***REMOVED*** Makefiles require tabs
+[Makefile]
+indent_style = tab
+
+***REMOVED*** Docker files
+[Dockerfile*]
+indent_size = 4
+
+***REMOVED*** Git config files
+[.git*]
+indent_size = 4
