@@ -23,7 +23,7 @@ logger = get_logger(__name__)
 
 def get_db_session() -> Session:
     """Get a database session for task execution."""
-    from app.core.database import SessionLocal
+    from app.db.session import SessionLocal
 
     return SessionLocal()
 
