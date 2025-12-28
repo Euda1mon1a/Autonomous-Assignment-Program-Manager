@@ -1,11 +1,7 @@
 {
   "mcpServers": {
     "residency-scheduler": {
-      "command": "docker",
-      "args": [
-        "compose", "exec", "-T", "mcp-server",
-        "python", "-m", "scheduler_mcp.server"
-      ],
+      "command": "./.claude/bin/mcp-stdio-wrapper.sh",
       "env": {
         "LOG_LEVEL": "INFO"
       },
