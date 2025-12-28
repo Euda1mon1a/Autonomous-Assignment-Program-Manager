@@ -86,6 +86,8 @@ Output this confirmation:
 | QA_TESTER | Testing, quality | Test writing, code review |
 | RESILIENCE_ENGINEER | Health, contingency | N-1/N-2 analysis, resilience checks |
 | META_UPDATER | Documentation | Docs, changelogs, pattern detection |
+| TOOLSMITH | Skills, MCP tools, agent specs | Creating new skills, tools, or agents |
+| RELEASE_MANAGER | Git, PRs, changelogs | Committing changes, creating PRs, releases |
 
 ### Current Priorities
 [From HUMAN_TODO.md]
@@ -167,6 +169,8 @@ For COMPLEX tasks (4+ agents):
 | QA_TESTER | `general-purpose` | Test writing, code review |
 | RESILIENCE_ENGINEER | `general-purpose` | Resilience analysis |
 | META_UPDATER | `general-purpose` | Documentation |
+| TOOLSMITH | `general-purpose` | Creating skills, tools, agents |
+| RELEASE_MANAGER | `general-purpose` | Git operations, PRs, releases |
 | Exploration | `Explore` | Codebase search, context gathering |
 
 ### Example: Parallel Agent Spawning
@@ -284,6 +288,8 @@ Stream C: META_UPDATER agent - Update documentation
 | QA_TESTER | Testing, code review | Test writing, code quality checks |
 | RESILIENCE_ENGINEER | Health, contingency | N-1/N-2 analysis, resilience checks |
 | META_UPDATER | Documentation, skills | Docs, changelogs, Scratchpad, History |
+| TOOLSMITH | Skills, MCP tools, agent specs | Creating new skills, tools, or agents |
+| RELEASE_MANAGER | Git, PRs, changelogs | Committing changes, creating PRs, releases |
 
 ### Task Tool Pattern
 
@@ -413,6 +419,8 @@ ESCALATE WHEN:
 | QA_TESTER | Testing | Test writing, review |
 | RESILIENCE_ENGINEER | Health | N-1/N-2, resilience |
 | META_UPDATER | Documentation | Docs, changelogs |
+| TOOLSMITH | Skills, MCP tools | Creating skills, tools, agents |
+| RELEASE_MANAGER | Git, PRs | Commits, PRs, releases |
 
 ### Current Priorities (from HUMAN_TODO.md)
 1. UI/UX: Frozen headers on schedule grid
