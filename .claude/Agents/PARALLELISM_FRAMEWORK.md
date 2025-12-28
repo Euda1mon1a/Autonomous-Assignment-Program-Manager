@@ -20,21 +20,35 @@ This framework provides deterministic rules for agents to decide when tasks can 
 
 ### Domain-to-Coordinator Mapping
 
+**Rule:** Specific file mappings take precedence over directory patterns.
+
 ```
-File Path                           → Coordinator         → Can Parallel With
-─────────────────────────────────────────────────────────────────────────────
-backend/app/scheduling/*            → COORD_ENGINE        → All except self
-backend/app/resilience/*            → COORD_RESILIENCE    → All except self
-backend/app/api/*                   → COORD_PLATFORM      → All except self
-backend/app/services/*              → COORD_PLATFORM      → All except self
-backend/app/models/*                → COORD_PLATFORM      → All except self
-backend/alembic/*                   → COORD_PLATFORM      → NONE (serialized)
-frontend/src/*                      → COORD_FRONTEND      → All except self
-backend/tests/*                     → COORD_QUALITY       → All except self
-frontend/__tests__/*                → COORD_QUALITY       → All except self
-.claude/*                           → COORD_OPS           → All except self
-docs/*                              → COORD_OPS           → All except self
+File Path                                        → Coordinator         → Can Parallel With
+────────────────────────────────────────────────────────────────────────────────────────────
+# COMPLIANCE EXCEPTIONS (specific files → COORD_RESILIENCE)
+backend/app/scheduling/acgme_validator.py        → COORD_RESILIENCE    → All except self
+backend/app/scheduling/constraints/acgme*.py     → COORD_RESILIENCE    → All except self
+backend/app/services/audit_service.py            → COORD_RESILIENCE    → All except self
+backend/app/services/credential_service.py       → COORD_RESILIENCE    → All except self
+backend/app/services/compliance*.py              → COORD_RESILIENCE    → All except self
+
+# DIRECTORY PATTERNS (apply when no specific match above)
+backend/app/scheduling/*                         → COORD_ENGINE        → All except self
+backend/app/resilience/*                         → COORD_RESILIENCE    → All except self
+backend/app/api/*                                → COORD_PLATFORM      → All except self
+backend/app/services/*                           → COORD_PLATFORM      → All except self
+backend/app/models/*                             → COORD_PLATFORM      → All except self
+backend/alembic/*                                → COORD_PLATFORM      → NONE (serialized)
+frontend/src/*                                   → COORD_FRONTEND      → All except self
+backend/tests/*                                  → COORD_QUALITY       → All except self
+frontend/__tests__/*                             → COORD_QUALITY       → All except self
+.claude/*                                        → COORD_OPS           → All except self
+docs/*                                           → COORD_OPS           → All except self
 ```
+
+> **Why compliance exceptions?** ACGME validation, audit trails, and credential checking are safety-critical.
+> These files MUST route to COORD_RESILIENCE regardless of their directory location to ensure the compliance
+> gate is never bypassed.
 
 ### Decision Rule
 
