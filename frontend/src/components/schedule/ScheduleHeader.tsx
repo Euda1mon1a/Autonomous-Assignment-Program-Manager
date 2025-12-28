@@ -32,24 +32,24 @@ export function ScheduleHeader({ days }: ScheduleHeaderProps) {
   }, [days])
 
   return (
-    <thead className="bg-gray-50 sticky top-0 z-10">
+    <thead className="bg-gray-50">
       {/* Date row */}
       <tr className="border-b border-gray-200">
-        {/* Person column header - spans 2 rows */}
+        {/* Person column header - spans 2 rows, sticky both top and left (corner cell) */}
         <th
           rowSpan={2}
-          className="sticky left-0 z-20 bg-gray-50 px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[180px]"
+          className="sticky left-0 top-0 z-30 bg-gray-50 px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[180px] shadow-[2px_2px_4px_-2px_rgba(0,0,0,0.1)]"
         >
           Person
         </th>
 
-        {/* Date headers - each day spans 2 columns (AM/PM) */}
+        {/* Date headers - each day spans 2 columns (AM/PM), sticky top */}
         {headerCells.map((cell) => (
           <th
             key={cell.dateStr}
             colSpan={2}
-            className={`px-2 py-2 text-center border-r border-gray-200 ${
-              cell.isWeekend ? 'bg-gray-100' : ''
+            className={`sticky top-0 z-20 px-2 py-2 text-center border-r border-gray-200 ${
+              cell.isWeekend ? 'bg-gray-100' : 'bg-gray-50'
             } ${cell.isToday ? 'bg-blue-50 ring-2 ring-blue-300 ring-inset' : ''}`}
           >
             <div className="flex flex-col items-center">
@@ -72,14 +72,14 @@ export function ScheduleHeader({ days }: ScheduleHeaderProps) {
         ))}
       </tr>
 
-      {/* AM/PM sub-header row */}
+      {/* AM/PM sub-header row - sticky below the date row */}
       <tr className="border-b-2 border-gray-300">
         {headerCells.map((cell) => (
           <th
             key={`${cell.dateStr}-ampm`}
             colSpan={2}
-            className={`border-r border-gray-200 ${
-              cell.isWeekend ? 'bg-gray-100' : ''
+            className={`sticky top-[52px] z-20 border-r border-gray-200 ${
+              cell.isWeekend ? 'bg-gray-100' : 'bg-gray-50'
             } ${cell.isToday ? 'bg-blue-50' : ''}`}
           >
             <div className="flex">
