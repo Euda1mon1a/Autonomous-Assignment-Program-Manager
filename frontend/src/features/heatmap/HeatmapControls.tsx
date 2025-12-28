@@ -5,7 +5,8 @@
  * including date range, person/rotation filters, grouping, and export.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { format, startOfWeek, addDays, subDays, parseISO } from 'date-fns';
 import { Calendar, Users, RotateCw, Download, Filter, X } from 'lucide-react';
 import type { HeatmapFilters, HeatmapGroupBy, DateRange } from './types';
 import { GROUP_BY_LABELS } from './types';
@@ -32,6 +33,50 @@ export function HeatmapControls({
   isLoading = false,
 }: HeatmapControlsProps) {
   const [showFilters, setShowFilters] = useState(false);
+
+  // Convert string dates to Date objects for display/navigation
+  const startDateObj = useMemo(() => parseISO(dateRange.start), [dateRange.start]);
+  const endDateObj = useMemo(() => parseISO(dateRange.end), [dateRange.end]);
+
+  // Navigate to previous 4-week block
+  const handlePreviousBlock = useCallback(() => {
+    const newStart = subDays(startDateObj, 28);
+    const newEnd = subDays(endDateObj, 28);
+    onDateRangeChange({
+      start: format(newStart, 'yyyy-MM-dd'),
+      end: format(newEnd, 'yyyy-MM-dd'),
+    });
+  }, [startDateObj, endDateObj, onDateRangeChange]);
+
+  // Navigate to next 4-week block
+  const handleNextBlock = useCallback(() => {
+    const newStart = addDays(startDateObj, 28);
+    const newEnd = addDays(endDateObj, 28);
+    onDateRangeChange({
+      start: format(newStart, 'yyyy-MM-dd'),
+      end: format(newEnd, 'yyyy-MM-dd'),
+    });
+  }, [startDateObj, endDateObj, onDateRangeChange]);
+
+  // Jump to today's date (centered in a 4-week block)
+  const handleToday = useCallback(() => {
+    const today = new Date();
+    const monday = startOfWeek(today, { weekStartsOn: 1 });
+    onDateRangeChange({
+      start: format(monday, 'yyyy-MM-dd'),
+      end: format(addDays(monday, 27), 'yyyy-MM-dd'),
+    });
+  }, [onDateRangeChange]);
+
+  // Jump to current 4-week block
+  const handleThisBlock = useCallback(() => {
+    const today = new Date();
+    const monday = startOfWeek(today, { weekStartsOn: 1 });
+    onDateRangeChange({
+      start: format(monday, 'yyyy-MM-dd'),
+      end: format(addDays(monday, 27), 'yyyy-MM-dd'),
+    });
+  }, [onDateRangeChange]);
 
   const handleDateRangeChange = (field: 'start' | 'end', value: string) => {
     onDateRangeChange({
@@ -92,6 +137,86 @@ export function HeatmapControls({
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+      {/* Block navigation bar */}
+      <div className="p-4 border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          {/* Block navigation buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePreviousBlock}
+              className="btn-secondary flex items-center gap-1"
+              aria-label="Previous block"
+              disabled={isLoading}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              Previous Block
+            </button>
+
+            <button
+              onClick={handleNextBlock}
+              className="btn-secondary flex items-center gap-1"
+              aria-label="Next block"
+              disabled={isLoading}
+            >
+              Next Block
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+          </div>
+
+          {/* Quick navigation buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleToday}
+              className="btn-secondary text-sm"
+              aria-label="Jump to today"
+              disabled={isLoading}
+            >
+              Today
+            </button>
+            <button
+              onClick={handleThisBlock}
+              className="btn-secondary text-sm"
+              aria-label="Jump to this block"
+              disabled={isLoading}
+            >
+              This Block
+            </button>
+          </div>
+
+          {/* Date range display (read-only) */}
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-gray-600">Block:</span>
+            <span className="font-medium text-gray-900 bg-gray-100 px-3 py-1 rounded">
+              {format(startDateObj, 'MMM d')} - {format(endDateObj, 'MMM d, yyyy')}
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* Main controls bar */}
       <div className="p-4 flex flex-wrap gap-4 items-center">
         {/* Date range picker */}
