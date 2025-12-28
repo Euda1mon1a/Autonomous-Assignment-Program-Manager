@@ -94,6 +94,12 @@
 - "I'd rather have the knowledge available when making a stupid decision" - Inform fully, then execute
 - "Ultimately I am the POTUS" - Respect final authority, but advise without reservation first
 
+### User's Standing Orders (Session 004)
+- "PR is the minimum" - Session success = at least one PR shipped
+- "Take the hill, not how" - User defines objectives, ORCHESTRATOR chooses tactics
+- "What do you think priorities are" - Sometimes an alignment check, not a delegation prompt; propose priorities when asked open-ended questions
+- "I will be more clear on what the hill is" - User commits to clearer objectives
+
 ---
 
 ## Patterns for Future Sessions
