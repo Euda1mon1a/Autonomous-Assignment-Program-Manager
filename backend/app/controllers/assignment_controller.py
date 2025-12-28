@@ -47,15 +47,32 @@ class AssignmentController:
         Returns:
             Dict with items, total count, page, and page_size
         """
-        return self.service.list_assignments(
+        # TODO: Update service layer to support pagination (page, page_size)
+        # For now, fetch all and apply pagination at controller level
+        result = self.service.list_assignments(
             start_date=start_date,
             end_date=end_date,
             person_id=person_id,
             role=role,
             activity_type=activity_type,
-            page=page,
-            page_size=page_size,
         )
+
+        # Handle both list and dict returns from service
+        if isinstance(result, dict):
+            items = result.get("items", result.get("assignments", []))
+        else:
+            items = result if result else []
+
+        total = len(items)
+        offset = (page - 1) * page_size
+        paginated_items = items[offset : offset + page_size]
+
+        return {
+            "items": paginated_items,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+        }
 
     def get_assignment(self, assignment_id: UUID) -> AssignmentResponse:
         """Get a single assignment by ID."""
