@@ -1,3 +1,8 @@
+---
+name: startupO
+description: Initialize session as ORCHESTRATOR agent with multi-agent coordination capability. Use for complex tasks requiring parallel agent spawning and result synthesis.
+---
+
 ***REMOVED*** Session Startup - ORCHESTRATOR Mode
 
 > **Purpose:** Initialize session as ORCHESTRATOR agent with multi-agent coordination capability
@@ -246,6 +251,53 @@ Task(
   ***REMOVED******REMOVED*** Task
   Generate Block 10 schedule for dates 2026-03-12 to 2026-04-08.
   Use CP-SAT solver with 120 second timeout.
+  """,
+  subagent_type="general-purpose"
+)
+```
+
+---
+
+***REMOVED******REMOVED*** ORCHESTRATOR: Proper Agent Assignment
+
+**CRITICAL:** When delegating via Task tool, always name the PAI agent explicitly.
+
+***REMOVED******REMOVED******REMOVED*** Incorrect (Generic)
+```
+Stream A: Agent 1 - Fix infrastructure
+Stream B: Agent 2 - Write tests
+```
+
+***REMOVED******REMOVED******REMOVED*** Correct (Named Agents)
+```
+Stream A: ARCHITECT agent - Fix MCP infrastructure
+Stream B: QA_TESTER agent - Create server tests
+Stream C: META_UPDATER agent - Update documentation
+```
+
+***REMOVED******REMOVED******REMOVED*** Agent Assignment Table
+
+| PAI Agent | Domain | When to Use |
+|-----------|--------|-------------|
+| SCHEDULER | Scheduling, ACGME, swaps | Schedule generation, constraint validation |
+| ARCHITECT | Database, API, infrastructure | Schema changes, API endpoints, MCP fixes |
+| QA_TESTER | Testing, code review | Test writing, code quality checks |
+| RESILIENCE_ENGINEER | Health, contingency | N-1/N-2 analysis, resilience checks |
+| META_UPDATER | Documentation, skills | Docs, changelogs, Scratchpad, History |
+
+***REMOVED******REMOVED******REMOVED*** Task Tool Pattern
+
+All PAI agents use `subagent_type="general-purpose"` with persona prefix:
+
+```python
+Task(
+  description="ARCHITECT: Fix MCP URIs",  ***REMOVED*** Agent name in description
+  prompt="""
+  ***REMOVED******REMOVED*** Agent: ARCHITECT
+  [Persona context from .claude/Agents/ARCHITECT.md]
+
+  ***REMOVED******REMOVED*** Task
+  [Specific task]
   """,
   subagent_type="general-purpose"
 )
