@@ -61,7 +61,24 @@ git status --porcelain
 git fetch origin main && git rev-list --count HEAD..origin/main
 ```
 
-### 3. Acknowledge ORCHESTRATOR Mode
+### 3. Check Codex Feedback (if PR exists)
+
+If current branch has an open PR, check for Codex feedback. Codex (GitHub AI) reviews PRs and is **the rate-limiting step before merge**.
+
+```bash
+PR_NUMBER=$(gh pr view --json number -q '.number' 2>/dev/null)
+if [ -n "$PR_NUMBER" ]; then
+  REPO=$(gh repo view --json nameWithOwner -q '.nameWithOwner')
+  CODEX_COUNT=$(gh api repos/${REPO}/pulls/${PR_NUMBER}/comments \
+    --jq '[.[] | select(.user.login == "chatgpt-codex-connector[bot]")] | length' 2>/dev/null || echo "0")
+
+  if [ "$CODEX_COUNT" -gt 0 ]; then
+    echo "Codex Feedback: ${CODEX_COUNT} comment(s) pending - run /check-codex"
+  fi
+fi
+```
+
+### 4. Acknowledge ORCHESTRATOR Mode
 
 Output this confirmation:
 
@@ -71,6 +88,12 @@ Output this confirmation:
 **Branch:** `[current-branch]`
 **Status:** [Clean/Uncommitted changes]
 **Behind main:** [N commits]
+
+### Codex Feedback
+- **Status:** [N] comment(s) pending (run `/check-codex` for details)
+- **Or:** No Codex feedback yet (typically 1-10 min after PR)
+- **Or:** No PR for current branch
+- **Note:** Codex is the rate-limiting step before merge
 
 ### ORCHESTRATOR Capabilities Enabled
 - Task decomposition with complexity scoring
@@ -91,6 +114,9 @@ Output this confirmation:
 
 ### Current Priorities
 [From HUMAN_TODO.md]
+
+### Key Rules
+- Address Codex feedback before merge (rate-limiting step)
 
 Ready to orchestrate. What's the task?
 ```
@@ -405,6 +431,10 @@ ESCALATE WHEN:
 **Status:** Clean working tree
 **Behind main:** 0 commits
 
+### Codex Feedback
+- **Status:** 2 comment(s) pending (run `/check-codex` for details)
+- **Note:** Codex is the rate-limiting step before merge
+
 ### ORCHESTRATOR Capabilities Enabled
 - Task decomposition with complexity scoring
 - Parallel agent spawning via Task tool
@@ -431,6 +461,7 @@ ESCALATE WHEN:
 - origin/main is sacred - PRs only
 - Backup before database modifications
 - Run linters before PR
+- Address Codex feedback before merge (rate-limiting step)
 
 Ready to orchestrate. What's the task?
 ```
@@ -442,6 +473,7 @@ Ready to orchestrate. What's the task?
 - `.claude/Agents/ORCHESTRATOR.md` - Full ORCHESTRATOR specification
 - `.claude/CONSTITUTION.md` - Foundational rules
 - `.claude/skills/startup/SKILL.md` - Basic startup (non-orchestrator)
+- `.claude/skills/check-codex/SKILL.md` - Codex feedback checking (rate-limiting step before merge)
 
 ---
 

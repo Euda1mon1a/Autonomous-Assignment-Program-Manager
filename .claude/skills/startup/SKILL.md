@@ -60,7 +60,24 @@ git branch -r | grep -E 'claude/|codex/|ai/' | head -5
 git fetch origin main && git rev-list --count HEAD..origin/main
 ```
 
-### 3. Check System Health (Optional)
+### 3. Check Codex Feedback (if PR exists)
+
+If current branch has an open PR, check for Codex feedback. Codex (GitHub AI) reviews PRs and is **the rate-limiting step before merge**.
+
+```bash
+PR_NUMBER=$(gh pr view --json number -q '.number' 2>/dev/null)
+if [ -n "$PR_NUMBER" ]; then
+  REPO=$(gh repo view --json nameWithOwner -q '.nameWithOwner')
+  CODEX_COUNT=$(gh api repos/${REPO}/pulls/${PR_NUMBER}/comments \
+    --jq '[.[] | select(.user.login == "chatgpt-codex-connector[bot]")] | length' 2>/dev/null || echo "0")
+
+  if [ "$CODEX_COUNT" -gt 0 ]; then
+    echo "Codex Feedback: ${CODEX_COUNT} comment(s) pending - run /check-codex"
+  fi
+fi
+```
+
+### 4. Check System Health (Optional)
 
 If Docker is running:
 
@@ -85,6 +102,11 @@ Provide a concise summary in this format:
 **Status:** Clean working tree / X uncommitted changes
 **Behind main:** 0 commits / X commits (rebase needed)
 
+### Codex Feedback
+- **Status:** [N] comment(s) pending (run `/check-codex` for details)
+- **Or:** No Codex feedback yet (typically 1-10 min after PR)
+- **Or:** No PR for current branch
+
 ### Key Rules Acknowledged
 - origin/main is sacred - PRs only
 - Backup before database modifications
@@ -97,6 +119,7 @@ Provide a concise summary in this format:
 
 ### Blockers/In-Progress
 - [Any blocked items or WIP from previous sessions]
+- [Codex P1 issues flagged as blockers if present]
 
 ### System Status
 - Backend: Running/Not running
@@ -156,6 +179,7 @@ cd frontend && npm run lint:fix && npm test
 
 | Skill | When to Use |
 |-------|-------------|
+| `check-codex` | View detailed Codex feedback (rate-limiting step before merge) |
 | `session-documentation` | End of session handoff |
 | `systematic-debugger` | Complex bug investigation |
 | `safe-schedule-generation` | Before schedule modifications |
@@ -175,6 +199,9 @@ cd frontend && npm run lint:fix && npm test
 **Status:** Clean working tree
 **Behind main:** 0 commits
 
+### Codex Feedback
+- **Status:** 2 comment(s) pending (run `/check-codex` for details)
+
 ### Key Rules Acknowledged
 - origin/main is sacred - PRs only
 - Backup before database modifications
@@ -187,6 +214,7 @@ cd frontend && npm run lint:fix && npm test
 
 ### Blockers/In-Progress
 - FastMCP upgrade blocked on URI template changes (see MCP_FASTMCP_UPGRADE_NEEDED.md)
+- Codex feedback pending (2 comments) - address before merge
 
 ### System Status
 - Backend: Running (Docker)
