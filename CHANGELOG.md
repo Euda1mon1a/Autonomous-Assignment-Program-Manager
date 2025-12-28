@@ -43,6 +43,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integrated into resilience framework exports
 - Tests in `backend/tests/resilience/test_recovery_distance.py`
 
+**Security Review & Documentation:**
+- Updated `docs/security/SECURITY_PATTERN_AUDIT.md` with dependency vulnerability analysis
+- CVE-2023-30533 & CVE-2024-22363 (SheetJS xlsx) analyzed - confirmed false positive
+- Documented frontend Excel export uses TSV workaround, not SheetJS library
+- Backend uses `openpyxl` (Python) for all Excel operations
+- New `docs/architecture/import-export-system.md` documenting export architecture
+- Identified `.xls` extension mismatch (frontend accepts, backend rejects)
+
 #### Faculty Outpatient Scheduling Improvements (December 2025)
 
 **Adjunct Faculty Role:**
