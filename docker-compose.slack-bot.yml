@@ -1,0 +1,33 @@
+# Docker Compose override for Slack Bot
+# Usage: docker compose -f docker-compose.yml -f docker-compose.slack-bot.yml up -d
+
+services:
+  slack-bot:
+    build:
+      context: ./slack-bot
+      dockerfile: Dockerfile
+    container_name: claude-slack-bot
+    restart: unless-stopped
+    volumes:
+      # Mount your repo as the workspace
+      - .:/app/workspace:rw
+      # Mount git config for commits
+      - ~/.gitconfig:/root/.gitconfig:ro
+      # Mount SSH keys for git push (optional)
+      - ~/.ssh:/root/.ssh:ro
+      # Mount Claude settings
+      - ~/.claude:/root/.claude:rw
+      - ~/.claude.json:/root/.claude.json:rw
+    environment:
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      - SLACK_APP_TOKEN=${SLACK_APP_TOKEN}
+      - SLACK_SIGNING_SECRET=${SLACK_SIGNING_SECRET}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - CLAUDE_WORKING_DIR=/app/workspace
+    networks:
+      - scheduler-network
+
+networks:
+  scheduler-network:
+    external: true
