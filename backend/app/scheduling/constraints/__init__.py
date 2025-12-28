@@ -53,6 +53,12 @@ from .call_coverage import (
     OVERNIGHT_CALL_DAYS,
 )
 
+# Overnight call generation constraint (unified approach)
+from .overnight_call import (
+    OvernightCallGenerationConstraint,
+    is_overnight_call_night,
+)
+
 # Call equity and preference constraints (soft)
 from .call_equity import (
     CallSpacingConstraint,
@@ -197,6 +203,9 @@ __all__ = [
     "CallAvailabilityConstraint",
     "OvernightCallCoverageConstraint",
     "OVERNIGHT_CALL_DAYS",
+    # Overnight call generation constraint (unified)
+    "OvernightCallGenerationConstraint",
+    "is_overnight_call_night",
     # Call equity and preference constraints (soft)
     "CallSpacingConstraint",
     "DeptChiefWednesdayPreferenceConstraint",
