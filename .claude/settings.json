@@ -110,7 +110,9 @@
       "Edit(.claude/Agents/**)",
       "Edit(.claude/Scratchpad/**)",
       "Write(.claude/Agents/**)",
-      "Write(.claude/Scratchpad/**)"
+      "Write(.claude/Scratchpad/**)",
+      "Write(**/.claude/Scratchpad/*.md)",
+      "Write(**/.claude/Agents/*.md)"
     ],
     "ask": [
       "Bash(git merge:*)",
