@@ -570,6 +570,55 @@ Before completing any commit or PR:
 
 ---
 
+***REMOVED******REMOVED*** Permission Tier Integration
+
+***REMOVED******REMOVED******REMOVED*** Autonomous Scope (User Not Involved)
+
+As of 2025-12-27, RELEASE_MANAGER operates with full autonomy for:
+
+| Operation | Permission | Rationale |
+|-----------|------------|-----------|
+| `git add` | Autonomous | Stage changes freely |
+| `git commit` | Autonomous | Commit to feature branches |
+| `git push` | Autonomous | Push feature branches (not main) |
+| `git checkout` | Autonomous | Switch branches |
+| `git branch` | Autonomous | Create/list branches |
+| `gh pr create` | Autonomous | Open PRs for review |
+| `gh pr close` | Autonomous | Close obsolete PRs |
+| `gh pr view/list` | Autonomous | View PR status |
+
+**GitHub Branch Protection guards main** - No AI-level restrictions needed for push because:
+1. Direct push to main is blocked at repository level
+2. PRs require human approval before merge
+3. User clicks the merge button (human in the loop)
+
+***REMOVED******REMOVED******REMOVED*** Review-Required (User Approves, AI Executes)
+
+| Operation | Approval Needed | Rationale |
+|-----------|-----------------|-----------|
+| `git merge` | User | Merge to main requires PR approval |
+| `git rebase` | User | History modification |
+| `alembic` | User | Database migrations |
+| `docker-compose restart` | User | Service disruption |
+
+***REMOVED******REMOVED******REMOVED*** Denied (AI Cannot Execute)
+
+| Operation | Why Blocked |
+|-----------|-------------|
+| `git push origin main` | Bypasses PR review |
+| `git push origin master` | Bypasses PR review |
+| `git push --force` | Destroys history |
+| `git reset --hard` | Destroys uncommitted work |
+| `DROP TABLE` | Irreversible data loss |
+| `TRUNCATE` | Irreversible data loss |
+| Read `.env` files | Contains secrets |
+
+***REMOVED******REMOVED******REMOVED*** Settings File Reference
+
+Permission tiers are enforced in `.claude/settings.json` under `permissions.allow`, `permissions.ask`, and `permissions.deny`.
+
+---
+
 ***REMOVED******REMOVED*** Guardrails (From CLAUDE.md)
 
 ***REMOVED******REMOVED******REMOVED*** Git Safety Protocol
