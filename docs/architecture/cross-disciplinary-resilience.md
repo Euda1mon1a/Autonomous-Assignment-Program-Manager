@@ -1,8 +1,8 @@
 # Cross-Disciplinary Engineering Resilience Framework
 
 > **Status**: Production-ready
-> **Version**: 1.0
-> **Last Updated**: 2025-12-21
+> **Version**: 1.1
+> **Last Updated**: 2025-12-28
 
 ---
 
@@ -1138,6 +1138,129 @@ for rec in combined['recommendations']:
 - **Rotation Scheduler**: Balances difficult rotations using fatigue curves
 - **Intervention Timing**: Tertiary creep triggers immediate action
 - **Recovery Planning**: Miner's rule guides recovery rotation sequencing
+
+---
+
+### 8. Recovery Distance Analysis (Schedule Resilience)
+
+**Source Domain**: Operations Research / Graph Theory
+
+**File**: `/backend/app/resilience/recovery_distance.py`
+
+#### Core Concept
+
+**Recovery Distance (RD)** measures the minimum number of atomic edits required to restore schedule feasibility after an n-1 shock (loss of a single resource). Lower RD indicates a more resilient schedule that can absorb disruptions with minimal manual intervention.
+
+**Key Principles**:
+
+1. **Bounded Search**: Depth-first search up to configurable depth (default: 5 edits)
+2. **Edit Atomicity**: Each edit is a single, well-defined operation
+3. **Witness Recovery**: Store the actual edits that achieve minimum distance
+4. **Aggregate Metrics**: Statistics across standard event suites
+
+#### Edit Operations
+
+| Edit Type | Description | Example |
+|-----------|-------------|---------|
+| `reassign` | Move uncovered block to available person | Assign Dr. Jones to cover Dr. Smith's absence |
+| `swap` | Exchange assignments between two people | Trade Monday AM between two residents |
+| `move_to_backup` | Use pre-designated backup personnel | Activate on-call backup for coverage |
+
+#### Key Classes
+
+```python
+@dataclass
+class N1Event:
+    """Single resource loss event."""
+    event_type: str  # "faculty_absence", "resident_sick", "room_closure"
+    resource_id: UUID
+    affected_blocks: list[UUID]
+    description: str = ""
+
+@dataclass
+class RecoveryResult:
+    """Result of recovery distance calculation for single event."""
+    event: N1Event
+    recovery_distance: int  # Minimum edits needed (0 = no recovery needed)
+    witness_edits: list[AssignmentEdit]  # Concrete solution
+    feasible: bool  # Whether recovery is possible within depth limit
+    computation_time_seconds: float
+
+@dataclass
+class RecoveryDistanceMetrics:
+    """Aggregate metrics across event suite."""
+    rd_mean: float
+    rd_median: float
+    rd_p95: float
+    rd_max: int
+    breakglass_count: int  # Events requiring >3 edits
+    infeasible_count: int  # Events with no recovery path
+    events_tested: int
+    by_event_type: dict[str, dict]
+
+class RecoveryDistanceCalculator:
+    def calculate_for_event(
+        self,
+        schedule: Schedule,
+        event: N1Event
+    ) -> RecoveryResult: ...
+
+    def calculate_aggregate(
+        self,
+        schedule: Schedule,
+        events: list[N1Event]
+    ) -> RecoveryDistanceMetrics: ...
+
+    def generate_test_events(
+        self,
+        schedule: Schedule
+    ) -> list[N1Event]: ...
+```
+
+#### Usage Example
+
+```python
+from app.resilience.recovery_distance import RecoveryDistanceCalculator, N1Event
+
+# Initialize calculator with bounds
+calculator = RecoveryDistanceCalculator(max_depth=5, timeout_seconds=30.0)
+
+# Generate standard test suite (faculty absences + resident sick days)
+events = calculator.generate_test_events(schedule)
+
+# Calculate aggregate resilience metrics
+metrics = calculator.calculate_aggregate(schedule, events)
+
+print(f"Schedule Resilience Report:")
+print(f"  Mean Recovery Distance: {metrics.rd_mean:.1f} edits")
+print(f"  P95 Recovery Distance: {metrics.rd_p95:.1f} edits")
+print(f"  Break-glass scenarios: {metrics.breakglass_count}")
+print(f"  Infeasible events: {metrics.infeasible_count}")
+
+# Resilience interpretation
+if metrics.rd_mean <= 1.0:
+    print("  → HIGHLY RESILIENT: Schedule absorbs most shocks")
+elif metrics.rd_mean <= 3.0:
+    print("  → MODERATELY RESILIENT: Minor adjustments needed")
+else:
+    print("  → BRITTLE: Significant rework required for disruptions")
+```
+
+#### Resilience Thresholds
+
+| RD Value | Interpretation | Action |
+|----------|----------------|--------|
+| 0 | Highly resilient | Schedule absorbs shock automatically |
+| 1-2 | Moderately resilient | Quick manual fix |
+| 3-5 | Fragile | Consider schedule redesign |
+| >5 or ∞ | Brittle/Infeasible | Major structural issues |
+
+#### Integration Points
+
+- **Schedule Generation**: Use RD as tie-breaker between equivalent solutions
+- **N-1/N-2 Analysis**: Complements contingency analysis with actionable recovery paths
+- **Dashboard**: Display RD metrics alongside defense level status
+- **Proactive Alerts**: Warn when RD_p95 exceeds threshold
 
 ---
 

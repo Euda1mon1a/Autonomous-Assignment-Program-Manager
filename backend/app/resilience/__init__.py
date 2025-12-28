@@ -106,6 +106,13 @@ from app.resilience.contingency import (
     ContingencyAnalyzer,
     VulnerabilityReport,
 )
+from app.resilience.recovery_distance import (
+    AssignmentEdit,
+    N1Event,
+    RecoveryDistanceCalculator,
+    RecoveryDistanceMetrics,
+    RecoveryResult,
+)
 from app.resilience.creep_fatigue import (
     CreepAnalysis,
     CreepFatigueModel,
@@ -225,6 +232,12 @@ __all__ = [
     "VulnerabilityReport",
     "CascadeSimulation",
     "CentralityScore",
+    # Tier 1: Recovery Distance
+    "RecoveryDistanceCalculator",
+    "RecoveryDistanceMetrics",
+    "RecoveryResult",
+    "N1Event",
+    "AssignmentEdit",
     # Tier 1: Static Stability
     "FallbackScheduler",
     "FallbackScenario",

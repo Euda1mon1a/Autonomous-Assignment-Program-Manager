@@ -136,7 +136,7 @@ async def check_service(service_name: str) -> dict[str, Any]:
     status information for that service only.
 
     Args:
-        service_name: Name of service to check (database, redis, celery)
+        service_name: Name of service to check (database, redis, celery, circuit_breakers)
 
     Returns:
         HealthCheckResult for the requested service
@@ -171,7 +171,7 @@ async def check_service(service_name: str) -> dict[str, Any]:
     except ValueError:
         raise HTTPException(
             status_code=404,
-            detail=f"Unknown service: {service_name}. Valid services: database, redis, celery",
+            detail=f"Unknown service: {service_name}. Valid services: database, redis, celery, circuit_breakers",
         )
 
 
