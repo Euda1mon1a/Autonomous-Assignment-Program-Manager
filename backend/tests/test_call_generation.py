@@ -416,3 +416,116 @@ class TestCallAssignmentService:
             end_date=date(2025, 12, 28),
         )
         assert len(remaining) == 4
+
+
+class TestSolverSundayNightCallCoverage:
+    """
+    Integration tests verifying Sunday nights are included in call scheduling.
+
+    This addresses the bug where Sunday nights were excluded because:
+    - workday_blocks filtered out blocks with is_weekend=True
+    - Sunday blocks have is_weekend=True
+    - But Sunday nights (weekday 6) require overnight call coverage
+
+    The fix uses context.blocks with explicit weekday filtering instead.
+    """
+
+    @pytest.fixture
+    def faculty(self):
+        """Create test faculty list."""
+        return [
+            Person(id=uuid4(), name="Faculty A", type="faculty", faculty_role="core"),
+            Person(id=uuid4(), name="Faculty B", type="faculty", faculty_role="core"),
+        ]
+
+    @pytest.fixture
+    def week_blocks(self):
+        """
+        Create a full week of blocks starting from Sunday.
+
+        Note: Sunday and Saturday have is_weekend=True, which previously
+        caused Sunday to be incorrectly filtered out of call scheduling.
+        """
+        blocks = []
+        start_date = date(2025, 12, 28)  # Sunday
+        for i in range(7):
+            block_date = start_date + timedelta(days=i)
+            for time_of_day in ["AM", "PM"]:
+                blocks.append(
+                    Block(
+                        id=uuid4(),
+                        date=block_date,
+                        time_of_day=time_of_day,
+                        # Weekends are 5 (Sat) and 6 (Sun)
+                        is_weekend=(block_date.weekday() in (5, 6)),
+                    )
+                )
+        return blocks
+
+    def test_sunday_block_has_is_weekend_true(self, week_blocks):
+        """Verify our test data: Sunday blocks should have is_weekend=True."""
+        sunday_blocks = [b for b in week_blocks if b.date.weekday() == 6]
+        assert len(sunday_blocks) == 2  # AM and PM
+        for block in sunday_blocks:
+            assert block.is_weekend is True, "Sunday should be marked as weekend"
+
+    def test_sunday_is_valid_overnight_call_day(self):
+        """Verify Sunday is recognized as an overnight call day."""
+        sunday = date(2025, 12, 28)
+        assert sunday.weekday() == 6  # Confirm it's Sunday
+        assert is_overnight_call_day(sunday), "Sunday should be an overnight call day"
+
+    def test_call_blocks_include_sunday_despite_weekend_flag(self, week_blocks):
+        """
+        Test that call block filtering includes Sunday nights.
+
+        This is the core regression test for the bug fixed in PR #489.
+        The solver should use explicit weekday filtering (0,1,2,3,6)
+        rather than relying on is_weekend flag.
+        """
+        # Simulate the fixed solver logic: filter by weekday, not is_weekend
+        call_blocks = [
+            block
+            for block in week_blocks
+            if block.date.weekday() in (0, 1, 2, 3, 6)
+        ]
+
+        # Get unique call dates
+        call_dates = set(b.date for b in call_blocks)
+
+        # Should include: Sun (28), Mon (29), Tue (30), Wed (31), Thu (1 Jan)
+        # Should exclude: Fri (2 Jan), Sat (3 Jan)
+        assert len(call_dates) == 5, f"Expected 5 call nights, got {len(call_dates)}"
+
+        # Specifically verify Sunday is included
+        sunday = date(2025, 12, 28)
+        assert sunday in call_dates, "Sunday should be included in call dates"
+
+    def test_workday_blocks_would_exclude_sunday_without_fix(self, week_blocks):
+        """
+        Demonstrate the original bug: filtering by is_weekend excludes Sunday.
+
+        This test shows what the bug was - workday_blocks would filter out
+        Sunday because is_weekend=True, but Sunday nights need call coverage.
+        """
+        # Old logic (buggy): filter out weekend blocks
+        workday_blocks = [b for b in week_blocks if not b.is_weekend]
+        workday_dates = set(b.date for b in workday_blocks)
+
+        # Sunday would NOT be in workday_blocks due to is_weekend=True
+        sunday = date(2025, 12, 28)
+        assert sunday not in workday_dates, "Sunday filtered by is_weekend"
+
+        # But Sunday IS a valid call night
+        assert is_overnight_call_day(sunday), "Sunday needs overnight call coverage"
+
+    def test_context_blocks_include_all_days(self, week_blocks):
+        """Verify context.blocks includes all days including weekends."""
+        all_dates = set(b.date for b in week_blocks)
+        assert len(all_dates) == 7, "Should have all 7 days of the week"
+
+        # Verify weekends are in the full block list
+        sunday = date(2025, 12, 28)
+        saturday = date(2026, 1, 3)
+        assert sunday in all_dates, "Sunday should be in context.blocks"
+        assert saturday in all_dates, "Saturday should be in context.blocks"

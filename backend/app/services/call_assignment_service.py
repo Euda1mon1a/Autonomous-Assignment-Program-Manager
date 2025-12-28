@@ -244,6 +244,8 @@ class CallAssignmentService:
         self,
         call_id: UUID,
         update_data: CallAssignmentUpdate,
+        *,
+        commit: bool = True,
     ) -> dict:
         """
         Update an existing call assignment.
@@ -251,6 +253,7 @@ class CallAssignmentService:
         Args:
             call_id: Call assignment ID
             update_data: Updated call assignment data
+            commit: Whether to commit the transaction (default True)
 
         Returns:
             Dict with:
@@ -284,19 +287,26 @@ class CallAssignmentService:
                 setattr(call_assignment, field, value)
 
         await self.db.flush()
-        await self.db.commit()
+        if commit:
+            await self.db.commit()
         await self.db.refresh(call_assignment)
 
         logger.info(f"Updated call assignment {call_id}")
 
         return {"call_assignment": call_assignment, "error": None}
 
-    async def delete_call_assignment(self, call_id: UUID) -> dict:
+    async def delete_call_assignment(
+        self,
+        call_id: UUID,
+        *,
+        commit: bool = True,
+    ) -> dict:
         """
         Delete a call assignment.
 
         Args:
             call_id: Call assignment ID
+            commit: Whether to commit the transaction (default True)
 
         Returns:
             Dict with:
@@ -314,7 +324,8 @@ class CallAssignmentService:
         # Delete
         await self.db.delete(call_assignment)
         await self.db.flush()
-        await self.db.commit()
+        if commit:
+            await self.db.commit()
 
         logger.info(f"Deleted call assignment {call_id}")
 

@@ -1,6 +1,6 @@
 # Call Generation Architecture
 
-> **Last Updated:** 2025-12-26
+> **Last Updated:** 2025-12-28
 > **Module:** `backend/app/scheduling/`
 
 ---
@@ -148,9 +148,15 @@ call_idx = getattr(context, "call_eligible_faculty_idx", {})
 
 if call_eligible:
     call_dates_processed = set()
-    for block in workday_blocks:
-        if block.date.weekday() not in (0, 1, 2, 3, 6):  # Skip Fri-Sat
-            continue
+    # IMPORTANT: Use context.blocks, NOT workday_blocks
+    # workday_blocks excludes is_weekend=True, but Sunday (weekday 6)
+    # requires overnight call despite being marked as weekend
+    call_blocks = [
+        block
+        for block in context.blocks
+        if block.date.weekday() in (0, 1, 2, 3, 6)  # Sun-Thu nights
+    ]
+    for block in call_blocks:
         if block.date in call_dates_processed:
             continue
         call_dates_processed.add(block.date)
@@ -163,6 +169,12 @@ if call_eligible:
 
 variables["call_assignments"] = call
 ```
+
+> **Note:** Prior to PR #489, this code incorrectly used `workday_blocks` which
+> filtered out blocks with `is_weekend=True`. Since Sunday blocks have
+> `is_weekend=True` but Sunday nights require overnight call coverage, this
+> caused Sunday nights to be excluded. The fix uses `context.blocks` with
+> explicit weekday filtering instead.
 
 ### 4. Solution Extraction
 
