@@ -9,6 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Excel Import with Backend-First Parsing (December 2025)
+
+**Full Excel (.xlsx) Import Support:**
+- Added `POST /imports/parse-xlsx` endpoint for Excel file parsing
+- Added `POST /imports/parse-xlsx/sheets` endpoint for listing workbook sheets
+- Backend uses `openpyxl` for full Excel support including:
+  - Date cell conversion to ISO format
+  - Merged cell handling
+  - Cell color detection (for color-coded schedules)
+  - Duplicate header detection with automatic renaming
+  - Empty row filtering
+- Frontend uses SheetJS as client-side fallback when backend is unavailable
+- Warning banner shown when using client-side fallback mode
+
+**Frontend Changes:**
+- Added `xlsx` (SheetJS) package for client-side fallback parsing
+- Updated `useImport` hook with hybrid backend/client parsing logic
+- Added `xlsxFallbackUsed` and `xlsxWarnings` state tracking
+- Updated `BulkImportModal` with fallback warning display
+
+**Files Added:**
+- `backend/app/api/routes/imports.py` - New import parsing endpoints
+- `backend/tests/routes/test_imports.py` - Endpoint tests
+
+**Files Modified:**
+- `frontend/src/features/import-export/useImport.ts` - Hybrid parsing logic
+- `frontend/src/features/import-export/BulkImportModal.tsx` - Warning banners
+- `docs/user-guide/imports.md` - Updated documentation
+
 #### Faculty Outpatient Scheduling Improvements (December 2025)
 
 **Adjunct Faculty Role:**
