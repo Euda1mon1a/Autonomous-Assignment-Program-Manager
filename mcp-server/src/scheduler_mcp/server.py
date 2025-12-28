@@ -8,7 +8,7 @@ tools and resources for AI assistant interaction.
 import logging
 import os
 import sys
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
 from fastmcp import FastMCP
@@ -158,6 +158,48 @@ mcp = FastMCP(
 )
 
 
+def parse_date_range(date_range: str) -> tuple[date, date]:
+    """
+    Parse a date_range preset into start and end dates.
+
+    Args:
+        date_range: Date range preset string:
+            - "current" or "today": Today only
+            - "week" or "this-week": Next 7 days
+            - "month" or "this-month": Next 30 days
+            - "YYYY-MM-DD:YYYY-MM-DD": Explicit date range
+            - Any other value: Default to 30 days
+
+    Returns:
+        Tuple of (start_date, end_date) as date objects.
+    """
+    today = date.today()
+
+    # Normalize the input
+    range_lower = date_range.lower().strip()
+
+    if range_lower in ("current", "today"):
+        return today, today
+    elif range_lower in ("week", "this-week"):
+        return today, today + timedelta(days=7)
+    elif range_lower in ("month", "this-month"):
+        return today, today + timedelta(days=30)
+    elif ":" in date_range:
+        # Try to parse as explicit range "YYYY-MM-DD:YYYY-MM-DD"
+        try:
+            parts = date_range.split(":")
+            if len(parts) == 2:
+                start = date.fromisoformat(parts[0].strip())
+                end = date.fromisoformat(parts[1].strip())
+                return start, end
+        except ValueError:
+            # Invalid format, fall through to default
+            pass
+
+    # Default: next 30 days
+    return today, today + timedelta(days=30)
+
+
 # Register Resources
 
 
@@ -173,15 +215,25 @@ async def schedule_status_resource(
     Provides comprehensive view of assignments, coverage metrics, and active issues.
 
     Args:
-        date_range: Date range preset (e.g., "current", "week", "month", or custom)
-        start_date: Start date in YYYY-MM-DD format (default: today)
-        end_date: End date in YYYY-MM-DD format (default: 30 days from start)
+        date_range: Date range preset:
+            - "current" or "today": Today only
+            - "week" or "this-week": Next 7 days
+            - "month" or "this-month": Next 30 days
+            - "YYYY-MM-DD:YYYY-MM-DD": Explicit date range
+            - Any other value: Default to 30 days
+        start_date: Start date in YYYY-MM-DD format (overrides date_range if provided)
+        end_date: End date in YYYY-MM-DD format (overrides date_range if provided)
 
     Returns:
         Current schedule status with assignments and metrics
     """
-    start = date.fromisoformat(start_date) if start_date else None
-    end = date.fromisoformat(end_date) if end_date else None
+    # If explicit start/end dates are provided, use them
+    if start_date or end_date:
+        start = date.fromisoformat(start_date) if start_date else None
+        end = date.fromisoformat(end_date) if end_date else None
+    else:
+        # Parse date_range preset
+        start, end = parse_date_range(date_range)
 
     return await get_schedule_status(start_date=start, end_date=end)
 
@@ -199,15 +251,25 @@ async def compliance_summary_resource(
     and duty hour restrictions.
 
     Args:
-        date_range: Date range preset (e.g., "current", "week", "month", or custom)
-        start_date: Start date in YYYY-MM-DD format (default: today)
-        end_date: End date in YYYY-MM-DD format (default: 30 days from start)
+        date_range: Date range preset:
+            - "current" or "today": Today only
+            - "week" or "this-week": Next 7 days
+            - "month" or "this-month": Next 30 days
+            - "YYYY-MM-DD:YYYY-MM-DD": Explicit date range
+            - Any other value: Default to 30 days
+        start_date: Start date in YYYY-MM-DD format (overrides date_range if provided)
+        end_date: End date in YYYY-MM-DD format (overrides date_range if provided)
 
     Returns:
         Compliance summary with violations and recommendations
     """
-    start = date.fromisoformat(start_date) if start_date else None
-    end = date.fromisoformat(end_date) if end_date else None
+    # If explicit start/end dates are provided, use them
+    if start_date or end_date:
+        start = date.fromisoformat(start_date) if start_date else None
+        end = date.fromisoformat(end_date) if end_date else None
+    else:
+        # Parse date_range preset
+        start, end = parse_date_range(date_range)
 
     return await get_compliance_summary(start_date=start, end_date=end)
 

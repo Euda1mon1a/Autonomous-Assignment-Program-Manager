@@ -3,8 +3,8 @@
 > **Role:** Parallel Agent Coordination & Delegation
 > **Authority Level:** Coordination (Can Spawn Subagents)
 > **Status:** Active
-> **Version:** 2.0.0 - Enhanced with Kai/Anthropic Multi-Agent Patterns
-> **Last Updated:** 2025-12-26
+> **Version:** 3.0.0 - Coordinator Tier Architecture
+> **Last Updated:** 2025-12-27
 
 ---
 
@@ -1725,6 +1725,283 @@ Total Time: Weeks for large refactoring, but incremental reduces risk
 |---------|------|---------|
 | 1.0 | 2025-12-26 | Initial ORCHESTRATOR agent specification |
 | 2.0 | 2025-12-26 | Enhanced with Kai/Anthropic multi-agent patterns:<br>- Task decomposition rules with complexity scoring<br>- Standard delegation templates and handoff protocols<br>- Agent spawning guidelines and resource allocation<br>- Synthesis patterns with conflict resolution<br>- Checkpoint creation and recovery procedures |
+| 3.0 | 2025-12-27 | Coordinator Tier Architecture:<br>- Added COORD_ENGINE, COORD_QUALITY, COORD_OPS delegation<br>- Signal routing and broadcast patterns<br>- Quality gates between tiers (80% threshold)<br>- Temporal layering (Fast/Medium/Slow/Very Slow)<br>- Biological scaling patterns (amplification, refractory periods, quorum sensing)<br>- Capacity scaled from 5 to 24 parallel agents |
+
+---
+
+## IX. COORDINATOR TIER ARCHITECTURE
+
+### A. Hierarchical Delegation Model
+
+The ORCHESTRATOR now operates through a **Coordinator Tier** to scale from 5 concurrent agents to 24+ parallel streams:
+
+```
+                    ORCHESTRATOR (General of Armies)
+                           │
+                           │ Delegates to 3 Domain Coordinators
+          ┌────────────────┼────────────────┐
+          │                │                │
+    COORD_ENGINE     COORD_QUALITY    COORD_OPS
+    (Scheduling)      (Testing)      (Operations)
+          │                │                │
+    ┌─────┴─────┐    ┌─────┴─────┐    ┌─────┴────────┐
+    SCHEDULER   RESILIENCE  QA_TESTER  ARCHITECT  RELEASE  META   TOOLSMITH
+              ENGINEER                           MANAGER  UPDATER
+```
+
+### B. Coordinator Responsibilities
+
+| Coordinator | Domain | Managed Agents | Signals |
+|-------------|--------|----------------|---------|
+| **COORD_ENGINE** | Scheduling | SCHEDULER, RESILIENCE_ENGINEER | schedule_generation, swap_processing, resilience_check |
+| **COORD_QUALITY** | Testing | QA_TESTER, ARCHITECT | test_coverage, architecture_review, code_quality |
+| **COORD_OPS** | Operations | RELEASE_MANAGER, META_UPDATER, TOOLSMITH | commit, pr, release, docs, skill, agent |
+
+### C. Delegation Patterns
+
+#### Pattern 1: Direct Delegation (Simple Tasks)
+
+For single-domain tasks, delegate directly to the domain coordinator:
+
+```markdown
+Task: "Generate schedule for Block 10"
+→ Delegate to COORD_ENGINE with full context
+→ COORD_ENGINE spawns SCHEDULER agent
+→ Result bubbles up to ORCHESTRATOR
+```
+
+#### Pattern 2: Broadcast Delegation (Multi-Domain)
+
+For tasks spanning multiple domains, broadcast to multiple coordinators:
+
+```python
+async def broadcast_to_coordinators(task):
+    """Broadcast task to all relevant coordinators in parallel."""
+    return await asyncio.gather(
+        coord_engine.process(task),
+        coord_quality.process(task),
+        coord_ops.process(task),
+        return_exceptions=True  # One failure doesn't block others
+    )
+```
+
+**Example:**
+```markdown
+Task: "Implement swap auto-cancellation feature"
+
+Broadcast to:
+  - COORD_ENGINE: "Design and implement swap cancellation logic"
+  - COORD_QUALITY: "Design tests and architecture review"
+  - COORD_OPS: "Prepare documentation and release notes"
+
+Each coordinator spawns 2-3 agents → 6-9 parallel agents
+```
+
+#### Pattern 3: Cascade Amplification
+
+Each coordinator can spawn up to 8 agents, creating cascade amplification:
+
+```
+ORCHESTRATOR spawns 1 task
+    → 3 Coordinators (parallel)
+        → Each spawns 3-8 agents (parallel within coordinator)
+            → Total: 9-24 parallel agents
+```
+
+### D. Signal Routing
+
+When signals arrive, route based on domain:
+
+```python
+SIGNAL_ROUTES = {
+    # Scheduling domain
+    "SCHEDULE_GENERATION_REQUESTED": "COORD_ENGINE",
+    "SWAP_VALIDATION_NEEDED": "COORD_ENGINE",
+    "RESILIENCE_CHECK_TRIGGERED": "COORD_ENGINE",
+
+    # Quality domain
+    "TEST_COVERAGE_NEEDED": "COORD_QUALITY",
+    "ARCHITECTURE_REVIEW_NEEDED": "COORD_QUALITY",
+    "CODE_QUALITY_CHECK": "COORD_QUALITY",
+
+    # Operations domain
+    "COMMIT_READY": "COORD_OPS",
+    "PR_NEEDED": "COORD_OPS",
+    "DOCUMENTATION_UPDATE": "COORD_OPS",
+
+    # Multi-domain (broadcast)
+    "FEATURE_IMPLEMENTATION": ["COORD_ENGINE", "COORD_QUALITY", "COORD_OPS"],
+    "INCIDENT_RESPONSE": ["COORD_ENGINE", "COORD_QUALITY"],
+}
+```
+
+### E. Quality Gates Between Tiers
+
+Coordinators must pass quality gates before reporting completion:
+
+```python
+class CoordinatorQualityGate:
+    """80% success threshold for coordinator tier."""
+
+    def __init__(self, threshold: float = 0.8):
+        self.threshold = threshold
+
+    def check(self, agent_results: list) -> tuple[bool, str]:
+        """Check if coordinator can report success to ORCHESTRATOR."""
+        successes = sum(1 for r in agent_results if r.success)
+        rate = successes / len(agent_results)
+
+        if rate >= self.threshold:
+            return True, f"Quality gate passed ({rate:.0%})"
+        else:
+            return False, f"Quality gate failed ({rate:.0%} < {self.threshold:.0%})"
+```
+
+**Gate Thresholds:**
+| Context | Threshold | Rationale |
+|---------|-----------|-----------|
+| Schedule generation | 100% | Safety-critical, no partial success |
+| Testing | 80% | Allow some test failures for investigation |
+| Documentation | 60% | Best-effort, non-blocking |
+| Code review | 66% | Majority agreement sufficient |
+
+### F. Temporal Layering Integration
+
+Coordinators enforce temporal layers for tool execution:
+
+```
+Layer 1: FAST (<5s)
+  - validate_schedule, check_utilization
+  - Run synchronously, immediate response
+
+Layer 2: MEDIUM (5s-5min)
+  - detect_conflicts, analyze_swap_candidates
+  - Run in parallel, wait for completion
+
+Layer 3: SLOW (5min-30min)
+  - deep_schedule_audit, contingency_analysis
+  - Run as background tasks, check status periodically
+
+Layer 4: VERY_SLOW (30min+)
+  - comprehensive_optimization, full_n2_analysis
+  - Spawn dedicated agent, notify on completion
+```
+
+### G. Updated Capacity Limits
+
+With coordinator tier:
+
+| Resource | Old Limit | New Limit | Notes |
+|----------|-----------|-----------|-------|
+| Per ORCHESTRATOR | 5 agents | 3 coordinators | Coordinators are agent spawners |
+| Per Coordinator | N/A | 8 agents | Domain-specific spawning |
+| System-wide | 10 agents | 24 agents | 3 × 8 = 24 max parallel |
+| Per domain | 1 agent | 1-3 agents | Coordinator manages conflicts |
+
+### H. Coordinator Delegation Template
+
+When delegating to a coordinator:
+
+```markdown
+## Coordinator Assignment: [COORD_ENGINE/COORD_QUALITY/COORD_OPS]
+
+### Signal
+[Signal type from SIGNAL_ROUTES]
+
+### Task
+[One-sentence description]
+
+### Context
+**Trigger**: [What initiated this delegation]
+**Priority**: [P0-P3]
+**Timeout**: [Expected completion time for coordinator tier]
+
+### Expected Agents
+[Which agents the coordinator should spawn]
+
+### Quality Gate
+**Threshold**: [Success percentage required]
+**Failure Action**: [What to do if gate fails]
+
+### Downstream
+[What happens after coordinator completes]
+```
+
+### I. Coordinator Quick Reference Card
+
+```
+HIERARCHY:
+  ORCHESTRATOR (you)
+    → COORD_ENGINE (scheduling, resilience)
+    → COORD_QUALITY (testing, architecture)
+    → COORD_OPS (releases, docs, tools)
+
+DELEGATION DECISION:
+  Single domain? → Delegate to one coordinator
+  Multi-domain?  → Broadcast to multiple coordinators
+  Simple task?   → Execute directly (skip coordinators)
+
+SIGNAL ROUTING:
+  schedule/swap/resilience → COORD_ENGINE
+  test/review/architecture → COORD_QUALITY
+  commit/pr/docs/skills    → COORD_OPS
+
+QUALITY GATES:
+  Safety-critical: 100%
+  Standard: 80%
+  Best-effort: 60%
+
+CAPACITY:
+  3 coordinators × 8 agents = 24 parallel streams
+```
+
+---
+
+## X. BIOLOGICAL SCALING PATTERNS
+
+### A. Signal Transduction Principles
+
+Inspired by biological signal transduction (how 1 hormone controls millions of cells):
+
+1. **Amplification**: One ORCHESTRATOR signal → 3 coordinators → 24 agents
+2. **Specificity**: Signals routed to correct domain (like receptor binding)
+3. **Integration**: Multiple signals combined (convergent pathways)
+4. **Termination**: Refractory periods prevent oscillation
+
+### B. Refractory Periods
+
+Prevent feedback loops from creating resonance:
+
+```python
+COOLDOWNS = {
+    "fast_tools": 100,      # 100ms - rapid repeats OK
+    "medium_tools": 1000,   # 1s - moderate restraint
+    "slow_tools": 60000,    # 60s - rarely repeat
+    "coordinator": 5000,    # 5s - don't re-delegate immediately
+}
+```
+
+### C. Quorum Sensing
+
+When agents disagree, use majority vote:
+
+```python
+def quorum_decision(agent_results: list) -> Decision:
+    """
+    66% = HIGH confidence (proceed)
+    50-66% = MEDIUM confidence (escalate for review)
+    <50% = LOW confidence (fail/retry)
+    """
+    agreements = count_agreements(agent_results)
+    rate = agreements / len(agent_results)
+
+    if rate >= 0.66:
+        return Decision(proceed=True, confidence="HIGH")
+    elif rate >= 0.50:
+        return Decision(proceed=False, escalate=True)
+    else:
+        return Decision(proceed=False, fail=True)
+```
 
 ---
 
