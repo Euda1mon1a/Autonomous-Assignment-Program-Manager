@@ -43,11 +43,12 @@ for pattern in "${BLOCKED_PATTERNS[@]}"; do
 done
 
 # Warning patterns (log but allow)
+# Note: Patterns use extended regex (-E flag in grep)
 WARNING_PATTERNS=(
-    "sudo"
+    "^sudo "
     "chmod 777"
-    "curl.*|.*sh"
-    "wget.*|.*sh"
+    "curl .* \| .*sh"
+    "wget .* \| .*sh"
 )
 
 for pattern in "${WARNING_PATTERNS[@]}"; do
