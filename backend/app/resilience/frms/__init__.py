@@ -30,6 +30,7 @@ from app.resilience.frms.samn_perelli import (
     SamnPerelliAssessment,
     assess_fatigue_level,
     is_safe_for_duty,
+    get_all_levels,
 )
 from app.resilience.frms.sleep_debt import (
     SleepDebtModel,
@@ -45,6 +46,8 @@ from app.resilience.frms.hazard_thresholds import (
     HazardLevel,
     FatigueHazard,
     HazardThresholdEngine,
+    get_hazard_level_info,
+    get_mitigation_info,
 )
 from app.resilience.frms.frms_service import (
     FRMSService,
@@ -56,6 +59,7 @@ __all__ = [
     "SamnPerelliAssessment",
     "assess_fatigue_level",
     "is_safe_for_duty",
+    "get_all_levels",
     # Sleep debt model
     "SleepDebtModel",
     "CircadianPhase",
@@ -68,6 +72,8 @@ __all__ = [
     "HazardLevel",
     "FatigueHazard",
     "HazardThresholdEngine",
+    "get_hazard_level_info",
+    "get_mitigation_info",
     # Main service
     "FRMSService",
 ]

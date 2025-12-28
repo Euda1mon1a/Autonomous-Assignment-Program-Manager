@@ -127,6 +127,50 @@
 
 ---
 
+### Session 002: 2025-12-27 — MCP Fix & Agent Gaps
+
+**Context:** Continuing from Session 001. Focus on MCP infrastructure validation before building more coordinators.
+
+**Key User Statements:**
+- "you know my answer" (confirming MCP validation first before building command structure)
+- "trust, but verify" (on agent hierarchy claims)
+- "opportunity cost is one of the hardest lessons to learn"
+- "wax on, wax off" (approval of delegation pattern)
+- "is architect the right person for the job?" (questioning hierarchy bypass)
+- "does each agent generate a .md report?" (audit trail concern)
+- "the PR agent should sort wheat from chaff and commit/PR it"
+
+**Issues Discovered:**
+1. MCP server crash-looping (STDIO transport in Docker)
+2. Pydantic schema collision (`date: date` field naming)
+3. Missing `app.api.deps` module
+4. Missing `get_all_levels` export from FRMS
+
+**TOOLSMITH Permission Gap (DOCUMENT FOR FUTURE):**
+- TOOLSMITH agents (a1a765c, a2c6dad) completed comprehensive specs but couldn't write to `.claude/Agents/`
+- Write tool was auto-denied despite this being TOOLSMITH's expected domain
+- Settings.json does NOT have `Edit(.claude/Agents/**)` - should be added
+- Current workaround: ORCHESTRATOR writes files from TOOLSMITH output
+- **ACTION NEEDED:** Add `Edit(.claude/Agents/**)` and `Write(.claude/Agents/**)` to TOOLSMITH's permissions
+
+**New Agent Request: DELEGATION_AUDITOR**
+- User requested: "an agent whose sole job is to determine how much you directly handled things vs. delegating"
+- Purpose: Track ORCHESTRATOR efficiency, ensure delegation patterns are healthy
+- Should analyze session transcripts for direct-vs-delegated ratio
+- Outputs audit trail for user visibility
+- Potential skills: analyze git commits for author patterns, count Task tool invocations vs direct edits
+
+**Pushback Given:**
+- Challenged user on architect routing for Pydantic bug (should have gone through COORD_QUALITY)
+- User agreed this was a learning moment about proper hierarchy
+
+**Trust Evolution:**
+- User wants more systematic audit trails ("how do we know what we did a day from now?")
+- Explicitly values the scratchpad documentation pattern
+- Prefers visibility into delegation patterns
+
+---
+
 *File created: 2025-12-27*
 *Last updated: 2025-12-27*
 *Maintained by: ORCHESTRATOR*
