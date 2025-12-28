@@ -8,6 +8,57 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### :bug: Bug Fixes - Overnight Call Scheduling
+
+Fixed critical bugs in overnight call scheduling and call assignment persistence (PR #489, #490).
+
+#### Sunday Night Call Coverage Fix
+**Problem:** Sunday nights were excluded from overnight call scheduling because:
+- `workday_blocks` filtered blocks with `is_weekend=True`
+- Sunday blocks have `is_weekend=True`
+- But Sunday nights (weekday 6) require overnight call coverage
+
+**Solution:** Changed solver to use `context.blocks` with explicit weekday filtering:
+```python
+call_blocks = [
+    block for block in context.blocks
+    if block.date.weekday() in (0, 1, 2, 3, 6)  # Sun-Thu nights
+]
+```
+
+**Files Changed:**
+- `backend/app/scheduling/solvers.py` - Fixed call variable creation logic
+
+#### Call Assignment Persistence Fix
+**Problem:** Call assignments were not persisting to database - `flush()` was called without `commit()`.
+
+**Solution:** Added explicit `commit()` calls after database operations.
+
+**Files Changed:**
+- `backend/app/services/call_assignment_service.py` - Added commit parameter and explicit commits
+
+#### API Consistency Improvement
+Added `commit` parameter to all CallAssignmentService mutation methods for consistent transaction control:
+
+| Method | Change |
+|--------|--------|
+| `create_call_assignment` | Added `commit: bool = True` |
+| `update_call_assignment` | Added `commit: bool = True` |
+| `delete_call_assignment` | Added `commit: bool = True` |
+| `clear_call_assignments_in_range` | Added `commit: bool = True` |
+
+This allows callers to batch operations in a single transaction when needed.
+
+#### Regression Tests Added
+New test class `TestSolverSundayNightCallCoverage` with 5 tests:
+- `test_sunday_block_has_is_weekend_true` - Validates test data
+- `test_sunday_is_valid_overnight_call_day` - Confirms Sunday is call day
+- `test_call_blocks_include_sunday_despite_weekend_flag` - Core regression test
+- `test_workday_blocks_would_exclude_sunday_without_fix` - Documents original bug
+- `test_context_blocks_include_all_days` - Verifies block completeness
+
+---
+
 ### :shield: Operational Resilience - Solver Kill-Switch & Constraint Metrics
 
 Added operational hardening features for scheduler reliability and diagnostics.
