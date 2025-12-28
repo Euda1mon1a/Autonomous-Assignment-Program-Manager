@@ -26,13 +26,29 @@ class AbsenceController:
         end_date: date | None = None,
         person_id: UUID | None = None,
         absence_type: str | None = None,
+        page: int = 1,
+        page_size: int = 100,
     ) -> dict:
-        """List absences with optional filters."""
+        """List absences with optional filters and pagination.
+
+        Args:
+            start_date: Filter absences starting from this date
+            end_date: Filter absences ending by this date
+            person_id: Filter by specific person
+            absence_type: Filter by absence type
+            page: Page number (1-indexed)
+            page_size: Number of items per page
+
+        Returns:
+            Dict with items, total count, page, and page_size
+        """
         return self.service.list_absences(
             start_date=start_date,
             end_date=end_date,
             person_id=person_id,
             absence_type=absence_type,
+            page=page,
+            page_size=page_size,
         )
 
     def get_absence(self, absence_id: UUID) -> AbsenceResponse:
