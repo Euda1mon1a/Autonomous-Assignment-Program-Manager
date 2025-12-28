@@ -347,36 +347,80 @@ logging.basicConfig(
 
 ---
 
-### Session 007 Handoff — READY FOR PICKUP
+### Session 007: 2025-12-28 — MCP Connection Troubleshooting
+
+**Context:** Continuing MCP fix from Session 006. Connection still failing.
 
 **The Hill (User-Clarified):**
 > "Component testing, validation, then head-to-head comparison of scheduling/resilience modules"
 
-**Immediate Next Steps:**
-1. **Verify MCP connection** - User restarting Claude Code now
-2. **Test MCP tools** - Run a simple scheduling tool to confirm 34 tools accessible
-3. **Define test harness** - standardized way to compare solver A vs solver B
-4. **Establish baselines** - what does "good" look like? (solve time, coverage %, fairness)
+**MCP Debugging Progress:**
 
-**What ORCHESTRATOR Needs:**
-| Need | Status |
-|------|--------|
-| MCP tools working | **FIXED** - pending user restart |
-| Subagent write permissions | Fixed in settings.json |
-| Test harness | Not yet built |
-| Baseline metrics | Not yet defined |
+| Attempt | What We Tried | Result |
+|---------|---------------|--------|
+| Session 006 | Fixed `server.py` logging to stderr | Container healthy, but Claude Code can't connect |
+| Session 007 | Added `-e MCP_TRANSPORT=stdio` to `.mcp.json` exec args | Still failing |
 
-**Uncommitted Changes:**
-- `mcp-server/src/scheduler_mcp/server.py` - MCP STDIO fix (needs PR)
-- `.claude/Scratchpad/2025-12-28_06-30_persona_loading_implementation.md` (stale)
+**Root Cause Analysis:**
+- Container runs HTTP transport on port 8080 (because STDIO needs stdin)
+- `.mcp.json` uses `docker compose exec` to spawn STDIO process
+- Even with `-e MCP_TRANSPORT=stdio`, connection fails
+- Need to debug what error Claude Code sees
+
+**Next Steps After Restart:**
+1. **Check Claude Code logs** for MCP connection errors
+2. **Test exec command manually:**
+   ```bash
+   docker compose exec -T -e MCP_TRANSPORT=stdio mcp-server python -m scheduler_mcp.server
+   ```
+   Then type `{"jsonrpc": "2.0", "method": "initialize", "id": 1, "params": {}}` to see response
+3. **If STDIO fails**, try SSE transport config:
+   ```json
+   {
+     "residency-scheduler": {
+       "url": "http://localhost:8080/mcp",
+       "transport": "sse"
+     }
+   }
+   ```
+   (Requires exposing port 8080 in docker-compose.yml)
+
+**Files Modified This Session:**
+- `.mcp.json` - Added `-e MCP_TRANSPORT=stdio` to exec args
 
 **Open PRs:**
-- None (PR #503, #504 merged)
+- PR #505: MCP STDIO fix (`server.py` logging to stderr)
+
+**Uncommitted Changes:**
+- `.mcp.json` - Transport override (local config, don't commit)
+- `.claude/Scratchpad/2025-12-28_06-30_persona_loading_implementation.md` (stale, can delete)
 
 **Standing Orders (Active):**
 - "PR is the minimum" per session
 - "Speak your piece" - candor expected
 - "Take the hill, not how" - user defines objectives, ORCHESTRATOR chooses tactics
+
+---
+
+### Session 008 Handoff — READY FOR PICKUP
+
+**Blocking Issue:** MCP connection not working
+
+**Quick Debug Commands:**
+```bash
+# Test exec command manually
+docker compose exec -T -e MCP_TRANSPORT=stdio mcp-server python -m scheduler_mcp.server
+
+# Check if port 8080 is exposed
+docker compose ps mcp-server
+
+# View MCP server logs
+docker compose logs mcp-server --tail 50
+```
+
+**Fallback Plan:** If STDIO transport continues to fail, switch to SSE/HTTP transport by:
+1. Expose port 8080 in `docker-compose.yml`
+2. Update `.mcp.json` to use `"transport": "sse"` with `"url": "http://localhost:8080/mcp"`
 
 ---
 
