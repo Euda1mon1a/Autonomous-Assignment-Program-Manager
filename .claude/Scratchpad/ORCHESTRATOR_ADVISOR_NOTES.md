@@ -601,6 +601,22 @@ logging.basicConfig(
 
 ---
 
+### Additional Learning: Parallel AO Deployment
+
+**User feedback:** While debugging MCP/Celery (backend AO), frontend tasks sat idle. User had to prompt about frontend work.
+
+**Insight:** ORCHESTRATOR had tunnel vision on "active problem" instead of deploying agents across all independent Areas of Operation (AOs) simultaneously.
+
+**Fix for future sessions:**
+1. On `/startupO`, scan HUMAN_TODO.md for all open tasks
+2. Categorize by AO (backend, frontend, docs, infra)
+3. Spawn agents for each independent AO immediately
+4. Only serialize when actual dependencies exist
+
+**Metaphor:** "Conventional units in multiple AOs, not Seal Team 6 on one target"
+
+---
+
 *File created: 2025-12-27*
 *Last updated: 2025-12-28 (Session 012)*
 *Maintained by: ORCHESTRATOR*
