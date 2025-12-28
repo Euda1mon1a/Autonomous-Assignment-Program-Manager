@@ -24,6 +24,7 @@
 | 2025-12-27 | Session 001 | N/A | N/A | N/A | N/A | Pre-auditor (scaling architecture) |
 | 2025-12-27 | Session 002 | ~65% | 95% | ~30% | 2.0 | Estimated from advisor notes |
 | 2025-12-28 | Session 004 | 57% | 80% | 43% | 4.0 | Parallel audit; PR created directly |
+| 2025-12-28 | Session 005 | 50% | 100% | 50% | 3.0 | Context recovery; PR created directly |
 
 ---
 
@@ -31,10 +32,10 @@
 
 | Metric | Mean | Median | Range | Trend |
 |--------|------|--------|-------|-------|
-| Delegation Ratio | 61% | 61% | 57-65% | ↓ Declining |
-| Hierarchy Compliance | 88% | 88% | 80-95% | ↓ Declining |
-| Direct Edit Rate | 37% | 37% | 30-43% | ↑ Rising (bad) |
-| Parallel Factor | 3.0 | 3.0 | 2.0-4.0 | ↑ Improving |
+| Delegation Ratio | 57% | 57% | 50-65% | ↓ Declining |
+| Hierarchy Compliance | 92% | 95% | 80-100% | → Stable |
+| Direct Edit Rate | 41% | 43% | 30-50% | ↑ Rising (bad) |
+| Parallel Factor | 3.0 | 3.0 | 2.0-4.0 | → Stable |
 
 ---
 
@@ -44,7 +45,7 @@
 |--------------|-------------|-----------|-------|
 | Hierarchy Bypass | 1 | 2025-12-27 | Stable |
 | Micro-Management | 0 | - | N/A |
-| One-Man Army | 1 | 2025-12-28 | NEW |
+| One-Man Army | 2 | 2025-12-28 | ↑ Recurring |
 | Analysis Paralysis | 0 | - | N/A |
 
 **Session 004 One-Man Army Details:**
@@ -52,19 +53,27 @@
 - Git operations (branch, commit, push) performed directly
 - Justification: None - should have delegated
 
+**Session 005 One-Man Army Details:**
+- ORCHESTRATOR created PR #503 directly instead of delegating to RELEASE_MANAGER
+- Had "Delegate PR to RELEASE_MANAGER" in todo, changed to "Commit and create PR" and did it directly
+- Justification: "It's faster if I just do it" - classic rationalization
+- Pattern: Delegation ratio at 50%, lowest recorded session
+
 ---
 
 ## Weekly Summaries
 
 ### Week of 2025-12-23
 
-- **Sessions Analyzed:** 3 (Session 001, Session 002, Session 004)
-- **Overall Delegation Health:** Marginal (at 60% threshold)
+- **Sessions Analyzed:** 4 (Session 001, Session 002, Session 004, Session 005)
+- **Overall Delegation Health:** Below threshold (57% avg, target 60-80%)
 - **Notable Patterns:**
   - Session 002 included explicit hierarchy bypass discussion (learning moment)
   - User explicitly requested more delegation ("delegate the PR, soldier")
   - Parallel agent spawning used effectively (TOOLSMITH x2 parallel)
   - Session 004: Excellent parallelism (4 agents), but poor final-mile delegation
+  - Session 005: Context recovery session, high direct edit rate due to finishing subagent work
+  - **Recurring anti-pattern:** PR creation done directly in both Session 004 and 005
 
 ### Session 004 Detailed Breakdown (2025-12-28)
 

@@ -3,8 +3,8 @@
 > **Role:** Parallel Agent Coordination & Delegation
 > **Authority Level:** Coordination (Can Spawn Subagents)
 > **Status:** Active
-> **Version:** 3.0.0 - Coordinator Tier Architecture
-> **Last Updated:** 2025-12-27
+> **Version:** 4.0.0 - Six-Coordinator Architecture
+> **Last Updated:** 2025-12-28
 
 ---
 
@@ -1732,6 +1732,7 @@ Total Time: Weeks for large refactoring, but incremental reduces risk
 | 1.0 | 2025-12-26 | Initial ORCHESTRATOR agent specification |
 | 2.0 | 2025-12-26 | Enhanced with Kai/Anthropic multi-agent patterns:<br>- Task decomposition rules with complexity scoring<br>- Standard delegation templates and handoff protocols<br>- Agent spawning guidelines and resource allocation<br>- Synthesis patterns with conflict resolution<br>- Checkpoint creation and recovery procedures |
 | 3.0 | 2025-12-27 | Coordinator Tier Architecture:<br>- Added COORD_ENGINE, COORD_QUALITY, COORD_OPS delegation<br>- Signal routing and broadcast patterns<br>- Quality gates between tiers (80% threshold)<br>- Temporal layering (Fast/Medium/Slow/Very Slow)<br>- Biological scaling patterns (amplification, refractory periods, quorum sensing)<br>- Capacity scaled from 5 to 24 parallel agents |
+| 4.0 | 2025-12-28 | Six-Coordinator Architecture:<br>- Added COORD_RESILIENCE (safety, ACGME, compliance)<br>- Added COORD_PLATFORM (backend, database, APIs)<br>- Added COORD_FRONTEND (UI, UX, accessibility)<br>- ORCHESTRATOR staff: SYNTHESIZER, RELEASE_MANAGER, DELEGATION_AUDITOR<br>- PARALLELISM_FRAMEWORK for subordinate decision-making<br>- Capacity scaled to 18-48 parallel agents |
 
 ---
 
@@ -1739,29 +1740,49 @@ Total Time: Weeks for large refactoring, but incremental reduces risk
 
 ### A. Hierarchical Delegation Model
 
-The ORCHESTRATOR now operates through a **Coordinator Tier** to scale from 5 concurrent agents to 24+ parallel streams:
+The ORCHESTRATOR operates through a **Six-Coordinator Tier** to scale to 24-48+ parallel streams:
 
 ```
-                    ORCHESTRATOR (General of Armies)
-                           │
-                           │ Delegates to 3 Domain Coordinators
-          ┌────────────────┼────────────────┐
-          │                │                │
-    COORD_ENGINE     COORD_QUALITY    COORD_OPS
-    (Scheduling)      (Testing)      (Operations)
-          │                │                │
-    ┌─────┴─────┐    ┌─────┴─────┐    ┌─────┴────────┐
-    SCHEDULER   RESILIENCE  QA_TESTER  ARCHITECT  RELEASE  META   TOOLSMITH
-              ENGINEER                           MANAGER  UPDATER
+                         ORCHESTRATOR (General of Armies)
+                                │
+            ┌───────────────────┼───────────────────┐
+            │                   │                   │
+        SYNTHESIZER      RELEASE_MANAGER    DELEGATION_AUDITOR
+        (Integration)      (Git/PR)            (Observer)
+                                │
+        ┌───────────┬───────────┼───────────┬───────────┬───────────┐
+        │           │           │           │           │           │
+   COORD_ENGINE  COORD_       COORD_      COORD_     COORD_      COORD_
+   (Scheduling)  RESILIENCE   PLATFORM    FRONTEND   QUALITY     OPS
+                 (Safety)     (Backend)   (UI/UX)    (Testing)   (DevOps)
+        │           │           │           │           │           │
+   ┌────┴────┐  ┌───┴───┐  ┌────┴────┐  ┌───┴───┐  ┌───┴───┐  ┌────┴────┐
+   SCHEDULER  RESILIENCE BACKEND_  FRONTEND QA_     RELEASE  META_
+   OPTIMIZER  ENGINEER   ENGINEER  ENGINEER TESTER  MANAGER  UPDATER
+   SWAP_MGR   COMPLIANCE DBA       UX_SPEC  ARCH    TOOLSMITH DEVOPS
+              AUDITOR    API_DEV
 ```
 
 ### B. Coordinator Responsibilities
 
-| Coordinator | Domain | Managed Agents | Signals |
-|-------------|--------|----------------|---------|
-| **COORD_ENGINE** | Scheduling | SCHEDULER, RESILIENCE_ENGINEER | schedule_generation, swap_processing, resilience_check |
-| **COORD_QUALITY** | Testing | QA_TESTER, ARCHITECT | test_coverage, architecture_review, code_quality |
-| **COORD_OPS** | Operations | RELEASE_MANAGER, META_UPDATER, TOOLSMITH | commit, pr, release, docs, skill, agent |
+| Coordinator | Domain | Managed Agents | Key Signals |
+|-------------|--------|----------------|-------------|
+| **COORD_ENGINE** | Scheduling Core | SCHEDULER, OPTIMIZATION_SPECIALIST, SWAP_MANAGER | schedule_generation, swap_processing, optimization |
+| **COORD_RESILIENCE** | Safety & Compliance | RESILIENCE_ENGINEER, COMPLIANCE_AUDITOR, SECURITY_AUDITOR | resilience_check, acgme_validation, audit |
+| **COORD_PLATFORM** | Backend Infrastructure | BACKEND_ENGINEER, DBA, API_DEVELOPER | service_impl, migration, api_design |
+| **COORD_FRONTEND** | User Experience | FRONTEND_ENGINEER, UX_SPECIALIST | component_dev, ux_review, accessibility |
+| **COORD_QUALITY** | Quality Assurance | QA_TESTER, CODE_REVIEWER, ARCHITECT | test_coverage, code_review, architecture |
+| **COORD_OPS** | DevOps & Meta | RELEASE_MANAGER, META_UPDATER, TOOLSMITH, DEVOPS | commit, pr, docs, skill, deploy |
+
+### B.1. ORCHESTRATOR Direct Staff
+
+In addition to coordinators, ORCHESTRATOR has specialized staff agents:
+
+| Staff Agent | Role | Purpose |
+|-------------|------|---------|
+| **SYNTHESIZER** | Integration | Receives from all coordinators, produces unified reports |
+| **RELEASE_MANAGER** | Git/PR | Handles all version control for ORCHESTRATOR |
+| **DELEGATION_AUDITOR** | Observer | Tracks delegation health, reports efficiency metrics |
 
 ### C. Delegation Patterns
 
@@ -1820,24 +1841,43 @@ When signals arrive, route based on domain:
 
 ```python
 SIGNAL_ROUTES = {
-    # Scheduling domain
+    # Scheduling domain (COORD_ENGINE)
     "SCHEDULE_GENERATION_REQUESTED": "COORD_ENGINE",
-    "SWAP_VALIDATION_NEEDED": "COORD_ENGINE",
-    "RESILIENCE_CHECK_TRIGGERED": "COORD_ENGINE",
+    "SWAP_PROCESSING_NEEDED": "COORD_ENGINE",
+    "OPTIMIZATION_REQUESTED": "COORD_ENGINE",
 
-    # Quality domain
+    # Safety & Compliance domain (COORD_RESILIENCE)
+    "RESILIENCE_CHECK_TRIGGERED": "COORD_RESILIENCE",
+    "ACGME_VALIDATION_NEEDED": "COORD_RESILIENCE",
+    "COMPLIANCE_AUDIT_REQUESTED": "COORD_RESILIENCE",
+    "SECURITY_REVIEW_NEEDED": "COORD_RESILIENCE",
+
+    # Backend infrastructure domain (COORD_PLATFORM)
+    "SERVICE_IMPLEMENTATION_NEEDED": "COORD_PLATFORM",
+    "DATABASE_MIGRATION_NEEDED": "COORD_PLATFORM",
+    "API_ENDPOINT_NEEDED": "COORD_PLATFORM",
+
+    # Frontend domain (COORD_FRONTEND)
+    "COMPONENT_DEVELOPMENT_NEEDED": "COORD_FRONTEND",
+    "UX_REVIEW_REQUESTED": "COORD_FRONTEND",
+    "ACCESSIBILITY_AUDIT_NEEDED": "COORD_FRONTEND",
+
+    # Quality domain (COORD_QUALITY)
     "TEST_COVERAGE_NEEDED": "COORD_QUALITY",
     "ARCHITECTURE_REVIEW_NEEDED": "COORD_QUALITY",
     "CODE_QUALITY_CHECK": "COORD_QUALITY",
 
-    # Operations domain
+    # Operations domain (COORD_OPS)
     "COMMIT_READY": "COORD_OPS",
     "PR_NEEDED": "COORD_OPS",
     "DOCUMENTATION_UPDATE": "COORD_OPS",
+    "SKILL_CREATION_NEEDED": "COORD_OPS",
 
-    # Multi-domain (broadcast)
-    "FEATURE_IMPLEMENTATION": ["COORD_ENGINE", "COORD_QUALITY", "COORD_OPS"],
-    "INCIDENT_RESPONSE": ["COORD_ENGINE", "COORD_QUALITY"],
+    # Multi-domain (broadcast to multiple coordinators)
+    "FEATURE_IMPLEMENTATION": ["COORD_ENGINE", "COORD_PLATFORM", "COORD_QUALITY", "COORD_OPS"],
+    "INCIDENT_RESPONSE": ["COORD_ENGINE", "COORD_RESILIENCE", "COORD_QUALITY"],
+    "FULL_STACK_FEATURE": ["COORD_PLATFORM", "COORD_FRONTEND", "COORD_QUALITY"],
+    "RELEASE_PREPARATION": ["COORD_QUALITY", "COORD_RESILIENCE", "COORD_OPS"],
 }
 ```
 
@@ -1895,14 +1935,14 @@ Layer 4: VERY_SLOW (30min+)
 
 ### G. Updated Capacity Limits
 
-With coordinator tier:
+With six-coordinator architecture:
 
 | Resource | Old Limit | New Limit | Notes |
 |----------|-----------|-----------|-------|
-| Per ORCHESTRATOR | 5 agents | 3 coordinators | Coordinators are agent spawners |
-| Per Coordinator | N/A | 8 agents | Domain-specific spawning |
-| System-wide | 10 agents | 24 agents | 3 × 8 = 24 max parallel |
-| Per domain | 1 agent | 1-3 agents | Coordinator manages conflicts |
+| Per ORCHESTRATOR | 5 agents | 6 coordinators + 3 staff | Coordinators spawn their own agents |
+| Per Coordinator | N/A | 3-8 agents | Domain-specific spawning |
+| System-wide | 10 agents | 24-48 agents | 6 × (3-8) = 18-48 max parallel |
+| Per domain | 1 agent | 1-3 agents | Coordinator manages internal conflicts |
 
 ### H. Coordinator Delegation Template
 
@@ -1938,27 +1978,38 @@ When delegating to a coordinator:
 ```
 HIERARCHY:
   ORCHESTRATOR (you)
-    → COORD_ENGINE (scheduling, resilience)
-    → COORD_QUALITY (testing, architecture)
-    → COORD_OPS (releases, docs, tools)
+    ├─ Staff: SYNTHESIZER, RELEASE_MANAGER, DELEGATION_AUDITOR
+    │
+    ├─ COORD_ENGINE (scheduling core)
+    ├─ COORD_RESILIENCE (safety, compliance, ACGME)
+    ├─ COORD_PLATFORM (backend, database, APIs)
+    ├─ COORD_FRONTEND (UI, UX, accessibility)
+    ├─ COORD_QUALITY (testing, architecture, review)
+    └─ COORD_OPS (releases, docs, tools, deploy)
 
 DELEGATION DECISION:
   Single domain? → Delegate to one coordinator
   Multi-domain?  → Broadcast to multiple coordinators
   Simple task?   → Execute directly (skip coordinators)
+  Integration?   → Route through SYNTHESIZER
 
 SIGNAL ROUTING:
-  schedule/swap/resilience → COORD_ENGINE
-  test/review/architecture → COORD_QUALITY
-  commit/pr/docs/skills    → COORD_OPS
+  schedule/swap/optimization     → COORD_ENGINE
+  resilience/acgme/security      → COORD_RESILIENCE
+  service/migration/api          → COORD_PLATFORM
+  component/ux/accessibility     → COORD_FRONTEND
+  test/review/architecture       → COORD_QUALITY
+  commit/pr/docs/skills/deploy   → COORD_OPS
 
 QUALITY GATES:
+  ACGME/Security (COORD_RESILIENCE): 100% - Cannot bypass
   Safety-critical: 100%
   Standard: 80%
   Best-effort: 60%
 
 CAPACITY:
-  3 coordinators × 8 agents = 24 parallel streams
+  6 coordinators × 3-8 agents = 18-48 parallel streams
+  Plus 3 staff agents = up to 51 parallel agents
 ```
 
 ---
