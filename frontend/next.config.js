@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
-  reactStrictMode: false, // Disabled temporarily to debug render loop
+  reactStrictMode: true, // Re-enabled - fix render loop root cause instead of hiding
   poweredByHeader: false,
   compress: true,
   images: {

@@ -215,10 +215,10 @@ See [MCP Admin Guide](docs/admin-manual/mcp-admin-guide.md) for complete documen
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | Python | 3.11+ | Core language |
-| FastAPI | 0.109.0 | High-performance web framework |
-| SQLAlchemy | 2.0.25 | ORM with async support |
-| Pydantic | 2.5.3 | Data validation |
-| Alembic | 1.13.1 | Database migrations |
+| FastAPI | 0.124.4 | High-performance web framework |
+| SQLAlchemy | 2.0.45 | ORM with async support |
+| Pydantic | 2.12.5 | Data validation |
+| Alembic | 1.17.2 | Database migrations |
 | python-jose | 3.3.0 | JWT token handling |
 | passlib | 1.7.4 | Password hashing (bcrypt) |
 | openpyxl | 3.1.2 | Excel export |
