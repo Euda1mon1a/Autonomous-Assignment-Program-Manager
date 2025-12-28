@@ -5,7 +5,7 @@
  */
 
 import { useState, useCallback, useRef, useId } from 'react';
-import { X, Upload, FileText, AlertCircle, CheckCircle, Download } from 'lucide-react';
+import { X, Upload, FileText, AlertCircle, AlertTriangle, CheckCircle, Download } from 'lucide-react';
 import { useImport } from './useImport';
 import { ImportPreview } from './ImportPreview';
 import { ImportProgressIndicator } from './ImportProgressIndicator';
@@ -49,6 +49,8 @@ export function BulkImportModal({
     progress,
     options,
     isLoading,
+    xlsxFallbackUsed,
+    xlsxWarnings,
     previewImport,
     executeImport,
     cancelImport,
@@ -320,6 +322,34 @@ export function BulkImportModal({
                   </p>
                 </div>
               </div>
+
+              {/* XLSX Fallback Warning */}
+              {xlsxFallbackUsed && (
+                <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800">
+                  <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium">Using Client-Side Parsing</p>
+                    <p className="text-sm">
+                      Backend Excel parsing is unavailable. Some features like cell color detection may not work.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* XLSX Warnings */}
+              {xlsxWarnings.length > 0 && !xlsxFallbackUsed && (
+                <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-800">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium">Parsing Notes</p>
+                    <ul className="text-sm list-disc list-inside">
+                      {xlsxWarnings.map((warning, index) => (
+                        <li key={index}>{warning}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
 
               {/* Import Options */}
               <div className="p-4 border border-gray-200 rounded-lg space-y-3">

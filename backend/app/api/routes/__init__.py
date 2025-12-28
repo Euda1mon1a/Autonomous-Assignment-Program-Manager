@@ -29,6 +29,7 @@ from app.api.routes import (
     fmit_timeline,
     game_theory,
     health,
+    imports,
     jobs,
     leave,
     me_dashboard,
@@ -146,5 +147,6 @@ api_router.include_router(role_views.router, prefix="/views", tags=["role-views"
 api_router.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
 api_router.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
 api_router.include_router(upload.router, prefix="/uploads", tags=["upload"])
+api_router.include_router(imports.router, prefix="/imports", tags=["imports"])
 api_router.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
 api_router.include_router(ws.router, tags=["websocket"])

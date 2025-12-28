@@ -4,7 +4,6 @@ Import schedules and data into Residency Scheduler from Excel files.
 
 ---
 
-<<<<<<< HEAD
 ## Web Interface (Recommended)
 
 The easiest way to import data is through the **Import/Export** page:
@@ -22,6 +21,34 @@ The web interface provides:
 - Progress tracking for large imports
 - Automatic duplicate detection
 
+### Supported File Formats
+
+| Format | Extension | Features |
+|--------|-----------|----------|
+| **Excel** | `.xlsx`, `.xls` | Full support including date conversion, color-coded cells (backend parsing) |
+| **CSV** | `.csv` | Standard comma-separated values |
+| **JSON** | `.json` | Array of objects format |
+
+### Excel Parsing Architecture
+
+Excel files are parsed using a **backend-first approach** with client-side fallback:
+
+1. **Primary (Backend)**: Uses `openpyxl` for full Excel support including:
+   - Date cell conversion to ISO format
+   - Merged cell handling
+   - Cell color detection (for color-coded schedules)
+   - Duplicate header detection
+   - Empty row filtering
+
+2. **Fallback (Client-Side)**: If the backend is unavailable, uses SheetJS:
+   - Basic cell value extraction
+   - Date handling
+   - A warning banner will appear when using fallback mode
+
+!!! note "Color-Coded Schedules"
+    If your Excel files use color coding (e.g., yellow for FMIT, red for vacation),
+    the backend parser can detect these. The client-side fallback cannot read colors.
+
 ---
 
 ## Command Line Import
@@ -29,9 +56,6 @@ The web interface provides:
 For advanced users and automation, use the Excel import script.
 
 ### Overview
-=======
-## Overview
->>>>>>> origin/docs/session-14-summary
 
 The Excel import script (`scripts/import_excel.py`) allows you to bulk import:
 
@@ -289,6 +313,72 @@ Row 5: Person not found: 'Dr. John Smith'
 - Check for typos in the name
 - Ensure "Dr." prefix matches or is handled
 
+### Client-Side Fallback Warning
+
+If you see "Using Client-Side Parsing" in the import modal:
+
+**Cause**: The backend API is unavailable or unreachable.
+
+**Impact**:
+- Basic import still works
+- Cell color detection is not available
+- Some advanced Excel features may not parse correctly
+
+**Solution**:
+- Ensure the backend server is running
+- Check network connectivity
+- Verify the API URL is correct in your environment config
+
+---
+
+## API Reference
+
+### POST /imports/parse-xlsx
+
+Parse an Excel file and return structured data for preview.
+
+**Request**: Multipart form data with file upload
+
+**Parameters**:
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `file` | File | required | Excel file (.xlsx, .xls) |
+| `sheet_name` | string | first sheet | Specific sheet to parse |
+| `header_row` | int | 1 | Row containing headers (1-indexed) |
+| `max_rows` | int | 10000 | Maximum rows to parse |
+| `skip_empty_rows` | bool | true | Skip completely empty rows |
+
+**Response**:
+```json
+{
+  "success": true,
+  "rows": [
+    {"name": "John Doe", "type": "resident", "email": "john@example.com"},
+    {"name": "Jane Smith", "type": "faculty", "email": "jane@example.com"}
+  ],
+  "columns": ["name", "type", "email"],
+  "total_rows": 2,
+  "sheet_name": "Sheet1",
+  "warnings": ["Skipped 3 empty rows"]
+}
+```
+
+### POST /imports/parse-xlsx/sheets
+
+List all sheet names in an Excel workbook.
+
+**Request**: Multipart form data with file upload
+
+**Response**:
+```json
+{
+  "success": true,
+  "sheets": ["Schedule", "Leave", "Personnel"],
+  "count": 3,
+  "default": "Schedule"
+}
+```
+
 ---
 
 ## Related
@@ -296,7 +386,4 @@ Row 5: Person not found: 'Dr. John Smith'
 - [Exporting Data](exports.md) - Export schedules to Excel
 - [Absences](absences.md) - Managing absences via the UI
 - [People Management](people.md) - Adding residents and faculty
-<<<<<<< HEAD
 - [Conflict Resolution](conflicts.md) - Resolving import conflicts
-=======
->>>>>>> origin/docs/session-14-summary
