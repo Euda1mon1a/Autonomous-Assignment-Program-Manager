@@ -80,6 +80,18 @@ class AssignmentWithWarnings(AssignmentResponse):
     is_compliant: bool = True
 
 
+class AssignmentListResponse(BaseModel):
+    """Schema for paginated assignment list response."""
+
+    items: list[AssignmentResponse]
+    total: int
+    page: int | None = None
+    page_size: int | None = None
+
+    class Config:
+        from_attributes = True
+
+
 class AssignmentWithExplanation(AssignmentResponse):
     """Schema for assignment response with full decision explanation."""
 

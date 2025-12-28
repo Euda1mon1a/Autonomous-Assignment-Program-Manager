@@ -15,6 +15,7 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.assignment import (
     AssignmentCreate,
+    AssignmentListResponse,
     AssignmentResponse,
     AssignmentUpdate,
     AssignmentWithWarnings,
@@ -23,7 +24,7 @@ from app.schemas.assignment import (
 router = APIRouter()
 
 
-@router.get("")
+@router.get("", response_model=AssignmentListResponse)
 def list_assignments(
     start_date: date | None = Query(None, description="Filter from this date"),
     end_date: date | None = Query(None, description="Filter until this date"),
@@ -32,10 +33,12 @@ def list_assignments(
     activity_type: str | None = Query(
         None, description="Filter by activity type (e.g., on_call, clinic, inpatient)"
     ),
+    page: int = Query(1, ge=1, description="Page number (1-indexed)"),
+    page_size: int = Query(100, ge=1, le=500, description="Items per page (max 500)"),
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """List assignments with optional filters. Requires authentication."""
+    """List assignments with optional filters and pagination. Requires authentication."""
     controller = AssignmentController(db)
     return controller.list_assignments(
         start_date=start_date,
@@ -43,6 +46,8 @@ def list_assignments(
         person_id=person_id,
         role=role,
         activity_type=activity_type,
+        page=page,
+        page_size=page_size,
     )
 
 
@@ -102,7 +107,7 @@ def delete_assignment(
     controller.delete_assignment(assignment_id)
 
 
-@router.delete("")
+@router.delete("", status_code=204)
 def delete_assignments_bulk(
     start_date: date = Query(..., description="Delete assignments from this date"),
     end_date: date = Query(..., description="Delete assignments until this date"),

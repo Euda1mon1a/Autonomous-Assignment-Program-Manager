@@ -13,27 +13,36 @@ from app.controllers.absence_controller import AbsenceController
 from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.absence import AbsenceCreate, AbsenceResponse, AbsenceUpdate
+from app.schemas.absence import (
+    AbsenceCreate,
+    AbsenceListResponse,
+    AbsenceResponse,
+    AbsenceUpdate,
+)
 
 router = APIRouter()
 
 
-@router.get("")
+@router.get("", response_model=AbsenceListResponse)
 def list_absences(
     start_date: date | None = Query(None, description="Filter absences starting from"),
     end_date: date | None = Query(None, description="Filter absences ending by"),
     person_id: UUID | None = Query(None, description="Filter by person"),
     absence_type: str | None = Query(None, description="Filter by absence type"),
+    page: int = Query(1, ge=1, description="Page number (1-indexed)"),
+    page_size: int = Query(100, ge=1, le=500, description="Items per page (max 500)"),
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """List absences with optional filters. Requires authentication."""
+    """List absences with optional filters and pagination. Requires authentication."""
     controller = AbsenceController(db)
     return controller.list_absences(
         start_date=start_date,
         end_date=end_date,
         person_id=person_id,
         absence_type=absence_type,
+        page=page,
+        page_size=page_size,
     )
 
 

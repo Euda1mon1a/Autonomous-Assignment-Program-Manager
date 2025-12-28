@@ -26,14 +26,47 @@ class AbsenceController:
         end_date: date | None = None,
         person_id: UUID | None = None,
         absence_type: str | None = None,
+        page: int = 1,
+        page_size: int = 100,
     ) -> dict:
-        """List absences with optional filters."""
-        return self.service.list_absences(
+        """List absences with optional filters and pagination.
+
+        Args:
+            start_date: Filter absences starting from this date
+            end_date: Filter absences ending by this date
+            person_id: Filter by specific person
+            absence_type: Filter by absence type
+            page: Page number (1-indexed)
+            page_size: Number of items per page
+
+        Returns:
+            Dict with items, total count, page, and page_size
+        """
+        # TODO: Update service layer to support pagination (page, page_size)
+        # For now, fetch all and apply pagination at controller level
+        result = self.service.list_absences(
             start_date=start_date,
             end_date=end_date,
             person_id=person_id,
             absence_type=absence_type,
         )
+
+        # Handle both list and dict returns from service
+        if isinstance(result, dict):
+            items = result.get("items", result.get("absences", []))
+        else:
+            items = result if result else []
+
+        total = len(items)
+        offset = (page - 1) * page_size
+        paginated_items = items[offset : offset + page_size]
+
+        return {
+            "items": paginated_items,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+        }
 
     def get_absence(self, absence_id: UUID) -> AbsenceResponse:
         """Get a single absence by ID."""

@@ -4,7 +4,7 @@
 services:
   # PostgreSQL Database
   db:
-    image: postgres:15-alpine
+    image: postgres:15.15-alpine  # CVE-2025-12817, CVE-2025-12818 patched
     container_name: residency-scheduler-db
     restart: unless-stopped
     environment:
@@ -24,7 +24,7 @@ services:
 
   # Redis - Message Broker for Celery
   redis:
-    image: redis:7-alpine
+    image: redis:7.4.2-alpine  # CVE-2025-49844 (CVSS 9.9 RCE) patched
     container_name: residency-scheduler-redis
     restart: unless-stopped
     # Port removed for production security - Redis only accessible within Docker network
