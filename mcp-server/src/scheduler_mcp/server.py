@@ -136,12 +136,13 @@ from .tools.validate_schedule import (
     validate_schedule as validate_schedule_by_id,
 )
 
-# Configure logging
+# Configure logging - MUST use stderr for STDIO transport compatibility
+# MCP uses stdout for JSON-RPC messages; logging to stdout corrupts the protocol
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.StreamHandler(sys.stdout),
+        logging.StreamHandler(sys.stderr),
     ],
 )
 
