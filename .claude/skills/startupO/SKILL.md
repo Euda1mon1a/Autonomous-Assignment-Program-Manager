@@ -124,6 +124,22 @@ Output this confirmation:
 Ready to orchestrate. What's the task?
 ```
 
+### 5. Spawn DELEGATION_AUDITOR (Background)
+
+Spawn DELEGATION_AUDITOR agent in background to track delegation metrics throughout the session:
+
+```
+Task(
+  description="DELEGATION_AUDITOR: Session monitoring",
+  prompt="Monitor this session for delegation patterns. Track metrics and update DELEGATION_METRICS.md at session end.",
+  subagent_type="general-purpose",
+  model="haiku",
+  run_in_background=true
+)
+```
+
+This ensures delegation metrics are always tracked without manual invocation.
+
 ---
 
 ## Complexity Assessment Framework

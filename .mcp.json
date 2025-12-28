@@ -2,14 +2,10 @@
   "mcpServers": {
     "residency-scheduler": {
       "command": "docker",
-      "args": [
-        "compose", "exec", "-T", "mcp-server",
-        "python", "-m", "scheduler_mcp.server"
-      ],
+      "args": ["compose", "exec", "-T", "-e", "MCP_TRANSPORT=stdio", "mcp-server", "python", "-m", "scheduler_mcp.server"],
       "env": {
         "LOG_LEVEL": "INFO"
-      },
-      "transport": "stdio"
+      }
     },
     "residency-scheduler-local": {
       "command": "python",

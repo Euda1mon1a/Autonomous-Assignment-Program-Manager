@@ -151,25 +151,62 @@ TASK_DURATION_ESTIMATES = {
 # Helper Functions
 
 
+_celery_app = None
+
+
 def get_celery_app():
     """
-    Get the Celery application instance.
+    Get or create a Celery application instance.
+
+    Creates a standalone Celery client that connects to Redis using
+    environment variables. This allows the MCP server to submit tasks
+    and query status without needing the backend codebase.
 
     Returns:
         Celery application instance
 
     Raises:
-        ImportError: If Celery or backend dependencies are not available
+        ImportError: If Celery is not installed
         ConnectionError: If Redis connection fails
     """
+    global _celery_app
+
+    if _celery_app is not None:
+        return _celery_app
+
     try:
-        from app.core.celery_app import get_celery_app as _get_celery_app
-        return _get_celery_app()
+        from celery import Celery
+
+        broker_url = os.getenv(
+            "CELERY_BROKER_URL", "redis://localhost:6379/0"
+        )
+        result_backend = os.getenv(
+            "CELERY_RESULT_BACKEND", "redis://localhost:6379/0"
+        )
+
+        _celery_app = Celery(
+            "scheduler_mcp",
+            broker=broker_url,
+            backend=result_backend,
+        )
+
+        # Configure for remote task submission (no task autodiscovery needed)
+        _celery_app.conf.update(
+            task_serializer="json",
+            accept_content=["json"],
+            result_serializer="json",
+            timezone="UTC",
+            enable_utc=True,
+            # Don't try to autodiscover tasks - we send by name
+            imports=[],
+        )
+
+        logger.info(f"Created MCP Celery client connected to {broker_url}")
+        return _celery_app
+
     except ImportError as e:
-        logger.error(f"Failed to import Celery app: {e}")
-        raise ImportError(
-            "Backend dependencies not available. Ensure PYTHONPATH includes backend directory."
-        ) from e
+        logger.error(f"Celery not installed: {e}")
+        raise ImportError("Celery package not installed.") from e
 
 
 def validate_task_params(task_type: TaskType, params: dict[str, Any]) -> None:

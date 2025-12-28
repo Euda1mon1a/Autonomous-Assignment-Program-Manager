@@ -181,8 +181,8 @@ services:
         reservations:
           cpus: '0.25'
           memory: 256M
-    # No ports exposed by default - stdio transport via docker exec
-    # For HTTP transport, uncomment: ports: ["8080:8080"]
+    # Port 8080 available for HTTP transport if needed (disabled by default for security)
+    # Uncomment to enable: ports: ["8080:8080"]
     networks:
       - app-network
     healthcheck:
