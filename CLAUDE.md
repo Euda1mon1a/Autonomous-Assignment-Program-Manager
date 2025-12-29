@@ -958,7 +958,14 @@ Cross-industry best practices organized in tiers:
 - **OpenTelemetry Export**: OTLP/Jaeger/Zipkin trace export for distributed tracing
 - **Circuit Breaker Health**: Breaker status integrated into `/health` endpoint
 
+**Time Crystal Scheduling** (NEW):
+- **Anti-Churn Objective**: Minimize schedule changes during regeneration
+- **Subharmonic Detection**: Identify natural cycles (7d, 14d, 28d ACGME windows)
+- **Stroboscopic Checkpoints**: State advances at discrete boundaries (week start, block end)
+- **Rigidity Scoring**: Measure schedule stability (0.0-1.0)
+
 See `docs/architecture/cross-disciplinary-resilience.md` for detailed documentation.
+See `docs/architecture/TIME_CRYSTAL_ANTI_CHURN.md` for time crystal scheduling.
 
 ### Swap System
 
