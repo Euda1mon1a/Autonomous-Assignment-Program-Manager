@@ -52,18 +52,6 @@ from .composite_resilience_tools import (
     calculate_recovery_distance,
     get_unified_critical_index,
 )
-
-# Import immune system tools (AIS - Artificial Immune System)
-from .immune_system_tools import (
-    # Response Models
-    AntibodyAnalysisResponse,
-    ImmuneResponseAssessmentResponse,
-    MemoryCellsResponse,
-    # Tool Functions
-    analyze_antibody_response,
-    assess_immune_response,
-    check_memory_cells,
-)
 from .deployment_tools import (
     DeploymentStatusResult,
     Environment,
@@ -89,30 +77,11 @@ from .deployment_tools import (
     validate_deployment,
 )
 
-# Import thermodynamics tools (entropy, phase transitions, free energy)
-from .thermodynamics_tools import (
-    # Response Models
-    ScheduleEntropyResponse,
-    EntropyMonitorStateResponse,
-    PhaseTransitionRiskResponse,
-    TransitionSeverityEnum,
-    FreeEnergyOptimizationResponse,
-    EnergyLandscapeResponse,
-    # Tool Functions
-    calculate_schedule_entropy,
-    get_entropy_monitor_state,
-    analyze_phase_transitions,
-    estimate_transition_time,
-    optimize_free_energy,
-    analyze_energy_landscape,
-)
-
 # Import early warning tools (STA/LTA, SPC, Fire Index)
 from .early_warning_integration import (
     # Burnout Fire Index (CFFDRS)
     BatchFireDangerRequest,
     BatchFireDangerResponse,
-    DangerClassEnum,
     FireDangerRequest,
     FireDangerResponse,
     # Seismic Detection (STA/LTA)
@@ -153,7 +122,35 @@ from .empirical_tools import (
 )
 
 # Import FRMS (Fatigue Risk Management System) tools
+from .frms_integration import (
+    FatigueHazardResponse,
+    FatigueScoreResponse,
+    # Response Models
+    FRMSAssessmentResponse,
+    ScheduleFatigueRiskResponse,
+    SleepDebtAnalysisResponse,
+    TeamFatigueScanResponse,
+    analyze_sleep_debt,
+    assess_schedule_fatigue_risk,
+    evaluate_fatigue_hazard,
+    get_fatigue_score,
+    # Tool Functions
+    run_frms_assessment,
+    scan_team_fatigue,
+)
+
 # Import immune system tools (AIS - Artificial Immune System)
+from .immune_system_tools import (
+    # Response Models
+    AntibodyAnalysisResponse,
+    ImmuneResponseAssessmentResponse,
+    MemoryCellsResponse,
+    # Tool Functions
+    analyze_antibody_response,
+    assess_immune_response,
+    check_memory_cells,
+)
+
 # Import optimization and analytics tools (Erlang C, Six Sigma, Equity)
 from .optimization_tools import (
     EquityMetricsResponse,
@@ -168,13 +165,12 @@ from .optimization_tools import (
     optimize_erlang_coverage,
 )
 
-# Import optimization and analytics tools
+# Import resilience integration tools (N-1/N-2, Defense Levels, Epidemiology)
 from .resilience_integration import (
     BehavioralPatternsResponse,
     BlastRadiusAnalysisRequest,
     BlastRadiusAnalysisResponse,
     BurnoutContagionResponse,
-    # Tier 4: Epidemiological Burnout Modeling
     BurnoutRtResponse,
     BurnoutSpreadSimulationResponse,
     CognitiveLoadRequest,
@@ -237,19 +233,19 @@ from .scheduling_tools import (
 )
 
 # Import thermodynamics tools (entropy, phase transitions, free energy)
-from .tools.validate_schedule import (
-    ConstraintConfig,
-)
-
-# Import new validate_schedule tool with ConstraintService integration
-from .tools.validate_schedule import (
-    ScheduleValidationRequest as ConstraintValidationRequest,
-)
-from .tools.validate_schedule import (
-    ScheduleValidationResponse as ConstraintValidationResponse,
-)
-from .tools.validate_schedule import (
-    validate_schedule as validate_schedule_by_id,
+from .thermodynamics_tools import (
+    EnergyLandscapeResponse,
+    EntropyMonitorStateResponse,
+    FreeEnergyOptimizationResponse,
+    PhaseTransitionRiskResponse,
+    # Response Models
+    ScheduleEntropyResponse,
+    analyze_energy_landscape,
+    analyze_phase_transitions,
+    # Tool Functions
+    calculate_schedule_entropy,
+    get_entropy_monitor_state,
+    optimize_free_energy,
 )
 
 # Import time crystal tools
@@ -266,22 +262,18 @@ from .time_crystal_tools import (
     get_time_crystal_health,
 )
 
-# Import FRMS (Fatigue Risk Management System) tools
-from .frms_integration import (
-    # Response Models
-    FRMSAssessmentResponse,
-    FatigueScoreResponse,
-    SleepDebtAnalysisResponse,
-    FatigueHazardResponse,
-    TeamFatigueScanResponse,
-    ScheduleFatigueRiskResponse,
-    # Tool Functions
-    run_frms_assessment,
-    get_fatigue_score,
-    analyze_sleep_debt,
-    evaluate_fatigue_hazard,
-    scan_team_fatigue,
-    assess_schedule_fatigue_risk,
+# Import validate_schedule tool with ConstraintService integration
+from .tools.validate_schedule import (
+    ConstraintConfig,
+)
+from .tools.validate_schedule import (
+    ScheduleValidationRequest as ConstraintValidationRequest,
+)
+from .tools.validate_schedule import (
+    ScheduleValidationResponse as ConstraintValidationResponse,
+)
+from .tools.validate_schedule import (
+    validate_schedule as validate_schedule_by_id,
 )
 
 # Configure logging - MUST use stderr for STDIO transport compatibility
