@@ -193,8 +193,11 @@ services:
         reservations:
           cpus: '0.25'
           memory: 256M
-    ***REMOVED*** Port 8080 available for HTTP transport if needed (disabled by default for security)
-    ***REMOVED*** Uncomment to enable: ports: ["8080:8080"]
+    ***REMOVED*** HTTP transport port - bound to localhost only for security
+    ***REMOVED*** This enables parallel MCP connections while preventing network exposure
+    ***REMOVED*** DNS rebinding protection: only accessible from 127.0.0.1
+    ports:
+      - "127.0.0.1:8080:8080"
     networks:
       - app-network
     healthcheck:
