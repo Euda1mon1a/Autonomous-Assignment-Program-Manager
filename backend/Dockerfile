@@ -16,7 +16,7 @@
 # =============================================================================
 # Build Stage - includes compilers and build tools
 # =============================================================================
-FROM python:3.12-slim AS builder
+FROM python:3.14-slim AS builder
 
 WORKDIR /app
 
@@ -39,7 +39,7 @@ RUN pip install --upgrade pip --no-cache-dir \
 # =============================================================================
 # Runtime Stage - minimal production image
 # =============================================================================
-FROM python:3.12-slim AS runtime
+FROM python:3.14-slim AS runtime
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
