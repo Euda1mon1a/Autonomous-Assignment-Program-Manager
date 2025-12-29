@@ -2255,7 +2255,127 @@ See **[Exotic Research Tools Reference](/mcp-server/docs/EXOTIC_RESEARCH_TOOLS.m
 
 ---
 
-**Document Version**: 1.2
+## Tier 5: Exotic Frontier Physics & Mathematics (NEW - 2025-12-29)
+
+The framework now extends to **10 exotic frontier concepts** from statistical mechanics, quantum physics, topology, neuroscience, ecology, and catastrophe theory. These modules provide cutting-edge analysis capabilities unavailable from traditional scheduling approaches.
+
+### Overview
+
+| Module | Source Domain | Primary Application |
+|--------|---------------|---------------------|
+| **Metastability Detection** | Statistical Mechanics | Detect solver trapping, recommend escape strategies |
+| **Spin Glass Model** | Condensed Matter Physics | Generate diverse near-optimal schedules via replicas |
+| **Circadian PRC** | Chronobiology | Mechanistic burnout prediction from phase shifts |
+| **Penrose Process** | Astrophysics | Extract efficiency from rotation boundary periods |
+| **Anderson Localization** | Quantum Physics | Minimize update cascade scope via disorder |
+| **Persistent Homology** | Algebraic Topology | Detect multi-scale coverage voids and cycles |
+| **Free Energy Principle** | Neuroscience (Friston) | Forecast-driven scheduling with active inference |
+| **Keystone Species** | Ecology | Identify critical resources with cascade impact |
+| **Quantum Zeno Governor** | Quantum Mechanics | Prevent over-monitoring from freezing optimization |
+| **Catastrophe Theory** | Mathematics | Predict sudden schedule failures from smooth parameter changes |
+
+### 15. Metastability Detection
+
+**Source Domain**: Statistical Mechanics / Phase Transitions
+
+**Files**: `/backend/app/resilience/metastability_detector.py`, `/backend/app/resilience/metastability_integration.py`
+
+Detects when OR-Tools solver becomes trapped in local optima using Boltzmann escape probability P = exp(-ΔE/kT). Recommends escape strategies: continue search, increase temperature, basin hopping, restart, or accept local optimum.
+
+### 16. Spin Glass Constraint Model
+
+**Source Domain**: Condensed Matter Physics
+
+**Files**: `/backend/app/scheduling/spin_glass_model.py`
+
+Models scheduling constraints as frustrated spin systems (Ising model). Generates multiple "replica" schedules by sampling different ground states. Computes Parisi overlap parameter to quantify schedule diversity.
+
+### 17. Circadian Phase Response Curves
+
+**Source Domain**: Chronobiology
+
+**Files**: `/backend/app/resilience/circadian_model.py`
+
+Models resident circadian rhythms as Kuramoto oscillators. Predicts burnout from accumulated phase shifts caused by night calls and irregular schedules. Provides mechanistic burnout prediction unlike statistical-only methods.
+
+### 18. Penrose Process Efficiency
+
+**Source Domain**: Astrophysics (Black Hole Thermodynamics)
+
+**Files**: `/backend/app/scheduling/penrose_efficiency.py`
+
+Identifies "ergosphere" periods at rotation boundaries where extractable efficiency exists. Finds "negative energy swaps" that improve both parties. Based on Penrose process from black hole physics.
+
+### 19. Anderson Localization
+
+**Source Domain**: Quantum Physics
+
+**Files**: `/backend/app/scheduling/anderson_localization.py`
+
+Creates "disorder" in constraint coupling to localize schedule updates. Prevents cascade propagation across schedule regions. Enables micro-solvers for localized repairs.
+
+### 20. Persistent Homology (TDA)
+
+**Source Domain**: Algebraic Topology
+
+**Files**: `/backend/app/analytics/persistent_homology.py`
+
+Computes topological features (Betti numbers) across multiple scales. β₀ detects coverage clusters, β₁ detects scheduling loops/cycles, β₂ detects coverage voids. Uses Vietoris-Rips filtration.
+
+### 21. Free Energy Principle
+
+**Source Domain**: Computational Neuroscience (Friston)
+
+**Files**: `/backend/app/scheduling/free_energy_scheduler.py`
+
+Minimizes variational free energy F = complexity + inaccuracy. Uses active inference to update forecasts and drive scheduling toward predicted states. Balances exploration vs. exploitation.
+
+### 22. Keystone Species Analysis
+
+**Source Domain**: Ecology
+
+**Files**: `/backend/app/resilience/keystone_analysis.py`
+
+Identifies "keystone" resources whose removal triggers cascade collapse. Computes keystoneness score combining network centrality, uniqueness, and cascade depth. Recommends redundancy for critical keystones.
+
+### 23. Quantum Zeno Governor
+
+**Source Domain**: Quantum Mechanics
+
+**Files**: `/backend/app/scheduling/zeno_governor.py`
+
+Monitors human intervention frequency. Too-frequent monitoring "collapses" schedule evolution (like quantum Zeno effect). Recommends intervention reduction or schedule locking when Zeno threshold exceeded.
+
+### 24. Catastrophe Theory Detector
+
+**Source Domain**: Mathematics (Singularity Theory)
+
+**Files**: `/backend/app/resilience/catastrophe_detector.py`
+
+Maps schedule parameters to catastrophe theory manifolds (fold, cusp, swallowtail). Predicts sudden failures from smooth parameter changes. Computes distance to catastrophe cusp for early warning.
+
+### Integration with Core Framework
+
+| Tier 5 Module | Complements | Synergy |
+|---------------|-------------|---------|
+| Metastability | Solver Controls | Enhanced solver escape strategies |
+| Spin Glass | N-1/N-2 Contingency | Pre-computed diverse fallbacks |
+| Circadian PRC | SPC/Epidemiology | Mechanistic vs. statistical burnout prediction |
+| Penrose Process | Swap Management | Identify high-efficiency swap opportunities |
+| Anderson Localization | Blast Radius | Theoretical foundation for isolation |
+| Persistent Homology | Coverage Analysis | Multi-scale topological perspective |
+| Free Energy | Resilience Forecasting | Prediction-driven scheduling |
+| Keystone Species | Defense in Depth | Quantified criticality assessment |
+| Quantum Zeno | Intervention Tracking | Prevent over-management paralysis |
+| Catastrophe Theory | Early Warning | Predict sudden phase transitions |
+
+### Full Documentation
+
+See **[Exotic Frontier Concepts Reference](/docs/architecture/EXOTIC_FRONTIER_CONCEPTS.md)** for complete implementation details, API reference, and usage examples.
+
+---
+
+**Document Version**: 1.3
 **Last Updated**: 2025-12-29
 **Maintained By**: Resilience Engineering Team
 **Related Documentation**:

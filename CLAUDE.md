@@ -1,6 +1,6 @@
 # CLAUDE.md - Project Guidelines for Autonomous Claude Work
 
-> **Last Updated:** 2025-12-25
+> **Last Updated:** 2025-12-29
 > **Purpose:** Guidelines for autonomous AI-assisted development on the Residency Scheduler project
 
 ---
@@ -958,13 +958,26 @@ Cross-industry best practices organized in tiers:
 - **OpenTelemetry Export**: OTLP/Jaeger/Zipkin trace export for distributed tracing
 - **Circuit Breaker Health**: Breaker status integrated into `/health` endpoint
 
-**Time Crystal Scheduling** (NEW):
+**Time Crystal Scheduling**:
 - **Anti-Churn Objective**: Minimize schedule changes during regeneration
 - **Subharmonic Detection**: Identify natural cycles (7d, 14d, 28d ACGME windows)
 - **Stroboscopic Checkpoints**: State advances at discrete boundaries (week start, block end)
 - **Rigidity Scoring**: Measure schedule stability (0.0-1.0)
 
+**Tier 5 - Exotic Frontier Concepts** (NEW - 10 modules):
+- **Metastability Detection**: Statistical mechanics escape strategies for solver trapping
+- **Spin Glass Model**: Frustrated constraint systems for diverse schedule replicas
+- **Circadian PRC**: Chronobiology-based mechanistic burnout prediction
+- **Penrose Process**: Astrophysics-inspired efficiency extraction at rotation boundaries
+- **Anderson Localization**: Quantum disorder for minimizing update cascade scope
+- **Persistent Homology**: Topological data analysis for multi-scale coverage patterns
+- **Free Energy Principle**: Friston's neuroscience framework for forecast-driven scheduling
+- **Keystone Species**: Ecological analysis identifying critical cascade-triggering resources
+- **Quantum Zeno Governor**: Prevents over-monitoring from freezing schedule optimization
+- **Catastrophe Theory**: Predicts sudden failures from smooth parameter changes
+
 See `docs/architecture/cross-disciplinary-resilience.md` for detailed documentation.
+See `docs/architecture/EXOTIC_FRONTIER_CONCEPTS.md` for exotic frontier concepts.
 See `docs/architecture/TIME_CRYSTAL_ANTI_CHURN.md` for time crystal scheduling.
 
 ### Swap System
