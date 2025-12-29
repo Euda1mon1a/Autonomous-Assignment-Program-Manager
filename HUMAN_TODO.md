@@ -250,11 +250,12 @@ From: [date] To: [date] Group by: [dropdown] ☑ Include FMIT [Filters]
 
 ---
 
-### Solver Template Distribution Bugs - FIXED
+### Solver Template Distribution Bugs - FIXED & VERIFIED
 
 **Priority:** High
 **Found:** Session review (2025-12-24)
 **Fixed:** 2025-12-24
+**Verified:** Session 015 (2025-12-29) - All 4 solvers operational
 **Location:** `backend/app/scheduling/solvers.py`, `backend/app/scheduling/engine.py`
 
 **Issue:** Both greedy and CP-SAT solvers were assigning all residents to the same rotation.
@@ -274,6 +275,20 @@ From: [date] To: [date] Group by: [dropdown] ☑ Include FMIT [Filters]
 - Solvers are for outpatient half-day optimization only
 - Templates now filtered to `activity_type == "outpatient"` by default
 - `"clinic"` is a separate activity_type for FM Clinic with its own capacity/supervision constraints
+
+**Session 015 Verification Results (2025-12-29):**
+
+| Solver | Tests | Status | Balance Verified |
+|--------|-------|--------|------------------|
+| **Greedy** | 7/7 pass | Operational | 7,7,6 distribution |
+| **CP-SAT** | 4/4 pass | Operational | 9,9 distribution |
+| **PuLP** | 5/5 pass | Operational | 9,9 distribution |
+| **Hybrid** | 5/5 pass | Operational | Fallback chain working |
+
+**Test Coverage Gap Identified:**
+- No explicit balance behavior tests exist
+- Balance is verified implicitly through assignment distribution
+- Recommendation: Add dedicated `test_template_balance_*` tests to each solver's test class
 
 ---
 
@@ -343,5 +358,4 @@ The following links in `README.md` point to non-existent files:
 
 ---
 
-*Last updated: 2025-12-28 (Session 012 completions added)*
-*Last updated: 2025-12-28*
+*Last updated: 2025-12-29 (Session 015 solver verification added)*
