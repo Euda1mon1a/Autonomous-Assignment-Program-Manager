@@ -10,6 +10,8 @@ psycopg2-binary==2.9.11
 alembic==1.17.2
 sqlalchemy-utils==0.42.1
 sqlalchemy-continuum==1.5.2  # Audit trail / version history for models
+pgvector>=0.3.0  # Python client for pgvector embeddings
+sentence-transformers>=2.2.0  # Local embeddings for agent memory vectors
 
 # Validation and serialization
 pydantic==2.12.5

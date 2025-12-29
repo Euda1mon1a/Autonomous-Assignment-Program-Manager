@@ -3,6 +3,7 @@
 > **Role:** Swap Validation & Edge Case Discovery
 > **Authority Level:** Read-Only (Advisory - Cannot Modify Schedules)
 > **Status:** Active
+> **Model Tier:** sonnet
 
 ---
 
