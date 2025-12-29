@@ -65,6 +65,9 @@ export function useTodayManifest(
 /**
  * Fetch the date range where schedule data is available
  * Uses the blocks endpoint to determine min/max dates
+ *
+ * Note: The /blocks API returns items sorted ascending by date, time_of_day.
+ * It only supports start_date, end_date, and block_number query params.
  */
 export function useScheduleDateRange(
   options?: Omit<UseQueryOptions<ScheduleDateRange, ApiError>, 'queryKey' | 'queryFn'>
@@ -72,27 +75,17 @@ export function useScheduleDateRange(
   return useQuery<ScheduleDateRange, ApiError>({
     queryKey: manifestQueryKeys.dateRange(),
     queryFn: async () => {
-      // Fetch blocks to determine date range
-      // The blocks endpoint returns a list of blocks with dates
-      const response = await get<{ items: Array<{ date: string }> }>('/blocks?limit=1');
+      // Fetch all blocks - the API returns them sorted ascending by date
+      const response = await get<{ items: Array<{ date: string }> }>('/blocks');
 
       // If no blocks exist, return null range
       if (!response.items || response.items.length === 0) {
         return { start_date: null, end_date: null, has_data: false };
       }
 
-      // Fetch again with date range to get actual bounds
-      // Get earliest block
-      const earliestResponse = await get<{ items: Array<{ date: string }> }>(
-        '/blocks?limit=1&order_by=date&order=asc'
-      );
-      // Get latest block
-      const latestResponse = await get<{ items: Array<{ date: string }> }>(
-        '/blocks?limit=1&order_by=date&order=desc'
-      );
-
-      const startDate = earliestResponse.items?.[0]?.date || null;
-      const endDate = latestResponse.items?.[0]?.date || null;
+      // First item is earliest (ascending order), last item is latest
+      const startDate = response.items[0]?.date || null;
+      const endDate = response.items[response.items.length - 1]?.date || null;
 
       return {
         start_date: startDate,
