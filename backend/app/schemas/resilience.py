@@ -1289,3 +1289,184 @@ class Tier3StatusResponse(BaseModel):
     tier3_status: str  # healthy, warning, degraded
     issues: list[str]
     recommendations: list[str]
+
+
+# =============================================================================
+# Complex Systems: Self-Organized Criticality (SOC) Early Warning
+# =============================================================================
+
+
+class SOCWarningLevel(str, Enum):
+    """Warning level for critical slowing down."""
+
+    GREEN = "green"  # Healthy - no warning signals
+    YELLOW = "yellow"  # Single warning signal detected
+    ORANGE = "orange"  # Two warning signals detected
+    RED = "red"  # All three signals detected - critical
+    UNKNOWN = "unknown"  # Insufficient data
+
+
+# SOC Request Schemas
+
+
+class CriticalSlowingDownRequest(BaseModel):
+    """Request to analyze critical slowing down signals."""
+
+    utilization_history: list[float] = Field(
+        ...,
+        description="Daily utilization values (0.0 to 1.0) for analysis",
+        min_items=30,
+    )
+    coverage_history: list[float] | None = Field(
+        default=None,
+        description="Optional daily coverage rates for enhanced analysis",
+    )
+    days_lookback: int = Field(
+        default=60,
+        ge=30,
+        le=180,
+        description="Number of historical days to analyze",
+    )
+
+
+# SOC Response Schemas
+
+
+class CriticalSlowingDownResponse(BaseModel):
+    """Response from critical slowing down analysis."""
+
+    # Analysis metadata
+    id: UUID
+    calculated_at: datetime
+    days_analyzed: int
+    data_quality: str  # "excellent", "good", "fair", "poor"
+
+    # Warning status
+    is_critical: bool = Field(..., description="Approaching critical point?")
+    warning_level: SOCWarningLevel
+    confidence: float = Field(..., ge=0.0, le=1.0)
+
+    # Early warning signals - Relaxation Time
+    relaxation_time_hours: float | None = Field(
+        None,
+        description="Current relaxation time in hours (target: < 48)",
+    )
+    relaxation_time_baseline: float | None = Field(
+        None,
+        description="Historical baseline relaxation time",
+    )
+    relaxation_time_increasing: bool = Field(
+        False,
+        description="Is relaxation time increasing?",
+    )
+
+    # Early warning signals - Variance
+    variance_current: float | None = Field(
+        None,
+        description="Current variance in utilization",
+    )
+    variance_baseline: float | None = Field(
+        None,
+        description="Historical baseline variance",
+    )
+    variance_slope: float | None = Field(
+        None,
+        description="Variance trend slope (target: < 0.1)",
+    )
+    variance_increasing: bool = Field(
+        False,
+        description="Is variance increasing?",
+    )
+
+    # Early warning signals - Autocorrelation
+    autocorrelation_ac1: float | None = Field(
+        None,
+        description="Lag-1 autocorrelation (target: < 0.7)",
+    )
+    autocorrelation_baseline: float | None = Field(
+        None,
+        description="Historical baseline AC1",
+    )
+    autocorrelation_increasing: bool = Field(
+        False,
+        description="Is autocorrelation increasing?",
+    )
+
+    # Risk assessment
+    signals_triggered: int = Field(
+        ...,
+        ge=0,
+        le=3,
+        description="Count of warning signals triggered (0-3)",
+    )
+    estimated_days_to_critical: int | None = Field(
+        None,
+        description="Projected days until critical point",
+    )
+    avalanche_risk_score: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Composite avalanche risk score",
+    )
+
+    # Actionable insights
+    recommendations: list[str] = Field(
+        default_factory=list,
+        description="Actionable recommendations",
+    )
+    immediate_actions: list[str] = Field(
+        default_factory=list,
+        description="Actions requiring immediate attention",
+    )
+    watch_items: list[str] = Field(
+        default_factory=list,
+        description="Items to monitor closely",
+    )
+
+    class Config:
+        """Pydantic model configuration."""
+
+        json_schema_extra = {
+            "example": {
+                "id": "123e4567-e89b-12d3-a456-426614174000",
+                "calculated_at": "2024-01-15T10:30:00",
+                "days_analyzed": 60,
+                "data_quality": "excellent",
+                "is_critical": True,
+                "warning_level": "orange",
+                "confidence": 0.85,
+                "relaxation_time_hours": 52.3,
+                "relaxation_time_baseline": 24.1,
+                "relaxation_time_increasing": True,
+                "variance_current": 0.045,
+                "variance_baseline": 0.022,
+                "variance_slope": 0.15,
+                "variance_increasing": True,
+                "autocorrelation_ac1": 0.68,
+                "autocorrelation_baseline": 0.45,
+                "autocorrelation_increasing": True,
+                "signals_triggered": 2,
+                "estimated_days_to_critical": 18,
+                "avalanche_risk_score": 0.72,
+                "recommendations": [
+                    "⚠️ TWO warning signals - avalanche risk elevated",
+                    "Activate preventive measures",
+                ],
+                "immediate_actions": ["Review N-1/N-2 contingency plans"],
+                "watch_items": ["Monitor swap resolution times"],
+            }
+        }
+
+
+class SOCMetricsHistoryResponse(BaseModel):
+    """Historical SOC metrics for trend analysis."""
+
+    metrics: list[CriticalSlowingDownResponse]
+    total_count: int
+    date_range_start: date
+    date_range_end: date
+    trend_summary: dict = Field(
+        default_factory=dict,
+        description="Summary of trends over the period",
+    )
