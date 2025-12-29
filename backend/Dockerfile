@@ -72,9 +72,8 @@ USER appuser
 # Expose port
 EXPOSE 8000
 
-# Health check using Python (no curl in distroless)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+# No healthcheck here - it will be defined in docker-compose.yml per service
+# since different services (backend, celery-worker, celery-beat) need different checks
 
 # Run migrations and start server
 ENTRYPOINT ["docker-entrypoint.sh"]
