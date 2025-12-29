@@ -918,8 +918,188 @@ Currently no tools have rate limits. Future considerations:
 
 ---
 
+## Research-to-Tool Conversions (3 tools)
+
+New tools that bridge research into actionable functionality.
+
+### 37. calculate_shapley_workload_tool
+
+**Purpose:** Calculate fair workload distribution using Shapley values from game theory
+
+**Input Schema:**
+```python
+{
+    "faculty_ids": list[str],    # Faculty IDs to analyze (minimum 2)
+    "start_date": str,           # YYYY-MM-DD format
+    "end_date": str,             # YYYY-MM-DD format
+    "num_samples": int           # Monte Carlo samples (100-10000, default 1000)
+}
+```
+
+**Output Schema:**
+```python
+{
+    "status": str,
+    "faculty_count": int,
+    "date_range": {"start": str, "end": str},
+    "results": {
+        "<faculty_id>": {
+            "shapley_value": float,        # 0-1, normalized contribution
+            "marginal_contribution": float, # Blocks covered uniquely
+            "fair_workload_target": float,  # Hours based on Shapley
+            "current_workload": float,      # Actual hours
+            "equity_gap": float             # +/- from fair
+        }
+    },
+    "summary": {
+        "total_workload": float,
+        "equity_gap_std_dev": float,
+        "overworked_count": int,
+        "underworked_count": int
+    }
+}
+```
+
+**Use Cases:**
+- Fair workload distribution analysis
+- Equity gap detection
+- Quarterly workload reviews
+- Burnout risk assessment
+
+**Research Source:** `docs/research/GAME_THEORY_QUICK_REFERENCE.md`
+
+**Dependencies:**
+- Requires: DATABASE_URL (for real calculations)
+- Rate Limit: None
+- Idempotent: Yes
+
+**Estimated Duration:** 2-10 seconds
+
+---
+
+### 38. detect_critical_slowing_down_tool
+
+**Purpose:** Early warning system for cascade failures using Self-Organized Criticality
+
+**Input Schema:**
+```python
+{
+    "utilization_history": list[float],  # Daily utilization (0.0-1.0)
+    "coverage_history": list[float] | None,  # Optional coverage rates
+    "days_lookback": int                 # Days to analyze (default: 60)
+}
+```
+
+**Output Schema:**
+```python
+{
+    "status": str,
+    "is_critical": bool,           # Approaching critical point?
+    "warning_level": str,          # GREEN/YELLOW/ORANGE/RED
+    "confidence": float,           # 0-1
+    "data_quality": str,           # excellent/good/fair/poor
+    "signals_triggered": int,      # 0-3 early warning signals
+    "triggered_signals": list[str],
+    "estimated_days_to_critical": int | None,
+    "metrics": {
+        "relaxation_time_hours": float,   # Target: < 48
+        "variance_slope": float,          # Target: < 0.1
+        "autocorrelation_ac1": float,     # Target: < 0.7
+        "mean_utilization": float
+    },
+    "thresholds": {...},
+    "recommendations": list[str],
+    "immediate_actions": list[str],
+    "days_analyzed": int
+}
+```
+
+**Use Cases:**
+- 2-4 week advance warning of cascade failures
+- Resilience monitoring
+- Crisis prevention
+- Weekly health checks
+
+**Research Source:** `docs/research/complex-systems-implementation-guide.md`
+
+**Dependencies:**
+- Requires: None (standalone calculation)
+- Rate Limit: None
+- Idempotent: Yes
+
+**Estimated Duration:** < 1 second
+
+---
+
+### 39. detect_schedule_changepoints_tool
+
+**Purpose:** Detect regime shifts and structural breaks in schedule patterns
+
+**Input Schema:**
+```python
+{
+    "daily_values": list[float],  # Daily workload values
+    "dates": list[str],           # YYYY-MM-DD format
+    "methods": list[str] | None   # ["cusum", "pelt"] (default: both)
+}
+```
+
+**Output Schema:**
+```python
+{
+    "status": str,
+    "methods_used": list[str],
+    "data_points": int,
+    "date_range": {"start": str, "end": str},
+    "results": {
+        "cusum": {
+            "method": str,
+            "change_points": list[ChangePoint],
+            "num_changepoints": int,
+            "algorithm_parameters": {...}
+        },
+        "pelt": {...}
+    },
+    "total_changepoints": int,
+    "summary": {
+        "mean_value": float,
+        "std_value": float,
+        "min_value": float,
+        "max_value": float
+    }
+}
+
+ChangePoint:
+{
+    "index": int,
+    "timestamp": str,
+    "change_type": str,    # mean_shift_upward, mean_shift_downward, segment_boundary
+    "magnitude": float,
+    "confidence": float,   # 0-1
+    "description": str
+}
+```
+
+**Use Cases:**
+- Detect policy changes
+- Identify staffing transitions
+- Compliance audit trail
+- Trend analysis
+
+**Research Source:** `docs/research/SIGNAL_PROCESSING_SCHEDULE_ANALYSIS.md`
+
+**Dependencies:**
+- Requires: None (standalone calculation)
+- Rate Limit: None
+- Idempotent: Yes
+
+**Estimated Duration:** < 1 second
+
+---
+
 ## Version History
 
+- **2025-12-29**: Added 3 research-to-tool conversions (39 tools total)
 - **2025-12-26**: Initial catalog (36 tools)
 - **MCP Server**: v0.1.0
 - **Backend API**: v1.0.0
