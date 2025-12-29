@@ -238,8 +238,22 @@ class AutonomousLoop:
 
         # Create adapter (lazy import to avoid circular dependency)
         from app.autonomous.adapter import ParameterAdapter
+        from app.autonomous.advisor import LLMAdvisor
 
         adapter = ParameterAdapter()
+
+        # Create LLM advisor (optional, airgap-compatible)
+        # Only create if Ollama is available, otherwise loop runs without advisor
+        try:
+            advisor = LLMAdvisor(
+                llm_router=None,  # Will create default Ollama router
+                model="llama3.2",
+                airgap_mode=True,  # Local only by default
+            )
+            logger.info("LLM advisor initialized with local Ollama")
+        except Exception as e:
+            logger.warning(f"LLM advisor unavailable: {e}")
+            advisor = None
 
         return cls(
             db=db,
@@ -249,7 +263,7 @@ class AutonomousLoop:
             evaluator=evaluator,
             config=config,
             adapter=adapter,
-            advisor=None,  # LLM advisor is optional
+            advisor=advisor,  # LLM advisor is optional but enabled by default
         )
 
     def run(self) -> LoopResult:
@@ -488,13 +502,13 @@ class AutonomousLoopWithAdvisor(AutonomousLoop):
     - Explanations for reports
     """
 
-    def _run_iteration(self) -> None:
-        """Run iteration with optional LLM advisory input."""
+    async def _run_iteration_async(self) -> None:
+        """Run iteration with optional LLM advisory input (async version)."""
         # First, try to get LLM suggestion if advisor is configured
         llm_suggestion = None
         if self.advisor:
             try:
-                llm_suggestion = self.advisor.suggest(
+                llm_suggestion = await self.advisor.suggest(
                     state=self.state,
                     last_evaluation=self._best_evaluation,
                     history=self.store.load_history(self.state.run_id)[-5:],
@@ -511,6 +525,11 @@ class AutonomousLoopWithAdvisor(AutonomousLoop):
         # If LLM suggested parameters, use them
         if llm_suggestion and llm_suggestion.params:
             self.state.current_params = llm_suggestion.params
+            logger.info(
+                f"Applying LLM suggestion: {llm_suggestion.type.value} "
+                f"(confidence={llm_suggestion.confidence:.2f})"
+            )
+            logger.debug(f"LLM reasoning: {llm_suggestion.reasoning}")
 
         # Run standard iteration
         super()._run_iteration()
@@ -518,5 +537,32 @@ class AutonomousLoopWithAdvisor(AutonomousLoop):
         # Log LLM usage if any
         if llm_suggestion:
             self.store.log(
-                self.state, f"LLM suggestion applied: {llm_suggestion.type.value}"
+                self.state,
+                f"LLM suggestion applied: {llm_suggestion.type.value} - {llm_suggestion.reasoning}",
             )
+
+    def _run_iteration(self) -> None:
+        """
+        Run iteration with optional LLM advisory input.
+
+        Note: This wraps the async version for compatibility with the base loop.
+        In production, consider making the entire loop async.
+        """
+        import asyncio
+
+        # Check if we're already in an event loop
+        try:
+            loop = asyncio.get_running_loop()
+            # If we're already in a loop, run the async version directly
+            # This requires the caller to use asyncio.run() or similar
+            logger.warning(
+                "Running async iteration in existing event loop - "
+                "consider making the entire loop async"
+            )
+            # Create a task and wait for it
+            task = loop.create_task(self._run_iteration_async())
+            # This is a bit hacky but works for now
+            loop.run_until_complete(task)
+        except RuntimeError:
+            # No event loop running, create one
+            asyncio.run(self._run_iteration_async())

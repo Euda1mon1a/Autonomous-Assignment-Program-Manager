@@ -3,6 +3,7 @@
 from app.models.absence import Absence
 from app.models.agent_memory import AgentEmbedding, ModelTier, TaskHistory
 from app.models.assignment import Assignment
+from app.models.rag_document import RAGDocument
 from app.models.block import Block
 from app.models.calendar_subscription import CalendarSubscription
 from app.models.call_assignment import CallAssignment
@@ -134,6 +135,8 @@ __all__ = [
     "ModelTier",
     "AgentEmbedding",
     "TaskHistory",
+    # RAG document model
+    "RAGDocument",
     # Idempotency models
     "IdempotencyRequest",
     "IdempotencyStatus",
