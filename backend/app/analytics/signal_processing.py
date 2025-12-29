@@ -28,6 +28,9 @@ Key Capabilities:
 7. Harmonic Analysis: Identify resonances between shift patterns that could
    indicate systemic scheduling issues.
 
+8. Change Point Detection: Detect regime shifts, policy changes, and structural
+   breaks using CUSUM and PELT algorithms.
+
 Cross-Disciplinary Origins:
 ---------------------------
 - Seismology: STA/LTA algorithm for detecting earthquakes
@@ -52,8 +55,11 @@ Usage:
     result = processor.analyze_workload_patterns(
         workload_series=daily_hours,
         dates=date_list,
-        analysis_types=["wavelet", "fft", "sta_lta"]
+        analysis_types=["wavelet", "fft", "sta_lta", "changepoint"]
     )
+
+    # Detect change points for regime shifts
+    changepoint_results = processor.analyze_schedule_changepoints(ts)
 
     # Export for visualization
     json_data = processor.export_to_holographic_format(result)
@@ -205,6 +211,7 @@ class SignalAnalysisResult(TypedDict, total=False):
     constraint_violations: list[ConstraintViolation]
     harmonic_analysis: dict | None
     adaptive_filtered: dict | None
+    changepoint_analysis: dict[str, ChangePointAnalysisResult] | None
     recommendations: list[str]
 
 
@@ -219,6 +226,27 @@ class HolographicExport(TypedDict):
     wavelet_domain: dict
     anomalies: list[dict]
     metadata: dict
+
+
+class ChangePoint(TypedDict):
+    """Detected change point in time series."""
+
+    index: int
+    timestamp: str  # ISO format date
+    change_type: str  # mean_shift, variance_change, trend_change
+    magnitude: float
+    confidence: float  # 0-1
+    description: str
+
+
+class ChangePointAnalysisResult(TypedDict):
+    """Result of change point detection analysis."""
+
+    method: str  # cusum, pelt, or ensemble
+    change_points: list[ChangePoint]
+    num_changepoints: int
+    segmentation_quality: float  # 0-1, higher is better
+    algorithm_parameters: dict
 
 
 # =============================================================================
@@ -1355,6 +1383,420 @@ class WorkloadSignalProcessor:
         }
 
     # =========================================================================
+    # Change Point Detection
+    # =========================================================================
+
+    def detect_change_points_cusum(
+        self,
+        series: NDArray[np.float64],
+        threshold: float = 5.0,
+        drift: float = 0.0,
+    ) -> list[ChangePoint]:
+        """
+        Detect change points using CUSUM (Cumulative Sum) algorithm.
+
+        CUSUM detects mean shifts by accumulating deviations from the target
+        mean. It's sensitive to persistent changes but robust to transient
+        spikes.
+
+        Algorithm:
+            S_high[t] = max(0, S_high[t-1] + (x[t] - mean - drift))
+            S_low[t] = min(0, S_low[t-1] + (x[t] - mean + drift))
+            Trigger when |S| > threshold
+
+        Args:
+            series: Input time series (workload values)
+            threshold: Alarm threshold (typically 4-5 for 3-sigma shifts)
+            drift: Allowable drift parameter (typically half the shift to detect)
+
+        Returns:
+            List of detected change points with metadata
+        """
+        n = len(series)
+        if n < 4:
+            logger.warning("Series too short for CUSUM analysis")
+            return []
+
+        # Compute mean and std for reference
+        mean = np.mean(series)
+        std = np.std(series)
+
+        # Standardize series
+        standardized = (series - mean) / (std + 1e-10)
+
+        # CUSUM statistics
+        s_high = np.zeros(n)
+        s_low = np.zeros(n)
+
+        change_points: list[ChangePoint] = []
+
+        for t in range(1, n):
+            # Upper CUSUM (detect upward shifts)
+            s_high[t] = max(0, s_high[t - 1] + standardized[t] - drift)
+
+            # Lower CUSUM (detect downward shifts)
+            s_low[t] = min(0, s_low[t - 1] + standardized[t] + drift)
+
+            # Check for alarm
+            if s_high[t] > threshold:
+                # Upward shift detected
+                # Estimate change magnitude
+                segment_start = max(0, t - 20)
+                pre_mean = np.mean(series[segment_start:t])
+                post_mean = np.mean(series[t : min(t + 10, n)])
+                magnitude = float(post_mean - pre_mean)
+
+                # Confidence based on CUSUM statistic
+                confidence = min(1.0, s_high[t] / (threshold * 2))
+
+                change_points.append(
+                    {
+                        "index": int(t),
+                        "timestamp": "",  # Will be filled by caller
+                        "change_type": "mean_shift_upward",
+                        "magnitude": magnitude,
+                        "confidence": confidence,
+                        "description": (
+                            f"Upward mean shift detected: "
+                            f"{pre_mean:.1f} → {post_mean:.1f} "
+                            f"(CUSUM={s_high[t]:.2f})"
+                        ),
+                    }
+                )
+
+                # Reset CUSUM after detection
+                s_high[t] = 0
+
+            if s_low[t] < -threshold:
+                # Downward shift detected
+                segment_start = max(0, t - 20)
+                pre_mean = np.mean(series[segment_start:t])
+                post_mean = np.mean(series[t : min(t + 10, n)])
+                magnitude = float(post_mean - pre_mean)
+
+                confidence = min(1.0, abs(s_low[t]) / (threshold * 2))
+
+                change_points.append(
+                    {
+                        "index": int(t),
+                        "timestamp": "",
+                        "change_type": "mean_shift_downward",
+                        "magnitude": magnitude,
+                        "confidence": confidence,
+                        "description": (
+                            f"Downward mean shift detected: "
+                            f"{pre_mean:.1f} → {post_mean:.1f} "
+                            f"(CUSUM={abs(s_low[t]):.2f})"
+                        ),
+                    }
+                )
+
+                # Reset CUSUM
+                s_low[t] = 0
+
+        logger.debug(f"CUSUM detected {len(change_points)} change points")
+        return change_points
+
+    def detect_change_points_pelt(
+        self,
+        series: NDArray[np.float64],
+        penalty: float = 1.0,
+        min_segment_length: int = 5,
+    ) -> list[ChangePoint]:
+        """
+        Detect change points using PELT (Pruned Exact Linear Time) algorithm.
+
+        PELT finds optimal segmentation by minimizing:
+            sum(segment_costs) + penalty * num_changepoints
+
+        It can detect multiple change points simultaneously and is optimal
+        for detecting structural breaks.
+
+        Args:
+            series: Input time series
+            penalty: Penalty for adding new segments (higher = fewer changepoints)
+            min_segment_length: Minimum samples between change points
+
+        Returns:
+            List of detected change points with metadata
+        """
+        n = len(series)
+        if n < 2 * min_segment_length:
+            logger.warning("Series too short for PELT analysis")
+            return []
+
+        # Try using ruptures library if available
+        try:
+            import ruptures as rpt
+
+            # Use PELT with RBF (Radial Basis Function) cost
+            # RBF is good for detecting both mean and variance changes
+            algo = rpt.Pelt(model="rbf", min_size=min_segment_length, jump=1)
+            algo.fit(series.reshape(-1, 1))
+
+            # Get change points
+            breakpoints = algo.predict(pen=penalty)
+
+            # Remove last point (always end of series)
+            if breakpoints and breakpoints[-1] == n:
+                breakpoints = breakpoints[:-1]
+
+            change_points: list[ChangePoint] = []
+
+            for cp_idx in breakpoints:
+                # Analyze segment before and after change point
+                segment_start = max(0, cp_idx - min_segment_length)
+                segment_end = min(n, cp_idx + min_segment_length)
+
+                pre_segment = series[segment_start:cp_idx]
+                post_segment = series[cp_idx:segment_end]
+
+                if len(pre_segment) > 0 and len(post_segment) > 0:
+                    # Compute statistics
+                    pre_mean = np.mean(pre_segment)
+                    post_mean = np.mean(post_segment)
+                    pre_std = np.std(pre_segment)
+                    post_std = np.std(post_segment)
+
+                    mean_change = abs(post_mean - pre_mean)
+                    var_change = abs(post_std - pre_std)
+
+                    # Classify change type
+                    if mean_change > 2 * var_change:
+                        change_type = "mean_shift"
+                        magnitude = float(post_mean - pre_mean)
+                        desc = f"Mean shift: {pre_mean:.1f} → {post_mean:.1f}"
+                    elif var_change > 2 * mean_change:
+                        change_type = "variance_change"
+                        magnitude = float(post_std - pre_std)
+                        desc = f"Variance change: {pre_std:.1f} → {post_std:.1f}"
+                    else:
+                        change_type = "trend_change"
+                        magnitude = float(mean_change + var_change)
+                        desc = (
+                            f"Trend change: mean {pre_mean:.1f}→{post_mean:.1f}, "
+                            f"std {pre_std:.1f}→{post_std:.1f}"
+                        )
+
+                    # Estimate confidence based on effect size
+                    effect_size = mean_change / (
+                        (pre_std + post_std) / 2 + 1e-10
+                    )
+                    confidence = min(1.0, effect_size / 3.0)
+
+                    change_points.append(
+                        {
+                            "index": int(cp_idx),
+                            "timestamp": "",
+                            "change_type": change_type,
+                            "magnitude": magnitude,
+                            "confidence": confidence,
+                            "description": desc,
+                        }
+                    )
+
+            logger.debug(
+                f"PELT detected {len(change_points)} change points "
+                f"(penalty={penalty})"
+            )
+            return change_points
+
+        except ImportError:
+            logger.warning(
+                "ruptures library not available, using simplified PELT implementation"
+            )
+            # Fallback to simplified implementation
+            return self._pelt_simplified(series, penalty, min_segment_length)
+
+    def _pelt_simplified(
+        self,
+        series: NDArray[np.float64],
+        penalty: float = 1.0,
+        min_segment_length: int = 5,
+    ) -> list[ChangePoint]:
+        """
+        Simplified PELT implementation without ruptures library.
+
+        Uses variance-based cost function and greedy search.
+        """
+        n = len(series)
+
+        # Compute variance cost for each potential segment
+        def segment_cost(start: int, end: int) -> float:
+            """Variance of segment as cost."""
+            if end - start < 2:
+                return 0.0
+            segment = series[start:end]
+            return float(np.var(segment) * (end - start))
+
+        # Greedy search for change points
+        change_points_idx: list[int] = []
+        current_pos = 0
+
+        while current_pos < n - min_segment_length:
+            # Try different segment lengths
+            best_cost = float("inf")
+            best_split = current_pos + min_segment_length
+
+            for split in range(
+                current_pos + min_segment_length, n - min_segment_length
+            ):
+                # Cost of two segments vs. one segment
+                cost_one = segment_cost(current_pos, n)
+                cost_two = (
+                    segment_cost(current_pos, split)
+                    + segment_cost(split, n)
+                    + penalty
+                )
+
+                if cost_two < cost_one and cost_two < best_cost:
+                    best_cost = cost_two
+                    best_split = split
+
+            if best_cost < segment_cost(current_pos, n):
+                change_points_idx.append(best_split)
+                current_pos = best_split
+            else:
+                break
+
+        # Convert to ChangePoint format
+        change_points: list[ChangePoint] = []
+        for cp_idx in change_points_idx:
+            segment_start = max(0, cp_idx - min_segment_length)
+            segment_end = min(n, cp_idx + min_segment_length)
+
+            pre_mean = np.mean(series[segment_start:cp_idx])
+            post_mean = np.mean(series[cp_idx:segment_end])
+
+            change_points.append(
+                {
+                    "index": int(cp_idx),
+                    "timestamp": "",
+                    "change_type": "variance_change",
+                    "magnitude": float(abs(post_mean - pre_mean)),
+                    "confidence": 0.7,  # Fixed confidence for simplified version
+                    "description": f"Segment boundary at index {cp_idx}",
+                }
+            )
+
+        logger.debug(
+            f"Simplified PELT detected {len(change_points)} change points"
+        )
+        return change_points
+
+    def analyze_schedule_changepoints(
+        self,
+        ts: WorkloadTimeSeries,
+        methods: list[str] | None = None,
+    ) -> dict[str, ChangePointAnalysisResult]:
+        """
+        Comprehensive change point analysis using multiple methods.
+
+        Detects regime shifts, policy changes, and structural breaks in
+        schedule patterns.
+
+        Args:
+            ts: Workload time series
+            methods: List of methods to use (default: ["cusum", "pelt"])
+                - "cusum": CUSUM algorithm for mean shifts
+                - "pelt": PELT algorithm for optimal segmentation
+                - "both": Run both and compare
+
+        Returns:
+            Dictionary with results from each method
+        """
+        if methods is None:
+            methods = ["cusum", "pelt"]
+
+        results: dict[str, ChangePointAnalysisResult] = {}
+
+        # CUSUM analysis
+        if "cusum" in methods or "both" in methods:
+            cusum_cps = self.detect_change_points_cusum(
+                ts.values, threshold=5.0, drift=0.0
+            )
+
+            # Fill in timestamps
+            for cp in cusum_cps:
+                if cp["index"] < len(ts.dates):
+                    cp["timestamp"] = ts.dates[cp["index"]].isoformat()
+
+            # Compute segmentation quality (variance reduction)
+            quality = self._compute_segmentation_quality(ts.values, cusum_cps)
+
+            results["cusum"] = {
+                "method": "cusum",
+                "change_points": cusum_cps,
+                "num_changepoints": len(cusum_cps),
+                "segmentation_quality": quality,
+                "algorithm_parameters": {"threshold": 5.0, "drift": 0.0},
+            }
+
+        # PELT analysis
+        if "pelt" in methods or "both" in methods:
+            pelt_cps = self.detect_change_points_pelt(
+                ts.values, penalty=1.0, min_segment_length=5
+            )
+
+            # Fill in timestamps
+            for cp in pelt_cps:
+                if cp["index"] < len(ts.dates):
+                    cp["timestamp"] = ts.dates[cp["index"]].isoformat()
+
+            quality = self._compute_segmentation_quality(ts.values, pelt_cps)
+
+            results["pelt"] = {
+                "method": "pelt",
+                "change_points": pelt_cps,
+                "num_changepoints": len(pelt_cps),
+                "segmentation_quality": quality,
+                "algorithm_parameters": {"penalty": 1.0, "min_segment_length": 5},
+            }
+
+        logger.info(
+            f"Change point analysis completed: "
+            f"CUSUM={len(results.get('cusum', {}).get('change_points', []))}, "
+            f"PELT={len(results.get('pelt', {}).get('change_points', []))}"
+        )
+
+        return results
+
+    def _compute_segmentation_quality(
+        self,
+        series: NDArray[np.float64],
+        change_points: list[ChangePoint],
+    ) -> float:
+        """
+        Compute segmentation quality as variance reduction.
+
+        Returns:
+            Quality score 0-1, where 1 = perfect segmentation
+        """
+        if not change_points:
+            return 0.0
+
+        # Variance of original series
+        total_var = np.var(series)
+        if total_var < 1e-10:
+            return 0.0
+
+        # Variance within segments
+        breakpoints = [0] + [cp["index"] for cp in change_points] + [len(series)]
+        breakpoints = sorted(set(breakpoints))
+
+        segment_var = 0.0
+        for i in range(len(breakpoints) - 1):
+            segment = series[breakpoints[i] : breakpoints[i + 1]]
+            if len(segment) > 1:
+                segment_var += np.var(segment) * len(segment)
+
+        segment_var /= len(series)
+
+        # Variance reduction
+        quality = 1.0 - (segment_var / total_var)
+        return float(max(0.0, min(1.0, quality)))
+
+    # =========================================================================
     # Main Analysis Pipeline
     # =========================================================================
 
@@ -1380,6 +1822,7 @@ class WorkloadSignalProcessor:
                 - "constraints": Frequency constraint validation
                 - "harmonic": Harmonic analysis
                 - "filter": Adaptive filtering
+                - "changepoint": Change point detection (CUSUM, PELT)
                 - "all": Run all analyses (default)
 
         Returns:
@@ -1395,6 +1838,7 @@ class WorkloadSignalProcessor:
                 "constraints",
                 "harmonic",
                 "filter",
+                "changepoint",
             ]
 
         analysis_id = datetime.utcnow().strftime("%Y%m%d%H%M%S")
@@ -1440,6 +1884,9 @@ class WorkloadSignalProcessor:
 
         if "filter" in analysis_types:
             result["adaptive_filtered"] = self.adaptive_filter(ts)
+
+        if "changepoint" in analysis_types:
+            result["changepoint_analysis"] = self.analyze_schedule_changepoints(ts)
 
         # Generate recommendations based on analysis
         result["recommendations"] = self._generate_recommendations(result)
@@ -1504,6 +1951,36 @@ class WorkloadSignalProcessor:
                 recommendations.append(
                     f"Detected {len(destructive)} destructive resonances between "
                     f"schedule patterns. These may cause irregular workload fluctuations."
+                )
+
+        # Check change point analysis
+        changepoint = result.get("changepoint_analysis")
+        if changepoint:
+            # Combine change points from all methods
+            all_cps = []
+            for method_name, method_result in changepoint.items():
+                all_cps.extend(method_result.get("change_points", []))
+
+            # High-confidence change points
+            high_conf_cps = [cp for cp in all_cps if cp.get("confidence", 0) > 0.7]
+            if high_conf_cps:
+                recommendations.append(
+                    f"Detected {len(high_conf_cps)} high-confidence regime shifts. "
+                    f"Review schedule structure changes at: "
+                    f"{', '.join(cp.get('timestamp', 'unknown')[:10] for cp in high_conf_cps[:3])}"
+                )
+
+            # Mean shift warnings
+            mean_shifts = [
+                cp
+                for cp in all_cps
+                if "mean_shift" in cp.get("change_type", "")
+                and abs(cp.get("magnitude", 0)) > 5.0
+            ]
+            if mean_shifts:
+                recommendations.append(
+                    f"Detected {len(mean_shifts)} significant workload level changes. "
+                    "May indicate staffing changes or policy updates."
                 )
 
         if not recommendations:
@@ -1604,6 +2081,21 @@ class WorkloadSignalProcessor:
                 }
             )
 
+        # Add change points
+        if result.get("changepoint_analysis"):
+            for method_name, method_result in result["changepoint_analysis"].items():
+                for cp in method_result.get("change_points", []):
+                    anomalies.append(
+                        {
+                            "type": f"changepoint_{cp['change_type']}",
+                            "date": cp["timestamp"],
+                            "index": cp["index"],
+                            "severity": cp["confidence"],
+                            "description": f"[{method_name.upper()}] {cp['description']}",
+                            "magnitude": cp["magnitude"],
+                        }
+                    )
+
         # Metadata
         metadata = {
             "analysis_id": result["analysis_id"],
@@ -1695,6 +2187,43 @@ def detect_schedule_anomalies(
     sta_lta_result = processor.sta_lta_detector(ts)
 
     return sta_lta_result.get("anomalies", [])
+
+
+def detect_schedule_changepoints(
+    daily_hours: Sequence[float],
+    dates: Sequence[date],
+    methods: list[str] | None = None,
+) -> dict[str, ChangePointAnalysisResult]:
+    """
+    Quick change point detection for schedule regime shifts.
+
+    Detects structural breaks, policy changes, and workload pattern shifts
+    in schedule time series.
+
+    Args:
+        daily_hours: Daily hours worked
+        dates: Corresponding dates
+        methods: Detection methods to use (default: ["cusum", "pelt"])
+
+    Returns:
+        Dictionary with change point results from each method
+
+    Example:
+        >>> results = detect_schedule_changepoints(
+        ...     daily_hours=[8, 8, 10, 10, 12, 12, 12],
+        ...     dates=[date(2025, 1, i) for i in range(1, 8)],
+        ...     methods=["cusum", "pelt"]
+        ... )
+        >>> for method, result in results.items():
+        ...     print(f"{method}: {result['num_changepoints']} change points")
+    """
+    ts = WorkloadTimeSeries(
+        values=np.array(daily_hours, dtype=np.float64),
+        dates=list(dates),
+    )
+
+    processor = WorkloadSignalProcessor()
+    return processor.analyze_schedule_changepoints(ts, methods=methods)
 
 
 def export_for_visualization(
