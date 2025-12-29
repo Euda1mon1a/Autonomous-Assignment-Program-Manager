@@ -52,6 +52,7 @@ docs/development/AI_RULES_OF_ENGAGEMENT.md   # Git/PR workflow
 HUMAN_TODO.md                                # Current priorities
 .claude/Agents/ORCHESTRATOR.md               # Full ORCHESTRATOR spec (skim)
 .claude/Scratchpad/ORCHESTRATOR_ADVISOR_NOTES.md  # Cross-session advisor notes
+.claude/skills/context-aware-delegation/SKILL.md  # Agent context isolation patterns
 ```
 
 > **Note:** The advisor notes file contains persistent observations about the user's communication style, decision-making patterns, and effective interaction approaches. This institutional memory compounds across sessions.
@@ -120,6 +121,12 @@ Output this confirmation:
 
 ### Key Rules
 - Address Codex feedback before merge (rate-limiting step)
+
+### Context Isolation Reminder
+Spawned agents have **isolated context** - they don't inherit your conversation.
+- Write self-contained prompts with explicit file paths
+- Include all context the agent needs to succeed
+- See `/context-aware-delegation` skill for templates
 
 Ready to orchestrate. What's the task?
 ```
@@ -494,6 +501,8 @@ Ready to orchestrate. What's the task?
 - `.claude/CONSTITUTION.md` - Foundational rules
 - `.claude/skills/startup/SKILL.md` - Basic startup (non-orchestrator)
 - `.claude/skills/check-codex/SKILL.md` - Codex feedback checking (rate-limiting step before merge)
+- `.claude/skills/context-aware-delegation/SKILL.md` - Agent context isolation and prompt templates
+- `.claude/skills/CORE/delegation-patterns.md` - Execution patterns (parallel, sequential, hybrid)
 
 ---
 
