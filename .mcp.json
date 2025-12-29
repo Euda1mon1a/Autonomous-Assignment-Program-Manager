@@ -1,11 +1,17 @@
 {
   "mcpServers": {
     "residency-scheduler": {
+      "url": "http://127.0.0.1:8080/mcp",
+      "transport": "http"
+    },
+    "residency-scheduler-stdio": {
       "command": "docker",
       "args": ["compose", "exec", "-T", "-e", "MCP_TRANSPORT=stdio", "mcp-server", "python", "-m", "scheduler_mcp.server"],
       "env": {
         "LOG_LEVEL": "INFO"
-      }
+      },
+      "disabled": true,
+      "_comment": "STDIO transport - single client only. Use HTTP for parallel agent access."
     },
     "residency-scheduler-local": {
       "command": "python",
@@ -17,7 +23,8 @@
         "LOG_LEVEL": "INFO"
       },
       "transport": "stdio",
-      "disabled": true
+      "disabled": true,
+      "_comment": "Local Python STDIO transport for development without Docker."
     }
   }
 }
