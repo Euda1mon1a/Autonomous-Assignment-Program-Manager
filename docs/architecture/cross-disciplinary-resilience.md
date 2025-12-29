@@ -2013,11 +2013,254 @@ The result: **Data-driven burnout prevention** that protects residents, ensures 
 
 ---
 
-**Document Version**: 1.1
-**Last Updated**: 2025-12-28
+---
+
+## Tier 4: Exotic Cross-Disciplinary Research (NEW - 2025-12-29)
+
+Beyond the core Tier 3 modules, the framework now includes **20 additional MCP tools** from 6 advanced research domains. These tools complement existing analytics with specialized capabilities.
+
+### 9. Kalman Filter (Control Theory)
+
+**Source Domain**: Estimation & Control Theory
+
+**Files**: `/mcp-server/src/scheduler_mcp/tools/kalman_filter_tools.py`
+
+#### Core Concept
+
+The Kalman filter is an optimal recursive estimator that combines predictions from a system model with noisy observations to produce filtered estimates with minimum variance. Originally developed for spacecraft navigation (Apollo program), now used in GPS, robotics, and signal processing.
+
+#### Medical Scheduling Application
+
+Filters noisy workload measurements to extract true underlying trends:
+- **State**: Estimated true workload
+- **Observations**: Measured workload (noisy due to absences, swaps, etc.)
+- **Output**: Cleaned trend + predictions
+
+**Why This Works**: Raw workload data has measurement noise. Kalman filtering provides cleaner signals for downstream analysis (SPC, trend detection).
+
+#### MCP Tools
+
+- **`analyze_workload_trend`**: Apply Kalman filter to workload history
+  - Returns filtered values, predictions, confidence intervals
+  - Trend assessment: INCREASING, STABLE, DECREASING
+  - Complements SPC by providing cleaner input signals
+
+- **`detect_workload_anomalies`**: Compare raw vs filtered to find outliers
+  - Severity: MODERATE (2σ), HIGH (3σ), CRITICAL (4σ+)
+  - Provides recommendations based on anomaly patterns
+
+---
+
+### 10. Fourier/FFT Analysis (Signal Processing)
+
+**Source Domain**: Signal Processing & Harmonic Analysis
+
+**Files**: `/mcp-server/src/scheduler_mcp/tools/fourier_analysis_tools.py`
+
+#### Core Concept
+
+Fourier Transform decomposes time-domain signals into frequency components, revealing periodic patterns invisible in raw data. Power spectrum analysis identifies dominant cycles and their strengths.
+
+#### Medical Scheduling Application
+
+Detects natural cycles in scheduling patterns:
+- **7-day cycles**: Weekly patterns (ACGME 1-in-7 rule)
+- **14-day cycles**: Bi-weekly rotations
+- **28-day cycles**: ACGME 4-week averaging windows
+
+**Why This Works**: Schedules have natural rhythms. FFT precisely identifies these periods, enabling anti-churn optimization and ACGME alignment validation.
+
+#### MCP Tools
+
+- **`detect_schedule_cycles`**: FFT-based periodicity detection
+  - Returns dominant periods in days with power spectrum
+  - Interprets standard periods (7d = weekly, 28d = ACGME window)
+
+- **`analyze_harmonic_resonance`**: Check alignment with ACGME windows
+  - Alignment scores for 7d, 14d, 28d periods
+  - Health status: healthy/degraded/critical
+
+- **`calculate_spectral_entropy`**: Measure schedule complexity
+  - Low entropy = regular/predictable; High entropy = chaotic
+
+---
+
+### 11. Game Theory (Economics)
+
+**Source Domain**: Game Theory & Mechanism Design
+
+**Files**: `/mcp-server/src/scheduler_mcp/tools/game_theory_tools.py`
+
+#### Core Concept
+
+Nash equilibrium describes a stable state where no player can improve by unilaterally changing strategy. Applied to scheduling, it predicts when people will request swaps.
+
+#### Medical Scheduling Application
+
+Models scheduling as a game:
+- **Players**: Residents/faculty
+- **Strategies**: Accept assignment vs request swap
+- **Payoffs**: Preference satisfaction, workload balance
+
+A schedule is **Nash stable** if no one has incentive to deviate.
+
+**Why This Works**: Swap requests are predictable. Game theory identifies dissatisfied individuals before they submit requests, enabling proactive intervention.
+
+#### MCP Tools
+
+- **`analyze_nash_stability`**: Check if schedule is Nash equilibrium
+  - Returns stability score and list of players with deviation incentives
+  - Predicts swap request rate
+
+- **`find_deviation_incentives`**: Analyze specific person's utility
+  - Utility breakdown: workload, preference, convenience, continuity
+  - Best alternative actions and improvement potential
+
+- **`detect_coordination_failures`**: Find blocked Pareto improvements
+  - Multi-way swaps that would benefit all parties
+  - "Welfare left on table" quantification
+
+---
+
+### 12. Value-at-Risk (Financial Engineering)
+
+**Source Domain**: Financial Risk Management
+
+**Files**: `/mcp-server/src/scheduler_mcp/var_risk_tools.py`
+
+#### Core Concept
+
+VaR (Value-at-Risk) quantifies worst-case losses with probabilistic bounds:
+- "With 95% confidence, coverage won't drop below X%"
+
+CVaR (Conditional VaR / Expected Shortfall) measures average loss in tail scenarios.
+
+#### Medical Scheduling Application
+
+Applies financial risk metrics to schedule vulnerability:
+- **VaR for coverage**: Probabilistic bounds on coverage drops
+- **Monte Carlo simulation**: Stress test random disruptions
+- **Tail risk**: Quantify worst-case scenarios
+
+**Why This Works**: N-1/N-2 contingency is deterministic. VaR adds probabilistic reasoning for scenarios with uncertain outcomes (flu season, deployment timing).
+
+#### MCP Tools
+
+- **`calculate_coverage_var`**: VaR at multiple confidence levels
+- **`calculate_workload_var`**: VaR for workload distribution
+- **`simulate_disruption_scenarios`**: Monte Carlo stress testing
+- **`calculate_conditional_var`**: Expected Shortfall (CVaR)
+
+---
+
+### 13. Lotka-Volterra Dynamics (Ecology)
+
+**Source Domain**: Population Ecology & Dynamical Systems
+
+**Files**: `/mcp-server/src/scheduler_mcp/tools/ecological_dynamics_tools.py`
+
+#### Core Concept
+
+Lotka-Volterra equations model predator-prey oscillations:
+```
+dx/dt = αx - βxy    (prey grows, consumed by predator)
+dy/dt = δxy - γy    (predator grows from prey, decays naturally)
+```
+
+Produces characteristic boom/bust cycles.
+
+#### Medical Scheduling Application
+
+Models capacity/demand oscillations:
+- **x (prey)** = Available capacity/slack
+- **y (predator)** = Workload demand
+
+Predicts periodic coverage crunches and recovery times.
+
+**Why This Works**: Scheduling systems exhibit natural cycles. LV equations model these dynamics, predicting crunches before they occur.
+
+#### MCP Tools
+
+- **`analyze_supply_demand_cycles`**: Fit LV model to historical data
+  - Returns fitted parameters, equilibrium, oscillation period
+  - R² goodness of fit
+
+- **`predict_capacity_crunch`**: Forecast when capacity falls below threshold
+  - Risk level, days until crunch, recovery timeline
+
+- **`find_equilibrium_point`**: Calculate stable equilibrium
+  - Sensitivity analysis for parameter changes
+
+- **`simulate_intervention`**: Test what-if scenarios
+  - Effect of adding capacity or reducing demand
+
+---
+
+### 14. Hopfield Network Attractors (Neuroscience)
+
+**Source Domain**: Computational Neuroscience & Neural Networks
+
+**Files**: `/mcp-server/src/scheduler_mcp/hopfield_attractor_tools.py`
+
+#### Core Concept
+
+Hopfield networks model associative memory as energy minimization:
+- **State**: Schedule encoded as binary pattern
+- **Energy**: E = -0.5 × Σ(w_ij × s_i × s_j)
+- **Attractors**: Stable patterns (energy minima)
+- **Basin depth**: Robustness to perturbation
+
+#### Medical Scheduling Application
+
+Models schedule stability as energy landscape:
+- **Low energy** = Stable schedule
+- **Attractors** = Natural schedule configurations
+- **Spurious attractors** = Anti-patterns (overload concentration, etc.)
+
+**Why This Works**: Schedules naturally "settle" into stable patterns. Hopfield analysis identifies these patterns and measures robustness.
+
+#### MCP Tools
+
+- **`calculate_hopfield_energy`**: Compute schedule state energy
+  - Stability classification: very_stable → highly_unstable
+
+- **`find_nearby_attractors`**: Identify stable patterns near current state
+  - Hamming distance to better configurations
+  - Improvement potential
+
+- **`measure_basin_depth`**: Energy barrier to escape current attractor
+  - Basin stability index
+  - Robustness threshold
+
+- **`detect_spurious_attractors`**: Find scheduling anti-patterns
+  - Overload concentration, shift clustering, etc.
+  - Mitigation recommendations
+
+---
+
+### Integration: Exotic Tools with Core Framework
+
+| Exotic Tool | Complements | Synergy |
+|-------------|-------------|---------|
+| Kalman Filter | SPC Monitoring | Cleaner signals for Western Electric rules |
+| Fourier/FFT | Time Crystal | Precise cycle detection for anti-churn |
+| Game Theory | Shapley Fairness | Stability + fairness together |
+| VaR | N-1/N-2 Contingency | Probabilistic bounds on disruption |
+| Lotka-Volterra | Homeostasis | Models dynamics homeostasis responds to |
+| Hopfield | Thermodynamics | Energy landscape complements free energy |
+
+### Full Documentation
+
+See **[Exotic Research Tools Reference](/mcp-server/docs/EXOTIC_RESEARCH_TOOLS.md)** for complete API documentation, parameters, and usage examples.
+
+---
+
+**Document Version**: 1.2
+**Last Updated**: 2025-12-29
 **Maintained By**: Resilience Engineering Team
 **Related Documentation**:
 - [MCP Tools Reference](../api/MCP_TOOLS_REFERENCE.md)
+- [Exotic Research Tools](../../mcp-server/docs/EXOTIC_RESEARCH_TOOLS.md)
 - [Resilience Framework Guide](../guides/resilience-framework.md)
 - [System Architecture](overview.md)
 - [Backend Architecture](backend.md)

@@ -30,14 +30,70 @@ Resources provide read-only access to scheduling data:
 
 ## Available Tools
 
-### Synchronous Tools
+The MCP server exposes **97+ tools** organized into functional categories.
 
-Tools enable active operations and analyses:
+### Core Scheduling Tools
 
 - **validate_schedule** - Validate a schedule against ACGME work hour rules
 - **run_contingency_analysis** - Analyze impact of faculty absences or emergencies
 - **detect_conflicts** - Identify scheduling conflicts and auto-resolution options
 - **analyze_swap_candidates** - Find optimal swap matches for schedule changes
+
+### Resilience Framework Tools (77 tools)
+
+See [RESILIENCE_MCP_INTEGRATION.md](./RESILIENCE_MCP_INTEGRATION.md) for full documentation.
+
+**Tier 1-2 Core Resilience**:
+- `check_utilization_threshold` - 80% queuing theory threshold
+- `get_defense_level` - Defense-in-depth status (5 levels)
+- `run_contingency_analysis_resilience` - N-1/N-2 power grid analysis
+- `analyze_homeostasis` - Feedback loop monitoring
+- `calculate_blast_radius` - Zone-based failure containment
+
+**Cross-Disciplinary Analytics (Tier 3)**:
+- `run_spc_analysis` - Western Electric Rules for workload drift
+- `calculate_process_capability` - Six Sigma Cp/Cpk indices
+- `calculate_burnout_rt` - SIR epidemiology reproduction number
+- `optimize_erlang_coverage` - Telecommunications queuing optimization
+- `detect_burnout_precursors` - Seismic STA/LTA early warning
+- `calculate_fire_danger_index` - Multi-temporal burnout (CFFDRS)
+- `assess_creep_fatigue` - Materials science Larson-Miller analysis
+
+### Exotic Research Tools (20 tools) - NEW
+
+See [docs/EXOTIC_RESEARCH_TOOLS.md](./docs/EXOTIC_RESEARCH_TOOLS.md) for full documentation.
+
+**Kalman Filter (Control Theory)**:
+- `analyze_workload_trend` - Filter noisy workload, extract trends
+- `detect_workload_anomalies` - Identify outliers via residual analysis
+
+**Fourier/FFT (Signal Processing)**:
+- `detect_schedule_cycles` - FFT periodicity detection (7d, 28d cycles)
+- `analyze_harmonic_resonance` - ACGME window alignment scoring
+- `calculate_spectral_entropy` - Schedule complexity measurement
+
+**Game Theory (Economics)**:
+- `analyze_nash_stability` - Detect stable schedule equilibria
+- `find_deviation_incentives` - Predict swap requests before they happen
+- `detect_coordination_failures` - Find blocked Pareto improvements
+
+**Value-at-Risk (Financial Engineering)**:
+- `calculate_coverage_var` - Probabilistic coverage bounds
+- `calculate_workload_var` - Workload distribution risk
+- `simulate_disruption_scenarios` - Monte Carlo stress testing
+- `calculate_conditional_var` - Tail risk (Expected Shortfall)
+
+**Lotka-Volterra (Ecology)**:
+- `analyze_supply_demand_cycles` - Fit predator-prey model
+- `predict_capacity_crunch` - Forecast coverage crises
+- `find_equilibrium_point` - Calculate stable staffing targets
+- `simulate_intervention` - Test what-if capacity changes
+
+**Hopfield Attractor (Neuroscience)**:
+- `calculate_hopfield_energy` - Schedule state energy
+- `find_nearby_attractors` - Identify stable patterns
+- `measure_basin_depth` - Robustness to perturbations
+- `detect_spurious_attractors` - Find scheduling anti-patterns
 
 ### Async Task Management Tools
 
