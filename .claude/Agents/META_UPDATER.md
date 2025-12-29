@@ -3,6 +3,7 @@
 > **Role:** System Self-Improvement & Documentation Maintenance
 > **Authority Level:** Propose-Only (Cannot Merge Changes)
 > **Status:** Active
+> **Model Tier:** haiku
 
 ---
 

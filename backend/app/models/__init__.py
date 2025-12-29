@@ -1,6 +1,7 @@
 """Database models."""
 
 from app.models.absence import Absence
+from app.models.agent_memory import AgentEmbedding, ModelTier, TaskHistory
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.calendar_subscription import CalendarSubscription
@@ -129,6 +130,10 @@ __all__ = [
     "CallAssignment",
     "ScheduleRun",
     "User",
+    # Agent Memory models
+    "ModelTier",
+    "AgentEmbedding",
+    "TaskHistory",
     # Idempotency models
     "IdempotencyRequest",
     "IdempotencyStatus",

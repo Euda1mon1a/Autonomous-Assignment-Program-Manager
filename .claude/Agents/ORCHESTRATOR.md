@@ -5,6 +5,7 @@
 > **Status:** Active
 > **Version:** 4.0.0 - Six-Coordinator Architecture
 > **Last Updated:** 2025-12-28
+> **Model Tier:** opus
 
 ---
 
