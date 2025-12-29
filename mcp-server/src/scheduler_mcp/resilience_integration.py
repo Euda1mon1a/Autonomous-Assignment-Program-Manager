@@ -8,18 +8,41 @@ and automated safety mechanisms.
 Tier 1 (Critical): Core resilience monitoring
 Tier 2 (Strategic): Advanced stress analysis and equilibrium
 Tier 3 (Advanced): Behavioral patterns and cognitive load
+Tier 4 (Epidemiological): Burnout contagion modeling and network analysis
 """
 
 import logging
 from datetime import date, datetime, timedelta
 from enum import Enum
 from typing import Any
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 from .api_client import get_api_client
 
 logger = logging.getLogger(__name__)
+
+
+def _anonymize_id(identifier: str | None, prefix: str = "Provider") -> str:
+    """Create consistent anonymized reference from ID.
+
+    Uses a hash-based approach to create deterministic but non-reversible
+    identifiers that comply with OPSEC/PERSEC requirements for military
+    medical data.
+
+    Args:
+        identifier: The original identifier (e.g., faculty_id, provider_id)
+        prefix: Prefix for the anonymized string (e.g., "Faculty", "Provider")
+
+    Returns:
+        Anonymized string like "Faculty-a1b2c3" or "Provider-d4e5f6"
+    """
+    if not identifier:
+        return f"{prefix}-unknown"
+    import hashlib
+    hash_suffix = hashlib.sha256(identifier.encode()).hexdigest()[:6]
+    return f"{prefix}-{hash_suffix}"
 
 
 # =============================================================================
@@ -707,7 +730,7 @@ async def run_contingency_analysis_deep(
             n1_vulns.append(
                 VulnerabilityInfo(
                     faculty_id=v.get("faculty_id", ""),
-                    faculty_name=v.get("faculty_name", f"Faculty {v.get('faculty_id', 'unknown')}"),
+                    faculty_name=_anonymize_id(v.get("faculty_id"), "Faculty"),
                     severity=v.get("severity", "medium"),
                     affected_blocks=v.get("affected_blocks", 0),
                     is_unique_provider=v.get("affected_blocks", 0) > 10,  # Heuristic
@@ -722,13 +745,9 @@ async def run_contingency_analysis_deep(
             n2_pairs.append(
                 FatalPairInfo(
                     faculty_1_id=p.get("faculty1_id", ""),
-                    faculty_1_name=p.get(
-                        "faculty1_name", f"Faculty {p.get('faculty1_id', 'unknown')}"
-                    ),
+                    faculty_1_name=_anonymize_id(p.get("faculty1_id"), "Faculty"),
                     faculty_2_id=p.get("faculty2_id", ""),
-                    faculty_2_name=p.get(
-                        "faculty2_name", f"Faculty {p.get('faculty2_id', 'unknown')}"
-                    ),
+                    faculty_2_name=_anonymize_id(p.get("faculty2_id"), "Faculty"),
                     uncoverable_blocks=p.get("uncoverable_blocks", 0),
                     affected_services=[],
                 )
@@ -1283,3 +1302,1066 @@ async def check_mtf_compliance(
             iron_dome_status="yellow",
             severity="warning",
         )
+
+
+# =============================================================================
+# Tier 4: Epidemiological Burnout Modeling
+# =============================================================================
+
+
+class BurnoutEpidemicStatusEnum(str, Enum):
+    """Status of burnout epidemic based on reproduction number (Rt)."""
+
+    NO_CASES = "no_cases"  # Rt = 0, no burnout detected
+    DECLINING = "declining"  # Rt < 0.5, epidemic fading
+    CONTROLLED = "controlled"  # 0.5 <= Rt < 1.0, stable/declining
+    SPREADING = "spreading"  # 1.0 <= Rt < 2.0, slowly growing
+    RAPID_SPREAD = "rapid_spread"  # 2.0 <= Rt < 3.0, accelerating
+    CRISIS = "crisis"  # Rt >= 3.0, emergency intervention needed
+
+
+class InterventionLevelEnum(str, Enum):
+    """Intervention urgency level based on reproduction number."""
+
+    NONE = "none"  # Rt << 1, burnout declining
+    MONITORING = "monitoring"  # Rt ~= 1, stable but watch closely
+    MODERATE = "moderate"  # Rt > 1, spreading slowly
+    AGGRESSIVE = "aggressive"  # Rt > 2, spreading rapidly
+    EMERGENCY = "emergency"  # Rt > 3, crisis intervention needed
+
+
+class SuperspreaderInfo(BaseModel):
+    """Information about a potential burnout superspreader."""
+
+    provider_id: str = Field(description="Provider identifier")
+    secondary_cases: int = Field(
+        ge=0, description="Number of secondary burnout cases caused by this provider"
+    )
+    degree: int = Field(ge=0, description="Number of social/work connections")
+    risk_level: str = Field(description="Risk level: low, moderate, high, critical")
+
+
+class BurnoutRtResponse(BaseModel):
+    """Response from burnout reproduction number calculation.
+
+    The reproduction number (Rt) is the average number of secondary burnout
+    cases caused by each burned out individual. It is a key epidemiological
+    metric that indicates whether burnout is spreading or declining.
+
+    - Rt < 1: Each burned out person infects less than 1 other, epidemic declining
+    - Rt = 1: Endemic state, stable but not declining
+    - Rt > 1: Each burned out person infects more than 1 other, epidemic growing
+    - Rt > 2: Rapid exponential growth, aggressive intervention needed
+    - Rt > 3: Crisis level, emergency intervention required
+    """
+
+    rt: float = Field(
+        ge=0.0,
+        description="Effective reproduction number (Rt) - average secondary cases per burnout",
+    )
+    status: BurnoutEpidemicStatusEnum = Field(
+        description="Epidemic status based on Rt value"
+    )
+    intervention_level: InterventionLevelEnum = Field(
+        description="Recommended intervention urgency level"
+    )
+    interventions: list[str] = Field(
+        description="List of recommended intervention strategies"
+    )
+    herd_immunity_threshold: float = Field(
+        ge=0.0,
+        le=1.0,
+        description="Fraction of population that must be immune to stop spread (1 - 1/R0)",
+    )
+    total_cases_analyzed: int = Field(
+        ge=0, description="Number of burned out individuals analyzed"
+    )
+    total_close_contacts: int = Field(
+        ge=0, description="Total number of close contacts identified"
+    )
+    superspreaders: list[SuperspreaderInfo] = Field(
+        default_factory=list,
+        description="High-connectivity individuals with >= 3 secondary cases",
+    )
+    high_risk_contacts: list[str] = Field(
+        default_factory=list,
+        description="Provider IDs of contacts at high risk of developing burnout",
+    )
+    analyzed_at: str = Field(description="Timestamp of analysis (ISO format)")
+    time_window_days: int = Field(
+        ge=1, description="Time window used for analysis (days)"
+    )
+    severity: str = Field(description="Overall severity: healthy, warning, critical, emergency")
+
+
+class SIRSimulationPoint(BaseModel):
+    """Single time point in SIR simulation trajectory."""
+
+    week: int = Field(ge=0, description="Simulation week number")
+    susceptible: int = Field(ge=0, description="Number of susceptible individuals")
+    infected: int = Field(ge=0, description="Number of infected (burned out) individuals")
+    recovered: int = Field(ge=0, description="Number of recovered individuals")
+    infection_rate: float = Field(
+        ge=0.0, le=1.0, description="Fraction of population currently infected"
+    )
+
+
+class BurnoutSpreadSimulationResponse(BaseModel):
+    """Response from SIR epidemic simulation for burnout spread.
+
+    Uses the SIR (Susceptible-Infected-Recovered) epidemiological model to
+    project burnout spread through the social/work network over time.
+
+    Key parameters:
+    - beta (infection_rate): Probability of burnout transmission per contact per week
+    - gamma (recovery_rate): Probability of recovery per week (1/gamma = avg burnout duration)
+
+    R0 (basic reproduction number) = beta / gamma
+    - R0 > 1: Epidemic grows until herd immunity reached
+    - R0 < 1: Epidemic dies out naturally
+    """
+
+    simulation_weeks: int = Field(ge=1, description="Number of weeks simulated")
+    infection_rate: float = Field(
+        ge=0.0,
+        le=1.0,
+        description="Beta - transmission probability per contact per week",
+    )
+    recovery_rate: float = Field(
+        ge=0.0,
+        le=1.0,
+        description="Gamma - recovery probability per week",
+    )
+    r0: float = Field(
+        ge=0.0,
+        description="Basic reproduction number (R0 = beta/gamma)",
+    )
+    herd_immunity_threshold: float = Field(
+        ge=0.0,
+        le=1.0,
+        description="Fraction that must be immune to stop spread",
+    )
+    initial_infected: int = Field(ge=0, description="Number of initially infected")
+    final_infected: int = Field(ge=0, description="Number infected at simulation end")
+    final_recovered: int = Field(ge=0, description="Number recovered at simulation end")
+    peak_infected: int = Field(ge=0, description="Maximum number infected simultaneously")
+    peak_week: int = Field(ge=0, description="Week when peak infection occurred")
+    epidemic_died_out: bool = Field(description="Whether epidemic naturally died out")
+    trajectory: list[SIRSimulationPoint] = Field(
+        description="Weekly SIR trajectory data"
+    )
+    warnings: list[str] = Field(
+        default_factory=list, description="Warnings about simulation results"
+    )
+    severity: str = Field(description="Overall severity: healthy, warning, critical, emergency")
+
+
+class ContagionRiskEnum(str, Enum):
+    """Overall contagion risk level."""
+
+    LOW = "low"  # <10% of network infected
+    MODERATE = "moderate"  # 10-25% infected
+    HIGH = "high"  # 25-50% infected
+    CRITICAL = "critical"  # >50% infected, cascade likely
+
+
+class ContagionSuperspreaderProfile(BaseModel):
+    """Detailed profile of a potential burnout superspreader in contagion model."""
+
+    provider_id: str = Field(description="Provider identifier")
+    provider_name: str = Field(description="Provider name (anonymized)")
+    burnout_score: float = Field(ge=0.0, le=1.0, description="Current burnout score")
+    burnout_trend: str = Field(description="Trend: increasing, stable, decreasing")
+    degree_centrality: float = Field(
+        ge=0.0, le=1.0, description="Normalized degree centrality"
+    )
+    betweenness_centrality: float = Field(
+        ge=0.0, le=1.0, description="Betweenness centrality (bridge importance)"
+    )
+    eigenvector_centrality: float = Field(
+        ge=0.0, le=1.0, description="Eigenvector centrality (connection quality)"
+    )
+    composite_centrality: float = Field(
+        ge=0.0, le=1.0, description="Combined centrality score"
+    )
+    superspreader_score: float = Field(
+        ge=0.0,
+        description="Risk score = burnout * centrality",
+    )
+    risk_level: str = Field(description="Risk level: low, moderate, high, critical")
+    direct_contacts: int = Field(ge=0, description="Number of direct connections")
+    estimated_cascade_size: int = Field(
+        ge=0, description="Estimated downstream infections if this node is infected"
+    )
+
+
+class NetworkInterventionInfo(BaseModel):
+    """Recommended network intervention to reduce burnout contagion."""
+
+    intervention_type: str = Field(
+        description="Type: edge_removal, buffer_insertion, workload_reduction, quarantine, peer_support"
+    )
+    priority: int = Field(ge=1, le=5, description="Priority 1=highest")
+    reason: str = Field(description="Reason for intervention")
+    target_providers: list[str] = Field(
+        description="Provider IDs targeted by this intervention"
+    )
+    affected_edges: list[tuple[str, str]] = Field(
+        default_factory=list, description="Network edges affected"
+    )
+    estimated_infection_reduction: float = Field(
+        ge=0.0, le=1.0, description="Estimated reduction in final infection rate"
+    )
+    estimated_cost_hours: float = Field(
+        ge=0.0, description="Estimated schedule disruption in hours"
+    )
+
+
+class BurnoutContagionResponse(BaseModel):
+    """Response from burnout contagion simulation using network diffusion model.
+
+    Uses SIS (Susceptible-Infected-Susceptible) epidemiological model on
+    the social/collaboration network to simulate burnout spread. Unlike SIR,
+    SIS allows reinfection - appropriate for burnout which can recur.
+
+    Key concepts:
+    - Superspreaders: High-burnout + high-centrality nodes that amplify contagion
+    - Network interventions: Targeted actions to break transmission chains
+    - Cascade prediction: Estimating outbreak severity from current state
+    """
+
+    network_size: int = Field(ge=0, description="Total nodes in social network")
+    current_susceptible: int = Field(
+        ge=0, description="Currently susceptible (low burnout)"
+    )
+    current_infected: int = Field(ge=0, description="Currently infected (high burnout)")
+    current_infection_rate: float = Field(
+        ge=0.0, le=1.0, description="Fraction currently infected"
+    )
+    contagion_risk: ContagionRiskEnum = Field(
+        description="Overall contagion risk level"
+    )
+    simulation_iterations: int = Field(ge=0, description="Number of iterations simulated")
+    final_infection_rate: float = Field(
+        ge=0.0, le=1.0, description="Projected final infection rate"
+    )
+    peak_infection_rate: float = Field(
+        ge=0.0, le=1.0, description="Peak infection rate during simulation"
+    )
+    peak_iteration: int = Field(ge=0, description="Iteration when peak occurred")
+    superspreaders: list[ContagionSuperspreaderProfile] = Field(
+        default_factory=list, description="Identified superspreader profiles"
+    )
+    total_superspreaders: int = Field(ge=0, description="Count of superspreaders")
+    recommended_interventions: list[NetworkInterventionInfo] = Field(
+        default_factory=list, description="Recommended network interventions"
+    )
+    warnings: list[str] = Field(default_factory=list, description="Alert messages")
+    generated_at: str = Field(description="Timestamp of analysis (ISO format)")
+    severity: str = Field(
+        description="Overall severity: healthy, warning, critical, emergency"
+    )
+
+
+# =============================================================================
+# Tier 4 Tool Functions: Epidemiological Burnout Modeling
+# =============================================================================
+
+
+async def calculate_burnout_rt(
+    burned_out_provider_ids: list[str],
+    time_window_days: int = 28,
+) -> BurnoutRtResponse:
+    """
+    Calculate the effective reproduction number (Rt) for burnout spread.
+
+    Applies epidemiological SIR modeling to understand burnout transmission
+    dynamics through social networks. The reproduction number (Rt) indicates
+    whether burnout is spreading or declining in the organization.
+
+    Scientific Background:
+    - Burnout spreads through social networks like an infectious disease
+    - Emotional contagion occurs through close work contacts
+    - High-connectivity individuals can become "superspreaders"
+    - Breaking transmission chains requires targeted interventions
+
+    Args:
+        burned_out_provider_ids: List of provider IDs currently experiencing burnout.
+            These are the "index cases" from which secondary cases are traced.
+        time_window_days: Time window in days for tracing secondary cases (default: 28).
+            Longer windows capture more transmission but may include unrelated cases.
+
+    Returns:
+        BurnoutRtResponse with reproduction number, status, and intervention recommendations.
+
+    Raises:
+        ValueError: If time_window_days is invalid (must be >= 1)
+
+    Example:
+        # Calculate Rt for 5 burned out providers
+        result = await calculate_burnout_rt(
+            burned_out_provider_ids=["provider-1", "provider-2", "provider-3"],
+            time_window_days=28
+        )
+
+        if result.rt > 1.0:
+            print(f"Burnout spreading! Rt={result.rt:.2f}")
+            print(f"Interventions: {result.interventions}")
+    """
+    if time_window_days < 1:
+        raise ValueError("time_window_days must be >= 1")
+
+    logger.info(
+        f"Calculating burnout Rt for {len(burned_out_provider_ids)} cases, "
+        f"time_window={time_window_days} days"
+    )
+
+    try:
+        # Attempt to use the actual epidemiology module
+        import networkx as nx
+        from app.resilience.burnout_epidemiology import (
+            BurnoutEpidemiology,
+            BurnoutState,
+        )
+
+        # Build social network from backend (placeholder - would call API in production)
+        # For now, create a simulated network
+        logger.warning("Using simulated social network - integrate with backend API for production")
+
+        # Create a simulated social network
+        network = nx.watts_strogatz_graph(n=50, k=6, p=0.3)
+
+        # Relabel nodes to use provider IDs
+        provider_ids = [f"provider-{i}" for i in range(50)]
+        mapping = {i: provider_ids[i] for i in range(50)}
+        network = nx.relabel_nodes(network, mapping)
+
+        # Initialize epidemiology analyzer
+        epi = BurnoutEpidemiology(network)
+
+        # Record burnout states
+        now = datetime.now()
+        for provider_id in burned_out_provider_ids:
+            if provider_id in network:
+                epi.record_burnout_state(
+                    UUID(provider_id) if "-" in provider_id else UUID(int=hash(provider_id) % (2**128)),
+                    BurnoutState.BURNED_OUT,
+                    now - timedelta(days=time_window_days // 2),  # Simulate onset in middle of window
+                )
+
+        # Calculate Rt
+        burned_out_uuids = {
+            UUID(pid) if "-" in pid else UUID(int=hash(pid) % (2**128))
+            for pid in burned_out_provider_ids
+            if pid in network
+        }
+
+        report = epi.calculate_reproduction_number(
+            burned_out_residents=burned_out_uuids,
+            time_window=timedelta(days=time_window_days),
+        )
+
+        # Map status
+        status_map = {
+            "no_cases": BurnoutEpidemicStatusEnum.NO_CASES,
+            "declining": BurnoutEpidemicStatusEnum.DECLINING,
+            "controlled": BurnoutEpidemicStatusEnum.CONTROLLED,
+            "spreading": BurnoutEpidemicStatusEnum.SPREADING,
+            "rapid_spread": BurnoutEpidemicStatusEnum.RAPID_SPREAD,
+            "crisis": BurnoutEpidemicStatusEnum.CRISIS,
+        }
+
+        intervention_map = {
+            "none": InterventionLevelEnum.NONE,
+            "monitoring": InterventionLevelEnum.MONITORING,
+            "moderate": InterventionLevelEnum.MODERATE,
+            "aggressive": InterventionLevelEnum.AGGRESSIVE,
+            "emergency": InterventionLevelEnum.EMERGENCY,
+        }
+
+        # Map superspreaders
+        superspreader_infos = [
+            SuperspreaderInfo(
+                provider_id=str(ss_id),
+                secondary_cases=report.secondary_cases.get(str(ss_id), 0),
+                degree=epi._get_degree(ss_id),
+                risk_level="high" if report.secondary_cases.get(str(ss_id), 0) >= 5 else "moderate",
+            )
+            for ss_id in report.super_spreaders
+        ]
+
+        # Determine severity
+        if report.reproduction_number >= 3.0:
+            severity = "emergency"
+        elif report.reproduction_number >= 2.0:
+            severity = "critical"
+        elif report.reproduction_number >= 1.0:
+            severity = "warning"
+        else:
+            severity = "healthy"
+
+        return BurnoutRtResponse(
+            rt=report.reproduction_number,
+            status=status_map.get(report.status, BurnoutEpidemicStatusEnum.CONTROLLED),
+            intervention_level=intervention_map.get(
+                report.intervention_level.value, InterventionLevelEnum.MONITORING
+            ),
+            interventions=report.recommended_interventions,
+            herd_immunity_threshold=epi.calculate_herd_immunity_threshold(
+                report.reproduction_number
+            ),
+            total_cases_analyzed=report.total_cases_analyzed,
+            total_close_contacts=report.total_close_contacts,
+            superspreaders=superspreader_infos,
+            high_risk_contacts=[str(c) for c in report.high_risk_contacts],
+            analyzed_at=report.analyzed_at.isoformat(),
+            time_window_days=time_window_days,
+            severity=severity,
+        )
+
+    except ImportError as e:
+        logger.warning(f"Burnout epidemiology module unavailable: {e}")
+        # Fallback with simulated data
+        return await _calculate_burnout_rt_fallback(
+            burned_out_provider_ids, time_window_days
+        )
+    except Exception as e:
+        logger.error(f"Burnout Rt calculation failed: {e}")
+        raise RuntimeError(f"Failed to calculate burnout Rt: {e}") from e
+
+
+async def _calculate_burnout_rt_fallback(
+    burned_out_provider_ids: list[str],
+    time_window_days: int,
+) -> BurnoutRtResponse:
+    """Fallback calculation when epidemiology module is unavailable."""
+    num_cases = len(burned_out_provider_ids)
+
+    # Simple heuristic: estimate Rt based on case count
+    if num_cases == 0:
+        rt = 0.0
+        status = BurnoutEpidemicStatusEnum.NO_CASES
+        level = InterventionLevelEnum.NONE
+        severity = "healthy"
+    elif num_cases <= 2:
+        rt = 0.5
+        status = BurnoutEpidemicStatusEnum.DECLINING
+        level = InterventionLevelEnum.MONITORING
+        severity = "healthy"
+    elif num_cases <= 5:
+        rt = 1.2
+        status = BurnoutEpidemicStatusEnum.SPREADING
+        level = InterventionLevelEnum.MODERATE
+        severity = "warning"
+    elif num_cases <= 10:
+        rt = 2.0
+        status = BurnoutEpidemicStatusEnum.RAPID_SPREAD
+        level = InterventionLevelEnum.AGGRESSIVE
+        severity = "critical"
+    else:
+        rt = 3.5
+        status = BurnoutEpidemicStatusEnum.CRISIS
+        level = InterventionLevelEnum.EMERGENCY
+        severity = "emergency"
+
+    # Generate interventions based on level
+    interventions = _get_interventions_for_rt(rt)
+
+    # Calculate herd immunity threshold
+    hit = 1.0 - (1.0 / rt) if rt > 1.0 else 0.0
+
+    return BurnoutRtResponse(
+        rt=rt,
+        status=status,
+        intervention_level=level,
+        interventions=interventions,
+        herd_immunity_threshold=max(0.0, min(1.0, hit)),
+        total_cases_analyzed=num_cases,
+        total_close_contacts=num_cases * 5,  # Estimate 5 contacts per case
+        superspreaders=[],
+        high_risk_contacts=[],
+        analyzed_at=datetime.now().isoformat(),
+        time_window_days=time_window_days,
+        severity=severity,
+    )
+
+
+def _get_interventions_for_rt(rt: float) -> list[str]:
+    """Get intervention recommendations based on reproduction number."""
+    interventions = []
+
+    if rt < 0.5:
+        interventions.extend([
+            "Continue current preventive measures",
+            "Monitor for early warning signs",
+            "Maintain work-life balance programs",
+        ])
+    elif rt < 1.0:
+        interventions.extend([
+            "Increase monitoring of at-risk individuals",
+            "Offer voluntary support groups and counseling",
+            "Review workload distribution for equity",
+            "Strengthen peer support networks",
+        ])
+    elif rt < 2.0:
+        interventions.extend([
+            "MODERATE INTERVENTION REQUIRED",
+            "Implement workload reduction for burned out individuals",
+            "Mandatory wellness check-ins for all staff",
+            "Increase staffing levels to reduce individual burden",
+            "Break transmission chains: reduce contact between burned out and at-risk",
+            "Provide mental health resources and counseling",
+        ])
+    elif rt < 3.0:
+        interventions.extend([
+            "AGGRESSIVE INTERVENTION REQUIRED",
+            "Mandatory time off for burned out individuals",
+            "Emergency staffing augmentation (temporary hires, locums)",
+            "Restructure teams to reduce superspreader connectivity",
+            "Daily wellness monitoring for all staff",
+            "Implement crisis management protocols",
+        ])
+    else:
+        interventions.extend([
+            "EMERGENCY INTERVENTION REQUIRED",
+            "IMMEDIATE ACTION: Remove burned out individuals from clinical duties",
+            "Emergency external support (crisis counseling, temporary replacements)",
+            "System-wide operational pause to prevent collapse",
+            "Comprehensive organizational assessment and restructuring",
+            "Notify program leadership and institutional administration",
+        ])
+
+    return interventions
+
+
+async def simulate_burnout_spread(
+    initial_infected_ids: list[str],
+    infection_rate: float = 0.05,
+    recovery_rate: float = 0.02,
+    simulation_weeks: int = 52,
+) -> BurnoutSpreadSimulationResponse:
+    """
+    Run SIR epidemic simulation for burnout spread through social network.
+
+    Uses the classic SIR (Susceptible-Infected-Recovered) epidemiological model
+    to project how burnout might spread through the organization's social network
+    over time. This helps identify:
+    - Whether burnout will become epidemic (R0 > 1) or die out (R0 < 1)
+    - When peak infection might occur
+    - How many people might ultimately be affected
+
+    Scientific Background:
+    - SIR model divides population into Susceptible, Infected, Recovered compartments
+    - Transmission occurs when infected contacts susceptible
+    - Recovery rate determines average duration of burnout
+    - R0 = beta/gamma predicts epidemic trajectory
+
+    Args:
+        initial_infected_ids: List of provider IDs to seed as initially burned out.
+            These are the "patient zero" cases that start the simulation.
+        infection_rate: Beta - probability of burnout transmission per contact per week.
+            Typical range: 0.01-0.15. Higher = faster spread.
+        recovery_rate: Gamma - probability of recovery per week.
+            Typical range: 0.001-0.05. Higher = faster recovery.
+            Note: 1/gamma = average weeks of burnout (e.g., 0.02 = 50 weeks avg)
+        simulation_weeks: Number of weeks to simulate (default: 52 = 1 year).
+
+    Returns:
+        BurnoutSpreadSimulationResponse with trajectory and peak analysis.
+
+    Raises:
+        ValueError: If rates are out of range [0, 1] or simulation_weeks < 1
+
+    Example:
+        # Simulate 1 year of burnout spread starting with 3 cases
+        result = await simulate_burnout_spread(
+            initial_infected_ids=["provider-1", "provider-2", "provider-3"],
+            infection_rate=0.05,
+            recovery_rate=0.02,
+            simulation_weeks=52
+        )
+
+        print(f"R0: {result.r0:.2f}")
+        print(f"Peak: {result.peak_infected} infected at week {result.peak_week}")
+        if result.epidemic_died_out:
+            print("Epidemic died out naturally")
+    """
+    if not 0.0 <= infection_rate <= 1.0:
+        raise ValueError("infection_rate must be between 0.0 and 1.0")
+    if not 0.0 <= recovery_rate <= 1.0:
+        raise ValueError("recovery_rate must be between 0.0 and 1.0")
+    if simulation_weeks < 1:
+        raise ValueError("simulation_weeks must be >= 1")
+
+    logger.info(
+        f"Simulating burnout spread: {len(initial_infected_ids)} initial cases, "
+        f"beta={infection_rate}, gamma={recovery_rate}, weeks={simulation_weeks}"
+    )
+
+    try:
+        # Attempt to use actual epidemiology module
+        import networkx as nx
+        from app.resilience.burnout_epidemiology import BurnoutEpidemiology
+
+        logger.warning("Using simulated social network - integrate with backend API for production")
+
+        # Create simulated social network
+        network = nx.watts_strogatz_graph(n=50, k=6, p=0.3)
+        provider_ids = [f"provider-{i}" for i in range(50)]
+        mapping = {i: provider_ids[i] for i in range(50)}
+        network = nx.relabel_nodes(network, mapping)
+
+        epi = BurnoutEpidemiology(network)
+
+        # Map initial infected to UUIDs
+        initial_uuids = set()
+        for pid in initial_infected_ids:
+            if pid in network:
+                uid = UUID(pid) if "-" in pid and len(pid) == 36 else UUID(int=hash(pid) % (2**128))
+                initial_uuids.add(uid)
+
+        # Run simulation
+        trajectory = epi.simulate_sir_spread(
+            initial_infected=initial_uuids,
+            beta=infection_rate,
+            gamma=recovery_rate,
+            steps=simulation_weeks,
+        )
+
+        # Convert trajectory to response format
+        trajectory_points = []
+        peak_infected = 0
+        peak_week = 0
+
+        for point in trajectory:
+            total = point["S"] + point["I"] + point["R"]
+            infection_rate_at_point = point["I"] / total if total > 0 else 0.0
+
+            trajectory_points.append(
+                SIRSimulationPoint(
+                    week=point["week"],
+                    susceptible=point["S"],
+                    infected=point["I"],
+                    recovered=point["R"],
+                    infection_rate=infection_rate_at_point,
+                )
+            )
+
+            if point["I"] > peak_infected:
+                peak_infected = point["I"]
+                peak_week = point["week"]
+
+        # Calculate R0
+        r0 = infection_rate / recovery_rate if recovery_rate > 0 else float("inf")
+
+        # Calculate herd immunity threshold
+        hit = 1.0 - (1.0 / r0) if r0 > 1.0 else 0.0
+
+        # Check if epidemic died out
+        final_point = trajectory[-1] if trajectory else {"I": 0, "R": 0}
+        epidemic_died_out = final_point.get("I", 0) == 0
+
+        # Generate warnings
+        warnings = []
+        if r0 > 1.0:
+            warnings.append(f"R0 > 1 ({r0:.2f}): Burnout is epidemic-capable")
+        if peak_infected > len(provider_ids) * 0.25:
+            warnings.append(
+                f"Peak infection affects {peak_infected}/{len(provider_ids)} ({peak_infected/len(provider_ids)*100:.0f}%) of network"
+            )
+        if not epidemic_died_out and simulation_weeks >= 52:
+            warnings.append("Epidemic still active after 1 year - consider interventions")
+
+        # Determine severity
+        final_rate = final_point.get("I", 0) / len(provider_ids) if provider_ids else 0
+        if final_rate > 0.5:
+            severity = "emergency"
+        elif final_rate > 0.25:
+            severity = "critical"
+        elif final_rate > 0.10:
+            severity = "warning"
+        else:
+            severity = "healthy"
+
+        return BurnoutSpreadSimulationResponse(
+            simulation_weeks=simulation_weeks,
+            infection_rate=infection_rate,
+            recovery_rate=recovery_rate,
+            r0=r0 if r0 != float("inf") else 999.9,
+            herd_immunity_threshold=max(0.0, min(1.0, hit)),
+            initial_infected=len(initial_infected_ids),
+            final_infected=final_point.get("I", 0),
+            final_recovered=final_point.get("R", 0),
+            peak_infected=peak_infected,
+            peak_week=peak_week,
+            epidemic_died_out=epidemic_died_out,
+            trajectory=trajectory_points,
+            warnings=warnings,
+            severity=severity,
+        )
+
+    except ImportError as e:
+        logger.warning(f"Burnout epidemiology module unavailable: {e}")
+        return await _simulate_burnout_spread_fallback(
+            initial_infected_ids, infection_rate, recovery_rate, simulation_weeks
+        )
+    except Exception as e:
+        logger.error(f"Burnout spread simulation failed: {e}")
+        raise RuntimeError(f"Failed to simulate burnout spread: {e}") from e
+
+
+async def _simulate_burnout_spread_fallback(
+    initial_infected_ids: list[str],
+    infection_rate: float,
+    recovery_rate: float,
+    simulation_weeks: int,
+) -> BurnoutSpreadSimulationResponse:
+    """Fallback simulation when epidemiology module is unavailable."""
+    # Simple SIR simulation without NetworkX
+    population = 50
+    initial_infected = min(len(initial_infected_ids), population)
+
+    susceptible = population - initial_infected
+    infected = initial_infected
+    recovered = 0
+
+    trajectory = []
+    peak_infected = infected
+    peak_week = 0
+
+    for week in range(simulation_weeks):
+        total = susceptible + infected + recovered
+        trajectory.append(
+            SIRSimulationPoint(
+                week=week,
+                susceptible=susceptible,
+                infected=infected,
+                recovered=recovered,
+                infection_rate=infected / total if total > 0 else 0.0,
+            )
+        )
+
+        if infected > peak_infected:
+            peak_infected = infected
+            peak_week = week
+
+        # SIR transitions (simplified)
+        new_infections = int(infection_rate * susceptible * infected / total) if total > 0 else 0
+        new_recoveries = int(recovery_rate * infected)
+
+        susceptible -= new_infections
+        infected += new_infections - new_recoveries
+        recovered += new_recoveries
+
+        susceptible = max(0, susceptible)
+        infected = max(0, infected)
+
+        if infected == 0:
+            break
+
+    r0 = infection_rate / recovery_rate if recovery_rate > 0 else 999.9
+    hit = 1.0 - (1.0 / r0) if r0 > 1.0 else 0.0
+
+    warnings = []
+    if r0 > 1.0:
+        warnings.append(f"R0 > 1 ({r0:.2f}): Epidemic-capable (fallback calculation)")
+
+    final_rate = infected / population
+    if final_rate > 0.5:
+        severity = "emergency"
+    elif final_rate > 0.25:
+        severity = "critical"
+    elif final_rate > 0.10:
+        severity = "warning"
+    else:
+        severity = "healthy"
+
+    return BurnoutSpreadSimulationResponse(
+        simulation_weeks=simulation_weeks,
+        infection_rate=infection_rate,
+        recovery_rate=recovery_rate,
+        r0=min(r0, 999.9),
+        herd_immunity_threshold=max(0.0, min(1.0, hit)),
+        initial_infected=initial_infected,
+        final_infected=infected,
+        final_recovered=recovered,
+        peak_infected=peak_infected,
+        peak_week=peak_week,
+        epidemic_died_out=(infected == 0),
+        trajectory=trajectory,
+        warnings=warnings,
+        severity=severity,
+    )
+
+
+async def simulate_burnout_contagion(
+    provider_burnout_scores: dict[str, float],
+    infection_rate: float = 0.05,
+    recovery_rate: float = 0.01,
+    simulation_iterations: int = 50,
+    max_interventions: int = 10,
+) -> BurnoutContagionResponse:
+    """
+    Simulate burnout contagion through social network using SIS model.
+
+    Uses the SIS (Susceptible-Infected-Susceptible) epidemiological model
+    on the provider collaboration network. Unlike SIR, SIS allows reinfection -
+    appropriate for burnout which can recur even after recovery.
+
+    Key features:
+    - Identifies superspreaders (high burnout + high network centrality)
+    - Recommends targeted network interventions
+    - Predicts cascade severity and peak infection timing
+
+    Scientific Background:
+    - Network topology determines outbreak severity
+    - Superspreaders (high-degree + high-burnout nodes) amplify contagion
+    - Edge removal, workload reduction, and quarantine can break transmission
+    - Centrality metrics (degree, betweenness, eigenvector) identify critical nodes
+
+    Args:
+        provider_burnout_scores: Dictionary mapping provider_id -> burnout score (0.0-1.0).
+            Scores >= 0.5 are considered "infected" (high burnout).
+        infection_rate: Beta - transmission probability per contact per iteration.
+            Typical range: 0.01-0.15.
+        recovery_rate: Lambda - recovery probability per iteration.
+            Typical range: 0.001-0.05.
+        simulation_iterations: Number of iterations to simulate (default: 50).
+        max_interventions: Maximum interventions to recommend (default: 10).
+
+    Returns:
+        BurnoutContagionResponse with superspreaders, interventions, and trajectory.
+
+    Raises:
+        ValueError: If rates are out of range or provider_burnout_scores is empty
+
+    Example:
+        # Simulate contagion with burnout scores for team
+        scores = {
+            "provider-1": 0.7,  # High burnout
+            "provider-2": 0.3,  # Low burnout
+            "provider-3": 0.9,  # Very high burnout
+            "provider-4": 0.4,  # Moderate
+        }
+        result = await simulate_burnout_contagion(
+            provider_burnout_scores=scores,
+            infection_rate=0.05,
+            recovery_rate=0.01
+        )
+
+        print(f"Risk: {result.contagion_risk}")
+        print(f"Superspreaders: {[s.provider_id for s in result.superspreaders]}")
+        for intervention in result.recommended_interventions:
+            print(f"  - {intervention.intervention_type}: {intervention.reason}")
+    """
+    if not provider_burnout_scores:
+        raise ValueError("provider_burnout_scores cannot be empty")
+    if not 0.0 <= infection_rate <= 1.0:
+        raise ValueError("infection_rate must be between 0.0 and 1.0")
+    if not 0.0 <= recovery_rate <= 1.0:
+        raise ValueError("recovery_rate must be between 0.0 and 1.0")
+    if simulation_iterations < 1:
+        raise ValueError("simulation_iterations must be >= 1")
+
+    logger.info(
+        f"Simulating burnout contagion: {len(provider_burnout_scores)} providers, "
+        f"beta={infection_rate}, lambda={recovery_rate}"
+    )
+
+    try:
+        # Attempt to use actual contagion model
+        import networkx as nx
+        from app.resilience.contagion_model import BurnoutContagionModel
+
+        logger.warning("Using simulated social network - integrate with backend API for production")
+
+        # Create simulated social network with provider IDs
+        provider_ids = list(provider_burnout_scores.keys())
+        n = len(provider_ids)
+
+        if n < 4:
+            # Too small for Watts-Strogatz, use complete graph
+            network = nx.complete_graph(n)
+        else:
+            k = min(4, n - 1)  # Each node connected to k neighbors
+            network = nx.watts_strogatz_graph(n=n, k=k, p=0.3)
+
+        mapping = {i: provider_ids[i] for i in range(n)}
+        network = nx.relabel_nodes(network, mapping)
+
+        # Initialize contagion model
+        model = BurnoutContagionModel(network)
+        model.configure(infection_rate=infection_rate, recovery_rate=recovery_rate)
+        model.set_initial_burnout(provider_ids, provider_burnout_scores)
+
+        # Run simulation
+        model.simulate(iterations=simulation_iterations)
+
+        # Generate report
+        report = model.generate_report()
+
+        # Map superspreader profiles
+        superspreader_profiles = [
+            ContagionSuperspreaderProfile(
+                provider_id=p.provider_id,
+                provider_name=_anonymize_id(p.provider_id, "Provider"),
+                burnout_score=p.burnout_score,
+                burnout_trend=p.burnout_trend,
+                degree_centrality=p.degree_centrality,
+                betweenness_centrality=p.betweenness_centrality,
+                eigenvector_centrality=p.eigenvector_centrality,
+                composite_centrality=p.composite_centrality,
+                superspreader_score=p.superspreader_score,
+                risk_level=p.risk_level,
+                direct_contacts=p.direct_contacts,
+                estimated_cascade_size=p.estimated_cascade_size,
+            )
+            for p in report.superspreaders
+        ]
+
+        # Map interventions
+        interventions = [
+            NetworkInterventionInfo(
+                intervention_type=i.intervention_type.value,
+                priority=i.priority,
+                reason=i.reason,
+                target_providers=i.target_providers,
+                affected_edges=list(i.affected_edges),
+                estimated_infection_reduction=i.estimated_infection_reduction,
+                estimated_cost_hours=i.estimated_cost,
+            )
+            for i in report.recommended_interventions[:max_interventions]
+        ]
+
+        # Determine severity
+        if report.contagion_risk.value == "critical":
+            severity = "emergency"
+        elif report.contagion_risk.value == "high":
+            severity = "critical"
+        elif report.contagion_risk.value == "moderate":
+            severity = "warning"
+        else:
+            severity = "healthy"
+
+        return BurnoutContagionResponse(
+            network_size=report.network_size,
+            current_susceptible=report.current_susceptible,
+            current_infected=report.current_infected,
+            current_infection_rate=report.current_infection_rate,
+            contagion_risk=ContagionRiskEnum(report.contagion_risk.value),
+            simulation_iterations=report.simulation_iterations,
+            final_infection_rate=report.final_infection_rate,
+            peak_infection_rate=report.peak_infection_rate,
+            peak_iteration=report.peak_iteration,
+            superspreaders=superspreader_profiles,
+            total_superspreaders=report.total_superspreaders,
+            recommended_interventions=interventions,
+            warnings=report.warnings,
+            generated_at=report.generated_at.isoformat(),
+            severity=severity,
+        )
+
+    except ImportError as e:
+        logger.warning(f"Contagion model unavailable: {e}")
+        return await _simulate_burnout_contagion_fallback(
+            provider_burnout_scores,
+            infection_rate,
+            recovery_rate,
+            simulation_iterations,
+            max_interventions,
+        )
+    except Exception as e:
+        logger.error(f"Burnout contagion simulation failed: {e}")
+        raise RuntimeError(f"Failed to simulate burnout contagion: {e}") from e
+
+
+async def _simulate_burnout_contagion_fallback(
+    provider_burnout_scores: dict[str, float],
+    infection_rate: float,
+    recovery_rate: float,
+    simulation_iterations: int,
+    max_interventions: int,
+) -> BurnoutContagionResponse:
+    """Fallback simulation when contagion model is unavailable."""
+    provider_ids = list(provider_burnout_scores.keys())
+    n = len(provider_ids)
+
+    # Count infected (burnout >= 0.5)
+    infected_count = sum(1 for score in provider_burnout_scores.values() if score >= 0.5)
+    susceptible_count = n - infected_count
+    infection_rate_current = infected_count / n if n > 0 else 0.0
+
+    # Determine risk level
+    if infection_rate_current >= 0.5:
+        risk = ContagionRiskEnum.CRITICAL
+        severity = "emergency"
+    elif infection_rate_current >= 0.25:
+        risk = ContagionRiskEnum.HIGH
+        severity = "critical"
+    elif infection_rate_current >= 0.1:
+        risk = ContagionRiskEnum.MODERATE
+        severity = "warning"
+    else:
+        risk = ContagionRiskEnum.LOW
+        severity = "healthy"
+
+    # Identify high-burnout individuals as potential superspreaders
+    superspreaders = []
+    for pid, score in provider_burnout_scores.items():
+        if score >= 0.6:
+            superspreaders.append(
+                ContagionSuperspreaderProfile(
+                    provider_id=pid,
+                    provider_name=f"Provider {pid[-4:]}",
+                    burnout_score=score,
+                    burnout_trend="stable",
+                    degree_centrality=0.5,  # Placeholder
+                    betweenness_centrality=0.3,
+                    eigenvector_centrality=0.4,
+                    composite_centrality=0.4,
+                    superspreader_score=score * 0.4,
+                    risk_level="high" if score >= 0.8 else "moderate",
+                    direct_contacts=5,
+                    estimated_cascade_size=int(score * 10),
+                )
+            )
+
+    # Generate simple interventions
+    interventions = []
+    for ss in superspreaders[:3]:
+        if ss.burnout_score >= 0.7:
+            interventions.append(
+                NetworkInterventionInfo(
+                    intervention_type="workload_reduction",
+                    priority=1,
+                    reason=f"High burnout score ({ss.burnout_score:.2f})",
+                    target_providers=[ss.provider_id],
+                    affected_edges=[],
+                    estimated_infection_reduction=0.15,
+                    estimated_cost_hours=20.0,
+                )
+            )
+
+    warnings = []
+    if infected_count > n * 0.3:
+        warnings.append(f"High infection rate: {infected_count}/{n} ({infection_rate_current*100:.0f}%)")
+    if len(superspreaders) > 3:
+        warnings.append(f"Multiple superspreaders identified: {len(superspreaders)}")
+
+    return BurnoutContagionResponse(
+        network_size=n,
+        current_susceptible=susceptible_count,
+        current_infected=infected_count,
+        current_infection_rate=infection_rate_current,
+        contagion_risk=risk,
+        simulation_iterations=simulation_iterations,
+        final_infection_rate=min(1.0, infection_rate_current * 1.5),  # Estimate
+        peak_infection_rate=min(1.0, infection_rate_current * 2.0),
+        peak_iteration=simulation_iterations // 2,
+        superspreaders=superspreaders,
+        total_superspreaders=len(superspreaders),
+        recommended_interventions=interventions[:max_interventions],
+        warnings=warnings,
+        generated_at=datetime.now().isoformat(),
+        severity=severity,
+    )

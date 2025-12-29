@@ -71,3 +71,19 @@ export interface ManifestFilters {
   role_type?: 'resident' | 'faculty' | 'fellow' | 'all';
   search?: string;
 }
+
+// ============================================================================
+// Schedule Date Range
+// ============================================================================
+
+/**
+ * Represents the date range where schedule data is available
+ */
+export interface ScheduleDateRange {
+  /** Earliest date with schedule data (ISO format) */
+  start_date: string | null;
+  /** Latest date with schedule data (ISO format) */
+  end_date: string | null;
+  /** Whether any schedule data exists */
+  has_data: boolean;
+}

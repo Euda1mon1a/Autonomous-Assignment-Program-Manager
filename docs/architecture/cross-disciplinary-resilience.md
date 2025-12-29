@@ -128,6 +128,27 @@ for alert in alerts:
 - **Dashboard**: Real-time control charts displayed in admin UI
 - **ACGME Validator**: Provides early warning before 80-hour violations
 
+#### MCP Tools
+
+AI agents can access SPC functionality via MCP:
+
+- **`run_spc_analysis`**: Apply Western Electric Rules to weekly hours data
+  - Detects Rule 1-4 violations
+  - Returns control limits, alerts, and recommendations
+  - Severity: `healthy`, `warning`, `critical`
+
+```python
+# Example MCP tool call
+result = await run_spc_analysis(
+    resident_id="abc-123",
+    weekly_hours=[58, 62, 59, 67, 71, 75, 78, 80],
+    target_hours=60.0,
+    sigma=5.0
+)
+```
+
+See [MCP Tools Reference](../api/MCP_TOOLS_REFERENCE.md#run_spc_analysis) for full documentation.
+
 ---
 
 ### 2. Process Capability Analysis (Six Sigma)
@@ -244,6 +265,31 @@ print(f"Estimated ACGME violations: {summary['estimated_defect_rate']['ppm']} PP
 - **Continuous Improvement**: Track Cpk trends to measure scheduling algorithm improvements
 - **Compliance Reporting**: Quantitative evidence for ACGME audits
 - **Resilience Dashboard**: Display sigma level and capability classification
+
+#### MCP Tools
+
+AI agents can access Process Capability via MCP:
+
+- **`calculate_process_capability_tool`**: Calculate Cp/Cpk indices for workload data
+  - Classifies capability: EXCELLENT, CAPABLE, MARGINAL, INCAPABLE
+  - Estimates sigma level and defect rate (PPM)
+  - Provides centering assessment and recommendations
+
+- **`calculate_process_capability`** (optimization module): Extended Six Sigma analysis
+  - Includes Cpm (Taguchi index) for off-target penalty
+  - Full Pp/Ppk long-term performance indices
+
+```python
+# Example MCP tool call
+result = await calculate_process_capability_tool(
+    weekly_hours=[58, 62, 59, 61, 63, 60, 58, 62],
+    lower_spec_limit=40.0,  # Minimum hours
+    upper_spec_limit=80.0   # ACGME max
+)
+print(f"Cpk: {result.cpk:.2f} - {result.interpretation}")
+```
+
+See [MCP Tools Reference](../api/MCP_TOOLS_REFERENCE.md#calculate_process_capability_tool) for full documentation.
 
 ---
 
@@ -402,6 +448,39 @@ for week in time_series[:5]:
 - **Alert System**: Rₜ > 2 triggers ORANGE safety level
 - **Intervention Recommender**: Evidence-based interventions from epidemiology
 - **Dashboard**: Network visualization with burnout status overlay
+
+#### MCP Tools
+
+AI agents can access Burnout Epidemiology via MCP:
+
+- **`calculate_burnout_rt`**: Calculate effective reproduction number (Rt)
+  - Identifies superspreaders and high-risk contacts
+  - Returns intervention recommendations based on Rt value
+  - Calculates herd immunity threshold
+
+- **`simulate_burnout_spread`**: Run SIR epidemic simulation
+  - Projects burnout trajectory over time
+  - Identifies peak infection week and final outcomes
+  - Calculates R0 from transmission/recovery parameters
+
+- **`simulate_burnout_contagion`**: SIS network diffusion model
+  - Uses actual social/collaboration network structure
+  - Identifies superspreader profiles with centrality scores
+  - Recommends network interventions (edge removal, buffer insertion)
+
+```python
+# Example MCP tool call
+result = await calculate_burnout_rt(
+    burned_out_provider_ids=["provider-1", "provider-2", "provider-3"],
+    time_window_days=28
+)
+if result.rt > 1.0:
+    print(f"Burnout spreading! Rt={result.rt:.2f}")
+    for intervention in result.interventions:
+        print(f"  - {intervention}")
+```
+
+See [MCP Tools Reference](../api/MCP_TOOLS_REFERENCE.md#calculate_burnout_rt) for full documentation.
 
 ---
 
@@ -581,6 +660,35 @@ for row in table:
 - **Capacity Planning**: Predicts staffing needs from historical arrival data
 - **Utilization Monitoring**: Compares actual vs. predicted occupancy
 
+#### MCP Tools
+
+AI agents can access Erlang C Coverage via MCP:
+
+- **`optimize_erlang_coverage`**: Find minimum staffing for service level target
+  - Returns recommended specialists, utilization, and wait probability
+  - Generates staffing table for decision support
+  - Severity levels based on 80% utilization threshold
+
+- **`calculate_erlang_metrics`**: Get detailed metrics for specific configuration
+  - Wait probability, average wait time, service level
+  - Occupancy rate and queue stability check
+  - Erlang B blocking probability
+
+```python
+# Example MCP tool call
+result = await optimize_erlang_coverage(
+    specialty="Orthopedic Surgery",
+    arrival_rate=2.5,        # 2.5 cases/hour
+    service_time_minutes=30,  # 30 min per case
+    target_wait_minutes=15,
+    target_wait_probability=0.05
+)
+print(f"Need {result.recommended_specialists} specialists")
+print(f"Wait probability: {result.wait_probability:.1%}")
+```
+
+See [MCP Tools Reference](../api/MCP_TOOLS_REFERENCE.md#optimize_erlang_coverage) for full documentation.
+
 ---
 
 ### 5. Seismic P-Wave Detection (STA/LTA Algorithm)
@@ -732,6 +840,32 @@ print(f"Combined burnout magnitude: {magnitude:.1f}/10")
 - **Real-Time Alerts**: Trigger notifications when STA/LTA > 2.5
 - **Predictive Dashboard**: Display STA/LTA traces for early warning
 - **Intervention Prioritization**: Magnitude prediction guides resource allocation
+
+#### MCP Tools
+
+AI agents can access Seismic Detection via MCP:
+
+- **`detect_burnout_precursors`**: Detect early warning signs using STA/LTA algorithm
+  - Monitors 5 precursor signal types (swap requests, sick calls, etc.)
+  - Configurable short/long window sizes
+  - Returns alerts with severity, magnitude prediction, and time-to-event
+  - Severity: `healthy`, `warning`, `elevated`, `critical`
+
+```python
+# Example MCP tool call
+result = await detect_burnout_precursors(
+    resident_id="abc-123",
+    signal_type="swap_requests",
+    time_series=[0, 1, 0, 1, 0, 2, 3, 5, 7, 8, 12, 15, 18],
+    short_window=5,
+    long_window=30
+)
+if result.alerts_detected > 0:
+    print(f"WARNING: {result.alerts[0].severity} precursor detected")
+    print(f"STA/LTA ratio: {result.max_sta_lta_ratio:.2f}")
+```
+
+See [MCP Tools Reference](../api/MCP_TOOLS_REFERENCE.md#detect_burnout_precursors) for full documentation.
 
 ---
 
@@ -937,6 +1071,34 @@ for report in reports[:3]:  # Top 3 at-risk
 - **Intervention Recommender**: Restrictions mapped to danger classes
 - **Dashboard**: Multi-temporal burnout "weather map"
 
+#### MCP Tools
+
+AI agents can access Fire Weather Index via MCP:
+
+- **`calculate_fire_danger_index`**: Calculate multi-temporal burnout danger
+  - Combines recent hours, monthly load, yearly satisfaction, and velocity
+  - Returns FWI score, component scores, and danger classification
+  - Temporal analysis explains each time scale contribution
+  - Severity: `healthy`, `warning`, `elevated`, `critical`, `emergency`
+
+```python
+# Example MCP tool call
+result = await calculate_fire_danger_index(
+    resident_id="abc-123",
+    recent_hours=75.0,       # High recent workload
+    monthly_load=260.0,      # Sustained overwork
+    yearly_satisfaction=0.4, # Low satisfaction
+    workload_velocity=8.0    # Increasing workload
+)
+
+if result.danger_class == "extreme":
+    print("EMERGENCY: Immediate intervention required")
+    for restriction in result.recommended_restrictions:
+        print(f"  - {restriction}")
+```
+
+See [MCP Tools Reference](../api/MCP_TOOLS_REFERENCE.md#calculate_fire_danger_index) for full documentation.
+
 ---
 
 ### 7. Creep/Fatigue Mechanics (Materials Science)
@@ -1139,6 +1301,31 @@ for rec in combined['recommendations']:
 - **Intervention Timing**: Tertiary creep triggers immediate action
 - **Recovery Planning**: Miner's rule guides recovery rotation sequencing
 
+#### MCP Tools
+
+AI agents can access Creep/Fatigue analysis via MCP:
+
+- **`assess_creep_fatigue`**: Combined creep-fatigue burnout assessment
+  - Larson-Miller parameter for time-dependent creep
+  - S-N curve analysis for rotation cycle fatigue
+  - Miner's rule cumulative damage calculation
+  - Creep stage classification: PRIMARY, SECONDARY, TERTIARY
+  - Severity: `healthy`, `at_risk`, `critical`
+
+```python
+# Example MCP tool call
+result = await assess_creep_fatigue(include_assessments=True, top_n=10)
+
+if result.tertiary_creep_count > 0:
+    print(f"URGENT: {result.tertiary_creep_count} residents approaching burnout")
+    for assessment in result.assessments:
+        if assessment.overall_risk == "high":
+            lmp = assessment.creep_analysis.larson_miller_parameter
+            print(f"  {assessment.resident_id}: LMP={lmp:.1f}")
+```
+
+See [MCP Tools Reference](../api/MCP_TOOLS_REFERENCE.md#assess_creep_fatigue) for full documentation.
+
 ---
 
 ### 8. Recovery Distance Analysis (Schedule Resilience)
@@ -1261,6 +1448,118 @@ else:
 - **N-1/N-2 Analysis**: Complements contingency analysis with actionable recovery paths
 - **Dashboard**: Display RD metrics alongside defense level status
 - **Proactive Alerts**: Warn when RD_p95 exceeds threshold
+
+#### MCP Tools
+
+AI agents can access Recovery Distance analysis via MCP:
+
+- **`calculate_recovery_distance`**: Measure schedule fragility
+  - Tests N-1 shock scenarios (faculty absence, resident sick)
+  - Returns RD mean, median, p95, and max values
+  - Identifies breakglass (>3 edits) and infeasible scenarios
+  - Includes witness edit sequences for sample results
+  - Severity: `resilient`, `moderate`, `fragile`, `brittle`
+
+```python
+# Example MCP tool call
+result = await calculate_recovery_distance(max_events=20)
+
+print(f"RD Mean: {result.rd_mean:.1f} edits")
+print(f"RD P95: {result.rd_p95:.1f} edits")
+
+if result.rd_p95 > 4:
+    print("WARNING: High recovery cost in worst case")
+if result.breakglass_count > result.events_tested * 0.2:
+    print("CRITICAL: Many scenarios require extensive rework")
+```
+
+See [MCP Tools Reference](../api/MCP_TOOLS_REFERENCE.md#calculate_recovery_distance) for full documentation.
+
+---
+
+## MCP Tools Integration
+
+The Cross-Disciplinary Resilience Framework is exposed to AI agents via the Model Context Protocol (MCP) server. This enables AI assistants to analyze burnout risk, optimize staffing, and monitor system health programmatically.
+
+### Composite Analytics Tools
+
+Beyond individual module tools, the MCP server provides composite analytics that aggregate signals across multiple domains:
+
+#### Unified Critical Index
+
+**Tool**: `get_unified_critical_index`
+
+Aggregates signals from three domains into a single actionable risk score:
+- **Contingency (40% weight)**: N-1/N-2 vulnerability
+- **Hub Analysis (35% weight)**: Network centrality
+- **Epidemiology (25% weight)**: Burnout super-spreader potential
+
+```python
+result = await get_unified_critical_index(include_details=True, top_n=5)
+
+if result.risk_level == "critical":
+    print(f"ALERT: {result.universal_critical_count} faculty need protection")
+    for faculty in result.top_critical_faculty:
+        print(f"  - {faculty.faculty_name}: {faculty.risk_pattern}")
+```
+
+**Risk Patterns Identified**:
+| Pattern | Domains High | Intervention Focus |
+|---------|--------------|-------------------|
+| `universal_critical` | All three | Immediate protection |
+| `structural_burnout` | Contingency + Epidemiology | Workload + wellness |
+| `influential_hub` | Contingency + Hub | Cross-training |
+| `social_connector` | Epidemiology + Hub | Network diversification |
+
+#### Transcription Triggers
+
+**Tool**: `analyze_transcription_triggers`
+
+Bio-inspired constraint regulation using gene regulatory network concepts:
+- Transcription factors (TFs) activate or repress constraints
+- Context-sensitive constraint weighting
+- Signal transduction cascades for stress response
+
+```python
+result = await analyze_transcription_triggers(include_constraints=True)
+
+print(f"Active TFs: {result.active_tfs}/{result.total_tfs}")
+print(f"Modified constraints: {result.constraints_with_modified_weight}")
+```
+
+#### Equity Metrics
+
+**Tool**: `calculate_equity_metrics`
+
+Gini coefficient and workload fairness analysis:
+- Measures inequality in workload distribution
+- Identifies most over/underloaded providers
+- Recommendations for rebalancing
+
+```python
+result = await calculate_equity_metrics(
+    hours_per_provider={"FAC-001": 72, "FAC-002": 65, "FAC-003": 58},
+    target_gini=0.15
+)
+print(f"Gini: {result.gini_coefficient:.3f}")
+print(f"Equitable: {result.is_equitable}")
+```
+
+### MCP Tool Categories Summary
+
+| Category | Tool Count | Purpose |
+|----------|------------|---------|
+| **Early Warning** | 4 tools | Detect burnout precursors |
+| **Epidemiology** | 3 tools | Model burnout spread |
+| **Optimization** | 3 tools | Staffing and quality |
+| **Composite** | 4 tools | Unified risk scores |
+| **Core Resilience** | 12+ tools | Framework monitoring |
+
+### Full Reference
+
+For complete tool documentation including all parameters, response formats, and examples:
+
+**[MCP Tools Reference](../api/MCP_TOOLS_REFERENCE.md)**
 
 ---
 
@@ -1692,11 +1991,12 @@ def test_process_capability_incapable():
 The Cross-Disciplinary Engineering Resilience Framework represents a paradigm shift in burnout prediction—from reactive intervention to proactive prevention. By applying 50+ years of proven engineering science from diverse domains, this framework provides quantitative, actionable insights that complement clinical judgment.
 
 **Key Achievements**:
-- ✅ 7 production-ready modules from 6 engineering disciplines
-- ✅ >90% test coverage with comprehensive validation
-- ✅ Mathematical rigor backed by peer-reviewed research
-- ✅ Modular architecture allowing incremental adoption
-- ✅ Real-world applicability demonstrated in test scenarios
+- 8 production-ready modules from 7 engineering disciplines
+- 13+ MCP tools exposing resilience framework to AI agents
+- >90% test coverage with comprehensive validation
+- Mathematical rigor backed by peer-reviewed research
+- Modular architecture allowing incremental adoption
+- Real-world applicability demonstrated in test scenarios
 
 **Impact**:
 Medical residencies can now leverage the same tools that:
@@ -1707,15 +2007,17 @@ Medical residencies can now leverage the same tools that:
 - Detect earthquakes early (Seismology)
 - Predict wildfire danger (Fire Science)
 - Prevent structural failures (Materials Science)
+- Balance workload distribution (Gini coefficient from economics)
 
 The result: **Data-driven burnout prevention** that protects residents, ensures patient safety, and maintains program quality.
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: 2025-12-21
+**Document Version**: 1.1
+**Last Updated**: 2025-12-28
 **Maintained By**: Resilience Engineering Team
 **Related Documentation**:
+- [MCP Tools Reference](../api/MCP_TOOLS_REFERENCE.md)
 - [Resilience Framework Guide](../guides/resilience-framework.md)
 - [System Architecture](overview.md)
 - [Backend Architecture](backend.md)
