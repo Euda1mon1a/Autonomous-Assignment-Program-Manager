@@ -617,6 +617,99 @@ logging.basicConfig(
 
 ---
 
+### Session 012 Continuation: 2025-12-28 — STDIO Contention Discovery & HTTP Migration
+
+**Context:** Session 012 spawned parallel agents (Streams A, B, C, D) to test MCP tools. Only Stream B completed; others reported "Not connected" errors.
+
+**Key Discoveries:**
+
+| Discovery | Implication | Resolution |
+|-----------|-------------|------------|
+| **MCP STDIO is single-client by design** | When one agent is mid-request, STDIO pipe is occupied; other agents queue or fail | Switch to HTTP transport |
+| **HTTP transport enables parallel access** | Multiple agents can make concurrent requests via session management | PR #514 implements localhost-only HTTP |
+| **Celery-beat ≠ Celery-worker** | Beat is a scheduler, not a web server; HTTP healthcheck always fails | PR #513 uses file-based healthcheck (`celerybeat-schedule`) |
+| **Resilience framework biology is structural** | Cross-disciplinary analogies (SIR models, homeostasis) are literal implementations, not metaphors | Team must understand the domain science |
+
+**PRs Created (All Open, Pending Merge):**
+| PR | Title | Key Change |
+|----|-------|------------|
+| #512 | feat(heatmap): add daily and weekly group_by | Backend bug fix + 28 new tests |
+| #513 | fix(celery): correct healthcheck for Beat | File-based check for scheduler |
+| #514 | feat(mcp): switch to HTTP transport | Enables parallel agent access |
+
+**Delegation Pattern Used:**
+- 4 parallel agents spawned (Streams A-D) for MCP tool testing
+- STDIO contention caused 3/4 streams to fail
+- Root cause identified; HTTP transport solution designed and implemented
+- **Assessment:** Good parallelization attempt; infrastructure limitation (not delegation failure)
+
+**MCP Transport Decision Tree (For Future Sessions):**
+```
+                    ┌─────────────────────────────┐
+                    │  How many concurrent agents │
+                    │   need MCP tool access?     │
+                    └──────────────┬──────────────┘
+                                   │
+                 ┌────────────────────────────────┐
+                 ▼                                ▼
+           1 Agent                         2+ Agents
+                 │                                │
+                 ▼                                ▼
+        ┌─────────────┐                  ┌─────────────┐
+        │ Use STDIO   │                  │ Use HTTP    │
+        │ (Zero net   │                  │ (127.0.0.1  │
+        │  exposure)  │                  │  only)      │
+        └─────────────┘                  └─────────────┘
+```
+
+**Celery Healthcheck Pattern (Discovered):**
+```yaml
+# WRONG (Beat is not a web server)
+healthcheck:
+  test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+
+# CORRECT (Beat creates/updates this file)
+celery-beat:
+  healthcheck:
+    test: ["CMD-SHELL", "[ -f celerybeat-schedule ]"]
+    interval: 30s
+    timeout: 5s
+    retries: 3
+```
+
+**When to Use Parallel vs Sequential Agents:**
+
+| Scenario | Pattern | Reason |
+|----------|---------|--------|
+| Independent code areas | **Parallel** | No dependencies; max throughput |
+| Shared database writes | **Sequential** | Race conditions possible |
+| Shared file writes | **Sequential** | File locks / overwrite risk |
+| MCP tool access (STDIO) | **Sequential** | Single-client limitation |
+| MCP tool access (HTTP) | **Parallel** | Session-managed concurrency |
+| Code review + implementation | **Sequential** | Review informs implementation |
+| Tests for different modules | **Parallel** | Independent test suites |
+
+**Session Handoff:**
+- PRs #512, #513, #514 all open; need human merge
+- `.mcp.json` now configured for HTTP transport
+- Claude Code session restart required to test HTTP MCP transport
+- `docker-compose.yml` has `127.0.0.1:8080` port binding for MCP
+
+---
+
+## Technical Reference: MCP Transport Comparison
+
+| Aspect | STDIO | HTTP |
+|--------|-------|------|
+| **Security** | Zero network exposure | Localhost-only (127.0.0.1) |
+| **Concurrency** | Single client | Multi-client (session IDs) |
+| **Agent compatibility** | 1 agent at a time | 2+ agents concurrent |
+| **Connection method** | `docker compose exec` | HTTP URL endpoint |
+| **Failure mode** | Queue/block | Parallel processing |
+| **When to use** | Single-agent sessions | Multi-agent orchestration |
+
+---
+
 *File created: 2025-12-27*
-*Last updated: 2025-12-28 (Session 012)*
+*Last updated: 2025-12-28 (Session 012 continuation)*
 *Maintained by: ORCHESTRATOR*

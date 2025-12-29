@@ -138,16 +138,18 @@ Proposed: [◀ Prev] [Next ▶] [Today] [This Block] Block: [Date Range]
 
 ---
 
-### 3. Heatmap Backend Bug - group_by Validation
+### 3. Heatmap Backend Bug - group_by Validation - FIXED
 **Priority:** Medium
 **Page:** `/heatmap`
-**Status:** Bug - needs fix
+**Status:** FIXED (PR #512)
 
 **Issue:** Backend rejects "Daily" and "Weekly" `group_by` values, only accepts "person" or "rotation"
 
-**Files to investigate:**
-- Backend endpoint handling heatmap requests
-- Schema validation for group_by parameter
+**Resolution (PR #512):**
+- Added `_generate_daily_heatmap()` and `_generate_weekly_heatmap()` helper methods
+- Extended group_by validation to accept 'daily' and 'weekly' values (case-insensitive)
+- Updated GET /heatmap, POST /heatmap/unified, GET /heatmap/image endpoints
+- Added 28 new tests (22 route-level, 6 service-level)
 
 ---
 
@@ -334,4 +336,4 @@ The following links in `README.md` point to non-existent files:
 
 ---
 
-*Last updated: 2025-12-26*
+*Last updated: 2025-12-28*
