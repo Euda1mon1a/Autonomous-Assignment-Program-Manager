@@ -136,6 +136,20 @@ from .tools.validate_schedule import (
     validate_schedule as validate_schedule_by_id,
 )
 
+# Import time crystal tools
+from .time_crystal_tools import (
+    CheckpointStatusResponse,
+    PeriodicityAnalysisResponse,
+    RigidityAnalysisResponse,
+    TimeCrystalHealthResponse,
+    TimeCrystalObjectiveResponse,
+    analyze_schedule_periodicity,
+    analyze_schedule_rigidity,
+    calculate_time_crystal_objective,
+    get_checkpoint_status,
+    get_time_crystal_health,
+)
+
 # Configure logging - MUST use stderr for STDIO transport compatibility
 # MCP uses stdout for JSON-RPC messages; logging to stdout corrupts the protocol
 logging.basicConfig(
@@ -1396,6 +1410,226 @@ async def module_usage_analysis_tool(
         print(f"Unreachable: {result.unreachable_modules}")
     """
     return await module_usage_analysis(entry_points=entry_points)
+
+
+# =============================================================================
+# Time Crystal Scheduling Tools
+# =============================================================================
+
+
+@mcp.tool()
+async def analyze_schedule_rigidity_tool(
+    current_assignments: list[dict] | None = None,
+    proposed_assignments: list[dict] | None = None,
+    current_schedule_id: str | None = None,
+    proposed_schedule_id: str | None = None,
+) -> RigidityAnalysisResponse:
+    """
+    Analyze schedule rigidity (anti-churn) between current and proposed schedules.
+
+    Time crystal insight: Schedules should be "rigid" - small perturbations
+    (like adding one absence) should NOT cause large-scale reshuffling.
+    This measures schedule stability.
+
+    Args:
+        current_assignments: Current schedule as list of dicts with
+            {person_id, block_id, template_id}
+        proposed_assignments: Proposed schedule as list of dicts
+        current_schedule_id: Alternative: ID of current schedule in database
+        proposed_schedule_id: Alternative: ID of proposed schedule in database
+
+    Returns:
+        Rigidity analysis with stability metrics:
+        - rigidity_score: 1.0 = identical, 0.0 = completely different
+        - total_changes: Number of assignment differences
+        - affected_people_count: How many people's schedules changed
+        - severity: minimal/low/moderate/high/critical
+        - recommendation: Actionable advice
+
+    Example:
+        # Compare two schedule versions
+        result = await analyze_schedule_rigidity_tool(
+            current_assignments=[
+                {"person_id": "uuid1", "block_id": "block1", "template_id": "clinic"}
+            ],
+            proposed_assignments=[
+                {"person_id": "uuid1", "block_id": "block1", "template_id": "OR"}
+            ]
+        )
+
+        print(f"Rigidity: {result.rigidity_score}")  # 0.0 - complete change
+        print(f"Severity: {result.severity}")
+    """
+    return await analyze_schedule_rigidity(
+        current_schedule_id=current_schedule_id,
+        proposed_schedule_id=proposed_schedule_id,
+        current_assignments=current_assignments,
+        proposed_assignments=proposed_assignments,
+    )
+
+
+@mcp.tool()
+async def analyze_schedule_periodicity_tool(
+    assignments: list[dict] | None = None,
+    schedule_id: str | None = None,
+    base_period_days: int = 7,
+) -> PeriodicityAnalysisResponse:
+    """
+    Analyze natural periodicities in a schedule.
+
+    Time crystal insight: Medical schedules have natural "drive periods"
+    (7 days, 28 days) and emergent "subharmonic responses" (alternating
+    weekends, Q4 call patterns). Detecting these helps preserve schedule
+    structure during regeneration.
+
+    Args:
+        assignments: Schedule as list of dicts with {person_id, block_id, date}
+        schedule_id: Alternative: ID of schedule in database
+        base_period_days: Base period to look for (default: 7 for weekly)
+
+    Returns:
+        Periodicity analysis with:
+        - fundamental_period_days: Strongest detected period
+        - subharmonic_periods: Detected longer cycles [7, 14, 28]
+        - periodicity_strength: 0-1 measure of periodic structure
+        - detected_patterns: Human-readable pattern descriptions
+        - recommendations: How to preserve detected patterns
+
+    Example:
+        result = await analyze_schedule_periodicity_tool(base_period_days=7)
+
+        print(f"Detected periods: {result.subharmonic_periods}")
+        # [7, 14, 28] - weekly, biweekly, ACGME 4-week
+    """
+    return await analyze_schedule_periodicity(
+        schedule_id=schedule_id,
+        assignments=assignments,
+        base_period_days=base_period_days,
+    )
+
+
+@mcp.tool()
+async def calculate_time_crystal_objective_tool(
+    current_assignments: list[dict],
+    proposed_assignments: list[dict],
+    constraint_results: list[dict] | None = None,
+    alpha: float = 0.3,
+    beta: float = 0.1,
+) -> TimeCrystalObjectiveResponse:
+    """
+    Calculate time-crystal-inspired optimization objective.
+
+    Combines constraint satisfaction with anti-churn (rigidity) to create
+    schedules that are BOTH compliant AND stable. Based on time crystal
+    physics and minimal disruption planning research.
+
+    Objective Function:
+        score = (1-α-β) * constraints + α * rigidity + β * fairness
+
+    Weight Guidelines:
+        - α = 0.0: Pure constraint optimization (may cause large reshuffles)
+        - α = 0.3: Balanced - satisfy constraints with minimal disruption
+        - α = 0.5: Conservative - prefer stability over minor improvements
+        - α = 1.0: Pure stability (no changes even if suboptimal)
+
+    Args:
+        current_assignments: Current schedule assignments
+        proposed_assignments: Proposed schedule assignments
+        constraint_results: Optional constraint evaluation results
+            (list of {satisfied: bool, penalty: float})
+        alpha: Weight for rigidity (0.0-1.0, default 0.3)
+        beta: Weight for fairness (0.0-1.0, default 0.1)
+
+    Returns:
+        Combined objective score with component breakdown:
+        - objective_score: Final score (higher is better)
+        - constraint_score: Constraint satisfaction component
+        - rigidity_score: Schedule stability component
+        - fairness_score: Churn distribution fairness
+        - interpretation: Human-readable assessment
+
+    Example:
+        result = await calculate_time_crystal_objective_tool(
+            current_assignments=[...],
+            proposed_assignments=[...],
+            alpha=0.3,  # 30% weight on stability
+            beta=0.1    # 10% weight on fair churn distribution
+        )
+
+        print(f"Score: {result.objective_score}")
+        print(f"Interpretation: {result.interpretation}")
+    """
+    return await calculate_time_crystal_objective(
+        current_assignments=current_assignments,
+        proposed_assignments=proposed_assignments,
+        constraint_results=constraint_results,
+        alpha=alpha,
+        beta=beta,
+    )
+
+
+@mcp.tool()
+async def get_checkpoint_status_tool(
+    schedule_id: str | None = None,
+) -> CheckpointStatusResponse:
+    """
+    Get current stroboscopic checkpoint status.
+
+    Time crystal insight: Like stroboscopic observation of time crystals,
+    schedule state advances only at discrete checkpoints (week boundaries,
+    block transitions) - not continuously. This ensures all observers see
+    consistent state.
+
+    Args:
+        schedule_id: Optional specific schedule to check
+
+    Returns:
+        Checkpoint status with:
+        - has_authoritative_state: Whether stable state exists
+        - has_draft_state: Whether pending changes exist
+        - last_checkpoint_time: When last checkpoint occurred
+        - last_checkpoint_boundary: Type (WEEK_START, BLOCK_END, etc.)
+        - pending_changes: Changes waiting for next checkpoint
+
+    Example:
+        status = await get_checkpoint_status_tool()
+
+        if status.has_draft_state:
+            print(f"{status.pending_changes} changes pending")
+    """
+    return await get_checkpoint_status(schedule_id=schedule_id)
+
+
+@mcp.tool()
+async def get_time_crystal_health_tool() -> TimeCrystalHealthResponse:
+    """
+    Get overall health of time crystal scheduling components.
+
+    Monitors the three pillars of time-crystal-inspired scheduling:
+    1. Periodicity: Are natural cycles being maintained?
+    2. Rigidity: Is schedule appropriately stable?
+    3. Checkpoints: Are stroboscopic checkpoints working?
+
+    Returns:
+        Health status with:
+        - periodicity_healthy: Natural cycles intact
+        - rigidity_healthy: Schedule stability acceptable
+        - checkpoint_healthy: State management working
+        - overall_health: healthy/degraded/critical
+        - metrics: Key health indicators
+        - issues: Detected problems
+        - recommendations: Suggested fixes
+
+    Example:
+        health = await get_time_crystal_health_tool()
+
+        if health.overall_health != "healthy":
+            for issue in health.issues:
+                print(f"Issue: {issue}")
+            for rec in health.recommendations:
+                print(f"Recommendation: {rec}")
+    """
+    return await get_time_crystal_health()
 
 
 # Server lifecycle functions (called by lifespan context manager)
