@@ -67,6 +67,12 @@ services:
       RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-false}
     ports:
       - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     networks:
       - app-network
 
@@ -121,6 +127,12 @@ services:
       SECRET_KEY: ${SECRET_KEY}
       DEBUG: "false"
     command: celery -A app.core.celery_app beat --loglevel=info
+    healthcheck:
+      test: ["CMD-SHELL", "[ -f celerybeat-schedule ] && echo 'healthy' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     networks:
       - app-network
 
