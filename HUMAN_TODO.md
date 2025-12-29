@@ -162,20 +162,27 @@ From: [date] To: [date] Group by: [dropdown] ☑ Include FMIT [Filters]
 ### 4. Daily Manifest - Empty State UX
 **Priority:** Medium
 **Page:** `/daily-manifest`
-**Status:** UX improvement needed
+**Status:** COMPLETE (Session 012, 2025-12-28)
 
-**Current behavior:** Shows "Error Loading Manifest - Not Found" when no schedule data exists
+**Issues fixed:**
+- [x] Improved error messaging with context-aware messages (network error vs service unavailable)
+- [x] Empty state now shows date-specific message with helpful guidance
+- [x] Added info box with actionable suggestions ("What you can do" list)
+- [x] Quick action buttons: "Go to Today" and "View All Day"
+- [x] Search empty state: Shows search term and "Clear Search" button
+- [ ] Date picker data availability indicator (deferred - requires backend endpoint)
 
-**Issues:**
-- [ ] Poor error message - doesn't explain the actual problem
-- [ ] No empty state guidance for users
-- [ ] Date picker allows selecting dates with no schedule data
+**Files Modified:**
+- `frontend/src/features/daily-manifest/DailyManifest.tsx`
 
-**Recommended fixes:**
-- [ ] Better error message: "No schedule assignments for this date"
-- [ ] Empty state with CTA: "No schedule data available. Generate a schedule or import data to get started"
-- [ ] Disable/gray out dates with no schedule data
-- [ ] Show data availability indicator (e.g., "Schedule available: Mar 16 - Apr 12, 2026")
+**Changes:**
+1. Error state now distinguishes between 404, network errors, and other errors with appropriate messaging
+2. Empty state (no locations) shows:
+   - CalendarX icon with date-specific heading
+   - Context-aware message (morning/afternoon/all day)
+   - Blue info box with helpful suggestions
+   - Quick action buttons to navigate to today or view all day
+3. Search empty state shows the search query and provides a "Clear Search" button
 
 ---
 
@@ -215,37 +222,31 @@ From: [date] To: [date] Group by: [dropdown] ☑ Include FMIT [Filters]
 
 ## Other Pending Tasks
 
-### Backend Fix: Faculty Assignments Missing rotation_template_id
+### Backend Fix: Faculty Assignments Missing rotation_template_id - FIXED
 
 **Priority:** Medium
 **Found:** Session 14 (2025-12-22)
-**Location:** Schedule generation engine or seeder
+**Fixed:** Session 14 (2025-12-23) - Commit e88a63b
+**Status:** RESOLVED
 
-**Issue:** Faculty-Inpatient Year View shows all zeros because faculty assignments are created without `rotation_template_id`.
+**Original Issue:** Faculty-Inpatient Year View showed all zeros because faculty assignments were created without `rotation_template_id`.
 
-Database verification:
+**Fix Applied:**
+- Added `_get_primary_template_for_block()` method to determine rotation template from resident assignments
+- Faculty supervisors now receive the same `rotation_template_id` as the residents they supervise
+- Tests added: `test_faculty_receives_rotation_template_id()` and `test_faculty_template_matches_resident_template()`
+
+**Current Database State (verified 2025-12-28):**
 ```
- total_assignments | with_template | without_template |   type
--------------------+---------------+------------------+----------
-                40 |             0 |               40 | faculty
-                40 |            40 |                0 | resident
+   type   | total_assignments | with_template | without_template
+----------+-------------------+---------------+------------------
+ faculty  |               430 |           430 |                0
+ resident |              3592 |          3592 |                0
 ```
 
-**Root Cause:** The schedule generator creates faculty assignments without linking rotation templates. The frontend correctly filters by `activity_type === 'inpatient'`, but faculty assignments have `activity_type = NULL` because no template is assigned.
-
-**Files to investigate:**
-- `backend/app/scheduling/engine.py` - Faculty assignment creation logic
-- Seed scripts that generate test data
-
-**Frontend code (working correctly):**
-```typescript
-// FacultyInpatientWeeksView.tsx:92-94
-if (
-  (am && am.activityType?.toLowerCase() === 'inpatient') ||
-  (pm && pm.activityType?.toLowerCase() === 'inpatient')
-) {
-  count++
-```
+**Files Modified:**
+- `backend/app/scheduling/engine.py` - Added `_get_primary_template_for_block()` and updated `_assign_faculty()`
+- `backend/tests/test_scheduling_engine.py` - Added faculty template tests
 
 ---
 

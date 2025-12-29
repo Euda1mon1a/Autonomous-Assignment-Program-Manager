@@ -24,6 +24,46 @@ from .async_tools import (
     list_active_tasks,
     start_background_task,
 )
+
+# Import circuit breaker tools
+from .circuit_breaker_tools import (
+    AllBreakersStatusResponse,
+    BreakerHealthResponse,
+    HalfOpenTestResponse,
+    ManualOverrideResponse,
+    check_circuit_breakers,
+    get_breaker_health,
+    override_circuit_breaker,
+    test_half_open_breaker,
+)
+
+# Import composite/advanced resilience tools
+from .composite_resilience_tools import (
+    # Creep Fatigue
+    CreepFatigueResponse,
+    # Recovery Distance
+    RecoveryDistanceResponse,
+    # Transcription Factors
+    TranscriptionTriggersResponse,
+    # Unified Critical Index
+    UnifiedCriticalIndexResponse,
+    analyze_transcription_triggers,
+    assess_creep_fatigue,
+    calculate_recovery_distance,
+    get_unified_critical_index,
+)
+
+# Import immune system tools (AIS - Artificial Immune System)
+from .immune_system_tools import (
+    # Response Models
+    AntibodyAnalysisResponse,
+    ImmuneResponseAssessmentResponse,
+    MemoryCellsResponse,
+    # Tool Functions
+    analyze_antibody_response,
+    assess_immune_response,
+    check_memory_cells,
+)
 from .deployment_tools import (
     DeploymentStatusResult,
     Environment,
@@ -48,10 +88,95 @@ from .deployment_tools import (
     run_smoke_tests,
     validate_deployment,
 )
+
+# Import thermodynamics tools (entropy, phase transitions, free energy)
+from .thermodynamics_tools import (
+    # Response Models
+    ScheduleEntropyResponse,
+    EntropyMonitorStateResponse,
+    PhaseTransitionRiskResponse,
+    TransitionSeverityEnum,
+    FreeEnergyOptimizationResponse,
+    EnergyLandscapeResponse,
+    # Tool Functions
+    calculate_schedule_entropy,
+    get_entropy_monitor_state,
+    analyze_phase_transitions,
+    estimate_transition_time,
+    optimize_free_energy,
+    analyze_energy_landscape,
+)
+
+# Import early warning tools (STA/LTA, SPC, Fire Index)
+from .early_warning_integration import (
+    # Burnout Fire Index (CFFDRS)
+    BatchFireDangerRequest,
+    BatchFireDangerResponse,
+    DangerClassEnum,
+    FireDangerRequest,
+    FireDangerResponse,
+    # Seismic Detection (STA/LTA)
+    MultiSignalMagnitudeRequest,
+    MultiSignalMagnitudeResponse,
+    PrecursorDetectionRequest,
+    PrecursorDetectionResponse,
+    PrecursorSignalType,
+    # SPC Monitoring (Western Electric)
+    ProcessCapabilityRequest,
+    SPCAnalysisRequest,
+    SPCAnalysisResponse,
+    calculate_batch_fire_danger,
+    calculate_fire_danger_index,
+    detect_burnout_precursors,
+    predict_burnout_magnitude,
+    run_spc_analysis,
+)
+from .early_warning_integration import (
+    ProcessCapabilityResponse as EWProcessCapabilityResponse,
+)
+from .early_warning_integration import (
+    calculate_process_capability_tool as calculate_spc_process_capability,
+)
+
+# Import empirical testing tools
+from .empirical_tools import (
+    AblationResult,
+    ConstraintBenchmarkResult,
+    ModuleUsageResult,
+    ResilienceBenchmarkResult,
+    SolverBenchmarkResult,
+    ablation_study,
+    benchmark_constraints,
+    benchmark_resilience,
+    benchmark_solvers,
+    module_usage_analysis,
+)
+
+# Import FRMS (Fatigue Risk Management System) tools
+# Import immune system tools (AIS - Artificial Immune System)
+# Import optimization and analytics tools (Erlang C, Six Sigma, Equity)
+from .optimization_tools import (
+    EquityMetricsResponse,
+    ErlangCoverageResponse,
+    ErlangMetricsResponse,
+    LorenzCurveResponse,
+    ProcessCapabilityResponse,
+    calculate_equity_metrics,
+    calculate_erlang_metrics,
+    calculate_process_capability,
+    generate_lorenz_curve,
+    optimize_erlang_coverage,
+)
+
+# Import optimization and analytics tools
 from .resilience_integration import (
     BehavioralPatternsResponse,
     BlastRadiusAnalysisRequest,
     BlastRadiusAnalysisResponse,
+    BurnoutContagionResponse,
+    # Tier 4: Epidemiological Burnout Modeling
+    BurnoutRtResponse,
+    BurnoutSpreadSimulationResponse,
     CognitiveLoadRequest,
     CognitiveLoadResponse,
     DefenseLevelResponse,
@@ -73,6 +198,7 @@ from .resilience_integration import (
     analyze_stigmergy,
     assess_cognitive_load,
     calculate_blast_radius,
+    calculate_burnout_rt,
     check_mtf_compliance,
     check_utilization_threshold,
     execute_sacrifice_hierarchy,
@@ -80,6 +206,8 @@ from .resilience_integration import (
     get_defense_level,
     get_static_fallbacks,
     run_contingency_analysis_deep,
+    simulate_burnout_contagion,
+    simulate_burnout_spread,
 )
 from .resilience_integration import (
     ContingencyAnalysisRequest as ResilienceContingencyRequest,
@@ -107,22 +235,10 @@ from .scheduling_tools import (
     run_contingency_analysis,
     validate_schedule,
 )
+
+# Import thermodynamics tools (entropy, phase transitions, free energy)
 from .tools.validate_schedule import (
     ConstraintConfig,
-)
-
-# Import empirical testing tools
-from .empirical_tools import (
-    AblationResult,
-    ConstraintBenchmarkResult,
-    ModuleUsageResult,
-    ResilienceBenchmarkResult,
-    SolverBenchmarkResult,
-    ablation_study,
-    benchmark_constraints,
-    benchmark_resilience,
-    benchmark_solvers,
-    module_usage_analysis,
 )
 
 # Import new validate_schedule tool with ConstraintService integration
@@ -148,6 +264,24 @@ from .time_crystal_tools import (
     calculate_time_crystal_objective,
     get_checkpoint_status,
     get_time_crystal_health,
+)
+
+# Import FRMS (Fatigue Risk Management System) tools
+from .frms_integration import (
+    # Response Models
+    FRMSAssessmentResponse,
+    FatigueScoreResponse,
+    SleepDebtAnalysisResponse,
+    FatigueHazardResponse,
+    TeamFatigueScanResponse,
+    ScheduleFatigueRiskResponse,
+    # Tool Functions
+    run_frms_assessment,
+    get_fatigue_score,
+    analyze_sleep_debt,
+    evaluate_fatigue_hazard,
+    scan_team_fatigue,
+    assess_schedule_fatigue_risk,
 )
 
 # Configure logging - MUST use stderr for STDIO transport compatibility
@@ -784,9 +918,7 @@ async def calculate_blast_radius_tool(
     Returns:
         Zone health analysis with containment status
     """
-    request = BlastRadiusAnalysisRequest(
-        zone_id=zone_id, check_all_zones=check_all_zones
-    )
+    request = BlastRadiusAnalysisRequest(zone_id=zone_id, check_all_zones=check_all_zones)
     return await calculate_blast_radius(request)
 
 
@@ -807,9 +939,7 @@ async def analyze_le_chatelier_tool(
     Returns:
         Equilibrium analysis with stress and compensation details
     """
-    request = LeChatelierAnalysisRequest(
-        include_stress_prediction=include_stress_prediction
-    )
+    request = LeChatelierAnalysisRequest(include_stress_prediction=include_stress_prediction)
     return await analyze_le_chatelier(request)
 
 
@@ -845,9 +975,7 @@ async def assess_cognitive_load_tool(
     Returns:
         Cognitive load analysis with decision queue details
     """
-    request = CognitiveLoadRequest(
-        session_id=session_id, include_queue_status=include_queue_status
-    )
+    request = CognitiveLoadRequest(session_id=session_id, include_queue_status=include_queue_status)
     return await assess_cognitive_load(request)
 
 
@@ -1063,9 +1191,7 @@ async def run_smoke_tests_tool(
     try:
         suite = TestSuite(test_suite)
     except ValueError as e:
-        raise ValueError(
-            f"Invalid test_suite: {test_suite}. Must be 'basic' or 'full'"
-        ) from e
+        raise ValueError(f"Invalid test_suite: {test_suite}. Must be 'basic' or 'full'") from e
 
     request = SmokeTestRequest(
         environment=env,
@@ -1468,6 +1594,59 @@ async def analyze_schedule_rigidity_tool(
     )
 
 
+# =============================================================================
+# Composite/Advanced Resilience Tools
+# =============================================================================
+
+
+@mcp.tool()
+async def get_unified_critical_index_tool(
+    include_details: bool = True,
+    top_n: int = 5,
+) -> UnifiedCriticalIndexResponse:
+    """
+    Calculate unified critical index aggregating all resilience signals.
+
+    Combines signals from three domains into a single actionable risk score:
+
+    1. **Contingency (N-1/N-2 Vulnerability)** - Weight: 40%
+       Faculty whose loss causes coverage gaps or cascade failures.
+
+    2. **Epidemiology (Burnout Super-Spreader)** - Weight: 25%
+       Faculty who can spread burnout through social connections.
+
+    3. **Hub Analysis (Network Centrality)** - Weight: 35%
+       Faculty who are structural "hubs" in the assignment network.
+
+    Key Insight: A faculty member who is N-1 vulnerable, a super-spreader,
+    AND a hub represents the highest concentration of organizational risk.
+
+    Risk Patterns:
+    - UNIVERSAL_CRITICAL: All three domains high - maximum risk
+    - STRUCTURAL_BURNOUT: Contingency + Epidemiology high
+    - INFLUENTIAL_HUB: Contingency + Hub high
+    - SOCIAL_CONNECTOR: Epidemiology + Hub high
+    - LOW_RISK: No domains elevated
+
+    Args:
+        include_details: Include individual faculty assessments
+        top_n: Number of top-risk faculty to return (1-20)
+
+    Returns:
+        Unified critical index with composite risk score, risk pattern
+        distribution, and prioritized intervention recommendations
+
+    Example:
+        result = await get_unified_critical_index_tool()
+        if result.risk_level == "critical":
+            print(f"ALERT: {result.universal_critical_count} faculty critical")
+    """
+    return await get_unified_critical_index(
+        include_details=include_details,
+        top_n=top_n,
+    )
+
+
 @mcp.tool()
 async def analyze_schedule_periodicity_tool(
     assignments: list[dict] | None = None,
@@ -1505,6 +1684,1201 @@ async def analyze_schedule_periodicity_tool(
         schedule_id=schedule_id,
         assignments=assignments,
         base_period_days=base_period_days,
+    )
+
+
+@mcp.tool()
+async def calculate_recovery_distance_tool(
+    start_date: str | None = None,
+    end_date: str | None = None,
+    max_events: int = 20,
+    include_samples: bool = True,
+) -> RecoveryDistanceResponse:
+    """
+    Calculate recovery distance metrics for schedule resilience.
+
+    Recovery Distance (RD) measures minimum edits to restore feasibility
+    after N-1 shocks. Inspired by graph-theoretic operations research.
+
+    Lower RD = More resilient schedule (easier to recover)
+    Higher RD = More brittle schedule (requires many changes)
+
+    Event Types Tested:
+    - Faculty absence: Single faculty unavailable
+    - Resident sick day: Single resident unavailable
+
+    Edit Operations:
+    1. Swap: Exchange assignments between two people
+    2. Move to backup: Reassign to pre-designated backup
+    3. Reassign: Find any available qualified person
+
+    Key Metrics:
+    - rd_mean: Average recovery distance (good < 2.0)
+    - rd_p95: 95th percentile for worst-case planning
+    - breakglass_count: Events requiring >3 edits (emergency)
+    - fragility_score: Overall schedule fragility (0-1)
+
+    Args:
+        start_date: Analysis start (YYYY-MM-DD), defaults to today
+        end_date: Analysis end (YYYY-MM-DD), defaults to 30 days
+        max_events: Maximum N-1 events to test (1-100)
+        include_samples: Include sample individual results
+
+    Returns:
+        Recovery distance metrics with fragility score and recommendations
+
+    Example:
+        result = await calculate_recovery_distance_tool()
+        if result.rd_p95 > 4:
+            print("WARNING: High recovery cost in worst case")
+    """
+    return await calculate_recovery_distance(
+        start_date=start_date,
+        end_date=end_date,
+        max_events=max_events,
+        include_samples=include_samples,
+    )
+
+
+@mcp.tool()
+async def assess_creep_fatigue_tool(
+    include_assessments: bool = True,
+    top_n: int = 10,
+) -> CreepFatigueResponse:
+    """
+    Assess burnout risk using materials science creep-fatigue analysis.
+
+    Adapts materials science concepts to predict resident burnout:
+
+    Creep Analysis (Time-Dependent Deformation):
+    - PRIMARY: Adaptation phase, strain rate decreasing
+    - SECONDARY: Steady-state, sustainable performance
+    - TERTIARY: Accelerating damage, approaching burnout
+
+    Uses Larson-Miller Parameter (LMP) to predict time-to-failure:
+    - LMP = workload * (C + log10(duration))
+    - LMP > 45.0 = high burnout risk
+    - Safe operating: LMP < 31.5
+
+    Fatigue Analysis (Cyclic Loading from Rotations):
+    Uses S-N curves and Miner's Rule:
+    - High stress rotations = fewer cycles to failure
+    - Cumulative damage D = Sum(n_i / N_i)
+    - Failure predicted when D >= 1.0
+
+    Combined Risk: 60% creep + 40% fatigue
+
+    Args:
+        include_assessments: Include individual resident assessments
+        top_n: Number of highest-risk residents to return (1-50)
+
+    Returns:
+        Creep-fatigue burnout predictions with LMP values and recommendations
+
+    Example:
+        result = await assess_creep_fatigue_tool()
+        if result.tertiary_creep_count > 0:
+            print(f"URGENT: {result.tertiary_creep_count} residents near burnout")
+    """
+    return await assess_creep_fatigue(
+        include_assessments=include_assessments,
+        top_n=top_n,
+    )
+
+
+@mcp.tool()
+async def analyze_transcription_triggers_tool(
+    include_tf_details: bool = True,
+    include_constraint_status: bool = True,
+) -> TranscriptionTriggersResponse:
+    """
+    Analyze transcription factor regulatory network for constraints.
+
+    Applies gene regulatory network (GRN) concepts to constraint management:
+
+    Biological Analogy:
+    - Constraints = "Genes" in the scheduler genome
+    - Transcription Factors (TFs) = Proteins controlling constraint weights
+    - Signals = External events (deployment, crisis) inducing TFs
+    - Chromatin State = Constraint accessibility (open/silenced)
+
+    TF Types:
+    - MASTER: Always active (PatientSafety_MR, ACGMECompliance_MR)
+    - ACTIVATOR: Increases constraint weight when expressed
+    - REPRESSOR: Decreases/disables constraints (e.g., CrisisMode_TF)
+    - PIONEER: Can re-open silenced constraints
+    - DUAL: Context-dependent action
+
+    Network Analysis:
+    - Positive feedback: Amplifies signals
+    - Negative feedback: Stabilizes system
+    - Feed-forward: Filters noise
+
+    Args:
+        include_tf_details: Include active TF details
+        include_constraint_status: Include constraint regulation status
+
+    Returns:
+        GRN analysis with TF expression, constraint weights, regulatory loops
+
+    Example:
+        result = await analyze_transcription_triggers_tool()
+        print(f"Active TFs: {result.active_tfs}/{result.total_tfs}")
+        for tf in result.active_tfs_list:
+            if tf.tf_type == "repressor" and tf.is_active:
+                print(f"Repressor active: {tf.name}")
+    """
+    return await analyze_transcription_triggers(
+        include_tf_details=include_tf_details,
+        include_constraint_status=include_constraint_status,
+    )
+
+
+# =============================================================================
+# Epidemiological Burnout Modeling Tools (Tier 4)
+# =============================================================================
+
+
+@mcp.tool()
+async def calculate_burnout_rt_tool(
+    burned_out_provider_ids: list[str],
+    time_window_days: int = 28,
+) -> BurnoutRtResponse:
+    """
+    Calculate the effective reproduction number (Rt) for burnout spread.
+
+    Applies epidemiological SIR modeling to understand burnout transmission
+    dynamics through social networks. The reproduction number (Rt) indicates
+    whether burnout is spreading or declining in the organization.
+
+    Scientific Background:
+    - Burnout spreads through social networks like an infectious disease
+    - Emotional contagion occurs through close work contacts (Bakker et al., 2009)
+    - High-connectivity individuals can become "superspreaders"
+    - Breaking transmission chains requires targeted interventions
+
+    Key Metrics:
+    - Rt < 1: Epidemic declining (each case causes <1 secondary case)
+    - Rt = 1: Endemic state (stable but not declining)
+    - Rt > 1: Epidemic growing (each case causes >1 secondary cases)
+    - Rt > 2: Rapid spread (aggressive intervention needed)
+    - Rt > 3: Crisis level (emergency intervention required)
+
+    Args:
+        burned_out_provider_ids: List of provider IDs currently experiencing burnout.
+            These are the "index cases" from which secondary cases are traced.
+        time_window_days: Time window in days for tracing secondary cases (default: 28).
+            Longer windows capture more transmission but may include unrelated cases.
+
+    Returns:
+        BurnoutRtResponse with reproduction number, status, and intervention recommendations.
+
+    Example:
+        # Calculate Rt for providers with high burnout
+        result = await calculate_burnout_rt_tool(
+            burned_out_provider_ids=["provider-1", "provider-2", "provider-3"],
+            time_window_days=28
+        )
+
+        if result.rt > 1.0:
+            print(f"ALERT: Burnout spreading! Rt={result.rt:.2f}")
+            for intervention in result.interventions:
+                print(f"  - {intervention}")
+        else:
+            print(f"Burnout declining. Rt={result.rt:.2f}")
+    """
+    return await calculate_burnout_rt(
+        burned_out_provider_ids=burned_out_provider_ids,
+        time_window_days=time_window_days,
+    )
+
+
+@mcp.tool()
+async def simulate_burnout_spread_tool(
+    initial_infected_ids: list[str],
+    infection_rate: float = 0.05,
+    recovery_rate: float = 0.02,
+    simulation_weeks: int = 52,
+) -> BurnoutSpreadSimulationResponse:
+    """
+    Run SIR epidemic simulation for burnout spread through social network.
+
+    Uses the classic SIR (Susceptible-Infected-Recovered) epidemiological model
+    to project how burnout might spread through the organization's social network
+    over time. This helps identify:
+    - Whether burnout will become epidemic (R0 > 1) or die out (R0 < 1)
+    - When peak infection might occur
+    - How many people might ultimately be affected
+
+    Scientific Background:
+    - SIR model divides population into Susceptible, Infected, Recovered compartments
+    - Transmission occurs when infected contacts susceptible
+    - Recovery rate determines average duration of burnout
+    - R0 = beta/gamma predicts epidemic trajectory
+    - Herd immunity threshold = 1 - 1/R0
+
+    Args:
+        initial_infected_ids: List of provider IDs to seed as initially burned out.
+            These are the "patient zero" cases that start the simulation.
+        infection_rate: Beta - probability of burnout transmission per contact per week.
+            Typical range: 0.01-0.15. Higher = faster spread.
+        recovery_rate: Gamma - probability of recovery per week.
+            Typical range: 0.001-0.05. Higher = faster recovery.
+            Note: 1/gamma = average weeks of burnout (e.g., 0.02 = 50 weeks avg)
+        simulation_weeks: Number of weeks to simulate (default: 52 = 1 year).
+
+    Returns:
+        BurnoutSpreadSimulationResponse with trajectory and peak analysis.
+
+    Example:
+        # Simulate 1 year of burnout spread starting with 3 cases
+        result = await simulate_burnout_spread_tool(
+            initial_infected_ids=["provider-1", "provider-2", "provider-3"],
+            infection_rate=0.05,
+            recovery_rate=0.02,
+            simulation_weeks=52
+        )
+
+        print(f"R0: {result.r0:.2f}")
+        print(f"Herd immunity threshold: {result.herd_immunity_threshold:.1%}")
+        print(f"Peak: {result.peak_infected} infected at week {result.peak_week}")
+
+        if result.epidemic_died_out:
+            print("Good news: Epidemic died out naturally")
+        else:
+            print("WARNING: Epidemic still active - intervention needed")
+    """
+    return await simulate_burnout_spread(
+        initial_infected_ids=initial_infected_ids,
+        infection_rate=infection_rate,
+        recovery_rate=recovery_rate,
+        simulation_weeks=simulation_weeks,
+    )
+
+
+@mcp.tool()
+async def simulate_burnout_contagion_tool(
+    provider_burnout_scores: dict[str, float],
+    infection_rate: float = 0.05,
+    recovery_rate: float = 0.01,
+    simulation_iterations: int = 50,
+    max_interventions: int = 10,
+) -> BurnoutContagionResponse:
+    """
+    Simulate burnout contagion through social network using SIS model.
+
+    Uses the SIS (Susceptible-Infected-Susceptible) epidemiological model
+    on the provider collaboration network. Unlike SIR, SIS allows reinfection -
+    appropriate for burnout which can recur even after recovery.
+
+    Key Features:
+    - Identifies superspreaders (high burnout + high network centrality)
+    - Recommends targeted network interventions to break transmission
+    - Predicts cascade severity and peak infection timing
+    - Uses network analysis (degree, betweenness, eigenvector centrality)
+
+    Scientific Background:
+    - Network topology determines outbreak severity
+    - Superspreaders (high-degree + high-burnout nodes) amplify contagion
+    - Edge removal, workload reduction, and quarantine can break transmission
+    - Centrality metrics identify critical nodes for intervention
+
+    Args:
+        provider_burnout_scores: Dictionary mapping provider_id -> burnout score (0.0-1.0).
+            Scores >= 0.5 are considered "infected" (high burnout).
+        infection_rate: Beta - transmission probability per contact per iteration.
+            Typical range: 0.01-0.15.
+        recovery_rate: Lambda - recovery probability per iteration.
+            Typical range: 0.001-0.05.
+        simulation_iterations: Number of iterations to simulate (default: 50).
+        max_interventions: Maximum interventions to recommend (default: 10).
+
+    Returns:
+        BurnoutContagionResponse with superspreaders, interventions, and trajectory.
+
+    Example:
+        # Simulate contagion with burnout scores for team
+        scores = {
+            "provider-1": 0.7,   # High burnout
+            "provider-2": 0.3,   # Low burnout
+            "provider-3": 0.9,   # Very high burnout - potential superspreader
+            "provider-4": 0.4,   # Moderate
+            "provider-5": 0.6,   # Elevated
+        }
+        result = await simulate_burnout_contagion_tool(
+            provider_burnout_scores=scores,
+            infection_rate=0.05,
+            recovery_rate=0.01
+        )
+
+        print(f"Contagion Risk: {result.contagion_risk}")
+        print(f"Final infection rate: {result.final_infection_rate:.1%}")
+
+        # Identify superspreaders
+        print(f"Superspreaders ({result.total_superspreaders}):")
+        for ss in result.superspreaders:
+            print(f"  - {ss.provider_id}: score={ss.superspreader_score:.2f}, "
+                  f"contacts={ss.direct_contacts}, risk={ss.risk_level}")
+
+        # Get intervention recommendations
+        print(f"Recommended Interventions:")
+        for intervention in result.recommended_interventions:
+            print(f"  - [{intervention.priority}] {intervention.intervention_type}: "
+                  f"{intervention.reason}")
+    """
+    return await simulate_burnout_contagion(
+        provider_burnout_scores=provider_burnout_scores,
+        infection_rate=infection_rate,
+        recovery_rate=recovery_rate,
+        simulation_iterations=simulation_iterations,
+        max_interventions=max_interventions,
+    )
+
+
+# =============================================================================
+# Circuit Breaker Tools (Distributed Systems Failure Isolation)
+# =============================================================================
+
+
+@mcp.tool()
+async def check_circuit_breakers_tool() -> AllBreakersStatusResponse:
+    """
+    Get status of all registered circuit breakers.
+
+    This tool retrieves comprehensive status information for all circuit
+    breakers in the system, including their current state, failure rates,
+    and recent state transitions. Based on the Netflix Hystrix pattern.
+
+    Circuit Breaker States:
+    - CLOSED: Normal operation, all requests pass through
+    - OPEN: Circuit tripped due to failures, requests fail fast (protects downstream)
+    - HALF_OPEN: Testing recovery, limited requests allowed to verify service health
+
+    Use Cases:
+    - System health monitoring dashboards
+    - Incident response (identify failing services)
+    - Capacity planning (identify overloaded services)
+    - Post-mortem analysis (review state transitions)
+
+    Returns:
+        AllBreakersStatusResponse with:
+        - Total count of breakers in each state
+        - Names of OPEN and HALF_OPEN breakers
+        - Detailed status for each breaker (failure rates, request counts)
+        - Overall system health assessment
+        - Recommended actions
+
+    Example:
+        result = await check_circuit_breakers_tool()
+
+        if result.open_breakers > 0:
+            print(f"WARNING: {result.open_breakers} breakers are OPEN")
+            for name in result.open_breaker_names:
+                print(f"  - {name}")
+            print(f"Recommendations:")
+            for rec in result.recommendations:
+                print(f"  * {rec}")
+    """
+    return await check_circuit_breakers()
+
+
+@mcp.tool()
+async def get_breaker_health_tool() -> BreakerHealthResponse:
+    """
+    Get aggregated health metrics for all circuit breakers.
+
+    This tool provides a high-level health assessment across all circuit
+    breakers, useful for dashboards, alerting, and trend analysis.
+
+    Metrics include:
+    - Total requests, failures, and rejections across all breakers
+    - Overall and average failure rates
+    - Identification of unhealthiest breakers
+    - Trend analysis (improving, stable, degrading)
+
+    Severity Levels:
+    - HEALTHY: All breakers operating normally
+    - WARNING: Some breakers have elevated failure rates
+    - CRITICAL: Breakers are OPEN, service degradation occurring
+    - EMERGENCY: System-wide circuit breaker failures
+
+    Returns:
+        BreakerHealthResponse with:
+        - Aggregated metrics across all breakers
+        - List of breakers needing immediate attention
+        - Trend analysis
+        - Severity assessment
+        - Prioritized recommendations
+
+    Example:
+        health = await get_breaker_health_tool()
+
+        # Use for alerting
+        if health.severity.value in ("critical", "emergency"):
+            send_alert(f"Circuit breaker alert: {health.severity.value}")
+
+        # Dashboard metrics
+        print(f"Overall failure rate: {health.metrics.overall_failure_rate*100:.1f}%")
+        print(f"Breakers needing attention: {health.breakers_needing_attention}")
+    """
+    return await get_breaker_health()
+
+
+@mcp.tool()
+async def test_half_open_tool(
+    breaker_name: str,
+) -> HalfOpenTestResponse:
+    """
+    Test a circuit breaker in HALF_OPEN state to verify recovery progress.
+
+    When a circuit breaker is in HALF_OPEN state, it allows limited test
+    requests to determine if the downstream service has recovered. This
+    tool provides information about the half-open state and recovery progress.
+
+    Half-Open Recovery Process:
+    1. Circuit opens after failure_threshold failures
+    2. After timeout_seconds, circuit transitions to HALF_OPEN
+    3. Limited requests are allowed through (half_open_max_calls)
+    4. If success_threshold successes occur, circuit closes (recovery complete)
+    5. If any failure occurs, circuit reopens (back to step 2)
+
+    Use Cases:
+    - Monitor service recovery progress
+    - Verify downstream service health before allowing full traffic
+    - Determine if manual intervention is needed
+
+    Args:
+        breaker_name: Name of the circuit breaker to test
+
+    Returns:
+        HalfOpenTestResponse with:
+        - Whether breaker is in HALF_OPEN state
+        - Recovery progress (successes / threshold)
+        - Whether breaker is ready to close
+        - Recommended next steps
+
+    Example:
+        # Check if database breaker is recovering
+        result = await test_half_open_tool("database_connection")
+
+        if result.is_half_open:
+            progress = result.test_result
+            print(f"Recovery progress: {progress.consecutive_successes}/"
+                  f"{progress.success_threshold}")
+
+            if progress.ready_to_close:
+                print("Service has recovered! Next request will close circuit.")
+        else:
+            print(f"Breaker not in HALF_OPEN: {result.error_message}")
+    """
+    return await test_half_open_breaker(breaker_name)
+
+
+@mcp.tool()
+async def override_circuit_breaker_tool(
+    breaker_name: str,
+    action: str,
+    reason: str,
+) -> ManualOverrideResponse:
+    """
+    Manually override a circuit breaker state for emergency or maintenance.
+
+    This tool allows manual control over circuit breaker state. Use with
+    caution - overriding circuit breakers bypasses automatic failure protection.
+
+    Available Actions:
+    - open: Force circuit to OPEN state (reject all requests to protect system)
+    - close: Force circuit to CLOSED state (allow all requests - verify service first!)
+    - reset: Reset circuit to initial state (clear all metrics and history)
+
+    When to Use:
+    - open: Known service issues, planned maintenance, protecting from cascade
+    - close: Verified service recovery, override after investigation
+    - reset: After fixing underlying issue, start fresh
+
+    Security Note:
+    This action is logged for audit purposes. Overriding circuit breakers
+    should only be done during planned maintenance or emergency situations.
+
+    Args:
+        breaker_name: Name of the circuit breaker to override
+        action: Action to take: "open", "close", or "reset"
+        reason: Reason for the override (stored in audit trail)
+
+    Returns:
+        ManualOverrideResponse with:
+        - Success/failure status
+        - Previous and current state
+        - Timestamp for audit
+
+    Raises:
+        ValueError: If breaker_name not found or action is invalid
+
+    Example:
+        # Force close after verified recovery
+        result = await override_circuit_breaker_tool(
+            breaker_name="external_api",
+            action="close",
+            reason="Verified service recovery after deployment v2.3.1"
+        )
+
+        # Force open during known issues
+        result = await override_circuit_breaker_tool(
+            breaker_name="database",
+            action="open",
+            reason="Database failover in progress - preventing cascade failures"
+        )
+
+        # Reset after root cause fix
+        result = await override_circuit_breaker_tool(
+            breaker_name="payment_gateway",
+            action="reset",
+            reason="Completed remediation of payment gateway timeout issue"
+        )
+    """
+    return await override_circuit_breaker(breaker_name, action, reason)
+
+
+# =============================================================================
+# Optimization and Analytics Tools
+# =============================================================================
+
+
+@mcp.tool()
+async def optimize_erlang_coverage_tool(
+    specialty: str,
+    arrival_rate: float,
+    service_time_minutes: float,
+    target_wait_minutes: float = 15.0,
+    target_wait_probability: float = 0.05,
+    max_servers: int = 20,
+) -> ErlangCoverageResponse:
+    """
+    Optimize specialist staffing using telecommunications Erlang-C formulas.
+
+    Applies M/M/c queuing theory (Markovian arrival, Markovian service, c servers)
+    to determine optimal specialist coverage, balancing utilization against wait
+    times. This is the same mathematical model used by call centers worldwide.
+
+    Key Concepts:
+    - Offered Load (A): arrival_rate * service_time = average work per time unit
+    - Erlang C: Probability a request must wait (with infinite queue)
+    - Service Level: Percentage of requests served within target wait time
+    - 80% Utilization Threshold: Above this, wait times grow exponentially
+
+    Typical Medical Applications:
+    - ER specialist coverage (orthopedic surgeon within 15 min)
+    - Call schedule optimization (consultant callback times)
+    - Procedure coverage (specialist availability for emergent cases)
+
+    Args:
+        specialty: Name of specialty (e.g., "Orthopedic Surgery", "Cardiology")
+        arrival_rate: Average requests per hour (e.g., 2.5 cases/hour)
+        service_time_minutes: Average time per case in minutes (e.g., 30 min)
+        target_wait_minutes: Target wait time for service level (default: 15 min)
+        target_wait_probability: Maximum acceptable wait probability (default: 5%)
+        max_servers: Maximum servers to consider (default: 20)
+
+    Returns:
+        Optimal staffing recommendation with staffing table and metrics
+
+    Example:
+        # Optimize ER orthopedic coverage
+        result = await optimize_erlang_coverage_tool(
+            specialty="Orthopedic Surgery",
+            arrival_rate=2.5,  # 2.5 cases/hour
+            service_time_minutes=30,  # 30 min per case
+            target_wait_minutes=15,
+            target_wait_probability=0.05
+        )
+        print(f"Need {result.recommended_specialists} specialists")
+        print(f"Wait probability: {result.wait_probability:.1%}")
+        print(f"Service level: {result.service_level:.1%}")
+    """
+    return await optimize_erlang_coverage(
+        specialty=specialty,
+        arrival_rate=arrival_rate,
+        service_time_minutes=service_time_minutes,
+        target_wait_minutes=target_wait_minutes,
+        target_wait_probability=target_wait_probability,
+        max_servers=max_servers,
+    )
+
+
+@mcp.tool()
+async def calculate_erlang_metrics_tool(
+    arrival_rate: float,
+    service_time_minutes: float,
+    servers: int,
+    target_wait_minutes: float = 15.0,
+) -> ErlangMetricsResponse:
+    """
+    Calculate detailed Erlang C metrics for a specific staffing configuration.
+
+    Use this tool to evaluate a specific staffing scenario or compare different
+    configurations. For optimization (finding minimum staff), use
+    optimize_erlang_coverage_tool instead.
+
+    The Erlang C formula calculates:
+    - Wait probability: Chance a request enters the queue
+    - Average wait time: Expected delay for requests that must wait
+    - Service level: Percentage served within target time
+    - Occupancy: Average utilization of specialists
+
+    Args:
+        arrival_rate: Average requests per hour
+        service_time_minutes: Average time per case in minutes
+        servers: Number of specialists to evaluate
+        target_wait_minutes: Target wait time for service level
+
+    Returns:
+        Detailed queuing metrics for the configuration
+
+    Example:
+        # Check metrics for 5 orthopedic surgeons
+        metrics = await calculate_erlang_metrics_tool(
+            arrival_rate=2.5,
+            service_time_minutes=30,
+            servers=5,
+            target_wait_minutes=15
+        )
+        print(f"Wait probability: {metrics.wait_probability:.1%}")
+        print(f"Occupancy: {metrics.occupancy:.1%}")
+    """
+    return await calculate_erlang_metrics(
+        arrival_rate=arrival_rate,
+        service_time_minutes=service_time_minutes,
+        servers=servers,
+        target_wait_minutes=target_wait_minutes,
+    )
+
+
+@mcp.tool()
+async def calculate_process_capability_tool(
+    data: list[float],
+    lower_spec_limit: float,
+    upper_spec_limit: float,
+    target: float | None = None,
+) -> ProcessCapabilityResponse:
+    """
+    Calculate Six Sigma process capability indices for schedule quality.
+
+    Applies Six Sigma statistical process control to measure how consistently
+    the scheduling process maintains ACGME compliance and operational constraints.
+    This is the same methodology used in manufacturing for quality control.
+
+    Process Capability Indices:
+    - Cp: Process potential (spread relative to spec width, assumes centered)
+    - Cpk: Process capability (accounts for off-center mean) - PRIMARY METRIC
+    - Cpm: Taguchi capability (penalizes deviation from target)
+
+    Capability Classification:
+    - Cpk >= 2.0: EXCELLENT (World Class, 6-sigma quality, 3.4 DPMO)
+    - Cpk >= 1.67: EXCELLENT (5-sigma quality, 233 DPMO)
+    - Cpk >= 1.33: CAPABLE (4-sigma, industry standard, 6,210 DPMO)
+    - Cpk >= 1.0: MARGINAL (3-sigma, minimum acceptable, 66,807 DPMO)
+    - Cpk < 1.0: INCAPABLE (defects expected)
+
+    Common Applications:
+    - Weekly work hours: LSL=40, USL=80 (ACGME), Target=60
+    - Coverage rates: LSL=0.95, USL=1.0, Target=1.0
+    - Utilization: LSL=0.0, USL=0.8, Target=0.65
+
+    Args:
+        data: Sample measurements (e.g., weekly hours for each resident)
+        lower_spec_limit: LSL - minimum acceptable value
+        upper_spec_limit: USL - maximum acceptable value
+        target: Ideal target value (defaults to midpoint)
+
+    Returns:
+        Capability indices with recommendations
+
+    Example:
+        # Analyze weekly work hours for ACGME compliance
+        weekly_hours = [65, 72, 58, 75, 68, 70, 62, 77, 55, 71]
+        result = await calculate_process_capability_tool(
+            data=weekly_hours,
+            lower_spec_limit=40,
+            upper_spec_limit=80,
+            target=60
+        )
+        print(f"Capability: {result.capability_status}")
+        print(f"Sigma Level: {result.sigma_level:.2f}")
+        print(f"Defect Rate: {result.estimated_defect_rate_ppm:.1f} PPM")
+    """
+    return await calculate_process_capability(
+        data=data,
+        lower_spec_limit=lower_spec_limit,
+        upper_spec_limit=upper_spec_limit,
+        target=target,
+    )
+
+
+@mcp.tool()
+async def calculate_equity_metrics_tool(
+    provider_hours: dict[str, float],
+    intensity_weights: dict[str, float] | None = None,
+) -> EquityMetricsResponse:
+    """
+    Calculate workload equity metrics using Gini coefficient and fairness analysis.
+
+    The Gini coefficient quantifies inequality in a distribution, ranging from
+    0 (perfect equality, everyone has same workload) to 1 (perfect inequality,
+    one person has all the work). For medical scheduling, a Gini coefficient
+    below 0.15 indicates equitable workload distribution.
+
+    Intensity weights allow accounting for shift difficulty:
+    - Night shifts might have weight 1.5
+    - Weekend shifts might have weight 1.3
+    - High-acuity rotations might have weight 1.2
+
+    Use this tool to:
+    - Detect workload imbalances before burnout occurs
+    - Identify overloaded and underloaded providers
+    - Generate rebalancing recommendations
+    - Track equity trends over time
+
+    Args:
+        provider_hours: Mapping of provider ID to total hours worked
+        intensity_weights: Optional intensity multiplier per provider
+
+    Returns:
+        Gini coefficient, statistics, and rebalancing recommendations
+
+    Example:
+        # Analyze faculty workload equity
+        hours = {
+            "FAC-001": 45,
+            "FAC-002": 52,
+            "FAC-003": 38,
+            "FAC-004": 60,
+            "FAC-005": 42
+        }
+        result = await calculate_equity_metrics_tool(hours)
+        print(f"Gini: {result.gini_coefficient:.3f}")
+        print(f"Equitable: {result.is_equitable}")
+        print(f"Most overloaded: {result.most_overloaded_provider}")
+        for rec in result.recommendations:
+            print(f"  - {rec}")
+    """
+    return await calculate_equity_metrics(
+        provider_hours=provider_hours,
+        intensity_weights=intensity_weights,
+    )
+
+
+@mcp.tool()
+async def generate_lorenz_curve_tool(
+    values: list[float],
+) -> LorenzCurveResponse:
+    """
+    Generate Lorenz curve data for visualizing workload inequality.
+
+    The Lorenz curve plots cumulative share of population (x-axis) against
+    cumulative share of total value (y-axis). Perfect equality is the 45-degree
+    diagonal line. The Gini coefficient equals twice the area between the
+    Lorenz curve and the equality line.
+
+    Use this data to create visualizations in dashboards showing:
+    - How workload is distributed across providers
+    - Distance from ideal (perfect equality line)
+    - Progress toward equity goals over time
+
+    Args:
+        values: List of numeric values (e.g., hours worked by each provider)
+
+    Returns:
+        Lorenz curve coordinates and Gini coefficient
+
+    Example:
+        # Generate Lorenz curve for faculty hours
+        hours = [45, 52, 38, 60, 42, 55, 48]
+        curve = await generate_lorenz_curve_tool(hours)
+        print(f"Gini coefficient: {curve.gini_coefficient:.3f}")
+
+        # Data ready for plotting:
+        # x-axis: curve.population_shares
+        # y-axis: curve.value_shares
+        # reference: curve.equality_line (45-degree line)
+    """
+    return await generate_lorenz_curve(values=values)
+
+
+# =============================================================================
+# Artificial Immune System Tools (AIS - Immunology-Inspired Resilience)
+# =============================================================================
+
+
+@mcp.tool()
+async def assess_immune_response_tool(
+    include_detectors: bool = True,
+    include_recent_anomalies: bool = True,
+    include_antibodies: bool = True,
+    max_items: int = 10,
+) -> ImmuneResponseAssessmentResponse:
+    """
+    Assess the current status of the artificial immune system.
+
+    Provides a comprehensive view of the immune system's adaptive response
+    capabilities for detecting and repairing schedule anomalies.
+
+    Key Concepts (Immunology-Inspired):
+    - Detectors: Hyperspheres in feature space that trigger on anomalous states
+    - Antibodies: Repair strategies with affinity for specific anomaly patterns
+    - Memory Cells: Learned patterns enabling faster future responses
+
+    The system uses Negative Selection Algorithm (NSA) to distinguish between
+    "self" (valid schedules) and "non-self" (anomalous states).
+
+    Components Analyzed:
+    - Training Status: Whether the system has learned valid schedule patterns
+    - Detector Coverage: Active detectors and their anomaly detection counts
+    - Anomaly History: Recently detected schedule anomalies
+    - Antibody Arsenal: Available repair strategies and success rates
+
+    Args:
+        include_detectors: Include details of most active detectors
+        include_recent_anomalies: Include recently detected anomalies
+        include_antibodies: Include registered antibody information
+        max_items: Maximum items per category (1-50)
+
+    Returns:
+        Comprehensive immune system status with health assessment
+
+    Example:
+        result = await assess_immune_response_tool()
+        if result.response_status.is_trained:
+            print(f"Detectors: {result.response_status.detector_count}")
+            print(f"Success rate: {result.response_status.repair_success_rate:.1%}")
+            print(f"Health: {result.overall_health}")
+        else:
+            print("WARNING: Immune system needs training on valid schedules")
+    """
+    return await assess_immune_response(
+        include_detectors=include_detectors,
+        include_recent_anomalies=include_recent_anomalies,
+        include_antibodies=include_antibodies,
+        max_items=max_items,
+    )
+
+
+@mcp.tool()
+async def check_memory_cells_tool(
+    include_inactive: bool = False,
+    max_patterns: int = 20,
+) -> MemoryCellsResponse:
+    """
+    Check immune system memory cells (learned patterns from past stressors).
+
+    Memory cells represent learned patterns from past anomalies, enabling faster
+    and more effective responses to recurring issues. Like biological immune
+    memory (T and B cells), the system remembers:
+
+    What Memory Cells Track:
+    - Pattern signatures: Feature vectors characterizing specific anomalies
+    - Effective responses: Which antibodies worked best for each pattern
+    - Occurrence frequency: How often each pattern has been seen
+    - Response optimization: Faster detection for known patterns
+
+    Benefits of Immune Memory:
+    1. Known patterns trigger immediate recognition (no search needed)
+    2. Effective antibodies are pre-selected based on history
+    3. Repair strategies are optimized from past experience
+
+    Pattern Types:
+    - coverage_gap: Coverage fell below threshold
+    - acgme_violation: Work hour or rest period violations
+    - workload_imbalance: Unfair distribution of assignments
+    - schedule_instability: Excessive changes or churn
+
+    Args:
+        include_inactive: Include patterns not seen recently (last 30 days)
+        max_patterns: Maximum number of patterns to return (1-100)
+
+    Returns:
+        Memory cell status with learned patterns and response improvements
+
+    Example:
+        result = await check_memory_cells_tool()
+        print(f"Memory cells: {result.total_memory_cells}")
+        print(f"Response improvement: {result.average_response_improvement:.1%}")
+
+        # Find most common anomaly types
+        for pattern_type, count in result.pattern_distribution.items():
+            print(f"  {pattern_type}: {count} occurrences")
+    """
+    return await check_memory_cells(
+        include_inactive=include_inactive,
+        max_patterns=max_patterns,
+    )
+
+
+@mcp.tool()
+async def analyze_antibody_response_tool(
+    schedule_state: dict[str, Any] | None = None,
+    include_all: bool = True,
+) -> AntibodyAnalysisResponse:
+    """
+    Analyze antibody (repair strategy) response capabilities.
+
+    Antibodies are repair strategies that fix specific types of anomalies.
+    Each antibody has an affinity pattern - it works best for anomalies
+    with similar feature vectors. Uses Clonal Selection algorithm.
+
+    Clonal Selection Process:
+    1. Calculate affinity of each antibody to the anomaly
+    2. Select antibody with highest affinity
+    3. Boost selection by historical success rate
+    4. Apply repair and track results
+
+    Available Antibodies:
+    - coverage_gap_repair: Finds available faculty to fill gaps
+    - workload_balance_repair: Redistributes assignments for fairness
+    - acgme_violation_repair: Adjusts hours/rest periods for compliance
+
+    Affinity Calculation:
+    - Based on distance in feature space
+    - Closer to antibody's affinity center = higher affinity
+    - Range: 0.0 (no match) to 1.0 (perfect match)
+
+    Args:
+        schedule_state: Optional current schedule state to calculate affinities.
+            If provided, finds best matching antibody for this state.
+            Expected keys: total_blocks, covered_blocks, faculty_count,
+            resident_count, acgme_violations, avg_hours_per_week,
+            supervision_ratio, workload_std_dev, schedule_changes
+        include_all: Include all antibodies even if affinity is zero
+
+    Returns:
+        Antibody analysis with active countermeasures and best match
+
+    Example:
+        # Find best repair for current schedule
+        schedule = {
+            "total_blocks": 100,
+            "covered_blocks": 75,  # Low coverage
+            "faculty_count": 10,
+            "resident_count": 25,
+            "acgme_violations": [{"type": "80hr", "severity": "CRITICAL"}],
+            "avg_hours_per_week": 85,
+            "workload_std_dev": 0.4,
+        }
+        result = await analyze_antibody_response_tool(schedule_state=schedule)
+
+        if result.best_match_antibody:
+            print(f"Recommended repair: {result.best_match_antibody}")
+        print(f"Repair capacity: {result.repair_capacity:.1%}")
+        print(f"Historical effectiveness: {result.historical_effectiveness:.1%}")
+    """
+    return await analyze_antibody_response(
+        schedule_state=schedule_state,
+        include_all=include_all,
+    )
+
+
+
+
+# =============================================================================
+# Thermodynamics Tools (Entropy, Phase Transitions, Free Energy)
+# =============================================================================
+
+
+@mcp.tool()
+async def calculate_schedule_entropy_tool(
+    start_date: str | None = None,
+    end_date: str | None = None,
+    include_mutual_information: bool = True,
+) -> ScheduleEntropyResponse:
+    """
+    Calculate comprehensive entropy metrics for the schedule.
+
+    Entropy measures the disorder/randomness in schedule assignment distribution.
+    This tool applies Shannon entropy analysis across multiple dimensions.
+
+    **Entropy Dimensions Analyzed:**
+    - Person Entropy: Distribution of assignments across faculty
+      - Low: Few faculty handle most work (concentrated risk)
+      - High: Work evenly distributed (resilient but may be chaotic)
+
+    - Rotation Entropy: Distribution across rotation types
+    - Time Entropy: Distribution across time blocks
+    - Joint Entropy: Combined person-rotation distribution
+    - Mutual Information: How much knowing the person tells about the rotation
+
+    **Optimal Entropy:**
+    Moderate entropy is ideal - not too concentrated (vulnerable) nor too
+    dispersed (potentially chaotic). The normalized_entropy metric (0-1)
+    helps identify this balance.
+
+    **Early Warning Application:**
+    Changes in entropy over time can signal approaching phase transitions.
+    Decreasing entropy may indicate system "crystallizing" into rigid patterns.
+
+    Args:
+        start_date: Start date for analysis (YYYY-MM-DD), defaults to today
+        end_date: End date for analysis (YYYY-MM-DD), defaults to 30 days
+        include_mutual_information: Calculate mutual information between dimensions
+
+    Returns:
+        ScheduleEntropyResponse with entropy metrics and interpretation
+
+    Example:
+        result = await calculate_schedule_entropy_tool(
+            start_date="2025-01-01",
+            end_date="2025-01-31"
+        )
+
+        if result.entropy_status == "too_concentrated":
+            print("WARNING: Schedule has concentrated risk")
+            print(f"Person entropy: {result.metrics.person_entropy:.2f} bits")
+    """
+    return await calculate_schedule_entropy(
+        start_date=start_date,
+        end_date=end_date,
+        include_mutual_information=include_mutual_information,
+    )
+
+
+@mcp.tool()
+async def get_entropy_monitor_state_tool(
+    history_window: int = 100,
+) -> EntropyMonitorStateResponse:
+    """
+    Get current state of the entropy monitor for early warning detection.
+
+    The entropy monitor tracks entropy dynamics over time to detect:
+    - Critical slowing down (entropy changes slow near phase transitions)
+    - Rapid entropy changes (system instability)
+    - Entropy production rate (energy dissipation)
+
+    **Critical Slowing Down:**
+    Near phase transitions, systems exhibit "critical slowing down" - recovery
+    from perturbations takes longer. This manifests as:
+    - High autocorrelation (system "remembers" longer)
+    - Low rate of change (entropy stabilizes at a new level)
+
+    Detecting critical slowing down provides early warning of approaching
+    phase transitions (system failures).
+
+    Args:
+        history_window: Number of entropy measurements to analyze (10-1000)
+
+    Returns:
+        EntropyMonitorStateResponse with current monitor state
+
+    Example:
+        result = await get_entropy_monitor_state_tool()
+        if result.critical_slowing_detected:
+            print("WARNING: Critical slowing detected - approaching phase transition")
+            print(f"Rate of change: {result.rate_of_change:.4f}")
+    """
+    return await get_entropy_monitor_state(history_window=history_window)
+
+
+@mcp.tool()
+async def analyze_phase_transitions_tool(
+    metrics: dict[str, list[float]] | None = None,
+    window_size: int = 50,
+) -> PhaseTransitionRiskResponse:
+    """
+    Detect approaching phase transitions using critical phenomena theory.
+
+    Applies physics-based early warning signal detection to identify when
+    the scheduling system is approaching a phase transition (failure).
+
+    **Universal Early Warning Signals (from physics):**
+
+    1. **Increasing Variance** - Fluctuations diverge before transitions
+       - Metric variance increases by >50% from baseline
+
+    2. **Critical Slowing Down** - Response time increases near critical point
+       - Autocorrelation at lag-1 exceeds 0.7
+
+    3. **Flickering** - Rapid state switching near bistable points
+       - System alternates between states
+
+    4. **Skewness Changes** - Distribution becomes asymmetric
+       - Skewness exceeds +/- 1.0
+
+    **Phase Transition Types:**
+    - Stable Schedule -> Chaotic Schedule (order-disorder)
+    - Resilient -> Fragile (resilience collapse)
+    - Normal -> Crisis (operational phase change)
+
+    **2025 Research Basis:**
+    Thermodynamic approaches using time-reversal symmetry breaking detect
+    transitions 2-3x earlier than traditional bifurcation methods.
+
+    Args:
+        metrics: Dictionary of metric_name -> time series values
+                 (if None, uses recent system metrics)
+        window_size: Analysis window size for signal detection (10-200)
+
+    Returns:
+        PhaseTransitionRiskResponse with detected signals and recommendations
+
+    Example:
+        result = await analyze_phase_transitions_tool(
+            metrics={
+                "utilization": [0.75, 0.78, 0.82, 0.85, 0.88, ...],
+                "coverage": [0.95, 0.93, 0.91, 0.89, 0.86, ...],
+                "violations": [0, 1, 1, 2, 3, 4, ...]
+            }
+        )
+
+        if result.overall_severity == "critical":
+            print(f"ALERT: Phase transition approaching")
+    """
+    return await analyze_phase_transitions(
+        metrics=metrics,
+        window_size=window_size,
+    )
+
+
+@mcp.tool()
+async def optimize_free_energy_tool(
+    schedule_id: str | None = None,
+    target_temperature: float = 1.0,
+    max_iterations: int = 100,
+) -> FreeEnergyOptimizationResponse:
+    """
+    Optimize schedule using free energy minimization.
+
+    **NOTE: This module is planned but not yet implemented.**
+
+    **Concept (Future Implementation):**
+    Free energy minimization applies thermodynamic principles to find optimal
+    schedule configurations by balancing:
+    - Internal Energy (U): Constraint violations and cost
+    - Entropy (S): Schedule flexibility and diversity
+    - Temperature (T): Control parameter for exploration vs exploitation
+
+    Helmholtz Free Energy: F = U - TS
+    Lower free energy = more stable configuration.
+
+    **Planned Features:**
+    - Identify metastable schedules (shallow energy wells)
+    - Find escape paths from local minima
+    - Adaptive temperature for crisis flexibility
+    - Pre-compute alternative schedules
+
+    Args:
+        schedule_id: Schedule to optimize (or use current)
+        target_temperature: Temperature parameter (higher = more exploration)
+        max_iterations: Maximum optimization iterations
+
+    Returns:
+        FreeEnergyOptimizationResponse (placeholder until implemented)
+
+    Example:
+        result = await optimize_free_energy_tool()
+        if result.improvement > 0:
+            print(f"Free energy reduced by {result.improvement:.2f}")
+    """
+    return await optimize_free_energy(
+        schedule_id=schedule_id,
+        target_temperature=target_temperature,
+        max_iterations=max_iterations,
     )
 
 
@@ -1565,6 +2939,283 @@ async def calculate_time_crystal_objective_tool(
         constraint_results=constraint_results,
         alpha=alpha,
         beta=beta,
+    )
+
+
+@mcp.tool()
+async def analyze_energy_landscape_tool(
+    schedule_id: str | None = None,
+) -> EnergyLandscapeResponse:
+    """
+    Analyze the energy landscape around current schedule.
+
+    **NOTE: This module is planned but not yet implemented.**
+
+    **Concept (Future Implementation):**
+    Energy landscape analysis maps the stability of the current schedule
+    and nearby alternatives:
+
+    - Deep well = Very stable schedule (hard to escape, may miss better options)
+    - Shallow well = Metastable schedule (easy to disrupt)
+    - Saddle point = Transition state (pathway between configurations)
+
+    **Planned Analysis:**
+    - Escape barrier height (how much perturbation to move)
+    - Nearby local minima (alternative schedules)
+    - Pathway analysis (how to reach better configurations)
+
+    Args:
+        schedule_id: Schedule to analyze (or use current)
+
+    Returns:
+        EnergyLandscapeResponse with stability analysis (placeholder)
+    """
+    return await analyze_energy_landscape(schedule_id=schedule_id)
+
+
+
+
+
+# =============================================================================
+# Early Warning System Tools (Cross-Disciplinary Burnout Detection)
+# =============================================================================
+
+
+@mcp.tool()
+async def detect_burnout_precursors_tool(
+    resident_id: str,
+    signal_type: str,
+    time_series: list[float],
+    short_window: int = 5,
+    long_window: int = 30,
+) -> PrecursorDetectionResponse:
+    """
+    Detect early warning signs of burnout using seismic STA/LTA algorithm.
+
+    Applies seismological precursor detection to workload patterns,
+    identifying P-wave equivalents that precede burnout events.
+
+    Args:
+        resident_id: UUID of resident to analyze
+        signal_type: Signal type to detect
+        time_series: Chronological time series data
+        short_window: STA window size (default 5)
+        long_window: LTA window size (default 30)
+
+    Returns:
+        Detection results with alerts and recommendations
+    """
+    try:
+        signal_enum = PrecursorSignalType(signal_type)
+    except ValueError as e:
+        raise ValueError(
+            f"Invalid signal_type: {signal_type}. "
+            f"Must be one of: {[s.value for s in PrecursorSignalType]}"
+        ) from e
+
+    request = PrecursorDetectionRequest(
+        resident_id=resident_id,
+        signal_type=signal_enum,
+        time_series=time_series,
+        short_window=short_window,
+        long_window=long_window,
+    )
+    return await detect_burnout_precursors(request)
+
+
+@mcp.tool()
+async def predict_burnout_magnitude_tool(
+    resident_id: str,
+    signals: dict[str, list[float]],
+    short_window: int = 5,
+    long_window: int = 30,
+) -> MultiSignalMagnitudeResponse:
+    """
+    Predict burnout magnitude from multiple precursor signals.
+
+    Combines evidence from multiple signal types to estimate severity
+    on a 1-10 scale (similar to Richter scale).
+
+    Args:
+        resident_id: UUID of resident to analyze
+        signals: Dict mapping signal_type to time series data
+        short_window: STA window size (default 5)
+        long_window: LTA window size (default 30)
+
+    Returns:
+        Predicted magnitude (1-10) with confidence and recommendations
+    """
+    request = MultiSignalMagnitudeRequest(
+        resident_id=resident_id,
+        signals=signals,
+        short_window=short_window,
+        long_window=long_window,
+    )
+    return await predict_burnout_magnitude(request)
+
+
+@mcp.tool()
+async def run_spc_analysis_tool(
+    resident_id: str,
+    weekly_hours: list[float],
+    target_hours: float = 60.0,
+    sigma: float = 5.0,
+) -> SPCAnalysisResponse:
+    """
+    Run Statistical Process Control analysis using Western Electric Rules.
+
+    Applies manufacturing quality control methodology to workload monitoring.
+
+    Args:
+        resident_id: UUID of resident to analyze
+        weekly_hours: Weekly work hours in chronological order
+        target_hours: Target weekly hours (default 60)
+        sigma: Process standard deviation (default 5)
+
+    Returns:
+        SPC analysis with violations and control chart data
+    """
+    request = SPCAnalysisRequest(
+        resident_id=resident_id,
+        weekly_hours=weekly_hours,
+        target_hours=target_hours,
+        sigma=sigma,
+    )
+    return await run_spc_analysis(request)
+
+
+@mcp.tool()
+async def calculate_workload_process_capability_tool(
+    weekly_hours: list[float],
+    lower_spec_limit: float = 40.0,
+    upper_spec_limit: float = 80.0,
+) -> EWProcessCapabilityResponse:
+    """
+    Calculate process capability indices (Cp/Cpk) for workload distribution.
+
+    Six Sigma quality metric adapted for medical scheduling.
+
+    Args:
+        weekly_hours: Weekly work hours data (minimum 2 weeks)
+        lower_spec_limit: Minimum hours (default 40)
+        upper_spec_limit: Maximum hours/ACGME limit (default 80)
+
+    Returns:
+        Process capability indices with interpretation
+    """
+    request = ProcessCapabilityRequest(
+        weekly_hours=weekly_hours,
+        lower_spec_limit=lower_spec_limit,
+        upper_spec_limit=upper_spec_limit,
+    )
+    return await calculate_spc_process_capability(request)
+
+
+@mcp.tool()
+async def calculate_fire_danger_index_tool(
+    resident_id: str,
+    recent_hours: float,
+    monthly_load: float,
+    yearly_satisfaction: float,
+    workload_velocity: float = 0.0,
+) -> FireDangerResponse:
+    """
+    Calculate multi-temporal burnout danger using Fire Weather Index system.
+
+    Adapts Canadian Forest Fire Danger Rating System (CFFDRS) for burnout.
+
+    Args:
+        resident_id: UUID of resident to assess
+        recent_hours: Hours worked in last 2 weeks
+        monthly_load: Average monthly hours over last 3 months
+        yearly_satisfaction: Job satisfaction (0.0-1.0)
+        workload_velocity: Rate of workload increase (hours/week)
+
+    Returns:
+        Fire danger assessment with restrictions
+    """
+    request = FireDangerRequest(
+        resident_id=resident_id,
+        recent_hours=recent_hours,
+        monthly_load=monthly_load,
+        yearly_satisfaction=yearly_satisfaction,
+        workload_velocity=workload_velocity,
+    )
+    return await calculate_fire_danger_index(request)
+
+
+@mcp.tool()
+async def calculate_batch_fire_danger_tool(
+    residents: list[dict[str, Any]],
+) -> BatchFireDangerResponse:
+    """
+    Calculate fire danger index for multiple residents.
+
+    Useful for program-wide burnout screening.
+
+    Args:
+        residents: List of dicts with keys:
+            resident_id, recent_hours, monthly_load,
+            yearly_satisfaction, workload_velocity (optional)
+
+    Returns:
+        Program-wide statistics and highest-risk residents
+    """
+    requests = []
+    for r in residents:
+        requests.append(
+            FireDangerRequest(
+                resident_id=r["resident_id"],
+                recent_hours=r["recent_hours"],
+                monthly_load=r["monthly_load"],
+                yearly_satisfaction=r["yearly_satisfaction"],
+                workload_velocity=r.get("workload_velocity", 0.0),
+            )
+        )
+    batch_request = BatchFireDangerRequest(residents=requests)
+    return await calculate_batch_fire_danger(batch_request)
+
+
+
+# =============================================================================
+# FRMS (Fatigue Risk Management System) Tools
+# =============================================================================
+
+
+@mcp.tool()
+async def run_frms_assessment_tool(
+    resident_id: str,
+    target_time: str | None = None,
+) -> FRMSAssessmentResponse:
+    """
+    Run comprehensive FRMS assessment for a resident.
+
+    Generates a complete fatigue profile aggregating all FRMS metrics
+    including Samn-Perelli level, sleep debt, alertness prediction,
+    hazard assessment, and ACGME compliance status.
+
+    Implements aviation FRMS standards (FAA AC 120-103A, ICAO Doc 9966)
+    adapted for medical residency scheduling.
+
+    Args:
+        resident_id: UUID of the resident to assess.
+        target_time: Optional target time for assessment (ISO format).
+                    Defaults to current time if not specified.
+
+    Returns:
+        FRMSAssessmentResponse with comprehensive fatigue profile.
+
+    Example:
+        result = await run_frms_assessment_tool(
+            resident_id="550e8400-e29b-41d4-a716-446655440000"
+        )
+
+        if result.hazard.is_critical:
+            print(f"CRITICAL: {result.hazard.required_mitigations}")
+    """
+    return await run_frms_assessment(
+        resident_id=resident_id,
+        target_time=target_time,
     )
 
 
@@ -1632,6 +3283,192 @@ async def get_time_crystal_health_tool() -> TimeCrystalHealthResponse:
     return await get_time_crystal_health()
 
 
+@mcp.tool()
+async def get_fatigue_score_tool(
+    hours_awake: float,
+    hours_worked_24h: float,
+    consecutive_night_shifts: int = 0,
+    time_of_day_hour: int = 12,
+    prior_sleep_hours: float = 7.0,
+) -> FatigueScoreResponse:
+    """
+    Calculate real-time fatigue score from objective factors.
+
+    Uses the Samn-Perelli scale (1-7) adapted from USAF aviation
+    with factors including hours awake, work intensity,
+    circadian timing, and prior sleep.
+
+    Args:
+        hours_awake: Hours since last sleep period (0-48).
+        hours_worked_24h: Work hours in last 24 hours (0-24).
+        consecutive_night_shifts: Number of consecutive night shifts (0-7).
+        time_of_day_hour: Current hour 0-23 (for circadian effects).
+        prior_sleep_hours: Hours of sleep in prior sleep period (0-12).
+
+    Returns:
+        FatigueScoreResponse with fatigue level and safety assessment.
+
+    Example:
+        result = await get_fatigue_score_tool(
+            hours_awake=18,
+            hours_worked_24h=12,
+            time_of_day_hour=4
+        )
+
+        if not result.is_safe_for_duty:
+            print(f"Fatigue level {result.samn_perelli_level}")
+    """
+    return await get_fatigue_score(
+        hours_awake=hours_awake,
+        hours_worked_24h=hours_worked_24h,
+        consecutive_night_shifts=consecutive_night_shifts,
+        time_of_day_hour=time_of_day_hour,
+        prior_sleep_hours=prior_sleep_hours,
+    )
+
+
+@mcp.tool()
+async def analyze_sleep_debt_tool(
+    sleep_hours_per_day: list[float],
+    baseline_sleep_need: float = 7.5,
+) -> SleepDebtAnalysisResponse:
+    """
+    Analyze cumulative sleep debt with BAC equivalence mapping.
+
+    Calculates accumulated sleep debt and cognitive impairment
+    equivalence based on Van Dongen et al. (2003).
+
+    Args:
+        sleep_hours_per_day: List of sleep hours for each day.
+        baseline_sleep_need: Individual's baseline sleep requirement.
+
+    Returns:
+        SleepDebtAnalysisResponse with debt analysis and recovery plan.
+
+    Example:
+        result = await analyze_sleep_debt_tool(
+            sleep_hours_per_day=[6.0, 5.5, 7.0, 5.0, 6.5, 8.0, 6.0],
+            baseline_sleep_need=7.5
+        )
+
+        print(f"Sleep debt: {result.current_debt_hours}h")
+        print(f"BAC equivalent: {result.impairment_equivalent_bac:.3f}")
+    """
+    return await analyze_sleep_debt(
+        sleep_hours_per_day=sleep_hours_per_day,
+        baseline_sleep_need=baseline_sleep_need,
+    )
+
+
+@mcp.tool()
+async def evaluate_fatigue_hazard_tool(
+    alertness: float | None = None,
+    sleep_debt: float | None = None,
+    hours_awake: float | None = None,
+    samn_perelli: int | None = None,
+    consecutive_nights: int = 0,
+    hours_worked_week: float = 0.0,
+) -> FatigueHazardResponse:
+    """
+    Evaluate fatigue hazard level with mitigation requirements.
+
+    Implements aviation FRMS 5-level hazard system:
+    GREEN, YELLOW, ORANGE, RED, BLACK.
+
+    Args:
+        alertness: Current alertness score 0.0-1.0 (optional).
+        sleep_debt: Current accumulated sleep debt in hours (optional).
+        hours_awake: Hours since last sleep (optional).
+        samn_perelli: Current Samn-Perelli level 1-7 (optional).
+        consecutive_nights: Number of consecutive night shifts.
+        hours_worked_week: Hours worked in current week.
+
+    Returns:
+        FatigueHazardResponse with hazard level and required mitigations.
+
+    Example:
+        result = await evaluate_fatigue_hazard_tool(
+            alertness=0.4,
+            sleep_debt=15.0,
+            hours_awake=20
+        )
+
+        if result.is_critical:
+            print(f"CRITICAL: {result.required_mitigations}")
+    """
+    return await evaluate_fatigue_hazard(
+        alertness=alertness,
+        sleep_debt=sleep_debt,
+        hours_awake=hours_awake,
+        samn_perelli=samn_perelli,
+        consecutive_nights=consecutive_nights,
+        hours_worked_week=hours_worked_week,
+    )
+
+
+@mcp.tool()
+async def scan_team_fatigue_tool(
+    hazard_threshold: str = "yellow",
+) -> TeamFatigueScanResponse:
+    """
+    Scan all residents for fatigue risks.
+
+    Returns fatigue profiles filtered to those at or above
+    the specified hazard threshold.
+
+    Args:
+        hazard_threshold: Minimum hazard level to include.
+                         Options: green, yellow, orange, red, black.
+
+    Returns:
+        TeamFatigueScanResponse with team fatigue summary.
+
+    Example:
+        result = await scan_team_fatigue_tool(hazard_threshold="orange")
+
+        print(f"Critical: {result.residents_red + result.residents_black}")
+    """
+    return await scan_team_fatigue(hazard_threshold=hazard_threshold)
+
+
+@mcp.tool()
+async def assess_schedule_fatigue_risk_tool(
+    resident_id: str,
+    proposed_shifts: list[dict[str, Any]],
+) -> ScheduleFatigueRiskResponse:
+    """
+    Assess fatigue risk for a proposed schedule.
+
+    Evaluates how a proposed sequence of shifts would affect
+    fatigue levels and identifies high-risk periods.
+
+    Args:
+        resident_id: UUID of the resident.
+        proposed_shifts: List of shift dictionaries with start, end, type.
+
+    Returns:
+        ScheduleFatigueRiskResponse with risk assessment.
+
+    Example:
+        shifts = [
+            {"start": "2025-01-15T07:00:00", "end": "2025-01-15T17:00:00", "type": "day"},
+            {"start": "2025-01-16T19:00:00", "end": "2025-01-17T07:00:00", "type": "night"},
+        ]
+
+        result = await assess_schedule_fatigue_risk_tool(
+            resident_id="550e8400-e29b-41d4-a716-446655440000",
+            proposed_shifts=shifts
+        )
+
+        if result.overall_risk == "high":
+            print(f"High risk periods: {result.high_risk_periods}")
+    """
+    return await assess_schedule_fatigue_risk(
+        resident_id=resident_id,
+        proposed_shifts=proposed_shifts,
+    )
+
+
 # Server lifecycle functions (called by lifespan context manager)
 
 
@@ -1671,7 +3508,7 @@ async def on_shutdown() -> None:
     logger.info("Shutting down Residency Scheduler MCP Server")
 
     # Close database connections
-    if hasattr(mcp, 'db_session') and mcp.db_session:
+    if hasattr(mcp, "db_session") and mcp.db_session:
         try:
             await mcp.db_session.close()
             logger.info("Database session closed")
@@ -1679,7 +3516,7 @@ async def on_shutdown() -> None:
             logger.warning(f"Error closing database session: {e}")
 
     # Close any open connections
-    if hasattr(mcp, 'connections'):
+    if hasattr(mcp, "connections"):
         for conn_id, conn in list(mcp.connections.items()):
             try:
                 await conn.close()
@@ -1689,7 +3526,7 @@ async def on_shutdown() -> None:
         mcp.connections.clear()
 
     # Flush any pending metrics
-    if hasattr(mcp, 'metrics'):
+    if hasattr(mcp, "metrics"):
         try:
             await mcp.metrics.flush()
             logger.info("Metrics flushed")
@@ -1697,7 +3534,7 @@ async def on_shutdown() -> None:
             logger.warning(f"Error flushing metrics: {e}")
 
     # Release any held resources
-    if hasattr(mcp, 'resource_locks'):
+    if hasattr(mcp, "resource_locks"):
         for lock_name, lock in list(mcp.resource_locks.items()):
             try:
                 if lock.locked():

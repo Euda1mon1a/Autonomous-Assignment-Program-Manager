@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { Calendar, Clock, Users, RefreshCw, AlertCircle, Search } from 'lucide-react';
+import { Calendar, Clock, Users, RefreshCw, AlertCircle, Search, CalendarX, Info } from 'lucide-react';
 import { LocationCard } from './LocationCard';
 import { useDailyManifest } from './hooks';
 
@@ -195,10 +195,14 @@ export function DailyManifest() {
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <h3 className="text-sm font-semibold text-red-800 mb-1">
-                Error Loading Manifest
+                Unable to Load Manifest
               </h3>
               <p className="text-sm text-red-700">
-                {error?.message || 'Failed to load daily manifest data'}
+                {error?.status === 404
+                  ? 'The manifest service is temporarily unavailable. Please try again later.'
+                  : error?.status === 0
+                  ? 'Unable to connect to the server. Please check your network connection.'
+                  : error?.message || 'An unexpected error occurred. Please try again.'}
               </p>
             </div>
             <button
@@ -239,15 +243,70 @@ export function DailyManifest() {
             </>
           ) : (
             <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-              <Users className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <h3 className="text-lg font-medium text-gray-900 mb-1">
-                No locations found
-              </h3>
-              <p className="text-gray-600">
-                {searchQuery
-                  ? 'Try adjusting your search criteria'
-                  : 'No assignments scheduled for this date and time'}
-              </p>
+              {searchQuery ? (
+                <>
+                  <Search className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    No results found
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    No locations or staff match &quot;{searchQuery}&quot;
+                  </p>
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition-colors"
+                  >
+                    Clear Search
+                  </button>
+                </>
+              ) : (
+                <>
+                  <CalendarX className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No Schedule Data for {format(selectedDate, 'MMMM d, yyyy')}
+                  </h3>
+                  <p className="text-gray-600 max-w-md mx-auto mb-4">
+                    {timeOfDay === 'ALL'
+                      ? 'There are no staff assignments scheduled for this date.'
+                      : `There are no staff assignments scheduled for this ${timeOfDay === 'AM' ? 'morning' : 'afternoon'}.`}
+                  </p>
+
+                  {/* Info box with helpful guidance */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-lg mx-auto text-left">
+                    <div className="flex items-start gap-3">
+                      <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="text-sm font-semibold text-blue-900 mb-1">
+                          What you can do:
+                        </h4>
+                        <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                          <li>Try selecting a different date when schedules are available</li>
+                          <li>Check both AM and PM sessions using the time selector</li>
+                          <li>Contact your program coordinator if you expected to see assignments</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick actions */}
+                  <div className="mt-4 flex items-center justify-center gap-3">
+                    <button
+                      onClick={() => setSelectedDate(new Date())}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
+                    >
+                      Go to Today
+                    </button>
+                    {timeOfDay !== 'ALL' && (
+                      <button
+                        onClick={() => setTimeOfDay('ALL')}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition-colors"
+                      >
+                        View All Day
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </>

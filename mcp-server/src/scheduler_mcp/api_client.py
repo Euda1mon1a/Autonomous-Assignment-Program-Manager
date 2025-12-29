@@ -21,8 +21,8 @@ class APIConfig(BaseModel):
     base_url: str = "http://localhost:8000"
     timeout: float = 30.0
     api_prefix: str = "/api/v1"
-    username: str = "admin"
-    password: str = "admin123"
+    username: str = ""  # REQUIRED: Set via API_USERNAME env var
+    password: str = ""  # REQUIRED: Set via API_PASSWORD env var
 
 
 class SchedulerAPIClient:
@@ -31,9 +31,14 @@ class SchedulerAPIClient:
     def __init__(self, config: APIConfig | None = None):
         self.config = config or APIConfig(
             base_url=os.environ.get("API_BASE_URL", "http://localhost:8000"),
-            username=os.environ.get("API_USERNAME", "admin"),
-            password=os.environ.get("API_PASSWORD", "admin123"),
+            username=os.environ.get("API_USERNAME", ""),
+            password=os.environ.get("API_PASSWORD", ""),
         )
+        if not self.config.username or not self.config.password:
+            raise ValueError(
+                "API_USERNAME and API_PASSWORD environment variables are required. "
+                "Set these in your .env file or docker-compose environment."
+            )
         self._client: httpx.AsyncClient | None = None
         self._token: str | None = None
 
