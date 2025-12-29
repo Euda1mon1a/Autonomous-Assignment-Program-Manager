@@ -28,6 +28,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Optional
 
+import numpy as np
+
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -279,7 +281,9 @@ def calculate_var(losses: list[float], confidence: float) -> float:
         return 0.0
 
     sorted_losses = sorted(losses)
-    index = int((1 - confidence) * len(losses))
+    # VaR at confidence level X means X% of losses are below this value
+    # For 95% confidence, we want the 95th percentile (upper tail)
+    index = int(confidence * len(losses))
     # Ensure index is within bounds
     index = max(0, min(index, len(sorted_losses) - 1))
     return sorted_losses[index]
@@ -650,8 +654,11 @@ def _simulate_single_disruption(
     acgme_violations = int(coverage_impact * 10) if coverage_impact > 0.15 else 0
 
     # Workload spike on remaining persons
-    if num_disruptions > 0:
+    if num_disruptions > 0 and num_disruptions < num_persons:
         workload_spike = num_disruptions / (num_persons - num_disruptions)
+    elif num_disruptions >= num_persons:
+        # All persons disrupted - maximum spike (capped at reasonable value)
+        workload_spike = float("inf") if num_persons > 0 else 0.0
     else:
         workload_spike = 0.0
 
@@ -726,7 +733,7 @@ def _calculate_conditional_var_placeholder(
     elif request.loss_metric == "workload_spike":
         losses = [random.gammavariate(2, 0.15) for _ in range(num_scenarios)]
     else:  # acgme_violations
-        losses = [random.poisson(3) for _ in range(num_scenarios)]
+        losses = [float(np.random.poisson(3)) for _ in range(num_scenarios)]
 
     # Calculate VaR and CVaR
     var_value, cvar_value = calculate_cvar(losses, request.confidence_level)

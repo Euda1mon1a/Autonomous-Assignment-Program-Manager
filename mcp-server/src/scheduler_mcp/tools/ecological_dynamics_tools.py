@@ -198,23 +198,28 @@ def fit_lotka_volterra_parameters(
         # Reasonable defaults for medical scheduling
         initial_guess = (0.1, 0.01, 0.01, 0.1)
 
+    # Convert lists to numpy arrays for vectorized operations
+    time_array = np.array(time_series)
+    capacity_array = np.array(capacity_series)
+    demand_array = np.array(demand_series)
+
     def residuals(params: np.ndarray) -> np.ndarray:
         """Calculate residuals between model and data."""
         alpha, beta, delta, gamma = params
 
         # Ensure positive parameters
         if any(p <= 0 for p in params):
-            return np.ones(len(time_series) * 2) * 1e10
+            return np.ones(len(time_array) * 2) * 1e10
 
-        y0 = [capacity_series[0], demand_series[0]]
-        solution = odeint(lotka_volterra, y0, time_series, args=(alpha, beta, delta, gamma))
+        y0 = [capacity_array[0], demand_array[0]]
+        solution = odeint(lotka_volterra, y0, time_array, args=(alpha, beta, delta, gamma))
 
         capacity_pred = solution[:, 0]
         demand_pred = solution[:, 1]
 
         # Combined residuals for both capacity and demand
-        capacity_residuals = capacity_series - capacity_pred
-        demand_residuals = demand_series - demand_pred
+        capacity_residuals = capacity_array - capacity_pred
+        demand_residuals = demand_array - demand_pred
 
         return np.concatenate([capacity_residuals, demand_residuals])
 
@@ -227,8 +232,8 @@ def fit_lotka_volterra_parameters(
 
     # Calculate R² for goodness of fit
     residual_sum_squares = np.sum(result.fun ** 2)
-    total_sum_squares = np.sum((capacity_series - np.mean(capacity_series)) ** 2) + \
-                        np.sum((demand_series - np.mean(demand_series)) ** 2)
+    total_sum_squares = np.sum((capacity_array - np.mean(capacity_array)) ** 2) + \
+                        np.sum((demand_array - np.mean(demand_array)) ** 2)
     r_squared = 1 - (residual_sum_squares / total_sum_squares) if total_sum_squares > 0 else 0.0
 
     return alpha, beta, delta, gamma, r_squared
