@@ -710,6 +710,36 @@ celery-beat:
 
 ---
 
+## Session 013: 2025-12-28 — Retrospective & Hooks
+
+**Accomplishments:**
+- PR #521: Exotic tools MCP readiness (128 tests, 2,494 lines)
+- Pre-plan ORCHESTRATOR hook added (EnterPlanMode, ExitPlanMode)
+
+**Retrospective Learnings:**
+1. **Delegation wasn't automatic** - User had to prompt "refactor, delegate" after I drafted a solo plan. Pre-plan hook now addresses this.
+2. **Model tier not specified** - All 4 agents inherited Opus; ARCHITECT could have been Haiku. Need model tier field in agent specs.
+3. **Context is rate limiter** - User correctly identified that Task hook would burn context on every spawn. Removed it - hooks belong at decision points, not execution points.
+
+**User Feedback Received:**
+- Appreciated direct retrospective feedback
+- Wants proactive delegation scoring, not reactive correction
+- Interested in vector-based agent selection (tabled - pgvector not available)
+
+**Infrastructure Added:**
+- `.claude/hooks/pre-plan-orchestrator.sh` - fires on EnterPlanMode/ExitPlanMode
+- Reminds about complexity scoring, delegation, cross-session context
+
+**Tabled for Future:**
+- pgvector agent memory (blocked - Postgres doesn't support extension)
+- Model tier metadata in agent specs
+- Task history embedding for semantic agent selection
+
+**Pattern Observed:**
+User operates in "design → delegate → retrospective" cycles. Values meta-improvement as much as feature delivery.
+
+---
+
 *File created: 2025-12-27*
-*Last updated: 2025-12-28 (Session 012 continuation)*
+*Last updated: 2025-12-28 (Session 013)*
 *Maintained by: ORCHESTRATOR*

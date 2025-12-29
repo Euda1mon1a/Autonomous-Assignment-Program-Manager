@@ -60,6 +60,24 @@
             "command": ".claude/hooks/pre-bash-validate.sh"
           }
         ]
+      },
+      {
+        "matcher": "EnterPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/pre-plan-orchestrator.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "ExitPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/pre-plan-orchestrator.sh"
+          }
+        ]
       }
     ],
     "Stop": [

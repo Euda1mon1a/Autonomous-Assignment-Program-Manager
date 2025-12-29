@@ -52,7 +52,8 @@ Security & Privacy:
 
 import hashlib
 import logging
-from datetime import date, datetime, timedelta
+from datetime import date as date_type
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any
 
@@ -235,6 +236,8 @@ def fit_lotka_volterra_parameters(
     total_sum_squares = np.sum((capacity_array - np.mean(capacity_array)) ** 2) + \
                         np.sum((demand_array - np.mean(demand_array)) ** 2)
     r_squared = 1 - (residual_sum_squares / total_sum_squares) if total_sum_squares > 0 else 0.0
+    # Clamp R² to [0, 1] for Pydantic validation
+    r_squared = max(0.0, min(1.0, float(r_squared)))
 
     return alpha, beta, delta, gamma, r_squared
 
@@ -319,7 +322,7 @@ def classify_stability(
 class HistoricalDataPoint(BaseModel):
     """Single data point in historical time series."""
 
-    date: date = Field(description="Date of observation")
+    date: date_type = Field(description="Date of observation")
     capacity: float = Field(ge=0.0, description="Available capacity (idle resident-hours)")
     demand: float = Field(ge=0.0, description="Workload demand (procedures, visits, etc.)")
 
@@ -388,12 +391,12 @@ class CapacityCrunchResponse(BaseModel):
     capacity_deficit: float = Field(description="Current - equilibrium (negative = overutilized)")
     crunch_threshold: float = Field(ge=0.0, description="Threshold for capacity crunch")
     days_until_crunch: int | None = Field(description="Days until capacity falls below threshold")
-    crunch_date: date | None = Field(description="Predicted date of capacity crunch")
+    crunch_date: date_type | None = Field(description="Predicted date of capacity crunch")
     risk_level: RiskLevelEnum = Field(description="Risk classification")
     minimum_capacity: float = Field(ge=0.0, description="Minimum capacity in prediction window")
-    minimum_capacity_date: date | None = Field(description="Date of minimum capacity")
+    minimum_capacity_date: date_type | None = Field(description="Date of minimum capacity")
     will_recover: bool = Field(description="Whether capacity recovers after crunch")
-    recovery_date: date | None = Field(description="Date capacity recovers above threshold")
+    recovery_date: date_type | None = Field(description="Date capacity recovers above threshold")
     mitigation_urgency: str = Field(description="Recommended urgency of intervention")
     predicted_trajectory: list[dict[str, float]] = Field(description="Predicted trajectory")
 
@@ -622,14 +625,14 @@ async def predict_capacity_crunch(
     if np.any(below_threshold):
         crunch_idx = np.argmax(below_threshold)
         days_until_crunch = int(t[crunch_idx])
-        crunch_date = date.today() + timedelta(days=days_until_crunch)
+        crunch_date = date_type.today() + timedelta(days=days_until_crunch)
 
         # Check if it recovers
         after_crunch = capacity_traj[crunch_idx:]
         above_threshold_after = after_crunch > request.crunch_threshold
         if np.any(above_threshold_after):
             recovery_idx = crunch_idx + np.argmax(above_threshold_after)
-            recovery_date = date.today() + timedelta(days=int(t[recovery_idx]))
+            recovery_date = date_type.today() + timedelta(days=int(t[recovery_idx]))
             will_recover = True
         else:
             recovery_date = None
@@ -643,7 +646,7 @@ async def predict_capacity_crunch(
     # Find minimum capacity
     min_capacity_idx = np.argmin(capacity_traj)
     minimum_capacity = float(capacity_traj[min_capacity_idx])
-    minimum_capacity_date = date.today() + timedelta(days=int(t[min_capacity_idx]))
+    minimum_capacity_date = date_type.today() + timedelta(days=int(t[min_capacity_idx]))
 
     # Classify risk
     if days_until_crunch is None:
