@@ -18,7 +18,7 @@ class HeatmapRequest(BaseModel):
     )
     include_fmit: bool = Field(True, description="Include FMIT swap data in heatmap")
     group_by: str = Field(
-        "person", description="Group heatmap by 'person' or 'rotation'"
+        "person", description="Group heatmap by 'person', 'rotation', 'daily', or 'weekly'"
     )
 
     class Config:
@@ -231,7 +231,7 @@ class UnifiedHeatmapRequest(BaseModel):
     )
     include_fmit: bool = Field(True, description="Include FMIT swap data in heatmap")
     group_by: str = Field(
-        "person", description="Group heatmap by 'person' or 'rotation'"
+        "person", description="Group heatmap by 'person', 'rotation', 'daily', or 'weekly'"
     )
 
     class Config:
