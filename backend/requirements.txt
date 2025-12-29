@@ -27,7 +27,7 @@ python-magic>=0.4.27  # File type detection for upload validation
 fastapi-pagination==0.15.3
 fastapi-cache2==0.2.2
 slowapi==0.1.9
-strawberry-graphql[fastapi]==0.219.2
+strawberry-graphql[fastapi]==0.257.0
 
 # Data Processing
 pandas==2.3.3
