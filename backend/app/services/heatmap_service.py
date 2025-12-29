@@ -152,6 +152,108 @@ class HeatmapService:
             .all()
         )
 
+    def _generate_daily_heatmap(
+        self,
+        db: Session,
+        assignments: list[Assignment],
+        start_date: date,
+        end_date: date,
+        include_fmit: bool = True,
+    ) -> HeatmapResponse:
+        """Generate heatmap grouped by day (showing assignment counts per day)."""
+        dates = self._get_date_range(start_date, end_date)
+        x_labels = [d.strftime("%Y-%m-%d") for d in dates]
+
+        # Count assignments per day
+        daily_counts = dict.fromkeys(dates, 0)
+        for assignment in assignments:
+            block_date = assignment.block.date
+            if block_date in daily_counts:
+                daily_counts[block_date] += 1
+
+        # Create single row with daily counts
+        z_values = [[float(daily_counts[d]) for d in dates]]
+        y_labels = ["Total Assignments"]
+
+        heatmap_data = HeatmapData(
+            x_labels=x_labels,
+            y_labels=y_labels,
+            z_values=z_values,
+            color_scale="Viridis",
+            annotations=None,
+        )
+
+        metadata: dict[str, Any] = {
+            "total_assignments": len(assignments),
+            "date_range_days": len(dates),
+            "grouping_type": "daily",
+        }
+
+        if include_fmit:
+            swaps = self._get_swap_records_in_range(db, start_date, end_date)
+            metadata["fmit_swaps_count"] = len(swaps)
+
+        return HeatmapResponse(
+            data=heatmap_data,
+            title="Daily Assignment Heatmap",
+            metadata=metadata,
+        )
+
+    def _generate_weekly_heatmap(
+        self,
+        db: Session,
+        assignments: list[Assignment],
+        start_date: date,
+        end_date: date,
+        include_fmit: bool = True,
+    ) -> HeatmapResponse:
+        """Generate heatmap grouped by week (showing assignment counts per week)."""
+        # Generate week starts
+        current_week = start_date - timedelta(days=start_date.weekday())
+        weeks = []
+        while current_week <= end_date:
+            weeks.append(current_week)
+            current_week += timedelta(days=7)
+
+        x_labels = [w.strftime("%Y-%m-%d") for w in weeks]
+
+        # Count assignments per week
+        weekly_counts = dict.fromkeys(weeks, 0)
+        for assignment in assignments:
+            block_date = assignment.block.date
+            # Find the week this assignment belongs to
+            week_start = block_date - timedelta(days=block_date.weekday())
+            if week_start in weekly_counts:
+                weekly_counts[week_start] += 1
+
+        # Create single row with weekly counts
+        z_values = [[float(weekly_counts[w]) for w in weeks]]
+        y_labels = ["Total Assignments"]
+
+        heatmap_data = HeatmapData(
+            x_labels=x_labels,
+            y_labels=y_labels,
+            z_values=z_values,
+            color_scale="Viridis",
+            annotations=None,
+        )
+
+        metadata: dict[str, Any] = {
+            "total_assignments": len(assignments),
+            "weeks_count": len(weeks),
+            "grouping_type": "weekly",
+        }
+
+        if include_fmit:
+            swaps = self._get_swap_records_in_range(db, start_date, end_date)
+            metadata["fmit_swaps_count"] = len(swaps)
+
+        return HeatmapResponse(
+            data=heatmap_data,
+            title="Weekly Assignment Heatmap",
+            metadata=metadata,
+        )
+
     def generate_unified_heatmap(
         self,
         db: Session,
@@ -172,18 +274,29 @@ class HeatmapService:
             person_ids: Optional filter by person IDs
             rotation_ids: Optional filter by rotation template IDs
             include_fmit: Whether to include FMIT swap data
-            group_by: Group by 'person' or 'rotation'
+            group_by: Group by 'person', 'rotation', 'daily', or 'weekly'
 
         Returns:
             HeatmapResponse with data and metadata
         """
-        dates = self._get_date_range(start_date, end_date)
-        x_labels = [d.strftime("%Y-%m-%d") for d in dates]
-
         # Get assignments
         assignments = self._get_assignments_in_range(
             db, start_date, end_date, person_ids, rotation_ids
         )
+
+        # Handle daily and weekly grouping (group by date instead of entity)
+        if group_by == "daily":
+            return self._generate_daily_heatmap(
+                db, assignments, start_date, end_date, include_fmit
+            )
+        elif group_by == "weekly":
+            return self._generate_weekly_heatmap(
+                db, assignments, start_date, end_date, include_fmit
+            )
+
+        # Original person/rotation grouping logic
+        dates = self._get_date_range(start_date, end_date)
+        x_labels = [d.strftime("%Y-%m-%d") for d in dates]
 
         # Build assignment map: (person_id or rotation_id, date) -> count
         assignment_map: dict[tuple[Any, date], int] = {}

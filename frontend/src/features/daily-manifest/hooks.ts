@@ -7,7 +7,7 @@
 
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { get, ApiError } from '@/lib/api';
-import type { DailyManifestData } from './types';
+import type { DailyManifestData, ScheduleDateRange } from './types';
 
 // ============================================================================
 // Query Keys
@@ -17,6 +17,7 @@ export const manifestQueryKeys = {
   all: ['daily-manifest'] as const,
   byDate: (date: string, timeOfDay: string) =>
     ['daily-manifest', date, timeOfDay] as const,
+  dateRange: () => ['daily-manifest', 'date-range'] as const,
 };
 
 // ============================================================================
@@ -59,4 +60,41 @@ export function useTodayManifest(
 ) {
   const today = new Date().toISOString().split('T')[0];
   return useDailyManifest(today, timeOfDay, options);
+}
+
+/**
+ * Fetch the date range where schedule data is available
+ * Uses the blocks endpoint to determine min/max dates
+ *
+ * Note: The /blocks API returns items sorted ascending by date, time_of_day.
+ * It only supports start_date, end_date, and block_number query params.
+ */
+export function useScheduleDateRange(
+  options?: Omit<UseQueryOptions<ScheduleDateRange, ApiError>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery<ScheduleDateRange, ApiError>({
+    queryKey: manifestQueryKeys.dateRange(),
+    queryFn: async () => {
+      // Fetch all blocks - the API returns them sorted ascending by date
+      const response = await get<{ items: Array<{ date: string }> }>('/blocks');
+
+      // If no blocks exist, return null range
+      if (!response.items || response.items.length === 0) {
+        return { start_date: null, end_date: null, has_data: false };
+      }
+
+      // First item is earliest (ascending order), last item is latest
+      const startDate = response.items[0]?.date || null;
+      const endDate = response.items[response.items.length - 1]?.date || null;
+
+      return {
+        start_date: startDate,
+        end_date: endDate,
+        has_data: !!(startDate && endDate),
+      };
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes - date range changes infrequently
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    ...options,
+  });
 }

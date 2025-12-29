@@ -9,6 +9,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Time Crystal Scheduling Tools (December 2025)
+
+**Anti-Churn Schedule Optimization:**
+- New `backend/app/scheduling/periodicity/` module implementing time-crystal-inspired scheduling
+- `anti_churn.py`: Hamming distance, rigidity scoring, combined time crystal objective
+- `subharmonic_detector.py`: Autocorrelation-based detection of natural periodicities (7d, 14d, 28d cycles)
+- `stroboscopic_manager.py`: Checkpoint-based state management for consistent schedule observation
+- Tests in `backend/tests/scheduling/periodicity/`
+
+**New MCP Tools (5 tools):**
+- `analyze_schedule_rigidity_tool`: Compare schedule stability between versions
+- `analyze_schedule_periodicity_tool`: Detect natural cycles (weekly, biweekly, ACGME 4-week)
+- `calculate_time_crystal_objective_tool`: Combined optimization score (constraints + rigidity + fairness)
+- `get_checkpoint_status_tool`: Stroboscopic state info
+- `get_time_crystal_health_tool`: Component health monitoring
+
+**Key Concepts:**
+- Time Crystal Objective: `score = (1-α-β)·constraints + α·rigidity + β·fairness`
+- Rigidity scoring prevents unnecessary churn during schedule regeneration
+- Subharmonic detection preserves emergent patterns (Q4 call, alternating weekends)
+- Stroboscopic checkpoints ensure consistent state observation
+
+**Files Added:**
+- `backend/app/scheduling/periodicity/__init__.py`
+- `backend/app/scheduling/periodicity/anti_churn.py`
+- `backend/app/scheduling/periodicity/subharmonic_detector.py`
+- `backend/app/scheduling/periodicity/stroboscopic_manager.py`
+- `mcp-server/src/scheduler_mcp/time_crystal_tools.py`
+- `docs/architecture/TIME_CRYSTAL_ANTI_CHURN.md`
+
+**References:**
+- SYNERGY_ANALYSIS.md Section 11: Time Crystal Dynamics
+- Shleyfman et al. (2025). Planning with Minimal Disruption. arXiv:2508.15358
+
 #### Observability & Resilience Hardening (December 2025)
 
 **Pre-Solver Constraint Saturation Validator:**

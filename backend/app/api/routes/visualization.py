@@ -36,7 +36,9 @@ def get_unified_heatmap(
         None, description="Filter by rotation template IDs"
     ),
     include_fmit: bool = Query(True, description="Include FMIT swap data"),
-    group_by: str = Query("person", description="Group by 'person' or 'rotation'"),
+    group_by: str = Query(
+        "person", description="Group by 'person', 'rotation', 'daily', or 'weekly'"
+    ),
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> HeatmapResponse:
@@ -51,14 +53,16 @@ def get_unified_heatmap(
         person_ids: Optional list of person IDs to filter
         rotation_ids: Optional list of rotation template IDs to filter
         include_fmit: Whether to include FMIT swap data
-        group_by: Group heatmap by 'person' or 'rotation'
+        group_by: Group heatmap by 'person', 'rotation', 'daily', or 'weekly'
 
     Returns:
         HeatmapResponse with visualization data
     """
-    if group_by not in ["person", "rotation"]:
+    group_by_lower = group_by.lower()
+    if group_by_lower not in ["person", "rotation", "daily", "weekly"]:
         raise HTTPException(
-            status_code=400, detail="group_by must be 'person' or 'rotation'"
+            status_code=400,
+            detail="group_by must be 'person', 'rotation', 'daily', or 'weekly'",
         )
 
     if start_date > end_date:
@@ -75,7 +79,7 @@ def get_unified_heatmap(
         person_ids=person_ids,
         rotation_ids=rotation_ids,
         include_fmit=include_fmit,
-        group_by=group_by,
+        group_by=group_by_lower,
     )
 
 
@@ -101,9 +105,11 @@ def get_unified_heatmap_with_time_range(
     Raises:
         HTTPException: If time range specification is invalid
     """
-    if request.group_by not in ["person", "rotation"]:
+    group_by_lower = request.group_by.lower()
+    if group_by_lower not in ["person", "rotation", "daily", "weekly"]:
         raise HTTPException(
-            status_code=400, detail="group_by must be 'person' or 'rotation'"
+            status_code=400,
+            detail="group_by must be 'person', 'rotation', 'daily', or 'weekly'",
         )
 
     # Use cached service for better performance
@@ -124,7 +130,7 @@ def get_unified_heatmap_with_time_range(
         person_ids=request.person_ids,
         rotation_ids=request.rotation_ids,
         include_fmit=request.include_fmit,
-        group_by=request.group_by,
+        group_by=group_by_lower,
     )
 
     # Add calculated date range to metadata
@@ -146,7 +152,9 @@ def get_heatmap_image(
         None, description="Filter by rotation template IDs"
     ),
     include_fmit: bool = Query(True, description="Include FMIT swap data"),
-    group_by: str = Query("person", description="Group by 'person' or 'rotation'"),
+    group_by: str = Query(
+        "person", description="Group by 'person', 'rotation', 'daily', or 'weekly'"
+    ),
     format: str = Query("png", description="Export format: png, pdf, or svg"),
     width: int = Query(1200, description="Width in pixels", gt=0),
     height: int = Query(800, description="Height in pixels", gt=0),
@@ -164,7 +172,7 @@ def get_heatmap_image(
         person_ids: Optional list of person IDs to filter
         rotation_ids: Optional list of rotation template IDs to filter
         include_fmit: Whether to include FMIT swap data
-        group_by: Group heatmap by 'person' or 'rotation'
+        group_by: Group heatmap by 'person', 'rotation', 'daily', or 'weekly'
         format: Export format (png, pdf, svg)
         width: Image width in pixels
         height: Image height in pixels
@@ -177,9 +185,11 @@ def get_heatmap_image(
             status_code=400, detail="format must be 'png', 'pdf', or 'svg'"
         )
 
-    if group_by not in ["person", "rotation"]:
+    group_by_lower = group_by.lower()
+    if group_by_lower not in ["person", "rotation", "daily", "weekly"]:
         raise HTTPException(
-            status_code=400, detail="group_by must be 'person' or 'rotation'"
+            status_code=400,
+            detail="group_by must be 'person', 'rotation', 'daily', or 'weekly'",
         )
 
     # Use cached service for better performance
@@ -193,7 +203,7 @@ def get_heatmap_image(
         person_ids=person_ids,
         rotation_ids=rotation_ids,
         include_fmit=include_fmit,
-        group_by=group_by,
+        group_by=group_by_lower,
     )
 
     # Export as image
