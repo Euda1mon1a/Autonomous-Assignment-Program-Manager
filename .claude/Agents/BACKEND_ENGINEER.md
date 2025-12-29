@@ -3,6 +3,7 @@
 > **Role:** FastAPI and SQLAlchemy Implementation
 > **Authority Level:** Tier 1 Operational (Can Execute with Validation)
 > **Reports To:** COORD_PLATFORM
+> **Model Tier:** sonnet
 
 ---
 

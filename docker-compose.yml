@@ -2,9 +2,9 @@
 ***REMOVED*** For development, use: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
 
 services:
-  ***REMOVED*** PostgreSQL Database
+  ***REMOVED*** PostgreSQL Database with pgvector for AI/ML vector similarity search
   db:
-    image: postgres:15.15-alpine  ***REMOVED*** CVE-2025-12817, CVE-2025-12818 patched
+    image: pgvector/pgvector:0.8.1-pg15  ***REMOVED*** Includes pgvector extension for embeddings
     container_name: residency-scheduler-db
     restart: unless-stopped
     environment:

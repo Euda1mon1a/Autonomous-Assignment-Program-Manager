@@ -6,6 +6,7 @@
 > **Status:** Active
 > **Version:** 2.0.0
 > **Last Updated:** 2025-12-28
+> **Model Tier:** opus
 
 ---
 

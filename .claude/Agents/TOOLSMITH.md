@@ -4,6 +4,7 @@
 > **Authority Level:** Generator (Can Create, Requires Review to Merge)
 > **Archetype:** Generator
 > **Status:** Active
+> **Model Tier:** sonnet
 
 ---
 

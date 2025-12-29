@@ -4,6 +4,7 @@
 > **Authority Level:** Execute with Safeguards (Can Commit/Push, Needs Approval for Merges to Main)
 > **Archetype:** Generator
 > **Status:** Active
+> **Model Tier:** sonnet
 
 ---
 

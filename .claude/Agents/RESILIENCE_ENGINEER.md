@@ -3,6 +3,7 @@
 > **Role:** Failure Simulation & Robustness Testing
 > **Authority Level:** Tier 2 (Advisory + Limited Execution)
 > **Status:** Active
+> **Model Tier:** sonnet
 
 ---
 

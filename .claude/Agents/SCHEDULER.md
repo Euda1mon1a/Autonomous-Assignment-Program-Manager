@@ -3,6 +3,7 @@
 > **Role:** Schedule Generation & Optimization
 > **Authority Level:** Tier 1 (Operational - with safeguards)
 > **Status:** Active
+> **Model Tier:** sonnet
 
 ---
 
