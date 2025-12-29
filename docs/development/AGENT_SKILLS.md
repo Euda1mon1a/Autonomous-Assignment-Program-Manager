@@ -1136,8 +1136,44 @@ return items.map(it => {
 
 ---
 
+## Agent Model Selection
+
+When spawning subagents, ORCHESTRATOR selects the optimal Claude model tier based on task complexity.
+
+### Model Tiers
+
+| Tier | Model | Cost | Use Case |
+|------|-------|------|----------|
+| Fast | **Haiku** | 1x | Simple tasks, metadata updates, auditing |
+| Balanced | **Sonnet** | 10x | Code generation, testing, analysis |
+| Complex | **Opus** | 100x | Architecture, coordination, multi-agent synthesis |
+
+### Agent Tier Assignments
+
+All agents have a `> **Model Tier:**` field in their spec headers:
+
+| Tier | Agents |
+|------|--------|
+| **Haiku** (4) | DELEGATION_AUDITOR, META_UPDATER, DBA, SYNTHESIZER |
+| **Sonnet** (11) | QA_TESTER, SCHEDULER, FRONTEND_ENGINEER, BACKEND_ENGINEER, RELEASE_MANAGER, TOOLSMITH, RESILIENCE_ENGINEER, COMPLIANCE_AUDITOR, BURNOUT_SENTINEL, CAPACITY_OPTIMIZER, EPIDEMIC_ANALYST |
+| **Opus** (10) | ORCHESTRATOR, ARCHITECT, AGENT_FACTORY, OPTIMIZATION_SPECIALIST, COORD_* |
+
+### Vector-Based Selection (pgvector)
+
+The system uses embeddings to learn optimal agent/model combinations:
+
+1. **Task embedding** - Embed task description using sentence-transformers (384 dims)
+2. **Similarity query** - Find similar successful historical tasks
+3. **Model recommendation** - Choose cheapest model that reliably handles this task type
+4. **Learning** - Record outcomes to improve future recommendations
+
+See [Agent Model Selection](AGENT_MODEL_SELECTION.md) for full documentation.
+
+---
+
 ## Related Documentation
 
+- [Agent Model Selection](AGENT_MODEL_SELECTION.md) - Vector-based model selection
 - [AI Agent User Guide](../guides/AI_AGENT_USER_GUIDE.md) - Complete agent setup
 - [AI Rules of Engagement](AI_RULES_OF_ENGAGEMENT.md) - Git and workflow rules
 - [CLAUDE.md](../../CLAUDE.md) - Project guidelines

@@ -3,6 +3,7 @@
 > **Role:** Database Migrations and Optimization
 > **Authority Level:** Tier 2 (ARCHITECT Approval for Schema Changes)
 > **Reports To:** COORD_PLATFORM
+> **Model Tier:** haiku
 
 ---
 

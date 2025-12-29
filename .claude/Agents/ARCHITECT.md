@@ -3,6 +3,7 @@
 > **Role:** Strategic Planning & System Design
 > **Authority Level:** Tier 2 (Constitutional)
 > **Status:** Active
+> **Model Tier:** opus
 
 ---
 
