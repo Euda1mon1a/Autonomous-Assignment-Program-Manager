@@ -17,7 +17,8 @@ Tier 3 Tactical Concepts:
 9. Cognitive Load Management (from psychology/human factors)
 10. Stigmergy/Swarm Intelligence (from biology/AI)
 11. Hub Vulnerability Analysis (from network theory)
-12. Creep/Fatigue Analysis (from materials science)
+12. Keystone Species Analysis (from ecology)
+13. Creep/Fatigue Analysis (from materials science)
 
 Tier 3+ Cross-Disciplinary Concepts:
 13. SPC Monitoring (from semiconductor manufacturing)
@@ -27,6 +28,7 @@ Tier 3+ Cross-Disciplinary Concepts:
 17. Seismic Detection (from seismology early warning systems)
 18. Burnout Fire Index (from forestry CFFDRS)
 19. Creep Fatigue (from materials science)
+20. Circadian Phase Response Curves (from chronobiology/sleep science)
 """
 
 # Circuit Breaker
@@ -55,6 +57,16 @@ from app.resilience.burnout_fire_index import (
     BurnoutDangerRating,
     DangerClass,
     FireDangerReport,
+)
+from app.resilience.catastrophe_detector import (
+    CatastropheAlert,
+    CatastropheDetector,
+    CatastropheRegion,
+    CuspAnalysis,
+    FailurePrediction,
+    FeasibilitySurface,
+    ParameterState,
+    SystemState,
 )
 from app.resilience.circuit_breaker import (
     CircuitBreaker,
@@ -149,6 +161,15 @@ from app.resilience.hub_analysis import (
     HubProtectionStatus,
     HubRiskLevel,
 )
+from app.resilience.keystone_analysis import (
+    CascadeAnalysis,
+    EntityType,
+    KeystoneAnalyzer,
+    KeystoneResource,
+    KeystoneRiskLevel,
+    SuccessionPlan,
+    SuccessionStatus,
+)
 from app.resilience.le_chatelier import (
     CompensationResponse,
     CompensationType,
@@ -159,6 +180,21 @@ from app.resilience.le_chatelier import (
     StressResponsePrediction,
     StressType,
     SystemStress,
+)
+from app.resilience.metastability_detector import (
+    EscapeStrategy,
+    MetastabilityAnalysis,
+    MetastabilityDetector,
+    MetastableState,
+    SolverState,
+)
+from app.resilience.metastability_integration import (
+    EnrichedSolverResult,
+    MetastabilitySolutionCallback,
+    MetastabilitySolverWrapper,
+    apply_escape_strategy,
+    check_metastability_during_solve,
+    create_metastability_callback,
 )
 from app.resilience.process_capability import (
     ProcessCapabilityReport,
@@ -196,6 +232,22 @@ from app.resilience.stigmergy import (
 )
 from app.resilience.utilization import UtilizationMonitor, UtilizationThreshold
 
+# Circadian Phase Response Curve
+from app.resilience.circadian_model import (
+    CircadianImpact,
+    CircadianOscillator,
+    CircadianQualityLevel,
+    CircadianScheduleAnalyzer,
+    CircadianShiftType,
+)
+from app.resilience.circadian_integration import (
+    CircadianConstraintResult,
+    CircadianObjective,
+    CircadianScheduleOptimizer,
+    classify_shift_type,
+    compute_schedule_regularity,
+    get_circadian_recommendations,
+)
 __all__ = [
     # Circuit Breaker
     "CircuitBreaker",
@@ -309,6 +361,14 @@ __all__ = [
     "CrossTrainingRecommendation",
     "CrossTrainingPriority",
     "HubDistributionReport",
+    # Tier 3: Keystone Species Analysis
+    "KeystoneAnalyzer",
+    "KeystoneResource",
+    "KeystoneRiskLevel",
+    "CascadeAnalysis",
+    "SuccessionPlan",
+    "SuccessionStatus",
+    "EntityType",
     # Tier 3: SPC Monitoring
     "SPCAlert",
     "WorkloadControlChart",
@@ -325,6 +385,15 @@ __all__ = [
     "BurnoutDangerRating",
     "DangerClass",
     "FireDangerReport",
+    # Catastrophe Theory
+    "CatastropheDetector",
+    "CatastropheAlert",
+    "CatastropheRegion",
+    "CuspAnalysis",
+    "FailurePrediction",
+    "FeasibilitySurface",
+    "ParameterState",
+    "SystemState",
     # Erlang Coverage
     "ErlangCCalculator",
     "ErlangMetrics",
@@ -336,6 +405,30 @@ __all__ = [
     "BurnoutEarlyWarning",
     "PrecursorSignal",
     "SeismicAlert",
+    # Metastability Detection
+    "MetastabilityDetector",
+    "MetastableState",
+    "SolverState",
+    "EscapeStrategy",
+    "MetastabilityAnalysis",
+    "MetastabilitySolverWrapper",
+    "MetastabilitySolutionCallback",
+    "EnrichedSolverResult",
+    "create_metastability_callback",
+    "apply_escape_strategy",
+    "check_metastability_during_solve",
+    # Circadian Phase Response Curve
+    "CircadianOscillator",
+    "CircadianImpact",
+    "CircadianQualityLevel",
+    "CircadianShiftType",
+    "CircadianScheduleAnalyzer",
+    "CircadianObjective",
+    "CircadianConstraintResult",
+    "CircadianScheduleOptimizer",
+    "classify_shift_type",
+    "compute_schedule_regularity",
+    "get_circadian_recommendations",
     # Service
     "ResilienceService",
     "ResilienceConfig",

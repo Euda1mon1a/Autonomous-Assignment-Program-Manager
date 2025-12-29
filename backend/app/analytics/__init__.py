@@ -22,11 +22,23 @@ from app.analytics.metrics import (
     calculate_fairness_index,
     calculate_preference_satisfaction,
 )
+from app.analytics.persistent_homology import (
+    CoverageVoid,
+    CyclicPattern,
+    PersistenceDiagram,
+    PersistentScheduleAnalyzer,
+    TopologicalFeature,
+)
 from app.analytics.reports import ReportGenerator
 from app.analytics.stability_metrics import (
     StabilityMetrics,
     StabilityMetricsComputer,
     compute_stability_metrics,
+)
+from app.analytics.tda_visualization import (
+    BarcodeVisualization,
+    create_tda_summary_report,
+    visualize_point_cloud,
 )
 
 
@@ -62,9 +74,15 @@ __all__ = [
     "APIAnalyticsService",
     "ARIMAConfig",
     "ARIMAForecaster",
+    "BarcodeVisualization",
+    "CoverageVoid",
+    "CyclicPattern",
+    "PersistenceDiagram",
+    "PersistentScheduleAnalyzer",
     "ReportGenerator",
     "StabilityMetrics",
     "StabilityMetricsComputer",
+    "TopologicalFeature",
     "WorkloadSeries",
     # Factory functions
     "get_analytics_engine",
@@ -81,4 +99,7 @@ __all__ = [
     "auto_select_arima_order",
     "check_stationarity",
     "forecast_workload",
+    # TDA functions
+    "create_tda_summary_report",
+    "visualize_point_cloud",
 ]
