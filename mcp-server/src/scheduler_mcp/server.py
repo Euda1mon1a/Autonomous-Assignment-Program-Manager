@@ -3391,6 +3391,255 @@ async def analyze_energy_landscape_tool(
 
 
 
+# =============================================================================
+# Hopfield Network Attractor Tools (Energy Landscape & Schedule Stability)
+# =============================================================================
+
+
+@mcp.tool()
+async def calculate_hopfield_energy_tool(
+    start_date: str | None = None,
+    end_date: str | None = None,
+    schedule_id: str | None = None,
+) -> HopfieldEnergyResponse:
+    """
+    Calculate Hopfield energy of the current schedule state.
+
+    **Hopfield Energy Function:**
+    E = -0.5 * sum_ij(w_ij * s_i * s_j)
+
+    Where:
+    - s_i, s_j are binary state variables (assignment present/absent)
+    - w_ij are learned weights encoding stable scheduling patterns
+    - Lower energy = more stable configuration
+
+    **Energy Interpretation:**
+    - Negative Energy: Schedule matches learned stable patterns
+    - Energy Near Zero: Schedule is in transition between patterns
+    - Positive Energy: Schedule conflicts with learned patterns (unstable)
+
+    **Neuroscience Analogy:**
+    Like how neurons settle into stable firing patterns representing memories,
+    schedules settle into stable assignment patterns that respect constraints
+    and historical preferences.
+
+    **Complementary to Thermodynamics:**
+    While thermodynamic entropy measures disorder, Hopfield energy measures
+    how well the schedule matches learned stable patterns. Use both together:
+    - High entropy + Low energy: Diverse but stable (good)
+    - Low entropy + Low energy: Concentrated but stable (risky)
+    - High entropy + High energy: Chaotic and unstable (bad)
+
+    Args:
+        start_date: Start date for analysis (YYYY-MM-DD), defaults to today
+        end_date: End date for analysis (YYYY-MM-DD), defaults to 30 days
+        schedule_id: Optional specific schedule ID to analyze
+
+    Returns:
+        HopfieldEnergyResponse with energy metrics and stability assessment
+
+    Example:
+        result = await calculate_hopfield_energy_tool(
+            start_date="2025-01-01",
+            end_date="2025-01-31"
+        )
+
+        if result.stability_level == "unstable":
+            print(f"WARNING: Schedule is unstable (energy={result.metrics.total_energy:.2f})")
+            print(f"Distance to stability: {result.metrics.distance_to_minimum} changes")
+    """
+    return await calculate_hopfield_energy(
+        start_date=start_date,
+        end_date=end_date,
+        schedule_id=schedule_id,
+    )
+
+
+@mcp.tool()
+async def find_nearby_attractors_tool(
+    max_distance: int = 10,
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> NearbyAttractorsResponse:
+    """
+    Identify stable attractors near the current schedule state.
+
+    **Attractor Concept:**
+    In Hopfield networks, attractors are stable states (energy minima) that
+    the system naturally evolves toward. Initial states within the "basin of
+    attraction" converge to the same attractor through energy minimization.
+
+    **Schedule Interpretation:**
+    - Each attractor represents a stable scheduling pattern
+    - Current schedule may be near (but not at) an attractor
+    - Multiple attractors = multiple valid scheduling strategies
+    - Finding nearby attractors shows alternative stable configurations
+
+    **Use Cases:**
+    1. Schedule Optimization: Find global minimum for best configuration
+    2. Alternative Schedules: Discover different stable patterns
+    3. Robustness Assessment: Check if current state is in deep basin
+    4. Constraint Debugging: Identify why schedule won't improve
+
+    **Search Strategy:**
+    Uses gradient descent and random perturbations to map the energy landscape
+    within max_distance Hamming distance from current state.
+
+    Args:
+        max_distance: Maximum Hamming distance to search (1-50)
+        start_date: Start date for analysis (YYYY-MM-DD)
+        end_date: End date for analysis (YYYY-MM-DD)
+
+    Returns:
+        NearbyAttractorsResponse with identified attractors and recommendations
+
+    Example:
+        result = await find_nearby_attractors_tool(max_distance=5)
+
+        for attractor in result.attractors:
+            if attractor.attractor_type == "global_minimum":
+                print(f"Global optimum found at distance {attractor.hamming_distance}")
+                print(f"Energy improvement: {result.current_state_energy - attractor.energy_level:.2f}")
+
+        if result.global_minimum_identified:
+            print("Optimization path available to global optimum")
+    """
+    return await find_nearby_attractors(
+        max_distance=max_distance,
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+
+@mcp.tool()
+async def measure_basin_depth_tool(
+    attractor_id: str | None = None,
+    num_perturbations: int = 100,
+) -> BasinDepthResponse:
+    """
+    Measure the depth of the basin of attraction for current or specified attractor.
+
+    **Basin Depth Concept:**
+    Basin depth is the energy barrier that must be overcome to escape the basin.
+    Deeper basins = more stable attractors = more robust schedules.
+
+    **Why Basin Depth Matters for Scheduling:**
+    - Deep Basin: Schedule is robust to random perturbations (swaps, absences)
+    - Shallow Basin: Small changes can push schedule into different attractor
+    - Critical for resilience: N-1/N-2 failures shouldn't escape basin
+
+    **Practical Applications:**
+    1. Swap Approval: Ensure swaps don't push schedule out of basin
+    2. N-1 Testing: Verify schedule remains stable after single faculty removal
+    3. Flexibility Assessment: How many simultaneous changes are safe
+    4. Schedule Comparison: Compare robustness of different schedules
+
+    **Measurement Method:**
+    Applies random perturbations and measures minimum energy barrier to:
+    1. Escape current basin
+    2. Reach a different attractor
+    3. Cross saddle points in the energy landscape
+
+    **Integration with Resilience Framework:**
+    Basin depth complements other resilience metrics:
+    - N-1/N-2 Contingency: Basin should survive N-1 perturbations
+    - Defense in Depth: Basin depth maps to resilience tier
+    - Recovery Distance: Basin escape distance ≈ recovery distance
+
+    Args:
+        attractor_id: Specific attractor to analyze (defaults to nearest)
+        num_perturbations: Number of random perturbations to test (10-1000)
+
+    Returns:
+        BasinDepthResponse with stability metrics and robustness assessment
+
+    Example:
+        result = await measure_basin_depth_tool(num_perturbations=200)
+
+        if result.metrics.basin_stability_index > 0.8:
+            print(f"Schedule is highly stable (index={result.metrics.basin_stability_index:.2f})")
+            print(f"Can tolerate {result.robustness_threshold} simultaneous changes")
+        else:
+            print("WARNING: Schedule is fragile")
+            print(f"Minimum escape barrier: {result.metrics.min_escape_energy:.2f}")
+    """
+    return await measure_basin_depth(
+        attractor_id=attractor_id,
+        num_perturbations=num_perturbations,
+    )
+
+
+@mcp.tool()
+async def detect_spurious_attractors_tool(
+    search_radius: int = 20,
+    min_basin_size: int = 10,
+) -> SpuriousAttractorsResponse:
+    """
+    Detect spurious attractors (unintended stable patterns / scheduling anti-patterns).
+
+    **Spurious Attractor Problem:**
+    Hopfield networks can form "spurious attractors" - stable states that were
+    NOT part of the training patterns. In scheduling context, these are anti-patterns:
+    - Concentrated overload on subset of faculty
+    - Systematic underutilization
+    - Clustering violations (too many similar shifts together)
+    - ACGME compliance boundary cases
+
+    **Why This Matters:**
+    If schedule generation randomly initializes near a spurious attractor, it may
+    converge to an anti-pattern that satisfies hard constraints but violates
+    implicit quality requirements.
+
+    **Common Scheduling Anti-Patterns:**
+    1. **Overload Concentration**: 80% of call shifts on 3 senior faculty
+    2. **Shift Clustering**: Same person assigned consecutive night shifts
+    3. **Underutilization**: Junior faculty assigned minimal rotations
+    4. **Boundary Gaming**: Schedule exactly at ACGME limits (not margin)
+    5. **Rotation Monotony**: Same person always assigned to same rotation type
+
+    **Detection Strategy:**
+    1. Search energy landscape for local minima
+    2. Check if each minimum corresponds to known good pattern
+    3. Classify unknown minima as spurious
+    4. Estimate basin size and capture probability
+
+    **Mitigation Strategies:**
+    - Add soft constraints to penalize anti-patterns
+    - Initialize schedule generation away from spurious basins
+    - Use basin escape techniques to leave spurious attractors
+    - Adjust weight matrix to eliminate spurious attractors
+
+    Args:
+        search_radius: Hamming distance to search for spurious attractors (5-50)
+        min_basin_size: Minimum basin size to report (avoid noise)
+
+    Returns:
+        SpuriousAttractorsResponse with anti-patterns and mitigation strategies
+
+    Example:
+        result = await detect_spurious_attractors_tool(search_radius=25)
+
+        if result.is_current_state_spurious:
+            print("ALERT: Current schedule is in a spurious attractor (anti-pattern)!")
+            highest_risk = result.highest_risk_attractor
+            print(f"Risk attractor: {highest_risk}")
+
+        for spurious in result.spurious_attractors:
+            if spurious.risk_level == "critical":
+                print(f"Critical anti-pattern: {spurious.description}")
+                print(f"Mitigation: {spurious.mitigation_strategy}")
+
+        if result.total_basin_coverage > 0.2:
+            print(f"WARNING: {result.total_basin_coverage:.0%} of state space is spurious!")
+    """
+    return await detect_spurious_attractors(
+        search_radius=search_radius,
+        min_basin_size=min_basin_size,
+    )
+
+
+
+
 
 # =============================================================================
 # Early Warning System Tools (Cross-Disciplinary Burnout Detection)
