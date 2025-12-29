@@ -192,20 +192,35 @@ By looking to fields like **game theory, epidemiology, ecology, and physics**, w
 
 ***REMOVED******REMOVED*** 📊 Implementation Status
 
-| Research Area | Status | Integration Priority | Complexity |
-|---------------|--------|---------------------|------------|
-| **Signal Processing** | ✅ Research Complete | ⭐⭐⭐ HIGH | Medium-High |
-| **Complex Systems** | ✅ Research Complete | ⭐⭐⭐ HIGH | Medium |
-| **Game Theory** | ✅ Research Complete | ⭐⭐⭐ HIGH | Medium-High |
-| **Stigmergy** | ✅ Implemented | - | Deployed |
-| **Control Theory** | ✅ Research Complete | ⭐⭐ MEDIUM | Medium |
-| **Epidemiology** | ✅ Research Complete | ⭐⭐ MEDIUM | Medium |
-| **Materials Science** | ✅ Research Complete | ⭐⭐ MEDIUM | Medium |
-| **Thermodynamics** | ✅ Research Complete | ⭐ LOW | High |
-| **Ecology** | ✅ Research Complete | ⭐ LOW | Medium |
-| **Neural Computation** | ✅ Research Complete | ⭐ LOW | High |
-| **Piezoelectric** | ✅ Research Complete | ⭐ LOW | Low |
-| **Quantum** | ✅ Research Complete | ⭐ LOW | Very High |
+| Research Area | Status | MCP Tool | Complexity |
+|---------------|--------|----------|------------|
+| **Signal Processing** | 🟢 **IMPLEMENTED** | `detect_schedule_changepoints_tool` | Medium-High |
+| **Complex Systems** | 🟢 **IMPLEMENTED** | `detect_critical_slowing_down_tool` | Medium |
+| **Game Theory** | 🟡 **PARTIAL** | `calculate_shapley_workload_tool` | Medium-High |
+| **Stigmergy** | ✅ Deployed | `analyze_stigmergy_tool` | - |
+| **Control Theory** | ✅ Research Complete | - | Medium |
+| **Epidemiology** | 🟡 **PARTIAL** | (burnout SIR model exists) | Medium |
+| **Materials Science** | 🟡 **PARTIAL** | (creep-fatigue exists) | Medium |
+| **Thermodynamics** | ✅ Research Complete | - | High |
+| **Ecology** | ✅ Research Complete | - | Medium |
+| **Neural Computation** | ✅ Research Complete | - | High |
+| **Piezoelectric** | ✅ Research Complete | - | Low |
+| **Quantum** | ✅ Research Complete | - | Very High |
+
+***REMOVED******REMOVED******REMOVED*** Recently Implemented (2025-12-29)
+
+Three research areas were converted to working MCP tools:
+
+| Tool | Research Source | What It Does |
+|------|----------------|--------------|
+| `calculate_shapley_workload_tool` | Game Theory → Shapley Values | Fair workload distribution based on marginal contribution |
+| `detect_critical_slowing_down_tool` | Complex Systems → SOC | 2-4 week early warning of cascade failures |
+| `detect_schedule_changepoints_tool` | Signal Processing → CUSUM/PELT | Detect regime shifts and policy changes |
+
+**Documentation:**
+- [Shapley Value Usage Guide](../examples/shapley_value_usage.md)
+- [SOC Predictor Implementation](../implementation/SOC_PREDICTOR_IMPLEMENTATION.md)
+- [Change Point Detection Guide](../examples/changepoint_detection_usage.md)
 
 ---
 
