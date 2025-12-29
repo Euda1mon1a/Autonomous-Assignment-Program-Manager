@@ -262,6 +262,126 @@ from .time_crystal_tools import (
     get_time_crystal_health,
 )
 
+# Import Hopfield network attractor tools (energy landscape & schedule stability)
+from .hopfield_attractor_tools import (
+    # Enums
+    AttractorTypeEnum,
+    StabilityLevelEnum,
+    # Response Models
+    AttractorInfo,
+    BasinDepthMetrics,
+    BasinDepthResponse,
+    NearbyAttractorsResponse,
+    ScheduleEnergyMetrics,
+    ScheduleEnergyResponse as HopfieldEnergyResponse,
+    SpuriousAttractorInfo,
+    SpuriousAttractorsResponse,
+    # Tool Functions
+    calculate_schedule_energy as calculate_hopfield_energy,
+    detect_spurious_attractors,
+    find_nearby_attractors,
+    measure_basin_depth,
+)
+
+# Import VaR (Value-at-Risk) tools for schedule vulnerability analysis
+from .var_risk_tools import (
+    # Enums
+    ConfidenceLevel,
+    DisruptionType,
+    RiskSeverity,
+    # Request Models
+    ConditionalVaRRequest,
+    CoverageVaRRequest,
+    DisruptionSimulationRequest,
+    WorkloadVaRRequest,
+    # Response Models
+    ConditionalVaRResponse,
+    CoverageVaRResponse,
+    DisruptionScenario,
+    DisruptionSimulationResponse,
+    VaRMetric,
+    WorkloadVaRResponse,
+    # Tool Functions
+    calculate_conditional_var,
+    calculate_coverage_var,
+    calculate_workload_var,
+    simulate_disruption_scenarios,
+)
+
+# Import Game Theory tools for Nash equilibrium analysis
+from .tools.game_theory_tools import (
+    # Enums
+    CoordinationFailureType,
+    DeviationType,
+    StabilityStatus,
+    # Request Models
+    DeviationIncentivesRequest,
+    NashStabilityRequest,
+    # Response Models
+    CoordinationFailure,
+    CoordinationFailuresResponse,
+    DeviationIncentive,
+    NashStabilityResponse,
+    PersonDeviationAnalysis,
+    UtilityComponents,
+    # Tool Functions
+    analyze_nash_stability,
+    calculate_person_utility,
+    detect_coordination_failures,
+    find_deviation_incentives,
+)
+
+# Import Ecological dynamics tools (Lotka-Volterra supply/demand modeling)
+from .tools.ecological_dynamics_tools import (
+    # Enums
+    InterventionTypeEnum,
+    RiskLevelEnum,
+    SystemStabilityEnum,
+    # Request Models
+    CapacityCrunchRequest,
+    EquilibriumRequest,
+    InterventionRequest,
+    SupplyDemandCyclesRequest,
+    # Response Models
+    CapacityCrunchResponse,
+    EquilibriumResponse,
+    HistoricalDataPoint,
+    InterventionResponse,
+    SupplyDemandCyclesResponse,
+    # Tool Functions
+    analyze_supply_demand_cycles,
+    find_equilibrium_point,
+    predict_capacity_crunch,
+    simulate_intervention,
+)
+
+# Import Kalman filter tools for workload trend analysis
+from .tools.kalman_filter_tools import (
+    # Request Models
+    WorkloadAnomalyRequest,
+    WorkloadTrendRequest,
+    # Response Models
+    AnomalyPoint,
+    WorkloadAnomalyResponse,
+    WorkloadTrendResponse,
+    # Tool Functions
+    analyze_workload_trend,
+    detect_workload_anomalies,
+)
+
+# Import Fourier/FFT analysis tools for periodicity detection
+from .tools.fourier_analysis_tools import (
+    # Response Models
+    DominantPeriod,
+    HarmonicResonanceResponse,
+    ScheduleCyclesResponse,
+    SpectralEntropyResponse,
+    # Tool Functions
+    analyze_harmonic_resonance,
+    calculate_spectral_entropy,
+    detect_schedule_cycles,
+)
+
 # Import validate_schedule tool with ConstraintService integration
 from .tools.validate_schedule import (
     ConstraintConfig,

@@ -39,6 +39,9 @@ dependencies = [
     "httpx>=0.25.0",
     "celery>=5.3.0",
     "redis>=5.0.0",
+    # Scientific computing for exotic research tools
+    "numpy>=1.21.0",
+    "scipy>=1.7.0",
 ]
 
 [project.optional-dependencies]
