@@ -107,7 +107,7 @@ class CachedHeatmapService:
             person_ids: Optional filter by person IDs
             rotation_ids: Optional filter by rotation template IDs
             include_fmit: Whether to include FMIT swap data
-            group_by: Group by 'person' or 'rotation'
+            group_by: Group by 'person', 'rotation', 'daily', or 'weekly'
 
         Returns:
             HeatmapResponse with visualization data
@@ -159,7 +159,7 @@ class CachedHeatmapService:
             person_ids: Optional filter by person IDs
             rotation_ids: Optional filter by rotation template IDs
             include_fmit: Whether to include FMIT swap data
-            group_by: Group by 'person' or 'rotation'
+            group_by: Group by 'person', 'rotation', 'daily', or 'weekly'
 
         Returns:
             HeatmapResponse with visualization data

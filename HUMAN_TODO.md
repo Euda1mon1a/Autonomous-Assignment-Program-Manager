@@ -90,11 +90,11 @@ Two new resident call types need to be captured in the scheduling system:
 ### 1. Schedule Grid - Frozen Headers/Columns
 **Priority:** High
 **Page:** `/schedule` (Block View)
-**Status:** To implement
+**Status:** ✅ COMPLETE (Session 012, 2025-12-28)
 
 **Issues:**
-- [ ] Top header row (dates) disappears when scrolling vertically through residents
-- [ ] First column (resident name/PGY) disappears when scrolling horizontally
+- [x] Top header row (dates) disappears when scrolling vertically through residents
+- [x] First column (resident name/PGY) disappears when scrolling horizontally
 
 **Implementation:**
 ```css
@@ -105,6 +105,11 @@ th { position: sticky; top: 0; background-color: ...; z-index: 1; }
 td:first-child, th:first-child { position: sticky; left: 0; z-index: 2; }
 ```
 
+**Files Modified:**
+- `frontend/src/components/schedule/ScheduleHeader.tsx` - Added sticky positioning
+- `frontend/src/components/schedule/ScheduleGrid.tsx` - Applied z-index hierarchy
+- `frontend/src/app/globals.css` - Enhanced scroll container styling
+
 **Additional UX suggestions:**
 - Add subtle row/column hover highlight for scanning dense schedules
 - Ensure scroll container is on grid (not whole page)
@@ -114,7 +119,7 @@ td:first-child, th:first-child { position: sticky; left: 0; z-index: 2; }
 ### 2. Heatmap Page - Add Block Navigation
 **Priority:** High
 **Page:** `/heatmap`
-**Status:** To implement
+**Status:** ✅ COMPLETE (Session 012, 2025-12-28)
 
 **Current state:** Only manual date pickers (From/To)
 
@@ -123,18 +128,19 @@ td:first-child, th:first-child { position: sticky; left: 0; z-index: 2; }
 [◀ Previous Block] [Next Block ▶] [Today] [This Block] Block: [Mar 12 - Apr 8, 2026]
 ```
 
-**Proposed layout:**
+**Implemented layout:**
 ```
-Current:  From: [date] To: [date] Group by: [dropdown] ☑ Include FMIT [Filters]
-
-Proposed: [◀ Prev] [Next ▶] [Today] [This Block] Block: [Date Range]
-          From: [date] To: [date] Group by: [dropdown] ☑ Include FMIT [Filters]
+[◀ Prev] [Next ▶] [Today] [This Block] Block: [Date Range]
+From: [date] To: [date] Group by: [dropdown] ☑ Include FMIT [Filters]
 ```
 
 **Benefits:**
 - Consistency with Schedule page UX
 - One-click block selection vs manual date entry
 - Quick navigation through 730 blocks
+
+**File Modified:**
+- `frontend/src/components/heatmap/HeatmapControls.tsx` - Added Previous/Next/Today/This Block buttons
 
 ---
 
@@ -336,4 +342,5 @@ The following links in `README.md` point to non-existent files:
 
 ---
 
+*Last updated: 2025-12-28 (Session 012 completions added)*
 *Last updated: 2025-12-28*
