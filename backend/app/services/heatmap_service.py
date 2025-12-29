@@ -153,7 +153,12 @@ class HeatmapService:
         )
 
     def _generate_daily_heatmap(
-        self, assignments: list[Assignment], start_date: date, end_date: date
+        self,
+        db: Session,
+        assignments: list[Assignment],
+        start_date: date,
+        end_date: date,
+        include_fmit: bool = True,
     ) -> HeatmapResponse:
         """Generate heatmap grouped by day (showing assignment counts per day)."""
         dates = self._get_date_range(start_date, end_date)
@@ -178,11 +183,15 @@ class HeatmapService:
             annotations=None,
         )
 
-        metadata = {
+        metadata: dict[str, Any] = {
             "total_assignments": len(assignments),
             "date_range_days": len(dates),
             "grouping_type": "daily",
         }
+
+        if include_fmit:
+            swaps = self._get_swap_records_in_range(db, start_date, end_date)
+            metadata["fmit_swaps_count"] = len(swaps)
 
         return HeatmapResponse(
             data=heatmap_data,
@@ -191,7 +200,12 @@ class HeatmapService:
         )
 
     def _generate_weekly_heatmap(
-        self, assignments: list[Assignment], start_date: date, end_date: date
+        self,
+        db: Session,
+        assignments: list[Assignment],
+        start_date: date,
+        end_date: date,
+        include_fmit: bool = True,
     ) -> HeatmapResponse:
         """Generate heatmap grouped by week (showing assignment counts per week)."""
         # Generate week starts
@@ -224,11 +238,15 @@ class HeatmapService:
             annotations=None,
         )
 
-        metadata = {
+        metadata: dict[str, Any] = {
             "total_assignments": len(assignments),
             "weeks_count": len(weeks),
             "grouping_type": "weekly",
         }
+
+        if include_fmit:
+            swaps = self._get_swap_records_in_range(db, start_date, end_date)
+            metadata["fmit_swaps_count"] = len(swaps)
 
         return HeatmapResponse(
             data=heatmap_data,
@@ -268,9 +286,13 @@ class HeatmapService:
 
         # Handle daily and weekly grouping (group by date instead of entity)
         if group_by == "daily":
-            return self._generate_daily_heatmap(assignments, start_date, end_date)
+            return self._generate_daily_heatmap(
+                db, assignments, start_date, end_date, include_fmit
+            )
         elif group_by == "weekly":
-            return self._generate_weekly_heatmap(assignments, start_date, end_date)
+            return self._generate_weekly_heatmap(
+                db, assignments, start_date, end_date, include_fmit
+            )
 
         # Original person/rotation grouping logic
         dates = self._get_date_range(start_date, end_date)

@@ -15,6 +15,9 @@ class TestHeatmapServiceGroupBy:
         """Test daily heatmap generation."""
         service = HeatmapService()
 
+        # Create mock database
+        db = MagicMock()
+
         # Create mock assignments
         assignments = []
         for i in range(3):
@@ -29,8 +32,15 @@ class TestHeatmapServiceGroupBy:
         assignment.block.date = date(2025, 1, 1)
         assignments.append(assignment)
 
+        # Mock swap records query
+        service._get_swap_records_in_range = MagicMock(return_value=[])
+
         result = service._generate_daily_heatmap(
-            assignments, start_date=date(2025, 1, 1), end_date=date(2025, 1, 3)
+            db,
+            assignments,
+            start_date=date(2025, 1, 1),
+            end_date=date(2025, 1, 3),
+            include_fmit=False,
         )
 
         assert result.title == "Daily Assignment Heatmap"
@@ -42,9 +52,41 @@ class TestHeatmapServiceGroupBy:
         assert result.metadata["date_range_days"] == 3
         assert result.metadata["total_assignments"] == 4
 
+    def test_generate_daily_heatmap_with_fmit(self):
+        """Test daily heatmap generation includes FMIT data when requested."""
+        service = HeatmapService()
+
+        # Create mock database
+        db = MagicMock()
+
+        # Create mock assignments
+        assignments = []
+        assignment = MagicMock()
+        assignment.block = MagicMock()
+        assignment.block.date = date(2025, 1, 1)
+        assignments.append(assignment)
+
+        # Mock swap records query to return 2 swaps
+        mock_swaps = [MagicMock(), MagicMock()]
+        service._get_swap_records_in_range = MagicMock(return_value=mock_swaps)
+
+        result = service._generate_daily_heatmap(
+            db,
+            assignments,
+            start_date=date(2025, 1, 1),
+            end_date=date(2025, 1, 1),
+            include_fmit=True,
+        )
+
+        assert result.metadata["fmit_swaps_count"] == 2
+        service._get_swap_records_in_range.assert_called_once()
+
     def test_generate_weekly_heatmap(self):
         """Test weekly heatmap generation."""
         service = HeatmapService()
+
+        # Create mock database
+        db = MagicMock()
 
         # Create mock assignments
         # Week starting 2024-12-30 (Monday)
@@ -62,8 +104,15 @@ class TestHeatmapServiceGroupBy:
             assignment.block.date = date(2025, 1, 6 + i)
             assignments.append(assignment)
 
+        # Mock swap records query
+        service._get_swap_records_in_range = MagicMock(return_value=[])
+
         result = service._generate_weekly_heatmap(
-            assignments, start_date=date(2024, 12, 30), end_date=date(2025, 1, 10)
+            db,
+            assignments,
+            start_date=date(2024, 12, 30),
+            end_date=date(2025, 1, 10),
+            include_fmit=False,
         )
 
         assert result.title == "Weekly Assignment Heatmap"
@@ -71,6 +120,35 @@ class TestHeatmapServiceGroupBy:
         assert len(result.data.x_labels) >= 2
         assert result.metadata["grouping_type"] == "weekly"
         assert result.metadata["total_assignments"] == 5
+
+    def test_generate_weekly_heatmap_with_fmit(self):
+        """Test weekly heatmap generation includes FMIT data when requested."""
+        service = HeatmapService()
+
+        # Create mock database
+        db = MagicMock()
+
+        # Create mock assignments
+        assignments = []
+        assignment = MagicMock()
+        assignment.block = MagicMock()
+        assignment.block.date = date(2025, 1, 6)
+        assignments.append(assignment)
+
+        # Mock swap records query to return 3 swaps
+        mock_swaps = [MagicMock(), MagicMock(), MagicMock()]
+        service._get_swap_records_in_range = MagicMock(return_value=mock_swaps)
+
+        result = service._generate_weekly_heatmap(
+            db,
+            assignments,
+            start_date=date(2025, 1, 6),
+            end_date=date(2025, 1, 12),
+            include_fmit=True,
+        )
+
+        assert result.metadata["fmit_swaps_count"] == 3
+        service._get_swap_records_in_range.assert_called_once()
 
     def test_generate_heatmap_with_daily_group_by(self):
         """Test unified heatmap with daily grouping."""
