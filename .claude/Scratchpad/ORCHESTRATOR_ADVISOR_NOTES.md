@@ -1044,6 +1044,35 @@ Action: No fix needed - database and code are healthy
 - Block completeness tests and startup health checks not immediately needed
 - Database is healthy; can add guardrails in future session if desired
 
+**COORD_INTEL Postmortem (Late Session 018):**
+User questioned whether protected branch `docs/session-014-historian` was investigated.
+
+Key finding: **The Session 014 bug WAS real.** Evidence:
+- SQL query on Dec 28 returned only odd blocks (1,3,5,7,9,11,13)
+- No explicit fix commit exists in git history
+- Even blocks likely restored by implicit DB re-initialization during Dec 29 migration work
+- Session 018's "cannot reproduce" was accurate but incomplete - didn't explain HOW it got fixed
+
+**Block Clarifications:**
+- Block 0 = fudge factor (Jul 1-2, before first Thursday) - intentional
+- Blocks 10-13 having assignments = forward planning (currently in Block 7, planning rest of AY)
+- Blocks 0-9 empty = not yet scheduled, not an anomaly
+
+**COORD_INTEL Created:**
+New forensics coordinator with full-stack investigation team:
+```
+COORD_INTEL (Intelligence & Forensics)
+├── INTEL_FRONTEND (Layer 1: UI forensics)
+├── INTEL_BACKEND (Layer 2: API forensics)
+├── INTEL_DBA (Layer 3: Database forensics)
+├── INTEL_INFRA (Layer 4: Container forensics)
+├── INTEL_QA (Layer 5: Bug reproduction)
+├── INTEL_DATA_VALIDATOR (Layer 6: Cross-layer verification)
+├── G6_EVIDENCE_COLLECTOR (artifact collection)
+└── HISTORIAN (narrative documentation)
+```
+Purpose: Prevent evidence loss in future severe bugs. Parallel spawn all layers.
+
 ---
 
 ## Active G-Staff Roster
