@@ -9,6 +9,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### ML Research Roadmap & Agent Skill Matcher (December 2025)
+
+**ML Research Document (`docs/planning/ML_RESEARCH_PAI_ADVANCEMENT.md`):**
+- Comprehensive 100-task ML roadmap across 10 research areas:
+  1. Agent Meta-Learning (task-agent matching, model tier optimization)
+  2. Burnout Prediction (LSTM forecasting, GNN contagion models)
+  3. Solver Intelligence (algorithm selection, neural warm starts)
+  4. Preference Learning (temporal patterns, collaborative filtering)
+  5. ACGME Compliance (violation prediction, proactive alerts)
+  6. Swap Matching (learning-to-rank, acceptance prediction)
+  7. Resilience & Networks (GNN vulnerability, cascade prediction)
+  8. Performance/Fatigue (error rate prediction, critical periods)
+  9. Knowledge Intelligence (schedule similarity, agent skill matching)
+  10. Agent Evolution (rule violation detection, gap identification)
+- Implementation roadmap with priorities (P1-P4) and effort estimates
+- Success metrics and technical architecture recommendations
+- Risk considerations (privacy, governance, failure modes, ethics)
+
+**Agent Skill Matcher Service (`backend/app/services/agent_matcher.py`):**
+- ML-powered agent selection using sentence-transformers embeddings (384-dim)
+- Semantic matching of task descriptions to agent capabilities via cosine similarity
+- Automatic model tier recommendations (haiku/sonnet/opus) based on archetype
+- Configurable similarity threshold for match quality control
+- LRU-cached embeddings for performance
+- Comprehensive test suite in `backend/tests/services/test_agent_matcher.py`
+
+**Usage:**
+```python
+from app.services.agent_matcher import match_task_to_agent
+agent, model = match_task_to_agent("Validate ACGME compliance")
+# Returns: ("ACGME_VALIDATOR", "haiku")
+```
+
+**PAI Advancement:**
+- Enables intelligent agent routing based on semantic understanding
+- Integrates with existing TaskHistory and AgentEmbedding infrastructure
+- Foundation for Task 1.1 (Task-Agent Similarity) meta-learning
 #### Session 015 - Solver Verification & Documentation (2025-12-29)
 
 **All 4 Solvers Verified Operational:**
