@@ -92,8 +92,17 @@ from app.models.resilience import (  # Tier 2 models; Tier 3 models; Tier 1 mode
     ZoneIncidentRecord,
     ZoneStatus,
 )
+from app.models.rotation_enums import (
+    ActivityType,
+    PreferenceWeight,
+    RotationPatternType,
+    RotationSettingType,
+    TimeOfDay,
+)
 from app.models.rotation_halfday_requirement import RotationHalfDayRequirement
+from app.models.rotation_preference import PREFERENCE_DEFAULTS, RotationPreference
 from app.models.rotation_template import RotationTemplate
+from app.models.weekly_pattern import WeeklyPattern
 from app.models.schedule_run import ScheduleRun
 from app.models.scheduled_job import JobExecution, ScheduledJob
 from app.models.schema_version import (
@@ -126,6 +135,15 @@ __all__ = [
     "Block",
     "RotationTemplate",
     "RotationHalfDayRequirement",
+    "WeeklyPattern",
+    "RotationPreference",
+    "PREFERENCE_DEFAULTS",
+    # Rotation enums
+    "RotationPatternType",
+    "RotationSettingType",
+    "PreferenceWeight",
+    "ActivityType",
+    "TimeOfDay",
     "Assignment",
     "Absence",
     "CallAssignment",
