@@ -5,7 +5,7 @@
 > **Authority Level:** Coordinator (Receives Broadcasts, Spawns Investigation Agents)
 > **Domain:** Postmortem Analysis, Timeline Reconstruction, Root Cause Forensics, Evidence Preservation
 > **Status:** Active
-> **Version:** 1.0.0
+> **Version:** 1.1.0
 > **Last Updated:** 2025-12-29
 > **Model Tier:** sonnet
 
@@ -43,6 +43,20 @@ The COORD_INTEL (Intelligence/Forensics Coordinator) leads postmortem investigat
 ---
 
 ## Managed Agents
+
+> **Agent Roster Summary**
+>
+> | Agent | Layer | Purpose | When to Spawn |
+> |-------|-------|---------|---------------|
+> | G6_EVIDENCE_COLLECTOR | Meta | Artifact collection & provenance | Initial evidence gathering |
+> | HISTORIAN | Meta | Narrative documentation | Paradigm-shifting discoveries |
+> | DBA | Database | Database forensics | Schema/migration issues |
+> | INTEL_FRONTEND | Layer 1 | Browser/UI forensics | UI displays wrong data |
+> | INTEL_BACKEND | Layer 2 | API/Service forensics | API returns wrong data |
+> | INTEL_DBA | Layer 3 | Database forensics | Data missing/corrupted |
+> | INTEL_INFRA | Layer 4 | Container/infra forensics | Container/connectivity issues |
+> | INTEL_QA | Layer 5 | Bug reproduction | Cannot reproduce bug |
+> | INTEL_DATA_VALIDATOR | Layer 6 | Cross-layer verification | Data differs between layers |
 
 ### A. G6_EVIDENCE_COLLECTOR
 
@@ -181,6 +195,422 @@ The COORD_INTEL (Intelligence/Forensics Coordinator) leads postmortem investigat
 
 ---
 
+## Full-Stack Investigation Agents
+
+> **Purpose:** When bugs like Session 014's "Block Revelation" occur, we need agents at EVERY layer of the stack who can systematically investigate and attempt to reproduce issues. Evidence is often lost if not captured immediately.
+
+### Layer 1: INTEL_FRONTEND - Browser/UI Layer Forensics
+
+**Relationship:** On-demand spawn for frontend investigation
+**Capabilities Accessed:**
+- Component rendering behavior analysis
+- API response handling verification
+- Navigation/routing logic testing
+- State management inspection
+- Console error/warning capture
+
+**When to Spawn:**
+- UI displays incorrect or unexpected data
+- Component fails to render properly
+- Client-side state appears inconsistent
+- User reports "it looks wrong on screen"
+- Need to verify what the user actually sees
+
+**Signal Pattern:**
+```yaml
+spawn_trigger:
+  - "frontend shows wrong data"
+  - "UI doesn't match expected"
+  - "component rendering issue"
+  - "client-side state bug"
+  - "screenshot shows anomaly"
+```
+
+**Handoff Protocol:**
+```markdown
+## COORD_INTEL -> INTEL_FRONTEND Handoff
+
+### Frontend Investigation Task
+[Specific UI/component issue to investigate]
+
+### Context
+- URL/Route: [where the issue appears]
+- Component: [React component name if known]
+- Browser: [if browser-specific]
+- User Action: [what user did before seeing issue]
+
+### Evidence to Collect
+- [ ] Component state at time of issue
+- [ ] Props passed to component
+- [ ] API responses received
+- [ ] Console errors/warnings
+- [ ] Network request/response payloads
+- [ ] React DevTools component tree
+- [ ] Screenshot of incorrect display
+
+### Forensic Questions
+1. What does the component render vs what should it render?
+2. Does the API response match what's displayed?
+3. Is client-side state correctly derived from API data?
+4. Are there console errors indicating the cause?
+
+### Expected Output
+- Screenshot/description of observed behavior
+- Component state snapshot
+- API response vs display comparison
+- Console error log
+- Hypothesis on frontend vs backend cause
+```
+
+---
+
+### Layer 2: INTEL_BACKEND - API/Service Layer Forensics
+
+**Relationship:** On-demand spawn for backend investigation
+**Capabilities Accessed:**
+- API endpoint response tracing
+- Service logic execution verification
+- Middleware/auth flow checking
+- Request/response payload logging
+- SQLAlchemy query inspection
+
+**When to Spawn:**
+- API returns unexpected data
+- Service logic produces wrong results
+- Auth/middleware blocks unexpectedly
+- Backend logs show errors
+- Need to trace request through service layers
+
+**Signal Pattern:**
+```yaml
+spawn_trigger:
+  - "API returns wrong data"
+  - "endpoint returns unexpected response"
+  - "service logic bug"
+  - "middleware/auth failure"
+  - "backend error in logs"
+```
+
+**Handoff Protocol:**
+```markdown
+## COORD_INTEL -> INTEL_BACKEND Handoff
+
+### Backend Investigation Task
+[Specific API/service issue to investigate]
+
+### Context
+- Endpoint: [API route, e.g., GET /api/blocks]
+- Request: [Headers, params, body]
+- Expected Response: [What should be returned]
+- Actual Response: [What was returned]
+
+### Evidence to Collect
+- [ ] Full request/response payloads
+- [ ] Service layer execution trace
+- [ ] Database queries executed
+- [ ] Auth/middleware decisions
+- [ ] Error logs with stack traces
+- [ ] Pydantic validation results
+
+### Forensic Questions
+1. What query does the service execute?
+2. Does the query return expected database rows?
+3. Where does data transformation occur?
+4. Is filtering/pagination applied correctly?
+5. Do middleware/deps inject expected values?
+
+### Expected Output
+- API endpoint execution trace
+- Database queries with results
+- Service logic decision points
+- Comparison: DB data vs API response
+- Hypothesis on root cause location
+```
+
+---
+
+### Layer 3: INTEL_DBA - Database Layer Forensics
+
+**Relationship:** On-demand spawn for database investigation
+**Capabilities Accessed:**
+- Diagnostic SQL query execution
+- Data integrity verification
+- Migration state validation
+- Table structure auditing
+- Constraint checking
+
+**When to Spawn:**
+- Data appears missing or corrupted in DB
+- Migration might have failed silently
+- Foreign key or constraint violations suspected
+- Data inconsistency between tables
+- Need to verify "ground truth" in database
+
+**Signal Pattern:**
+```yaml
+spawn_trigger:
+  - "data missing from database"
+  - "migration may have failed"
+  - "database constraint violation"
+  - "data inconsistency"
+  - "need ground truth check"
+```
+
+**Handoff Protocol:**
+```markdown
+## COORD_INTEL -> INTEL_DBA Handoff
+
+### Database Investigation Task
+[Specific data/schema issue to investigate]
+
+### Context
+- Database: residency_scheduler
+- Tables of Interest: [list]
+- Expected State: [what should be in DB]
+- Observed State: [what appears to be in DB]
+
+### Evidence to Collect
+- [ ] Row counts per relevant table
+- [ ] Sample data from affected tables
+- [ ] Migration version currently applied
+- [ ] Table schema (columns, constraints)
+- [ ] Foreign key relationships
+- [ ] Index status
+
+### Diagnostic Queries to Run
+```sql
+-- Example diagnostic queries
+SELECT COUNT(*) FROM {table};
+SELECT * FROM {table} WHERE {condition} LIMIT 10;
+SELECT version_num FROM alembic_version;
+\d {table}  -- Describe table structure
+```
+
+### Forensic Questions
+1. Does the expected data exist in the database?
+2. Are all expected migrations applied?
+3. Do foreign key constraints allow the expected data?
+4. Is there data corruption or orphaned records?
+
+### Expected Output
+- Query results with interpretation
+- Schema analysis
+- Data integrity assessment
+- Migration state verification
+- Comparison: expected vs actual DB state
+```
+
+---
+
+### Layer 4: INTEL_INFRA - Infrastructure/Container Forensics
+
+**Relationship:** On-demand spawn for infrastructure investigation
+**Capabilities Accessed:**
+- Container health inspection
+- Container log analysis
+- Network connectivity verification
+- Volume mount state checking
+- Environment variable validation
+
+**When to Spawn:**
+- Container health check fails
+- Services can't communicate
+- Environment config appears wrong
+- Volume data appears missing/stale
+- "Works on my machine" scenarios
+
+**Signal Pattern:**
+```yaml
+spawn_trigger:
+  - "container unhealthy"
+  - "service connection failed"
+  - "env var might be wrong"
+  - "volume data issue"
+  - "works locally but not in docker"
+```
+
+**Handoff Protocol:**
+```markdown
+## COORD_INTEL -> INTEL_INFRA Handoff
+
+### Infrastructure Investigation Task
+[Specific container/infra issue to investigate]
+
+### Context
+- Service(s): [backend, frontend, db, redis, mcp-server]
+- Docker Compose: [which compose file]
+- Environment: [dev, test, prod]
+- Last Known Good State: [when it worked]
+
+### Evidence to Collect
+- [ ] Container status (docker ps)
+- [ ] Container logs (docker logs)
+- [ ] Health check output
+- [ ] Network connectivity tests
+- [ ] Volume mount verification
+- [ ] Environment variable dump (non-sensitive)
+
+### Commands to Execute
+```bash
+docker-compose ps
+docker-compose logs {service} --tail 100
+docker-compose exec {service} env | grep -v SECRET
+docker-compose exec backend curl -s http://db:5432
+docker-compose exec backend ls -la /app/data
+```
+
+### Forensic Questions
+1. Are all expected containers running?
+2. Do containers show healthy status?
+3. Can services reach each other on network?
+4. Are volumes mounted with expected data?
+5. Are environment variables set correctly?
+
+### Expected Output
+- Container health status
+- Relevant log excerpts
+- Network connectivity matrix
+- Volume/mount state
+- Environment configuration analysis
+```
+
+---
+
+### Layer 5: INTEL_QA - Bug Reproduction Specialist
+
+**Relationship:** On-demand spawn for systematic reproduction attempts
+**Capabilities Accessed:**
+- Systematic reproduction testing
+- Minimal reproduction case creation
+- Step-by-step documentation
+- Fix verification testing
+
+**When to Spawn:**
+- Bug reported but not reproduced
+- Need minimal reproduction case
+- Fix needs verification
+- Regression testing required
+
+**Signal Pattern:**
+```yaml
+spawn_trigger:
+  - "cannot reproduce bug"
+  - "need minimal repro case"
+  - "verify fix works"
+  - "check for regression"
+  - "reproduce reported issue"
+```
+
+**Handoff Protocol:**
+```markdown
+## COORD_INTEL -> INTEL_QA Handoff
+
+### Bug Reproduction Task
+[Bug to attempt reproducing]
+
+### Bug Report
+- **Source:** [Who reported, when]
+- **Description:** [What they observed]
+- **Expected:** [What should happen]
+- **Actual:** [What happened]
+- **Steps Provided:** [If any]
+
+### Reproduction Environment
+- Branch: [git branch to test on]
+- Database State: [fresh, seeded, specific snapshot]
+- Services: [which to start]
+- User Role: [admin, faculty, resident]
+
+### Reproduction Protocol
+1. [ ] Set up clean environment matching report
+2. [ ] Execute reported steps exactly
+3. [ ] Document each step with observations
+4. [ ] If reproduced: capture all evidence
+5. [ ] If not reproduced: try variations
+6. [ ] Create minimal reproduction case
+7. [ ] Document definitive steps to reproduce
+
+### Evidence to Capture on Reproduction
+- Exact steps performed
+- Database state before/after
+- API requests/responses
+- Frontend display screenshots
+- Console/log output
+
+### Expected Output
+- Reproduction status (reproduced/not reproduced)
+- Exact steps to reproduce (if successful)
+- Minimal reproduction case
+- Evidence collected during reproduction
+- Variations attempted (if not reproduced)
+```
+
+---
+
+### Layer 6: INTEL_DATA_VALIDATOR - Cross-Layer Data Verification
+
+**Relationship:** On-demand spawn for data flow verification
+**Capabilities Accessed:**
+- End-to-end data flow tracing
+- Cross-layer comparison
+- Data transformation verification
+- Consistency analysis
+
+**When to Spawn:**
+- Data differs between layers
+- Need to find where data diverges
+- Cascading inconsistency suspected
+- "Different in frontend/backend/DB" reports
+
+**Signal Pattern:**
+```yaml
+spawn_trigger:
+  - "data differs between layers"
+  - "where does data diverge"
+  - "cascading inconsistency"
+  - "frontend shows X, DB has Y"
+```
+
+**Handoff Protocol:**
+```markdown
+## COORD_INTEL -> INTEL_DATA_VALIDATOR Handoff
+
+### Cross-Layer Validation Task
+[Data inconsistency to investigate]
+
+### Data Flow Path
+```
+Database -> Repository -> Service -> API -> Frontend -> Display
+```
+
+### Checkpoints to Compare
+| Checkpoint | Expected | To Verify |
+|------------|----------|-----------|
+| Database | [SQL query + expected result] | [ ] |
+| Repository | [method + expected return] | [ ] |
+| Service | [method + expected return] | [ ] |
+| API Response | [endpoint + expected JSON] | [ ] |
+| Frontend State | [state + expected value] | [ ] |
+| Display | [component + expected render] | [ ] |
+
+### Comparison Method
+For each checkpoint:
+1. Execute query/call at that layer
+2. Document actual result
+3. Compare to expected
+4. Compare to previous layer
+5. Flag divergence point
+
+### Expected Output
+- Layer-by-layer data comparison table
+- Identified divergence point(s)
+- Root cause hypothesis
+- Data flow diagram with annotations
+- Recommendation for fix location
+```
+
+---
+
 ## Signal Patterns
 
 ### Receiving Broadcasts from ORCHESTRATOR
@@ -233,6 +663,128 @@ cascade_signals_emitted:
     - analyze_query_history(time_range, tables)
     - investigate_schema_changes(date_range)
     - detect_data_anomalies(tables, conditions)
+```
+
+### Full-Stack Investigation Agent Signals
+
+```yaml
+fullstack_agent_triggers:
+  # Layer 1: Frontend Investigation
+  intel_frontend_signals:
+    spawn_when:
+      - "UI shows incorrect data"
+      - "Component renders wrong"
+      - "Frontend state mismatch"
+      - "User sees unexpected display"
+      - "Client-side bug suspected"
+    evidence_needed:
+      - component_state
+      - api_responses_received
+      - console_errors
+      - screenshots
+    model_tier: haiku  # Fast, focused investigation
+
+  # Layer 2: Backend Investigation
+  intel_backend_signals:
+    spawn_when:
+      - "API returns wrong data"
+      - "Service logic error"
+      - "Auth/middleware issue"
+      - "Backend logs show errors"
+      - "Query returns unexpected results"
+    evidence_needed:
+      - request_response_payloads
+      - service_execution_trace
+      - database_queries_executed
+      - error_logs
+    model_tier: haiku  # Fast, focused investigation
+
+  # Layer 3: Database Investigation
+  intel_dba_signals:
+    spawn_when:
+      - "Data missing from DB"
+      - "Migration may have failed"
+      - "Constraint violation"
+      - "Data inconsistency"
+      - "Ground truth verification needed"
+    evidence_needed:
+      - row_counts
+      - sample_data
+      - migration_state
+      - schema_structure
+    model_tier: haiku  # Fast, focused investigation
+
+  # Layer 4: Infrastructure Investigation
+  intel_infra_signals:
+    spawn_when:
+      - "Container unhealthy"
+      - "Service connection failed"
+      - "Environment config wrong"
+      - "Volume data issue"
+      - "Works locally not in Docker"
+    evidence_needed:
+      - container_status
+      - container_logs
+      - network_tests
+      - volume_state
+    model_tier: haiku  # Fast, focused investigation
+
+  # Layer 5: QA Reproduction
+  intel_qa_signals:
+    spawn_when:
+      - "Bug reported"
+      - "Cannot reproduce"
+      - "Need minimal repro"
+      - "Verify fix works"
+      - "Check for regression"
+    evidence_needed:
+      - reproduction_steps
+      - environment_state
+      - exact_conditions
+      - variations_attempted
+    model_tier: haiku  # Fast, focused investigation
+
+  # Layer 6: Cross-Layer Validation
+  intel_data_validator_signals:
+    spawn_when:
+      - "Data differs between layers"
+      - "Need to find divergence point"
+      - "Cascading inconsistency"
+      - "Frontend/backend/DB mismatch"
+    evidence_needed:
+      - layer_by_layer_comparison
+      - divergence_points
+      - data_flow_trace
+    model_tier: sonnet  # More complex cross-cutting analysis
+
+# Parallel Spawning Patterns
+parallel_spawn_patterns:
+  full_stack_investigation:
+    description: "Spawn all layer agents simultaneously when bug location unknown"
+    trigger: "Bug report with unclear location"
+    spawn_set:
+      - INTEL_FRONTEND
+      - INTEL_BACKEND
+      - INTEL_DBA
+      - INTEL_INFRA (conditional)
+    coordination: INTEL_DATA_VALIDATOR synthesizes results
+
+  bug_reproduction:
+    description: "Systematic reproduction attempt with evidence preservation"
+    trigger: "Bug reported but not reproduced"
+    spawn_sequence:
+      1: G6_EVIDENCE_COLLECTOR (preserve evidence immediately)
+      2: INTEL_QA (attempt reproduction)
+      3: Layer agents (based on QA findings)
+
+  data_divergence:
+    description: "Find where data goes wrong in the stack"
+    trigger: "Same data shows different at different layers"
+    spawn_set:
+      - INTEL_DBA (ground truth)
+      - INTEL_BACKEND (API response)
+      - INTEL_FRONTEND (display state)
+    synthesis: INTEL_DATA_VALIDATOR compares all three
 ```
 
 ### Cross-Coordinator Signals
@@ -441,6 +993,260 @@ OUTPUT: Evidence archive with chain of custody
    - What was collected
    - Any evidence that was already lost
    - Recommended next steps
+```
+
+### Workflow 5: Full Stack Investigation
+
+> **Purpose:** Parallel investigation across all layers when bug location is unknown.
+> **Inspired By:** Session 014 where frontend showed all blocks, backend returned odd blocks, and DB only had odd blocks - requiring investigation at every layer to find the divergence.
+
+```
+INPUT: Bug report where data appears incorrect (location unknown)
+OUTPUT: Identified divergence point with evidence from each layer
+
+1. Triage Bug Report
+   - What is the symptom?
+   - Which layers might be involved?
+   - What is the expected vs actual behavior?
+   - Is this urgent (data loss risk)?
+
+2. Parallel Agent Spawning (CRITICAL - DO IN PARALLEL)
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │  Spawn all layer agents SIMULTANEOUSLY to capture evidence before  │
+   │  it changes. Do NOT wait for one to complete before spawning next. │
+   └─────────────────────────────────────────────────────────────────────┘
+
+   2a. Spawn INTEL_FRONTEND
+       - Capture what user sees on screen
+       - Document component state
+       - Record API responses received
+
+   2b. Spawn INTEL_BACKEND
+       - Trace API endpoint execution
+       - Document database queries
+       - Record service layer decisions
+
+   2c. Spawn INTEL_DBA
+       - Query database directly
+       - Document row counts and sample data
+       - Verify migration state
+
+   2d. Spawn INTEL_INFRA (if applicable)
+       - Check container health
+       - Verify service connectivity
+       - Confirm environment config
+
+3. Evidence Collection (All Agents Report)
+   - Collect evidence packets from each agent
+   - Normalize timestamps across layers
+   - Create evidence inventory
+
+4. Cross-Layer Comparison
+   - Spawn INTEL_DATA_VALIDATOR
+   - Compare data at each layer boundary:
+     * DB rows vs Repository return
+     * Repository return vs Service return
+     * Service return vs API response
+     * API response vs Frontend state
+     * Frontend state vs Display
+   - Identify divergence point(s)
+
+5. Divergence Analysis
+   - At which layer does data first differ?
+   - What transformation caused the divergence?
+   - Is this a bug or expected behavior?
+   - What code path causes this?
+
+6. Root Cause Determination
+   - Apply 5-Whys from divergence point
+   - Document root cause with evidence chain
+   - Verify cause explains all symptoms
+
+7. Fix Recommendation
+   - Which layer needs the fix?
+   - What code change is required?
+   - What tests should verify the fix?
+   - Route to appropriate coordinator (COORD_ENGINE, COORD_PLATFORM)
+
+8. Reproduction Documentation
+   - Spawn INTEL_QA to create minimal reproduction case
+   - Document exact steps to reproduce
+   - Create regression test specification
+```
+
+**Parallel Spawn Diagram:**
+```
+                           ┌──────────────────┐
+                           │   COORD_INTEL    │
+                           │   (Coordinator)   │
+                           └────────┬─────────┘
+                                    │
+              ┌─────────────────────┼─────────────────────┐
+              │                     │                     │
+              ▼                     ▼                     ▼
+    ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
+    │ INTEL_FRONTEND  │   │ INTEL_BACKEND   │   │   INTEL_DBA     │
+    │ (UI Layer)      │   │ (API Layer)     │   │ (DB Layer)      │
+    └────────┬────────┘   └────────┬────────┘   └────────┬────────┘
+             │                     │                     │
+             │    ┌────────────────┼────────────────┐    │
+             │    │                                 │    │
+             │    ▼                                 ▼    │
+             │  ┌─────────────────┐   ┌─────────────────┐│
+             │  │ INTEL_INFRA    │   │ INTEL_QA        ││
+             │  │ (if needed)    │   │ (reproduction)  ││
+             │  └────────┬───────┘   └────────┬────────┘│
+             │           │                     │        │
+             ▼           ▼                     ▼        ▼
+    ┌─────────────────────────────────────────────────────────────┐
+    │                   INTEL_DATA_VALIDATOR                      │
+    │               (Cross-Layer Comparison)                       │
+    └─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Workflow 6: Bug Reproduction Protocol
+
+> **Purpose:** Systematic approach to reproduce reported bugs before evidence is lost.
+> **Why This Matters:** Bugs that can't be reproduced can't be fixed. Capture evidence NOW.
+
+```
+INPUT: Bug report (may be vague or incomplete)
+OUTPUT: Verified reproduction steps OR documented inability to reproduce
+
+1. Bug Report Intake
+   - Source: Who reported (user, test, monitoring)
+   - Symptom: What was observed
+   - Expected: What should have happened
+   - Actual: What happened instead
+   - Timestamp: When it occurred
+   - Context: User, data, environment
+
+2. Immediate Evidence Preservation (BEFORE attempting reproduction)
+   - Spawn G6_EVIDENCE_COLLECTOR: Capture logs from time of report
+   - Spawn INTEL_DBA: Snapshot relevant database state
+   - Document current git commit/branch
+   - Note any deployments in last 24h
+
+3. Environment Setup
+   - Identify target environment (local, staging, prod-like)
+   - Set up clean environment matching reported conditions
+   - Seed database to match reported state (if possible)
+   - Configure user/role matching reporter
+
+4. First Reproduction Attempt
+   - Spawn INTEL_QA with exact reported steps
+   - Execute steps precisely as reported
+   - Document EVERYTHING:
+     * Each action taken
+     * System response
+     * Timestamps
+     * Screenshots/recordings
+
+5. Result Evaluation
+
+   IF REPRODUCED:
+   - Mark reproduction as CONFIRMED
+   - Document exact reproduction steps
+   - Spawn layer-specific agents for investigation
+   - Proceed to Full Stack Investigation workflow
+
+   IF NOT REPRODUCED (first attempt):
+   - Document what WAS observed
+   - Continue to variation attempts
+
+6. Variation Attempts (if not reproduced on first try)
+   - Vary timing (faster/slower execution)
+   - Vary data (different records, edge cases)
+   - Vary user role (different permissions)
+   - Vary environment (different browser, container state)
+   - Vary order of operations
+   - Try with fresh database
+   - Try with production-like data volume
+
+7. Parallel Hypothesis Testing
+   Spawn multiple agents to test different theories:
+
+   INTEL_FRONTEND: "Is this a rendering race condition?"
+   INTEL_BACKEND: "Is this a caching issue?"
+   INTEL_DBA: "Is there data corruption?"
+   INTEL_INFRA: "Is this environment-specific?"
+
+8. Final Determination
+
+   IF REPRODUCED (any variation):
+   - Document EXACT conditions for reproduction
+   - Create minimal reproduction case
+   - Specify "reproduces when X, Y, Z"
+
+   IF NOT REPRODUCED (all attempts failed):
+   - Document all attempted variations
+   - Hypothesize why it can't be reproduced:
+     * Timing-dependent (race condition)
+     * Data-dependent (specific data no longer exists)
+     * Environment-dependent (prod-only)
+     * Heisenbug (observation changes behavior)
+   - Recommend monitoring/instrumentation to catch next occurrence
+   - Add diagnostic logging for future occurrences
+
+9. Output Documentation
+   - Reproduction report with all attempts
+   - Minimal reproduction case (if successful)
+   - Recommended next steps
+   - Test specification for regression prevention
+```
+
+**Reproduction Decision Tree:**
+```
+                        ┌─────────────────┐
+                        │   Bug Reported  │
+                        └────────┬────────┘
+                                 │
+                                 ▼
+                    ┌────────────────────────┐
+                    │ Preserve Evidence NOW  │
+                    │ (logs, DB, git state)  │
+                    └────────────┬───────────┘
+                                 │
+                                 ▼
+                    ┌────────────────────────┐
+                    │ First Attempt: Exact   │
+                    │ steps as reported      │
+                    └────────────┬───────────┘
+                                 │
+               ┌─────────────────┴─────────────────┐
+               │                                   │
+               ▼                                   ▼
+    ┌──────────────────┐                ┌──────────────────┐
+    │   REPRODUCED     │                │  NOT REPRODUCED  │
+    │   (Confirmed)    │                │  (Yet)           │
+    └────────┬─────────┘                └────────┬─────────┘
+             │                                   │
+             ▼                                   ▼
+    ┌──────────────────┐                ┌──────────────────┐
+    │ Full Stack       │                │ Try Variations:  │
+    │ Investigation    │                │ - Timing         │
+    └──────────────────┘                │ - Data           │
+                                        │ - Environment    │
+                                        │ - User role      │
+                                        └────────┬─────────┘
+                                                 │
+                        ┌────────────────────────┴────────────────────────┐
+                        │                                                 │
+                        ▼                                                 ▼
+             ┌──────────────────┐                              ┌──────────────────┐
+             │   REPRODUCED     │                              │  STILL NOT       │
+             │   (with variant) │                              │  REPRODUCIBLE    │
+             └────────┬─────────┘                              └────────┬─────────┘
+                      │                                                 │
+                      ▼                                                 ▼
+             ┌──────────────────┐                              ┌──────────────────┐
+             │ Document exact   │                              │ Document attempts│
+             │ conditions       │                              │ Add monitoring   │
+             └──────────────────┘                              │ Wait for next    │
+                                                               │ occurrence       │
+                                                               └──────────────────┘
 ```
 
 ---
@@ -984,6 +1790,7 @@ At session end, assess:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1.0 | 2025-12-29 | Added Full-Stack Investigation agents (INTEL_FRONTEND, INTEL_BACKEND, INTEL_DBA, INTEL_INFRA, INTEL_QA, INTEL_DATA_VALIDATOR), Full Stack Investigation workflow, Bug Reproduction Protocol workflow, and parallel spawn signal patterns. Inspired by Session 014's Block Revelation bug where investigation required evidence from every layer of the stack. |
 | 1.0.0 | 2025-12-29 | Initial COORD_INTEL coordinator specification |
 
 ---
