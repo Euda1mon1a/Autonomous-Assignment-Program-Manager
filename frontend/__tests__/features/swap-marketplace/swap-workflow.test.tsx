@@ -28,6 +28,17 @@ import { SwapStatus } from '@/features/swap-marketplace/types';
 // Mock the hooks
 jest.mock('@/features/swap-marketplace/hooks');
 
+// Mock the AuthContext
+jest.mock('@/contexts/AuthContext', () => ({
+  useAuth: jest.fn(() => ({
+    user: { id: 'test-user-1', name: 'Test User', email: 'test@example.com', role: 'FACULTY' },
+    isLoading: false,
+    isAuthenticated: true,
+    login: jest.fn(),
+    logout: jest.fn(),
+  })),
+}));
+
 // Create a wrapper with QueryClient for testing
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -133,10 +144,10 @@ describe('Swap Workflow Integration Tests', () => {
         wrapper: createWrapper(),
       });
 
-      const weekSelect = screen.getByLabelText(/week to offload/i);
+      const weekSelect = screen.getAllByRole('combobox')[0];
       await user.selectOptions(weekSelect, mockAvailableWeeks[0].date);
 
-      const reasonTextarea = screen.getByLabelText(/reason \/ notes/i);
+      const reasonTextarea = screen.getByRole('textbox');
       await user.type(reasonTextarea, 'Conference attendance');
 
       const createButton = screen.getByRole('button', { name: /create request/i });
@@ -264,7 +275,7 @@ describe('Swap Workflow Integration Tests', () => {
         wrapper: createWrapper(),
       });
 
-      const weekSelect = screen.getByLabelText(/week to offload/i);
+      const weekSelect = screen.getAllByRole('combobox')[0];
       await user.selectOptions(weekSelect, mockAvailableWeeks[0].date);
 
       const createButton = screen.getByRole('button', { name: /create request/i });
@@ -451,13 +462,13 @@ describe('Swap Workflow Integration Tests', () => {
         wrapper: createWrapper(),
       });
 
-      const weekSelect = screen.getByLabelText(/week to offload/i);
+      const weekSelect = screen.getAllByRole('combobox')[0];
       await user.selectOptions(weekSelect, mockAvailableWeeks[0].date);
 
-      const specificRadio = screen.getByLabelText(/request specific faculty/i);
+      const specificRadio = screen.getAllByRole('radio')[1];
       await user.click(specificRadio);
 
-      const facultySelect = screen.getByLabelText(/target faculty/i);
+      const facultySelect = screen.getAllByRole('combobox')[1];
       await user.selectOptions(facultySelect, mockFacultyMembers[0].id);
 
       const createButton = screen.getByRole('button', { name: /create request/i });
@@ -501,7 +512,7 @@ describe('Swap Workflow Integration Tests', () => {
         wrapper: createWrapper(),
       });
 
-      const weekSelect = screen.getByLabelText(/week to offload/i);
+      const weekSelect = screen.getAllByRole('combobox')[0];
       await user.selectOptions(weekSelect, mockAvailableWeeks[0].date);
 
       const createButton = screen.getByRole('button', { name: /create request/i });
@@ -559,7 +570,7 @@ describe('Swap Workflow Integration Tests', () => {
         wrapper: createWrapper(),
       });
 
-      const weekSelect = screen.getByLabelText(/week to offload/i);
+      const weekSelect = screen.getAllByRole('combobox')[0];
       await user.selectOptions(weekSelect, mockAvailableWeeks[0].date);
 
       const createButton = screen.getByRole('button', { name: /create request/i });

@@ -15,6 +15,17 @@ import { mockMySwapsResponse, mockEmptyMySwapsResponse } from './mockData';
 // Mock the hooks
 jest.mock('@/features/swap-marketplace/hooks');
 
+// Mock the AuthContext
+jest.mock('@/contexts/AuthContext', () => ({
+  useAuth: jest.fn(() => ({
+    user: { id: 'test-user-1', name: 'Test User', email: 'test@example.com', role: 'FACULTY' },
+    isLoading: false,
+    isAuthenticated: true,
+    login: jest.fn(),
+    logout: jest.fn(),
+  })),
+}));
+
 // Create a wrapper with QueryClient for testing
 function createWrapper() {
   const queryClient = new QueryClient({
