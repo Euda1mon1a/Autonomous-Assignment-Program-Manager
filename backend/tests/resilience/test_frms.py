@@ -40,6 +40,7 @@ from app.resilience.frms.hazard_thresholds import (
     HazardThresholdEngine,
     FatigueHazard,
     TriggerType,
+    MitigationType,
     get_hazard_level_info,
     get_mitigation_info,
 )
@@ -431,7 +432,7 @@ class TestHazardThresholds:
 
         assert hazard.hazard_level == HazardLevel.YELLOW
         assert len(hazard.triggers) > 0
-        assert TriggerType.MONITORING.value in [m.value for m in hazard.required_mitigations]
+        assert MitigationType.MONITORING.value in [m.value for m in hazard.required_mitigations]
 
     def test_evaluate_red_hazard(self):
         """Test RED hazard (warning)."""

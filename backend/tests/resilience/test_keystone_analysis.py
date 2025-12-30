@@ -39,6 +39,10 @@ class MockAssignment:
         self.person_id = person_id
         self.rotation_template_id = rotation_template_id
 
+    def get(self, key, default=None):
+        """Dict-like get() for compatibility with keystone analysis code."""
+        return getattr(self, key, default)
+
 
 class TestKeystoneAnalyzer:
     """Test suite for KeystoneAnalyzer."""
@@ -571,7 +575,7 @@ class TestKeystoneAnalyzer:
             indirect_dependents=15,
             cascade_depth=3,
             bottleneck_score=0.7,
-            functional_redundancy=0.2,
+            functional_redundancy=0.05,  # Must be < 0.1 for is_single_point_of_failure
             unique_capabilities=["Skill A"],
             shared_capabilities=["Skill B"],
         )

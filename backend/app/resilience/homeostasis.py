@@ -682,6 +682,41 @@ class HomeostasisMonitor:
         self.correction_handlers[action_type] = handler
         logger.info(f"Registered correction handler for {action_type.value}")
 
+    def register_feedback_loop(
+        self,
+        name: str,
+        description: str,
+        setpoint: Setpoint,
+        feedback_type: FeedbackType,
+    ) -> UUID:
+        """
+        Register a new feedback loop for monitoring a metric.
+
+        Args:
+            name: Unique name for the feedback loop
+            description: Description of what this loop monitors
+            setpoint: The setpoint configuration for this metric
+            feedback_type: Type of feedback (NEGATIVE for stabilizing)
+
+        Returns:
+            UUID of the created feedback loop
+        """
+        # Register the setpoint if not already registered
+        if setpoint.id not in self.setpoints:
+            self.setpoints[setpoint.id] = setpoint
+
+        # Create the feedback loop
+        loop = FeedbackLoop(
+            id=uuid4(),
+            name=name,
+            description=description,
+            setpoint=setpoint,
+            feedback_type=feedback_type,
+        )
+        self.feedback_loops[loop.id] = loop
+        logger.info(f"Registered feedback loop: {name}")
+        return loop.id
+
     def check_feedback_loop(
         self,
         loop_id: UUID,
