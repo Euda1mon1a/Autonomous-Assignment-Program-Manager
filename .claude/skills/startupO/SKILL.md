@@ -116,11 +116,37 @@ Output this confirmation:
 | TOOLSMITH | Skills, MCP tools, agent specs | Creating new skills, tools, or agents |
 | RELEASE_MANAGER | Git, PRs, changelogs | Committing changes, creating PRs, releases |
 
+### G-Staff (Army Doctrine)
+| Position | Agent | Role |
+|----------|-------|------|
+| G-1 | G1_PERSONNEL | Personnel & roster tracking |
+| G-2 | G2_RECON | Intelligence/Reconnaissance |
+| G-3 | SYNTHESIZER | Operations integration |
+| G-4 | G4_CONTEXT_MANAGER | RAG/vector context |
+| G-5 | META_UPDATER | Plans & documentation |
+| G-6 | G6_SIGNAL | Signal/Data Processing |
+| IG | DELEGATION_AUDITOR | Inspector General (invoke at session end) |
+| PAO | HISTORIAN | Public Affairs - significant sessions |
+
+### Special Staff
+| Agent | Role |
+|-------|------|
+| FORCE_MANAGER | Team assembly, coordinator assignment |
+| COORD_AAR | After Action Review (auto-trigger at session end) |
+| COORD_INTEL | Full-stack forensics & investigation |
+| DEVCOM_RESEARCH | R&D - exotic concepts, cross-disciplinary |
+| MEDCOM | Medical Advisory - ACGME, clinical implications |
+
 ### Current Priorities
 [From HUMAN_TODO.md]
 
 ### Key Rules
 - Address Codex feedback before merge (rate-limiting step)
+
+### Session End Protocol
+- Invoke **DELEGATION_AUDITOR** for metrics audit
+- **COORD_AAR** auto-triggers for After Action Review
+- **HISTORIAN** for significant/poignant sessions
 
 ### Context Isolation Reminder
 Spawned agents have **isolated context** - they don't inherit your conversation.
@@ -130,22 +156,6 @@ Spawned agents have **isolated context** - they don't inherit your conversation.
 
 Ready to orchestrate. What's the task?
 ```
-
-### 5. Spawn DELEGATION_AUDITOR (Background)
-
-Spawn DELEGATION_AUDITOR agent in background to track delegation metrics throughout the session:
-
-```
-Task(
-  description="DELEGATION_AUDITOR: Session monitoring",
-  prompt="Monitor this session for delegation patterns. Track metrics and update DELEGATION_METRICS.md at session end.",
-  subagent_type="general-purpose",
-  model="haiku",
-  run_in_background=true
-)
-```
-
-This ensures delegation metrics are always tracked without manual invocation.
 
 ---
 
@@ -478,6 +488,27 @@ ESCALATE WHEN:
 | TOOLSMITH | Skills, MCP tools | Creating skills, tools, agents |
 | RELEASE_MANAGER | Git, PRs | Commits, PRs, releases |
 
+### G-Staff (Army Doctrine)
+| Position | Agent | Role |
+|----------|-------|------|
+| G-1 | G1_PERSONNEL | Personnel tracking |
+| G-2 | G2_RECON | Intelligence/Recon |
+| G-3 | SYNTHESIZER | Operations |
+| G-4 | G4_CONTEXT_MANAGER | RAG/vector context |
+| G-5 | META_UPDATER | Plans & docs |
+| G-6 | G6_SIGNAL | Signal/Data Processing |
+| IG | DELEGATION_AUDITOR | Inspector General |
+| PAO | HISTORIAN | Public Affairs |
+
+### Special Staff
+| Agent | Role |
+|-------|------|
+| FORCE_MANAGER | Team assembly |
+| COORD_AAR | After Action Review |
+| COORD_INTEL | Full-stack forensics |
+| DEVCOM_RESEARCH | R&D - exotic concepts |
+| MEDCOM | Medical Advisory |
+
 ### Current Priorities (from HUMAN_TODO.md)
 1. UI/UX: Frozen headers on schedule grid
 2. Heatmap: Add block navigation
@@ -488,6 +519,11 @@ ESCALATE WHEN:
 - Backup before database modifications
 - Run linters before PR
 - Address Codex feedback before merge (rate-limiting step)
+
+### Session End Protocol
+- Invoke DELEGATION_AUDITOR for metrics
+- COORD_AAR auto-triggers for After Action Review
+- HISTORIAN for significant sessions
 
 Ready to orchestrate. What's the task?
 ```
