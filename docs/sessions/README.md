@@ -12,6 +12,13 @@ Historical records of parallel development sessions.
 | Session 12 | 2025-12-20 | Route tests & N+1 optimization | Completed |
 | Session 13 | 2025-12-21 | Frontend test coverage | Completed |
 | Session 14 | 2025-12-21 | 50 parallel TODOs | Completed |
+| Session 15 | 2025-12-26 | Solver verification & test results | Completed |
+| Session 16 | 2025-12-27 | PAI Organizational Expansion | Completed |
+| Session 17 | 2025-12-27 | 2 Strikes Rule lesson | Completed |
+| Session 18 | 2025-12-28 | Block Revelation & COORD_INTEL | Completed |
+| Session 19 | 2025-12-29 | RAG Activation & Vector DB | Completed |
+| Session 20 | 2025-12-29/30 | MVP Verification Night Mission | Completed |
+| Session 21 | 2025-12-30 | Technical Debt Sprint Review | Completed |
 
 ## Session Documents
 
@@ -93,6 +100,41 @@ Session planning documents are maintained in the project root during active deve
   - MCP server: Cleanup logic and sampling integration
   - Infrastructure: Pool resizing, Redis cache, DLQ, i18n
   - 4,419 lines added across 27 files
+
+- **SESSION_015_HANDOFF.md** - Solver verification & test results
+  - All 3 solvers verified (Greedy, PuLP, CP-SAT)
+  - Constraint testing validation
+  - Performance benchmarks
+
+- **SESSION_016_HANDOFF.md** - PAI Organizational Expansion
+  - G-Staff agents (G1-G6)
+  - FORCE_MANAGER and specialist agents
+  - Context isolation discovery (agents don't inherit parent memory)
+
+- **SESSION_017_LESSON.md** - 2 Strikes Rule
+  - After 2 failed "simple fix" attempts, delegate instead of retry
+  - Anti-pattern documentation
+
+- **SESSION_018_HANDOFF.md** - Block Revelation & COORD_INTEL
+  - Block structure investigation
+  - COORD_INTEL agent activation
+
+- **SESSION_019_HANDOFF.md** - RAG Activation & Vector DB
+  - pgvector 0.8.1-pg15 container
+  - 62 knowledge chunks embedded
+  - Semantic search operational
+
+- **SESSION_020_HANDOFF.md** - MVP Verification Night Mission
+  - All 3 solvers verified working
+  - 664 tests passing (up from 585)
+  - Block 10 schedule: 87 assignments, 0 violations
+  - Full-stack 16-layer review: 86/100 score
+
+- **SESSION_021_HANDOFF.md** - Technical Debt Sprint Review
+  - 21 DEBT items analyzed (43% fully resolved, 48% partial)
+  - P0 Critical items (Celery, security) fully resolved
+  - 8 parallel agents reviewed full stack
+  - MVP readiness: 88/100
 
 ## Archiving Process
 
