@@ -8,17 +8,25 @@ minimize security risk.
 Security Flow:
 1. User authenticates with normal access token
 2. User requests audience token for specific operation
-3. Frontend receives short-lived token
-4. Frontend makes operation request with audience token
-5. Backend validates audience token matches operation
-6. Operation executes with full audit trail
+3. System validates user role has permission for the audience
+4. Frontend receives short-lived token
+5. Frontend makes operation request with audience token
+6. Backend validates audience token matches operation
+7. Operation executes with full audit trail
+
+Role-Based Access Control:
+- admin (level 4): All audiences including admin.impersonate, database.*
+- coordinator (level 3): schedule.delete, resilience.override, audit.export, jobs.kill, solver.abort
+- faculty (level 2): swap.execute, swap.rollback
+- clinical_staff/rn/lpn/msa (level 1): Basic operations
+- resident (level 0): Most restricted access
 """
 
 import logging
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from jose import jwt
+from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
@@ -30,6 +38,7 @@ from app.core.audience_auth import (
 )
 from app.core.config import get_settings
 from app.core.security import get_current_active_user
+from app.models.token_blacklist import TokenBlacklist
 from app.models.user import User
 from app.schemas.audience_token import (
     AudienceListResponse,
@@ -42,6 +51,117 @@ from app.schemas.audience_token import (
 router = APIRouter()
 settings = get_settings()
 logger = logging.getLogger(__name__)
+
+# =============================================================================
+# Role Hierarchy and Audience Permission Mapping
+# =============================================================================
+# Role levels (lowest to highest privilege)
+ROLE_LEVELS: dict[str, int] = {
+    "resident": 0,
+    "clinical_staff": 1,
+    "rn": 1,
+    "lpn": 1,
+    "msa": 1,
+    "faculty": 2,
+    "coordinator": 3,
+    "admin": 4,
+}
+
+# Minimum role level required for each audience
+# Audiences not listed here are available to all authenticated users (level 0)
+AUDIENCE_REQUIREMENTS: dict[str, int] = {
+    # Admin-only audiences (level 4)
+    "admin.impersonate": 4,
+    "database.backup": 4,
+    "database.restore": 4,
+    # Coordinator-level audiences (level 3)
+    "schedule.delete": 3,
+    "resilience.override": 3,
+    "audit.export": 3,
+    "jobs.kill": 3,
+    "solver.abort": 3,
+    # Faculty-level audiences (level 2)
+    "swap.execute": 2,
+    "swap.rollback": 2,
+}
+
+
+def get_user_role_level(role: str) -> int:
+    """
+    Get the numeric privilege level for a user role.
+
+    Args:
+        role: User role string (e.g., 'admin', 'faculty', 'resident')
+
+    Returns:
+        Integer privilege level (0-4), defaults to 0 for unknown roles
+    """
+    return ROLE_LEVELS.get(role.lower(), 0)
+
+
+def check_audience_permission(user_role: str, audience: str) -> tuple[bool, str | None]:
+    """
+    Check if a user's role has permission to request a specific audience token.
+
+    This implements role-based access control (RBAC) for audience tokens,
+    preventing privilege escalation attacks where lower-privileged users
+    attempt to obtain tokens for high-privilege operations.
+
+    Args:
+        user_role: The user's role (e.g., 'admin', 'faculty', 'resident')
+        audience: The requested audience scope (e.g., 'admin.impersonate')
+
+    Returns:
+        Tuple of (is_permitted: bool, error_message: Optional[str])
+        - (True, None) if permitted
+        - (False, "reason") if denied
+
+    Security Notes:
+        - Unknown roles default to lowest privilege level (0)
+        - Audiences not in AUDIENCE_REQUIREMENTS are available to all users
+        - This is a critical security control - changes require security review
+    """
+    user_level = get_user_role_level(user_role)
+    required_level = AUDIENCE_REQUIREMENTS.get(audience, 0)
+
+    if user_level >= required_level:
+        return True, None
+
+    # Construct informative error message (without revealing exact levels)
+    required_role = "admin"
+    if required_level == 3:
+        required_role = "coordinator or higher"
+    elif required_level == 2:
+        required_role = "faculty or higher"
+    elif required_level == 1:
+        required_role = "clinical staff or higher"
+
+    return False, f"Audience '{audience}' requires {required_role} role"
+
+
+def get_token_owner_id(db: Session, jti: str) -> str | None:
+    """
+    Look up the owner (user_id) of a token by its JTI.
+
+    This queries the TokenBlacklist to find if this token was previously
+    recorded (e.g., during creation or a prior revocation attempt).
+
+    Args:
+        db: Database session
+        jti: JWT ID to look up
+
+    Returns:
+        User ID string if found, None otherwise
+
+    Note:
+        If the token was never recorded in the blacklist, we cannot
+        determine ownership from the database. In that case, we must
+        decode the token to get the user_id from the 'sub' claim.
+    """
+    record = db.query(TokenBlacklist).filter(TokenBlacklist.jti == jti).first()
+    if record and record.user_id:
+        return str(record.user_id)
+    return None
 
 
 @router.get("/audiences", response_model=AudienceListResponse)
@@ -116,9 +236,29 @@ async def request_audience_token(
     1. Store token temporarily in memory (not localStorage)
     2. Include in Authorization header: `Bearer <token>`
     3. Discard after operation completes
+
+    **Role Requirements**:
+    - admin.impersonate, database.backup, database.restore: admin only
+    - schedule.delete, resilience.override, audit.export, jobs.kill, solver.abort: coordinator+
+    - swap.execute, swap.rollback: faculty+
+    - Other audiences: any authenticated user
     """
-    # TODO: Add role-based audience restrictions
-    # Example: Only admins can request "admin.impersonate" tokens
+    # Security: Verify user role has permission for this audience
+    is_permitted, error_msg = check_audience_permission(
+        user_role=current_user.role,
+        audience=request.audience,
+    )
+
+    if not is_permitted:
+        logger.warning(
+            f"Audience token denied: user={current_user.username}, "
+            f"role={current_user.role}, audience={request.audience}, "
+            f"reason={error_msg}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=error_msg,
+        )
 
     try:
         # Create audience token
@@ -193,25 +333,102 @@ async def revoke_token(
         "message": "Token successfully revoked"
     }
     ```
+
+    **Ownership Verification**:
+    Token ownership is verified in the following order:
+    1. If `token` is provided in request, decode it to get user_id
+    2. Check if token is already in blacklist (has recorded user_id)
+    3. Admins can revoke any token regardless of ownership
     """
     try:
-        # TODO: Verify token belongs to current user (or user is admin)
-        # This requires decoding the token to get the user_id
-        # For now, we'll allow any authenticated user to revoke
+        # Security: Verify token belongs to current user (or user is admin)
+        token_owner_id: str | None = None
+        expires_at = datetime.utcnow()  # Default expiration for cleanup
 
-        # We need to get the expiration time from somewhere
-        # Option 1: Accept it in the request
-        # Option 2: Decode the token (but it might already be expired)
-        # For now, we'll use a safe default
+        # Method 1: If token is provided, decode it to get owner and expiration
+        if request.token:
+            try:
+                # Decode token without verification (may be expired, that's OK)
+                # We just need to extract the user_id and expiration
+                payload = jwt.decode(
+                    request.token,
+                    settings.SECRET_KEY,
+                    algorithms=[ALGORITHM],
+                    options={"verify_exp": False},  # Allow expired tokens
+                )
 
-        expires_at = datetime.utcnow()  # Already expired, cleanup will handle it
+                # Verify the JTI matches
+                token_jti = payload.get("jti")
+                if token_jti != request.jti:
+                    logger.warning(
+                        f"Token JTI mismatch: provided_jti={request.jti}, "
+                        f"token_jti={token_jti}, user={current_user.username}"
+                    )
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Token JTI does not match provided JTI",
+                    )
+
+                token_owner_id = payload.get("sub")
+
+                # Get actual expiration from token if available
+                exp = payload.get("exp")
+                if exp:
+                    expires_at = datetime.utcfromtimestamp(exp)
+
+            except JWTError as e:
+                logger.warning(
+                    f"Failed to decode token for revocation: error={e}, "
+                    f"jti={request.jti}, user={current_user.username}"
+                )
+                # Continue without token owner info - will check blacklist next
+
+        # Method 2: Check if token is already in blacklist (has user_id recorded)
+        if not token_owner_id:
+            token_owner_id = get_token_owner_id(db, request.jti)
+
+        # Verify ownership: user must own the token OR be an admin
+        if token_owner_id and token_owner_id != str(current_user.id):
+            # Token belongs to someone else - check if current user is admin
+            if not current_user.is_admin:
+                logger.warning(
+                    f"Unauthorized token revocation attempt: "
+                    f"user={current_user.username}, user_id={current_user.id}, "
+                    f"token_owner_id={token_owner_id}, jti={request.jti}"
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Cannot revoke tokens belonging to other users",
+                )
+            else:
+                # Admin revoking another user's token - log this elevated action
+                logger.info(
+                    f"Admin revoking another user's token: "
+                    f"admin={current_user.username}, token_owner_id={token_owner_id}, "
+                    f"jti={request.jti}, reason={request.reason}"
+                )
+
+        # If we couldn't determine ownership and user is not admin, require token
+        if not token_owner_id and not current_user.is_admin:
+            # We can't verify ownership - for security, require the token to be provided
+            # This prevents users from revoking arbitrary JTIs by guessing
+            if not request.token:
+                logger.warning(
+                    f"Token revocation without ownership proof: "
+                    f"user={current_user.username}, jti={request.jti}"
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Token must be provided for ownership verification, "
+                    "or this JTI is not recognized",
+                )
 
         # Revoke the token
         revoke_audience_token(
             db=db,
             jti=request.jti,
             expires_at=expires_at,
-            user_id=str(current_user.id),
+            user_id=str(current_user.id),  # Record who revoked it
             reason=request.reason,
         )
 
@@ -226,6 +443,9 @@ async def revoke_token(
             message="Token successfully revoked",
         )
 
+    except HTTPException:
+        # Re-raise HTTP exceptions (403, 400) as-is
+        raise
     except Exception as e:
         logger.error(
             f"Error revoking audience token: user={current_user.username}, "

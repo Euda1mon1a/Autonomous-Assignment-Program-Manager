@@ -13,7 +13,7 @@ Security Note:
 import hashlib
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 from typing import Literal
 
@@ -180,7 +180,7 @@ def generate_manifest(
     sha256_rows = _compute_rows_hash(rows)
 
     # Generate UTC timestamp
-    generated_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    generated_at = datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
     # Create and validate manifest
     manifest = ExportManifest(
@@ -263,7 +263,7 @@ def verify_manifest(rows: list[dict], manifest_path: Path) -> tuple[bool, str]:
     except (json.JSONDecodeError, ValueError) as e:
         logger.error(f"Invalid manifest file {manifest_path}: {e}")
         return False, f"Invalid manifest format: {e}"
-    except IOError as e:
+    except OSError as e:
         logger.error(f"Cannot read manifest {manifest_path}: {e}")
         return False, f"Cannot read manifest: {e}"
 

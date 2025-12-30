@@ -150,7 +150,7 @@ class ScheduleState(BaseModel):
             "checkpoint_boundary": self.checkpoint_boundary,
             "checkpoint_time": self.checkpoint_time.isoformat(),
             "assignments": sorted(
-                (json.dumps(a, sort_keys=True) for a in self.assignments)
+                json.dumps(a, sort_keys=True) for a in self.assignments
             ),
             "metadata": json.dumps(self.metadata, sort_keys=True),
             "acgme_compliant": self.acgme_compliant,

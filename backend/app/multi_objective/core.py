@@ -467,9 +467,7 @@ class SolutionArchive:
         # Check if dominated by any existing solution
         for existing in self.solutions:
             relation = compare_dominance(solution, existing, self.objectives)
-            if relation == DominanceRelation.DOMINATED:
-                return False
-            elif relation == DominanceRelation.EQUAL:
+            if relation == DominanceRelation.DOMINATED or relation == DominanceRelation.EQUAL:
                 return False
 
         # Remove solutions dominated by the new one

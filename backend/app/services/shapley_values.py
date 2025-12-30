@@ -332,7 +332,7 @@ class ShapleyValueService:
         Returns:
             Dictionary mapping faculty_id to Shapley value
         """
-        shapley = {fac_id: 0.0 for fac_id in faculty_ids}
+        shapley = dict.fromkeys(faculty_ids, 0.0)
 
         for _ in range(num_samples):
             # Random permutation (order of joining coalition)

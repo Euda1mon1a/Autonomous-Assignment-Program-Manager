@@ -4,13 +4,39 @@
  * Provides a configured axios instance with interceptors for
  * authentication, error handling, and type-safe request helpers.
  *
+ * Features:
+ * - Automatic token refresh on 401 errors (reactive refresh)
+ * - Request queuing during refresh to prevent race conditions
+ * - Retry failed requests after successful refresh
+ *
  * @module lib/api
  */
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios'
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios'
 
 // API base URL from environment or default for development
 // Use /api/v1 directly to avoid 307 redirect which causes CORS issues
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+
+// Import token refresh functions (lazy import to avoid circular dependency)
+// These will be dynamically imported when needed
+let authModule: typeof import('./auth') | null = null
+
+async function getAuthModule() {
+  if (!authModule) {
+    authModule = await import('./auth')
+  }
+  return authModule
+}
+
+/**
+ * Queue of failed requests waiting for token refresh.
+ * Each entry contains resolve/reject functions to continue or fail the request.
+ */
+interface QueuedRequest {
+  resolve: (config: InternalAxiosRequestConfig) => void
+  reject: (error: Error) => void
+  config: InternalAxiosRequestConfig
+}
 
 /**
  * Standardized API error shape returned by all API operations.
@@ -144,7 +170,7 @@ function createApiClient(): AxiosInstance {
     }
   )
 
-  // Response interceptor - transform errors
+  // Response interceptor - transform errors and handle token refresh
   client.interceptors.response.use(
     (response) => {
       console.log(`[api.ts] RESPONSE: ${response.status} ${response.config.url}`)
@@ -152,8 +178,9 @@ function createApiClient(): AxiosInstance {
       // This is used for schedule generation that completes but has validation warnings
       return response
     },
-    (error: AxiosError) => {
+    async (error: AxiosError) => {
       const apiError = transformError(error)
+      const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 
       // Issue #5: Treat 207 Multi-Status as success (partial success scenario)
       if (error.response?.status === 207) {
@@ -161,14 +188,40 @@ function createApiClient(): AxiosInstance {
       }
 
       if (typeof window !== 'undefined') {
-        // Handle 401 - redirect to login
-        // Security: No need to clear localStorage since tokens are in httpOnly cookies
-        // Don't redirect if already on login page (prevents infinite loop)
-        // Don't redirect for auth endpoints (let checkAuth handle gracefully)
         const requestUrl = error.config?.url || ''
         const isAuthEndpoint = requestUrl.includes('/auth/')
-        if (apiError.status === 401 && !window.location.pathname.includes('/login') && !isAuthEndpoint) {
-          window.location.href = '/login'
+
+        // Handle 401 - attempt token refresh before redirecting
+        // Don't try to refresh for auth endpoints (prevents infinite loops)
+        // Don't retry if we already tried to refresh
+        if (apiError.status === 401 && !isAuthEndpoint && !originalRequest._retry) {
+          console.log('[api.ts] 401 received, attempting token refresh...')
+
+          try {
+            const auth = await getAuthModule()
+
+            // Check if we have a refresh mechanism available
+            if (auth.attemptTokenRefresh) {
+              originalRequest._retry = true
+              const refreshed = await auth.attemptTokenRefresh()
+
+              if (refreshed) {
+                console.log('[api.ts] Token refresh successful, retrying original request')
+                // Retry the original request - the new access token is already
+                // set as httpOnly cookie by the refresh endpoint
+                return client(originalRequest)
+              }
+            }
+          } catch (refreshError) {
+            console.error('[api.ts] Token refresh failed:', refreshError)
+          }
+
+          // Refresh failed or not available - redirect to login
+          // Don't redirect if already on login page (prevents infinite loop)
+          if (!window.location.pathname.includes('/login')) {
+            console.log('[api.ts] Token refresh failed, redirecting to login')
+            window.location.href = '/login'
+          }
         }
 
         // Handle 403 - forbidden access

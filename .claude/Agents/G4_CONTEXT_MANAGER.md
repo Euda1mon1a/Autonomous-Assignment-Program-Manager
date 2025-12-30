@@ -337,82 +337,69 @@ our thinking has evolved."
 
 ## Implementation Status
 
-### Current State (Pre-pgvector)
+### Current State: ACTIVE ✅
 
-**Status:** Placeholder specification with file-based workaround
+**Status:** Fully operational with pgvector
 
-**Blocked on:**
-- PostgreSQL pgvector extension not yet installed
-- Vector embedding model not yet selected
-- Semantic search infrastructure not deployed
-- Cross-session memory table schema pending
+**Infrastructure:**
+- pgvector 0.8.1 extension installed on PostgreSQL
+- `rag_documents` table with 384-dimensional vectors
+- HNSW + IVFFlat indexes for fast similarity search
+- sentence-transformers `all-MiniLM-L6-v2` model (local, no API calls)
+- 62+ chunks already embedded from Session 019
 
-**Active Workaround:**
-- Session context stored in markdown files (ORCHESTRATOR_ADVISOR_NOTES.md)
-- Filename patterns used for retrieval
-- Cross-references maintained manually
-- Decision lineage tracked in CHANGELOG.md
+**Active Components:**
+| Component | Location | Status |
+|-----------|----------|--------|
+| Embedding Service | `backend/app/services/embedding_service.py` | ✅ Active |
+| RAG Service | `backend/app/services/rag_service.py` | ✅ Active |
+| Celery Tasks | `backend/app/tasks/rag_tasks.py` | ✅ Available |
+| API Endpoints | `backend/app/api/routes/rag.py` | ✅ Active |
+| Knowledge Base | `docs/rag-knowledge/*.md` | ✅ 6 documents |
 
-**Files to Monitor:**
-```
-docs/session-notes/
-├── SESSION_XXX_DECISIONS.md
-├── SESSION_XXX_LEARNINGS.md
-└── SESSION_XXX_HANDOFF.md
+**API Endpoints:**
+- `POST /rag/ingest` - Ingest document
+- `POST /rag/retrieve` - Semantic search
+- `POST /rag/context` - Build LLM context
+- `DELETE /rag/documents/{doc_type}` - Clear by type
+- `GET /rag/health` - System health
+- `GET /rag/stats` - Document statistics
 
-.claude/ORCHESTRATOR_ADVISOR_NOTES.md
-CHANGELOG.md
-```
+**Celery Tasks:**
+- `initialize_embeddings` - Bulk load from `/docs/rag-knowledge/`
+- `refresh_single_document` - Update specific file
+- `periodic_refresh` - Full refresh (available, NOT scheduled)
+- `check_rag_health` - Validate system
+- `clear_all_embeddings` - Nuclear reset
 
-### Planned Migration Path
+### Document Types (doc_type categories)
 
-**Phase 1: Database Preparation (Prerequisites)**
-```sql
--- Install pgvector extension
-CREATE EXTENSION IF NOT EXISTS vector;
+| Type | Purpose | Source |
+|------|---------|--------|
+| `acgme_rules` | ACGME compliance knowledge | `docs/rag-knowledge/acgme-rules.md` |
+| `scheduling_policy` | Scheduling logic & constraints | `docs/rag-knowledge/scheduling-policies.md` |
+| `swap_system` | Swap workflow knowledge | `docs/rag-knowledge/swap-system.md` |
+| `military_specific` | Military medical context | `docs/rag-knowledge/military-specific.md` |
+| `resilience_concepts` | Resilience framework | `docs/rag-knowledge/resilience-concepts.md` |
+| `user_guide_faq` | User-facing FAQ | `docs/rag-knowledge/user-guide-faq.md` |
+| `session_learnings` | Session-captured insights | Dynamic (G4 curated) |
+| `decision_history` | Key decisions & rationale | Dynamic (G4 curated) |
 
--- Create embeddings table
-CREATE TABLE session_context (
-    id SERIAL PRIMARY KEY,
-    session_id VARCHAR(255),
-    context_type VARCHAR(50),
-    domain VARCHAR(100),
-    title TEXT,
-    summary TEXT,
-    embedding vector(1536),
-    created_at TIMESTAMP,
-    accessed_at TIMESTAMP,
-    importance_level INT,
-    metadata JSONB,
-    superseded_by INT REFERENCES session_context(id)
-);
+### Curation Guidelines
 
--- Create consolidated context table
-CREATE TABLE context_consolidations (
-    id SERIAL PRIMARY KEY,
-    topic VARCHAR(255),
-    consolidated_summary TEXT,
-    source_contexts INT[],
-    created_at TIMESTAMP,
-    last_updated TIMESTAMP,
-    related_consolidations INT[]
-);
-```
+**SHOULD Embed:**
+- Key architectural decisions with rationale
+- Bug fixes with root cause analysis
+- New patterns discovered (e.g., coordinator delegation)
+- ACGME or domain knowledge updates
+- Cross-session learnings that compound
 
-**Phase 2: Migration of Existing Context**
-- Convert markdown session notes to embeddings
-- Create consolidations from decision history
-- Establish relationships in vector space
-
-**Phase 3: Agent Integration**
-- Update agent prompts with context retrieval instructions
-- Create context query APIs
-- Implement automated context capture
-
-**Phase 4: Ongoing Operations**
-- Continuous session context capture
-- Regular consolidation cycles
-- Optimization and pruning
+**SHOULD NOT Embed:**
+- Routine task completion logs
+- Temporary debugging output
+- Session-specific file paths
+- Credentials or sensitive data
+- Duplicate content already in knowledge base
 
 ---
 
@@ -438,7 +425,8 @@ CREATE TABLE context_consolidations (
 
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
-| 1.0.0 | 2025-12-29 | FUTURE (Placeholder) | Initial G4_CONTEXT_MANAGER specification created; implementation blocked on pgvector extension; documented current file-based workaround and planned migration path |
+| 1.0.0 | 2025-12-29 | FUTURE (Placeholder) | Initial G4_CONTEXT_MANAGER specification created |
+| 2.0.0 | 2025-12-30 | ACTIVE | pgvector operational; updated implementation status; added curation guidelines; documented doc_types and API endpoints |
 
 ---
 

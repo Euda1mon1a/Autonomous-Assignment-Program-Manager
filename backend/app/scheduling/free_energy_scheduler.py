@@ -432,7 +432,7 @@ class FreeEnergyScheduler(BioInspiredSolver):
         forecast_vector = forecast.to_vector(template_order)
 
         # Compute actual coverage from schedule
-        template_counts = {tid: 0 for tid in template_order}
+        template_counts = dict.fromkeys(template_order, 0)
         assignments = schedule.to_assignment_list(context)
 
         for _, _, template_id in assignments:
@@ -595,7 +595,7 @@ class FreeEnergyScheduler(BioInspiredSolver):
             template_order = [t.id for t in context.templates]
             assignments = updated_schedule.to_assignment_list(context)
 
-            template_counts = {tid: 0 for tid in template_order}
+            template_counts = dict.fromkeys(template_order, 0)
             for _, _, template_id in assignments:
                 if template_id in template_counts:
                     template_counts[template_id] += 1

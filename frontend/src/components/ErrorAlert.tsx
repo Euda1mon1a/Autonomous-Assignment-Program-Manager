@@ -52,8 +52,9 @@ export function ErrorAlert({ message, onRetry, onDismiss }: ErrorAlertProps) {
               onClick={onRetry}
               className="p-1 text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition-colors"
               title="Retry"
+              aria-label="Retry"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-4 h-4" aria-hidden="true" />
             </button>
           )}
           {onDismiss && (
@@ -61,8 +62,9 @@ export function ErrorAlert({ message, onRetry, onDismiss }: ErrorAlertProps) {
               onClick={onDismiss}
               className="p-1 text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition-colors"
               title="Dismiss"
+              aria-label="Dismiss error"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4" aria-hidden="true" />
             </button>
           )}
         </div>

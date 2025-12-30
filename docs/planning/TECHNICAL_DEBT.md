@@ -24,20 +24,12 @@ This document tracks identified technical debt, prioritized by severity and impa
 **Location:** `docker-compose.yml` (celery-worker service)
 **Category:** Infrastructure
 **Found:** 2025-12-30
+**Status:** ✅ RESOLVED (2025-12-30, PR #546)
 
-**Description:** Docker Celery worker only listens to 3 of 6 configured queues. Metrics, exports, and security tasks will never execute.
-
-**Current:**
-```yaml
-command: celery -A app.core.celery_app worker -Q default,resilience,notifications
-```
-
-**Required:**
+**Resolution:** Updated celery-worker command to listen to all 6 queues:
 ```yaml
 command: celery -A app.core.celery_app worker -Q default,resilience,notifications,metrics,exports,security
 ```
-
-**Impact:** High - Background tasks for metrics, exports, and security rotation will fail silently.
 
 ---
 
@@ -45,14 +37,12 @@ command: celery -A app.core.celery_app worker -Q default,resilience,notification
 **Location:** `/backend/app/api/routes/audience_tokens.py`
 **Category:** Security
 **Found:** 2025-12-30
+**Status:** ✅ RESOLVED (2025-12-30, PR #546)
 
-**Issues:**
-1. Line 120: Role-based audience restrictions not implemented
-2. Line 198: Token ownership verification incomplete
-
-**Impact:** Security vulnerability - potential privilege escalation and token theft.
-
-**Fix:** Implement role checks in `request_audience_token()` and ownership verification in `revoke_token()`.
+**Resolution:**
+1. Implemented AUDIENCE_REQUIREMENTS dict with 5-level role hierarchy (0=viewer, 4=admin)
+2. Added check_audience_permission() function with proper 403 responses
+3. Token ownership verification now checks current_user.id == owner OR is_admin
 
 ---
 
@@ -62,12 +52,9 @@ command: celery -A app.core.celery_app worker -Q default,resilience,notification
 **Location:** `/frontend/src/hooks/useClaudeChat.ts`
 **Category:** Configuration
 **Found:** 2025-12-30
+**Status:** ✅ RESOLVED (2025-12-30, PR #546)
 
-**Description:** Uses `REACT_APP_API_URL` (React CRA style) instead of `NEXT_PUBLIC_API_URL` (Next.js style).
-
-**Impact:** Claude chat feature silently fails when env var not set.
-
-**Fix:** Change to `process.env.NEXT_PUBLIC_API_URL`.
+**Resolution:** Changed to `process.env.NEXT_PUBLIC_API_URL`.
 
 ---
 
@@ -278,10 +265,15 @@ const { user } = useAuth();
 **Location:** `docker-compose.ollama.yml`
 **Category:** Feature Incomplete
 **Found:** 2025-12-30
+**Status:** ✅ RESOLVED (2025-12-30)
 
-**Description:** LLM Router service uses `alpine:latest` with `tail -f /dev/null`.
+**Description:** LLM Router service used `alpine:latest` with `tail -f /dev/null`.
 
-**Fix:** Implement actual routing logic or remove service.
+**Resolution:** Commented out Docker service with detailed documentation explaining:
+- LLMRouter is fully implemented as Python library in `backend/app/services/llm_router.py`
+- In-process usage (current) is more efficient than separate service
+- Provided clear instructions for future HTTP API exposure if needed
+- Links to implementation, usage, and future work steps in inline comments
 
 ---
 
@@ -370,7 +362,7 @@ export async function logout(): Promise<void> {
 | DEBT-014 | Open | - | - |
 | DEBT-015 | Open | - | - |
 | DEBT-016 | Open | - | - |
-| DEBT-017 | Open | - | - |
+| DEBT-017 | ✅ Closed | 2025-12-30 | Local changes |
 | DEBT-018 | Open | - | - |
 | DEBT-019 | Open | - | - |
 | DEBT-020 | Open | - | - |

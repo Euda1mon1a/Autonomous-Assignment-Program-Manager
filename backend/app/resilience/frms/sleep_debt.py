@@ -419,7 +419,7 @@ class SleepDebtModel:
         self,
         resident_id: UUID,
         planned_sleep_hours: list[float],
-        start_debt: Optional[float] = None,
+        start_debt: float | None = None,
     ) -> list[dict]:
         """
         Predict sleep debt trajectory over future days.

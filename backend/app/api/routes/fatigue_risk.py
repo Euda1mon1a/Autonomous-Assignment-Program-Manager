@@ -146,7 +146,7 @@ async def calculate_fatigue_score(
 )
 async def get_resident_fatigue_profile(
     resident_id: UUID,
-    target_time: Optional[datetime] = None,
+    target_time: datetime | None = None,
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -178,7 +178,7 @@ async def get_resident_fatigue_profile(
 )
 async def get_alertness_prediction(
     resident_id: UUID,
-    target_time: Optional[datetime] = None,
+    target_time: datetime | None = None,
     db: AsyncSession = Depends(get_db),
 ):
     """

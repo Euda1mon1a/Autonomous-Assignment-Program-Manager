@@ -172,7 +172,7 @@ class LLMAdvisor:
 
     def __init__(
         self,
-        llm_router: Optional[LLMRouter] = None,
+        llm_router: LLMRouter | None = None,
         model: str = "llama3.2",
         max_tokens: int = 1024,
         temperature: float = 0.3,

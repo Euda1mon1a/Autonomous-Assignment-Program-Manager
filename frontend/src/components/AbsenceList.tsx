@@ -124,15 +124,17 @@ export function AbsenceList({ absences, people, onEdit, onDelete }: AbsenceListP
                         onClick={() => onEdit(absence)}
                         className="text-blue-600 hover:text-blue-800 p-1 hover:bg-blue-50 rounded"
                         title="Edit absence"
+                        aria-label="Edit absence"
                       >
-                        <Pencil className="w-4 h-4" />
+                        <Pencil className="w-4 h-4" aria-hidden="true" />
                       </button>
                       <button
                         onClick={() => onDelete(absence)}
                         className="text-red-600 hover:text-red-800 p-1 hover:bg-red-50 rounded"
                         title="Delete absence"
+                        aria-label="Delete absence"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" aria-hidden="true" />
                       </button>
                     </div>
                   </td>

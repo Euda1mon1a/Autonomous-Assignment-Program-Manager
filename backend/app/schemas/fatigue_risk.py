@@ -24,7 +24,7 @@ class SamnPerelliAssessmentRequest(BaseModel):
     """Request to submit a Samn-Perelli fatigue assessment."""
 
     level: int = Field(..., ge=1, le=7, description="Samn-Perelli level (1-7)")
-    notes: Optional[str] = Field(None, max_length=1000)
+    notes: str | None = Field(None, max_length=1000)
 
 
 class SamnPerelliAssessmentResponse(BaseModel):
@@ -37,9 +37,9 @@ class SamnPerelliAssessmentResponse(BaseModel):
     assessed_at: datetime
     is_self_reported: bool
     safe_for_duty: bool
-    duty_restrictions: Optional[list[str]] = None
-    recommended_rest_hours: Optional[float] = None
-    notes: Optional[str] = None
+    duty_restrictions: list[str] | None = None
+    recommended_rest_hours: float | None = None
+    notes: str | None = None
 
 
 # =============================================================================
@@ -130,15 +130,15 @@ class HazardAlertResponse(BaseModel):
     hazard_level_name: str
     detected_at: datetime
     triggers: list[str]
-    alertness_score: Optional[float] = None
-    sleep_debt: Optional[float] = None
-    hours_awake: Optional[float] = None
-    samn_perelli: Optional[int] = None
+    alertness_score: float | None = None
+    sleep_debt: float | None = None
+    hours_awake: float | None = None
+    samn_perelli: int | None = None
     required_mitigations: list[str]
     recommended_mitigations: list[str]
     acgme_risk: bool
-    escalation_time: Optional[datetime] = None
-    notes: Optional[str] = None
+    escalation_time: datetime | None = None
+    notes: str | None = None
 
 
 class HazardScanResponse(BaseModel):
@@ -197,7 +197,7 @@ class SleepDebtTrajectoryRequest(BaseModel):
         ..., min_length=1, max_length=30,
         description="Planned sleep hours for each upcoming day"
     )
-    start_debt: Optional[float] = Field(None, ge=0)
+    start_debt: float | None = Field(None, ge=0)
 
 
 class SleepDebtTrajectoryResponse(BaseModel):
@@ -286,10 +286,10 @@ class TemporalConstraintsExport(BaseModel):
 class InterventionCreateRequest(BaseModel):
     """Request to record a fatigue intervention."""
 
-    alert_id: Optional[UUID] = None
+    alert_id: UUID | None = None
     intervention_type: str
-    description: Optional[str] = None
-    authorized_by: Optional[str] = None
+    description: str | None = None
+    authorized_by: str | None = None
     authorization_method: str = "manual"
 
 
@@ -297,8 +297,8 @@ class InterventionUpdateRequest(BaseModel):
     """Request to update intervention outcome."""
 
     outcome: str
-    outcome_notes: Optional[str] = None
-    post_alertness: Optional[float] = None
+    outcome_notes: str | None = None
+    post_alertness: float | None = None
 
 
 class InterventionResponse(BaseModel):
@@ -306,19 +306,19 @@ class InterventionResponse(BaseModel):
 
     id: str
     person_id: str
-    alert_id: Optional[str] = None
+    alert_id: str | None = None
     intervention_type: str
-    description: Optional[str] = None
-    authorized_by: Optional[str] = None
+    description: str | None = None
+    authorized_by: str | None = None
     authorization_method: str
     created_at: datetime
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    outcome: Optional[str] = None
-    outcome_notes: Optional[str] = None
-    pre_alertness: Optional[float] = None
-    post_alertness: Optional[float] = None
-    alertness_improvement: Optional[float] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    outcome: str | None = None
+    outcome_notes: str | None = None
+    pre_alertness: float | None = None
+    post_alertness: float | None = None
+    alertness_improvement: float | None = None
 
 
 # =============================================================================

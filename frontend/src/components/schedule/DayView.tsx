@@ -169,15 +169,17 @@ export function DayView({
             onClick={handlePrevDay}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             title="Previous day"
+            aria-label="Previous day"
           >
-            <ChevronLeft className="w-5 h-5 text-gray-600" />
+            <ChevronLeft className="w-5 h-5 text-gray-600" aria-hidden="true" />
           </button>
           <button
             onClick={handleNextDay}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             title="Next day"
+            aria-label="Next day"
           >
-            <ChevronRight className="w-5 h-5 text-gray-600" />
+            <ChevronRight className="w-5 h-5 text-gray-600" aria-hidden="true" />
           </button>
           <button
             onClick={handleToday}
@@ -217,8 +219,10 @@ export function DayView({
             onClick={() => setShowDatePicker(!showDatePicker)}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             title="Jump to date"
+            aria-label="Jump to date"
+            aria-expanded={showDatePicker}
           >
-            <Calendar className="w-5 h-5 text-gray-600" />
+            <Calendar className="w-5 h-5 text-gray-600" aria-hidden="true" />
           </button>
           {showDatePicker && (
             <div className="absolute right-0 top-full mt-2 p-2 bg-white border rounded-lg shadow-lg z-10">

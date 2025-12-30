@@ -43,18 +43,37 @@ from app.models.resilience import (
 )
 from app.models.user import User
 from app.schemas.resilience import (
+    AllostasisMetricsResponse,
+    AssignmentSuggestionsResponse,
+    BehavioralSignalResponse,
+    BlastRadiusReportResponse,
     CentralityScore,
+    CognitiveLoadAnalysis,
+    CognitiveSessionEndResponse,
+    CognitiveSessionStartResponse,
+    CognitiveSessionStatusResponse,
+    CollectivePreferenceResponse,
+    CompensationResponse,
     ComprehensiveReportResponse,
+    ContainmentSetResponse,
     CrisisActivationRequest,
     CrisisDeactivationRequest,
     CrisisResponse,
     CrisisSeverity,
+    CrossTrainingRecommendationsResponse,
+    DecisionCreateResponse,
+    DecisionQueueResponse,
+    DecisionResolveResponse,
     DefenseLevel,
+    EquilibriumReportResponse,
+    EquilibriumShiftResponse,
     EventHistoryItem,
     EventHistoryResponse,
+    FacultyPreferencesResponse,
     FallbackActivationRequest,
     FallbackActivationResponse,
     FallbackDeactivationRequest,
+    FallbackDeactivationResponse,
     FallbackInfo,
     FallbackListResponse,
     FallbackScenario,
@@ -63,14 +82,37 @@ from app.schemas.resilience import (
     HealthCheckResponse,
     HomeostasisCheckRequest,
     HomeostasisReport,
+    HomeostasisStatusResponse,
+    HubAnalysisResponse,
+    HubDistributionReportResponse,
+    HubProfileDetailResponse,
+    HubProtectionPlanCreateResponse,
+    HubStatusResponse,
     LoadSheddingLevel,
     LoadSheddingRequest,
     LoadSheddingStatus,
+    MTFComplianceResponse,
     OverallStatus,
+    PreferenceRecordResponse,
+    PrioritizedDecisionsResponse,
     RedundancyStatus,
+    StigmergyPatternsResponse,
+    StigmergyStatusResponse,
+    StressPredictionResponse,
+    StressResolveResponse,
+    StressResponse,
+    SwapNetworkResponse,
+    Tier2StatusResponse,
+    Tier3StatusResponse,
+    TopHubsResponse,
+    TrailEvaporationResponse,
     UtilizationLevel,
     UtilizationMetrics,
     VulnerabilityReportResponse,
+    ZoneAssignmentResponse,
+    ZoneIncidentResponse,
+    ZoneListResponse,
+    ZoneResponse,
 )
 from app.services.resilience.homeostasis import (
     get_homeostasis_service,
@@ -487,7 +529,7 @@ async def activate_fallback(
     )
 
 
-@router.post("/fallbacks/deactivate")
+@router.post("/fallbacks/deactivate", response_model=FallbackDeactivationResponse)
 async def deactivate_fallback(
     request: FallbackDeactivationRequest,
     db: Session = Depends(get_db),
@@ -973,7 +1015,7 @@ def _centrality_to_risk(score: float) -> str:
 # =============================================================================
 
 
-@router.get("/mtf-compliance")
+@router.get("/mtf-compliance", response_model=MTFComplianceResponse)
 async def get_mtf_compliance(
     check_circuit_breaker: bool = Query(
         True, description="Check circuit breaker status"
@@ -1151,7 +1193,7 @@ async def get_mtf_compliance(
 # =============================================================================
 
 
-@router.get("/tier2/homeostasis")
+@router.get("/tier2/homeostasis", response_model=HomeostasisStatusResponse)
 async def get_homeostasis_status(
     db: Session = Depends(get_db),
 ):
@@ -1262,7 +1304,7 @@ async def check_homeostasis(
     return homeostasis_service.check_homeostasis(request.metrics)
 
 
-@router.post("/tier2/allostasis/calculate")
+@router.post("/tier2/allostasis/calculate", response_model=AllostasisMetricsResponse)
 async def calculate_allostatic_load(
     entity_id: UUID,
     entity_type: str,
@@ -1311,7 +1353,7 @@ async def calculate_allostatic_load(
 # =============================================================================
 
 
-@router.get("/tier2/zones")
+@router.get("/tier2/zones", response_model=ZoneListResponse)
 async def list_zones(
     db: Session = Depends(get_db),
 ):
@@ -1350,7 +1392,7 @@ async def list_zones(
     return {"zones": zones, "total": len(zones)}
 
 
-@router.get("/tier2/zones/report")
+@router.get("/tier2/zones/report", response_model=BlastRadiusReportResponse)
 async def get_blast_radius_report(
     db: Session = Depends(get_db),
 ):
@@ -1410,7 +1452,7 @@ async def get_blast_radius_report(
     )
 
 
-@router.post("/tier2/zones")
+@router.post("/tier2/zones", response_model=ZoneResponse)
 async def create_zone(
     name: str,
     zone_type: str,
@@ -1466,7 +1508,7 @@ async def create_zone(
     )
 
 
-@router.post("/tier2/zones/{zone_id}/assign")
+@router.post("/tier2/zones/{zone_id}/assign", response_model=ZoneAssignmentResponse)
 async def assign_faculty_to_zone(
     zone_id: UUID,
     faculty_id: UUID,
@@ -1489,7 +1531,7 @@ async def assign_faculty_to_zone(
     return {"success": True, "message": f"Assigned {faculty_name} to zone as {role}"}
 
 
-@router.post("/tier2/zones/incident")
+@router.post("/tier2/zones/incident", response_model=ZoneIncidentResponse)
 async def record_zone_incident(
     zone_id: UUID,
     incident_type: str,
@@ -1535,7 +1577,7 @@ async def record_zone_incident(
     )
 
 
-@router.post("/tier2/zones/containment")
+@router.post("/tier2/zones/containment", response_model=ContainmentSetResponse)
 async def set_containment_level(
     level: str,
     reason: str,
@@ -1577,7 +1619,7 @@ async def set_containment_level(
 # =============================================================================
 
 
-@router.get("/tier2/equilibrium")
+@router.get("/tier2/equilibrium", response_model=EquilibriumReportResponse)
 async def get_equilibrium_report(
     db: Session = Depends(get_db),
 ):
@@ -1649,7 +1691,7 @@ async def get_equilibrium_report(
     )
 
 
-@router.post("/tier2/stress")
+@router.post("/tier2/stress", response_model=StressResponse)
 async def apply_stress(
     stress_type: str,
     description: str,
@@ -1711,7 +1753,7 @@ async def apply_stress(
     )
 
 
-@router.post("/tier2/stress/{stress_id}/resolve")
+@router.post("/tier2/stress/{stress_id}/resolve", response_model=StressResolveResponse)
 async def resolve_stress(
     stress_id: UUID,
     resolution_notes: str = "",
@@ -1727,7 +1769,7 @@ async def resolve_stress(
     return {"success": True, "stress_id": str(stress_id), "message": "Stress resolved"}
 
 
-@router.post("/tier2/compensation")
+@router.post("/tier2/compensation", response_model=CompensationResponse)
 async def initiate_compensation(
     stress_id: UUID,
     compensation_type: str,
@@ -1792,7 +1834,7 @@ async def initiate_compensation(
     )
 
 
-@router.post("/tier2/stress/predict")
+@router.post("/tier2/stress/predict", response_model=StressPredictionResponse)
 async def predict_stress_response(
     stress_type: str,
     magnitude: float,
@@ -1851,7 +1893,7 @@ async def predict_stress_response(
     )
 
 
-@router.post("/tier2/equilibrium/shift")
+@router.post("/tier2/equilibrium/shift", response_model=EquilibriumShiftResponse)
 async def calculate_equilibrium_shift(
     original_capacity: float,
     original_demand: float,
@@ -1897,7 +1939,7 @@ async def calculate_equilibrium_shift(
 # =============================================================================
 
 
-@router.get("/tier2/status")
+@router.get("/tier2/status", response_model=Tier2StatusResponse)
 async def get_tier2_status(
     db: Session = Depends(get_db),
 ):
@@ -1944,7 +1986,7 @@ async def get_tier2_status(
 # =============================================================================
 
 
-@router.post("/tier3/cognitive/session/start")
+@router.post("/tier3/cognitive/session/start", response_model=CognitiveSessionStartResponse)
 async def start_cognitive_session(
     user_id: UUID,
     db: Session = Depends(get_db),
@@ -1967,7 +2009,7 @@ async def start_cognitive_session(
     }
 
 
-@router.post("/tier3/cognitive/session/{session_id}/end")
+@router.post("/tier3/cognitive/session/{session_id}/end", response_model=CognitiveSessionEndResponse)
 async def end_cognitive_session(
     session_id: UUID,
     db: Session = Depends(get_db),
@@ -1980,7 +2022,7 @@ async def end_cognitive_session(
     return {"success": True, "session_id": str(session_id), "message": "Session ended"}
 
 
-@router.get("/tier3/cognitive/session/{session_id}/status")
+@router.get("/tier3/cognitive/session/{session_id}/status", response_model=CognitiveSessionStatusResponse)
 async def get_cognitive_session_status(
     session_id: UUID,
     db: Session = Depends(get_db),
@@ -2010,7 +2052,7 @@ async def get_cognitive_session_status(
     }
 
 
-@router.post("/tier3/cognitive/decision")
+@router.post("/tier3/cognitive/decision", response_model=DecisionCreateResponse)
 async def create_decision(
     category: str,
     complexity: str,
@@ -2077,7 +2119,7 @@ async def create_decision(
     }
 
 
-@router.post("/tier3/cognitive/decision/{decision_id}/resolve")
+@router.post("/tier3/cognitive/decision/{decision_id}/resolve", response_model=DecisionResolveResponse)
 async def resolve_decision(
     decision_id: UUID,
     session_id: UUID,
@@ -2103,7 +2145,7 @@ async def resolve_decision(
     }
 
 
-@router.get("/tier3/cognitive/queue")
+@router.get("/tier3/cognitive/queue", response_model=DecisionQueueResponse)
 async def get_decision_queue(
     db: Session = Depends(get_db),
 ):
@@ -2129,7 +2171,7 @@ async def get_decision_queue(
     }
 
 
-@router.get("/tier3/cognitive/decisions/prioritized")
+@router.get("/tier3/cognitive/decisions/prioritized", response_model=PrioritizedDecisionsResponse)
 async def get_prioritized_decisions(
     db: Session = Depends(get_db),
 ):
@@ -2154,7 +2196,7 @@ async def get_prioritized_decisions(
     }
 
 
-@router.post("/tier3/cognitive/schedule/analyze")
+@router.post("/tier3/cognitive/schedule/analyze", response_model=CognitiveLoadAnalysis)
 async def analyze_schedule_cognitive_load(
     schedule_changes: list[dict],
     db: Session = Depends(get_db),
@@ -2175,7 +2217,7 @@ async def analyze_schedule_cognitive_load(
 # =============================================================================
 
 
-@router.post("/tier3/stigmergy/preference")
+@router.post("/tier3/stigmergy/preference", response_model=PreferenceRecordResponse)
 async def record_preference(
     faculty_id: UUID,
     trail_type: str,
@@ -2223,7 +2265,7 @@ async def record_preference(
     }
 
 
-@router.post("/tier3/stigmergy/signal")
+@router.post("/tier3/stigmergy/signal", response_model=BehavioralSignalResponse)
 async def record_behavioral_signal(
     faculty_id: UUID,
     signal_type: str,
@@ -2267,7 +2309,7 @@ async def record_behavioral_signal(
     return {"success": True, "signal_type": signal_type, "faculty_id": str(faculty_id)}
 
 
-@router.get("/tier3/stigmergy/collective")
+@router.get("/tier3/stigmergy/collective", response_model=CollectivePreferenceResponse)
 async def get_collective_preference(
     slot_type: str | None = None,
     slot_id: UUID | None = None,
@@ -2297,7 +2339,7 @@ async def get_collective_preference(
     }
 
 
-@router.get("/tier3/stigmergy/faculty/{faculty_id}/preferences")
+@router.get("/tier3/stigmergy/faculty/{faculty_id}/preferences", response_model=FacultyPreferencesResponse)
 async def get_faculty_preferences(
     faculty_id: UUID,
     trail_type: str | None = None,
@@ -2338,7 +2380,7 @@ async def get_faculty_preferences(
     }
 
 
-@router.get("/tier3/stigmergy/swap-network")
+@router.get("/tier3/stigmergy/swap-network", response_model=SwapNetworkResponse)
 async def get_swap_network(
     db: Session = Depends(get_db),
 ):
@@ -2362,7 +2404,7 @@ async def get_swap_network(
     }
 
 
-@router.post("/tier3/stigmergy/suggest")
+@router.post("/tier3/stigmergy/suggest", response_model=AssignmentSuggestionsResponse)
 async def suggest_assignments(
     slot_id: UUID,
     slot_type: str,
@@ -2386,7 +2428,7 @@ async def suggest_assignments(
     }
 
 
-@router.get("/tier3/stigmergy/status")
+@router.get("/tier3/stigmergy/status", response_model=StigmergyStatusResponse)
 async def get_stigmergy_status(
     db: Session = Depends(get_db),
 ):
@@ -2409,7 +2451,7 @@ async def get_stigmergy_status(
     }
 
 
-@router.get("/tier3/stigmergy/patterns")
+@router.get("/tier3/stigmergy/patterns", response_model=StigmergyPatternsResponse)
 async def detect_preference_patterns(
     db: Session = Depends(get_db),
 ):
@@ -2420,7 +2462,7 @@ async def detect_preference_patterns(
     return patterns
 
 
-@router.post("/tier3/stigmergy/evaporate")
+@router.post("/tier3/stigmergy/evaporate", response_model=TrailEvaporationResponse)
 async def evaporate_trails(
     force: bool = False,
     db: Session = Depends(get_db),
@@ -2438,7 +2480,7 @@ async def evaporate_trails(
 # =============================================================================
 
 
-@router.post("/tier3/hubs/analyze")
+@router.post("/tier3/hubs/analyze", response_model=HubAnalysisResponse)
 async def analyze_hubs(
     start_date: date | None = None,
     end_date: date | None = None,
@@ -2533,7 +2575,7 @@ async def analyze_hubs(
     }
 
 
-@router.get("/tier3/hubs/top")
+@router.get("/tier3/hubs/top", response_model=TopHubsResponse)
 async def get_top_hubs(
     n: int = Query(5, ge=1, le=20),
     db: Session = Depends(get_db),
@@ -2557,7 +2599,7 @@ async def get_top_hubs(
     }
 
 
-@router.get("/tier3/hubs/{faculty_id}/profile")
+@router.get("/tier3/hubs/{faculty_id}/profile", response_model=HubProfileDetailResponse)
 async def get_hub_profile(
     faculty_id: UUID,
     db: Session = Depends(get_db),
@@ -2586,7 +2628,7 @@ async def get_hub_profile(
     }
 
 
-@router.get("/tier3/hubs/cross-training")
+@router.get("/tier3/hubs/cross-training", response_model=CrossTrainingRecommendationsResponse)
 async def get_cross_training_recommendations(
     db: Session = Depends(get_db),
 ):
@@ -2616,7 +2658,7 @@ async def get_cross_training_recommendations(
     }
 
 
-@router.post("/tier3/hubs/{faculty_id}/protect")
+@router.post("/tier3/hubs/{faculty_id}/protect", response_model=HubProtectionPlanCreateResponse)
 async def create_hub_protection_plan(
     faculty_id: UUID,
     period_start: date,
@@ -2659,7 +2701,7 @@ async def create_hub_protection_plan(
     }
 
 
-@router.get("/tier3/hubs/distribution")
+@router.get("/tier3/hubs/distribution", response_model=HubDistributionReportResponse)
 async def get_hub_distribution_report(
     db: Session = Depends(get_db),
 ):
@@ -2687,7 +2729,7 @@ async def get_hub_distribution_report(
     }
 
 
-@router.get("/tier3/hubs/status")
+@router.get("/tier3/hubs/status", response_model=HubStatusResponse)
 async def get_hub_status(
     db: Session = Depends(get_db),
 ):
@@ -2703,7 +2745,7 @@ async def get_hub_status(
 # =============================================================================
 
 
-@router.get("/tier3/status")
+@router.get("/tier3/status", response_model=Tier3StatusResponse)
 async def get_tier3_status(
     db: Session = Depends(get_db),
 ):

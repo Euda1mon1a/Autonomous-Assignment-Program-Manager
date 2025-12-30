@@ -28,9 +28,7 @@ class AudienceTokenRequest(BaseModel):
 
         if v not in VALID_AUDIENCES:
             valid_list = ", ".join(VALID_AUDIENCES.keys())
-            raise ValueError(
-                f"Invalid audience: {v}. Valid audiences: {valid_list}"
-            )
+            raise ValueError(f"Invalid audience: {v}. Valid audiences: {valid_list}")
         return v
 
 
@@ -80,6 +78,11 @@ class RevokeTokenRequest(BaseModel):
         ...,
         description="JWT ID of the token to revoke",
         min_length=32,
+    )
+    token: str | None = Field(
+        default=None,
+        description="The actual JWT token (optional, for ownership verification). "
+        "If provided, the token is decoded to verify the requester owns it.",
     )
     reason: str = Field(
         default="manual_revocation",

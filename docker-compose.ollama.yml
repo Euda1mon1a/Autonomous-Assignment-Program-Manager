@@ -96,49 +96,56 @@ services:
     networks:
       - app-network
 
-  # LLM Router - Intelligent Model Selection and Request Routing
-  # Routes requests to Ollama (local) or Claude (cloud) based on complexity
-  # PLACEHOLDER: Service spec defined, implementation pending
-  llm-router:
-    # TODO: Replace with actual image once router service is implemented
-    # Current plan: Python FastAPI service with routing logic
-    image: alpine:latest
-    container_name: residency-scheduler-llm-router
-    restart: unless-stopped
-
-    depends_on:
-      ollama:
-        condition: service_healthy
-
-    environment:
-      # Ollama connection (internal Docker network)
-      OLLAMA_URL: http://ollama:11434
-
-      # Anthropic API (optional, for hybrid routing)
-      # Leave empty to use Ollama-only mode
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-
-      # Default provider selection
-      # Options: "ollama", "anthropic", "auto" (auto-select based on complexity)
-      DEFAULT_PROVIDER: ${DEFAULT_PROVIDER:-ollama}
-
-      # Routing thresholds (for auto mode)
-      # Requests below complexity threshold use Ollama, above use Claude
-      COMPLEXITY_THRESHOLD: ${COMPLEXITY_THRESHOLD:-0.7}
-
-      # Model selection
-      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
-      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-5-20250929}
-
-    # Placeholder command - replace when router is implemented
-    command: ["tail", "-f", "/dev/null"]
-
-    networks:
-      - app-network
-
-    # Placeholder: No ports exposed yet (will expose HTTP API when implemented)
-    # ports:
-    #   - "127.0.0.1:8081:8081"
+  # LLM Router - DEPRECATED (In-Process Implementation)
+  #
+  # NOTE: LLM Router is fully implemented as a Python service in:
+  #   backend/app/services/llm_router.py
+  #
+  # This provides intelligent routing between Ollama (local) and Anthropic (cloud)
+  # with circuit breaker patterns, task classification, and fallback chains.
+  #
+  # The router is integrated directly into:
+  #   - Autonomous loop advisor (backend/app/autonomous/advisor.py)
+  #   - MCP server tools (scheduler_mcp/server.py)
+  #
+  # COMMENTED OUT because:
+  #   1. The Python library is fully functional and widely used
+  #   2. No HTTP API clients depend on external llm-router service
+  #   3. Running as separate service adds network overhead without benefit
+  #   4. In-process usage allows for efficient local-only (airgap) mode
+  #
+  # Future Work (DEBT-017):
+  # If you need to expose the router as an external HTTP API service:
+  #   1. Create FastAPI wrapper in backend/app/api/routes/llm_router.py
+  #   2. Expose endpoints for /generate, /classify, /health
+  #   3. Build Docker image from backend/Dockerfile with entrypoint
+  #   4. Uncomment service below with proper configuration
+  #   5. Update clients to use HTTP calls instead of direct imports
+  #
+  # Uncommented configuration (for future reference):
+  #
+  # llm-router:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #     target: api
+  #   container_name: residency-scheduler-llm-router
+  #   restart: unless-stopped
+  #   depends_on:
+  #     ollama:
+  #       condition: service_healthy
+  #   environment:
+  #     OLLAMA_URL: http://ollama:11434
+  #     ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+  #     DEFAULT_PROVIDER: ${DEFAULT_PROVIDER:-ollama}
+  #     COMPLEXITY_THRESHOLD: ${COMPLEXITY_THRESHOLD:-0.7}
+  #     OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
+  #     ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-5-20250929}
+  #   command: uvicorn app.api.main:app --host 0.0.0.0 --port 8081
+  #   ports:
+  #     - "127.0.0.1:8081:8081"
+  #   networks:
+  #     - app-network
 
 # Volumes
 volumes:

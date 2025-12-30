@@ -21,7 +21,7 @@ class ModelTier(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
     )
-    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class AgentEmbedding(Base):
@@ -36,7 +36,7 @@ class AgentEmbedding(Base):
     spec_hash: Mapped[str] = mapped_column(
         String, nullable=False
     )  # SHA256 of spec content
-    capabilities: Mapped[Optional[str]] = mapped_column(
+    capabilities: Mapped[str | None] = mapped_column(
         Text, nullable=True
     )  # Extracted capabilities text
     updated_at: Mapped[datetime] = mapped_column(
@@ -57,6 +57,6 @@ class TaskHistory(Base):
         String, nullable=False
     )  # haiku, sonnet, opus
     success: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    duration_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    session_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    session_id: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
