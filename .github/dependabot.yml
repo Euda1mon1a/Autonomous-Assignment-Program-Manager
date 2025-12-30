@@ -1,163 +1,78 @@
 # Dependabot Configuration
-# Automatically creates PRs to update dependencies
-# Documentation: https://docs.github.com/en/code-security/dependabot
+# SECURITY ALERTS ONLY - no automatic version bumps
+#
+# LESSON LEARNED: Automatic updates broke production:
+# - Python 3.12→3.14 broke OR-Tools (no wheel)
+# - Tailwind v4 broke CSS syntax
+# - React ecosystem updates need manual testing
+#
+# Manual updates preferred - we control the timing.
 
 version: 2
 updates:
-  # Python dependencies (backend)
+  # Python - security only
   - package-ecosystem: "pip"
     directory: "/backend"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "America/New_York"
-    open-pull-requests-limit: 10
-    reviewers:
-      - "Euda1mon1a"
+      interval: "daily"  # Check daily for security
+    open-pull-requests-limit: 5
     labels:
-      - "dependencies"
+      - "security"
       - "python"
-      - "backend"
     commit-message:
-      prefix: "deps(backend)"
-    groups:
-      # Group minor and patch updates together
-      python-minor-patch:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
-      # Security updates are always separate
+      prefix: "security(backend)"
+    # Only create PRs for security updates
     ignore:
-      # Ignore major version updates for critical dependencies (update manually)
-      - dependency-name: "sqlalchemy"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "fastapi"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "pydantic"
-        update-types: ["version-update:semver-major"]
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
 
-  # NPM dependencies (frontend)
+  # NPM - security only
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "America/New_York"
-    open-pull-requests-limit: 10
-    reviewers:
-      - "Euda1mon1a"
+      interval: "daily"
+    open-pull-requests-limit: 5
     labels:
-      - "dependencies"
+      - "security"
       - "javascript"
-      - "frontend"
     commit-message:
-      prefix: "deps(frontend)"
-    groups:
-      # Group React ecosystem updates
-      react-ecosystem:
-        patterns:
-          - "react"
-          - "react-dom"
-          - "@types/react*"
-        update-types:
-          - "minor"
-          - "patch"
-      # Group testing libraries
-      testing:
-        patterns:
-          - "@testing-library/*"
-          - "jest*"
-          - "@playwright/*"
-        update-types:
-          - "minor"
-          - "patch"
-      # Group development tools
-      dev-tools:
-        patterns:
-          - "eslint*"
-          - "typescript"
-          - "@types/*"
-          - "prettier*"
-        update-types:
-          - "minor"
-          - "patch"
+      prefix: "security(frontend)"
     ignore:
-      # Ignore major version updates for Next.js (update manually)
-      - dependency-name: "next"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "react"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "react-dom"
-        update-types: ["version-update:semver-major"]
-      # Ignore ESLint major updates - Next.js 14 doesn't support ESLint 9
-      - dependency-name: "eslint"
-        update-types: ["version-update:semver-major"]
-      # Ignore Jest major updates - require manual testing validation
-      - dependency-name: "jest"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "jest-environment-jsdom"
-        update-types: ["version-update:semver-major"]
-      # LESSON LEARNED: Tailwind v4 has breaking CSS syntax changes
-      # Only allow patch updates for CSS tooling
-      - dependency-name: "tailwindcss"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
-      - dependency-name: "postcss"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "autoprefixer"
-        update-types: ["version-update:semver-major"]
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
 
-  # GitHub Actions
+  # GitHub Actions - security only
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "America/New_York"
-    open-pull-requests-limit: 5
+      interval: "daily"
+    open-pull-requests-limit: 3
     labels:
-      - "dependencies"
-      - "github-actions"
+      - "security"
       - "ci-cd"
     commit-message:
-      prefix: "ci"
-    groups:
-      github-actions:
-        patterns:
-          - "*"
+      prefix: "security(ci)"
+    ignore:
+      - dependency-name: "*"
         update-types:
-          - "minor"
-          - "patch"
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
 
-  # Docker (if using Docker base images)
+  # Docker - disabled (manual only)
+  # Python base image updates have broken builds twice
   - package-ecosystem: "docker"
     directory: "/backend"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "America/New_York"
+      interval: "monthly"  # Rarely check
+    open-pull-requests-limit: 0  # Never open PRs
     labels:
-      - "dependencies"
       - "docker"
-      - "backend"
-    commit-message:
-      prefix: "deps(docker)"
-
-  - package-ecosystem: "docker"
-    directory: "/frontend"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "America/New_York"
-    labels:
-      - "dependencies"
-      - "docker"
-      - "frontend"
-    commit-message:
-      prefix: "deps(docker)"
+    ignore:
+      - dependency-name: "*"
