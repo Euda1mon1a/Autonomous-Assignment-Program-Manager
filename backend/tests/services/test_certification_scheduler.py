@@ -117,7 +117,11 @@ class TestCertificationSchedulerStart:
             patch.dict("os.environ", {"CERT_CHECK_ENABLED": "true"}),
             patch.dict(
                 "sys.modules",
-                {"apscheduler": None, "apscheduler.schedulers": None, "apscheduler.schedulers.background": None},
+                {
+                    "apscheduler": None,
+                    "apscheduler.schedulers": None,
+                    "apscheduler.schedulers.background": None,
+                },
             ),
         ):
             # Need to reload module to pick up the missing import
