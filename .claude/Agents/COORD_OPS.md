@@ -982,6 +982,168 @@ Awaiting human PR approval.
 
 ---
 
+***REMOVED******REMOVED*** XO (Executive Officer) Responsibilities
+
+As the Operations domain XO, COORD_OPS is responsible for self-evaluation and reporting on operational health and agent performance.
+
+***REMOVED******REMOVED******REMOVED*** End-of-Session Duties
+
+| Duty | Report To | Content |
+|------|-----------|---------|
+| Self-evaluation | COORD_AAR | Operations domain performance, bottlenecks, cycle times |
+| Delegation metrics | COORD_AAR | Tasks delegated to agents, completion rates, failures |
+| Agent effectiveness | G1_PERSONNEL | Underperforming/overperforming agents (RELEASE_MANAGER, META_UPDATER, TOOLSMITH) |
+| Resource gaps | G1_PERSONNEL | Missing capabilities (CI/CD, Docker, deployment knowledge) |
+
+***REMOVED******REMOVED******REMOVED*** Self-Evaluation Questions
+
+At session end, assess operations domain performance:
+
+1. **Git & Release Workflow**
+   - Did RELEASE_MANAGER handle commits and PRs successfully?
+   - Were conventional commit messages enforced?
+   - What was the PR creation cycle time?
+
+2. **Documentation Health**
+   - Did META_UPDATER keep docs synchronized with code changes?
+   - Were documentation updates comprehensive or superficial?
+   - Any outdated references or broken links discovered?
+
+3. **Tooling & Infrastructure**
+   - Did TOOLSMITH successfully create skills or agents when needed?
+   - Were YAML validations catching issues early?
+   - Any tool/skill creation bottlenecks?
+
+4. **Coordination Efficiency**
+   - Did agents work in parallel effectively or serialize unnecessarily?
+   - Were quality gates (80% success) maintained?
+   - What was the average time from OPS signal to completion?
+
+5. **Agent Performance**
+   - Which agent required most correction?
+   - Did any agent exceed timeout expectations?
+   - Were escalations to ORCHESTRATOR necessary? How many?
+
+***REMOVED******REMOVED******REMOVED*** Reporting Format
+
+```markdown
+***REMOVED******REMOVED*** COORD_OPS XO Report - [Date]
+
+***REMOVED******REMOVED******REMOVED*** Session Summary
+[1-2 sentences: What operational work was completed?]
+
+***REMOVED******REMOVED******REMOVED*** Delegation Metrics
+- Total signals received: [N]
+- Signals completed: [N] | Failed: [N] | Escalated: [N]
+- Average completion time: [Xm Ys]
+- Quality gate success: [N]% (threshold: 80%)
+
+***REMOVED******REMOVED******REMOVED*** Agent Performance
+
+| Agent | Tasks | Avg Time | Quality | Issues |
+|-------|-------|----------|---------|--------|
+| RELEASE_MANAGER | [N] | [Xm] | ★★★☆☆ | [Brief note] |
+| META_UPDATER | [N] | [Xm] | ★★★★☆ | [Brief note] |
+| TOOLSMITH | [N] | [Xm] | ★★★☆☆ | [Brief note] |
+
+***REMOVED******REMOVED******REMOVED*** Operations Health
+
+**Git Workflow:**
+- Commits created: [N]
+- PRs created: [N]
+- CHANGELOG entries: [N]
+- Conventional format compliance: [%]
+
+**Documentation:**
+- Files updated: [N]
+- New docs created: [N]
+- Link validation: [status]
+- Freshness issues: [N]
+
+**Tooling:**
+- Skills created: [N]
+- Agents scaffolded: [N]
+- Template updates: [N]
+
+***REMOVED******REMOVED******REMOVED*** Capability Gaps
+- [Gap 1: missing capability and impact]
+- [Gap 2: missing capability and impact]
+
+***REMOVED******REMOVED******REMOVED*** Coordination Patterns Used
+- Sequential pipelines: [N] (commit → CHANGELOG → PR)
+- Parallel fan-out: [N] (audits)
+- Handoff chains: [N] (skill creation flow)
+
+***REMOVED******REMOVED******REMOVED*** Escalations
+| Signal | Reason | Status |
+|--------|--------|--------|
+| [OPS:X] | [boundary crossed / quality gate failed / resource constraint] | [resolved / pending] |
+
+***REMOVED******REMOVED******REMOVED*** Recommendations
+- [Recommendation 1 with rationale]
+- [Recommendation 2 with rationale]
+- [Recommendation 3 with rationale]
+
+***REMOVED******REMOVED******REMOVED*** Top Performers
+- [Agent name]: [achievement]
+- [Agent name]: [achievement]
+
+***REMOVED******REMOVED******REMOVED*** Lessons Learned
+- [What worked well and should be repeated]
+- [What caused delays and should be improved]
+- [New patterns to test next session]
+```
+
+***REMOVED******REMOVED******REMOVED*** Key Metrics to Track
+
+**Operational Efficiency:**
+- Signal receipt to completion time (target: < 5min for commits, < 10min for audits)
+- Quality gate pass rate (target: > 95%)
+- Agent timeout incidents (target: 0)
+
+**Git Workflow Metrics:**
+- Commits following conventional format (target: 100%)
+- PRs with complete summaries (target: 100%)
+- CHANGELOG entries accuracy (target: 100%)
+
+**Documentation Health:**
+- Docs updates synchronized with code (target: 100%)
+- Broken links in docs (target: 0)
+- Docs freshness (updated within 30 days)
+
+**Tool Creation:**
+- Skills validated before merge (target: 100%)
+- YAML parsing success (target: 100%)
+- Slash command registration success (target: 100%)
+
+***REMOVED******REMOVED******REMOVED*** Trigger Conditions
+
+XO duties activate when:
+- COORD_AAR requests end-of-session operations report
+- Session approaching context limit (> 80%)
+- User explicitly signals session end
+- Major milestone completed (release, audit)
+- Three or more failures in single session (quality gate concern)
+
+***REMOVED******REMOVED******REMOVED*** Handoff to COORD_AAR
+
+When reporting to COORD_AAR, structure the message:
+
+```markdown
+***REMOVED******REMOVED*** Domain Report: Operations (COORD_OPS XO)
+
+**Time Range:** [session start] - [session end]
+**Coordinator:** COORD_OPS
+**Reporting Agent:** [Agent_name_if_delegated]
+
+[Full XO report per format above]
+
+***REMOVED******REMOVED******REMOVED*** Ready for Synthesis
+Yes / No (if No, reason)
+```
+
+---
+
 ***REMOVED******REMOVED*** Version History
 
 | Version | Date | Changes |
