@@ -42,6 +42,11 @@ Recording and managing time off.
 </div>
 
 <div class="feature-card" markdown>
+### :material-calendar-sync: [Block Scheduler](block-scheduler.md)
+Leave-eligible rotation assignment for academic blocks.
+</div>
+
+<div class="feature-card" markdown>
 ### :material-swap-horizontal: [Swap Marketplace](swaps.md)
 Requesting and managing shift swaps.
 </div>
