@@ -1169,11 +1169,69 @@ The system uses embeddings to learn optimal agent/model combinations:
 
 See [Agent Model Selection](AGENT_MODEL_SELECTION.md) for full documentation.
 
+***REMOVED******REMOVED******REMOVED*** Agent Skill Matcher Service (NEW)
+
+The `AgentMatcher` service (`backend/app/services/agent_matcher.py`) provides ML-powered agent selection:
+
+```python
+from app.services.agent_matcher import match_task_to_agent, get_agent_matcher
+
+***REMOVED*** Simple usage - get best agent for a task
+agent, model = match_task_to_agent("Validate ACGME compliance for schedule")
+***REMOVED*** Returns: ("ACGME_VALIDATOR", "haiku")
+
+***REMOVED*** Advanced usage - get multiple matches with explanations
+matcher = get_agent_matcher()
+explanation = matcher.explain_match("Generate a compliant resident schedule")
+***REMOVED*** Returns: {
+***REMOVED***   "task": "Generate a compliant resident schedule",
+***REMOVED***   "matches": [{"agent": "SCHEDULER", "score": 0.82, ...}, ...],
+***REMOVED***   "recommendation": "SCHEDULER",
+***REMOVED***   "confidence": "high"
+***REMOVED*** }
+```
+
+**How It Works:**
+1. Loads agent specifications from `.claude/Agents/*.md`
+2. Extracts capabilities from Charter and Primary Responsibilities sections
+3. Pre-computes 384-dim embeddings for each agent using sentence-transformers
+4. Matches incoming task descriptions via cosine similarity
+5. Returns ranked list of agents with model tier recommendations
+
+**Model Tier Recommendations by Archetype:**
+| Archetype | Model | Rationale |
+|-----------|-------|-----------|
+| Researcher | sonnet | Thorough analysis needs |
+| Validator | haiku | Rule-based checks, fast |
+| Generator | sonnet | Creative output needs |
+| Critic | sonnet | Adversarial analysis |
+| Synthesizer | opus | Complex integration |
+
+---
+
+***REMOVED******REMOVED*** ML Research Roadmap
+
+For comprehensive ML enhancement opportunities across the PAI system, see:
+**[ML Research for PAI Advancement](../planning/ML_RESEARCH_PAI_ADVANCEMENT.md)**
+
+This document outlines 100 tasks across 10 research areas:
+- Agent Meta-Learning
+- Burnout Prediction & Prevention
+- Solver Intelligence
+- Preference Learning & Personalization
+- ACGME Compliance Intelligence
+- Swap Matching & Optimization
+- Resilience & Network Analysis
+- Performance & Fatigue Modeling
+- Document & Knowledge Intelligence
+- Autonomous Agent Evolution
+
 ---
 
 ***REMOVED******REMOVED*** Related Documentation
 
 - [Agent Model Selection](AGENT_MODEL_SELECTION.md) - Vector-based model selection
+- [ML Research for PAI Advancement](../planning/ML_RESEARCH_PAI_ADVANCEMENT.md) - 100-task ML roadmap
 - [AI Agent User Guide](../guides/AI_AGENT_USER_GUIDE.md) - Complete agent setup
 - [AI Rules of Engagement](AI_RULES_OF_ENGAGEMENT.md) - Git and workflow rules
 - [CLAUDE.md](../../CLAUDE.md) - Project guidelines
