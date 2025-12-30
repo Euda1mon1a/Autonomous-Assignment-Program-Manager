@@ -3,7 +3,7 @@
 > **Role:** G-4 Staff - Context and Logistics Management
 > **Authority Level:** Execute with Safeguards
 > **Archetype:** Synthesizer
-> **Status:** FUTURE (Placeholder spec - implementation blocked on pgvector)
+> **Status:** Active
 > **Model Tier:** sonnet
 
 ---
@@ -168,13 +168,18 @@ This agent is responsible for maintaining semantic understanding of session hist
    - Provide summary of new context
 ```
 
-**Current Workaround (Without pgvector):**
+**Infrastructure Available:**
+- pgvector 0.8.1 active on PostgreSQL
+- `rag_documents` table with HNSW/IVFFlat indexes
+- RAG service at `backend/app/services/rag_service.py`
+- Init script at `scripts/init_rag_embeddings.py`
+
+**Fallback (if vector DB unavailable):**
 - Store context summaries in markdown files
 - Use filename patterns for retrieval
-- Example: `docs/session-notes/SESSION_015_DECISIONS.md`
-- Manually update cross-references
+- Example: `.claude/Scratchpad/ORCHESTRATOR_ADVISOR_NOTES.md`
 
-### Workflow 2: Retrieve Relevant Context (Planned)
+### Workflow 2: Retrieve Relevant Context (Active)
 
 **Trigger:** Agent queries "What have we decided about X?"
 
@@ -210,7 +215,7 @@ This agent is responsible for maintaining semantic understanding of session hist
    - Identify frequently accessed context
 ```
 
-### Workflow 3: Memory Consolidation (Planned)
+### Workflow 3: Memory Consolidation (Active)
 
 **Trigger:** Regularly scheduled (daily) or on-demand
 
@@ -246,7 +251,7 @@ This agent is responsible for maintaining semantic understanding of session hist
    - Flagged contradictions or issues
 ```
 
-### Workflow 4: Context Optimization (Planned)
+### Workflow 4: Context Optimization (Active)
 
 **Trigger:** Context window usage monitoring or agent request
 
