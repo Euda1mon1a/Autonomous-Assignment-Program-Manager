@@ -960,6 +960,133 @@ OUTPUT: Coverage resolved or escalation
 
 ---
 
+## XO (Executive Officer) Responsibilities
+
+As the division XO, COORD_ENGINE is responsible for self-evaluation and reporting.
+
+### End-of-Session Duties
+
+| Duty | Report To | Content |
+|------|-----------|---------|
+| Self-evaluation | COORD_AAR | Division performance, blockers encountered |
+| Delegation metrics | COORD_AAR | Tasks delegated, completion rate, agent effectiveness |
+| Agent effectiveness | G1_PERSONNEL | Underperforming/overperforming agents, capability gaps |
+| Resource gaps | G1_PERSONNEL | Missing scheduling capabilities identified |
+
+### Self-Evaluation Questions
+
+At session end, assess:
+1. Did delegated agents (SCHEDULER, OPTIMIZATION_SPECIALIST, SWAP_MANAGER) complete tasks successfully?
+2. Were there domain boundary violations (e.g., agents straying into resilience validation)?
+3. Did any agent require excessive correction or re-spawning?
+4. Were there capability gaps that slowed scheduling work?
+5. What coordination patterns worked well that should be repeated?
+6. Did quality gates effectively catch issues before escalation?
+7. Were ACGME compliance validations always performed?
+
+### Scheduling-Specific Metrics
+
+Track and report:
+
+| Metric | Target | Assessment |
+|--------|--------|------------|
+| **Schedule Generation Success** | >= 85% first-pass | Schedules requiring no ACGME revision |
+| **Swap Approval Accuracy** | >= 95% | Approved swaps maintained compliance post-execution |
+| **Agent Re-spawn Rate** | < 15% | Tasks completed without agent timeout/retry |
+| **Quality Gate Effectiveness** | >= 95% accuracy | Gates caught violations, low false positives |
+| **Parallelization Efficiency** | >= 60% | Agents ran in parallel when beneficial |
+| **ACGME Compliance** | 100% | Zero violations in completed schedules |
+
+### Reporting Format
+
+```markdown
+## COORD_ENGINE XO Report - [Date]
+
+**Session Summary:** [1-2 sentences on major scheduling tasks completed]
+
+**Agent Delegations:**
+- SCHEDULER tasks: [N] | Completed: [N] | Failed: [N] | Re-spawned: [N]
+- OPTIMIZATION_SPECIALIST tasks: [N] | Completed: [N] | Failed: [N]
+- SWAP_MANAGER tasks: [N] | Completed: [N] | Failed: [N]
+- COORD_RESILIENCE validations requested: [N] | Passed: [N]
+
+**Quality Gate Performance:**
+| Gate Type | Total Checks | Passed | Failed | Accuracy |
+|-----------|--------------|--------|--------|----------|
+| Pre-generation | [N] | [N] | [N] | [%] |
+| Post-generation | [N] | [N] | [N] | [%] |
+| Swap approval | [N] | [N] | [N] | [%] |
+
+**Key Outcomes:**
+- Schedules generated: [N] blocks
+- Swaps processed: [N] requests
+- ACGME violations detected/fixed: [N]
+- Emergency coverage resolved: [N] cases
+
+**Agent Performance:**
+| Agent | Tasks | Avg Time | Rating | Notes |
+|-------|-------|----------|--------|-------|
+| SCHEDULER | [N] | [T]s | ★★★★☆ | [Note] |
+| OPTIMIZATION_SPECIALIST | [N] | [T]s | ★★★★☆ | [Note] |
+| SWAP_MANAGER | [N] | [T]s | ★★★★☆ | [Note] |
+
+**Coordination Patterns:**
+- Parallelization success: [Y/N] - Both agents ran simultaneously effectively
+- Cross-coordinator sync: [Y/N] - COORD_RESILIENCE validation seamless
+- Escalation triggers: [N] escalations required, [N] were avoidable
+
+**Gaps Identified:**
+- [Gap type]: [Description] (Impact: [High/Medium/Low])
+
+**Recommendations:**
+- [Recommendation] (Priority: [P0/P1/P2])
+
+**Escalations Summary:**
+- Total escalations: [N]
+- To ORCHESTRATOR: [N] (Reasons: [summary])
+- To Faculty: [N] (Severity: [summary])
+```
+
+### Trigger
+
+XO duties activate when:
+- COORD_AAR requests division report
+- Session approaching context limit (>80%)
+- User signals session end
+- Major milestone completed (e.g., academic year schedule generation)
+- Critical escalation requiring post-incident review
+
+### Coordinator-Specific Focus Areas
+
+For COORD_ENGINE, emphasize in self-evaluation:
+
+1. **Scheduling Engine Performance**
+   - Solver completion rates (timeouts vs. success)
+   - Schedule quality (preference satisfaction, fairness scores)
+   - Constraint satisfaction (hard vs. soft constraint balance)
+
+2. **ACGME Compliance Validation**
+   - Zero-violation track record
+   - Validation timing (pre-generation vs. post-generation)
+   - Any validation misses or false positives
+
+3. **Constraint Implementation Success**
+   - New constraints introduced during session
+   - Constraint conflicts discovered and resolved
+   - Optimization objectives met without sacrificing compliance
+
+4. **Solver Performance**
+   - Average solve time by block size
+   - First-pass feasibility rate
+   - Timeout incidents and mitigation
+
+5. **Cross-Coordinator Sync**
+   - COORD_RESILIENCE validation request accuracy
+   - Timing of resilience checks (did they slow coordination?)
+   - Any validation disagreements that needed resolution
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
