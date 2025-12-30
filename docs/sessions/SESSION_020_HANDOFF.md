@@ -161,4 +161,75 @@ This session honored. No HISTORIAN narrative required - straightforward night op
 
 *Session 020 Complete. MVP verification achieved. All solvers operational. Resilience framework substantially improved.*
 
+---
+
+## Addendum: Full-Stack MVP Review (2025-12-30)
+
+Following the overnight MVP verification, a comprehensive 16-layer full-stack inspection was conducted.
+
+### Review Scope
+
+16 parallel exploration agents inspected:
+1. Frontend Architecture
+2. Frontend Components (139 total)
+3. State Management (TanStack Query + Context)
+4. Backend Middleware (9-layer stack)
+5. Database/ORM (38 models, 197 relationships)
+6. Authentication (JWT+httpOnly, bcrypt, RBAC)
+7. Docker/Deployment
+8. CI/CD Pipeline (13 workflows)
+9. MCP Server (81 tools)
+10. Celery Tasks (24 tasks, 6 queues)
+11. WebSocket/Real-time
+12. API Routes (548 endpoints)
+13. Frontend-Backend Integration
+14. Environment Configuration (102 env vars)
+15. Error Handling (RFC 7807 compliant)
+16. Performance (caching, N+1 analysis)
+
+### Overall Score: 86/100 - Production Ready
+
+### Critical Findings (2 issues)
+
+1. **Celery Worker Missing Queues** (P0)
+   - Docker worker only listens to 3/6 queues
+   - Metrics, exports, security tasks will never execute
+
+2. **Security TODOs in audience_tokens.py** (P0)
+   - Line 120: Role-based audience restrictions missing
+   - Line 198: Token ownership verification incomplete
+
+### High Priority Findings (6 issues)
+
+- Frontend env var mismatch (`REACT_APP_API_URL` vs `NEXT_PUBLIC_API_URL`)
+- Missing database indexes on Block.date, Assignment.person_id
+- Admin users page API not wired (4 TODOs)
+- Resilience API response model coverage (22%)
+- Token refresh not implemented in frontend
+- Hardcoded API URLs in frontend
+
+### Layer Scores
+
+| Layer | Score | Status |
+|-------|-------|--------|
+| Frontend Architecture | 92/100 | Excellent |
+| Backend Middleware | 94/100 | Excellent |
+| Authentication | 96/100 | Excellent |
+| Database/ORM | 85/100 | Good |
+| Docker/Deploy | 78/100 | Good |
+| CI/CD | 82/100 | Good |
+| Error Handling | 92/100 | Excellent |
+
+### Documentation Created
+
+- `docs/planning/MVP_STATUS_REPORT.md` - Full 16-layer analysis
+- `docs/planning/TECHNICAL_DEBT.md` - 21 tracked issues by priority
+- `HUMAN_TODO.md` - Updated with critical/high priority items
+
+### Verdict
+
+**MVP is production-ready** pending resolution of 2 critical issues (Celery queues + security TODOs).
+
+---
+
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
