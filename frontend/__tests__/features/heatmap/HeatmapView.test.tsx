@@ -10,28 +10,37 @@ import { heatmapMockFactories } from './heatmap-mocks';
 import { createWrapper } from '../../utils/test-utils';
 
 // Mock react-plotly.js to avoid SSR issues and simplify testing
-const MockPlot = jest.fn(({ data, layout, config, onClick, style }) => (
-  <div
-    data-testid="plotly-plot"
-    data-plot-data={JSON.stringify(data)}
-    data-plot-layout={JSON.stringify(layout)}
-    data-plot-config={JSON.stringify(config)}
-    onClick={onClick}
-    style={style}
-  >
-    Plotly Mock
-  </div>
-));
-
 jest.mock('react-plotly.js', () => ({
   __esModule: true,
-  default: MockPlot,
+  default: jest.fn(({ data, layout, config, onClick, style }: any) => {
+    const React = require('react');
+    return React.createElement('div', {
+      'data-testid': 'plotly-plot',
+      'data-plot-data': JSON.stringify(data),
+      'data-plot-layout': JSON.stringify(layout),
+      'data-plot-config': JSON.stringify(config),
+      onClick,
+      style,
+    }, 'Plotly Mock');
+  }),
 }));
 
-// Mock dynamic import for next/dynamic
+// Mock dynamic import for next/dynamic - returns the mocked Plot component
 jest.mock('next/dynamic', () => ({
   __esModule: true,
-  default: () => MockPlot,
+  default: () => {
+    const React = require('react');
+    return jest.fn(({ data, layout, config, onClick, style }: any) =>
+      React.createElement('div', {
+        'data-testid': 'plotly-plot',
+        'data-plot-data': JSON.stringify(data),
+        'data-plot-layout': JSON.stringify(layout),
+        'data-plot-config': JSON.stringify(config),
+        onClick,
+        style,
+      }, 'Plotly Mock')
+    );
+  },
 }));
 
 describe('HeatmapView', () => {
