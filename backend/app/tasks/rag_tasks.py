@@ -30,6 +30,8 @@ DOC_TYPE_MAP = {
     "military-specific.md": "military_specific",
     "resilience-concepts.md": "resilience_concepts",
     "user-guide-faq.md": "user_guide_faq",
+    "session-learnings.md": "session_learnings",
+    "session-protocols.md": "session_protocols",
 }
 
 
