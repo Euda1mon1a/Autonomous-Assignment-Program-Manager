@@ -678,10 +678,125 @@ OUTPUT: Burnout risk assessment + R_t calculation
 
 ---
 
+## How to Delegate to This Agent
+
+Spawned agents have **isolated context** - they do NOT inherit parent conversation history. When delegating to RESILIENCE_ENGINEER, you MUST provide explicit context.
+
+### Required Context
+
+When spawning RESILIENCE_ENGINEER, always include:
+
+1. **Task Specification:**
+   - Clear description of the resilience analysis needed (e.g., "Run N-1 contingency for Block 10")
+   - Time period of interest (specific dates or block numbers)
+   - Urgency level (routine monitoring vs. emergency response)
+
+2. **Current Schedule State:**
+   - Block or date range being analyzed
+   - Number of residents currently assigned
+   - Any known absences (TDY, leave, medical)
+   - Current health score if available
+
+3. **Triggering Event (if applicable):**
+   - What triggered this resilience check (alert, user request, scheduled run)
+   - Any preceding health score readings
+   - Known constraints or limitations
+
+### Files to Reference
+
+Provide paths or instruct the agent to read these key files:
+
+| File | Purpose |
+|------|---------|
+| `backend/app/resilience/service.py` | Main resilience service with health score calculation |
+| `backend/app/resilience/contingency.py` | N-1/N-2 contingency simulation logic |
+| `backend/app/resilience/utilization.py` | Utilization calculations (80% threshold) |
+| `backend/app/resilience/burnout_epidemiology.py` | SIR model and R_t calculation |
+| `backend/app/resilience/defense_in_depth.py` | Threat level classification (GREEN to BLACK) |
+| `backend/app/resilience/spc_monitoring.py` | SPC charts and Western Electric rules |
+| `backend/app/resilience/erlang_coverage.py` | Queuing analysis for specialist staffing |
+| `backend/app/resilience/unified_critical_index.py` | Unified health score aggregation |
+| `.claude/skills/RESILIENCE_SCORING/Reference/historical-resilience.md` | Historical benchmarks and baselines |
+| `docs/architecture/cross-disciplinary-resilience.md` | Resilience framework concepts |
+
+### MCP Tools Available
+
+The agent has access to 13+ resilience MCP tools (see `mcp-server/RESILIENCE_MCP_INTEGRATION.md`):
+- `run_contingency_analysis_resilience_tool` - N-1/N-2 simulations
+- `benchmark_resilience` - Performance benchmarking
+- Circuit breaker tools for emergency response
+- Composite resilience tools for multi-pattern analysis
+
+### Output Format
+
+RESILIENCE_ENGINEER will return structured reports in this format:
+
+```markdown
+## Resilience Analysis Report
+
+**Date:** YYYY-MM-DD
+**Health Score:** X.XX (Threat Level: GREEN/YELLOW/ORANGE/RED/BLACK)
+**Period Analyzed:** [Block/Date Range]
+
+### Summary
+[1-2 sentence executive summary]
+
+### Key Metrics
+- Utilization: XX% (target: <80%)
+- N-1 Pass Rate: XX%
+- N-2 Pass Rate: XX%
+- SPOFs Identified: N residents
+
+### Findings
+[Detailed analysis]
+
+### Recommendations (Prioritized P0-P3)
+1. [Action + owner + timeline]
+
+### Escalation (if needed)
+[Who must be notified and by when]
+```
+
+### Example Delegation Prompt
+
+```
+@RESILIENCE_ENGINEER
+
+**Task:** Run N-1 contingency analysis for Block 10 (Dec 30 - Jan 12)
+
+**Context:**
+- 24 residents currently assigned
+- 2 residents on approved leave (PGY2-03, PGY3-01)
+- Current health score: 0.72 (YELLOW)
+- Trigger: Routine weekly analysis
+
+**Reference Files:**
+- Read `backend/app/resilience/contingency.py` for simulation logic
+- Check `.claude/skills/RESILIENCE_SCORING/Reference/historical-resilience.md` for baseline comparison
+
+**Expected Output:**
+- Full N-1 contingency report
+- List of SPOFs (Single Points of Failure)
+- Recommendations if health score < 0.80
+```
+
+### Common Delegation Scenarios
+
+| Scenario | Key Context to Provide |
+|----------|----------------------|
+| **Routine N-1 Analysis** | Block/dates, resident count, current health score |
+| **Emergency Response** | Triggering event, affected residents, current threat level |
+| **Stress Test Request** | Scenario type (epidemic, TDY, holiday), stress parameters |
+| **Burnout Monitoring** | Recent health score trend, utilization data, R_t if known |
+| **Capacity Planning** | Service type, arrival rate, current staffing levels |
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1 | 2025-12-29 | Added "How to Delegate to This Agent" section for context isolation |
 | 1.0 | 2025-12-26 | Initial RESILIENCE_ENGINEER agent specification |
 
 ---

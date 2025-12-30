@@ -83,6 +83,116 @@ The COORD_PLATFORM coordinator is responsible for all backend infrastructure ope
 
 ---
 
+## How to Delegate to This Agent
+
+> **CRITICAL:** Spawned agents have isolated context - they do NOT inherit parent conversation history. All required context must be explicitly passed.
+
+### Required Context (From ORCHESTRATOR)
+
+When spawning COORD_PLATFORM, the ORCHESTRATOR **must provide**:
+
+| Context Item | Description | Example |
+|--------------|-------------|---------|
+| **Signal Type** | The broadcast signal being sent | `PLATFORM:SERVICE`, `PLATFORM:MIGRATION` |
+| **Task Description** | Clear description of what needs to be done | "Implement swap auto-matcher service with eligibility rules" |
+| **Affected Files** | Explicit list of files to create/modify | `backend/app/services/swap_matcher.py`, `backend/app/schemas/swap.py` |
+| **Related Models** | SQLAlchemy models involved in the task | `Person`, `Assignment`, `SwapRequest` |
+| **Constraints** | ACGME rules, security requirements, performance targets | "Must maintain 80-hour rule compliance" |
+| **Dependencies** | Other domain work this depends on or blocks | "Blocks COORD_ENGINE schedule regeneration" |
+
+### Files to Reference
+
+These files provide essential context for backend platform work:
+
+| File | Purpose | When Needed |
+|------|---------|-------------|
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/CLAUDE.md` | Project guidelines, architecture patterns, code style | Always |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/models/__init__.py` | Existing model definitions | Schema/migration work |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/api/routes/__init__.py` | Existing route structure | API endpoint work |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/services/__init__.py` | Existing service patterns | Service implementation |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/alembic/versions/` | Migration history | Database migrations |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/docs/architecture/SOLVER_ALGORITHM.md` | Scheduling engine docs | Constraint-related services |
+
+### Context to Pass to Managed Agents
+
+When COORD_PLATFORM spawns its agents, it **must pass**:
+
+**To BACKEND_ENGINEER:**
+```
+- Task: [specific service/controller to implement]
+- Files: [exact paths to create/modify]
+- Related Models: [models the service will use]
+- Pydantic Schemas: [schemas for request/response]
+- Test Requirements: [what tests to write]
+- Architecture: Layered (Route → Controller → Service → Repository → Model)
+```
+
+**To DBA:**
+```
+- Task: [schema change or migration description]
+- Affected Tables: [table names and relationships]
+- Migration Type: [additive/destructive/data-migration]
+- Rollback Plan: [how to reverse if needed]
+- Index Strategy: [queries that need optimization]
+```
+
+**To API_DEVELOPER:**
+```
+- Task: [endpoint to create/modify]
+- HTTP Method: [GET/POST/PUT/DELETE]
+- Path: [route path with parameters]
+- Request Schema: [Pydantic model for input]
+- Response Schema: [Pydantic model for output]
+- Auth Requirements: [roles that can access]
+```
+
+### Output Format
+
+COORD_PLATFORM returns a structured synthesis report to ORCHESTRATOR:
+
+```markdown
+## Platform Task Completion Report
+
+**Signal:** [PLATFORM:XXX]
+**Status:** [SUCCESS|PARTIAL|BLOCKED]
+**Success Rate:** [X/Y agents completed = Z%]
+
+### Agent Results
+
+#### BACKEND_ENGINEER
+- Status: [SUCCESS|FAILED|SKIPPED]
+- Files Modified: [list]
+- Tests Added: [list]
+- Notes: [any issues]
+
+#### DBA
+- Status: [SUCCESS|FAILED|SKIPPED]
+- Migration: [migration filename if applicable]
+- Rollback Tested: [YES|NO]
+- Notes: [any issues]
+
+#### API_DEVELOPER
+- Status: [SUCCESS|FAILED|SKIPPED]
+- Endpoints: [list of routes]
+- OpenAPI Updated: [YES|NO]
+- Notes: [any issues]
+
+### Quality Gates
+- [ ] Migration Safety: [PASS|FAIL]
+- [ ] Layered Architecture: [PASS|FAIL]
+- [ ] Async Operations: [PASS|FAIL]
+- [ ] Type Hints: [PASS|WARN]
+- [ ] N+1 Prevention: [PASS|FAIL]
+
+### Blocking Issues (if any)
+[List any issues preventing completion]
+
+### Handoff Notes
+[Context for dependent domains or follow-up work]
+```
+
+---
+
 ## Signal Patterns
 
 ### Receiving Broadcasts from ORCHESTRATOR

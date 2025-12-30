@@ -671,6 +671,124 @@ OUTPUT: Agent spec update PR
 
 ---
 
+## How to Delegate to This Agent
+
+**IMPORTANT:** Spawned agents have isolated context - they do NOT inherit the parent conversation. When delegating to META_UPDATER, you MUST explicitly provide the context listed below.
+
+### Required Context by Task Type
+
+**For Weekly Health Reports:**
+```
+Provide:
+- Date range for analysis (e.g., "2025-12-22 to 2025-12-29")
+- GitHub commit/PR/issue counts (from `gh` CLI output)
+- Any known escalations or incidents from the week
+- Test failure trends (if available)
+```
+
+**For Pattern Identification:**
+```
+Provide:
+- Specific observations of recurring issues (with dates and examples)
+- Links to relevant GitHub issues or PRs showing the pattern
+- Affected agents and frequency of occurrence
+- Any error messages or symptoms observed
+```
+
+**For Documentation Audit:**
+```
+Provide:
+- Scope of audit (full repo, specific directory, or specific files)
+- Any known documentation gaps or outdated sections
+- Recent feature additions that may need documentation
+```
+
+**For Skill Enhancement:**
+```
+Provide:
+- Name of skill to enhance
+- Specific gaps or issues observed
+- Example scenarios where skill failed or was insufficient
+- Affected agents and their feedback
+```
+
+**For Agent Specification Update:**
+```
+Provide:
+- Name of agent specification to update
+- Specific inefficiencies or authority mismatches observed
+- Evidence (dates, issue links, examples of delays)
+- Proposed changes (if any ideas from parent context)
+```
+
+### Files to Reference
+
+**Always Needed:**
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/CLAUDE.md` - Project guidelines and context
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Agents/` - All agent specifications (for cross-referencing)
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/skills/` - All skill definitions
+
+**For Documentation Tasks:**
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/docs/` - All documentation subdirectories
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/README.md` - Project overview
+
+**For System Health:**
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/CHANGELOG.md` - Recent changes
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/docs/sessions/` - Session logs (if available)
+
+### Output Format
+
+**Standard Response Structure:**
+```markdown
+## META_UPDATER Analysis
+
+### Summary
+[1-2 sentence executive summary]
+
+### Findings
+1. [Finding 1 with evidence]
+2. [Finding 2 with evidence]
+...
+
+### Recommendations
+| Priority | Type | Description | Effort |
+|----------|------|-------------|--------|
+| P1 | [Skill/Doc/Agent] | [Brief description] | [S/M/L] |
+...
+
+### Proposed Actions
+- [ ] [Action 1 - with assignee if known]
+- [ ] [Action 2]
+
+### Files Changed/Created (if applicable)
+- `path/to/file` - [description of change]
+```
+
+**For Improvement Proposals:** Use the Improvement Proposal Template defined in the Approach section.
+
+**For Escalations:** Use the Escalation Format defined in the Escalation Rules section.
+
+### Example Delegation Prompt
+
+```
+Task: Analyze agent performance patterns from the past week
+
+Context:
+- Date range: 2025-12-22 to 2025-12-29
+- Observations: SCHEDULER escalated 3 times for timezone issues
+- GitHub data: 15 commits merged, 4 PRs closed, 2 new issues
+- Known issues: docs/api/swaps.md has broken links
+
+Files to read:
+- .claude/Agents/SCHEDULER.md
+- docs/api/swaps.md
+- CHANGELOG.md
+
+Expected output: Weekly health report with improvement recommendations
+```
+
+---
+
 ## Version History
 
 | Version | Date | Changes |

@@ -8,6 +8,112 @@
 
 ---
 
+## How to Delegate to This Agent
+
+**IMPORTANT:** Spawned agents have isolated context and do NOT inherit parent conversation history. When delegating to COMPLIANCE_AUDITOR, you MUST provide the following context explicitly.
+
+### Required Context
+
+When spawning this agent, include:
+
+1. **Audit Scope** (mandatory)
+   - Time range: Start date and end date (ISO format: YYYY-MM-DD)
+   - Block numbers if block-specific (e.g., "Block 10")
+   - Resident IDs if person-specific (e.g., ["PGY1-01", "PGY2-03"])
+   - Audit type: "full", "pre-commit", or "historical"
+
+2. **Schedule Data** (mandatory for validation)
+   - Provide schedule file path OR inline schedule data
+   - Format: JSON with assignments array containing person_id, date, shift_type, hours
+
+3. **Violation History** (optional, for historical analysis)
+   - Previous violations if analyzing patterns
+   - Date range of historical data to consider
+
+### Files to Reference
+
+| File | Purpose |
+|------|---------|
+| `/backend/app/scheduling/acgme_validator.py` | Core ACGME validation logic |
+| `/backend/app/scheduling/constraints/` | Constraint definitions (80-hour, 1-in-7, supervision) |
+| `/backend/app/services/compliance/` | Compliance service layer |
+| `/backend/app/schemas/compliance.py` | Pydantic schemas for compliance data |
+| `/docs/architecture/SOLVER_ALGORITHM.md` | Constraint solver documentation |
+| `/.claude/skills/acgme-compliance.md` | Skill for ACGME rule expertise |
+| `/.claude/skills/COMPLIANCE_VALIDATION.md` | Full compliance validation workflow |
+
+### MCP Tools Available
+
+When running in MCP context, these tools support compliance work:
+- `validate_schedule` - Run ACGME validation suite
+- `get_work_hours` - Calculate hours for a person/period
+- `check_supervision_ratio` - Verify faculty-resident ratios
+- `list_violations` - Query violation history
+- `generate_compliance_report` - Create formatted audit report
+
+### Delegation Example
+
+```markdown
+## Task: Pre-Schedule Validation
+
+**Audit Type:** pre-commit
+**Date Range:** 2025-01-06 to 2025-02-02 (Block 10)
+**Schedule File:** /backend/data/proposed_block10_schedule.json
+
+**Request:** Validate this proposed schedule against all ACGME rules before it is committed. Flag any violations with severity and remediation options.
+
+**Expected Output:** Structured audit report with PASS/FAIL status, violation list, and recommendations.
+```
+
+### Output Format
+
+COMPLIANCE_AUDITOR returns structured reports in this format:
+
+```json
+{
+  "audit_id": "uuid",
+  "audit_type": "pre-commit|full|historical",
+  "timestamp": "ISO-8601",
+  "scope": {
+    "date_range": ["start", "end"],
+    "residents": ["list or 'all'"],
+    "blocks": ["list or 'all'"]
+  },
+  "result": "PASS|FAIL",
+  "summary": {
+    "total_violations": 0,
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "compliance_percentage": 100.0
+  },
+  "violations": [
+    {
+      "id": "uuid",
+      "rule": "80-hour",
+      "severity": "CRITICAL",
+      "person_id": "PGY1-01",
+      "details": "82 hours in week of 2025-01-13",
+      "remediation": ["Option 1: Remove shift X", "Option 2: Swap with Y"]
+    }
+  ],
+  "recommendations": ["Prioritized list of fixes"],
+  "escalations": ["Items requiring human approval"]
+}
+```
+
+### Escalation Protocol
+
+If COMPLIANCE_AUDITOR finds issues requiring human intervention, it will:
+1. Return the audit report with `escalations` array populated
+2. Set `result: "FAIL"` for any CRITICAL/HIGH violations
+3. Recommend escalation path in `recommendations`
+
+The calling agent (typically COORD_RESILIENCE) must handle escalation to humans.
+
+---
+
 ## Charter
 
 The COMPLIANCE_AUDITOR agent specializes in ACGME regulatory compliance for medical residency scheduling. This agent performs systematic audits, historical analysis, and regulatory reporting while ensuring all schedules meet ACGME requirements.

@@ -341,6 +341,81 @@ HISTORIAN is successful if:
 
 ---
 
+## How to Delegate to This Agent
+
+**IMPORTANT:** HISTORIAN runs in an isolated context and does NOT inherit the parent conversation. All necessary information must be explicitly passed.
+
+### Required Context (Minimum)
+
+When spawning HISTORIAN, you MUST provide:
+
+1. **Session Number** - The sequential session ID (e.g., "015")
+2. **Evocative Title** - A human-readable title capturing the session's theme
+3. **Outcome Status** - One of: `Success`, `Partial`, `Blocked`, `Pivoted`
+4. **Narrative Summary** - 2-5 paragraphs describing:
+   - The challenge faced (what problem, why it mattered)
+   - The journey (what was tried, dead ends, breakthroughs)
+   - The resolution (what was ultimately done)
+   - Key insights (what was learned about domain/codebase/process)
+
+### Files to Reference
+
+HISTORIAN should be directed to read these files for context:
+
+| File Path | Purpose |
+|-----------|---------|
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/docs/sessions/` | Existing session narratives for tone/style consistency |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/docs/planning/TODO_TRACKER.md` | Current project priorities and completed work |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/CHANGELOG.md` | Recent changes for artifact references |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/ORCHESTRATOR_LOG.md` | Session activity log (if maintained) |
+
+### Artifacts to Provide
+
+Include in the delegation message:
+- **PR URLs** - `https://github.com/.../pull/XXX`
+- **Commit SHAs** - First 7 characters minimum
+- **Files Changed** - Key source files modified
+- **Documentation Updated** - Any docs created/modified
+
+### Output Format
+
+HISTORIAN produces a single markdown file:
+```
+docs/sessions/session-XXX-YYYY-MM-DD.md
+```
+
+The file follows the template specified in the "Output Format" section above.
+
+### Example Delegation Message
+
+```
+Create a session narrative for Session 015.
+
+**Title:** "The Block Revelation - When Semantics Met Scheduling"
+
+**Outcome:** Success
+
+**Context:**
+We discovered that our entire understanding of "blocks" was wrong. The ACGME
+uses "block" to mean a 2-4 week rotation period, but we had implemented blocks
+as half-day slots. This fundamental disconnect explained why our constraint
+solver kept producing schedules that "felt wrong" even when technically compliant.
+
+The breakthrough came when comparing our data model to the Airtable export format.
+We realized we were modeling time granularity, not rotation periods. The fix
+required rethinking our entire temporal model.
+
+**Artifacts:**
+- PR #523: docs: Session 014 - HISTORIAN agent and The Block Revelation
+- Commits: faa56ca
+- Files: backend/app/models/block.py, docs/architecture/TEMPORAL_MODEL.md
+
+**Files to reference for style:**
+- docs/sessions/session-014-2025-12-28.md
+```
+
+---
+
 ## Invocation Syntax
 
 ```bash

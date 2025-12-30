@@ -30,6 +30,127 @@ The CAPACITY_OPTIMIZER agent is responsible for applying telecommunications queu
 
 ---
 
+## How to Delegate to This Agent
+
+> **CRITICAL**: Spawned agents have **isolated context** - they do NOT inherit parent conversation history. You MUST pass all required context explicitly.
+
+### Required Context
+
+When delegating to CAPACITY_OPTIMIZER, always provide:
+
+1. **Analysis Type** (required)
+   - `staffing_optimization`: Determine optimal specialist count for a service
+   - `process_capability`: Calculate Six Sigma quality metrics for schedule data
+   - `equity_analysis`: Assess workload fairness across providers
+   - `utilization_check`: Monitor against 80% threshold
+   - `scenario_analysis`: What-if modeling for staffing changes
+
+2. **Numeric Data** (required for analysis)
+   - For staffing: `arrival_rate` (cases/hour), `service_time_minutes`, `current_specialists`
+   - For capability: `data_points[]` (numeric array), `lower_spec_limit`, `upper_spec_limit`, `target`
+   - For equity: `provider_hours{}` (dict of provider_id -> hours), optionally `intensity_weights{}`
+   - For utilization: `available_faculty`, `required_blocks`, `days_in_period`
+
+3. **Service Level Targets** (optional, defaults provided)
+   - `target_wait_minutes`: Default 15
+   - `target_wait_probability`: Default 0.05 (5%)
+   - `utilization_threshold`: Default 0.80 (80%)
+   - `gini_threshold`: Default 0.15
+
+### Files to Reference
+
+When spawning CAPACITY_OPTIMIZER, instruct it to read:
+
+| File | Purpose |
+|------|---------|
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Agents/CAPACITY_OPTIMIZER.md` | This spec (agent identity and approach) |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/docs/architecture/cross-disciplinary-resilience.md` | Resilience framework context (80% threshold rationale) |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/resilience/capacity_optimizer.py` | Implementation reference (if debugging) |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/schemas/resilience.py` | Pydantic schemas for request/response types |
+
+### Delegation Template
+
+```markdown
+## Task for CAPACITY_OPTIMIZER
+
+**Analysis Type:** [staffing_optimization | process_capability | equity_analysis | utilization_check | scenario_analysis]
+
+**Context:**
+[Explain the business situation - why this analysis is needed]
+
+**Data:**
+```json
+{
+  "specialty": "Orthopedic Surgery",
+  "arrival_rate": 2.5,
+  "service_time_minutes": 30,
+  "current_specialists": 3,
+  "target_wait_minutes": 15,
+  "target_service_level": 0.95
+}
+```
+
+**Questions to Answer:**
+1. [Specific question 1]
+2. [Specific question 2]
+
+**Output Format:**
+[staffing_table | capability_report | equity_report | utilization_status | scenario_comparison]
+```
+
+### Expected Output Format
+
+CAPACITY_OPTIMIZER will return structured reports based on analysis type:
+
+**Staffing Optimization:**
+```markdown
+## Staffing Analysis: [Specialty]
+| Specialists | Utilization | Wait Prob | Service Level | Status |
+|-------------|-------------|-----------|---------------|--------|
+| N | XX% | XX% | XX% | [STATUS] |
+
+Recommendation: [Minimum N specialists required, rationale]
+```
+
+**Process Capability:**
+```markdown
+## Schedule Quality Report
+| Index | Value | Status |
+|-------|-------|--------|
+| Cpk | X.XX | [EXCELLENT|CAPABLE|MARGINAL|INCAPABLE] |
+
+Sigma Level: X.X | Defect Rate: X ppm
+Recommendation: [Improvement actions]
+```
+
+**Equity Analysis:**
+```markdown
+## Workload Equity Analysis
+Gini Coefficient: X.XX ([EQUITABLE|WARNING|INEQUITABLE|CRITICAL])
+Most Overloaded: [Provider] (+X hours)
+Most Underloaded: [Provider] (-X hours)
+Recommendation: [Rebalancing actions]
+```
+
+**Utilization Check:**
+```markdown
+## Utilization Status
+Current: XX% | Threshold: 80% | Status: [HEALTHY|WARNING|CRITICAL|EMERGENCY]
+Wait Time Multiplier: X.Xx
+N-1 Impact: [Analysis of single absence]
+Recommendation: [Actions if needed]
+```
+
+### Anti-Patterns to Avoid
+
+- **DON'T** assume agent knows current schedule state
+- **DON'T** reference "the data we discussed earlier"
+- **DON'T** ask for analysis without providing numeric inputs
+- **DON'T** expect agent to query database directly (pass data in delegation)
+- **DON'T** omit specialty/service name when requesting staffing analysis
+
+---
+
 ## Personality Traits
 
 **Quantitative & Data-Driven**

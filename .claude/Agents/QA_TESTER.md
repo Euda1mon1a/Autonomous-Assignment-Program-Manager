@@ -725,10 +725,120 @@ OUTPUT: Regression test added to suite
 
 ---
 
+## How to Delegate to This Agent
+
+Spawned agents have **isolated context** - they do NOT inherit parent conversation history. When delegating to QA_TESTER, you MUST provide explicit context.
+
+### Required Context
+
+**For Schedule Validation:**
+- Schedule data (JSON or reference to database query)
+- Block/rotation identifiers being validated
+- Specific validation concerns (ACGME, coverage, credentials)
+- Time period under test (date range)
+
+**For Swap Request Validation:**
+- Swap request details (initiator, partner, dates, shift types)
+- Current assignment state for both parties
+- ACGME hours context (rolling 4-week totals)
+- Credential status for both parties
+
+**For Edge Case Discovery:**
+- Feature or component under test
+- Recent changes (PR numbers, commit hashes)
+- Known issues or areas of concern
+- Current test coverage gaps
+
+**For Bug Investigation:**
+- Reproduction steps (if known)
+- Error messages and stack traces
+- Environment details (branch, commit hash)
+- Related test failures
+
+### Files to Reference
+
+**Test Infrastructure:**
+- `/backend/tests/conftest.py` - Pytest fixtures and test configuration
+- `/backend/tests/services/` - Service layer tests
+- `/backend/tests/scheduling/` - Scheduling and ACGME validation tests
+- `/frontend/src/__tests__/` - Frontend component tests
+
+**Source Code Under Test:**
+- `/backend/app/scheduling/acgme_validator.py` - ACGME compliance logic
+- `/backend/app/services/swap_executor.py` - Swap execution logic
+- `/backend/app/scheduling/engine.py` - Schedule generation engine
+- `/backend/app/services/constraints/` - Constraint implementations
+
+**Configuration:**
+- `/backend/pytest.ini` - Pytest configuration
+- `/backend/.coveragerc` - Coverage configuration
+- `/load-tests/scenarios/` - k6 load test scenarios
+
+**Documentation:**
+- `/docs/architecture/SOLVER_ALGORITHM.md` - Solver and constraint documentation
+- `/docs/development/AGENT_SKILLS.md` - Available testing skills
+
+### Output Format
+
+**For Validation Tasks:**
+```markdown
+## QA Validation Report
+
+**Component:** [what was tested]
+**Date:** YYYY-MM-DD
+**Verdict:** [PASS | FAIL | CONDITIONAL]
+
+### Tests Executed
+- [Test 1]: PASS/FAIL
+- [Test 2]: PASS/FAIL
+
+### Edge Cases Checked
+- [Edge case 1]: [result]
+- [Edge case 2]: [result]
+
+### Issues Found
+[List with severity and reproduction steps]
+
+### Recommendations
+[Improvements or fixes needed]
+```
+
+**For Bug Reports:**
+Use the Bug Report Template documented in the "Bug Reporting" section above.
+
+**For Test Generation:**
+```python
+# Generated test file with:
+# - Test class/function with descriptive name
+# - Docstring explaining scenario
+# - Setup, execution, assertions
+# - Cleanup if needed
+```
+
+### Example Delegation Prompts
+
+**Good (explicit context):**
+```
+Validate the Block 10 schedule for PGY-2 residents.
+- Schedule file: /tmp/block10_schedule.json
+- Date range: 2025-08-04 to 2025-08-31
+- Residents: ["RES-101", "RES-102", "RES-103"]
+- Focus: ACGME 80-hour rule and 1-in-7 compliance
+- Known concern: RES-102 has high call burden
+```
+
+**Bad (assumes context):**
+```
+Check if the schedule is valid.
+```
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1 | 2025-12-29 | Added "How to Delegate to This Agent" section for context isolation |
 | 1.0 | 2025-12-26 | Initial QA_TESTER agent specification |
 
 ---

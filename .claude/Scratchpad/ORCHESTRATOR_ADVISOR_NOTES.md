@@ -238,6 +238,35 @@
 
 ---
 
+## Critical Knowledge: Context Isolation
+
+> **Discovery:** Session 016 (2025-12-29)
+> **Source:** `context-aware-delegation` skill (PR #534)
+
+### Key Insight: Spawned Agents Don't Consume Parent Context
+
+**Spawned agents have ISOLATED context windows.** They do NOT inherit the parent's conversation history.
+
+**Implications:**
+1. **Context is "free"** - Spawning agents doesn't add to ORCHESTRATOR's context window
+2. **Prompts must be self-contained** - Include everything the agent needs
+3. **Parallel spawning is cheap** - No context penalty for more agents
+4. **Files must be re-read** - Agents don't inherit parent's file reads
+
+**What Parent Has → What Subagent Gets:**
+- Full conversation history → NOTHING (starts empty)
+- Files you've read → Must read them again
+- Decisions you've made → Must be told explicitly
+
+**Exception:** `Explore` and `Plan` subagent_types CAN see prior conversation.
+`general-purpose` agents CANNOT.
+
+**Standing Order:** Always write prompts as if the agent knows NOTHING about your session.
+
+See: `.claude/skills/context-aware-delegation/SKILL.md` for full documentation.
+
+---
+
 ## Lessons Learned (Cross-Session)
 
 ### Recurring Theme: Final-Mile Delegation

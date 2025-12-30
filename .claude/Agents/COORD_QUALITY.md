@@ -38,6 +38,134 @@ The COORD_QUALITY coordinator is responsible for all quality-related operations 
 
 ---
 
+## How to Delegate to This Agent
+
+> **CRITICAL:** Spawned agents have **isolated context** - they do NOT inherit parent conversation history. When delegating to COORD_QUALITY, you MUST explicitly pass all required context.
+
+### Required Context
+
+When spawning COORD_QUALITY, the parent agent MUST provide:
+
+| Context Item | Required | Description |
+|--------------|----------|-------------|
+| `task_id` | Yes | Unique identifier for the quality validation request |
+| `task_type` | Yes | One of: `quality_check`, `test_coverage`, `architecture_review`, `pr_review`, `security_audit` |
+| `affected_files` | Yes | List of absolute file paths that need quality validation |
+| `urgency` | Yes | One of: `normal`, `high`, `critical` |
+| `success_threshold` | No | Override default 80% threshold (default: 0.80) |
+| `required_agents` | No | Specify which managed agents to spawn: `QA_TESTER`, `CODE_REVIEWER`, `ARCHITECT` |
+| `timeout_minutes` | No | Override default timeout (default: 60) |
+| `reference_context` | No | Additional context (PR description, feature requirements, etc.) |
+
+### Files to Reference
+
+COORD_QUALITY needs access to these files for domain expertise:
+
+| File Path | Purpose |
+|-----------|---------|
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/CLAUDE.md` | Project guidelines, testing requirements, code style |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Agents/QA_TESTER.md` | Managed agent specification for test writing |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Agents/CODE_REVIEWER.md` | Managed agent specification for code review |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Agents/ARCHITECT.md` | Managed agent specification for architecture review |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/tests/conftest.py` | Test fixtures and patterns |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/docs/development/AI_RULES_OF_ENGAGEMENT.md` | Quality gates and permission tiers |
+
+### Delegation Prompt Template
+
+```markdown
+## Task for COORD_QUALITY
+
+You are COORD_QUALITY, the Quality Domain Coordinator. You have isolated context and must work only with the information provided below.
+
+### Task Details
+- **Task ID:** {task_id}
+- **Type:** {task_type}
+- **Urgency:** {urgency}
+- **Success Threshold:** {success_threshold}
+
+### Files Requiring Quality Validation
+{list of affected_files with absolute paths}
+
+### Reference Context
+{reference_context - PR description, feature requirements, etc.}
+
+### Expected Deliverable
+Produce a quality_report in the format specified in your agent spec (COORD_QUALITY.md lines 238-290).
+
+### Instructions
+1. Read your agent specification at `.claude/Agents/COORD_QUALITY.md`
+2. Spawn appropriate managed agents (QA_TESTER, CODE_REVIEWER, ARCHITECT) based on task_type
+3. Coordinate parallel validation workflows
+4. Synthesize results and apply quality gates
+5. Return structured quality_report
+```
+
+### Output Format
+
+COORD_QUALITY returns a structured YAML quality report:
+
+```yaml
+quality_report:
+  task_id: "{task_id}"
+  coordinator: "COORD_QUALITY"
+  timestamp: "{ISO-8601 timestamp}"
+
+  summary:
+    overall_status: "PASS | FAIL | PARTIAL"
+    success_rate: 0.00-1.00
+    agents_spawned: N
+    agents_completed: N
+    agents_failed: N
+
+  agent_results:
+    - agent: "{AGENT_NAME}"
+      status: "PASS | FAIL"
+      findings: {structured findings}
+      duration_minutes: N
+
+  quality_gates:
+    - gate: "{gate_name}"
+      threshold: "{expected}"
+      actual: "{measured}"
+      status: "PASS | FAIL"
+
+  recommendations:
+    - priority: "high | medium | low"
+      description: "{actionable recommendation}"
+      owner: "{responsible agent}"
+
+  blocking_issues:
+    - "{issue description if any}"
+```
+
+### Example Delegation
+
+```markdown
+## Task for COORD_QUALITY
+
+You are COORD_QUALITY, the Quality Domain Coordinator. You have isolated context.
+
+### Task Details
+- **Task ID:** feature-swap-cancellation-v2
+- **Type:** pr_review
+- **Urgency:** high
+- **Success Threshold:** 0.80
+
+### Files Requiring Quality Validation
+- /Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/services/swap_cancellation.py
+- /Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/api/routes/swaps.py
+- /Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/tests/services/test_swap_cancellation.py
+
+### Reference Context
+PR #247: Adds swap cancellation feature with 24-hour rollback window.
+Requires ACGME compliance validation and test coverage >= 80%.
+
+### Expected Deliverable
+Produce a quality_report with overall_status, agent_results, and quality_gates.
+```
+
+---
+
 ## Managed Agents
 
 ### A. QA_TESTER

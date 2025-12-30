@@ -155,6 +155,132 @@ npm test             # Jest tests
 
 ---
 
+## How to Delegate to This Agent
+
+**Context Isolation Notice:** This agent runs in an isolated context and does NOT inherit any parent conversation history. All required context must be explicitly passed.
+
+### Required Context
+
+When delegating tasks to FRONTEND_ENGINEER, always provide:
+
+1. **Task Type** - Specify one of:
+   - `component-create`: New React component
+   - `component-modify`: Update existing component
+   - `page-create`: New Next.js page/route
+   - `hook-create`: New custom hook
+   - `bug-fix`: Fix UI bug or issue
+   - `style-update`: TailwindCSS/styling changes
+   - `test-write`: Add/update tests
+
+2. **Affected Files** - List specific file paths being created or modified
+
+3. **API Contract** - If consuming backend data, include:
+   - Endpoint URL and HTTP method
+   - Request/response TypeScript types
+   - Backend schema reference (from `backend/app/schemas/`)
+
+4. **Component Requirements** - For UI work, specify:
+   - Props interface expected
+   - State management approach (TanStack Query, local state, context)
+   - Accessibility requirements (ARIA labels, keyboard navigation)
+
+5. **Design Specifications** - If applicable:
+   - Layout constraints (responsive breakpoints)
+   - TailwindCSS classes to use/match
+   - Reference to similar existing component
+
+### Files to Reference
+
+Pass relevant file contents when delegating:
+
+| File | When Needed | Purpose |
+|------|-------------|---------|
+| `/frontend/src/lib/api.ts` | API integration | Base API client configuration |
+| `/frontend/src/types/*.ts` | All tasks | Shared TypeScript types |
+| `/frontend/src/components/ui/*.tsx` | Component work | Base UI primitives |
+| `/frontend/src/hooks/useApi.ts` | Data fetching | TanStack Query patterns |
+| `/frontend/tailwind.config.js` | Styling | Theme colors, spacing, breakpoints |
+| `/backend/app/schemas/*.py` | API integration | Backend Pydantic schemas for type alignment |
+
+### Example Delegation Prompt
+
+```markdown
+**Task:** Create ScheduleSwapForm component
+
+**Type:** component-create
+
+**Files to Create:**
+- /frontend/src/components/schedule/ScheduleSwapForm.tsx
+- /frontend/src/components/schedule/ScheduleSwapForm.test.tsx
+
+**API Contract:**
+- POST /api/v1/swaps
+- Request: { requestor_id: string, target_date: string, swap_type: "one_to_one" | "absorb" }
+- Response: { id: string, status: "pending", created_at: string }
+
+**Props Interface:**
+```typescript
+interface ScheduleSwapFormProps {
+  residentId: string;
+  availableDates: Date[];
+  onSuccess: (swapId: string) => void;
+  onCancel: () => void;
+}
+```
+
+**Existing Pattern Reference:**
+See /frontend/src/components/schedule/ScheduleRequestForm.tsx for similar form pattern
+
+**Requirements:**
+- Form validation with react-hook-form
+- Loading state during submission
+- Error toast on failure
+- TailwindCSS styling matching existing forms
+```
+
+### Output Format
+
+FRONTEND_ENGINEER should return:
+
+**For Component Creation:**
+```markdown
+## Files Created/Modified
+- [file path]: [brief description of changes]
+
+## Component API
+- Props: [interface definition]
+- Exports: [named exports]
+
+## Testing
+- Test coverage: [X tests added]
+- Run with: `npm test -- [test file]`
+
+## Verification
+- [ ] TypeScript: `npm run type-check` passes
+- [ ] Lint: `npm run lint` passes
+- [ ] Tests: `npm test` passes
+- [ ] Manual: [instructions for visual verification]
+
+## Notes
+[Any caveats, TODOs, or coordination needed with other agents]
+```
+
+**For Bug Fixes:**
+```markdown
+## Root Cause
+[What caused the bug]
+
+## Fix Applied
+- [file]: [change description]
+
+## Verification
+- [ ] Bug no longer reproduces
+- [ ] Existing tests pass
+- [ ] New regression test added (if applicable)
+```
+
+---
+
 **Coordinator:** COORD_QUALITY (alongside ARCHITECT, QA_TESTER)
 
 **Created By:** TOOLSMITH Agent (a1a765c), written by ORCHESTRATOR

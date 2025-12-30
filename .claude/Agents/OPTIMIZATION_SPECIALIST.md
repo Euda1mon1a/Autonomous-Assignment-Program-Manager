@@ -296,6 +296,115 @@ OUTPUT: Optimized hyperparameter configuration
 
 ---
 
+## How to Delegate to This Agent
+
+**CRITICAL:** Spawned agents have **isolated context** - they do NOT inherit parent conversation history. You MUST explicitly pass all required information when delegating tasks.
+
+### Required Context (Always Include)
+
+| Context Item | Description | Example |
+|--------------|-------------|---------|
+| **Problem Type** | Which optimization to perform | "NSGA-II for fairness+coverage", "QUBO for call assignment" |
+| **Objective Functions** | What to optimize | `[{"name": "fairness", "weight": 0.6}, {"name": "coverage", "weight": 0.4}]` |
+| **Decision Variables** | What can be changed | "Resident-to-rotation assignments for Block 10" |
+| **Constraint Specifications** | Hard/soft constraints | "ACGME 80-hour rule, 1-in-7 off, supervision ratios" |
+| **Current Schedule State** | If optimizing existing schedule | Path to schedule JSON or database query criteria |
+| **Performance Targets** | Time/quality bounds | "Max 5 minutes, hypervolume > 0.85" |
+
+### Files to Reference
+
+The delegating agent should point OPTIMIZATION_SPECIALIST to these files based on task type:
+
+**For Bio-Inspired Optimization:**
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/scheduling/bio_inspired/` - Algorithm implementations
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/scheduling/bio_inspired/base.py` - Base classes (Chromosome, Individual)
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/scheduling/bio_inspired/nsga2.py` - NSGA-II for multi-objective
+
+**For QUBO/Quantum-Inspired:**
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/scheduling/quantum/` - QUBO solvers
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/scheduling/quantum/call_assignment_qubo.py` - Call night formulation
+
+**For Multi-Objective Framework:**
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/multi_objective/core.py` - ObjectiveConfig, ParetoFrontier
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/multi_objective/indicators.py` - Quality metrics (hypervolume, spread)
+
+**For Constraint Understanding:**
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/scheduling/acgme_validator.py` - ACGME constraint definitions
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/docs/architecture/SOLVER_ALGORITHM.md` - Solver architecture overview
+
+### Delegation Template
+
+```markdown
+**Task:** [Specific optimization request]
+
+**Problem Definition:**
+- Objectives: [list with weights]
+- Variables: [what can be changed]
+- Hard Constraints: [must satisfy]
+- Soft Constraints: [penalize but allow]
+
+**Input Data:**
+- Current schedule: [file path or inline JSON]
+- Eligible persons: [list or query]
+- Date range: [start, end]
+
+**Performance Requirements:**
+- Max runtime: [seconds]
+- Min quality: [hypervolume threshold]
+- Reproducibility: [seed if needed]
+
+**Expected Output Format:**
+- Pareto front JSON with solutions
+- Performance metrics
+- Recommendation for preferred solution
+
+**Files to Read:**
+- [List specific paths relevant to this task]
+```
+
+### Output Format
+
+OPTIMIZATION_SPECIALIST returns structured results:
+
+```json
+{
+  "status": "success|timeout|infeasible",
+  "algorithm": "NSGA-II|GA|QUBO|PSO|ACO",
+  "runtime_seconds": 142.5,
+  "pareto_front": [
+    {
+      "solution_id": "sol_001",
+      "objectives": {"fairness": 0.92, "coverage": 0.88},
+      "is_knee_point": true,
+      "assignments": [{"person_id": "...", "block_id": "...", "rotation": "..."}]
+    }
+  ],
+  "quality_metrics": {
+    "hypervolume": 0.873,
+    "spread": 0.412,
+    "solutions_count": 15
+  },
+  "recommendation": {
+    "preferred_solution_id": "sol_001",
+    "rationale": "Best balance at knee point"
+  },
+  "constraint_violations": [],
+  "warnings": []
+}
+```
+
+### Common Delegation Mistakes
+
+| Mistake | Problem | Fix |
+|---------|---------|-----|
+| "Optimize the schedule" | No objectives specified | List objectives with weights |
+| Passing file names only | Agent can't find context | Use absolute paths |
+| No constraint list | Solutions may be infeasible | Specify hard constraints explicitly |
+| Missing time limit | Solver may run indefinitely | Always set max runtime |
+| Assuming database access | Agent may not have connection | Pass data inline or as file path |
+
+---
+
 ## Version History
 
 | Version | Date | Changes |

@@ -36,6 +36,175 @@ The ORCHESTRATOR agent is responsible for coordinating complex multi-agent workf
 
 ---
 
+## How to Delegate to This Agent
+
+> **CRITICAL**: Spawned agents have **isolated context** - they do NOT inherit the parent conversation history. You MUST provide all necessary context explicitly when delegating to ORCHESTRATOR.
+
+### Required Context
+
+When spawning the ORCHESTRATOR agent, you MUST provide:
+
+1. **Task Definition**
+   - Clear objective (what outcome is needed)
+   - Scope boundaries (what's in/out of scope)
+   - Success criteria (how to know when done)
+
+2. **Agent Availability**
+   - Which coordinators/agents are available for delegation
+   - Any capacity constraints or agent exclusions
+   - Current workload status if relevant
+
+3. **System State**
+   - Current git branch and uncommitted changes
+   - Database migration status (if relevant)
+   - Any active incidents or blockers
+
+4. **Priority & Constraints**
+   - Priority level (P0-P3)
+   - Time constraints or deadlines
+   - Resource limits (max agents, max duration)
+
+5. **Escalation Path**
+   - Who to escalate to if coordination fails
+   - Human contact for urgent decisions
+   - Fallback strategy if agents unavailable
+
+### Files to Reference
+
+Provide paths to these files when delegating:
+
+| File | Purpose | When Needed |
+|------|---------|-------------|
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Agents/ORCHESTRATOR.md` | This spec (self-reference) | Always |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Scratchpad/ORCHESTRATOR_ADVISOR_NOTES.md` | Cross-session memory | Always (startup) |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Agents/*.md` | Other agent specs | When delegating to specific agents |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/CLAUDE.md` | Project guidelines | Always |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/docs/planning/TODO_TRACKER.md` | Current task status | For feature work |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/docs/architecture/SOLVER_ALGORITHM.md` | Scheduling engine docs | For schedule-related tasks |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/docs/architecture/cross-disciplinary-resilience.md` | Resilience framework | For resilience-related tasks |
+
+### Delegation Template
+
+Use this template when spawning ORCHESTRATOR:
+
+```markdown
+## Delegation to ORCHESTRATOR
+
+### Task
+[One-sentence objective]
+
+### Context
+**Current Branch**: [branch name]
+**Uncommitted Changes**: [yes/no, summary if yes]
+**Priority**: [P0-P3]
+**Deadline**: [time constraint or "none"]
+
+### Scope
+**In Scope**:
+- [Task 1]
+- [Task 2]
+
+**Out of Scope**:
+- [Excluded item 1]
+
+### Available Agents
+[List of agents/coordinators ORCHESTRATOR can use]
+
+### Success Criteria
+- [ ] Criterion 1
+- [ ] Criterion 2
+
+### Escalation
+**Escalate to**: [Agent or Human]
+**Escalate if**: [Condition]
+
+### Reference Files
+- [Path 1] - [Why needed]
+- [Path 2] - [Why needed]
+```
+
+### Output Format
+
+ORCHESTRATOR will return results in this structure:
+
+```markdown
+## Orchestration Results
+
+### Summary
+[1-2 sentence overview of what was accomplished]
+
+### Agents Deployed
+| Agent | Task | Status | Duration |
+|-------|------|--------|----------|
+| [name] | [task] | [completed/failed] | [time] |
+
+### Deliverables
+1. [Deliverable 1 with file paths if applicable]
+2. [Deliverable 2]
+
+### Synthesis
+[Integrated findings from all agents]
+
+### Conflicts Resolved
+[Any disagreements between agents and how resolved]
+
+### Issues/Blockers
+[Any unresolved issues requiring escalation]
+
+### Recommendations
+[Next steps or follow-up actions]
+```
+
+### Example Delegation
+
+```markdown
+## Delegation to ORCHESTRATOR
+
+### Task
+Implement swap auto-cancellation feature end-to-end
+
+### Context
+**Current Branch**: feature/swap-auto-cancel
+**Uncommitted Changes**: No
+**Priority**: P1
+**Deadline**: End of sprint (5 days)
+
+### Scope
+**In Scope**:
+- Database schema changes for rollback window
+- Service layer for auto-cancellation logic
+- API endpoints for triggering cancellation
+- Unit and integration tests
+- Documentation updates
+
+**Out of Scope**:
+- Frontend UI changes (separate ticket)
+- Email notification redesign
+
+### Available Agents
+- COORD_ENGINE (SCHEDULER, SWAP_MANAGER)
+- COORD_PLATFORM (BACKEND_ENGINEER, DBA)
+- COORD_QUALITY (QA_TESTER, ARCHITECT)
+- COORD_OPS (META_UPDATER)
+
+### Success Criteria
+- [ ] Swaps violating ACGME rules auto-cancel within 1 minute
+- [ ] Audit trail captures cancellation reason
+- [ ] 80%+ test coverage on new code
+- [ ] API documentation updated
+
+### Escalation
+**Escalate to**: ARCHITECT for design conflicts, Faculty for timeline concerns
+**Escalate if**: Agents disagree on safety-critical design decisions
+
+### Reference Files
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/services/swap_service.py` - Existing swap logic
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/scheduling/acgme_validator.py` - Validation rules
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/docs/planning/SWAP_FEATURE_PLAN.md` - Feature requirements
+```
+
+---
+
 ## Personality Traits
 
 **Efficient & Organized**

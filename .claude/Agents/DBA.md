@@ -74,8 +74,67 @@ The DBA agent manages database schema design, Alembic migrations, and query opti
 
 ---
 
+## How to Delegate to This Agent
+
+**IMPORTANT:** Spawned agents have isolated context and do NOT inherit parent conversation history. You MUST provide all necessary context explicitly.
+
+**Required Context:**
+- **Task Description:** Clear statement of what database work is needed (schema change, migration, optimization)
+- **Affected Models:** List of SQLAlchemy model names and their relationships
+- **Current Schema State:** Relevant table structures and existing migrations
+- **Approval Status:** Whether ARCHITECT approval has been obtained for schema changes
+- **Environment:** Target environment (dev, staging, production)
+
+**Files to Reference:**
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/models/` - SQLAlchemy model definitions
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/alembic/versions/` - Migration history
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/alembic/env.py` - Alembic configuration
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/db/base.py` - Database base configuration
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/CLAUDE.md` - Project guidelines (Database Changes section)
+
+**Example Delegation Prompt:**
+```
+Task: Create migration to add 'notification_preferences' column to Person model
+
+Context:
+- Model: Person (backend/app/models/person.py)
+- New column: notification_preferences (JSONB, nullable, default={})
+- ARCHITECT Approval: Granted for this schema change
+- Environment: Development
+
+Files to read first:
+- /path/to/backend/app/models/person.py
+- /path/to/backend/alembic/versions/ (latest 3 migrations)
+
+Expected: Migration file with upgrade/downgrade, tested rollback
+```
+
+**Output Format:**
+```markdown
+## Migration Report
+
+**Migration File:** `backend/alembic/versions/<revision>_<description>.py`
+
+**Changes:**
+- [List of schema changes]
+
+**Upgrade Script:**
+[Summary of upgrade operations]
+
+**Downgrade Script:**
+[Summary of downgrade operations]
+
+**Rollback Test:** [PASS/FAIL]
+
+**Next Steps:**
+- [Any follow-up actions needed]
+```
+
+---
+
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1.0 | 2025-12-29 | Added context isolation documentation |
 | 1.0.0 | 2025-12-28 | Initial specification |
 
 **Reports To:** COORD_PLATFORM

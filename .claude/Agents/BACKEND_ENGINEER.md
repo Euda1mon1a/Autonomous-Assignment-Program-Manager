@@ -83,8 +83,142 @@ The BACKEND_ENGINEER agent implements FastAPI endpoints, SQLAlchemy models, and 
 
 ---
 
+## How to Delegate to This Agent
+
+> **Context Isolation Warning:** Spawned agents have isolated context and do NOT inherit parent conversation history. You MUST explicitly pass all required information.
+
+### Required Context (Always Include)
+
+When delegating to BACKEND_ENGINEER, provide:
+
+1. **Task Description**
+   - Clear statement of what endpoint/service to implement
+   - User story or acceptance criteria if available
+   - Related issue/ticket number
+
+2. **API Contract** (if modifying endpoints)
+   - HTTP method and path
+   - Request body schema
+   - Response body schema
+   - Error response formats
+
+3. **Database Context** (if querying data)
+   - Relevant model names and relationships
+   - Key fields being accessed
+   - Any joins or eager loading requirements
+
+4. **Business Rules**
+   - ACGME compliance requirements (if scheduling-related)
+   - Validation rules beyond schema
+   - Edge cases to handle
+
+### Files to Reference
+
+Include paths in delegation prompt:
+
+| File | Purpose |
+|------|---------|
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/CLAUDE.md` | Project conventions, architecture patterns |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/models/*.py` | SQLAlchemy models (read-only reference) |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/schemas/*.py` | Existing Pydantic patterns |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/services/*.py` | Service layer patterns |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/api/routes/*.py` | Existing route patterns |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/tests/conftest.py` | Test fixtures |
+
+### Delegation Prompt Template
+
+```markdown
+## Task for BACKEND_ENGINEER
+
+**Objective:** [Clear task description]
+
+**API Contract:**
+- Method: [GET/POST/PUT/DELETE]
+- Path: [/api/v1/...]
+- Request: [schema or "none"]
+- Response: [schema description]
+
+**Database Models Involved:**
+- [Model1] - [relevant fields]
+- [Model2] - [relationship to Model1]
+
+**Business Rules:**
+- [Rule 1]
+- [Rule 2]
+
+**Files to Read First:**
+- [Specific file paths relevant to this task]
+
+**Acceptance Criteria:**
+- [ ] Endpoint returns correct response
+- [ ] Tests pass
+- [ ] Follows async patterns
+```
+
+### Expected Output Format
+
+BACKEND_ENGINEER should respond with:
+
+```markdown
+## Implementation Complete
+
+**Files Created/Modified:**
+- `/path/to/file1.py` - [what was done]
+- `/path/to/file2.py` - [what was done]
+
+**Tests Added:**
+- `/path/to/test_file.py::test_name` - [what it tests]
+
+**Verification:**
+- [ ] All tests pass: `pytest backend/tests/path/to/tests -v`
+- [ ] Type hints complete
+- [ ] Docstrings added
+
+**Notes/Blockers:**
+- [Any issues encountered]
+- [Questions for escalation]
+```
+
+### Example Delegation
+
+```markdown
+## Task for BACKEND_ENGINEER
+
+**Objective:** Create GET endpoint to retrieve schedule assignments by block
+
+**API Contract:**
+- Method: GET
+- Path: /api/v1/assignments/block/{block_id}
+- Request: None (path parameter only)
+- Response: List[AssignmentResponse] with person and rotation details
+
+**Database Models Involved:**
+- Assignment - id, person_id, block_id, rotation_id
+- Person - id, name, role (relationship via person_id)
+- Block - id, date, session (relationship via block_id)
+
+**Business Rules:**
+- Only return active assignments (is_active=True)
+- Include person name in response
+- Order by person role, then name
+
+**Files to Read First:**
+- /Users/.../backend/app/models/assignment.py
+- /Users/.../backend/app/schemas/assignment.py
+- /Users/.../backend/app/api/routes/assignments.py (existing patterns)
+
+**Acceptance Criteria:**
+- [ ] Returns 200 with list of assignments
+- [ ] Returns 404 if block not found
+- [ ] Handles empty assignment lists
+- [ ] Test coverage for happy path and error cases
+```
+
+---
+
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1.0 | 2025-12-29 | Added "How to Delegate to This Agent" section for context isolation |
 | 1.0.0 | 2025-12-28 | Initial specification |
 
 **Reports To:** COORD_PLATFORM
