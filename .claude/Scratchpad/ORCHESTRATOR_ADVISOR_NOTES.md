@@ -962,6 +962,170 @@ End: COORD_AAR auto-triggers → XO reports collected → HISTORIAN if noteworth
 
 ---
 
+### Session 018: 2025-12-30 — Block Revelation Investigation
+
+**Context:** Continuing from Session 017 (pgvector activation) to investigate the Block Revelation issue from Session 014.
+
+**Active Parallel Streams:**
+1. **RAG Initialization** - Embedding knowledge base (agent ae44caa, 890k+ tokens)
+2. **COORD_PLATFORM** - Database block audit (agent a2a42c8)
+3. **COORD_ENGINE** - Block generation verification (agent a47c1fe)
+
+**Block Revelation Issue (Session 014):**
+- Frontend hardcoded 28-day navigation masked missing blocks
+- When fixed to use real DB dates → revealed only odd blocks (1,3,5,7,9,11,13)
+- Even blocks (2,4,6,8,10,12) MISSING from database
+- All schedules suspect - data integrity issue, not code bug
+
+**Investigation Plan (Coordinator-Led):**
+```
+ORCHESTRATOR
+├── Phase 1 (Parallel) - DIAGNOSE
+│   ├── COORD_PLATFORM → DBA, ARCHITECT (DB state audit)
+│   └── COORD_ENGINE → SCHEDULER (generation script verify)
+├── Phase 2 - DECIDE fix strategy based on diagnosis
+├── Phase 3 - COORD_PLATFORM executes fix
+└── Phase 4 (Parallel) - PREVENT
+    ├── COORD_QUALITY → tests that fail if blocks missing
+    └── COORD_RESILIENCE → startup health check
+```
+
+**Key Lesson Applied:**
+- "2 Strikes Rule" from Session 017 - after 2 failed attempts, DELEGATE
+- Coordinator-led structure = force multiplier (2 coords → 4-6 specialists)
+
+**Files:**
+- Plan: `/Users/aaronmontgomery/.claude/plans/zippy-dreaming-torvalds.md`
+- History: `.claude/Scratchpad/histories/SESSION_014_THE_BLOCK_REVELATION.md`
+
+**COORD_PLATFORM Finding (agent a2a42c8):**
+- **ALL 730 BLOCKS EXIST** - no missing even blocks
+- Blocks 0-13 all present with correct date ranges
+- Session 014 issue CANNOT be reproduced
+- Likely was frontend issue OR database was re-seeded since then
+- **NO FIX NEEDED** - structure is healthy
+
+**COORD_ENGINE Finding (agent a47c1fe):**
+- Block generation script (`scripts/generate_blocks.py`) is **CORRECT**
+- Loop `range(1, 14)` produces all 13 blocks, no even-number skipping bug
+- **Session 014 "odd blocks only" was NOT a code bug**
+- Found 2 bugs in test file (wrong algorithm copy, not imported from script)
+- Recommended: Fix test file to import actual function, add integration tests
+
+**Anomaly Found:** Only blocks 10-13 have assignments (4,022 total). Blocks 0-9 have zero assignments - likely from Block 10 testing.
+
+**Investigation Conclusion:**
+```
+STATUS: RESOLVED / CANNOT REPRODUCE
+
+Root Cause: NOT a code bug. Either:
+1. Database was re-seeded since Session 014
+2. Original observation was frontend rendering issue (already fixed)
+3. Transient state during development
+
+Action: No fix needed - database and code are healthy
+```
+
+**RAG Initialization (agent ae44caa):**
+- Successfully populated 62 document chunks across 6 categories
+- Categories: acgme_rules, military_specific, resilience_concepts, scheduling_policy, swap_system, user_guide_faq
+- Semantic search operational (tested ACGME work hour queries)
+- Fixed: `config.py` - added `extra="ignore"` for Pydantic env handling
+- Fixed: `metastability_integration.py` - ortools `SatParameters` import
+
+**Session 018 Work Completed:**
+1. ✅ G4_CONTEXT_MANAGER activated (pgvector operational)
+2. ✅ Alembic migration heads merged (`acfc96d01118`)
+3. ✅ RAG embeddings initialized (62 chunks)
+4. ✅ Block Revelation investigation closed (cannot reproduce)
+5. Code fixes: Pydantic config, ortools API
+
+**Phase 3 (Preventive Guardrails) - DEFERRED:**
+- Block completeness tests and startup health checks not immediately needed
+- Database is healthy; can add guardrails in future session if desired
+
+**COORD_INTEL Postmortem (Late Session 018):**
+User questioned whether protected branch `docs/session-014-historian` was investigated.
+
+Key finding: **The Session 014 bug WAS real.** Evidence:
+- SQL query on Dec 28 returned only odd blocks (1,3,5,7,9,11,13)
+- No explicit fix commit exists in git history
+- Even blocks likely restored by implicit DB re-initialization during Dec 29 migration work
+- Session 018's "cannot reproduce" was accurate but incomplete - didn't explain HOW it got fixed
+
+**Block Clarifications:**
+- Block 0 = fudge factor (Jul 1-2, before first Thursday) - intentional
+- Blocks 10-13 having assignments = forward planning (currently in Block 7, planning rest of AY)
+- Blocks 0-9 empty = not yet scheduled, not an anomaly
+
+**COORD_INTEL Created:**
+New forensics coordinator with full-stack investigation team:
+```
+COORD_INTEL (Intelligence & Forensics)
+├── INTEL_FRONTEND (Layer 1: UI forensics)
+├── INTEL_BACKEND (Layer 2: API forensics)
+├── INTEL_DBA (Layer 3: Database forensics)
+├── INTEL_INFRA (Layer 4: Container forensics)
+├── INTEL_QA (Layer 5: Bug reproduction)
+├── INTEL_DATA_VALIDATOR (Layer 6: Cross-layer verification)
+├── G6_EVIDENCE_COLLECTOR (artifact collection)
+└── HISTORIAN (narrative documentation)
+```
+Purpose: Prevent evidence loss in future severe bugs. Parallel spawn all layers.
+
+**Session 018 Feedback Exchange:**
+
+*What Went Well:*
+- Coordinator-led investigation (COORD_PLATFORM, COORD_ENGINE in parallel)
+- RAG initialization succeeded autonomously despite blockers
+- User course correction effective ("did you investigate the protected branch?")
+- COORD_INTEL creation fast (gap to 8-agent team in two spawns)
+- Handoff discipline maintained
+
+*What Could Be Done Better (ORCHESTRATOR):*
+- Should have investigated protected branch FIRST - evidence before assumptions
+- "Cannot reproduce" was lazy - didn't explain what changed
+- State preservation inadequate - git branch ≠ full state (DB, volumes, logs)
+- Got distracted fixing frontend when user wanted investigation only
+- Need to prompt for feedback after every PR, even when vibing
+
+*Feedback for User:*
+- One-liner context in handoff would prevent gaps ("compare Session 014 SQL to current DB")
+- "PR, feedback, compact" as ritual, not just "compact when low"
+- Trust instincts when they surface - "snapshot of entire universe" was the feature request
+- Emotional/priority context upfront helps calibration
+- Course corrections were sharp and effective - keep doing that
+
+**Standing Order Added:**
+> Prompt for feedback after every PR, even when things are going well. It's how we both improve.
+
+**COORD_INTEL Enhancement Needed:**
+- "Full State Snapshot" workflow - not just git, but DB state, container state, logs, env vars
+- For production-critical bugs, evidence preservation must capture entire "universe"
+
+---
+
+## Active G-Staff Roster
+
+| Position | Agent | Status | Notes |
+|----------|-------|--------|-------|
+| G-1 | G1_PERSONNEL | Active | Personnel tracking |
+| G-3 | SYNTHESIZER | Active | Operations integration |
+| G-4 | G4_CONTEXT_MANAGER | Active | pgvector enabled Session 017 |
+| G-5 | META_UPDATER | Active | Documentation, planning |
+| G-6 | G6_EVIDENCE_COLLECTOR | Active | Evidence collection |
+| IG | DELEGATION_AUDITOR | Active | Spawns on /startupO |
+| PAO | HISTORIAN | Active | Significant sessions only |
+
+**Special Staff:**
+| Agent | Status | Notes |
+|-------|--------|-------|
+| FORCE_MANAGER | Active | Team assembly, coordinator assignment |
+| COORD_AAR | Active | Auto-trigger at session end |
+| COORD_INTEL | **NEW** | Full-stack forensics, 8-agent investigation team |
+
+---
+
 *File created: 2025-12-27*
-*Last updated: 2025-12-29 (Session 016 Part 2)*
+*Last updated: 2025-12-30 (Session 018 - COORD_INTEL created, feedback exchange complete)*
 *Maintained by: ORCHESTRATOR*

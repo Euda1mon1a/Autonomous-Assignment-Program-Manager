@@ -465,6 +465,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"  # Ignore extra env vars not defined in Settings
 
 
 @lru_cache
