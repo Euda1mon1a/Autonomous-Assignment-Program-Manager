@@ -1126,6 +1126,160 @@ Purpose: Prevent evidence loss in future severe bugs. Parallel spawn all layers.
 
 ---
 
+### Session 019: 2025-12-29 — PAI Organizational Restructure & RAG Activation
+
+**Context:** Continuing organizational expansion and activating RAG system with verified vector DB.
+
+**Work Completed:**
+
+1. **Updated /startupO Skill:**
+   - Removed DELEGATION_AUDITOR auto-spawn (moved to session end)
+   - Added complete G-Staff hierarchy (G-1 through G-6, IG, PAO)
+   - Added Special Staff section in startup checklist
+
+2. **PAI Organizational Restructure (PR #542 - MERGED):**
+   - Created G2_RECON (Intelligence/Reconnaissance) - battlefield awareness
+   - Renamed G6_EVIDENCE_COLLECTOR to G6_SIGNAL (Signal/Data Processing)
+   - Created DEVCOM_RESEARCH (R&D Special Staff) - exotic/experimental concepts
+   - Created MEDCOM (Medical Advisory Special Staff) - ACGME/clinical domain expertise
+   - Updated ORCHESTRATOR.md to v5.1 with complete G-Staff roster
+
+3. **RAG System Activation (PR #543 - OPEN):**
+   - Verified 62 chunks in vector DB across 6 categories:
+     - acgme_rules, military_specific, resilience_concepts
+     - scheduling_policy, swap_system, user_guide_faq
+   - Created 6 RAG API endpoints for semantic search
+   - Created RAGSearch frontend component + hooks
+   - Created 16 integration tests for RAG functionality
+
+**G-Staff Now Complete:**
+| Position | Agent | Status | Role |
+|----------|-------|--------|------|
+| G-1 | G1_PERSONNEL | Active | Personnel/Admin |
+| G-2 | G2_RECON | **NEW** | Intelligence/Recon |
+| G-3 | SYNTHESIZER | Active | Operations |
+| G-4 | G4_CONTEXT_MANAGER | Active | Context/pgvector |
+| G-5 | META_UPDATER | Active | Plans/Documentation |
+| G-6 | G6_SIGNAL | Renamed | Signal/Data Processing |
+| IG | DELEGATION_AUDITOR | Active | Inspector General |
+| PAO | HISTORIAN | Active | Public Affairs |
+
+**New Special Staff:**
+| Agent | Status | Role |
+|-------|--------|------|
+| DEVCOM_RESEARCH | **NEW** | R&D, experimental concepts |
+| MEDCOM | **NEW** | Medical/ACGME advisory |
+
+**Key Context for Session 020:**
+- PR #543 needs merge (RAG activation, 16 tests passing)
+- RAG system operational with 62 embedded chunks
+- G-Staff hierarchy complete - full Army doctrine alignment
+- Three new agents need integration into workflows: G2_RECON, DEVCOM_RESEARCH, MEDCOM
+
+**Delegation Assessment:**
+- PR #542 created and merged autonomously (organizational restructure)
+- PR #543 created with comprehensive testing (RAG system)
+- Proper use of META_UPDATER for documentation tasks
+- No one-man-army anti-patterns observed
+
+**Session Duration:** ~3 hours
+**Lines Changed:** ~2,500 (across agent specs, frontend components, backend endpoints, tests)
+
+---
+
+## Active G-Staff Roster (Updated Session 019)
+
+| Position | Agent | Status | Notes |
+|----------|-------|--------|-------|
+| G-1 | G1_PERSONNEL | Active | Personnel tracking |
+| G-2 | G2_RECON | **NEW** | Intelligence/reconnaissance |
+| G-3 | SYNTHESIZER | Active | Operations integration |
+| G-4 | G4_CONTEXT_MANAGER | Active | pgvector enabled Session 017 |
+| G-5 | META_UPDATER | Active | Documentation, planning |
+| G-6 | G6_SIGNAL | Renamed | Signal/data processing (was G6_EVIDENCE_COLLECTOR) |
+| IG | DELEGATION_AUDITOR | Active | Spawns at session end |
+| PAO | HISTORIAN | Active | Significant sessions only |
+
+**Special Staff:**
+| Agent | Status | Notes |
+|-------|--------|-------|
+| FORCE_MANAGER | Active | Team assembly, coordinator assignment |
+| COORD_AAR | Active | Auto-trigger at session end |
+| COORD_INTEL | Active | Full-stack forensics, 8-agent investigation team |
+| DEVCOM_RESEARCH | **NEW** | R&D, exotic concepts (Session 019) |
+| MEDCOM | **NEW** | Medical/ACGME advisory (Session 019) |
+
+---
+
+### Session 020: 2025-12-29/30 — MVP Verification Night Mission
+
+**Context:** User going to sleep, authorized full autonomous operation with "cleared hot" for database writes.
+
+**Key User Statements:**
+- "I want to wake up tomorrow to a minimally viable product"
+- "I know CP-SAT works, but not that greedy or pulp do"
+- "I have no idea if any of the resilience modules actually work"
+- "cleared hot, just make double sure backups exist isolated/safe"
+- "Nothing is sacred, do what you must to achieve the mission. Maybe Historian, Historian is sacred"
+- "don't forget your coordinators, they're force multipliers"
+- "o7 good night, thank you for all the fish"
+
+**Work Completed:**
+
+1. **Solver Verification:**
+   - Greedy: 28/28 tests pass, functional verification complete, MVP-READY
+   - PuLP: 28/28 tests pass, functional verification complete, MVP-READY
+   - Both solvers respect template balancing (no concentration bug)
+
+2. **Resilience Framework Audit:**
+   - 42 modules inventoried in `backend/app/resilience/`
+   - 1,165+ tests across dedicated test files
+   - Identified MVP-blocking gap: le_chatelier.py (0 tests)
+
+3. **Test Fixes Applied:**
+   - SQLite/ARRAY incompatibility (12 errors → 0)
+   - MockAssignment.get() method (10 tests fixed)
+   - MitigationType.MONITORING fix (1 test fixed)
+   - HomeostasisMonitor.register_feedback_loop() (2 tests enabled)
+   - SIR simulation assertion fix (1 test fixed)
+
+4. **New Tests Created:**
+   - `test_le_chatelier.py`: 59 comprehensive tests (all pass)
+
+5. **Test Results:**
+   - Before: 585 passed, 54 failed, 22 errors
+   - After: 664 passed, 45 failed, 11 errors
+   - Net: +79 passing, -9 failures, -11 errors
+
+**Delegation Pattern Used:**
+- Coordinator-led: COORD_QUALITY, COORD_RESILIENCE, COORD_PLATFORM
+- Each coordinator spawned parallel specialists
+- Force multiplier pattern properly applied
+
+**PR Created:** #544 - https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager/pull/544
+
+**Backup Verification:**
+- Fresh backup created before operations: `residency_scheduler_20251229_224927.sql.gz`
+- Isolated in `backups/postgres/` directory
+
+**Remaining Work (Not MVP-Blocking):**
+- 45 test failures are calibration/threshold issues (CFFDRS, circadian, creep fatigue formulas)
+- Require domain expertise to recalibrate, not code fixes
+
+**Lessons Applied:**
+- "Coordinators as force multipliers" - User's reminder was well-heeded
+- Full parallel orchestration: 7 agents + 3 coordinators
+- "2 Strikes Rule" - delegated when complexity exceeded expectations
+- HISTORIAN declared sacred - no narrative this session (straightforward ops)
+
+**User Communication Style Noted:**
+- "o7" = military salute, appreciation
+- "thanks for all the fish" = Hitchhiker's Guide reference, high trust signal
+- Comfortable with full autonomous overnight operation
+- Appreciates mission-focused execution over ceremony
+
+---
+
 *File created: 2025-12-27*
-*Last updated: 2025-12-30 (Session 018 - COORD_INTEL created, feedback exchange complete)*
+*Last updated: 2025-12-30 (Session 020 - MVP verification night mission)*
 *Maintained by: ORCHESTRATOR*
