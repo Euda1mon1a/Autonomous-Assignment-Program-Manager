@@ -41,6 +41,7 @@ from app.api.routes import (
     procedures,
     qubo_templates,
     quota,
+    rag,
     rate_limit,
     reports,
     resilience,
@@ -126,6 +127,7 @@ api_router.include_router(
     tags=["scheduling-catalyst"],
 )
 api_router.include_router(ml.router, prefix="/ml", tags=["ml"])
+api_router.include_router(rag.router, prefix="/rag", tags=["rag"])
 api_router.include_router(
     qubo_templates.router, prefix="/qubo-templates", tags=["qubo-templates"]
 )

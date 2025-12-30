@@ -12,6 +12,8 @@ sqlalchemy-utils==0.42.1
 sqlalchemy-continuum==1.5.2  # Audit trail / version history for models
 pgvector>=0.3.0  # Python client for pgvector embeddings
 sentence-transformers>=2.2.0  # Local embeddings for agent memory vectors
+transformers>=4.47.0  # Huggingface transformers (version compatible with huggingface-hub)
+huggingface-hub>=0.34.0,<1.0  # Huggingface hub (required by transformers, pinned for compatibility)
 
 # Validation and serialization
 pydantic==2.12.5
