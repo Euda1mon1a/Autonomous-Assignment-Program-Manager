@@ -22,6 +22,7 @@ from app.api.routes import (
     daily_manifest,
     db_admin,
     docs,
+    exotic_resilience,
     experiments,
     export,
     exports,
@@ -102,6 +103,11 @@ api_router.include_router(export.router, prefix="/export", tags=["export"])
 api_router.include_router(exports.router, prefix="/exports", tags=["exports"])
 api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
 api_router.include_router(resilience.router, prefix="/resilience", tags=["resilience"])
+api_router.include_router(
+    exotic_resilience.router,
+    prefix="/resilience/exotic",
+    tags=["exotic-resilience"],
+)
 api_router.include_router(fatigue_risk.router)  # prefix="/fatigue-risk" defined in router
 api_router.include_router(
     game_theory.router, prefix="/game-theory", tags=["game-theory"]

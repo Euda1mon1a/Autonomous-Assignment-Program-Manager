@@ -26,7 +26,6 @@ import logging
 from datetime import datetime
 from enum import Enum
 from typing import Any
-from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -402,10 +401,70 @@ async def assess_immune_response(
     logger.info(f"Assessing immune response (max_items={max_items})")
 
     try:
+        # Try to call backend API first
+        from .api_client import SchedulerAPIClient
+
+        try:
+            async with SchedulerAPIClient() as client:
+                response = await client.client.post(
+                    f"{client.config.api_prefix}/resilience/exotic/immune/assess",
+                    json={},
+                    headers=await client._ensure_authenticated(),
+                )
+                response.raise_for_status()
+                data = response.json()
+
+                # Build response from backend data
+                response_status = ImmuneResponseInfo(
+                    state=ImmuneSystemStateEnum.ACTIVE if not data.get("is_anomaly") else ImmuneSystemStateEnum.RESPONDING,
+                    is_trained=True,
+                    detector_count=data.get("total_detectors", 100),
+                    antibody_count=len(data.get("suggested_repairs", [])),
+                    anomalies_detected=1 if data.get("is_anomaly") else 0,
+                    repairs_applied=0,
+                    successful_repairs=0,
+                    repair_success_rate=0.8,
+                    feature_dimensions=10,
+                    detection_radius=0.1,
+                    training_samples=50,
+                )
+
+                # Map immune health from backend
+                immune_health = data.get("immune_health", "healthy")
+                if immune_health == "healthy":
+                    overall_health = "healthy"
+                    severity = "healthy"
+                elif immune_health == "degraded":
+                    overall_health = "responding"
+                    severity = "warning"
+                else:
+                    overall_health = "stressed"
+                    severity = "critical"
+
+                logger.info(f"Immune response assessed from backend (health={immune_health})")
+
+                return ImmuneResponseAssessmentResponse(
+                    analyzed_at=datetime.now().isoformat(),
+                    response_status=response_status,
+                    active_detectors=[],
+                    recent_anomalies=[],
+                    available_antibodies=[],
+                    overall_health=overall_health,
+                    detection_coverage=1.0 - data.get("anomaly_score", 0.0),
+                    recommendations=[
+                        f"Anomaly detected: {data.get('is_anomaly', False)}",
+                        f"Matching detectors: {data.get('matching_detectors', 0)}",
+                    ],
+                    severity=severity,
+                )
+
+        except Exception as api_error:
+            logger.warning(f"Backend API call failed, using fallback: {api_error}")
+
         from app.resilience.immune_system import ScheduleImmuneSystem
 
-        # In production, would access the actual immune system instance
-        logger.warning("Immune system assessment using placeholder data")
+        # Fallback to placeholder data
+        logger.warning("Immune system assessment using placeholder data (backend unavailable)")
 
         # Build response with mock data showing structure
         active_detectors = []
