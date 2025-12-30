@@ -167,6 +167,20 @@ export {
 } from './useAdminScheduling'
 
 // ============================================================================
+// RAG Hooks
+// ============================================================================
+export {
+  useRAGHealth,
+  useRAGSearch,
+  ragQueryKeys,
+  type RAGCategory,
+  type RAGChunk,
+  type RAGRetrieveRequest,
+  type RAGRetrieveResponse,
+  type RAGHealthResponse,
+} from './useRAG'
+
+// ============================================================================
 // Shared Types
 // ============================================================================
 export type { ListResponse } from './useSchedule'
