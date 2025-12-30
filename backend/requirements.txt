@@ -45,6 +45,10 @@ PyWavelets>=1.4.0  ***REMOVED*** Wavelet transforms for multi-resolution schedul
 statsmodels>=0.14.0  ***REMOVED*** STL decomposition, ARIMA forecasting, time series analysis
 ruptures>=1.1.0  ***REMOVED*** Change point detection (PELT algorithm) for regime shifts
 
+***REMOVED*** Topological Data Analysis (TDA)
+ripser>=0.6.0  ***REMOVED*** Persistent homology computation (Vietoris-Rips filtration)
+persim>=0.3.0  ***REMOVED*** Persistence diagram utilities (bottleneck distance, visualization)
+
 ***REMOVED*** Machine Learning
 scikit-learn>=1.3.0
 joblib>=1.3.0  ***REMOVED*** Model serialization
