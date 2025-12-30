@@ -1,9 +1,10 @@
 # Block Scheduler Feature: Leave-Eligible Rotation Matching
 
-> **Status:** Future Session
+> **Status:** Implemented
 > **Created:** 2025-12-30
+> **Implemented:** 2025-12-30
 > **Priority:** High (operational requirement)
-> **Related:** Rotation Template GUI (in progress)
+> **Related:** Rotation Template GUI (completed)
 
 ---
 
@@ -234,24 +235,24 @@ The `leave_eligible` toggle in the Rotation Template GUI directly affects:
 
 ## Implementation Phases
 
-### Phase 1: Data Foundation
-- [ ] Add block assignment tracking
-- [ ] Link absences to blocks
-- [ ] Query for leave-eligible rotation availability
+### Phase 1: Data Foundation ✅
+- [x] Add block assignment tracking (`BlockAssignment` model)
+- [x] Link absences to blocks (via date overlap detection)
+- [x] Query for leave-eligible rotation availability
 
-### Phase 2: Matching Algorithm
-- [ ] Implement resident-to-rotation matching
-- [ ] Add capacity tracking
-- [ ] Add ACGME validation hooks
+### Phase 2: Matching Algorithm ✅
+- [x] Implement resident-to-rotation matching (`BlockSchedulerService`)
+- [x] Add capacity tracking (`RotationSlot` with available/is_full)
+- [x] Add coverage gap detection
 
-### Phase 3: UI Integration
-- [ ] Block scheduler dashboard
-- [ ] Leave request → rotation preview
-- [ ] Coverage gap alerts
+### Phase 3: API Integration ✅
+- [x] Block scheduler dashboard endpoint (`/block-scheduler/dashboard`)
+- [x] Schedule preview/execute endpoint (`/block-scheduler/schedule`)
+- [x] Coverage gap alerts in response
 
-### Phase 4: Automation
-- [ ] Auto-assign on leave approval
-- [ ] Conflict detection
+### Phase 4: Future Enhancements
+- [ ] Auto-assign on leave approval (webhook integration)
+- [ ] Frontend UI components
 - [ ] Swap suggestions when conflicts arise
 
 ---
@@ -277,7 +278,21 @@ The `leave_eligible` toggle in the Rotation Template GUI directly affects:
 
 ## Related Files
 
+### Core Implementation
+- `backend/app/models/block_assignment.py` - BlockAssignment model
+- `backend/app/schemas/block_assignment.py` - Pydantic schemas
+- `backend/app/repositories/block_assignment.py` - Data access layer
+- `backend/app/services/block_scheduler_service.py` - Leave-eligible matching algorithm
+- `backend/app/controllers/block_scheduler_controller.py` - Request handling
+- `backend/app/api/routes/block_scheduler.py` - API endpoints
+
+### Migration
+- `backend/alembic/versions/20251230_add_block_assignments.py` - Database migration
+
+### Tests
+- `backend/tests/services/test_block_scheduler_service.py` - Unit tests
+
+### Dependencies
 - `backend/app/models/rotation_template.py` - `leave_eligible` field
 - `backend/app/models/absence.py` - Leave request model
 - `backend/app/scheduling/` - Scheduling engine
-- `docs/planning/ROTATION_TEMPLATE_GUI_PLAN.md` - Current session work

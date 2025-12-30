@@ -11,6 +11,7 @@ from app.api.routes import (
     audit,
     auth,
     batch,
+    block_scheduler,
     blocks,
     calendar,
     call_assignments,
@@ -76,6 +77,9 @@ api_router.include_router(people.router, prefix="/people", tags=["people"])
 api_router.include_router(blocks.router, prefix="/blocks", tags=["blocks"])
 api_router.include_router(
     academic_blocks.router, prefix="/academic-blocks", tags=["academic-blocks"]
+)
+api_router.include_router(
+    block_scheduler.router, prefix="/block-scheduler", tags=["block-scheduler"]
 )
 api_router.include_router(
     rotation_templates.router, prefix="/rotation-templates", tags=["rotation-templates"]
