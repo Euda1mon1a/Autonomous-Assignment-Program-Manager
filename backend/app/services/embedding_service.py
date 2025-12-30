@@ -3,7 +3,13 @@ import hashlib
 from functools import lru_cache
 from typing import List, Optional
 
-from sentence_transformers import SentenceTransformer
+# Optional dependency
+try:
+    from sentence_transformers import SentenceTransformer
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+    SentenceTransformer = None  # type: ignore
 
 
 class EmbeddingService:
@@ -13,15 +19,20 @@ class EmbeddingService:
     No API calls required - runs entirely on CPU.
     """
 
-    _model: SentenceTransformer | None = None
+    _model: Optional[object] = None  # SentenceTransformer | None
     MODEL_NAME = "all-MiniLM-L6-v2"
     EMBEDDING_DIM = 384
 
     @classmethod
-    def get_model(cls) -> SentenceTransformer:
+    def get_model(cls):  # type: ignore
         """Lazy load the sentence-transformer model."""
+        if not SENTENCE_TRANSFORMERS_AVAILABLE:
+            raise ImportError(
+                "sentence-transformers not available. "
+                "Install with: pip install sentence-transformers"
+            )
         if cls._model is None:
-            cls._model = SentenceTransformer(cls.MODEL_NAME)
+            cls._model = SentenceTransformer(cls.MODEL_NAME)  # type: ignore
         return cls._model
 
     @classmethod

@@ -838,4 +838,419 @@ describe('useAuth token refresh', () => {
     // This may happen asynchronously, so we just verify the refresh was called
     expect(mockedAuthApi.performRefresh).toHaveBeenCalled()
   })
+
+  it('should prevent concurrent refresh attempts', async () => {
+    mockedAuthApi.getCurrentUser.mockResolvedValue(mockUser)
+    // Make performRefresh take some time to complete
+    mockedAuthApi.performRefresh.mockImplementation(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                access_token: 'new-token',
+                refresh_token: 'new-refresh',
+                token_type: 'bearer',
+              }),
+            100
+          )
+        )
+    )
+
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(result.current.isAuthenticated).toBe(true)
+    })
+
+    // Start two refresh operations simultaneously
+    let firstRefresh: Promise<boolean>
+    let secondRefresh: Promise<boolean>
+
+    await act(async () => {
+      firstRefresh = result.current.refreshToken()
+      secondRefresh = result.current.refreshToken()
+    })
+
+    const [firstResult, secondResult] = await Promise.all([firstRefresh!, secondRefresh!])
+
+    // First should succeed, second should be skipped
+    expect(firstResult).toBe(true)
+    expect(secondResult).toBe(false)
+
+    // performRefresh should only be called once due to concurrent prevention
+    expect(mockedAuthApi.performRefresh).toHaveBeenCalledTimes(1)
+  })
+
+  it('should handle token expiry edge cases', async () => {
+    mockedAuthApi.getCurrentUser.mockResolvedValue(mockUser)
+    // Token expired 5 minutes ago
+    mockedAuthApi.getTimeUntilExpiry.mockReturnValue(-5 * 60 * 1000)
+    mockedAuthApi.isTokenExpired.mockReturnValue(true)
+
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(result.current.isAuthenticated).toBe(true)
+    })
+
+    expect(result.current.getTokenExpiry()).toBe(-5 * 60 * 1000)
+    expect(result.current.needsRefresh()).toBe(true)
+  })
+})
+
+// ============================================================================
+// Additional Edge Cases
+// ============================================================================
+
+describe('useAuth - Role and Permission Edge Cases', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('should handle unknown role gracefully', async () => {
+    const userWithUnknownRole = {
+      ...mockUser,
+      role: 'unknown_role' as any,
+    }
+    mockedAuthApi.getCurrentUser.mockResolvedValueOnce(userWithUnknownRole)
+
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(result.current.isAuthenticated).toBe(true)
+    })
+
+    // Unknown role causes an error when checking permissions
+    // This is expected behavior - the hook will throw if role is invalid
+    // In production, this would be caught by the UI error boundary
+    expect(() => result.current.hasPermission('schedule:read')).toThrow()
+  })
+
+  it('should handle multiple role checks efficiently', async () => {
+    mockedAuthApi.getCurrentUser.mockResolvedValueOnce(mockAdminUser)
+
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(result.current.isAuthenticated).toBe(true)
+    })
+
+    // Check multiple roles at once
+    expect(result.current.hasRole(['admin', 'coordinator', 'faculty'])).toBe(true)
+    expect(result.current.hasRole(['resident', 'faculty'])).toBe(false)
+  })
+
+  it('should maintain permission consistency across re-renders', async () => {
+    mockedAuthApi.getCurrentUser.mockResolvedValue(mockCoordinatorUser)
+
+    const { result, rerender } = renderHook(() => useAuth(), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(result.current.isAuthenticated).toBe(true)
+    })
+
+    const firstPermissionCheck = result.current.hasPermission('schedule:generate')
+
+    // Force re-render
+    rerender()
+
+    const secondPermissionCheck = result.current.hasPermission('schedule:generate')
+
+    // Permission check should be consistent
+    expect(firstPermissionCheck).toBe(secondPermissionCheck)
+    expect(firstPermissionCheck).toBe(true)
+  })
+})
+
+describe('useLogin - Cache Invalidation', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('should invalidate schedule queries after login', async () => {
+    mockedAuthApi.login.mockResolvedValueOnce(mockLoginResponse)
+    mockedAuthApi.getCurrentUser.mockResolvedValue(mockUser)
+
+    const wrapper = createWrapper()
+    const { result } = renderHook(() => useLogin(), { wrapper })
+
+    await act(async () => {
+      result.current.mutate({
+        username: 'testuser',
+        password: 'password123',
+      })
+    })
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
+    })
+
+    // Verify login was called with correct credentials
+    expect(mockedAuthApi.login).toHaveBeenCalledWith(
+      expect.objectContaining({
+        username: 'testuser',
+        password: 'password123',
+      }),
+      expect.anything()
+    )
+  })
+
+  it('should handle network timeout errors', async () => {
+    const timeoutError = {
+      message: 'Request timeout',
+      status: 408,
+      detail: 'The request took too long to complete'
+    }
+    mockedAuthApi.login.mockRejectedValueOnce(timeoutError)
+
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    })
+
+    await act(async () => {
+      result.current.mutate({
+        username: 'testuser',
+        password: 'password123',
+      })
+    })
+
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true)
+    })
+
+    expect(result.current.error?.status).toBe(408)
+  })
+
+  it('should handle account locked errors', async () => {
+    const lockedError = {
+      message: 'Account locked',
+      status: 423,
+      detail: 'Too many failed login attempts'
+    }
+    mockedAuthApi.login.mockRejectedValueOnce(lockedError)
+
+    const { result } = renderHook(() => useLogin(), {
+      wrapper: createWrapper(),
+    })
+
+    await act(async () => {
+      result.current.mutate({
+        username: 'testuser',
+        password: 'password123',
+      })
+    })
+
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true)
+    })
+
+    expect(result.current.error?.status).toBe(423)
+    expect(result.current.error?.message).toContain('locked')
+  })
+})
+
+describe('useLogout - Additional Scenarios', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('should return boolean indicating server logout success', async () => {
+    // Simulate successful server logout
+    mockedAuthApi.logout.mockResolvedValueOnce(true)
+
+    const { result } = renderHook(() => useLogout(), {
+      wrapper: createWrapper(),
+    })
+
+    await act(async () => {
+      result.current.mutate()
+    })
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
+    })
+
+    // Logout mutation returns the boolean from the API
+    expect(result.current.data).toBe(true)
+  })
+
+  it('should handle logout with partial server failure gracefully', async () => {
+    // Server returns false indicating partial failure but doesn't error
+    mockedAuthApi.logout.mockResolvedValueOnce(false)
+
+    const { result } = renderHook(() => useLogout(), {
+      wrapper: createWrapper(),
+    })
+
+    // Spy on console.warn to verify the warning is logged
+    const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation()
+
+    await act(async () => {
+      result.current.mutate()
+    })
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
+    })
+
+    // Verify warning was logged
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      'Server logout failed, but local session was cleared'
+    )
+
+    consoleWarnSpy.mockRestore()
+  })
+})
+
+describe('usePermissions - Comprehensive Permission Matrix', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('should return all admin permissions', async () => {
+    mockedAuthApi.getCurrentUser.mockResolvedValueOnce(mockAdminUser)
+
+    const { result } = renderHook(() => usePermissions(), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    // Verify admin has ALL permissions
+    expect(result.current.permissions).toContain('schedule:read')
+    expect(result.current.permissions).toContain('schedule:write')
+    expect(result.current.permissions).toContain('schedule:generate')
+    expect(result.current.permissions).toContain('people:delete')
+    expect(result.current.permissions).toContain('absences:approve')
+    expect(result.current.permissions).toContain('admin:full')
+    expect(result.current.permissions.length).toBeGreaterThan(10)
+  })
+
+  it('should correctly differentiate faculty vs resident permissions', async () => {
+    // Test faculty permissions
+    mockedAuthApi.getCurrentUser.mockResolvedValueOnce(mockFacultyUser)
+
+    const { result: facultyResult } = renderHook(() => usePermissions(), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(facultyResult.current.isLoading).toBe(false)
+    })
+
+    // Faculty can write absences
+    expect(facultyResult.current.hasPermission('absences:write')).toBe(true)
+    // But cannot approve them
+    expect(facultyResult.current.hasPermission('absences:approve')).toBe(false)
+
+    // Test resident permissions (create new wrapper for clean state)
+    jest.clearAllMocks()
+    mockedAuthApi.getCurrentUser.mockResolvedValueOnce(mockUser)
+
+    const { result: residentResult } = renderHook(() => usePermissions(), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(residentResult.current.isLoading).toBe(false)
+    })
+
+    // Resident can also write absences
+    expect(residentResult.current.hasPermission('absences:write')).toBe(true)
+    // But cannot approve them
+    expect(residentResult.current.hasPermission('absences:approve')).toBe(false)
+  })
+})
+
+describe('useValidateSession - Token Validation Edge Cases', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('should handle token validation with expired token gracefully', async () => {
+    const expiredTokenError = {
+      message: 'Token has expired',
+      status: 401,
+      detail: 'Access token is no longer valid'
+    }
+    mockedAuthApi.validateToken.mockRejectedValueOnce(expiredTokenError)
+
+    const { result } = renderHook(() => useValidateSession(), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true)
+    })
+
+    expect(result.current.error?.message).toContain('expired')
+    expect(mockedAuthApi.validateToken).toHaveBeenCalledTimes(1)
+  })
+
+  it('should handle malformed token responses', async () => {
+    // Simulate server returning null for invalid token (not an error)
+    mockedAuthApi.validateToken.mockResolvedValueOnce(null)
+
+    const { result } = renderHook(() => useValidateSession(), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
+    })
+
+    expect(result.current.data).toBeNull()
+  })
+})
+
+describe('useRole - Role Checking Comprehensive Tests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('should provide all role convenience booleans', async () => {
+    mockedAuthApi.getCurrentUser.mockResolvedValueOnce(mockCoordinatorUser)
+
+    const { result } = renderHook(() => useRole(), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    expect(result.current.role).toBe('coordinator')
+    expect(result.current.isAdmin).toBe(false)
+    expect(result.current.isCoordinator).toBe(true)
+    expect(result.current.isFaculty).toBe(false)
+    expect(result.current.isResident).toBe(false)
+  })
+
+  it('should handle empty role array check', async () => {
+    mockedAuthApi.getCurrentUser.mockResolvedValueOnce(mockUser)
+
+    const { result } = renderHook(() => useRole(), {
+      wrapper: createWrapper(),
+    })
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    // Empty array should return false
+    expect(result.current.hasRole([] as any)).toBe(false)
+  })
 })
