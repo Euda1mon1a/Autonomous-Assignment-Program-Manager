@@ -24,20 +24,21 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import JSON, UUID as PGUUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from pgvector.sqlalchemy import Vector
 
 
 # revision identifiers, used by Alembic.
 revision: str = '20251229_rag_documents'
-down_revision: Union[str, None] = '20251227_pgvector'
+down_revision: Union[str, None] = 'e46cd3bee350'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
     """Create rag_documents table for RAG system."""
-    # Note: pgvector extension already enabled in 20251227_pgvector migration
+    # Enable pgvector extension (idempotent - safe to run if already enabled)
+    op.execute('CREATE EXTENSION IF NOT EXISTS vector')
 
     # Create rag_documents table
     op.create_table(
@@ -69,7 +70,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             'metadata_',
-            JSON,
+            JSONB,
             nullable=False,
             server_default='{}',
             comment='Additional metadata: source_file, page_number, section, author, etc.',
