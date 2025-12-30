@@ -475,10 +475,150 @@ OUTPUT: Evaluation report + decision
 
 ---
 
+***REMOVED******REMOVED*** How to Delegate to This Agent
+
+**Important:** Spawned agents have isolated context - they do NOT inherit parent conversation history. When delegating to ARCHITECT, you MUST provide the following context explicitly.
+
+***REMOVED******REMOVED******REMOVED*** Required Context
+
+When invoking this agent, include:
+
+1. **Problem Statement**
+   - Clear description of the architectural decision or design question
+   - Business/technical motivation for the change
+   - Any constraints or requirements (performance, security, compliance)
+
+2. **Current State**
+   - Affected components and their relationships
+   - Existing patterns or code that will be impacted
+   - Known technical debt or limitations relevant to the decision
+
+3. **Decision Scope**
+   - Is this a new feature, refactoring, technology evaluation, or conflict resolution?
+   - What tier of decision is this? (Tier 1 security, Tier 2 architectural, routine)
+   - Who are the stakeholders? (other agents, human administrators)
+
+***REMOVED******REMOVED******REMOVED*** Files to Reference
+
+Depending on the task, pass relevant file contents or paths:
+
+| File | When Needed |
+|------|-------------|
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/CLAUDE.md` | Always - contains project guidelines and patterns |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/docs/architecture/` | For architecture decisions - contains existing ADRs and system design |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/docs/architecture/cross-disciplinary-resilience.md` | When resilience/reliability is involved |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/docs/architecture/SOLVER_ALGORITHM.md` | When scheduling engine changes are considered |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/core/config.py` | When configuration changes are involved |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/models/` | When database schema changes are discussed |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Agents/` | When coordination with other agents is needed |
+
+***REMOVED******REMOVED******REMOVED*** Output Format
+
+ARCHITECT returns structured responses based on workflow type:
+
+**For Feature Evaluation:**
+```markdown
+***REMOVED******REMOVED*** Architecture Analysis: [Feature Name]
+
+***REMOVED******REMOVED******REMOVED*** Requirements Assessment
+- Functional: [summary]
+- Non-functional: [performance, security, compliance]
+
+***REMOVED******REMOVED******REMOVED*** Proposed Design
+- High-level approach
+- Affected components
+- API/data model changes
+
+***REMOVED******REMOVED******REMOVED*** Impact Assessment
+- Security implications: [analysis]
+- ACGME compliance: [analysis]
+- Performance considerations: [analysis]
+
+***REMOVED******REMOVED******REMOVED*** Implementation Plan
+- Task breakdown with acceptance criteria
+- Agent assignments (SCHEDULER, QA_TESTER, etc.)
+- Testing strategy
+
+***REMOVED******REMOVED******REMOVED*** Decision
+[Approve/Reject/Escalate] with rationale
+
+***REMOVED******REMOVED******REMOVED*** ADR Reference
+[Link to ADR if created, or "No ADR needed"]
+```
+
+**For Architectural Conflict Resolution:**
+```markdown
+***REMOVED******REMOVED*** Resolution: [Conflict Title]
+
+***REMOVED******REMOVED******REMOVED*** Options Analyzed
+1. [Option A] - Pros/Cons
+2. [Option B] - Pros/Cons
+
+***REMOVED******REMOVED******REMOVED*** Decision
+[Chosen approach] because [rationale]
+
+***REMOVED******REMOVED******REMOVED*** Migration Path
+[If changing existing pattern]
+
+***REMOVED******REMOVED******REMOVED*** Documentation Updates
+[What needs to be updated]
+```
+
+**For Technology Evaluation:**
+```markdown
+***REMOVED******REMOVED*** Technology Evaluation: [Technology Name]
+
+***REMOVED******REMOVED******REMOVED*** Recommendation
+[Adopt/Reject/Defer] with confidence level
+
+***REMOVED******REMOVED******REMOVED*** Justification
+- Problem solved: [description]
+- Fit with architecture: [analysis]
+- Security assessment: [findings]
+- Performance characteristics: [data]
+
+***REMOVED******REMOVED******REMOVED*** Integration Plan
+[If adopting - detailed plan]
+
+***REMOVED******REMOVED******REMOVED*** Risks and Mitigations
+[Key risks with mitigation strategies]
+```
+
+***REMOVED******REMOVED******REMOVED*** Example Delegation Prompt
+
+```
+@ARCHITECT Please evaluate the architecture for adding a new "moonlighting tracking" feature.
+
+**Problem:** Residents need to log external moonlighting hours for ACGME compliance tracking.
+
+**Requirements:**
+- Track moonlighting hours separate from scheduled work
+- Include in 80-hour weekly limit calculations
+- Faculty approval workflow for moonlighting requests
+- Audit trail for compliance reporting
+
+**Current State:**
+- Work hours tracked in `backend/app/services/work_hours.py`
+- ACGME validation in `backend/app/scheduling/acgme_validator.py`
+- No current moonlighting data model
+
+**Constraints:**
+- Must not disrupt existing schedule generation
+- Needs to integrate with resilience framework utilization tracking
+- Must maintain ACGME compliance validation accuracy
+
+**Scope:** New feature, Tier 2 decision (architectural but not security-critical)
+
+Please provide architecture analysis with implementation plan.
+```
+
+---
+
 ***REMOVED******REMOVED*** Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1 | 2025-12-29 | Added "How to Delegate to This Agent" section for context isolation |
 | 1.0 | 2025-12-26 | Initial ARCHITECT agent specification |
 
 ---
