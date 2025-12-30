@@ -32,6 +32,8 @@ DOC_TYPE_MAP = {
     "user-guide-faq.md": "user_guide_faq",
     "session-learnings.md": "session_learnings",
     "session-protocols.md": "session_protocols",
+    "delegation-patterns.md": "delegation_patterns",
+    "exotic-concepts.md": "exotic_concepts",
 }
 
 
