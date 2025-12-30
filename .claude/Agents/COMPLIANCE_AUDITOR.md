@@ -58,7 +58,7 @@ When running in MCP context, these tools support compliance work:
 
 **Audit Type:** pre-commit
 **Date Range:** 2025-01-06 to 2025-02-02 (Block 10)
-**Schedule File:** /backend/data/proposed_block10_schedule.json
+**Schedule Data:** [Provide schedule JSON inline or via MCP tool query]
 
 **Request:** Validate this proposed schedule against all ACGME rules before it is committed. Flag any violations with severity and remediation options.
 

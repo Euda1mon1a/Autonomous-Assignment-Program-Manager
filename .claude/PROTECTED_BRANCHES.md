@@ -22,4 +22,18 @@ Session 014 represents a significant moment in the project's development:
 
 ---
 
+***REMOVED******REMOVED*** `docs/session-017-lessons`
+
+**Protected:** 2025-12-29
+**Reason:** Session lessons archive
+
+Contains Session 018 feedback exchange and standing orders:
+- Feedback exchange (what went well, what to improve)
+- Standing order: Prompt for feedback after every PR
+- Key learning: git branch ≠ full state (need DB, volumes, logs for postmortem)
+
+**Do not delete this branch.**
+
+---
+
 *This file is checked on `/startup` and `/startupO` to prevent accidental cleanup.*

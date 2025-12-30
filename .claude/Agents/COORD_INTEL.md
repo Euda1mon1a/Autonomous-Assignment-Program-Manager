@@ -560,7 +560,7 @@ spawn_trigger:
 - Data differs between layers
 - Need to find where data diverges
 - Cascading inconsistency suspected
-- "Different in frontend/backend/DB" reports
+- Reports claiming "data differs between frontend, backend, and DB"
 
 **Signal Pattern:**
 ```yaml
