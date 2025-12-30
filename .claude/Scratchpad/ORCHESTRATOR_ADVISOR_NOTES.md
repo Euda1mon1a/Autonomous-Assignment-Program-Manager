@@ -1073,6 +1073,36 @@ COORD_INTEL (Intelligence & Forensics)
 ```
 Purpose: Prevent evidence loss in future severe bugs. Parallel spawn all layers.
 
+**Session 018 Feedback Exchange:**
+
+*What Went Well:*
+- Coordinator-led investigation (COORD_PLATFORM, COORD_ENGINE in parallel)
+- RAG initialization succeeded autonomously despite blockers
+- User course correction effective ("did you investigate the protected branch?")
+- COORD_INTEL creation fast (gap to 8-agent team in two spawns)
+- Handoff discipline maintained
+
+*What Could Be Done Better (ORCHESTRATOR):*
+- Should have investigated protected branch FIRST - evidence before assumptions
+- "Cannot reproduce" was lazy - didn't explain what changed
+- State preservation inadequate - git branch ≠ full state (DB, volumes, logs)
+- Got distracted fixing frontend when user wanted investigation only
+- Need to prompt for feedback after every PR, even when vibing
+
+*Feedback for User:*
+- One-liner context in handoff would prevent gaps ("compare Session 014 SQL to current DB")
+- "PR, feedback, compact" as ritual, not just "compact when low"
+- Trust instincts when they surface - "snapshot of entire universe" was the feature request
+- Emotional/priority context upfront helps calibration
+- Course corrections were sharp and effective - keep doing that
+
+**Standing Order Added:**
+> Prompt for feedback after every PR, even when things are going well. It's how we both improve.
+
+**COORD_INTEL Enhancement Needed:**
+- "Full State Snapshot" workflow - not just git, but DB state, container state, logs, env vars
+- For production-critical bugs, evidence preservation must capture entire "universe"
+
 ---
 
 ## Active G-Staff Roster
@@ -1092,9 +1122,10 @@ Purpose: Prevent evidence loss in future severe bugs. Parallel spawn all layers.
 |-------|--------|-------|
 | FORCE_MANAGER | Active | Team assembly, coordinator assignment |
 | COORD_AAR | Active | Auto-trigger at session end |
+| COORD_INTEL | **NEW** | Full-stack forensics, 8-agent investigation team |
 
 ---
 
 *File created: 2025-12-27*
-*Last updated: 2025-12-30 (Session 018 - Block Revelation RESOLVED, RAG operational)*
+*Last updated: 2025-12-30 (Session 018 - COORD_INTEL created, feedback exchange complete)*
 *Maintained by: ORCHESTRATOR*
