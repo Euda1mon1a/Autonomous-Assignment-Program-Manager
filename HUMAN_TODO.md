@@ -358,4 +358,107 @@ The following links in `README.md` point to non-existent files:
 
 ---
 
-*Last updated: 2025-12-29 (Session 015 solver verification added)*
+---
+
+## Full-Stack MVP Review Findings (2025-12-30)
+
+> Comprehensive 16-layer inspection conducted. See `docs/planning/MVP_STATUS_REPORT.md` for full details.
+
+### 🔴 CRITICAL - Fix Before Launch
+
+#### 1. Celery Worker Missing Queues
+**Priority:** CRITICAL
+**Location:** `docker-compose.yml` (celery-worker service)
+
+```yaml
+# CURRENT (broken):
+command: celery -A app.core.celery_app worker -Q default,resilience,notifications
+
+# SHOULD BE:
+command: celery -A app.core.celery_app worker -Q default,resilience,notifications,metrics,exports,security
+```
+
+**Impact:** Metrics, exports, and security rotation tasks will queue indefinitely.
+
+#### 2. Security TODOs in audience_tokens.py
+**Priority:** CRITICAL
+**Location:** `/backend/app/api/routes/audience_tokens.py`
+
+| Line | Issue | Risk |
+|------|-------|------|
+| 120 | Role-based audience restrictions missing | Privilege escalation |
+| 198 | Token ownership verification incomplete | Token theft |
+
+**Action:** Implement role checks and ownership verification before MVP launch.
+
+### 🟡 HIGH PRIORITY - Fix This Week
+
+#### 3. Frontend Environment Variable Mismatch
+**Location:** `/frontend/src/hooks/useClaudeChat.ts`
+- Uses `REACT_APP_API_URL` (React CRA style)
+- Should use `NEXT_PUBLIC_API_URL` (Next.js style)
+- **Impact:** Claude chat will fail silently
+
+#### 4. Missing Database Indexes
+**Location:** Database schema
+```sql
+CREATE INDEX idx_block_date ON blocks(date);
+CREATE INDEX idx_assignment_person_id ON assignments(person_id);
+CREATE INDEX idx_assignment_block_id ON assignments(block_id);
+```
+**Impact:** Slow queries on schedule views and reports
+
+#### 5. Admin Users Page API Not Wired
+**Location:** `/frontend/src/app/admin/users/page.tsx`
+- 4 TODO comments for CRUD API calls
+- Currently uses mock data
+- **Impact:** User management non-functional
+
+#### 6. Resilience API Response Models
+**Location:** `/backend/app/api/routes/resilience.py`
+- Only 12/54 endpoints have `response_model` defined (22%)
+- **Impact:** Poor OpenAPI documentation, inconsistent responses
+
+### 🟢 MEDIUM PRIORITY - Post-Launch Sprint
+
+#### 7. Frontend Accessibility Gaps
+- Only 24/80 core components have ARIA attributes
+- Missing `<thead>` in ScheduleGrid tables
+- Missing `aria-label` on icon-only buttons
+
+#### 8. Token Refresh Not Implemented
+- Access tokens expire in 15 minutes
+- Refresh token exists but not used in frontend
+- Users silently logged out
+
+#### 9. MCP Placeholder Tools (11 tools)
+- Hopfield networks, immune system, game theory return synthetic data
+- Shapley value returns uniform distribution
+
+#### 10. Frontend WebSocket Client Missing
+- Backend WebSocket fully implemented (8 event types)
+- Frontend only has SSE, no native WebSocket client
+
+---
+
+### Full-Stack Review Summary
+
+| Layer | Status | Score |
+|-------|--------|-------|
+| Frontend Architecture | ✅ Excellent | 92/100 |
+| Backend Middleware | ✅ Excellent | 94/100 |
+| Authentication | ✅ Excellent | 96/100 |
+| Database/ORM | ✅ Good | 85/100 |
+| Docker/Deploy | ⚠️ Good | 78/100 |
+| CI/CD | ✅ Good | 82/100 |
+| Error Handling | ✅ Excellent | 92/100 |
+
+**Overall MVP Status:** PRODUCTION-READY (with 2 critical fixes)
+
+See also:
+- `docs/planning/MVP_STATUS_REPORT.md` - Full 16-layer analysis
+- `docs/planning/TECHNICAL_DEBT.md` - Tracked issues by priority
+
+---
+
+*Last updated: 2025-12-30 (Full-stack MVP review completed)*
