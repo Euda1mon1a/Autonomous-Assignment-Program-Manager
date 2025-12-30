@@ -41,6 +41,7 @@ from datetime import datetime
 from typing import Any
 
 from ortools.sat.python import cp_model
+from ortools.sat.sat_parameters_pb2 import SatParameters
 
 from app.resilience.metastability_detector import (
     EscapeStrategy,
@@ -356,8 +357,8 @@ def create_metastability_callback() -> MetastabilitySolutionCallback:
 def apply_escape_strategy(
     solver: cp_model.CpSolver,
     strategy: EscapeStrategy,
-    current_params: cp_model.CpSolverParameters | None = None,
-) -> cp_model.CpSolverParameters:
+    current_params: SatParameters | None = None,
+) -> SatParameters:
     """
     Apply escape strategy by modifying solver parameters.
 
@@ -372,12 +373,12 @@ def apply_escape_strategy(
         Modified solver parameters
 
     Example:
-        params = cp_model.CpSolverParameters()
+        params = SatParameters()
         new_params = apply_escape_strategy(solver, EscapeStrategy.INCREASE_TEMPERATURE, params)
         solver.parameters.CopyFrom(new_params)
     """
     if current_params is None:
-        params = cp_model.CpSolverParameters()
+        params = SatParameters()
     else:
         params = current_params
 
