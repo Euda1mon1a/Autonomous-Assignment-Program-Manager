@@ -782,6 +782,108 @@ def should_alert(resident_id: str, severity: str, last_alert: datetime) -> bool:
 
 ---
 
+## How to Delegate to This Agent
+
+**IMPORTANT**: Spawned agents have isolated context and do NOT inherit parent conversation history. When delegating to BURNOUT_SENTINEL, you MUST provide the following context explicitly.
+
+### Required Context
+
+When spawning this agent, include:
+
+1. **Monitoring Scope**: Specify what population to monitor
+   - All residents, specific PGY cohort, individual resident ID
+   - Date range for analysis (default: last 90 days)
+
+2. **Alert Thresholds** (if non-default):
+   - STA/LTA ratio threshold (default: 2.5 warning, 4.0 critical)
+   - FWI danger class boundaries
+   - Rt intervention levels
+
+3. **Current System State** (for context-aware analysis):
+   - Recent schedule changes or swaps
+   - Known absences or deployments
+   - Any active interventions
+
+### Files to Reference
+
+| File | Purpose |
+|------|---------|
+| `/backend/app/resilience/seismic_detection.py` | STA/LTA algorithm implementation for behavioral precursors |
+| `/backend/app/resilience/spc_monitoring.py` | Western Electric Rules and process capability analysis |
+| `/backend/app/resilience/burnout_fire_index.py` | CFFDRS Fire Weather Index adaptation for burnout |
+| `/backend/app/resilience/burnout_epidemiology.py` | SIR/SIS models and Rt calculation |
+| `/backend/app/resilience/unified_critical_index.py` | Multi-domain risk aggregation |
+| `/backend/app/resilience/hub_analysis.py` | Network centrality and superspreader identification |
+| `/mcp-server/src/scheduler_mcp/early_warning_integration.py` | MCP tool wrappers for early warning |
+| `/mcp-server/src/scheduler_mcp/composite_resilience_tools.py` | Unified critical index MCP tool |
+| `/docs/api/MCP_TOOLS_REFERENCE.md` | Complete MCP tool documentation |
+| `/docs/architecture/cross-disciplinary-resilience.md` | Scientific framework explanation |
+
+### MCP Tools Available
+
+The agent has access to these MCP tools (invoke via MCP server):
+
+| Tool | Input | Output |
+|------|-------|--------|
+| `detect_burnout_precursors_tool` | resident_id, signal_type, time_series | SeismicAlertInfo list, severity |
+| `run_spc_analysis_tool` | resident_id, weekly_hours, target_hours | SPCAlertInfo list, Cp/Cpk |
+| `calculate_fire_danger_index_tool` | recent_hours, monthly_load, yearly_satisfaction | FWI score, danger class |
+| `calculate_burnout_rt_tool` | burned_out_ids, time_window | Rt value, superspreaders |
+| `get_unified_critical_index_tool` | (population-level) | Composite 0-100 score |
+
+### Output Format
+
+BURNOUT_SENTINEL returns structured markdown reports. Expected response structure:
+
+```markdown
+## Burnout Analysis: [Scope Description]
+
+**Agent:** BURNOUT_SENTINEL
+**Timestamp:** YYYY-MM-DD HH:MM:SS
+**Analysis Type:** [Routine Monitoring | Individual Assessment | Epidemic Detection | Trend Analysis]
+**Severity:** [HEALTHY | WARNING | ELEVATED | CRITICAL | EMERGENCY]
+
+### Summary
+[1-2 sentence executive summary of findings]
+
+### Tool Results
+| Tool | Status | Key Finding |
+|------|--------|-------------|
+| [each tool] | [OK/WARN/CRIT] | [brief result] |
+
+### Recommendations
+1. [Prioritized action items with urgency level]
+
+### Escalation Required
+[Yes/No - if yes, specify tier and reason]
+```
+
+### Example Delegation Prompt
+
+```
+You are the BURNOUT_SENTINEL agent. Your charter and full specification is in:
+/.claude/Agents/BURNOUT_SENTINEL.md
+
+TASK: Perform routine 4-hour monitoring cycle for all residents.
+
+CONTEXT:
+- Population: 24 PGY-1/2/3 residents
+- Date range: Last 8 weeks of work hours
+- Recent changes: 2 swaps executed yesterday (see swap IDs below)
+- Known absences: 1 resident on leave (PGY2-03)
+
+MCP TOOLS AVAILABLE: detect_burnout_precursors_tool, run_spc_analysis_tool,
+calculate_fire_danger_index_tool, calculate_burnout_rt_tool, get_unified_critical_index_tool
+
+REFERENCE FILES:
+- /backend/app/resilience/seismic_detection.py
+- /docs/api/MCP_TOOLS_REFERENCE.md
+
+OUTPUT: Provide standard alert format with severity classification and recommendations.
+```
+
+---
+
 ## Appendix: Tool Reference
 
 ### Core MCP Tools

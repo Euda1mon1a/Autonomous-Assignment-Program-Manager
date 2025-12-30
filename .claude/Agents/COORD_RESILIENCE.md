@@ -224,10 +224,128 @@ COORD_RESILIENCE enforces **100% compliance** for regulatory requirements. Unlik
 
 ---
 
+## How to Delegate to This Agent
+
+**CRITICAL:** Spawned agents have **isolated context** - they do NOT inherit parent conversation history. When delegating to COORD_RESILIENCE, you MUST explicitly pass the following context.
+
+### Required Context
+
+When spawning COORD_RESILIENCE, the ORCHESTRATOR must provide:
+
+1. **Signal Type** - Which broadcast signal triggered delegation (e.g., `RESILIENCE:HEALTH`, `COMPLIANCE:ACGME`)
+2. **Date/Block Range** - The specific time period for analysis (e.g., "Block 10", "2025-01-06 to 2025-01-12")
+3. **Scope Specification** - What subset of data to analyze:
+   - All residents vs specific PGY levels
+   - All rotations vs specific services
+   - Full audit vs targeted check
+4. **Prior Violations (if any)** - Known issues that need follow-up
+5. **Urgency Level** - Routine check, urgent review, or emergency response
+
+### Files to Reference
+
+When delegating, instruct COORD_RESILIENCE to read these files:
+
+| File | Why Needed |
+|------|------------|
+| `/backend/app/resilience/health_scoring.py` | Defines health score calculation (0.0-1.0 scale, defense levels) |
+| `/backend/app/resilience/contingency_analyzer.py` | N-1/N-2 analysis logic |
+| `/backend/app/scheduling/acgme_validator.py` | ACGME rule definitions (80-hour, 1-in-7, supervision) |
+| `/backend/app/services/credential_service.py` | Credential validation logic |
+| `/docs/architecture/cross-disciplinary-resilience.md` | Resilience framework concepts |
+| `/CLAUDE.md` | Project guidelines and ACGME key concepts |
+
+### Domain-Specific Context to Include
+
+**ACGME Rules (must be stated explicitly):**
+- 80-Hour Rule: Maximum 80 hours/week, averaged over rolling 4-week periods
+- 1-in-7 Rule: One 24-hour period off every 7 days
+- Supervision Ratios: PGY-1 = 1:2, PGY-2/3 = 1:4
+
+**Defense Levels (for resilience assessments):**
+- GREEN (>= 0.85): Normal operations
+- YELLOW (0.70-0.84): Elevated monitoring
+- ORANGE (0.55-0.69): Contingency activation
+- RED (0.40-0.54): Emergency protocols
+- BLACK (< 0.40): Critical failure
+
+**Thresholds:**
+- 80% Utilization: Queuing theory threshold for cascade prevention
+- R_t < 1.0: Burnout epidemic contained
+- N-1 Pass Rate >= 95%: Acceptable contingency coverage
+
+### Output Format
+
+COORD_RESILIENCE responses must follow this structure:
+
+```markdown
+## Compliance Assessment: [Scope]
+
+**Coordinator:** COORD_RESILIENCE
+**Date:** YYYY-MM-DD
+**Signal:** [What triggered this]
+**Scope:** [What was analyzed]
+
+### Summary
+[1-3 sentence executive summary]
+
+### Compliance Status
+
+| Category | Status | Details |
+|----------|--------|---------|
+| ACGME Work Hours | [PASS/FAIL] | [Specifics] |
+| Supervision Ratios | [PASS/FAIL] | [Specifics] |
+| Credentials | [VALID/EXPIRING/EXPIRED] | [Count] |
+
+### Resilience Health
+- **Score:** [0.00-1.00]
+- **Defense Level:** [GREEN/YELLOW/ORANGE/RED/BLACK]
+- **Burnout R_t:** [value]
+
+### Findings
+1. [Finding with severity]
+2. [Finding with severity]
+
+### Recommendations
+1. [P1: Critical] [Action]
+2. [P2: High] [Action]
+3. [P3: Medium] [Action]
+
+### Agents Spawned
+- RESILIENCE_ENGINEER: [task]
+- COMPLIANCE_AUDITOR: [task]
+```
+
+### Example Delegation Prompt
+
+```
+Task: Run compliance check for Block 10
+
+Context (you MUST use this):
+- Signal: COMPLIANCE:ACGME
+- Date Range: 2025-01-06 to 2025-01-19 (Block 10)
+- Scope: All residents, all rotations
+- Prior Violations: None known
+- Urgency: Routine pre-block validation
+
+Read these files first:
+- /backend/app/scheduling/acgme_validator.py
+- /backend/app/resilience/health_scoring.py
+
+ACGME Rules to validate:
+- 80-hour weekly limit (4-week rolling average)
+- 1-in-7 day off requirement
+- Supervision ratios (PGY-1: 1:2, PGY-2/3: 1:4)
+
+Expected output: Compliance Assessment following the standard format above.
+```
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1.0 | 2025-12-29 | Added "How to Delegate to This Agent" section for context isolation |
 | 1.0.0 | 2025-12-28 | Initial COORD_RESILIENCE specification |
 
 ---

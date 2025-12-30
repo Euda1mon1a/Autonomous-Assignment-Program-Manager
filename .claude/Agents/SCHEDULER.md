@@ -661,11 +661,168 @@ def rollback_to_backup(backup_id: str) -> bool:
 
 ---
 
+## How to Delegate to This Agent
+
+When spawning SCHEDULER as a sub-agent, the parent agent must provide the following context since spawned agents have **isolated context** and do not inherit the parent conversation history.
+
+### Required Context
+
+**Task Specification:**
+- Clear objective: generate/optimize/validate/swap
+- Date range: Block number or date range (e.g., "Block 10: 2025-07-01 to 2025-08-31")
+- Affected residents: List of person IDs or "all active residents"
+- Constraints to apply: Which constraint sets are active
+
+**Schedule State:**
+- Current schedule summary (if modifying existing)
+- Known conflicts or gaps to address
+- Locked blocks (leave, conferences, pre-assigned)
+- Recent swap requests pending
+
+**Resilience Status:**
+- Current health score (must be >= 0.7 for writes)
+- N-1 contingency status
+- Any active circuit breaker states
+
+### Files to Reference
+
+**Core Configuration:**
+- `/backend/app/core/config.py` - Environment settings, solver timeouts
+- `/backend/app/scheduling/acgme_validator.py` - ACGME rule definitions
+
+**Constraint Definitions:**
+- `/backend/app/scheduling/constraints/` - All constraint implementations
+- `/backend/app/services/constraints/acgme.py` - ACGME-specific constraints
+- `/docs/architecture/SOLVER_ALGORITHM.md` - Constraint modeling reference
+
+**Schema Files:**
+- `/backend/app/schemas/assignment.py` - Assignment create/update schemas
+- `/backend/app/schemas/swap.py` - Swap request schemas
+- `/backend/app/models/assignment.py` - Assignment database model
+
+**Resilience Framework:**
+- `/backend/app/resilience/` - Health scoring, N-1 analysis
+- `/docs/architecture/cross-disciplinary-resilience.md` - Resilience concepts
+
+### MCP Tools Required
+
+The following MCP tools should be available when spawning:
+- `validate_schedule` - ACGME compliance validation
+- `get_schedule_health` - Resilience health metrics
+- `execute_swap` - Swap transaction execution
+- `get_coverage_gaps` - Identify understaffed blocks
+- `calculate_work_hours` - Per-resident hour calculations
+
+### Environment Requirements
+
+- Database backup mechanism available
+- Redis connection for solver kill-switch
+- Celery worker running (for async operations)
+- Notification service accessible (for alerts)
+
+### Output Format
+
+**For Schedule Generation:**
+```markdown
+## Schedule Generation Result
+
+**Status:** [SUCCESS | PARTIAL | FAILED]
+**Blocks Generated:** X of Y
+**Solve Time:** X minutes
+
+### ACGME Compliance
+- 80-hour rule: [PASS | VIOLATIONS: count]
+- 1-in-7 rule: [PASS | VIOLATIONS: count]
+- Supervision: [PASS | VIOLATIONS: count]
+
+### Quality Metrics
+- Fairness (call variance): X.XX
+- Preference satisfaction: XX%
+- Coverage completeness: XX%
+
+### Issues Requiring Attention
+[List any unresolved conflicts or warnings]
+
+### Audit Reference
+- Backup ID: [backup identifier]
+- Generation timestamp: [ISO timestamp]
+```
+
+**For Swap Processing:**
+```markdown
+## Swap Processing Result
+
+**Request ID:** [swap_id]
+**Status:** [APPROVED | REJECTED | PENDING_APPROVAL]
+
+### Validation Results
+- ACGME check: [PASS | FAIL: reason]
+- Credential check: [PASS | FAIL: reason]
+- Coverage impact: [PASS | FAIL: reason]
+
+### If Approved
+- Executed at: [timestamp]
+- Rollback window expires: [timestamp]
+- Notifications sent to: [parties]
+
+### If Rejected
+- Reason: [detailed explanation]
+- Alternative suggestions: [if available]
+```
+
+**For Optimization:**
+```markdown
+## Schedule Optimization Result
+
+**Status:** [IMPROVED | NO_IMPROVEMENT | FAILED]
+
+### Before/After Comparison
+| Metric | Before | After | Change |
+|--------|--------|-------|--------|
+| Fairness score | X.XX | X.XX | +/-X% |
+| Preference satisfaction | XX% | XX% | +/-X% |
+| Work hour variance | X.XX | X.XX | +/-X% |
+
+### Changes Made
+- [List specific block reassignments]
+
+### Faculty Approval Required
+[YES | NO - with reason]
+```
+
+### Example Delegation Prompt
+
+```
+Task: Generate schedule for Block 10 (July 1 - August 31, 2025)
+
+Context:
+- 28 active residents (8 PGY-1, 10 PGY-2, 10 PGY-3)
+- Rotation templates: Inpatient (40%), Clinic (30%), Procedures (20%), Electives (10%)
+- Known absences: PGY2-03 (July 4-11 vacation), PGY1-07 (July 15 conference)
+- Resilience health: 0.82 (healthy)
+- N-1 status: PASSING
+
+Constraints:
+- ACGME compliance (80hr, 1-in-7, supervision)
+- Credential requirements per slot-type invariants
+- Fair call distribution (max 2 shifts variance)
+- Preference priority: Clinic day requests > Weekend requests
+
+Files to review:
+- /backend/app/scheduling/constraints/ for active constraints
+- /docs/architecture/SOLVER_ALGORITHM.md for solver configuration
+
+Expected output: Schedule generation result with quality metrics and faculty review checklist.
+```
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2025-12-26 | Initial SCHEDULER agent specification |
+| 1.1 | 2025-12-29 | Added "How to Delegate to This Agent" section for context isolation |
 
 ---
 

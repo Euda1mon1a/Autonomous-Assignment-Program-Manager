@@ -44,6 +44,124 @@ The COORD_OPS (Operations Coordinator) agent sits between ORCHESTRATOR and the o
 
 ---
 
+## How to Delegate to This Agent
+
+> **CRITICAL:** Spawned agents have isolated context. They do NOT inherit parent conversation history. You MUST pass all required context explicitly.
+
+### Required Context
+
+When spawning COORD_OPS, the parent (typically ORCHESTRATOR) MUST provide:
+
+| Context Item | Required | Description |
+|--------------|----------|-------------|
+| `signal` | YES | Operation signal (e.g., `OPS:COMMIT`, `OPS:PR`, `OPS:RELEASE`) |
+| `task_description` | YES | Human-readable description of what needs to be done |
+| `changed_files` | For commits | List of files that were modified |
+| `commit_context` | For commits | What changes were made and why |
+| `user_facing` | For commits | Boolean - whether changes affect end users (triggers CHANGELOG) |
+| `version` | For releases | Target version number (e.g., "1.2.0") |
+| `skill_requirements` | For skills | Name, purpose, and usage patterns for new skill |
+| `agent_requirements` | For agents | Agent name, archetype, and charter summary |
+| `originating_domain` | If handoff | Which domain coordinator handed off this work |
+| `partial_results` | If resuming | Results from any prior partial execution |
+
+### Files to Reference
+
+COORD_OPS needs access to these files to coordinate effectively:
+
+**Agent Specifications (for spawning):**
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Agents/RELEASE_MANAGER.md` - Understand git/PR capabilities
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Agents/META_UPDATER.md` - Understand documentation capabilities
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Agents/TOOLSMITH.md` - Understand creation capabilities
+
+**Project Context:**
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/CLAUDE.md` - Project guidelines and conventions
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/CHANGELOG.md` - Current changelog state (for updates)
+
+**Quality Gates:**
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/skills/pre-pr-checklist/SKILL.md` - PR validation requirements
+
+### Example Delegation Prompt
+
+```markdown
+## Task: COORD_OPS - Commit and Create PR
+
+### Signal
+OPS:COMMIT
+
+### Task Description
+Commit the swap auto-matching feature implementation and create a PR for review.
+
+### Context
+**Changed Files:**
+- `backend/app/services/swap_matcher.py` (new)
+- `backend/app/api/routes/swaps.py` (modified)
+- `backend/tests/test_swap_matcher.py` (new)
+
+**Commit Context:**
+Implemented automatic swap matching algorithm that finds compatible
+faculty pairs for schedule swaps based on rotation compatibility,
+ACGME compliance, and preference scoring.
+
+**User Facing:** true (new feature visible to faculty)
+
+**Originating Domain:** COORD_SCHEDULING completed implementation
+
+### Expected Deliverables
+1. Commit with conventional message format
+2. CHANGELOG entry under [Unreleased] > Added
+3. PR with summary and test plan
+4. PR URL for human review
+
+### Success Criteria
+- [ ] Commit follows conventional format
+- [ ] Tests pass before PR creation
+- [ ] PR includes AI attribution footer
+- [ ] CHANGELOG entry is accurate
+```
+
+### Output Format
+
+COORD_OPS returns results in this structure:
+
+```markdown
+## Ops Result: [SIGNAL]
+
+**Status:** COMPLETE | PARTIAL | FAILED | ESCALATED
+**Duration:** [time]
+**Quality Gate:** PASSED | FAILED ([n/m] = [%])
+
+### Summary
+[1-2 sentence description of what was accomplished]
+
+### Deliverables
+| Type | Value |
+|------|-------|
+| Commit | `[hash]` |
+| PR URL | [url] |
+| CHANGELOG | [entry added/not needed] |
+
+### Agent Contributions
+- RELEASE_MANAGER: [tasks] ([duration])
+- META_UPDATER: [tasks] ([duration])
+- TOOLSMITH: [tasks] ([duration])
+
+### Issues (if any)
+- [Issue description and resolution/escalation status]
+
+### Next Steps
+[What happens next - typically "Awaiting human PR approval"]
+```
+
+### Anti-Patterns When Delegating
+
+1. **DON'T** assume COORD_OPS knows what changed - always pass `changed_files` and `commit_context`
+2. **DON'T** omit `user_facing` flag - COORD_OPS needs this to decide on CHANGELOG updates
+3. **DON'T** delegate without specifying expected deliverables - be explicit about what outputs are needed
+4. **DON'T** pass vague task descriptions - be specific about what operation is needed
+
+---
+
 ## Personality Traits
 
 **Efficient & Delegating**

@@ -378,6 +378,98 @@ OUTPUT: Current session delegation snapshot
 
 ---
 
+## How to Delegate to This Agent
+
+**IMPORTANT:** Spawned agents have isolated context - they do NOT inherit the parent conversation history. You MUST provide the following when delegating to DELEGATION_AUDITOR.
+
+### Required Context
+
+When invoking this agent, you MUST pass:
+
+1. **Session Transcript or Action Summary**
+   - Full conversation history if available, OR
+   - Structured summary of actions taken (tool invocations with types and counts)
+   - Include timestamps if measuring session duration
+
+2. **Metrics Thresholds** (can reference file instead)
+   - Healthy delegation ratio range (default: 60-80%)
+   - Anti-pattern thresholds from Metrics Framework section
+   - Or simply: "Use standard thresholds from your spec"
+
+3. **Task Context**
+   - Session complexity score or description
+   - Any user directives that override defaults (e.g., "user requested direct action")
+   - Time pressure or emergency context if applicable
+
+### Files to Reference
+
+| File | Purpose | Required? |
+|------|---------|-----------|
+| `.claude/Scratchpad/ORCHESTRATOR_ADVISOR_NOTES.md` | Session logs with delegation decisions | Yes (if exists) |
+| `.claude/Scratchpad/DELEGATION_METRICS.md` | Historical running averages for comparison | Optional |
+| `.claude/Scratchpad/delegation-audits/*.md` | Previous audit reports for trend analysis | Only for Trend Analysis workflow |
+
+### Delegation Prompt Template
+
+```
+Audit the following session for delegation efficiency.
+
+## Session Actions
+[Paste structured action list here]
+
+- Task tool invocations: [count]
+- Edit/Write by ORCHESTRATOR: [count]
+- Direct Bash commands: [count]
+- File reads (neutral): [count]
+
+## Session Context
+- Complexity: [Low/Medium/High with justification]
+- User directives: [any overrides]
+- Duration: [approximate]
+
+## Request
+Generate a Session Audit Report using your standard format.
+Compare against these prior metrics (if available):
+[Paste running averages or say "No prior data"]
+```
+
+### Output Format
+
+The agent will return a structured markdown report containing:
+
+1. **Summary Metrics Table** - Delegation ratio, hierarchy compliance, direct edit rate, parallel factor
+2. **Actions Breakdown** - Categorized counts with examples
+3. **Anti-Pattern Alerts** - Any detected issues with severity and context
+4. **Session Context** - Complexity score and exception notes
+5. **Comparison to Average** - Delta from running averages (if prior data provided)
+
+### Minimal Delegation Example
+
+```
+Audit this session for delegation patterns.
+
+Actions taken:
+- Task tool: 5 invocations (ARCHITECT x2, TOOLSMITH x2, QA_TESTER x1)
+- Direct Edit: 3 (permission fixes, quick typo)
+- Bash: 8 (git status, pytest, docker commands)
+- Read/Glob: 15 (context gathering)
+
+Context: High complexity (multi-domain, 2+ hours), no user overrides.
+
+Generate audit report with anti-pattern detection.
+```
+
+### Common Delegation Mistakes
+
+| Mistake | Why It Fails | Correct Approach |
+|---------|--------------|------------------|
+| "Audit my delegation" | No action data provided | Include action counts/list |
+| Passing only git log | Git commits != tool invocations | Need full action summary |
+| Omitting user directives | Misflags justified direct actions as anti-patterns | Always note overrides |
+| Requesting trend analysis without prior audits | No historical data to analyze | Run Session Audit first |
+
+---
+
 ## Version History
 
 | Version | Date | Changes |

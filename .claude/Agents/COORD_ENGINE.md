@@ -40,6 +40,181 @@ The COORD_ENGINE agent is the domain coordinator for scheduling core operations.
 
 ---
 
+## How to Delegate to This Agent
+
+> **IMPORTANT:** Spawned agents have isolated context. They do NOT inherit the parent conversation history. When delegating to COORD_ENGINE, you MUST explicitly provide all required context.
+
+### Required Context
+
+When spawning COORD_ENGINE for scheduling domain tasks, provide:
+
+1. **Task Type:** One of `schedule_generation`, `swap_processing`, `optimization_request`, `emergency_coverage`, or `coverage_gap`
+2. **Task Parameters:**
+   - For schedule generation: `block_id`, `date_range`, `constraint_overrides` (if any)
+   - For swap processing: `swap_request_id`, `requestor_id`, `affected_shifts`
+   - For optimization: `schedule_id`, `optimization_objectives`, `constraint_priorities`
+   - For emergency coverage: `affected_resident_id`, `affected_shifts`, `urgency_level`, `timeline`
+   - For coverage gaps: `gap_details`, `date_range`, `required_coverage_type`
+3. **Current System State:**
+   - Current health score (from last resilience check)
+   - Active threat level (GREEN/YELLOW/ORANGE/RED/BLACK)
+   - Any known SPOFs or constraints
+4. **Authorization Context:**
+   - Who initiated the request (user role, ID)
+   - Any pre-approved exceptions or overrides
+
+### Files to Reference
+
+When delegating, ensure COORD_ENGINE has access to these files:
+
+| File | Purpose |
+|------|---------|
+| `.claude/Agents/SCHEDULER.md` | SCHEDULER agent capabilities and spawn protocol |
+| `.claude/Agents/OPTIMIZATION_SPECIALIST.md` | Optimization agent capabilities |
+| `.claude/Agents/SWAP_MANAGER.md` | Swap management agent capabilities |
+| `.claude/Agents/COORD_RESILIENCE.md` | Peer coordinator for compliance validation requests |
+| `backend/app/scheduling/` | Scheduling engine implementation |
+| `backend/app/services/swap_executor.py` | Swap execution service |
+| `docs/architecture/SOLVER_ALGORITHM.md` | Solver constraints and optimization details |
+
+### Delegation Template
+
+```markdown
+## Task Delegation to COORD_ENGINE
+
+### Task Type
+[schedule_generation | swap_processing | optimization_request | emergency_coverage | coverage_gap]
+
+### Task Details
+- Description: [What needs to be accomplished]
+- Parameters: [Task-specific parameters as listed above]
+- Deadline: [When result is needed]
+- Priority: [P0-P3]
+
+### Current System State
+- Health Score: [0.0-1.0]
+- Threat Level: [GREEN/YELLOW/ORANGE/RED/BLACK]
+- Known Issues: [Any active SPOFs, constraints, or warnings]
+
+### Authorization
+- Initiated By: [Role/ID of requester]
+- Pre-Approved Exceptions: [None | List of approved overrides]
+
+### Success Criteria
+- [ ] [Specific measurable outcome 1]
+- [ ] [Specific measurable outcome 2]
+- [ ] [Quality gate requirements]
+```
+
+### Expected Output Format
+
+COORD_ENGINE returns results in this structure:
+
+```yaml
+coordination_result:
+  status: [SUCCESS | PARTIAL_SUCCESS | FAILURE | ESCALATION_REQUIRED]
+  task_type: [original task type]
+
+  managed_agent_results:
+    scheduler:
+      status: [COMPLETED | FAILED | NOT_INVOKED]
+      output: [agent-specific output]
+    optimization_specialist:
+      status: [COMPLETED | FAILED | NOT_INVOKED]
+      output: [agent-specific output]
+    swap_manager:
+      status: [COMPLETED | FAILED | NOT_INVOKED]
+      output: [agent-specific output]
+
+  cross_coordinator_results:
+    coord_resilience_validation:
+      requested: [true | false]
+      result: [validation outcome if requested]
+
+  quality_gates:
+    gates_evaluated: [list of gate names]
+    gates_passed: [list of passed gates]
+    gates_failed: [list of failed gates]
+
+  synthesis:
+    summary: [1-2 sentence outcome summary]
+    key_metrics:
+      - [metric_name]: [value]
+    recommendations: [prioritized list P0-P3]
+
+  escalation:
+    required: [true | false]
+    reason: [if required, why]
+    decision_needed: [what approval is required]
+    deadline: [by when]
+```
+
+### Common Delegation Scenarios
+
+**Scenario 1: Generate Block Schedule**
+```markdown
+## Task Delegation to COORD_ENGINE
+
+### Task Type
+schedule_generation
+
+### Task Details
+- Description: Generate schedule for Block 10 (January rotation)
+- Parameters:
+  - block_id: 10
+  - date_range: 2025-01-06 to 2025-02-02
+  - constraint_overrides: None
+- Deadline: 2025-01-03 17:00 HST
+- Priority: P1
+
+### Current System State
+- Health Score: 0.87
+- Threat Level: GREEN
+- Known Issues: None
+
+### Authorization
+- Initiated By: Chief Resident (CR-001)
+- Pre-Approved Exceptions: None
+
+### Success Criteria
+- [ ] 100% coverage for all required slots
+- [ ] Zero ACGME violations
+- [ ] Health score >= 0.7 post-generation
+```
+
+**Scenario 2: Process Swap Request**
+```markdown
+## Task Delegation to COORD_ENGINE
+
+### Task Type
+swap_processing
+
+### Task Details
+- Description: Process one-to-one swap request between R-042 and R-017
+- Parameters:
+  - swap_request_id: SWAP-2025-0142
+  - requestor_id: R-042
+  - affected_shifts: [2025-01-15 Call, 2025-01-22 Call]
+- Deadline: 2025-01-10 12:00 HST
+- Priority: P2
+
+### Current System State
+- Health Score: 0.82
+- Threat Level: GREEN
+- Known Issues: R-017 approaching 70hr/week (monitor)
+
+### Authorization
+- Initiated By: Resident (R-042)
+- Pre-Approved Exceptions: None
+
+### Success Criteria
+- [ ] Swap validation complete (ACGME + credentials)
+- [ ] Both parties remain compliant post-swap
+- [ ] Coverage maintained
+```
+
+---
+
 ## Managed Agents
 
 ### SCHEDULER

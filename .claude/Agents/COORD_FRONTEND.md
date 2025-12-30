@@ -39,6 +39,98 @@ The COORD_FRONTEND coordinator is responsible for all frontend and user experien
 
 ---
 
+## How to Delegate to This Agent
+
+> **Context Isolation Notice:** Spawned agents have isolated context and do NOT inherit parent conversation history. When delegating to COORD_FRONTEND, you MUST provide the context documented below.
+
+### Required Context
+
+When spawning COORD_FRONTEND, the delegating agent (typically ORCHESTRATOR) MUST provide:
+
+1. **Task Description** - Clear statement of what frontend work is needed
+2. **Signal Type** - Which signal triggered this work (e.g., `FRONTEND:COMPONENT`, `FRONTEND:PAGE`)
+3. **Affected Components/Pages** - List of existing components or pages being modified
+4. **API Contract** - Backend API endpoints and response schemas if data fetching is involved
+5. **Design Requirements** - Visual specifications, mockups, or design system tokens to follow
+6. **Priority Level** - Task urgency (blocking, high, normal, low)
+
+### Files to Reference
+
+Provide paths or content for these files based on task type:
+
+| File/Directory | When Needed | Purpose |
+|----------------|-------------|---------|
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/frontend/src/types/` | Always | Shared TypeScript types for API responses |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/frontend/src/components/ui/` | Component work | Design system components for consistency |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/frontend/src/hooks/` | Data fetching | Existing hooks to reuse or extend |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/frontend/src/lib/api.ts` | API integration | API client configuration |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/frontend/tailwind.config.ts` | Styling work | Design tokens (colors, spacing, typography) |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/frontend/tsconfig.json` | Always | TypeScript configuration for strict mode |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/schemas/` | API integration | Pydantic schemas for API contract alignment |
+
+### Delegation Prompt Template
+
+```
+Signal: FRONTEND:[SIGNAL_TYPE]
+Priority: [blocking|high|normal|low]
+
+Task: [Clear description of frontend work needed]
+
+Context:
+- Affected files: [list of files being modified]
+- Related API endpoints: [if applicable]
+- Design requirements: [visual specs or design tokens]
+
+Files to read:
+- [absolute path 1] - [why needed]
+- [absolute path 2] - [why needed]
+
+Success Criteria:
+- [specific deliverable 1]
+- [specific deliverable 2]
+
+Constraints:
+- [any limitations or requirements]
+```
+
+### Output Format
+
+COORD_FRONTEND returns a structured synthesis report:
+
+```markdown
+## COORD_FRONTEND Synthesis Report
+
+### Signal Received
+- Type: [signal type]
+- Priority: [level]
+
+### Agents Spawned
+| Agent | Task | Status | Duration |
+|-------|------|--------|----------|
+| FRONTEND_ENGINEER | [task] | [completed/failed] | [time] |
+| UX_SPECIALIST | [task] | [completed/failed] | [time] |
+
+### Quality Gates
+| Gate | Status | Details |
+|------|--------|---------|
+| TypeScript Strict | [PASS/FAIL] | [errors if any] |
+| Accessibility | [PASS/FAIL] | [violations if any] |
+| Bundle Size | [PASS/FAIL] | [delta] |
+| Core Web Vitals | [PASS/WARN] | [metrics] |
+
+### Deliverables
+- [File path]: [description of changes]
+- [File path]: [description of changes]
+
+### Overall Status
+[SUCCESS (>= 80%) | PARTIAL | FAILED]
+
+### Issues Requiring Escalation
+- [Any items needing ARCHITECT or ORCHESTRATOR attention]
+```
+
+---
+
 ## Managed Agents
 
 ### A. FRONTEND_ENGINEER

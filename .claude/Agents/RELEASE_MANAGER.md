@@ -644,10 +644,167 @@ Permission tiers are enforced in `.claude/settings.json` under `permissions.allo
 
 ---
 
+## How to Delegate to This Agent
+
+Spawned agents have **isolated context** - they do NOT inherit parent conversation history. When delegating to RELEASE_MANAGER, the orchestrator MUST provide explicit context.
+
+### Required Context (Always Provide)
+
+| Context Item | Description | Example |
+|--------------|-------------|---------|
+| **Task Type** | Which workflow to execute | "Create PR", "Commit changes", "Update CHANGELOG", "Coordinate release" |
+| **Current Branch** | Git branch context | `git branch --show-current` output |
+| **Changes Summary** | What was changed and why | "Implemented swap auto-matcher for faculty schedule exchanges" |
+| **Files Modified** | List of changed files | `git status --short` output |
+| **Commit Type** | Conventional commit type | `feat`, `fix`, `docs`, `refactor`, etc. |
+| **Scope** | Component affected | `api`, `scheduler`, `swap`, `ui`, etc. |
+
+### Files to Reference
+
+| File | Path | Why Needed |
+|------|------|------------|
+| Project guidelines | `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/CLAUDE.md` | Git safety protocol, coding standards |
+| Changelog | `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/CHANGELOG.md` | Update with user-facing changes |
+| Git settings | `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/settings.json` | Permission tier enforcement |
+| This spec | `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Agents/RELEASE_MANAGER.md` | Workflow reference |
+
+### Delegation Prompt Templates
+
+**For Committing Changes:**
+```
+Execute RELEASE_MANAGER Workflow 1: Commit Changes
+
+Context:
+- Branch: [current branch name]
+- Changes: [summary of what was changed]
+- Files: [list of modified files]
+- Commit Type: [feat/fix/docs/etc.]
+- Scope: [api/scheduler/swap/etc.]
+- Motivation: [why this change was made]
+
+Files to read for reference:
+- /path/to/CLAUDE.md (git safety protocol)
+- /path/to/RELEASE_MANAGER.md (commit format)
+```
+
+**For Creating PRs:**
+```
+Execute RELEASE_MANAGER Workflow 2: Create Pull Request
+
+Context:
+- Branch: [feature branch name]
+- Target: main
+- Summary: [1-3 sentences describing the PR]
+- Changes:
+  - [Change 1]
+  - [Change 2]
+- Test Plan:
+  - [How to verify]
+- Related Issues: [#issue numbers if any]
+
+Files to read for reference:
+- /path/to/RELEASE_MANAGER.md (PR format)
+- /path/to/pre-pr-checklist skill
+```
+
+**For CHANGELOG Updates:**
+```
+Execute RELEASE_MANAGER Workflow 3: Update CHANGELOG
+
+Context:
+- Changes since last release:
+  - [feat: description]
+  - [fix: description]
+- User-facing changes only: [list]
+- Skip internal changes: [refactor, test, chore]
+
+Files to read:
+- /path/to/CHANGELOG.md (current state)
+- /path/to/RELEASE_MANAGER.md (CHANGELOG format)
+```
+
+**For Coordinating Release:**
+```
+Execute RELEASE_MANAGER Workflow 4: Coordinate Release
+
+Context:
+- Version Type: [MAJOR/MINOR/PATCH]
+- Current Version: [x.y.z]
+- Proposed Version: [x.y.z]
+- Changes included:
+  - [list of changes]
+- Pre-release status:
+  - Tests: [passing/failing]
+  - Docs: [updated/pending]
+  - CHANGELOG: [complete/pending]
+
+Files to read:
+- /path/to/CHANGELOG.md
+- /path/to/pyproject.toml (backend version)
+- /path/to/package.json (frontend version)
+```
+
+### Expected Output Format
+
+RELEASE_MANAGER should return structured responses:
+
+**For Commits:**
+```yaml
+status: success | failed | escalated
+commit_hash: [short hash]
+commit_message: [first line of commit]
+branch: [branch name]
+next_steps: [suggested follow-up actions]
+```
+
+**For PRs:**
+```yaml
+status: success | failed | escalated
+pr_url: [GitHub PR URL]
+pr_number: [PR number]
+title: [PR title]
+reviewers: [assigned reviewers]
+checks: [pending | passing | failing]
+```
+
+**For CHANGELOG:**
+```yaml
+status: success | failed | escalated
+entries_added: [count]
+categories:
+  added: [list]
+  changed: [list]
+  fixed: [list]
+commit_hash: [if committed]
+```
+
+**For Releases:**
+```yaml
+status: success | pending_approval | failed | escalated
+version: [x.y.z]
+tag: [vx.y.z]
+pr_url: [release PR URL]
+release_url: [GitHub release URL if created]
+escalation_reason: [if escalated]
+```
+
+### Anti-Patterns (What NOT to Do)
+
+| Anti-Pattern | Why It Fails | Correct Approach |
+|--------------|--------------|------------------|
+| "Commit the changes" | Agent doesn't know what changed | Provide files list and summary |
+| "Create a PR" | Agent doesn't know branch or changes | Provide branch, target, and summary |
+| "Update CHANGELOG" | Agent doesn't know what features | Provide list of user-facing changes |
+| "Do a release" | Agent doesn't know version or scope | Provide version type and change list |
+| No file paths | Agent can't find project files | Always include absolute paths |
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1.0 | 2025-12-29 | Added "How to Delegate to This Agent" section for context isolation |
 | 1.0.0 | 2025-12-27 | Initial RELEASE_MANAGER agent specification |
 
 ---

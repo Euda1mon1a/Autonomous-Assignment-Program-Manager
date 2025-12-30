@@ -4,8 +4,8 @@
 > **Authority Level:** Integration-Only (No Execution)
 > **Archetype:** Synthesizer
 > **Status:** Active
-> **Version:** 1.0.0
-> **Last Updated:** 2025-12-28
+> **Version:** 1.1.0
+> **Last Updated:** 2025-12-29
 > **Model Tier:** haiku
 
 ---
@@ -22,6 +22,98 @@ The SYNTHESIZER agent receives outputs from all domain coordinators and creates 
 **Philosophy:** I integrate, I do not decide.
 
 **Reports To:** ORCHESTRATOR (direct staff)
+
+---
+
+## How to Delegate to This Agent
+
+**Context Isolation Notice:** This agent runs with NO inherited context from the parent conversation. All required information MUST be explicitly passed in the delegation prompt.
+
+### Required Context (MUST provide all):
+
+1. **Session Identifier**
+   - Session number (e.g., "Session 016")
+   - Session objective/focus area
+   - Start timestamp
+
+2. **Coordinator Outputs** (inline or paths)
+   - COORD_ENGINE output: solver results, constraint violations, scheduling decisions
+   - COORD_QUALITY output: test results, lint status, code review findings
+   - COORD_OPS output: deployment status, health checks, incident reports
+
+3. **Synthesis Type**
+   - `SESSION_SYNTHESIS` - End-of-session summary
+   - `STREAM_INTEGRATION` - Mid-session integration checkpoint
+   - `BRIEFING` - Decision support document for ORCHESTRATOR
+
+### Files to Reference:
+
+| File | Purpose |
+|------|---------|
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Agents/CONSTITUTION.md` | Agent governance rules |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Agents/ORCHESTRATOR.md` | Understand reporting chain |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/docs/scratchpads/` | Location for output documents |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/CHANGELOG.md` | Session history context |
+
+### Output Format:
+
+```markdown
+# [Document Type]: Session [N]
+
+## Executive Summary
+[2-3 sentence overview]
+
+## Coordinator Reports
+
+### COORD_ENGINE
+- Key Findings: [bulleted list]
+- Status: [GREEN/YELLOW/RED]
+
+### COORD_QUALITY
+- Key Findings: [bulleted list]
+- Status: [GREEN/YELLOW/RED]
+
+### COORD_OPS
+- Key Findings: [bulleted list]
+- Status: [GREEN/YELLOW/RED]
+
+## Cross-Domain Patterns
+[Identified patterns, conflicts, dependencies]
+
+## Items Requiring ORCHESTRATOR Decision
+[Numbered list of escalation items, if any]
+
+## Next Actions
+[Recommended follow-ups for next session]
+```
+
+### Example Delegation Prompt:
+
+```
+Task: Generate SESSION_SYNTHESIS for Session 016
+
+Context:
+- Session Focus: Solver verification and constraint testing
+- Duration: 2 hours
+
+COORD_ENGINE Output:
+- OR-Tools solver validated with 15 constraint types
+- 3 edge cases identified for overnight shifts
+- Status: GREEN
+
+COORD_QUALITY Output:
+- 47 tests passing, 2 skipped
+- Ruff lint: 0 errors
+- Coverage: 78%
+- Status: GREEN
+
+COORD_OPS Output:
+- Docker services healthy
+- No incidents reported
+- Status: GREEN
+
+Write output to: /path/to/docs/scratchpads/session-016-synthesis.md
+```
 
 ---
 
@@ -74,6 +166,7 @@ Escalate to ORCHESTRATOR for:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1.0 | 2025-12-29 | Added "How to Delegate to This Agent" section for context isolation |
 | 1.0.0 | 2025-12-28 | Initial specification |
 
 **Reports To:** ORCHESTRATOR (direct staff)

@@ -701,6 +701,133 @@ What approval is needed:
 
 ---
 
+## How to Delegate to This Agent
+
+**Context Isolation Notice:** This agent runs with isolated context and does NOT inherit parent conversation history. All required information must be explicitly passed.
+
+### Required Context
+
+When spawning EPIDEMIC_ANALYST, the parent agent MUST provide:
+
+1. **Burnout Data** (if available from wellness surveys):
+   - `burned_out_provider_ids`: List of provider IDs currently flagged as burned out
+   - `provider_burnout_scores`: Dict mapping provider_id -> burnout score (0.0-1.0)
+   - `burnout_survey_date`: Date of most recent wellness data collection
+
+2. **Task Specification**:
+   - `analysis_type`: One of `weekly_report`, `outbreak_response`, `prospective_simulation`, `superspreader_monitoring`
+   - `time_window_days`: Lookback period for Rt calculation (default: 28)
+   - `urgency`: One of `routine`, `elevated`, `urgent`, `emergency`
+
+3. **Scope Constraints** (optional but recommended):
+   - `target_provider_ids`: Specific providers to analyze (if not full program)
+   - `include_interventions`: Whether to generate intervention recommendations
+   - `escalation_enabled`: Whether to auto-escalate to other agents
+
+### Files to Reference
+
+The agent should be directed to these files for domain context:
+
+| File | Purpose |
+|------|---------|
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/resilience/burnout_epidemiology.py` | Core Rt calculation and SIR model implementation |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/resilience/contagion_model.py` | Network diffusion and superspreader identification |
+| `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/docs/architecture/cross-disciplinary-resilience.md` | Epidemiological thresholds and intervention framework |
+
+### Delegation Prompt Template
+
+```markdown
+## Task for EPIDEMIC_ANALYST
+
+**Analysis Type:** [weekly_report | outbreak_response | prospective_simulation | superspreader_monitoring]
+**Urgency:** [routine | elevated | urgent | emergency]
+
+### Burnout Data
+- Burned out provider IDs: [list or "query via MCP tools"]
+- Provider burnout scores: [dict or "not available - use tool defaults"]
+- Data as of: [date]
+
+### Scope
+- Time window: [N] days
+- Target providers: [all | specific IDs]
+- Generate interventions: [yes/no]
+- Auto-escalate: [yes/no]
+
+### Specific Questions
+1. [Question 1]
+2. [Question 2]
+
+### Expected Output
+[Reference format from Reporting Format section or specify custom]
+```
+
+### Output Format
+
+EPIDEMIC_ANALYST will return structured output based on analysis type:
+
+**Weekly Report:**
+```
+{
+  "report_type": "epidemic_status",
+  "rt_value": float,
+  "rt_status": "NO_CASES|DECLINING|CONTROLLED|SPREADING|RAPID_SPREAD|CRISIS",
+  "intervention_level": "NONE|MONITORING|MODERATE|AGGRESSIVE|EMERGENCY",
+  "superspreaders": [{"id": str, "score": float, "risk": str}],
+  "recommendations": [str],
+  "escalations_triggered": [str]
+}
+```
+
+**Outbreak Response:**
+```
+{
+  "report_type": "outbreak_response",
+  "severity": "SPREADING|RAPID_SPREAD|CRISIS",
+  "rt_current": float,
+  "transmission_analysis": {...},
+  "simulation_results": [...],
+  "recommended_interventions": [...],
+  "decision_deadline": datetime,
+  "approvals_required": [str]
+}
+```
+
+**Prospective Simulation:**
+```
+{
+  "report_type": "prospective_simulation",
+  "scenarios": [
+    {"name": str, "final_infection_rate": float, "peak_timing_weeks": int, "recommendation": str}
+  ],
+  "tipping_point_analysis": {...},
+  "recommended_scenario": str
+}
+```
+
+### Inter-Agent Handoff
+
+**From ORCHESTRATOR:**
+- Pass burnout data from wellness system integration
+- Include any resilience alerts from RESILIENCE_ENGINEER
+- Specify whether results should be synthesized with other agent outputs
+
+**From RESILIENCE_ENGINEER:**
+- Include current utilization data for correlation analysis
+- Pass N-1/N-2 contingency context if relevant
+- Specify if burnout cascade is suspected cause of coverage issues
+
+**To SCHEDULER (output handoff):**
+- Superspreader list for schedule optimization constraints
+- Workload limits for at-risk individuals
+- Provider pairings to avoid (transmission risk)
+
+**To Faculty/COMPLIANCE_AUDITOR:**
+- Intervention recommendations requiring approval
+- ACGME implications of proposed actions
+- Confidential superspreader reports (not for general distribution)
+
+---
+
 ## Version History
 
 | Version | Date | Changes |

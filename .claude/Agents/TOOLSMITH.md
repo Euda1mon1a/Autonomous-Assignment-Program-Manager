@@ -161,6 +161,33 @@ The TOOLSMITH agent is responsible for creating new skills, MCP tools, and agent
 7. Report completion to ORCHESTRATOR
 ```
 
+### Context Isolation Awareness (Critical for Agent Design)
+
+**Spawned agents have ISOLATED context windows.** They do NOT consume the parent's context or inherit conversation history.
+
+**Design Implications:**
+
+| Aspect | Impact on Agent Design |
+|--------|----------------------|
+| Context window | Agents get fresh context - no inheritance penalty |
+| Prompt requirements | Must be self-contained with all necessary context |
+| File references | Use absolute paths; agent hasn't read parent's files |
+| Decisions | Explicitly pass any decisions made in parent context |
+| Parallel spawning | "Free" from context perspective - spawn liberally |
+
+**Agent Prompt Checklist:**
+- [ ] Agent role/persona stated explicitly
+- [ ] Absolute file paths (not relative)
+- [ ] Complete task description
+- [ ] Constraints and boundaries
+- [ ] Expected output format
+- [ ] Any decisions from parent context that affect task
+
+**Exception:** `Explore` and `Plan` subagent_types CAN see prior conversation.
+All PAI agents use `general-purpose` which CANNOT.
+
+See: `.claude/skills/context-aware-delegation/SKILL.md` for full documentation.
+
 ### Workflow 3: Create MCP Tool
 
 ```
