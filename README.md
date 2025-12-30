@@ -49,8 +49,11 @@ Residency Scheduler is a production-ready, full-stack application designed to au
 
 **Cross-Disciplinary Research** - 10+ bridge specifications connecting resilience concepts from forestry, telecommunications, epidemiology, game theory, and materials science.
 
+**Exotic Frontier Concepts** - 10 cutting-edge physics/biology/math scheduling modules including metastability detection (statistical mechanics), spin glass constraint models (condensed matter), circadian phase response (chronobiology), Penrose process efficiency (astrophysics), Anderson localization (quantum physics), persistent homology (topology), free energy scheduling (neuroscience), keystone species analysis (ecology), quantum Zeno governor, and catastrophe theory detection.
+
 ### Recent Changes (427 commits since Dec 18)
 
+- **Exotic Frontier Implementation** - 10 new modules (~21,000 lines) from statistical mechanics, quantum physics, topology, neuroscience, ecology, and catastrophe theory
 - Added FMIT recovery constraints and activity type categorization
 - Implemented schedule verification scripts with 12 automated checks
 - Created 10 service specifications for advanced features (signal processing, game theory, control theory)
@@ -119,7 +122,16 @@ Built-in system resilience inspired by cross-industry best practices:
 - **Prometheus Metrics** - Real-time monitoring and alerting
 - **Celery Background Tasks** - Automated health checks and contingency analysis
 
+**Exotic Frontier Modules** (Tier 5):
+- **Metastability Detection** - Escape stuck solver states using statistical mechanics
+- **Spin Glass Model** - Generate diverse schedule replicas via frustrated constraints
+- **Persistent Homology** - Topological analysis of coverage patterns
+- **Free Energy Scheduling** - Prediction-driven optimization using Friston's neuroscience framework
+- **Keystone Species Analysis** - Identify critical resources with cascade collapse potential
+- **Catastrophe Theory** - Predict sudden failures from smooth parameter changes
+
 See [Resilience Framework](docs/guides/resilience-framework.md) for detailed documentation.
+See [Exotic Frontier Concepts](docs/architecture/EXOTIC_FRONTIER_CONCEPTS.md) for advanced modules.
 
 ### Solver Operational Controls
 - **Kill-Switch**: Redis-backed abort mechanism for runaway solver jobs

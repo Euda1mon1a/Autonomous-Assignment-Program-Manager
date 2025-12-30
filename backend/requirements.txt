@@ -45,6 +45,10 @@ PyWavelets>=1.4.0  # Wavelet transforms for multi-resolution schedule decomposit
 statsmodels>=0.14.0  # STL decomposition, ARIMA forecasting, time series analysis
 ruptures>=1.1.0  # Change point detection (PELT algorithm) for regime shifts
 
+# Topological Data Analysis (TDA)
+ripser>=0.6.0  # Persistent homology computation (Vietoris-Rips filtration)
+persim>=0.3.0  # Persistence diagram utilities (bottleneck distance, visualization)
+
 # Machine Learning
 scikit-learn>=1.3.0
 joblib>=1.3.0  # Model serialization

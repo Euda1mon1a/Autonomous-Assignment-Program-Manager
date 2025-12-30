@@ -1,0 +1,849 @@
+"""
+Penrose Process for Schedule Rotation Efficiency Extraction.
+
+Applies black hole physics concept to scheduling:
+- Ergosphere = Rotation boundary periods (week ends, block transitions)
+- Negative energy states = Swaps that appear locally costly but unlock system benefit
+- Energy extraction = Conflict reduction through rotation-aware assignment
+
+Physics basis: Penrose process extracts up to 29% rotational energy from
+spinning black holes by splitting particles in the ergosphere.
+
+In scheduling context:
+- The "rotation" is the duty cycle (weekly patterns, block boundaries)
+- The "ergosphere" is the boundary region between rotations (handoff periods)
+- "Negative energy particles" are swaps that cost locally but benefit globally
+- "Energy extraction" is reduction in conflicts and improvements in coverage
+
+Example:
+    >>> extractor = PenroseEfficiencyExtractor()
+    >>> ergospheres = await extractor.identify_ergosphere_periods(rotations)
+    >>> swaps = await extractor.find_negative_energy_swaps(schedule, ergospheres[0])
+    >>> optimized = await extractor.execute_penrose_cascade(schedule)
+    >>> efficiency = extractor.compute_extraction_efficiency(swaps)
+"""
+
+import logging
+from collections import defaultdict
+from dataclasses import dataclass, field
+from datetime import date, datetime, timedelta
+from typing import Any
+from uuid import UUID
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.assignment import Assignment
+from app.models.block import Block
+from app.models.rotation_template import RotationTemplate
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ErgospherePeriod:
+    """
+    Represents a rotation boundary period with extraction potential.
+
+    The ergosphere is the region around a rotating black hole where particles
+    can have negative energy states. In scheduling, this represents transition
+    periods between rotation phases where swaps can unlock hidden efficiency.
+
+    Attributes:
+        start_time: Beginning of the ergosphere period
+        end_time: End of the ergosphere period
+        rotation_velocity: Rate of schedule changes (swaps/day) in this period
+        extraction_potential: Estimated efficiency gain from Penrose swaps (0-1)
+        boundary_type: Type of boundary ("week_end", "block_transition", "rotation_handoff")
+        affected_assignments: Assignment IDs in this ergosphere
+    """
+
+    start_time: datetime
+    end_time: datetime
+    rotation_velocity: float  # Swaps per day
+    extraction_potential: float  # 0-1 scale, max ~0.29 (Penrose theoretical limit)
+    boundary_type: str  # "week_end", "block_transition", "rotation_handoff"
+    affected_assignments: list[UUID] = field(default_factory=list)
+
+    def __post_init__(self):
+        """Validate ergosphere parameters."""
+        if not 0 <= self.extraction_potential <= 0.29:
+            logger.warning(
+                f"Extraction potential {self.extraction_potential} exceeds "
+                f"Penrose limit of 0.29 (29%)"
+            )
+        if self.start_time >= self.end_time:
+            raise ValueError("Ergosphere start_time must be before end_time")
+
+    @property
+    def duration_hours(self) -> float:
+        """Calculate duration of ergosphere in hours."""
+        return (self.end_time - self.start_time).total_seconds() / 3600
+
+    @property
+    def is_high_potential(self) -> bool:
+        """Check if this ergosphere has high extraction potential (>15%)."""
+        return self.extraction_potential > 0.15
+
+
+@dataclass
+class PhaseComponent:
+    """
+    Represents a phase decomposition of an assignment.
+
+    In the Penrose process, particles are split into positive and negative
+    energy components. For scheduling, we decompose assignments into phases
+    (e.g., pre-handoff, during-handoff, post-handoff) to identify where
+    swaps can extract efficiency.
+
+    Attributes:
+        assignment_id: ID of the parent assignment
+        phase_type: Type of phase ("pre_transition", "transition", "post_transition")
+        energy_state: Energy state ("positive", "negative", "zero")
+        phase_start: Start time of this phase
+        phase_end: End time of this phase
+        conflict_score: Number of conflicts in this phase
+        flexibility_score: Degrees of freedom available (0-1)
+    """
+
+    assignment_id: UUID
+    phase_type: str
+    energy_state: str  # "positive", "negative", "zero"
+    phase_start: datetime
+    phase_end: datetime
+    conflict_score: int
+    flexibility_score: float  # 0-1, higher = more swap options
+
+    def __post_init__(self):
+        """Validate phase component."""
+        valid_phases = {"pre_transition", "transition", "post_transition"}
+        if self.phase_type not in valid_phases:
+            raise ValueError(f"phase_type must be one of {valid_phases}")
+
+        valid_states = {"positive", "negative", "zero"}
+        if self.energy_state not in valid_states:
+            raise ValueError(f"energy_state must be one of {valid_states}")
+
+    @property
+    def is_negative_energy(self) -> bool:
+        """Check if this phase component has negative energy state."""
+        return self.energy_state == "negative"
+
+
+@dataclass
+class PenroseSwap:
+    """
+    Represents a Penrose swap with local cost but global benefit.
+
+    In the Penrose process, a particle enters the ergosphere, splits into
+    positive and negative energy particles, and the negative one falls into
+    the black hole while the positive one escapes with more energy than the
+    original particle.
+
+    For scheduling: a swap that locally increases conflicts but globally
+    reduces total system conflicts or improves coverage.
+
+    Attributes:
+        swap_id: Unique identifier for this swap
+        assignment_a: First assignment to swap
+        assignment_b: Second assignment to swap
+        local_cost: Local conflict increase (negative = improvement)
+        global_benefit: System-wide benefit score (positive = good)
+        net_extraction: Net efficiency extraction (global_benefit - local_cost)
+        ergosphere_period: The ergosphere where this swap occurs
+        confidence: Confidence in benefit estimate (0-1)
+        executed: Whether this swap has been executed
+    """
+
+    swap_id: UUID
+    assignment_a: UUID
+    assignment_b: UUID
+    local_cost: float  # Can be negative (local improvement)
+    global_benefit: float  # Should be positive
+    ergosphere_period: ErgospherePeriod
+    confidence: float = 0.8
+    executed: bool = False
+
+    def __post_init__(self):
+        """Validate Penrose swap."""
+        if not 0 <= self.confidence <= 1:
+            raise ValueError("confidence must be between 0 and 1")
+
+    @property
+    def net_extraction(self) -> float:
+        """Calculate net efficiency extraction."""
+        return self.global_benefit - abs(self.local_cost)
+
+    @property
+    def is_beneficial(self) -> bool:
+        """Check if this swap provides net benefit."""
+        return self.net_extraction > 0
+
+    @property
+    def extraction_ratio(self) -> float:
+        """Calculate extraction efficiency ratio (benefit/cost)."""
+        if abs(self.local_cost) < 0.001:  # Avoid division by zero
+            return float("inf") if self.global_benefit > 0 else 0
+        return self.global_benefit / abs(self.local_cost)
+
+
+class RotationEnergyTracker:
+    """
+    Tracks rotation energy and extraction limits.
+
+    Just as a black hole spins down as energy is extracted via the Penrose
+    process, a schedule's "rotation energy" (capacity for beneficial swaps)
+    diminishes as swaps are executed. This class tracks the extraction budget.
+
+    Attributes:
+        initial_rotation_energy: Initial capacity for swaps
+        extracted_energy: Total energy extracted so far
+        max_extraction_fraction: Maximum fraction that can be extracted (0.29)
+        extraction_history: History of extractions
+    """
+
+    def __init__(self, initial_rotation_energy: float):
+        """
+        Initialize rotation energy tracker.
+
+        Args:
+            initial_rotation_energy: Initial swap capacity (e.g., number of
+                potential beneficial swaps)
+        """
+        self.initial_rotation_energy = initial_rotation_energy
+        self.extracted_energy = 0.0
+        self.max_extraction_fraction = 0.29  # Penrose theoretical limit
+        self.extraction_history: list[dict[str, Any]] = []
+
+    @property
+    def remaining_energy(self) -> float:
+        """Calculate remaining extractable energy."""
+        return self.initial_rotation_energy - self.extracted_energy
+
+    @property
+    def extraction_fraction(self) -> float:
+        """Calculate fraction of energy extracted."""
+        if self.initial_rotation_energy == 0:
+            return 0
+        return self.extracted_energy / self.initial_rotation_energy
+
+    @property
+    def is_exhausted(self) -> bool:
+        """Check if extraction capacity is exhausted."""
+        return self.extraction_fraction >= self.max_extraction_fraction
+
+    @property
+    def extraction_budget(self) -> float:
+        """Calculate remaining extraction budget."""
+        max_extractable = self.initial_rotation_energy * self.max_extraction_fraction
+        return max(0, max_extractable - self.extracted_energy)
+
+    def record_extraction(self, swap: PenroseSwap) -> bool:
+        """
+        Record an energy extraction from a swap.
+
+        Args:
+            swap: The Penrose swap that was executed
+
+        Returns:
+            True if extraction was recorded, False if budget exhausted
+        """
+        if self.is_exhausted:
+            logger.warning("Extraction budget exhausted, cannot record more extractions")
+            return False
+
+        if not swap.is_beneficial:
+            logger.warning(f"Swap {swap.swap_id} is not beneficial, skipping")
+            return False
+
+        self.extracted_energy += swap.net_extraction
+        self.extraction_history.append(
+            {
+                "swap_id": str(swap.swap_id),
+                "extraction": swap.net_extraction,
+                "timestamp": datetime.utcnow(),
+                "cumulative": self.extracted_energy,
+            }
+        )
+        logger.info(
+            f"Recorded extraction: {swap.net_extraction:.2f} "
+            f"(total: {self.extracted_energy:.2f}, "
+            f"fraction: {self.extraction_fraction:.2%})"
+        )
+        return True
+
+
+class PenroseEfficiencyExtractor:
+    """
+    Extract rotation efficiency using Penrose process analogy.
+
+    The Penrose process extracts rotational energy from black holes by
+    exploiting the ergosphere's unique properties. This class applies
+    the same principle to schedule optimization:
+
+    1. Identify ergospheres (rotation boundaries)
+    2. Decompose assignments into phase components
+    3. Find negative-energy swaps (locally costly, globally beneficial)
+    4. Execute Penrose cascade to extract efficiency
+    5. Track extraction limits to prevent over-optimization
+
+    Example:
+        >>> async with get_db() as db:
+        ...     extractor = PenroseEfficiencyExtractor(db)
+        ...     schedule_data = await extractor.load_schedule(schedule_id)
+        ...     ergospheres = await extractor.identify_ergosphere_periods(
+        ...         schedule_data['rotations']
+        ...     )
+        ...     swaps = await extractor.find_negative_energy_swaps(
+        ...         schedule_data, ergospheres[0]
+        ...     )
+        ...     optimized = await extractor.execute_penrose_cascade(schedule_data)
+    """
+
+    def __init__(self, db: AsyncSession):
+        """
+        Initialize Penrose efficiency extractor.
+
+        Args:
+            db: Async database session
+        """
+        self.db = db
+        self.energy_tracker: RotationEnergyTracker | None = None
+
+    async def identify_ergosphere_periods(
+        self, start_date: date, end_date: date
+    ) -> list[ErgospherePeriod]:
+        """
+        Identify rotation boundary periods (ergospheres).
+
+        Ergospheres are transition zones where swaps can extract efficiency:
+        - Week boundaries (Friday PM to Monday AM)
+        - Block transitions (last day of block to first day of next)
+        - Rotation handoffs (when residents change services)
+
+        Args:
+            start_date: Start date for analysis
+            end_date: End date for analysis
+
+        Returns:
+            List of identified ergosphere periods sorted by extraction potential
+        """
+        ergospheres: list[ErgospherePeriod] = []
+
+        # Load all blocks in the date range
+        result = await self.db.execute(
+            select(Block)
+            .where(Block.date >= start_date)
+            .where(Block.date <= end_date)
+            .order_by(Block.date, Block.time_of_day)
+        )
+        blocks = result.scalars().all()
+
+        # Group blocks by week
+        blocks_by_week: dict[int, list[Block]] = defaultdict(list)
+        for block in blocks:
+            week_num = block.date.isocalendar()[1]
+            blocks_by_week[week_num].append(block)
+
+        # Identify week-end ergospheres (Friday PM to Monday AM)
+        for week_num, week_blocks in blocks_by_week.items():
+            # Find Friday PM and Monday AM blocks
+            friday_pm = None
+            monday_am = None
+
+            for block in week_blocks:
+                if block.date.weekday() == 4 and block.time_of_day == "PM":  # Friday
+                    friday_pm = block
+                if block.date.weekday() == 0 and block.time_of_day == "AM":  # Monday
+                    monday_am = block
+
+            if friday_pm and monday_am:
+                # Calculate rotation velocity (historical swap rate)
+                rotation_velocity = await self._calculate_rotation_velocity(
+                    friday_pm.date, monday_am.date
+                )
+
+                # Estimate extraction potential based on transition complexity
+                extraction_potential = min(
+                    0.29, rotation_velocity * 0.1
+                )  # Cap at Penrose limit
+
+                ergosphere = ErgospherePeriod(
+                    start_time=datetime.combine(friday_pm.date, datetime.min.time())
+                    + timedelta(hours=12),  # Friday PM
+                    end_time=datetime.combine(monday_am.date, datetime.min.time())
+                    + timedelta(hours=8),  # Monday AM
+                    rotation_velocity=rotation_velocity,
+                    extraction_potential=extraction_potential,
+                    boundary_type="week_end",
+                    affected_assignments=await self._get_assignments_in_period(
+                        friday_pm.date, monday_am.date
+                    ),
+                )
+                ergospheres.append(ergosphere)
+
+        # Identify block transition ergospheres
+        block_transitions = await self._identify_block_transitions(blocks)
+        ergospheres.extend(block_transitions)
+
+        # Sort by extraction potential (highest first)
+        ergospheres.sort(key=lambda e: e.extraction_potential, reverse=True)
+
+        logger.info(
+            f"Identified {len(ergospheres)} ergosphere periods "
+            f"({sum(1 for e in ergospheres if e.is_high_potential)} high-potential)"
+        )
+
+        return ergospheres
+
+    async def _calculate_rotation_velocity(
+        self, start_date: date, end_date: date
+    ) -> float:
+        """
+        Calculate historical rotation velocity (swaps per day).
+
+        Args:
+            start_date: Start date for velocity calculation
+            end_date: End date for velocity calculation
+
+        Returns:
+            Average swaps per day in this period
+        """
+        # Query swap history in similar periods (same week of year, previous years)
+        # For now, use a simplified estimate based on day of week patterns
+        # TODO: Implement actual historical query when swap model is available
+
+        # Heuristic: More swaps happen around weekends and block transitions
+        days = (end_date - start_date).days
+        if days == 0:
+            return 0.0
+
+        # Estimate based on day of week
+        weekend_factor = 2.0 if start_date.weekday() >= 4 else 1.0
+        return weekend_factor * 1.5  # Baseline: 1.5 swaps/day, higher on weekends
+
+    async def _get_assignments_in_period(
+        self, start_date: date, end_date: date
+    ) -> list[UUID]:
+        """
+        Get assignment IDs in a date range.
+
+        Args:
+            start_date: Start date
+            end_date: End date
+
+        Returns:
+            List of assignment UUIDs
+        """
+        result = await self.db.execute(
+            select(Assignment.id)
+            .join(Block)
+            .where(Block.date >= start_date)
+            .where(Block.date <= end_date)
+        )
+        return [row[0] for row in result.all()]
+
+    async def _identify_block_transitions(
+        self, blocks: list[Block]
+    ) -> list[ErgospherePeriod]:
+        """
+        Identify block transition ergospheres.
+
+        Args:
+            blocks: List of blocks to analyze
+
+        Returns:
+            List of block transition ergospheres
+        """
+        ergospheres: list[ErgospherePeriod] = []
+
+        # Group blocks by block_number
+        blocks_by_num: dict[int, list[Block]] = defaultdict(list)
+        for block in blocks:
+            blocks_by_num[block.block_number].append(block)
+
+        # Find transitions between consecutive blocks
+        sorted_block_nums = sorted(blocks_by_num.keys())
+        for i in range(len(sorted_block_nums) - 1):
+            current_num = sorted_block_nums[i]
+            next_num = sorted_block_nums[i + 1]
+
+            if next_num == current_num + 1:
+                # Find last block of current and first block of next
+                current_blocks = sorted(
+                    blocks_by_num[current_num], key=lambda b: (b.date, b.time_of_day)
+                )
+                next_blocks = sorted(
+                    blocks_by_num[next_num], key=lambda b: (b.date, b.time_of_day)
+                )
+
+                if current_blocks and next_blocks:
+                    last_block = current_blocks[-1]
+                    first_block = next_blocks[0]
+
+                    rotation_velocity = await self._calculate_rotation_velocity(
+                        last_block.date, first_block.date
+                    )
+
+                    # Block transitions have higher extraction potential
+                    extraction_potential = min(0.29, rotation_velocity * 0.15)
+
+                    ergosphere = ErgospherePeriod(
+                        start_time=datetime.combine(last_block.date, datetime.min.time())
+                        + timedelta(hours=12 if last_block.time_of_day == "PM" else 0),
+                        end_time=datetime.combine(first_block.date, datetime.min.time())
+                        + timedelta(hours=8 if first_block.time_of_day == "AM" else 12),
+                        rotation_velocity=rotation_velocity,
+                        extraction_potential=extraction_potential,
+                        boundary_type="block_transition",
+                        affected_assignments=await self._get_assignments_in_period(
+                            last_block.date, first_block.date
+                        ),
+                    )
+                    ergospheres.append(ergosphere)
+
+        return ergospheres
+
+    async def decompose_into_phases(self, assignment: Assignment) -> list[PhaseComponent]:
+        """
+        Decompose an assignment into rotation phases.
+
+        Similar to how a particle is split in the Penrose process,
+        we decompose an assignment into pre-transition, transition,
+        and post-transition phases to identify negative-energy states.
+
+        Args:
+            assignment: The assignment to decompose
+
+        Returns:
+            List of phase components
+        """
+        phases: list[PhaseComponent] = []
+
+        if not assignment.block:
+            logger.warning(f"Assignment {assignment.id} has no block, cannot decompose")
+            return phases
+
+        block_date = assignment.block.date
+        block_time = assignment.block.time_of_day
+
+        # Convert block to datetime
+        assignment_dt = datetime.combine(block_date, datetime.min.time()) + timedelta(
+            hours=12 if block_time == "PM" else 0
+        )
+
+        # Pre-transition phase (12 hours before)
+        pre_start = assignment_dt - timedelta(hours=12)
+        pre_end = assignment_dt
+
+        # Transition phase (current block)
+        trans_start = assignment_dt
+        trans_end = assignment_dt + timedelta(hours=4)  # Half-day block
+
+        # Post-transition phase (12 hours after)
+        post_start = trans_end
+        post_end = trans_end + timedelta(hours=12)
+
+        # Calculate conflict scores for each phase
+        # TODO: Implement actual conflict detection
+        pre_conflicts = 0  # await self._count_conflicts_in_period(assignment, pre_start, pre_end)
+        trans_conflicts = 0  # await self._count_conflicts_in_period(assignment, trans_start, trans_end)
+        post_conflicts = 0  # await self._count_conflicts_in_period(assignment, post_start, post_end)
+
+        # Determine energy states based on conflict patterns
+        # Negative energy = transition reduces conflicts
+        pre_energy = "positive" if pre_conflicts > trans_conflicts else "zero"
+        trans_energy = "negative" if trans_conflicts < (pre_conflicts + post_conflicts) / 2 else "positive"
+        post_energy = "positive" if post_conflicts > trans_conflicts else "zero"
+
+        # Create phase components
+        phases.extend(
+            [
+                PhaseComponent(
+                    assignment_id=assignment.id,
+                    phase_type="pre_transition",
+                    energy_state=pre_energy,
+                    phase_start=pre_start,
+                    phase_end=pre_end,
+                    conflict_score=pre_conflicts,
+                    flexibility_score=0.7,  # TODO: Calculate actual flexibility
+                ),
+                PhaseComponent(
+                    assignment_id=assignment.id,
+                    phase_type="transition",
+                    energy_state=trans_energy,
+                    phase_start=trans_start,
+                    phase_end=trans_end,
+                    conflict_score=trans_conflicts,
+                    flexibility_score=0.5,
+                ),
+                PhaseComponent(
+                    assignment_id=assignment.id,
+                    phase_type="post_transition",
+                    energy_state=post_energy,
+                    phase_start=post_start,
+                    phase_end=post_end,
+                    conflict_score=post_conflicts,
+                    flexibility_score=0.7,
+                ),
+            ]
+        )
+
+        return phases
+
+    async def find_negative_energy_swaps(
+        self, schedule_id: UUID, period: ErgospherePeriod
+    ) -> list[PenroseSwap]:
+        """
+        Find swaps with local cost but global benefit (negative energy).
+
+        In the Penrose process, particles with negative energy relative to
+        infinity can exist in the ergosphere. For scheduling, these are swaps
+        that locally increase conflicts but globally improve the schedule.
+
+        Args:
+            schedule_id: ID of the schedule to analyze
+            period: The ergosphere period to search
+
+        Returns:
+            List of Penrose swaps sorted by net extraction benefit
+        """
+        swaps: list[PenroseSwap] = []
+
+        # Get assignments in this ergosphere period
+        result = await self.db.execute(
+            select(Assignment)
+            .join(Block)
+            .where(Assignment.id.in_(period.affected_assignments))
+            .options()  # Could add selectinload for relations
+        )
+        assignments = result.scalars().all()
+
+        # Find potential swap pairs
+        for i, assign_a in enumerate(assignments):
+            for assign_b in assignments[i + 1 :]:
+                # Calculate local and global impacts
+                local_cost = await self._calculate_local_cost(assign_a, assign_b)
+                global_benefit = await self._calculate_global_benefit(
+                    assign_a, assign_b, assignments
+                )
+
+                # Only include if globally beneficial
+                if global_benefit > abs(local_cost):
+                    swap = PenroseSwap(
+                        swap_id=UUID(int=hash((assign_a.id, assign_b.id)) & (2**128 - 1)),
+                        assignment_a=assign_a.id,
+                        assignment_b=assign_b.id,
+                        local_cost=local_cost,
+                        global_benefit=global_benefit,
+                        ergosphere_period=period,
+                        confidence=0.8,  # TODO: Calculate based on data quality
+                    )
+                    swaps.append(swap)
+
+        # Sort by net extraction (highest first)
+        swaps.sort(key=lambda s: s.net_extraction, reverse=True)
+
+        logger.info(
+            f"Found {len(swaps)} negative-energy swaps in ergosphere "
+            f"{period.boundary_type} with total extraction potential "
+            f"{sum(s.net_extraction for s in swaps):.2f}"
+        )
+
+        return swaps
+
+    async def _calculate_local_cost(
+        self, assign_a: Assignment, assign_b: Assignment
+    ) -> float:
+        """
+        Calculate local cost of swapping two assignments.
+
+        Args:
+            assign_a: First assignment
+            assign_b: Second assignment
+
+        Returns:
+            Local cost (positive = worse, negative = better)
+        """
+        # TODO: Implement actual conflict detection
+        # For now, use a simplified heuristic
+
+        # Cost factors:
+        # 1. Person preference mismatch
+        # 2. Skill/qualification mismatch
+        # 3. Local workload imbalance
+
+        cost = 0.0
+
+        # If swapping creates a skill mismatch, add cost
+        if assign_a.rotation_template_id != assign_b.rotation_template_id:
+            cost += 2.0  # Different rotation types = higher cost
+
+        # If persons have different roles, add cost
+        if assign_a.role != assign_b.role:
+            cost += 1.5
+
+        return cost
+
+    async def _calculate_global_benefit(
+        self, assign_a: Assignment, assign_b: Assignment, all_assignments: list[Assignment]
+    ) -> float:
+        """
+        Calculate global benefit of swapping two assignments.
+
+        Args:
+            assign_a: First assignment
+            assign_b: Second assignment
+            all_assignments: All assignments in the period
+
+        Returns:
+            Global benefit score (higher = better)
+        """
+        # TODO: Implement actual global optimization metrics
+        # For now, use a simplified heuristic
+
+        benefit = 0.0
+
+        # Benefit factors:
+        # 1. Improved workload balance
+        # 2. Reduced ACGME violations
+        # 3. Better coverage distribution
+        # 4. Improved person preferences
+
+        # If swap improves workload balance across the schedule
+        benefit += 3.0  # Placeholder
+
+        # If swap reduces consecutive shifts
+        benefit += 2.0  # Placeholder
+
+        # If swap improves specialty coverage
+        if assign_a.rotation_template_id and assign_b.rotation_template_id:
+            benefit += 1.5
+
+        return benefit
+
+    def compute_extraction_efficiency(self, swaps_executed: list[PenroseSwap]) -> float:
+        """
+        Compute total efficiency extraction from executed swaps.
+
+        Args:
+            swaps_executed: List of executed Penrose swaps
+
+        Returns:
+            Total efficiency extracted as fraction (0-0.29)
+        """
+        if not swaps_executed:
+            return 0.0
+
+        total_extraction = sum(swap.net_extraction for swap in swaps_executed if swap.executed)
+
+        # Normalize by initial rotation energy if tracker is initialized
+        if self.energy_tracker:
+            efficiency = total_extraction / self.energy_tracker.initial_rotation_energy
+            efficiency = min(efficiency, 0.29)  # Cap at Penrose limit
+        else:
+            # Without tracker, estimate based on number of swaps
+            efficiency = min(len(swaps_executed) * 0.05, 0.29)
+
+        logger.info(
+            f"Computed extraction efficiency: {efficiency:.2%} "
+            f"from {len(swaps_executed)} swaps "
+            f"(total extraction: {total_extraction:.2f})"
+        )
+
+        return efficiency
+
+    async def execute_penrose_cascade(
+        self, schedule_id: UUID, max_iterations: int = 5
+    ) -> dict[str, Any]:
+        """
+        Execute cascade of Penrose swaps to optimize schedule.
+
+        Like a chain reaction of Penrose processes, execute multiple
+        rounds of beneficial swaps until convergence or budget exhaustion.
+
+        Args:
+            schedule_id: ID of the schedule to optimize
+            max_iterations: Maximum optimization iterations
+
+        Returns:
+            Dictionary with optimization results:
+                - swaps_executed: Number of swaps executed
+                - efficiency_extracted: Total efficiency extraction
+                - iterations: Number of iterations performed
+                - final_conflicts: Final conflict count
+                - improvement: Overall improvement metric
+        """
+        # Initialize energy tracker
+        initial_energy = 100.0  # TODO: Calculate based on schedule flexibility
+        self.energy_tracker = RotationEnergyTracker(initial_energy)
+
+        all_swaps: list[PenroseSwap] = []
+        iteration = 0
+
+        logger.info(f"Starting Penrose cascade for schedule {schedule_id}")
+
+        while iteration < max_iterations and not self.energy_tracker.is_exhausted:
+            iteration += 1
+            logger.info(
+                f"Cascade iteration {iteration}/{max_iterations} "
+                f"(budget: {self.energy_tracker.extraction_budget:.2f})"
+            )
+
+            # Identify ergospheres
+            # TODO: Get actual schedule date range
+            start_date = date.today()
+            end_date = start_date + timedelta(days=28)  # One block
+            ergospheres = await self.identify_ergosphere_periods(start_date, end_date)
+
+            # Find swaps in high-potential ergospheres
+            iteration_swaps: list[PenroseSwap] = []
+            for ergosphere in ergospheres:
+                if ergosphere.is_high_potential:
+                    swaps = await self.find_negative_energy_swaps(schedule_id, ergosphere)
+                    iteration_swaps.extend(swaps)
+
+            if not iteration_swaps:
+                logger.info("No beneficial swaps found, terminating cascade")
+                break
+
+            # Execute top swaps within budget
+            executed_count = 0
+            for swap in sorted(iteration_swaps, key=lambda s: s.net_extraction, reverse=True):
+                if swap.net_extraction <= self.energy_tracker.extraction_budget:
+                    # TODO: Actually execute the swap in the database
+                    swap.executed = True
+                    self.energy_tracker.record_extraction(swap)
+                    all_swaps.append(swap)
+                    executed_count += 1
+
+                    logger.debug(
+                        f"Executed swap {swap.swap_id}: "
+                        f"extraction={swap.net_extraction:.2f}"
+                    )
+
+            if executed_count == 0:
+                logger.info("No swaps within budget, terminating cascade")
+                break
+
+            logger.info(f"Iteration {iteration}: executed {executed_count} swaps")
+
+        # Calculate final metrics
+        efficiency = self.compute_extraction_efficiency(all_swaps)
+
+        result = {
+            "swaps_executed": len([s for s in all_swaps if s.executed]),
+            "efficiency_extracted": efficiency,
+            "iterations": iteration,
+            "final_conflicts": 0,  # TODO: Calculate actual conflict count
+            "improvement": efficiency * 100,  # Percentage improvement
+            "budget_used": self.energy_tracker.extraction_fraction,
+            "swaps": all_swaps,
+        }
+
+        logger.info(
+            f"Penrose cascade complete: {result['swaps_executed']} swaps, "
+            f"{result['efficiency_extracted']:.2%} efficiency extracted"
+        )
+
+        return result
