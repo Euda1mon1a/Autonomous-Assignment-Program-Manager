@@ -962,6 +962,69 @@ End: COORD_AAR auto-triggers → XO reports collected → HISTORIAN if noteworth
 
 ---
 
+### Session 018: 2025-12-30 — Block Revelation Investigation
+
+**Context:** Continuing from Session 017 (pgvector activation) to investigate the Block Revelation issue from Session 014.
+
+**Active Parallel Streams:**
+1. **RAG Initialization** - Embedding knowledge base (agent ae44caa, 890k+ tokens)
+2. **COORD_PLATFORM** - Database block audit (agent a2a42c8)
+3. **COORD_ENGINE** - Block generation verification (agent a47c1fe)
+
+**Block Revelation Issue (Session 014):**
+- Frontend hardcoded 28-day navigation masked missing blocks
+- When fixed to use real DB dates → revealed only odd blocks (1,3,5,7,9,11,13)
+- Even blocks (2,4,6,8,10,12) MISSING from database
+- All schedules suspect - data integrity issue, not code bug
+
+**Investigation Plan (Coordinator-Led):**
+```
+ORCHESTRATOR
+├── Phase 1 (Parallel) - DIAGNOSE
+│   ├── COORD_PLATFORM → DBA, ARCHITECT (DB state audit)
+│   └── COORD_ENGINE → SCHEDULER (generation script verify)
+├── Phase 2 - DECIDE fix strategy based on diagnosis
+├── Phase 3 - COORD_PLATFORM executes fix
+└── Phase 4 (Parallel) - PREVENT
+    ├── COORD_QUALITY → tests that fail if blocks missing
+    └── COORD_RESILIENCE → startup health check
+```
+
+**Key Lesson Applied:**
+- "2 Strikes Rule" from Session 017 - after 2 failed attempts, DELEGATE
+- Coordinator-led structure = force multiplier (2 coords → 4-6 specialists)
+
+**Files:**
+- Plan: `/Users/aaronmontgomery/.claude/plans/zippy-dreaming-torvalds.md`
+- History: `.claude/Scratchpad/histories/SESSION_014_THE_BLOCK_REVELATION.md`
+
+**Next Steps on Resume:**
+1. Check agent outputs for COORD_PLATFORM and COORD_ENGINE
+2. Review findings, decide fix strategy (Option A/B/C)
+3. Execute fix, spawn Phase 3 coordinators for guardrails
+
+---
+
+## Active G-Staff Roster
+
+| Position | Agent | Status | Notes |
+|----------|-------|--------|-------|
+| G-1 | G1_PERSONNEL | Active | Personnel tracking |
+| G-3 | SYNTHESIZER | Active | Operations integration |
+| G-4 | G4_CONTEXT_MANAGER | Active | pgvector enabled Session 017 |
+| G-5 | META_UPDATER | Active | Documentation, planning |
+| G-6 | G6_EVIDENCE_COLLECTOR | Active | Evidence collection |
+| IG | DELEGATION_AUDITOR | Active | Spawns on /startupO |
+| PAO | HISTORIAN | Active | Significant sessions only |
+
+**Special Staff:**
+| Agent | Status | Notes |
+|-------|--------|-------|
+| FORCE_MANAGER | Active | Team assembly, coordinator assignment |
+| COORD_AAR | Active | Auto-trigger at session end |
+
+---
+
 *File created: 2025-12-27*
-*Last updated: 2025-12-29 (Session 016 Part 2)*
+*Last updated: 2025-12-30 (Session 018 - Block Revelation Investigation)*
 *Maintained by: ORCHESTRATOR*
