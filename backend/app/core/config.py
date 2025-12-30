@@ -118,11 +118,6 @@ class Settings(BaseSettings):
     RATE_LIMIT_REGISTER_WINDOW: int = 60  # Time window in seconds (1 minute)
     RATE_LIMIT_ENABLED: bool = True  # Enable/disable rate limiting globally
 
-    # Cache TTL Settings (in seconds)
-    CACHE_HEATMAP_TTL: int = 300  # 5 minutes for heatmap data
-    CACHE_CALENDAR_TTL: int = 600  # 10 minutes for calendar exports
-    CACHE_SCHEDULE_TTL: int = 300  # 5 minutes for schedule queries
-
     # File Upload Settings
     UPLOAD_STORAGE_BACKEND: str = "local"  # Storage backend: 'local' or 's3'
     UPLOAD_LOCAL_DIR: str = "/tmp/uploads"  # Local storage directory
@@ -184,6 +179,9 @@ class Settings(BaseSettings):
     RESILIENCE_SLACK_CHANNEL: str = ""  # Slack channel for alerts (optional)
 
     # OpenTelemetry / Distributed Tracing Configuration
+    # Default: disabled for development to avoid performance impact
+    # Enable in production for distributed tracing across services
+    # Requires OTEL collector or compatible backend (Jaeger, Zipkin, etc.)
     TELEMETRY_ENABLED: bool = False  # Enable distributed tracing
     TELEMETRY_SERVICE_NAME: str = "residency-scheduler"
     TELEMETRY_ENVIRONMENT: str = "development"  # development, staging, production
@@ -191,15 +189,21 @@ class Settings(BaseSettings):
     TELEMETRY_CONSOLE_EXPORT: bool = False  # Enable console exporter for debugging
 
     # Exporter Configuration
+    # Supported types: otlp_grpc (default), otlp_http, jaeger, zipkin
+    # OTLP: OpenTelemetry Protocol (gRPC on 4317, HTTP on 4318)
+    # Jaeger: All-in-one for distributed tracing
+    # Zipkin: Distributed tracing and monitoring
     TELEMETRY_EXPORTER_TYPE: str = "otlp_grpc"  # jaeger, zipkin, otlp_http, otlp_grpc
     TELEMETRY_EXPORTER_ENDPOINT: str = "http://localhost:4317"  # Exporter endpoint URL
     TELEMETRY_EXPORTER_INSECURE: bool = True  # Use insecure connection (no TLS)
     TELEMETRY_EXPORTER_HEADERS: dict[str, str] = {}  # Custom headers for authentication
 
     # Instrumentation Configuration
-    TELEMETRY_TRACE_SQLALCHEMY: bool = True  # Enable SQLAlchemy tracing
-    TELEMETRY_TRACE_REDIS: bool = True  # Enable Redis tracing
-    TELEMETRY_TRACE_HTTP: bool = True  # Enable HTTP client tracing
+    # These control which components emit traces
+    # Disabling reduces overhead but loses visibility into those systems
+    TELEMETRY_TRACE_SQLALCHEMY: bool = True  # Enable SQLAlchemy tracing (database queries)
+    TELEMETRY_TRACE_REDIS: bool = True  # Enable Redis tracing (cache operations)
+    TELEMETRY_TRACE_HTTP: bool = True  # Enable HTTP client tracing (external APIs)
 
     # ML Model Configuration
     # Machine learning models for schedule scoring and prediction

@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { ChatMessage, ChatSession, ClaudeCodeRequest, ClaudeCodeResponse, StreamUpdate } from '../types/chat';
 import { v4 as uuidv4 } from 'uuid';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const CLAUDE_CHAT_ENDPOINT = `${API_BASE_URL}/api/claude/chat`;
 const CLAUDE_STREAM_ENDPOINT = `${API_BASE_URL}/api/claude/chat/stream`;
 

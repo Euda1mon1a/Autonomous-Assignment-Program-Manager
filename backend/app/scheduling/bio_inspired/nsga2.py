@@ -456,7 +456,7 @@ class NSGA2Solver(BioInspiredSolver):
         """
         n = len(population)
         dominated_by: dict[int, list[int]] = {i: [] for i in range(n)}
-        domination_count: dict[int, int] = {i: 0 for i in range(n)}
+        domination_count: dict[int, int] = dict.fromkeys(range(n), 0)
         fronts: list[list[Individual]] = [[]]
 
         # Compare all pairs

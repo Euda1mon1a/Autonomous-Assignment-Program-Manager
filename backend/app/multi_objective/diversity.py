@@ -626,7 +626,7 @@ class ReferencePointAssociation:
         selected: list[Solution] = []
 
         # Track niche counts
-        niche_counts = {i: 0 for i in range(len(self.reference_points))}
+        niche_counts = dict.fromkeys(range(len(self.reference_points)), 0)
 
         while len(selected) < n_select:
             # Find reference point with minimum count

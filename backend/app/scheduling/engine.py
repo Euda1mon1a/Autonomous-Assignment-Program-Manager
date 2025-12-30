@@ -22,7 +22,7 @@ import time
 from datetime import date, timedelta
 from uuid import UUID
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.logging import get_logger
 from app.schemas.schedule import (
@@ -976,7 +976,7 @@ class SchedulingEngine:
             >>> if is_available:
             ...     # Can assign resident to this block
         """
-        # Get all people
+        # Get all people (no eager loading needed - only accessing person.id)
         people = self.db.query(Person).all()
 
         # Get all blocks in range
@@ -1374,15 +1374,37 @@ class SchedulingEngine:
                 assignments_by_block[assignment.block_id] = []
             assignments_by_block[assignment.block_id].append(assignment)
 
+        # Pre-fetch all residents who have assignments (N+1 fix)
+        # This replaces the per-block query inside the loop
+        all_resident_ids = {a.person_id for a in self.assignments}
+        all_residents = (
+            self.db.query(Person).filter(Person.id.in_(all_resident_ids)).all()
+        )
+        residents_by_id = {r.id: r for r in all_residents}
+
+        # Pre-fetch all rotation templates used in assignments (N+1 fix)
+        # This is used by _get_primary_template_for_block to break ties
+        all_template_ids = {
+            a.rotation_template_id for a in self.assignments if a.rotation_template_id
+        }
+        all_templates = (
+            self.db.query(RotationTemplate)
+            .filter(RotationTemplate.id.in_(all_template_ids))
+            .all()
+            if all_template_ids
+            else []
+        )
+        templates_by_id = {t.id: t for t in all_templates}
+
         # Assign faculty to each block
         faculty_assignments = {f.id: 0 for f in faculty}
 
         for block_id, block_assignments in assignments_by_block.items():
-            # Get resident details for this block
+            # Get resident details for this block from pre-fetched data
             resident_ids = [a.person_id for a in block_assignments]
-            residents_in_block = (
-                self.db.query(Person).filter(Person.id.in_(resident_ids)).all()
-            )
+            residents_in_block = [
+                residents_by_id[rid] for rid in resident_ids if rid in residents_by_id
+            ]
 
             # Calculate required faculty
             pgy1_count = sum(1 for r in residents_in_block if r.pgy_level == 1)
@@ -1411,7 +1433,7 @@ class SchedulingEngine:
             # Determine primary rotation template from resident assignments in this block
             # Faculty should be assigned the same rotation as the residents they supervise
             primary_template_id = self._get_primary_template_for_block(
-                block_assignments
+                block_assignments, templates_by_id
             )
 
             for fac in selected:
@@ -1426,7 +1448,9 @@ class SchedulingEngine:
                 faculty_assignments[fac.id] += 1
 
     def _get_primary_template_for_block(
-        self, block_assignments: list[Assignment]
+        self,
+        block_assignments: list[Assignment],
+        templates_cache: dict[UUID, RotationTemplate] | None = None,
     ) -> UUID | None:
         """
         Determine the primary rotation template for a block based on resident assignments.
@@ -1444,6 +1468,8 @@ class SchedulingEngine:
 
         Args:
             block_assignments: List of resident Assignment objects for this block
+            templates_cache: Pre-fetched templates dict (N+1 optimization).
+                           If None, will query database (for backward compatibility).
 
         Returns:
             UUID of the primary rotation template, or None if no assignments
@@ -1472,12 +1498,17 @@ class SchedulingEngine:
             return candidates[0]
 
         # Break ties by preferring inpatient templates
+        # Use cache if available to avoid N+1 queries
         for tid in candidates:
-            template = (
-                self.db.query(RotationTemplate)
-                .filter(RotationTemplate.id == tid)
-                .first()
-            )
+            if templates_cache is not None:
+                template = templates_cache.get(tid)
+            else:
+                # Fallback to database query (backward compatibility)
+                template = (
+                    self.db.query(RotationTemplate)
+                    .filter(RotationTemplate.id == tid)
+                    .first()
+                )
             if template and template.activity_type == "inpatient":
                 return tid
 
@@ -1617,6 +1648,32 @@ class SchedulingEngine:
                 "message": "Post-Call rotation template not configured",
             }
 
+        # Pre-fetch all blocks in the date range (N+1 fix)
+        # Build lookups by ID and by date for efficient access
+        all_blocks = (
+            self.db.query(Block)
+            .filter(
+                Block.date >= self.start_date,
+                Block.date <= self.end_date,
+            )
+            .all()
+        )
+        blocks_by_id = {b.id: b for b in all_blocks}
+        blocks_by_date: dict[date, list[Block]] = {}
+        for block in all_blocks:
+            if block.date not in blocks_by_date:
+                blocks_by_date[block.date] = []
+            blocks_by_date[block.date].append(block)
+
+        # Pre-fetch all persons who have assignments (N+1 fix)
+        all_person_ids = list(assignments_by_person.keys())
+        all_persons = (
+            self.db.query(Person).filter(Person.id.in_(all_person_ids)).all()
+            if all_person_ids
+            else []
+        )
+        persons_by_id = {p.id: p for p in all_persons}
+
         # Check each person's NF assignments
         for person_id, person_assignments in assignments_by_person.items():
             # Find NF assignments
@@ -1630,9 +1687,10 @@ class SchedulingEngine:
                 continue
 
             # Group NF assignments by date to find transition days
+            # Use pre-fetched blocks instead of querying per assignment
             nf_by_date: dict[date, list] = {}
             for a in nf_assignments:
-                block = self.db.query(Block).filter(Block.id == a.block_id).first()
+                block = blocks_by_id.get(a.block_id)
                 if block:
                     if block.date not in nf_by_date:
                         nf_by_date[block.date] = []
@@ -1649,9 +1707,8 @@ class SchedulingEngine:
                 total_transitions += 1
 
                 # Check for PC assignments on the required date
-                pc_blocks = (
-                    self.db.query(Block).filter(Block.date == pc_required_date).all()
-                )
+                # Use pre-fetched blocks instead of querying per date
+                pc_blocks = blocks_by_date.get(pc_required_date, [])
 
                 has_am_pc = False
                 has_pm_pc = False
@@ -1675,9 +1732,8 @@ class SchedulingEngine:
 
                 # Record violations
                 if not has_am_pc or not has_pm_pc:
-                    person = (
-                        self.db.query(Person).filter(Person.id == person_id).first()
-                    )
+                    # Use pre-fetched person instead of querying per violation
+                    person = persons_by_id.get(person_id)
                     violations.append(
                         {
                             "person_id": str(person_id),

@@ -450,7 +450,7 @@ def classify_shift_type(shift_start: datetime, duration: float) -> CircadianShif
             return CircadianShiftType.DAY
     elif 15 <= hour < 23:
         return CircadianShiftType.EVENING
-    elif 23 <= hour or hour < 6:
+    elif hour >= 23 or hour < 6:
         return CircadianShiftType.NIGHT
     else:
         return CircadianShiftType.SPLIT

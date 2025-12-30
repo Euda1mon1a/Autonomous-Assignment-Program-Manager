@@ -98,8 +98,8 @@ class FatigueProfile:
     consecutive_night_shifts: int
 
     # Predictions
-    predicted_end_of_shift_alertness: Optional[float] = None
-    next_rest_opportunity: Optional[datetime] = None
+    predicted_end_of_shift_alertness: float | None = None
+    next_rest_opportunity: datetime | None = None
     recovery_sleep_needed: float = 0.0
 
     # ACGME compliance
@@ -182,10 +182,10 @@ class FRMSService:
 
     def __init__(
         self,
-        db: Optional[AsyncSession] = None,
-        sleep_model: Optional[SleepDebtModel] = None,
-        alertness_predictor: Optional[AlertnessPredictor] = None,
-        hazard_engine: Optional[HazardThresholdEngine] = None,
+        db: AsyncSession | None = None,
+        sleep_model: SleepDebtModel | None = None,
+        alertness_predictor: AlertnessPredictor | None = None,
+        hazard_engine: HazardThresholdEngine | None = None,
     ):
         """
         Initialize FRMS service.
@@ -206,7 +206,7 @@ class FRMSService:
     async def get_resident_profile(
         self,
         resident_id: UUID,
-        target_time: Optional[datetime] = None,
+        target_time: datetime | None = None,
     ) -> FatigueProfile:
         """
         Get complete fatigue profile for a resident.
@@ -288,7 +288,7 @@ class FRMSService:
 
     async def scan_all_residents(
         self,
-        target_time: Optional[datetime] = None,
+        target_time: datetime | None = None,
         hazard_threshold: HazardLevel = HazardLevel.YELLOW,
     ) -> list[FatigueProfile]:
         """
@@ -635,7 +635,7 @@ class FRMSService:
 
     # Helper methods
 
-    async def _get_resident(self, resident_id: UUID) -> Optional[Person]:
+    async def _get_resident(self, resident_id: UUID) -> Person | None:
         """Get resident by ID."""
         if not self.db:
             return None

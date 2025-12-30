@@ -55,7 +55,7 @@ class CallScheduleInput:
     faculty: list[str]
     target_calls: dict[str, int]
     eligibility: dict[date, set[str]]
-    max_calls: Optional[dict[str, int]] = None
+    max_calls: dict[str, int] | None = None
 
 
 @dataclass

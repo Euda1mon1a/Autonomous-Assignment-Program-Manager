@@ -193,8 +193,8 @@ export function HolidayEditModal({
             <Calendar className="w-5 h-5 text-blue-600" />
             <h2 className="text-lg font-semibold">Edit Holidays</h2>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded" aria-label="Close dialog">
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -227,7 +227,7 @@ export function HolidayEditModal({
                 Add
               </button>
             </div>
-            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+            {error && <p className="mt-2 text-sm text-red-600" role="alert" aria-live="polite">{error}</p>}
           </div>
 
           {/* Holidays list */}
@@ -271,8 +271,9 @@ export function HolidayEditModal({
                     onClick={() => handleRemoveHoliday(holiday.id)}
                     className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                     title="Remove holiday"
+                    aria-label={`Remove ${holiday.name} holiday`}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
               ))

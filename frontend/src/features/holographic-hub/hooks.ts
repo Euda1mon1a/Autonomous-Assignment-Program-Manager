@@ -5,6 +5,21 @@
  * data fetching, and real-time updates.
  */
 
+// WebXR type declarations for browser environments with WebXR support
+declare global {
+  interface XRSession extends EventTarget {
+    end(): Promise<void>;
+  }
+  interface XRSystem {
+    isSessionSupported(mode: string): Promise<boolean>;
+    requestSession(mode: string, options?: XRSessionInit): Promise<XRSession>;
+  }
+  interface XRSessionInit {
+    requiredFeatures?: string[];
+    optionalFeatures?: string[];
+  }
+}
+
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -251,7 +266,7 @@ export function useHolographicState(initialState?: Partial<HolographicState>) {
       ...prev,
       layerVisibility: Object.fromEntries(
         Object.keys(prev.layerVisibility).map((k) => [k, visible])
-      ) as LayerVisibility,
+      ) as unknown as LayerVisibility,
     }));
   }, []);
 
@@ -260,7 +275,7 @@ export function useHolographicState(initialState?: Partial<HolographicState>) {
       ...prev,
       constraintVisibility: Object.fromEntries(
         Object.keys(prev.constraintVisibility).map((k) => [k, visible])
-      ) as ConstraintVisibility,
+      ) as unknown as ConstraintVisibility,
     }));
   }, []);
 

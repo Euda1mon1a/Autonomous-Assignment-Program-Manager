@@ -190,7 +190,7 @@ export function ScheduleGrid({ startDate, endDate }: ScheduleGridProps) {
   const isLoading = blocksLoading || assignmentsLoading || peopleLoading || templatesLoading
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center h-64" role="status" aria-live="polite" aria-busy="true">
         <LoadingSpinner />
         <span className="ml-2 text-gray-600">Loading schedule...</span>
       </div>
@@ -242,7 +242,7 @@ export function ScheduleGrid({ startDate, endDate }: ScheduleGridProps) {
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className="glass-panel overflow-auto max-h-[calc(100vh-220px)]"
     >
-      <table className="min-w-full divide-y divide-gray-200/50 schedule-grid-table">
+      <table className="min-w-full divide-y divide-gray-200/50 schedule-grid-table" role="grid" aria-label="Schedule grid showing assignments by person and date">
         <ScheduleHeader days={days} />
 
         <tbody className="bg-white/50 divide-y divide-gray-200/50">
@@ -347,14 +347,14 @@ function PersonRow({ person, days, todayStr, getAssignment }: PersonRowProps) {
   return (
     <tr className="group hover:bg-blue-50/30 transition-colors duration-150">
       {/* Sticky person name column */}
-      <td className="sticky left-0 z-10 bg-white group-hover:bg-blue-50/50 px-4 py-2 border-r border-gray-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] transition-colors duration-150">
+      <th scope="row" className="sticky left-0 z-10 bg-white group-hover:bg-blue-50/50 px-4 py-2 border-r border-gray-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] transition-colors duration-150 text-left font-normal">
         <div className="flex flex-col gap-1">
           <span className="font-medium text-gray-900 text-sm whitespace-nowrap">
             {person.name}
           </span>
           {personBadge}
         </div>
-      </td>
+      </th>
 
       {/* Day cells - AM and PM for each day */}
       {days.map((day) => {

@@ -278,10 +278,15 @@ const { user } = useAuth();
 **Location:** `docker-compose.ollama.yml`
 **Category:** Feature Incomplete
 **Found:** 2025-12-30
+**Status:** ✅ RESOLVED (2025-12-30)
 
-**Description:** LLM Router service uses `alpine:latest` with `tail -f /dev/null`.
+**Description:** LLM Router service used `alpine:latest` with `tail -f /dev/null`.
 
-**Fix:** Implement actual routing logic or remove service.
+**Resolution:** Commented out Docker service with detailed documentation explaining:
+- LLMRouter is fully implemented as Python library in `backend/app/services/llm_router.py`
+- In-process usage (current) is more efficient than separate service
+- Provided clear instructions for future HTTP API exposure if needed
+- Links to implementation, usage, and future work steps in inline comments
 
 ---
 
@@ -370,7 +375,7 @@ export async function logout(): Promise<void> {
 | DEBT-014 | Open | - | - |
 | DEBT-015 | Open | - | - |
 | DEBT-016 | Open | - | - |
-| DEBT-017 | Open | - | - |
+| DEBT-017 | ✅ Closed | 2025-12-30 | Local changes |
 | DEBT-018 | Open | - | - |
 | DEBT-019 | Open | - | - |
 | DEBT-020 | Open | - | - |

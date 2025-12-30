@@ -3,18 +3,28 @@
 This module tests the call assignment service which handles
 on-call scheduling with async SQLAlchemy 2.0 patterns.
 
-NOTE: This is a test template created by Claude Code Web.
-Claude Code Local should:
-1. Run tests to verify they work: pytest tests/services/test_call_assignment_service.py -v
-2. Add fixtures based on actual service interface
-3. Expand test coverage for async operations
+DEBT-016 TRIAGE STATUS: Placeholder tests - service IS implemented
+==========================================
+The service exists at: app/services/call_assignment_service.py
+
+To unskip these tests:
+1. Import the service: from app.services.call_assignment_service import CallAssignmentService
+2. Create fixtures using conftest.py patterns (see tests/conftest.py)
+3. Replace `pass` statements with actual assertions
+4. Remove individual @pytest.mark.skip decorators
+
+Priority methods to test:
+- assign_call_by_rules(): Main orchestration method
+- validate_call_assignment(): Constraint validation
+- get_available_residents_for_call(): Eligibility filtering
+- get_call_equity_report(): Distribution metrics
 """
 
 import pytest
 from datetime import date, datetime
 from uuid import uuid4
 
-# TODO: Uncomment when service is available
+# Import available when tests are unskipped:
 # from app.services.call_assignment_service import CallAssignmentService
 
 
@@ -42,7 +52,7 @@ class TestCallAssignmentService:
     # Retrieval Tests
     # =========================================================================
 
-    @pytest.mark.skip(reason="Awaiting service implementation verification")
+    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs fixtures and assertions")
     @pytest.mark.asyncio
     async def test_get_call_assignment_success(self, db, sample_faculty):
         """Test retrieving a call assignment by ID."""
@@ -51,7 +61,7 @@ class TestCallAssignmentService:
         # Could be None for non-existent ID
         pass
 
-    @pytest.mark.skip(reason="Awaiting service implementation verification")
+    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs fixtures and assertions")
     @pytest.mark.asyncio
     async def test_get_call_assignment_with_eager_loading(self, db, sample_faculty):
         """Test N+1 optimization via selectinload."""
@@ -62,7 +72,7 @@ class TestCallAssignmentService:
         # assert assignment.person is not None or assignment is None
         pass
 
-    @pytest.mark.skip(reason="Awaiting service implementation verification")
+    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs fixtures and assertions")
     @pytest.mark.asyncio
     async def test_get_call_assignments_by_date_range(self, db, sample_faculty):
         """Test retrieving call assignments by date range."""
@@ -76,7 +86,7 @@ class TestCallAssignmentService:
         # assert "total" in result
         pass
 
-    @pytest.mark.skip(reason="Awaiting service implementation verification")
+    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs fixtures and assertions")
     @pytest.mark.asyncio
     async def test_get_call_assignments_pagination(self, db, sample_faculty):
         """Test pagination of call assignments."""
@@ -90,7 +100,7 @@ class TestCallAssignmentService:
     # Creation Tests
     # =========================================================================
 
-    @pytest.mark.skip(reason="Awaiting service implementation verification")
+    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs fixtures and assertions")
     @pytest.mark.asyncio
     async def test_create_call_assignment_success(self, db, sample_faculty, sample_residents):
         """Test creating a new call assignment."""
@@ -103,7 +113,7 @@ class TestCallAssignmentService:
         # assert result.id is not None
         pass
 
-    @pytest.mark.skip(reason="Awaiting service implementation verification")
+    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs fixtures and assertions")
     @pytest.mark.asyncio
     async def test_create_call_assignment_conflict(self, db, sample_faculty, sample_residents):
         """Test creating call assignment that conflicts."""
@@ -116,7 +126,7 @@ class TestCallAssignmentService:
     # Update Tests
     # =========================================================================
 
-    @pytest.mark.skip(reason="Awaiting service implementation verification")
+    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs fixtures and assertions")
     @pytest.mark.asyncio
     async def test_update_call_assignment_success(self, db, sample_faculty):
         """Test updating a call assignment."""
@@ -124,7 +134,7 @@ class TestCallAssignmentService:
         # Create first, then update
         pass
 
-    @pytest.mark.skip(reason="Awaiting service implementation verification")
+    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs fixtures and assertions")
     @pytest.mark.asyncio
     async def test_update_call_assignment_not_found(self, db):
         """Test updating non-existent call assignment."""
@@ -140,7 +150,7 @@ class TestCallAssignmentService:
     # Deletion Tests
     # =========================================================================
 
-    @pytest.mark.skip(reason="Awaiting service implementation verification")
+    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs fixtures and assertions")
     @pytest.mark.asyncio
     async def test_delete_call_assignment_success(self, db, sample_faculty):
         """Test deleting a call assignment."""
@@ -151,7 +161,7 @@ class TestCallAssignmentService:
     # Equity Tests
     # =========================================================================
 
-    @pytest.mark.skip(reason="Awaiting service implementation verification")
+    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs fixtures and assertions")
     @pytest.mark.asyncio
     async def test_get_call_equity_metrics(self, db, sample_residents):
         """Test retrieving call equity metrics."""
@@ -163,7 +173,7 @@ class TestCallAssignmentService:
         # assert isinstance(metrics, dict)
         pass
 
-    @pytest.mark.skip(reason="Awaiting service implementation verification")
+    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs fixtures and assertions")
     @pytest.mark.asyncio
     async def test_get_call_distribution_by_person(self, db, sample_residents):
         """Test getting call distribution for a specific person."""
@@ -178,7 +188,7 @@ class TestCallAssignmentService:
 class TestCallAssignmentConcurrency:
     """Test concurrent access patterns for call assignments."""
 
-    @pytest.mark.skip(reason="Awaiting async test setup")
+    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs async fixtures")
     @pytest.mark.asyncio
     async def test_concurrent_call_assignment_creation(self, db):
         """Test two concurrent creations for same date."""
@@ -193,7 +203,7 @@ class TestCallAssignmentConcurrency:
         # One should succeed, one should fail or both succeed if no conflict
         pass
 
-    @pytest.mark.skip(reason="Awaiting async test setup")
+    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs async fixtures")
     @pytest.mark.asyncio
     async def test_concurrent_updates_optimistic_locking(self, db):
         """Test optimistic locking prevents lost updates."""
@@ -206,13 +216,13 @@ class TestCallAssignmentConcurrency:
 class TestCallAssignmentIntegration:
     """Integration tests for call assignment service."""
 
-    @pytest.mark.skip(reason="Awaiting integration test setup")
+    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs integration fixtures")
     @pytest.mark.asyncio
     async def test_full_call_schedule_workflow(self, db):
         """Test complete workflow: create, update, validate, delete."""
         pass
 
-    @pytest.mark.skip(reason="Awaiting integration test setup")
+    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs integration fixtures")
     @pytest.mark.asyncio
     async def test_call_assignment_acgme_validation(self, db):
         """Test that call assignments respect ACGME rules."""

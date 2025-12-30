@@ -103,6 +103,39 @@ async def lifespan(app: FastAPI):
     # Validate security configuration at startup
     _validate_security_config()
 
+    # Initialize OpenTelemetry tracer if enabled
+    if settings.TELEMETRY_ENABLED:
+        try:
+            from app.telemetry.tracer import TracerConfig, initialize_tracer
+
+            tracer_config = TracerConfig(
+                service_name=settings.TELEMETRY_SERVICE_NAME,
+                service_version=settings.APP_VERSION,
+                environment=settings.TELEMETRY_ENVIRONMENT,
+                sampling_rate=settings.TELEMETRY_SAMPLING_RATE,
+                console_export=settings.TELEMETRY_CONSOLE_EXPORT,
+                enable_sqlalchemy=settings.TELEMETRY_TRACE_SQLALCHEMY,
+                enable_redis=settings.TELEMETRY_TRACE_REDIS,
+                enable_http=settings.TELEMETRY_TRACE_HTTP,
+                exporter_type=settings.TELEMETRY_EXPORTER_TYPE,
+                exporter_endpoint=settings.TELEMETRY_EXPORTER_ENDPOINT,
+                exporter_insecure=settings.TELEMETRY_EXPORTER_INSECURE,
+                exporter_headers=settings.TELEMETRY_EXPORTER_HEADERS,
+            )
+            initialize_tracer(tracer_config)
+            logger.info(
+                f"OpenTelemetry tracer initialized: "
+                f"endpoint={settings.TELEMETRY_EXPORTER_ENDPOINT}, "
+                f"environment={settings.TELEMETRY_ENVIRONMENT}"
+            )
+        except Exception as e:
+            logger.warning(f"Failed to initialize OpenTelemetry tracer: {e}")
+    else:
+        logger.info(
+            "OpenTelemetry tracing disabled (TELEMETRY_ENABLED=false). "
+            "Set TELEMETRY_ENABLED=true to enable distributed tracing."
+        )
+
     # Initialize Prometheus instrumentation
     try:
         from prometheus_fastapi_instrumentator import Instrumentator
@@ -161,6 +194,16 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     logger.info("Shutting down Residency Scheduler API")
+
+    # Shutdown OpenTelemetry tracer if enabled
+    if settings.TELEMETRY_ENABLED:
+        try:
+            from app.telemetry.tracer import shutdown_tracer
+
+            shutdown_tracer()
+            logger.info("OpenTelemetry tracer shutdown complete")
+        except Exception as e:
+            logger.warning(f"Failed to shutdown OpenTelemetry tracer: {e}")
 
     # Log final cache stats
     try:

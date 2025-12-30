@@ -1470,3 +1470,279 @@ class SOCMetricsHistoryResponse(BaseModel):
         default_factory=dict,
         description="Summary of trends over the period",
     )
+
+
+# =============================================================================
+# Additional Response Schemas for API Endpoints
+# =============================================================================
+
+
+class SuccessResponse(BaseModel):
+    """Generic success response."""
+
+    success: bool = True
+    message: str
+
+
+class FallbackDeactivationResponse(BaseModel):
+    """Response from fallback deactivation."""
+
+    success: bool
+    message: str
+
+
+class MTFComplianceResponse(BaseModel):
+    """Response from MTF compliance check (Iron Dome)."""
+
+    drrs_category: str = Field(..., description="DRRS C-rating (C1-C5)")
+    mission_capability: str = Field(..., description="Mission capability assessment")
+    personnel_rating: str = Field(..., description="Personnel P-rating (P1-P4)")
+    capability_rating: str = Field(..., description="Capability S-rating (S1-S4)")
+    circuit_breaker: dict | None = Field(
+        None, description="Circuit breaker status if checked"
+    )
+    executive_summary: str = Field(..., description="Executive summary")
+    deficiencies: list[str] = Field(default_factory=list)
+    mfrs_generated: int = Field(default=0)
+    rffs_generated: int = Field(default=0)
+    iron_dome_status: str = Field(..., description="green/yellow/red status")
+    severity: str = Field(..., description="healthy/warning/critical/emergency")
+
+
+class ZoneListResponse(BaseModel):
+    """Response listing all zones."""
+
+    zones: list["ZoneResponse"]
+    total: int
+
+
+class ZoneAssignmentResponse(BaseModel):
+    """Response from zone faculty assignment."""
+
+    success: bool
+    message: str
+
+
+class ContainmentSetResponse(BaseModel):
+    """Response from setting containment level."""
+
+    success: bool
+    containment_level: str
+    reason: str
+
+
+class StressResolveResponse(BaseModel):
+    """Response from resolving a stress."""
+
+    success: bool
+    stress_id: str
+    message: str
+
+
+class CognitiveSessionStartResponse(BaseModel):
+    """Response from starting a cognitive session."""
+
+    session_id: UUID
+    user_id: str
+    started_at: str
+    max_decisions_before_break: int
+    current_state: str
+
+
+class CognitiveSessionEndResponse(BaseModel):
+    """Response from ending a cognitive session."""
+
+    success: bool
+    session_id: str
+    message: str
+
+
+class CognitiveSessionStatusResponse(BaseModel):
+    """Response for cognitive session status."""
+
+    session_id: str
+    user_id: str
+    current_state: str
+    decisions_this_session: int
+    cognitive_cost_this_session: float
+    remaining_capacity: float
+    decisions_until_break: int
+    should_take_break: bool
+    average_decision_time: float
+    recommendations: list[str]
+
+
+class DecisionCreateResponse(BaseModel):
+    """Response from creating a decision."""
+
+    decision_id: UUID
+    category: str
+    complexity: str
+    description: str
+    options: list[str]
+    recommended_option: str | None
+    has_safe_default: bool
+    is_urgent: bool
+    estimated_cognitive_cost: float
+
+
+class DecisionResolveResponse(BaseModel):
+    """Response from resolving a decision."""
+
+    success: bool
+    decision_id: str
+    chosen_option: str
+
+
+class PrioritizedDecisionsResponse(BaseModel):
+    """Response for prioritized decisions."""
+
+    decisions: list[dict]
+    total: int
+
+
+class ScheduleCognitiveAnalysisResponse(BaseModel):
+    """Response from analyzing schedule cognitive load."""
+
+    total_score: float
+    grade: str
+    grade_description: str
+    factors: dict
+    recommendations: list[str]
+
+
+class PreferenceRecordResponse(BaseModel):
+    """Response from recording a preference."""
+
+    trail_id: UUID
+    faculty_id: str
+    trail_type: str
+    strength: float
+    strength_category: str
+
+
+class BehavioralSignalResponse(BaseModel):
+    """Response from recording a behavioral signal."""
+
+    success: bool
+    signal_type: str
+    faculty_id: str
+
+
+class FacultyPreferencesResponse(BaseModel):
+    """Response for faculty preferences."""
+
+    faculty_id: str
+    trails: list[dict]
+    total: int
+
+
+class SwapNetworkResponse(BaseModel):
+    """Response for swap network."""
+
+    edges: list[dict]
+    total_pairs: int
+
+
+class AssignmentSuggestionsResponse(BaseModel):
+    """Response for assignment suggestions."""
+
+    suggestions: list[dict]
+    total: int
+
+
+class StigmergyPatternsResponse(BaseModel):
+    """Response for stigmergy patterns."""
+
+    patterns: list[dict] = Field(default_factory=list)
+    total: int = 0
+
+
+class TrailEvaporationResponse(BaseModel):
+    """Response from trail evaporation."""
+
+    success: bool
+    message: str
+
+
+class HubAnalysisResponse(BaseModel):
+    """Response from hub analysis."""
+
+    analyzed_at: str
+    total_faculty: int
+    total_hubs: int
+    hubs: list[dict]
+
+
+class TopHubsResponse(BaseModel):
+    """Response for top hubs."""
+
+    hubs: list[dict]
+    count: int
+
+
+class HubProfileDetailResponse(BaseModel):
+    """Response for hub profile details."""
+
+    faculty_id: str
+    faculty_name: str
+    risk_level: str
+    unique_skills: list[str]
+    high_demand_skills: list[str]
+    protection_status: str
+    protection_measures: list[str]
+    backup_faculty: list[str]
+    risk_factors: list[str]
+    mitigation_actions: list[str]
+
+
+class CrossTrainingRecommendationsResponse(BaseModel):
+    """Response for cross-training recommendations."""
+
+    recommendations: list[dict]
+    total: int
+
+
+class HubProtectionPlanCreateResponse(BaseModel):
+    """Response from creating a hub protection plan."""
+
+    plan_id: str
+    hub_faculty_id: str
+    hub_faculty_name: str
+    period_start: str
+    period_end: str
+    reason: str
+    workload_reduction: float
+    backup_assigned: bool
+    backup_faculty_ids: list[str]
+    status: str
+
+
+class HubDistributionReportResponse(BaseModel):
+    """Response for hub distribution report."""
+
+    generated_at: str
+    total_faculty: int
+    total_hubs: int
+    catastrophic_hubs: int
+    critical_hubs: int
+    high_risk_hubs: int
+    hub_concentration: float
+    single_points_of_failure: int
+    average_hub_score: float
+    services_with_single_provider: list[str]
+    services_with_dual_coverage: list[str]
+    well_covered_services: list[str]
+    recommendations: list[str]
+
+
+class HubStatusResponse(BaseModel):
+    """Response for hub status."""
+
+    total_hubs: int
+    catastrophic_count: int
+    critical_count: int
+    high_risk_count: int
+    active_protection_plans: int
+    pending_cross_training: int
+    recommendations: list[str] = Field(default_factory=list)

@@ -231,9 +231,9 @@ class SuccessionPlan:
     risk_reduction: float = 0.0  # Expected risk reduction (0.0-1.0)
 
     # Tracking
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    verified_at: Optional[datetime] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    verified_at: datetime | None = None
 
 
 class KeystoneAnalyzer:
@@ -264,8 +264,8 @@ class KeystoneAnalyzer:
         self.cascade_simulations: dict[UUID, CascadeAnalysis] = {}
         self.succession_plans: dict[UUID, SuccessionPlan] = {}
 
-        self._dependency_graph: Optional["nx.DiGraph"] = None
-        self._last_analysis: Optional[datetime] = None
+        self._dependency_graph: nx.DiGraph | None = None
+        self._last_analysis: datetime | None = None
 
     def build_dependency_graph(
         self,
@@ -512,7 +512,7 @@ class KeystoneAnalyzer:
         assignments: list,
         services: dict[UUID, list[UUID]],
         rotations: dict[UUID, dict],
-        threshold: Optional[float] = None,
+        threshold: float | None = None,
     ) -> list[KeystoneResource]:
         """
         Identify keystone resources in the scheduling ecosystem.

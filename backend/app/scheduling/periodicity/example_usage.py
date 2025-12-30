@@ -88,7 +88,7 @@ async def example_basic_usage():
     current = await manager.get_observable_state()
     print(f"   State ID: {current.state_id}")
     print(f"   Assignments: {len(current.assignments)}")
-    print(f"   ✓ Draft does NOT affect observers")
+    print("   ✓ Draft does NOT affect observers")
 
     # Advance checkpoint - atomic transition
     print("\n4. Advancing Checkpoint (Atomic Transition):")
@@ -104,7 +104,7 @@ async def example_basic_usage():
     print(f"   State ID: {current.state_id}")
     print(f"   Assignments: {len(current.assignments)}")
     print(f"   Status: {current.status}")
-    print(f"   ✓ State atomically transitioned at checkpoint")
+    print("   ✓ State atomically transitioned at checkpoint")
 
     # Cleanup
     await redis_client.close()

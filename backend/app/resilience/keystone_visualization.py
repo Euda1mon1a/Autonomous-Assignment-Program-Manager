@@ -56,9 +56,9 @@ class KeystoneVisualizer:
         self,
         graph: "nx.DiGraph",
         keystones: list,
-        output_path: Optional[str] = None,
-        highlight_entity: Optional[UUID] = None,
-    ) -> Optional[str]:
+        output_path: str | None = None,
+        highlight_entity: UUID | None = None,
+    ) -> str | None:
         """
         Visualize dependency graph with keystone highlighting.
 
@@ -213,8 +213,8 @@ class KeystoneVisualizer:
         self,
         cascade_analysis,
         graph: "nx.DiGraph",
-        output_path: Optional[str] = None,
-    ) -> Optional[str]:
+        output_path: str | None = None,
+    ) -> str | None:
         """
         Visualize cascade propagation as multi-level diagram.
 
@@ -367,8 +367,8 @@ class KeystoneVisualizer:
         self,
         keystones: list,
         services: dict[UUID, list[UUID]],
-        output_path: Optional[str] = None,
-    ) -> Optional[str]:
+        output_path: str | None = None,
+    ) -> str | None:
         """
         Visualize functional redundancy as heatmap.
 
@@ -468,8 +468,8 @@ class KeystoneVisualizer:
     def visualize_succession_timeline(
         self,
         succession_plans: list,
-        output_path: Optional[str] = None,
-    ) -> Optional[str]:
+        output_path: str | None = None,
+    ) -> str | None:
         """
         Visualize succession plan timelines as Gantt chart.
 
@@ -610,7 +610,7 @@ class KeystoneVisualizer:
         graph: "nx.DiGraph",
         keystones: list,
         output_path: str,
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Export dependency graph to Graphviz DOT format.
 

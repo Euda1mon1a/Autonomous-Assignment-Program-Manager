@@ -65,6 +65,20 @@ services:
       DEBUG: "false"
       CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000"]}
       RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-false}
+      # OpenTelemetry Distributed Tracing Configuration
+      # For production deployments, enable TELEMETRY_ENABLED and configure OTEL backend
+      # Supported backends: Jaeger, Zipkin, DataDog, New Relic, or any OTLP-compatible collector
+      TELEMETRY_ENABLED: ${TELEMETRY_ENABLED:-false}
+      TELEMETRY_SERVICE_NAME: ${TELEMETRY_SERVICE_NAME:-residency-scheduler}
+      TELEMETRY_ENVIRONMENT: ${TELEMETRY_ENVIRONMENT:-production}
+      TELEMETRY_SAMPLING_RATE: ${TELEMETRY_SAMPLING_RATE:-1.0}
+      TELEMETRY_CONSOLE_EXPORT: ${TELEMETRY_CONSOLE_EXPORT:-false}
+      TELEMETRY_EXPORTER_TYPE: ${TELEMETRY_EXPORTER_TYPE:-otlp_grpc}
+      TELEMETRY_EXPORTER_ENDPOINT: ${TELEMETRY_EXPORTER_ENDPOINT:-http://localhost:4317}
+      TELEMETRY_EXPORTER_INSECURE: ${TELEMETRY_EXPORTER_INSECURE:-false}
+      TELEMETRY_TRACE_SQLALCHEMY: ${TELEMETRY_TRACE_SQLALCHEMY:-true}
+      TELEMETRY_TRACE_REDIS: ${TELEMETRY_TRACE_REDIS:-true}
+      TELEMETRY_TRACE_HTTP: ${TELEMETRY_TRACE_HTTP:-true}
     ports:
       - "8000:8000"
     healthcheck:
@@ -96,7 +110,12 @@ services:
       CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-dev_only_password}@redis:6379/0
       SECRET_KEY: ${SECRET_KEY}
       DEBUG: "false"
-    command: celery -A app.core.celery_app worker --loglevel=info -Q default,resilience,notifications
+      # OpenTelemetry Distributed Tracing for Celery background tasks
+      TELEMETRY_ENABLED: ${TELEMETRY_ENABLED:-false}
+      TELEMETRY_SERVICE_NAME: ${TELEMETRY_SERVICE_NAME:-residency-scheduler-worker}
+      TELEMETRY_ENVIRONMENT: ${TELEMETRY_ENVIRONMENT:-production}
+      TELEMETRY_EXPORTER_ENDPOINT: ${TELEMETRY_EXPORTER_ENDPOINT:-http://localhost:4317}
+    command: celery -A app.core.celery_app worker --loglevel=info -Q default,resilience,notifications,metrics,exports,security
     networks:
       - app-network
     healthcheck:
@@ -126,6 +145,11 @@ services:
       CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-dev_only_password}@redis:6379/0
       SECRET_KEY: ${SECRET_KEY}
       DEBUG: "false"
+      # OpenTelemetry Distributed Tracing for scheduled tasks
+      TELEMETRY_ENABLED: ${TELEMETRY_ENABLED:-false}
+      TELEMETRY_SERVICE_NAME: ${TELEMETRY_SERVICE_NAME:-residency-scheduler-beat}
+      TELEMETRY_ENVIRONMENT: ${TELEMETRY_ENVIRONMENT:-production}
+      TELEMETRY_EXPORTER_ENDPOINT: ${TELEMETRY_EXPORTER_ENDPOINT:-http://localhost:4317}
     command: celery -A app.core.celery_app beat --loglevel=info
     healthcheck:
       test: ["CMD-SHELL", "[ -f celerybeat-schedule ] && echo 'healthy' || exit 1"]

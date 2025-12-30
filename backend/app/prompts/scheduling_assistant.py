@@ -240,7 +240,7 @@ def build_rag_prompt(
     query: str,
     context: str,
     system_prompt: str = SCHEDULING_ASSISTANT_SYSTEM_PROMPT,
-    task_prompt: Optional[str] = None
+    task_prompt: str | None = None
 ) -> str:
     """
     Build a complete prompt with RAG context injected.
@@ -528,8 +528,8 @@ class PromptManager:
     def build_prompt(
         self,
         query: str,
-        context: Optional[str] = None,
-        task_type: Optional[str] = None,
+        context: str | None = None,
+        task_type: str | None = None,
         include_examples: bool = False
     ) -> str:
         """
@@ -620,7 +620,7 @@ class PromptManager:
             # If formatting fails, return template as-is
             return template
 
-    def get_few_shot_example(self, example_type: str) -> Optional[dict]:
+    def get_few_shot_example(self, example_type: str) -> dict | None:
         """
         Get a specific few-shot example.
 

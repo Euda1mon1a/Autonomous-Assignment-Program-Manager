@@ -171,15 +171,15 @@ class FatigueHazard:
     hazard_level: HazardLevel
     detected_at: datetime
     triggers: list[TriggerType] = field(default_factory=list)
-    alertness_score: Optional[float] = None
-    sleep_debt: Optional[float] = None
-    hours_awake: Optional[float] = None
-    samn_perelli: Optional[SamnPerelliLevel] = None
+    alertness_score: float | None = None
+    sleep_debt: float | None = None
+    hours_awake: float | None = None
+    samn_perelli: SamnPerelliLevel | None = None
     required_mitigations: list[MitigationType] = field(default_factory=list)
     recommended_mitigations: list[MitigationType] = field(default_factory=list)
     acgme_risk: bool = False
-    escalation_time: Optional[datetime] = None
-    notes: Optional[str] = None
+    escalation_time: datetime | None = None
+    notes: str | None = None
 
     def to_dict(self) -> dict:
         """Convert hazard to dictionary for API response."""
@@ -261,13 +261,13 @@ class HazardThresholdEngine:
     def evaluate_hazard(
         self,
         resident_id: UUID,
-        alertness: Optional[float] = None,
-        sleep_debt: Optional[float] = None,
-        hours_awake: Optional[float] = None,
-        samn_perelli: Optional[SamnPerelliLevel] = None,
+        alertness: float | None = None,
+        sleep_debt: float | None = None,
+        hours_awake: float | None = None,
+        samn_perelli: SamnPerelliLevel | None = None,
         consecutive_nights: int = 0,
         hours_worked_week: float = 0.0,
-        prediction: Optional[AlertnessPrediction] = None,
+        prediction: AlertnessPrediction | None = None,
     ) -> FatigueHazard:
         """
         Evaluate fatigue metrics and determine hazard level.
@@ -439,7 +439,7 @@ class HazardThresholdEngine:
         Returns:
             Dict with counts and percentages by level
         """
-        counts = {level: 0 for level in HazardLevel}
+        counts = dict.fromkeys(HazardLevel, 0)
         for hazard in hazards:
             counts[hazard.hazard_level] += 1
 
@@ -507,9 +507,9 @@ class HazardThresholdEngine:
     def _estimate_escalation_time(
         self,
         current_level: HazardLevel,
-        hours_awake: Optional[float],
-        sleep_debt: Optional[float],
-    ) -> Optional[datetime]:
+        hours_awake: float | None,
+        sleep_debt: float | None,
+    ) -> datetime | None:
         """Estimate when hazard will escalate to next level."""
         if current_level == HazardLevel.BLACK:
             return None  # Already at highest

@@ -128,7 +128,7 @@ async def example_with_real_llm():
         )
 
         if suggestion:
-            logger.info(f"✓ LLM Suggestion Received:")
+            logger.info("✓ LLM Suggestion Received:")
             logger.info(f"  Type: {suggestion.type.value}")
             logger.info(f"  Confidence: {suggestion.confidence:.2f}")
             logger.info(f"  Reasoning: {suggestion.reasoning}")
@@ -138,7 +138,7 @@ async def example_with_real_llm():
             logger.info(f"  Valid: {is_valid}")
 
             if suggestion.params:
-                logger.info(f"  Suggested Parameters:")
+                logger.info("  Suggested Parameters:")
                 logger.info(f"    Algorithm: {suggestion.params.algorithm}")
                 logger.info(f"    Timeout: {suggestion.params.timeout_seconds}s")
                 logger.info(
@@ -196,7 +196,7 @@ def example_with_mock_advisor():
     )
 
     if suggestion:
-        logger.info(f"✓ Mock Suggestion Received:")
+        logger.info("✓ Mock Suggestion Received:")
         logger.info(f"  Type: {suggestion.type.value}")
         logger.info(f"  Confidence: {suggestion.confidence:.2f}")
         logger.info(f"  Reasoning: {suggestion.reasoning}")
@@ -225,7 +225,7 @@ async def example_router_health_check():
                 logger.info(f"  Error: {health.error_message}")
 
         stats = router.get_stats()
-        logger.info(f"\nRouter Statistics:")
+        logger.info("\nRouter Statistics:")
         logger.info(f"  Total Requests: {stats.total_requests}")
         logger.info(f"  Fallback Count: {stats.fallback_count}")
         logger.info(f"  Error Count: {stats.error_count}")
