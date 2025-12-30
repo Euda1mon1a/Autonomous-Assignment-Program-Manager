@@ -222,15 +222,17 @@ export function WeekView({
             onClick={handlePrevWeek}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             title="Previous week"
+            aria-label="Previous week"
           >
-            <ChevronLeft className="w-5 h-5 text-gray-600" />
+            <ChevronLeft className="w-5 h-5 text-gray-600" aria-hidden="true" />
           </button>
           <button
             onClick={handleNextWeek}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             title="Next week"
+            aria-label="Next week"
           >
-            <ChevronRight className="w-5 h-5 text-gray-600" />
+            <ChevronRight className="w-5 h-5 text-gray-600" aria-hidden="true" />
           </button>
           <button
             onClick={handleThisWeek}

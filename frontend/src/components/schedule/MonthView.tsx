@@ -186,15 +186,17 @@ export function MonthView({
             onClick={handlePrevMonth}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             title="Previous month"
+            aria-label="Previous month"
           >
-            <ChevronLeft className="w-5 h-5 text-gray-600" />
+            <ChevronLeft className="w-5 h-5 text-gray-600" aria-hidden="true" />
           </button>
           <button
             onClick={handleNextMonth}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             title="Next month"
+            aria-label="Next month"
           >
-            <ChevronRight className="w-5 h-5 text-gray-600" />
+            <ChevronRight className="w-5 h-5 text-gray-600" aria-hidden="true" />
           </button>
           <button
             onClick={handleThisMonth}

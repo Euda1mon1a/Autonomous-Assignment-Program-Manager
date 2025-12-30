@@ -167,6 +167,25 @@ export {
 } from './useAdminScheduling'
 
 // ============================================================================
+// Admin User Management Hooks
+// ============================================================================
+export {
+  useUsers,
+  useUser as useAdminUser,
+  useCreateUser,
+  useUpdateUser,
+  useDeleteUser,
+  useToggleUserLock,
+  useResendInvite,
+  useBulkUserAction,
+  adminUsersQueryKeys,
+  type AdminUserFilters,
+  type LockUserResponse,
+  type ResendInviteResponse,
+  type BulkActionResponse,
+} from './useAdminUsers'
+
+// ============================================================================
 // RAG Hooks
 // ============================================================================
 export {
@@ -179,6 +198,30 @@ export {
   type RAGRetrieveResponse,
   type RAGHealthResponse,
 } from './useRAG'
+
+// ============================================================================
+// WebSocket Hooks
+// ============================================================================
+export {
+  useWebSocket,
+  useScheduleWebSocket,
+  usePersonWebSocket,
+  type EventType,
+  type WebSocketEvent,
+  type ScheduleUpdatedEvent,
+  type AssignmentChangedEvent,
+  type SwapRequestedEvent,
+  type SwapApprovedEvent,
+  type ConflictDetectedEvent,
+  type ResilienceAlertEvent,
+  type ConnectionAckEvent,
+  type AnyWebSocketEvent,
+  type ClientAction,
+  type ClientMessage,
+  type ConnectionState,
+  type UseWebSocketOptions,
+  type UseWebSocketReturn,
+} from './useWebSocket'
 
 // ============================================================================
 // Shared Types

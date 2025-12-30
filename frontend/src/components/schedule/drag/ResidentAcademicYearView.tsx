@@ -322,8 +322,9 @@ export function ResidentAcademicYearView({
               onClick={() => setSelectedYear(y => y - 1)}
               className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
               title="Previous academic year"
+              aria-label="Previous academic year"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4" aria-hidden="true" />
             </button>
             <span className="text-lg font-semibold text-gray-900 min-w-[140px] text-center">
               AY {selectedYear}-{selectedYear + 1}
@@ -332,8 +333,9 @@ export function ResidentAcademicYearView({
               onClick={() => setSelectedYear(y => y + 1)}
               className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
               title="Next academic year"
+              aria-label="Next academic year"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
 
@@ -345,20 +347,24 @@ export function ResidentAcademicYearView({
               <Calendar className="w-4 h-4" />
               Today
             </button>
-            <div className="flex items-center border border-gray-200 rounded-lg">
+            <div className="flex items-center border border-gray-200 rounded-lg" role="group" aria-label="Zoom controls">
               <button
                 onClick={() => setZoomLevel('compact')}
                 className={`p-2 rounded-l-lg transition-colors ${zoomLevel === 'compact' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}
                 title="Compact view"
+                aria-label="Compact view"
+                aria-pressed={zoomLevel === 'compact'}
               >
-                <ZoomOut className="w-4 h-4" />
+                <ZoomOut className="w-4 h-4" aria-hidden="true" />
               </button>
               <button
                 onClick={() => setZoomLevel('normal')}
                 className={`p-2 rounded-r-lg transition-colors ${zoomLevel === 'normal' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}
                 title="Normal view"
+                aria-label="Normal view"
+                aria-pressed={zoomLevel === 'normal'}
               >
-                <ZoomIn className="w-4 h-4" />
+                <ZoomIn className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
           </div>

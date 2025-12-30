@@ -256,7 +256,7 @@ class AlertnessPredictor:
     SLEEP_INERTIA_DURATION_MINUTES = 30  ***REMOVED*** Duration of post-wake grogginess
     SLEEP_INERTIA_IMPACT = 0.15  ***REMOVED*** Reduction in alertness
 
-    def __init__(self, sleep_model: Optional[SleepDebtModel] = None):
+    def __init__(self, sleep_model: SleepDebtModel | None = None):
         """
         Initialize alertness predictor.
 

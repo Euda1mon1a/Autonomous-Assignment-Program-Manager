@@ -13,7 +13,7 @@ class EmbeddingService:
     No API calls required - runs entirely on CPU.
     """
 
-    _model: Optional[SentenceTransformer] = None
+    _model: SentenceTransformer | None = None
     MODEL_NAME = "all-MiniLM-L6-v2"
     EMBEDDING_DIM = 384
 
@@ -25,7 +25,7 @@ class EmbeddingService:
         return cls._model
 
     @classmethod
-    def embed_text(cls, text: str) -> List[float]:
+    def embed_text(cls, text: str) -> list[float]:
         """Generate embedding for a single text.
 
         Args:
@@ -39,7 +39,7 @@ class EmbeddingService:
         return embedding.tolist()
 
     @classmethod
-    def embed_batch(cls, texts: List[str]) -> List[List[float]]:
+    def embed_batch(cls, texts: list[str]) -> list[list[float]]:
         """Generate embeddings for multiple texts efficiently.
 
         Args:

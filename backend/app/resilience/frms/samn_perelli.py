@@ -101,11 +101,11 @@ class SamnPerelliAssessment:
     description: str
     assessed_at: datetime
     is_self_reported: bool = False
-    context: Optional[dict] = None
+    context: dict | None = None
     safe_for_duty: bool = True
-    duty_restrictions: Optional[list[str]] = None
-    recommended_rest_hours: Optional[float] = None
-    notes: Optional[str] = None
+    duty_restrictions: list[str] | None = None
+    recommended_rest_hours: float | None = None
+    notes: str | None = None
 
     def to_dict(self) -> dict:
         """Convert assessment to dictionary for API response."""
@@ -128,8 +128,8 @@ def assess_fatigue_level(
     level: int,
     resident_id: UUID,
     is_self_reported: bool = False,
-    context: Optional[dict] = None,
-    notes: Optional[str] = None,
+    context: dict | None = None,
+    notes: str | None = None,
 ) -> SamnPerelliAssessment:
     """
     Create a Samn-Perelli fatigue assessment from a level rating.

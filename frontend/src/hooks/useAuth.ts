@@ -5,6 +5,7 @@
  * with React Query caching and httpOnly cookie-based authentication.
  */
 import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query'
+import { useCallback, useEffect, useRef } from 'react'
 import { ApiError } from '@/lib/api'
 import {
   login as loginApi,
@@ -12,6 +13,10 @@ import {
   getCurrentUser,
   checkAuth,
   validateToken,
+  performRefresh,
+  clearTokenState,
+  isTokenExpired,
+  getTimeUntilExpiry,
   type User,
   type LoginCredentials,
   type LoginResponse,
@@ -120,6 +125,7 @@ export const authQueryKeys = {
   user: () => ['auth', 'user'] as const,
   check: () => ['auth', 'check'] as const,
   validate: () => ['auth', 'validate'] as const,
+  tokenStatus: () => ['auth', 'tokenStatus'] as const,
 }
 
 // ============================================================================
@@ -270,7 +276,57 @@ export function useAuthCheck(
 export function useAuth(
   options?: Omit<UseQueryOptions<User, ApiError>, 'queryKey' | 'queryFn'>
 ) {
+  const queryClient = useQueryClient()
   const userQuery = useUser(options)
+
+  // Track if we're refreshing
+  const isRefreshingRef = useRef(false)
+
+  /**
+   * Manually triggers a token refresh.
+   *
+   * This is useful when you want to proactively refresh the token
+   * before making a critical operation, ensuring the token is fresh.
+   *
+   * @returns Promise resolving to true if refresh succeeded
+   */
+  const refreshToken = useCallback(async (): Promise<boolean> => {
+    if (isRefreshingRef.current) {
+      console.log('[useAuth] Refresh already in progress')
+      return false
+    }
+
+    isRefreshingRef.current = true
+    try {
+      const result = await performRefresh()
+      if (result) {
+        // Refresh user data after successful token refresh
+        await queryClient.invalidateQueries({ queryKey: authQueryKeys.user() })
+        return true
+      }
+      return false
+    } finally {
+      isRefreshingRef.current = false
+    }
+  }, [queryClient])
+
+  /**
+   * Gets the remaining time until the access token expires.
+   *
+   * @returns Milliseconds until expiry, or 0 if expired/unknown
+   */
+  const getTokenExpiry = useCallback((): number => {
+    return getTimeUntilExpiry()
+  }, [])
+
+  /**
+   * Checks if the access token is expired or about to expire.
+   *
+   * @returns True if the token needs refresh
+   */
+  const needsRefresh = useCallback((): boolean => {
+    return isTokenExpired()
+  }, [])
 
   const hasPermission = (permission: Permission): boolean => {
     if (!userQuery.data?.role) return false
@@ -293,6 +349,10 @@ export function useAuth(
     hasPermission,
     hasRole,
     refetch: userQuery.refetch,
+    // New token refresh methods
+    refreshToken,
+    getTokenExpiry,
+    needsRefresh,
   }
 }
 
@@ -430,14 +490,19 @@ export function useLogin() {
 export function useLogout() {
   const queryClient = useQueryClient()
 
-  return useMutation<void, ApiError, void>({
+  return useMutation<boolean, ApiError, void>({
     mutationFn: logoutApi,
-    onSuccess: () => {
+    onSuccess: (serverLogoutSuccess) => {
       // Clear all authentication-related cache
       queryClient.setQueryData(authQueryKeys.user(), null)
       queryClient.setQueryData(authQueryKeys.check(), { authenticated: false })
       // Clear all other cached queries (user no longer has access)
       queryClient.clear()
+
+      // Log if server logout failed (local state was still cleared)
+      if (!serverLogoutSuccess) {
+        console.warn('Server logout failed, but local session was cleared')
+      }
     },
     onError: () => {
       // Even if logout request fails, clear client-side auth state

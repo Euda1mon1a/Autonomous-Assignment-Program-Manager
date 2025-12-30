@@ -96,49 +96,56 @@ services:
     networks:
       - app-network
 
-  ***REMOVED*** LLM Router - Intelligent Model Selection and Request Routing
-  ***REMOVED*** Routes requests to Ollama (local) or Claude (cloud) based on complexity
-  ***REMOVED*** PLACEHOLDER: Service spec defined, implementation pending
-  llm-router:
-    ***REMOVED*** TODO: Replace with actual image once router service is implemented
-    ***REMOVED*** Current plan: Python FastAPI service with routing logic
-    image: alpine:latest
-    container_name: residency-scheduler-llm-router
-    restart: unless-stopped
-
-    depends_on:
-      ollama:
-        condition: service_healthy
-
-    environment:
-      ***REMOVED*** Ollama connection (internal Docker network)
-      OLLAMA_URL: http://ollama:11434
-
-      ***REMOVED*** Anthropic API (optional, for hybrid routing)
-      ***REMOVED*** Leave empty to use Ollama-only mode
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-
-      ***REMOVED*** Default provider selection
-      ***REMOVED*** Options: "ollama", "anthropic", "auto" (auto-select based on complexity)
-      DEFAULT_PROVIDER: ${DEFAULT_PROVIDER:-ollama}
-
-      ***REMOVED*** Routing thresholds (for auto mode)
-      ***REMOVED*** Requests below complexity threshold use Ollama, above use Claude
-      COMPLEXITY_THRESHOLD: ${COMPLEXITY_THRESHOLD:-0.7}
-
-      ***REMOVED*** Model selection
-      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
-      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-5-20250929}
-
-    ***REMOVED*** Placeholder command - replace when router is implemented
-    command: ["tail", "-f", "/dev/null"]
-
-    networks:
-      - app-network
-
-    ***REMOVED*** Placeholder: No ports exposed yet (will expose HTTP API when implemented)
-    ***REMOVED*** ports:
-    ***REMOVED***   - "127.0.0.1:8081:8081"
+  ***REMOVED*** LLM Router - DEPRECATED (In-Process Implementation)
+  ***REMOVED***
+  ***REMOVED*** NOTE: LLM Router is fully implemented as a Python service in:
+  ***REMOVED***   backend/app/services/llm_router.py
+  ***REMOVED***
+  ***REMOVED*** This provides intelligent routing between Ollama (local) and Anthropic (cloud)
+  ***REMOVED*** with circuit breaker patterns, task classification, and fallback chains.
+  ***REMOVED***
+  ***REMOVED*** The router is integrated directly into:
+  ***REMOVED***   - Autonomous loop advisor (backend/app/autonomous/advisor.py)
+  ***REMOVED***   - MCP server tools (scheduler_mcp/server.py)
+  ***REMOVED***
+  ***REMOVED*** COMMENTED OUT because:
+  ***REMOVED***   1. The Python library is fully functional and widely used
+  ***REMOVED***   2. No HTTP API clients depend on external llm-router service
+  ***REMOVED***   3. Running as separate service adds network overhead without benefit
+  ***REMOVED***   4. In-process usage allows for efficient local-only (airgap) mode
+  ***REMOVED***
+  ***REMOVED*** Future Work (DEBT-017):
+  ***REMOVED*** If you need to expose the router as an external HTTP API service:
+  ***REMOVED***   1. Create FastAPI wrapper in backend/app/api/routes/llm_router.py
+  ***REMOVED***   2. Expose endpoints for /generate, /classify, /health
+  ***REMOVED***   3. Build Docker image from backend/Dockerfile with entrypoint
+  ***REMOVED***   4. Uncomment service below with proper configuration
+  ***REMOVED***   5. Update clients to use HTTP calls instead of direct imports
+  ***REMOVED***
+  ***REMOVED*** Uncommented configuration (for future reference):
+  ***REMOVED***
+  ***REMOVED*** llm-router:
+  ***REMOVED***   build:
+  ***REMOVED***     context: ./backend
+  ***REMOVED***     dockerfile: Dockerfile
+  ***REMOVED***     target: api
+  ***REMOVED***   container_name: residency-scheduler-llm-router
+  ***REMOVED***   restart: unless-stopped
+  ***REMOVED***   depends_on:
+  ***REMOVED***     ollama:
+  ***REMOVED***       condition: service_healthy
+  ***REMOVED***   environment:
+  ***REMOVED***     OLLAMA_URL: http://ollama:11434
+  ***REMOVED***     ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+  ***REMOVED***     DEFAULT_PROVIDER: ${DEFAULT_PROVIDER:-ollama}
+  ***REMOVED***     COMPLEXITY_THRESHOLD: ${COMPLEXITY_THRESHOLD:-0.7}
+  ***REMOVED***     OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
+  ***REMOVED***     ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-5-20250929}
+  ***REMOVED***   command: uvicorn app.api.main:app --host 0.0.0.0 --port 8081
+  ***REMOVED***   ports:
+  ***REMOVED***     - "127.0.0.1:8081:8081"
+  ***REMOVED***   networks:
+  ***REMOVED***     - app-network
 
 ***REMOVED*** Volumes
 volumes:

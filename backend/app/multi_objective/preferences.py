@@ -242,9 +242,7 @@ class AchievementScalarizing(PreferenceMethod):
             rho: Augmentation parameter for tie-breaking
         """
         self.reference_point = reference_point
-        self.weights = weights or {
-            name: 1.0 for name in reference_point.objective_names
-        }
+        self.weights = weights or dict.fromkeys(reference_point.objective_names, 1.0)
         self.rho = rho
 
     @property

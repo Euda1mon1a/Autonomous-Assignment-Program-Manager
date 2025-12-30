@@ -383,26 +383,26 @@ def format_policy_for_display(policy: InterventionPolicy) -> str:
         "=" * 40,
         f"Max checks per day: {policy.max_checks_per_day}",
         f"Min interval: {policy.min_interval_hours} hours",
-        f"",
-        f"Recommended review windows:",
+        "",
+        "Recommended review windows:",
     ]
 
     for window in policy.recommended_windows:
         lines.append(f"  • {window}")
 
     if policy.hands_off_periods:
-        lines.append(f"")
-        lines.append(f"Hands-off periods (no interventions):")
+        lines.append("")
+        lines.append("Hands-off periods (no interventions):")
         for period in policy.hands_off_periods:
             lines.append(
                 f"  • {period['start']}-{period['end']} "
                 f"({period['duration_hours']}h): {period['reason']}"
             )
 
-    lines.append(f"")
+    lines.append("")
     lines.append(f"Auto-lock threshold: {policy.auto_lock_threshold:.0%} confidence")
-    lines.append(f"")
-    lines.append(f"Rationale:")
+    lines.append("")
+    lines.append("Rationale:")
     lines.append(f"  {policy.explanation}")
 
     return "\n".join(lines)

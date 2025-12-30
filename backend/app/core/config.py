@@ -118,11 +118,6 @@ class Settings(BaseSettings):
     RATE_LIMIT_REGISTER_WINDOW: int = 60  ***REMOVED*** Time window in seconds (1 minute)
     RATE_LIMIT_ENABLED: bool = True  ***REMOVED*** Enable/disable rate limiting globally
 
-    ***REMOVED*** Cache TTL Settings (in seconds)
-    CACHE_HEATMAP_TTL: int = 300  ***REMOVED*** 5 minutes for heatmap data
-    CACHE_CALENDAR_TTL: int = 600  ***REMOVED*** 10 minutes for calendar exports
-    CACHE_SCHEDULE_TTL: int = 300  ***REMOVED*** 5 minutes for schedule queries
-
     ***REMOVED*** File Upload Settings
     UPLOAD_STORAGE_BACKEND: str = "local"  ***REMOVED*** Storage backend: 'local' or 's3'
     UPLOAD_LOCAL_DIR: str = "/tmp/uploads"  ***REMOVED*** Local storage directory
@@ -184,6 +179,9 @@ class Settings(BaseSettings):
     RESILIENCE_SLACK_CHANNEL: str = ""  ***REMOVED*** Slack channel for alerts (optional)
 
     ***REMOVED*** OpenTelemetry / Distributed Tracing Configuration
+    ***REMOVED*** Default: disabled for development to avoid performance impact
+    ***REMOVED*** Enable in production for distributed tracing across services
+    ***REMOVED*** Requires OTEL collector or compatible backend (Jaeger, Zipkin, etc.)
     TELEMETRY_ENABLED: bool = False  ***REMOVED*** Enable distributed tracing
     TELEMETRY_SERVICE_NAME: str = "residency-scheduler"
     TELEMETRY_ENVIRONMENT: str = "development"  ***REMOVED*** development, staging, production
@@ -191,15 +189,21 @@ class Settings(BaseSettings):
     TELEMETRY_CONSOLE_EXPORT: bool = False  ***REMOVED*** Enable console exporter for debugging
 
     ***REMOVED*** Exporter Configuration
+    ***REMOVED*** Supported types: otlp_grpc (default), otlp_http, jaeger, zipkin
+    ***REMOVED*** OTLP: OpenTelemetry Protocol (gRPC on 4317, HTTP on 4318)
+    ***REMOVED*** Jaeger: All-in-one for distributed tracing
+    ***REMOVED*** Zipkin: Distributed tracing and monitoring
     TELEMETRY_EXPORTER_TYPE: str = "otlp_grpc"  ***REMOVED*** jaeger, zipkin, otlp_http, otlp_grpc
     TELEMETRY_EXPORTER_ENDPOINT: str = "http://localhost:4317"  ***REMOVED*** Exporter endpoint URL
     TELEMETRY_EXPORTER_INSECURE: bool = True  ***REMOVED*** Use insecure connection (no TLS)
     TELEMETRY_EXPORTER_HEADERS: dict[str, str] = {}  ***REMOVED*** Custom headers for authentication
 
     ***REMOVED*** Instrumentation Configuration
-    TELEMETRY_TRACE_SQLALCHEMY: bool = True  ***REMOVED*** Enable SQLAlchemy tracing
-    TELEMETRY_TRACE_REDIS: bool = True  ***REMOVED*** Enable Redis tracing
-    TELEMETRY_TRACE_HTTP: bool = True  ***REMOVED*** Enable HTTP client tracing
+    ***REMOVED*** These control which components emit traces
+    ***REMOVED*** Disabling reduces overhead but loses visibility into those systems
+    TELEMETRY_TRACE_SQLALCHEMY: bool = True  ***REMOVED*** Enable SQLAlchemy tracing (database queries)
+    TELEMETRY_TRACE_REDIS: bool = True  ***REMOVED*** Enable Redis tracing (cache operations)
+    TELEMETRY_TRACE_HTTP: bool = True  ***REMOVED*** Enable HTTP client tracing (external APIs)
 
     ***REMOVED*** ML Model Configuration
     ***REMOVED*** Machine learning models for schedule scoring and prediction

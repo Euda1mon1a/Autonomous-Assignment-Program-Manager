@@ -241,7 +241,7 @@ export function GenerateScheduleDialog({
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           {errors.general && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm" role="alert" aria-live="polite">
               {errors.general}
             </div>
           )}

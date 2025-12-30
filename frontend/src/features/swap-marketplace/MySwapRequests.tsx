@@ -16,6 +16,7 @@ import {
   AlertCircle,
   Loader2,
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useMySwapRequests } from './hooks';
 import { SwapRequestCard } from './SwapRequestCard';
 import type { MyRequestsTab } from './types';
@@ -26,7 +27,8 @@ import type { MyRequestsTab } from './types';
 
 export function MySwapRequests() {
   const [activeTab, setActiveTab] = useState<MyRequestsTab>('incoming');
-  const { data, isLoading, error, refetch } = useMySwapRequests();
+  const { user } = useAuth();
+  const { data, isLoading, error, refetch } = useMySwapRequests(user?.id);
 
   const handleActionComplete = () => {
     refetch();

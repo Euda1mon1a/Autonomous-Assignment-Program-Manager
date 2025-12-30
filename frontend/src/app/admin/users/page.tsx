@@ -27,110 +27,35 @@ import {
   ChevronUp,
   RefreshCw,
   Download,
-  Upload,
+  Loader2,
 } from 'lucide-react';
 import type {
   User,
   UserRole,
   UserStatus,
   UserManagementTab,
-  UserFilters,
   UserCreate,
+  UserUpdate,
   BulkAction,
   RolePermissions,
-  Permission,
 } from '@/types/admin-users';
 import {
   USER_ROLE_LABELS,
   USER_ROLE_COLORS,
 } from '@/types/admin-users';
+import {
+  useUsers,
+  useCreateUser,
+  useUpdateUser,
+  useDeleteUser,
+  useToggleUserLock,
+  useResendInvite,
+  useBulkUserAction,
+} from '@/hooks/useAdminUsers';
 
 // ============================================================================
-// Mock Data (to be replaced with API hooks later)
+// Mock Role Permissions Data (for display purposes only)
 // ============================================================================
-
-const MOCK_USERS: User[] = [
-  {
-    id: '1',
-    email: 'admin@example.mil',
-    firstName: 'System',
-    lastName: 'Administrator',
-    role: 'admin',
-    status: 'active',
-    lastLogin: '2024-12-23T08:30:00Z',
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-12-23T08:30:00Z',
-    mfaEnabled: true,
-    failedLoginAttempts: 0,
-  },
-  {
-    id: '2',
-    email: 'coordinator@example.mil',
-    firstName: 'Schedule',
-    lastName: 'Coordinator',
-    role: 'coordinator',
-    status: 'active',
-    lastLogin: '2024-12-22T15:45:00Z',
-    createdAt: '2024-02-15T00:00:00Z',
-    updatedAt: '2024-12-22T15:45:00Z',
-    mfaEnabled: true,
-    failedLoginAttempts: 0,
-  },
-  {
-    id: '3',
-    email: 'faculty1@example.mil',
-    firstName: 'John',
-    lastName: 'Faculty',
-    role: 'faculty',
-    status: 'active',
-    personId: 'person-1',
-    lastLogin: '2024-12-20T10:00:00Z',
-    createdAt: '2024-03-01T00:00:00Z',
-    updatedAt: '2024-12-20T10:00:00Z',
-    mfaEnabled: false,
-    failedLoginAttempts: 0,
-  },
-  {
-    id: '4',
-    email: 'resident1@example.mil',
-    firstName: 'Jane',
-    lastName: 'Resident',
-    role: 'resident',
-    status: 'active',
-    personId: 'person-2',
-    lastLogin: '2024-12-21T14:30:00Z',
-    createdAt: '2024-06-01T00:00:00Z',
-    updatedAt: '2024-12-21T14:30:00Z',
-    mfaEnabled: false,
-    failedLoginAttempts: 0,
-  },
-  {
-    id: '5',
-    email: 'pending@example.mil',
-    firstName: 'New',
-    lastName: 'User',
-    role: 'resident',
-    status: 'pending',
-    createdAt: '2024-12-20T00:00:00Z',
-    updatedAt: '2024-12-20T00:00:00Z',
-    mfaEnabled: false,
-    failedLoginAttempts: 0,
-  },
-  {
-    id: '6',
-    email: 'locked@example.mil',
-    firstName: 'Locked',
-    lastName: 'Account',
-    role: 'faculty',
-    status: 'locked',
-    lastLogin: '2024-12-10T09:00:00Z',
-    createdAt: '2024-04-01T00:00:00Z',
-    updatedAt: '2024-12-15T00:00:00Z',
-    mfaEnabled: false,
-    failedLoginAttempts: 5,
-    lockedUntil: '2024-12-25T00:00:00Z',
-  },
-];
 
 const MOCK_ROLE_PERMISSIONS: RolePermissions[] = [
   {
@@ -226,6 +151,95 @@ function EmptyState({ title, description, action }: { title: string; description
       <h3 className="text-lg font-medium text-slate-200 mb-2">{title}</h3>
       <p className="text-slate-400 mb-6 max-w-md mx-auto">{description}</p>
       {action}
+    </div>
+  );
+}
+
+function LoadingState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-12">
+      <Loader2 className="w-8 h-8 text-violet-500 animate-spin mb-4" />
+      <p className="text-slate-400">Loading users...</p>
+    </div>
+  );
+}
+
+function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 px-4">
+      <AlertTriangle className="w-12 h-12 text-red-400 mb-4" />
+      <h3 className="text-lg font-medium text-slate-200 mb-2">Failed to load users</h3>
+      <p className="text-slate-400 mb-6 max-w-md mx-auto text-center">{message}</p>
+      {onRetry && (
+        <button
+          onClick={onRetry}
+          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Retry
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// Confirmation Dialog Component
+// ============================================================================
+
+interface ConfirmDialogProps {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  confirmLabel?: string;
+  confirmVariant?: 'danger' | 'primary';
+  isLoading?: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+function ConfirmDialog({
+  isOpen,
+  title,
+  message,
+  confirmLabel = 'Confirm',
+  confirmVariant = 'danger',
+  isLoading = false,
+  onConfirm,
+  onCancel,
+}: ConfirmDialogProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+        <h2 className="text-lg font-semibold text-white mb-2">{title}</h2>
+        <p className="text-slate-400 mb-6">{message}</p>
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isLoading}
+            className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isLoading}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 ${
+              confirmVariant === 'danger'
+                ? 'bg-red-600 hover:bg-red-500'
+                : 'bg-violet-600 hover:bg-violet-500'
+            }`}
+          >
+            {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -620,8 +634,8 @@ function ActivityPanel() {
 // ============================================================================
 
 export default function AdminUsersPage() {
+  // UI State
   const [activeTab, setActiveTab] = useState<UserManagementTab>('users');
-  const [users] = useState<User[]>(MOCK_USERS);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
@@ -630,18 +644,47 @@ export default function AdminUsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | undefined>();
 
+  // Confirmation dialog state
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; user?: User }>({
+    isOpen: false,
+  });
+
+  // API Hooks
+  const {
+    data: usersData,
+    isLoading,
+    error,
+    refetch,
+  } = useUsers({
+    search: searchQuery || undefined,
+    role: roleFilter,
+    status: statusFilter,
+  });
+
+  const createUserMutation = useCreateUser();
+  const updateUserMutation = useUpdateUser();
+  const deleteUserMutation = useDeleteUser();
+  const toggleLockMutation = useToggleUserLock();
+  const resendInviteMutation = useResendInvite();
+  const bulkActionMutation = useBulkUserAction();
+
+  // Derived data - memoize to prevent unnecessary re-renders
+  const users = useMemo(() => usersData?.users ?? [], [usersData?.users]);
+  const totalUsers = usersData?.total ?? 0;
+
+  // Client-side filtering for search (API handles role/status filters)
   const filteredUsers = useMemo(() => {
+    // If search is handled server-side, just return users
+    // For now we still filter client-side for instant feedback
     return users.filter((user) => {
       const matchesSearch =
         searchQuery === '' ||
         user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-      const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-      return matchesSearch && matchesRole && matchesStatus;
+      return matchesSearch;
     });
-  }, [users, searchQuery, roleFilter, statusFilter]);
+  }, [users, searchQuery]);
 
   const handleSelectUser = useCallback((userId: string) => {
     setSelectedUsers((prev) =>
@@ -658,9 +701,42 @@ export default function AdminUsersPage() {
   }, [selectedUsers.length, filteredUsers]);
 
   const handleCreateUser = useCallback((data: UserCreate) => {
-    console.log('Create user:', data);
-    // TODO: Call API
-  }, []);
+    createUserMutation.mutate(data, {
+      onSuccess: () => {
+        setIsModalOpen(false);
+        setEditingUser(undefined);
+      },
+    });
+  }, [createUserMutation]);
+
+  const handleUpdateUser = useCallback((data: UserCreate) => {
+    if (!editingUser) return;
+
+    const updateData: UserUpdate = {
+      email: data.email,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      role: data.role,
+    };
+
+    updateUserMutation.mutate(
+      { id: editingUser.id, data: updateData },
+      {
+        onSuccess: () => {
+          setIsModalOpen(false);
+          setEditingUser(undefined);
+        },
+      }
+    );
+  }, [editingUser, updateUserMutation]);
+
+  const handleSaveUser = useCallback((data: UserCreate) => {
+    if (editingUser) {
+      handleUpdateUser(data);
+    } else {
+      handleCreateUser(data);
+    }
+  }, [editingUser, handleCreateUser, handleUpdateUser]);
 
   const handleEditUser = useCallback((user: User) => {
     setEditingUser(user);
@@ -668,19 +744,44 @@ export default function AdminUsersPage() {
   }, []);
 
   const handleDeleteUser = useCallback((user: User) => {
-    console.log('Delete user:', user.id);
-    // TODO: Show confirmation dialog and call API
+    setDeleteConfirm({ isOpen: true, user });
   }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (!deleteConfirm.user) return;
+
+    deleteUserMutation.mutate(deleteConfirm.user.id, {
+      onSuccess: () => {
+        setDeleteConfirm({ isOpen: false });
+        setSelectedUsers((prev) => prev.filter((id) => id !== deleteConfirm.user?.id));
+      },
+      onError: () => {
+        // Keep dialog open on error so user can see the error
+      },
+    });
+  }, [deleteConfirm.user, deleteUserMutation]);
 
   const handleToggleLock = useCallback((user: User) => {
-    console.log('Toggle lock:', user.id);
-    // TODO: Call API
-  }, []);
+    const shouldLock = user.status !== 'locked';
+    toggleLockMutation.mutate({ id: user.id, lock: shouldLock });
+  }, [toggleLockMutation]);
 
   const handleResendInvite = useCallback((user: User) => {
-    console.log('Resend invite:', user.id);
-    // TODO: Call API
-  }, []);
+    resendInviteMutation.mutate(user.id);
+  }, [resendInviteMutation]);
+
+  const handleBulkAction = useCallback((action: BulkAction) => {
+    if (selectedUsers.length === 0) return;
+
+    bulkActionMutation.mutate(
+      { userIds: selectedUsers, action },
+      {
+        onSuccess: () => {
+          setSelectedUsers([]);
+        },
+      }
+    );
+  }, [selectedUsers, bulkActionMutation]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -811,13 +912,25 @@ export default function AdminUsersPage() {
                   {selectedUsers.length} user(s) selected
                 </span>
                 <div className="flex gap-2">
-                  <button className="px-3 py-1.5 text-xs font-medium bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors">
-                    Activate
+                  <button
+                    onClick={() => handleBulkAction('activate')}
+                    disabled={bulkActionMutation.isPending}
+                    className="px-3 py-1.5 text-xs font-medium bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {bulkActionMutation.isPending ? 'Processing...' : 'Activate'}
                   </button>
-                  <button className="px-3 py-1.5 text-xs font-medium bg-slate-600 hover:bg-slate-500 text-white rounded-lg transition-colors">
+                  <button
+                    onClick={() => handleBulkAction('deactivate')}
+                    disabled={bulkActionMutation.isPending}
+                    className="px-3 py-1.5 text-xs font-medium bg-slate-600 hover:bg-slate-500 text-white rounded-lg transition-colors disabled:opacity-50"
+                  >
                     Deactivate
                   </button>
-                  <button className="px-3 py-1.5 text-xs font-medium bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors">
+                  <button
+                    onClick={() => handleBulkAction('delete')}
+                    disabled={bulkActionMutation.isPending}
+                    className="px-3 py-1.5 text-xs font-medium bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors disabled:opacity-50"
+                  >
                     Delete
                   </button>
                 </div>
@@ -832,7 +945,14 @@ export default function AdminUsersPage() {
 
             {/* Users Table */}
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg overflow-hidden">
-              {filteredUsers.length === 0 ? (
+              {isLoading ? (
+                <LoadingState />
+              ) : error ? (
+                <ErrorState
+                  message={error.message || 'Failed to load users'}
+                  onRetry={() => refetch()}
+                />
+              ) : filteredUsers.length === 0 ? (
                 <EmptyState
                   title="No users found"
                   description="No users match your current filters. Try adjusting your search or filters."
@@ -889,7 +1009,7 @@ export default function AdminUsersPage() {
 
             {/* Pagination */}
             <div className="flex items-center justify-between text-sm text-slate-400">
-              <span>Showing {filteredUsers.length} of {users.length} users</span>
+              <span>Showing {filteredUsers.length} of {totalUsers} users</span>
               <div className="flex gap-2">
                 <button className="px-3 py-1.5 border border-slate-700 rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50" disabled>
                   Previous
@@ -911,7 +1031,19 @@ export default function AdminUsersPage() {
         user={editingUser}
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setEditingUser(undefined); }}
-        onSave={handleCreateUser}
+        onSave={handleSaveUser}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        title="Delete User"
+        message={`Are you sure you want to delete ${deleteConfirm.user?.firstName} ${deleteConfirm.user?.lastName} (${deleteConfirm.user?.email})? This action cannot be undone.`}
+        confirmLabel="Delete"
+        confirmVariant="danger"
+        isLoading={deleteUserMutation.isPending}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteConfirm({ isOpen: false })}
       />
     </div>
   );

@@ -1371,7 +1371,7 @@ class HybridTemplatePipeline:
             reheat_factor=self.config.reheat_factor,
         )
 
-        best_sample = {i: 0 for i in range(n)}
+        best_sample = dict.fromkeys(range(n), 0)
         best_energy = self._compute_energy(best_sample, Q)
 
         for read in range(self.config.num_reads):

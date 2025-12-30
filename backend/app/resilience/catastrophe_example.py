@@ -57,7 +57,7 @@ def example_deployment_season_monitoring():
     analysis = detector.detect_catastrophe_cusp(surface)
 
     if analysis.cusp_exists:
-        print(f"✓ Cusp catastrophe detected!")
+        print("✓ Cusp catastrophe detected!")
         print(f"  Cusp center: {analysis.cusp_center}")
         print(f"  Cusp score: {analysis.cusp_score:.3f}")
         print(f"  Hysteresis gap: {analysis.hysteresis_gap:.3f}")
@@ -130,7 +130,7 @@ def example_deployment_season_monitoring():
             defense_level = alert.recommended_defense_level
             print(f"      → Activating defense level: {defense_level.name}")
         else:
-            print(f"  ✓ System safe (no alert)")
+            print("  ✓ System safe (no alert)")
 
         print()
 
@@ -142,7 +142,7 @@ def example_deployment_season_monitoring():
         trajectory=trajectory, cusp_analysis=analysis, horizon=2
     )
 
-    print(f"Prediction results:")
+    print("Prediction results:")
     print(f"  Will fail: {prediction.will_fail}")
     print(f"  Confidence: {prediction.confidence:.2%}")
     print(f"  Current state: {prediction.current_state.value}")
@@ -158,7 +158,7 @@ def example_deployment_season_monitoring():
     print()
 
     if prediction.recommended_actions:
-        print(f"  Recommended actions:")
+        print("  Recommended actions:")
         for action in prediction.recommended_actions:
             print(f"    • {action}")
     print()
@@ -191,14 +191,14 @@ def example_hysteresis_demonstration():
     print(f"Hysteresis gap: {analysis.hysteresis_gap:.3f}")
     print()
     print("This means:")
-    print(f"  • When demand INCREASES, system fails at higher threshold")
-    print(f"  • When demand DECREASES, system recovers at lower threshold")
-    print(f"  • Gap represents the 'cost' of letting system fail")
+    print("  • When demand INCREASES, system fails at higher threshold")
+    print("  • When demand DECREASES, system recovers at lower threshold")
+    print("  • Gap represents the 'cost' of letting system fail")
     print()
     print("Implications for scheduling:")
-    print(f"  ✓ Prevention is easier than cure")
-    print(f"  ✓ Build buffers BEFORE deployment season")
-    print(f"  ✓ Recovery requires larger capacity reduction")
+    print("  ✓ Prevention is easier than cure")
+    print("  ✓ Build buffers BEFORE deployment season")
+    print("  ✓ Recovery requires larger capacity reduction")
     print()
 
 

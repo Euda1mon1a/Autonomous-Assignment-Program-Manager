@@ -346,8 +346,9 @@ export function QuickAssignMenu({
           <button
             onClick={onClose}
             className="p-1 text-gray-400 hover:text-gray-600 rounded"
+            aria-label="Close menu"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
         <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">

@@ -214,24 +214,17 @@ export function useSwapMarketplace(
 
 /**
  * Fetch current user's swap requests (incoming, outgoing, recent)
+ * @param currentUserId - User ID from AuthContext (required for proper isIncoming/isOutgoing flags)
+ * @param options - React Query options
  */
 export function useMySwapRequests(
+  currentUserId?: string,
   options?: Omit<UseQueryOptions<MySwapsResponse, ApiError>, 'queryKey' | 'queryFn'>
 ) {
   return useQuery<MySwapsResponse, ApiError>({
     queryKey: swapQueryKeys.mySwaps(),
     queryFn: async () => {
       const response = await get<MySwapsApiResponse>('/portal/my/swaps');
-
-      // Get current user ID from localStorage if available
-      let currentUserId: string | undefined;
-      if (typeof window !== 'undefined') {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          currentUserId = user.id;
-        }
-      }
 
       return {
         incomingRequests: response.incoming_requests.map((req: SwapRequestApiResponse) =>

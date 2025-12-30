@@ -287,10 +287,10 @@ When responding:
         task_type="vacation_request"
     )
 
-    print(f"\nCUSTOM TASK: vacation_request")
+    print("\nCUSTOM TASK: vacation_request")
     print(f"QUERY: {query}\n")
     print(f"Available task types: {pm.get_all_task_types()}\n")
-    print(f"Generated prompt includes custom task instructions.\n")
+    print("Generated prompt includes custom task instructions.\n")
 
 
 def main():
