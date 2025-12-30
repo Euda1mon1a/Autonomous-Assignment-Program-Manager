@@ -16,26 +16,27 @@ Comprehensive reference of all REST API endpoints in the Residency Scheduler.
 3. [Authentication & Authorization](#authentication--authorization)
 4. [People Management](#people-management)
 5. [Blocks & Calendar](#blocks--calendar)
-6. [Assignments](#assignments)
-7. [Call Assignments](#call-assignments)
-8. [Absences & Leave](#absences--leave)
-9. [Schedule Generation](#schedule-generation)
-10. [Swaps & Exchanges](#swaps--exchanges)
-11. [Rotation Templates](#rotation-templates)
-12. [Procedures](#procedures)
-13. [Credentials](#credentials)
-14. [Certifications](#certifications)
-15. [Settings](#settings)
-16. [Analytics & Reporting](#analytics--reporting)
-17. [Resilience Framework](#resilience-framework)
-18. [Audit & Compliance](#audit--compliance)
-19. [Search](#search)
-20. [Exports](#exports)
-21. [Conflict Resolution](#conflict-resolution)
-22. [Portal & Dashboard](#portal--dashboard)
-23. [Specialized Routes](#specialized-routes)
-24. [Response Codes](#response-codes)
-25. [Authentication Requirements](#authentication-requirements)
+6. [Block Scheduler](#block-scheduler)
+7. [Assignments](#assignments)
+8. [Call Assignments](#call-assignments)
+9. [Absences & Leave](#absences--leave)
+10. [Schedule Generation](#schedule-generation)
+11. [Swaps & Exchanges](#swaps--exchanges)
+13. [Rotation Templates](#rotation-templates)
+14. [Procedures](#procedures)
+15. [Credentials](#credentials)
+16. [Certifications](#certifications)
+17. [Settings](#settings)
+18. [Analytics & Reporting](#analytics--reporting)
+19. [Resilience Framework](#resilience-framework)
+20. [Audit & Compliance](#audit--compliance)
+21. [Search](#search)
+22. [Exports](#exports)
+23. [Conflict Resolution](#conflict-resolution)
+24. [Portal & Dashboard](#portal--dashboard)
+25. [Specialized Routes](#specialized-routes)
+26. [Response Codes](#response-codes)
+27. [Authentication Requirements](#authentication-requirements)
 
 ---
 
@@ -156,6 +157,52 @@ See [Authentication](authentication.md) for full details.
 
 - **730 blocks/year**: 365 days x 2 sessions (AM/PM)
 - **Block numbering**: Sequential within academic year
+
+---
+
+## Block Scheduler
+
+**Prefix:** `/api/block-scheduler`
+
+Leave-eligible rotation matching for academic block scheduling. Automatically assigns residents with approved leave to leave-eligible rotations.
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/block-scheduler/dashboard` | Bearer | Dashboard view with leave info and capacity |
+| POST | `/block-scheduler/schedule` | Bearer | Schedule block (dry_run mode available) |
+| GET | `/block-scheduler/assignments/{id}` | Bearer | Get block assignment by ID |
+| POST | `/block-scheduler/assignments` | Scheduler | Create manual assignment |
+| PUT | `/block-scheduler/assignments/{id}` | Scheduler | Update assignment |
+| DELETE | `/block-scheduler/assignments/{id}` | Scheduler | Delete assignment |
+
+### Query Parameters (Dashboard)
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `block_number` | int | Academic block (0-13) |
+| `academic_year` | int | Academic year (e.g., 2025) |
+
+### Schedule Request Body
+
+```json
+{
+  "block_number": 5,
+  "academic_year": 2025,
+  "dry_run": true,
+  "include_all_residents": true
+}
+```
+
+### Assignment Reasons
+
+| Reason | Description |
+|--------|-------------|
+| `leave_eligible_match` | Auto-assigned due to leave |
+| `coverage_priority` | Fills non-leave-eligible rotation |
+| `balanced` | Workload balance |
+| `manual` | Manual override |
+
+See [Block Scheduler](block-scheduler.md) for full details.
 
 ---
 
@@ -789,6 +836,7 @@ curl -X POST http://localhost:8000/api/v1/schedule/generate \
 ## Related Documentation
 
 - [Authentication](authentication.md) - Token management details
+- [Block Scheduler](block-scheduler.md) - Leave-eligible rotation matching
 - [Schedule](schedule.md) - Schedule generation details
 - [Swaps](swaps.md) - Swap marketplace operations
 - [Analytics](analytics.md) - Metrics and reporting

@@ -3,6 +3,7 @@
 from app.models.absence import Absence
 from app.models.agent_memory import AgentEmbedding, ModelTier, TaskHistory
 from app.models.assignment import Assignment
+from app.models.block_assignment import AssignmentReason, BlockAssignment
 from app.models.rag_document import RAGDocument
 from app.models.block import Block
 from app.models.calendar_subscription import CalendarSubscription
@@ -133,6 +134,8 @@ __all__ = [
     "Person",
     "ScreenerRole",
     "Block",
+    "BlockAssignment",
+    "AssignmentReason",
     "RotationTemplate",
     "RotationHalfDayRequirement",
     "WeeklyPattern",
