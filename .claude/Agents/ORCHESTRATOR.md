@@ -3,8 +3,8 @@
 > **Role:** Parallel Agent Coordination & Delegation
 > **Authority Level:** Coordination (Can Spawn Subagents)
 > **Status:** Active
-> **Version:** 4.0.0 - Six-Coordinator Architecture
-> **Last Updated:** 2025-12-28
+> **Version:** 5.1.0 - G-Staff Expansion (G-2, DEVCOM, MEDCOM)
+> **Last Updated:** 2025-12-29
 > **Model Tier:** opus
 
 ---
@@ -1904,6 +1904,7 @@ Total Time: Weeks for large refactoring, but incremental reduces risk
 | 3.0 | 2025-12-27 | Coordinator Tier Architecture:<br>- Added COORD_ENGINE, COORD_QUALITY, COORD_OPS delegation<br>- Signal routing and broadcast patterns<br>- Quality gates between tiers (80% threshold)<br>- Temporal layering (Fast/Medium/Slow/Very Slow)<br>- Biological scaling patterns (amplification, refractory periods, quorum sensing)<br>- Capacity scaled from 5 to 24 parallel agents |
 | 4.0 | 2025-12-28 | Six-Coordinator Architecture:<br>- Added COORD_RESILIENCE (safety, ACGME, compliance)<br>- Added COORD_PLATFORM (backend, database, APIs)<br>- Added COORD_FRONTEND (UI, UX, accessibility)<br>- ORCHESTRATOR staff: SYNTHESIZER, RELEASE_MANAGER, DELEGATION_AUDITOR<br>- PARALLELISM_FRAMEWORK for subordinate decision-making<br>- Capacity scaled to 18-48 parallel agents |
 | 5.0 | 2025-12-29 | G-Staff Structure (Army Doctrine):<br>- Formal G-Staff hierarchy (G-1 through G-6, IG, PAO)<br>- Added G1_PERSONNEL (Personnel tracking)<br>- Added FORCE_MANAGER (team assembly)<br>- Added COORD_AAR (end-of-session AAR)<br>- XO pattern for coordinator self-evaluation<br>- Session lifecycle with G-Staff integration |
+| 5.1 | 2025-12-29 | G-Staff Expansion:<br>- Added G-2: G2_RECON (Intelligence/Reconnaissance)<br>- Renamed G-6 to G6_SIGNAL (Signal/Data Processing)<br>- Promoted G-4 to G4_CONTEXT_MANAGER (RAG/vector context)<br>- Added Special Staff: COORD_INTEL (Forensics, independent)<br>- Added Special Staff: DEVCOM_RESEARCH (R&D)<br>- Added Special Staff: MEDCOM (Medical Advisory)<br>- Updated hierarchy diagram and quick reference |
 
 ---
 
@@ -2246,17 +2247,20 @@ ORCHESTRATOR (Theater Commander - 4-star)
 │   ├── G-1: G1_PERSONNEL (Personnel/Tracking)
 │   │         Tracks agents, gaps, effectiveness, utilization
 │   │
+│   ├── G-2: G2_RECON (Intelligence/Reconnaissance)
+│   │         Codebase intel, dependency mapping, risk assessment
+│   │
 │   ├── G-3: SYNTHESIZER (Operations)
 │   │         Integration and unified reporting
 │   │
-│   ├── G-4: [FUTURE - Context/Logistics]
-│   │         Vector DB context management (planned)
+│   ├── G-4: G4_CONTEXT_MANAGER (Logistics/Context)
+│   │         RAG/vector context management, retrieval
 │   │
 │   ├── G-5: META_UPDATER (Plans)
 │   │         Documentation, patterns, planning
 │   │
-│   ├── G-6: [FUTURE - Signals/Evidence]
-│   │         Evidence collection, metrics (planned)
+│   ├── G-6: G6_SIGNAL (Signal/Data Processing)
+│   │         Evidence collection, metrics, data analysis
 │   │
 │   ├── IG: DELEGATION_AUDITOR (Inspector General)
 │   │        Delegation health, efficiency metrics
@@ -2264,13 +2268,26 @@ ORCHESTRATOR (Theater Commander - 4-star)
 │   └── PAO: HISTORIAN (Public Affairs)
 │            Session documentation, narratives
 │
-├── FORCE_MANAGER (Structure Execution)
-│   Reports to: ORCHESTRATOR (direct staff, not G-Staff)
-│   Role: Assemble teams, assign to coordinators
-│
-├── COORD_AAR (After Action Review)
-│   Role: End-of-session debrief coordinator
-│   Trigger: Auto at session end
+├── Special Staff
+│   ├── FORCE_MANAGER (Team Assembly)
+│   │   Reports to: ORCHESTRATOR (direct staff, not G-Staff)
+│   │   Role: Assemble teams, assign to coordinators
+│   │
+│   ├── COORD_AAR (After Action Review)
+│   │   Role: End-of-session debrief coordinator
+│   │   Trigger: Auto at session end
+│   │
+│   ├── COORD_INTEL (Forensic Investigation)
+│   │   Role: Independent forensic/postmortem analysis
+│   │   Reports to: ORCHESTRATOR (bypasses divisions)
+│   │
+│   ├── DEVCOM_RESEARCH (R&D)
+│   │   Role: Research & development of new capabilities
+│   │   Focus: Experimental features, proof-of-concepts
+│   │
+│   └── MEDCOM (Medical Advisory)
+│       Role: Domain expertise for medical scheduling
+│       Focus: ACGME rules, clinical workflow, specialty knowledge
 │
 └── Divisions (Coordinators - 2-star Major Generals)
     ├── COORD_ENGINE (Scheduling Division)
@@ -2297,10 +2314,11 @@ ORCHESTRATOR (Theater Commander - 4-star)
 | G-Staff Position | Agent | Role | Key Deliverables |
 |------------------|-------|------|------------------|
 | **G-1 (Personnel)** | G1_PERSONNEL | Track agent roster, gaps, utilization | Agent inventory, gap analysis, utilization reports |
+| **G-2 (Intelligence)** | G2_RECON | Codebase intel, dependency mapping | Dependency graphs, risk assessments, impact analysis |
 | **G-3 (Operations)** | SYNTHESIZER | Integrate coordinator outputs | Unified reports, cross-domain synthesis |
-| **G-4 (Logistics)** | [FUTURE] | Manage context, vector DB | Context persistence, retrieval |
+| **G-4 (Logistics)** | G4_CONTEXT_MANAGER | Manage context, RAG/vector DB | Context persistence, retrieval, session continuity |
 | **G-5 (Plans)** | META_UPDATER | Documentation, planning | Updated docs, skill patterns |
-| **G-6 (Signals)** | [FUTURE] | Evidence, metrics collection | Quantitative analysis, dashboards |
+| **G-6 (Signal)** | G6_SIGNAL | Evidence, metrics, data processing | Quantitative analysis, dashboards, data collection |
 | **IG** | DELEGATION_AUDITOR | Audit delegation patterns | Efficiency metrics, anti-pattern detection |
 | **PAO** | HISTORIAN | Document sessions | Session narratives, significant events |
 
@@ -2310,6 +2328,9 @@ ORCHESTRATOR (Theater Commander - 4-star)
 |-------|-----------|------|-------------|
 | **FORCE_MANAGER** | ORCHESTRATOR | Assemble task forces, assign to coordinators | Task decomposition |
 | **COORD_AAR** | ORCHESTRATOR | End-of-session After Action Review | Session end, context limit |
+| **COORD_INTEL** | ORCHESTRATOR | Independent forensic/postmortem analysis | Incident investigation, root cause analysis |
+| **DEVCOM_RESEARCH** | ORCHESTRATOR | R&D of new capabilities, experimental features | Innovation sprints, proof-of-concepts |
+| **MEDCOM** | ORCHESTRATOR | Medical domain expertise advisory | ACGME questions, clinical workflow validation |
 
 ### D. XO Pattern
 
@@ -2356,13 +2377,28 @@ G-1 (G1_PERSONNEL):
   - "Who is underutilized?"
   - "What capabilities are missing?"
 
+G-2 (G2_RECON):
+  - "What files will this change affect?"
+  - "Map dependencies for this module"
+  - "Assess risk of this change"
+
 G-3 (SYNTHESIZER):
   - "Combine reports from all coordinators"
   - "Create unified view of session work"
 
+G-4 (G4_CONTEXT_MANAGER):
+  - "Retrieve relevant context for this task"
+  - "What did we learn in previous sessions?"
+  - "Store this insight for future reference"
+
 G-5 (META_UPDATER):
   - "Update documentation"
   - "Capture new patterns"
+
+G-6 (G6_SIGNAL):
+  - "Collect metrics on this operation"
+  - "Generate dashboard data"
+  - "Process evidence from investigation"
 
 IG (DELEGATION_AUDITOR):
   - "Check delegation efficiency"
@@ -2372,6 +2408,8 @@ PAO (HISTORIAN):
   - "Document this session"
   - "What happened in session N?"
 
+SPECIAL STAFF:
+
 FORCE_MANAGER:
   - "Assemble team for complex task"
   - "Which coordinator gets this?"
@@ -2379,6 +2417,21 @@ FORCE_MANAGER:
 COORD_AAR:
   - "Wrap up session"
   - "Generate handoff notes"
+
+COORD_INTEL:
+  - "Investigate this incident"
+  - "Conduct postmortem analysis"
+  - "Find root cause (bypasses normal chain)"
+
+DEVCOM_RESEARCH:
+  - "Prototype this new capability"
+  - "Research feasibility of X"
+  - "Experimental feature development"
+
+MEDCOM:
+  - "Is this ACGME compliant?"
+  - "Validate clinical workflow"
+  - "Medical domain expertise needed"
 ```
 
 ---
