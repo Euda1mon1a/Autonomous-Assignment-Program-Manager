@@ -82,7 +82,9 @@ class BlockSchedulerService:
         self.assignment_repo = BlockAssignmentRepository(db)
         self.absence_repo = AbsenceRepository(db)
 
-    def get_block_dates(self, block_number: int, academic_year: int) -> tuple[date, date]:
+    def get_block_dates(
+        self, block_number: int, academic_year: int
+    ) -> tuple[date, date]:
         """
         Calculate the start and end dates for an academic block.
 
@@ -116,11 +118,7 @@ class BlockSchedulerService:
         start_date, end_date = self.get_block_dates(block_number, academic_year)
 
         # Get all residents
-        residents = (
-            self.db.query(Person)
-            .filter(Person.type == "resident")
-            .all()
-        )
+        residents = self.db.query(Person).filter(Person.type == "resident").all()
 
         residents_with_leave: list[ResidentLeaveData] = []
 
@@ -303,11 +301,7 @@ class BlockSchedulerService:
         start_date, end_date = self.get_block_dates(block_number, academic_year)
 
         # Get all residents
-        all_residents = (
-            self.db.query(Person)
-            .filter(Person.type == "resident")
-            .all()
-        )
+        all_residents = self.db.query(Person).filter(Person.type == "resident").all()
 
         # Get leave data
         residents_with_leave = self.get_residents_with_leave_in_block(
@@ -351,16 +345,18 @@ class BlockSchedulerService:
                 )
                 assignments.append(preview)
 
-                assignment_records.append({
-                    "block_number": block_number,
-                    "academic_year": academic_year,
-                    "resident_id": resident.id,
-                    "rotation_template_id": rotation.id,
-                    "has_leave": True,
-                    "leave_days": leave_data.leave_days,
-                    "assignment_reason": AssignmentReason.LEAVE_ELIGIBLE_MATCH.value,
-                    "created_by": created_by,
-                })
+                assignment_records.append(
+                    {
+                        "block_number": block_number,
+                        "academic_year": academic_year,
+                        "resident_id": resident.id,
+                        "rotation_template_id": rotation.id,
+                        "has_leave": True,
+                        "leave_days": leave_data.leave_days,
+                        "assignment_reason": AssignmentReason.LEAVE_ELIGIBLE_MATCH.value,
+                        "created_by": created_by,
+                    }
+                )
             else:
                 # No leave-eligible rotation available - conflict
                 leave_conflicts.append(
@@ -407,16 +403,18 @@ class BlockSchedulerService:
                     )
                     assignments.append(preview)
 
-                    assignment_records.append({
-                        "block_number": block_number,
-                        "academic_year": academic_year,
-                        "resident_id": resident.id,
-                        "rotation_template_id": rotation.id,
-                        "has_leave": False,
-                        "leave_days": 0,
-                        "assignment_reason": reason,
-                        "created_by": created_by,
-                    })
+                    assignment_records.append(
+                        {
+                            "block_number": block_number,
+                            "academic_year": academic_year,
+                            "resident_id": resident.id,
+                            "rotation_template_id": rotation.id,
+                            "has_leave": False,
+                            "leave_days": 0,
+                            "assignment_reason": reason,
+                            "created_by": created_by,
+                        }
+                    )
 
         # Step 3: Identify coverage gaps
         for rotation_id, slot in capacities.items():
@@ -469,13 +467,16 @@ class BlockSchedulerService:
             dry_run=dry_run,
             success=len(leave_conflicts) == 0,
             message=(
-                "Preview generated" if dry_run
+                "Preview generated"
+                if dry_run
                 else "Assignments saved successfully"
                 if len(leave_conflicts) == 0
                 else f"Completed with {len(leave_conflicts)} conflicts"
             ),
             assignments=assignments,
-            total_residents=len(all_residents) if include_all_residents else len(residents_with_leave),
+            total_residents=len(all_residents)
+            if include_all_residents
+            else len(residents_with_leave),
             residents_with_leave=len(residents_with_leave),
             coverage_gaps=[g for g in coverage_gaps if g.gap > 0],
             leave_conflicts=leave_conflicts,
@@ -491,11 +492,7 @@ class BlockSchedulerService:
         start_date, end_date = self.get_block_dates(block_number, academic_year)
 
         # Get all residents
-        all_residents = (
-            self.db.query(Person)
-            .filter(Person.type == "resident")
-            .all()
-        )
+        all_residents = self.db.query(Person).filter(Person.type == "resident").all()
 
         # Get leave data
         residents_with_leave = self.get_residents_with_leave_in_block(

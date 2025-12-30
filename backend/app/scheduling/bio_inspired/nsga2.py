@@ -52,6 +52,7 @@ class ParetoFront:
     The Pareto front contains all non-dominated solutions where no solution
     is strictly better than another in all objectives.
     """
+
     individuals: list[Individual] = field(default_factory=list)
     generation: int = 0
 
@@ -65,9 +66,13 @@ class ParetoFront:
 
         # Remove any existing members dominated by new individual
         self.individuals = [
-            ind for ind in self.individuals
-            if not (individual.fitness and ind.fitness and
-                   individual.fitness.dominates(ind.fitness))
+            ind
+            for ind in self.individuals
+            if not (
+                individual.fitness
+                and ind.fitness
+                and individual.fitness.dominates(ind.fitness)
+            )
         ]
 
         # Check for duplicates (same fitness values)
@@ -75,8 +80,7 @@ class ParetoFront:
             for existing in self.individuals:
                 if existing.fitness:
                     if np.allclose(
-                        individual.fitness.to_array(),
-                        existing.fitness.to_array()
+                        individual.fitness.to_array(), existing.fitness.to_array()
                     ):
                         return  # Already have this point
 
@@ -87,14 +91,20 @@ class ParetoFront:
         if not self.individuals:
             return {}
 
-        objectives = ["coverage", "fairness", "preferences",
-                     "learning_goals", "acgme_compliance", "continuity"]
+        objectives = [
+            "coverage",
+            "fairness",
+            "preferences",
+            "learning_goals",
+            "acgme_compliance",
+            "continuity",
+        ]
         extremes = {}
 
         for obj in objectives:
             best = max(
                 self.individuals,
-                key=lambda ind: getattr(ind.fitness, obj) if ind.fitness else 0
+                key=lambda ind: getattr(ind.fitness, obj) if ind.fitness else 0,
             )
             extremes[f"best_{obj}"] = best
 
@@ -159,11 +169,9 @@ class ParetoFront:
             return 0.0
 
         # Get objective arrays
-        objectives = np.array([
-            ind.fitness.to_array()
-            for ind in self.individuals
-            if ind.fitness
-        ])
+        objectives = np.array(
+            [ind.fitness.to_array() for ind in self.individuals if ind.fitness]
+        )
 
         if len(objectives) < 2:
             return 0.0
@@ -221,12 +229,18 @@ class CrowdingDistance:
         """
         if len(individuals) <= 2:
             for ind in individuals:
-                ind.crowding_distance = float('inf')
+                ind.crowding_distance = float("inf")
             return individuals
 
         if objectives is None:
-            objectives = ["coverage", "fairness", "preferences",
-                         "learning_goals", "acgme_compliance", "continuity"]
+            objectives = [
+                "coverage",
+                "fairness",
+                "preferences",
+                "learning_goals",
+                "acgme_compliance",
+                "continuity",
+            ]
 
         # Initialize distances
         for ind in individuals:
@@ -237,12 +251,12 @@ class CrowdingDistance:
             # Sort by this objective
             sorted_inds = sorted(
                 individuals,
-                key=lambda ind: getattr(ind.fitness, obj) if ind.fitness else 0
+                key=lambda ind: getattr(ind.fitness, obj) if ind.fitness else 0,
             )
 
             # Boundary points get infinite distance
-            sorted_inds[0].crowding_distance = float('inf')
-            sorted_inds[-1].crowding_distance = float('inf')
+            sorted_inds[0].crowding_distance = float("inf")
+            sorted_inds[-1].crowding_distance = float("inf")
 
             # Get objective range
             if sorted_inds[0].fitness and sorted_inds[-1].fitness:
@@ -261,7 +275,9 @@ class CrowdingDistance:
                     if sorted_inds[i - 1].fitness and sorted_inds[i + 1].fitness:
                         obj_prev = getattr(sorted_inds[i - 1].fitness, obj)
                         obj_next = getattr(sorted_inds[i + 1].fitness, obj)
-                        sorted_inds[i].crowding_distance += (obj_next - obj_prev) / obj_range
+                        sorted_inds[i].crowding_distance += (
+                            obj_next - obj_prev
+                        ) / obj_range
 
         return individuals
 
@@ -269,6 +285,7 @@ class CrowdingDistance:
 @dataclass
 class NSGA2Config:
     """Configuration for NSGA-II algorithm."""
+
     population_size: int = 100
     max_generations: int = 200
     crossover_method: CrossoverMethod = CrossoverMethod.UNIFORM
@@ -314,8 +331,12 @@ class NSGA2Solver(BioInspiredSolver):
         """
         self.config = config or NSGA2Config()
         self.objectives = objectives or [
-            "coverage", "fairness", "preferences",
-            "learning_goals", "acgme_compliance", "continuity"
+            "coverage",
+            "fairness",
+            "preferences",
+            "learning_goals",
+            "acgme_compliance",
+            "continuity",
         ]
 
         super().__init__(
@@ -356,10 +377,10 @@ class NSGA2Solver(BioInspiredSolver):
         start_time = time.time()
 
         # Calculate number of templates
-        self._n_templates = max(1, len([
-            t for t in context.templates
-            if not t.requires_procedure_credential
-        ]))
+        self._n_templates = max(
+            1,
+            len([t for t in context.templates if not t.requires_procedure_credential]),
+        )
 
         # Initialize population
         self.population = self.initialize_population(context)
@@ -395,7 +416,7 @@ class NSGA2Solver(BioInspiredSolver):
             # Update Pareto front
             pareto = ParetoFront(
                 individuals=[ind.copy() for ind in self.fronts[0]],
-                generation=generation
+                generation=generation,
             )
             self.pareto_history.append(pareto)
             self.pareto_front = pareto.individuals
@@ -431,7 +452,7 @@ class NSGA2Solver(BioInspiredSolver):
         # Return knee point of final Pareto front
         final_pareto = ParetoFront(
             individuals=self.fronts[0] if self.fronts else [],
-            generation=len(self.evolution_history)
+            generation=len(self.evolution_history),
         )
         knee = final_pareto.get_knee_point()
         self.best_individual = knee
@@ -534,22 +555,26 @@ class NSGA2Solver(BioInspiredSolver):
             fitness2 = self.evaluate_fitness(child2_chr, context)
 
             # Create individuals
-            offspring.append(Individual(
-                chromosome=child1_chr,
-                fitness=fitness1,
-                generation=generation + 1,
-                parent_ids=[parent1.id, parent2.id],
-                id=self._get_next_id(),
-            ))
-
-            if len(offspring) < self.population_size:
-                offspring.append(Individual(
-                    chromosome=child2_chr,
-                    fitness=fitness2,
+            offspring.append(
+                Individual(
+                    chromosome=child1_chr,
+                    fitness=fitness1,
                     generation=generation + 1,
                     parent_ids=[parent1.id, parent2.id],
                     id=self._get_next_id(),
-                ))
+                )
+            )
+
+            if len(offspring) < self.population_size:
+                offspring.append(
+                    Individual(
+                        chromosome=child2_chr,
+                        fitness=fitness2,
+                        generation=generation + 1,
+                        parent_ids=[parent1.id, parent2.id],
+                        id=self._get_next_id(),
+                    )
+                )
 
         return offspring
 
@@ -562,8 +587,7 @@ class NSGA2Solver(BioInspiredSolver):
         2. If same rank, higher crowding distance wins (more diverse)
         """
         candidates = random.sample(
-            self.population,
-            min(self.config.tournament_size, len(self.population))
+            self.population, min(self.config.tournament_size, len(self.population))
         )
 
         winner = candidates[0]
@@ -601,7 +625,7 @@ class NSGA2Solver(BioInspiredSolver):
                 sorted_front = sorted(
                     front,
                     key=lambda ind: ind.crowding_distance,
-                    reverse=True  # Higher crowding = more diverse
+                    reverse=True,  # Higher crowding = more diverse
                 )
                 new_population.extend(sorted_front[:remaining])
                 break
@@ -618,8 +642,8 @@ class NSGA2Solver(BioInspiredSolver):
 
         # Check if spread increased or size increased
         return (
-            len(curr.individuals) > len(prev.individuals) or
-            curr.compute_spread() > prev.compute_spread() * 1.01
+            len(curr.individuals) > len(prev.individuals)
+            or curr.compute_spread() > prev.compute_spread() * 1.01
         )
 
     def _check_convergence(self, generation: int) -> bool:
@@ -634,7 +658,7 @@ class NSGA2Solver(BioInspiredSolver):
         # Check hypervolume stability
         recent_hv = [
             s.hypervolume
-            for s in self.evolution_history[-self.config.early_stop_generations:]
+            for s in self.evolution_history[-self.config.early_stop_generations :]
         ]
         hv_range = max(recent_hv) - min(recent_hv)
 
@@ -670,14 +694,10 @@ class NSGA2Solver(BioInspiredSolver):
             "tournament_size": self.config.tournament_size,
         }
 
-        base_data["pareto_history"] = [
-            pf.to_json() for pf in self.pareto_history[-10:]
-        ]
+        base_data["pareto_history"] = [pf.to_json() for pf in self.pareto_history[-10:]]
 
         base_data["final_pareto_front"] = (
-            self.pareto_history[-1].to_json()
-            if self.pareto_history
-            else None
+            self.pareto_history[-1].to_json() if self.pareto_history else None
         )
 
         return base_data

@@ -106,9 +106,7 @@ class MockConstraint(SoftConstraint):
 def test_context():
     """Create a test scheduling context."""
     residents = [MockPerson(role="RESIDENT") for _ in range(5)]
-    blocks = [
-        MockBlock(block_date=date.today() + timedelta(days=i)) for i in range(10)
-    ]
+    blocks = [MockBlock(block_date=date.today() + timedelta(days=i)) for i in range(10)]
     templates = [MockTemplate(name=f"Template_{i}") for i in range(3)]
 
     return SchedulingContext(
@@ -136,11 +134,15 @@ def test_constraints():
 def conflicting_constraints():
     """Create constraints that conflict."""
     return [
-        MockConstraint("Equity", ConstraintType.EQUITY, weight=1.0, always_satisfied=True),
+        MockConstraint(
+            "Equity", ConstraintType.EQUITY, weight=1.0, always_satisfied=True
+        ),
         MockConstraint(
             "Preference", ConstraintType.PREFERENCE, weight=1.0, always_satisfied=False
         ),
-        MockConstraint("Capacity", ConstraintType.CAPACITY, weight=1.0, always_satisfied=False),
+        MockConstraint(
+            "Capacity", ConstraintType.CAPACITY, weight=1.0, always_satisfied=False
+        ),
     ]
 
 
@@ -302,7 +304,9 @@ class TestReplicaGeneration:
     def test_replica_indices(self, spin_glass_scheduler):
         """Test that replica indices are assigned correctly."""
         n_replicas = 5
-        replicas = spin_glass_scheduler.generate_replica_schedules(n_replicas=n_replicas)
+        replicas = spin_glass_scheduler.generate_replica_schedules(
+            n_replicas=n_replicas
+        )
 
         indices = [r.replica_index for r in replicas]
         assert indices == list(range(n_replicas))
@@ -381,8 +385,12 @@ class TestParisiOverlap:
         """Test that overlap is symmetric: q_ab = q_ba."""
         replicas = spin_glass_scheduler.generate_replica_schedules(n_replicas=3)
 
-        overlap_01 = spin_glass_scheduler.compute_parisi_overlap(replicas[0], replicas[1])
-        overlap_10 = spin_glass_scheduler.compute_parisi_overlap(replicas[1], replicas[0])
+        overlap_01 = spin_glass_scheduler.compute_parisi_overlap(
+            replicas[0], replicas[1]
+        )
+        overlap_10 = spin_glass_scheduler.compute_parisi_overlap(
+            replicas[1], replicas[0]
+        )
 
         assert overlap_01 == pytest.approx(overlap_10)
 
@@ -397,7 +405,9 @@ class TestParisiOverlap:
         )
 
         replicas = spin_glass_scheduler.generate_replica_schedules(n_replicas=1)
-        overlap = spin_glass_scheduler.compute_parisi_overlap(empty_replica, replicas[0])
+        overlap = spin_glass_scheduler.compute_parisi_overlap(
+            empty_replica, replicas[0]
+        )
 
         # Empty vs non-empty should have 0 overlap
         assert overlap == 0.0

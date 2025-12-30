@@ -562,9 +562,7 @@ class InteractivePreferenceElicitor:
         self.max_iterations = max_iterations
         self.state = PreferenceElicitationState()
 
-    def start_elicitation(
-        self, frontier: ParetoFrontier
-    ) -> list[Solution]:
+    def start_elicitation(self, frontier: ParetoFrontier) -> list[Solution]:
         """
         Start the elicitation process.
 
@@ -602,11 +600,13 @@ class InteractivePreferenceElicitor:
             New set of solutions based on feedback
         """
         self.state.iteration += 1
-        self.state.feedback_history.append({
-            "type": feedback_type,
-            "data": feedback_data,
-            "iteration": self.state.iteration,
-        })
+        self.state.feedback_history.append(
+            {
+                "type": feedback_type,
+                "data": feedback_data,
+                "iteration": self.state.iteration,
+            }
+        )
 
         if feedback_type == "rating":
             return self._process_rating_feedback(feedback_data, current_frontier)
@@ -621,7 +621,9 @@ class InteractivePreferenceElicitor:
             return self._process_bounds_feedback(feedback_data, current_frontier)
 
         elif feedback_type == "classification":
-            return self._process_classification_feedback(feedback_data, current_frontier)
+            return self._process_classification_feedback(
+                feedback_data, current_frontier
+            )
 
         elif feedback_type == "done":
             self.state.is_complete = True
@@ -654,7 +656,9 @@ class InteractivePreferenceElicitor:
             self.state.reference_history.append(self.state.current_reference)
 
             # Find solutions near the best one
-            return self._find_neighborhood(best_solution, frontier, self.initial_samples)
+            return self._find_neighborhood(
+                best_solution, frontier, self.initial_samples
+            )
 
         return self._select_representatives(frontier, self.initial_samples)
 
@@ -677,9 +681,7 @@ class InteractivePreferenceElicitor:
             preferred = next(
                 (s for s in frontier.solutions if str(s.id) == preferred_id), None
             )
-            other = next(
-                (s for s in frontier.solutions if str(s.id) == other_id), None
-            )
+            other = next((s for s in frontier.solutions if str(s.id) == other_id), None)
 
             if preferred and other:
                 # Increase weight for objectives where preferred is better
@@ -831,9 +833,7 @@ class InteractivePreferenceElicitor:
             best_idx = 0
 
             for i, candidate in enumerate(remaining):
-                min_dist = min(
-                    self._solution_distance(candidate, s) for s in selected
-                )
+                min_dist = min(self._solution_distance(candidate, s) for s in selected)
                 if min_dist > best_distance:
                     best_distance = min_dist
                     best_idx = i
@@ -892,9 +892,7 @@ class InteractivePreferenceElicitor:
                 if self.state.current_reference
                 else None
             ),
-            "reference_history": [
-                r.values for r in self.state.reference_history
-            ],
+            "reference_history": [r.values for r in self.state.reference_history],
             "selected_count": len(self.state.selected_solutions),
             "feedback_count": len(self.state.feedback_history),
         }
@@ -949,9 +947,7 @@ class PreferenceArticulator:
         """Set lexicographic priority ordering."""
         self.method = LexicographicOrdering(priority)
 
-    def start_interactive(
-        self, frontier: ParetoFrontier
-    ) -> list[Solution]:
+    def start_interactive(self, frontier: ParetoFrontier) -> list[Solution]:
         """Start interactive preference elicitation."""
         self.elicitor = InteractivePreferenceElicitor(self.objectives)
         return self.elicitor.start_elicitation(frontier)
@@ -990,7 +986,9 @@ class PreferenceArticulator:
         """Select best solutions according to current preferences."""
         if not self.method:
             # Default: return knee and extremes
-            result = [frontier.get_knee_solution()] if frontier.get_knee_solution() else []
+            result = (
+                [frontier.get_knee_solution()] if frontier.get_knee_solution() else []
+            )
             result.extend(frontier.get_extreme_solutions())
             return result[:n]
 

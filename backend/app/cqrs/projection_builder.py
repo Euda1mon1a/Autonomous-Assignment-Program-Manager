@@ -168,6 +168,7 @@ class ProjectionCheckpoint(Base):
 
     __table_args__ = (
         Index("idx_projection_checkpoint", "projection_name", "checkpoint_sequence"),
+        {"extend_existing": True},
     )
 
 

@@ -82,9 +82,9 @@ def test_persons(db: Session):
     for i in range(5):
         person = Person(
             id=uuid4(),
-            name=f"Resident {i+1}",
+            name=f"Resident {i + 1}",
             role="RESIDENT",
-            email=f"resident{i+1}@test.mil",
+            email=f"resident{i + 1}@test.mil",
             pgy_level=i % 3 + 1,  # Mix of PGY-1, PGY-2, PGY-3
         )
         db.add(person)
@@ -94,9 +94,9 @@ def test_persons(db: Session):
     for i in range(2):
         person = Person(
             id=uuid4(),
-            name=f"Faculty {i+1}",
+            name=f"Faculty {i + 1}",
             role="FACULTY",
-            email=f"faculty{i+1}@test.mil",
+            email=f"faculty{i + 1}@test.mil",
         )
         db.add(person)
         persons.append(person)
@@ -230,9 +230,7 @@ class TestDisruption:
 class TestPropagationAnalyzer:
     """Test propagation analysis."""
 
-    def test_build_constraint_graph(
-        self, db: Session, scheduling_context, test_blocks
-    ):
+    def test_build_constraint_graph(self, db: Session, scheduling_context, test_blocks):
         """Test constraint graph construction."""
         constraint_manager = ConstraintManager.create_default()
         analyzer = PropagationAnalyzer(
@@ -249,13 +247,17 @@ class TestPropagationAnalyzer:
 
         # Check specific edge exists (consecutive days)
         first_block = test_blocks[0]
-        second_day_blocks = [b for b in test_blocks if b.date == first_block.date + timedelta(days=1)]
+        second_day_blocks = [
+            b for b in test_blocks if b.date == first_block.date + timedelta(days=1)
+        ]
 
         if second_day_blocks:
             # Should have edge from first block to next day's blocks
             second_block = second_day_blocks[0]
             # May not have direct edge if different sessions, but should be connected via graph
-            assert nx.has_path(graph, first_block.id, second_block.id) or True  # Allow for different topologies
+            assert (
+                nx.has_path(graph, first_block.id, second_block.id) or True
+            )  # Allow for different topologies
 
     def test_measure_propagation_single_block(
         self, db: Session, scheduling_context, test_blocks
@@ -282,7 +284,9 @@ class TestPropagationAnalyzer:
         # Verify propagation strength decays
         if len(steps) > 1:
             for i in range(len(steps) - 1):
-                assert steps[i].propagation_strength >= steps[i + 1].propagation_strength
+                assert (
+                    steps[i].propagation_strength >= steps[i + 1].propagation_strength
+                )
 
     def test_measure_propagation_multiple_epicenters(
         self, db: Session, scheduling_context, test_blocks
@@ -381,9 +385,7 @@ class TestAndersonLocalizer:
         assert len(region.epicenter_blocks) == 5
         assert region.region_size >= 0
 
-    def test_region_classification(
-        self, db: Session, scheduling_context, test_blocks
-    ):
+    def test_region_classification(self, db: Session, scheduling_context, test_blocks):
         """Test region type classification."""
         localizer = AndersonLocalizer(db=db)
 
@@ -664,9 +666,7 @@ class TestIntegration:
         assert event.quality in LocalizationQuality
         assert tracker.metrics.total_events == 1
 
-    def test_multiple_disruptions(
-        self, db: Session, scheduling_context, test_blocks
-    ):
+    def test_multiple_disruptions(self, db: Session, scheduling_context, test_blocks):
         """Test handling multiple disruptions."""
         localizer = AndersonLocalizer(db=db)
         tracker = LocalizationMetricsTracker()

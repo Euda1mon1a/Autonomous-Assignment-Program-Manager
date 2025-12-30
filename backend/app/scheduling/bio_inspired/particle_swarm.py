@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 
 class SwarmTopology(Enum):
     """Topology for particle communication."""
+
     GLOBAL = "global"  # All particles share global best
     RING = "ring"  # Each particle has 2 neighbors
     RANDOM = "random"  # Random subset of neighbors
@@ -60,11 +61,12 @@ class Particle:
     - Personal best: Best position this particle has visited
     - Fitness: Evaluation at current position
     """
+
     position: np.ndarray
     velocity: np.ndarray
     personal_best: np.ndarray
-    personal_best_fitness: float = float('-inf')
-    fitness: float = float('-inf')
+    personal_best_fitness: float = float("-inf")
+    fitness: float = float("-inf")
     id: int = 0
     neighbors: list[int] = field(default_factory=list)
 
@@ -92,6 +94,7 @@ class Particle:
 @dataclass
 class PSOConfig:
     """Configuration for Particle Swarm Optimization."""
+
     swarm_size: int = 50
     max_iterations: int = 200
     topology: SwarmTopology = SwarmTopology.GLOBAL
@@ -167,7 +170,7 @@ class ParticleSwarmSolver(BioInspiredSolver):
         # PSO state
         self.swarm: list[Particle] = []
         self.global_best: np.ndarray | None = None
-        self.global_best_fitness: float = float('-inf')
+        self.global_best_fitness: float = float("-inf")
         self.current_inertia: float = self.config.inertia_weight
         self._n_templates: int = 1
         self._fitness_history: list[float] = []
@@ -185,10 +188,10 @@ class ParticleSwarmSolver(BioInspiredSolver):
         start_time = time.time()
 
         # Calculate number of templates
-        self._n_templates = max(1, len([
-            t for t in context.templates
-            if not t.requires_procedure_credential
-        ]))
+        self._n_templates = max(
+            1,
+            len([t for t in context.templates if not t.requires_procedure_credential]),
+        )
 
         # Initialize swarm
         self._initialize_swarm()
@@ -258,15 +261,13 @@ class ParticleSwarmSolver(BioInspiredSolver):
             position = np.random.uniform(
                 self.config.position_min,
                 self.config.position_max,
-                self.config.dimension
+                self.config.dimension,
             )
 
             # Random initial velocity
             velocity_range = (self.config.position_max - self.config.position_min) * 0.1
             velocity = np.random.uniform(
-                -velocity_range,
-                velocity_range,
-                self.config.dimension
+                -velocity_range, velocity_range, self.config.dimension
             )
 
             particle = Particle(
@@ -329,23 +330,21 @@ class ParticleSwarmSolver(BioInspiredSolver):
         r2 = np.random.random(self.config.dimension)
 
         # Velocity update
-        cognitive = self.config.cognitive_coeff * r1 * (
-            particle.personal_best - particle.position
+        cognitive = (
+            self.config.cognitive_coeff
+            * r1
+            * (particle.personal_best - particle.position)
         )
-        social = self.config.social_coeff * r2 * (
-            local_best - particle.position
-        )
+        social = self.config.social_coeff * r2 * (local_best - particle.position)
 
-        new_velocity = (
-            self.current_inertia * particle.velocity +
-            cognitive +
-            social
-        )
+        new_velocity = self.current_inertia * particle.velocity + cognitive + social
 
         # Clamp velocity
         velocity_magnitude = np.linalg.norm(new_velocity)
         if velocity_magnitude > self.config.velocity_clamp:
-            new_velocity = new_velocity * (self.config.velocity_clamp / velocity_magnitude)
+            new_velocity = new_velocity * (
+                self.config.velocity_clamp / velocity_magnitude
+            )
 
         particle.velocity = new_velocity
 
@@ -354,9 +353,7 @@ class ParticleSwarmSolver(BioInspiredSolver):
 
         # Clamp position to bounds
         new_position = np.clip(
-            new_position,
-            self.config.position_min,
-            self.config.position_max
+            new_position, self.config.position_min, self.config.position_max
         )
 
         particle.position = new_position
@@ -372,8 +369,10 @@ class ParticleSwarmSolver(BioInspiredSolver):
 
     def _get_local_best(self, particle: Particle) -> np.ndarray:
         """Get best position among particle's neighbors."""
-        best_fitness = float('-inf')
-        best_position = self.global_best if self.global_best is not None else particle.position
+        best_fitness = float("-inf")
+        best_position = (
+            self.global_best if self.global_best is not None else particle.position
+        )
 
         for neighbor_idx in particle.neighbors:
             neighbor = self.swarm[neighbor_idx]
@@ -474,7 +473,7 @@ class ParticleSwarmSolver(BioInspiredSolver):
 
                 # ACGME: respect weekly limits
                 weekly_count = sum(
-                    chromosome.genes[r_idx, max(0, b_idx-10):b_idx] > 0
+                    chromosome.genes[r_idx, max(0, b_idx - 10) : b_idx] > 0
                 )
                 if weekly_count >= 13:  # ~80 hours
                     score -= weights[4] * 2.0  # Heavy penalty
@@ -497,9 +496,8 @@ class ParticleSwarmSolver(BioInspiredSolver):
         Linear decrease from max to min over iterations.
         """
         progress = iteration / self.config.max_iterations
-        self.current_inertia = (
-            self.config.inertia_max -
-            progress * (self.config.inertia_max - self.config.inertia_min)
+        self.current_inertia = self.config.inertia_max - progress * (
+            self.config.inertia_max - self.config.inertia_min
         )
 
     def _track_iteration(self, iteration: int):
@@ -537,7 +535,7 @@ class ParticleSwarmSolver(BioInspiredSolver):
         if len(self._fitness_history) < self.config.early_stop_iterations:
             return False
 
-        recent = self._fitness_history[-self.config.early_stop_iterations:]
+        recent = self._fitness_history[-self.config.early_stop_iterations :]
         improvement = max(recent) - min(recent)
 
         return improvement < 0.001

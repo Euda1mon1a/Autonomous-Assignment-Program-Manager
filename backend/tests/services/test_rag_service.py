@@ -18,7 +18,9 @@ class TestRAGServiceChunking:
         """Test basic text chunking with default parameters."""
         service = RAGService(db)
 
-        text = "This is sentence one. This is sentence two. This is sentence three. " * 20
+        text = (
+            "This is sentence one. This is sentence two. This is sentence three. " * 20
+        )
         chunks = service._chunk_text(text, chunk_size=100, chunk_overlap=20)
 
         assert len(chunks) > 1, "Text should be split into multiple chunks"
@@ -78,19 +80,22 @@ class TestRAGServiceIngestion:
 
     @pytest.mark.skipif(
         True,  # Skip for SQLite tests
-        reason="Requires PostgreSQL with pgvector extension"
+        reason="Requires PostgreSQL with pgvector extension",
     )
     async def test_ingest_document_success(self, db):
         """Test successful document ingestion."""
         service = RAGService(db)
 
-        content = """
+        content = (
+            """
         ACGME Duty Hour Requirements:
 
         1. The 80-Hour Rule: Residents must not exceed 80 hours per week averaged over 4 weeks.
         2. The 1-in-7 Rule: Residents must have at least one 24-hour period free of duty every 7 days.
         3. Supervision Requirements: All patient care must be supervised.
-        """ * 5  # Make it long enough to chunk
+        """
+            * 5
+        )  # Make it long enough to chunk
 
         response = await service.ingest_document(
             content=content,
@@ -119,7 +124,9 @@ class TestRAGServiceIngestion:
         """Test that invalid overlap raises ValueError."""
         service = RAGService(db)
 
-        with pytest.raises(ValueError, match="chunk_overlap must be less than chunk_size"):
+        with pytest.raises(
+            ValueError, match="chunk_overlap must be less than chunk_size"
+        ):
             await service.ingest_document(
                 content="Some content",
                 doc_type="acgme_rules",
@@ -133,7 +140,7 @@ class TestRAGServiceRetrieval:
 
     @pytest.mark.skipif(
         True,  # Skip for SQLite tests
-        reason="Requires PostgreSQL with pgvector extension"
+        reason="Requires PostgreSQL with pgvector extension",
     )
     async def test_retrieve_documents(self, db):
         """Test retrieving documents by similarity."""
@@ -166,7 +173,7 @@ class TestRAGServiceRetrieval:
 
     @pytest.mark.skipif(
         True,  # Skip for SQLite tests
-        reason="Requires PostgreSQL with pgvector extension"
+        reason="Requires PostgreSQL with pgvector extension",
     )
     async def test_retrieve_with_doc_type_filter(self, db):
         """Test retrieving documents filtered by doc_type."""
@@ -215,7 +222,7 @@ class TestRAGServiceContextBuilding:
 
     @pytest.mark.skipif(
         True,  # Skip for SQLite tests
-        reason="Requires PostgreSQL with pgvector extension"
+        reason="Requires PostgreSQL with pgvector extension",
     )
     async def test_build_context(self, db):
         """Test building context string from retrieved documents."""
@@ -237,14 +244,16 @@ class TestRAGServiceContextBuilding:
 
         assert context.query == "work hour limits"
         assert len(context.context) > 0
-        assert "80-hour" in context.context.lower() or "80 hour" in context.context.lower()
+        assert (
+            "80-hour" in context.context.lower() or "80 hour" in context.context.lower()
+        )
         assert len(context.sources) > 0
         assert context.token_count > 0
         assert context.token_count <= 2000
 
     @pytest.mark.skipif(
         True,  # Skip for SQLite tests
-        reason="Requires PostgreSQL with pgvector extension"
+        reason="Requires PostgreSQL with pgvector extension",
     )
     async def test_build_context_respects_token_limit(self, db):
         """Test that context building respects max_tokens limit."""
@@ -289,7 +298,7 @@ class TestRAGServiceHealth:
 
     @pytest.mark.skipif(
         True,  # Skip for SQLite tests
-        reason="Requires PostgreSQL with pgvector extension"
+        reason="Requires PostgreSQL with pgvector extension",
     )
     async def test_get_health(self, db):
         """Test health check returns system status."""
@@ -306,7 +315,7 @@ class TestRAGServiceHealth:
 
     @pytest.mark.skipif(
         True,  # Skip for SQLite tests
-        reason="Requires PostgreSQL with pgvector extension"
+        reason="Requires PostgreSQL with pgvector extension",
     )
     async def test_get_health_with_documents(self, db):
         """Test health check with ingested documents."""
@@ -330,7 +339,7 @@ class TestRAGServiceDeletion:
 
     @pytest.mark.skipif(
         True,  # Skip for SQLite tests
-        reason="Requires PostgreSQL with pgvector extension"
+        reason="Requires PostgreSQL with pgvector extension",
     )
     async def test_delete_by_doc_type(self, db):
         """Test deleting documents by type."""
@@ -358,7 +367,7 @@ class TestRAGServiceDeletion:
 
     @pytest.mark.skipif(
         True,  # Skip for SQLite tests
-        reason="Requires PostgreSQL with pgvector extension"
+        reason="Requires PostgreSQL with pgvector extension",
     )
     async def test_delete_by_id(self, db):
         """Test deleting a specific document by ID."""

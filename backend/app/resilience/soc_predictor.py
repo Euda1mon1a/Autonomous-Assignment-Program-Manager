@@ -195,8 +195,12 @@ class SOCAvalanchePredictor:
                 relaxation_increasing
                 and relaxation_time
                 and relaxation_time > self.relaxation_threshold,
-                variance_increasing and variance_slope and variance_slope > self.variance_slope_threshold,
-                ac1_increasing and ac1_current and ac1_current > self.autocorrelation_threshold,
+                variance_increasing
+                and variance_slope
+                and variance_slope > self.variance_slope_threshold,
+                ac1_increasing
+                and ac1_current
+                and ac1_current > self.autocorrelation_threshold,
             ]
         )
 
@@ -324,7 +328,9 @@ class SOCAvalanchePredictor:
 
             # Recent vs baseline relaxation time
             split = len(perturbations) // 2
-            baseline_tau = statistics.mean(perturbations[:split]) * 24  # Convert to hours
+            baseline_tau = (
+                statistics.mean(perturbations[:split]) * 24
+            )  # Convert to hours
             recent_tau = statistics.mean(perturbations[split:]) * 24
 
             is_increasing = recent_tau > baseline_tau * 1.2  # 20% increase
@@ -438,7 +444,9 @@ class SOCAvalanchePredictor:
 
         # Variance risk
         if variance_slope is not None:
-            var_risk = min(1.0, abs(variance_slope) / (self.variance_slope_threshold * 2))
+            var_risk = min(
+                1.0, abs(variance_slope) / (self.variance_slope_threshold * 2)
+            )
             risk_components.append(var_risk * 0.30)
 
         # AC1 risk
@@ -511,7 +519,9 @@ class SOCAvalanchePredictor:
             recommendations.append("Maintain current monitoring frequency")
 
         elif warning_level == WarningLevel.YELLOW:
-            recommendations.append("Single warning signal detected - increase monitoring")
+            recommendations.append(
+                "Single warning signal detected - increase monitoring"
+            )
             if relaxation_time and relaxation_time > self.relaxation_threshold:
                 recommendations.append(
                     f"Relaxation time elevated ({relaxation_time:.1f}hrs) - "
@@ -527,11 +537,11 @@ class SOCAvalanchePredictor:
                 )
 
         elif warning_level == WarningLevel.ORANGE:
-            recommendations.append(
-                "⚠️ TWO warning signals - avalanche risk elevated"
-            )
+            recommendations.append("⚠️ TWO warning signals - avalanche risk elevated")
             recommendations.append("Activate preventive measures:")
-            recommendations.append("- Review and optimize current schedule distribution")
+            recommendations.append(
+                "- Review and optimize current schedule distribution"
+            )
             recommendations.append("- Confirm backup coverage plans")
             recommendations.append("- Defer non-essential commitments")
             if days_to_critical:
@@ -585,7 +595,9 @@ class SOCAvalanchePredictor:
         items = []
 
         if relaxation_increasing:
-            items.append("Monitor swap resolution times - should decrease, not increase")
+            items.append(
+                "Monitor swap resolution times - should decrease, not increase"
+            )
         if variance_increasing:
             items.append("Watch for increasing daily utilization fluctuations")
         if ac1_increasing:

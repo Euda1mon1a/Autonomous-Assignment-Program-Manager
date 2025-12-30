@@ -159,9 +159,7 @@ class TestTopologicalFeature:
 
     def test_midpoint(self):
         """Test midpoint calculation."""
-        feature = TopologicalFeature(
-            dimension=0, birth=2.0, death=6.0, persistence=4.0
-        )
+        feature = TopologicalFeature(dimension=0, birth=2.0, death=6.0, persistence=4.0)
         assert feature.midpoint == 4.0
 
 
@@ -185,9 +183,7 @@ class TestPersistenceDiagram:
         h1 = [TopologicalFeature(1, 1.0, 3.0, 2.0)]
         h2 = [TopologicalFeature(2, 2.0, 4.0, 2.0)]
 
-        diagram = PersistenceDiagram(
-            h0_features=h0, h1_features=h1, h2_features=h2
-        )
+        diagram = PersistenceDiagram(h0_features=h0, h1_features=h1, h2_features=h2)
 
         assert diagram.total_features == 4
         assert len(diagram.h0_features) == 2
@@ -321,15 +317,11 @@ class TestPersistentScheduleAnalyzer:
             h1_features=[],
             h2_features=[TopologicalFeature(2, 0, 2, 2) for _ in range(5)],
         )
-        anomalous_score = analyzer.compute_structural_anomaly_score(
-            anomalous_diagram
-        )
+        anomalous_score = analyzer.compute_structural_anomaly_score(anomalous_diagram)
         assert 0.0 <= anomalous_score <= 1.0
         assert anomalous_score > 0.5  # Should be high for anomalous structure
 
-    def test_compare_schedules_topologically(
-        self, db: Session, sample_assignments
-    ):
+    def test_compare_schedules_topologically(self, db: Session, sample_assignments):
         """Test topological comparison of two schedules."""
         analyzer = PersistentScheduleAnalyzer(db)
 
@@ -363,19 +355,17 @@ class TestPersistentScheduleAnalyzer:
         analyzer = PersistentScheduleAnalyzer(db)
 
         # Get date range from sample assignments
-        first_block = db.query(Block).filter(
-            Block.id == sample_assignments[0].block_id
-        ).first()
-        last_block = db.query(Block).filter(
-            Block.id == sample_assignments[-1].block_id
-        ).first()
+        first_block = (
+            db.query(Block).filter(Block.id == sample_assignments[0].block_id).first()
+        )
+        last_block = (
+            db.query(Block).filter(Block.id == sample_assignments[-1].block_id).first()
+        )
 
         start_date = first_block.date
         end_date = last_block.date
 
-        result = analyzer.analyze_schedule(
-            start_date=start_date, end_date=end_date
-        )
+        result = analyzer.analyze_schedule(start_date=start_date, end_date=end_date)
 
         # Should return comprehensive analysis
         assert "total_assignments" in result
@@ -397,9 +387,7 @@ class TestPersistentScheduleAnalyzer:
         # Use a date range with no assignments
         future_date = date.today() + timedelta(days=365)
 
-        result = analyzer.analyze_schedule(
-            start_date=future_date, end_date=future_date
-        )
+        result = analyzer.analyze_schedule(start_date=future_date, end_date=future_date)
 
         # Should handle gracefully
         assert "error" in result or result["total_assignments"] == 0

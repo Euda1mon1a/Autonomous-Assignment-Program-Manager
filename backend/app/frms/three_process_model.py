@@ -151,11 +151,15 @@ class AlertnessState:
             "timestamp": self.timestamp.isoformat(),
             "sleep_reservoir": round(self.sleep_reservoir, 2),
             "hours_awake": round(self.hours_awake, 2),
-            "last_sleep_end": self.last_sleep_end.isoformat() if self.last_sleep_end else None,
+            "last_sleep_end": self.last_sleep_end.isoformat()
+            if self.last_sleep_end
+            else None,
             "last_sleep_duration": round(self.last_sleep_duration, 2),
             "cumulative_debt": round(self.cumulative_debt, 2),
             "circadian_phase": self.circadian_phase.value,
-            "effectiveness": self.effectiveness.to_dict() if self.effectiveness else None,
+            "effectiveness": self.effectiveness.to_dict()
+            if self.effectiveness
+            else None,
             "time_series": [
                 {"time": t.isoformat(), "effectiveness": round(e, 2)}
                 for t, e in self.time_series[-48:]  # Last 48 data points
@@ -380,7 +384,9 @@ class ThreeProcessModel:
         new_reservoir = min(self.S_MAX, state.sleep_reservoir + recovery)
 
         # Reduce cumulative debt (sleep pays off debt)
-        debt_recovery = effective_hours * 2.0  # Each hour of sleep reduces 2 hours of debt
+        debt_recovery = (
+            effective_hours * 2.0
+        )  # Each hour of sleep reduces 2 hours of debt
         new_debt = max(0, state.cumulative_debt - debt_recovery)
 
         # Update circadian phase
@@ -459,9 +465,9 @@ class ThreeProcessModel:
 
         # Combined effectiveness (weighted sum minus inertia)
         combined = (
-            self.WEIGHT_HOMEOSTATIC * homeostatic +
-            self.WEIGHT_CIRCADIAN * circadian -
-            inertia_penalty
+            self.WEIGHT_HOMEOSTATIC * homeostatic
+            + self.WEIGHT_CIRCADIAN * circadian
+            - inertia_penalty
         )
 
         # Normalize to 0-100 range
@@ -478,7 +484,8 @@ class ThreeProcessModel:
             "circadian_phase": state.circadian_phase.value,
             "minutes_since_wake": (
                 (state.timestamp - state.last_sleep_end).total_seconds() / 60.0
-                if state.last_sleep_end else None
+                if state.last_sleep_end
+                else None
             ),
             "last_sleep_hours": state.last_sleep_duration,
         }
@@ -511,7 +518,12 @@ class ThreeProcessModel:
         mean = 75.0
         amplitude = mean * self.CIRCADIAN_AMPLITUDE
 
-        phase_radians = 2 * math.pi * (time_of_day - self.CIRCADIAN_PHASE_SHIFT) / self.CIRCADIAN_PERIOD
+        phase_radians = (
+            2
+            * math.pi
+            * (time_of_day - self.CIRCADIAN_PHASE_SHIFT)
+            / self.CIRCADIAN_PERIOD
+        )
 
         # Shift by -π/2 so minimum is at phase_shift
         circadian = mean + amplitude * math.sin(phase_radians - math.pi / 2)
@@ -534,7 +546,9 @@ class ThreeProcessModel:
         if state.last_sleep_end is None:
             return 0.0
 
-        minutes_since_wake = (state.timestamp - state.last_sleep_end).total_seconds() / 60.0
+        minutes_since_wake = (
+            state.timestamp - state.last_sleep_end
+        ).total_seconds() / 60.0
 
         if minutes_since_wake >= self.INERTIA_DURATION:
             return 0.0
@@ -641,7 +655,7 @@ class ThreeProcessModel:
 
         # Parabolic: maximum at center, 1.0 at edges
         normalized_distance = distance_from_center / max_distance
-        multiplier = 2.5 - 1.5 * (normalized_distance ** 2)
+        multiplier = 2.5 - 1.5 * (normalized_distance**2)
 
         return multiplier
 
@@ -752,8 +766,7 @@ class ThreeProcessModel:
 
         # Calculate time in WOCL
         wocl_samples = sum(
-            1 for t, _ in predictions
-            if self.is_in_wocl(t.hour + t.minute / 60.0)
+            1 for t, _ in predictions if self.is_in_wocl(t.hour + t.minute / 60.0)
         )
 
         return {
@@ -803,16 +816,10 @@ class ThreeProcessModel:
             )
 
         if has_wocl_exposure:
-            recommendations.append(
-                "WOCL: Shift includes 2:00-6:00 AM exposure"
-            )
-            recommendations.append(
-                "Avoid: High-risk procedures during WOCL window"
-            )
+            recommendations.append("WOCL: Shift includes 2:00-6:00 AM exposure")
+            recommendations.append("Avoid: High-risk procedures during WOCL window")
 
         if mean_score >= self.THRESHOLD_ACCEPTABLE:
-            recommendations.append(
-                "Overall shift effectiveness is acceptable"
-            )
+            recommendations.append("Overall shift effectiveness is acceptable")
 
         return recommendations

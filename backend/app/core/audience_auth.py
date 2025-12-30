@@ -485,7 +485,9 @@ def require_audience(audience: str) -> Callable:
         # Parse "Bearer <token>" format
         parts = authorization.split()
         if len(parts) != 2 or parts[0].lower() != "bearer":
-            logger.warning(f"Invalid Authorization header format for audience: {audience}")
+            logger.warning(
+                f"Invalid Authorization header format for audience: {audience}"
+            )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Invalid authorization format",

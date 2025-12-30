@@ -55,6 +55,7 @@ logger = logging.getLogger(__name__)
 
 class DecompositionStrategy(Enum):
     """Strategies for decomposing the problem."""
+
     BY_RESIDENT = "by_resident"  # Each resident as separate QUBO
     BY_BLOCK_WEEK = "by_block_week"  # Weekly blocks as QUBO
     BY_TEMPLATE = "by_template"  # Templates as separate problems
@@ -71,6 +72,7 @@ class ProblemDecomposition:
     - Each sub-problem is solved independently with QUBO
     - Solutions are merged to form complete schedule
     """
+
     # Decomposition matrix: [n_residents, n_blocks] -> sub-problem index
     partition: np.ndarray
     n_subproblems: int
@@ -131,9 +133,7 @@ class ProblemDecomposition:
     ) -> "ProblemDecomposition":
         """Create random adaptive decomposition."""
         partition = np.random.randint(
-            0, n_subproblems,
-            size=(n_residents, n_blocks),
-            dtype=np.int32
+            0, n_subproblems, size=(n_residents, n_blocks), dtype=np.int32
         )
         return cls(
             partition=partition,
@@ -173,6 +173,7 @@ class ProblemDecomposition:
 @dataclass
 class HybridConfig:
     """Configuration for Hybrid GA-QUBO solver."""
+
     population_size: int = 50
     max_generations: int = 100
 
@@ -268,10 +269,10 @@ class HybridGAQUBOSolver(BioInspiredSolver):
 
         n_residents = len(context.residents)
         n_blocks = len([b for b in context.blocks if not b.is_weekend])
-        self._n_templates = max(1, len([
-            t for t in context.templates
-            if not t.requires_procedure_credential
-        ]))
+        self._n_templates = max(
+            1,
+            len([t for t in context.templates if not t.requires_procedure_credential]),
+        )
 
         # Initialize islands
         self._initialize_islands(context, n_residents, n_blocks)
@@ -294,9 +295,9 @@ class HybridGAQUBOSolver(BioInspiredSolver):
 
             # Migration between islands
             if (
-                self.config.enable_migration and
-                generation > 0 and
-                generation % self.config.migration_interval == 0
+                self.config.enable_migration
+                and generation > 0
+                and generation % self.config.migration_interval == 0
             ):
                 self._migrate_between_islands()
 
@@ -344,7 +345,9 @@ class HybridGAQUBOSolver(BioInspiredSolver):
             for _ in range(pop_per_island):
                 # Create decomposition
                 if strategy == DecompositionStrategy.BY_RESIDENT:
-                    decomp = ProblemDecomposition.create_by_resident(n_residents, n_blocks)
+                    decomp = ProblemDecomposition.create_by_resident(
+                        n_residents, n_blocks
+                    )
                 elif strategy == DecompositionStrategy.BY_BLOCK_WEEK:
                     decomp = ProblemDecomposition.create_by_week(n_residents, n_blocks)
                 else:
@@ -370,7 +373,7 @@ class HybridGAQUBOSolver(BioInspiredSolver):
         all_individuals = [ind for island in self.islands for ind in island]
         self.best_individual = max(
             all_individuals,
-            key=lambda ind: ind.fitness.weighted_sum() if ind.fitness else 0
+            key=lambda ind: ind.fitness.weighted_sum() if ind.fitness else 0,
         )
 
     def _evolve_island(
@@ -386,11 +389,11 @@ class HybridGAQUBOSolver(BioInspiredSolver):
         sorted_island = sorted(
             island,
             key=lambda ind: ind.fitness.weighted_sum() if ind.fitness else 0,
-            reverse=True
+            reverse=True,
         )
 
         # Keep elite
-        new_island = sorted_island[:self.config.elite_size]
+        new_island = sorted_island[: self.config.elite_size]
 
         # Create offspring
         while len(new_island) < len(island):
@@ -447,22 +450,26 @@ class HybridGAQUBOSolver(BioInspiredSolver):
             fitness2 = self.evaluate_fitness(child2_chr, context)
 
             # Create individuals
-            new_island.append(Individual(
-                chromosome=child1_chr,
-                fitness=fitness1,
-                generation=generation + 1,
-                parent_ids=[parents[0].id, parents[1].id],
-                id=self._get_next_id(),
-            ))
-
-            if len(new_island) < len(island):
-                new_island.append(Individual(
-                    chromosome=child2_chr,
-                    fitness=fitness2,
+            new_island.append(
+                Individual(
+                    chromosome=child1_chr,
+                    fitness=fitness1,
                     generation=generation + 1,
                     parent_ids=[parents[0].id, parents[1].id],
                     id=self._get_next_id(),
-                ))
+                )
+            )
+
+            if len(new_island) < len(island):
+                new_island.append(
+                    Individual(
+                        chromosome=child2_chr,
+                        fitness=fitness2,
+                        generation=generation + 1,
+                        parent_ids=[parents[0].id, parents[1].id],
+                        id=self._get_next_id(),
+                    )
+                )
 
         # Replace island population
         island.clear()
@@ -493,9 +500,10 @@ class HybridGAQUBOSolver(BioInspiredSolver):
             if n_vars < self.config.min_subproblem_size:
                 # Too small for QUBO, use random assignment
                 solution = np.random.randint(
-                    0, self._n_templates + 1,
+                    0,
+                    self._n_templates + 1,
                     size=(n_residents, n_blocks),
-                    dtype=np.int32
+                    dtype=np.int32,
                 )
                 decomp.subproblem_solutions[subproblem_idx] = solution
                 decomp.subproblem_energies[subproblem_idx] = 0.0
@@ -512,9 +520,10 @@ class HybridGAQUBOSolver(BioInspiredSolver):
                 logger.warning(f"QUBO sub-problem {subproblem_idx} failed: {e}")
                 # Fallback to random
                 solution = np.random.randint(
-                    0, self._n_templates + 1,
+                    0,
+                    self._n_templates + 1,
                     size=(n_residents, n_blocks),
-                    dtype=np.int32
+                    dtype=np.int32,
                 )
                 decomp.subproblem_solutions[subproblem_idx] = solution
                 decomp.subproblem_energies[subproblem_idx] = 0.0
@@ -678,8 +687,7 @@ class HybridGAQUBOSolver(BioInspiredSolver):
 
         # Random reassignment for mutated positions
         mutated[mutation_mask] = np.random.randint(
-            0, n_subproblems,
-            size=np.sum(mutation_mask)
+            0, n_subproblems, size=np.sum(mutation_mask)
         )
 
         return mutated
@@ -693,9 +701,11 @@ class HybridGAQUBOSolver(BioInspiredSolver):
             sorted_island = sorted(
                 island,
                 key=lambda ind: ind.fitness.weighted_sum() if ind.fitness else 0,
-                reverse=True
+                reverse=True,
             )
-            migrants.append([ind.copy() for ind in sorted_island[:self.config.migration_size]])
+            migrants.append(
+                [ind.copy() for ind in sorted_island[: self.config.migration_size]]
+            )
 
         # Receive migrants from previous island
         for i, island in enumerate(self.islands):
@@ -715,14 +725,17 @@ class HybridGAQUBOSolver(BioInspiredSolver):
         all_individuals = [ind for island in self.islands for ind in island]
         current_best = max(
             all_individuals,
-            key=lambda ind: ind.fitness.weighted_sum() if ind.fitness else 0
+            key=lambda ind: ind.fitness.weighted_sum() if ind.fitness else 0,
         )
 
         if (
-            not self.best_individual or
-            not self.best_individual.fitness or
-            (current_best.fitness and
-             current_best.fitness.weighted_sum() > self.best_individual.fitness.weighted_sum())
+            not self.best_individual
+            or not self.best_individual.fitness
+            or (
+                current_best.fitness
+                and current_best.fitness.weighted_sum()
+                > self.best_individual.fitness.weighted_sum()
+            )
         ):
             self.best_individual = current_best.copy()
 
@@ -730,9 +743,7 @@ class HybridGAQUBOSolver(BioInspiredSolver):
         """Track statistics for this generation."""
         all_individuals = [ind for island in self.islands for ind in island]
         fitness_values = [
-            ind.fitness.weighted_sum()
-            for ind in all_individuals
-            if ind.fitness
+            ind.fitness.weighted_sum() for ind in all_individuals if ind.fitness
         ]
 
         stats = PopulationStats(
@@ -764,11 +775,13 @@ class HybridGAQUBOSolver(BioInspiredSolver):
             "total_calls": len(self.qubo_stats),
             "avg_qubo_time": (
                 np.mean([s["qubo_time"] for s in self.qubo_stats])
-                if self.qubo_stats else 0
+                if self.qubo_stats
+                else 0
             ),
             "avg_energy": (
                 np.mean([s["total_energy"] for s in self.qubo_stats])
-                if self.qubo_stats else 0
+                if self.qubo_stats
+                else 0
             ),
         }
 
@@ -778,7 +791,7 @@ class HybridGAQUBOSolver(BioInspiredSolver):
                 "size": len(island),
                 "best_fitness": max(
                     (ind.fitness.weighted_sum() for ind in island if ind.fitness),
-                    default=0
+                    default=0,
                 ),
             }
             for i, island in enumerate(self.islands)

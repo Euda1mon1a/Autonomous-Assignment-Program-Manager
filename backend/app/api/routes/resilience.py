@@ -1986,7 +1986,9 @@ async def get_tier2_status(
 # =============================================================================
 
 
-@router.post("/tier3/cognitive/session/start", response_model=CognitiveSessionStartResponse)
+@router.post(
+    "/tier3/cognitive/session/start", response_model=CognitiveSessionStartResponse
+)
 async def start_cognitive_session(
     user_id: UUID,
     db: Session = Depends(get_db),
@@ -2009,7 +2011,10 @@ async def start_cognitive_session(
     }
 
 
-@router.post("/tier3/cognitive/session/{session_id}/end", response_model=CognitiveSessionEndResponse)
+@router.post(
+    "/tier3/cognitive/session/{session_id}/end",
+    response_model=CognitiveSessionEndResponse,
+)
 async def end_cognitive_session(
     session_id: UUID,
     db: Session = Depends(get_db),
@@ -2022,7 +2027,10 @@ async def end_cognitive_session(
     return {"success": True, "session_id": str(session_id), "message": "Session ended"}
 
 
-@router.get("/tier3/cognitive/session/{session_id}/status", response_model=CognitiveSessionStatusResponse)
+@router.get(
+    "/tier3/cognitive/session/{session_id}/status",
+    response_model=CognitiveSessionStatusResponse,
+)
 async def get_cognitive_session_status(
     session_id: UUID,
     db: Session = Depends(get_db),
@@ -2119,7 +2127,10 @@ async def create_decision(
     }
 
 
-@router.post("/tier3/cognitive/decision/{decision_id}/resolve", response_model=DecisionResolveResponse)
+@router.post(
+    "/tier3/cognitive/decision/{decision_id}/resolve",
+    response_model=DecisionResolveResponse,
+)
 async def resolve_decision(
     decision_id: UUID,
     session_id: UUID,
@@ -2171,7 +2182,10 @@ async def get_decision_queue(
     }
 
 
-@router.get("/tier3/cognitive/decisions/prioritized", response_model=PrioritizedDecisionsResponse)
+@router.get(
+    "/tier3/cognitive/decisions/prioritized",
+    response_model=PrioritizedDecisionsResponse,
+)
 async def get_prioritized_decisions(
     db: Session = Depends(get_db),
 ):
@@ -2339,7 +2353,10 @@ async def get_collective_preference(
     }
 
 
-@router.get("/tier3/stigmergy/faculty/{faculty_id}/preferences", response_model=FacultyPreferencesResponse)
+@router.get(
+    "/tier3/stigmergy/faculty/{faculty_id}/preferences",
+    response_model=FacultyPreferencesResponse,
+)
 async def get_faculty_preferences(
     faculty_id: UUID,
     trail_type: str | None = None,
@@ -2628,7 +2645,9 @@ async def get_hub_profile(
     }
 
 
-@router.get("/tier3/hubs/cross-training", response_model=CrossTrainingRecommendationsResponse)
+@router.get(
+    "/tier3/hubs/cross-training", response_model=CrossTrainingRecommendationsResponse
+)
 async def get_cross_training_recommendations(
     db: Session = Depends(get_db),
 ):
@@ -2658,7 +2677,9 @@ async def get_cross_training_recommendations(
     }
 
 
-@router.post("/tier3/hubs/{faculty_id}/protect", response_model=HubProtectionPlanCreateResponse)
+@router.post(
+    "/tier3/hubs/{faculty_id}/protect", response_model=HubProtectionPlanCreateResponse
+)
 async def create_hub_protection_plan(
     faculty_id: UUID,
     period_start: date,

@@ -24,15 +24,23 @@ class TestParseXlsxEndpoint:
 
     def test_parse_simple_xlsx(self, client):
         """Test parsing a simple Excel file."""
-        xlsx_data = create_test_xlsx([
-            ["name", "type", "email"],
-            ["John Doe", "resident", "john@example.com"],
-            ["Jane Smith", "faculty", "jane@example.com"],
-        ])
+        xlsx_data = create_test_xlsx(
+            [
+                ["name", "type", "email"],
+                ["John Doe", "resident", "john@example.com"],
+                ["Jane Smith", "faculty", "jane@example.com"],
+            ]
+        )
 
         response = client.post(
             "/api/v1/imports/parse-xlsx",
-            files={"file": ("test.xlsx", xlsx_data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+            files={
+                "file": (
+                    "test.xlsx",
+                    xlsx_data,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+            },
         )
 
         assert response.status_code == 200
@@ -46,16 +54,24 @@ class TestParseXlsxEndpoint:
 
     def test_parse_xlsx_with_empty_rows(self, client):
         """Test parsing Excel file skips empty rows by default."""
-        xlsx_data = create_test_xlsx([
-            ["name", "value"],
-            ["Row1", "A"],
-            [None, None],  # Empty row
-            ["Row2", "B"],
-        ])
+        xlsx_data = create_test_xlsx(
+            [
+                ["name", "value"],
+                ["Row1", "A"],
+                [None, None],  # Empty row
+                ["Row2", "B"],
+            ]
+        )
 
         response = client.post(
             "/api/v1/imports/parse-xlsx",
-            files={"file": ("test.xlsx", xlsx_data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+            files={
+                "file": (
+                    "test.xlsx",
+                    xlsx_data,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+            },
             data={"skip_empty_rows": "true"},
         )
 
@@ -81,7 +97,13 @@ class TestParseXlsxEndpoint:
         """Test that corrupt files are handled gracefully."""
         response = client.post(
             "/api/v1/imports/parse-xlsx",
-            files={"file": ("test.xlsx", b"not valid xlsx content", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+            files={
+                "file": (
+                    "test.xlsx",
+                    b"not valid xlsx content",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+            },
         )
 
         assert response.status_code == 400
@@ -105,7 +127,13 @@ class TestParseXlsxEndpoint:
 
         response = client.post(
             "/api/v1/imports/parse-xlsx",
-            files={"file": ("test.xlsx", xlsx_data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+            files={
+                "file": (
+                    "test.xlsx",
+                    xlsx_data,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+            },
         )
 
         assert response.status_code == 200
@@ -114,14 +142,22 @@ class TestParseXlsxEndpoint:
 
     def test_parse_xlsx_duplicate_headers(self, client):
         """Test that duplicate headers are renamed and warned."""
-        xlsx_data = create_test_xlsx([
-            ["name", "name", "value"],  # Duplicate header
-            ["A", "B", "C"],
-        ])
+        xlsx_data = create_test_xlsx(
+            [
+                ["name", "name", "value"],  # Duplicate header
+                ["A", "B", "C"],
+            ]
+        )
 
         response = client.post(
             "/api/v1/imports/parse-xlsx",
-            files={"file": ("test.xlsx", xlsx_data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+            files={
+                "file": (
+                    "test.xlsx",
+                    xlsx_data,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+            },
         )
 
         assert response.status_code == 200
@@ -150,7 +186,13 @@ class TestListXlsxSheetsEndpoint:
 
         response = client.post(
             "/api/v1/imports/parse-xlsx/sheets",
-            files={"file": ("test.xlsx", xlsx_data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+            files={
+                "file": (
+                    "test.xlsx",
+                    xlsx_data,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+            },
         )
 
         assert response.status_code == 200

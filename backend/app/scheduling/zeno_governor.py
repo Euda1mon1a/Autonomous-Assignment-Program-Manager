@@ -82,7 +82,9 @@ class OptimizationFreedomWindow:
 
     window_id: UUID = field(default_factory=uuid4)
     start_time: datetime = field(default_factory=datetime.now)
-    end_time: datetime = field(default_factory=lambda: datetime.now() + timedelta(hours=4))
+    end_time: datetime = field(
+        default_factory=lambda: datetime.now() + timedelta(hours=4)
+    )
     reason: str = field(default="Allow solver exploration")
     is_active: bool = field(default=True)
     interventions_blocked: int = field(default=0)
@@ -137,9 +139,7 @@ class HumanIntervention:
     assignments_reviewed: set[UUID] = field(default_factory=set)
     assignments_locked: set[UUID] = field(default_factory=set)
     assignments_modified: set[UUID] = field(default_factory=set)
-    intervention_type: str = field(
-        default="review"
-    )  # review, lock, modify, unlock
+    intervention_type: str = field(default="review")  # review, lock, modify, unlock
     reason: str = field(default="")
 
 
@@ -256,9 +256,7 @@ class ZenoGovernor:
             return 0.0
 
         cutoff = datetime.now() - time_window
-        recent_interventions = [
-            i for i in self.interventions if i.timestamp >= cutoff
-        ]
+        recent_interventions = [i for i in self.interventions if i.timestamp >= cutoff]
 
         if not recent_interventions:
             return 0.0
@@ -527,7 +525,10 @@ class ZenoGovernor:
         if len(self.interventions) >= 2:
             sorted_interventions = sorted(self.interventions, key=lambda x: x.timestamp)
             intervals = [
-                (sorted_interventions[i + 1].timestamp - sorted_interventions[i].timestamp).total_seconds()
+                (
+                    sorted_interventions[i + 1].timestamp
+                    - sorted_interventions[i].timestamp
+                ).total_seconds()
                 / 3600
                 for i in range(len(sorted_interventions) - 1)
             ]

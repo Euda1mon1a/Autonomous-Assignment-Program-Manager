@@ -201,7 +201,9 @@ class Settings(BaseSettings):
     # Instrumentation Configuration
     # These control which components emit traces
     # Disabling reduces overhead but loses visibility into those systems
-    TELEMETRY_TRACE_SQLALCHEMY: bool = True  # Enable SQLAlchemy tracing (database queries)
+    TELEMETRY_TRACE_SQLALCHEMY: bool = (
+        True  # Enable SQLAlchemy tracing (database queries)
+    )
     TELEMETRY_TRACE_REDIS: bool = True  # Enable Redis tracing (cache operations)
     TELEMETRY_TRACE_HTTP: bool = True  # Enable HTTP client tracing (external APIs)
 

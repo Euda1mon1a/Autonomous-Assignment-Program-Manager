@@ -41,11 +41,11 @@ async def get_my_sessions(
     return sessions
 
 
-@router.get("/me/current", response_model=SessionResponse | None)
+@router.get("/me/current", response_model=None)
 async def get_current_session(
     request: Request,
     current_user: User = Depends(get_current_active_user),
-):
+) -> SessionResponse | None:
     """
     Get information about the current session.
 

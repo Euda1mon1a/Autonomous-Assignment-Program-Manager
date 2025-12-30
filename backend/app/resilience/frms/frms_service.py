@@ -127,7 +127,8 @@ class FatigueProfile:
                 "level_name": self.hazard_level.name,
                 "triggers": self.hazard_triggers,
                 "required_mitigations": self.required_mitigations,
-                "is_critical": self.hazard_level in [HazardLevel.RED, HazardLevel.BLACK],
+                "is_critical": self.hazard_level
+                in [HazardLevel.RED, HazardLevel.BLACK],
             },
             "work_history": {
                 "hours_worked_week": round(self.hours_worked_week, 1),
@@ -311,9 +312,7 @@ class FRMSService:
 
         for resident in residents:
             try:
-                profile = await self.get_resident_profile(
-                    resident.id, target_time
-                )
+                profile = await self.get_resident_profile(resident.id, target_time)
                 if profile.hazard_level.value >= hazard_threshold.value:
                     profiles.append(profile)
             except Exception as e:
@@ -369,7 +368,9 @@ class FRMSService:
         high_risk = self.alertness_predictor.identify_high_risk_windows(trajectory)
 
         # Calculate overall metrics
-        min_alertness = min(p.alertness_score for p in trajectory) if trajectory else 1.0
+        min_alertness = (
+            min(p.alertness_score for p in trajectory) if trajectory else 1.0
+        )
         avg_alertness = (
             sum(p.alertness_score for p in trajectory) / len(trajectory)
             if trajectory
@@ -387,9 +388,11 @@ class FRMSService:
             "resident_id": str(resident_id),
             "shifts_evaluated": len(shifts),
             "overall_risk": (
-                "high" if min_alertness < 0.4 else
-                "moderate" if min_alertness < 0.6 else
-                "low"
+                "high"
+                if min_alertness < 0.4
+                else "moderate"
+                if min_alertness < 0.6
+                else "low"
             ),
             "metrics": {
                 "minimum_alertness": round(min_alertness, 3),
@@ -443,20 +446,22 @@ class FRMSService:
                 target_time = target_time.replace(hour=hour)
 
                 try:
-                    profile = await self.get_resident_profile(
-                        resident.id, target_time
+                    profile = await self.get_resident_profile(resident.id, target_time)
+                    resident_data["hourly_alertness"].append(
+                        {
+                            "hour": hour,
+                            "alertness": round(profile.current_alertness, 2),
+                            "hazard_level": profile.hazard_level.value,
+                        }
                     )
-                    resident_data["hourly_alertness"].append({
-                        "hour": hour,
-                        "alertness": round(profile.current_alertness, 2),
-                        "hazard_level": profile.hazard_level.value,
-                    })
                 except Exception:
-                    resident_data["hourly_alertness"].append({
-                        "hour": hour,
-                        "alertness": None,
-                        "hazard_level": "unknown",
-                    })
+                    resident_data["hourly_alertness"].append(
+                        {
+                            "hour": hour,
+                            "alertness": None,
+                            "hazard_level": "unknown",
+                        }
+                    )
 
             heatmap["residents"].append(resident_data)
 
@@ -543,10 +548,12 @@ class FRMSService:
                         "alertness_multiplier": mult,
                         "scheduling_impact": self._get_phase_scheduling_impact(phase),
                     }
-                    for phase, mult in self.sleep_model.__class__.__bases__[0].__dict__.get(
-                        "CIRCADIAN_MULTIPLIERS", {}
-                    ).items()
-                ] if False else self._build_circadian_phases(),
+                    for phase, mult in self.sleep_model.__class__.__bases__[0]
+                    .__dict__.get("CIRCADIAN_MULTIPLIERS", {})
+                    .items()
+                ]
+                if False
+                else self._build_circadian_phases(),
             },
             "sleep_homeostasis": {
                 "description": "Sleep pressure accumulation and recovery",
@@ -567,8 +574,7 @@ class FRMSService:
                     for i in range(1, 8)
                 ],
                 "duty_thresholds": {
-                    duty: level.value
-                    for duty, level in DUTY_THRESHOLDS.items()
+                    duty: level.value for duty, level in DUTY_THRESHOLDS.items()
                 },
             },
             "hazard_thresholds": {
@@ -581,11 +587,31 @@ class FRMSService:
                         "hours_awake_max": thresholds["hours_awake_max"],
                     }
                     for level, thresholds in {
-                        HazardLevel.GREEN: {"alertness_min": 0.7, "sleep_debt_max": 5, "hours_awake_max": 14},
-                        HazardLevel.YELLOW: {"alertness_min": 0.55, "sleep_debt_max": 10, "hours_awake_max": 18},
-                        HazardLevel.ORANGE: {"alertness_min": 0.45, "sleep_debt_max": 15, "hours_awake_max": 22},
-                        HazardLevel.RED: {"alertness_min": 0.35, "sleep_debt_max": 20, "hours_awake_max": 26},
-                        HazardLevel.BLACK: {"alertness_min": 0.0, "sleep_debt_max": 40, "hours_awake_max": 48},
+                        HazardLevel.GREEN: {
+                            "alertness_min": 0.7,
+                            "sleep_debt_max": 5,
+                            "hours_awake_max": 14,
+                        },
+                        HazardLevel.YELLOW: {
+                            "alertness_min": 0.55,
+                            "sleep_debt_max": 10,
+                            "hours_awake_max": 18,
+                        },
+                        HazardLevel.ORANGE: {
+                            "alertness_min": 0.45,
+                            "sleep_debt_max": 15,
+                            "hours_awake_max": 22,
+                        },
+                        HazardLevel.RED: {
+                            "alertness_min": 0.35,
+                            "sleep_debt_max": 20,
+                            "hours_awake_max": 26,
+                        },
+                        HazardLevel.BLACK: {
+                            "alertness_min": 0.0,
+                            "sleep_debt_max": 40,
+                            "hours_awake_max": 48,
+                        },
                     }.items()
                 ],
             },
@@ -639,18 +665,14 @@ class FRMSService:
         """Get resident by ID."""
         if not self.db:
             return None
-        result = await self.db.execute(
-            select(Person).where(Person.id == resident_id)
-        )
+        result = await self.db.execute(select(Person).where(Person.id == resident_id))
         return result.scalar_one_or_none()
 
     async def _get_all_residents(self) -> list[Person]:
         """Get all residents."""
         if not self.db:
             return []
-        result = await self.db.execute(
-            select(Person).where(Person.type == "resident")
-        )
+        result = await self.db.execute(select(Person).where(Person.type == "resident"))
         return list(result.scalars().all())
 
     async def _get_work_history(
@@ -686,16 +708,29 @@ class FRMSService:
 
         # Calculate metrics
         hours_week = len(assignments) * 6  # 6 hours per half-day block
-        hours_today = sum(
-            1 for a in assignments
-            if hasattr(a, 'block') and a.block and a.block.date == today
-        ) * 6
+        hours_today = (
+            sum(
+                1
+                for a in assignments
+                if hasattr(a, "block") and a.block and a.block.date == today
+            )
+            * 6
+        )
 
         # Simplified consecutive days/nights calculation
         return {
             "hours_week": hours_week,
             "hours_today": hours_today,
-            "consecutive_days": min(len(set(a.block.date for a in assignments if hasattr(a, 'block') and a.block)), 7),
+            "consecutive_days": min(
+                len(
+                    set(
+                        a.block.date
+                        for a in assignments
+                        if hasattr(a, "block") and a.block
+                    )
+                ),
+                7,
+            ),
             "consecutive_nights": 0,  # Would need more complex logic
         }
 

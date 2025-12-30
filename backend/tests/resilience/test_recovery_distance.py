@@ -68,11 +68,11 @@ def mock_people(faculty_ids, resident_ids):
 
     # Add faculty
     for i, fid in enumerate(faculty_ids):
-        people.append(MockPerson(fid, f"Dr. Faculty {i+1}", "FACULTY"))
+        people.append(MockPerson(fid, f"Dr. Faculty {i + 1}", "FACULTY"))
 
     # Add residents
     for i, rid in enumerate(resident_ids):
-        people.append(MockPerson(rid, f"Resident {i+1}", "RESIDENT"))
+        people.append(MockPerson(rid, f"Resident {i + 1}", "RESIDENT"))
 
     return people
 
@@ -91,7 +91,9 @@ def mock_blocks(block_ids, sample_date):
     for i, bid in enumerate(block_ids):
         day_offset = i // 2
         time_of_day = "AM" if i % 2 == 0 else "PM"
-        blocks.append(MockBlock(bid, sample_date + timedelta(days=day_offset), time_of_day))
+        blocks.append(
+            MockBlock(bid, sample_date + timedelta(days=day_offset), time_of_day)
+        )
 
     return blocks
 
@@ -272,14 +274,18 @@ def test_recovery_result_infeasible():
 
 def test_calculator_initialization():
     """Test calculator initialization."""
-    calc = RecoveryDistanceCalculator(max_depth=3, timeout_seconds=5.0, enable_caching=False)
+    calc = RecoveryDistanceCalculator(
+        max_depth=3, timeout_seconds=5.0, enable_caching=False
+    )
 
     assert calc.max_depth == 3
     assert calc.timeout_seconds == 5.0
     assert calc.enable_caching is False
 
 
-def test_calculate_for_event_rd_zero(calculator, simple_schedule, faculty_ids, block_ids):
+def test_calculate_for_event_rd_zero(
+    calculator, simple_schedule, faculty_ids, block_ids
+):
     """Test RD=0 when schedule remains feasible after event."""
     # Remove a faculty member who has minimal assignments
     # Since we have round-robin assignments, removing one faculty should
@@ -311,7 +317,9 @@ def test_calculate_for_event_rd_zero(calculator, simple_schedule, faculty_ids, b
     assert isinstance(result.feasible, bool)
 
 
-def test_calculate_for_event_needs_recovery(calculator, simple_schedule, faculty_ids, block_ids):
+def test_calculate_for_event_needs_recovery(
+    calculator, simple_schedule, faculty_ids, block_ids
+):
     """Test RD>0 when recovery is needed."""
     # Remove a faculty member with many assignments
     event = N1Event(
@@ -328,7 +336,9 @@ def test_calculate_for_event_needs_recovery(calculator, simple_schedule, faculty
     assert result.event == event
 
 
-def test_calculate_for_event_caching(calculator, simple_schedule, faculty_ids, block_ids):
+def test_calculate_for_event_caching(
+    calculator, simple_schedule, faculty_ids, block_ids
+):
     """Test that caching works."""
     event = N1Event(
         event_type="faculty_absence",
@@ -362,7 +372,9 @@ def test_calculate_aggregate_empty_events(calculator, simple_schedule):
     assert metrics.breakglass_count == 0
 
 
-def test_calculate_aggregate_single_event(calculator, simple_schedule, faculty_ids, block_ids):
+def test_calculate_aggregate_single_event(
+    calculator, simple_schedule, faculty_ids, block_ids
+):
     """Test aggregate metrics with single event."""
     event = N1Event(
         event_type="faculty_absence",
@@ -378,7 +390,9 @@ def test_calculate_aggregate_single_event(calculator, simple_schedule, faculty_i
     assert isinstance(metrics.rd_median, (int, float))
 
 
-def test_calculate_aggregate_multiple_events(calculator, simple_schedule, faculty_ids, block_ids):
+def test_calculate_aggregate_multiple_events(
+    calculator, simple_schedule, faculty_ids, block_ids
+):
     """Test aggregate metrics with multiple events."""
     events = [
         N1Event(
@@ -397,7 +411,9 @@ def test_calculate_aggregate_multiple_events(calculator, simple_schedule, facult
     assert metrics.rd_max >= 0
 
 
-def test_aggregate_metrics_by_event_type(calculator, simple_schedule, faculty_ids, resident_ids, block_ids):
+def test_aggregate_metrics_by_event_type(
+    calculator, simple_schedule, faculty_ids, resident_ids, block_ids
+):
     """Test aggregate metrics breakdown by event type."""
     events = [
         N1Event(
@@ -432,9 +448,15 @@ def test_aggregate_breakglass_count():
     event2 = N1Event("faculty_absence", uuid.uuid4(), [uuid.uuid4()])
     event3 = N1Event("faculty_absence", uuid.uuid4(), [uuid.uuid4()])
 
-    result1 = RecoveryResult(event1, recovery_distance=2, witness_edits=[], feasible=True)
-    result2 = RecoveryResult(event2, recovery_distance=4, witness_edits=[], feasible=True)
-    result3 = RecoveryResult(event3, recovery_distance=5, witness_edits=[], feasible=True)
+    result1 = RecoveryResult(
+        event1, recovery_distance=2, witness_edits=[], feasible=True
+    )
+    result2 = RecoveryResult(
+        event2, recovery_distance=4, witness_edits=[], feasible=True
+    )
+    result3 = RecoveryResult(
+        event3, recovery_distance=5, witness_edits=[], feasible=True
+    )
 
     # Count breakglass (RD > 3)
     distances = [r.recovery_distance for r in [result1, result2, result3]]
@@ -450,7 +472,9 @@ def test_aggregate_breakglass_count():
 
 def test_generate_test_events_basic(calculator, simple_schedule, sample_date):
     """Test basic event generation."""
-    events = calculator.generate_test_events(simple_schedule, sample_date, sample_date + timedelta(days=7))
+    events = calculator.generate_test_events(
+        simple_schedule, sample_date, sample_date + timedelta(days=7)
+    )
 
     assert len(events) > 0
     assert all(isinstance(e, N1Event) for e in events)
@@ -508,7 +532,9 @@ def test_generate_test_events_empty_schedule(calculator):
 # =========================================================================
 
 
-def test_infeasible_recovery_max_depth(calculator, simple_schedule, faculty_ids, block_ids):
+def test_infeasible_recovery_max_depth(
+    calculator, simple_schedule, faculty_ids, block_ids
+):
     """Test that search respects max_depth."""
     # Create calculator with very limited depth
     limited_calc = RecoveryDistanceCalculator(max_depth=1, timeout_seconds=5.0)
@@ -528,13 +554,23 @@ def test_infeasible_recovery_max_depth(calculator, simple_schedule, faculty_ids,
 
 def test_timeout_handling():
     """Test that search respects timeout."""
-    calc = RecoveryDistanceCalculator(max_depth=10, timeout_seconds=0.001)  # Very short timeout
+    calc = RecoveryDistanceCalculator(
+        max_depth=10, timeout_seconds=0.001
+    )  # Very short timeout
 
     # Create complex schedule
     schedule = {
         "assignments": [],
-        "blocks": [type("Block", (), {"id": uuid.uuid4(), "date": date.today()})() for _ in range(100)],
-        "people": [type("Person", (), {"id": uuid.uuid4(), "name": f"P{i}", "role": "FACULTY"})() for i in range(20)],
+        "blocks": [
+            type("Block", (), {"id": uuid.uuid4(), "date": date.today()})()
+            for _ in range(100)
+        ],
+        "people": [
+            type(
+                "Person", (), {"id": uuid.uuid4(), "name": f"P{i}", "role": "FACULTY"}
+            )()
+            for i in range(20)
+        ],
     }
 
     event = N1Event(
@@ -556,12 +592,32 @@ def test_double_booking_detection(calculator):
 
     # Create two assignments for same person on same block
     assignments = [
-        type("Assignment", (), {"id": uuid.uuid4(), "person_id": person_id, "block_id": block_id, "role": "primary"})(),
-        type("Assignment", (), {"id": uuid.uuid4(), "person_id": person_id, "block_id": block_id, "role": "primary"})(),
+        type(
+            "Assignment",
+            (),
+            {
+                "id": uuid.uuid4(),
+                "person_id": person_id,
+                "block_id": block_id,
+                "role": "primary",
+            },
+        )(),
+        type(
+            "Assignment",
+            (),
+            {
+                "id": uuid.uuid4(),
+                "person_id": person_id,
+                "block_id": block_id,
+                "role": "primary",
+            },
+        )(),
     ]
 
     blocks = [type("Block", (), {"id": block_id, "date": date.today()})()]
-    people = [type("Person", (), {"id": person_id, "name": "Test", "role": "FACULTY"})()]
+    people = [
+        type("Person", (), {"id": person_id, "name": "Test", "role": "FACULTY"})()
+    ]
 
     schedule = {"assignments": assignments, "blocks": blocks, "people": people}
 
@@ -591,7 +647,9 @@ def test_minimum_coverage_check(calculator):
 # =========================================================================
 
 
-def test_realistic_faculty_absence_scenario(calculator, simple_schedule, faculty_ids, block_ids):
+def test_realistic_faculty_absence_scenario(
+    calculator, simple_schedule, faculty_ids, block_ids
+):
     """Test realistic faculty absence scenario."""
     # Faculty member covers 3 blocks in a week
     event = N1Event(
@@ -620,11 +678,27 @@ def test_resilience_comparison():
     # Schedule A: Brittle (no redundancy)
     schedule_a = {
         "assignments": [
-            type("Assignment", (), {"id": uuid.uuid4(), "person_id": uuid.uuid4(), "block_id": uuid.uuid4()})()
+            type(
+                "Assignment",
+                (),
+                {
+                    "id": uuid.uuid4(),
+                    "person_id": uuid.uuid4(),
+                    "block_id": uuid.uuid4(),
+                },
+            )()
             for _ in range(10)
         ],
-        "blocks": [type("Block", (), {"id": uuid.uuid4(), "date": date.today()})() for _ in range(10)],
-        "people": [type("Person", (), {"id": uuid.uuid4(), "name": f"P{i}", "role": "FACULTY"})() for i in range(10)],
+        "blocks": [
+            type("Block", (), {"id": uuid.uuid4(), "date": date.today()})()
+            for _ in range(10)
+        ],
+        "people": [
+            type(
+                "Person", (), {"id": uuid.uuid4(), "name": f"P{i}", "role": "FACULTY"}
+            )()
+            for i in range(10)
+        ],
     }
 
     # Generate events for schedule A
@@ -663,8 +737,13 @@ def test_cache_performance():
 
     schedule = {
         "assignments": [],
-        "blocks": [type("Block", (), {"id": uuid.uuid4(), "date": date.today()})() for _ in range(5)],
-        "people": [type("Person", (), {"id": uuid.uuid4(), "name": "P1", "role": "FACULTY"})()],
+        "blocks": [
+            type("Block", (), {"id": uuid.uuid4(), "date": date.today()})()
+            for _ in range(5)
+        ],
+        "people": [
+            type("Person", (), {"id": uuid.uuid4(), "name": "P1", "role": "FACULTY"})()
+        ],
     }
 
     event = N1Event(

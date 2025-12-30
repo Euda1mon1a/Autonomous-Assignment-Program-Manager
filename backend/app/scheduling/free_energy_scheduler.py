@@ -78,7 +78,9 @@ class DemandForecast:
         Returns:
             Numpy array of predicted coverage values
         """
-        return np.array([self.predicted_coverage.get(tid, 0.0) for tid in template_order])
+        return np.array(
+            [self.predicted_coverage.get(tid, 0.0) for tid in template_order]
+        )
 
     @classmethod
     def from_historical_data(
@@ -269,9 +271,8 @@ class GenerativeModel:
 
         # Bayesian update with exponential moving average
         self.learned_weights = (
-            (1 - self.learning_rate) * self.learned_weights
-            + self.learning_rate * actual_vector
-        )
+            1 - self.learning_rate
+        ) * self.learned_weights + self.learning_rate * actual_vector
 
         # Renormalize
         weight_sum = self.learned_weights.sum()
@@ -674,7 +675,10 @@ class FreeEnergyScheduler(BioInspiredSolver):
         )
 
         # Generate initial forecast
-        if hasattr(context, "historical_assignments") and context.historical_assignments:
+        if (
+            hasattr(context, "historical_assignments")
+            and context.historical_assignments
+        ):
             self.current_forecast = DemandForecast.from_historical_data(
                 historical_assignments=context.historical_assignments,
                 templates=list(context.templates),
@@ -692,7 +696,8 @@ class FreeEnergyScheduler(BioInspiredSolver):
         self.population = self.initialize_population(context)
 
         best_individual = max(
-            self.population, key=lambda ind: ind.fitness.weighted_sum() if ind.fitness else 0
+            self.population,
+            key=lambda ind: ind.fitness.weighted_sum() if ind.fitness else 0,
         )
 
         # Evolution loop
@@ -711,7 +716,9 @@ class FreeEnergyScheduler(BioInspiredSolver):
 
                 # Update best individual
                 best_individual.chromosome = updated_schedule
-                best_individual.fitness = self.evaluate_fitness(updated_schedule, context)
+                best_individual.fitness = self.evaluate_fitness(
+                    updated_schedule, context
+                )
 
                 # Update forecast
                 self.current_forecast = updated_forecast
@@ -784,7 +791,8 @@ class FreeEnergyScheduler(BioInspiredSolver):
             if (
                 current_best.fitness
                 and best_individual.fitness
-                and current_best.fitness.weighted_sum() > best_individual.fitness.weighted_sum()
+                and current_best.fitness.weighted_sum()
+                > best_individual.fitness.weighted_sum()
             ):
                 best_individual = current_best
 

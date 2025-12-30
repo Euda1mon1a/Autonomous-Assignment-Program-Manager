@@ -240,7 +240,9 @@ class TestLLMRouter:
         """Test task classification for code tasks."""
         router = LLMRouter()
 
-        classification = await router.classify_task("Write a function to validate dates")
+        classification = await router.classify_task(
+            "Write a function to validate dates"
+        )
 
         assert classification.task_type == "code_generation"
         assert classification.recommended_model == "qwen2.5"

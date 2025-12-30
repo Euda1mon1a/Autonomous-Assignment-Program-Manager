@@ -83,7 +83,9 @@ class FatigueAlert:
             "contributing_factors": self.contributing_factors,
             "recommended_actions": self.recommended_actions,
             "acknowledged": self.acknowledged,
-            "acknowledged_at": self.acknowledged_at.isoformat() if self.acknowledged_at else None,
+            "acknowledged_at": self.acknowledged_at.isoformat()
+            if self.acknowledged_at
+            else None,
             "acknowledged_by": self.acknowledged_by,
         }
 
@@ -256,8 +258,7 @@ class FatigueMonitor:
             # Keep only last 48 hours
             cutoff = current_time - timedelta(hours=48)
             self._effectiveness_history[person_id] = [
-                (t, e) for t, e in self._effectiveness_history[person_id]
-                if t >= cutoff
+                (t, e) for t, e in self._effectiveness_history[person_id] if t >= cutoff
             ]
 
         # Check for alerts
@@ -345,38 +346,50 @@ class FatigueMonitor:
         recommendations = []
 
         if severity == AlertSeverity.EMERGENCY:
-            recommendations.extend([
-                "IMMEDIATE: Remove from clinical duties",
-                "Ensure faculty coverage for current patients",
-                "Mandatory rest period before returning",
-                "Consider wellness check-in",
-            ])
+            recommendations.extend(
+                [
+                    "IMMEDIATE: Remove from clinical duties",
+                    "Ensure faculty coverage for current patients",
+                    "Mandatory rest period before returning",
+                    "Consider wellness check-in",
+                ]
+            )
         elif severity == AlertSeverity.CRITICAL:
-            recommendations.extend([
-                "Reduce current workload",
-                "Ensure close faculty supervision",
-                "Schedule rest period within 2 hours",
-                "Avoid high-risk procedures",
-            ])
+            recommendations.extend(
+                [
+                    "Reduce current workload",
+                    "Ensure close faculty supervision",
+                    "Schedule rest period within 2 hours",
+                    "Avoid high-risk procedures",
+                ]
+            )
         elif severity == AlertSeverity.WARNING:
-            recommendations.extend([
-                "Monitor closely for further degradation",
-                "Consider scheduling break",
-                "Review upcoming assignments for fatigue impact",
-            ])
+            recommendations.extend(
+                [
+                    "Monitor closely for further degradation",
+                    "Consider scheduling break",
+                    "Review upcoming assignments for fatigue impact",
+                ]
+            )
         elif severity == AlertSeverity.INFO:
-            recommendations.extend([
-                "Track fatigue trend",
-                "Ensure adequate rest before next shift",
-            ])
+            recommendations.extend(
+                [
+                    "Track fatigue trend",
+                    "Ensure adequate rest before next shift",
+                ]
+            )
 
         # Add factor-specific recommendations
         factors = effectiveness.factors
         if factors.get("in_wocl"):
-            recommendations.append("Currently in WOCL (2-6 AM) - heightened vigilance needed")
+            recommendations.append(
+                "Currently in WOCL (2-6 AM) - heightened vigilance needed"
+            )
 
         if factors.get("hours_awake", 0) > 16:
-            recommendations.append(f"Extended wakefulness ({factors.get('hours_awake'):.0f} hours) - prioritize rest")
+            recommendations.append(
+                f"Extended wakefulness ({factors.get('hours_awake'):.0f} hours) - prioritize rest"
+            )
 
         return recommendations
 
@@ -388,8 +401,7 @@ class FatigueMonitor:
             List of active FatigueAlert objects
         """
         return [
-            alert for alert in self._active_alerts.values()
-            if not alert.acknowledged
+            alert for alert in self._active_alerts.values() if not alert.acknowledged
         ]
 
     def acknowledge_alert(
@@ -467,11 +479,13 @@ class FatigueMonitor:
 
             # Track highest risk
             if score < self.THRESHOLD_FAA_CAUTION:
-                highest_risk.append({
-                    "person_id": str(person_id),
-                    "effectiveness": round(score, 2),
-                    "risk_level": state.effectiveness.risk_level,
-                })
+                highest_risk.append(
+                    {
+                        "person_id": str(person_id),
+                        "effectiveness": round(score, 2),
+                        "risk_level": state.effectiveness.risk_level,
+                    }
+                )
 
         # Sort highest risk
         highest_risk.sort(key=lambda x: x["effectiveness"])
@@ -482,10 +496,7 @@ class FatigueMonitor:
 
         # 24-hour statistics
         cutoff = now - timedelta(hours=24)
-        alerts_24h = len([
-            a for a in self._alert_history
-            if a.created_at >= cutoff
-        ])
+        alerts_24h = len([a for a in self._alert_history if a.created_at >= cutoff])
 
         # Effectiveness 24h
         all_scores_24h = []
@@ -578,8 +589,7 @@ class FatigueMonitor:
             Report dict with alert statistics
         """
         relevant_alerts = [
-            a for a in self._alert_history
-            if start_date <= a.created_at <= end_date
+            a for a in self._alert_history if start_date <= a.created_at <= end_date
         ]
 
         by_severity = {}
@@ -593,7 +603,11 @@ class FatigueMonitor:
             # By person
             pid = str(alert.person_id)
             if pid not in by_person:
-                by_person[pid] = {"name": alert.person_name, "count": 0, "severities": []}
+                by_person[pid] = {
+                    "name": alert.person_name,
+                    "count": 0,
+                    "severities": [],
+                }
             by_person[pid]["count"] += 1
             by_person[pid]["severities"].append(sev)
 
@@ -604,5 +618,7 @@ class FatigueMonitor:
             "by_severity": by_severity,
             "by_person": by_person,
             "acknowledged_count": len([a for a in relevant_alerts if a.acknowledged]),
-            "unacknowledged_count": len([a for a in relevant_alerts if not a.acknowledged]),
+            "unacknowledged_count": len(
+                [a for a in relevant_alerts if not a.acknowledged]
+            ),
         }

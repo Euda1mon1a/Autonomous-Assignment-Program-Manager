@@ -10,6 +10,8 @@ Provides high-level session management operations:
 - Activity logging
 """
 
+from __future__ import annotations
+
 import logging
 import secrets
 from datetime import datetime, timedelta
@@ -658,7 +660,7 @@ _session_manager: SessionManager | None = None
 
 
 def get_session_manager(
-    storage: SessionStorage | None = None,
+    storage=None,  # type: SessionStorage | None
     **kwargs,
 ) -> SessionManager:
     """

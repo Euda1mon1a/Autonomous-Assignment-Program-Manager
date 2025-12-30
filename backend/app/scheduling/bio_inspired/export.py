@@ -50,6 +50,7 @@ class NumpyEncoder(json.JSONEncoder):
 @dataclass
 class ExportMetadata:
     """Metadata for exported data."""
+
     algorithm: str
     timestamp: str
     version: str = "1.0"
@@ -102,8 +103,12 @@ class ParetoExporter:
         """
         if objectives is None:
             objectives = [
-                "coverage", "fairness", "preferences",
-                "learning_goals", "acgme_compliance", "continuity"
+                "coverage",
+                "fairness",
+                "preferences",
+                "learning_goals",
+                "acgme_compliance",
+                "continuity",
             ]
 
         metadata = ExportMetadata(
@@ -123,8 +128,7 @@ class ParetoExporter:
             # Add objectives
             if ind.fitness:
                 solution["objectives"] = {
-                    obj: getattr(ind.fitness, obj, 0)
-                    for obj in objectives
+                    obj: getattr(ind.fitness, obj, 0) for obj in objectives
                 }
                 solution["weighted_sum"] = ind.fitness.weighted_sum()
 
@@ -170,9 +174,7 @@ class ParetoExporter:
 
         for obj in objectives:
             values = [
-                getattr(ind.fitness, obj, 0)
-                for ind in pareto_front
-                if ind.fitness
+                getattr(ind.fitness, obj, 0) for ind in pareto_front if ind.fitness
             ]
             if values:
                 stats["objective_ranges"][obj] = {
@@ -284,7 +286,9 @@ class EvolutionExporter:
             best_data = {
                 "id": best_individual.id,
                 "generation": best_individual.generation,
-                "fitness": best_individual.fitness.to_dict() if best_individual.fitness else {},
+                "fitness": best_individual.fitness.to_dict()
+                if best_individual.fitness
+                else {},
                 "n_assignments": best_individual.chromosome.count_assignments(),
             }
 
@@ -297,7 +301,7 @@ class EvolutionExporter:
                     "size": len(front),
                     "best_weighted_sum": max(
                         (ind.fitness.weighted_sum() for ind in front if ind.fitness),
-                        default=0
+                        default=0,
                     ),
                 }
                 for i, front in enumerate(pareto_history)
@@ -306,17 +310,19 @@ class EvolutionExporter:
             if include_full_pareto and len(pareto_history) > 0:
                 # Include final Pareto front details
                 final_front = pareto_history[-1]
-                pareto_data.append({
-                    "generation": len(pareto_history) - 1,
-                    "is_final": True,
-                    "solutions": [
-                        {
-                            "id": ind.id,
-                            "fitness": ind.fitness.to_dict() if ind.fitness else {},
-                        }
-                        for ind in final_front
-                    ],
-                })
+                pareto_data.append(
+                    {
+                        "generation": len(pareto_history) - 1,
+                        "is_final": True,
+                        "solutions": [
+                            {
+                                "id": ind.id,
+                                "fitness": ind.fitness.to_dict() if ind.fitness else {},
+                            }
+                            for ind in final_front
+                        ],
+                    }
+                )
 
         return {
             "type": "evolution_history",
@@ -345,8 +351,8 @@ class EvolutionExporter:
 
         # Compute improvement rate
         if len(best_fitness_series) >= 2:
-            early_avg = np.mean(best_fitness_series[:len(best_fitness_series)//4])
-            late_avg = np.mean(best_fitness_series[-len(best_fitness_series)//4:])
+            early_avg = np.mean(best_fitness_series[: len(best_fitness_series) // 4])
+            late_avg = np.mean(best_fitness_series[-len(best_fitness_series) // 4 :])
             improvement_rate = (late_avg - early_avg) / max(early_avg, 0.001)
         else:
             improvement_rate = 0.0
@@ -365,12 +371,15 @@ class EvolutionExporter:
             "diversity": {
                 "initial": float(diversity_series[0]) if diversity_series else 0,
                 "final": float(diversity_series[-1]) if diversity_series else 0,
-                "trend": "decreasing" if diversity_series and diversity_series[-1] < diversity_series[0] else "stable",
+                "trend": "decreasing"
+                if diversity_series and diversity_series[-1] < diversity_series[0]
+                else "stable",
             },
             "efficiency": {
                 "evaluations_to_best": self._find_first_best(best_fitness_series),
                 "avg_improvement_per_generation": float(
-                    (best_fitness_series[-1] - best_fitness_series[0]) / len(best_fitness_series)
+                    (best_fitness_series[-1] - best_fitness_series[0])
+                    / len(best_fitness_series)
                 ),
             },
         }
@@ -499,17 +508,19 @@ class HolographicExporter:
         nodes = []
         for ind in pareto_front:
             if ind.fitness:
-                nodes.append({
-                    "id": ind.id,
-                    "position": {
-                        "x": ind.fitness.coverage,
-                        "y": ind.fitness.fairness,
-                        "z": ind.fitness.acgme_compliance,
-                    },
-                    "size": ind.fitness.weighted_sum() * 10,  # Scale for visibility
-                    "color": self._fitness_to_color(ind.fitness.weighted_sum()),
-                    "label": f"Solution {ind.id}",
-                })
+                nodes.append(
+                    {
+                        "id": ind.id,
+                        "position": {
+                            "x": ind.fitness.coverage,
+                            "y": ind.fitness.fairness,
+                            "z": ind.fitness.acgme_compliance,
+                        },
+                        "size": ind.fitness.weighted_sum() * 10,  # Scale for visibility
+                        "color": self._fitness_to_color(ind.fitness.weighted_sum()),
+                        "label": f"Solution {ind.id}",
+                    }
+                )
 
         # Animation frames from population snapshots
         frames = []
@@ -517,21 +528,27 @@ class HolographicExporter:
             frame_nodes = []
             for ind in pop[:50]:  # Limit nodes per frame
                 if ind.fitness:
-                    frame_nodes.append({
-                        "id": ind.id,
-                        "position": {
-                            "x": ind.fitness.coverage,
-                            "y": ind.fitness.fairness,
-                            "z": ind.fitness.acgme_compliance,
-                        },
-                        "fitness": ind.fitness.weighted_sum(),
-                    })
+                    frame_nodes.append(
+                        {
+                            "id": ind.id,
+                            "position": {
+                                "x": ind.fitness.coverage,
+                                "y": ind.fitness.fairness,
+                                "z": ind.fitness.acgme_compliance,
+                            },
+                            "fitness": ind.fitness.weighted_sum(),
+                        }
+                    )
 
-            frames.append({
-                "generation": gen,
-                "nodes": frame_nodes,
-                "stats": evolution_history[gen].to_dict() if gen < len(evolution_history) else {},
-            })
+            frames.append(
+                {
+                    "generation": gen,
+                    "nodes": frame_nodes,
+                    "stats": evolution_history[gen].to_dict()
+                    if gen < len(evolution_history)
+                    else {},
+                }
+            )
 
         # Pareto surface (3D mesh)
         surface = self._build_pareto_surface(pareto_front)
@@ -576,11 +593,13 @@ class HolographicExporter:
         vertices = []
         for ind in pareto_front:
             if ind.fitness:
-                vertices.append([
-                    ind.fitness.coverage,
-                    ind.fitness.fairness,
-                    ind.fitness.acgme_compliance,
-                ])
+                vertices.append(
+                    [
+                        ind.fitness.coverage,
+                        ind.fitness.fairness,
+                        ind.fitness.acgme_compliance,
+                    ]
+                )
 
         # Simple triangulation (would use scipy.spatial.Delaunay for real impl)
         faces = []

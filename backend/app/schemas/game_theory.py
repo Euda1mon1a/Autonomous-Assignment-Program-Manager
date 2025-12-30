@@ -403,14 +403,18 @@ class OptimalConfigResponse(BaseModel):
 class ShapleyValueRequest(BaseModel):
     """Request to calculate Shapley values for faculty workload."""
 
-    faculty_ids: list[UUID] = Field(..., min_length=2, description="Faculty members to analyze (minimum 2)")
+    faculty_ids: list[UUID] = Field(
+        ..., min_length=2, description="Faculty members to analyze (minimum 2)"
+    )
     start_date: datetime = Field(..., description="Start date for workload analysis")
-    end_date: datetime = Field(..., description="End date for workload analysis (inclusive)")
+    end_date: datetime = Field(
+        ..., description="End date for workload analysis (inclusive)"
+    )
     num_samples: int = Field(
         1000,
         ge=100,
         le=10000,
-        description="Monte Carlo samples (more = better accuracy, default 1000)"
+        description="Monte Carlo samples (more = better accuracy, default 1000)",
     )
 
 
@@ -421,13 +425,24 @@ class ShapleyValueResult(BaseModel):
     faculty_name: str
 
     # Core Shapley metrics
-    shapley_value: float = Field(..., ge=0.0, le=1.0, description="Normalized Shapley value (0-1, proportion of total contribution)")
-    marginal_contribution: float = Field(..., ge=0.0, description="Marginal contribution to coverage (blocks)")
+    shapley_value: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Normalized Shapley value (0-1, proportion of total contribution)",
+    )
+    marginal_contribution: float = Field(
+        ..., ge=0.0, description="Marginal contribution to coverage (blocks)"
+    )
 
     # Workload fairness
-    fair_workload_target: float = Field(..., ge=0.0, description="Fair workload in hours based on Shapley proportion")
+    fair_workload_target: float = Field(
+        ..., ge=0.0, description="Fair workload in hours based on Shapley proportion"
+    )
     current_workload: float = Field(..., ge=0.0, description="Actual workload in hours")
-    equity_gap: float = Field(..., description="Hours above (+) or below (-) fair target")
+    equity_gap: float = Field(
+        ..., description="Hours above (+) or below (-) fair target"
+    )
 
     class Config:
         from_attributes = True
@@ -440,14 +455,30 @@ class FacultyShapleyMetrics(BaseModel):
     faculty_results: list[ShapleyValueResult]
 
     # Summary statistics
-    total_workload: float = Field(..., ge=0.0, description="Total hours worked by all faculty")
-    total_fair_target: float = Field(..., ge=0.0, description="Sum of all fair workload targets")
-    equity_gap_std_dev: float = Field(..., ge=0.0, description="Standard deviation of equity gaps (lower = more equitable)")
+    total_workload: float = Field(
+        ..., ge=0.0, description="Total hours worked by all faculty"
+    )
+    total_fair_target: float = Field(
+        ..., ge=0.0, description="Sum of all fair workload targets"
+    )
+    equity_gap_std_dev: float = Field(
+        ...,
+        ge=0.0,
+        description="Standard deviation of equity gaps (lower = more equitable)",
+    )
 
     # Equity indicators
-    overworked_count: int = Field(..., ge=0, description="Number of faculty working above fair share")
-    underworked_count: int = Field(..., ge=0, description="Number of faculty working below fair share")
+    overworked_count: int = Field(
+        ..., ge=0, description="Number of faculty working above fair share"
+    )
+    underworked_count: int = Field(
+        ..., ge=0, description="Number of faculty working below fair share"
+    )
 
     # Outliers
-    most_overworked_faculty_id: UUID | None = Field(None, description="Faculty ID with largest positive equity gap")
-    most_underworked_faculty_id: UUID | None = Field(None, description="Faculty ID with largest negative equity gap")
+    most_overworked_faculty_id: UUID | None = Field(
+        None, description="Faculty ID with largest positive equity gap"
+    )
+    most_underworked_faculty_id: UUID | None = Field(
+        None, description="Faculty ID with largest negative equity gap"
+    )

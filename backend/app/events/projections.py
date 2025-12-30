@@ -71,6 +71,7 @@ class ProjectionCheckpoint(Base):
     """
 
     __tablename__ = "projection_checkpoints"
+    __table_args__ = {"extend_existing": True}
 
     id = Column(GUID(), primary_key=True)
     projection_name = Column(String(100), nullable=False, index=True)

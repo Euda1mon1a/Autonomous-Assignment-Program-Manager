@@ -194,7 +194,9 @@ def plot_parisi_overlap_matrix(
 
     ax.set_xlabel("Replica Index", fontsize=12)
     ax.set_ylabel("Replica Index", fontsize=12)
-    ax.set_title("Parisi Overlap Matrix (RSB Structure)", fontsize=14, fontweight="bold")
+    ax.set_title(
+        "Parisi Overlap Matrix (RSB Structure)", fontsize=14, fontweight="bold"
+    )
 
     # Add info text
     info_text = (
@@ -265,7 +267,9 @@ def plot_overlap_distribution(
 
     # Add info text
     total_pairs = sum(counts)
-    info_text = f"Total Pairs: {total_pairs}\nDiversity: {rsb_analysis.diversity_score:.3f}"
+    info_text = (
+        f"Total Pairs: {total_pairs}\nDiversity: {rsb_analysis.diversity_score:.3f}"
+    )
     ax.text(
         0.98,
         0.98,
@@ -341,7 +345,9 @@ def plot_frustration_network(
 
     # Draw nodes
     for constraint, (x, y) in positions.items():
-        ax.scatter([x], [y], s=500, c="lightblue", edgecolor="black", linewidth=2, zorder=3)
+        ax.scatter(
+            [x], [y], s=500, c="lightblue", edgecolor="black", linewidth=2, zorder=3
+        )
         ax.text(
             x,
             y,
@@ -416,13 +422,16 @@ def plot_solution_basins(
     if n_basins > 0:
         colors = plt.cm.tab10(np.linspace(0, 1, n_basins))
         replica_colors = [
-            colors[basin_assignments.get(i, 0) % len(colors)] for i in range(len(replicas))
+            colors[basin_assignments.get(i, 0) % len(colors)]
+            for i in range(len(replicas))
         ]
     else:
         replica_colors = "blue"
 
     # Scatter plot
-    ax.scatter(magnetizations, energies, c=replica_colors, alpha=0.6, s=50, edgecolor="black")
+    ax.scatter(
+        magnetizations, energies, c=replica_colors, alpha=0.6, s=50, edgecolor="black"
+    )
 
     ax.set_xlabel("Magnetization (Soft Constraint Alignment)", fontsize=12)
     ax.set_ylabel("Energy (Total Violations)", fontsize=12)

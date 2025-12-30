@@ -235,9 +235,7 @@ class FacultyOutpatientAssignmentService:
 
         return block_start, block_end
 
-    def _get_blocks_for_period(
-        self, start_date: date, end_date: date
-    ) -> list[Block]:
+    def _get_blocks_for_period(self, start_date: date, end_date: date) -> list[Block]:
         """Get all blocks in the date range."""
         return (
             self.db.query(Block)
@@ -312,11 +310,7 @@ class FacultyOutpatientAssignmentService:
         - Blocking absences (leave, TDY, etc.)
         - ADJUNCT role (not auto-scheduled, can be pre-loaded to FMIT manually)
         """
-        all_faculty = (
-            self.db.query(Person)
-            .filter(Person.type == "faculty")
-            .all()
-        )
+        all_faculty = self.db.query(Person).filter(Person.type == "faculty").all()
 
         # Get faculty with FMIT during this period
         fmit_templates = (
@@ -362,7 +356,8 @@ class FacultyOutpatientAssignmentService:
         # Exclude faculty on FMIT/absences AND adjunct faculty (not auto-scheduled)
         excluded = fmit_faculty_ids | absent_faculty_ids
         available = [
-            f for f in all_faculty
+            f
+            for f in all_faculty
             if f.id not in excluded and f.role_enum != FacultyRole.ADJUNCT
         ]
 
@@ -400,7 +395,11 @@ class FacultyOutpatientAssignmentService:
 
         # Get FM Clinic template (primary clinic assignment target)
         fm_clinic_template = next(
-            (t for t in templates if "FM" in t.name.upper() or "CLINIC" in t.name.upper()),
+            (
+                t
+                for t in templates
+                if "FM" in t.name.upper() or "CLINIC" in t.name.upper()
+            ),
             templates[0] if templates else None,
         )
 
@@ -424,7 +423,10 @@ class FacultyOutpatientAssignmentService:
                     continue
 
                 # Skip Sports Med faculty for regular clinic
-                if hasattr(f, "faculty_role") and f.faculty_role == FacultyRole.SPORTS_MED:
+                if (
+                    hasattr(f, "faculty_role")
+                    and f.faculty_role == FacultyRole.SPORTS_MED
+                ):
                     continue
 
                 # Score by load (fewer = higher priority)
@@ -514,11 +516,7 @@ class FacultyOutpatientAssignmentService:
 
         # Get person lookup for PGY levels
         resident_ids = [a.person_id for a in resident_assignments]
-        residents = (
-            self.db.query(Person)
-            .filter(Person.id.in_(resident_ids))
-            .all()
-        )
+        residents = self.db.query(Person).filter(Person.id.in_(resident_ids)).all()
         resident_lookup = {r.id: r for r in residents}
 
         # For each block with residents, assign supervising faculty
@@ -549,23 +547,16 @@ class FacultyOutpatientAssignmentService:
             # Find available faculty (not already assigned to this block)
             existing_faculty_in_block = set()
             existing_assignments = (
-                self.db.query(Assignment)
-                .filter(Assignment.block_id == block_id)
-                .all()
+                self.db.query(Assignment).filter(Assignment.block_id == block_id).all()
             )
             for ea in existing_assignments:
                 existing_faculty_in_block.add(ea.person_id)
 
             # Also exclude faculty assigned via new clinic assignments (not yet committed)
-            for fid in [
-                pid for bid, pid in new_assignments_set if bid == block_id
-            ]:
+            for fid in [pid for bid, pid in new_assignments_set if bid == block_id]:
                 existing_faculty_in_block.add(fid)
 
-            available = [
-                f for f in faculty
-                if f.id not in existing_faculty_in_block
-            ]
+            available = [f for f in faculty if f.id not in existing_faculty_in_block]
 
             if not available:
                 continue
@@ -619,7 +610,9 @@ class FacultyOutpatientAssignmentService:
                     FacultyAssignmentSummary(
                         faculty_id=f.id,
                         faculty_name=f.name,
-                        faculty_role=str(f.faculty_role) if hasattr(f, "faculty_role") and f.faculty_role else "unknown",
+                        faculty_role=str(f.faculty_role)
+                        if hasattr(f, "faculty_role") and f.faculty_role
+                        else "unknown",
                         clinic_sessions=clinic_count,
                         supervision_sessions=supervision_count,
                         total_sessions=clinic_count + supervision_count,

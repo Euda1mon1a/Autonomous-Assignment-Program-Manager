@@ -45,11 +45,6 @@ Features:
     - Async/await support
 """
 
-# Core cache classes
-# Compatibility exports for cache.py classes
-# These mirror the classes from the standalone cache.py file
-from enum import Enum
-
 # Decorators
 from app.core.cache.decorators import (
     cache_invalidate,
@@ -88,36 +83,15 @@ from app.core.cache.strategies import (
 # Utility functions
 from app.core.cache.utils import invalidate_schedule_cache
 
-
-class CachePrefix(str, Enum):
-    """Cache key prefixes for different data types."""
-
-    HEATMAP = "heatmap"
-    CALENDAR = "calendar"
-    ASSIGNMENTS = "assignments"
-    PERSONS = "persons"
-    ROTATIONS = "rotations"
-    BLOCKS = "blocks"
-    COVERAGE = "coverage"
-    WORKLOAD = "workload"
-    SCHEDULE = "schedule"
-    GENERAL = "service"
-
-
-class CacheTTL:
-    """Standard TTL values for different cache types."""
-
-    SHORT = 300  # 5 minutes
-    MEDIUM = 1800  # 30 minutes
-    LONG = 3600  # 1 hour
-    EXTENDED = 14400  # 4 hours
-    DAY = 86400  # 24 hours
-    WEEK = 604800  # 7 days
-
-
-def get_service_cache():
-    """Get service-level cache instance."""
-    return get_cache("service")
+# Backward compatibility: import ServiceCache from renamed service_cache.py
+from app.core.service_cache import (
+    CachePrefix,
+    CacheTTL,
+    ServiceCache,
+    get_service_cache,
+    invalidate_person_cache,
+    invalidate_rotation_cache,
+)
 
 
 __all__ = [
@@ -148,10 +122,13 @@ __all__ = [
     "write_through",
     # Utility functions
     "invalidate_schedule_cache",
-    # Compatibility exports from cache.py
+    # Backward compatibility exports from service_cache.py
     "CachePrefix",
     "CacheTTL",
+    "ServiceCache",
     "get_service_cache",
+    "invalidate_person_cache",
+    "invalidate_rotation_cache",
 ]
 
 # Version

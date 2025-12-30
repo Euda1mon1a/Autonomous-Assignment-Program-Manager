@@ -54,8 +54,12 @@ class TestScheduleGenerationRoutes:
     # Schedule Generation Tests
     # =========================================================================
 
-    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs auth fixtures and test data")
-    def test_post_schedule_generate_success(self, client, auth_headers, sample_rotation_template):
+    @pytest.mark.skip(
+        reason="DEBT-016: Placeholder - needs auth fixtures and test data"
+    )
+    def test_post_schedule_generate_success(
+        self, client, auth_headers, sample_rotation_template
+    ):
         """Test successful schedule generation."""
         response = client.post(
             "/api/schedule/generate",
@@ -68,7 +72,9 @@ class TestScheduleGenerationRoutes:
         )
         assert response.status_code in [200, 201, 202]  # May be async
 
-    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs auth fixtures and test data")
+    @pytest.mark.skip(
+        reason="DEBT-016: Placeholder - needs auth fixtures and test data"
+    )
     def test_post_schedule_generate_missing_dates(self, client, auth_headers):
         """Test schedule generation fails without required dates."""
         response = client.post(
@@ -78,7 +84,9 @@ class TestScheduleGenerationRoutes:
         )
         assert response.status_code == 422  # Validation error
 
-    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs auth fixtures and test data")
+    @pytest.mark.skip(
+        reason="DEBT-016: Placeholder - needs auth fixtures and test data"
+    )
     def test_post_schedule_generate_invalid_date_range(self, client, auth_headers):
         """Test schedule generation fails with end_date before start_date."""
         response = client.post(
@@ -91,7 +99,9 @@ class TestScheduleGenerationRoutes:
         )
         assert response.status_code == 400
 
-    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs auth fixtures and test data")
+    @pytest.mark.skip(
+        reason="DEBT-016: Placeholder - needs auth fixtures and test data"
+    )
     def test_post_schedule_generate_requires_auth(self, client):
         """Test schedule generation requires authentication."""
         response = client.post(
@@ -107,7 +117,9 @@ class TestScheduleGenerationRoutes:
     # Schedule Validation Tests
     # =========================================================================
 
-    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs auth fixtures and test data")
+    @pytest.mark.skip(
+        reason="DEBT-016: Placeholder - needs auth fixtures and test data"
+    )
     def test_post_schedule_validate_success(self, client, auth_headers):
         """Test schedule validation endpoint."""
         response = client.post(
@@ -117,7 +129,9 @@ class TestScheduleGenerationRoutes:
         )
         assert response.status_code in [200, 422]
 
-    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs auth fixtures and test data")
+    @pytest.mark.skip(
+        reason="DEBT-016: Placeholder - needs auth fixtures and test data"
+    )
     def test_post_schedule_validate_acgme_compliance(self, client, auth_headers):
         """Test schedule validation returns ACGME compliance status."""
         response = client.post(
@@ -133,7 +147,9 @@ class TestScheduleGenerationRoutes:
     # Emergency Coverage Tests
     # =========================================================================
 
-    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs auth fixtures and test data")
+    @pytest.mark.skip(
+        reason="DEBT-016: Placeholder - needs auth fixtures and test data"
+    )
     def test_post_emergency_coverage_success(self, client, auth_headers):
         """Test emergency coverage endpoint."""
         response = client.post(
@@ -146,8 +162,12 @@ class TestScheduleGenerationRoutes:
         )
         assert response.status_code in [200, 201]
 
-    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs auth fixtures and test data")
-    def test_post_emergency_coverage_requires_scheduler_role(self, client, auth_headers):
+    @pytest.mark.skip(
+        reason="DEBT-016: Placeholder - needs auth fixtures and test data"
+    )
+    def test_post_emergency_coverage_requires_scheduler_role(
+        self, client, auth_headers
+    ):
         """Test emergency coverage requires scheduler role."""
         # Use non-scheduler user
         response = client.post(
@@ -170,7 +190,9 @@ class TestScheduleRetrievalRoutes:
         """Get authentication headers."""
         return {}
 
-    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs auth fixtures and test data")
+    @pytest.mark.skip(
+        reason="DEBT-016: Placeholder - needs auth fixtures and test data"
+    )
     def test_get_schedule_by_date_range(self, client, auth_headers):
         """Test retrieving schedule by date range."""
         response = client.get(
@@ -183,7 +205,9 @@ class TestScheduleRetrievalRoutes:
         )
         assert response.status_code == 200
 
-    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs auth fixtures and test data")
+    @pytest.mark.skip(
+        reason="DEBT-016: Placeholder - needs auth fixtures and test data"
+    )
     def test_get_schedule_by_person(self, client, auth_headers):
         """Test retrieving schedule filtered by person."""
         person_id = str(uuid4())
@@ -203,7 +227,9 @@ class TestScheduleModificationRoutes:
         """Get authentication headers."""
         return {}
 
-    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs auth fixtures and test data")
+    @pytest.mark.skip(
+        reason="DEBT-016: Placeholder - needs auth fixtures and test data"
+    )
     def test_delete_schedule_bulk_success(self, client, auth_headers):
         """Test bulk schedule deletion."""
         response = client.delete(
@@ -216,7 +242,9 @@ class TestScheduleModificationRoutes:
         )
         assert response.status_code in [200, 204]
 
-    @pytest.mark.skip(reason="DEBT-016: Placeholder - needs auth fixtures and test data")
+    @pytest.mark.skip(
+        reason="DEBT-016: Placeholder - needs auth fixtures and test data"
+    )
     def test_delete_schedule_requires_scheduler_role(self, client, auth_headers):
         """Test bulk deletion requires scheduler role."""
         response = client.delete(

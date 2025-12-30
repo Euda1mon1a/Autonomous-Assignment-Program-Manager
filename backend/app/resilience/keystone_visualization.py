@@ -406,7 +406,9 @@ class KeystoneVisualizer:
                 providers = services.get(service_id, [])
                 if keystone.entity_id in providers:
                     # Count alternatives (exclude keystone itself)
-                    alternatives = len([p for p in providers if p != keystone.entity_id])
+                    alternatives = len(
+                        [p for p in providers if p != keystone.entity_id]
+                    )
                     matrix[i, j] = alternatives
 
         # Create heatmap
@@ -418,7 +420,7 @@ class KeystoneVisualizer:
         ax.set_xticks(range(num_services))
         ax.set_yticks(range(num_keystones))
 
-        service_labels = [f"Svc-{i+1}" for i in range(num_services)]
+        service_labels = [f"Svc-{i + 1}" for i in range(num_services)]
         keystone_labels = [k.entity_name[:20] for k in keystones]
 
         ax.set_xticklabels(service_labels, rotation=45, ha="right", fontsize=8)
@@ -538,7 +540,9 @@ class KeystoneVisualizer:
             )
 
             # Label
-            label = f"{plan.keystone_entity_name[:20]}\n({plan.estimated_training_hours}h)"
+            label = (
+                f"{plan.keystone_entity_name[:20]}\n({plan.estimated_training_hours}h)"
+            )
             ax.text(
                 -5,
                 i,
@@ -568,7 +572,9 @@ class KeystoneVisualizer:
         num_months = max(1, date_range // 30)
         tick_positions = [i * (date_range / num_months) for i in range(num_months + 1)]
         tick_labels = [
-            (min_date + __import__("datetime").timedelta(days=int(pos))).strftime("%b %Y")
+            (min_date + __import__("datetime").timedelta(days=int(pos))).strftime(
+                "%b %Y"
+            )
             for pos in tick_positions
         ]
         ax.set_xticks(tick_positions)
@@ -577,8 +583,7 @@ class KeystoneVisualizer:
         ax.set_yticks([])
         ax.set_xlabel("Timeline", fontsize=12)
         ax.set_title(
-            "Succession Plan Timeline\n"
-            f"{len(succession_plans)} plans scheduled",
+            f"Succession Plan Timeline\n{len(succession_plans)} plans scheduled",
             fontsize=14,
             fontweight="bold",
         )

@@ -347,7 +347,9 @@ class RecoveryDistanceCalculator:
         # 95th percentile (for worst-case planning)
         if distances:
             sorted_distances = sorted(distances)
-            p95_index = min(int(len(sorted_distances) * 0.95), len(sorted_distances) - 1)
+            p95_index = min(
+                int(len(sorted_distances) * 0.95), len(sorted_distances) - 1
+            )
             rd_p95 = sorted_distances[p95_index]
         else:
             rd_p95 = 0.0
@@ -455,7 +457,9 @@ class RecoveryDistanceCalculator:
                     day_blocks = [
                         a.block_id
                         for a in affected
-                        if any(b.id == a.block_id and b.date == sample_date for b in blocks)
+                        if any(
+                            b.id == a.block_id and b.date == sample_date for b in blocks
+                        )
                     ]
                     if day_blocks:
                         events.append(

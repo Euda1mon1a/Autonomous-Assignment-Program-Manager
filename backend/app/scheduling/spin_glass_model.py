@@ -181,7 +181,9 @@ class SpinGlassScheduler:
         # Cache constraint interaction matrix for efficiency
         self._interaction_matrix: dict[tuple[str, str], float] | None = None
 
-    def compute_frustration_index(self, constraints: list[Constraint] | None = None) -> float:
+    def compute_frustration_index(
+        self, constraints: list[Constraint] | None = None
+    ) -> float:
         """
         Measure the degree of frustration in the constraint system.
 
@@ -266,7 +268,9 @@ class SpinGlassScheduler:
         """
         replicas: list[ReplicaSchedule] = []
 
-        logger.info(f"Generating {n_replicas} replica schedules at T={self.temperature}")
+        logger.info(
+            f"Generating {n_replicas} replica schedules at T={self.temperature}"
+        )
 
         for replica_idx in range(n_replicas):
             # Generate a perturbed schedule via simulated annealing
@@ -403,7 +407,9 @@ class SpinGlassScheduler:
 
             overlaps.append(mean_overlap)
 
-            logger.debug(f"Density={density:.2f}, T={temp:.3f}, overlap={mean_overlap:.3f}")
+            logger.debug(
+                f"Density={density:.2f}, T={temp:.3f}, overlap={mean_overlap:.3f}"
+            )
 
         # Find transition point as maximum derivative of overlap
         overlaps_array = np.array(overlaps)
@@ -705,7 +711,10 @@ class SpinGlassScheduler:
         if move_type == "swap" and len(new_assignments) >= 2:
             # Swap two assignments
             i, j = self.rng.choice(len(new_assignments), size=2, replace=False)
-            new_assignments[i], new_assignments[j] = new_assignments[j], new_assignments[i]
+            new_assignments[i], new_assignments[j] = (
+                new_assignments[j],
+                new_assignments[i],
+            )
 
         elif move_type == "reassign" and self.context.residents:
             # Reassign a random block to a different resident

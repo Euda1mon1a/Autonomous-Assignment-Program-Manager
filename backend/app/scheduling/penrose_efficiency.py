@@ -249,7 +249,9 @@ class RotationEnergyTracker:
             True if extraction was recorded, False if budget exhausted
         """
         if self.is_exhausted:
-            logger.warning("Extraction budget exhausted, cannot record more extractions")
+            logger.warning(
+                "Extraction budget exhausted, cannot record more extractions"
+            )
             return False
 
         if not swap.is_beneficial:
@@ -489,7 +491,9 @@ class PenroseEfficiencyExtractor:
                     extraction_potential = min(0.29, rotation_velocity * 0.15)
 
                     ergosphere = ErgospherePeriod(
-                        start_time=datetime.combine(last_block.date, datetime.min.time())
+                        start_time=datetime.combine(
+                            last_block.date, datetime.min.time()
+                        )
                         + timedelta(hours=12 if last_block.time_of_day == "PM" else 0),
                         end_time=datetime.combine(first_block.date, datetime.min.time())
                         + timedelta(hours=8 if first_block.time_of_day == "AM" else 12),
@@ -504,7 +508,9 @@ class PenroseEfficiencyExtractor:
 
         return ergospheres
 
-    async def decompose_into_phases(self, assignment: Assignment) -> list[PhaseComponent]:
+    async def decompose_into_phases(
+        self, assignment: Assignment
+    ) -> list[PhaseComponent]:
         """
         Decompose an assignment into rotation phases.
 
@@ -546,14 +552,22 @@ class PenroseEfficiencyExtractor:
 
         # Calculate conflict scores for each phase
         # TODO: Implement actual conflict detection
-        pre_conflicts = 0  # await self._count_conflicts_in_period(assignment, pre_start, pre_end)
+        pre_conflicts = (
+            0  # await self._count_conflicts_in_period(assignment, pre_start, pre_end)
+        )
         trans_conflicts = 0  # await self._count_conflicts_in_period(assignment, trans_start, trans_end)
-        post_conflicts = 0  # await self._count_conflicts_in_period(assignment, post_start, post_end)
+        post_conflicts = (
+            0  # await self._count_conflicts_in_period(assignment, post_start, post_end)
+        )
 
         # Determine energy states based on conflict patterns
         # Negative energy = transition reduces conflicts
         pre_energy = "positive" if pre_conflicts > trans_conflicts else "zero"
-        trans_energy = "negative" if trans_conflicts < (pre_conflicts + post_conflicts) / 2 else "positive"
+        trans_energy = (
+            "negative"
+            if trans_conflicts < (pre_conflicts + post_conflicts) / 2
+            else "positive"
+        )
         post_energy = "positive" if post_conflicts > trans_conflicts else "zero"
 
         # Create phase components
@@ -631,7 +645,9 @@ class PenroseEfficiencyExtractor:
                 # Only include if globally beneficial
                 if global_benefit > abs(local_cost):
                     swap = PenroseSwap(
-                        swap_id=UUID(int=hash((assign_a.id, assign_b.id)) & (2**128 - 1)),
+                        swap_id=UUID(
+                            int=hash((assign_a.id, assign_b.id)) & (2**128 - 1)
+                        ),
                         assignment_a=assign_a.id,
                         assignment_b=assign_b.id,
                         local_cost=local_cost,
@@ -686,7 +702,10 @@ class PenroseEfficiencyExtractor:
         return cost
 
     async def _calculate_global_benefit(
-        self, assign_a: Assignment, assign_b: Assignment, all_assignments: list[Assignment]
+        self,
+        assign_a: Assignment,
+        assign_b: Assignment,
+        all_assignments: list[Assignment],
     ) -> float:
         """
         Calculate global benefit of swapping two assignments.
@@ -735,7 +754,9 @@ class PenroseEfficiencyExtractor:
         if not swaps_executed:
             return 0.0
 
-        total_extraction = sum(swap.net_extraction for swap in swaps_executed if swap.executed)
+        total_extraction = sum(
+            swap.net_extraction for swap in swaps_executed if swap.executed
+        )
 
         # Normalize by initial rotation energy if tracker is initialized
         if self.energy_tracker:
@@ -800,7 +821,9 @@ class PenroseEfficiencyExtractor:
             iteration_swaps: list[PenroseSwap] = []
             for ergosphere in ergospheres:
                 if ergosphere.is_high_potential:
-                    swaps = await self.find_negative_energy_swaps(schedule_id, ergosphere)
+                    swaps = await self.find_negative_energy_swaps(
+                        schedule_id, ergosphere
+                    )
                     iteration_swaps.extend(swaps)
 
             if not iteration_swaps:
@@ -809,7 +832,9 @@ class PenroseEfficiencyExtractor:
 
             # Execute top swaps within budget
             executed_count = 0
-            for swap in sorted(iteration_swaps, key=lambda s: s.net_extraction, reverse=True):
+            for swap in sorted(
+                iteration_swaps, key=lambda s: s.net_extraction, reverse=True
+            ):
                 if swap.net_extraction <= self.energy_tracker.extraction_budget:
                     # TODO: Actually execute the swap in the database
                     swap.executed = True

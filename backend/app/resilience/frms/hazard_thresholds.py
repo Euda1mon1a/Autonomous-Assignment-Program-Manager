@@ -212,7 +212,11 @@ class FatigueHazard:
     @property
     def requires_schedule_change(self) -> bool:
         """Check if hazard requires schedule modification."""
-        return self.hazard_level in [HazardLevel.ORANGE, HazardLevel.RED, HazardLevel.BLACK]
+        return self.hazard_level in [
+            HazardLevel.ORANGE,
+            HazardLevel.RED,
+            HazardLevel.BLACK,
+        ]
 
 
 class HazardThresholdEngine:
@@ -454,16 +458,19 @@ class HazardThresholdEngine:
                 }
                 for level, count in counts.items()
             },
-            "critical_count": sum(
-                1 for h in hazards if h.is_critical
-            ),
+            "critical_count": sum(1 for h in hazards if h.is_critical),
             "acgme_risk_count": sum(1 for h in hazards if h.acgme_risk),
         }
 
     def _check_alertness(self, alertness: float) -> HazardLevel:
         """Check alertness against thresholds."""
-        for level in [HazardLevel.BLACK, HazardLevel.RED, HazardLevel.ORANGE,
-                      HazardLevel.YELLOW, HazardLevel.GREEN]:
+        for level in [
+            HazardLevel.BLACK,
+            HazardLevel.RED,
+            HazardLevel.ORANGE,
+            HazardLevel.YELLOW,
+            HazardLevel.GREEN,
+        ]:
             if alertness < THRESHOLDS[level]["alertness_min"]:
                 # Below this level's minimum, so return the higher level
                 if level == HazardLevel.GREEN:
@@ -474,32 +481,52 @@ class HazardThresholdEngine:
 
     def _check_sleep_debt(self, sleep_debt: float) -> HazardLevel:
         """Check sleep debt against thresholds."""
-        for level in [HazardLevel.GREEN, HazardLevel.YELLOW, HazardLevel.ORANGE,
-                      HazardLevel.RED, HazardLevel.BLACK]:
+        for level in [
+            HazardLevel.GREEN,
+            HazardLevel.YELLOW,
+            HazardLevel.ORANGE,
+            HazardLevel.RED,
+            HazardLevel.BLACK,
+        ]:
             if sleep_debt <= THRESHOLDS[level]["sleep_debt_max"]:
                 return level
         return HazardLevel.BLACK
 
     def _check_hours_awake(self, hours_awake: float) -> HazardLevel:
         """Check hours awake against thresholds."""
-        for level in [HazardLevel.GREEN, HazardLevel.YELLOW, HazardLevel.ORANGE,
-                      HazardLevel.RED, HazardLevel.BLACK]:
+        for level in [
+            HazardLevel.GREEN,
+            HazardLevel.YELLOW,
+            HazardLevel.ORANGE,
+            HazardLevel.RED,
+            HazardLevel.BLACK,
+        ]:
             if hours_awake <= THRESHOLDS[level]["hours_awake_max"]:
                 return level
         return HazardLevel.BLACK
 
     def _check_samn_perelli(self, sp_level: SamnPerelliLevel) -> HazardLevel:
         """Check Samn-Perelli level against thresholds."""
-        for level in [HazardLevel.GREEN, HazardLevel.YELLOW, HazardLevel.ORANGE,
-                      HazardLevel.RED, HazardLevel.BLACK]:
+        for level in [
+            HazardLevel.GREEN,
+            HazardLevel.YELLOW,
+            HazardLevel.ORANGE,
+            HazardLevel.RED,
+            HazardLevel.BLACK,
+        ]:
             if sp_level <= THRESHOLDS[level]["samn_perelli_max"]:
                 return level
         return HazardLevel.BLACK
 
     def _check_consecutive_nights(self, nights: int) -> HazardLevel:
         """Check consecutive nights against thresholds."""
-        for level in [HazardLevel.GREEN, HazardLevel.YELLOW, HazardLevel.ORANGE,
-                      HazardLevel.RED, HazardLevel.BLACK]:
+        for level in [
+            HazardLevel.GREEN,
+            HazardLevel.YELLOW,
+            HazardLevel.ORANGE,
+            HazardLevel.RED,
+            HazardLevel.BLACK,
+        ]:
             if nights <= THRESHOLDS[level]["consecutive_nights_max"]:
                 return level
         return HazardLevel.BLACK

@@ -192,8 +192,8 @@ class MigrationLock(Base):
     expires_at = Column(DateTime, nullable=False, index=True)
     heartbeat_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
-    # Metadata
-    metadata = Column(JSONType)
+    # Lock metadata (named lock_metadata to avoid conflict with SQLAlchemy reserved 'metadata')
+    lock_metadata = Column(JSONType)
 
     def __repr__(self):
         return f"<MigrationLock(name='{self.lock_name}', holder='{self.lock_holder}')>"
@@ -411,7 +411,7 @@ class MigrationLockManager:
                     seconds=self.timeout_seconds
                 )
                 existing_lock.heartbeat_at = datetime.utcnow()
-                existing_lock.metadata = metadata
+                existing_lock.lock_metadata = metadata
                 self.db.commit()
                 return existing_lock
             else:
@@ -425,7 +425,7 @@ class MigrationLockManager:
             lock_holder=self.lock_holder_id,
             status=MigrationLockStatus.LOCKED.value,
             expires_at=expires_at,
-            metadata=metadata,
+            lock_metadata=metadata,
         )
 
         self.db.add(lock)

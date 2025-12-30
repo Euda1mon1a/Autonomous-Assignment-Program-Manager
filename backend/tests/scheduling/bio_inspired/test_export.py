@@ -1,4 +1,5 @@
 """Tests for export functionality."""
+
 import json
 import tempfile
 from pathlib import Path
@@ -140,7 +141,9 @@ class TestParetoExporter:
 class TestEvolutionExporter:
     """Tests for evolution history exporter."""
 
-    def _create_evolution_history(self, n_generations: int = 10) -> list[PopulationStats]:
+    def _create_evolution_history(
+        self, n_generations: int = 10
+    ) -> list[PopulationStats]:
         """Create test evolution history."""
         return [
             PopulationStats(

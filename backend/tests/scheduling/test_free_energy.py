@@ -66,7 +66,9 @@ class MockTemplate:
 class MockAssignment:
     """Mock Assignment for testing."""
 
-    def __init__(self, person_id: uuid.UUID, block_id: uuid.UUID, template_id: uuid.UUID):
+    def __init__(
+        self, person_id: uuid.UUID, block_id: uuid.UUID, template_id: uuid.UUID
+    ):
         self.id = uuid.uuid4()
         self.person_id = person_id
         self.block_id = block_id
@@ -82,7 +84,7 @@ class TestDemandForecast:
     def test_initialization(self):
         """Test DemandForecast initialization."""
         template_ids = [uuid.uuid4() for _ in range(3)]
-        coverage = {tid: 0.33 for tid in template_ids}
+        coverage = dict.fromkeys(template_ids, 0.33)
 
         forecast = DemandForecast(
             predicted_coverage=coverage,
@@ -232,7 +234,7 @@ class TestScheduleOutcome:
     def test_initialization(self):
         """Test ScheduleOutcome initialization."""
         template_ids = [uuid.uuid4() for _ in range(3)]
-        coverage = {tid: 0.33 for tid in template_ids}
+        coverage = dict.fromkeys(template_ids, 0.33)
 
         outcome = ScheduleOutcome(
             actual_coverage=coverage,
@@ -258,7 +260,7 @@ class TestGenerativeModel:
         assert model.n_templates == 3
         assert len(model.prior_weights) == 3
         assert len(model.learned_weights) == 3
-        assert np.allclose(model.prior_weights, [1/3, 1/3, 1/3])
+        assert np.allclose(model.prior_weights, [1 / 3, 1 / 3, 1 / 3])
         assert model.outcomes_seen == 0
 
     def test_update_single_outcome(self):
@@ -474,7 +476,7 @@ class TestFreeEnergyScheduler:
 
         template_ids = [t.id for t in context.templates]
         forecast = DemandForecast(
-            predicted_coverage={tid: 0.5 for tid in template_ids},
+            predicted_coverage=dict.fromkeys(template_ids, 0.5),
             predicted_complexity=0.5,
             confidence=0.8,
         )
@@ -501,7 +503,7 @@ class TestFreeEnergyScheduler:
 
         template_ids = [t.id for t in context.templates]
         forecast = DemandForecast(
-            predicted_coverage={tid: 0.5 for tid in template_ids},
+            predicted_coverage=dict.fromkeys(template_ids, 0.5),
             predicted_complexity=0.5,
             confidence=0.8,
         )
@@ -513,7 +515,9 @@ class TestFreeEnergyScheduler:
             density=0.5,
         )
 
-        initial_energy = solver.compute_free_energy(initial_chromosome, forecast, context)
+        initial_energy = solver.compute_free_energy(
+            initial_chromosome, forecast, context
+        )
 
         optimized = solver.minimize_free_energy(
             initial_schedule=initial_chromosome,
@@ -540,7 +544,7 @@ class TestFreeEnergyScheduler:
 
         template_ids = [t.id for t in context.templates]
         forecast = DemandForecast(
-            predicted_coverage={tid: 0.5 for tid in template_ids},
+            predicted_coverage=dict.fromkeys(template_ids, 0.5),
             predicted_complexity=0.5,
             confidence=0.8,
         )

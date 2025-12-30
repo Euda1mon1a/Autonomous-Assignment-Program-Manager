@@ -40,10 +40,7 @@ Potential swap candidates:
     query = "Can I swap my Friday call shift with someone? I have a family emergency."
 
     prompt = pm.build_prompt(
-        query=query,
-        context=context,
-        task_type="swap",
-        include_examples=False
+        query=query, context=context, task_type="swap", include_examples=False
     )
 
     print(f"\nUSER QUERY:\n{query}\n")
@@ -63,31 +60,62 @@ def example_compliance_check():
     schedule_data = {
         "person": "Dr. Michael Chen (PGY-1)",
         "assignments": [
-            {"date": "2024-01-15", "rotation": "Clinic", "shift_type": "AM", "hours": 8},
-            {"date": "2024-01-15", "rotation": "Clinic", "shift_type": "PM", "hours": 4},
-            {"date": "2024-01-16", "rotation": "Inpatient", "shift_type": "Day", "hours": 12},
-            {"date": "2024-01-17", "rotation": "Inpatient", "shift_type": "Day", "hours": 12},
-            {"date": "2024-01-18", "rotation": "Inpatient", "shift_type": "Day", "hours": 12},
-            {"date": "2024-01-19", "rotation": "Clinic", "shift_type": "AM", "hours": 8},
-            {"date": "2024-01-20", "rotation": "Call", "shift_type": "24hr", "hours": 24},
+            {
+                "date": "2024-01-15",
+                "rotation": "Clinic",
+                "shift_type": "AM",
+                "hours": 8,
+            },
+            {
+                "date": "2024-01-15",
+                "rotation": "Clinic",
+                "shift_type": "PM",
+                "hours": 4,
+            },
+            {
+                "date": "2024-01-16",
+                "rotation": "Inpatient",
+                "shift_type": "Day",
+                "hours": 12,
+            },
+            {
+                "date": "2024-01-17",
+                "rotation": "Inpatient",
+                "shift_type": "Day",
+                "hours": 12,
+            },
+            {
+                "date": "2024-01-18",
+                "rotation": "Inpatient",
+                "shift_type": "Day",
+                "hours": 12,
+            },
+            {
+                "date": "2024-01-19",
+                "rotation": "Clinic",
+                "shift_type": "AM",
+                "hours": 8,
+            },
+            {
+                "date": "2024-01-20",
+                "rotation": "Call",
+                "shift_type": "24hr",
+                "hours": 24,
+            },
         ],
         "hours_summary": {
             "This week": "80 hours",
             "Last week": "68 hours",
-            "4-week average": "74 hours"
+            "4-week average": "74 hours",
         },
-        "compliance_status": "AT LIMIT - 80 hours this week"
+        "compliance_status": "AT LIMIT - 80 hours this week",
     }
 
     context = format_schedule_data_for_context(schedule_data)
 
     query = "Am I over my work hour limit this week?"
 
-    prompt = pm.build_prompt(
-        query=query,
-        context=context,
-        task_type="compliance"
-    )
+    prompt = pm.build_prompt(query=query, context=context, task_type="compliance")
 
     print(f"\nUSER QUERY:\n{query}\n")
     print(f"FORMATTED CONTEXT:\n{context}\n")
@@ -129,11 +157,7 @@ ACGME Concerns:
 
     query = "Are there any coverage gaps next week that I should be worried about?"
 
-    prompt = pm.build_prompt(
-        query=query,
-        context=context,
-        task_type="coverage"
-    )
+    prompt = pm.build_prompt(query=query, context=context, task_type="coverage")
 
     print(f"\nUSER QUERY:\n{query}\n")
     print(f"GENERATED PROMPT:\n{prompt}\n")
@@ -148,11 +172,7 @@ def example_error_handling():
     pm = get_default_prompt_manager()
 
     # No swap candidates
-    error1 = pm.get_error_prompt(
-        "no_swap_candidates",
-        shift_type="call",
-        date="Jan 19"
-    )
+    error1 = pm.get_error_prompt("no_swap_candidates", shift_type="call", date="Jan 19")
     print("\nERROR TYPE: No Swap Candidates")
     print(f"{error1}\n")
 
@@ -163,15 +183,14 @@ def example_error_handling():
         current_value="72 hours",
         projected_value="96 hours",
         limit="80 hours (4-week average)",
-        alternative_suggestion="Swap a different shift earlier in the week to stay under limit"
+        alternative_suggestion="Swap a different shift earlier in the week to stay under limit",
     )
     print("\nERROR TYPE: ACGME Violation")
     print(f"{error2}\n")
 
     # Tool failure
     error3 = pm.get_error_prompt(
-        "tool_failure",
-        error_message="Database connection timeout after 30 seconds"
+        "tool_failure", error_message="Database connection timeout after 30 seconds"
     )
     print("\nERROR TYPE: Tool Failure")
     print(f"{error3}\n")
@@ -200,7 +219,7 @@ def example_few_shot():
         query=query,
         context="Dr. Jones is assigned to Monday clinic...",
         task_type="swap",
-        include_examples=True  # Include few-shot examples
+        include_examples=True,  # Include few-shot examples
     )
 
     print(f"\nPROMPT WITH EXAMPLES (length: {len(prompt)} chars)")
@@ -243,9 +262,7 @@ def example_tool_response():
 }"""
 
     response_prompt = pm.build_tool_response(
-        original_query=original_query,
-        tool_results=tool_results,
-        task_type="swap"
+        original_query=original_query, tool_results=tool_results, task_type="swap"
     )
 
     print(f"\nORIGINAL QUERY:\n{original_query}\n")
@@ -281,11 +298,7 @@ When responding:
     query = "Can I take leave from Feb 1-7 for a family event?"
     context = "Your training: 80% clinic completion, on track for milestones..."
 
-    prompt = pm.build_prompt(
-        query=query,
-        context=context,
-        task_type="vacation_request"
-    )
+    prompt = pm.build_prompt(query=query, context=context, task_type="vacation_request")
 
     print("\nCUSTOM TASK: vacation_request")
     print(f"QUERY: {query}\n")

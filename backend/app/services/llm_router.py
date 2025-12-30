@@ -274,7 +274,9 @@ class OllamaProvider(LLMProvider):
 
         except httpx.HTTPStatusError as e:
             self._record_failure()
-            logger.error(f"Ollama HTTP error: {e.response.status_code} - {e.response.text}")
+            logger.error(
+                f"Ollama HTTP error: {e.response.status_code} - {e.response.text}"
+            )
             raise LLMProviderError(
                 f"Ollama generation failed: {e.response.status_code}"
             ) from e
@@ -440,9 +442,7 @@ class AnthropicProvider(LLMProvider):
         self.default_model = default_model
 
         if not self.api_key:
-            logger.warning(
-                "ANTHROPIC_API_KEY not set - Anthropic provider unavailable"
-            )
+            logger.warning("ANTHROPIC_API_KEY not set - Anthropic provider unavailable")
             self._is_available = False
             self._client = None
         else:
@@ -792,7 +792,9 @@ class LLMRouter:
 
             # Try fallback chain if enabled
             if self.enable_fallback:
-                return await self._fallback_generate(request, failed_provider=provider_name)
+                return await self._fallback_generate(
+                    request, failed_provider=provider_name
+                )
             else:
                 raise
 
@@ -809,9 +811,7 @@ class LLMRouter:
         """Generate with specific provider."""
         # Check circuit breaker
         if not self.circuit_breaker.can_execute(provider_name):
-            raise ProviderUnavailableError(
-                f"Circuit breaker open for {provider_name}"
-            )
+            raise ProviderUnavailableError(f"Circuit breaker open for {provider_name}")
 
         provider = self.providers.get(provider_name)
         if not provider:
