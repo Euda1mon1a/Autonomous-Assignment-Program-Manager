@@ -282,6 +282,35 @@ See: `.claude/skills/context-aware-delegation/SKILL.md` for full documentation.
 
 ---
 
+### Session 017: 2025-12-30 — The "2 Strikes" Rule
+
+**Context:** Attempted to fix alembic migration branching issue. What looked like "2 lines of code" cascaded into 5+ attempts, consuming significant context while user waited.
+
+**User Feedback (verbatim):**
+> "You have a tendency to think of things as a couple of lines of code, but then errors keep happening and you're locked in when we could be supervising other AOs at the same time."
+
+**The Pattern:**
+1. ORCHESTRATOR sees "simple fix"
+2. First attempt fails unexpectedly
+3. "Okay, one more try" → fails again
+4. Sunk cost fallacy kicks in
+5. Context burns while other work waits
+
+**The Rule:**
+> **After 2 failed attempts at something you thought was simple, DELEGATE.**
+> - Subagents have fresh context (free)
+> - ORCHESTRATOR can supervise multiple streams
+> - "Leading by doing" has a limit
+
+**When to Apply:**
+- Infrastructure issues (Docker, migrations, configs)
+- Debugging cascading errors
+- Anything where "one more fix" becomes a pattern
+
+**Exception:** Only persist if the issue is truly blocking ALL other work AND no specialist exists for it.
+
+---
+
 ### Session 005: 2025-12-28 — Six-Coordinator Architecture Implementation
 
 **Context:** Continued from Session 004 after context reset. Implementing the approved architecture evolution plan.
