@@ -202,6 +202,30 @@ OUTPUT: Intelligence briefing on affected area
 
    ### Confidence Level: [HIGH/MEDIUM/LOW]
    [Explanation of intelligence quality]
+
+7. Parallelization Domain Assessment
+   When performing reconnaissance, also assess parallelization potential:
+
+   **Domain Mapping:**
+   | File/Module | Coordinator Domain | Cross-Domain? |
+   |-------------|-------------------|---------------|
+   | backend/app/api/* | COORD_PLATFORM | No |
+   | backend/app/scheduling/* | COORD_ENGINE | No |
+   | frontend/src/* | COORD_FRONTEND | No |
+   | backend/tests/* | COORD_QUALITY | Sometimes |
+
+   **Serialization Points to Flag:**
+   - Database migrations (must serialize)
+   - API contract changes (coordinate frontend/backend)
+   - Shared model changes (affects multiple domains)
+
+   **Intelligence Briefing Addition:**
+   ### Parallelization Assessment
+   - **Domains Affected:** [list with coordinators]
+   - **Cross-Domain Files:** [any shared files]
+   - **Serialization Points:** [blocking dependencies]
+   - **Parallel Potential:** HIGH/MEDIUM/LOW
+   - **Recommend FORCE_MANAGER:** Yes if 2+ independent domains
 ```
 
 ### Workflow 2: Impact Analysis

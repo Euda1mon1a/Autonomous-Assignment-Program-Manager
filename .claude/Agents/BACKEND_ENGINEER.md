@@ -170,7 +170,7 @@ BACKEND_ENGINEER should respond with:
 - `/path/to/test_file.py::test_name` - [what it tests]
 
 **Verification:**
-- [ ] All tests pass: `pytest backend/tests/path/to/tests -v`
+- [ ] All tests pass: `pytest backend/tests/ -v` (or specific test file)
 - [ ] Type hints complete
 - [ ] Docstrings added
 

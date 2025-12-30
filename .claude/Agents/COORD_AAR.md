@@ -75,6 +75,29 @@ if context_usage > 0.80:
     spawn_coord_aar(reason="Context limit approaching")
 ```
 
+### Integration with /startupO
+
+**CRITICAL:** ORCHESTRATOR MUST invoke COORD_AAR at session end.
+
+**Trigger Signals (detect any of these):**
+- User says "ending session", "wrapping up", "that's all", "goodnight"
+- Context approaching limit (>80%)
+- PR merged and no new tasks queued
+- User explicitly requests AAR
+
+**Manual Invocation (Required until auto-trigger implemented):**
+Before ending any session, ORCHESTRATOR must spawn:
+```
+Task(
+  description="COORD_AAR: Session wrap-up",
+  prompt="Run end-of-session After Action Review. Session ID: [X]. Key accomplishments: [list]. Open items: [list].",
+  subagent_type="general-purpose"
+)
+```
+
+**Why This Matters:**
+G1_PERSONNEL analysis found COORD_AAR was designed for auto-trigger but never invoked in 22 sessions. This explicit mechanism ensures AAR happens.
+
 ---
 
 ## Personality Traits

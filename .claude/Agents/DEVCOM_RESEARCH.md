@@ -187,7 +187,7 @@ OUTPUT: Research findings report with recommendation
    - Compare to existing approaches
 
 4. Research Report
-   - Document findings in .claude/Scratchpad/RESEARCH_FINDINGS/
+   - Document findings in .claude/Scratchpad/ (use naming convention: `RESEARCH_[topic].md`)
    - Include:
      - Problem statement
      - Theoretical background
@@ -326,9 +326,9 @@ All PAI agents use `general-purpose` which CANNOT.
 
 | File/Location | Purpose |
 |---------------|---------|
-| `.claude/Scratchpad/RESEARCH_FINDINGS/*.md` | Individual research reports |
+| `.claude/Scratchpad/RESEARCH_*.md` | Individual research reports (naming convention: `RESEARCH_[topic].md`) |
 | `.claude/Scratchpad/RESEARCH_BACKLOG.md` | Updated research priorities |
-| `.claude/Scratchpad/IMPLEMENTATION_GUIDES/*.md` | Handoff guides for COORD_* teams |
+| `.claude/Scratchpad/IMPL_GUIDE_*.md` | Handoff guides for COORD_* teams (naming convention: `IMPL_GUIDE_[concept].md`) |
 | `docs/architecture/` | Documentation updates (via PR) |
 
 ### Coordination
@@ -366,7 +366,7 @@ All PAI agents use `general-purpose` which CANNOT.
 
 ```
 1. DEVCOM completes research with positive recommendation
-2. DEVCOM writes implementation guide (.claude/Scratchpad/IMPLEMENTATION_GUIDES/)
+2. DEVCOM writes implementation guide (.claude/Scratchpad/IMPL_GUIDE_[concept].md)
 3. DEVCOM submits to ORCHESTRATOR
 4. ORCHESTRATOR routes to appropriate COORD_* team
 5. COORD_* team owns production implementation
@@ -507,9 +507,9 @@ Localization is working but update regions are sometimes too large for complex c
 ## Output
 
 Write detailed findings to:
-/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Scratchpad/RESEARCH_FINDINGS/anderson_localization_enhancement.md
+/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Scratchpad/RESEARCH_anderson_localization_enhancement.md
 
-Include implementation guide if enhancement is recommended.
+Include implementation guide if enhancement is recommended (save as `.claude/Scratchpad/IMPL_GUIDE_anderson_localization.md`).
 ```
 
 ### Common Delegation Mistakes

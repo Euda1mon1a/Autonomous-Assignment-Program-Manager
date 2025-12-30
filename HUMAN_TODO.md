@@ -398,30 +398,24 @@ The following links in `README.md` point to non-existent files:
 
 ### 🔴 CRITICAL - Fix Before Launch
 
-#### 1. Celery Worker Missing Queues
-**Priority:** CRITICAL
+#### 1. Celery Worker Missing Queues - ✅ RESOLVED
+**Priority:** CRITICAL → RESOLVED
 **Location:** `docker-compose.yml` (celery-worker service)
+**Verified:** 2025-12-30 (Session 023)
 
+The celery worker command already includes all 6 queues:
 ```yaml
-# CURRENT (broken):
-command: celery -A app.core.celery_app worker -Q default,resilience,notifications
-
-# SHOULD BE:
-command: celery -A app.core.celery_app worker -Q default,resilience,notifications,metrics,exports,security
+command: celery -A app.core.celery_app worker --loglevel=info -Q default,resilience,notifications,metrics,exports,security
 ```
 
-**Impact:** Metrics, exports, and security rotation tasks will queue indefinitely.
-
-#### 2. Security TODOs in audience_tokens.py
-**Priority:** CRITICAL
+#### 2. Security TODOs in audience_tokens.py - ✅ RESOLVED
+**Priority:** CRITICAL → RESOLVED
 **Location:** `/backend/app/api/routes/audience_tokens.py`
+**Verified:** 2025-12-30 (Session 023)
 
-| Line | Issue | Risk |
-|------|-------|------|
-| 120 | Role-based audience restrictions missing | Privilege escalation |
-| 198 | Token ownership verification incomplete | Token theft |
-
-**Action:** Implement role checks and ownership verification before MVP launch.
+Both security controls are fully implemented:
+- **Role-based restrictions:** `ROLE_LEVELS` (L59-68), `AUDIENCE_REQUIREMENTS` (L72-86), `check_audience_permission()` (L102-139)
+- **Token ownership:** Multi-method verification (decode L349-384, blacklist L386-388), admin bypass (L391-424)
 
 ### 🟡 HIGH PRIORITY - Fix This Week
 
@@ -485,7 +479,7 @@ CREATE INDEX idx_assignment_block_id ON assignments(block_id);
 | CI/CD | ✅ Good | 82/100 |
 | Error Handling | ✅ Excellent | 92/100 |
 
-**Overall MVP Status:** PRODUCTION-READY (with 2 critical fixes)
+**Overall MVP Status:** PRODUCTION-READY ✅ (critical items verified resolved)
 
 See also:
 - `docs/planning/MVP_STATUS_REPORT.md` - Full 16-layer analysis
@@ -493,4 +487,4 @@ See also:
 
 ---
 
-*Last updated: 2025-12-30 (Full-stack MVP review completed)*
+*Last updated: 2025-12-30 (Session 023 - Critical items verified resolved)*

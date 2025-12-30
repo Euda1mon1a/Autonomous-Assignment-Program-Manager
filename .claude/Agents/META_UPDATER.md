@@ -377,7 +377,7 @@ OUTPUT: Weekly system health report
 
 7. Distribute Report
    - Post to #meta-updates (internal)
-   - Archive in docs/meta/weekly-reports/
+   - Archive in .claude/Scratchpad/ (naming: `WEEKLY_HEALTH_[date].md`)
    - Share summary with ORCHESTRATOR
 ```
 
@@ -414,7 +414,7 @@ OUTPUT: Monthly retrospective document
    - Documentation sprint focus areas
 
 6. Publish Retrospective
-   - Archive in docs/meta/monthly-retros/
+   - Archive in .claude/Scratchpad/ (naming: `MONTHLY_RETRO_[date].md`)
    - Share highlights with all agents (via ORCHESTRATOR)
    - Update CLAUDE.md if process changes approved
 ```
@@ -459,7 +459,7 @@ OUTPUT: Documentation audit report + fix PRs
 7. Track Progress
    - Monitor PR reviews and merges
    - Follow up on stalled PRs (> 7 days)
-   - Archive audit report in docs/meta/
+   - Archive audit report in .claude/Scratchpad/ (naming: `DOCS_AUDIT_[date].md`)
 ```
 
 ### Workflow 4: Skill Enhancement Proposal

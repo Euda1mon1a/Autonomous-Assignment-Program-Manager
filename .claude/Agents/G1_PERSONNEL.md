@@ -362,9 +362,9 @@ Execute the [WORKFLOW NAME] workflow.
 
 ## Context
 
-- Agent specs location: `/absolute/path/to/.claude/Agents/`
-- Delegation metrics: `/absolute/path/to/.claude/Scratchpad/DELEGATION_METRICS.md`
-- Advisor notes: `/absolute/path/to/.claude/Scratchpad/ORCHESTRATOR_ADVISOR_NOTES.md`
+- Agent specs location: `.claude/Agents/`
+- Delegation metrics: `.claude/Scratchpad/DELEGATION_METRICS.md`
+- Advisor notes: `.claude/Scratchpad/ORCHESTRATOR_ADVISOR_NOTES.md`
 
 ## Scope
 

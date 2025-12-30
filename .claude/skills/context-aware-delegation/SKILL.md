@@ -54,6 +54,53 @@ description: Understand agent context isolation and write effective prompts for 
 
 ---
 
+## Key Insight: Mid-Task Updates Don't Affect Running Agents
+
+**Updating an agent's specification file while it's running has ZERO effect on the running instance.**
+
+This is non-obvious but important:
+
+```
+Timeline:
+─────────────────────────────────────────────────────────────────────
+
+ T=0   ORCHESTRATOR spawns COORD_PLATFORM with Task tool
+       └─ Agent receives snapshot of context from prompt
+
+ T=1   COORD_PLATFORM is executing its task...
+       └─ Running with T=0 context (frozen)
+
+ T=2   META_UPDATER edits COORD_PLATFORM.md (fixes broken refs)
+       └─ File on disk changes
+
+ T=3   COORD_PLATFORM completes and returns results
+       └─ Still using T=0 context - UNAWARE of T=2 changes
+
+ T=4   ORCHESTRATOR spawns COORD_PLATFORM again for new task
+       └─ THIS instance gets the updated spec (if included in prompt)
+─────────────────────────────────────────────────────────────────────
+```
+
+### Why This Matters
+
+1. **Safe parallel updates:** You can run an agent AND update its documentation simultaneously
+2. **No "hot reload" surprises:** Running agents won't suddenly change behavior
+3. **Blueprints vs. soldiers:** The `.md` spec is a blueprint; spawned agents are soldiers already deployed
+4. **Only future spawns see updates:** Changes take effect on the NEXT spawn, not current execution
+
+### Practical Implications
+
+| Scenario | Safe? | Why |
+|----------|-------|-----|
+| Update agent spec while agent runs | ✅ Yes | Running agent has frozen context |
+| Fix broken refs in `.claude/Agents/` during multi-agent operation | ✅ Yes | Each agent operates independently |
+| Change agent's constraints mid-task | ❌ Won't work | Agent won't see the change |
+| Update shared documentation (CLAUDE.md) | ✅ Safe for running agents | They already read it at spawn |
+
+**Bottom line:** Treat spawned agents like deployed units. Updating HQ's playbook doesn't radio new orders to troops already in the field.
+
+---
+
 ## The Golden Rule
 
 > **Write prompts as if the agent knows NOTHING about your session.**
