@@ -54,6 +54,38 @@
 
 ## Feature Requests - Pending Investigation
 
+### ACGME Rest Hours - PGY-Level Differentiation
+**Priority:** Medium
+**Added:** 2025-12-30
+**Status:** Awaiting PF discussion
+
+**Issue:** MEDCOM analysis identified that ACGME rest hours should be PGY-level dependent:
+
+| PGY Level | ACGME Requirement | Current Code |
+|-----------|------------------|--------------|
+| PGY-1 | 10 hours ("should have" - recommended) | 8 hours |
+| PGY-2+ | 8 hours ("must have" - required) | 8 hours ✓ |
+
+**Current implementation:** Single constant `ACGME_MIN_REST_BETWEEN_SHIFTS = 8.0` in `backend/app/resilience/frms/frms_service.py:181`
+
+**Questions for PF:**
+- [ ] Should PGY-1 residents be held to the stricter 10-hour recommendation?
+- [ ] Is 8 hours acceptable as floor for all levels (technically compliant)?
+- [ ] Are there program-specific policies that override ACGME minimums?
+
+**If approved for implementation:**
+```python
+ACGME_MIN_REST_PGY1 = 10.0      # ACGME "should have"
+ACGME_MIN_REST_PGY2_PLUS = 8.0  # ACGME "must have"
+```
+
+**Files to update:**
+- `backend/app/resilience/frms/frms_service.py` (constraint definition)
+- `docs/rag-knowledge/acgme-rules.md` (documentation)
+- `backend/app/prompts/scheduling_assistant.py` (AI guidance)
+
+---
+
 ### Resident Call Types
 **Priority:** Medium
 **Added:** 2025-12-26
