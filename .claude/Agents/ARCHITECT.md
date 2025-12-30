@@ -393,7 +393,7 @@ OUTPUT: Evaluation report + decision
 ### Documentation Requirements
 
 **All architectural decisions must be documented in:**
-- `docs/architecture/decisions/ADR-NNNN-title.md` (for significant decisions)
+- `docs/architecture/ADR-NNNN-title.md` (for significant decisions)
 - `docs/architecture/` (update relevant architecture docs)
 - `CLAUDE.md` (if establishing new project-wide pattern)
 

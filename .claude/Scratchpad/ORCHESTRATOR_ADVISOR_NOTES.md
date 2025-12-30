@@ -1389,8 +1389,41 @@ From user's late-night mission briefing:
 
 5. **"Nothing Else Is Sacred"** - If it blocks MVP, change it. Database schema, API contracts, even agent specs can be evolved mid-flight.
 
+6. **"Prior You / Current You"** - Treat every session like it might crash. Write to disk frequently, commit incrementally (~30 min or after each major artifact), leave breadcrumbs. Prior-you's job is to leave current-you enough state to continue without the session that created it. (Added Session 022)
+
+---
+
+### Session 022: 2025-12-30 — Crash Recovery & Parallelization Correction
+
+**Context:** IDE crashed during autonomous work. Session recovered 2,614 lines of salvageable work.
+
+**Key User Statements:**
+- "could we not have had 4 qa testers?" (parallelization correction)
+- "prior you allowed current you to pick up the pieces and continue working" (crash resilience insight)
+
+**Work Salvaged:**
+- G4_LIBRARIAN File Inventory Report (294 lines, 43 agents audited)
+- HUMAN_TODO.md ACGME PGY-level section (32 lines)
+- Frontend auth test suite (2,279 lines: LoginForm, ProtectedRoute, AuthContext, api-client)
+
+**Delegation Pattern Correction:**
+- ORCHESTRATOR spawned 1 QA_TESTER for 5 test failures
+- User correctly noted: should have been 2+ parallel agents (LoginForm domain + api-client domain)
+- Lesson: "one agent per failure domain" not "one agent per task type"
+
+**Crash Resilience Pattern Identified:**
+Prior session survived because:
+1. Work written to disk (not in-memory)
+2. Proper file paths (tests in `frontend/__tests__/`)
+3. Dated + attributed artifacts (FILE_INVENTORY_REPORT.md)
+4. Git status as manifest (untracked + modified = inventory)
+
+**Standing Order Added:** "Prior You / Current You" - incremental commits, disk writes, breadcrumbs
+
+**PR Created:** #553 - https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager/pull/553
+
 ---
 
 *File created: 2025-12-27*
-*Last updated: 2025-12-30 (Session 020 - MVP verification night mission; Session 020 learnings appended)*
+*Last updated: 2025-12-30 (Session 022 - Crash recovery, parallelization correction, "Prior You / Current You" standing order)*
 *Maintained by: ORCHESTRATOR / G-5 META_UPDATER*

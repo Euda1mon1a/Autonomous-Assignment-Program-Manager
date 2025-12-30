@@ -54,6 +54,38 @@
 
 ## Feature Requests - Pending Investigation
 
+### ACGME Rest Hours - PGY-Level Differentiation
+**Priority:** Medium
+**Added:** 2025-12-30
+**Status:** Awaiting PF discussion
+
+**Issue:** MEDCOM analysis identified that ACGME rest hours should be PGY-level dependent:
+
+| PGY Level | ACGME Requirement | Current Code |
+|-----------|------------------|--------------|
+| PGY-1 | 10 hours ("should have" - recommended) | 8 hours |
+| PGY-2+ | 8 hours ("must have" - required) | 8 hours ✓ |
+
+**Current implementation:** Single constant `ACGME_MIN_REST_BETWEEN_SHIFTS = 8.0` in `backend/app/resilience/frms/frms_service.py:181`
+
+**Questions for PF:**
+- [ ] Should PGY-1 residents be held to the stricter 10-hour recommendation?
+- [ ] Is 8 hours acceptable as floor for all levels (technically compliant)?
+- [ ] Are there program-specific policies that override ACGME minimums?
+
+**If approved for implementation:**
+```python
+ACGME_MIN_REST_PGY1 = 10.0      # ACGME "should have"
+ACGME_MIN_REST_PGY2_PLUS = 8.0  # ACGME "must have"
+```
+
+**Files to update:**
+- `backend/app/resilience/frms/frms_service.py` (constraint definition)
+- `docs/rag-knowledge/acgme-rules.md` (documentation)
+- `backend/app/prompts/scheduling_assistant.py` (AI guidance)
+
+---
+
 ### Resident Call Types
 **Priority:** Medium
 **Added:** 2025-12-26
@@ -366,30 +398,24 @@ The following links in `README.md` point to non-existent files:
 
 ### 🔴 CRITICAL - Fix Before Launch
 
-#### 1. Celery Worker Missing Queues
-**Priority:** CRITICAL
+#### 1. Celery Worker Missing Queues - ✅ RESOLVED
+**Priority:** CRITICAL → RESOLVED
 **Location:** `docker-compose.yml` (celery-worker service)
+**Verified:** 2025-12-30 (Session 023)
 
+The celery worker command already includes all 6 queues:
 ```yaml
-# CURRENT (broken):
-command: celery -A app.core.celery_app worker -Q default,resilience,notifications
-
-# SHOULD BE:
-command: celery -A app.core.celery_app worker -Q default,resilience,notifications,metrics,exports,security
+command: celery -A app.core.celery_app worker --loglevel=info -Q default,resilience,notifications,metrics,exports,security
 ```
 
-**Impact:** Metrics, exports, and security rotation tasks will queue indefinitely.
-
-#### 2. Security TODOs in audience_tokens.py
-**Priority:** CRITICAL
+#### 2. Security TODOs in audience_tokens.py - ✅ RESOLVED
+**Priority:** CRITICAL → RESOLVED
 **Location:** `/backend/app/api/routes/audience_tokens.py`
+**Verified:** 2025-12-30 (Session 023)
 
-| Line | Issue | Risk |
-|------|-------|------|
-| 120 | Role-based audience restrictions missing | Privilege escalation |
-| 198 | Token ownership verification incomplete | Token theft |
-
-**Action:** Implement role checks and ownership verification before MVP launch.
+Both security controls are fully implemented:
+- **Role-based restrictions:** `ROLE_LEVELS` (L59-68), `AUDIENCE_REQUIREMENTS` (L72-86), `check_audience_permission()` (L102-139)
+- **Token ownership:** Multi-method verification (decode L349-384, blacklist L386-388), admin bypass (L391-424)
 
 ### 🟡 HIGH PRIORITY - Fix This Week
 
@@ -453,7 +479,7 @@ CREATE INDEX idx_assignment_block_id ON assignments(block_id);
 | CI/CD | ✅ Good | 82/100 |
 | Error Handling | ✅ Excellent | 92/100 |
 
-**Overall MVP Status:** PRODUCTION-READY (with 2 critical fixes)
+**Overall MVP Status:** PRODUCTION-READY ✅ (critical items verified resolved)
 
 See also:
 - `docs/planning/MVP_STATUS_REPORT.md` - Full 16-layer analysis
@@ -461,4 +487,4 @@ See also:
 
 ---
 
-*Last updated: 2025-12-30 (Full-stack MVP review completed)*
+*Last updated: 2025-12-30 (Session 023 - Critical items verified resolved)*

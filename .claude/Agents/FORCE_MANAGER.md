@@ -433,6 +433,42 @@ OUTPUT: Recommendations for organizational improvement
    - Requested approval level
 ```
 
+### Workflow 5: Parallelization Domain Scoring
+
+**Trigger:** Complex task requiring team assembly
+**Output:** Domain parallelization analysis with agent recommendations
+
+**Scoring Matrix:**
+| Factor | Weight | High (3) | Medium (2) | Low (1) |
+|--------|--------|----------|------------|---------|
+| Domain Independence | 3x | Fully independent | Some coupling | Tightly coupled |
+| Data Dependencies | 2x | None | One-way | Bidirectional |
+| File Overlap | 2x | No overlap | Different dirs | Same dir |
+| Serialization Points | 1x | None | One | Multiple |
+
+**Total Score:** Sum of (Factor × Weight), Max = 24
+
+**Grades:**
+- 20-24: HIGH → Spawn all domains in parallel
+- 14-19: MEDIUM → Phase some work
+- 8-13: LOW → Serialize most work
+- 0-7: MINIMAL → Near-sequential
+
+**Output Format:**
+```
+## Parallelization Analysis: {task}
+Score: X/24 ({GRADE})
+
+| Domain | Score | Agents | Coordinator |
+|--------|-------|--------|-------------|
+
+Execution Plan:
+- Phase 1 (Parallel): [domains]
+- Phase 2 (After sync): [domains]
+```
+
+**Integration:** When DOMAIN_ANALYST is available, delegate scoring to them.
+
 ---
 
 ## Context Isolation Awareness

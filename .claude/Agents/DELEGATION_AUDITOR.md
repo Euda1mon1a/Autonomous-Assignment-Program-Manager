@@ -249,6 +249,40 @@ OUTPUT: Current session delegation snapshot
    - Anti-patterns: None detected"
 ```
 
+### Workflow 4: Pre-Delegation Check (Proactive Mode)
+
+**Trigger:** ORCHESTRATOR about to delegate (optional pre-check)
+**Output:** PROCEED / ADJUST / WARN recommendation
+
+**Anti-Pattern Detection:**
+
+| Pattern | Detection | Recommendation |
+|---------|-----------|----------------|
+| One-Agent-Per-Type | Task split by role, not domain | WARN: Split by domain instead |
+| Hierarchy Bypass | Specialist doing coordinator's job | WARN: Route through coordinator |
+| Sequential-When-Parallel | Independent domains serialized | ADJUST: Parallelize |
+| Over-Staffing | More agents than domains | WARN: Reduce agent count |
+| Under-Staffing | Fewer agents than parallelizable domains | ADJUST: Add agents |
+
+**Pre-Check Output:**
+
+```
+## Pre-Delegation Check
+Proposed: {task} → {agents}
+Status: [PROCEED | ADJUST | WARN]
+
+Anti-Patterns: [list if any]
+Suggestions: [adjustments if ADJUST]
+
+Projected Metrics:
+- Delegation ratio: X% (target: 60-80%)
+- Parallel factor: X (target: >1.5)
+```
+
+**Note:** This check is ADVISORY. ORCHESTRATOR may proceed despite warnings. All warnings logged for end-of-session audit.
+
+**Integration:** ORCHESTRATOR should invoke before major delegation decisions.
+
 ---
 
 ## Report Format

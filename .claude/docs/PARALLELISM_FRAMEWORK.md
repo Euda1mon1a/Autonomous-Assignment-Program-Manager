@@ -402,12 +402,205 @@ COORDINATOR CAPACITY:
    Result: Proper coordination via broadcast
 ```
 
+### 5. Single Validator Bottleneck
+
+```
+❌ BAD: N × TOOLSMITH parallel → 1 × COORD_QUALITY validates all
+   Result: Validation bottleneck, not tailored per artifact
+
+✓ GOOD: N × COORD_QUALITY parallel (each managing own team)
+   Result: Maximum parallelism with quality gates preserved
+```
+
+---
+
+## Agent Modification Patterns
+
+Two patterns for agent creation/modification work:
+
+| Pattern | Use When | Key Characteristic |
+|---------|----------|-------------------|
+| **Team Lead** | Creating NEW agents | One COORD_QUALITY per agent (full lifecycle) |
+| **Batch Augmentation** | Updating EXISTING agents | Parallel TOOLSMITH, single COORD_QUALITY validation |
+
+---
+
+### Pattern 1: Team Lead (New Agent Creation)
+
+**Use when:** Creating multiple NEW agents from scratch.
+
+**Why:** Each new agent is a distinct deliverable needing full lifecycle management.
+
+```
+G4_LIBRARIAN (advisor - inventory of existing agents, patterns, gaps)
+    ↓
+AGENT_FACTORY (executive - designs N specs, informed by LIBRARIAN)
+    ↓
+N × COORD_QUALITY (parallel middle managers - one per agent)
+    │
+    ├── COORD_QUALITY_1 → TOOLSMITH_1 → QA_TESTER_1 → CODE_REVIEWER_1 → report
+    ├── COORD_QUALITY_2 → TOOLSMITH_2 → QA_TESTER_2 → CODE_REVIEWER_2 → report
+    ├── COORD_QUALITY_3 → TOOLSMITH_3 → QA_TESTER_3 → CODE_REVIEWER_3 → report
+    └── ... (all teams run in parallel)
+    ↓
+AGENT_FACTORY (collects reports from all middle managers)
+    ↓
+G4_LIBRARIAN (post-creation inventory update, reference verification)
+```
+
+**G4_LIBRARIAN's Role:**
+
+| Phase | G4_LIBRARIAN Contribution |
+|-------|--------------------------|
+| **Pre-creation** | Advise on existing patterns, naming conventions, capability gaps |
+| **Design review** | Flag potential duplicates or overlaps with existing agents |
+| **Post-creation** | Update FILE_INVENTORY_REPORT, verify all references valid |
+
+**Principles:**
+
+| Principle | Description |
+|-----------|-------------|
+| **COORD_QUALITY = Middle Management** | Each instance oversees ONE team of 3 |
+| **Teams Run in Parallel** | Spawn as many COORD_QUALITY as you have new agents |
+| **Sequential Within Team** | TOOLSMITH → QA_TESTER → CODE_REVIEWER (quality gates) |
+| **Tailor-Made Teams** | Each COORD_QUALITY customizes pipeline for their agent |
+
+**Example: Creating 3 New Agents**
+
+```python
+# AGENT_FACTORY spawns 3 parallel COORD_QUALITY teams
+for agent_spec in [CI_LIAISON, DOMAIN_ANALYST, CRASH_RECOVERY_SPECIALIST]:
+    Task(
+        description=f"COORD_QUALITY: Team Lead for {agent_spec.name}",
+        prompt=f"""
+        ## Agent: COORD_QUALITY (Team Lead)
+
+        You own the full lifecycle for creating {agent_spec.name}.
+
+        Run this pipeline SEQUENTIALLY within your team:
+        1. Spawn TOOLSMITH to create the agent spec
+        2. After TOOLSMITH completes, spawn QA_TESTER to validate
+        3. After QA_TESTER passes, spawn CODE_REVIEWER for quality
+
+        Report back to AGENT_FACTORY with: APPROVED or NEEDS_REVISION
+
+        Spec to implement:
+        {agent_spec.details}
+        """,
+        subagent_type="general-purpose"
+    )
+# All 3 COORD_QUALITY teams run in PARALLEL
+# Each team runs TOOLSMITH → QA → REVIEW sequentially
+```
+
+---
+
+### Pattern 2: Batch Augmentation (Existing Agent Updates)
+
+**Use when:** Augmenting/updating multiple EXISTING agents with similar changes.
+
+**Why:** Changes are uniform, same validation criteria, cross-artifact consistency matters.
+
+```
+G4_LIBRARIAN (advisor - current state of agents to be modified)
+    ↓
+FORCE_MANAGER (defines augmentation specs, informed by LIBRARIAN)
+    ↓
+N × TOOLSMITH (parallel - each updates one agent)
+    ↓
+1 × COORD_QUALITY (validates entire batch)
+    │
+    ├── QA_TESTER: Structural validation across all N
+    └── CODE_REVIEWER: Quality review across all N (can run parallel with QA)
+    ↓
+G4_LIBRARIAN (post-augmentation inventory update, reference verification)
+```
+
+**G4_LIBRARIAN's Role (Augmentation):**
+
+| Phase | G4_LIBRARIAN Contribution |
+|-------|--------------------------|
+| **Pre-augmentation** | Provide current state of target agents, existing references |
+| **Conflict detection** | Flag if augmentations might break existing references |
+| **Post-augmentation** | Update inventory, verify no broken references introduced |
+
+**Principles:**
+
+| Principle | Description |
+|-----------|-------------|
+| **Parallel Creation** | N TOOLSMITH agents run simultaneously |
+| **Batch Validation** | Single COORD_QUALITY validates all changes together |
+| **Cross-Artifact Consistency** | Validator can check for conflicts between changes |
+| **Efficient for Homogeneous Work** | Same validation checklist applies to all |
+
+**Example: Augmenting 4 Existing Agents (Session 023)**
+
+```python
+# Spawn TOOLSMITH agents in parallel for each augmentation
+augmentations = [
+    ("COORD_AAR", "Add auto-trigger mechanism"),
+    ("FORCE_MANAGER", "Add Workflow 5: Parallelization Scoring"),
+    ("G2_RECON", "Add domain mapping to reconnaissance"),
+    ("DELEGATION_AUDITOR", "Add real-time proactive mode"),
+]
+
+for agent, change in augmentations:
+    Task(
+        description=f"TOOLSMITH: Augment {agent}",
+        prompt=f"Add {change} to {agent}.md",
+        subagent_type="general-purpose"
+    )
+# All 4 TOOLSMITH run in PARALLEL
+
+# After all complete, single COORD_QUALITY validates batch
+Task(
+    description="COORD_QUALITY: Validate all augmentations",
+    prompt="""
+    Validate all 4 augmentations for:
+    - Markdown integrity (no duplicates, proper formatting)
+    - Section placement (logical location)
+    - Cross-artifact consistency (no conflicts)
+    - Pattern compliance
+    """,
+    subagent_type="general-purpose"
+)
+```
+
+---
+
+### Decision Guide: Which Pattern?
+
+```
+Are you creating NEW agents from scratch?
+    │
+    YES → Team Lead Pattern (N × COORD_QUALITY teams)
+    │
+    NO
+    │
+    ▼
+Are you augmenting EXISTING agents with similar changes?
+    │
+    YES → Batch Augmentation Pattern (N × TOOLSMITH → 1 × COORD_QUALITY)
+    │
+    NO
+    │
+    ▼
+Mixed (some new, some augmentations)?
+    │
+    → Split into two parallel workstreams:
+        ├── Stream A: Team Lead for new agents
+        └── Stream B: Batch Augmentation for updates
+```
+
 ---
 
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.3.0 | 2025-12-30 | Added G4_LIBRARIAN as advisor to both patterns (pre/post creation) |
+| 1.2.0 | 2025-12-30 | Split into Team Lead (new) vs Batch Augmentation (existing) patterns with decision guide |
+| 1.1.0 | 2025-12-30 | Added Team Lead Pattern, Anti-Pattern #5 (Single Validator Bottleneck) |
 | 1.0.0 | 2025-12-28 | Initial PARALLELISM_FRAMEWORK specification |
 
 ---
