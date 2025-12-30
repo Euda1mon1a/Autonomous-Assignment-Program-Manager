@@ -1,0 +1,155 @@
+# Ollama Local LLM Integration - Docker Compose Overlay
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.ollama.yml up
+#
+# This overlay adds local LLM capabilities via Ollama for:
+# - Private, on-premises AI inference
+# - Cost reduction for high-volume scheduling operations
+# - HIPAA-compliant alternative to cloud APIs
+# - Hybrid routing (Ollama for simple tasks, Claude for complex reasoning)
+
+services:
+  # Ollama - Local LLM Inference Server
+  # Provides llama3.2 and mistral models for on-device AI processing
+  # Security model: localhost-only port binding, resource limits, no privilege escalation
+  ollama:
+    image: ollama/ollama:latest
+    container_name: residency-scheduler-ollama
+    restart: unless-stopped
+
+    # Volume for model persistence (models are large, ~4-7GB each)
+    volumes:
+      - ollama_models:/root/.ollama
+
+    # Port 11434 bound to localhost only for security
+    # DNS rebinding protection: only accessible from 127.0.0.1
+    ports:
+      - "127.0.0.1:11434:11434"
+
+    # Auto-pull models on startup
+    # llama3.2: 3B param model for general tasks (~2GB)
+    # mistral: 7B param model for complex reasoning (~4GB)
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        # Start Ollama server in background
+        /bin/ollama serve &
+        OLLAMA_PID=$$!
+
+        # Wait for Ollama to be ready
+        echo "Waiting for Ollama server to start..."
+        until ollama list > /dev/null 2>&1; do
+          sleep 2
+        done
+
+        # Pull models if not already present
+        echo "Checking for llama3.2 model..."
+        if ! ollama list | grep -q llama3.2; then
+          echo "Pulling llama3.2 model (this may take several minutes)..."
+          ollama pull llama3.2
+        else
+          echo "llama3.2 already present"
+        fi
+
+        echo "Checking for mistral model..."
+        if ! ollama list | grep -q mistral; then
+          echo "Pulling mistral model (this may take several minutes)..."
+          ollama pull mistral
+        else
+          echo "mistral already present"
+        fi
+
+        echo "Models ready. Ollama server running."
+
+        # Wait for Ollama server process
+        wait $$OLLAMA_PID
+
+    # Health check - verify server responds and models are loaded
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list | grep -q llama3.2 && ollama list | grep -q mistral"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 300s  # Extended start period for model downloads
+
+    # Resource limits (Docker MCP Toolkit pattern)
+    # - 16GB limit accommodates multiple models in memory
+    # - 4GB reservation ensures baseline availability
+    # - no-new-privileges prevents privilege escalation
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 16G
+        reservations:
+          cpus: '1'
+          memory: 4G
+
+    # GPU support (optional, uncomment for NVIDIA GPU acceleration)
+    # Requires nvidia-docker2 and NVIDIA Container Toolkit installed
+    # runtime: nvidia
+    # environment:
+    #   - NVIDIA_VISIBLE_DEVICES=all
+    #   - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+    networks:
+      - app-network
+
+  # LLM Router - Intelligent Model Selection and Request Routing
+  # Routes requests to Ollama (local) or Claude (cloud) based on complexity
+  # PLACEHOLDER: Service spec defined, implementation pending
+  llm-router:
+    # TODO: Replace with actual image once router service is implemented
+    # Current plan: Python FastAPI service with routing logic
+    image: alpine:latest
+    container_name: residency-scheduler-llm-router
+    restart: unless-stopped
+
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+    environment:
+      # Ollama connection (internal Docker network)
+      OLLAMA_URL: http://ollama:11434
+
+      # Anthropic API (optional, for hybrid routing)
+      # Leave empty to use Ollama-only mode
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+
+      # Default provider selection
+      # Options: "ollama", "anthropic", "auto" (auto-select based on complexity)
+      DEFAULT_PROVIDER: ${DEFAULT_PROVIDER:-ollama}
+
+      # Routing thresholds (for auto mode)
+      # Requests below complexity threshold use Ollama, above use Claude
+      COMPLEXITY_THRESHOLD: ${COMPLEXITY_THRESHOLD:-0.7}
+
+      # Model selection
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-5-20250929}
+
+    # Placeholder command - replace when router is implemented
+    command: ["tail", "-f", "/dev/null"]
+
+    networks:
+      - app-network
+
+    # Placeholder: No ports exposed yet (will expose HTTP API when implemented)
+    # ports:
+    #   - "127.0.0.1:8081:8081"
+
+# Volumes
+volumes:
+  # Ollama model storage
+  # Models are large (4-7GB each), persist across container restarts
+  ollama_models:
+    driver: local
+
+# Networks are inherited from base docker-compose.yml
+# The app-network is already defined there
+networks:
+  app-network:
+    external: true
+    name: autonomous-assignment-program-manager_app-network

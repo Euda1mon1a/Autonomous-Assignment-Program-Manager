@@ -68,6 +68,17 @@ from app.schemas.portal import (
     SwapRequestSummary,
     SwapRespondRequest,
 )
+from app.schemas.rag import (
+    ContextBuildRequest,
+    DocumentChunk,
+    DocumentIngestRequest,
+    IngestResponse,
+    RAGContext,
+    RAGHealthResponse,
+    RAGRetrievalRequest,
+    RetrievalResponse,
+    RetrievedDocument,
+)
 from app.schemas.procedure import (
     ProcedureCreate,
     ProcedureListResponse,
@@ -233,4 +244,14 @@ __all__ = [
     "MatchingCriteria",
     "MatchingSuggestion",
     "MatchingAnalytics",
+    # RAG schemas
+    "DocumentIngestRequest",
+    "DocumentChunk",
+    "RetrievedDocument",
+    "IngestResponse",
+    "RAGRetrievalRequest",
+    "RetrievalResponse",
+    "ContextBuildRequest",
+    "RAGContext",
+    "RAGHealthResponse",
 ]

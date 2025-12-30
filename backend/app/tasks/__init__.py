@@ -1,17 +1,27 @@
 """
-Schedule Metrics Tasks Module.
+Tasks Module - Celery Background Tasks.
 
-This module provides Celery background tasks for computing and tracking
-schedule metrics over time. Tasks are designed to run periodically via
-Celery Beat for automated monitoring and reporting.
+This module provides Celery background tasks for automated operations
+including schedule metrics, RAG embeddings, and other async workflows.
+Tasks are designed to run periodically via Celery Beat for automated
+monitoring and reporting.
 
-Main Tasks:
------------
+Main Task Categories:
+--------------------
+
+Schedule Metrics Tasks:
 - compute_schedule_metrics: Compute comprehensive schedule metrics
 - compute_version_diff: Compare two schedule versions
 - snapshot_metrics: Take periodic metrics snapshots
 - cleanup_old_snapshots: Remove old snapshot data
 - generate_fairness_trend_report: Generate fairness trend analysis
+
+RAG Embedding Tasks:
+- initialize_embeddings: Embed all knowledge base documents
+- refresh_single_document: Update embeddings for one document
+- check_rag_health: Verify RAG system status
+- periodic_refresh: Scheduled weekly refresh
+- clear_all_embeddings: Reset all RAG embeddings
 
 Periodic Schedule:
 -----------------
@@ -23,6 +33,7 @@ Default schedule:
 - Daily cleanup at 3 AM
 - Weekly fairness report on Monday at 7 AM
 - Daily full metrics computation at 6 AM
+- Weekly RAG refresh on Monday at 2 AM
 
 Usage:
 ------
@@ -35,12 +46,17 @@ Tasks can be called directly or queued via Celery:
     )
 
     # Async call via Celery (recommended)
-    from app.tasks import compute_schedule_metrics
+    from app.tasks import compute_schedule_metrics, initialize_embeddings
+
     task = compute_schedule_metrics.delay(
         start_date="2025-01-01",
         end_date="2025-03-31"
     )
     result = task.get(timeout=600)
+
+    # RAG embeddings initialization
+    rag_task = initialize_embeddings.delay()
+    rag_result = rag_task.get(timeout=300)
 
 Configuration:
 -------------
@@ -56,7 +72,8 @@ Or manually update the includes:
         include=[
             "app.resilience.tasks",
             "app.notifications.tasks",
-            "app.tasks.schedule_metrics_tasks",  # Add this
+            "app.tasks.schedule_metrics_tasks",
+            "app.tasks.rag_tasks",  # Add for RAG embeddings
         ],
     )
 """
@@ -79,14 +96,27 @@ from app.tasks.schedule_metrics_tasks import (
     generate_fairness_trend_report,
     snapshot_metrics,
 )
+from app.tasks.rag_tasks import (
+    check_rag_health,
+    clear_all_embeddings,
+    initialize_embeddings,
+    periodic_refresh,
+    refresh_single_document,
+)
 
 __all__ = [
-    # Tasks
+    # Schedule Metrics Tasks
     "compute_schedule_metrics",
     "compute_version_diff",
     "snapshot_metrics",
     "cleanup_old_snapshots",
     "generate_fairness_trend_report",
+    # RAG Tasks
+    "initialize_embeddings",
+    "refresh_single_document",
+    "check_rag_health",
+    "periodic_refresh",
+    "clear_all_embeddings",
     # Configuration
     "get_schedule_metrics_beat_schedule",
     "get_beat_schedule_for_environment",

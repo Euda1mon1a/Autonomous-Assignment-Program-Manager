@@ -14,13 +14,22 @@ The Python loop must be able to:
 """
 
 import json
+import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 from app.autonomous.evaluator import EvaluationResult
 from app.autonomous.state import GeneratorParams, IterationRecord, RunState
+from app.prompts.scheduling_assistant import (
+    SCHEDULING_ASSISTANT_SYSTEM_PROMPT,
+    PromptManager,
+)
+from app.schemas.llm import LLMRequest
+from app.services.llm_router import LLMRouter
+
+logger = logging.getLogger(__name__)
 
 
 class SuggestionType(str, Enum):
@@ -149,8 +158,9 @@ class LLMAdvisor:
     the Python control loop.
 
     Example:
-        >>> advisor = LLMAdvisor(llm_client=my_client)
-        >>> suggestion = advisor.suggest(
+        >>> router = LLMRouter(default_provider="ollama", airgap_mode=True)
+        >>> advisor = LLMAdvisor(llm_router=router)
+        >>> suggestion = await advisor.suggest(
         ...     state=state,
         ...     last_evaluation=evaluation,
         ...     history=history,
@@ -162,24 +172,38 @@ class LLMAdvisor:
 
     def __init__(
         self,
-        llm_client: Any = None,
-        model: str = "claude-3-haiku-20240307",
+        llm_router: Optional[LLMRouter] = None,
+        model: str = "llama3.2",
         max_tokens: int = 1024,
+        temperature: float = 0.3,
+        airgap_mode: bool = True,
     ):
         """
         Initialize the LLM advisor.
 
         Args:
-            llm_client: Anthropic or compatible LLM client
-            model: Model to use for suggestions
+            llm_router: LLMRouter instance (if None, creates local Ollama router)
+            model: Model to use for suggestions (default: llama3.2 for Ollama)
             max_tokens: Maximum tokens in response
+            temperature: Sampling temperature (lower = more deterministic)
+            airgap_mode: If True, only use local Ollama (no cloud providers)
         """
-        self.llm_client = llm_client
+        self.llm_router = llm_router or LLMRouter(
+            default_provider="ollama",
+            enable_fallback=True,
+            airgap_mode=airgap_mode,
+        )
         self.model = model
         self.max_tokens = max_tokens
+        self.temperature = temperature
         self.schema = SuggestionSchema()
+        self.prompt_manager = PromptManager()
 
-    def suggest(
+        logger.info(
+            f"LLMAdvisor initialized (model={model}, airgap={airgap_mode})"
+        )
+
+    async def suggest(
         self,
         state: RunState,
         last_evaluation: EvaluationResult | None,
@@ -196,7 +220,7 @@ class LLMAdvisor:
         Returns:
             Validated Suggestion or None if LLM unavailable/failed
         """
-        if self.llm_client is None:
+        if self.llm_router is None:
             return None
 
         try:
@@ -204,7 +228,7 @@ class LLMAdvisor:
             prompt = self._build_prompt(state, last_evaluation, history)
 
             # Query LLM
-            response = self._query_llm(prompt)
+            response = await self._query_llm(prompt)
 
             # Parse response
             suggestion = self._parse_response(response)
@@ -213,9 +237,7 @@ class LLMAdvisor:
 
         except Exception as e:
             # Log but don't crash - the loop can continue without LLM
-            import logging
-
-            logging.getLogger(__name__).warning(f"LLM advisor error: {e}")
+            logger.warning(f"LLM advisor error: {e}", exc_info=True)
             return None
 
     def validate_suggestion(self, suggestion: Suggestion) -> bool:
@@ -230,20 +252,23 @@ class LLMAdvisor:
         """
         # Basic validation
         if suggestion.confidence < 0.3:
+            logger.debug("Suggestion rejected: confidence too low")
             return False  # Low confidence suggestions are ignored
 
         if not suggestion.reasoning:
+            logger.debug("Suggestion rejected: no reasoning provided")
             return False  # Require reasoning
 
         # Validate parameters if present
         if suggestion.params:
-            is_valid, _ = self.schema.validate_params(suggestion.params.to_dict())
+            is_valid, error = self.schema.validate_params(suggestion.params.to_dict())
             if not is_valid:
+                logger.warning(f"Suggestion rejected: {error}")
                 return False
 
         return True
 
-    def explain(
+    async def explain(
         self,
         evaluation: EvaluationResult,
     ) -> str:
@@ -259,15 +284,16 @@ class LLMAdvisor:
         Returns:
             Human-readable explanation string
         """
-        if self.llm_client is None:
+        if self.llm_router is None:
             return self._fallback_explanation(evaluation)
 
         try:
             prompt = self._build_explanation_prompt(evaluation)
-            response = self._query_llm(prompt)
+            response = await self._query_llm(prompt)
             return response
 
-        except Exception:
+        except Exception as e:
+            logger.warning(f"LLM explanation error: {e}")
             return self._fallback_explanation(evaluation)
 
     def _build_prompt(
@@ -381,19 +407,25 @@ class LLMAdvisor:
 
         return "\n".join(prompt_parts)
 
-    def _query_llm(self, prompt: str) -> str:
+    async def _query_llm(self, prompt: str) -> str:
         """Query the LLM and return response text."""
-        if self.llm_client is None:
-            raise ValueError("No LLM client configured")
+        if self.llm_router is None:
+            raise ValueError("No LLM router configured")
 
-        # Generic LLM query - adapt based on actual client interface
-        response = self.llm_client.messages.create(
+        # Build LLM request
+        request = LLMRequest(
+            prompt=prompt,
+            system=SCHEDULING_ASSISTANT_SYSTEM_PROMPT,
             model=self.model,
+            provider="ollama",  # Use local Ollama for airgap compatibility
             max_tokens=self.max_tokens,
-            messages=[{"role": "user", "content": prompt}],
+            temperature=self.temperature,
         )
 
-        return response.content[0].text
+        # Generate response
+        response = await self.llm_router.generate(request)
+
+        return response.content
 
     def _parse_response(self, response: str) -> Suggestion:
         """Parse LLM response into a Suggestion."""
@@ -448,6 +480,11 @@ class LLMAdvisor:
 
         return " ".join(lines)
 
+    async def close(self):
+        """Close LLM router connections."""
+        if self.llm_router:
+            await self.llm_router.close()
+
 
 class MockLLMAdvisor(LLMAdvisor):
     """
@@ -458,10 +495,16 @@ class MockLLMAdvisor(LLMAdvisor):
     """
 
     def __init__(self):
-        """Initialize mock advisor without LLM client."""
-        super().__init__(llm_client=None)
+        """Initialize mock advisor without LLM router."""
+        # Don't call super().__init__ to avoid creating router
+        self.llm_router = None
+        self.model = "mock"
+        self.max_tokens = 1024
+        self.temperature = 0.3
+        self.schema = SuggestionSchema()
+        self.prompt_manager = PromptManager()
 
-    def suggest(
+    async def suggest(
         self,
         state: RunState,
         last_evaluation: EvaluationResult | None,
@@ -497,3 +540,7 @@ class MockLLMAdvisor(LLMAdvisor):
             )
 
         return None
+
+    async def close(self):
+        """No-op for mock advisor."""
+        pass

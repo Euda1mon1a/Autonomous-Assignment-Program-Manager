@@ -242,6 +242,18 @@ class Settings(BaseSettings):
     SHADOW_HEALTH_CHECK_INTERVAL: int = 60  # Health check interval in seconds
     SHADOW_METRICS_RETENTION_HOURS: int = 24  # Metrics retention period
 
+    # LLM Router Configuration
+    LLM_DEFAULT_PROVIDER: str = "ollama"  # Default provider: ollama, anthropic
+    LLM_ENABLE_FALLBACK: bool = True  # Enable fallback to other providers
+    LLM_AIRGAP_MODE: bool = False  # Disable cloud providers (local only)
+    OLLAMA_URL: str = "http://ollama:11434"  # Ollama API base URL
+    OLLAMA_DEFAULT_MODEL: str = "llama3.2"  # Default Ollama model
+    OLLAMA_FAST_MODEL: str = "llama3.2"  # Fast model for simple tasks
+    OLLAMA_TOOL_MODEL: str = "mistral"  # Model with tool calling support
+    OLLAMA_TIMEOUT: float = 60.0  # Ollama request timeout in seconds
+    ANTHROPIC_API_KEY: str = ""  # Anthropic API key (optional for airgap)
+    ANTHROPIC_DEFAULT_MODEL: str = "claude-3-5-sonnet-20241022"  # Default Claude model
+
     @field_validator("SECRET_KEY", "WEBHOOK_SECRET")
     @classmethod
     def validate_secrets(cls, v: str, info) -> str:

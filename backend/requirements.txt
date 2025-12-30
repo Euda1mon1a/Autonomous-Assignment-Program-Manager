@@ -31,6 +31,9 @@ fastapi-cache2==0.2.2
 slowapi==0.1.9
 strawberry-graphql[fastapi]==0.288.1
 
+# AI/LLM Integration
+anthropic>=0.40.0  # Anthropic Claude API client
+
 # Data Processing
 pandas==2.3.3
 numpy==2.4.0
