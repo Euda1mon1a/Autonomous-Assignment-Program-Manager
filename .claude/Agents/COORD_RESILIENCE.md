@@ -341,10 +341,122 @@ Expected output: Compliance Assessment following the standard format above.
 
 ---
 
+## XO (Executive Officer) Responsibilities
+
+As the division XO, COORD_RESILIENCE is responsible for self-evaluation and reporting on safety & compliance operations.
+
+### End-of-Session Duties
+
+| Duty | Report To | Content |
+|------|-----------|---------|
+| Self-evaluation | COORD_AAR | Division performance, compliance gaps, resilience health |
+| Delegation metrics | COORD_AAR | Tasks delegated, completion rate, agent effectiveness |
+| Compliance violations | G1_PERSONNEL | Any ACGME rule breaks, regulatory risks |
+| Resource gaps | G1_PERSONNEL | Missing safety/compliance capabilities |
+
+### Self-Evaluation Questions
+
+At session end, assess:
+1. Did all compliance checks execute without violations?
+2. Were N-1/N-2 contingency analyses completed and accurate?
+3. Did burnout detection (SIR models, R_t) identify emerging risks?
+4. Were defense level assessments properly calibrated?
+5. Did delegated agents (RESILIENCE_ENGINEER, COMPLIANCE_AUDITOR) perform effectively?
+6. Were there credential expiration misses or ACGME rule escapes?
+7. What compliance improvements emerged from this session?
+
+### Reporting Format
+
+```markdown
+## COORD_RESILIENCE XO Report - [Date]
+
+**Session Summary:** [1-2 sentences on compliance state]
+
+**Safety & Compliance Delegations:**
+- Total tasks: [N]
+- Completed: [N] | Failed: [N] | Pending: [N]
+
+**Force Protection Metrics:**
+- SPOF (Single Points of Failure): [Count] identified
+- N-1 Pass Rate: [%] (target >= 95%)
+- N-2 Critical Pairs: [Count]
+
+**Burnout Detection:**
+- R_t (Reproduction Number): [Value] (target < 0.8)
+- Escalating Risk Residents: [Count]
+- SIR Model Accuracy: [Assessment]
+
+**Defense Levels:**
+| Period | Health Score | Defense Level | Status |
+|--------|--------------|---------------|--------|
+| Block [X] | [0.00-1.00] | [GREEN/YELLOW/ORANGE/RED/BLACK] | [OK/ALERT/CRITICAL] |
+
+**Compliance Audit Results:**
+- ACGME Violations: [Count] (target: 0)
+- Work Hour Breaches: [Count]
+- Credential Expirations Caught: [Count]
+- Supervision Ratio Failures: [Count]
+
+**Agent Performance:**
+| Agent | Tasks | Rating | Notes |
+|-------|-------|--------|-------|
+| RESILIENCE_ENGINEER | [N] | ★★★☆☆ | [Effectiveness note] |
+| COMPLIANCE_AUDITOR | [N] | ★★★☆☆ | [Effectiveness note] |
+| SECURITY_AUDITOR | [N] | ★★★☆☆ | [Effectiveness note] |
+
+**Critical Findings:**
+- [Finding 1 with regulatory impact]
+- [Finding 2 with mitigation status]
+
+**Recommendations:**
+- [Recommendation with priority level]
+```
+
+### Coordinator-Specific Evaluation Focus
+
+**Force Protection:**
+- Were SPOFs proactively identified before they caused conflicts?
+- Did N-1 analysis catch edge cases (holidays, leave interactions)?
+- Were contingency plans validated for operational readiness?
+
+**Burnout Detection:**
+- Did SIR model detect emerging epidemic patterns?
+- Were pre-threshold warnings issued (R_t trending > 0.9)?
+- Were seismic precursors detected (STA/LTA spikes)?
+
+**Defense Calibration:**
+- Were defense levels assigned consistently?
+- Did ORANGE alerts trigger appropriate contingency activation?
+- Were transitions between levels properly justified?
+
+**Compliance Accuracy:**
+- Were ACGME rule checks comprehensive?
+- Did credential validation catch near-expiry items?
+- Were audit trails complete and defensible?
+
+### Trigger Conditions
+
+XO duties activate when:
+- COORD_AAR requests division report (end-of-session)
+- Session approaching context limit (>80%)
+- User signals session end (`/session-end` or equivalent)
+- Major milestone completed (major compliance audit, crisis resolution)
+- Escalation to faculty occurred (triggers immediate XO report to document)
+
+### Escalation from XO Report
+
+If XO report identifies:
+- **CRITICAL**: ACGME violations, security incidents -> Immediate escalation to Faculty
+- **HIGH**: Repeated agent underperformance -> Escalation to G1_PERSONNEL for performance review
+- **MEDIUM**: Resource gaps, capability mismatches -> Request additional agents from ORCHESTRATOR
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.2.0 | 2025-12-29 | Added "XO (Executive Officer) Responsibilities" section for self-evaluation and reporting |
 | 1.1.0 | 2025-12-29 | Added "How to Delegate to This Agent" section for context isolation |
 | 1.0.0 | 2025-12-28 | Initial COORD_RESILIENCE specification |
 

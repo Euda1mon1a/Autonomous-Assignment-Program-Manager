@@ -263,6 +263,89 @@ COORD_FRONTEND enforces an 80% success threshold before signaling completion to 
 
 ---
 
+## XO (Executive Officer) Responsibilities
+
+As the division XO, COORD_FRONTEND is responsible for self-evaluation and reporting.
+
+### End-of-Session Duties
+
+| Duty | Report To | Content |
+|------|-----------|---------|
+| Self-evaluation | COORD_AAR | Frontend division performance, blockers encountered, agent effectiveness |
+| Delegation metrics | COORD_AAR | Tasks delegated, completion rate, quality gate pass rate |
+| Agent effectiveness | G1_PERSONNEL | Underperforming/overperforming agents (FRONTEND_ENGINEER, UX_SPECIALIST) |
+| Resource gaps | G1_PERSONNEL | Missing capabilities identified (accessibility tools, performance profiling, etc.) |
+
+### Self-Evaluation Questions
+
+At session end, assess:
+1. Did delegated frontend agents (FRONTEND_ENGINEER, UX_SPECIALIST) complete tasks successfully?
+2. Were quality gates (TypeScript, accessibility, bundle size) maintained at >= 80% pass rate?
+3. Did any agent require excessive correction for type safety or accessibility issues?
+4. Were there capability gaps (e.g., missing testing libraries, design system limitations)?
+5. What component patterns or workflows worked well that should be repeated?
+6. Did performance metrics (Core Web Vitals, bundle size) improve or degrade?
+7. Was accessibility compliance (WCAG 2.1 AA) achieved for all new components?
+
+### Reporting Format
+
+```markdown
+## COORD_FRONTEND XO Report - [Date]
+
+**Session Summary:** [1-2 sentences about frontend work completed]
+
+**Delegations:**
+- Total frontend tasks: [N]
+- Completed: [N] | Failed: [N] | Pending: [N]
+- Quality gate pass rate: [X]%
+
+**Agent Performance:**
+| Agent | Tasks | Completion | Quality | Notes |
+|-------|-------|-----------|---------|-------|
+| FRONTEND_ENGINEER | [N] | [%] | ★★★☆☆ | [e.g., Strong type safety, needs perf optimization] |
+| UX_SPECIALIST | [N] | [%] | ★★★☆☆ | [e.g., Excellent accessibility, needs mobile review] |
+
+**Quality Metrics:**
+| Gate | Pass Rate | Details |
+|------|-----------|---------|
+| TypeScript Strict | [X]% | [Errors if any] |
+| Accessibility (WCAG 2.1 AA) | [X]% | [Violations if any] |
+| Bundle Size | [X]% | [Average delta] |
+| Core Web Vitals | [X]% | [LCP/CLS/FID averages] |
+
+**Gaps Identified:**
+- [Gap description - e.g., "Missing E2E testing framework for component interactions"]
+- [Gap description]
+
+**Recommendations:**
+- [Recommendation - e.g., "Increase UX_SPECIALIST availability for accessibility reviews"]
+- [Recommendation]
+
+**Blocks/Escalations:**
+- [Any issues requiring ORCHESTRATOR, ARCHITECT, or COORD_QUALITY attention]
+```
+
+### Trigger
+
+XO duties activate when:
+- COORD_AAR requests division report (formal EOD/EOW review)
+- Session approaching context limit (>80%)
+- User signals session end ("wrap up", "end session", "debrief")
+- Major frontend milestone completed (design system release, performance optimization phase, accessibility audit)
+
+### Frontend-Specific Focus Areas
+
+When self-evaluating, prioritize:
+
+1. **UI Component Quality** - Were new components reusable, well-typed, and integrated with design system?
+2. **Type Safety** - Did TypeScript strict mode catch issues early? Were type errors zero?
+3. **User Experience** - Did changes improve or maintain UX consistency? Any usability regressions?
+4. **Performance** - Did bundle size remain controlled? Did Core Web Vitals improve?
+5. **Accessibility** - Were WCAG 2.1 AA standards met for all new components?
+6. **Mobile Experience** - Were responsive design changes tested across viewport sizes?
+
+---
+
 ## Version History
 
 | Version | Date | Changes |

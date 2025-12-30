@@ -1903,6 +1903,7 @@ Total Time: Weeks for large refactoring, but incremental reduces risk
 | 2.0 | 2025-12-26 | Enhanced with Kai/Anthropic multi-agent patterns:<br>- Task decomposition rules with complexity scoring<br>- Standard delegation templates and handoff protocols<br>- Agent spawning guidelines and resource allocation<br>- Synthesis patterns with conflict resolution<br>- Checkpoint creation and recovery procedures |
 | 3.0 | 2025-12-27 | Coordinator Tier Architecture:<br>- Added COORD_ENGINE, COORD_QUALITY, COORD_OPS delegation<br>- Signal routing and broadcast patterns<br>- Quality gates between tiers (80% threshold)<br>- Temporal layering (Fast/Medium/Slow/Very Slow)<br>- Biological scaling patterns (amplification, refractory periods, quorum sensing)<br>- Capacity scaled from 5 to 24 parallel agents |
 | 4.0 | 2025-12-28 | Six-Coordinator Architecture:<br>- Added COORD_RESILIENCE (safety, ACGME, compliance)<br>- Added COORD_PLATFORM (backend, database, APIs)<br>- Added COORD_FRONTEND (UI, UX, accessibility)<br>- ORCHESTRATOR staff: SYNTHESIZER, RELEASE_MANAGER, DELEGATION_AUDITOR<br>- PARALLELISM_FRAMEWORK for subordinate decision-making<br>- Capacity scaled to 18-48 parallel agents |
+| 5.0 | 2025-12-29 | G-Staff Structure (Army Doctrine):<br>- Formal G-Staff hierarchy (G-1 through G-6, IG, PAO)<br>- Added G1_PERSONNEL (Personnel tracking)<br>- Added FORCE_MANAGER (team assembly)<br>- Added COORD_AAR (end-of-session AAR)<br>- XO pattern for coordinator self-evaluation<br>- Session lifecycle with G-Staff integration |
 
 ---
 
@@ -2228,6 +2229,156 @@ def quorum_decision(agent_results: list) -> Decision:
         return Decision(proceed=False, escalate=True)
     else:
         return Decision(proceed=False, fail=True)
+```
+
+---
+
+## XI. G-STAFF STRUCTURE (Army Doctrine)
+
+### A. Organizational Hierarchy
+
+The ORCHESTRATOR operates as a **Theater Commander (4-star General)** with formal G-Staff structure:
+
+```
+ORCHESTRATOR (Theater Commander - 4-star)
+│
+├── G-Staff (Direct Reports)
+│   ├── G-1: G1_PERSONNEL (Personnel/Tracking)
+│   │         Tracks agents, gaps, effectiveness, utilization
+│   │
+│   ├── G-3: SYNTHESIZER (Operations)
+│   │         Integration and unified reporting
+│   │
+│   ├── G-4: [FUTURE - Context/Logistics]
+│   │         Vector DB context management (planned)
+│   │
+│   ├── G-5: META_UPDATER (Plans)
+│   │         Documentation, patterns, planning
+│   │
+│   ├── G-6: [FUTURE - Signals/Evidence]
+│   │         Evidence collection, metrics (planned)
+│   │
+│   ├── IG: DELEGATION_AUDITOR (Inspector General)
+│   │        Delegation health, efficiency metrics
+│   │
+│   └── PAO: HISTORIAN (Public Affairs)
+│            Session documentation, narratives
+│
+├── FORCE_MANAGER (Structure Execution)
+│   Reports to: ORCHESTRATOR (direct staff, not G-Staff)
+│   Role: Assemble teams, assign to coordinators
+│
+├── COORD_AAR (After Action Review)
+│   Role: End-of-session debrief coordinator
+│   Trigger: Auto at session end
+│
+└── Divisions (Coordinators - 2-star Major Generals)
+    ├── COORD_ENGINE (Scheduling Division)
+    │   Agents: SCHEDULER, OPTIMIZATION_SPECIALIST, SWAP_MANAGER
+    │
+    ├── COORD_PLATFORM (Platform Division)
+    │   Agents: BACKEND_ENGINEER, DBA, API_DEVELOPER
+    │
+    ├── COORD_QUALITY (Quality Division)
+    │   Agents: QA_TESTER, CODE_REVIEWER, ARCHITECT
+    │
+    ├── COORD_OPS (Operations Division)
+    │   Agents: RELEASE_MANAGER, META_UPDATER, TOOLSMITH
+    │
+    ├── COORD_FRONTEND (Frontend Division)
+    │   Agents: FRONTEND_ENGINEER, UX_SPECIALIST
+    │
+    └── COORD_RESILIENCE (Force Protection Division)
+        Agents: RESILIENCE_ENGINEER, COMPLIANCE_AUDITOR
+```
+
+### B. G-Staff Responsibilities
+
+| G-Staff Position | Agent | Role | Key Deliverables |
+|------------------|-------|------|------------------|
+| **G-1 (Personnel)** | G1_PERSONNEL | Track agent roster, gaps, utilization | Agent inventory, gap analysis, utilization reports |
+| **G-3 (Operations)** | SYNTHESIZER | Integrate coordinator outputs | Unified reports, cross-domain synthesis |
+| **G-4 (Logistics)** | [FUTURE] | Manage context, vector DB | Context persistence, retrieval |
+| **G-5 (Plans)** | META_UPDATER | Documentation, planning | Updated docs, skill patterns |
+| **G-6 (Signals)** | [FUTURE] | Evidence, metrics collection | Quantitative analysis, dashboards |
+| **IG** | DELEGATION_AUDITOR | Audit delegation patterns | Efficiency metrics, anti-pattern detection |
+| **PAO** | HISTORIAN | Document sessions | Session narratives, significant events |
+
+### C. Special Staff Agents
+
+| Agent | Reports To | Role | Key Trigger |
+|-------|-----------|------|-------------|
+| **FORCE_MANAGER** | ORCHESTRATOR | Assemble task forces, assign to coordinators | Task decomposition |
+| **COORD_AAR** | ORCHESTRATOR | End-of-session After Action Review | Session end, context limit |
+
+### D. XO Pattern
+
+Each Division Coordinator has XO (Executive Officer) responsibilities:
+
+1. **Self-evaluate** division performance at session end
+2. **Report** metrics to COORD_AAR
+3. **Flag** underperforming agents to G-1 (G1_PERSONNEL)
+4. **Track** delegations made during session
+
+XO reports flow: Division XO → COORD_AAR → ORCHESTRATOR → (Faculty if needed)
+
+### E. Session Lifecycle with G-Staff
+
+```
+Session Start:
+  1. /startupO invoked
+  2. ORCHESTRATOR loads context (CLAUDE.md, advisor notes)
+  3. DELEGATION_AUDITOR spawned in background
+  4. Ready for user requests
+
+During Session:
+  5. User requests decomposed
+  6. FORCE_MANAGER (if complex) assembles task force
+  7. Coordinators manage their divisions
+  8. G-1 tracks utilization in background
+
+Session End:
+  9. COORD_AAR auto-triggers
+  10. XO reports collected from active coordinators
+  11. DELEGATION_AUDITOR provides metrics
+  12. HISTORIAN documents if noteworthy
+  13. Scratchpad updated with insights
+  14. Handoff notes generated
+```
+
+### F. G-Staff Quick Reference
+
+```
+WHEN TO USE EACH G-STAFF:
+
+G-1 (G1_PERSONNEL):
+  - "What agents do we have?"
+  - "Who is underutilized?"
+  - "What capabilities are missing?"
+
+G-3 (SYNTHESIZER):
+  - "Combine reports from all coordinators"
+  - "Create unified view of session work"
+
+G-5 (META_UPDATER):
+  - "Update documentation"
+  - "Capture new patterns"
+
+IG (DELEGATION_AUDITOR):
+  - "Check delegation efficiency"
+  - "Detect anti-patterns"
+
+PAO (HISTORIAN):
+  - "Document this session"
+  - "What happened in session N?"
+
+FORCE_MANAGER:
+  - "Assemble team for complex task"
+  - "Which coordinator gets this?"
+
+COORD_AAR:
+  - "Wrap up session"
+  - "Generate handoff notes"
 ```
 
 ---

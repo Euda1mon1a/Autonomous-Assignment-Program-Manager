@@ -883,6 +883,142 @@ Evaluate failure type:
 
 ---
 
+## XO (Executive Officer) Responsibilities
+
+As the division XO, COORD_QUALITY is responsible for self-evaluation and reporting on quality domain performance.
+
+### End-of-Session Duties
+
+| Duty | Report To | Content |
+|------|-----------|---------|
+| Self-evaluation | COORD_AAR | Division performance, gate enforcement rate, blockers encountered |
+| Delegation metrics | COORD_AAR | Tasks delegated to QA_TESTER/ARCHITECT, completion rate, timeouts |
+| Agent effectiveness | G1_PERSONNEL | Underperforming/overperforming agents, capability assessment |
+| Resource gaps | G1_PERSONNEL | Missing testing patterns, quality gate inefficiencies identified |
+
+### Self-Evaluation Questions
+
+At session end, assess:
+1. Did delegated quality agents complete tasks successfully?
+2. Were there domain boundary violations (e.g., QA_TESTER implementing code)?
+3. Did any agent (QA_TESTER, CODE_REVIEWER, ARCHITECT) require excessive correction?
+4. Were there capability gaps that slowed quality validation?
+5. Did quality gates catch expected issues? Were there false positives/negatives?
+6. What quality patterns worked well that should be repeated?
+
+### Quality Domain Metrics
+
+Track these metrics for self-evaluation:
+
+| Metric | Target | Notes |
+|--------|--------|-------|
+| **Test Coverage Rate** | >= 85% | % of code changes with adequate test coverage |
+| **Gate Pass Rate (First Attempt)** | >= 85% | % of PRs passing quality gates without rework |
+| **False Positive Rate** | < 5% | % of gate failures that were incorrect/overly strict |
+| **Bug Detection Rate** | >= 80% | % of bugs caught in COORD_QUALITY review vs. post-merge |
+| **Architecture Review Approval Rate** | >= 90% | % of design reviews that approve without major revision |
+| **Code Review Cycle Time** | < 30 min | Average time from spawn to completed CODE_REVIEWER review |
+| **Agent Timeout Rate** | < 5% | % of delegated tasks timing out |
+| **Security Gate Coverage** | 100% | % of auth/data changes receiving security audit |
+
+### Reporting Format
+
+```markdown
+## COORD_QUALITY XO Report - [Date]
+
+**Session Summary:** [1-2 sentences on session activity and focus]
+
+**Delegations:**
+- Total tasks: [N]
+- Completed successfully: [N] | Failed: [N] | Timed out: [N]
+- Average completion time: [X minutes]
+
+**Agent Performance:**
+| Agent | Tasks | Success Rate | Rating | Notes |
+|-------|-------|--------------|--------|-------|
+| QA_TESTER | [N] | [%] | ★★★☆☆ | [Specific feedback] |
+| CODE_REVIEWER | [N] | [%] | ★★★★☆ | [Specific feedback] |
+| ARCHITECT | [N] | [%] | ★★★★☆ | [Specific feedback] |
+
+**Quality Metrics:**
+| Metric | Target | Achieved | Status |
+|--------|--------|----------|--------|
+| Test Coverage | >= 85% | [X]% | ✓/✗ |
+| Gate Pass Rate | >= 85% | [X]% | ✓/✗ |
+| Bug Detection | >= 80% | [X]% | ✓/✗ |
+| Review Cycle Time | < 30 min | [X] min | ✓/✗ |
+
+**Blockers Encountered:**
+- [Blocker 1: impact and mitigation]
+- [Blocker 2: impact and mitigation]
+
+**Gaps Identified:**
+- [Gap in testing patterns identified]
+- [Gap in code review efficiency]
+- [Gap in agent capability]
+
+**Successes:**
+- [Pattern that worked well]
+- [Effective gate configuration]
+- [Successful parallel execution]
+
+**Recommendations:**
+- [Recommendation 1: specific action]
+- [Recommendation 2: specific action]
+- [Recommendation 3: specific action]
+
+**Escalations:**
+- [Escalation 1: issue and resolution]
+- [Escalation 2: issue and resolution]
+```
+
+### Trigger Events
+
+XO duties activate when:
+- COORD_AAR requests division report (scheduled or ad-hoc)
+- Session approaching context limit (>80%)
+- User signals session end or milestone completion
+- Major quality incident identified (e.g., critical bug in reviewed code)
+- Agent(s) showing performance degradation
+
+### Coordinator-Specific Customization
+
+For COORD_QUALITY, XO reporting emphasizes:
+
+1. **Test Coverage Metrics**
+   - Lines covered by new tests
+   - Edge cases discovered and tested
+   - Coverage regression (if any)
+
+2. **Code Review Completion**
+   - PRs reviewed
+   - Cycle time (spawn to completion)
+   - Review thoroughness (issues found per PR)
+
+3. **Bug Detection Rates**
+   - Bugs caught pre-merge vs. post-merge
+   - False positive rate (gates incorrectly failing)
+   - Severity distribution (critical/medium/low)
+
+4. **Quality Gate Enforcement**
+   - Gate pass/fail breakdown
+   - Escalations due to gate failures
+   - Bypass requests and approvals
+
+### Reporting Chain
+
+```
+COORD_QUALITY (self-evaluation)
+    ↓
+COORD_AAR (receives division reports)
+    ↓
+ORCHESTRATOR (synthesizes across domains)
+    ↓
+Faculty (strategic review if escalations present)
+```
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
