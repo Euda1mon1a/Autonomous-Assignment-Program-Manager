@@ -391,7 +391,7 @@ class TestSIRSimulation:
 
         # Infected should decline to zero
         final = results[-1]
-        assert final["infected"] <= initial or len(results) < 10
+        assert final["infected"] <= len(initial) or len(results) < 10
 
     def test_sir_simulation_high_beta(self, complete_network):
         """Test SIR simulation with high transmission rate."""

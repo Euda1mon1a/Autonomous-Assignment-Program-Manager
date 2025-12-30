@@ -5,10 +5,9 @@ from datetime import datetime
 from enum import Enum
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
-from sqlalchemy.dialects.postgresql import ARRAY
 
 from app.db.base import Base
-from app.db.types import GUID, JSONType
+from app.db.types import GUID, JSONType, StringArrayType
 
 
 class ExportFormat(str, Enum):
@@ -89,7 +88,7 @@ class ExportJob(Base):
     )
 
     # Email delivery settings
-    email_recipients = Column(ARRAY(String), nullable=True)
+    email_recipients = Column(StringArrayType(), nullable=True)
     email_subject_template = Column(String(500), nullable=True)
     email_body_template = Column(Text, nullable=True)
 
@@ -104,7 +103,7 @@ class ExportJob(Base):
 
     # Export configuration
     filters = Column(JSONType, nullable=True, default=dict)
-    columns = Column(ARRAY(String), nullable=True)
+    columns = Column(StringArrayType(), nullable=True)
     include_headers = Column(Boolean, default=True)
 
     # Execution tracking
@@ -174,7 +173,7 @@ class ExportJobExecution(Base):
     file_path = Column(String(1000), nullable=True)
     s3_url = Column(String(1000), nullable=True)
     email_sent = Column(Boolean, default=False)
-    email_recipients = Column(ARRAY(String), nullable=True)
+    email_recipients = Column(StringArrayType(), nullable=True)
 
     # Error tracking
     error_message = Column(Text, nullable=True)
