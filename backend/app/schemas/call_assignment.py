@@ -64,6 +64,17 @@ class CallAssignmentUpdate(BaseModel):
             raise ValueError("call_type must be 'overnight', 'weekend', or 'backup'")
         return v
 
+    @field_validator("call_date")
+    @classmethod
+    def validate_call_date_not_future(cls, v: date | None) -> date | None:
+        """Validate call date is not too far in future."""
+        if v is not None:
+            from datetime import date as dt_date, timedelta
+            max_future = dt_date.today() + timedelta(days=730)  # 2 years
+            if v > max_future:
+                raise ValueError("call_date cannot be more than 2 years in the future")
+        return v
+
 
 class PersonBrief(BaseModel):
     """Brief person info for embedding in responses."""

@@ -73,6 +73,14 @@ class AbsenceBase(BaseModel):
             raise ValueError("end_date must be >= start_date")
         return self
 
+    @field_validator("notes")
+    @classmethod
+    def validate_notes_length(cls, v: str | None) -> str | None:
+        """Validate notes field length."""
+        if v is not None and len(v) > 2000:
+            raise ValueError("notes must be less than 2000 characters")
+        return v
+
 
 class AbsenceCreate(AbsenceBase):
     """
@@ -115,6 +123,14 @@ class AbsenceUpdate(BaseModel):
     def validate_absence_type(cls, v: str | None) -> str | None:
         if v is not None and v not in VALID_ABSENCE_TYPES:
             raise ValueError(f"absence_type must be one of {VALID_ABSENCE_TYPES}")
+        return v
+
+    @field_validator("notes")
+    @classmethod
+    def validate_notes_length(cls, v: str | None) -> str | None:
+        """Validate notes field length."""
+        if v is not None and len(v) > 2000:
+            raise ValueError("notes must be less than 2000 characters")
         return v
 
 

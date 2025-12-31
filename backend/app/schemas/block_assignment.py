@@ -37,6 +37,14 @@ class BlockAssignmentBase(BaseModel):
             raise ValueError(f"assignment_reason must be one of {valid_reasons}")
         return v
 
+    @field_validator("notes")
+    @classmethod
+    def validate_notes(cls, v: str | None) -> str | None:
+        """Validate notes are not too long."""
+        if v is not None and len(v) > 1000:
+            raise ValueError("notes must be less than 1000 characters")
+        return v
+
 
 class BlockAssignmentCreate(BlockAssignmentBase):
     """Schema for creating a block assignment."""
@@ -60,6 +68,14 @@ class BlockAssignmentUpdate(BaseModel):
             valid_reasons = [r.value for r in AssignmentReasonEnum]
             if v not in valid_reasons:
                 raise ValueError(f"assignment_reason must be one of {valid_reasons}")
+        return v
+
+    @field_validator("notes")
+    @classmethod
+    def validate_notes(cls, v: str | None) -> str | None:
+        """Validate notes are not too long."""
+        if v is not None and len(v) > 1000:
+            raise ValueError("notes must be less than 1000 characters")
         return v
 
 
