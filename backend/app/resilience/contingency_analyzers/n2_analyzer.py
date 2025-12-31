@@ -86,6 +86,7 @@ class N2Analyzer:
         # Check for overlapping assignments (increases severity)
         overlap = self._find_slot_overlap(person1_slots, person2_slots)
         if overlap:
+            logger.warning("N-2 scenario has %d overlapping slots - increased severity", len(overlap))
             total_affected += len(overlap) * 2  # Double penalty for overlap
 
         # Determine interdependency type
@@ -96,6 +97,8 @@ class N2Analyzer:
         else:
             interdependency = "independent"
 
+        logger.debug("Interdependency type: %s, total affected slots: %d", interdependency, total_affected)
+
         # Check backup coverage
         viable_backups = []
         for backup_id in available_backups:
@@ -104,6 +107,9 @@ class N2Analyzer:
                 viable_backups.append(backup_id)
 
         has_backup = len(viable_backups) > 0
+
+        if not has_backup:
+            logger.error("CRITICAL: N-2 scenario with no viable backups for %d affected slots", total_affected)
 
         # Calculate criticality (N-2 is inherently more critical)
         base_criticality = 0.6  # N-2 starts higher than N-1

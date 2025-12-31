@@ -89,7 +89,29 @@ class CheckWorkHoursTool(BaseTool[WorkHoursCheckRequest, WorkHoursCheckResponse]
     async def execute(
         self, request: WorkHoursCheckRequest
     ) -> WorkHoursCheckResponse:
-        """Execute the tool."""
+        """
+        Execute ACGME 80-hour work week compliance check.
+
+        Validates that all residents meet the ACGME requirement of no more than
+        80 hours per week, averaged over rolling 4-week periods. Returns detailed
+        breakdown by person including total hours, average per week, maximum week,
+        and violation counts.
+
+        ACGME Common Program Requirements:
+        - Duty hours: 80 hours/week maximum (averaged over 4 weeks)
+        - At-home call hours count toward duty hour limits
+        - Strategic napping does NOT reduce duty hours
+
+        Args:
+            request: Validated request with date range and optional person filter
+
+        Returns:
+            WorkHoursCheckResponse with per-person breakdown and violation summary
+
+        Raises:
+            APIError: Backend API request fails
+            ValidationError: Invalid person_id or missing data
+        """
         client = self._require_api_client()
 
         try:
@@ -130,8 +152,30 @@ class CheckWorkHoursTool(BaseTool[WorkHoursCheckRequest, WorkHoursCheckResponse]
                 people=people,
             )
 
+        except (ConnectionError, TimeoutError) as e:
+            # Network connectivity issues
+            return WorkHoursCheckResponse(
+                start_date=request.start_date,
+                end_date=request.end_date,
+                total_people_checked=0,
+                compliant_count=0,
+                violation_count=0,
+                overall_compliant=False,
+                people=[],
+            )
+        except KeyError as e:
+            # Missing required data fields
+            return WorkHoursCheckResponse(
+                start_date=request.start_date,
+                end_date=request.end_date,
+                total_people_checked=0,
+                compliant_count=0,
+                violation_count=0,
+                overall_compliant=False,
+                people=[],
+            )
         except Exception as e:
-            # Return empty result on error
+            # Unexpected errors
             return WorkHoursCheckResponse(
                 start_date=request.start_date,
                 end_date=request.end_date,

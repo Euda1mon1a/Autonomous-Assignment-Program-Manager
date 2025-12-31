@@ -130,7 +130,7 @@ async def save_version(request: VersionSaveRequest) -> VersionSaveResponse:
             saved_at=datetime.utcnow().isoformat(),
         )
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError) as e:
         logger.error(f"Error saving version: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,

@@ -61,6 +61,50 @@ const saveToStorage = (key: string, value: unknown): void => {
 };
 
 /**
+ * Validates if a value is a valid ChatSession.
+ *
+ * @param value - Value to validate
+ * @returns True if value is a ChatSession
+ */
+function isChatSession(value: unknown): value is ChatSession {
+  if (!value || typeof value !== 'object') return false;
+  const obj = value as Record<string, unknown>;
+  return (
+    typeof obj.id === 'string' &&
+    typeof obj.title === 'string' &&
+    typeof obj.programId === 'string' &&
+    typeof obj.adminId === 'string' &&
+    Array.isArray(obj.messages)
+  );
+}
+
+/**
+ * Validates if a value is a valid ChatMessage array.
+ *
+ * @param value - Value to validate
+ * @returns True if value is a ChatMessage array
+ */
+function isChatMessageArray(value: unknown): value is ChatMessage[] {
+  return Array.isArray(value) && value.every(msg =>
+    msg && typeof msg === 'object' &&
+    'id' in msg && 'role' in msg && 'content' in msg
+  );
+}
+
+/**
+ * Validates if a string is a valid ISO date.
+ *
+ * @param value - String to validate
+ * @returns True if value is a valid ISO date string
+ */
+function isValidISODate(value: string): boolean {
+  const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
+  if (!dateRegex.test(value)) return false;
+  const date = new Date(value);
+  return !isNaN(date.getTime());
+}
+
+/**
  * Context data for Claude Code requests.
  */
 export interface ClaudeCodeContext {
@@ -88,6 +132,28 @@ export interface ArtifactMetadata {
   type?: string;
   title?: string;
   [key: string]: unknown;
+}
+
+/**
+ * Error types for Claude Chat operations.
+ */
+export type ClaudeChatErrorType =
+  | 'NO_SESSION'
+  | 'EMPTY_MESSAGE'
+  | 'NETWORK_ERROR'
+  | 'STREAM_ERROR'
+  | 'PARSE_ERROR'
+  | 'ABORT_ERROR'
+  | 'UNKNOWN_ERROR';
+
+/**
+ * Structured error for Claude Chat operations.
+ */
+export interface ClaudeChatError {
+  type: ClaudeChatErrorType;
+  message: string;
+  originalError?: Error;
+  timestamp: Date;
 }
 
 export interface SavedSession {

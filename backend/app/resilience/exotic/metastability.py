@@ -18,11 +18,14 @@ Based on:
 - Energy landscape analysis
 """
 
+import logging
 from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
 from scipy.optimize import differential_evolution
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -76,8 +79,10 @@ class MetastabilityDetector:
         Returns:
             MetastableState characterization
         """
+        logger.info("Analyzing metastability: current_energy=%.2f, landscape_size=%d", current_energy, len(energy_landscape))
         if not energy_landscape or not barrier_samples:
             # Insufficient data
+            logger.warning("Insufficient data for metastability analysis")
             return MetastableState(
                 energy=current_energy,
                 barrier_height=0.0,

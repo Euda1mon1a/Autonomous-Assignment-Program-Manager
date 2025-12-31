@@ -82,7 +82,25 @@ class ValidateScheduleTool(
     async def execute(
         self, request: ValidateScheduleRequest
     ) -> ValidateScheduleResponse:
-        """Execute the tool."""
+        """
+        Execute schedule validation against ACGME compliance rules.
+
+        Validates the schedule for the specified date range, checking:
+        - 80-hour work week rule (averaged over 4 weeks)
+        - 1-in-7 day off rule
+        - Supervision ratios (PGY-1: 1:2, PGY-2/3: 1:4)
+        - Coverage gaps and overlaps
+
+        Args:
+            request: Validated request containing date range and check filters
+
+        Returns:
+            ValidateScheduleResponse with compliance score and detailed issues list
+
+        Raises:
+            APIError: Backend API request fails
+            ValidationError: Response data is malformed
+        """
         client = self._require_api_client()
 
         try:
@@ -123,8 +141,8 @@ class ValidateScheduleTool(
                 end_date=request.end_date,
             )
 
-        except Exception as e:
-            # Return failure response
+        except (ConnectionError, TimeoutError) as e:
+            # Network connectivity issues
             return ValidateScheduleResponse(
                 is_valid=False,
                 compliance_rate=0.0,
@@ -136,7 +154,47 @@ class ValidateScheduleTool(
                     ValidationIssue(
                         severity="critical",
                         rule_type="system",
-                        message=f"Validation failed: {e}",
+                        message=f"Backend service unavailable: {type(e).__name__}",
+                        constraint_name="api_connection_error",
+                    )
+                ],
+                start_date=request.start_date,
+                end_date=request.end_date,
+            )
+        except (KeyError, ValueError, TypeError) as e:
+            # Data parsing errors
+            return ValidateScheduleResponse(
+                is_valid=False,
+                compliance_rate=0.0,
+                total_issues=1,
+                critical_count=1,
+                warning_count=0,
+                info_count=0,
+                issues=[
+                    ValidationIssue(
+                        severity="critical",
+                        rule_type="system",
+                        message=f"Invalid response data: {type(e).__name__}",
+                        constraint_name="api_parse_error",
+                    )
+                ],
+                start_date=request.start_date,
+                end_date=request.end_date,
+            )
+        except Exception as e:
+            # Unexpected errors
+            return ValidateScheduleResponse(
+                is_valid=False,
+                compliance_rate=0.0,
+                total_issues=1,
+                critical_count=1,
+                warning_count=0,
+                info_count=0,
+                issues=[
+                    ValidationIssue(
+                        severity="critical",
+                        rule_type="system",
+                        message=f"Validation failed: {type(e).__name__}",
                         constraint_name="api_error",
                     )
                 ],

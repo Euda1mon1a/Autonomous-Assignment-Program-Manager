@@ -15,10 +15,13 @@ Eight rules:
 8. Eight consecutive points beyond 1σ (both sides)
 """
 
+import logging
 from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -60,16 +63,19 @@ class WesternElectricRules:
         Returns:
             List of RuleViolation objects
         """
+        logger.info("Checking Western Electric rules for %d data points", len(data))
         violations = []
 
         # Rule 1: One point beyond 3σ
         v1 = self._rule_1_beyond_3sigma(data)
         if v1:
+            logger.warning("Rule 1 violations detected: %d points beyond 3σ", len(v1))
             violations.extend(v1)
 
         # Rule 2: Two of three consecutive beyond 2σ
         v2 = self._rule_2_two_of_three_beyond_2sigma(data)
         if v2:
+            logger.warning("Rule 2 violations detected: %d instances", len(v2))
             violations.extend(v2)
 
         # Rule 3: Four of five consecutive beyond 1σ
@@ -102,6 +108,7 @@ class WesternElectricRules:
         if v8:
             violations.extend(v8)
 
+        logger.debug("Western Electric check complete: %d total violations found", len(violations))
         return violations
 
     def _rule_1_beyond_3sigma(self, data: list[float]) -> list[RuleViolation]:

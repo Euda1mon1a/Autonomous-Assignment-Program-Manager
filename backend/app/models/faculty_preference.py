@@ -89,3 +89,6 @@ class FacultyPreference(Base):
     def is_week_preferred(self, week_date: str) -> bool:
         """Check if a week is preferred."""
         return self.preferred_weeks and week_date in self.preferred_weeks
+
+    def __repr__(self) -> str:
+        return f"<FacultyPreference(id={self.id}, faculty_id={self.faculty_id})>"

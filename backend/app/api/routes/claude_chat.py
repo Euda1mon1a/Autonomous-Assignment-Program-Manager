@@ -48,7 +48,8 @@ from fastapi import (
 )
 from pydantic import BaseModel
 
-from app.api.deps import get_current_active_user, get_db
+from app.api.deps import get_current_active_user
+from app.db.session import get_async_db
 from app.core.config import settings
 from app.models.user import User
 

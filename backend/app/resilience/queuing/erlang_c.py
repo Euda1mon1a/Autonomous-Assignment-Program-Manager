@@ -14,6 +14,7 @@ Application to scheduling:
 - Service time = consultation duration
 """
 
+import logging
 from dataclasses import dataclass
 from math import factorial
 from typing import Optional
@@ -21,6 +22,8 @@ from typing import Optional
 import numpy as np
 from scipy.optimize import fsolve
 from scipy.special import factorial as scipy_factorial
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass

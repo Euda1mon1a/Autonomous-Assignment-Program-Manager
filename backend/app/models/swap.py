@@ -64,6 +64,9 @@ class SwapRecord(Base):
 
     __versioned__ = {}
 
+    def __repr__(self) -> str:
+        return f"<SwapRecord(id={self.id}, type='{self.swap_type.value}', status='{self.status.value}')>"
+
 
 class SwapApproval(Base):
     """Approval record for a swap request."""
@@ -82,3 +85,6 @@ class SwapApproval(Base):
 
     swap = relationship("SwapRecord", backref="approvals")
     faculty = relationship("Person")
+
+    def __repr__(self) -> str:
+        return f"<SwapApproval(id={self.id}, swap_id={self.swap_id}, role='{self.role}', approved={self.approved})>"

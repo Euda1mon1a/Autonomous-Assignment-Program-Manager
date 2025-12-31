@@ -177,18 +177,12 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
   formData.append('password', credentials.password)
 
   // Step 1: Authenticate and get token (set as httpOnly cookie)
-  let tokenResponse;
-  try {
-    tokenResponse = await api.post<RefreshTokenResponse>('/auth/login', formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      withCredentials: true, // Required for cookies
-    })
-  } catch (loginError) {
-    console.error('[auth.ts] Login request FAILED:', loginError)
-    throw loginError
-  }
+  const tokenResponse = await api.post<RefreshTokenResponse>('/auth/login', formData, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    withCredentials: true, // Required for cookies
+  })
 
   // Step 2: Store refresh token and schedule proactive refresh
   storeTokens(tokenResponse.data.refresh_token)
@@ -205,8 +199,6 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
   } catch (error) {
     // Login succeeded (token is set in cookie), but failed to fetch user data
     // This is a partial success - the user is authenticated but we can't get their details
-    console.error('Failed to fetch user data after successful login:', error)
-
     // Throw a descriptive error for the UI to handle
     // The user can try refreshing the page since the cookie is set
     throw new Error('Authentication succeeded but failed to load user profile. Please refresh the page.')
@@ -248,8 +240,6 @@ export async function logout(): Promise<boolean> {
     return true
   } catch (error) {
     // Even if the request fails, the user is logged out client-side
-    // Log the error for debugging but don't propagate it
-    console.error('Logout error (local session cleared):', error)
     return false
   }
 }
@@ -282,13 +272,8 @@ export async function logout(): Promise<boolean> {
  * @see validateToken - For checking if the session is still valid
  */
 export async function getCurrentUser(): Promise<User> {
-  try {
-    const user = await get<User>('/auth/me')
-    return user
-  } catch (err) {
-    console.error('[auth.ts] getCurrentUser() - FAILED:', err)
-    throw err
-  }
+  const user = await get<User>('/auth/me')
+  return user
 }
 
 /**
@@ -452,15 +437,14 @@ function scheduleProactiveRefresh(): void {
 
   if (timeUntilRefresh <= 0) {
     // Token is already expired or about to expire, refresh immediately
-    performRefresh().catch((err) => {
-      console.error('[auth.ts] Immediate refresh failed:', err)
+    performRefresh().catch(() => {
+      // Silent failure - rely on reactive refresh
     })
     return
   }
 
   refreshTimerId = setTimeout(() => {
-    performRefresh().catch((err) => {
-      console.error('[auth.ts] Proactive refresh failed:', err)
+    performRefresh().catch(() => {
       // On proactive refresh failure, we'll rely on reactive refresh
     })
   }, timeUntilRefresh)
@@ -498,8 +482,6 @@ export async function performRefresh(): Promise<RefreshTokenResponse | null> {
 
       return response
     } catch (error) {
-      console.error('[auth.ts] Token refresh failed:', error)
-
       // Clear state on failure - user needs to re-login
       clearTokenState()
 

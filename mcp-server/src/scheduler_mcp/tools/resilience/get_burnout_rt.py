@@ -61,7 +61,29 @@ class GetBurnoutRtTool(BaseTool[GetBurnoutRtRequest, GetBurnoutRtResponse]):
     async def execute(
         self, request: GetBurnoutRtRequest
     ) -> GetBurnoutRtResponse:
-        """Execute the tool."""
+        """
+        Execute burnout reproduction number (Rt) calculation.
+
+        Uses SIR (Susceptible-Infected-Recovered) epidemiological model to track
+        burnout spread through the residency program. Rt > 1.0 indicates spreading
+        burnout, while Rt < 1.0 indicates declining burnout.
+
+        Interpretation:
+        - Rt < 0.9: Declining (burnout fading)
+        - Rt 0.9-1.1: Stable (endemic equilibrium)
+        - Rt 1.1-1.5: Growing (intervention needed)
+        - Rt > 1.5: Epidemic (crisis mode)
+
+        Args:
+            request: Validated request with optional date (defaults to today)
+
+        Returns:
+            GetBurnoutRtResponse with Rt value, trend, SIR compartments, and recommendations
+
+        Raises:
+            APIError: Backend API request fails
+            ValidationError: Invalid date format or missing data
+        """
         client = self._require_api_client()
 
         try:
@@ -100,8 +122,8 @@ class GetBurnoutRtTool(BaseTool[GetBurnoutRtRequest, GetBurnoutRtResponse]):
                 recommendations=data.get("recommendations", []),
             )
 
-        except Exception as e:
-            # Return safe default
+        except (ConnectionError, TimeoutError) as e:
+            # Network connectivity issues
             return GetBurnoutRtResponse(
                 date=request.date or "",
                 rt_value=0.0,
@@ -109,5 +131,27 @@ class GetBurnoutRtTool(BaseTool[GetBurnoutRtRequest, GetBurnoutRtResponse]):
                 susceptible=0,
                 infected=0,
                 recovered=0,
-                recommendations=[f"Error: {e}"],
+                recommendations=[f"Backend service unavailable: {type(e).__name__}"],
+            )
+        except (KeyError, ValueError) as e:
+            # Data parsing errors
+            return GetBurnoutRtResponse(
+                date=request.date or "",
+                rt_value=0.0,
+                trend="unknown",
+                susceptible=0,
+                infected=0,
+                recovered=0,
+                recommendations=[f"Invalid response data: {type(e).__name__}"],
+            )
+        except Exception as e:
+            # Unexpected errors
+            return GetBurnoutRtResponse(
+                date=request.date or "",
+                rt_value=0.0,
+                trend="unknown",
+                susceptible=0,
+                infected=0,
+                recovered=0,
+                recommendations=[f"Error: {type(e).__name__}"],
             )
