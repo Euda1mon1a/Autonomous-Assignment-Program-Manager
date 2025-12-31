@@ -32,6 +32,7 @@ Tier 2:
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date, datetime
+from functools import lru_cache
 from typing import Any
 from uuid import UUID
 
@@ -152,6 +153,33 @@ from app.resilience.utilization import (
 logger = get_logger(__name__)
 
 
+# Resilience Framework Thresholds
+MAX_UTILIZATION = 0.80  # Maximum utilization threshold (80%)
+WARNING_THRESHOLD = 0.70  # Warning level threshold (70%)
+ALLOSTATIC_WARNING_THRESHOLD = 50.0  # Allostatic load warning level
+ALLOSTATIC_CRITICAL_THRESHOLD = 80.0  # Allostatic load critical level
+
+# Compensation and Sustainability
+BASE_COMPENSATION_RATE = 0.5  # Base compensation rate (50%)
+COMPENSATION_COST_MULTIPLIER = 1.5  # Multiplier for compensation costs
+SUSTAINABILITY_THRESHOLD = 0.7  # Sustainability threshold (70%)
+
+# Cognitive Load Management
+MAX_DECISIONS_PER_SESSION = 7  # Miller's Law: 7±2 items in working memory
+
+# Preference Trail (Stigmergy) Constants
+PREFERENCE_EVAPORATION_RATE = 0.1  # 10% evaporation per interval
+PREFERENCE_REINFORCEMENT_AMOUNT = 0.1  # 10% reinforcement per successful swap
+EVAPORATION_INTERVAL_HOURS = 24.0  # Evaporate trails every 24 hours
+
+# Hub Protection Constants
+HUB_THRESHOLD = 0.4  # Threshold for identifying hub faculty
+CRITICAL_HUB_THRESHOLD = 0.6  # Critical hub threshold (60%)
+
+# Time-Frequency (TF) Analysis
+TF_DECAY_INTERVAL_HOURS = 1.0  # Decay interval for time-frequency signals
+
+
 @dataclass
 class SystemHealthReport:
     """Comprehensive system health report."""
@@ -181,8 +209,8 @@ class ResilienceConfig:
     """Configuration for resilience service."""
 
     # Tier 1: Utilization thresholds
-    max_utilization: float = 0.80
-    warning_threshold: float = 0.70
+    max_utilization: float = MAX_UTILIZATION
+    warning_threshold: float = WARNING_THRESHOLD
 
     # Tier 1: Auto-activation settings
     auto_activate_defense: bool = True
@@ -199,8 +227,8 @@ class ResilienceConfig:
 
     # Tier 2: Homeostasis settings
     homeostasis_check_interval_minutes: int = 30
-    allostatic_warning_threshold: float = 50.0
-    allostatic_critical_threshold: float = 80.0
+    allostatic_warning_threshold: float = ALLOSTATIC_WARNING_THRESHOLD
+    allostatic_critical_threshold: float = ALLOSTATIC_CRITICAL_THRESHOLD
     auto_correct_feedback_loops: bool = True
 
     # Tier 2: Blast radius settings
@@ -209,28 +237,28 @@ class ResilienceConfig:
     auto_escalate_containment: bool = True
 
     # Tier 2: Le Chatelier settings
-    base_compensation_rate: float = 0.5  # 50% natural compensation
-    compensation_cost_multiplier: float = 1.5
-    sustainability_threshold: float = 0.7
+    base_compensation_rate: float = BASE_COMPENSATION_RATE  # Natural compensation
+    compensation_cost_multiplier: float = COMPENSATION_COST_MULTIPLIER
+    sustainability_threshold: float = SUSTAINABILITY_THRESHOLD
 
     # Tier 3: Cognitive Load settings
-    max_decisions_per_session: int = 7  # Miller's Law
+    max_decisions_per_session: int = MAX_DECISIONS_PER_SESSION  # Miller's Law
     auto_decide_when_fatigued: bool = True
     batch_similar_decisions: bool = True
 
     # Tier 3: Stigmergy settings
-    preference_evaporation_rate: float = 0.1  # Per day
-    preference_reinforcement_amount: float = 0.1
-    evaporation_interval_hours: float = 24.0
+    preference_evaporation_rate: float = PREFERENCE_EVAPORATION_RATE  # Per day
+    preference_reinforcement_amount: float = PREFERENCE_REINFORCEMENT_AMOUNT
+    evaporation_interval_hours: float = EVAPORATION_INTERVAL_HOURS
 
     # Tier 3: Hub Analysis settings
-    hub_threshold: float = 0.4
-    critical_hub_threshold: float = 0.6
+    hub_threshold: float = HUB_THRESHOLD
+    critical_hub_threshold: float = CRITICAL_HUB_THRESHOLD
     use_networkx: bool = True
 
     # Tier 4: Transcription Factor Scheduler settings
     enable_transcription_factors: bool = True
-    tf_decay_interval_hours: float = 1.0
+    tf_decay_interval_hours: float = TF_DECAY_INTERVAL_HOURS
     auto_induce_tfs_from_events: bool = True
 
 
@@ -687,7 +715,7 @@ class ResilienceService:
             self._last_contingency_analysis is None
             or (datetime.now() - self._last_contingency_analysis).total_seconds()
             > self.config.contingency_analysis_interval_hours * 3600
-            or current_utilization > 0.80  # Always run when stressed
+            or current_utilization > MAX_UTILIZATION  # Always run when stressed
         )
 
         if not should_run:

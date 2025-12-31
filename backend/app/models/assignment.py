@@ -28,6 +28,18 @@ class Assignment(Base):
 
     Version history is tracked via SQLAlchemy-Continuum.
     Access history: assignment.versions
+
+    Performance Optimization Notes:
+    - Consider adding composite index on (person_id, block_id) for faster lookups
+    - Consider adding composite index on (block_id, role) for role-based queries
+    - Consider adding index on created_at for temporal queries
+    - The schedule_run_id already has an index for provenance tracking
+
+    Suggested indexes (add via Alembic migration):
+    CREATE INDEX idx_assignments_person_block ON assignments(person_id, block_id);
+    CREATE INDEX idx_assignments_block_role ON assignments(block_id, role);
+    CREATE INDEX idx_assignments_created_at ON assignments(created_at);
+    CREATE INDEX idx_assignments_person_created ON assignments(person_id, created_at DESC);
     """
 
     __tablename__ = "assignments"
@@ -35,12 +47,12 @@ class Assignment(Base):
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     block_id = Column(
-        GUID(), ForeignKey("blocks.id", ondelete="CASCADE"), nullable=False
+        GUID(), ForeignKey("blocks.id", ondelete="CASCADE"), nullable=False, index=True  # Performance: Indexed for frequent foreign key lookups
     )
     person_id = Column(
-        GUID(), ForeignKey("people.id", ondelete="CASCADE"), nullable=False
+        GUID(), ForeignKey("people.id", ondelete="CASCADE"), nullable=False, index=True  # Performance: Indexed for frequent foreign key lookups
     )
-    rotation_template_id = Column(GUID(), ForeignKey("rotation_templates.id"))
+    rotation_template_id = Column(GUID(), ForeignKey("rotation_templates.id"), index=True)  # Performance: Indexed for template-based queries
 
     role = Column(String(50), nullable=False)  # 'primary', 'supervising', 'backup'
 

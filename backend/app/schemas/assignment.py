@@ -1,55 +1,70 @@
 """Assignment schemas."""
 
 from datetime import datetime
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
 
+class AssignmentRole(str, Enum):
+    """Assignment role types."""
+
+    PRIMARY = "primary"
+    SUPERVISING = "supervising"
+    BACKUP = "backup"
+
+
 class AssignmentBase(BaseModel):
     """Base assignment schema."""
 
-    block_id: UUID
-    person_id: UUID
-    rotation_template_id: UUID | None = None
-    role: str  # 'primary', 'supervising', 'backup'
-    activity_override: str | None = None
-    notes: str | None = None
-    override_reason: str | None = None  # Reason for acknowledging ACGME violations
-
-    @field_validator("role")
-    @classmethod
-    def validate_role(cls, v: str) -> str:
-        if v not in ("primary", "supervising", "backup"):
-            raise ValueError("role must be 'primary', 'supervising', or 'backup'")
-        return v
+    block_id: UUID = Field(..., description="Block UUID for this assignment")
+    person_id: UUID = Field(..., description="Person UUID for this assignment")
+    rotation_template_id: UUID | None = Field(
+        None, description="Rotation template UUID (optional)"
+    )
+    role: AssignmentRole = Field(..., description="Assignment role type")
+    activity_override: str | None = Field(
+        None, max_length=200, description="Override activity type (optional)"
+    )
+    notes: str | None = Field(None, max_length=1000, description="Assignment notes")
+    override_reason: str | None = Field(
+        None,
+        max_length=500,
+        description="Reason for acknowledging ACGME violations",
+    )
 
 
 class AssignmentCreate(AssignmentBase):
     """Schema for creating an assignment."""
 
-    created_by: str | None = None
+    created_by: str | None = Field(
+        None, max_length=100, description="User who created this assignment"
+    )
 
 
 class AssignmentUpdate(BaseModel):
     """Schema for updating an assignment."""
 
-    rotation_template_id: UUID | None = None
-    role: str | None = None
-    activity_override: str | None = None
-    notes: str | None = None
-    override_reason: str | None = None  # Reason for acknowledging ACGME violations
-    acknowledge_override: bool | None = (
-        None  # Set to True to timestamp override_acknowledged_at
+    rotation_template_id: UUID | None = Field(
+        None, description="Rotation template UUID (optional)"
     )
-    updated_at: datetime  # Required for optimistic locking
-
-    @field_validator("role")
-    @classmethod
-    def validate_role(cls, v: str | None) -> str | None:
-        if v is not None and v not in ("primary", "supervising", "backup"):
-            raise ValueError("role must be 'primary', 'supervising', or 'backup'")
-        return v
+    role: AssignmentRole | None = Field(None, description="Assignment role type")
+    activity_override: str | None = Field(
+        None, max_length=200, description="Override activity type (optional)"
+    )
+    notes: str | None = Field(None, max_length=1000, description="Assignment notes")
+    override_reason: str | None = Field(
+        None,
+        max_length=500,
+        description="Reason for acknowledging ACGME violations",
+    )
+    acknowledge_override: bool | None = Field(
+        None, description="Set to True to timestamp override_acknowledged_at"
+    )
+    updated_at: datetime = Field(
+        ..., description="Current timestamp for optimistic locking"
+    )
 
 
 class AssignmentResponse(AssignmentBase):

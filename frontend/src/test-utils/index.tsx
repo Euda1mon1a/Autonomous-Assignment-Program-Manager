@@ -357,14 +357,14 @@ export async function waitForApiCalls(mockFn: jest.Mock, expectedCalls: number):
 /**
  * Setup user event with default options
  */
-export function setupUser() {
+export function setupUser(): ReturnType<typeof userEvent.setup> {
   return userEvent.setup();
 }
 
 /**
  * Type into an input field
  */
-export async function typeIntoField(user: ReturnType<typeof userEvent.setup>, input: HTMLElement, text: string) {
+export async function typeIntoField(user: ReturnType<typeof userEvent.setup>, input: HTMLElement, text: string): Promise<void> {
   await user.clear(input);
   await user.type(input, text);
 }
@@ -376,7 +376,7 @@ export async function selectOption(
   user: ReturnType<typeof userEvent.setup>,
   select: HTMLElement,
   optionText: string
-) {
+): Promise<void> {
   await user.click(select);
   await user.click(await waitForElement(() => document.querySelector(`[role="option"]`)));
 }

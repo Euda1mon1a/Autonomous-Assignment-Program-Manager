@@ -4,7 +4,7 @@ from datetime import date, datetime
 from uuid import UUID
 
 from sqlalchemy import func, or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.swap import SwapApproval, SwapRecord, SwapStatus, SwapType
 
@@ -57,6 +57,27 @@ class SwapRepository:
         """Get a swap record by ID."""
         return self.db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()
 
+    def get_by_id_with_relations(self, swap_id: UUID) -> SwapRecord | None:
+        """
+        Get a swap record by ID with eager-loaded relationships.
+
+        N+1 Optimization: Uses selectinload to eagerly fetch source_faculty,
+        target_faculty, and approvals in batch queries, preventing N+1 queries
+        when accessing these relationships.
+
+        Performance: Use this when you need to access faculty or approval data.
+        """
+        return (
+            self.db.query(SwapRecord)
+            .options(
+                selectinload(SwapRecord.source_faculty),
+                selectinload(SwapRecord.target_faculty),
+                selectinload(SwapRecord.approvals),
+            )
+            .filter(SwapRecord.id == swap_id)
+            .first()
+        )
+
     def update_status(
         self,
         swap_id: UUID,
@@ -104,8 +125,20 @@ class SwapRepository:
         faculty_id: UUID,
         as_source: bool = True,
         as_target: bool = True,
+        include_relations: bool = False,
     ) -> list[SwapRecord]:
-        """Find swaps involving a faculty member."""
+        """
+        Find swaps involving a faculty member.
+
+        Args:
+            faculty_id: Faculty member to search for
+            as_source: Include swaps where faculty is source
+            as_target: Include swaps where faculty is target
+            include_relations: If True, eager-load faculty and approvals (N+1 optimization)
+
+        N+1 Optimization: When include_relations=True, uses selectinload to prevent
+        N+1 queries when iterating over results and accessing relationships.
+        """
         conditions = []
         if as_source:
             conditions.append(SwapRecord.source_faculty_id == faculty_id)
@@ -115,19 +148,35 @@ class SwapRepository:
         if not conditions:
             return []
 
-        return (
-            self.db.query(SwapRecord)
-            .filter(or_(*conditions))
-            .order_by(SwapRecord.requested_at.desc())
-            .all()
-        )
+        query = self.db.query(SwapRecord).filter(or_(*conditions))
+
+        if include_relations:
+            query = query.options(
+                selectinload(SwapRecord.source_faculty),
+                selectinload(SwapRecord.target_faculty),
+                selectinload(SwapRecord.approvals),
+            )
+
+        return query.order_by(SwapRecord.requested_at.desc()).all()
 
     def find_by_status(
         self,
         status: SwapStatus,
         faculty_id: UUID | None = None,
+        include_relations: bool = False,
     ) -> list[SwapRecord]:
-        """Find swaps by status."""
+        """
+        Find swaps by status.
+
+        Args:
+            status: SwapStatus to filter by
+            faculty_id: Optional faculty filter
+            include_relations: If True, eager-load relationships (N+1 optimization)
+
+        Performance: Consider adding database index on (status, requested_at)
+        for faster filtering and sorting. Index suggestion:
+        CREATE INDEX idx_swap_status_requested ON swap_records(status, requested_at DESC);
+        """
         query = self.db.query(SwapRecord).filter(SwapRecord.status == status)
 
         if faculty_id:
@@ -138,14 +187,28 @@ class SwapRepository:
                 )
             )
 
+        if include_relations:
+            query = query.options(
+                selectinload(SwapRecord.source_faculty),
+                selectinload(SwapRecord.target_faculty),
+                selectinload(SwapRecord.approvals),
+            )
+
         return query.order_by(SwapRecord.requested_at.desc()).all()
 
     def find_by_week(
         self,
         week: date,
         faculty_id: UUID | None = None,
+        include_relations: bool = False,
     ) -> list[SwapRecord]:
-        """Find swaps for a specific week."""
+        """
+        Find swaps for a specific week.
+
+        Performance: Consider adding database indexes for date filtering:
+        CREATE INDEX idx_swap_source_week ON swap_records(source_week);
+        CREATE INDEX idx_swap_target_week ON swap_records(target_week);
+        """
         query = self.db.query(SwapRecord).filter(
             or_(
                 SwapRecord.source_week == week,
@@ -159,6 +222,13 @@ class SwapRepository:
                     SwapRecord.source_faculty_id == faculty_id,
                     SwapRecord.target_faculty_id == faculty_id,
                 )
+            )
+
+        if include_relations:
+            query = query.options(
+                selectinload(SwapRecord.source_faculty),
+                selectinload(SwapRecord.target_faculty),
+                selectinload(SwapRecord.approvals),
             )
 
         return query.all()

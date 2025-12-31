@@ -85,7 +85,7 @@ export const useClaudeChat = () => {
   }, [messages]);
 
   // Update sessions list for session history
-  const updateSessionsList = (currentSession: ChatSession, messageCount: number) => {
+  const updateSessionsList = (currentSession: ChatSession, messageCount: number): void => {
     const sessionsList = loadFromStorage<SavedSession[]>(STORAGE_KEY_SESSIONS_LIST) || [];
     const existingIndex = sessionsList.findIndex(s => s.id === currentSession.id);
 
@@ -303,7 +303,7 @@ export const useClaudeChat = () => {
   );
 
   // Cancel ongoing request
-  const cancelRequest = useCallback(() => {
+  const cancelRequest = useCallback((): void => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       setIsLoading(false);
@@ -311,13 +311,13 @@ export const useClaudeChat = () => {
   }, []);
 
   // Clear messages
-  const clearMessages = useCallback(() => {
+  const clearMessages = useCallback((): void => {
     setMessages([]);
     setError(null);
   }, []);
 
   // Export session
-  const exportSession = useCallback(() => {
+  const exportSession = useCallback((): (ChatSession & { messages: ChatMessage[] }) | null => {
     if (!session) return null;
     return {
       ...session,

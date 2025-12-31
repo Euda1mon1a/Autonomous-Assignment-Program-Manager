@@ -129,8 +129,8 @@ export function formatZodError(error: unknown): Record<string, string> {
   const fieldErrors: Record<string, string> = {};
 
   if (isZodErrorLike(error) && error.errors) {
-    error.errors.forEach((err) => {
-      const path = err.path.join(".");
+    error.errors.forEach((err: ZodErrorIssue): void => {
+      const path: string = err.path.join(".");
       fieldErrors[path] = err.message;
     });
   }

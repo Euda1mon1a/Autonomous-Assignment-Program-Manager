@@ -10,10 +10,10 @@ import { Badge } from './Badge';
 export interface Column<T> {
   key: string;
   header: string;
-  accessor: (row: T) => any;
+  accessor: (row: T) => string | number | boolean | Date | null | undefined;
   sortable?: boolean;
   filterable?: boolean;
-  render?: (value: any, row: T) => React.ReactNode;
+  render?: (value: string | number | boolean | Date | null | undefined, row: T) => React.ReactNode;
   width?: string;
 }
 

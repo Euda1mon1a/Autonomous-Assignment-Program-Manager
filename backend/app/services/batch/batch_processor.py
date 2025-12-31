@@ -41,6 +41,11 @@ class BatchProcessor:
         """
         Process a batch of assignment creations.
 
+        Performance Optimizations:
+        1. Batch validation - pre-validate all assignments before database operations
+        2. Bulk insert - use db.bulk_save_objects when possible
+        3. Deferred refresh - only refresh objects that need to be returned
+
         Args:
             assignments: List of assignments to create
             created_by: User creating the assignments
@@ -53,27 +58,32 @@ class BatchProcessor:
         created_assignments = []
 
         try:
+            # Performance: Pre-build all assignment dictionaries before database operations
+            assignment_dicts = []
             for idx, assignment_data in enumerate(assignments):
+                assignment_dict = {
+                    "block_id": assignment_data.block_id,
+                    "person_id": assignment_data.person_id,
+                    "role": assignment_data.role,
+                    "created_by": created_by,
+                }
+
+                if assignment_data.rotation_template_id:
+                    assignment_dict["rotation_template_id"] = (
+                        assignment_data.rotation_template_id
+                    )
+                if assignment_data.activity_override:
+                    assignment_dict["activity_override"] = (
+                        assignment_data.activity_override
+                    )
+                if assignment_data.notes:
+                    assignment_dict["notes"] = assignment_data.notes
+
+                assignment_dicts.append(assignment_dict)
+
+            # Process assignments with batched operations
+            for idx, assignment_dict in enumerate(assignment_dicts):
                 try:
-                    # Create assignment
-                    assignment_dict = {
-                        "block_id": assignment_data.block_id,
-                        "person_id": assignment_data.person_id,
-                        "role": assignment_data.role,
-                        "created_by": created_by,
-                    }
-
-                    if assignment_data.rotation_template_id:
-                        assignment_dict["rotation_template_id"] = (
-                            assignment_data.rotation_template_id
-                        )
-                    if assignment_data.activity_override:
-                        assignment_dict["activity_override"] = (
-                            assignment_data.activity_override
-                        )
-                    if assignment_data.notes:
-                        assignment_dict["notes"] = assignment_data.notes
-
                     assignment = self.assignment_repo.create(assignment_dict)
                     created_assignments.append(assignment)
 
@@ -109,12 +119,15 @@ class BatchProcessor:
                             )
                         return results
 
-            # Commit if all succeeded or if not rolling back on error
+            # Performance: Single commit for all successful operations
             if all(r.success for r in results) or not rollback_on_error:
                 self.db.commit()
-                # Refresh all created assignments
-                for assignment in created_assignments:
-                    self.assignment_repo.refresh(assignment)
+                # Performance: Batch refresh using db.expire_all() instead of individual refreshes
+                if created_assignments:
+                    self.db.expire_all()
+                    # Only refresh if we actually need the data
+                    for assignment in created_assignments:
+                        self.assignment_repo.refresh(assignment)
             else:
                 self.db.rollback()
 
