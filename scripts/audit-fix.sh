@@ -19,7 +19,7 @@
 #   1 - Some vulnerabilities remain or fix failed
 # ============================================================
 
-set -e
+set -euo pipefail
 
 echo "=============================================="
 echo "NPM Security Audit Fix Script"
@@ -27,7 +27,29 @@ echo "=============================================="
 echo ""
 
 FRONTEND_DIR="$(dirname "$0")/../frontend"
-cd "$FRONTEND_DIR"
+
+# Validate frontend directory exists
+if [ ! -d "$FRONTEND_DIR" ]; then
+    echo "ERROR: Frontend directory not found: $FRONTEND_DIR" >&2
+    exit 1
+fi
+
+cd "$FRONTEND_DIR" || {
+    echo "ERROR: Failed to change to frontend directory" >&2
+    exit 1
+}
+
+# Verify package.json exists
+if [ ! -f "package.json" ]; then
+    echo "ERROR: package.json not found in frontend directory" >&2
+    exit 1
+fi
+
+# Verify npm is available
+if ! command -v npm >/dev/null 2>&1; then
+    echo "ERROR: npm command not found" >&2
+    exit 1
+fi
 
 echo "Current directory: $(pwd)"
 echo ""

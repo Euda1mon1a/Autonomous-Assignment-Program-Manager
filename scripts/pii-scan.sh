@@ -27,7 +27,7 @@
 #   1 - Potential issues found (fails commit)
 # ============================================================
 
-set -e
+set -euo pipefail
 
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
@@ -35,6 +35,12 @@ GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
 ERRORS=0
+
+# Verify grep is available
+if ! command -v grep >/dev/null 2>&1; then
+    echo -e "${RED}ERROR: grep command not found${NC}" >&2
+    exit 1
+fi
 
 echo "Running PII/OPSEC/PERSEC scan..."
 

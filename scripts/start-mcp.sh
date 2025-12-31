@@ -20,19 +20,39 @@
 #   PYTHONPATH       - Python module path
 # ============================================================
 
-set -e
+set -euo pipefail
 
 # Ensure we're in project root
 # This allows the script to be called from anywhere
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || {
+    echo "ERROR: Failed to change to project root" >&2
+    exit 1
+}
+
+# Check if curl is available for health checks
+if ! command -v curl >/dev/null 2>&1; then
+    echo "ERROR: curl command not found (required for health checks)" >&2
+    exit 1
+fi
 
 # Check if FastAPI backend is running
 # MCP server requires backend to be accessible for API integration
 echo "Checking FastAPI backend..."
 if ! curl -s http://localhost:8000/health > /dev/null 2>&1; then
     echo "FastAPI backend not running. Starting with Docker Compose..."
+
+    # Verify docker-compose is available
+    if ! command -v docker-compose >/dev/null 2>&1; then
+        echo "ERROR: docker-compose command not found" >&2
+        exit 1
+    fi
+
     # Start only backend service to minimize resource usage
-    docker-compose up -d backend
+    if ! docker-compose up -d backend; then
+        echo "ERROR: Failed to start backend with docker-compose" >&2
+        exit 1
+    fi
+
     echo "Waiting for backend to be healthy..."
     # Allow time for database connection and migrations
     sleep 5
@@ -41,7 +61,7 @@ fi
 # Verify backend is healthy after startup
 # Fail fast if backend cannot be started
 if ! curl -s http://localhost:8000/health > /dev/null 2>&1; then
-    echo "ERROR: FastAPI backend failed to start"
+    echo "ERROR: FastAPI backend failed to start or is unhealthy" >&2
     exit 1
 fi
 
