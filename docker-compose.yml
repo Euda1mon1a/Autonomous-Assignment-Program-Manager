@@ -127,6 +127,9 @@ services:
     command: celery -A app.core.celery_app worker --loglevel=info -Q default,resilience,notifications,metrics,exports,security
     networks:
       - app-network
+    # Health check - verifies Celery worker is responsive
+    # Uses inspect ping to check worker heartbeat
+    # Extended start period allows worker to initialize queues
     healthcheck:
       test: ["CMD-SHELL", "celery -A app.core.celery_app inspect ping -d celery@$$HOSTNAME"]
       interval: 30s
@@ -160,6 +163,9 @@ services:
       TELEMETRY_ENVIRONMENT: ${TELEMETRY_ENVIRONMENT:-production}
       TELEMETRY_EXPORTER_ENDPOINT: ${TELEMETRY_EXPORTER_ENDPOINT:-http://localhost:4317}
     command: celery -A app.core.celery_app beat --loglevel=info
+    # Health check - verifies Celery beat scheduler is running
+    # Checks for schedule file presence as indicator of active scheduler
+    # Extended start period allows beat to create initial schedule
     healthcheck:
       test: ["CMD-SHELL", "[ -f celerybeat-schedule ] && echo 'healthy' || exit 1"]
       interval: 30s
@@ -244,6 +250,9 @@ services:
       - "127.0.0.1:8080:8080"
     networks:
       - app-network
+    # Health check - verifies MCP server module loads successfully
+    # Tests Python import to ensure server initialization
+    # Quick startup since MCP initializes rapidly
     healthcheck:
       test: ["CMD", "python", "-c", "from scheduler_mcp.server import mcp; print('healthy')"]
       interval: 30s

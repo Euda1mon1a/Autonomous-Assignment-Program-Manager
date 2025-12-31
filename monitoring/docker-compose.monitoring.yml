@@ -43,6 +43,9 @@ services:
     networks:
       - monitoring
       - app-network
+    # Health check - validates Prometheus scraping engine readiness
+    # Uses Prometheus built-in health endpoint for status
+    # Extended start period allows TSDB initialization and first scrape
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
       interval: 30s
@@ -76,6 +79,9 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD:-}
       - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
       - PAGERDUTY_SERVICE_KEY=${PAGERDUTY_SERVICE_KEY:-}
+    # Health check - ensures Alertmanager is processing alerts
+    # Checks built-in health endpoint for service readiness
+    # Short start period since Alertmanager starts quickly
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:9093/-/healthy"]
       interval: 30s

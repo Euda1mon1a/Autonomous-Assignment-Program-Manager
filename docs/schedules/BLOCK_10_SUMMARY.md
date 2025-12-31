@@ -78,10 +78,10 @@
 
 | Week | Dates | Faculty | Holiday |
 |------|-------|---------|---------|
-| 1 | TBD | Chu |  |
-| 2 | TBD | Bevis |  |
-| 3 | TBD | Chu |  |
-| 4 | TBD | LaBounty |  |
+| 1 | Mar 12-18 | Chu |  |
+| 2 | Mar 19-25 | Bevis |  |
+| 3 | Mar 26-Apr 1 | Chu |  |
+| 4 | Apr 2-8 | LaBounty | Easter (Apr 5) |
 
 ---
 

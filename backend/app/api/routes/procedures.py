@@ -29,7 +29,7 @@ async def list_procedures(
     complexity_level: str | None = Query(
         None, description="Filter by complexity level"
     ),
-    db=Depends(get_db),
+    db=Depends(get_async_db),
 ):
     """List all procedures with optional filters."""
     controller = ProcedureController(db)
@@ -42,14 +42,14 @@ async def list_procedures(
 
 
 @router.get("/specialties", response_model=list[str])
-async def get_specialties(db=Depends(get_db)):
+async def get_specialties(db=Depends(get_async_db)):
     """Get all unique specialties from procedures."""
     controller = ProcedureController(db)
     return controller.get_specialties()
 
 
 @router.get("/categories", response_model=list[str])
-async def get_categories(db=Depends(get_db)):
+async def get_categories(db=Depends(get_async_db)):
     """Get all unique categories from procedures."""
     controller = ProcedureController(db)
     return controller.get_categories()
@@ -58,7 +58,7 @@ async def get_categories(db=Depends(get_db)):
 @router.get("/by-name/{name}", response_model=ProcedureResponse)
 async def get_procedure_by_name(
     name: str,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
 ):
     """Get a procedure by its name."""
     controller = ProcedureController(db)
@@ -68,7 +68,7 @@ async def get_procedure_by_name(
 @router.get("/{procedure_id}", response_model=ProcedureResponse)
 async def get_procedure(
     procedure_id: UUID,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
 ):
     """Get a procedure by ID."""
     controller = ProcedureController(db)
@@ -78,7 +78,7 @@ async def get_procedure(
 @router.post("", response_model=ProcedureResponse, status_code=201)
 async def create_procedure(
     procedure_in: ProcedureCreate,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Create a new procedure. Requires authentication."""
@@ -90,7 +90,7 @@ async def create_procedure(
 async def update_procedure(
     procedure_id: UUID,
     procedure_in: ProcedureUpdate,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Update an existing procedure. Requires authentication."""
@@ -101,7 +101,7 @@ async def update_procedure(
 @router.delete("/{procedure_id}", status_code=204)
 async def delete_procedure(
     procedure_id: UUID,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Delete a procedure. Requires authentication."""
@@ -112,7 +112,7 @@ async def delete_procedure(
 @router.post("/{procedure_id}/deactivate", response_model=ProcedureResponse)
 async def deactivate_procedure(
     procedure_id: UUID,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Deactivate a procedure (soft delete). Requires authentication."""
@@ -123,7 +123,7 @@ async def deactivate_procedure(
 @router.post("/{procedure_id}/activate", response_model=ProcedureResponse)
 async def activate_procedure(
     procedure_id: UUID,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Activate a procedure. Requires authentication."""

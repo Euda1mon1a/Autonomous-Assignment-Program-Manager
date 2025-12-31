@@ -182,16 +182,16 @@ class N1Analyzer:
         has_backup = len(available_specialists) > 1 or len(cross_trained) > 0
 
         if len(available_specialists) == 1:
-            criticality = 0.9  # Single point of failure
-            cascade_potential = 0.7
+            criticality = CRITICALITY_SPECIALTY_SINGLE  # Single point of failure
+            cascade_potential = CASCADE_SPECIALTY_SINGLE
         elif len(available_specialists) == 2:
-            criticality = 0.6  # Limited redundancy
-            cascade_potential = 0.4
+            criticality = CRITICALITY_SPECIALTY_DUAL  # Limited redundancy
+            cascade_potential = CASCADE_SPECIALTY_DUAL
         else:
-            criticality = 0.3  # Multiple specialists
-            cascade_potential = 0.1
+            criticality = CRITICALITY_SPECIALTY_MULTIPLE  # Multiple specialists
+            cascade_potential = CASCADE_SPECIALTY_MULTIPLE
 
-        recovery_hours = required_slots * 2.0 if has_backup else required_slots * 8.0
+        recovery_hours = required_slots * RECOVERY_TIME_SPECIALTY_WITH_BACKUP_MULTIPLIER if has_backup else required_slots * RECOVERY_TIME_SPECIALTY_NO_BACKUP_MULTIPLIER
 
         if has_backup:
             mitigation = f"Activate cross-trained personnel: {cross_trained}"
@@ -216,7 +216,7 @@ class N1Analyzer:
 
     def find_single_points_of_failure(
         self,
-        min_criticality: float = 0.7,
+        min_criticality: float = CRITICALITY_SPOF_THRESHOLD,
     ) -> list[N1FailureScenario]:
         """
         Find single points of failure (SPOF).
