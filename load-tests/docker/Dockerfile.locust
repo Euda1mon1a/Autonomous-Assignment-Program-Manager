@@ -1,0 +1,51 @@
+***REMOVED*** Dockerfile for Locust Load Testing
+***REMOVED***
+***REMOVED*** Build: docker build -f docker/Dockerfile.locust -t scheduler-locust .
+***REMOVED*** Run: docker run -p 8089:8089 scheduler-locust
+
+FROM python:3.11-slim
+
+***REMOVED*** Install dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+***REMOVED*** Install Locust and dependencies
+RUN pip install --no-cache-dir \
+    locust==2.17.0 \
+    requests==2.31.0 \
+    psutil==5.9.6
+
+***REMOVED*** Create app directory
+WORKDIR /app
+
+***REMOVED*** Copy Locust files
+COPY locust/ /app/
+
+***REMOVED*** Expose Locust web UI port
+EXPOSE 8089
+
+***REMOVED*** Default command - start Locust web UI
+CMD ["locust", "-f", "locustfile.py", "--host", "http://backend:8000"]
+
+***REMOVED*** Usage examples:
+***REMOVED***
+***REMOVED*** Web UI mode:
+***REMOVED*** docker run -p 8089:8089 scheduler-locust
+***REMOVED***
+***REMOVED*** Headless mode:
+***REMOVED*** docker run scheduler-locust \
+***REMOVED***   -f locustfile.py \
+***REMOVED***   --host http://backend:8000 \
+***REMOVED***   --headless \
+***REMOVED***   -u 100 \
+***REMOVED***   -r 10 \
+***REMOVED***   -t 10m
+***REMOVED***
+***REMOVED*** With specific user class:
+***REMOVED*** docker run scheduler-locust \
+***REMOVED***   -f locustfile.py \
+***REMOVED***   --host http://backend:8000 \
+***REMOVED***   --headless \
+***REMOVED***   -u 50 \
+***REMOVED***   --user AdminUser

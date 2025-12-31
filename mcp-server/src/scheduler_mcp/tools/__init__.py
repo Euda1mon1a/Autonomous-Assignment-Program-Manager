@@ -4,12 +4,76 @@ Tools subpackage for specialized MCP tools.
 This package contains specialized tool implementations that integrate
 with the backend constraint service and other services.
 
+Production Tools:
+- schedule: Schedule management (get, create, update, delete, generate, validate, optimize, export)
+- compliance: ACGME compliance checking (work hours, day-off, supervision, violations, reports)
+- swap: Schedule swap management (create, find matches, execute, rollback, history)
+- resilience: Resilience monitoring (defense level, utilization, N-1 analysis, burnout Rt, early warnings)
+- analytics: Schedule analytics (coverage metrics, workload distribution, trend analysis)
+
 Exotic Research Tools (require numpy, scipy):
 - game_theory_tools: Nash equilibrium analysis for schedule stability
 - ecological_dynamics_tools: Lotka-Volterra supply/demand modeling
 - kalman_filter_tools: Workload trend analysis with noise filtering
 - fourier_analysis_tools: FFT-based periodicity detection
 """
+
+***REMOVED*** Base infrastructure
+from .base import (
+    APIError,
+    AuthenticationError,
+    BaseTool,
+    ToolError,
+    ValidationError as ToolValidationError,
+)
+from .executor import ExecutionContext, ToolExecutor, get_executor
+from .registry import ToolRegistry, get_registry
+
+***REMOVED*** Schedule tools
+from .schedule import (
+    CreateAssignmentTool,
+    DeleteAssignmentTool,
+    ExportScheduleTool,
+    GenerateScheduleTool,
+    GetScheduleTool,
+    OptimizeScheduleTool,
+    UpdateAssignmentTool,
+    ValidateScheduleTool,
+)
+
+***REMOVED*** Compliance tools
+from .compliance import (
+    CheckDayOffTool,
+    CheckSupervisionTool,
+    CheckWorkHoursTool,
+    GenerateComplianceReportTool,
+    GetViolationsTool,
+)
+
+***REMOVED*** Swap tools
+from .swap import (
+    CreateSwapTool,
+    ExecuteSwapTool,
+    FindSwapMatchesTool,
+    GetSwapHistoryTool,
+    RollbackSwapTool,
+)
+
+***REMOVED*** Resilience tools
+from .resilience import (
+    GetBurnoutRtTool,
+    GetDefenseLevelTool,
+    GetEarlyWarningsTool,
+    GetUtilizationTool,
+    RunN1AnalysisTool,
+)
+
+***REMOVED*** Analytics tools
+from .analytics import (
+    CoverageMetricsTool,
+    TrendAnalysisTool,
+    WorkloadDistributionTool,
+)
 
 from .validate_schedule import (
     ConstraintConfig,
@@ -95,6 +159,48 @@ from .fourier_analysis_tools import (
 )
 
 __all__ = [
+    ***REMOVED*** Base Infrastructure
+    "BaseTool",
+    "ToolError",
+    "ToolValidationError",
+    "APIError",
+    "AuthenticationError",
+    "ToolRegistry",
+    "get_registry",
+    "ToolExecutor",
+    "get_executor",
+    "ExecutionContext",
+    ***REMOVED*** Schedule Tools
+    "GetScheduleTool",
+    "CreateAssignmentTool",
+    "UpdateAssignmentTool",
+    "DeleteAssignmentTool",
+    "GenerateScheduleTool",
+    "ValidateScheduleTool",
+    "OptimizeScheduleTool",
+    "ExportScheduleTool",
+    ***REMOVED*** Compliance Tools
+    "CheckWorkHoursTool",
+    "CheckDayOffTool",
+    "CheckSupervisionTool",
+    "GetViolationsTool",
+    "GenerateComplianceReportTool",
+    ***REMOVED*** Swap Tools
+    "CreateSwapTool",
+    "FindSwapMatchesTool",
+    "ExecuteSwapTool",
+    "RollbackSwapTool",
+    "GetSwapHistoryTool",
+    ***REMOVED*** Resilience Tools
+    "GetDefenseLevelTool",
+    "GetUtilizationTool",
+    "RunN1AnalysisTool",
+    "GetBurnoutRtTool",
+    "GetEarlyWarningsTool",
+    ***REMOVED*** Analytics Tools
+    "CoverageMetricsTool",
+    "WorkloadDistributionTool",
+    "TrendAnalysisTool",
     ***REMOVED*** Validate Schedule
     "ConstraintConfig",
     "ScheduleValidationRequest",
