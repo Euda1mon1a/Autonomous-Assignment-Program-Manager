@@ -6,7 +6,7 @@ from uuid import UUID
 
 import plotly.graph_objects as go
 import plotly.io as pio
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.assignment import Assignment
 from app.models.block import Block
@@ -126,6 +126,11 @@ class HeatmapService:
         query = (
             db.query(Assignment)
             .join(Block)
+            .options(
+                joinedload(Assignment.block),
+                joinedload(Assignment.person),
+                joinedload(Assignment.rotation_template),
+            )
             .filter(Block.date >= start_date, Block.date <= end_date)
         )
 
