@@ -1,6 +1,11 @@
 ---
 name: code-review
 description: Review generated code for bugs, security issues, performance, and best practices. Use when reviewing Claude-generated code, checking for vulnerabilities, auditing implementation quality, or validating code changes before commit.
+model_tier: opus
+parallel_hints:
+  can_parallel_with: [test-writer, security-audit, lint-monorepo]
+  must_serialize_with: [database-migration]
+  preferred_batch_size: 5
 ---
 
 # Code Review Skill

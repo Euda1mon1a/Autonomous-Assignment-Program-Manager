@@ -1,6 +1,11 @@
 ---
 name: automated-code-fixer
 description: Automated IT helper for detecting and fixing code issues. Use when code fails tests, linting, type-checking, or has security vulnerabilities. Enforces strict quality gates before accepting fixes.
+model_tier: opus
+parallel_hints:
+  can_parallel_with: [lint-monorepo, test-writer]
+  must_serialize_with: [database-migration]
+  preferred_batch_size: 3
 ---
 
 # Automated Code Fixer

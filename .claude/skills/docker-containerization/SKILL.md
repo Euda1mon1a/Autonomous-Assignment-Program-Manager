@@ -1,6 +1,11 @@
 ---
 name: docker-containerization
 description: Docker development and container orchestration expertise. Use when creating Dockerfiles, docker-compose configurations, debugging container issues, optimizing images, or setting up isolated development environments. Integrates with CI/CD workflows and security scanning.
+model_tier: opus
+parallel_hints:
+  can_parallel_with: [security-audit, code-review]
+  must_serialize_with: [database-migration]
+  preferred_batch_size: 2
 ---
 
 # Docker Containerization Skill

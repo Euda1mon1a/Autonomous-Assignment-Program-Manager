@@ -1,6 +1,14 @@
 ---
 name: pr-reviewer
 description: Pull request review expertise with focus on context, quality gates, and team standards. Use when reviewing PRs, validating changes before merge, or generating PR descriptions. Works with gh CLI for GitHub integration.
+model_tier: opus
+parallel_hints:
+  can_parallel_with:
+    - code-review
+    - security-audit
+  must_serialize_with:
+    - database-migration
+  preferred_batch_size: 3
 ---
 
 # PR Reviewer Skill
