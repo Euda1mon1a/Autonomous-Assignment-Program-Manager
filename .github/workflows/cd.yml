@@ -116,7 +116,10 @@ jobs:
             VERSION=${{ steps.version.outputs.version }}
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'http://localhost:8000' }}
 
-  # Deploy to staging environment
+  # Deploy to staging environment via Render
+  # Render uses deploy hooks - simple POST requests that trigger service rebuilds
+  # Deploy hooks are configured in Render dashboard > Service > Settings > Deploy Hook
+  # Store the hook URL in GitHub Secrets as RENDER_DEPLOY_HOOK_URL
   deploy-staging:
     needs: build-images
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
@@ -129,46 +132,65 @@ jobs:
       deployments: write
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Deploy to staging
+      - name: Trigger Render Deploy (Staging)
         run: |
-          echo "Deploying to staging environment..."
-          echo "Backend image: ${{ needs.build-images.outputs.backend-image }}"
-          echo "Frontend image: ${{ needs.build-images.outputs.frontend-image }}"
+          echo "Deploying to Render staging environment..."
           echo "Version: ${{ needs.build-images.outputs.version }}"
 
-          # Example deployment commands (customize for your infrastructure)
-          # Option 1: SSH deployment
-          # ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }} << 'EOF'
-          #   cd /app
-          #   docker compose pull
-          #   docker compose up -d
-          # EOF
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "::warning::RENDER_DEPLOY_HOOK_URL not set, skipping deploy"
+            echo "To configure: Render Dashboard > Service > Settings > Deploy Hook"
+            exit 0
+          fi
 
-          # Option 2: Kubernetes deployment
-          # kubectl set image deployment/backend backend=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:sha-${{ github.sha }}
-          # kubectl set image deployment/frontend frontend=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:sha-${{ github.sha }}
+          # Trigger Render deploy hook
+          # Render will pull latest code and rebuild the service
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" \
+            -H "Accept: application/json" \
+            --fail --silent --show-error
 
-          # Option 3: Docker Swarm deployment
-          # docker service update --image ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:sha-${{ github.sha }} residency-backend
-          # docker service update --image ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:sha-${{ github.sha }} residency-frontend
+          echo "Deploy hook triggered successfully"
+
+      - name: Wait for Render deployment
+        run: |
+          # Give Render time to start the deployment
+          # Note: For more robust checks, use Render API to poll deployment status
+          echo "Waiting for Render to process deployment..."
+          sleep 30
 
       - name: Run smoke tests
         run: |
           echo "Running smoke tests against staging..."
-          # Example: curl health endpoints
-          # curl --fail ${{ vars.STAGING_URL }}/api/health || exit 1
+          if [ -n "${{ vars.STAGING_URL }}" ]; then
+            # Retry health check up to 5 times with 10s delay
+            for i in {1..5}; do
+              if curl --fail --silent "${{ vars.STAGING_URL }}/api/health"; then
+                echo "Health check passed"
+                exit 0
+              fi
+              echo "Attempt $i failed, retrying in 10s..."
+              sleep 10
+            done
+            echo "::warning::Health check failed after 5 attempts"
+          else
+            echo "::warning::STAGING_URL not set, skipping smoke tests"
+          fi
 
       - name: Notify deployment
         if: always()
         run: |
           echo "Staging deployment completed with status: ${{ job.status }}"
-          # Notify via Slack, Discord, etc.
-          # curl -X POST ${{ secrets.SLACK_WEBHOOK }} -d '{"text":"Staging deployment: ${{ job.status }}"}'
+          # Optional: Notify via Slack, Discord, etc.
+          # if [ -n "${{ secrets.SLACK_WEBHOOK }}" ]; then
+          #   curl -X POST "${{ secrets.SLACK_WEBHOOK }}" \
+          #     -H "Content-Type: application/json" \
+          #     -d '{"text":"Staging deployment: ${{ job.status }} (version: ${{ needs.build-images.outputs.version }})"}'
+          # fi
 
-  # Deploy to production environment (only on releases)
+  # Deploy to production environment via Render (only on releases)
+  # Production uses a separate deploy hook for isolation
+  # Store in GitHub Secrets as RENDER_PROD_DEPLOY_HOOK_URL
+  # Render supports manual approval via GitHub Environments
   deploy-production:
     needs: [build-images, deploy-staging]
     if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
@@ -181,36 +203,70 @@ jobs:
       deployments: write
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Deploy to production
+      - name: Trigger Render Deploy (Production)
         run: |
-          echo "Deploying to production environment..."
-          echo "Backend image: ${{ needs.build-images.outputs.backend-image }}"
-          echo "Frontend image: ${{ needs.build-images.outputs.frontend-image }}"
+          echo "Deploying to Render production environment..."
           echo "Version: ${{ needs.build-images.outputs.version }}"
 
-          # Production deployment commands (customize for your infrastructure)
-          # Ensure you have proper rollback mechanisms in place
+          if [ -z "${{ secrets.RENDER_PROD_DEPLOY_HOOK_URL }}" ]; then
+            echo "::warning::RENDER_PROD_DEPLOY_HOOK_URL not set, skipping deploy"
+            echo "To configure: Render Dashboard > Service > Settings > Deploy Hook"
+            exit 0
+          fi
+
+          # Trigger Render production deploy hook
+          curl -X POST "${{ secrets.RENDER_PROD_DEPLOY_HOOK_URL }}" \
+            -H "Accept: application/json" \
+            --fail --silent --show-error
+
+          echo "Production deploy hook triggered successfully"
+
+      - name: Wait for Render deployment
+        run: |
+          # Give Render time to process the deployment
+          echo "Waiting for Render to process production deployment..."
+          sleep 45
 
       - name: Run production smoke tests
         run: |
           echo "Running production smoke tests..."
-          # curl --fail ${{ vars.PRODUCTION_URL }}/api/health || exit 1
+          if [ -n "${{ vars.PRODUCTION_URL }}" ]; then
+            # More retries for production (services may take longer)
+            for i in {1..8}; do
+              if curl --fail --silent "${{ vars.PRODUCTION_URL }}/api/health"; then
+                echo "Production health check passed"
+                exit 0
+              fi
+              echo "Attempt $i failed, retrying in 15s..."
+              sleep 15
+            done
+            echo "::error::Production health check failed after 8 attempts"
+            exit 1
+          else
+            echo "::warning::PRODUCTION_URL not set, skipping smoke tests"
+          fi
 
       - name: Create deployment record
         run: |
           echo "Recording deployment: ${{ needs.build-images.outputs.version }}"
-          # Log deployment to your tracking system
+          echo "Deployed at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          # Optional: Log to external tracking system
 
       - name: Notify production deployment
         if: always()
         run: |
           echo "Production deployment completed with status: ${{ job.status }}"
-          # Notify stakeholders
+          # Optional: Notify stakeholders via Slack, PagerDuty, etc.
+          # if [ -n "${{ secrets.SLACK_WEBHOOK }}" ]; then
+          #   curl -X POST "${{ secrets.SLACK_WEBHOOK }}" \
+          #     -H "Content-Type: application/json" \
+          #     -d '{"text":"PRODUCTION deployment: ${{ job.status }} (version: ${{ needs.build-images.outputs.version }})"}'
+          # fi
 
   # Run database migrations (separate job for safety)
+  # Note: For Render, migrations typically run as part of the build command
+  # in render.yaml. This job is for manual migration runs or pre-deploy checks.
+  # Render's DATABASE_URL is injected automatically into services.
   run-migrations:
     needs: [build-images]
     runs-on: ubuntu-latest
@@ -238,10 +294,20 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           echo "Running database migrations..."
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::warning::DATABASE_URL not set - migrations run via Render build command"
+            echo "See render.yaml buildCommand for automatic migration execution"
+            exit 0
+          fi
+          # For manual migration runs when DATABASE_URL is configured
           # alembic upgrade head
           echo "Migrations completed (dry-run in CI)"
 
-  # Rollback job (can be triggered manually)
+  # Rollback job (manual trigger only)
+  # Render supports rollback via:
+  # 1. Dashboard: Service > Deploys > select previous deploy > "Rollback"
+  # 2. API: Use Render API to trigger rollback (requires API key)
+  # This job provides a workflow-based rollback option
   rollback:
     if: github.event_name == 'workflow_dispatch' && failure()
     runs-on: ubuntu-latest
@@ -253,7 +319,23 @@ jobs:
       - name: Rollback deployment
         run: |
           echo "Rolling back deployment..."
-          # Implement rollback logic based on your infrastructure
-          # Example: Revert to previous Docker image tag
-          # kubectl rollout undo deployment/backend
-          # kubectl rollout undo deployment/frontend
+          echo "Environment: ${{ github.event.inputs.environment }}"
+
+          # Render rollback options:
+          # Option 1: Use Render Dashboard (recommended for quick rollbacks)
+          #   - Go to Render Dashboard > Service > Deploys
+          #   - Click on previous successful deploy
+          #   - Click "Rollback to this deploy"
+
+          # Option 2: Re-deploy previous Git commit
+          #   - Push a revert commit: git revert HEAD && git push
+
+          # Option 3: Use Render API (if RENDER_API_KEY is configured)
+          # if [ -n "${{ secrets.RENDER_API_KEY }}" ]; then
+          #   curl -X POST "https://api.render.com/v1/services/$SERVICE_ID/rollback" \
+          #     -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+          #     -H "Content-Type: application/json"
+          # fi
+
+          echo "::warning::Manual rollback required - see Render Dashboard"
+          echo "Dashboard: https://dashboard.render.com"

@@ -105,3 +105,20 @@ async def async_task_session_scope():
 # Alias for backwards compatibility
 get_async_session_context = async_task_session_scope
 async_session = async_task_session_scope
+
+
+async def get_async_db() -> Generator[Session, None, None]:
+    """
+    Get async database session dependency for FastAPI routes.
+
+    This is an async wrapper around the sync database session.
+    For true async database support, consider using SQLAlchemy async engine.
+    """
+    db = SessionLocal()
+    try:
+        yield db
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
