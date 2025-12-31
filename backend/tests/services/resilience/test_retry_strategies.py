@@ -1298,7 +1298,7 @@ class TestRetryIntegration:
         for _ in range(5):
             attempts = [0]
 
-            def fail_once():
+            def fail_once(attempts=attempts):
                 attempts[0] += 1
                 if attempts[0] < 2:
                     raise ValueError("Fail")

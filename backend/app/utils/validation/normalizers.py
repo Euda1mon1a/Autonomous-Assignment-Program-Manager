@@ -153,7 +153,9 @@ def normalize_date_string(
         dt = datetime.strptime(date_string.strip(), input_format)
         return dt.strftime("%Y-%m-%d")
     except ValueError as e:
-        raise ValueError(f"Cannot parse date '{date_string}' with format '{input_format}'") from e
+        raise ValueError(
+            f"Cannot parse date '{date_string}' with format '{input_format}'"
+        ) from e
 
 
 def normalize_specialty(specialty: str) -> str:

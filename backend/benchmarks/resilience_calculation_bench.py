@@ -161,8 +161,10 @@ def benchmark_n1_contingency(
             vulnerabilities_found.append(len(result.get("vulnerabilities", [])))
 
             if verbose:
-                print(f"  Iteration {i + 1}: {metrics['duration']:.3f}s, "
-                      f"{len(result.get('vulnerabilities', []))} vulnerabilities")
+                print(
+                    f"  Iteration {i + 1}: {metrics['duration']:.3f}s, "
+                    f"{len(result.get('vulnerabilities', []))} vulnerabilities"
+                )
 
         finally:
             db.query(Assignment).delete()
@@ -190,7 +192,8 @@ def benchmark_n1_contingency(
         metadata={
             "num_people": num_people,
             "num_weeks": num_weeks,
-            "avg_vulnerabilities": sum(vulnerabilities_found) / len(vulnerabilities_found)
+            "avg_vulnerabilities": sum(vulnerabilities_found)
+            / len(vulnerabilities_found)
             if vulnerabilities_found
             else 0,
         },
@@ -237,7 +240,9 @@ def benchmark_burnout_epidemiology(
             rt_values.append(result.get("Rt", 0))
 
             if verbose:
-                print(f"  Iteration {i + 1}: {metrics['duration']:.3f}s, Rt={result.get('Rt', 0):.2f}")
+                print(
+                    f"  Iteration {i + 1}: {metrics['duration']:.3f}s, Rt={result.get('Rt', 0):.2f}"
+                )
 
         finally:
             db.query(Assignment).delete()
@@ -310,8 +315,10 @@ def benchmark_spc_monitoring(
             violations_found.append(len(result.get("violations", [])))
 
             if verbose:
-                print(f"  Iteration {i + 1}: {metrics['duration']:.3f}s, "
-                      f"{len(result.get('violations', []))} violations")
+                print(
+                    f"  Iteration {i + 1}: {metrics['duration']:.3f}s, "
+                    f"{len(result.get('violations', []))} violations"
+                )
 
         finally:
             db.query(Assignment).delete()
@@ -402,7 +409,9 @@ def run_suite(verbose: bool = False):
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(description="Benchmark resilience calculation performance")
+    parser = argparse.ArgumentParser(
+        description="Benchmark resilience calculation performance"
+    )
     parser.add_argument(
         "--metric",
         type=str,
@@ -412,7 +421,9 @@ def main():
     )
     parser.add_argument("--people", type=int, default=50, help="Number of people")
     parser.add_argument("--weeks", type=int, default=4, help="Number of weeks")
-    parser.add_argument("--iterations", type=int, default=10, help="Number of iterations")
+    parser.add_argument(
+        "--iterations", type=int, default=10, help="Number of iterations"
+    )
     parser.add_argument("--suite", action="store_true", help="Run full suite")
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
 

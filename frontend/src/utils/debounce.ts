@@ -15,14 +15,12 @@ export function debounce<T extends (...args: any[]) => any>(
   let timeout: NodeJS.Timeout | null = null;
 
   return function (this: any, ...args: Parameters<T>) {
-    const context = this;
-
     if (timeout) {
       clearTimeout(timeout);
     }
 
     timeout = setTimeout(() => {
-      func.apply(context, args);
+      func.apply(this, args);
     }, wait);
   };
 }
@@ -37,7 +35,6 @@ export function debounceLeading<T extends (...args: any[]) => any>(
   let timeout: NodeJS.Timeout | null = null;
 
   return function (this: any, ...args: Parameters<T>) {
-    const context = this;
     const callNow = !timeout;
 
     if (timeout) {
@@ -49,7 +46,7 @@ export function debounceLeading<T extends (...args: any[]) => any>(
     }, wait);
 
     if (callNow) {
-      func.apply(context, args);
+      func.apply(this, args);
     }
   };
 }
@@ -65,10 +62,8 @@ export function throttle<T extends (...args: any[]) => any>(
   let lastRan: number | null = null;
 
   return function (this: any, ...args: Parameters<T>) {
-    const context = this;
-
     if (!lastRan) {
-      func.apply(context, args);
+      func.apply(this, args);
       lastRan = Date.now();
     } else {
       if (timeout) {
@@ -77,7 +72,7 @@ export function throttle<T extends (...args: any[]) => any>(
 
       timeout = setTimeout(() => {
         if (Date.now() - lastRan! >= wait) {
-          func.apply(context, args);
+          func.apply(this, args);
           lastRan = Date.now();
         }
       }, wait - (Date.now() - lastRan));
@@ -94,14 +89,12 @@ export function rafThrottle<T extends (...args: any[]) => any>(
   let rafId: number | null = null;
 
   return function (this: any, ...args: Parameters<T>) {
-    const context = this;
-
     if (rafId) {
       return;
     }
 
     rafId = requestAnimationFrame(() => {
-      func.apply(context, args);
+      func.apply(this, args);
       rafId = null;
     });
   };
@@ -312,8 +305,6 @@ export function debounceWithMonitoring<T extends (...args: any[]) => any>(
   let timeout: NodeJS.Timeout | null = null;
 
   return function (this: any, ...args: Parameters<T>) {
-    const context = this;
-
     monitor.recordCall(false);
 
     if (timeout) {
@@ -322,7 +313,7 @@ export function debounceWithMonitoring<T extends (...args: any[]) => any>(
 
     timeout = setTimeout(() => {
       monitor.recordCall(true);
-      func.apply(context, args);
+      func.apply(this, args);
     }, wait);
   };
 }

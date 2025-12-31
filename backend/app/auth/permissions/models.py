@@ -130,15 +130,28 @@ class PermissionCheckResult(BaseModel):
 
 ***REMOVED*** Role hierarchy definition
 ***REMOVED*** Lower roles in the list inherit from higher roles
+***REMOVED*** SECURITY FIX: Faculty does NOT inherit from Coordinator
 ROLE_HIERARCHY = {
     UserRole.ADMIN: [],  ***REMOVED*** Admin has no parent roles (top of hierarchy)
     UserRole.COORDINATOR: [UserRole.ADMIN],  ***REMOVED*** Coordinator inherits from admin
-    UserRole.FACULTY: [UserRole.COORDINATOR],  ***REMOVED*** Faculty inherits from coordinator
-    UserRole.RESIDENT: [],  ***REMOVED*** Resident is independent
-    UserRole.CLINICAL_STAFF: [],  ***REMOVED*** Clinical staff is independent
+    UserRole.FACULTY: [],  ***REMOVED*** INDEPENDENT - no inheritance (SECURITY FIX)
+    UserRole.RESIDENT: [],  ***REMOVED*** INDEPENDENT - no inheritance
+    UserRole.CLINICAL_STAFF: [],  ***REMOVED*** INDEPENDENT - no inheritance
     UserRole.RN: [UserRole.CLINICAL_STAFF],  ***REMOVED*** RN inherits from clinical_staff
     UserRole.LPN: [UserRole.CLINICAL_STAFF],  ***REMOVED*** LPN inherits from clinical_staff
     UserRole.MSA: [UserRole.CLINICAL_STAFF],  ***REMOVED*** MSA inherits from clinical_staff
+}
+
+***REMOVED*** Role privilege levels (higher = more privileged)
+ROLE_LEVELS = {
+    UserRole.ADMIN: 100,
+    UserRole.COORDINATOR: 90,
+    UserRole.FACULTY: 80,
+    UserRole.RESIDENT: 70,
+    UserRole.CLINICAL_STAFF: 60,
+    UserRole.RN: 50,
+    UserRole.LPN: 40,
+    UserRole.MSA: 30,
 }
 
 

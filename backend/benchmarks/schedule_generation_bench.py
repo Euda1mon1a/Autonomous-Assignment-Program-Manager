@@ -230,9 +230,9 @@ def run_suite(verbose: bool = False):
     print()
 
     sizes = [
-        (10, 2),   ***REMOVED*** Small: 10 residents, 2 weeks
-        (25, 4),   ***REMOVED*** Medium: 25 residents, 4 weeks
-        (50, 4),   ***REMOVED*** Large: 50 residents, 4 weeks
+        (10, 2),  ***REMOVED*** Small: 10 residents, 2 weeks
+        (25, 4),  ***REMOVED*** Medium: 25 residents, 4 weeks
+        (50, 4),  ***REMOVED*** Large: 50 residents, 4 weeks
         (100, 4),  ***REMOVED*** Very large: 100 residents, 4 weeks
     ]
 

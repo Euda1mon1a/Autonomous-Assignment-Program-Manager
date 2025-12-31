@@ -20,15 +20,15 @@ class AssignmentFactory:
     @staticmethod
     def create_assignment(
         db: Session,
-        person: Optional[Person] = None,
-        block: Optional[Block] = None,
-        rotation_template: Optional[RotationTemplate] = None,
+        person: Person | None = None,
+        block: Block | None = None,
+        rotation_template: RotationTemplate | None = None,
         role: str = "primary",
-        activity_override: Optional[str] = None,
-        notes: Optional[str] = None,
-        created_by: Optional[str] = None,
-        confidence: Optional[float] = None,
-        score: Optional[float] = None,
+        activity_override: str | None = None,
+        notes: str | None = None,
+        created_by: str | None = None,
+        confidence: float | None = None,
+        score: float | None = None,
     ) -> Assignment:
         """
         Create a single assignment.
@@ -289,9 +289,7 @@ class AssignmentFactory:
             list[Assignment]: List of conflicting assignments
         """
         if len(rotation_templates) < 2:
-            raise ValueError(
-                "Need at least 2 rotation templates to create conflicts"
-            )
+            raise ValueError("Need at least 2 rotation templates to create conflicts")
 
         assignments = []
         for i, block in enumerate(blocks):

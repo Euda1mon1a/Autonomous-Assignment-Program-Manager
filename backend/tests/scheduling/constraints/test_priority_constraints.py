@@ -10,7 +10,9 @@ from uuid import uuid4
 from unittest.mock import Mock
 
 from app.scheduling.constraints.capacity import ClinicCapacityConstraint
-from app.scheduling.constraints.night_float_post_call import NightFloatPostCallConstraint
+from app.scheduling.constraints.night_float_post_call import (
+    NightFloatPostCallConstraint,
+)
 from app.scheduling.constraints.base import (
     SchedulingContext,
     ConstraintPriority,

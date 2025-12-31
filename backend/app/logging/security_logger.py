@@ -497,7 +497,9 @@ def log_authz_failure(
     **metadata,
 ) -> None:
     """Log authorization failure (convenience function)."""
-    get_security_logger().log_authz_failure(user_id, resource, action, reason, **metadata)
+    get_security_logger().log_authz_failure(
+        user_id, resource, action, reason, **metadata
+    )
 
 
 def log_data_access(
@@ -508,7 +510,9 @@ def log_data_access(
     **metadata,
 ) -> None:
     """Log data access (convenience function)."""
-    get_security_logger().log_data_access(user_id, resource, action, sensitive, **metadata)
+    get_security_logger().log_data_access(
+        user_id, resource, action, sensitive, **metadata
+    )
 
 
 def log_suspicious_activity(

@@ -87,4 +87,6 @@ class CursorPaginatedResponse(BaseModel, Generic[T]):
     """Cursor-paginated response."""
 
     items: list[T] = Field(..., description="Page items")
-    cursor_info: CursorPageInfo = Field(..., description="Cursor pagination information")
+    cursor_info: CursorPageInfo = Field(
+        ..., description="Cursor pagination information"
+    )

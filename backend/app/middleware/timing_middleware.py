@@ -52,8 +52,15 @@ class TimingMiddleware(BaseHTTPMiddleware):
         self.slow_threshold_ms = slow_threshold_ms
         self.warn_threshold_ms = warn_threshold_ms
         self.enable_performance_logger = enable_performance_logger
-        self.excluded_paths = excluded_paths or {"/health", "/metrics", "/docs", "/openapi.json"}
-        self.perf_logger = get_performance_logger() if enable_performance_logger else None
+        self.excluded_paths = excluded_paths or {
+            "/health",
+            "/metrics",
+            "/docs",
+            "/openapi.json",
+        }
+        self.perf_logger = (
+            get_performance_logger() if enable_performance_logger else None
+        )
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """

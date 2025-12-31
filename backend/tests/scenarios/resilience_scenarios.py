@@ -182,7 +182,10 @@ class ResilienceScenarios:
         """
         ***REMOVED*** Create schedule with some residents overworked
         schedule = ScheduleFactory.create_complete_schedule(
-            db, num_residents=10, num_faculty=3, num_days=28  ***REMOVED*** Understaffed
+            db,
+            num_residents=10,
+            num_faculty=3,
+            num_days=28,  ***REMOVED*** Understaffed
         )
 
         ***REMOVED*** Simulate burnout by creating consecutive weeks without breaks
@@ -233,7 +236,10 @@ class ResilienceScenarios:
         )
 
         zone_b = ScheduleFactory.create_clinic_day_schedule(
-            db, num_residents=4, num_faculty=2, clinic_date=date.today() + timedelta(days=1)
+            db,
+            num_residents=4,
+            num_faculty=2,
+            clinic_date=date.today() + timedelta(days=1),
         )
 
         ***REMOVED*** Failure in zone A

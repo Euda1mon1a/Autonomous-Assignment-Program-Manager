@@ -21,7 +21,9 @@ class SwapConflictScenarios:
         Same faculty requests to swap same week with multiple other faculty.
         """
         ***REMOVED*** Create faculty
-        faculty = PersonFactory.create_batch_faculty(db, count=5, include_leadership=False)
+        faculty = PersonFactory.create_batch_faculty(
+            db, count=5, include_leadership=False
+        )
 
         ***REMOVED*** Create conflicting swaps (same source, same week, different targets)
         same_week = date.today() + timedelta(days=14)
@@ -47,7 +49,9 @@ class SwapConflictScenarios:
         A swaps with B, B swaps with C, C swaps with A (circular dependency).
         """
         ***REMOVED*** Create 3 faculty
-        faculty = PersonFactory.create_batch_faculty(db, count=3, include_leadership=False)
+        faculty = PersonFactory.create_batch_faculty(
+            db, count=3, include_leadership=False
+        )
 
         week1 = date.today() + timedelta(days=7)
         week2 = week1 + timedelta(days=7)
@@ -94,7 +98,9 @@ class SwapConflictScenarios:
         Multiple faculty trying to absorb same week.
         """
         ***REMOVED*** Create faculty
-        faculty = PersonFactory.create_batch_faculty(db, count=4, include_leadership=False)
+        faculty = PersonFactory.create_batch_faculty(
+            db, count=4, include_leadership=False
+        )
 
         target_week = date.today() + timedelta(days=14)
 
@@ -124,7 +130,9 @@ class SwapConflictScenarios:
         Swap A depends on Swap B, which depends on Swap C. If C fails, all fail.
         """
         ***REMOVED*** Create 4 faculty
-        faculty = PersonFactory.create_batch_faculty(db, count=4, include_leadership=False)
+        faculty = PersonFactory.create_batch_faculty(
+            db, count=4, include_leadership=False
+        )
 
         week1 = date.today() + timedelta(days=7)
         week2 = week1 + timedelta(days=7)
@@ -132,19 +140,29 @@ class SwapConflictScenarios:
 
         ***REMOVED*** Swap chain: A->B->C->D
         swap_ab = SwapFactory.create_one_to_one_swap(
-            db, source_faculty=faculty[0], target_faculty=faculty[1],
-            source_week=week1, target_week=week2, status=SwapStatus.APPROVED
+            db,
+            source_faculty=faculty[0],
+            target_faculty=faculty[1],
+            source_week=week1,
+            target_week=week2,
+            status=SwapStatus.APPROVED,
         )
 
         swap_bc = SwapFactory.create_one_to_one_swap(
-            db, source_faculty=faculty[1], target_faculty=faculty[2],
-            source_week=week2, target_week=week3, status=SwapStatus.APPROVED
+            db,
+            source_faculty=faculty[1],
+            target_faculty=faculty[2],
+            source_week=week2,
+            target_week=week3,
+            status=SwapStatus.APPROVED,
         )
 
         ***REMOVED*** This swap gets rejected (breaks the chain)
         swap_cd = SwapFactory.create_rejected_swap(
-            db, source_faculty=faculty[2], target_faculty=faculty[3],
-            reason="Insufficient coverage"
+            db,
+            source_faculty=faculty[2],
+            target_faculty=faculty[3],
+            reason="Insufficient coverage",
         )
 
         return {
@@ -162,7 +180,9 @@ class SwapConflictScenarios:
         Swap is executed then needs to be rolled back due to emergency.
         """
         ***REMOVED*** Create faculty
-        faculty = PersonFactory.create_batch_faculty(db, count=2, include_leadership=False)
+        faculty = PersonFactory.create_batch_faculty(
+            db, count=2, include_leadership=False
+        )
 
         ***REMOVED*** Create executed swap
         executed_swap = SwapFactory.create_executed_swap(
@@ -192,7 +212,9 @@ class SwapConflictScenarios:
         Mutual swaps that both require approval but neither approves the other.
         """
         ***REMOVED*** Create faculty
-        faculty = PersonFactory.create_batch_faculty(db, count=2, include_leadership=False)
+        faculty = PersonFactory.create_batch_faculty(
+            db, count=2, include_leadership=False
+        )
 
         week1 = date.today() + timedelta(days=7)
         week2 = week1 + timedelta(days=7)
@@ -241,7 +263,9 @@ class SwapConflictScenarios:
 
         ***REMOVED*** Try to swap for another Sunday (would violate equity)
         ***REMOVED*** Source week = Sunday, target week = weekday
-        source_week = date.today() + timedelta(days=(6 - date.today().weekday()))  ***REMOVED*** Next Sunday
+        source_week = date.today() + timedelta(
+            days=(6 - date.today().weekday())
+        )  ***REMOVED*** Next Sunday
         target_week = source_week + timedelta(days=2)  ***REMOVED*** Tuesday
 
         swap = SwapFactory.create_one_to_one_swap(
@@ -273,7 +297,9 @@ class SwapConflictScenarios:
             dict: Multiple conflict scenarios
         """
         ***REMOVED*** Create large faculty pool
-        faculty = PersonFactory.create_batch_faculty(db, count=num_conflicts * 2, include_leadership=False)
+        faculty = PersonFactory.create_batch_faculty(
+            db, count=num_conflicts * 2, include_leadership=False
+        )
 
         ***REMOVED*** Create various conflicts
         swaps = SwapFactory.create_batch_swaps(

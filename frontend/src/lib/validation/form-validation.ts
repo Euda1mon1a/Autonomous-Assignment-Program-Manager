@@ -58,7 +58,7 @@ export function validateForm<T extends Record<string, any>>(
     schema.parse(values);
     return { isValid: true, errors: {} };
   } catch (error: any) {
-    const errors = formatZodError(error);
+    const errors = formatZodError(error) as Partial<Record<keyof T, string>>;
     return { isValid: false, errors };
   }
 }

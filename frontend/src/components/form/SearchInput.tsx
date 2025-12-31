@@ -7,6 +7,7 @@ export interface SearchInputProps {
   value: string;
   onChange: (value: string) => void;
   onSearch?: (value: string) => void;
+  onFocus?: () => void;
   placeholder?: string;
   loading?: boolean;
   debounceMs?: number;
@@ -33,6 +34,7 @@ export function SearchInput({
   value,
   onChange,
   onSearch,
+  onFocus,
   placeholder = 'Search...',
   loading = false,
   debounceMs = 300,
@@ -75,6 +77,7 @@ export function SearchInput({
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onFocus={onFocus}
           placeholder={placeholder}
           className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />

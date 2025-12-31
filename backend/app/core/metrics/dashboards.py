@@ -93,7 +93,7 @@ class GrafanaDashboardBuilder:
             Panel(
                 title="Response Time (p95)",
                 visualization_type=VisualizationType.GRAPH,
-                query='histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))',
+                query="histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
                 description="95th percentile response time",
                 unit="s",
                 thresholds=[0.5, 1.0, 2.0],
@@ -113,7 +113,7 @@ class GrafanaDashboardBuilder:
             Panel(
                 title="Active Users",
                 visualization_type=VisualizationType.STAT,
-                query='count(count by (user_id) (rate(http_requests_total[5m])))',
+                query="count(count by (user_id) (rate(http_requests_total[5m])))",
                 description="Number of active users in last 5 minutes",
                 grid_pos={"h": 4, "w": 6, "x": 6, "y": 8},
             ),
@@ -121,7 +121,7 @@ class GrafanaDashboardBuilder:
             Panel(
                 title="Database Connections",
                 visualization_type=VisualizationType.GAUGE,
-                query='db_connections_active',
+                query="db_connections_active",
                 description="Active database connections",
                 thresholds=[50, 80, 100],
                 grid_pos={"h": 4, "w": 6, "x": 12, "y": 8},
@@ -130,7 +130,7 @@ class GrafanaDashboardBuilder:
             Panel(
                 title="Cache Hit Rate",
                 visualization_type=VisualizationType.STAT,
-                query='rate(cache_hits_total[5m]) / (rate(cache_hits_total[5m]) + rate(cache_misses_total[5m]))',
+                query="rate(cache_hits_total[5m]) / (rate(cache_hits_total[5m]) + rate(cache_misses_total[5m]))",
                 description="Percentage of cache hits",
                 unit="percentunit",
                 thresholds=[0.7, 0.9],
@@ -160,7 +160,7 @@ class GrafanaDashboardBuilder:
             Panel(
                 title="ACGME Violations (24h)",
                 visualization_type=VisualizationType.STAT,
-                query='increase(acgme_violations_total[24h])',
+                query="increase(acgme_violations_total[24h])",
                 description="Number of ACGME violations in last 24 hours",
                 thresholds=[1, 5, 10],
                 grid_pos={"h": 6, "w": 6, "x": 0, "y": 0},
@@ -169,7 +169,7 @@ class GrafanaDashboardBuilder:
             Panel(
                 title="Work Hour Violations by Type",
                 visualization_type=VisualizationType.BAR_CHART,
-                query='sum by (rule) (increase(acgme_violations_total[7d]))',
+                query="sum by (rule) (increase(acgme_violations_total[7d]))",
                 description="Breakdown of violations by rule type",
                 grid_pos={"h": 8, "w": 12, "x": 6, "y": 0},
             ),
@@ -177,7 +177,7 @@ class GrafanaDashboardBuilder:
             Panel(
                 title="ACGME Overrides (7d)",
                 visualization_type=VisualizationType.TABLE,
-                query='acgme_override_events',
+                query="acgme_override_events",
                 description="Recent ACGME overrides with justifications",
                 grid_pos={"h": 8, "w": 12, "x": 0, "y": 6},
             ),
@@ -185,7 +185,7 @@ class GrafanaDashboardBuilder:
             Panel(
                 title="Compliance Score",
                 visualization_type=VisualizationType.GAUGE,
-                query='(1 - (increase(acgme_violations_total[7d]) / schedule_assignments_total)) * 100',
+                query="(1 - (increase(acgme_violations_total[7d]) / schedule_assignments_total)) * 100",
                 description="Overall compliance score (% of assignments without violations)",
                 unit="percent",
                 thresholds=[90, 95, 98],
@@ -215,7 +215,7 @@ class GrafanaDashboardBuilder:
             Panel(
                 title="Failed Authentication Attempts",
                 visualization_type=VisualizationType.GRAPH,
-                query='rate(auth_failures_total[5m])',
+                query="rate(auth_failures_total[5m])",
                 description="Failed authentication attempts per second",
                 thresholds=[0.1, 0.5],
                 grid_pos={"h": 8, "w": 12, "x": 0, "y": 0},
@@ -224,7 +224,7 @@ class GrafanaDashboardBuilder:
             Panel(
                 title="Rate Limit Violations",
                 visualization_type=VisualizationType.GRAPH,
-                query='rate(rate_limit_exceeded_total[5m])',
+                query="rate(rate_limit_exceeded_total[5m])",
                 description="Rate limit violations per second",
                 grid_pos={"h": 8, "w": 12, "x": 12, "y": 0},
             ),
@@ -232,7 +232,7 @@ class GrafanaDashboardBuilder:
             Panel(
                 title="Suspicious Activity Events",
                 visualization_type=VisualizationType.TABLE,
-                query='suspicious_activity_events',
+                query="suspicious_activity_events",
                 description="Recent suspicious activity detections",
                 grid_pos={"h": 10, "w": 24, "x": 0, "y": 8},
             ),
@@ -286,7 +286,10 @@ class GrafanaDashboardBuilder:
                             "steps": [
                                 {"color": "green", "value": None},
                                 *[
-                                    {"color": self._get_threshold_color(i), "value": threshold}
+                                    {
+                                        "color": self._get_threshold_color(i),
+                                        "value": threshold,
+                                    }
                                     for i, threshold in enumerate(panel.thresholds)
                                 ],
                             ],

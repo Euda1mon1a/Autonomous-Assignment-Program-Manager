@@ -144,7 +144,7 @@ def absence_conflict_setup(db: Session) -> dict:
     ***REMOVED*** Faculty 4: Week 7 (days 42-48)
     assignments = []
     fmit_weeks = [
-        (faculty[0], 0),   ***REMOVED*** Week 1
+        (faculty[0], 0),  ***REMOVED*** Week 1
         (faculty[1], 14),  ***REMOVED*** Week 3
         (faculty[2], 28),  ***REMOVED*** Week 5
         (faculty[3], 42),  ***REMOVED*** Week 7
@@ -264,9 +264,7 @@ class TestAbsenceConflictWorkflowE2E:
 
             ***REMOVED*** Verify alert was created in database
             alert = (
-                db.query(ConflictAlert)
-                .filter(ConflictAlert.id == alert_ids[0])
-                .first()
+                db.query(ConflictAlert).filter(ConflictAlert.id == alert_ids[0]).first()
             )
             assert alert is not None
             assert alert.faculty_id == faculty1.id

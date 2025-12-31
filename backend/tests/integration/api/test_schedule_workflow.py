@@ -182,9 +182,9 @@ class TestScheduleWorkflow:
             response = client.post(
                 "/api/rotation-templates/",
                 json={
-                    "name": f"Rotation {i+1}",
+                    "name": f"Rotation {i + 1}",
                     "activity_type": activity,
-                    "abbreviation": f"R{i+1}",
+                    "abbreviation": f"R{i + 1}",
                     "max_residents": 3,
                 },
                 headers=auth_headers,

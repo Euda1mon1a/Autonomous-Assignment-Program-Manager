@@ -33,10 +33,11 @@ class ErrorResponse(BaseModel):
     success: bool = Field(False, description="Always false for errors")
     error: str = Field(..., description="Error message")
     error_code: str | None = Field(None, description="Error code")
-    details: list[ErrorDetail] | None = Field(None, description="Detailed error information")
+    details: list[ErrorDetail] | None = Field(
+        None, description="Detailed error information"
+    )
     timestamp: datetime = Field(
-        default_factory=datetime.utcnow,
-        description="Error timestamp"
+        default_factory=datetime.utcnow, description="Error timestamp"
     )
 
 
@@ -47,8 +48,7 @@ class SuccessResponse(BaseModel, Generic[T]):
     data: T = Field(..., description="Response data")
     message: str | None = Field(None, description="Optional success message")
     timestamp: datetime = Field(
-        default_factory=datetime.utcnow,
-        description="Response timestamp"
+        default_factory=datetime.utcnow, description="Response timestamp"
     )
 
 
@@ -81,8 +81,7 @@ class IdResponse(BaseModel):
 
     id: UUID = Field(..., description="Created resource ID")
     created_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        description="Creation timestamp"
+        default_factory=datetime.utcnow, description="Creation timestamp"
     )
 
 
@@ -160,10 +159,8 @@ class HealthCheckResponse(BaseModel):
     status: str = Field(..., description="Health status")
     version: str | None = Field(None, description="API version")
     timestamp: datetime = Field(
-        default_factory=datetime.utcnow,
-        description="Health check timestamp"
+        default_factory=datetime.utcnow, description="Health check timestamp"
     )
     dependencies: dict[str, str] | None = Field(
-        None,
-        description="Status of dependencies (database, redis, etc.)"
+        None, description="Status of dependencies (database, redis, etc.)"
     )

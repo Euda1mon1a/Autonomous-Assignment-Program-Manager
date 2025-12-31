@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-export type BadgeVariant = 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info';
+export type BadgeVariant = 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'destructive' | 'info';
 export type BadgeSize = 'sm' | 'md' | 'lg';
 
 export interface BadgeProps {
@@ -20,6 +20,7 @@ const variantStyles: Record<BadgeVariant, string> = {
   success: 'bg-green-100 text-green-800',
   warning: 'bg-amber-100 text-amber-800',
   danger: 'bg-red-100 text-red-800',
+  destructive: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
   info: 'bg-cyan-100 text-cyan-800',
 };
 
@@ -58,6 +59,7 @@ export function Badge({
           variant === 'success' ? 'bg-green-600' :
           variant === 'warning' ? 'bg-amber-600' :
           variant === 'danger' ? 'bg-red-600' :
+          variant === 'destructive' ? 'bg-red-600' :
           'bg-cyan-600'
         }`} />
       )}

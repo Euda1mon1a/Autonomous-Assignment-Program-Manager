@@ -69,7 +69,9 @@ class TestExportImportWorkflow:
         auth_headers: dict,
     ):
         """Test importing schedule from CSV."""
-        csv_content = b"date,time_of_day,person_name,rotation\n2024-01-01,AM,Dr. Smith,Clinic\n"
+        csv_content = (
+            b"date,time_of_day,person_name,rotation\n2024-01-01,AM,Dr. Smith,Clinic\n"
+        )
 
         import_response = client.post(
             "/api/imports/schedule",
@@ -137,7 +139,9 @@ class TestExportImportWorkflow:
         auth_headers: dict,
     ):
         """Test importing people/personnel data."""
-        csv_content = b"name,type,email,pgy_level\nDr. Import,resident,import@test.org,1\n"
+        csv_content = (
+            b"name,type,email,pgy_level\nDr. Import,resident,import@test.org,1\n"
+        )
 
         import_response = client.post(
             "/api/imports/people",

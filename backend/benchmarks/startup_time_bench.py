@@ -107,7 +107,9 @@ def benchmark_import_time(verbose: bool = False) -> BenchmarkResult:
     return result
 
 
-def benchmark_database_connection(iterations: int = 10, verbose: bool = False) -> BenchmarkResult:
+def benchmark_database_connection(
+    iterations: int = 10, verbose: bool = False
+) -> BenchmarkResult:
     """Benchmark database connection establishment time."""
     print_benchmark_header(
         "Database Connection Time",
@@ -168,7 +170,9 @@ def benchmark_database_connection(iterations: int = 10, verbose: bool = False) -
     return result
 
 
-def benchmark_app_initialization(iterations: int = 3, verbose: bool = False) -> BenchmarkResult:
+def benchmark_app_initialization(
+    iterations: int = 3, verbose: bool = False
+) -> BenchmarkResult:
     """Benchmark full FastAPI application initialization."""
     print_benchmark_header(
         "FastAPI App Initialization",
@@ -232,7 +236,9 @@ def benchmark_app_initialization(iterations: int = 3, verbose: bool = False) -> 
     return result
 
 
-def benchmark_config_loading(iterations: int = 100, verbose: bool = False) -> BenchmarkResult:
+def benchmark_config_loading(
+    iterations: int = 100, verbose: bool = False
+) -> BenchmarkResult:
     """Benchmark configuration loading time."""
     print_benchmark_header(
         "Configuration Loading",
@@ -324,7 +330,9 @@ def main():
         choices=["config", "import", "db", "app", "all"],
         help="Benchmark type",
     )
-    parser.add_argument("--iterations", type=int, default=10, help="Number of iterations")
+    parser.add_argument(
+        "--iterations", type=int, default=10, help="Number of iterations"
+    )
     parser.add_argument("--suite", action="store_true", help="Run full suite")
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
 
@@ -334,7 +342,9 @@ def main():
         run_suite(verbose=args.verbose)
     else:
         if args.benchmark == "config" or args.benchmark == "all":
-            result = benchmark_config_loading(iterations=args.iterations, verbose=args.verbose)
+            result = benchmark_config_loading(
+                iterations=args.iterations, verbose=args.verbose
+            )
 
         if args.benchmark == "import" or args.benchmark == "all":
             result = benchmark_import_time(verbose=args.verbose)

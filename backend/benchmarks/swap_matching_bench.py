@@ -238,7 +238,9 @@ def main():
     parser = argparse.ArgumentParser(description="Benchmark swap matching performance")
     parser.add_argument("--faculty", type=int, default=30, help="Number of faculty")
     parser.add_argument("--weeks", type=int, default=4, help="Number of weeks")
-    parser.add_argument("--iterations", type=int, default=20, help="Number of iterations")
+    parser.add_argument(
+        "--iterations", type=int, default=20, help="Number of iterations"
+    )
     parser.add_argument("--suite", action="store_true", help="Run full suite")
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
 

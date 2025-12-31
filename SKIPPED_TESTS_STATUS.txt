@@ -1,0 +1,234 @@
+================================================================================
+G2_RECON INTELLIGENCE REPORT: SKIPPED TEST ANALYSIS
+================================================================================
+
+MISSION STATUS: COMPLETE
+Date: 2025-12-31
+Classification: Development Intelligence
+
+================================================================================
+EXECUTIVE SUMMARY
+================================================================================
+
+Total Skip Decorators Found: 96
+Total Files with Skips: 11
+Regression Risk: MODERATE-HIGH (42 tests with no coverage)
+
+PRIORITY BREAKDOWN:
+  P1 (CRITICAL):  1 test   - Fix test isolation issue
+  P2 (HIGH):     42 tests  - Unskip DEBT-016 placeholders + fixtures
+  P3 (MEDIUM):    2 tests  - Implement mock fixtures
+  P4 (LOW):       8 tests  - Defer (feature incomplete)
+  P0 (OPTIONAL): 43 tests  - Keep skipped (optional dependencies)
+
+================================================================================
+BY CATEGORY - DISTRIBUTION
+================================================================================
+
+1. DEBT-016 PLACEHOLDERS (HIGH PRIORITY - UNSKIP IMMEDIATELY)
+   └─ Tests: 42 (43% of all skips)
+   ├─ test_fmit_scheduler_service.py........... 14 tests
+   ├─ test_call_assignment_service.py......... 16 tests
+   └─ test_schedule_routes.py................. 12 tests
+   
+   Status: Services IMPLEMENTED, tests waiting for fixtures
+   Effort: 8-10 hours
+   Risk: HIGH - No regression coverage for 3 core services
+
+2. MISSING OPTIONAL DEPENDENCIES (KEEP SKIPPED)
+   └─ Tests: 35 (36% of all skips)
+   ├─ ndlib (burnout epidemiology)........... 30 tests
+   ├─ PyQUBO + dwave (quantum).............. 2 tests
+   ├─ NetworkX (graph analysis)............ 1 test
+   └─ Action: Keep skipped - make conditional in CI
+   
+   Status: Optional advanced features
+   Risk: LOW
+
+3. KNOWN ISSUES - TEST ISOLATION (CRITICAL FIX)
+   └─ Test: 1 (1% of all skips)
+   ├─ test_resilience_load.py::test_concurrent_contingency_analyses
+   
+   Status: BLOCKED on SQLAlchemy object lifecycle fix
+   Effort: 3-5 hours
+   Risk: CRITICAL - Can't load test critical N-1 contingency logic
+
+4. NOT YET IMPLEMENTED (DEFER)
+   └─ Tests: 8 (8% of all skips)
+   ├─ test_kalman_workload_bridge.py......... 8 tests
+   
+   Status: Feature incomplete - Kalman filter stub raises NotImplementedError
+   Effort: 4-6 hours (when ready)
+   Risk: MEDIUM
+
+5. VECTOR DATABASE (KEEP SKIPPED - ENVIRONMENT)
+   └─ Tests: 9 (9% of all skips)
+   ├─ test_rag_service.py................... 9 tests
+   
+   Status: Requires PostgreSQL with pgvector extension
+   Effort: N/A (environmental requirement)
+   Risk: LOW - Chunking tests DO work with SQLite
+
+6. MISC FIXTURES (IMPLEMENT + UNSKIP)
+   └─ Tests: 2 (2% of all skips)
+   ├─ test_anti_churn.py.................... 2 tests
+   
+   Status: Need mock Assignment objects with dates
+   Effort: 1-2 hours
+   Risk: MEDIUM
+
+7. MCP SERVER OPTIONAL (KEEP SKIPPED)
+   └─ Test: 1 (1% of all skips)
+   ├─ test_orchestration_e2e.py............ 1 test
+   
+   Status: Optional integration - requires docker-compose up mcp-server
+   Effort: N/A (optional)
+   Risk: LOW
+
+================================================================================
+ACTION ITEMS - PRIORITIZED
+================================================================================
+
+IMMEDIATE (Next Sprint - 12 hours)
+  [P1] Fix SQLAlchemy test isolation in test_resilience_load.py
+       └─ 3-5 hours diagnosis + fix
+       └─ BLOCKS load testing of critical resilience features
+       └─ Status: Waiting on test isolation pattern fix
+       
+  [P2] Unskip DEBT-016 placeholders (3 files, 42 tests)
+       ├─ test_fmit_scheduler_service.py (14 tests) - 2-3 hours
+       ├─ test_call_assignment_service.py (16 tests) - 2-3 hours
+       └─ test_schedule_routes.py (12 tests) - 3-4 hours
+       └─ UNBLOCKS regression coverage for 3 core services
+       └─ Status: Ready to implement (fixture patterns exist in conftest.py)
+
+MEDIUM TERM (2-3 weeks)
+  [P3] Implement anti-churn pattern detection fixtures
+       └─ 1-2 hours
+       └─ test_anti_churn.py (2 tests)
+       
+  [P4] Implement Kalman filter when feature is ready
+       └─ 4-6 hours (advanced signal processing)
+       └─ test_kalman_workload_bridge.py (8 tests)
+
+KEEP SKIPPED (Conditional CI)
+  [P0] Keep skipped with conditional testing
+       ├─ ndlib tests (30) - pip install ndlib for optional tests
+       ├─ Quantum tests (3) - pip install PyQUBO dwave-samplers
+       ├─ NetworkX test (1) - pip install NetworkX
+       ├─ pgvector tests (9) - Requires PostgreSQL in Docker
+       └─ MCP test (1) - Requires docker-compose up mcp-server
+
+================================================================================
+FILES READY TO UNSKIP (HIGHEST IMPACT)
+================================================================================
+
+File: tests/services/test_fmit_scheduler_service.py
+  Skip Count: 14 / 13 total tests (108% - more skips than tests!)
+  Service Status: ✓ Implemented (app/services/fmit_scheduler_service.py)
+  Blocker: Fixture setup
+  Effort: 2-3 hours
+  Priority: P2
+  
+File: tests/services/test_call_assignment_service.py
+  Skip Count: 16 / 15 total tests (107% - more skips than tests!)
+  Service Status: ✓ Implemented (app/services/call_assignment_service.py)
+  Blocker: Fixture setup
+  Effort: 2-3 hours
+  Priority: P2
+  
+File: tests/test_schedule_routes.py
+  Skip Count: 13 / 12 total tests (108%)
+  Route Status: ✓ Implemented (app/api/routes/schedule.py)
+  Blocker: Auth fixtures + sample data
+  Effort: 3-4 hours
+  Priority: P2
+
+================================================================================
+REGRESSION RISK ASSESSMENT
+================================================================================
+
+COVERAGE GAPS (HIGH RISK):
+  - No unit tests for FMITSchedulerService (implemented, untested)
+  - No unit tests for CallAssignmentService (implemented, untested)
+  - No integration tests for /api/schedule routes (core API, untested)
+  - Can't load test N-1/N-2 contingency logic (blocked by isolation issue)
+  
+Mitigation: Unskip 42 DEBT-016 tests + fix 1 isolation issue = 43 tests unblocked
+
+KNOWN WORKING (OK):
+  - Core ACGME compliance logic (tested)
+  - Schedule generation engine (tested)
+  - Swap management (tested)
+  - Basic resilience framework (tested)
+
+OPTIONAL/ADVANCED (OK to skip):
+  - Burnout contagion modeling (ndlib - optional tier 4)
+  - Quantum scheduling (PyQUBO - experimental)
+  - Vector similarity search (pgvector - production only)
+
+================================================================================
+EFFORT ESTIMATION
+================================================================================
+
+Total effort to unskip high-priority tests: 12-15 hours
+
+Breakdown:
+  1. Fix test isolation (P1).........  3-5 hours
+  2. Unskip DEBT-016 (P2)........... 8-10 hours
+  3. Anti-churn fixtures (P3)...... 1-2 hours
+     ─────────────────────────────
+     TOTAL....................... 12-17 hours
+
+Parallelizable: Yes - 3 developers can work on DEBT-016 files simultaneously
+
+ROI: Unblocks 43 regression tests + fixes critical test isolation issue
+
+================================================================================
+DELIVERABLES GENERATED
+================================================================================
+
+1. SKIPPED_TESTS_MANIFEST.md
+   └─ Comprehensive analysis with unskip procedures
+   └─ Root cause by category
+   └─ Implementation guidance per file
+   
+2. SKIPPED_TESTS_QUICK_REFERENCE.md
+   └─ One-page reference for quick lookup
+   └─ Unskip checklists
+   └─ CI configuration
+   
+3. SKIPPED_TESTS_INVENTORY.csv
+   └─ Spreadsheet format for tracking
+   └─ By test, with priority and effort estimates
+   └─ Useful for project management tools
+
+4. This Status Report (SKIPPED_TESTS_STATUS.txt)
+   └─ Executive summary for decision makers
+
+================================================================================
+RECOMMENDATION
+================================================================================
+
+NEXT STEP: Start with P1 + P2 simultaneously
+  └─ Terminal 1: Debug test isolation issue in test_resilience_load.py
+  └─ Terminal 2: Implement DEBT-016 fixtures (parallel)
+  └─ Expected completion: 1-2 sprints
+  └─ Expected impact: 43 new regression tests
+
+FOLLOW UP: Implement P3 + prepare for P4
+  └─ Anti-churn mock fixtures (low effort)
+  └─ Monitor Kalman filter implementation
+  └─ Prepare integration tests for optional features
+
+================================================================================
+END REPORT
+================================================================================
+
+For questions about skip reasons, see SKIPPED_TESTS_MANIFEST.md
+For quick lookups, see SKIPPED_TESTS_QUICK_REFERENCE.md
+For spreadsheet tracking, see SKIPPED_TESTS_INVENTORY.csv
+
+Generated by G2_RECON Intelligence Probe
+Classification: Development Intelligence
+Mission Complete ✓

@@ -192,7 +192,9 @@ class RequiredFieldError(InputValidationError):
             **context: Additional context
         """
         if not message:
-            message = f"Field '{field}' is required" if field else "Required field is missing"
+            message = (
+                f"Field '{field}' is required" if field else "Required field is missing"
+            )
 
         super().__init__(
             message=message,

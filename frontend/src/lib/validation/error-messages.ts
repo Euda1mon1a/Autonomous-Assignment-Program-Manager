@@ -96,7 +96,8 @@ export function getFieldError(
 ): string {
   const errorFunc = validationErrors[errorType];
   if (typeof errorFunc === "function") {
-    return errorFunc(fieldName, ...args);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (errorFunc as any)(fieldName, ...args) as string;
   }
   return errorFunc as string;
 }

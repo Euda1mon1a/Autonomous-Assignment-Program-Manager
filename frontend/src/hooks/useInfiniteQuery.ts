@@ -64,12 +64,13 @@ export function useInfiniteQuery<T>({
     error,
   } = useTanStackInfiniteQuery({
     queryKey,
-    queryFn: async ({ pageParam = 0 }) => {
+    queryFn: async ({ pageParam }: { pageParam: number }) => {
       return fetchFn(pageParam, pageSize);
     },
     getNextPageParam: (lastPage, allPages) => {
       return lastPage.hasMore ? allPages.length : undefined;
     },
+    initialPageParam: 0,
     enabled,
     staleTime,
   });
@@ -175,13 +176,19 @@ export function useBidirectionalInfiniteQuery<T>({
 }: BidirectionalInfiniteQueryOptions<T>) {
   const downQuery = useInfiniteQuery({
     queryKey: [...queryKey, 'down'],
-    fetchFn: (page: number) => fetchFn(page, pageSize, 'down'),
+    fetchFn: async (page: number) => {
+      const result = await fetchFn(page, pageSize, 'down');
+      return { ...result, total: 0 };
+    },
     pageSize,
   });
 
   const upQuery = useInfiniteQuery({
     queryKey: [...queryKey, 'up'],
-    fetchFn: (page: number) => fetchFn(page, pageSize, 'up'),
+    fetchFn: async (page: number) => {
+      const result = await fetchFn(page, pageSize, 'up');
+      return { ...result, total: 0 };
+    },
     pageSize,
   });
 

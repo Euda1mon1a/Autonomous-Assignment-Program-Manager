@@ -18,11 +18,11 @@ from app.models.rotation_template import RotationTemplate
 
 def create_test_schedule(
     db: Session,
-    residents: List[Person],
+    residents: list[Person],
     template: RotationTemplate,
     start_date: date,
     days: int = 7,
-) -> List[Assignment]:
+) -> list[Assignment]:
     """
     Create a test schedule with blocks and assignments.
 
@@ -72,7 +72,7 @@ def create_test_schedule(
     return assignments
 
 
-def create_test_residents(db: Session, count: int = 3) -> List[Person]:
+def create_test_residents(db: Session, count: int = 3) -> list[Person]:
     """
     Create test residents.
 
@@ -88,9 +88,9 @@ def create_test_residents(db: Session, count: int = 3) -> List[Person]:
     for i in range(count):
         resident = Person(
             id=uuid4(),
-            name=f"Dr. Test Resident {i+1}",
+            name=f"Dr. Test Resident {i + 1}",
             type="resident",
-            email=f"resident{i+1}@test.org",
+            email=f"resident{i + 1}@test.org",
             pgy_level=(i % 3) + 1,
         )
         db.add(resident)
@@ -100,7 +100,7 @@ def create_test_residents(db: Session, count: int = 3) -> List[Person]:
     return residents
 
 
-def create_test_faculty(db: Session, count: int = 2) -> List[Person]:
+def create_test_faculty(db: Session, count: int = 2) -> list[Person]:
     """
     Create test faculty members.
 
@@ -116,9 +116,9 @@ def create_test_faculty(db: Session, count: int = 2) -> List[Person]:
     for i in range(count):
         fac = Person(
             id=uuid4(),
-            name=f"Dr. Test Faculty {i+1}",
+            name=f"Dr. Test Faculty {i + 1}",
             type="faculty",
-            email=f"faculty{i+1}@test.org",
+            email=f"faculty{i + 1}@test.org",
             performs_procedures=(i == 0),
             specialties=["General Medicine"],
         )
@@ -129,7 +129,7 @@ def create_test_faculty(db: Session, count: int = 2) -> List[Person]:
     return faculty
 
 
-def create_test_rotation_templates(db: Session) -> List[RotationTemplate]:
+def create_test_rotation_templates(db: Session) -> list[RotationTemplate]:
     """
     Create standard test rotation templates.
 
@@ -174,7 +174,7 @@ def create_test_rotation_templates(db: Session) -> List[RotationTemplate]:
 
 def create_academic_year_blocks(
     db: Session, start_date: date, end_date: date
-) -> List[Block]:
+) -> list[Block]:
     """
     Create blocks for an entire academic year.
 

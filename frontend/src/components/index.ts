@@ -24,7 +24,7 @@ export * from './layout';
 export * from './LoadingStates';
 
 // Existing Components (for backward compatibility)
-export { default as EmptyState } from './EmptyState';
+export { EmptyState } from './EmptyState';
 export { Toast } from './Toast';
 export { Modal } from './Modal';
 export { ConfirmDialog } from './ConfirmDialog';

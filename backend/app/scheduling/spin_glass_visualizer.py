@@ -132,7 +132,7 @@ def plot_energy_landscape(
         transform=ax.transAxes,
         fontsize=10,
         verticalalignment="top",
-        bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
+        bbox={"boxstyle": "round", "facecolor": "wheat", "alpha": 0.5},
     )
 
     plt.tight_layout()
@@ -210,7 +210,7 @@ def plot_parisi_overlap_matrix(
         info_text,
         fontsize=10,
         verticalalignment="top",
-        bbox=dict(boxstyle="round", facecolor="lightblue", alpha=0.8),
+        bbox={"boxstyle": "round", "facecolor": "lightblue", "alpha": 0.8},
     )
 
     plt.tight_layout()
@@ -278,7 +278,7 @@ def plot_overlap_distribution(
         fontsize=10,
         verticalalignment="top",
         horizontalalignment="right",
-        bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
+        bbox={"boxstyle": "round", "facecolor": "wheat", "alpha": 0.5},
     )
 
     plt.tight_layout()
@@ -447,7 +447,7 @@ def plot_solution_basins(
         transform=ax.transAxes,
         fontsize=10,
         verticalalignment="top",
-        bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
+        bbox={"boxstyle": "round", "facecolor": "wheat", "alpha": 0.5},
     )
 
     plt.tight_layout()

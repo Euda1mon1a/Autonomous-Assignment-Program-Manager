@@ -82,14 +82,16 @@ def generate_from_pyspy(
     try:
         subprocess.run(cmd, check=True)
         print(f"\n✓ Flame graph saved to: {output_file}")
-        print(f"  Open in browser to visualize")
+        print("  Open in browser to visualize")
     except subprocess.CalledProcessError as e:
         print(f"ERROR: py-spy failed: {e}")
         print("\nTry running with sudo:")
         print(f"  sudo env PATH=$PATH {' '.join(cmd)}")
 
 
-def convert_pstats_to_flamegraph(pstats_file: Path, output_file: str = "flamegraph.svg"):
+def convert_pstats_to_flamegraph(
+    pstats_file: Path, output_file: str = "flamegraph.svg"
+):
     """
     Convert cProfile .pstats file to flame graph format.
 
