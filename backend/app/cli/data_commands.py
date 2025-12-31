@@ -14,7 +14,7 @@ from app.db.session import SessionLocal
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
-from app.models.rotation import RotationTemplate
+from app.models.rotation_template import RotationTemplate
 
 logger = get_logger(__name__)
 
