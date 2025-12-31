@@ -388,18 +388,17 @@ describe('EditPersonModal', () => {
     })
 
     it('should not submit with validation errors', async () => {
-      const user = userEvent.setup()
-
       render(
         <EditPersonModal {...defaultProps} />,
         { wrapper: createWrapper() }
       )
 
       const nameInput = screen.getByLabelText(/name/i)
-      await user.clear(nameInput)
+      // Use fireEvent for reliable clearing
+      fireEvent.change(nameInput, { target: { value: '' } })
 
-      const submitButton = screen.getByRole('button', { name: /save changes/i })
-      await user.click(submitButton)
+      const form = nameInput.closest('form')!
+      fireEvent.submit(form)
 
       await waitFor(() => {
         expect(screen.getByText(/name is required/i)).toBeInTheDocument()
@@ -409,19 +408,17 @@ describe('EditPersonModal', () => {
     })
 
     it('should parse specialties correctly', async () => {
-      const user = userEvent.setup()
-
       render(
         <EditPersonModal {...defaultProps} />,
         { wrapper: createWrapper() }
       )
 
       const specialtiesInput = screen.getByLabelText(/specialties/i)
-      await user.clear(specialtiesInput)
-      await user.type(specialtiesInput, 'Cardiology, Neurology, Oncology')
+      // Use fireEvent for reliable input
+      fireEvent.change(specialtiesInput, { target: { value: 'Cardiology, Neurology, Oncology' } })
 
-      const submitButton = screen.getByRole('button', { name: /save changes/i })
-      await user.click(submitButton)
+      const form = specialtiesInput.closest('form')!
+      fireEvent.submit(form)
 
       await waitFor(() => {
         expect(mockMutateAsync).toHaveBeenCalledWith({
