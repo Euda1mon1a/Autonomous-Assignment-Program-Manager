@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class NumpyEncoder(json.JSONEncoder):
     """JSON encoder that handles numpy types."""
 
-    def default(self, obj):
+    def default(self, obj) -> Any:
         if isinstance(obj, np.integer):
             return int(obj)
         elif isinstance(obj, np.floating):

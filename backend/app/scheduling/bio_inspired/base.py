@@ -220,7 +220,7 @@ class Chromosome:
         """Get template index for a resident-block pair (0 = unassigned)."""
         return int(self.genes[resident_idx, block_idx])
 
-    def set_assignment(self, resident_idx: int, block_idx: int, template_idx: int):
+    def set_assignment(self, resident_idx: int, block_idx: int, template_idx: int) -> None:
         """Set template index for a resident-block pair."""
         self.genes[resident_idx, block_idx] = template_idx
 
@@ -696,7 +696,7 @@ class BioInspiredSolver(BaseSolver, ABC):
 
         return population
 
-    def update_pareto_front(self, population: list[Individual]):
+    def update_pareto_front(self, population: list[Individual]) -> None:
         """
         Update the Pareto front with non-dominated solutions.
 

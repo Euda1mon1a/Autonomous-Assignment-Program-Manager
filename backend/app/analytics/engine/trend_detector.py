@@ -31,12 +31,29 @@ class TrendDetector:
         """
         Detect trends in multiple time series.
 
+        Analyzes each time series to identify directional trends (increasing,
+        decreasing, stable) using linear regression with statistical significance
+        testing.
+
         Args:
-            time_series_data: Dict of metric name to Series
-            min_observations: Minimum observations needed
+            time_series_data: Dict mapping metric name to pandas Series
+                containing time series data
+            min_observations: Minimum number of data points required for
+                trend analysis (default: 4)
 
         Returns:
-            Dict of metric name to trend analysis
+            dict[str, dict[str, Any]]: Dictionary mapping metric names to
+                trend analysis results containing:
+                - direction: "increasing" | "decreasing" | "stable" | "insufficient_data"
+                - confidence: "high" | "medium" | "low"
+                - slope: Trend slope value
+                - r_squared: R² goodness of fit
+                - p_value: Statistical significance
+                - percent_change: Overall percentage change
+
+        Note:
+            Trends with fewer than min_observations data points are marked
+            as "insufficient_data".
         """
         trends = {}
 
@@ -56,11 +73,26 @@ class TrendDetector:
         """
         Analyze trend for a single time series.
 
+        Performs linear regression on the time series and computes trend
+        direction, statistical significance, and magnitude metrics.
+
         Args:
-            series: Time series data
+            series: pandas Series containing time series data
 
         Returns:
-            Dict with trend analysis
+            dict[str, Any]: Analysis containing:
+                - direction: Trend direction classification
+                - confidence: Statistical confidence level
+                - slope: Linear regression slope
+                - r_squared: Coefficient of determination
+                - p_value: Statistical p-value
+                - percent_change: Percentage change from first to last
+                - first_value: Initial value
+                - last_value: Final value
+
+        Note:
+            Direction is "stable" if |slope| < 0.01. Confidence is "high"
+            if p < 0.01 and R² > 0.7, "medium" if p < 0.05 and R² > 0.5.
         """
         # Remove NaN values
         series = series.dropna()
@@ -124,12 +156,26 @@ class TrendDetector:
         """
         Detect significant change points in time series.
 
+        Identifies points where the time series exhibits sudden changes
+        that exceed a statistical threshold based on z-scores of first
+        differences.
+
         Args:
-            series: Time series data
-            threshold: Z-score threshold for detection
+            series: pandas Series containing time series data
+            threshold: Z-score threshold for change point detection
+                (default: 2.0 for ~95% confidence)
 
         Returns:
-            List of change points with dates and magnitudes
+            list[dict[str, Any]]: List of detected change points, each containing:
+                - date: Timestamp of the change point
+                - z_score: Z-score of the change magnitude
+                - value_change: Absolute change in value
+                - value_before: Value immediately before change
+                - value_after: Value immediately after change
+
+        Note:
+            Returns empty list if series has fewer than 3 points or if
+            standard deviation is zero (constant series).
         """
         series = series.dropna()
 
@@ -174,12 +220,24 @@ class TrendDetector:
         """
         Detect cyclic patterns in time series.
 
+        Uses autocorrelation analysis to identify periodic patterns in the
+        data, useful for detecting weekly, monthly, or other regular cycles.
+
         Args:
-            series: Time series data
-            max_period: Maximum cycle period to check
+            series: pandas Series containing time series data
+            max_period: Maximum cycle period to test in time units
+                (default: 30)
 
         Returns:
-            Dict with cycle detection results
+            dict[str, Any]: Cycle detection results containing:
+                - has_cycle: Boolean indicating if significant cycle detected
+                - period: Cycle period in time units (None if no cycle)
+                - strength: Autocorrelation strength (0 to 1)
+                - autocorrelation: Raw autocorrelation coefficient
+
+        Note:
+            A cycle is considered significant if autocorrelation strength
+            exceeds 0.3. Requires at least max_period data points.
         """
         series = series.dropna()
 
@@ -228,12 +286,23 @@ class TrendDetector:
         """
         Calculate volatility metrics.
 
+        Computes multiple measures of time series variability to assess
+        how much the metric fluctuates over time.
+
         Args:
-            series: Time series data
-            window: Rolling window size
+            series: pandas Series containing time series data
+            window: Rolling window size for rolling statistics (default: 7)
 
         Returns:
-            Dict with volatility metrics
+            dict[str, float]: Volatility metrics containing:
+                - std: Standard deviation of entire series
+                - coefficient_of_variation: Std dev / mean (normalized volatility)
+                - range: Maximum value - minimum value
+                - avg_rolling_std: Mean of rolling window standard deviations
+
+        Note:
+            Returns zeros if series has fewer than 2 points. Coefficient
+            of variation is 0 if mean is zero.
         """
         series = series.dropna()
 
@@ -273,13 +342,38 @@ class TrendDetector:
         """
         Detect outliers in time series.
 
+        Identifies anomalous values that deviate significantly from the
+        typical distribution using either z-score or IQR methods.
+
         Args:
-            series: Time series data
-            method: Detection method (zscore, iqr)
-            threshold: Threshold for outlier detection
+            series: pandas Series containing time series data
+            method: Detection method - "zscore" (default) or "iqr"
+            threshold: Threshold for outlier detection:
+                - For "zscore": Number of standard deviations (default: 3.0)
+                - For "iqr": IQR multiplier (default: 3.0)
 
         Returns:
-            List of outliers with dates and values
+            list[dict[str, Any]]: List of detected outliers, each containing:
+                For "zscore" method:
+                    - date: Timestamp of outlier
+                    - value: Outlier value
+                    - z_score: Z-score of the value
+                    - method: "zscore"
+                For "iqr" method:
+                    - date: Timestamp of outlier
+                    - value: Outlier value
+                    - lower_bound: IQR lower bound
+                    - upper_bound: IQR upper bound
+                    - method: "iqr"
+
+        Note:
+            Returns empty list if series has fewer than 3 points or if
+            standard deviation is zero (for zscore method).
+
+        Example:
+            >>> outliers = detector.detect_outliers(data, method="zscore", threshold=2.5)
+            >>> for outlier in outliers:
+            ...     print(f"Outlier at {outlier['date']}: {outlier['value']}")
         """
         series = series.dropna()
 
