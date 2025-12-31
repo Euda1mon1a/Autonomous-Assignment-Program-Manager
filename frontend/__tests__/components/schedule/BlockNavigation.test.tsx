@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent } from '@/test-utils'
 import { BlockNavigation } from '@/components/schedule/BlockNavigation'
 import { addDays, subDays, format } from 'date-fns'
 

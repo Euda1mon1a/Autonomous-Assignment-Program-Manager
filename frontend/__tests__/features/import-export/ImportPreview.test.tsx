@@ -4,7 +4,7 @@
  * Tests preview table, filtering, sorting, row expansion, and validation display
  */
 
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { ImportPreview, ImportPreviewSkeleton } from '@/features/import-export/ImportPreview';
 import { importExportMockFactories } from './import-export-mocks';

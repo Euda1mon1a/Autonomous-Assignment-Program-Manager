@@ -4,7 +4,7 @@
  * Tests for the AbsenceCalendar component (used as BlockCalendar)
  * including navigation, absence display, and user interactions.
  */
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { AbsenceCalendar } from '@/components/AbsenceCalendar'
 import type { Absence, Person } from '@/types/api'

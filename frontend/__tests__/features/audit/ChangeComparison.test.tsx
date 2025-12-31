@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { ChangeComparison } from '@/features/audit/ChangeComparison';
 import { mockAuditLogs, getMockLogs } from './mockData';

@@ -1,5 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react'
-import { renderHook, act } from '@testing-library/react'
+import { render, screen, fireEvent } from '@/test-utils'
+import { renderHook, act } from '@/test-utils'
 import { ViewToggle, useScheduleView } from '@/components/schedule/ViewToggle'
 import { useRouter, useSearchParams } from 'next/navigation'
 
