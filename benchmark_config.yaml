@@ -1,0 +1,238 @@
+# Benchmark Configuration
+# Defines benchmark parameters, thresholds, and execution settings
+
+version: "1.0"
+
+# Global benchmark settings
+global:
+  output_directory: "benchmark_results"
+  iterations: 3
+  warmup_iterations: 1
+  verbose: false
+  save_raw_data: true
+
+# Schedule generation benchmarks
+schedule_generation:
+  enabled: true
+  configurations:
+    - name: "small_program"
+      residents: 10
+      weeks: 2
+      iterations: 5
+      threshold_seconds: 5.0
+
+    - name: "medium_program"
+      residents: 25
+      weeks: 4
+      iterations: 3
+      threshold_seconds: 10.0
+
+    - name: "large_program"
+      residents: 50
+      weeks: 4
+      iterations: 3
+      threshold_seconds: 20.0
+
+    - name: "xlarge_program"
+      residents: 100
+      weeks: 4
+      iterations: 2
+      threshold_seconds: 45.0
+
+# ACGME validation benchmarks
+acgme_validation:
+  enabled: true
+  configurations:
+    - name: "small_validation"
+      residents: 25
+      weeks: 4
+      validation_type: "full"
+      iterations: 5
+      threshold_seconds: 1.0
+
+    - name: "medium_validation"
+      residents: 50
+      weeks: 4
+      validation_type: "full"
+      iterations: 5
+      threshold_seconds: 2.0
+
+    - name: "large_validation"
+      residents: 100
+      weeks: 4
+      validation_type: "full"
+      iterations: 3
+      threshold_seconds: 5.0
+
+    - name: "extended_validation"
+      residents: 100
+      weeks: 12
+      validation_type: "full"
+      iterations: 2
+      threshold_seconds: 15.0
+
+# Database query benchmarks
+database_queries:
+  enabled: true
+  configurations:
+    - name: "simple_queries"
+      query_type: "simple"
+      iterations: 100
+      threshold_ms: 10
+
+    - name: "join_queries"
+      query_type: "joins"
+      iterations: 50
+      threshold_ms: 50
+
+    - name: "bulk_insert_50"
+      query_type: "bulk"
+      batch_size: 50
+      iterations: 10
+      threshold_ms: 100
+
+    - name: "bulk_insert_500"
+      query_type: "bulk"
+      batch_size: 500
+      iterations: 10
+      threshold_ms: 500
+
+# Resilience calculation benchmarks
+resilience_calculations:
+  enabled: true
+  configurations:
+    - name: "n1_contingency_small"
+      metric: "n1"
+      people: 25
+      weeks: 4
+      iterations: 10
+      threshold_seconds: 3.0
+
+    - name: "n1_contingency_large"
+      metric: "n1"
+      people: 100
+      weeks: 4
+      iterations: 10
+      threshold_seconds: 10.0
+
+    - name: "burnout_epidemiology"
+      metric: "burnout"
+      residents: 50
+      weeks: 12
+      iterations: 10
+      threshold_seconds: 5.0
+
+    - name: "spc_monitoring"
+      metric: "spc"
+      weeks: 12
+      iterations: 10
+      threshold_seconds: 3.0
+
+# Swap matching benchmarks
+swap_matching:
+  enabled: true
+  configurations:
+    - name: "small_faculty_pool"
+      faculty: 10
+      weeks: 4
+      iterations: 20
+      threshold_seconds: 0.5
+
+    - name: "medium_faculty_pool"
+      faculty: 30
+      weeks: 4
+      iterations: 20
+      threshold_seconds: 1.0
+
+    - name: "large_faculty_pool"
+      faculty: 100
+      weeks: 4
+      iterations: 20
+      threshold_seconds: 3.0
+
+# Concurrent operations benchmarks
+concurrent_operations:
+  enabled: true
+  configurations:
+    - name: "concurrent_reads_low"
+      operation: "reads"
+      workers: 10
+      duration: 10
+      threshold_ops_per_sec: 50
+
+    - name: "concurrent_reads_high"
+      operation: "reads"
+      workers: 50
+      duration: 10
+      threshold_ops_per_sec: 200
+
+    - name: "concurrent_writes"
+      operation: "writes"
+      workers: 20
+      duration: 10
+      threshold_ops_per_sec: 30
+
+# Memory usage benchmarks
+memory_usage:
+  enabled: true
+  configurations:
+    - name: "schedule_generation_memory"
+      operation: "schedule"
+      iterations: 10
+      max_growth_mb: 50
+      max_peak_mb: 500
+
+    - name: "validation_memory"
+      operation: "validation"
+      iterations: 20
+      max_growth_mb: 30
+      max_peak_mb: 300
+
+# Startup time benchmarks
+startup_time:
+  enabled: true
+  configurations:
+    - name: "config_loading"
+      benchmark: "config"
+      iterations: 100
+      threshold_ms: 50
+
+    - name: "module_import"
+      benchmark: "import"
+      threshold_ms: 5000
+
+    - name: "database_connection"
+      benchmark: "db"
+      iterations: 10
+      threshold_ms: 500
+
+    - name: "app_initialization"
+      benchmark: "app"
+      iterations: 3
+      threshold_seconds: 10.0
+
+# Performance regression thresholds
+regression_detection:
+  enabled: true
+  thresholds:
+    duration_increase_percent: 10  # Alert if >10% slower
+    memory_increase_percent: 15    # Alert if >15% more memory
+    throughput_decrease_percent: 10  # Alert if >10% less throughput
+
+  alerts:
+    slack_webhook: null  # Set to webhook URL if using Slack
+    email_recipients: []  # Add email addresses for alerts
+
+# CI/CD integration
+ci_integration:
+  enabled: true
+  fail_on_regression: true
+  required_benchmarks:
+    - "schedule_generation.medium_program"
+    - "acgme_validation.medium_validation"
+    - "database_queries.simple_queries"
+
+  quick_suite:
+    - "schedule_generation.small_program"
+    - "acgme_validation.small_validation"
+    - "startup_time.config_loading"

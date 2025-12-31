@@ -1,0 +1,325 @@
+{
+  "authentication": {
+    "login": {
+      "description": "Authenticate user and receive JWT tokens",
+      "endpoint": "POST /api/auth/login",
+      "content_type": "application/x-www-form-urlencoded",
+      "body": "username=user@example.com&password=your_password"
+    },
+    "login_json": {
+      "description": "Authenticate user with JSON body",
+      "endpoint": "POST /api/auth/login/json",
+      "content_type": "application/json",
+      "body": {
+        "username": "user@example.com",
+        "password": "your_password"
+      }
+    },
+    "register": {
+      "description": "Register new user (admin only after first user)",
+      "endpoint": "POST /api/auth/register",
+      "content_type": "application/json",
+      "body": {
+        "username": "newuser",
+        "email": "newuser@example.com",
+        "password": "SecureP@ssw0rd123",
+        "role": "coordinator"
+      }
+    },
+    "refresh_token": {
+      "description": "Refresh access token using refresh token",
+      "endpoint": "POST /api/auth/refresh",
+      "content_type": "application/json",
+      "body": {
+        "refresh_token": "eyJhbGciOiJIUzI1NiIs..."
+      }
+    }
+  },
+  "schedule": {
+    "generate": {
+      "description": "Generate schedule with hybrid algorithm",
+      "endpoint": "POST /api/v1/schedule/generate",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN",
+        "Content-Type": "application/json",
+        "Idempotency-Key": "unique-key-12345"
+      },
+      "body": {
+        "start_date": "2024-07-01",
+        "end_date": "2024-07-31",
+        "pgy_levels": [1, 2, 3],
+        "rotation_template_ids": [
+          "550e8400-e29b-41d4-a716-446655440000"
+        ],
+        "algorithm": "hybrid",
+        "timeout_seconds": 120.0
+      }
+    },
+    "generate_minimal": {
+      "description": "Generate schedule with minimal parameters",
+      "endpoint": "POST /api/v1/schedule/generate",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN"
+      },
+      "body": {
+        "start_date": "2024-07-01",
+        "end_date": "2024-07-31"
+      }
+    },
+    "emergency_coverage": {
+      "description": "Handle emergency absence and find replacement",
+      "endpoint": "POST /api/v1/schedule/emergency-coverage",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN"
+      },
+      "body": {
+        "person_id": "550e8400-e29b-41d4-a716-446655440000",
+        "start_date": "2024-07-15",
+        "end_date": "2024-07-22",
+        "reason": "Military deployment",
+        "is_deployment": true
+      }
+    },
+    "faculty_outpatient": {
+      "description": "Generate faculty outpatient assignments",
+      "endpoint": "POST /api/v1/schedule/faculty-outpatient/generate",
+      "query_params": {
+        "block_number": 10,
+        "regenerate": true,
+        "include_clinic": true,
+        "include_supervision": true
+      },
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN"
+      }
+    }
+  },
+  "assignments": {
+    "create": {
+      "description": "Create new assignment with ACGME validation",
+      "endpoint": "POST /api/v1/assignments",
+      "headers": {
+        "Authorization": "Bearer SCHEDULER_TOKEN"
+      },
+      "body": {
+        "block_id": "550e8400-e29b-41d4-a716-446655440001",
+        "person_id": "550e8400-e29b-41d4-a716-446655440002",
+        "rotation_template_id": "550e8400-e29b-41d4-a716-446655440003",
+        "role": "resident",
+        "override_reason": "Manual assignment for coverage gap"
+      }
+    },
+    "create_minimal": {
+      "description": "Create assignment with minimal required fields",
+      "endpoint": "POST /api/v1/assignments",
+      "headers": {
+        "Authorization": "Bearer SCHEDULER_TOKEN"
+      },
+      "body": {
+        "block_id": "550e8400-e29b-41d4-a716-446655440001",
+        "person_id": "550e8400-e29b-41d4-a716-446655440002",
+        "rotation_template_id": "550e8400-e29b-41d4-a716-446655440003",
+        "role": "resident"
+      }
+    },
+    "update": {
+      "description": "Update assignment with optimistic locking",
+      "endpoint": "PUT /api/v1/assignments/{assignment_id}",
+      "headers": {
+        "Authorization": "Bearer SCHEDULER_TOKEN"
+      },
+      "body": {
+        "person_id": "550e8400-e29b-41d4-a716-446655440004",
+        "rotation_template_id": "550e8400-e29b-41d4-a716-446655440005",
+        "version": 1,
+        "override_reason": "Reassignment due to absence"
+      }
+    }
+  },
+  "persons": {
+    "create_resident": {
+      "description": "Create new resident",
+      "endpoint": "POST /api/v1/people",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN"
+      },
+      "body": {
+        "name": "PGY1-04",
+        "type": "resident",
+        "pgy_level": 1,
+        "email": "pgy1-04@example.com",
+        "phone": "+1-808-555-5678",
+        "is_active": true
+      }
+    },
+    "create_faculty": {
+      "description": "Create new faculty member",
+      "endpoint": "POST /api/v1/people",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN"
+      },
+      "body": {
+        "name": "FAC-CORE-02",
+        "type": "faculty",
+        "email": "core-02@example.com",
+        "phone": "+1-808-555-9876",
+        "specialty": "Sports Medicine",
+        "is_active": true
+      }
+    },
+    "update_pgy_level": {
+      "description": "Promote resident to next PGY level",
+      "endpoint": "PUT /api/v1/people/{person_id}",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN"
+      },
+      "body": {
+        "pgy_level": 2
+      }
+    },
+    "deactivate": {
+      "description": "Deactivate person (soft delete)",
+      "endpoint": "PUT /api/v1/people/{person_id}",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN"
+      },
+      "body": {
+        "is_active": false
+      }
+    }
+  },
+  "swaps": {
+    "execute_one_to_one": {
+      "description": "Execute one-to-one swap between faculty",
+      "endpoint": "POST /api/v1/swaps/execute",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN"
+      },
+      "body": {
+        "source_faculty_id": "550e8400-e29b-41d4-a716-446655440000",
+        "source_week": "2024-07-08",
+        "target_faculty_id": "550e8400-e29b-41d4-a716-446655440001",
+        "target_week": "2024-07-15",
+        "swap_type": "one_to_one",
+        "reason": "Family commitment conflict"
+      }
+    },
+    "execute_absorb": {
+      "description": "Absorb week without exchange (emergency coverage)",
+      "endpoint": "POST /api/v1/swaps/execute",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN"
+      },
+      "body": {
+        "source_faculty_id": "550e8400-e29b-41d4-a716-446655440000",
+        "source_week": "2024-07-08",
+        "target_faculty_id": "550e8400-e29b-41d4-a716-446655440001",
+        "swap_type": "absorb",
+        "reason": "Medical leave - no exchange required"
+      }
+    },
+    "validate": {
+      "description": "Validate proposed swap before execution",
+      "endpoint": "POST /api/v1/swaps/validate",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN"
+      },
+      "body": {
+        "source_faculty_id": "550e8400-e29b-41d4-a716-446655440000",
+        "source_week": "2024-07-08",
+        "target_faculty_id": "550e8400-e29b-41d4-a716-446655440001",
+        "target_week": "2024-07-15",
+        "swap_type": "one_to_one"
+      }
+    },
+    "rollback": {
+      "description": "Rollback swap within 24-hour window",
+      "endpoint": "POST /api/v1/swaps/{swap_id}/rollback",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN"
+      },
+      "body": {
+        "reason": "Faculty changed mind, reverting to original schedule"
+      }
+    }
+  },
+  "resilience": {
+    "activate_crisis": {
+      "description": "Activate crisis mode with fallback schedule",
+      "endpoint": "POST /api/v1/resilience/crisis/activate",
+      "headers": {
+        "Authorization": "Bearer ADMIN_TOKEN"
+      },
+      "body": {
+        "severity": "high",
+        "reason": "Multiple faculty deployments - insufficient coverage",
+        "expected_duration_hours": 168,
+        "activate_fallback": true
+      }
+    },
+    "deactivate_crisis": {
+      "description": "Deactivate crisis mode and return to normal operations",
+      "endpoint": "POST /api/v1/resilience/crisis/deactivate",
+      "headers": {
+        "Authorization": "Bearer ADMIN_TOKEN"
+      },
+      "body": {
+        "reason": "Staffing restored to normal levels",
+        "deactivate_fallback": true
+      }
+    },
+    "activate_fallback": {
+      "description": "Activate specific fallback schedule",
+      "endpoint": "POST /api/v1/resilience/fallbacks/activate",
+      "headers": {
+        "Authorization": "Bearer ADMIN_TOKEN"
+      },
+      "body": {
+        "fallback_id": "550e8400-e29b-41d4-a716-446655440000",
+        "reason": "Faculty deployment emergency",
+        "effective_date": "2024-07-01"
+      }
+    },
+    "set_load_shedding": {
+      "description": "Set load shedding level to reduce system load",
+      "endpoint": "POST /api/v1/resilience/load-shedding",
+      "headers": {
+        "Authorization": "Bearer ADMIN_TOKEN"
+      },
+      "body": {
+        "level": "medium",
+        "reason": "Approaching 80% utilization",
+        "duration_hours": 24
+      }
+    }
+  },
+  "common_query_patterns": {
+    "pagination": {
+      "description": "Paginated list request",
+      "query_params": {
+        "page": 1,
+        "page_size": 50
+      }
+    },
+    "date_range": {
+      "description": "Date range filter",
+      "query_params": {
+        "start_date": "2024-07-01",
+        "end_date": "2024-07-31"
+      }
+    },
+    "filter_by_person": {
+      "description": "Filter by specific person",
+      "query_params": {
+        "person_id": "550e8400-e29b-41d4-a716-446655440000"
+      }
+    },
+    "filter_by_type": {
+      "description": "Filter by type (resident/faculty)",
+      "query_params": {
+        "type": "resident",
+        "pgy_level": 1
+      }
+    }
+  }
+}
