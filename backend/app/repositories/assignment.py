@@ -83,6 +83,15 @@ class AssignmentRepository(BaseRepository[Assignment]):
         # Get total count before pagination (using a subquery for efficiency)
         total = query.count()
 
+        # Apply deterministic ordering for stable pagination
+        # Order by block date if available, then by assignment id for stability
+        if start_date or end_date:
+            # Block is already joined, order by date then id
+            query = query.order_by(Block.date, Assignment.id)
+        else:
+            # No block join, just order by id for deterministic results
+            query = query.order_by(Assignment.id)
+
         # Apply pagination at database level
         if offset is not None:
             query = query.offset(offset)
