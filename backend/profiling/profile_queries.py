@@ -34,13 +34,17 @@ class QueryProfiler:
     def __init__(self):
         self.queries = []
 
-    def before_cursor_execute(self, conn, cursor, statement, parameters, context, executemany):
+    def before_cursor_execute(
+        self, conn, cursor, statement, parameters, context, executemany
+    ):
         """Called before query execution."""
         import time
 
         context._query_start_time = time.perf_counter()
 
-    def after_cursor_execute(self, conn, cursor, statement, parameters, context, executemany):
+    def after_cursor_execute(
+        self, conn, cursor, statement, parameters, context, executemany
+    ):
         """Called after query execution."""
         import time
 
@@ -75,7 +79,7 @@ class QueryProfiler:
         print(f"Total Queries: {len(self.queries)}")
         print(f"Total Time: {total_time:.3f}s")
         print(f"Average Time: {avg_time:.6f}s")
-        print(f"\nSlowest Queries:")
+        print("\nSlowest Queries:")
         print(f"{'-' * 80}")
 
         for i, query in enumerate(sorted_queries[:10], 1):
@@ -117,7 +121,9 @@ def profile_simple_queries():
 
         with profiler:
             for person_id in person_ids[:50]:
-                result = db.execute(select(Person).where(Person.id == person_id)).scalar_one_or_none()
+                result = db.execute(
+                    select(Person).where(Person.id == person_id)
+                ).scalar_one_or_none()
 
         profiler.print_stats(limit=30)
         query_profiler.print_summary()
@@ -198,15 +204,19 @@ def profile_join_queries():
         profiler = ProfilerContext("join_queries_eager")
 
         with profiler:
-            result = db.execute(
-                select(Assignment)
-                .options(
-                    joinedload(Assignment.person),
-                    joinedload(Assignment.block),
-                    joinedload(Assignment.rotation_template),
+            result = (
+                db.execute(
+                    select(Assignment)
+                    .options(
+                        joinedload(Assignment.person),
+                        joinedload(Assignment.block),
+                        joinedload(Assignment.rotation_template),
+                    )
+                    .limit(100)
                 )
-                .limit(100)
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
 
         profiler.print_stats(limit=30)
         query_profiler.print_summary()

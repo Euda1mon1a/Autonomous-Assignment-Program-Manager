@@ -22,7 +22,7 @@ def assert_valid_date(value: Any) -> None:
     """Assert value is a valid ISO date string."""
     try:
         if isinstance(value, str):
-            datetime.fromisoformat(value.replace('Z', '+00:00'))
+            datetime.fromisoformat(value.replace("Z", "+00:00"))
         elif isinstance(value, date):
             pass  # Already a date
         else:
@@ -94,12 +94,14 @@ def assert_acgme_compliant(compliance_data: dict) -> None:
         compliance_data: Compliance check result from API
     """
     if "compliant" in compliance_data:
-        assert compliance_data["compliant"] is True, "ACGME compliance violation detected"
+        assert compliance_data["compliant"] is True, (
+            "ACGME compliance violation detected"
+        )
 
     if "violations" in compliance_data:
-        assert (
-            len(compliance_data["violations"]) == 0
-        ), f"ACGME violations found: {compliance_data['violations']}"
+        assert len(compliance_data["violations"]) == 0, (
+            f"ACGME violations found: {compliance_data['violations']}"
+        )
 
 
 def assert_no_conflicts(conflicts: list) -> None:
@@ -121,12 +123,12 @@ def assert_swap_status(swap: dict, expected_status: str) -> None:
         expected_status: Expected swap status
     """
     assert "status" in swap, "Swap missing status field"
-    assert (
-        swap["status"] == expected_status
-    ), f"Expected swap status '{expected_status}', got '{swap['status']}'"
+    assert swap["status"] == expected_status, (
+        f"Expected swap status '{expected_status}', got '{swap['status']}'"
+    )
 
 
-def assert_pagination_valid(response: dict, expected_items: Optional[int] = None) -> None:
+def assert_pagination_valid(response: dict, expected_items: int | None = None) -> None:
     """
     Assert pagination response is valid.
 
@@ -145,9 +147,9 @@ def assert_pagination_valid(response: dict, expected_items: Optional[int] = None
     assert isinstance(response["size"], int)
 
     if expected_items is not None:
-        assert (
-            len(response["items"]) == expected_items
-        ), f"Expected {expected_items} items, got {len(response['items'])}"
+        assert len(response["items"]) == expected_items, (
+            f"Expected {expected_items} items, got {len(response['items'])}"
+        )
 
 
 def assert_datetime_recent(dt_string: str, max_age_seconds: int = 60) -> None:
@@ -158,10 +160,10 @@ def assert_datetime_recent(dt_string: str, max_age_seconds: int = 60) -> None:
         dt_string: ISO datetime string
         max_age_seconds: Maximum age in seconds
     """
-    dt = datetime.fromisoformat(dt_string.replace('Z', '+00:00'))
+    dt = datetime.fromisoformat(dt_string.replace("Z", "+00:00"))
     now = datetime.now(dt.tzinfo)
     age = (now - dt).total_seconds()
 
-    assert (
-        age <= max_age_seconds
-    ), f"Datetime is {age}s old, expected <= {max_age_seconds}s"
+    assert age <= max_age_seconds, (
+        f"Datetime is {age}s old, expected <= {max_age_seconds}s"
+    )

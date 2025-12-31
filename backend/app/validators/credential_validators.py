@@ -112,7 +112,9 @@ def validate_credential_name(credential_name: str) -> str:
         raise ValidationError(f"Credential name too short: '{name}'")
 
     if len(name) > 100:
-        raise ValidationError(f"Credential name too long: '{name}' (max 100 characters)")
+        raise ValidationError(
+            f"Credential name too long: '{name}' (max 100 characters)"
+        )
 
     return name
 
@@ -146,7 +148,9 @@ def validate_credential_expiration(
         )
 
     # Validate date format
-    validated_date = validate_date_not_null(expiration_date, "Credential expiration date")
+    validated_date = validate_date_not_null(
+        expiration_date, "Credential expiration date"
+    )
 
     # Check if already expired
     if not allow_expired:
@@ -304,7 +308,9 @@ async def validate_person_has_credential(
         "credential_name": credential_name,
         "person_id": str(person_id),
         "person_name": person.name,
-        "expires_at": credential.expires_at.isoformat() if credential.expires_at else None,
+        "expires_at": credential.expires_at.isoformat()
+        if credential.expires_at
+        else None,
     }
 
 
@@ -363,7 +369,8 @@ async def validate_slot_type_credentials(
         "hard_requirements_total": len(hard_requirements),
         "hard_violations": hard_violations,
         "soft_warnings": soft_warnings,
-        "penalty_score": len(soft_warnings) * 3,  # 3 points per missing soft requirement
+        "penalty_score": len(soft_warnings)
+        * 3,  # 3 points per missing soft requirement
     }
 
 
@@ -387,10 +394,14 @@ async def get_expiring_credentials(
     threshold_date = today + timedelta(days=days_threshold)
 
     # Build query
-    query = select(Certification).join(Person).where(
-        Certification.expires_at.isnot(None),
-        Certification.expires_at >= today,
-        Certification.expires_at <= threshold_date,
+    query = (
+        select(Certification)
+        .join(Person)
+        .where(
+            Certification.expires_at.isnot(None),
+            Certification.expires_at >= today,
+            Certification.expires_at <= threshold_date,
+        )
     )
 
     if person_id is not None:
@@ -461,7 +472,9 @@ async def validate_credential_update(
     is_renewal = False
     if existing and existing.expires_at:
         # Should be close to expiration or within renewal window
-        renewal_window_start = existing.expires_at - timedelta(days=90)  # 90 days before
+        renewal_window_start = existing.expires_at - timedelta(
+            days=90
+        )  # 90 days before
         today = date.today()
 
         if today >= renewal_window_start:

@@ -70,7 +70,11 @@ def user_admin_setup(db: Session, admin_user: User) -> dict:
         )
         db.add(user)
         users.append(user)
-        credentials[username] = {"username": username, "password": password, "role": role}
+        credentials[username] = {
+            "username": username,
+            "password": password,
+            "role": role,
+        }
 
     db.commit()
 
@@ -253,7 +257,9 @@ class TestUserAdministrationE2E:
 
         # Step 4: Verify each user has correct role assignment
         for username, email, expected_role in roles_to_create:
-            user_in_list = next((u for u in all_users if u["username"] == username), None)
+            user_in_list = next(
+                (u for u in all_users if u["username"] == username), None
+            )
             assert user_in_list is not None
             assert user_in_list["role"] == expected_role
             assert user_in_list["email"] == email

@@ -93,10 +93,10 @@ class BarcodeVisualization:
                     x=[feature.birth, feature.death],
                     y=[idx, idx],
                     mode="lines",
-                    line=dict(
-                        color=self.colors[dim],
-                        width=3 if feature.is_significant else 1,
-                    ),
+                    line={
+                        "color": self.colors[dim],
+                        "width": 3 if feature.is_significant else 1,
+                    },
                     name=f"H{dim}",
                     showlegend=False,
                     hovertemplate=(
@@ -117,7 +117,7 @@ class BarcodeVisualization:
                     x=[None],
                     y=[None],
                     mode="lines",
-                    line=dict(color=color, width=3),
+                    line={"color": color, "width": 3},
                     name=f"H{dim}",
                     showlegend=True,
                 )
@@ -127,7 +127,7 @@ class BarcodeVisualization:
             title=title,
             xaxis_title="Filtration Parameter",
             yaxis_title="Feature Index",
-            yaxis=dict(showticklabels=False),
+            yaxis={"showticklabels": False},
             hovermode="closest",
             template="plotly_white",
         )
@@ -180,11 +180,11 @@ class BarcodeVisualization:
                         x=[f.birth for f in sig_features],
                         y=[f.death for f in sig_features],
                         mode="markers",
-                        marker=dict(
-                            color=self.colors[dim],
-                            size=10,
-                            line=dict(color="white", width=1),
-                        ),
+                        marker={
+                            "color": self.colors[dim],
+                            "size": 10,
+                            "line": {"color": "white", "width": 1},
+                        },
                         name=f"H{dim} (significant)",
                         hovertemplate=(
                             f"<b>H{dim} Feature</b><br>"
@@ -204,11 +204,11 @@ class BarcodeVisualization:
                         x=[f.birth for f in insig_features],
                         y=[f.death for f in insig_features],
                         mode="markers",
-                        marker=dict(
-                            color=self.colors[dim],
-                            size=5,
-                            opacity=0.5,
-                        ),
+                        marker={
+                            "color": self.colors[dim],
+                            "size": 5,
+                            "opacity": 0.5,
+                        },
                         name=f"H{dim} (weak)",
                         hovertemplate=(
                             f"<b>H{dim} Feature</b><br>"
@@ -227,7 +227,7 @@ class BarcodeVisualization:
                 x=[0, max_val * 1.1],
                 y=[0, max_val * 1.1],
                 mode="lines",
-                line=dict(color="gray", dash="dash"),
+                line={"color": "gray", "dash": "dash"},
                 name="Birth = Death",
                 showlegend=False,
                 hoverinfo="skip",
@@ -240,8 +240,8 @@ class BarcodeVisualization:
             yaxis_title="Death",
             template="plotly_white",
             hovermode="closest",
-            xaxis=dict(range=[0, max_val * 1.1]),
-            yaxis=dict(range=[0, max_val * 1.1]),
+            xaxis={"range": [0, max_val * 1.1]},
+            yaxis={"range": [0, max_val * 1.1]},
         )
 
         return fig.to_dict()
@@ -285,7 +285,7 @@ class BarcodeVisualization:
                         x=[f.birth for f in sig_features],
                         y=[f.death for f in sig_features],
                         mode="markers",
-                        marker=dict(color=self.colors[dim], size=8),
+                        marker={"color": self.colors[dim], "size": 8},
                         name=f"H{dim}",
                         legendgroup=f"h{dim}",
                     ),
@@ -299,7 +299,7 @@ class BarcodeVisualization:
                 x=[0, max_val * 1.1],
                 y=[0, max_val * 1.1],
                 mode="lines",
-                line=dict(color="gray", dash="dash"),
+                line={"color": "gray", "dash": "dash"},
                 showlegend=False,
             ),
             row=1,
@@ -321,7 +321,7 @@ class BarcodeVisualization:
                     x=[feature.birth, feature.death],
                     y=[idx, idx],
                     mode="lines",
-                    line=dict(color=self.colors[dim], width=3),
+                    line={"color": self.colors[dim], "width": 3},
                     showlegend=False,
                     legendgroup=f"h{dim}",
                 ),
@@ -373,12 +373,12 @@ def visualize_point_cloud(
                 x=point_cloud[:, 0],
                 y=point_cloud[:, 1],
                 mode="markers",
-                marker=dict(
-                    size=8,
-                    color=np.arange(len(point_cloud)),
-                    colorscale="Viridis",
-                    showscale=True,
-                ),
+                marker={
+                    "size": 8,
+                    "color": np.arange(len(point_cloud)),
+                    "colorscale": "Viridis",
+                    "showscale": True,
+                },
                 text=labels if labels else None,
                 hovertemplate="<b>Point %{pointNumber}</b><br>"
                 "X: %{x:.3f}<br>"
@@ -405,12 +405,12 @@ def visualize_point_cloud(
                 y=point_cloud[:, 1],
                 z=point_cloud[:, 2],
                 mode="markers",
-                marker=dict(
-                    size=5,
-                    color=np.arange(len(point_cloud)),
-                    colorscale="Viridis",
-                    showscale=True,
-                ),
+                marker={
+                    "size": 5,
+                    "color": np.arange(len(point_cloud)),
+                    "colorscale": "Viridis",
+                    "showscale": True,
+                },
                 text=labels if labels else None,
                 hovertemplate="<b>Point %{pointNumber}</b><br>"
                 "X: %{x:.3f}<br>"
@@ -423,11 +423,11 @@ def visualize_point_cloud(
 
         fig.update_layout(
             title=title,
-            scene=dict(
-                xaxis_title="Component 1",
-                yaxis_title="Component 2",
-                zaxis_title="Component 3",
-            ),
+            scene={
+                "xaxis_title": "Component 1",
+                "yaxis_title": "Component 2",
+                "zaxis_title": "Component 3",
+            },
             template="plotly_white",
         )
     else:

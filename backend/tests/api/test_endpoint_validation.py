@@ -37,7 +37,9 @@ from app.models.user import User
 class TestRequestValidation:
     """Tests for request body and parameter validation."""
 
-    def test_invalid_json_body_returns_422(self, client: TestClient, auth_headers: dict):
+    def test_invalid_json_body_returns_422(
+        self, client: TestClient, auth_headers: dict
+    ):
         """Test that invalid JSON returns 422 Unprocessable Entity."""
         response = client.post(
             "/api/people",
@@ -225,9 +227,7 @@ class TestResponseValidation:
         assert "detail" in error
         assert "not found" in error["detail"].lower()
 
-    def test_list_endpoint_returns_array(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_list_endpoint_returns_array(self, client: TestClient, auth_headers: dict):
         """Test list endpoint returns array in response."""
         response = client.get(
             "/api/people",
@@ -236,7 +236,9 @@ class TestResponseValidation:
 
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list) or ("items" in data and isinstance(data["items"], list))
+        assert isinstance(data, list) or (
+            "items" in data and isinstance(data["items"], list)
+        )
 
 
 # ============================================================================
@@ -323,9 +325,7 @@ class TestErrorHandling:
 class TestHTTPHeaders:
     """Tests for HTTP headers in requests and responses."""
 
-    def test_content_type_json_required(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_content_type_json_required(self, client: TestClient, auth_headers: dict):
         """Test endpoints require application/json content type."""
         response = client.post(
             "/api/people",
@@ -356,9 +356,7 @@ class TestHTTPHeaders:
         # Implementation depends on CORS middleware configuration
         assert response.status_code in [200, 204]
 
-    def test_rate_limit_headers_present(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_rate_limit_headers_present(self, client: TestClient, auth_headers: dict):
         """Test rate limit headers are included."""
         response = client.get(
             "/api/people",
@@ -455,9 +453,7 @@ class TestPagination:
 class TestFilteringAndSorting:
     """Tests for filtering and sorting in list endpoints."""
 
-    def test_filter_by_type(
-        self, client: TestClient, auth_headers: dict, db: Session
-    ):
+    def test_filter_by_type(self, client: TestClient, auth_headers: dict, db: Session):
         """Test filtering by person type."""
         # Create mix of residents and faculty
         for i in range(3):
@@ -489,9 +485,7 @@ class TestFilteringAndSorting:
         for item in items:
             assert item["type"] == "resident"
 
-    def test_sort_by_field(
-        self, client: TestClient, auth_headers: dict, db: Session
-    ):
+    def test_sort_by_field(self, client: TestClient, auth_headers: dict, db: Session):
         """Test sorting results by field."""
         # Create people with different names
         names = ["Charlie", "Alice", "Bob"]

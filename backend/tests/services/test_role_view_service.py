@@ -114,9 +114,7 @@ class TestRoleViewService:
             "swap_management": {"swaps": []},
         }
 
-        filtered = RoleViewService.filter_response_for_role(
-            data, StaffRole.COORDINATOR
-        )
+        filtered = RoleViewService.filter_response_for_role(data, StaffRole.COORDINATOR)
 
         # Coordinator sees everything except compliance
         assert "schedules" in filtered
@@ -413,12 +411,8 @@ class TestRoleViewService:
 
     def test_can_access_endpoint_admin_full_access(self):
         """Test admin can access all endpoint categories."""
-        assert (
-            RoleViewService.can_access_endpoint(StaffRole.ADMIN, "schedules") is True
-        )
-        assert (
-            RoleViewService.can_access_endpoint(StaffRole.ADMIN, "manifest") is True
-        )
+        assert RoleViewService.can_access_endpoint(StaffRole.ADMIN, "schedules") is True
+        assert RoleViewService.can_access_endpoint(StaffRole.ADMIN, "manifest") is True
         assert (
             RoleViewService.can_access_endpoint(StaffRole.ADMIN, "call_roster") is True
         )
@@ -429,9 +423,7 @@ class TestRoleViewService:
         assert (
             RoleViewService.can_access_endpoint(StaffRole.ADMIN, "compliance") is True
         )
-        assert (
-            RoleViewService.can_access_endpoint(StaffRole.ADMIN, "conflicts") is True
-        )
+        assert RoleViewService.can_access_endpoint(StaffRole.ADMIN, "conflicts") is True
         assert RoleViewService.can_access_endpoint(StaffRole.ADMIN, "swaps") is True
 
     def test_can_access_endpoint_coordinator_no_compliance(self):
@@ -441,7 +433,9 @@ class TestRoleViewService:
             is True
         )
         assert (
-            RoleViewService.can_access_endpoint(StaffRole.COORDINATOR, "academic_blocks")
+            RoleViewService.can_access_endpoint(
+                StaffRole.COORDINATOR, "academic_blocks"
+            )
             is True
         )
         assert (
@@ -460,8 +454,7 @@ class TestRoleViewService:
         """Test faculty has limited endpoint access."""
         # Faculty cannot view all schedules
         assert (
-            RoleViewService.can_access_endpoint(StaffRole.FACULTY, "schedules")
-            is True
+            RoleViewService.can_access_endpoint(StaffRole.FACULTY, "schedules") is True
         )  # Because can_view_own_schedule is True by default
         assert (
             RoleViewService.can_access_endpoint(StaffRole.FACULTY, "academic_blocks")
@@ -480,16 +473,12 @@ class TestRoleViewService:
     def test_can_access_endpoint_resident_swap_and_conflict_access(self):
         """Test resident can access swaps and conflicts."""
         assert (
-            RoleViewService.can_access_endpoint(StaffRole.RESIDENT, "schedules")
-            is True
+            RoleViewService.can_access_endpoint(StaffRole.RESIDENT, "schedules") is True
         )  # can_view_own_schedule
         assert (
-            RoleViewService.can_access_endpoint(StaffRole.RESIDENT, "conflicts")
-            is True
+            RoleViewService.can_access_endpoint(StaffRole.RESIDENT, "conflicts") is True
         )
-        assert (
-            RoleViewService.can_access_endpoint(StaffRole.RESIDENT, "swaps") is True
-        )
+        assert RoleViewService.can_access_endpoint(StaffRole.RESIDENT, "swaps") is True
         assert (
             RoleViewService.can_access_endpoint(StaffRole.RESIDENT, "academic_blocks")
             is False

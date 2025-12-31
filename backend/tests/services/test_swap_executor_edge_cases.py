@@ -151,9 +151,13 @@ class TestConcurrentSwapHandling:
     """Tests for handling concurrent swap requests."""
 
     def test_concurrent_swaps_same_shift_first_wins(
-        self, db: Session, swap_executor: SwapExecutor,
-        faculty_a: Person, faculty_b: Person, faculty_c: Person,
-        clinic_rotation: RotationTemplate
+        self,
+        db: Session,
+        swap_executor: SwapExecutor,
+        faculty_a: Person,
+        faculty_b: Person,
+        faculty_c: Person,
+        clinic_rotation: RotationTemplate,
     ):
         """Test that first swap wins when multiple requests target same shift."""
         # Create block and initial assignment
@@ -200,9 +204,12 @@ class TestConcurrentSwapHandling:
         assert "already swapped" in result2.error_message.lower()
 
     def test_simultaneous_bidirectional_swaps(
-        self, db: Session, swap_executor: SwapExecutor,
-        faculty_a: Person, faculty_b: Person,
-        clinic_rotation: RotationTemplate
+        self,
+        db: Session,
+        swap_executor: SwapExecutor,
+        faculty_a: Person,
+        faculty_b: Person,
+        clinic_rotation: RotationTemplate,
     ):
         """Test handling of simultaneous A->B and B->A swap requests."""
         # Create two blocks
@@ -251,8 +258,9 @@ class TestConcurrentSwapHandling:
         result2 = swap_executor.execute_swap(swap_b_to_a.id)
 
         # One should succeed, one should detect redundancy
-        assert (result1.success and not result2.success) or \
-               (not result1.success and result2.success)
+        assert (result1.success and not result2.success) or (
+            not result1.success and result2.success
+        )
 
 
 # ============================================================================
@@ -264,9 +272,12 @@ class TestACGMEComplianceDuringSwaps:
     """Tests for ACGME compliance validation during swap execution."""
 
     def test_swap_rejected_would_violate_80_hour_limit(
-        self, db: Session, swap_executor: SwapExecutor,
-        faculty_a: Person, faculty_b: Person,
-        call_rotation: RotationTemplate
+        self,
+        db: Session,
+        swap_executor: SwapExecutor,
+        faculty_a: Person,
+        faculty_b: Person,
+        call_rotation: RotationTemplate,
     ):
         """Test swap rejection when it would cause 80-hour violation."""
         start_date = date.today()
@@ -309,13 +320,18 @@ class TestACGMEComplianceDuringSwaps:
 
         result = swap_executor.execute_swap(swap.id)
         assert result.success is False
-        assert "acgme" in result.error_message.lower() or \
-               "80 hour" in result.error_message.lower()
+        assert (
+            "acgme" in result.error_message.lower()
+            or "80 hour" in result.error_message.lower()
+        )
 
     def test_swap_maintains_one_in_seven_compliance(
-        self, db: Session, swap_executor: SwapExecutor,
-        faculty_a: Person, faculty_b: Person,
-        clinic_rotation: RotationTemplate
+        self,
+        db: Session,
+        swap_executor: SwapExecutor,
+        faculty_a: Person,
+        faculty_b: Person,
+        clinic_rotation: RotationTemplate,
     ):
         """Test that swap doesn't violate 1-in-7 day off rule."""
         start_date = date.today()
@@ -369,9 +385,12 @@ class TestSwapRollbackScenarios:
     """Tests for swap rollback functionality."""
 
     def test_rollback_swap_within_24_hours(
-        self, db: Session, swap_executor: SwapExecutor,
-        faculty_a: Person, faculty_b: Person,
-        clinic_rotation: RotationTemplate
+        self,
+        db: Session,
+        swap_executor: SwapExecutor,
+        faculty_a: Person,
+        faculty_b: Person,
+        clinic_rotation: RotationTemplate,
     ):
         """Test successful rollback of swap within 24-hour window."""
         block = Block(
@@ -409,9 +428,12 @@ class TestSwapRollbackScenarios:
         assert assignment.person_id == faculty_a.id
 
     def test_rollback_fails_after_24_hours(
-        self, db: Session, swap_executor: SwapExecutor,
-        faculty_a: Person, faculty_b: Person,
-        clinic_rotation: RotationTemplate
+        self,
+        db: Session,
+        swap_executor: SwapExecutor,
+        faculty_a: Person,
+        faculty_b: Person,
+        clinic_rotation: RotationTemplate,
     ):
         """Test rollback rejection after 24-hour window."""
         block = Block(
@@ -442,9 +464,13 @@ class TestSwapRollbackScenarios:
         assert "24 hour" in rollback_result.error_message.lower()
 
     def test_partial_rollback_cascade_handling(
-        self, db: Session, swap_executor: SwapExecutor,
-        faculty_a: Person, faculty_b: Person, faculty_c: Person,
-        clinic_rotation: RotationTemplate
+        self,
+        db: Session,
+        swap_executor: SwapExecutor,
+        faculty_a: Person,
+        faculty_b: Person,
+        faculty_c: Person,
+        clinic_rotation: RotationTemplate,
     ):
         """Test rollback when swap is part of a chain."""
         # Create chain: A->B (swap1), then B->C (swap2)
@@ -508,9 +534,12 @@ class TestSwapEdgeCases:
     """Tests for various edge cases in swap execution."""
 
     def test_swap_with_deleted_assignment(
-        self, db: Session, swap_executor: SwapExecutor,
-        faculty_a: Person, faculty_b: Person,
-        clinic_rotation: RotationTemplate
+        self,
+        db: Session,
+        swap_executor: SwapExecutor,
+        faculty_a: Person,
+        faculty_b: Person,
+        clinic_rotation: RotationTemplate,
     ):
         """Test swap request where assignment was deleted."""
         block = Block(
@@ -545,9 +574,12 @@ class TestSwapEdgeCases:
         assert "not found" in result.error_message.lower()
 
     def test_swap_with_past_date_block(
-        self, db: Session, swap_executor: SwapExecutor,
-        faculty_a: Person, faculty_b: Person,
-        clinic_rotation: RotationTemplate
+        self,
+        db: Session,
+        swap_executor: SwapExecutor,
+        faculty_a: Person,
+        faculty_b: Person,
+        clinic_rotation: RotationTemplate,
     ):
         """Test swap request for past date (should be rejected)."""
         block = Block(
@@ -577,8 +609,11 @@ class TestSwapEdgeCases:
         assert "past" in result.error_message.lower()
 
     def test_swap_self_assignment(
-        self, db: Session, swap_executor: SwapExecutor,
-        faculty_a: Person, clinic_rotation: RotationTemplate
+        self,
+        db: Session,
+        swap_executor: SwapExecutor,
+        faculty_a: Person,
+        clinic_rotation: RotationTemplate,
     ):
         """Test swap request where requester and target are same person."""
         block = Block(
@@ -608,8 +643,11 @@ class TestSwapEdgeCases:
         assert "self" in result.error_message.lower()
 
     def test_swap_with_nonexistent_target_person(
-        self, db: Session, swap_executor: SwapExecutor,
-        faculty_a: Person, clinic_rotation: RotationTemplate
+        self,
+        db: Session,
+        swap_executor: SwapExecutor,
+        faculty_a: Person,
+        clinic_rotation: RotationTemplate,
     ):
         """Test swap with target person that doesn't exist."""
         block = Block(
@@ -638,9 +676,12 @@ class TestSwapEdgeCases:
         assert result.success is False
 
     def test_swap_execution_idempotency(
-        self, db: Session, swap_executor: SwapExecutor,
-        faculty_a: Person, faculty_b: Person,
-        clinic_rotation: RotationTemplate
+        self,
+        db: Session,
+        swap_executor: SwapExecutor,
+        faculty_a: Person,
+        faculty_b: Person,
+        clinic_rotation: RotationTemplate,
     ):
         """Test that executing same swap twice is idempotent."""
         block = Block(

@@ -138,7 +138,9 @@ class EmergencyScenarios:
         Multiple faculty on TDY simultaneously, leaving coverage gap.
         """
         # Create faculty
-        faculty = PersonFactory.create_batch_faculty(db, count=5, include_leadership=False)
+        faculty = PersonFactory.create_batch_faculty(
+            db, count=5, include_leadership=False
+        )
 
         # Create overlapping TDY assignments
         tdys = []
@@ -152,7 +154,7 @@ class EmergencyScenarios:
                 person=fac,
                 start_date=tdy_start,
                 days=14,
-                location=f"Location-{i+1}",
+                location=f"Location-{i + 1}",
             )
             tdys.append(tdy)
 

@@ -231,9 +231,7 @@ class ComplianceLogger:
             user_id: User who created the assignment
             **metadata: Additional metadata
         """
-        violation_details = (
-            f"Worked {hours} hours in {period}, exceeding threshold of {threshold} hours"
-        )
+        violation_details = f"Worked {hours} hours in {period}, exceeding threshold of {threshold} hours"
 
         event = ComplianceEvent(
             event_type=ComplianceEventType.WORK_HOUR_EXCEEDED,
@@ -535,7 +533,12 @@ def log_acgme_violation(
 ) -> None:
     """Log ACGME violation (convenience function)."""
     get_compliance_logger().log_acgme_violation(
-        rule, affected_person, affected_person_role, violation_details, user_id, **metadata
+        rule,
+        affected_person,
+        affected_person_role,
+        violation_details,
+        user_id,
+        **metadata,
     )
 
 

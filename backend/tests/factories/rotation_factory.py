@@ -17,14 +17,14 @@ class RotationFactory:
     @staticmethod
     def create_rotation_template(
         db: Session,
-        name: Optional[str] = None,
+        name: str | None = None,
         activity_type: str = "clinic",
-        abbreviation: Optional[str] = None,
-        max_residents: Optional[int] = None,
+        abbreviation: str | None = None,
+        max_residents: int | None = None,
         supervision_required: bool = True,
         max_supervision_ratio: int = 4,
         leave_eligible: bool = True,
-        requires_specialty: Optional[str] = None,
+        requires_specialty: str | None = None,
         requires_procedure_credential: bool = False,
     ) -> RotationTemplate:
         """
@@ -81,7 +81,7 @@ class RotationFactory:
     @staticmethod
     def create_clinic_template(
         db: Session,
-        pgy_level: Optional[int] = None,
+        pgy_level: int | None = None,
         max_residents: int = 4,
     ) -> RotationTemplate:
         """
@@ -242,7 +242,7 @@ class RotationFactory:
     def create_batch_templates(
         db: Session,
         count: int = 5,
-        activity_types: Optional[list[str]] = None,
+        activity_types: list[str] | None = None,
     ) -> list[RotationTemplate]:
         """
         Create multiple rotation templates.

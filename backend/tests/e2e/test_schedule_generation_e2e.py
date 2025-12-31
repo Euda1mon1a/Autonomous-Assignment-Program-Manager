@@ -343,9 +343,7 @@ class TestScheduleGenerationWorkflow:
 
             # Clear previous assignments to prevent conflicts
             db.query(Assignment).filter(
-                Assignment.block_id.in_(
-                    [str(block.id) for block in setup["blocks"]]
-                )
+                Assignment.block_id.in_([str(block.id) for block in setup["blocks"]])
             ).delete(synchronize_session=False)
             db.commit()
 
@@ -396,7 +394,9 @@ class TestScheduleGenerationWorkflow:
                     assignment = Assignment(
                         id=uuid4(),
                         person_id=resident.id,
-                        rotation_template_id=setup["templates"][i % len(setup["templates"])].id,
+                        rotation_template_id=setup["templates"][
+                            i % len(setup["templates"])
+                        ].id,
                         block_id=block.id,
                         role="primary",
                     )
@@ -466,7 +466,8 @@ class TestScheduleGenerationWorkflow:
         # Create schedule with intentional 80-hour violation
         # Assign resident to all blocks for a week (should exceed 80 hours)
         violation_blocks = [
-            b for b in setup["blocks"][:14]  # 7 days * 2 blocks/day
+            b
+            for b in setup["blocks"][:14]  # 7 days * 2 blocks/day
         ]
 
         for block in violation_blocks:
@@ -631,7 +632,9 @@ class TestScheduleGenerationWorkflow:
                 assignment = Assignment(
                     id=uuid4(),
                     person_id=resident.id,
-                    rotation_template_id=setup["templates"][i % len(setup["templates"])].id,
+                    rotation_template_id=setup["templates"][
+                        i % len(setup["templates"])
+                    ].id,
                     block_id=block.id,
                     role="primary",
                 )
@@ -761,10 +764,14 @@ class TestScheduleGenerationEdgeCases:
         end_date = start_date + timedelta(days=28)  # 4 weeks
 
         # Need to create additional blocks
-        existing_blocks = db.query(Block).filter(
-            Block.date >= start_date,
-            Block.date <= end_date,
-        ).count()
+        existing_blocks = (
+            db.query(Block)
+            .filter(
+                Block.date >= start_date,
+                Block.date <= end_date,
+            )
+            .count()
+        )
 
         # Create missing blocks
         for i in range(14, 29):  # Days 14-28 (we already have 0-13)

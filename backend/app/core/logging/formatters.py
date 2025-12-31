@@ -77,7 +77,9 @@ class JSONFormatter:
                     if record["exception"].type
                     else None
                 ),
-                "value": str(record["exception"].value) if record["exception"].value else None,
+                "value": str(record["exception"].value)
+                if record["exception"].value
+                else None,
                 "traceback": record["exception"].traceback is not None,
             }
 
@@ -246,9 +248,13 @@ class LogfmtFormatter:
         # Exception
         if record["exception"]:
             exc_type = (
-                record["exception"].type.__name__ if record["exception"].type else "Unknown"
+                record["exception"].type.__name__
+                if record["exception"].type
+                else "Unknown"
             )
-            exc_value = str(record["exception"].value) if record["exception"].value else ""
+            exc_value = (
+                str(record["exception"].value) if record["exception"].value else ""
+            )
             pairs.append(f"exception_type={exc_type}")
             pairs.append(f"exception_value={self._quote(exc_value)}")
 
@@ -317,7 +323,9 @@ class CloudWatchFormatter:
                     else None
                 ),
                 "value": (
-                    str(record["exception"].value) if record["exception"].value else None
+                    str(record["exception"].value)
+                    if record["exception"].value
+                    else None
                 ),
             }
 
@@ -364,7 +372,9 @@ class ColoredTextFormatter:
             str: Formatted log string with colors
         """
         level = record["level"].name
-        color = self.COLORS.get(level, self.COLORS["RESET"]) if self.include_colors else ""
+        color = (
+            self.COLORS.get(level, self.COLORS["RESET"]) if self.include_colors else ""
+        )
         reset = self.COLORS["RESET"] if self.include_colors else ""
 
         # Format timestamp

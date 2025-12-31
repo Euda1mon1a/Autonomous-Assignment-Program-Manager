@@ -74,7 +74,7 @@ def setup_test_data(db: Session, num_records: int = 1000):
     # Create blocks
     blocks = []
     start_date = date.today()
-    for day_offset in range((num_records // 20)):
+    for day_offset in range(num_records // 20):
         current_date = start_date + timedelta(days=day_offset)
         for time_of_day in ["AM", "PM"]:
             block = Block(
@@ -112,7 +112,9 @@ def setup_test_data(db: Session, num_records: int = 1000):
     }
 
 
-def benchmark_simple_queries(iterations: int = 100, verbose: bool = False) -> BenchmarkResult:
+def benchmark_simple_queries(
+    iterations: int = 100, verbose: bool = False
+) -> BenchmarkResult:
     """Benchmark simple SELECT queries."""
     print_benchmark_header(
         "Simple Query Performance",
@@ -173,7 +175,9 @@ def benchmark_simple_queries(iterations: int = 100, verbose: bool = False) -> Be
     return result
 
 
-def benchmark_join_queries(iterations: int = 50, verbose: bool = False) -> BenchmarkResult:
+def benchmark_join_queries(
+    iterations: int = 50, verbose: bool = False
+) -> BenchmarkResult:
     """Benchmark complex JOIN queries with relationships."""
     print_benchmark_header(
         "Join Query Performance",
@@ -195,15 +199,19 @@ def benchmark_join_queries(iterations: int = 50, verbose: bool = False) -> Bench
         # Benchmark eager loading (joinedload)
         for i in range(iterations):
             with measure_performance("eager_join") as metrics:
-                result = db.execute(
-                    select(Assignment)
-                    .options(
-                        joinedload(Assignment.person),
-                        joinedload(Assignment.block),
-                        joinedload(Assignment.rotation_template),
+                result = (
+                    db.execute(
+                        select(Assignment)
+                        .options(
+                            joinedload(Assignment.person),
+                            joinedload(Assignment.block),
+                            joinedload(Assignment.rotation_template),
+                        )
+                        .limit(50)
                     )
-                    .limit(50)
-                ).scalars().all()
+                    .scalars()
+                    .all()
+                )
 
             eager_durations.append(metrics["duration"])
 
@@ -213,15 +221,19 @@ def benchmark_join_queries(iterations: int = 50, verbose: bool = False) -> Bench
         # Benchmark lazy loading (selectinload)
         for i in range(iterations):
             with measure_performance("lazy_join") as metrics:
-                result = db.execute(
-                    select(Assignment)
-                    .options(
-                        selectinload(Assignment.person),
-                        selectinload(Assignment.block),
-                        selectinload(Assignment.rotation_template),
+                result = (
+                    db.execute(
+                        select(Assignment)
+                        .options(
+                            selectinload(Assignment.person),
+                            selectinload(Assignment.block),
+                            selectinload(Assignment.rotation_template),
+                        )
+                        .limit(50)
                     )
-                    .limit(50)
-                ).scalars().all()
+                    .scalars()
+                    .all()
+                )
 
             lazy_durations.append(metrics["duration"])
 
@@ -262,7 +274,9 @@ def benchmark_join_queries(iterations: int = 50, verbose: bool = False) -> Bench
     return result
 
 
-def benchmark_bulk_operations(batch_size: int = 100, iterations: int = 10, verbose: bool = False) -> BenchmarkResult:
+def benchmark_bulk_operations(
+    batch_size: int = 100, iterations: int = 10, verbose: bool = False
+) -> BenchmarkResult:
     """Benchmark bulk insert/update operations."""
     print_benchmark_header(
         f"Bulk Operations (batch size: {batch_size})",
@@ -314,8 +328,7 @@ def benchmark_bulk_operations(batch_size: int = 100, iterations: int = 10, verbo
             # Benchmark bulk update
             with measure_performance("bulk_update") as metrics:
                 db.execute(
-                    select(Person)
-                    .where(Person.email.like(f"bulk{i}_%"))
+                    select(Person).where(Person.email.like(f"bulk{i}_%"))
                 ).scalars().all()
 
                 # Update all records
@@ -384,7 +397,11 @@ def run_suite(verbose: bool = False):
 
     # Bulk operations
     for batch_size in [50, 100, 500]:
-        results.append(benchmark_bulk_operations(batch_size=batch_size, iterations=10, verbose=verbose))
+        results.append(
+            benchmark_bulk_operations(
+                batch_size=batch_size, iterations=10, verbose=verbose
+            )
+        )
         print()
 
     # Save results
@@ -407,8 +424,12 @@ def main():
         choices=["simple", "joins", "bulk"],
         help="Query type to benchmark",
     )
-    parser.add_argument("--iterations", type=int, default=100, help="Number of iterations")
-    parser.add_argument("--batch-size", type=int, default=100, help="Batch size for bulk operations")
+    parser.add_argument(
+        "--iterations", type=int, default=100, help="Number of iterations"
+    )
+    parser.add_argument(
+        "--batch-size", type=int, default=100, help="Batch size for bulk operations"
+    )
     parser.add_argument("--suite", action="store_true", help="Run full suite")
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
 
@@ -418,9 +439,13 @@ def main():
         run_suite(verbose=args.verbose)
     else:
         if args.query_type == "simple":
-            result = benchmark_simple_queries(iterations=args.iterations, verbose=args.verbose)
+            result = benchmark_simple_queries(
+                iterations=args.iterations, verbose=args.verbose
+            )
         elif args.query_type == "joins":
-            result = benchmark_join_queries(iterations=args.iterations, verbose=args.verbose)
+            result = benchmark_join_queries(
+                iterations=args.iterations, verbose=args.verbose
+            )
         elif args.query_type == "bulk":
             result = benchmark_bulk_operations(
                 batch_size=args.batch_size,

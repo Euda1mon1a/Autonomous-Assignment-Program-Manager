@@ -199,9 +199,7 @@ async def validate_block_availability(
         raise ValidationError(f"Block not found: {block_id}")
 
     # Count existing assignments
-    result = await db.execute(
-        select(Assignment).where(Assignment.block_id == block_id)
-    )
+    result = await db.execute(select(Assignment).where(Assignment.block_id == block_id))
     assignments = result.scalars().all()
     current_count = len(assignments)
 

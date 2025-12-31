@@ -44,8 +44,8 @@ def data() -> None:
 )
 def export(
     format: str,
-    output: Optional[str],
-    tables: Optional[str],
+    output: str | None,
+    tables: str | None,
 ) -> None:
     """
     Export database data to file.
@@ -71,12 +71,16 @@ def export(
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Determine tables to export
-        table_list = tables.split(",") if tables else [
-            "persons",
-            "assignments",
-            "blocks",
-            "rotations",
-        ]
+        table_list = (
+            tables.split(",")
+            if tables
+            else [
+                "persons",
+                "assignments",
+                "blocks",
+                "rotations",
+            ]
+        )
 
         click.echo(f"Exporting {len(table_list)} tables to {output_path}")
 
@@ -100,13 +104,17 @@ def export(
 
         # Export assignments
         if "assignments" in table_list:
-            assignments = db.execute(
-                select(Assignment).options(
-                    selectinload(Assignment.person),
-                    selectinload(Assignment.block),
-                    selectinload(Assignment.rotation),
+            assignments = (
+                db.execute(
+                    select(Assignment).options(
+                        selectinload(Assignment.person),
+                        selectinload(Assignment.block),
+                        selectinload(Assignment.rotation),
+                    )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
             data_export["assignments"] = [
                 {
                     "id": str(a.id),
@@ -208,7 +216,7 @@ def export(
 )
 def import_data(
     file: str,
-    format: Optional[str],
+    format: str | None,
     dry_run: bool,
     replace: bool,
 ) -> None:
@@ -232,9 +240,12 @@ def import_data(
         # Auto-detect format
         if not format:
             ext = file_path.suffix.lstrip(".")
-            format = {"json": "json", "csv": "csv", "xlsx": "excel", "xls": "excel"}.get(
-                ext
-            )
+            format = {
+                "json": "json",
+                "csv": "csv",
+                "xlsx": "excel",
+                "xls": "excel",
+            }.get(ext)
 
             if not format:
                 click.echo(f"Error: Cannot determine format for {file_path}", err=True)
@@ -262,7 +273,7 @@ def import_data(
                         click.echo(f"  - Skipped: {p_data['email']} (already exists)")
                         continue
 
-                    person = Person(**p_data) if not existing else existing
+                    person = existing if existing else Person(**p_data)
                     if not existing:
                         db.add(person)
 
@@ -287,7 +298,9 @@ def import_data(
                 # Excel import logic would go here
 
             except ImportError:
-                click.echo("Error: pandas and openpyxl required for Excel import", err=True)
+                click.echo(
+                    "Error: pandas and openpyxl required for Excel import", err=True
+                )
                 click.echo("Install with: pip install pandas openpyxl")
                 raise click.Abort()
 
@@ -323,7 +336,7 @@ def import_data(
 )
 def seed(
     type: str,
-    academic_year: Optional[int],
+    academic_year: int | None,
 ) -> None:
     """
     Seed database with test data.
@@ -384,9 +397,9 @@ def seed(
             for pgy in [1, 2, 3]:
                 for i in range(6):
                     person = Person(
-                        email=f"pgy{pgy}_{i+1:02d}@example.com",
+                        email=f"pgy{pgy}_{i + 1:02d}@example.com",
                         first_name=f"PGY{pgy}",
-                        last_name=f"Resident{i+1:02d}",
+                        last_name=f"Resident{i + 1:02d}",
                         role="RESIDENT",
                         pgy_level=pgy,
                         is_active=True,
@@ -397,8 +410,8 @@ def seed(
             roles = ["PD", "APD", "CORE", "CORE", "CORE"]
             for i, role in enumerate(roles):
                 person = Person(
-                    email=f"faculty_{i+1:02d}@example.com",
-                    first_name=f"Faculty{i+1:02d}",
+                    email=f"faculty_{i + 1:02d}@example.com",
+                    first_name=f"Faculty{i + 1:02d}",
                     last_name=role,
                     role="FACULTY",
                     faculty_role=role.lower(),
@@ -406,7 +419,7 @@ def seed(
                 )
                 db.add(person)
 
-            click.echo(f"  ✓ Created 18 residents and 5 faculty")
+            click.echo("  ✓ Created 18 residents and 5 faculty")
 
         if type in ["all", "rotations"]:
             click.echo("\nCreating rotation templates...")

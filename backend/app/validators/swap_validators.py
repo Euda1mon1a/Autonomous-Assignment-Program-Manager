@@ -168,9 +168,7 @@ async def validate_swap_request(
     today = date.today()
 
     if assignment_date < today:
-        errors.append(
-            f"Cannot swap assignment in the past ({assignment_date})"
-        )
+        errors.append(f"Cannot swap assignment in the past ({assignment_date})")
     elif assignment_date == today:
         warnings.append(
             f"Swapping assignment for today ({assignment_date}) - may be too late"
@@ -506,7 +504,7 @@ async def validate_swap_compatibility(
     if requester_conflict and requester_conflict.id != requester_assignment_id:
         return {
             "is_compatible": False,
-            "reason": f"Requester already has assignment on target's block",
+            "reason": "Requester already has assignment on target's block",
         }
 
     # Would target have conflict at requester's time?
@@ -521,7 +519,7 @@ async def validate_swap_compatibility(
     if target_conflict and target_conflict.id != target_assignment_id:
         return {
             "is_compatible": False,
-            "reason": f"Target already has assignment on requester's block",
+            "reason": "Target already has assignment on requester's block",
         }
 
     return {

@@ -73,7 +73,9 @@ class TestEmbeddingServiceEmbedText:
             result = EmbeddingService.embed_text("Test text")
 
             # Verify encode was called with correct parameters
-            mock_model.encode.assert_called_once_with("Test text", convert_to_numpy=True)
+            mock_model.encode.assert_called_once_with(
+                "Test text", convert_to_numpy=True
+            )
 
             # Verify result is a list of floats
             assert isinstance(result, list)
@@ -132,7 +134,9 @@ class TestEmbeddingServiceEmbedText:
             special_text = "Test with émojis 🚀 and spëcial çhars!"
             result = EmbeddingService.embed_text(special_text)
 
-            mock_model.encode.assert_called_once_with(special_text, convert_to_numpy=True)
+            mock_model.encode.assert_called_once_with(
+                special_text, convert_to_numpy=True
+            )
             assert isinstance(result, list)
 
 
@@ -146,11 +150,13 @@ class TestEmbeddingServiceEmbedBatch:
 
         mock_model = Mock()
         # Mock batch of 3 embeddings
-        mock_embeddings = np.array([
-            [0.1] * 384,
-            [0.2] * 384,
-            [0.3] * 384,
-        ])
+        mock_embeddings = np.array(
+            [
+                [0.1] * 384,
+                [0.2] * 384,
+                [0.3] * 384,
+            ]
+        )
         mock_model.encode.return_value = mock_embeddings
 
         with patch("app.services.embedding_service.SentenceTransformer") as mock_st:
@@ -161,9 +167,7 @@ class TestEmbeddingServiceEmbedBatch:
 
             # Verify encode was called with correct parameters
             mock_model.encode.assert_called_once_with(
-                texts,
-                convert_to_numpy=True,
-                show_progress_bar=False
+                texts, convert_to_numpy=True, show_progress_bar=False
             )
 
             # Verify result structure
@@ -205,9 +209,7 @@ class TestEmbeddingServiceEmbedBatch:
             result = EmbeddingService.embed_batch([])
 
             mock_model.encode.assert_called_once_with(
-                [],
-                convert_to_numpy=True,
-                show_progress_bar=False
+                [], convert_to_numpy=True, show_progress_bar=False
             )
             assert isinstance(result, list)
 
@@ -236,11 +238,13 @@ class TestEmbeddingServiceEmbedBatch:
         EmbeddingService._model = None
 
         mock_model = Mock()
-        mock_embeddings = np.array([
-            [0.1] * 384,
-            [0.2] * 384,
-            [0.3] * 384,
-        ])
+        mock_embeddings = np.array(
+            [
+                [0.1] * 384,
+                [0.2] * 384,
+                [0.3] * 384,
+            ]
+        )
         mock_model.encode.return_value = mock_embeddings
 
         with patch("app.services.embedding_service.SentenceTransformer") as mock_st:
@@ -300,7 +304,7 @@ class TestEmbeddingServiceHashText:
         assert len(result) == 64
 
         # Verify it matches expected SHA256 of empty string
-        expected = hashlib.sha256("".encode()).hexdigest()
+        expected = hashlib.sha256(b"").hexdigest()
         assert result == expected
 
     def test_hash_text_unicode(self):
@@ -420,9 +424,7 @@ class TestGetCachedEmbedding:
 
         mock_model = Mock()
         # Generate different embeddings for each call
-        mock_model.encode.side_effect = [
-            np.array([float(i)] * 384) for i in range(150)
-        ]
+        mock_model.encode.side_effect = [np.array([float(i)] * 384) for i in range(150)]
 
         with patch("app.services.embedding_service.SentenceTransformer") as mock_st:
             mock_st.return_value = mock_model
@@ -602,13 +604,15 @@ class TestEmbeddingServiceEdgeCases:
 
         mock_model = Mock()
         # Different embeddings for each input
-        mock_embeddings = np.array([
-            [0.1] * 384,
-            [0.2] * 384,
-            [0.3] * 384,
-            [0.4] * 384,
-            [0.5] * 384,
-        ])
+        mock_embeddings = np.array(
+            [
+                [0.1] * 384,
+                [0.2] * 384,
+                [0.3] * 384,
+                [0.4] * 384,
+                [0.5] * 384,
+            ]
+        )
         mock_model.encode.return_value = mock_embeddings
 
         with patch("app.services.embedding_service.SentenceTransformer") as mock_st:

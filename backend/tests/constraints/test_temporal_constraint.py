@@ -1136,10 +1136,14 @@ class TestTemporalConstraintsIntegration:
         wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
 
         all_blocks = [
-            wed1_am, wed1_pm,
-            wed2_am, wed2_pm,
-            wed3_am, wed3_pm,
-            wed4_am, wed4_pm,
+            wed1_am,
+            wed1_pm,
+            wed2_am,
+            wed2_pm,
+            wed3_am,
+            wed3_pm,
+            wed4_am,
+            wed4_pm,
         ]
 
         clinic_template = MockTemplate(activity_type="outpatient")
@@ -1231,10 +1235,14 @@ class TestTemporalConstraintsIntegration:
         wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
 
         all_blocks = [
-            wed1_am, wed1_pm,
-            wed2_am, wed2_pm,
-            wed3_am, wed3_pm,
-            wed4_am, wed4_pm,
+            wed1_am,
+            wed1_pm,
+            wed2_am,
+            wed2_pm,
+            wed3_am,
+            wed3_pm,
+            wed4_am,
+            wed4_pm,
         ]
 
         clinic_template = MockTemplate(activity_type="outpatient")

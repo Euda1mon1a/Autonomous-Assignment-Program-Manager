@@ -175,18 +175,41 @@ class RoleHierarchy:
     Manages hierarchical role relationships and inheritance.
 
     Higher roles inherit all permissions from lower roles.
+
+    Role Hierarchy (highest to lowest privilege):
+    1. ADMIN (100) - Full system access
+    2. COORDINATOR (90) - Schedule management, inherits from ADMIN
+    3. FACULTY (80) - Limited management, INDEPENDENT (no inheritance)
+    4. RESIDENT (70) - Basic view + self-management, INDEPENDENT
+    5. CLINICAL_STAFF (60) - Clinical view access, INDEPENDENT
+    6. RN (50) - Inherits from CLINICAL_STAFF
+    7. LPN (40) - Inherits from CLINICAL_STAFF
+    8. MSA (30) - Inherits from CLINICAL_STAFF
     """
 
+    # Role level constants for comparison
+    ROLE_LEVELS: dict[UserRole, int] = {
+        UserRole.ADMIN: 100,
+        UserRole.COORDINATOR: 90,
+        UserRole.FACULTY: 80,
+        UserRole.RESIDENT: 70,
+        UserRole.CLINICAL_STAFF: 60,
+        UserRole.RN: 50,
+        UserRole.LPN: 40,
+        UserRole.MSA: 30,
+    }
+
     # Role hierarchy map (role -> parent roles)
+    # SECURITY FIX: Faculty does NOT inherit from Coordinator
     HIERARCHY: dict[UserRole, set[UserRole]] = {
         UserRole.ADMIN: set(),  # Top level, no parents
-        UserRole.COORDINATOR: {UserRole.ADMIN},
-        UserRole.FACULTY: {UserRole.ADMIN, UserRole.COORDINATOR},
-        UserRole.CLINICAL_STAFF: {UserRole.ADMIN, UserRole.COORDINATOR},
-        UserRole.RN: {UserRole.ADMIN, UserRole.COORDINATOR, UserRole.CLINICAL_STAFF},
-        UserRole.LPN: {UserRole.ADMIN, UserRole.COORDINATOR, UserRole.CLINICAL_STAFF},
-        UserRole.MSA: {UserRole.ADMIN, UserRole.COORDINATOR, UserRole.CLINICAL_STAFF},
-        UserRole.RESIDENT: {UserRole.ADMIN, UserRole.COORDINATOR},
+        UserRole.COORDINATOR: {UserRole.ADMIN},  # Inherits from admin only
+        UserRole.FACULTY: set(),  # INDEPENDENT - no inheritance
+        UserRole.CLINICAL_STAFF: set(),  # INDEPENDENT - no inheritance
+        UserRole.RN: {UserRole.CLINICAL_STAFF},  # Inherits from clinical_staff
+        UserRole.LPN: {UserRole.CLINICAL_STAFF},  # Inherits from clinical_staff
+        UserRole.MSA: {UserRole.CLINICAL_STAFF},  # Inherits from clinical_staff
+        UserRole.RESIDENT: set(),  # INDEPENDENT - no inheritance
     }
 
     @classmethod
@@ -216,8 +239,66 @@ class RoleHierarchy:
 
         Returns:
             True if role is higher than compared_to
+
+        Note:
+            Uses role levels for comparison. Higher numeric level = higher privilege.
         """
-        return compared_to in cls.HIERARCHY.get(role, set())
+        role_level = cls.ROLE_LEVELS.get(role, 0)
+        compared_level = cls.ROLE_LEVELS.get(compared_to, 0)
+        return role_level > compared_level
+
+    @classmethod
+    def get_role_level(cls, role: UserRole) -> int:
+        """
+        Get the numeric privilege level for a role.
+
+        Args:
+            role: Role to check
+
+        Returns:
+            Numeric privilege level (higher = more privileged)
+        """
+        return cls.ROLE_LEVELS.get(role, 0)
+
+    @classmethod
+    def is_equal_or_higher_role(cls, role: UserRole, compared_to: UserRole) -> bool:
+        """
+        Check if role has equal or higher privilege than compared_to.
+
+        Args:
+            role: Role to check
+            compared_to: Role to compare against
+
+        Returns:
+            True if role >= compared_to in privilege level
+        """
+        return cls.get_role_level(role) >= cls.get_role_level(compared_to)
+
+    @classmethod
+    def can_manage_role(cls, manager_role: UserRole, target_role: UserRole) -> bool:
+        """
+        Check if a manager role can manage a target role.
+
+        Only admins can manage coordinators.
+        Coordinators can manage faculty and below.
+
+        Args:
+            manager_role: Role attempting management
+            target_role: Role being managed
+
+        Returns:
+            True if management is allowed
+        """
+        # Admin can manage all roles
+        if manager_role == UserRole.ADMIN:
+            return True
+
+        # Coordinator can manage all except Admin and Coordinator
+        if manager_role == UserRole.COORDINATOR:
+            return target_role not in {UserRole.ADMIN, UserRole.COORDINATOR}
+
+        # All other roles cannot manage others
+        return False
 
 
 # ============================================================================
@@ -612,7 +693,13 @@ class AccessControlMatrix:
         For example:
         - Residents can only update their own absence requests
         - Faculty can approve swaps involving them
+        - APPROVE/REJECT actions require resource context validation
         """
+        # SECURITY: APPROVE/REJECT actions require context validation
+        if action in {PermissionAction.APPROVE, PermissionAction.REJECT}:
+            if not self._validate_approval_context(role, resource, action, context):
+                return False
+
         # Own resource rule: Users with limited permissions can modify their own resources
         if role in {UserRole.RESIDENT, UserRole.FACULTY}:
             if action in {PermissionAction.UPDATE, PermissionAction.DELETE}:
@@ -626,6 +713,91 @@ class AccessControlMatrix:
                     return self._context_evaluators["is_own_resource"](context)
 
         return True  # No additional context restrictions
+
+    def _validate_approval_context(
+        self,
+        role: UserRole,
+        resource: ResourceType,
+        action: PermissionAction,
+        context: PermissionContext,
+    ) -> bool:
+        """
+        Validate context for APPROVE/REJECT actions.
+
+        SECURITY REQUIREMENT: All approvals must have proper context.
+
+        Args:
+            role: User role performing action
+            resource: Resource being approved/rejected
+            action: APPROVE or REJECT
+            context: Permission context with resource metadata
+
+        Returns:
+            True if approval context is valid, False otherwise
+        """
+        # Admin can approve anything
+        if role == UserRole.ADMIN:
+            return True
+
+        # Validate resource owner is set for approvals
+        if context.resource_owner_id is None:
+            logger.warning(
+                f"APPROVAL DENIED: No resource_owner_id for {action} on {resource}"
+            )
+            return False
+
+        # Validate resource metadata exists
+        if not context.resource_metadata:
+            logger.warning(
+                f"APPROVAL DENIED: No resource_metadata for {action} on {resource}"
+            )
+            return False
+
+        # Resource-specific validation
+        if resource in {ResourceType.ABSENCE, ResourceType.LEAVE}:
+            # Must specify department/unit for leave approvals
+            if "department" not in context.resource_metadata:
+                logger.warning(
+                    f"APPROVAL DENIED: No department in metadata for {resource}"
+                )
+                return False
+
+        if resource in {ResourceType.SWAP, ResourceType.SWAP_REQUEST}:
+            # Must specify both parties involved in swap
+            required_keys = {"requesting_user_id", "target_user_id"}
+            if not required_keys.issubset(context.resource_metadata.keys()):
+                logger.warning(
+                    f"APPROVAL DENIED: Missing swap parties in metadata. "
+                    f"Required: {required_keys}, "
+                    f"Got: {set(context.resource_metadata.keys())}"
+                )
+                return False
+
+            # Coordinator role check for swap approvals
+            if role != UserRole.COORDINATOR:
+                # Faculty can only approve swaps they're involved in
+                if role == UserRole.FACULTY:
+                    user_id = str(context.user_id)
+                    involved = {
+                        str(context.resource_metadata.get("requesting_user_id")),
+                        str(context.resource_metadata.get("target_user_id")),
+                    }
+                    if user_id not in involved:
+                        logger.warning(
+                            f"APPROVAL DENIED: Faculty {user_id} not involved in swap"
+                        )
+                        return False
+
+        # Check supervisor relationship for non-admin approvals
+        if role == UserRole.COORDINATOR:
+            # Coordinators must be supervisor of the resource owner
+            if not self._context_evaluators["is_supervisor"](context):
+                logger.warning(
+                    "APPROVAL DENIED: Coordinator not supervisor of resource owner"
+                )
+                return False
+
+        return True
 
     def _audit_permission_check(
         self,

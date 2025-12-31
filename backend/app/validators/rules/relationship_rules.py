@@ -171,9 +171,7 @@ async def validate_orphaned_assignments(
             )
 
         # Check block exists
-        result = await db.execute(
-            select(Block).where(Block.id == assignment.block_id)
-        )
+        result = await db.execute(select(Block).where(Block.id == assignment.block_id))
         block = result.scalar_one_or_none()
 
         if not block:
@@ -245,7 +243,11 @@ async def validate_cascade_delete_impact(
             "entity_type": entity_type,
             "entity_id": str(entity_id),
             "affected_assignments": len(assignments),
-            "impact_level": "high" if len(assignments) > 10 else "medium" if len(assignments) > 0 else "low",
+            "impact_level": "high"
+            if len(assignments) > 10
+            else "medium"
+            if len(assignments) > 0
+            else "low",
             "message": f"Deleting person will affect {len(assignments)} assignments",
         }
 
@@ -260,7 +262,11 @@ async def validate_cascade_delete_impact(
             "entity_type": entity_type,
             "entity_id": str(entity_id),
             "affected_assignments": len(assignments),
-            "impact_level": "high" if len(assignments) > 5 else "medium" if len(assignments) > 0 else "low",
+            "impact_level": "high"
+            if len(assignments) > 5
+            else "medium"
+            if len(assignments) > 0
+            else "low",
             "message": f"Deleting block will affect {len(assignments)} assignments",
         }
 

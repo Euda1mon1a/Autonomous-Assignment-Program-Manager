@@ -45,9 +45,9 @@ def compliance() -> None:
     help="Show detailed violation information",
 )
 def check(
-    start: Optional[datetime],
-    end: Optional[datetime],
-    person: Optional[str],
+    start: datetime | None,
+    end: datetime | None,
+    person: str | None,
     verbose: bool,
 ) -> None:
     """
@@ -89,9 +89,7 @@ def check(
 
         if person:
             person_obj = db.execute(
-                select(Person).where(
-                    (Person.id == person) | (Person.email == person)
-                )
+                select(Person).where((Person.id == person) | (Person.email == person))
             ).scalar_one_or_none()
 
             if not person_obj:
@@ -181,9 +179,9 @@ def check(
 )
 def report(
     start: datetime,
-    end: Optional[datetime],
+    end: datetime | None,
     format: str,
-    output: Optional[str],
+    output: str | None,
 ) -> None:
     """
     Generate comprehensive ACGME compliance report.
@@ -210,17 +208,21 @@ def report(
         click.echo(f"Generating compliance report from {start_date} to {end_date}")
 
         # Load all assignments
-        assignments = db.execute(
-            select(Assignment)
-            .join(Block)
-            .where(Block.date >= start_date)
-            .where(Block.date <= end_date)
-            .options(
-                selectinload(Assignment.person),
-                selectinload(Assignment.block),
-                selectinload(Assignment.rotation),
+        assignments = (
+            db.execute(
+                select(Assignment)
+                .join(Block)
+                .where(Block.date >= start_date)
+                .where(Block.date <= end_date)
+                .options(
+                    selectinload(Assignment.person),
+                    selectinload(Assignment.block),
+                    selectinload(Assignment.rotation),
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         # Validate
         validator = ACGMEValidator(db)
@@ -251,7 +253,9 @@ def report(
             with open(output_path, "w") as f:
                 f.write("# ACGME Compliance Report\n\n")
                 f.write(f"**Period:** {start_date} to {end_date}\n")
-                f.write(f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n")
+                f.write(
+                    f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n"
+                )
 
                 f.write("## Summary\n\n")
                 f.write(f"- Total Assignments: {len(assignments)}\n")
@@ -271,7 +275,9 @@ def report(
                 f.write("| Person | Assignments | Estimated Hours |\n")
                 f.write("|--------|-------------|----------------|\n")
                 for person_id, data in people.items():
-                    f.write(f"| {data['name']} | {data['assignments']} | {data['hours']} |\n")
+                    f.write(
+                        f"| {data['name']} | {data['assignments']} | {data['hours']} |\n"
+                    )
 
         elif format == "json":
             import json
@@ -296,10 +302,7 @@ def report(
                     }
                     for v in violations
                 ],
-                "work_hours": {
-                    person_id: data
-                    for person_id, data in people.items()
-                },
+                "work_hours": {person_id: data for person_id, data in people.items()},
             }
 
             with open(output_path, "w") as f:
@@ -332,8 +335,8 @@ def report(
     help="End date (defaults to today)",
 )
 def statistics(
-    start: Optional[datetime],
-    end: Optional[datetime],
+    start: datetime | None,
+    end: datetime | None,
 ) -> None:
     """
     Show compliance statistics and metrics.
@@ -358,17 +361,21 @@ def statistics(
         click.echo(f"Compliance Statistics from {start_date} to {end_date}")
 
         # Load assignments
-        assignments = db.execute(
-            select(Assignment)
-            .join(Block)
-            .where(Block.date >= start_date)
-            .where(Block.date <= end_date)
-            .options(
-                selectinload(Assignment.person),
-                selectinload(Assignment.block),
-                selectinload(Assignment.rotation),
+        assignments = (
+            db.execute(
+                select(Assignment)
+                .join(Block)
+                .where(Block.date >= start_date)
+                .where(Block.date <= end_date)
+                .options(
+                    selectinload(Assignment.person),
+                    selectinload(Assignment.block),
+                    selectinload(Assignment.rotation),
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         # Validate
         validator = ACGMEValidator(db)

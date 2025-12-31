@@ -7,6 +7,7 @@ from typing import List, Optional
 # Optional dependency
 try:
     from sentence_transformers import SentenceTransformer
+
     SENTENCE_TRANSFORMERS_AVAILABLE = True
 except ImportError:
     SENTENCE_TRANSFORMERS_AVAILABLE = False
@@ -20,7 +21,7 @@ class EmbeddingService:
     No API calls required - runs entirely on CPU.
     """
 
-    _model: Optional[object] = None  # SentenceTransformer | None
+    _model: object | None = None  # SentenceTransformer | None
     MODEL_NAME = "all-MiniLM-L6-v2"
     EMBEDDING_DIM = 384
 

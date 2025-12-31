@@ -1,0 +1,256 @@
+/**
+ * Tests for Button Component
+ * Component: 40 - Base button variants
+ */
+
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import { Button, IconButton } from '../Button';
+
+describe('Button', () => {
+  // Test 40.1: Render test
+  describe('Rendering', () => {
+    it('renders with children', () => {
+      render(<Button>Click me</Button>);
+
+      expect(screen.getByText('Click me')).toBeInTheDocument();
+    });
+
+    it('renders as a button element', () => {
+      render(<Button>Click me</Button>);
+
+      const button = screen.getByText('Click me');
+      expect(button.tagName).toBe('BUTTON');
+    });
+
+    it('forwards ref correctly', () => {
+      const ref = React.createRef<HTMLButtonElement>();
+      render(<Button ref={ref}>Click me</Button>);
+
+      expect(ref.current).toBeInstanceOf(HTMLButtonElement);
+    });
+
+    it('renders with left icon', () => {
+      render(<Button leftIcon={<span>📝</span>}>Edit</Button>);
+
+      expect(screen.getByText('📝')).toBeInTheDocument();
+      expect(screen.getByText('Edit')).toBeInTheDocument();
+    });
+
+    it('renders with right icon', () => {
+      render(<Button rightIcon={<span>→</span>}>Next</Button>);
+
+      expect(screen.getByText('→')).toBeInTheDocument();
+      expect(screen.getByText('Next')).toBeInTheDocument();
+    });
+
+    it('renders loading state', () => {
+      render(<Button isLoading>Save</Button>);
+
+      expect(screen.getByText('Save')).toBeInTheDocument();
+    });
+
+    it('renders custom loading text', () => {
+      render(<Button isLoading loadingText="Saving...">Save</Button>);
+
+      expect(screen.getByText('Saving...')).toBeInTheDocument();
+    });
+  });
+
+  // Test 40.2: Variant and size tests
+  describe('Variants and Sizes', () => {
+    it('renders primary variant (default)', () => {
+      const { container } = render(<Button variant="primary">Primary</Button>);
+
+      const button = container.querySelector('.bg-blue-600');
+      expect(button).toBeInTheDocument();
+    });
+
+    it('renders secondary variant', () => {
+      const { container } = render(<Button variant="secondary">Secondary</Button>);
+
+      const button = container.querySelector('.bg-gray-100');
+      expect(button).toBeInTheDocument();
+    });
+
+    it('renders danger variant', () => {
+      const { container } = render(<Button variant="danger">Delete</Button>);
+
+      const button = container.querySelector('.bg-red-600');
+      expect(button).toBeInTheDocument();
+    });
+
+    it('renders ghost variant', () => {
+      const { container } = render(<Button variant="ghost">Ghost</Button>);
+
+      const button = container.querySelector('.bg-transparent');
+      expect(button).toBeInTheDocument();
+    });
+
+    it('renders outline variant', () => {
+      const { container } = render(<Button variant="outline">Outline</Button>);
+
+      const button = container.querySelector('.border.border-gray-300');
+      expect(button).toBeInTheDocument();
+    });
+
+    it('renders success variant', () => {
+      const { container } = render(<Button variant="success">Success</Button>);
+
+      const button = container.querySelector('.bg-green-600');
+      expect(button).toBeInTheDocument();
+    });
+
+    it('renders small size', () => {
+      const { container } = render(<Button size="sm">Small</Button>);
+
+      const button = container.querySelector('.px-3.py-1\\.5.text-sm');
+      expect(button).toBeInTheDocument();
+    });
+
+    it('renders medium size (default)', () => {
+      const { container } = render(<Button size="md">Medium</Button>);
+
+      const button = container.querySelector('.px-4.py-2.text-sm');
+      expect(button).toBeInTheDocument();
+    });
+
+    it('renders large size', () => {
+      const { container } = render(<Button size="lg">Large</Button>);
+
+      const button = container.querySelector('.px-6.py-3.text-base');
+      expect(button).toBeInTheDocument();
+    });
+
+    it('renders full width when fullWidth is true', () => {
+      const { container } = render(<Button fullWidth>Full Width</Button>);
+
+      const button = container.querySelector('.w-full');
+      expect(button).toBeInTheDocument();
+    });
+  });
+
+  // Test 40.3: Accessibility and interaction
+  describe('Accessibility and Interaction', () => {
+    it('handles click events', () => {
+      const handleClick = jest.fn();
+      render(<Button onClick={handleClick}>Click me</Button>);
+
+      fireEvent.click(screen.getByText('Click me'));
+      expect(handleClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('is disabled when disabled prop is true', () => {
+      render(<Button disabled>Disabled</Button>);
+
+      const button = screen.getByText('Disabled');
+      expect(button).toBeDisabled();
+    });
+
+    it('is disabled when isLoading is true', () => {
+      render(<Button isLoading>Loading</Button>);
+
+      const button = screen.getByText('Loading');
+      expect(button).toBeDisabled();
+    });
+
+    it('does not call onClick when disabled', () => {
+      const handleClick = jest.fn();
+      render(<Button disabled onClick={handleClick}>Disabled</Button>);
+
+      fireEvent.click(screen.getByText('Disabled'));
+      expect(handleClick).not.toHaveBeenCalled();
+    });
+
+    it('is keyboard accessible', () => {
+      render(<Button>Focus me</Button>);
+
+      const button = screen.getByText('Focus me');
+      button.focus();
+
+      expect(button).toHaveFocus();
+    });
+
+    it('applies focus ring styles', () => {
+      const { container } = render(<Button>Click me</Button>);
+
+      const button = container.querySelector('.focus\\:outline-none.focus\\:ring-2');
+      expect(button).toBeInTheDocument();
+    });
+
+    it('passes through other HTML button props', () => {
+      render(<Button type="submit" name="submit-btn" data-testid="custom-button">Submit</Button>);
+
+      const button = screen.getByText('Submit');
+      expect(button).toHaveAttribute('type', 'submit');
+      expect(button).toHaveAttribute('name', 'submit-btn');
+      expect(button).toHaveAttribute('data-testid', 'custom-button');
+    });
+  });
+
+  // Test 40.4: Edge cases and IconButton
+  describe('Edge Cases and IconButton', () => {
+    it('applies custom className', () => {
+      const { container } = render(<Button className="custom-class">Click me</Button>);
+
+      const button = container.querySelector('.custom-class');
+      expect(button).toBeInTheDocument();
+    });
+
+    it('merges custom className with base classes', () => {
+      render(<Button className="custom-class">Click me</Button>);
+
+      const button = screen.getByText('Click me');
+      expect(button).toHaveClass('custom-class');
+      expect(button).toHaveClass('inline-flex');
+    });
+
+    it('hides icons when loading', () => {
+      render(<Button isLoading leftIcon={<span>📝</span>} rightIcon={<span>→</span>}>Save</Button>);
+
+      expect(screen.queryByText('📝')).not.toBeInTheDocument();
+      expect(screen.queryByText('→')).not.toBeInTheDocument();
+    });
+
+    it('renders IconButton variant', () => {
+      render(<IconButton>🔍</IconButton>);
+
+      expect(screen.getByText('🔍')).toBeInTheDocument();
+    });
+
+    it('IconButton has correct padding for sizes', () => {
+      const { container, rerender } = render(<IconButton size="sm">🔍</IconButton>);
+
+      expect(container.querySelector('.p-1\\.5')).toBeInTheDocument();
+
+      rerender(<IconButton size="md">🔍</IconButton>);
+      expect(container.querySelector('.p-2')).toBeInTheDocument();
+
+      rerender(<IconButton size="lg">🔍</IconButton>);
+      expect(container.querySelector('.p-3')).toBeInTheDocument();
+    });
+
+    it('IconButton forwards ref correctly', () => {
+      const ref = React.createRef<HTMLButtonElement>();
+      render(<IconButton ref={ref}>🔍</IconButton>);
+
+      expect(ref.current).toBeInstanceOf(HTMLButtonElement);
+    });
+
+    it('renders with both icons and text', () => {
+      render(<Button leftIcon={<span>📝</span>} rightIcon={<span>→</span>}>Edit and Next</Button>);
+
+      expect(screen.getByText('📝')).toBeInTheDocument();
+      expect(screen.getByText('Edit and Next')).toBeInTheDocument();
+      expect(screen.getByText('→')).toBeInTheDocument();
+    });
+
+    it('applies disabled styles', () => {
+      const { container } = render(<Button disabled>Disabled</Button>);
+
+      const button = container.querySelector('.disabled\\:opacity-50.disabled\\:cursor-not-allowed');
+      expect(button).toBeInTheDocument();
+    });
+  });
+});

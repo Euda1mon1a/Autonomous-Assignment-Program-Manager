@@ -571,10 +571,9 @@ class TestSwapWorkflowE2E:
             assert history["total"] >= 3
             # All swaps should involve faculty1
             for item in history["items"]:
-                assert (
-                    item["source_faculty_id"] == str(faculty1.id)
-                    or item["target_faculty_id"] == str(faculty1.id)
-                )
+                assert item["source_faculty_id"] == str(faculty1.id) or item[
+                    "target_faculty_id"
+                ] == str(faculty1.id)
 
         # Test 2: Filter by status
         status_response = client.get(
@@ -857,7 +856,9 @@ class TestSwapWorkflowE2E:
         assert result.swap_id is not None
 
         # Verify swap record created
-        swap_record = db.query(SwapRecord).filter(SwapRecord.id == result.swap_id).first()
+        swap_record = (
+            db.query(SwapRecord).filter(SwapRecord.id == result.swap_id).first()
+        )
         assert swap_record is not None
         assert swap_record.status == SwapStatus.EXECUTED
         assert swap_record.executed_by_id == admin_user.id

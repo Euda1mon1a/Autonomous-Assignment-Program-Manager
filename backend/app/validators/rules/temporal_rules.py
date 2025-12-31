@@ -161,14 +161,10 @@ def validate_sequence_order(
         next_date = dates[i + 1]
 
         if current > next_date:
-            issues.append(
-                f"Dates out of order at index {i}: {current} > {next_date}"
-            )
+            issues.append(f"Dates out of order at index {i}: {current} > {next_date}")
 
         if not allow_duplicates and current == next_date:
-            issues.append(
-                f"Duplicate date at index {i}: {current}"
-            )
+            issues.append(f"Duplicate date at index {i}: {current}")
 
     # Check for gaps if not allowed
     if not allow_gaps:
@@ -186,8 +182,7 @@ def validate_sequence_order(
 
     # Calculate statistics
     is_consecutive = all(
-        dates[i + 1] - dates[i] == timedelta(days=1)
-        for i in range(len(dates) - 1)
+        dates[i + 1] - dates[i] == timedelta(days=1) for i in range(len(dates) - 1)
     )
 
     return {

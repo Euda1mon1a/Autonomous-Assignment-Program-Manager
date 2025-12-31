@@ -44,33 +44,93 @@ class TestRoleHierarchy:
         assert UserRole.ADMIN in inherited
 
     def test_get_inherited_roles_faculty(self):
-        """Faculty inherits from admin and coordinator."""
+        """Faculty is INDEPENDENT - no inheritance (SECURITY FIX)."""
         inherited = RoleHierarchy.get_inherited_roles(UserRole.FACULTY)
         assert UserRole.FACULTY in inherited
-        assert UserRole.ADMIN in inherited
-        assert UserRole.COORDINATOR in inherited
+        # SECURITY FIX: Faculty does NOT inherit from Coordinator
+        assert UserRole.ADMIN not in inherited
+        assert UserRole.COORDINATOR not in inherited
+        assert len(inherited) == 1  # Only itself
 
     def test_get_inherited_roles_clinical_staff(self):
-        """Clinical staff inherits from admin and coordinator."""
+        """Clinical staff is INDEPENDENT - no inheritance."""
         inherited = RoleHierarchy.get_inherited_roles(UserRole.CLINICAL_STAFF)
         assert UserRole.CLINICAL_STAFF in inherited
-        assert UserRole.ADMIN in inherited
-        assert UserRole.COORDINATOR in inherited
+        # Clinical staff does NOT inherit from anyone
+        assert UserRole.ADMIN not in inherited
+        assert UserRole.COORDINATOR not in inherited
+        assert len(inherited) == 1  # Only itself
 
     def test_get_inherited_roles_rn(self):
-        """RN inherits from clinical_staff, coordinator, and admin."""
+        """RN inherits from clinical_staff only."""
         inherited = RoleHierarchy.get_inherited_roles(UserRole.RN)
         assert UserRole.RN in inherited
         assert UserRole.CLINICAL_STAFF in inherited
-        assert UserRole.COORDINATOR in inherited
-        assert UserRole.ADMIN in inherited
+        # RN does NOT inherit from Coordinator or Admin
+        assert UserRole.COORDINATOR not in inherited
+        assert UserRole.ADMIN not in inherited
+        assert len(inherited) == 2  # RN + CLINICAL_STAFF
 
     def test_is_higher_role(self):
-        """Test role hierarchy comparison."""
-        assert RoleHierarchy.is_higher_role(UserRole.COORDINATOR, UserRole.ADMIN)
-        assert RoleHierarchy.is_higher_role(UserRole.FACULTY, UserRole.ADMIN)
-        assert RoleHierarchy.is_higher_role(UserRole.RESIDENT, UserRole.ADMIN)
-        assert not RoleHierarchy.is_higher_role(UserRole.ADMIN, UserRole.COORDINATOR)
+        """Test role hierarchy comparison using numeric levels."""
+        # Admin (100) is higher than Coordinator (90)
+        assert RoleHierarchy.is_higher_role(UserRole.ADMIN, UserRole.COORDINATOR)
+        # Coordinator (90) is higher than Faculty (80)
+        assert RoleHierarchy.is_higher_role(UserRole.COORDINATOR, UserRole.FACULTY)
+        # Faculty (80) is higher than Resident (70)
+        assert RoleHierarchy.is_higher_role(UserRole.FACULTY, UserRole.RESIDENT)
+        # Resident (70) is higher than Clinical Staff (60)
+        assert RoleHierarchy.is_higher_role(UserRole.RESIDENT, UserRole.CLINICAL_STAFF)
+        # Coordinator is NOT higher than Admin
+        assert not RoleHierarchy.is_higher_role(UserRole.COORDINATOR, UserRole.ADMIN)
+        # Faculty is NOT higher than Coordinator
+        assert not RoleHierarchy.is_higher_role(UserRole.FACULTY, UserRole.COORDINATOR)
+
+    def test_get_role_level(self):
+        """Test role level retrieval."""
+        assert RoleHierarchy.get_role_level(UserRole.ADMIN) == 100
+        assert RoleHierarchy.get_role_level(UserRole.COORDINATOR) == 90
+        assert RoleHierarchy.get_role_level(UserRole.FACULTY) == 80
+        assert RoleHierarchy.get_role_level(UserRole.RESIDENT) == 70
+        assert RoleHierarchy.get_role_level(UserRole.CLINICAL_STAFF) == 60
+
+    def test_is_equal_or_higher_role(self):
+        """Test equal or higher role comparison."""
+        # Equal
+        assert RoleHierarchy.is_equal_or_higher_role(UserRole.ADMIN, UserRole.ADMIN)
+        assert RoleHierarchy.is_equal_or_higher_role(
+            UserRole.COORDINATOR, UserRole.COORDINATOR
+        )
+        # Higher
+        assert RoleHierarchy.is_equal_or_higher_role(
+            UserRole.ADMIN, UserRole.COORDINATOR
+        )
+        assert RoleHierarchy.is_equal_or_higher_role(
+            UserRole.COORDINATOR, UserRole.FACULTY
+        )
+        # Lower
+        assert not RoleHierarchy.is_equal_or_higher_role(
+            UserRole.FACULTY, UserRole.COORDINATOR
+        )
+
+    def test_can_manage_role(self):
+        """Test role management permissions."""
+        # Admin can manage all roles
+        assert RoleHierarchy.can_manage_role(UserRole.ADMIN, UserRole.ADMIN)
+        assert RoleHierarchy.can_manage_role(UserRole.ADMIN, UserRole.COORDINATOR)
+        assert RoleHierarchy.can_manage_role(UserRole.ADMIN, UserRole.FACULTY)
+
+        # Coordinator can manage Faculty and below, but NOT Admin or Coordinator
+        assert not RoleHierarchy.can_manage_role(UserRole.COORDINATOR, UserRole.ADMIN)
+        assert not RoleHierarchy.can_manage_role(
+            UserRole.COORDINATOR, UserRole.COORDINATOR
+        )
+        assert RoleHierarchy.can_manage_role(UserRole.COORDINATOR, UserRole.FACULTY)
+        assert RoleHierarchy.can_manage_role(UserRole.COORDINATOR, UserRole.RESIDENT)
+
+        # Faculty cannot manage any roles
+        assert not RoleHierarchy.can_manage_role(UserRole.FACULTY, UserRole.RESIDENT)
+        assert not RoleHierarchy.can_manage_role(UserRole.FACULTY, UserRole.FACULTY)
 
 
 class TestAccessControlMatrix:

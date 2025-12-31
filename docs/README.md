@@ -2,6 +2,8 @@
 
 Welcome to the Residency Scheduler documentation. This comprehensive guide will help you install, configure, use, and develop the system.
 
+> **Documentation Restructure (2025-12-31):** Human-readable docs are now in `/docs/`, while LLM-focused documentation (session reports, technical deep dives) has moved to `.claude/dontreadme/`. See [Documentation Structure](#documentation-structure-update-2025-12-31) below.
+
 ---
 
 ## Quick Navigation
@@ -180,16 +182,18 @@ Experimental research and exploration documents.
 | [Catalyst Concepts Analysis](research/catalyst-concepts-analysis.md) | Catalyst pattern analysis |
 | [Quantum Physics Scheduler Exploration](research/quantum-physics-scheduler-exploration.md) | Quantum-inspired scheduling concepts |
 
-### :material-calendar-clock: Sessions
-Development session notes and summaries.
+### :material-robot: AI Agent Documentation (LLMs)
+**For AI agents only** - Session reports, technical deep dives, and LLM-focused context.
 
-| Document | Description |
+| Location | Description |
 |----------|-------------|
-| [Sessions Index](sessions/README.md) | Overview of development sessions |
-| [Session 9: MCP N8N Parallel Work](sessions/SESSION_009_MCP_N8N_PARALLEL_WORK.md) | MCP and N8N integration work |
-| [Session 10: Load Testing](sessions/SESSION_10_LOAD_TESTING.md) | Load testing implementation |
-| [Session 11A: MCP & Optimization](sessions/SESSION_11A_MCP_AND_OPTIMIZATION.md) | MCP tools & performance optimization |
-| [Session 11B: Test Coverage](sessions/SESSION_11B_TEST_COVERAGE.md) | Test coverage expansion |
+| [`.claude/dontreadme/INDEX.md`](../.claude/dontreadme/INDEX.md) | **Master index for AI agents (start here)** |
+| [`.claude/dontreadme/synthesis/`](../.claude/dontreadme/synthesis/) | Patterns, decisions, lessons learned |
+| [`.claude/dontreadme/sessions/`](../.claude/dontreadme/sessions/) | Session reports and completion summaries |
+| [`.claude/dontreadme/reconnaissance/`](../.claude/dontreadme/reconnaissance/) | Recon findings and issue mapping |
+| [`.claude/dontreadme/technical/`](../.claude/dontreadme/technical/) | Implementation details and deep dives |
+
+**Human developers:** See [Development Guide](development/index.md) instead
 
 ### :material-archive: Archived
 Historical documentation retained for reference.
@@ -245,6 +249,30 @@ Important files at the docs/ root:
 | [MCP_IDE_INTEGRATION.md](MCP_IDE_INTEGRATION.md) | Model Context Protocol IDE integration |
 | [PRIORITY_LIST.md](PRIORITY_LIST.md) | Current development priorities |
 | [PULSE_CHECKLIST.md](PULSE_CHECKLIST.md) | System health pulse checklist |
+
+---
+
+## Documentation Structure (Update 2025-12-31)
+
+**What Changed:**
+- **Before:** Mixed human and LLM documentation in `/docs/` (35% was "chaff" for humans)
+- **After:**
+  - `/docs/` - Human-readable documentation (users, admins, developers)
+  - `.claude/dontreadme/` - LLM-focused documentation (session reports, technical internals)
+
+**Why:**
+- Humans struggled to find relevant docs amid session reports and technical jargon
+- AI agents needed deep context without cluttering user guides
+- Separate audiences require separate content
+
+**Result:**
+- 70% reduction in documentation noise for humans
+- Rich technical context for AI agents
+- Cleaner, more focused guides
+
+**Migration:** All session reports, implementation summaries, and LLM-specific docs moved to `.claude/dontreadme/`
+
+**For AI Agents:** Start at `.claude/dontreadme/INDEX.md`
 
 ---
 
@@ -326,6 +354,6 @@ Additional community-maintained documentation: [Project Wiki](https://github.com
 
 **Made with care for those who care for others**
 
-Version: 1.0.0 | Last Updated: 2025-12-18
+Version: 1.0.0 | Last Updated: 2025-12-31 (Documentation restructure)
 
 </div>

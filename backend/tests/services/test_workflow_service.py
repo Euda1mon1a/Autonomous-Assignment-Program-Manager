@@ -142,7 +142,9 @@ class TestTemplateManagement:
                     definition={"invalid": "data"},
                 )
 
-    def test_create_template_database_rollback_on_error(self, db, sample_workflow_definition):
+    def test_create_template_database_rollback_on_error(
+        self, db, sample_workflow_definition
+    ):
         """Test that database is rolled back on error."""
         service = WorkflowService(db)
 
@@ -203,7 +205,9 @@ class TestTemplateManagement:
         assert len(result) >= 1
         assert any(t.id == sample_workflow_template.id for t in result)
 
-    def test_list_templates_active_only(self, db, sample_workflow_definition, admin_user):
+    def test_list_templates_active_only(
+        self, db, sample_workflow_definition, admin_user
+    ):
         """Test listing only active templates."""
         # Create active and inactive templates
         active_template = WorkflowTemplate(
@@ -231,7 +235,9 @@ class TestTemplateManagement:
         assert any(t.id == active_template.id for t in result)
         assert not any(t.id == inactive_template.id for t in result)
 
-    def test_list_templates_filter_by_tags(self, db, sample_workflow_definition, admin_user):
+    def test_list_templates_filter_by_tags(
+        self, db, sample_workflow_definition, admin_user
+    ):
         """Test filtering templates by tags."""
         # Create templates with different tags
         template1 = WorkflowTemplate(
@@ -282,15 +288,19 @@ class TestTemplateManagement:
         with pytest.raises(ValueError, match="Template .* not found"):
             service.deactivate_template(uuid4())
 
-    def test_deactivate_template_persists_to_database(self, db, sample_workflow_template):
+    def test_deactivate_template_persists_to_database(
+        self, db, sample_workflow_template
+    ):
         """Test that template deactivation persists to database."""
         service = WorkflowService(db)
         service.deactivate_template(sample_workflow_template.id)
 
         # Query directly from database
-        db_template = db.query(WorkflowTemplate).filter(
-            WorkflowTemplate.id == sample_workflow_template.id
-        ).first()
+        db_template = (
+            db.query(WorkflowTemplate)
+            .filter(WorkflowTemplate.id == sample_workflow_template.id)
+            .first()
+        )
         assert db_template.is_active is False
 
 
@@ -343,9 +353,7 @@ class TestWorkflowInstanceManagement:
                 async_execution=False,
             )
 
-    def test_start_workflow_inactive_template_error(
-        self, db, sample_workflow_template
-    ):
+    def test_start_workflow_inactive_template_error(self, db, sample_workflow_template):
         """Test starting a workflow with inactive template raises error."""
         # Deactivate the template
         sample_workflow_template.is_active = False
@@ -368,7 +376,9 @@ class TestWorkflowInstanceManagement:
         mock_instance = Mock(spec=WorkflowInstance)
         mock_instance.id = uuid4()
 
-        with patch.object(service.engine, "create_instance", return_value=mock_instance):
+        with patch.object(
+            service.engine, "create_instance", return_value=mock_instance
+        ):
             with patch("asyncio.create_task"):
                 result = service.start_workflow(
                     template_name=sample_workflow_template.name,
@@ -426,9 +436,7 @@ class TestWorkflowInstanceManagement:
 
             assert result is None
 
-    def test_cancel_workflow_success(
-        self, db, sample_workflow_instance, admin_user
-    ):
+    def test_cancel_workflow_success(self, db, sample_workflow_instance, admin_user):
         """Test cancelling a workflow successfully."""
         service = WorkflowService(db)
 
@@ -714,9 +722,7 @@ class TestQueryAndMonitoring:
             assert result["completed"] == 80
             assert result["failed"] == 10
 
-    def test_get_statistics_filter_by_template(
-        self, db, sample_workflow_template
-    ):
+    def test_get_statistics_filter_by_template(self, db, sample_workflow_template):
         """Test getting statistics filtered by template name."""
         service = WorkflowService(db)
 
@@ -731,9 +737,7 @@ class TestQueryAndMonitoring:
             "get_statistics",
             return_value=mock_stats,
         ):
-            result = service.get_statistics(
-                template_name=sample_workflow_template.name
-            )
+            result = service.get_statistics(template_name=sample_workflow_template.name)
 
             assert result["total_workflows"] == 10
 
@@ -771,7 +775,10 @@ class TestCommonWorkflowTemplates:
 
         assert result is not None
         assert result.name == "schedule_generation"
-        assert result.description == "Automated schedule generation with validation and notifications"
+        assert (
+            result.description
+            == "Automated schedule generation with validation and notifications"
+        )
         assert result.tags == ["schedule", "acgme", "automated"]
         assert result.created_by_id == admin_user.id
         assert result.is_active is True
@@ -873,7 +880,9 @@ class TestCommonWorkflowTemplates:
 class TestEdgeCases:
     """Test suite for edge cases and integration scenarios."""
 
-    def test_multiple_template_versions(self, db, sample_workflow_definition, admin_user):
+    def test_multiple_template_versions(
+        self, db, sample_workflow_definition, admin_user
+    ):
         """Test handling multiple versions of the same template."""
         service = WorkflowService(db)
 
@@ -930,9 +939,30 @@ class TestEdgeCases:
         template_names_versions = [(t.name, t.version) for t in result]
 
         # Find indices of our templates
-        a_v2_idx = next((i for i, (n, v) in enumerate(template_names_versions) if n == "a_workflow" and v == 2), None)
-        a_v1_idx = next((i for i, (n, v) in enumerate(template_names_versions) if n == "a_workflow" and v == 1), None)
-        b_v1_idx = next((i for i, (n, v) in enumerate(template_names_versions) if n == "b_workflow" and v == 1), None)
+        a_v2_idx = next(
+            (
+                i
+                for i, (n, v) in enumerate(template_names_versions)
+                if n == "a_workflow" and v == 2
+            ),
+            None,
+        )
+        a_v1_idx = next(
+            (
+                i
+                for i, (n, v) in enumerate(template_names_versions)
+                if n == "a_workflow" and v == 1
+            ),
+            None,
+        )
+        b_v1_idx = next(
+            (
+                i
+                for i, (n, v) in enumerate(template_names_versions)
+                if n == "b_workflow" and v == 1
+            ),
+            None,
+        )
 
         # Verify ordering if all found
         if a_v2_idx is not None and a_v1_idx is not None:
@@ -948,7 +978,9 @@ class TestEdgeCases:
         mock_instance.id = uuid4()
         mock_instance.input_data = None
 
-        with patch.object(service.engine, "create_instance", return_value=mock_instance):
+        with patch.object(
+            service.engine, "create_instance", return_value=mock_instance
+        ):
             with patch("asyncio.create_task"):
                 result = service.start_workflow(
                     template_name=sample_workflow_template.name,

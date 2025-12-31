@@ -34,7 +34,9 @@ class DateRangeFilter(BaseModel):
 class DateTimeRangeFilter(BaseModel):
     """Filter by datetime range."""
 
-    start_datetime: datetime | None = Field(None, description="Start datetime (inclusive)")
+    start_datetime: datetime | None = Field(
+        None, description="Start datetime (inclusive)"
+    )
     end_datetime: datetime | None = Field(None, description="End datetime (inclusive)")
 
     @field_validator("end_datetime")
@@ -54,7 +56,9 @@ class PersonFilter(BaseModel):
     pgy_level: int | None = Field(None, ge=1, le=3, description="PGY level (1-3)")
     faculty_role: str | None = Field(None, description="Faculty role")
     specialties: list[str] | None = Field(None, description="Specialties filter")
-    performs_procedures: bool | None = Field(None, description="Performs procedures flag")
+    performs_procedures: bool | None = Field(
+        None, description="Performs procedures flag"
+    )
 
     @field_validator("person_type")
     @classmethod
@@ -70,7 +74,9 @@ class AssignmentFilter(BaseModel):
 
     person_id: UUID | None = Field(None, description="Filter by person")
     block_id: UUID | None = Field(None, description="Filter by block")
-    rotation_template_id: UUID | None = Field(None, description="Filter by rotation template")
+    rotation_template_id: UUID | None = Field(
+        None, description="Filter by rotation template"
+    )
     role: str | None = Field(None, description="Assignment role")
     date_range: DateRangeFilter | None = Field(None, description="Filter by date range")
 
@@ -114,7 +120,14 @@ class SwapFilter(BaseModel):
     @classmethod
     def validate_status(cls, v: str | None) -> str | None:
         """Validate status is valid."""
-        valid_statuses = ["pending", "approved", "executed", "rejected", "cancelled", "rolled_back"]
+        valid_statuses = [
+            "pending",
+            "approved",
+            "executed",
+            "rejected",
+            "cancelled",
+            "rolled_back",
+        ]
         if v is not None and v not in valid_statuses:
             raise ValueError(f"status must be one of {valid_statuses}")
         return v
@@ -132,24 +145,29 @@ class SwapFilter(BaseModel):
 class SearchFilter(BaseModel):
     """General search filter."""
 
-    query: str | None = Field(None, description="Search query string", min_length=1, max_length=255)
+    query: str | None = Field(
+        None, description="Search query string", min_length=1, max_length=255
+    )
     fields: list[str] | None = Field(None, description="Fields to search in")
 
 
 class StatusFilter(BaseModel):
     """Filter by status."""
 
-    status: str | list[str] | None = Field(None, description="Status or list of statuses")
+    status: str | list[str] | None = Field(
+        None, description="Status or list of statuses"
+    )
     exclude_status: str | list[str] | None = Field(
-        None,
-        description="Status or list of statuses to exclude"
+        None, description="Status or list of statuses to exclude"
     )
 
 
 class IdListFilter(BaseModel):
     """Filter by list of IDs."""
 
-    ids: list[UUID] = Field(..., description="List of IDs to filter by", min_length=1, max_length=1000)
+    ids: list[UUID] = Field(
+        ..., description="List of IDs to filter by", min_length=1, max_length=1000
+    )
 
     @field_validator("ids")
     @classmethod

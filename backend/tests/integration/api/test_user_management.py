@@ -272,7 +272,9 @@ class TestUserManagementWorkflow:
         # Step 3: Verify import
         if import_response.status_code in [200, 201]:
             result = import_response.json()
-            assert "created" in result or "imported" in result or isinstance(result, list)
+            assert (
+                "created" in result or "imported" in result or isinstance(result, list)
+            )
 
     def test_user_deactivation_workflow(
         self,

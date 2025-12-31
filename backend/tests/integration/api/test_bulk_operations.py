@@ -31,11 +31,13 @@ class TestBulkOperationsWorkflow:
         for i in range(14):
             current_date = start_date + timedelta(days=i)
             for tod in ["AM", "PM"]:
-                blocks_data.append({
-                    "date": current_date.isoformat(),
-                    "time_of_day": tod,
-                    "block_number": 1,
-                })
+                blocks_data.append(
+                    {
+                        "date": current_date.isoformat(),
+                        "time_of_day": tod,
+                        "block_number": 1,
+                    }
+                )
 
         bulk_response = client.post(
             "/api/blocks/bulk",
@@ -145,7 +147,13 @@ class TestBulkOperationsWorkflow:
         # Simulate CSV upload
         import_response = client.post(
             "/api/imports/schedule",
-            files={"file": ("schedule.csv", b"date,time_of_day,person,rotation\n", "text/csv")},
+            files={
+                "file": (
+                    "schedule.csv",
+                    b"date,time_of_day,person,rotation\n",
+                    "text/csv",
+                )
+            },
             headers=auth_headers,
         )
         assert import_response.status_code in [200, 201, 400, 404, 501]

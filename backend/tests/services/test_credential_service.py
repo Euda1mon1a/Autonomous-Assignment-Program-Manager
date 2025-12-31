@@ -195,9 +195,7 @@ class TestListCredentialsForPerson:
     ):
         """Test filtering credentials by status."""
         service = CredentialService(db)
-        result = service.list_credentials_for_person(
-            sample_faculty.id, status="active"
-        )
+        result = service.list_credentials_for_person(sample_faculty.id, status="active")
 
         assert result["total"] == 1
         assert result["items"][0].status == "active"
@@ -376,9 +374,7 @@ class TestIsFacultyQualified:
     ):
         """Test checking if faculty is qualified returns True."""
         service = CredentialService(db)
-        result = service.is_faculty_qualified(
-            sample_faculty.id, sample_procedure.id
-        )
+        result = service.is_faculty_qualified(sample_faculty.id, sample_procedure.id)
 
         assert result["is_qualified"] is True
 
@@ -387,9 +383,7 @@ class TestIsFacultyQualified:
     ):
         """Test checking if faculty is qualified returns False when no credential."""
         service = CredentialService(db)
-        result = service.is_faculty_qualified(
-            sample_faculty.id, sample_procedure.id
-        )
+        result = service.is_faculty_qualified(sample_faculty.id, sample_procedure.id)
 
         assert result["is_qualified"] is False
 
@@ -1052,9 +1046,7 @@ class TestEdgeCases:
         assert credential.expiration_date is None
         assert credential.is_valid is True
 
-    def test_updates_persist_across_service_instances(
-        self, db, sample_credential
-    ):
+    def test_updates_persist_across_service_instances(self, db, sample_credential):
         """Test that updates persist when creating new service instance."""
         service1 = CredentialService(db)
         service1.update_credential(

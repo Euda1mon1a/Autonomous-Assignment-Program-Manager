@@ -16,7 +16,7 @@ from app.models.rotation_template import RotationTemplate
 from app.models.user import User
 
 
-def cleanup_assignments(db: Session, assignment_ids: Optional[List[str]] = None) -> None:
+def cleanup_assignments(db: Session, assignment_ids: list[str] | None = None) -> None:
     """
     Clean up test assignments.
 
@@ -34,7 +34,7 @@ def cleanup_assignments(db: Session, assignment_ids: Optional[List[str]] = None)
     db.commit()
 
 
-def cleanup_blocks(db: Session, block_ids: Optional[List[str]] = None) -> None:
+def cleanup_blocks(db: Session, block_ids: list[str] | None = None) -> None:
     """
     Clean up test blocks.
 
@@ -52,7 +52,7 @@ def cleanup_blocks(db: Session, block_ids: Optional[List[str]] = None) -> None:
     db.commit()
 
 
-def cleanup_people(db: Session, person_ids: Optional[List[str]] = None) -> None:
+def cleanup_people(db: Session, person_ids: list[str] | None = None) -> None:
     """
     Clean up test people.
 
@@ -71,7 +71,7 @@ def cleanup_people(db: Session, person_ids: Optional[List[str]] = None) -> None:
 
 
 def cleanup_rotation_templates(
-    db: Session, template_ids: Optional[List[str]] = None
+    db: Session, template_ids: list[str] | None = None
 ) -> None:
     """
     Clean up test rotation templates.
@@ -90,7 +90,7 @@ def cleanup_rotation_templates(
     db.commit()
 
 
-def cleanup_absences(db: Session, absence_ids: Optional[List[str]] = None) -> None:
+def cleanup_absences(db: Session, absence_ids: list[str] | None = None) -> None:
     """
     Clean up test absences.
 
@@ -108,7 +108,7 @@ def cleanup_absences(db: Session, absence_ids: Optional[List[str]] = None) -> No
     db.commit()
 
 
-def cleanup_users(db: Session, user_ids: Optional[List[str]] = None) -> None:
+def cleanup_users(db: Session, user_ids: list[str] | None = None) -> None:
     """
     Clean up test users.
 

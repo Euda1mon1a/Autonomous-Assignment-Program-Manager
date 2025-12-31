@@ -34,8 +34,8 @@ export function lazyLoadWithRetry<T extends React.ComponentType<any>>(
             await new Promise((r) => setTimeout(r, delay));
           }
 
-          const module = await importFn();
-          resolve(module);
+          const loadedModule = await importFn();
+          resolve(loadedModule);
         } catch (error) {
           if (retryCount > 0) {
             // Exponential backoff

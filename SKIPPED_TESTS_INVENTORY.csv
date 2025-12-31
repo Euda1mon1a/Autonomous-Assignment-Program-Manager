@@ -1,0 +1,96 @@
+File,Test Name,Category,Skip Type,Skip Reason,Priority,Unskip Effort (hours),Dependencies,Status
+tests/services/test_fmit_scheduler_service.py,test_get_fmit_schedule_success,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_fmit_scheduler_service.py,test_get_fmit_schedule_empty_range,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_fmit_scheduler_service.py,test_generate_fair_schedule_success,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_fmit_scheduler_service.py,test_generate_fair_schedule_validates_acgme,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_fmit_scheduler_service.py,test_generate_fair_schedule_no_faculty,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_fmit_scheduler_service.py,test_validate_schedule_detects_conflicts,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_fmit_scheduler_service.py,test_validate_schedule_clean,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_fmit_scheduler_service.py,test_assign_fmit_week_success,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_fmit_scheduler_service.py,test_assign_fmit_week_already_assigned,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_fmit_scheduler_service.py,test_find_swap_candidates,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_fmit_scheduler_service.py,test_find_swap_candidates_no_matches,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_fmit_scheduler_service.py,test_full_schedule_generation_workflow,DEBT-016,skip,DEBT-016: Placeholder - needs integration fixtures,P2,2-3,,Ready to unskip
+tests/services/test_fmit_scheduler_service.py,test_schedule_recovery_after_failure,DEBT-016,skip,DEBT-016: Placeholder - needs integration fixtures,P2,2-3,,Ready to unskip
+tests/services/test_call_assignment_service.py,test_get_call_assignment_success,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_call_assignment_service.py,test_get_call_assignment_with_eager_loading,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_call_assignment_service.py,test_get_call_assignments_by_date_range,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_call_assignment_service.py,test_get_call_assignments_pagination,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_call_assignment_service.py,test_create_call_assignment_success,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_call_assignment_service.py,test_create_call_assignment_conflict,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_call_assignment_service.py,test_update_call_assignment_success,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_call_assignment_service.py,test_update_call_assignment_not_found,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_call_assignment_service.py,test_delete_call_assignment_success,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_call_assignment_service.py,test_get_call_equity_metrics,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_call_assignment_service.py,test_get_call_distribution_by_person,DEBT-016,skip,DEBT-016: Placeholder - needs fixtures and assertions,P2,2-3,,Ready to unskip
+tests/services/test_call_assignment_service.py,test_concurrent_call_assignment_creation,DEBT-016,skip,DEBT-016: Placeholder - needs async fixtures,P2,2-3,,Ready to unskip
+tests/services/test_call_assignment_service.py,test_concurrent_updates_optimistic_locking,DEBT-016,skip,DEBT-016: Placeholder - needs async fixtures,P2,2-3,,Ready to unskip
+tests/services/test_call_assignment_service.py,test_full_call_schedule_workflow,DEBT-016,skip,DEBT-016: Placeholder - needs integration fixtures,P2,2-3,,Ready to unskip
+tests/services/test_call_assignment_service.py,test_call_assignment_acgme_validation,DEBT-016,skip,DEBT-016: Placeholder - needs integration fixtures,P2,2-3,,Ready to unskip
+tests/test_schedule_routes.py,test_post_schedule_generate_success,Missing Dep,skip,,,,,
+tests/test_schedule_routes.py,test_post_schedule_generate_missing_dates,Missing Dep,skip,,,,,
+tests/test_schedule_routes.py,test_post_schedule_generate_invalid_date_range,Missing Dep,skip,,,,,
+tests/test_schedule_routes.py,test_post_schedule_generate_requires_auth,Missing Dep,skip,,,,,
+tests/test_schedule_routes.py,test_post_schedule_validate_success,Missing Dep,skip,,,,,
+tests/test_schedule_routes.py,test_post_schedule_validate_acgme_compliance,Missing Dep,skip,,,,,
+tests/test_schedule_routes.py,test_post_emergency_coverage_success,Missing Dep,skip,,,,,
+tests/test_schedule_routes.py,test_post_emergency_coverage_requires_scheduler_role,Missing Dep,skip,,,,,
+tests/test_schedule_routes.py,test_get_schedule_by_date_range,Missing Dep,skip,,,,,
+tests/test_schedule_routes.py,test_get_schedule_by_person,Missing Dep,skip,,,,,
+tests/test_schedule_routes.py,test_delete_schedule_bulk_success,Missing Dep,skip,,,,,
+tests/test_schedule_routes.py,test_delete_schedule_requires_scheduler_role,Missing Dep,skip,,,,,
+tests/resilience/test_resilience_load.py,test_concurrent_contingency_analyses,Missing Dep,skip,,,,,
+tests/scheduling/periodicity/test_anti_churn.py,test_detect_weekly_pattern,Fixtures,skip,Requires mock Assignment objects with block.date,P3,1-2,,Needs fixtures
+tests/scheduling/periodicity/test_anti_churn.py,test_detect_subharmonics,Fixtures,skip,Requires mock Assignment objects with block.date,P3,1-2,,Needs fixtures
+tests/unit/test_contagion_model.py,test_model_initialization,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_model_initialization_empty_network,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_model_requires_ndlib,Optional,skipif,Test for missing ndlib,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_configure_model,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_configure_default_parameters,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_configure_invalid_infection_rate,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_configure_invalid_recovery_rate,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_set_initial_burnout,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_set_initial_burnout_before_configure,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_simulate_basic,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_simulate_infection_spread,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_simulate_without_configuration,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_simulate_snapshots,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_identify_superspreaders,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_identify_superspreaders_profiles,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_identify_superspreaders_no_burnout,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_recommend_interventions,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_recommend_interventions_types,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_recommend_interventions_no_superspreaders,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_recommend_interventions_max_limit,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_generate_report,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_generate_report_without_simulation,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_report_risk_levels,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_report_warnings,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_get_infection_trajectory,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_get_current_state,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_get_current_state_no_simulation,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_single_node_network,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_disconnected_network,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_all_infected_initial_state,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/unit/test_contagion_model.py,test_all_susceptible_initial_state,Optional,skipif,ndlib not installed,P0,0,ndlib,Keep skipped
+tests/services/test_rag_service.py,test_ingest_document_success,Missing Dep,skipif,,,,,
+tests/services/test_rag_service.py,test_retrieve_documents,Missing Dep,skipif,,,,,
+tests/services/test_rag_service.py,test_retrieve_with_doc_type_filter,Missing Dep,skipif,,,,,
+tests/services/test_rag_service.py,test_build_context,Missing Dep,skipif,,,,,
+tests/services/test_rag_service.py,test_build_context_respects_token_limit,Missing Dep,skipif,,,,,
+tests/services/test_rag_service.py,test_get_health,Missing Dep,skipif,,,,,
+tests/services/test_rag_service.py,test_get_health_with_documents,Missing Dep,skipif,,,,,
+tests/services/test_rag_service.py,test_delete_by_doc_type,Missing Dep,skipif,,,,,
+tests/services/test_rag_service.py,test_delete_by_id,Missing Dep,skipif,,,,,
+tests/scheduling/test_quantum_solver.py,test_pyqubo_solver,Missing Dep,skipif,PyQUBO not installed,P0,0,quantum,Keep skipped
+tests/scheduling/test_quantum_solver.py,test_dwave_simulated_annealing,Missing Dep,skipif,dwave-samplers not installed,P0,0,quantum,Keep skipped
+tests/test_resilience_hub_analysis.py,test_calculate_centrality_with_networkx,Missing Dep,skipif,NetworkX not installed,P0,0,NetworkX,Keep skipped
+tests/integration/bridges/test_kalman_workload_bridge.py,test_convergence_with_consistent_data,Missing Dep,skipif,,,,,
+tests/integration/bridges/test_kalman_workload_bridge.py,test_filters_noisy_self_reports,Missing Dep,skipif,,,,,
+tests/integration/bridges/test_kalman_workload_bridge.py,test_adapts_to_sudden_workload_increase,Missing Dep,skipif,,,,,
+tests/integration/bridges/test_kalman_workload_bridge.py,test_handles_missing_measurements_gracefully,Missing Dep,skipif,,,,,
+tests/integration/bridges/test_kalman_workload_bridge.py,test_95_percent_coverage,Missing Dep,skipif,,,,,
+tests/integration/bridges/test_kalman_workload_bridge.py,test_kalman_gain_formula,Missing Dep,skipif,,,,,
+tests/integration/bridges/test_kalman_workload_bridge.py,test_realistic_workload_scenario,Missing Dep,skipif,,,,,
+tests/integration/bridges/test_kalman_workload_bridge.py,test_extreme_measurement_values,Missing Dep,skipif,,,,,
+tests/integration/test_orchestration_e2e.py,test_real_mcp_tool_execution,Missing Dep,skipif,,,,,

@@ -195,9 +195,7 @@ class TestAuthentication:
 
         assert response.status_code == 401
 
-    def test_login_with_inactive_account(
-        self, client: TestClient, inactive_user: User
-    ):
+    def test_login_with_inactive_account(self, client: TestClient, inactive_user: User):
         """Test login fails for inactive account."""
         response = client.post(
             "/api/auth/login/json",
@@ -302,9 +300,7 @@ class TestRoleBasedAuthorization:
         response = client.get("/api/admin/users", headers=headers)
         assert response.status_code == 403  # Forbidden
 
-    def test_resident_can_request_swaps(
-        self, client: TestClient, resident_user: User
-    ):
+    def test_resident_can_request_swaps(self, client: TestClient, resident_user: User):
         """Test resident can request schedule swaps."""
         headers = get_auth_headers(resident_user)
 
@@ -418,9 +414,7 @@ class TestPermissionEdgeCases:
         # Should either be forbidden or not found
         assert response.status_code in [403, 404]
 
-    def test_deleted_user_token_invalid(
-        self, client: TestClient, db: Session
-    ):
+    def test_deleted_user_token_invalid(self, client: TestClient, db: Session):
         """Test that token becomes invalid after user deletion."""
         # Create user
         user = User(

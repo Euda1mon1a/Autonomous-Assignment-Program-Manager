@@ -111,7 +111,9 @@ def setup_tracing(config: TracingConfig, app: Any | None = None) -> None:
         # Jaeger exporter
         jaeger_exporter = JaegerExporter(
             agent_host_name=config.jaeger_endpoint.split(":")[0],
-            agent_port=int(config.jaeger_endpoint.split(":")[1]) if ":" in config.jaeger_endpoint else 6831,
+            agent_port=int(config.jaeger_endpoint.split(":")[1])
+            if ":" in config.jaeger_endpoint
+            else 6831,
         )
         provider.add_span_processor(BatchSpanProcessor(jaeger_exporter))
         logger.info(f"Added Jaeger exporter: {config.jaeger_endpoint}")

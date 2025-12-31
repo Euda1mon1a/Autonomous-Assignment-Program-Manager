@@ -31,12 +31,12 @@ class BlockFactory:
     @staticmethod
     def create_block(
         db: Session,
-        block_date: Optional[date] = None,
+        block_date: date | None = None,
         time_of_day: str = "AM",
-        block_number: Optional[int] = None,
-        is_weekend: Optional[bool] = None,
-        is_holiday: Optional[bool] = None,
-        holiday_name: Optional[str] = None,
+        block_number: int | None = None,
+        is_weekend: bool | None = None,
+        is_holiday: bool | None = None,
+        holiday_name: str | None = None,
     ) -> Block:
         """
         Create a single block.
@@ -82,7 +82,7 @@ class BlockFactory:
     @staticmethod
     def create_day_blocks(
         db: Session,
-        block_date: Optional[date] = None,
+        block_date: date | None = None,
     ) -> tuple[Block, Block]:
         """
         Create AM and PM blocks for a single day.
@@ -97,15 +97,19 @@ class BlockFactory:
         if block_date is None:
             block_date = date.today()
 
-        am_block = BlockFactory.create_block(db, block_date=block_date, time_of_day="AM")
-        pm_block = BlockFactory.create_block(db, block_date=block_date, time_of_day="PM")
+        am_block = BlockFactory.create_block(
+            db, block_date=block_date, time_of_day="AM"
+        )
+        pm_block = BlockFactory.create_block(
+            db, block_date=block_date, time_of_day="PM"
+        )
 
         return am_block, pm_block
 
     @staticmethod
     def create_week_blocks(
         db: Session,
-        start_date: Optional[date] = None,
+        start_date: date | None = None,
     ) -> list[Block]:
         """
         Create blocks for a full week (7 days × 2 blocks = 14 blocks).
@@ -134,7 +138,7 @@ class BlockFactory:
     @staticmethod
     def create_block_period(
         db: Session,
-        start_date: Optional[date] = None,
+        start_date: date | None = None,
         days: int = 28,
     ) -> list[Block]:
         """
@@ -165,7 +169,7 @@ class BlockFactory:
     @staticmethod
     def create_academic_year_blocks(
         db: Session,
-        year: Optional[int] = None,
+        year: int | None = None,
     ) -> list[Block]:
         """
         Create blocks for a full academic year (365 days × 2 blocks = 730 blocks).
@@ -214,7 +218,7 @@ class BlockFactory:
     @staticmethod
     def create_weekend_blocks(
         db: Session,
-        start_date: Optional[date] = None,
+        start_date: date | None = None,
         num_weekends: int = 4,
     ) -> list[Block]:
         """
@@ -258,7 +262,7 @@ class BlockFactory:
     @staticmethod
     def create_holiday_blocks(
         db: Session,
-        year: Optional[int] = None,
+        year: int | None = None,
     ) -> list[Block]:
         """
         Create blocks for federal holidays.
@@ -321,7 +325,7 @@ class BlockFactory:
         return min(block_number, 13)  # Cap at 13
 
     @staticmethod
-    def _check_holiday(check_date: date) -> tuple[bool, Optional[str]]:
+    def _check_holiday(check_date: date) -> tuple[bool, str | None]:
         """
         Check if a date is a federal holiday.
 

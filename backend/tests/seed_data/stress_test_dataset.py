@@ -117,7 +117,9 @@ class StressTestDataset:
         }
 
     @staticmethod
-    def seed_swap_flood(db: Session, num_faculty: int = 50, num_swaps: int = 500) -> dict:
+    def seed_swap_flood(
+        db: Session, num_faculty: int = 50, num_swaps: int = 500
+    ) -> dict:
         """
         Seed database with large number of swap requests.
 
@@ -283,7 +285,9 @@ class StressTestDataset:
         }
 
     @staticmethod
-    def seed_academic_year_full_assignments(db: Session, year: int | None = None) -> dict:
+    def seed_academic_year_full_assignments(
+        db: Session, year: int | None = None
+    ) -> dict:
         """
         Seed database with full academic year INCLUDING all assignments.
 

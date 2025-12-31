@@ -334,9 +334,11 @@ class TestIdempotencyService:
         request_id = result.id
 
         # Query directly from database
-        db_request = db.query(IdempotencyRequest).filter(
-            IdempotencyRequest.id == request_id
-        ).first()
+        db_request = (
+            db.query(IdempotencyRequest)
+            .filter(IdempotencyRequest.id == request_id)
+            .first()
+        )
 
         assert db_request is not None
         assert db_request.idempotency_key == key
@@ -560,9 +562,11 @@ class TestIdempotencyService:
 
         assert count == 1
         # Verify deletion
-        db_request = db.query(IdempotencyRequest).filter(
-            IdempotencyRequest.idempotency_key == "expired-key"
-        ).first()
+        db_request = (
+            db.query(IdempotencyRequest)
+            .filter(IdempotencyRequest.idempotency_key == "expired-key")
+            .first()
+        )
         assert db_request is None
 
     def test_cleanup_expired_keeps_valid_records(self, db):
@@ -585,9 +589,11 @@ class TestIdempotencyService:
 
         assert count == 0
         # Verify still exists
-        db_request = db.query(IdempotencyRequest).filter(
-            IdempotencyRequest.idempotency_key == "valid-key"
-        ).first()
+        db_request = (
+            db.query(IdempotencyRequest)
+            .filter(IdempotencyRequest.idempotency_key == "valid-key")
+            .first()
+        )
         assert db_request is not None
 
     def test_cleanup_expired_multiple_records(self, db):
@@ -602,7 +608,7 @@ class TestIdempotencyService:
                 body_hash=f"hash-{i}",
                 request_params={},
                 status=IdempotencyStatus.COMPLETED.value,
-                expires_at=datetime.utcnow() - timedelta(hours=i+1),
+                expires_at=datetime.utcnow() - timedelta(hours=i + 1),
             )
             db.add(expired)
 
@@ -613,7 +619,7 @@ class TestIdempotencyService:
                 body_hash=f"hash-{i}",
                 request_params={},
                 status=IdempotencyStatus.COMPLETED.value,
-                expires_at=datetime.utcnow() + timedelta(hours=i+1),
+                expires_at=datetime.utcnow() + timedelta(hours=i + 1),
             )
             db.add(valid)
 
@@ -800,9 +806,11 @@ class TestIdempotencyService:
 
         assert count == 3
         # Verify 2 requests still pending
-        pending_count = db.query(IdempotencyRequest).filter(
-            IdempotencyRequest.status == IdempotencyStatus.PENDING.value
-        ).count()
+        pending_count = (
+            db.query(IdempotencyRequest)
+            .filter(IdempotencyRequest.status == IdempotencyStatus.PENDING.value)
+            .count()
+        )
         assert pending_count == 2
 
     def test_timeout_stale_pending_custom_timeout(self, db):

@@ -31,6 +31,7 @@ def validate_future_date_strict(
 
     if min_days_ahead > 0:
         from datetime import timedelta
+
         min_date = today + timedelta(days=min_days_ahead)
 
     if check_date < min_date:
@@ -175,16 +176,22 @@ def validate_password_strength(
         failed_requirements.append(f"Password must be at least {min_length} characters")
 
     if require_uppercase and not re.search(r"[A-Z]", password):
-        failed_requirements.append("Password must contain at least one uppercase letter")
+        failed_requirements.append(
+            "Password must contain at least one uppercase letter"
+        )
 
     if require_lowercase and not re.search(r"[a-z]", password):
-        failed_requirements.append("Password must contain at least one lowercase letter")
+        failed_requirements.append(
+            "Password must contain at least one lowercase letter"
+        )
 
     if require_digit and not re.search(r"\d", password):
         failed_requirements.append("Password must contain at least one digit")
 
     if require_special and not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-        failed_requirements.append("Password must contain at least one special character")
+        failed_requirements.append(
+            "Password must contain at least one special character"
+        )
 
     return len(failed_requirements) == 0, failed_requirements
 
@@ -258,7 +265,10 @@ def validate_list_unique(
     """
     if field:
         # For list of objects
-        values = [getattr(item, field) if hasattr(item, field) else item.get(field) for item in items]
+        values = [
+            getattr(item, field) if hasattr(item, field) else item.get(field)
+            for item in items
+        ]
     else:
         # For list of primitives
         values = items

@@ -369,24 +369,21 @@ class TestAcademicBlockService:
         )
 
         # 3 assignments to rotation1, 2 to rotation2
-        assignments = (
-            [
-                Assignment(
-                    id=uuid4(),
-                    rotation_template_id=rotation1.id,
-                    rotation_template=rotation1,
-                )
-                for _ in range(3)
-            ]
-            + [
-                Assignment(
-                    id=uuid4(),
-                    rotation_template_id=rotation2.id,
-                    rotation_template=rotation2,
-                )
-                for _ in range(2)
-            ]
-        )
+        assignments = [
+            Assignment(
+                id=uuid4(),
+                rotation_template_id=rotation1.id,
+                rotation_template=rotation1,
+            )
+            for _ in range(3)
+        ] + [
+            Assignment(
+                id=uuid4(),
+                rotation_template_id=rotation2.id,
+                rotation_template=rotation2,
+            )
+            for _ in range(2)
+        ]
 
         abbr, full_name = service._get_primary_rotation(assignments)
 
@@ -532,7 +529,9 @@ class TestAcademicBlockService:
         assert "Average weekly hours" in status.violations[0]
         assert "exceeds ACGME limit" in status.violations[0]
 
-    def test_check_acgme_compliance_warning_approaching_limit(self, db, sample_resident):
+    def test_check_acgme_compliance_warning_approaching_limit(
+        self, db, sample_resident
+    ):
         """Test ACGME compliance warning for hours approaching limit."""
         service = AcademicBlockService(db)
 

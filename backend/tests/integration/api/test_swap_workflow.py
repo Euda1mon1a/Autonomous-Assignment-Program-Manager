@@ -286,7 +286,10 @@ class TestSwapWorkflow:
             headers=auth_headers,
         )
 
-        if assignment_a_response.status_code in [200, 201] and assignment_b_response.status_code in [200, 201]:
+        if assignment_a_response.status_code in [
+            200,
+            201,
+        ] and assignment_b_response.status_code in [200, 201]:
             # Step 2: Create swap
             swap_response = client.post(
                 "/api/swap/",
@@ -348,7 +351,10 @@ class TestSwapWorkflow:
             headers=auth_headers,
         )
 
-        if assignment_a_response.status_code in [200, 201] and assignment_b_response.status_code in [200, 201]:
+        if assignment_a_response.status_code in [
+            200,
+            201,
+        ] and assignment_b_response.status_code in [200, 201]:
             swap_response = client.post(
                 "/api/swap/",
                 json={
@@ -405,7 +411,10 @@ class TestSwapWorkflow:
             headers=auth_headers,
         )
 
-        if assignment_a_response.status_code in [200, 201] and assignment_b_response.status_code in [200, 201]:
+        if assignment_a_response.status_code in [
+            200,
+            201,
+        ] and assignment_b_response.status_code in [200, 201]:
             swap_response = client.post(
                 "/api/swap/",
                 json={

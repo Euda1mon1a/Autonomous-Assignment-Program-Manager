@@ -67,7 +67,9 @@ def force_gc():
     }
 
 
-def benchmark_schedule_generation_memory(iterations: int = 10, verbose: bool = False) -> BenchmarkResult:
+def benchmark_schedule_generation_memory(
+    iterations: int = 10, verbose: bool = False
+) -> BenchmarkResult:
     """Benchmark memory usage during schedule generation."""
     print_benchmark_header(
         "Schedule Generation Memory Usage",
@@ -169,7 +171,9 @@ def benchmark_schedule_generation_memory(iterations: int = 10, verbose: bool = F
     print(f"Memory Growth: {memory_leak:.1f} MB")
 
     if memory_leak > 50:
-        print(f"⚠️  WARNING: Possible memory leak detected ({memory_leak:.1f} MB growth)")
+        print(
+            f"⚠️  WARNING: Possible memory leak detected ({memory_leak:.1f} MB growth)"
+        )
 
     result = BenchmarkResult(
         benchmark_name="memory_schedule_generation",
@@ -199,7 +203,9 @@ def benchmark_schedule_generation_memory(iterations: int = 10, verbose: bool = F
     return result
 
 
-def benchmark_validation_memory(iterations: int = 20, verbose: bool = False) -> BenchmarkResult:
+def benchmark_validation_memory(
+    iterations: int = 20, verbose: bool = False
+) -> BenchmarkResult:
     """Benchmark memory usage during ACGME validation."""
     print_benchmark_header(
         "ACGME Validation Memory Usage",
@@ -370,7 +376,9 @@ def main():
         choices=["schedule", "validation"],
         help="Operation to benchmark",
     )
-    parser.add_argument("--iterations", type=int, default=10, help="Number of iterations")
+    parser.add_argument(
+        "--iterations", type=int, default=10, help="Number of iterations"
+    )
     parser.add_argument("--suite", action="store_true", help="Run full suite")
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
 
@@ -384,7 +392,9 @@ def main():
                 iterations=args.iterations, verbose=args.verbose
             )
         else:
-            result = benchmark_validation_memory(iterations=args.iterations, verbose=args.verbose)
+            result = benchmark_validation_memory(
+                iterations=args.iterations, verbose=args.verbose
+            )
 
         output_dir = Path(__file__).parent.parent.parent / "benchmark_results"
         result.save(output_dir)

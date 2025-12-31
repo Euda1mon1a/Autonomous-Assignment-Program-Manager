@@ -902,7 +902,9 @@ class TestCircuitBreakerDecorators:
         def fallback_func():
             return "fallback"
 
-        @circuit_breaker(name="test_fallback", failure_threshold=1, fallback=fallback_func)
+        @circuit_breaker(
+            name="test_fallback", failure_threshold=1, fallback=fallback_func
+        )
         def failing_func():
             raise ValueError("Error")
 
@@ -1041,7 +1043,9 @@ class TestCircuitBreakerIntegration:
         time.sleep(0.6)
 
         # Next call should transition to HALF_OPEN
-        success_func = lambda: "success"
+        def success_func():
+            return "success"
+
         result = breaker.call(success_func)
 
         assert result == "success"

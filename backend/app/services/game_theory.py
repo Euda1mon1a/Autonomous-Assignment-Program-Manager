@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 # Optional dependency - game theory features require axelrod
 try:
     import axelrod as axl
+
     AXELROD_AVAILABLE = True
 except ImportError:
     AXELROD_AVAILABLE = False
@@ -37,6 +38,7 @@ except ImportError:
             Random = Any
             Grudger = Any
             Match = Any
+
         axl = DummyAxelrod()  # type: ignore
 
 from app.models.game_theory import (
@@ -54,6 +56,7 @@ logger = logging.getLogger(__name__)
 
 # Only define ResilienceConfigPlayer if axelrod is available
 if AXELROD_AVAILABLE:
+
     class ResilienceConfigPlayer(axl.Player):  # type: ignore
         """
         Custom Axelrod player that maps resilience configuration to PD strategy.
@@ -131,7 +134,9 @@ if AXELROD_AVAILABLE:
                     return self.history[-1]
                 else:
                     return (
-                        axl.Action.C if self.history[-1] == axl.Action.D else axl.Action.D
+                        axl.Action.C
+                        if self.history[-1] == axl.Action.D
+                        else axl.Action.D
                     )
 
             elif self.strategy_type == "random":

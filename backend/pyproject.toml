@@ -100,6 +100,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "F403", "F405"]  # __init__.py files use star imports for re-exports
 "tests/*" = ["F841", "ARG", "B007", "E402", "B017", "B905", "E741", "F811", "SIM108", "SIM117", "F401", "B024", "E712", "C401", "SIM110"]  # Tests have many patterns that are acceptable
 "app/api/routes/*" = ["ARG001", "E402", "F841", "B007", "E712", "C401"]  # FastAPI routes: unused args/vars, late imports, boolean comparisons, comprehensions
 "alembic/env.py" = ["F401"]  # Model imports needed for metadata registration

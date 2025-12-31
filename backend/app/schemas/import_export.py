@@ -45,7 +45,13 @@ class ImportRequest(BaseModel):
     @classmethod
     def validate_entity_type(cls, v: str) -> str:
         """Validate entity_type is valid."""
-        valid_types = ["person", "assignment", "block", "rotation_template", "certification"]
+        valid_types = [
+            "person",
+            "assignment",
+            "block",
+            "rotation_template",
+            "certification",
+        ]
         if v not in valid_types:
             raise ValueError(f"entity_type must be one of {valid_types}")
         return v
@@ -64,7 +70,14 @@ class ExportRequest(BaseModel):
     @classmethod
     def validate_entity_type(cls, v: str) -> str:
         """Validate entity_type is valid."""
-        valid_types = ["person", "assignment", "block", "rotation_template", "certification", "swap"]
+        valid_types = [
+            "person",
+            "assignment",
+            "block",
+            "rotation_template",
+            "certification",
+            "swap",
+        ]
         if v not in valid_types:
             raise ValueError(f"entity_type must be one of {valid_types}")
         return v
@@ -106,8 +119,12 @@ class ImportResult(BaseModel):
     skipped: int = Field(..., description="Skipped rows")
     failed: int = Field(..., description="Failed rows")
     errors: list[ImportValidationError] = Field([], description="Import errors")
-    started_at: datetime = Field(default_factory=datetime.utcnow, description="Import start time")
-    completed_at: datetime = Field(default_factory=datetime.utcnow, description="Import completion time")
+    started_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Import start time"
+    )
+    completed_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Import completion time"
+    )
 
 
 class ExportResult(BaseModel):
@@ -118,7 +135,9 @@ class ExportResult(BaseModel):
     data: str = Field(..., description="Base64-encoded file data or download URL")
     size_bytes: int = Field(..., description="File size in bytes")
     row_count: int = Field(..., description="Number of rows exported")
-    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Export generation time")
+    generated_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Export generation time"
+    )
 
 
 class ImportTemplate(BaseModel):
@@ -138,7 +157,9 @@ class ScheduleImportRequest(BaseModel):
     academic_year: str = Field(..., description="Academic year (e.g., '2024-2025')")
     format: ImportFormat = Field(..., description="Import format")
     data: str = Field(..., description="Import data")
-    overwrite_existing: bool = Field(False, description="Overwrite existing assignments")
+    overwrite_existing: bool = Field(
+        False, description="Overwrite existing assignments"
+    )
     validate_acgme: bool = Field(True, description="Validate ACGME compliance")
 
 
@@ -150,7 +171,9 @@ class ScheduleExportRequest(BaseModel):
     format: ExportFormat = Field(..., description="Export format")
     include_person_details: bool = Field(True, description="Include person details")
     include_rotation_details: bool = Field(True, description="Include rotation details")
-    group_by: str | None = Field(None, description="Group by field (person, date, rotation)")
+    group_by: str | None = Field(
+        None, description="Group by field (person, date, rotation)"
+    )
 
     @field_validator("group_by")
     @classmethod

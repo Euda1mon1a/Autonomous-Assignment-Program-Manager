@@ -30,7 +30,7 @@ def maintenance() -> None:
     is_flag=True,
     help="Compress backup file",
 )
-def backup(output: Optional[str], compress: bool) -> None:
+def backup(output: str | None, compress: bool) -> None:
     """
     Create database backup.
 
@@ -64,11 +64,16 @@ def backup(output: Optional[str], compress: bool) -> None:
         # Build pg_dump command
         cmd = [
             "pg_dump",
-            "-h", parsed.hostname or "localhost",
-            "-p", str(parsed.port or 5432),
-            "-U", parsed.username or "postgres",
-            "-F", "c",  # Custom format
-            "-f", str(output_path),
+            "-h",
+            parsed.hostname or "localhost",
+            "-p",
+            str(parsed.port or 5432),
+            "-U",
+            parsed.username or "postgres",
+            "-F",
+            "c",  # Custom format
+            "-f",
+            str(output_path),
         ]
 
         if compress:
@@ -148,10 +153,14 @@ def restore(file: str, confirm: bool) -> None:
         # Build pg_restore command
         cmd = [
             "pg_restore",
-            "-h", parsed.hostname or "localhost",
-            "-p", str(parsed.port or 5432),
-            "-U", parsed.username or "postgres",
-            "-d", parsed.path.lstrip("/"),
+            "-h",
+            parsed.hostname or "localhost",
+            "-p",
+            str(parsed.port or 5432),
+            "-U",
+            parsed.username or "postgres",
+            "-d",
+            parsed.path.lstrip("/"),
             "--clean",  # Drop existing objects
             "--if-exists",  # Ignore errors if objects don't exist
             str(file_path),
@@ -220,11 +229,11 @@ def cleanup(days: int, confirm: bool) -> None:
         from app.models.block import Block
         from sqlalchemy import select
 
-        old_assignments = db.execute(
-            select(Assignment)
-            .join(Block)
-            .where(Block.date < cutoff_date)
-        ).scalars().all()
+        old_assignments = (
+            db.execute(select(Assignment).join(Block).where(Block.date < cutoff_date))
+            .scalars()
+            .all()
+        )
 
         count = len(old_assignments)
 
@@ -303,9 +312,7 @@ def reindex() -> None:
 
         # Get list of tables
         result = db.execute(
-            text(
-                "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
-            )
+            text("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
         )
         tables = [row[0] for row in result]
 

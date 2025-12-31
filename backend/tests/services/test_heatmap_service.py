@@ -468,7 +468,9 @@ class TestHeatmapService:
         assert len(swaps) == 1
         assert swaps[0].status == SwapStatus.EXECUTED
 
-    def test_get_swap_records_in_range_excludes_pending(self, db, sample_faculty_members):
+    def test_get_swap_records_in_range_excludes_pending(
+        self, db, sample_faculty_members
+    ):
         """Test that pending swaps are excluded."""
         service = HeatmapService()
         start = date(2024, 1, 1)
@@ -970,7 +972,9 @@ class TestHeatmapService:
         assert len(result.data.x_labels) == 7  # All 7 days
         assert result.metadata["include_weekends"] is True
 
-    def test_generate_person_workload_heatmap_exclude_weekends(self, db, sample_resident):
+    def test_generate_person_workload_heatmap_exclude_weekends(
+        self, db, sample_resident
+    ):
         """Test workload heatmap excluding weekends."""
         service = HeatmapService()
         start = date(2024, 1, 1)  # Monday

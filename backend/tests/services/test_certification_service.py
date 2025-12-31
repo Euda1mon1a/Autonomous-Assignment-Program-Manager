@@ -72,9 +72,7 @@ def inactive_cert_type(db) -> CertificationType:
 
 
 @pytest.fixture
-def current_certification(
-    db, sample_resident, sample_cert_type
-) -> PersonCertification:
+def current_certification(db, sample_resident, sample_cert_type) -> PersonCertification:
     """Create a current certification (expires in 1 year)."""
     cert = PersonCertification(
         id=uuid4(),
@@ -418,9 +416,7 @@ class TestPersonCertificationOperations:
         cert = result["certification"]
         assert cert.status == "expired"
 
-    def test_create_person_certification_person_not_found(
-        self, db, sample_cert_type
-    ):
+    def test_create_person_certification_person_not_found(self, db, sample_cert_type):
         """Test creating certification for non-existent person fails."""
         service = CertificationService(db)
         result = service.create_person_certification(
@@ -612,7 +608,11 @@ class TestExpirationAndCompliance:
     """Test suite for expiration tracking and compliance checks."""
 
     def test_get_expiring_certifications_default_180_days(
-        self, db, current_certification, expiring_soon_certification, expired_certification
+        self,
+        db,
+        current_certification,
+        expiring_soon_certification,
+        expired_certification,
     ):
         """Test getting certifications expiring within 180 days."""
         service = CertificationService(db)
@@ -653,7 +653,11 @@ class TestExpirationAndCompliance:
         assert result["items"][0].id == expired_certification.id
 
     def test_get_compliance_summary(
-        self, db, current_certification, expiring_soon_certification, expired_certification
+        self,
+        db,
+        current_certification,
+        expiring_soon_certification,
+        expired_certification,
     ):
         """Test getting overall compliance summary."""
         service = CertificationService(db)
@@ -712,9 +716,7 @@ class TestExpirationAndCompliance:
         assert result["error"] is not None
         assert "Person not found" in result["error"]
 
-    def test_get_certifications_needing_reminder(
-        self, db, expiring_soon_certification
-    ):
+    def test_get_certifications_needing_reminder(self, db, expiring_soon_certification):
         """Test getting certifications that need reminders."""
         service = CertificationService(db)
         # expiring_soon_certification expires in 60 days
