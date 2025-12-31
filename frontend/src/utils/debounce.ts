@@ -15,21 +15,12 @@ export function debounce<T extends (...args: any[]) => any>(
   let timeout: NodeJS.Timeout | null = null;
 
   return function (this: any, ...args: Parameters<T>) {
-<<<<<<< HEAD
-=======
-    const context = this;
-
->>>>>>> origin/main
     if (timeout) {
       clearTimeout(timeout);
     }
 
     timeout = setTimeout(() => {
-<<<<<<< HEAD
       func.apply(this, args);
-=======
-      func.apply(context, args);
->>>>>>> origin/main
     }, wait);
   };
 }
@@ -44,10 +35,6 @@ export function debounceLeading<T extends (...args: any[]) => any>(
   let timeout: NodeJS.Timeout | null = null;
 
   return function (this: any, ...args: Parameters<T>) {
-<<<<<<< HEAD
-=======
-    const context = this;
->>>>>>> origin/main
     const callNow = !timeout;
 
     if (timeout) {
@@ -59,11 +46,7 @@ export function debounceLeading<T extends (...args: any[]) => any>(
     }, wait);
 
     if (callNow) {
-<<<<<<< HEAD
       func.apply(this, args);
-=======
-      func.apply(context, args);
->>>>>>> origin/main
     }
   };
 }
@@ -79,15 +62,8 @@ export function throttle<T extends (...args: any[]) => any>(
   let lastRan: number | null = null;
 
   return function (this: any, ...args: Parameters<T>) {
-<<<<<<< HEAD
     if (!lastRan) {
       func.apply(this, args);
-=======
-    const context = this;
-
-    if (!lastRan) {
-      func.apply(context, args);
->>>>>>> origin/main
       lastRan = Date.now();
     } else {
       if (timeout) {
@@ -96,11 +72,7 @@ export function throttle<T extends (...args: any[]) => any>(
 
       timeout = setTimeout(() => {
         if (Date.now() - lastRan! >= wait) {
-<<<<<<< HEAD
           func.apply(this, args);
-=======
-          func.apply(context, args);
->>>>>>> origin/main
           lastRan = Date.now();
         }
       }, wait - (Date.now() - lastRan));
@@ -117,21 +89,12 @@ export function rafThrottle<T extends (...args: any[]) => any>(
   let rafId: number | null = null;
 
   return function (this: any, ...args: Parameters<T>) {
-<<<<<<< HEAD
-=======
-    const context = this;
-
->>>>>>> origin/main
     if (rafId) {
       return;
     }
 
     rafId = requestAnimationFrame(() => {
-<<<<<<< HEAD
       func.apply(this, args);
-=======
-      func.apply(context, args);
->>>>>>> origin/main
       rafId = null;
     });
   };
@@ -342,11 +305,6 @@ export function debounceWithMonitoring<T extends (...args: any[]) => any>(
   let timeout: NodeJS.Timeout | null = null;
 
   return function (this: any, ...args: Parameters<T>) {
-<<<<<<< HEAD
-=======
-    const context = this;
-
->>>>>>> origin/main
     monitor.recordCall(false);
 
     if (timeout) {
@@ -355,11 +313,7 @@ export function debounceWithMonitoring<T extends (...args: any[]) => any>(
 
     timeout = setTimeout(() => {
       monitor.recordCall(true);
-<<<<<<< HEAD
       func.apply(this, args);
-=======
-      func.apply(context, args);
->>>>>>> origin/main
     }, wait);
   };
 }

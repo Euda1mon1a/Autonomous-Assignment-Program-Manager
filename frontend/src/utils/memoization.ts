@@ -78,13 +78,9 @@ export class LRUCache<K, V> {
     // Evict oldest if over size
     if (this.cache.size > this.maxSize) {
       const firstKey = this.cache.keys().next().value;
-<<<<<<< HEAD
       if (firstKey !== undefined) {
         this.cache.delete(firstKey);
       }
-=======
-      this.cache.delete(firstKey);
->>>>>>> origin/main
     }
   }
 
@@ -158,7 +154,7 @@ export function memoizeWithTTL<T extends any[], R>(
 /**
  * React hook for memoized computations with dependencies.
  */
-import { useMemo, useRef } from 'react';
+import { useRef } from 'react';
 
 export function useDeepMemo<T>(
   factory: () => T,
