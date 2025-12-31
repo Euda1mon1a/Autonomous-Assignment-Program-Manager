@@ -23,7 +23,6 @@ class TestResilienceStatusCommands:
 
     def test_show_status(self, cli_runner, monkeypatch):
         """Test show resilience status."""
-
         class MockAPI:
             def get(self, endpoint, params=None):
                 return {
@@ -40,9 +39,7 @@ class TestResilienceStatusCommands:
                     }
                 }
 
-        monkeypatch.setattr(
-            "cli.commands.resilience_status.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.resilience_status.APIClient", lambda: MockAPI())
 
         from cli.commands.resilience_status import app as status_app
 
@@ -52,7 +49,6 @@ class TestResilienceStatusCommands:
 
     def test_show_summary(self, cli_runner, monkeypatch):
         """Test show resilience summary."""
-
         class MockAPI:
             def get(self, endpoint, params=None):
                 return {
@@ -62,9 +58,7 @@ class TestResilienceStatusCommands:
                     }
                 }
 
-        monkeypatch.setattr(
-            "cli.commands.resilience_status.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.resilience_status.APIClient", lambda: MockAPI())
 
         from cli.commands.resilience_status import app as status_app
 
@@ -78,7 +72,6 @@ class TestResilienceAnalyzeCommands:
 
     def test_n1_analysis(self, cli_runner, monkeypatch):
         """Test N-1 contingency analysis."""
-
         class MockAPI:
             def post(self, endpoint, json=None):
                 return {
@@ -86,9 +79,7 @@ class TestResilienceAnalyzeCommands:
                     "vulnerabilities": [],
                 }
 
-        monkeypatch.setattr(
-            "cli.commands.resilience_analyze.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.resilience_analyze.APIClient", lambda: MockAPI())
 
         from cli.commands.resilience_analyze import app as analyze_app
 
@@ -98,7 +89,6 @@ class TestResilienceAnalyzeCommands:
 
     def test_n2_analysis(self, cli_runner, monkeypatch):
         """Test N-2 contingency analysis."""
-
         class MockAPI:
             def post(self, endpoint, json=None):
                 return {
@@ -106,9 +96,7 @@ class TestResilienceAnalyzeCommands:
                     "critical_pairs": [],
                 }
 
-        monkeypatch.setattr(
-            "cli.commands.resilience_analyze.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.resilience_analyze.APIClient", lambda: MockAPI())
 
         from cli.commands.resilience_analyze import app as analyze_app
 
@@ -118,14 +106,11 @@ class TestResilienceAnalyzeCommands:
 
     def test_identify_bottlenecks(self, cli_runner, monkeypatch):
         """Test bottleneck identification."""
-
         class MockAPI:
             def get(self, endpoint, params=None):
                 return {"bottlenecks": []}
 
-        monkeypatch.setattr(
-            "cli.commands.resilience_analyze.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.resilience_analyze.APIClient", lambda: MockAPI())
 
         from cli.commands.resilience_analyze import app as analyze_app
 
@@ -139,14 +124,11 @@ class TestResilienceAlertsCommands:
 
     def test_list_alerts(self, cli_runner, monkeypatch):
         """Test list alerts."""
-
         class MockAPI:
             def get(self, endpoint, params=None):
                 return {"alerts": []}
 
-        monkeypatch.setattr(
-            "cli.commands.resilience_alerts.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.resilience_alerts.APIClient", lambda: MockAPI())
 
         from cli.commands.resilience_alerts import app as alerts_app
 
@@ -156,14 +138,11 @@ class TestResilienceAlertsCommands:
 
     def test_show_critical_alerts(self, cli_runner, monkeypatch):
         """Test show critical alerts."""
-
         class MockAPI:
             def get(self, endpoint, params=None):
                 return {"alerts": []}
 
-        monkeypatch.setattr(
-            "cli.commands.resilience_alerts.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.resilience_alerts.APIClient", lambda: MockAPI())
 
         from cli.commands.resilience_alerts import app as alerts_app
 
@@ -173,14 +152,11 @@ class TestResilienceAlertsCommands:
 
     def test_acknowledge_alert(self, cli_runner, monkeypatch):
         """Test acknowledge alert."""
-
         class MockAPI:
             def post(self, endpoint, json=None):
                 return {"status": "acknowledged"}
 
-        monkeypatch.setattr(
-            "cli.commands.resilience_alerts.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.resilience_alerts.APIClient", lambda: MockAPI())
 
         from cli.commands.resilience_alerts import app as alerts_app
 

@@ -91,6 +91,6 @@ class EmailImageHandler:
         if responsive:
             attrs.append('style="max-width: 100%; height: auto;"')
 
-        img_tag = f"<img {' '.join(attrs)} />"
+        img_tag = f'<img {" ".join(attrs)} />'
 
         return img_tag

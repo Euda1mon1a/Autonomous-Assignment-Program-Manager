@@ -19,7 +19,6 @@ class TestDatabaseCommands:
 
     def test_db_init(self, cli_runner, monkeypatch):
         """Test db init command."""
-
         # Mock subprocess for Alembic
         def mock_run(*args, **kwargs):
             class Result:
@@ -42,7 +41,6 @@ class TestMigrateCommands:
 
     def test_migrate_upgrade(self, cli_runner, monkeypatch):
         """Test migrate upgrade command."""
-
         def mock_run(*args, **kwargs):
             class Result:
                 returncode = 0
@@ -61,7 +59,6 @@ class TestMigrateCommands:
 
     def test_migrate_current(self, cli_runner, monkeypatch):
         """Test migrate current command."""
-
         def mock_run(*args, **kwargs):
             class Result:
                 returncode = 0
@@ -132,32 +129,17 @@ class TestQueryCommands:
     @pytest.mark.asyncio
     async def test_query_persons(self, cli_runner, monkeypatch):
         """Test query persons command."""
-
         # Mock database session
         class MockSession:
             async def execute(self, query):
                 class Result:
                     def fetchmany(self, limit):
                         return [
-                            (
-                                "user1",
-                                "John",
-                                "Doe",
-                                "john@example.com",
-                                "RESIDENT",
-                                "PGY-1",
-                            ),
+                            ("user1", "John", "Doe", "john@example.com", "RESIDENT", "PGY-1"),
                         ]
 
                     def keys(self):
-                        return [
-                            "id",
-                            "first_name",
-                            "last_name",
-                            "email",
-                            "role",
-                            "pgy_level",
-                        ]
+                        return ["id", "first_name", "last_name", "email", "role", "pgy_level"]
 
                 return Result()
 

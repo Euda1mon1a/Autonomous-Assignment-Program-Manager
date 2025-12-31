@@ -18,9 +18,7 @@ console = Console()
 def block(
     block_number: int = typer.Argument(..., help="Block number"),
     year: int = typer.Option(2024, "--year", "-y", help="Academic year"),
-    detailed: bool = typer.Option(
-        False, "--detailed", "-d", help="Show detailed violations"
-    ),
+    detailed: bool = typer.Option(False, "--detailed", "-d", help="Show detailed violations"),
 ):
     """
     Check ACGME compliance for a block.
@@ -138,14 +136,7 @@ async def check_block_compliance(block: int, year: int, detailed: bool):
             print_table(
                 violations,
                 title="ACGME Violations",
-                columns=[
-                    "person_id",
-                    "rule",
-                    "value",
-                    "limit",
-                    "severity",
-                    "description",
-                ],
+                columns=["person_id", "rule", "value", "limit", "severity", "description"],
             )
         else:
             # Summary by rule
@@ -304,14 +295,7 @@ async def check_supervision_ratios(block: int, year: int):
         print_table(
             violations,
             title="Supervision Violations",
-            columns=[
-                "rotation",
-                "date",
-                "residents",
-                "faculty",
-                "ratio",
-                "required_ratio",
-            ],
+            columns=["rotation", "date", "residents", "faculty", "ratio", "required_ratio"],
         )
 
     except Exception as e:

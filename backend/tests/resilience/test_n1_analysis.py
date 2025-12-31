@@ -38,9 +38,7 @@ class TestN1Analyzer:
         """Test analyzing person without backup (SPOF)."""
         analyzer = N1Analyzer()
 
-        assigned_slots = [
-            (date(2024, 1, i), "clinic") for i in range(1, 11)
-        ]  # 10 slots
+        assigned_slots = [(date(2024, 1, i), "clinic") for i in range(1, 11)]  # 10 slots
 
         scenario = analyzer.analyze_person_failure(
             person_id="critical_resident",
@@ -120,18 +118,14 @@ class TestN1Analyzer:
         # High redundancy
         score_high = analyzer.calculate_redundancy_score(
             person_id="person1",
-            assignments=[
-                (date(2024, 1, i), "clinic") for i in range(1, 6)
-            ],  # 5 assignments
+            assignments=[(date(2024, 1, i), "clinic") for i in range(1, 6)],  # 5 assignments
             available_backups=3,
         )
 
         # Low redundancy
         score_low = analyzer.calculate_redundancy_score(
             person_id="person2",
-            assignments=[
-                (date(2024, 1, i), "clinic") for i in range(1, 21)
-            ],  # 20 assignments
+            assignments=[(date(2024, 1, i), "clinic") for i in range(1, 21)],  # 20 assignments
             available_backups=1,
         )
 
@@ -144,9 +138,7 @@ class TestN1Analyzer:
         analyzer = N1Analyzer()
 
         # Add various scenarios
-        analyzer.analyze_person_failure(
-            "p1", [(date(2024, 1, 1), "c")], ["b1"], {"b1": 1}
-        )
+        analyzer.analyze_person_failure("p1", [(date(2024, 1, 1), "c")], ["b1"], {"b1": 1})
         analyzer.analyze_person_failure("p2", [(date(2024, 1, 1), "c")] * 10, [], {})
         analyzer.analyze_specialty_failure("s1", 5, ["spec1"], [])
 

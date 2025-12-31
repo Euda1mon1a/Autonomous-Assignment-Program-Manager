@@ -15,11 +15,10 @@ from datetime import datetime
 from typing import Any
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
-from app.db.types import GUID
+from app.db.types import GUID, JSONType
 
 
 class RotationPreference(Base):
@@ -79,7 +78,7 @@ class RotationPreference(Base):
     # - preferred_days: {"activity": "fm_clinic", "days": [1, 2, 5]}
     # - balance_weekly: {"max_same_per_day": 1}
     config_json = Column(
-        JSONB,
+        JSONType,
         default=dict,
         nullable=False,
         comment="Type-specific configuration parameters",

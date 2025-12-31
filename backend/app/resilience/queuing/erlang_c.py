@@ -138,15 +138,13 @@ class ErlangC:
         """
         A = arrival_rate / service_rate  # Total offered load
 
-        if num_servers <= A:
+        if A >= num_servers:
             return 1.0  # System overloaded
 
         # Calculate numerator: A^c / c! * c/(c-A)
         try:
             # Use log to avoid overflow
-            log_numerator = num_servers * np.log(A) - np.sum(
-                np.log(np.arange(1, num_servers + 1))
-            )
+            log_numerator = num_servers * np.log(A) - np.sum(np.log(np.arange(1, num_servers + 1)))
             log_numerator += np.log(num_servers / (num_servers - A))
             numerator = np.exp(log_numerator)
         except (OverflowError, ValueError):
@@ -189,9 +187,7 @@ class ErlangC:
             Required number of servers
         """
         # Minimum servers to meet utilization constraint
-        min_servers_util = int(
-            np.ceil(arrival_rate / (service_rate * target_utilization))
-        )
+        min_servers_util = int(np.ceil(arrival_rate / (service_rate * target_utilization)))
 
         # Search for servers that meet service level
         for num_servers in range(min_servers_util, min_servers_util + 20):
@@ -248,9 +244,7 @@ class ErlangC:
             Dict with before/after metrics
         """
         before = self.calculate(arrival_rate, service_rate, current_servers)
-        after = self.calculate(
-            arrival_rate, service_rate, current_servers + additional_servers
-        )
+        after = self.calculate(arrival_rate, service_rate, current_servers + additional_servers)
 
         wait_time_reduction = before.avg_wait_time - after.avg_wait_time
         queue_reduction = before.avg_queue_length - after.avg_queue_length

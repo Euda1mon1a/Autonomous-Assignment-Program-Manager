@@ -77,9 +77,7 @@ def range(
 @app.command()
 def year(
     year: int = typer.Argument(..., help="Academic year"),
-    skip_existing: bool = typer.Option(
-        False, "--skip-existing", help="Skip blocks with schedules"
-    ),
+    skip_existing: bool = typer.Option(False, "--skip-existing", help="Skip blocks with schedules"),
 ):
     """
     Generate schedules for entire academic year.
@@ -135,9 +133,7 @@ async def generate_block_schedule(block_number: int, year: int, dry_run: bool):
             console.print(response)
         else:
             print_success(f"Schedule generated for Block {block_number}")
-            console.print(
-                f"Assignments created: {response.get('assignments_count', 0)}"
-            )
+            console.print(f"Assignments created: {response.get('assignments_count', 0)}")
 
     except Exception as e:
         print_error(f"Generation failed: {str(e)}")

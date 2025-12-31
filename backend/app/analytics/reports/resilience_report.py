@@ -19,11 +19,9 @@ class ResilienceReport:
         self.analytics_engine = AnalyticsEngine(db)
         self.report_builder = ReportBuilder()
 
-    async def generate(self, start_date: date, end_date: date) -> dict[str, Any]:
+    async def generate(self, start_date: date, end_date: date) -> Dict[str, Any]:
         """Generate resilience report."""
-        metrics = await self.analytics_engine.calculate_all_metrics(
-            start_date, end_date
-        )
+        metrics = await self.analytics_engine.calculate_all_metrics(start_date, end_date)
 
         report = self.report_builder.build_report(
             title="Resilience Report",
@@ -41,12 +39,8 @@ class ResilienceReport:
             report,
             "Risk Assessment",
             {
-                "high_utilization_days": metrics["resilience_metrics"][
-                    "high_utilization_count"
-                ],
-                "n1_vulnerable_days": metrics["resilience_metrics"][
-                    "n1_vulnerable_days"
-                ],
+                "high_utilization_days": metrics["resilience_metrics"]["high_utilization_count"],
+                "n1_vulnerable_days": metrics["resilience_metrics"]["n1_vulnerable_days"],
             },
         )
 

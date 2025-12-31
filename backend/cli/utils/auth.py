@@ -52,7 +52,9 @@ class AuthManager:
                 token_data = {
                     "access_token": data["access_token"],
                     "token_type": data.get("token_type", "bearer"),
-                    "expires_at": (datetime.now() + timedelta(days=7)).isoformat(),
+                    "expires_at": (
+                        datetime.now() + timedelta(days=7)
+                    ).isoformat(),
                     "email": email,
                 }
 
@@ -75,7 +77,7 @@ class AuthManager:
         else:
             console.print("[yellow]No active session[/yellow]")
 
-    def get_token(self) -> str | None:
+    def get_token(self) -> Optional[str]:
         """
         Get stored authentication token.
 
@@ -96,7 +98,7 @@ class AuthManager:
 
         return token_data["access_token"]
 
-    def get_headers(self) -> dict[str, str]:
+    def get_headers(self) -> Dict[str, str]:
         """
         Get authentication headers for API requests.
 
@@ -122,7 +124,7 @@ class AuthManager:
         """
         return self.get_token() is not None
 
-    def get_user_info(self) -> dict[str, str] | None:
+    def get_user_info(self) -> Optional[Dict[str, str]]:
         """
         Get stored user information.
 
@@ -139,7 +141,7 @@ class AuthManager:
 
         return None
 
-    def _save_token(self, token_data: dict[str, str]) -> None:
+    def _save_token(self, token_data: Dict[str, str]) -> None:
         """Save token data to file."""
         with open(self.token_file, "w") as f:
             json.dump(token_data, f, indent=2)
@@ -147,15 +149,15 @@ class AuthManager:
         # Secure permissions (owner read/write only)
         self.token_file.chmod(0o600)
 
-    def _load_token(self) -> dict[str, str] | None:
+    def _load_token(self) -> Optional[Dict[str, str]]:
         """Load token data from file."""
         if not self.token_file.exists():
             return None
 
         try:
-            with open(self.token_file) as f:
+            with open(self.token_file, "r") as f:
                 return json.load(f)
-        except (OSError, json.JSONDecodeError):
+        except (json.JSONDecodeError, IOError):
             return None
 
 
@@ -169,7 +171,6 @@ def require_auth(func):
         def protected_command():
             pass
     """
-
     def wrapper(*args, **kwargs):
         auth = AuthManager()
 

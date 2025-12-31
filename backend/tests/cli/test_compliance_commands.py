@@ -23,7 +23,6 @@ class TestComplianceCheckCommands:
 
     def test_check_block(self, cli_runner, monkeypatch):
         """Test check block compliance."""
-
         class MockAPI:
             def get(self, endpoint, params=None):
                 return {
@@ -31,9 +30,7 @@ class TestComplianceCheckCommands:
                     "violations": [],
                 }
 
-        monkeypatch.setattr(
-            "cli.commands.compliance_check.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.compliance_check.APIClient", lambda: MockAPI())
 
         from cli.commands.compliance_check import app as check_app
 
@@ -43,14 +40,11 @@ class TestComplianceCheckCommands:
 
     def test_check_80_hour_rule(self, cli_runner, monkeypatch):
         """Test 80-hour rule check."""
-
         class MockAPI:
             def get(self, endpoint, params=None):
                 return {"violations": []}
 
-        monkeypatch.setattr(
-            "cli.commands.compliance_check.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.compliance_check.APIClient", lambda: MockAPI())
 
         from cli.commands.compliance_check import app as check_app
 
@@ -60,14 +54,11 @@ class TestComplianceCheckCommands:
 
     def test_check_one_in_seven(self, cli_runner, monkeypatch):
         """Test 1-in-7 rule check."""
-
         class MockAPI:
             def get(self, endpoint, params=None):
                 return {"violations": []}
 
-        monkeypatch.setattr(
-            "cli.commands.compliance_check.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.compliance_check.APIClient", lambda: MockAPI())
 
         from cli.commands.compliance_check import app as check_app
 
@@ -81,14 +72,11 @@ class TestComplianceReportCommands:
 
     def test_generate_report(self, cli_runner, monkeypatch):
         """Test generate compliance report."""
-
         class MockAPI:
             def get(self, endpoint, params=None):
                 return {"summary": "Report data"}
 
-        monkeypatch.setattr(
-            "cli.commands.compliance_report.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.compliance_report.APIClient", lambda: MockAPI())
 
         from cli.commands.compliance_report import app as report_app
 
@@ -98,7 +86,6 @@ class TestComplianceReportCommands:
 
     def test_show_summary(self, cli_runner, monkeypatch):
         """Test show compliance summary."""
-
         class MockAPI:
             def get(self, endpoint, params=None):
                 return {
@@ -109,9 +96,7 @@ class TestComplianceReportCommands:
                     }
                 }
 
-        monkeypatch.setattr(
-            "cli.commands.compliance_report.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.compliance_report.APIClient", lambda: MockAPI())
 
         from cli.commands.compliance_report import app as report_app
 
@@ -125,14 +110,11 @@ class TestViolationsCommands:
 
     def test_list_violations(self, cli_runner, monkeypatch):
         """Test list violations."""
-
         class MockAPI:
             def get(self, endpoint, params=None):
                 return {"violations": []}
 
-        monkeypatch.setattr(
-            "cli.commands.compliance_violations.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.compliance_violations.APIClient", lambda: MockAPI())
 
         from cli.commands.compliance_violations import app as violations_app
 
@@ -142,14 +124,11 @@ class TestViolationsCommands:
 
     def test_show_critical_violations(self, cli_runner, monkeypatch):
         """Test show critical violations."""
-
         class MockAPI:
             def get(self, endpoint, params=None):
                 return {"violations": []}
 
-        monkeypatch.setattr(
-            "cli.commands.compliance_violations.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.compliance_violations.APIClient", lambda: MockAPI())
 
         from cli.commands.compliance_violations import app as violations_app
 
@@ -163,7 +142,6 @@ class TestComplianceFixCommands:
 
     def test_get_fix_suggestions(self, cli_runner, monkeypatch):
         """Test get fix suggestions."""
-
         class MockAPI:
             def get(self, endpoint, params=None):
                 return {"suggestions": []}
@@ -178,7 +156,6 @@ class TestComplianceFixCommands:
 
     def test_auto_fix_dry_run(self, cli_runner, monkeypatch):
         """Test auto-fix in dry-run mode."""
-
         class MockAPI:
             def post(self, endpoint, json=None):
                 return {

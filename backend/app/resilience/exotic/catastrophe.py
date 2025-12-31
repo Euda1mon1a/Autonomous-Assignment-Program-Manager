@@ -132,9 +132,7 @@ class CatastropheTheory:
 
         return "stable" if second_derivative > 0 else "unstable"
 
-    def find_bifurcation_set(
-        self, b_range: tuple[float, float], num_points: int = 100
-    ) -> list[tuple[float, float]]:
+    def find_bifurcation_set(self, b_range: tuple[float, float], num_points: int = 100) -> list[tuple[float, float]]:
         """
         Find bifurcation set (catastrophe boundary).
 
@@ -153,7 +151,7 @@ class CatastropheTheory:
         for b in b_values:
             # Cusp boundary: a = -(3^(1/3)) * (3|b|)^(2/3) * sign(b)
             if abs(b) > 1e-10:
-                a = -np.cbrt(27) * np.cbrt(abs(b) ** 2) * np.sign(b)
+                a = -np.cbrt(27) * np.cbrt(abs(b)**2) * np.sign(b)
             else:
                 a = 0.0
 
@@ -168,7 +166,7 @@ class CatastropheTheory:
         da: float,
         db: float,
         num_steps: int = 100,
-    ) -> CatastrophePoint | None:
+    ) -> Optional[CatastrophePoint]:
         """
         Predict if parameter change will cause catastrophic jump.
 
@@ -327,9 +325,7 @@ class CatastropheTheory:
             else:
                 # Follow nearest stable equilibrium
                 if stable_equilibria:
-                    current_x = min(
-                        stable_equilibria, key=lambda eq: abs(eq - current_x)
-                    )
+                    current_x = min(stable_equilibria, key=lambda eq: abs(eq - current_x))
 
             forward_path.append((b, current_x))
 
@@ -381,9 +377,7 @@ class CatastropheTheory:
 
             # Trapezoid area
             db = b2 - b1
-            avg_height = abs(
-                (x_forward1 + x_forward2) / 2 - (x_backward1 + x_backward2) / 2
-            )
+            avg_height = abs((x_forward1 + x_forward2) / 2 - (x_backward1 + x_backward2) / 2)
             area += avg_height * abs(db)
 
         return area

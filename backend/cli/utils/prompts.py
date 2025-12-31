@@ -33,9 +33,9 @@ def confirm(message: str, default: bool = False) -> bool:
 
 def prompt(
     message: str,
-    default: str | None = None,
+    default: Optional[str] = None,
     password: bool = False,
-    validator: Callable[[str], bool] | None = None,
+    validator: Optional[Callable[[str], bool]] = None,
 ) -> str:
     """
     Prompt for input with optional validation.
@@ -64,9 +64,9 @@ def prompt(
 
 def prompt_int(
     message: str,
-    default: int | None = None,
-    min_value: int | None = None,
-    max_value: int | None = None,
+    default: Optional[int] = None,
+    min_value: Optional[int] = None,
+    max_value: Optional[int] = None,
 ) -> int:
     """
     Prompt for integer input.
@@ -96,8 +96,8 @@ def prompt_int(
 
 def choose(
     message: str,
-    choices: list[str],
-    default: str | None = None,
+    choices: List[str],
+    default: Optional[str] = None,
 ) -> str:
     """
     Prompt user to choose from a list of options.
@@ -137,7 +137,7 @@ def choose(
 def confirm_dangerous(
     action: str,
     resource: str,
-    confirmation_text: str | None = None,
+    confirmation_text: Optional[str] = None,
 ) -> bool:
     """
     Confirm dangerous action with typed confirmation.
@@ -167,7 +167,7 @@ def confirm_dangerous(
     return False
 
 
-def prompt_email(message: str = "Email", default: str | None = None) -> str:
+def prompt_email(message: str = "Email", default: Optional[str] = None) -> str:
     """Prompt for email address with validation."""
     import re
 
@@ -184,7 +184,7 @@ def prompt_email(message: str = "Email", default: str | None = None) -> str:
 
 def prompt_date(
     message: str = "Date (YYYY-MM-DD)",
-    default: str | None = None,
+    default: Optional[str] = None,
 ) -> str:
     """Prompt for date with validation."""
     from datetime import datetime

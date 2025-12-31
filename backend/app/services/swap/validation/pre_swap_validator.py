@@ -107,7 +107,9 @@ class PreSwapValidator:
         checks_performed.append("conflicting_swaps")
         conflicting = await self._check_conflicting_swaps(swap)
         if conflicting:
-            errors.append(f"Conflicting swap exists: {conflicting[0].id}")
+            errors.append(
+                f"Conflicting swap exists: {conflicting[0].id}"
+            )
 
         # Check 6: Faculty availability
         checks_performed.append("faculty_availability")

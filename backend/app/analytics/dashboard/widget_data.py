@@ -18,14 +18,16 @@ class WidgetData:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_coverage_widget(self) -> dict[str, Any]:
+    async def get_coverage_widget(self) -> Dict[str, Any]:
         """Get coverage widget data."""
         today = date.today()
         week_start = today - timedelta(days=today.weekday())
         week_end = week_start + timedelta(days=6)
 
         blocks_result = await self.db.execute(
-            select(func.count(Block.id)).where(Block.date.between(week_start, week_end))
+            select(func.count(Block.id)).where(
+                Block.date.between(week_start, week_end)
+            )
         )
         total_blocks = blocks_result.scalar() or 1
 
@@ -45,7 +47,7 @@ class WidgetData:
             "data": {"covered": total_assignments, "total": total_blocks},
         }
 
-    async def get_violations_widget(self) -> dict[str, Any]:
+    async def get_violations_widget(self) -> Dict[str, Any]:
         """Get violations widget data."""
         # Simplified - would integrate with violation tracker
         return {
@@ -55,7 +57,7 @@ class WidgetData:
             "severity": "low",
         }
 
-    async def get_utilization_widget(self) -> dict[str, Any]:
+    async def get_utilization_widget(self) -> Dict[str, Any]:
         """Get utilization widget data."""
         return {
             "title": "Current Utilization",

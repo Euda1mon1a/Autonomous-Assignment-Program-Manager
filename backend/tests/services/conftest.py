@@ -64,26 +64,30 @@ class PersonFactory:
         return person
 
     @staticmethod
-    def create_multiple_residents(db: Session, count: int = 3) -> list[Person]:
+    def create_multiple_residents(
+        db: Session, count: int = 3
+    ) -> list[Person]:
         """Create multiple residents."""
         residents = []
         for i in range(count):
             resident = PersonFactory.create_resident(
                 db,
-                name=f"Dr. Resident {i + 1}",
+                name=f"Dr. Resident {i+1}",
                 pgy_level=(i % 3) + 1,
             )
             residents.append(resident)
         return residents
 
     @staticmethod
-    def create_multiple_faculty(db: Session, count: int = 3) -> list[Person]:
+    def create_multiple_faculty(
+        db: Session, count: int = 3
+    ) -> list[Person]:
         """Create multiple faculty members."""
         faculty = []
         for i in range(count):
             fac = PersonFactory.create_faculty(
                 db,
-                name=f"Dr. Faculty {i + 1}",
+                name=f"Dr. Faculty {i+1}",
                 performs_procedures=(i == 0),
             )
             faculty.append(fac)
@@ -118,7 +122,9 @@ class BlockFactory:
         return block
 
     @staticmethod
-    def create_blocks_for_week(db: Session, start_date: date = None) -> list[Block]:
+    def create_blocks_for_week(
+        db: Session, start_date: date = None
+    ) -> list[Block]:
         """Create blocks for one week (AM and PM each day)."""
         if start_date is None:
             start_date = date.today()
@@ -144,7 +150,9 @@ class BlockFactory:
         return blocks
 
     @staticmethod
-    def create_blocks_for_month(db: Session, start_date: date = None) -> list[Block]:
+    def create_blocks_for_month(
+        db: Session, start_date: date = None
+    ) -> list[Block]:
         """Create blocks for one month (AM and PM each day)."""
         if start_date is None:
             start_date = date.today()
@@ -205,9 +213,9 @@ class RotationTemplateFactory:
         for i in range(count):
             template = RotationTemplate(
                 id=uuid4(),
-                name=f"Rotation {i + 1}",
+                name=f"Rotation {i+1}",
                 activity_type=activity_types[i % len(activity_types)],
-                abbreviation=f"ROT{i + 1}",
+                abbreviation=f"ROT{i+1}",
                 max_residents=4,
                 supervision_required=True,
             )

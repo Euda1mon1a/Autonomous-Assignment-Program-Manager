@@ -22,9 +22,7 @@ def file(
     input_file: Path = typer.Argument(..., help="Input file to import"),
     block: int = typer.Option(None, "--block", "-b", help="Target block number"),
     year: int = typer.Option(2024, "--year", "-y", help="Academic year"),
-    validate: bool = typer.Option(
-        True, "--validate/--no-validate", help="Validate before import"
-    ),
+    validate: bool = typer.Option(True, "--validate/--no-validate", help="Validate before import"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Preview without importing"),
 ):
     """
@@ -103,7 +101,7 @@ async def import_schedule_file(
         print_info(f"Importing schedule from {input_file}...")
 
         # Read file
-        with open(input_file) as f:
+        with open(input_file, "r") as f:
             schedule_data = json.load(f)
 
         # Validate if requested
@@ -137,7 +135,7 @@ async def import_schedule_file(
                 },
             )
 
-            print_success("Schedule imported successfully")
+            print_success(f"Schedule imported successfully")
             console.print(f"Assignments created: {response.get('created', 0)}")
 
     except json.JSONDecodeError as e:
@@ -164,18 +162,16 @@ async def import_csv_schedule(input_file: Path, block: int, year: int):
 
         assignments = []
 
-        with open(input_file) as f:
+        with open(input_file, "r") as f:
             reader = csv.DictReader(f)
 
             for row in reader:
-                assignments.append(
-                    {
-                        "person_id": row["person_id"],
-                        "rotation_id": row["rotation_id"],
-                        "start_date": row["start_date"],
-                        "end_date": row["end_date"],
-                    }
-                )
+                assignments.append({
+                    "person_id": row["person_id"],
+                    "rotation_id": row["rotation_id"],
+                    "start_date": row["start_date"],
+                    "end_date": row["end_date"],
+                })
 
         console.print(f"Found {len(assignments)} assignments in CSV")
 
@@ -209,7 +205,7 @@ async def import_rotation_template(template_file: Path, rotation_name: str):
     try:
         print_info(f"Importing template for {rotation_name}...")
 
-        with open(template_file) as f:
+        with open(template_file, "r") as f:
             template_data = json.load(f)
 
         api = APIClient()

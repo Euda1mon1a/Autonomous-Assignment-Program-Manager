@@ -19,9 +19,7 @@ console = Console()
 @app.command()
 def execute(
     query: str = typer.Argument(..., help="SQL query to execute"),
-    format: str = typer.Option(
-        "table", "--format", "-f", help="Output format (table/json)"
-    ),
+    format: str = typer.Option("table", "--format", "-f", help="Output format (table/json)"),
     limit: int = typer.Option(100, "--limit", "-l", help="Maximum rows to return"),
 ):
     """
@@ -37,7 +35,7 @@ def execute(
 
 @app.command()
 def persons(
-    role: str | None = typer.Option(None, "--role", "-r", help="Filter by role"),
+    role: Optional[str] = typer.Option(None, "--role", "-r", help="Filter by role"),
     limit: int = typer.Option(50, "--limit", "-l", help="Maximum rows"),
 ):
     """Quick view of persons table."""
@@ -53,10 +51,8 @@ def persons(
 
 @app.command()
 def assignments(
-    person_id: str | None = typer.Option(
-        None, "--person", "-p", help="Filter by person ID"
-    ),
-    block: int | None = typer.Option(None, "--block", "-b", help="Filter by block"),
+    person_id: Optional[str] = typer.Option(None, "--person", "-p", help="Filter by person ID"),
+    block: Optional[int] = typer.Option(None, "--block", "-b", help="Filter by block"),
     limit: int = typer.Option(50, "--limit", "-l", help="Maximum rows"),
 ):
     """Quick view of assignments table."""
@@ -92,9 +88,7 @@ def rotations():
 
 @app.command()
 def blocks(
-    year: int | None = typer.Option(
-        None, "--year", "-y", help="Filter by academic year"
-    ),
+    year: Optional[int] = typer.Option(None, "--year", "-y", help="Filter by academic year"),
 ):
     """Quick view of blocks table."""
     query = "SELECT block_number, start_date, end_date, academic_year FROM blocks"

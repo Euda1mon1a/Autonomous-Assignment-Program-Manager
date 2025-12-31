@@ -29,15 +29,12 @@ class TestGenerateCommands:
 
     def test_generate_block_dry_run(self, cli_runner, monkeypatch):
         """Test generate block in dry-run mode."""
-
         # Mock API client
         class MockAPI:
             def post(self, endpoint, json=None):
                 return {"assignments_count": 100}
 
-        monkeypatch.setattr(
-            "cli.commands.schedule_generate.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.schedule_generate.APIClient", lambda: MockAPI())
 
         from cli.commands.schedule_generate import app as generate_app
 
@@ -66,14 +63,11 @@ class TestValidateCommands:
 
     def test_validate_block(self, cli_runner, monkeypatch):
         """Test validate block command."""
-
         class MockAPI:
             def post(self, endpoint, json=None):
                 return {"violations": []}
 
-        monkeypatch.setattr(
-            "cli.commands.schedule_validate.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.schedule_validate.APIClient", lambda: MockAPI())
 
         from cli.commands.schedule_validate import app as validate_app
 
@@ -83,7 +77,6 @@ class TestValidateCommands:
 
     def test_validate_acgme(self, cli_runner, monkeypatch):
         """Test ACGME validation."""
-
         class MockAPI:
             def get(self, endpoint, params=None):
                 return {
@@ -91,9 +84,7 @@ class TestValidateCommands:
                     "compliance_rate": 95.0,
                 }
 
-        monkeypatch.setattr(
-            "cli.commands.schedule_validate.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.schedule_validate.APIClient", lambda: MockAPI())
 
         from cli.commands.schedule_validate import app as validate_app
 
@@ -107,7 +98,6 @@ class TestExportCommands:
 
     def test_export_block_json(self, cli_runner, tmp_path, monkeypatch):
         """Test export block to JSON."""
-
         class MockAPI:
             def get(self, endpoint, params=None):
                 return {
@@ -135,14 +125,11 @@ class TestConflictsCommands:
 
     def test_detect_conflicts(self, cli_runner, monkeypatch):
         """Test conflict detection."""
-
         class MockAPI:
             def get(self, endpoint, params=None):
                 return {"conflicts": []}
 
-        monkeypatch.setattr(
-            "cli.commands.schedule_conflicts.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.schedule_conflicts.APIClient", lambda: MockAPI())
 
         from cli.commands.schedule_conflicts import app as conflicts_app
 
@@ -156,7 +143,6 @@ class TestCoverageCommands:
 
     def test_analyze_coverage(self, cli_runner, monkeypatch):
         """Test coverage analysis."""
-
         class MockAPI:
             def get(self, endpoint, params=None):
                 return {
@@ -166,9 +152,7 @@ class TestCoverageCommands:
                     }
                 }
 
-        monkeypatch.setattr(
-            "cli.commands.schedule_coverage.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.schedule_coverage.APIClient", lambda: MockAPI())
 
         from cli.commands.schedule_coverage import app as coverage_app
 
@@ -182,7 +166,6 @@ class TestOptimizeCommands:
 
     def test_optimize_block_dry_run(self, cli_runner, monkeypatch):
         """Test optimize block in dry-run mode."""
-
         class MockAPI:
             def post(self, endpoint, json=None):
                 return {
@@ -193,9 +176,7 @@ class TestOptimizeCommands:
                     }
                 }
 
-        monkeypatch.setattr(
-            "cli.commands.schedule_optimize.APIClient", lambda: MockAPI()
-        )
+        monkeypatch.setattr("cli.commands.schedule_optimize.APIClient", lambda: MockAPI())
 
         from cli.commands.schedule_optimize import app as optimize_app
 

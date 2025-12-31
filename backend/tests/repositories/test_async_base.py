@@ -271,7 +271,9 @@ class TestAsyncRepositoryFiltering:
             await repository.create(schema)
         await repository.commit()
 
-        results = await repository.get_by_filters({"name": "Test", "count": 10})
+        results = await repository.get_by_filters(
+            {"name": "Test", "count": 10}
+        )
         assert len(results) == 3
 
     async def test_get_first_by_filters(self, repository):
@@ -362,7 +364,10 @@ class TestAsyncRepositoryBulkOps:
 
     async def test_bulk_create(self, repository):
         """Test creating multiple entities."""
-        schemas = [TestModelSchema(name=f"Bulk {i}") for i in range(5)]
+        schemas = [
+            TestModelSchema(name=f"Bulk {i}")
+            for i in range(5)
+        ]
         objs = await repository.bulk_create(schemas)
         await repository.commit()
 

@@ -23,15 +23,13 @@ class ACGMEAnnualReport:
         self.violation_tracker = ViolationTracker(db)
         self.report_builder = ReportBuilder()
 
-    async def generate(self, year: int) -> dict[str, Any]:
+    async def generate(self, year: int) -> Dict[str, Any]:
         """Generate annual ACGME report."""
         start_date = date(year, 1, 1)
         end_date = date(year, 12, 31)
 
         # Get metrics
-        metrics = await self.analytics_engine.calculate_all_metrics(
-            start_date, end_date
-        )
+        metrics = await self.analytics_engine.calculate_all_metrics(start_date, end_date)
         score = await self.compliance_score.calculate_score(start_date, end_date)
         violations = await self.violation_tracker.track_violations(start_date, end_date)
 

@@ -15,7 +15,6 @@ def cli_runner():
 @pytest.fixture
 def mock_api_response(monkeypatch):
     """Mock API responses."""
-
     def _mock_response(data):
         class MockResponse:
             def __init__(self, json_data, status_code=200):
@@ -55,7 +54,6 @@ def mock_config(monkeypatch):
 @pytest.fixture
 def mock_auth(monkeypatch):
     """Mock authentication."""
-
     class MockAuth:
         def get_token(self):
             return "mock_token"

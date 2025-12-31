@@ -2,7 +2,6 @@
 
 Provides optimized task queue management for Celery and async tasks.
 """
-
 import asyncio
 import logging
 from dataclasses import dataclass
@@ -65,14 +64,14 @@ class TaskQueue:
             "total_time": 0.0,
         }
         self._running = False
-        self._worker_task: asyncio.Task | None = None
+        self._worker_task: Optional[asyncio.Task] = None
 
     async def enqueue(
         self,
         func: Callable,
         *args,
         priority: TaskPriority = TaskPriority.NORMAL,
-        task_id: str | None = None,
+        task_id: Optional[str] = None,
         max_retries: int = 3,
         **kwargs,
     ) -> str:
@@ -133,9 +132,7 @@ class TaskQueue:
 
         # Wait for active tasks to complete
         if self.active_tasks:
-            logger.info(
-                f"Waiting for {len(self.active_tasks)} active tasks to complete"
-            )
+            logger.info(f"Waiting for {len(self.active_tasks)} active tasks to complete")
             await asyncio.gather(*self.active_tasks, return_exceptions=True)
 
         logger.info("Task queue stopped")
@@ -163,7 +160,7 @@ class TaskQueue:
                 logger.error(f"Worker error: {e}", exc_info=True)
                 await asyncio.sleep(0.1)
 
-    async def _get_next_task(self) -> Task | None:
+    async def _get_next_task(self) -> Optional[Task]:
         """Get next task from queues (priority order).
 
         Returns:
@@ -200,7 +197,9 @@ class TaskQueue:
                 self.stats["completed"] += 1
                 self.stats["total_time"] += execution_time
 
-                logger.debug(f"Task {task.id} completed in {execution_time:.2f}s")
+                logger.debug(
+                    f"Task {task.id} completed in {execution_time:.2f}s"
+                )
 
                 return result
 
@@ -213,7 +212,7 @@ class TaskQueue:
                     self.stats["retried"] += 1
 
                     # Re-enqueue with exponential backoff
-                    await asyncio.sleep(2**task.retries)
+                    await asyncio.sleep(2 ** task.retries)
                     queue = self.queues[task.priority]
                     await queue.put((-task.priority.value, task))
 
@@ -222,9 +221,7 @@ class TaskQueue:
                     )
                 else:
                     self.stats["failed"] += 1
-                    logger.error(
-                        f"Task {task.id} failed permanently after {task.retries} retries"
-                    )
+                    logger.error(f"Task {task.id} failed permanently after {task.retries} retries")
 
     async def get_queue_sizes(self) -> dict[str, int]:
         """Get current queue sizes by priority.
@@ -232,7 +229,10 @@ class TaskQueue:
         Returns:
             Dictionary of priority -> queue size
         """
-        return {priority.name: queue.qsize() for priority, queue in self.queues.items()}
+        return {
+            priority.name: queue.qsize()
+            for priority, queue in self.queues.items()
+        }
 
     async def get_stats(self) -> dict:
         """Get task queue statistics.
@@ -254,13 +254,15 @@ class TaskQueue:
             "total_tasks": total_tasks,
             "average_execution_time": round(avg_time, 3),
             "success_rate": (
-                self.stats["completed"] / total_tasks * 100 if total_tasks > 0 else 0.0
+                self.stats["completed"] / total_tasks * 100
+                if total_tasks > 0
+                else 0.0
             ),
         }
 
 
 # Global task queue instance
-_task_queue: TaskQueue | None = None
+_task_queue: Optional[TaskQueue] = None
 
 
 def get_task_queue() -> TaskQueue:

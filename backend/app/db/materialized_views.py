@@ -3,7 +3,6 @@
 Provides utilities for creating and managing PostgreSQL materialized views
 for frequently accessed, expensive queries.
 """
-
 import logging
 from datetime import datetime, timedelta
 from typing import Optional
@@ -30,7 +29,7 @@ class MaterializedViewManager:
         self,
         view_name: str,
         query: str,
-        refresh_interval: timedelta | None = None,
+        refresh_interval: Optional[timedelta] = None,
     ) -> None:
         """Create a materialized view.
 
@@ -175,7 +174,6 @@ class MaterializedViewManager:
 
 
 # Pre-defined materialized views for common queries
-
 
 async def create_schedule_summary_view(manager: MaterializedViewManager):
     """Create materialized view for schedule summary statistics."""

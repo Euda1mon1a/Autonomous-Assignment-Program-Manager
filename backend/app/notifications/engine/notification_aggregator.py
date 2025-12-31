@@ -65,9 +65,7 @@ class NotificationAggregator:
 
         return False
 
-    def get_aggregated(
-        self, recipient_id: UUID, notification_type: str
-    ) -> list[dict[str, Any]]:
+    def get_aggregated(self, recipient_id: UUID, notification_type: str) -> list[dict[str, Any]]:
         """Get aggregated notifications for sending."""
         key = f"{recipient_id}:{notification_type}"
 

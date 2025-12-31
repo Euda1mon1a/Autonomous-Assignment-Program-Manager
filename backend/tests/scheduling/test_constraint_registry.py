@@ -92,7 +92,6 @@ class TestConstraintRegistry:
 
     def test_register_constraint(self):
         """Test registering a constraint."""
-
         @ConstraintRegistry.register(
             name="TestConstraint",
             version="1.0",
@@ -107,7 +106,6 @@ class TestConstraintRegistry:
 
     def test_get_by_latest_version(self):
         """Test getting constraint by latest version."""
-
         @ConstraintRegistry.register(
             name="Versioned",
             version="1.0",
@@ -130,7 +128,6 @@ class TestConstraintRegistry:
 
     def test_get_specific_version(self):
         """Test getting constraint by specific version."""
-
         @ConstraintRegistry.register(
             name="Versioned",
             version="1.0",
@@ -153,7 +150,6 @@ class TestConstraintRegistry:
 
     def test_get_metadata(self):
         """Test getting constraint metadata."""
-
         @ConstraintRegistry.register(
             name="Test",
             version="1.0",
@@ -170,7 +166,6 @@ class TestConstraintRegistry:
 
     def test_get_all_constraints(self):
         """Test getting all constraints."""
-
         @ConstraintRegistry.register(
             name="Constraint1",
             version="1.0",
@@ -192,7 +187,6 @@ class TestConstraintRegistry:
 
     def test_get_all_active_only(self):
         """Test getting only active constraints."""
-
         @ConstraintRegistry.register(
             name="Active",
             version="1.0",
@@ -219,7 +213,6 @@ class TestConstraintRegistry:
 
     def test_find_by_category(self):
         """Test finding constraints by category."""
-
         @ConstraintRegistry.register(
             name="CustomConstraint",
             version="1.0",
@@ -233,7 +226,6 @@ class TestConstraintRegistry:
 
     def test_find_by_tag(self):
         """Test finding constraints by tag."""
-
         @ConstraintRegistry.register(
             name="Tagged",
             version="1.0",
@@ -248,7 +240,6 @@ class TestConstraintRegistry:
 
     def test_find_by_constraint_type(self):
         """Test finding constraints by type."""
-
         @ConstraintRegistry.register(
             name="CapacityConstraint",
             version="1.0",
@@ -263,7 +254,6 @@ class TestConstraintRegistry:
 
     def test_deprecate_constraint(self):
         """Test deprecating a constraint."""
-
         @ConstraintRegistry.register(
             name="OldConstraint",
             version="1.0",
@@ -284,7 +274,6 @@ class TestConstraintRegistry:
 
     def test_enable_disable_constraint(self):
         """Test enabling and disabling constraints."""
-
         @ConstraintRegistry.register(
             name="Toggle",
             version="1.0",
@@ -305,7 +294,6 @@ class TestConstraintRegistry:
 
     def test_list_by_category(self):
         """Test listing constraints by category."""
-
         @ConstraintRegistry.register(
             name="Acgme",
             version="1.0",
@@ -328,7 +316,6 @@ class TestConstraintRegistry:
 
     def test_get_category_stats(self):
         """Test getting category statistics."""
-
         @ConstraintRegistry.register(
             name="Constraint1",
             version="1.0",
@@ -351,7 +338,6 @@ class TestConstraintRegistry:
 
     def test_get_status_report(self):
         """Test getting status report."""
-
         @ConstraintRegistry.register(
             name="ReportTest",
             version="1.0",
@@ -366,7 +352,6 @@ class TestConstraintRegistry:
 
     def test_clear_registry(self):
         """Test clearing registry."""
-
         @ConstraintRegistry.register(
             name="ToClear",
             version="1.0",
@@ -383,7 +368,6 @@ class TestConstraintRegistry:
 
     def test_multiple_versions_tracking(self):
         """Test tracking multiple constraint versions."""
-
         @ConstraintRegistry.register(
             name="Evolving",
             version="1.0",

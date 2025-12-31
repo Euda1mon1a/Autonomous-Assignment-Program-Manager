@@ -2,7 +2,6 @@
 
 Analyzes PostgreSQL EXPLAIN output to identify performance bottlenecks.
 """
-
 import json
 import logging
 import re
@@ -44,7 +43,7 @@ class ExplainAnalyzer:
     async def analyze_query(
         self,
         query_str: str,
-        params: dict[str, Any] | None = None,
+        params: Optional[dict[str, Any]] = None,
         analyze: bool = True,
     ) -> ExplainMetrics:
         """Analyze query execution plan.
@@ -62,7 +61,9 @@ class ExplainAnalyzer:
         explain_query = f"EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) {query_str}"
 
         # Execute EXPLAIN
-        result = await self.session.execute(text(explain_query), params or {})
+        result = await self.session.execute(
+            text(explain_query), params or {}
+        )
         explain_output = result.scalar()
 
         # Parse JSON output
@@ -98,14 +99,11 @@ class ExplainAnalyzer:
 
         # Analyze for recommendations
         missing_indexes = self._identify_missing_indexes(plan)
-        recommendations = self._generate_recommendations(
-            plan,
-            {
-                "has_seq_scan": has_seq_scan,
-                "total_cost": total_cost,
-                "execution_time": execution_time,
-            },
-        )
+        recommendations = self._generate_recommendations(plan, {
+            "has_seq_scan": has_seq_scan,
+            "total_cost": total_cost,
+            "execution_time": execution_time,
+        })
 
         return ExplainMetrics(
             total_cost=total_cost,
@@ -199,7 +197,7 @@ class ExplainAnalyzer:
         """
         # Simple regex to extract column names
         # This is a basic implementation - could be more sophisticated
-        pattern = r"\((\w+)\s+[=<>!]"
+        pattern = r'\((\w+)\s+[=<>!]'
         matches = re.findall(pattern, filter_str)
         return list(set(matches))
 
@@ -229,7 +227,8 @@ class ExplainAnalyzer:
         # Slow execution time
         if metrics["execution_time"] > 1000:
             recommendations.append(
-                "Query execution time > 1 second - consider optimization or caching"
+                "Query execution time > 1 second - consider optimization "
+                "or caching"
             )
 
         # Check for nested loops without indexes
@@ -295,7 +294,7 @@ class ExplainAnalyzer:
         self,
         query1: str,
         query2: str,
-        params: dict | None = None,
+        params: Optional[dict] = None,
     ) -> dict[str, Any]:
         """Compare performance of two queries.
 
@@ -321,9 +320,7 @@ class ExplainAnalyzer:
                 "execution_time": metrics2.execution_time_ms,
                 "rows_scanned": metrics2.rows_scanned,
             },
-            "winner": "query1"
-            if metrics1.execution_time_ms < metrics2.execution_time_ms
-            else "query2",
+            "winner": "query1" if metrics1.execution_time_ms < metrics2.execution_time_ms else "query2",
             "improvement": abs(
                 (metrics2.execution_time_ms - metrics1.execution_time_ms)
                 / metrics1.execution_time_ms

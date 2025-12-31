@@ -18,9 +18,7 @@ console = Console()
 def detect(
     block: int = typer.Argument(..., help="Block number"),
     year: int = typer.Option(2024, "--year", "-y", help="Academic year"),
-    severity: str = typer.Option(
-        None, "--severity", "-s", help="Filter by severity (high/medium/low)"
-    ),
+    severity: str = typer.Option(None, "--severity", "-s", help="Filter by severity (high/medium/low)"),
 ):
     """
     Detect scheduling conflicts.
@@ -36,9 +34,7 @@ def detect(
 @app.command()
 def resolve(
     conflict_id: str = typer.Argument(..., help="Conflict ID to resolve"),
-    method: str = typer.Option(
-        "auto", "--method", "-m", help="Resolution method (auto/manual/suggest)"
-    ),
+    method: str = typer.Option("auto", "--method", "-m", help="Resolution method (auto/manual/suggest)"),
 ):
     """
     Resolve a specific conflict.
@@ -173,9 +169,7 @@ async def check_person_conflicts(person_id: str, days: int):
             print_success(f"No conflicts found for {person_id}")
             return
 
-        console.print(
-            f"\n[yellow]Found {len(conflicts)} conflicts for {person_id}[/yellow]\n"
-        )
+        console.print(f"\n[yellow]Found {len(conflicts)} conflicts for {person_id}[/yellow]\n")
 
         print_table(
             conflicts,

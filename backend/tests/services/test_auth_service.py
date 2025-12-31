@@ -76,7 +76,9 @@ class TestAuthService:
         assert test_user.last_login is not None
         assert test_user.last_login >= (old_login or datetime.min)
 
-    def test_authenticate_returns_jti(self, auth_service: AuthService, test_user: User):
+    def test_authenticate_returns_jti(
+        self, auth_service: AuthService, test_user: User
+    ):
         """Test that authentication returns JTI for token blacklist."""
         result = auth_service.authenticate("testuser", "Test@Pass123")
 
@@ -92,7 +94,9 @@ class TestAuthService:
         assert "expires_at" in result
         assert result["expires_at"] is not None
 
-    def test_register_user_first_user_becomes_admin(self, auth_service: AuthService):
+    def test_register_user_first_user_becomes_admin(
+        self, auth_service: AuthService
+    ):
         """Test that first user registered becomes admin."""
         result = auth_service.register_user(
             username="firstuser",

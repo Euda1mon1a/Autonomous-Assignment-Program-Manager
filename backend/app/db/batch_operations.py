@@ -2,7 +2,6 @@
 
 Provides utilities for efficient bulk inserts, updates, and deletes.
 """
-
 import logging
 from typing import Any, Sequence, Type, TypeVar
 
@@ -31,7 +30,7 @@ class BatchOperations:
 
     async def bulk_insert(
         self,
-        model: type[T],
+        model: Type[T],
         records: Sequence[dict[str, Any]],
         return_defaults: bool = False,
     ) -> int:
@@ -67,14 +66,12 @@ class BatchOperations:
             )
 
         await self.session.commit()
-        logger.info(
-            f"Bulk inserted {total_inserted} records into {model.__tablename__}"
-        )
+        logger.info(f"Bulk inserted {total_inserted} records into {model.__tablename__}")
         return total_inserted
 
     async def bulk_upsert(
         self,
-        model: type[T],
+        model: Type[T],
         records: Sequence[dict[str, Any]],
         conflict_columns: list[str],
         update_columns: list[str],
@@ -102,7 +99,9 @@ class BatchOperations:
             stmt = pg_insert(model).values(batch)
 
             # Build update dict for conflict resolution
-            update_dict = {col: getattr(stmt.excluded, col) for col in update_columns}
+            update_dict = {
+                col: getattr(stmt.excluded, col) for col in update_columns
+            }
 
             stmt = stmt.on_conflict_do_update(
                 index_elements=conflict_columns, set_=update_dict
@@ -117,14 +116,12 @@ class BatchOperations:
             )
 
         await self.session.commit()
-        logger.info(
-            f"Bulk upserted {total_upserted} records into {model.__tablename__}"
-        )
+        logger.info(f"Bulk upserted {total_upserted} records into {model.__tablename__}")
         return total_upserted
 
     async def bulk_update(
         self,
-        model: type[T],
+        model: Type[T],
         updates: Sequence[dict[str, Any]],
         id_column: str = "id",
     ) -> int:
@@ -170,7 +167,7 @@ class BatchOperations:
 
     async def bulk_delete(
         self,
-        model: type[T],
+        model: Type[T],
         ids: Sequence[Any],
         id_column: str = "id",
     ) -> int:
@@ -229,9 +226,9 @@ class BatchOperations:
         cursor = raw_connection.cursor()
 
         # Execute COPY command
-        with open(csv_file_path) as f:
+        with open(csv_file_path, "r") as f:
             copy_sql = f"""
-                COPY {table_name} ({",".join(columns)})
+                COPY {table_name} ({','.join(columns)})
                 FROM STDIN WITH CSV HEADER
             """
             cursor.copy_expert(copy_sql, f)

@@ -96,9 +96,7 @@ def pgy(
 @app.command()
 def password(
     user_id: str = typer.Argument(..., help="User ID or email"),
-    new_password: str = typer.Option(
-        None, "--password", "-p", prompt=True, hide_input=True, help="New password"
-    ),
+    new_password: str = typer.Option(None, "--password", "-p", prompt=True, hide_input=True, help="New password"),
 ):
     """
     Reset user password.

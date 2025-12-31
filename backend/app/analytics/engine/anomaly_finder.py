@@ -26,9 +26,9 @@ class AnomalyFinder:
 
     def find_anomalies(
         self,
-        time_series_data: dict[str, pd.Series],
+        time_series_data: Dict[str, pd.Series],
         sensitivity: float = 2.5,
-    ) -> list[dict[str, Any]]:
+    ) -> List[Dict[str, Any]]:
         """
         Find anomalies across multiple metrics.
 
@@ -57,7 +57,7 @@ class AnomalyFinder:
         series: pd.Series,
         metric_name: str,
         threshold: float = 2.5,
-    ) -> list[dict[str, Any]]:
+    ) -> List[Dict[str, Any]]:
         """
         Detect statistical anomalies using z-score.
 
@@ -94,22 +94,18 @@ class AnomalyFinder:
                 else:
                     severity = "medium"
 
-                anomalies.append(
-                    {
-                        "metric": metric_name,
-                        "date": idx.isoformat()
-                        if hasattr(idx, "isoformat")
-                        else str(idx),
-                        "value": float(value),
-                        "expected_value": float(mean),
-                        "z_score": float(z_score),
-                        "severity": severity,
-                        "type": "statistical",
-                        "description": self._generate_description(
-                            metric_name, value, mean, z_score
-                        ),
-                    }
-                )
+                anomalies.append({
+                    "metric": metric_name,
+                    "date": idx.isoformat() if hasattr(idx, "isoformat") else str(idx),
+                    "value": float(value),
+                    "expected_value": float(mean),
+                    "z_score": float(z_score),
+                    "severity": severity,
+                    "type": "statistical",
+                    "description": self._generate_description(
+                        metric_name, value, mean, z_score
+                    ),
+                })
 
         return anomalies
 
@@ -117,7 +113,7 @@ class AnomalyFinder:
         self,
         coverage_series: pd.Series,
         threshold: float = 0.5,
-    ) -> list[dict[str, Any]]:
+    ) -> List[Dict[str, Any]]:
         """
         Detect coverage-specific anomalies.
 
@@ -135,19 +131,15 @@ class AnomalyFinder:
             if value < threshold:
                 severity = "critical" if value < 0.3 else "high"
 
-                anomalies.append(
-                    {
-                        "metric": "coverage_rate",
-                        "date": idx.isoformat()
-                        if hasattr(idx, "isoformat")
-                        else str(idx),
-                        "value": float(value),
-                        "expected_value": 1.0,
-                        "severity": severity,
-                        "type": "coverage_gap",
-                        "description": f"Coverage rate {value:.1%} is below threshold {threshold:.1%}",
-                    }
-                )
+                anomalies.append({
+                    "metric": "coverage_rate",
+                    "date": idx.isoformat() if hasattr(idx, "isoformat") else str(idx),
+                    "value": float(value),
+                    "expected_value": 1.0,
+                    "severity": severity,
+                    "type": "coverage_gap",
+                    "description": f"Coverage rate {value:.1%} is below threshold {threshold:.1%}",
+                })
 
         return anomalies
 
@@ -155,7 +147,7 @@ class AnomalyFinder:
         self,
         workload_series: pd.Series,
         max_hours: float = 80.0,
-    ) -> list[dict[str, Any]]:
+    ) -> List[Dict[str, Any]]:
         """
         Detect workload-specific anomalies (ACGME violations).
 
@@ -173,19 +165,15 @@ class AnomalyFinder:
             if value > max_hours:
                 severity = "critical" if value > max_hours * 1.2 else "high"
 
-                anomalies.append(
-                    {
-                        "metric": "workload_hours",
-                        "date": idx.isoformat()
-                        if hasattr(idx, "isoformat")
-                        else str(idx),
-                        "value": float(value),
-                        "expected_value": float(max_hours),
-                        "severity": severity,
-                        "type": "acgme_violation",
-                        "description": f"Workload {value:.1f}h exceeds ACGME limit {max_hours}h",
-                    }
-                )
+                anomalies.append({
+                    "metric": "workload_hours",
+                    "date": idx.isoformat() if hasattr(idx, "isoformat") else str(idx),
+                    "value": float(value),
+                    "expected_value": float(max_hours),
+                    "severity": severity,
+                    "type": "acgme_violation",
+                    "description": f"Workload {value:.1f}h exceeds ACGME limit {max_hours}h",
+                })
 
         return anomalies
 
@@ -193,7 +181,7 @@ class AnomalyFinder:
         self,
         series: pd.Series,
         threshold_pct: float = 50.0,
-    ) -> list[dict[str, Any]]:
+    ) -> List[Dict[str, Any]]:
         """
         Detect sudden changes in metrics.
 
@@ -218,19 +206,15 @@ class AnomalyFinder:
             if abs(pct_change) > threshold_pct:
                 severity = "high" if abs(pct_change) > 100 else "medium"
 
-                anomalies.append(
-                    {
-                        "metric": series.name or "unknown",
-                        "date": idx.isoformat()
-                        if hasattr(idx, "isoformat")
-                        else str(idx),
-                        "value": float(series.loc[idx]),
-                        "percent_change": float(pct_change),
-                        "severity": severity,
-                        "type": "sudden_change",
-                        "description": f"Sudden {abs(pct_change):.1f}% change detected",
-                    }
-                )
+                anomalies.append({
+                    "metric": series.name or "unknown",
+                    "date": idx.isoformat() if hasattr(idx, "isoformat") else str(idx),
+                    "value": float(series.loc[idx]),
+                    "percent_change": float(pct_change),
+                    "severity": severity,
+                    "type": "sudden_change",
+                    "description": f"Sudden {abs(pct_change):.1f}% change detected",
+                })
 
         return anomalies
 
@@ -239,7 +223,7 @@ class AnomalyFinder:
         series: pd.Series,
         min_consecutive: int = 3,
         threshold: float = 2.0,
-    ) -> list[dict[str, Any]]:
+    ) -> List[Dict[str, Any]]:
         """
         Detect consecutive anomalous values (sustained issues).
 
@@ -276,21 +260,15 @@ class AnomalyFinder:
                 consecutive_count += 1
             else:
                 if consecutive_count >= min_consecutive and start_idx is not None:
-                    anomalies.append(
-                        {
-                            "metric": series.name or "unknown",
-                            "start_date": start_idx.isoformat()
-                            if hasattr(start_idx, "isoformat")
-                            else str(start_idx),
-                            "end_date": idx.isoformat()
-                            if hasattr(idx, "isoformat")
-                            else str(idx),
-                            "duration": consecutive_count,
-                            "severity": "critical",
-                            "type": "sustained_anomaly",
-                            "description": f"Sustained anomaly for {consecutive_count} periods",
-                        }
-                    )
+                    anomalies.append({
+                        "metric": series.name or "unknown",
+                        "start_date": start_idx.isoformat() if hasattr(start_idx, "isoformat") else str(start_idx),
+                        "end_date": idx.isoformat() if hasattr(idx, "isoformat") else str(idx),
+                        "duration": consecutive_count,
+                        "severity": "critical",
+                        "type": "sustained_anomaly",
+                        "description": f"Sustained anomaly for {consecutive_count} periods",
+                    })
                 consecutive_count = 0
                 start_idx = None
 
@@ -323,9 +301,9 @@ class AnomalyFinder:
 
     def prioritize_anomalies(
         self,
-        anomalies: list[dict[str, Any]],
+        anomalies: List[Dict[str, Any]],
         max_results: int = 10,
-    ) -> list[dict[str, Any]]:
+    ) -> List[Dict[str, Any]]:
         """
         Prioritize anomalies by severity and impact.
 

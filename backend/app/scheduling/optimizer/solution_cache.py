@@ -2,7 +2,6 @@
 
 Caches partial and complete solutions to avoid redundant computation.
 """
-
 import hashlib
 import json
 import logging
@@ -54,7 +53,7 @@ class SolutionCache:
     async def get_solution(
         self,
         problem_hash: str,
-    ) -> dict | None:
+    ) -> Optional[dict]:
         """Get cached solution for problem.
 
         Args:
@@ -77,7 +76,7 @@ class SolutionCache:
         self,
         problem_hash: str,
         solution: dict,
-        ttl: int | None = None,
+        ttl: Optional[int] = None,
     ) -> None:
         """Cache solution for problem.
 
@@ -94,7 +93,7 @@ class SolutionCache:
         self,
         problem_hash: str,
         date_range: tuple[date, date],
-    ) -> dict | None:
+    ) -> Optional[dict]:
         """Get cached partial solution for date range.
 
         Args:
@@ -119,7 +118,7 @@ class SolutionCache:
         problem_hash: str,
         date_range: tuple[date, date],
         partial_solution: dict,
-        ttl: int | None = None,
+        ttl: Optional[int] = None,
     ) -> None:
         """Cache partial solution.
 
@@ -135,9 +134,9 @@ class SolutionCache:
 
     async def invalidate_solutions(
         self,
-        person_ids: list[str] | None = None,
-        rotation_ids: list[str] | None = None,
-        date_range: tuple[date, date] | None = None,
+        person_ids: Optional[list[str]] = None,
+        rotation_ids: Optional[list[str]] = None,
+        date_range: Optional[tuple[date, date]] = None,
     ) -> int:
         """Invalidate solutions affected by changes.
 
@@ -188,7 +187,7 @@ class IncrementalSolutionBuilder:
         """
         self.cache = solution_cache
         self.current_solution: dict = {}
-        self.problem_hash: str | None = None
+        self.problem_hash: Optional[str] = None
 
     async def initialize(
         self,
@@ -255,7 +254,7 @@ class IncrementalSolutionBuilder:
 
 
 # Global solution cache
-_solution_cache: SolutionCache | None = None
+_solution_cache: Optional[SolutionCache] = None
 
 
 def get_solution_cache() -> SolutionCache:

@@ -122,7 +122,9 @@ class SkillValidator:
 
         # Generate warnings
         if expiring_soon:
-            warnings.append(f"{len(expiring_soon)} credentials expiring within 30 days")
+            warnings.append(
+                f"{len(expiring_soon)} credentials expiring within 30 days"
+            )
 
         qualified = len(missing_credentials) == 0
 
@@ -165,12 +167,10 @@ class SkillValidator:
 
         for cred_name in required_creds:
             if cred_name not in faculty_creds:
-                missing.append(
-                    {
-                        "credential": cred_name,
-                        "required_for": list(rotation_types),
-                    }
-                )
+                missing.append({
+                    "credential": cred_name,
+                    "required_for": list(rotation_types),
+                })
             else:
                 # Check expiration
                 cred_info = faculty_creds[cred_name]
@@ -180,13 +180,11 @@ class SkillValidator:
                     ).days
 
                     if days_until_expiry < 30:
-                        expiring.append(
-                            {
-                                "credential": cred_name,
-                                "expires_at": cred_info["expires_at"].isoformat(),
-                                "days_until_expiry": days_until_expiry,
-                            }
-                        )
+                        expiring.append({
+                            "credential": cred_name,
+                            "expires_at": cred_info["expires_at"].isoformat(),
+                            "days_until_expiry": days_until_expiry,
+                        })
 
         return {
             "missing": missing,

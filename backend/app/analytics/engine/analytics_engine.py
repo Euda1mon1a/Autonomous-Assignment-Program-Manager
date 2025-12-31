@@ -67,9 +67,9 @@ class AnalyticsEngine:
         self,
         start_date: date,
         end_date: date,
-        person_id: str | None = None,
-        rotation_type: str | None = None,
-    ) -> dict[str, Any]:
+        person_id: Optional[str] = None,
+        rotation_type: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """
         Calculate comprehensive metrics for a period.
 
@@ -140,7 +140,7 @@ class AnalyticsEngine:
     async def get_dashboard_summary(
         self,
         date_range: int = 30,
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         """
         Get summary metrics for dashboard display.
 
@@ -187,7 +187,7 @@ class AnalyticsEngine:
         period1_end: date,
         period2_start: date,
         period2_end: date,
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         """
         Compare metrics between two time periods.
 
@@ -201,13 +201,11 @@ class AnalyticsEngine:
             Comparison results with deltas and percent changes
         """
         return await self.comparator.compare(
-            period1_start,
-            period1_end,
-            period2_start,
-            period2_end,
+            period1_start, period1_end,
+            period2_start, period2_end,
         )
 
-    def _count_forecast_issues(self, forecasts: dict[str, Any]) -> int:
+    def _count_forecast_issues(self, forecasts: Dict[str, Any]) -> int:
         """Count predicted issues in forecast data."""
         count = 0
 
@@ -224,7 +222,7 @@ class AnalyticsEngine:
         person_id: str,
         start_date: date,
         end_date: date,
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         """
         Get comprehensive analytics for a specific person.
 
@@ -237,7 +235,9 @@ class AnalyticsEngine:
             Person-specific metrics, workload trends, predictions
         """
         # Get person details
-        result = await self.db.execute(select(Person).where(Person.id == person_id))
+        result = await self.db.execute(
+            select(Person).where(Person.id == person_id)
+        )
         person = result.scalar_one_or_none()
 
         if not person:

@@ -19,10 +19,7 @@ from app.resilience.engine.defense_level_calculator import (
     DefenseLevelCalculator,
     DefenseLevelResult,
 )
-from app.resilience.engine.utilization_monitor import (
-    UtilizationMonitor,
-    UtilizationSnapshot,
-)
+from app.resilience.engine.utilization_monitor import UtilizationMonitor, UtilizationSnapshot
 from app.resilience.engine.threshold_manager import ThresholdManager, ThresholdViolation
 
 
@@ -118,8 +115,8 @@ class ResilienceEngine:
         coverage_gaps: int = 0,
         burnout_cases: int = 0,
         cascade_risk: float = 0.0,
-        arrival_rate: float | None = None,
-        service_rate: float | None = None,
+        arrival_rate: Optional[float] = None,
+        service_rate: Optional[float] = None,
     ) -> ResilienceStatus:
         """
         Assess overall resilience status.
@@ -171,33 +168,23 @@ class ResilienceEngine:
         if util_violation:
             violations.append(util_violation)
 
-        n1_violation = self.threshold_manager.check_threshold(
-            "n1_failures", n1_failures
-        )
+        n1_violation = self.threshold_manager.check_threshold("n1_failures", n1_failures)
         if n1_violation:
             violations.append(n1_violation)
 
-        n2_violation = self.threshold_manager.check_threshold(
-            "n2_failures", n2_failures
-        )
+        n2_violation = self.threshold_manager.check_threshold("n2_failures", n2_failures)
         if n2_violation:
             violations.append(n2_violation)
 
-        gap_violation = self.threshold_manager.check_threshold(
-            "coverage_gaps", coverage_gaps
-        )
+        gap_violation = self.threshold_manager.check_threshold("coverage_gaps", coverage_gaps)
         if gap_violation:
             violations.append(gap_violation)
 
-        burnout_violation = self.threshold_manager.check_threshold(
-            "burnout_cases", burnout_cases
-        )
+        burnout_violation = self.threshold_manager.check_threshold("burnout_cases", burnout_cases)
         if burnout_violation:
             violations.append(burnout_violation)
 
-        cascade_violation = self.threshold_manager.check_threshold(
-            "cascade_risk", cascade_risk
-        )
+        cascade_violation = self.threshold_manager.check_threshold("cascade_risk", cascade_risk)
         if cascade_violation:
             violations.append(cascade_violation)
 
@@ -233,17 +220,11 @@ class ResilienceEngine:
 
         # Defense level alerts
         if defense_level.level == DefenseLevel.BLACK:
-            alerts.append(
-                "🚨 EMERGENCY: System in BLACK defense level - immediate action required"
-            )
+            alerts.append("🚨 EMERGENCY: System in BLACK defense level - immediate action required")
         elif defense_level.level == DefenseLevel.RED:
-            alerts.append(
-                "🔴 CRITICAL: System in RED defense level - urgent intervention needed"
-            )
+            alerts.append("🔴 CRITICAL: System in RED defense level - urgent intervention needed")
         elif defense_level.level == DefenseLevel.ORANGE:
-            alerts.append(
-                "🟠 WARNING: System in ORANGE defense level - degraded operations"
-            )
+            alerts.append("🟠 WARNING: System in ORANGE defense level - degraded operations")
         elif defense_level.level == DefenseLevel.YELLOW:
             alerts.append("🟡 CAUTION: System in YELLOW defense level - early warning")
 
@@ -283,9 +264,7 @@ class ResilienceEngine:
         # Violations contribution (0-0.3)
         critical_violations = sum(1 for v in violations if v.severity == "critical")
         warning_violations = sum(1 for v in violations if v.severity == "warning")
-        violation_score = min(
-            0.3, (critical_violations * 0.1 + warning_violations * 0.05)
-        )
+        violation_score = min(0.3, (critical_violations * 0.1 + warning_violations * 0.05))
 
         return min(1.0, defense_score + util_score + violation_score)
 

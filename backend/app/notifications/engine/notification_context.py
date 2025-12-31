@@ -25,10 +25,7 @@ class NotificationContext:
     """
 
     def __init__(
-        self,
-        notification_id: UUID,
-        recipient_id: UUID,
-        metadata: dict[str, Any] | None = None,
+        self, notification_id: UUID, recipient_id: UUID, metadata: dict[str, Any] | None = None
     ):
         """
         Initialize notification context.

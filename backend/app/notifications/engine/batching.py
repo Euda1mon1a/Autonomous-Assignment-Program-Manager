@@ -119,8 +119,7 @@ class BatchingEngine:
                     batch_key=batch_key,
                     notification_type=payload.notification_type,
                     channels=channels,
-                    scheduled_send=datetime.utcnow()
-                    + timedelta(minutes=window_minutes),
+                    scheduled_send=datetime.utcnow() + timedelta(minutes=window_minutes),
                 )
                 self._batches[batch_key] = batch
 
@@ -192,7 +191,9 @@ class BatchingEngine:
             Aggregated data dictionary
         """
         notification_type = NotificationType(batch["notification_type"])
-        payloads = [NotificationPayload(**p) for p in batch["payloads"]]
+        payloads = [
+            NotificationPayload(**p) for p in batch["payloads"]
+        ]
 
         # Different aggregation strategies by type
         if notification_type == NotificationType.ASSIGNMENT_CHANGED:
@@ -221,13 +222,11 @@ class BatchingEngine:
         changes = []
         for payload in payloads:
             if payload.data:
-                changes.append(
-                    {
-                        "rotation": payload.data.get("rotation_name"),
-                        "block": payload.data.get("block_name"),
-                        "date_range": f"{payload.data.get('start_date')} to {payload.data.get('end_date')}",
-                    }
-                )
+                changes.append({
+                    "rotation": payload.data.get("rotation_name"),
+                    "block": payload.data.get("block_name"),
+                    "date_range": f"{payload.data.get('start_date')} to {payload.data.get('end_date')}",
+                })
 
         return {
             "change_count": len(changes),
@@ -242,13 +241,11 @@ class BatchingEngine:
         shifts = []
         for payload in payloads:
             if payload.data:
-                shifts.append(
-                    {
-                        "rotation": payload.data.get("rotation_name"),
-                        "location": payload.data.get("location"),
-                        "start_date": payload.data.get("start_date"),
-                    }
-                )
+                shifts.append({
+                    "rotation": payload.data.get("rotation_name"),
+                    "location": payload.data.get("location"),
+                    "start_date": payload.data.get("start_date"),
+                })
 
         return {
             "shift_count": len(shifts),
@@ -263,15 +260,11 @@ class BatchingEngine:
         absences = []
         for payload in payloads:
             if payload.data:
-                absences.append(
-                    {
-                        "type": payload.data.get("absence_type"),
-                        "period": f"{payload.data.get('start_date')} to {payload.data.get('end_date')}",
-                        "status": "approved"
-                        if "approved" in payload.notification_type
-                        else "rejected",
-                    }
-                )
+                absences.append({
+                    "type": payload.data.get("absence_type"),
+                    "period": f"{payload.data.get('start_date')} to {payload.data.get('end_date')}",
+                    "status": "approved" if "approved" in payload.notification_type else "rejected",
+                })
 
         return {
             "absence_count": len(absences),
@@ -308,7 +301,9 @@ class BatchingEngine:
                 "total_notifications": total_notifications,
                 "by_type": dict(by_type),
                 "average_batch_size": (
-                    total_notifications / len(self._batches) if self._batches else 0
+                    total_notifications / len(self._batches)
+                    if self._batches
+                    else 0
                 ),
             }
 

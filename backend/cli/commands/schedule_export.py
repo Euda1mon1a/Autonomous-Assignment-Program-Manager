@@ -37,9 +37,7 @@ def block(
 @app.command()
 def person(
     person_id: str = typer.Argument(..., help="Person ID"),
-    output: Path = typer.Option(
-        "person_schedule.json", "--output", "-o", help="Output file"
-    ),
+    output: Path = typer.Option("person_schedule.json", "--output", "-o", help="Output file"),
     format: str = typer.Option("json", "--format", "-f", help="Format (json/csv/xlsx)"),
     start_date: str = typer.Option(None, "--start", help="Start date"),
     end_date: str = typer.Option(None, "--end", help="End date"),
@@ -60,9 +58,7 @@ def person(
 @app.command()
 def year(
     year: int = typer.Argument(..., help="Academic year"),
-    output: Path = typer.Option(
-        "year_schedule.xlsx", "--output", "-o", help="Output file"
-    ),
+    output: Path = typer.Option("year_schedule.xlsx", "--output", "-o", help="Output file"),
     format: str = typer.Option("xlsx", "--format", "-f", help="Format (json/xlsx)"),
 ):
     """
@@ -138,11 +134,7 @@ async def export_block_schedule(block: int, output: Path, format: str, year: int
 
 
 async def export_person_schedule(
-    person_id: str,
-    output: Path,
-    format: str,
-    start_date: str = None,
-    end_date: str = None,
+    person_id: str, output: Path, format: str, start_date: str = None, end_date: str = None
 ):
     """Export person's schedule."""
     api = APIClient()

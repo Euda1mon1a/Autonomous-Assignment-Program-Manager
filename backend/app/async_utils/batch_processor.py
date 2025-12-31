@@ -3,7 +3,6 @@
 Provides utilities for processing large datasets in batches with
 parallel execution and progress tracking.
 """
-
 import asyncio
 import logging
 from dataclasses import dataclass
@@ -53,7 +52,7 @@ class BatchProcessor:
         self,
         items: Sequence[T],
         processor: Callable[[T], R],
-        progress_callback: Callable[[int, int], None] | None = None,
+        progress_callback: Optional[Callable[[int, int], None]] = None,
     ) -> BatchResult:
         """Process items in batches.
 
@@ -110,7 +109,10 @@ class BatchProcessor:
                 return batch_results, batch_errors
 
         # Process all batches
-        batch_tasks = [process_batch(idx, batch) for idx, batch in enumerate(batches)]
+        batch_tasks = [
+            process_batch(idx, batch)
+            for idx, batch in enumerate(batches)
+        ]
 
         batch_outputs = await asyncio.gather(*batch_tasks, return_exceptions=True)
 
@@ -171,7 +173,7 @@ class BatchProcessor:
                 except Exception as e:
                     last_error = e
                     if attempt < max_retries:
-                        await asyncio.sleep(retry_delay * (2**attempt))
+                        await asyncio.sleep(retry_delay * (2 ** attempt))
 
             raise last_error
 
@@ -198,9 +200,9 @@ class StreamingBatchProcessor:
         self.flush_interval = flush_interval
         self.queue: asyncio.Queue = asyncio.Queue(maxsize=max_queue_size)
         self.current_batch: list = []
-        self.processor: Callable | None = None
+        self.processor: Optional[Callable] = None
         self._running = False
-        self._worker_task: asyncio.Task | None = None
+        self._worker_task: Optional[asyncio.Task] = None
 
     async def start(self, processor: Callable[[Sequence[T]], Any]):
         """Start the streaming processor.
@@ -257,15 +259,15 @@ class StreamingBatchProcessor:
                         timeout=1.0,
                     )
                     self.current_batch.append(item)
-                except TimeoutError:
+                except asyncio.TimeoutError:
                     pass
 
                 # Check if batch is full or flush interval reached
                 now = datetime.utcnow()
                 batch_full = len(self.current_batch) >= self.batch_size
                 time_to_flush = (
-                    now - last_flush
-                ).total_seconds() >= self.flush_interval
+                    (now - last_flush).total_seconds() >= self.flush_interval
+                )
 
                 if batch_full or (time_to_flush and self.current_batch):
                     await self._flush_batch()

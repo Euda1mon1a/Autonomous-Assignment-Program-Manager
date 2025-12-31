@@ -2,7 +2,6 @@
 
 Prunes infeasible assignments early to reduce solver search space.
 """
-
 import logging
 from datetime import date
 from typing import Any, Optional
@@ -23,7 +22,7 @@ class ConstraintPruner:
         persons: list[dict],
         rotations: list[dict],
         blocks: list[dict],
-        existing_assignments: list[dict] | None = None,
+        existing_assignments: Optional[list[dict]] = None,
     ) -> dict[str, Any]:
         """Prune infeasible person-rotation-block combinations.
 
@@ -72,17 +71,15 @@ class ConstraintPruner:
                 )
 
                 for rotation in feasible_rotations:
-                    feasible_assignments.append(
-                        {
-                            "person_id": person["id"],
-                            "block_id": block["id"],
-                            "rotation_id": rotation["id"],
-                        }
-                    )
+                    feasible_assignments.append({
+                        "person_id": person["id"],
+                        "block_id": block["id"],
+                        "rotation_id": rotation["id"],
+                    })
 
         logger.info(
             f"Constraint pruning: {self.pruned_count}/{self.total_evaluated} "
-            f"combinations pruned ({self.pruned_count / self.total_evaluated * 100:.1f}%)"
+            f"combinations pruned ({self.pruned_count/self.total_evaluated*100:.1f}%)"
         )
 
         return {
@@ -90,9 +87,7 @@ class ConstraintPruner:
             "total_evaluated": self.total_evaluated,
             "pruned_count": self.pruned_count,
             "pruning_reasons": pruning_reasons,
-            "reduction_ratio": self.pruned_count / self.total_evaluated
-            if self.total_evaluated > 0
-            else 0,
+            "reduction_ratio": self.pruned_count / self.total_evaluated if self.total_evaluated > 0 else 0,
         }
 
     def _get_feasible_rotations(
@@ -131,7 +126,7 @@ class ConstraintPruner:
         person: dict,
         rotation: dict,
         block: dict,
-    ) -> str | None:
+    ) -> Optional[str]:
         """Check if person-rotation-block is feasible.
 
         Args:

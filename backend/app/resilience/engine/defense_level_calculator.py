@@ -180,13 +180,7 @@ class DefenseLevelCalculator:
 
         # Generate rationale and recommendations
         rationale = self._generate_rationale(
-            level,
-            util_score,
-            n1_score,
-            n2_score,
-            cascade_score,
-            gap_score,
-            burnout_score,
+            level, util_score, n1_score, n2_score, cascade_score, gap_score, burnout_score
         )
         recommendations = self._generate_recommendations(level, metrics)
 
@@ -204,10 +198,8 @@ class DefenseLevelCalculator:
             return 0.0
         elif utilization < self.UTILIZATION_YELLOW:
             # Linear interpolation GREEN -> YELLOW
-            return (
-                1.0
-                * (utilization - self.UTILIZATION_GREEN)
-                / (self.UTILIZATION_YELLOW - self.UTILIZATION_GREEN)
+            return 1.0 * (utilization - self.UTILIZATION_GREEN) / (
+                self.UTILIZATION_YELLOW - self.UTILIZATION_GREEN
             )
         elif utilization < self.UTILIZATION_ORANGE:
             return 1.0 + 1.0 * (utilization - self.UTILIZATION_YELLOW) / (
@@ -367,9 +359,7 @@ class DefenseLevelCalculator:
             if metrics.coverage_gaps > 0:
                 recs.append(f"Fill {metrics.coverage_gaps} coverage gaps immediately")
             if metrics.n2_failures > 0:
-                recs.append(
-                    f"Critical: {metrics.n2_failures} N-2 failure scenarios detected"
-                )
+                recs.append(f"Critical: {metrics.n2_failures} N-2 failure scenarios detected")
             recs.append("Consider activating backup residents")
 
         elif level == DefenseLevel.RED:

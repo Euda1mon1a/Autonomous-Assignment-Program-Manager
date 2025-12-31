@@ -195,9 +195,7 @@ class RtCalculator:
         dist = []
         for day in range(max_days):
             # Probability mass for this day
-            prob = gamma.cdf(day + 1, shape, scale=scale) - gamma.cdf(
-                day, shape, scale=scale
-            )
+            prob = gamma.cdf(day + 1, shape, scale=scale) - gamma.cdf(day, shape, scale=scale)
             dist.append(prob)
 
         # Normalize
@@ -296,13 +294,7 @@ class RtCalculator:
         # Calculate trend
         if len(rt_history) >= 7:
             recent_trend = np.mean(rt_history[-7:]) - np.mean(rt_history[-14:-7])
-            trend_direction = (
-                "decreasing"
-                if recent_trend < -0.1
-                else "increasing"
-                if recent_trend > 0.1
-                else "stable"
-            )
+            trend_direction = "decreasing" if recent_trend < -0.1 else "increasing" if recent_trend > 0.1 else "stable"
         else:
             trend_direction = "insufficient_data"
 

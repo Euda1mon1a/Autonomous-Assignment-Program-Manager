@@ -49,9 +49,7 @@ def show(
 @app.command()
 def resolve(
     violation_id: str = typer.Argument(..., help="Violation ID"),
-    resolution: str = typer.Option(
-        ..., "--resolution", "-r", prompt=True, help="Resolution notes"
-    ),
+    resolution: str = typer.Option(..., "--resolution", "-r", prompt=True, help="Resolution notes"),
 ):
     """
     Mark violation as resolved.
@@ -151,11 +149,11 @@ async def show_violation(violation_id: str):
         console.print(f"Limit: {violation.get('limit')}")
         console.print(f"Detected: {violation.get('detected_at')}")
         console.print(f"Status: {violation.get('status')}")
-        console.print("\nDescription:")
+        console.print(f"\nDescription:")
         console.print(f"  {violation.get('description')}")
 
-        if violation.get("resolution"):
-            console.print("\nResolution:")
+        if violation.get('resolution'):
+            console.print(f"\nResolution:")
             console.print(f"  {violation.get('resolution')}")
 
     except Exception as e:

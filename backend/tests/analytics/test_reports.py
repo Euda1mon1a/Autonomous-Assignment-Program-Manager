@@ -131,24 +131,18 @@ class TestACGMEAnnualReport:
         report_gen = ACGMEAnnualReport(async_db_session)
 
         # Mock dependencies
-        report_gen.analytics_engine.calculate_all_metrics = AsyncMock(
-            return_value={
-                "schedule_metrics": {},
-                "compliance_metrics": {},
-                "resilience_metrics": {},
-            }
-        )
-        report_gen.compliance_score.calculate_score = AsyncMock(
-            return_value={
-                "compliance_score": 95.0,
-                "rating": "excellent",
-            }
-        )
-        report_gen.violation_tracker.track_violations = AsyncMock(
-            return_value={
-                "total_violations": 2,
-            }
-        )
+        report_gen.analytics_engine.calculate_all_metrics = AsyncMock(return_value={
+            "schedule_metrics": {},
+            "compliance_metrics": {},
+            "resilience_metrics": {},
+        })
+        report_gen.compliance_score.calculate_score = AsyncMock(return_value={
+            "compliance_score": 95.0,
+            "rating": "excellent",
+        })
+        report_gen.violation_tracker.track_violations = AsyncMock(return_value={
+            "total_violations": 2,
+        })
 
         report = await report_gen.generate(2024)
 

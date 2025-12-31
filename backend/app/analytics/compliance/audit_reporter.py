@@ -23,23 +23,20 @@ class AuditReporter:
 
     async def generate_audit_report(
         self, start_date: date, end_date: date
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         """Generate comprehensive audit report."""
         violations = await self.violation_tracker.track_violations(start_date, end_date)
         score = await self.compliance_score.calculate_score(start_date, end_date)
 
         return {
-            "audit_period": {
-                "start": start_date.isoformat(),
-                "end": end_date.isoformat(),
-            },
+            "audit_period": {"start": start_date.isoformat(), "end": end_date.isoformat()},
             "compliance_score": score,
             "violations": violations,
             "recommendations": self._generate_recommendations(violations, score),
         }
 
     def _generate_recommendations(
-        self, violations: dict[str, Any], score: dict[str, Any]
+        self, violations: Dict[str, Any], score: Dict[str, Any]
     ) -> List[str]:
         """Generate improvement recommendations."""
         recommendations = []

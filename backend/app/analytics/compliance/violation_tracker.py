@@ -22,8 +22,8 @@ class ViolationTracker:
         self.db = db
 
     async def track_violations(
-        self, start_date: date, end_date: date, person_id: str | None = None
-    ) -> dict[str, Any]:
+        self, start_date: date, end_date: date, person_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Track all ACGME violations for a period."""
         work_hour_violations = await self._track_80_hour_violations(
             start_date, end_date, person_id
@@ -40,8 +40,8 @@ class ViolationTracker:
         }
 
     async def _track_80_hour_violations(
-        self, start_date: date, end_date: date, person_id: str | None = None
-    ) -> list[dict[str, Any]]:
+        self, start_date: date, end_date: date, person_id: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """Track 80-hour rule violations."""
         person_query = select(Person).where(Person.type == "resident")
         if person_id:
@@ -76,13 +76,13 @@ class ViolationTracker:
         return violations
 
     def _check_80_hour_windows(
-        self, assignments: list[Assignment], person: Person
-    ) -> list[dict[str, Any]]:
+        self, assignments: List[Assignment], person: Person
+    ) -> List[Dict[str, Any]]:
         """Check 80-hour rule in 4-week windows."""
         violations = []
 
         # Group assignments by week
-        weeks: dict[int, list[Assignment]] = {}
+        weeks: Dict[int, List[Assignment]] = {}
         for assignment in assignments:
             if assignment.block and assignment.block.date:
                 week_num = assignment.block.date.isocalendar()[1]
@@ -101,30 +101,28 @@ class ViolationTracker:
             max_hours = 80 * 4  # 80 hours/week * 4 weeks
 
             if total_hours > max_hours:
-                violations.append(
-                    {
-                        "person_id": str(person.id),
-                        "person_name": person.name,
-                        "violation_type": "80_hour_rule",
-                        "week_start": week_nums[i],
-                        "total_hours": total_hours,
-                        "limit": max_hours,
-                        "excess_hours": total_hours - max_hours,
-                    }
-                )
+                violations.append({
+                    "person_id": str(person.id),
+                    "person_name": person.name,
+                    "violation_type": "80_hour_rule",
+                    "week_start": week_nums[i],
+                    "total_hours": total_hours,
+                    "limit": max_hours,
+                    "excess_hours": total_hours - max_hours,
+                })
 
         return violations
 
     async def _track_1in7_violations(
-        self, start_date: date, end_date: date, person_id: str | None = None
-    ) -> list[dict[str, Any]]:
+        self, start_date: date, end_date: date, person_id: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """Track 1-in-7 day off violations."""
         # Simplified implementation
         return []
 
     async def get_violation_trends(
         self, start_date: date, end_date: date
-    ) -> dict[str, list[int]]:
+    ) -> Dict[str, List[int]]:
         """Get violation trends over time."""
         # Track violations week by week
         weeks_data = []

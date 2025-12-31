@@ -1,5 +1,4 @@
 """Tests for batch database operations."""
-
 import pytest
 from datetime import datetime
 
@@ -32,7 +31,6 @@ async def test_bulk_insert(db_session):
 
     # Verify in database
     from sqlalchemy import select
-
     result = await db_session.execute(select(Person))
     all_persons = result.scalars().all()
 
@@ -83,8 +81,9 @@ async def test_bulk_upsert(db_session):
 
     # Verify updates
     from sqlalchemy import select
-
-    result = await db_session.execute(select(Person).where(Person.id == "person_0"))
+    result = await db_session.execute(
+        select(Person).where(Person.id == "person_0")
+    )
     person = result.scalar_one()
 
     assert person.name == "Updated Person 0"
@@ -127,7 +126,6 @@ async def test_bulk_update(db_session):
 
     # Verify updates
     from sqlalchemy import select
-
     result = await db_session.execute(select(Person))
     all_persons = result.scalars().all()
 
@@ -162,7 +160,6 @@ async def test_bulk_delete(db_session):
 
     # Verify deletion
     from sqlalchemy import select
-
     result = await db_session.execute(select(Person))
     remaining_persons = result.scalars().all()
 
@@ -194,7 +191,6 @@ async def test_batch_size_handling(db_session):
 
     # Verify all inserted
     from sqlalchemy import select
-
     result = await db_session.execute(select(Person))
     all_persons = result.scalars().all()
 

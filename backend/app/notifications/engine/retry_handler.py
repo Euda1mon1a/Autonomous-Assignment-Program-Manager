@@ -180,9 +180,7 @@ class RetryHandler:
                     )
                 else:
                     # Failed again
-                    await self._handle_retry_failure(
-                        retry, results[0].message if results else "Unknown error"
-                    )
+                    await self._handle_retry_failure(retry, results[0].message if results else "Unknown error")
 
                 processed += 1
 
@@ -335,9 +333,7 @@ class RetryHandler:
                     self._dead_letter.remove(retry)
                     self._retries[retry.id] = retry
 
-                    logger.info(
-                        "Moved retry %s from dead letter back to queue", retry_id
-                    )
+                    logger.info("Moved retry %s from dead letter back to queue", retry_id)
                     return True
 
             return False

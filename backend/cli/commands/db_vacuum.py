@@ -19,9 +19,7 @@ console = Console()
 @app.command()
 def vacuum(
     full: bool = typer.Option(False, "--full", help="Run VACUUM FULL (locks table)"),
-    analyze: bool = typer.Option(
-        True, "--analyze/--no-analyze", help="Run ANALYZE after VACUUM"
-    ),
+    analyze: bool = typer.Option(True, "--analyze/--no-analyze", help="Run ANALYZE after VACUUM"),
     table: str = typer.Option(None, "--table", "-t", help="Specific table to vacuum"),
 ):
     """
@@ -92,9 +90,7 @@ async def run_vacuum(full: bool, analyze: bool, table: str = None):
 
             with step("Vacuuming database"):
                 # VACUUM cannot run in transaction block
-                await session.connection(
-                    execution_options={"isolation_level": "AUTOCOMMIT"}
-                )
+                await session.connection(execution_options={"isolation_level": "AUTOCOMMIT"})
                 await session.execute(text(cmd))
 
             print_success("VACUUM completed")
@@ -156,9 +152,7 @@ async def run_reindex(table: str = None, index: str = None):
 
             with step("Reindexing"):
                 # REINDEX cannot run in transaction block
-                await session.connection(
-                    execution_options={"isolation_level": "AUTOCOMMIT"}
-                )
+                await session.connection(execution_options={"isolation_level": "AUTOCOMMIT"})
                 await session.execute(text(cmd))
 
             print_success("REINDEX completed")

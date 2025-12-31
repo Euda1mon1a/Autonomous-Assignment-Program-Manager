@@ -32,8 +32,8 @@ class UtilizationSnapshot:
     arrival_rate: float  # λ - requests per hour
     service_rate: float  # μ - service per hour per server
     traffic_intensity: float  # ρ = λ/(c*μ)
-    queue_length: float | None = None  # Expected queue length (from Erlang C)
-    wait_time: float | None = None  # Expected wait time (hours)
+    queue_length: Optional[float] = None  # Expected queue length (from Erlang C)
+    wait_time: Optional[float] = None  # Expected wait time (hours)
 
 
 @dataclass
@@ -73,8 +73,8 @@ class UtilizationMonitor:
         total_capacity: float,
         utilized_capacity: float,
         num_servers: int,
-        arrival_rate: float | None = None,
-        service_rate: float | None = None,
+        arrival_rate: Optional[float] = None,
+        service_rate: Optional[float] = None,
     ) -> UtilizationSnapshot:
         """
         Calculate utilization snapshot for a time period.
@@ -91,9 +91,7 @@ class UtilizationMonitor:
         Returns:
             UtilizationSnapshot with metrics and queue predictions
         """
-        utilization_ratio = (
-            utilized_capacity / total_capacity if total_capacity > 0 else 0.0
-        )
+        utilization_ratio = utilized_capacity / total_capacity if total_capacity > 0 else 0.0
 
         # Calculate traffic intensity if rates provided
         traffic_intensity = 0.0
@@ -126,9 +124,7 @@ class UtilizationMonitor:
             wait_time=wait_time,
         )
 
-    def _erlang_c(
-        self, arrival_rate: float, service_rate: float, num_servers: int
-    ) -> float:
+    def _erlang_c(self, arrival_rate: float, service_rate: float, num_servers: int) -> float:
         """
         Calculate Erlang C formula - probability of queuing in M/M/c system.
 
@@ -145,7 +141,7 @@ class UtilizationMonitor:
         """
         A = arrival_rate / service_rate  # Total offered load
 
-        if num_servers <= A:
+        if A >= num_servers:
             return 1.0  # System unstable, queue infinite
 
         # Calculate numerator: A^c / c! * c/(c-A)
@@ -284,9 +280,7 @@ class UtilizationMonitor:
 
         if capacity_increase_pct < 10:
             action = "monitor"
-            message = (
-                f"Increase capacity by {capacity_increase_pct:.1f}% or reduce load"
-            )
+            message = f"Increase capacity by {capacity_increase_pct:.1f}% or reduce load"
         elif capacity_increase_pct < 25:
             action = "adjust"
             message = f"Recommend {capacity_increase_pct:.1f}% capacity increase"

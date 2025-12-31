@@ -2,7 +2,6 @@
 
 Reduces cache memory usage by compressing large values.
 """
-
 import gzip
 import json
 import logging
@@ -57,18 +56,13 @@ class CacheCompression:
             json_data = json.dumps(data).encode()
 
         # Check if compression is worthwhile
-        if (
-            len(json_data) < self.min_size_bytes
-            or self.algorithm == CompressionAlgorithm.NONE
-        ):
+        if len(json_data) < self.min_size_bytes or self.algorithm == CompressionAlgorithm.NONE:
             return json_data, False
 
         # Compress based on algorithm
         try:
             if self.algorithm == CompressionAlgorithm.GZIP:
-                compressed = gzip.compress(
-                    json_data, compresslevel=self.compression_level
-                )
+                compressed = gzip.compress(json_data, compresslevel=self.compression_level)
             elif self.algorithm == CompressionAlgorithm.ZLIB:
                 compressed = zlib.compress(json_data, level=self.compression_level)
             else:
@@ -78,7 +72,7 @@ class CacheCompression:
             if len(compressed) < len(json_data):
                 logger.debug(
                     f"Compressed {len(json_data)} -> {len(compressed)} bytes "
-                    f"({len(compressed) / len(json_data) * 100:.1f}%)"
+                    f"({len(compressed)/len(json_data)*100:.1f}%)"
                 )
                 return compressed, True
             else:
@@ -157,7 +151,7 @@ class CompressedCacheWrapper:
     def __init__(
         self,
         cache,
-        compressor: CacheCompression | None = None,
+        compressor: Optional[CacheCompression] = None,
     ):
         """Initialize compressed cache wrapper.
 
@@ -177,7 +171,7 @@ class CompressedCacheWrapper:
         self,
         key: str,
         value: Any,
-        ttl: int | None = None,
+        ttl: Optional[int] = None,
     ) -> bool:
         """Set value with automatic compression.
 
@@ -216,7 +210,7 @@ class CompressedCacheWrapper:
 
         return await self.cache.set(key, json.dumps(cache_value), ttl)
 
-    async def get(self, key: str) -> Any | None:
+    async def get(self, key: str) -> Optional[Any]:
         """Get value with automatic decompression.
 
         Args:
@@ -249,7 +243,9 @@ class CompressedCacheWrapper:
         total_original = self.stats["total_original_bytes"]
         total_compressed = self.stats["total_compressed_bytes"]
 
-        overall_ratio = total_compressed / total_original if total_original > 0 else 1.0
+        overall_ratio = (
+            total_compressed / total_original if total_original > 0 else 1.0
+        )
         space_saved = total_original - total_compressed
         space_saved_pct = (
             space_saved / total_original * 100 if total_original > 0 else 0.0
@@ -266,7 +262,7 @@ class CompressedCacheWrapper:
 
 
 # Global compressed cache
-_compressed_cache: CompressedCacheWrapper | None = None
+_compressed_cache: Optional[CompressedCacheWrapper] = None
 
 
 def get_compressed_cache() -> CompressedCacheWrapper:

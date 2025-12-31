@@ -44,8 +44,8 @@ class TimeSeriesAnalyzer:
         start_date: date,
         end_date: date,
         granularity: str = "week",
-        metrics: list[str] | None = None,
-    ) -> dict[str, pd.Series]:
+        metrics: Optional[List[str]] = None,
+    ) -> Dict[str, pd.Series]:
         """
         Extract time series data for various metrics.
 
@@ -120,7 +120,10 @@ class TimeSeriesAnalyzer:
         result = await self.db.execute(query)
         data = result.all()
 
-        df = pd.DataFrame([{"date": row.date, "count": row.count} for row in data])
+        df = pd.DataFrame([
+            {"date": row.date, "count": row.count}
+            for row in data
+        ])
 
         if df.empty:
             return pd.Series(dtype=float)
@@ -161,9 +164,7 @@ class TimeSeriesAnalyzer:
             coverage_series = assignment_series / total_capacity
         else:
             # For aggregated periods, divide by number of days in period
-            coverage_series = assignment_series / (
-                total_capacity * 7
-            )  # Assume 7 days per week
+            coverage_series = assignment_series / (total_capacity * 7)  # Assume 7 days per week
 
         return coverage_series
 
@@ -214,7 +215,7 @@ class TimeSeriesAnalyzer:
     def calculate_trend(
         self,
         series: pd.Series,
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         """
         Calculate trend statistics.
 
@@ -263,7 +264,7 @@ class TimeSeriesAnalyzer:
         self,
         series: pd.Series,
         period: int = 7,
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         """
         Detect seasonality in time series.
 
@@ -315,7 +316,7 @@ class TimeSeriesAnalyzer:
     def get_summary_statistics(
         self,
         series: pd.Series,
-    ) -> dict[str, float]:
+    ) -> Dict[str, float]:
         """
         Calculate summary statistics for time series.
 

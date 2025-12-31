@@ -19,19 +19,16 @@ class MonthlySummaryReport:
         self.analytics_engine = AnalyticsEngine(db)
         self.report_builder = ReportBuilder()
 
-    async def generate(self, year: int, month: int) -> dict[str, Any]:
+    async def generate(self, year: int, month: int) -> Dict[str, Any]:
         """Generate monthly summary."""
         # Calculate month dates
         import calendar
-
         start_date = date(year, month, 1)
         last_day = calendar.monthrange(year, month)[1]
         end_date = date(year, month, last_day)
 
         # Get metrics
-        metrics = await self.analytics_engine.calculate_all_metrics(
-            start_date, end_date
-        )
+        metrics = await self.analytics_engine.calculate_all_metrics(start_date, end_date)
 
         # Build report
         report = self.report_builder.build_report(

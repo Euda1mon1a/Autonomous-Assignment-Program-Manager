@@ -52,13 +52,11 @@ class TestComplianceScore:
         calculator = ComplianceScore(async_db_session)
 
         # Mock violation tracker
-        calculator.violation_tracker.track_violations = AsyncMock(
-            return_value={
-                "total_violations": 5,
-                "work_hour_violations": [],
-                "day_off_violations": [],
-            }
-        )
+        calculator.violation_tracker.track_violations = AsyncMock(return_value={
+            "total_violations": 5,
+            "work_hour_violations": [],
+            "day_off_violations": [],
+        })
 
         start_date = date(2024, 1, 1)
         end_date = date(2024, 1, 31)
@@ -98,17 +96,13 @@ class TestAuditReporter:
         reporter = AuditReporter(async_db_session)
 
         # Mock dependencies
-        reporter.violation_tracker.track_violations = AsyncMock(
-            return_value={
-                "total_violations": 5,
-            }
-        )
-        reporter.compliance_score.calculate_score = AsyncMock(
-            return_value={
-                "compliance_score": 95.0,
-                "rating": "excellent",
-            }
-        )
+        reporter.violation_tracker.track_violations = AsyncMock(return_value={
+            "total_violations": 5,
+        })
+        reporter.compliance_score.calculate_score = AsyncMock(return_value={
+            "compliance_score": 95.0,
+            "rating": "excellent",
+        })
 
         start_date = date(2024, 1, 1)
         end_date = date(2024, 1, 31)
@@ -131,12 +125,10 @@ class TestComplianceBenchmark:
         benchmark = ComplianceBenchmark(async_db_session)
 
         # Mock compliance score
-        benchmark.compliance_score.calculate_score = AsyncMock(
-            return_value={
-                "compliance_score": 92.0,
-                "rating": "good",
-            }
-        )
+        benchmark.compliance_score.calculate_score = AsyncMock(return_value={
+            "compliance_score": 92.0,
+            "rating": "good",
+        })
 
         start_date = date(2024, 1, 1)
         end_date = date(2024, 1, 31)

@@ -23,7 +23,7 @@ class RiskPredictor:
 
     async def predict_risks(
         self, start_date: date, forecast_days: int = 30
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         """Predict compliance risks for future period."""
         end_date = start_date + timedelta(days=forecast_days)
 
@@ -44,7 +44,7 @@ class RiskPredictor:
 
     async def _identify_high_risk_persons(
         self, start_date: date, end_date: date, threshold_hours: float = 75
-    ) -> list[dict[str, Any]]:
+    ) -> List[Dict[str, Any]]:
         """Identify persons at risk of violations."""
         query = (
             select(
@@ -74,13 +74,11 @@ class RiskPredictor:
             weekly_avg = estimated_hours / weeks if weeks > 0 else 0
 
             if weekly_avg > threshold_hours:
-                high_risk.append(
-                    {
-                        "person_id": str(row.id),
-                        "person_name": row.name,
-                        "weekly_average_hours": round(weekly_avg, 2),
-                        "risk_factor": "high_workload",
-                    }
-                )
+                high_risk.append({
+                    "person_id": str(row.id),
+                    "person_name": row.name,
+                    "weekly_average_hours": round(weekly_avg, 2),
+                    "risk_factor": "high_workload",
+                })
 
         return high_risk

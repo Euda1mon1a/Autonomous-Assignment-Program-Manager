@@ -22,9 +22,7 @@ console = Console()
 
 @app.command()
 def all(
-    profile: str = typer.Option(
-        "dev", "--profile", "-p", help="Seed profile (dev/demo/test)"
-    ),
+    profile: str = typer.Option("dev", "--profile", "-p", help="Seed profile (dev/demo/test)"),
 ):
     """
     Seed database with complete dataset.
@@ -144,7 +142,7 @@ async def seed_users(count: int):
             for i in range(residents_count):
                 person = Person(
                     id=f"RES-{i + 1:03d}",
-                    first_name="Resident",
+                    first_name=f"Resident",
                     last_name=f"{i + 1:03d}",
                     email=f"resident{i + 1}@example.com",
                     role=Role.RESIDENT,
@@ -157,7 +155,7 @@ async def seed_users(count: int):
             for i in range(faculty_count):
                 person = Person(
                     id=f"FAC-{i + 1:03d}",
-                    first_name="Faculty",
+                    first_name=f"Faculty",
                     last_name=f"{i + 1:03d}",
                     email=f"faculty{i + 1}@example.com",
                     role=Role.FACULTY,
@@ -169,7 +167,7 @@ async def seed_users(count: int):
             for i in range(staff_count):
                 person = Person(
                     id=f"STAFF-{i + 1:03d}",
-                    first_name="Staff",
+                    first_name=f"Staff",
                     last_name=f"{i + 1:03d}",
                     email=f"staff{i + 1}@example.com",
                     role=Role.CLINICAL_STAFF,

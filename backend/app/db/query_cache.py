@@ -3,7 +3,6 @@
 Provides efficient caching for database query results with automatic invalidation
 and performance metrics.
 """
-
 import hashlib
 import json
 import logging
@@ -23,7 +22,7 @@ T = TypeVar("T")
 class QueryCache:
     """Redis-based query result cache with automatic invalidation."""
 
-    def __init__(self, redis_client: redis.Redis | None = None):
+    def __init__(self, redis_client: Optional[redis.Redis] = None):
         """Initialize query cache.
 
         Args:
@@ -43,7 +42,7 @@ class QueryCache:
         self,
         key: str,
         fetch_fn: Callable[[], Any],
-        ttl: timedelta | None = None,
+        ttl: Optional[timedelta] = None,
         serializer: Callable[[Any], str] = json.dumps,
         deserializer: Callable[[str], Any] = json.loads,
     ) -> Any:
@@ -134,7 +133,9 @@ class QueryCache:
             Dictionary with hit rate and other metrics
         """
         total = self.metrics["hits"] + self.metrics["misses"]
-        hit_rate = self.metrics["hits"] / total * 100 if total > 0 else 0
+        hit_rate = (
+            self.metrics["hits"] / total * 100 if total > 0 else 0
+        )
 
         return {
             "hits": self.metrics["hits"],
@@ -155,8 +156,8 @@ class CachedQuery:
     def __init__(
         self,
         cache: QueryCache,
-        ttl: timedelta | None = None,
-        key_prefix: str | None = None,
+        ttl: Optional[timedelta] = None,
+        key_prefix: Optional[str] = None,
     ):
         """Initialize cached query decorator.
 
@@ -201,7 +202,7 @@ class CachedQuery:
 
 
 # Global cache instance
-_cache_instance: QueryCache | None = None
+_cache_instance: Optional[QueryCache] = None
 
 
 def get_query_cache() -> QueryCache:

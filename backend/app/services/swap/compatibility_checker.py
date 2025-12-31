@@ -126,9 +126,7 @@ class CompatibilityChecker:
         schedule_score = await self._score_schedule_compatibility(request_a, request_b)
         preference_score = await self._score_preference_alignment(request_a, request_b)
         workload_score = await self._score_workload_balance(request_a, request_b)
-        credential_score = await self._score_credential_compatibility(
-            request_a, request_b
-        )
+        credential_score = await self._score_credential_compatibility(request_a, request_b)
         temporal_score = self._score_temporal_proximity(request_a, request_b)
 
         # Calculate weighted overall score
@@ -159,9 +157,7 @@ class CompatibilityChecker:
             recommendations.append("Excellent schedule fit")
 
         if overall_score > 0.85:
-            recommendations.append(
-                "This is an excellent match - prioritize notification"
-            )
+            recommendations.append("This is an excellent match - prioritize notification")
 
         score = CompatibilityScore(
             overall_score=overall_score,
@@ -250,12 +246,8 @@ class CompatibilityChecker:
         )
 
         # Check for rotation type compatibility
-        a_rotation_types = set(
-            a.rotation_type for a in source_a_assignments if a.rotation_type
-        )
-        b_rotation_types = set(
-            a.rotation_type for a in source_b_assignments if a.rotation_type
-        )
+        a_rotation_types = set(a.rotation_type for a in source_a_assignments if a.rotation_type)
+        b_rotation_types = set(a.rotation_type for a in source_b_assignments if a.rotation_type)
 
         # If both faculty can do each other's rotations, full score
         # Otherwise, reduce score based on incompatibility
@@ -287,17 +279,11 @@ class CompatibilityChecker:
         # This would integrate with faculty preference service
         # For now, simple heuristic based on swap type
 
-        if (
-            request_a.swap_type == SwapType.ONE_TO_ONE
-            and request_b.swap_type == SwapType.ONE_TO_ONE
-        ):
+        if request_a.swap_type == SwapType.ONE_TO_ONE and request_b.swap_type == SwapType.ONE_TO_ONE:
             # Both want to swap - higher alignment
             return 0.9
 
-        if (
-            request_a.swap_type == SwapType.ABSORB
-            or request_b.swap_type == SwapType.ABSORB
-        ):
+        if request_a.swap_type == SwapType.ABSORB or request_b.swap_type == SwapType.ABSORB:
             # One party just giving away - medium alignment
             return 0.7
 
@@ -412,7 +398,8 @@ class CompatibilityChecker:
     async def _count_faculty_assignments(self, faculty_id: UUID) -> int:
         """Count total assignments for a faculty member."""
         result = await self.db.execute(
-            select(Assignment).where(Assignment.person_id == faculty_id)
+            select(Assignment)
+            .where(Assignment.person_id == faculty_id)
         )
 
         return len(list(result.scalars().all()))

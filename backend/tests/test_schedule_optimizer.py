@@ -1,5 +1,4 @@
 """Tests for schedule generation optimizer components."""
-
 import pytest
 from datetime import date, timedelta
 
@@ -170,7 +169,9 @@ async def test_solution_cache():
     constraints = {"max_hours_per_week": 80}
 
     # Generate problem hash
-    problem_hash = cache.generate_problem_hash(persons, rotations, blocks, constraints)
+    problem_hash = cache.generate_problem_hash(
+        persons, rotations, blocks, constraints
+    )
 
     assert len(problem_hash) > 0
 
@@ -232,7 +233,6 @@ async def test_parallel_solver():
     async def mock_solver(problem_data: dict, solver_id: int) -> dict:
         """Mock solver that returns different objective values."""
         import asyncio
-
         await asyncio.sleep(0.1)
 
         return {
@@ -258,7 +258,6 @@ async def test_parallel_solver_timeout():
     async def slow_solver(problem_data: dict, solver_id: int) -> dict:
         """Solver that times out."""
         import asyncio
-
         await asyncio.sleep(10)  # Will timeout
         return {"objective_value": 100}
 
@@ -278,7 +277,6 @@ async def test_parallel_solver_with_strategies():
     async def mock_solver(problem_data: dict, solver_id: int) -> dict:
         """Mock solver that uses strategy from problem data."""
         import asyncio
-
         await asyncio.sleep(0.1)
 
         strategy = problem_data.get("heuristic", "default")

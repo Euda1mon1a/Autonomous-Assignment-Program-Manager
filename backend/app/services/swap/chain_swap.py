@@ -283,9 +283,7 @@ class ChainSwapCoordinator:
                 faculty_name=faculty.name,
                 gives_week=edge_data["source_week"],
                 receives_week=edge_data["target_week"] or edge_data["source_week"],
-                swap_request_id=UUID(edge_data["swap_id"])
-                if edge_data.get("swap_id")
-                else None,
+                swap_request_id=UUID(edge_data["swap_id"]) if edge_data.get("swap_id") else None,
             )
 
             nodes.append(node)
@@ -335,9 +333,7 @@ class ChainSwapCoordinator:
                 faculty_name=faculty.name,
                 gives_week=edge_data["source_week"],
                 receives_week=edge_data["target_week"] or edge_data["source_week"],
-                swap_request_id=UUID(edge_data["swap_id"])
-                if edge_data.get("swap_id")
-                else None,
+                swap_request_id=UUID(edge_data["swap_id"]) if edge_data.get("swap_id") else None,
             )
 
             nodes.append(node)
@@ -402,28 +398,28 @@ class ChainSwapCoordinator:
         )
 
         for chain in sorted_chains:
-            plan.append(
-                {
-                    "chain_id": chain.chain_id,
-                    "chain_type": chain.chain_type,
-                    "participants": len(chain.nodes),
-                    "is_valid": chain.is_valid,
-                    "priority": "high" if chain.total_swaps >= 4 else "normal",
-                    "nodes": [
-                        {
-                            "faculty_id": str(node.faculty_id),
-                            "faculty_name": node.faculty_name,
-                            "gives": node.gives_week.isoformat(),
-                            "receives": node.receives_week.isoformat(),
-                        }
-                        for node in chain.nodes
-                    ],
-                }
-            )
+            plan.append({
+                "chain_id": chain.chain_id,
+                "chain_type": chain.chain_type,
+                "participants": len(chain.nodes),
+                "is_valid": chain.is_valid,
+                "priority": "high" if chain.total_swaps >= 4 else "normal",
+                "nodes": [
+                    {
+                        "faculty_id": str(node.faculty_id),
+                        "faculty_name": node.faculty_name,
+                        "gives": node.gives_week.isoformat(),
+                        "receives": node.receives_week.isoformat(),
+                    }
+                    for node in chain.nodes
+                ],
+            })
 
         return plan
 
     async def _get_faculty(self, faculty_id: UUID) -> Person | None:
         """Get faculty member by ID."""
-        result = await self.db.execute(select(Person).where(Person.id == faculty_id))
+        result = await self.db.execute(
+            select(Person).where(Person.id == faculty_id)
+        )
         return result.scalar_one_or_none()

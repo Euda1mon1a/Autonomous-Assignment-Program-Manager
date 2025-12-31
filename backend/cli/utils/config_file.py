@@ -33,7 +33,7 @@ class ConfigFile:
         self.config_dir = get_config_dir()
         self.config_file = self.config_dir / "config.yaml"
 
-    def load(self) -> dict[str, Any]:
+    def load(self) -> Dict[str, Any]:
         """
         Load configuration from file.
 
@@ -44,7 +44,7 @@ class ConfigFile:
             return self._get_defaults()
 
         try:
-            with open(self.config_file) as f:
+            with open(self.config_file, "r") as f:
                 config = yaml.safe_load(f)
 
             # Get profile-specific config or defaults
@@ -54,7 +54,7 @@ class ConfigFile:
             console.print(f"[red]Error loading config: {e}[/red]")
             return self._get_defaults()
 
-    def save(self, config: dict[str, Any]) -> None:
+    def save(self, config: Dict[str, Any]) -> None:
         """
         Save configuration to file.
 
@@ -63,7 +63,7 @@ class ConfigFile:
         """
         # Load existing config
         if self.config_file.exists():
-            with open(self.config_file) as f:
+            with open(self.config_file, "r") as f:
                 all_config = yaml.safe_load(f) or {}
         else:
             all_config = {}
@@ -75,9 +75,7 @@ class ConfigFile:
         with open(self.config_file, "w") as f:
             yaml.dump(all_config, f, default_flow_style=False)
 
-        console.print(
-            f"[green]Configuration saved for profile '{self.profile}'[/green]"
-        )
+        console.print(f"[green]Configuration saved for profile '{self.profile}'[/green]")
 
     def get(self, key: str, default: Any = None) -> Any:
         """
@@ -127,7 +125,7 @@ class ConfigFile:
 
         self.save(config)
 
-    def _get_defaults(self) -> dict[str, Any]:
+    def _get_defaults(self) -> Dict[str, Any]:
         """Get default configuration."""
         return {
             "api": {
@@ -158,7 +156,7 @@ class ConfigFile:
         if not self.config_file.exists():
             return ["dev"]
 
-        with open(self.config_file) as f:
+        with open(self.config_file, "r") as f:
             config = yaml.safe_load(f)
 
         return list(config.keys()) if config else ["dev"]
@@ -174,7 +172,7 @@ class ConfigFile:
             console.print("[yellow]No configuration file exists[/yellow]")
             return
 
-        with open(self.config_file) as f:
+        with open(self.config_file, "r") as f:
             config = yaml.safe_load(f)
 
         if profile in config:
@@ -209,12 +207,12 @@ class ConfigFile:
         Args:
             input_file: Input file path
         """
-        with open(input_file) as f:
+        with open(input_file, "r") as f:
             imported = yaml.safe_load(f)
 
         # Load existing config
         if self.config_file.exists():
-            with open(self.config_file) as f:
+            with open(self.config_file, "r") as f:
                 config = yaml.safe_load(f) or {}
         else:
             config = {}

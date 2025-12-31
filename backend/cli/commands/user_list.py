@@ -18,9 +18,7 @@ console = Console()
 def all(
     role: str = typer.Option(None, "--role", "-r", help="Filter by role"),
     active: bool = typer.Option(None, "--active", help="Filter by active status"),
-    format: str = typer.Option(
-        "table", "--format", "-f", help="Output format (table/json)"
-    ),
+    format: str = typer.Option("table", "--format", "-f", help="Output format (table/json)"),
     limit: int = typer.Option(100, "--limit", "-n", help="Maximum results"),
 ):
     """
@@ -112,15 +110,7 @@ async def list_all_users(
             print_table(
                 users,
                 title="Users",
-                columns=[
-                    "id",
-                    "email",
-                    "first_name",
-                    "last_name",
-                    "role",
-                    "pgy_level",
-                    "is_active",
-                ],
+                columns=["id", "email", "first_name", "last_name", "role", "pgy_level", "is_active"],
             )
 
     except Exception as e:
@@ -157,14 +147,7 @@ async def list_residents(pgy_level: str = None, format: str = "table"):
             print_table(
                 residents,
                 title="Residents",
-                columns=[
-                    "id",
-                    "first_name",
-                    "last_name",
-                    "email",
-                    "pgy_level",
-                    "is_active",
-                ],
+                columns=["id", "first_name", "last_name", "email", "pgy_level", "is_active"],
             )
 
     except Exception as e:

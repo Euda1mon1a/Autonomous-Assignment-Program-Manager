@@ -62,15 +62,8 @@ class TemporalConstraintTemplate(HardConstraint):
 
     def _get_day_name(self, date_obj: date) -> str:
         """Get day name from date."""
-        days = [
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-            "Sunday",
-        ]
+        days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday',
+                'Friday', 'Saturday', 'Sunday']
         return days[date_obj.weekday()]
 
     def _is_allowed_day(self, date_obj: date) -> bool:
@@ -154,34 +147,26 @@ class TemporalConstraintTemplate(HardConstraint):
 
             if not self._is_allowed_date(block.date):
                 violations.append(
-                    type(
-                        "ConstraintViolation",
-                        (),
-                        {
-                            "constraint_name": self.name,
-                            "constraint_type": self.constraint_type,
-                            "severity": "HIGH",
-                            "message": "Assignment outside allowed date range",
-                            "person_id": assignment.person_id,
-                            "block_id": assignment.block_id,
-                        },
-                    )()
+                    type('ConstraintViolation', (), {
+                        'constraint_name': self.name,
+                        'constraint_type': self.constraint_type,
+                        'severity': 'HIGH',
+                        'message': f'Assignment outside allowed date range',
+                        'person_id': assignment.person_id,
+                        'block_id': assignment.block_id,
+                    })()
                 )
 
             if not self._is_allowed_day(block.date):
                 violations.append(
-                    type(
-                        "ConstraintViolation",
-                        (),
-                        {
-                            "constraint_name": self.name,
-                            "constraint_type": self.constraint_type,
-                            "severity": "HIGH",
-                            "message": "Assignment on forbidden day of week",
-                            "person_id": assignment.person_id,
-                            "block_id": assignment.block_id,
-                        },
-                    )()
+                    type('ConstraintViolation', (), {
+                        'constraint_name': self.name,
+                        'constraint_type': self.constraint_type,
+                        'severity': 'HIGH',
+                        'message': f'Assignment on forbidden day of week',
+                        'person_id': assignment.person_id,
+                        'block_id': assignment.block_id,
+                    })()
                 )
 
         return ConstraintResult(

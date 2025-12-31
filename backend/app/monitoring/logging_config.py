@@ -16,7 +16,6 @@ import structlog
 # CORRELATION ID MANAGEMENT (Task 15)
 # ============================================================================
 
-
 class CorrelationIdFilter(logging.Filter):
     """Add correlation ID to all log records."""
 
@@ -62,43 +61,29 @@ class CorrelationIdFilter(logging.Filter):
 # SENSITIVE DATA REDACTION (Task 16)
 # ============================================================================
 
-
 class SensitiveDataRedactor:
     """Redact sensitive data from logs."""
 
     # Patterns for sensitive data
     PATTERNS = {
-        "email": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
-        "phone": r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b",
-        "ssn": r"\b\d{3}-\d{2}-\d{4}\b",
-        "credit_card": r"\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b",
-        "api_key": r'(?:api[_-]?key|apikey)["\']?\s*[:=]\s*["\']?([^\s"\']+)',
-        "token": r'(?:token|authorization)["\']?\s*[:=]\s*["\']?([^\s"\']+)',
-        "password": r'(?:password|passwd)["\']?\s*[:=]\s*["\']?([^\s"\']+)',
-        "secret": r'(?:secret|secret_key)["\']?\s*[:=]\s*["\']?([^\s"\']+)',
+        'email': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
+        'phone': r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b',
+        'ssn': r'\b\d{3}-\d{2}-\d{4}\b',
+        'credit_card': r'\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b',
+        'api_key': r'(?:api[_-]?key|apikey)["\']?\s*[:=]\s*["\']?([^\s"\']+)',
+        'token': r'(?:token|authorization)["\']?\s*[:=]\s*["\']?([^\s"\']+)',
+        'password': r'(?:password|passwd)["\']?\s*[:=]\s*["\']?([^\s"\']+)',
+        'secret': r'(?:secret|secret_key)["\']?\s*[:=]\s*["\']?([^\s"\']+)',
     }
 
     SENSITIVE_KEYS = {
-        "password",
-        "passwd",
-        "secret",
-        "api_key",
-        "apikey",
-        "token",
-        "authorization",
-        "auth",
-        "access_token",
-        "refresh_token",
-        "private_key",
-        "pem",
-        "certificate",
-        "ssn",
-        "email",
-        "phone",
+        'password', 'passwd', 'secret', 'api_key', 'apikey', 'token',
+        'authorization', 'auth', 'access_token', 'refresh_token',
+        'private_key', 'pem', 'certificate', 'ssn', 'email', 'phone'
     }
 
     @classmethod
-    def redact(cls, data: str, include_patterns: list | None = None) -> str:
+    def redact(cls, data: str, include_patterns: Optional[list] = None) -> str:
         """
         Redact sensitive data from string.
 
@@ -117,15 +102,15 @@ class SensitiveDataRedactor:
                 pattern = cls.PATTERNS[pattern_name]
                 redacted = re.sub(
                     pattern,
-                    f"[REDACTED_{pattern_name.upper()}]",
+                    f'[REDACTED_{pattern_name.upper()}]',
                     redacted,
-                    flags=re.IGNORECASE,
+                    flags=re.IGNORECASE
                 )
 
         return redacted
 
     @classmethod
-    def redact_dict(cls, data: dict[str, Any]) -> dict[str, Any]:
+    def redact_dict(cls, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Redact sensitive data from dictionary.
 
@@ -141,17 +126,15 @@ class SensitiveDataRedactor:
             if isinstance(key, str) and any(
                 sensitive in key.lower() for sensitive in cls.SENSITIVE_KEYS
             ):
-                redacted[key] = "[REDACTED]"
+                redacted[key] = '[REDACTED]'
             elif isinstance(value, dict):
                 redacted[key] = cls.redact_dict(value)
             elif isinstance(value, str):
                 redacted[key] = cls.redact(value)
             elif isinstance(value, list):
                 redacted[key] = [
-                    cls.redact_dict(item)
-                    if isinstance(item, dict)
-                    else cls.redact(str(item))
-                    if isinstance(item, str)
+                    cls.redact_dict(item) if isinstance(item, dict)
+                    else cls.redact(str(item)) if isinstance(item, str)
                     else item
                     for item in value
                 ]
@@ -164,7 +147,6 @@ class SensitiveDataRedactor:
 # ============================================================================
 # STRUCTURED LOGGING CONFIGURATION (Task 14)
 # ============================================================================
-
 
 class JSONFormatter(logging.Formatter):
     """Format log records as JSON with structured fields."""
@@ -180,55 +162,36 @@ class JSONFormatter(logging.Formatter):
             JSON formatted string
         """
         log_data = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "level": record.levelname,
-            "logger": record.name,
-            "message": record.getMessage(),
-            "correlation_id": getattr(record, "correlation_id", "N/A"),
+            'timestamp': datetime.utcnow().isoformat(),
+            'level': record.levelname,
+            'logger': record.name,
+            'message': record.getMessage(),
+            'correlation_id': getattr(record, 'correlation_id', 'N/A'),
         }
 
         # Add context fields
-        if hasattr(record, "context"):
+        if hasattr(record, 'context'):
             context = record.context
             if isinstance(context, dict):
                 context = SensitiveDataRedactor.redact_dict(context)
-            log_data["context"] = context
+            log_data['context'] = context
 
         # Add exception info
         if record.exc_info:
-            log_data["exception"] = {
-                "type": record.exc_info[0].__name__ if record.exc_info[0] else None,
-                "message": str(record.exc_info[1]) if record.exc_info[1] else None,
-                "traceback": self.formatException(record.exc_info),
+            log_data['exception'] = {
+                'type': record.exc_info[0].__name__ if record.exc_info[0] else None,
+                'message': str(record.exc_info[1]) if record.exc_info[1] else None,
+                'traceback': self.formatException(record.exc_info),
             }
 
         # Add extra fields
         for key, value in record.__dict__.items():
             if key not in [
-                "name",
-                "msg",
-                "args",
-                "created",
-                "filename",
-                "funcName",
-                "levelname",
-                "levelno",
-                "lineno",
-                "module",
-                "msecs",
-                "message",
-                "pathname",
-                "process",
-                "processName",
-                "relativeCreated",
-                "thread",
-                "threadName",
-                "exc_info",
-                "exc_text",
-                "stack_info",
-                "correlation_id",
-                "context",
-                "getMessage",
+                'name', 'msg', 'args', 'created', 'filename', 'funcName',
+                'levelname', 'levelno', 'lineno', 'module', 'msecs',
+                'message', 'pathname', 'process', 'processName', 'relativeCreated',
+                'thread', 'threadName', 'exc_info', 'exc_text', 'stack_info',
+                'correlation_id', 'context', 'getMessage'
             ]:
                 if isinstance(value, dict):
                     log_data[key] = SensitiveDataRedactor.redact_dict(value)
@@ -244,12 +207,11 @@ class JSONFormatter(logging.Formatter):
 # LOG ROTATION CONFIGURATION (Task 18)
 # ============================================================================
 
-
 def setup_rotating_handler(
     log_path: str,
     max_bytes: int = 10485760,  # 10MB
     backup_count: int = 5,
-    formatter: logging.Formatter | None = None,
+    formatter: Optional[logging.Formatter] = None
 ) -> logging.handlers.RotatingFileHandler:
     """
     Setup rotating file handler.
@@ -266,7 +228,9 @@ def setup_rotating_handler(
     os.makedirs(os.path.dirname(log_path), exist_ok=True)
 
     handler = logging.handlers.RotatingFileHandler(
-        log_path, maxBytes=max_bytes, backupCount=backup_count
+        log_path,
+        maxBytes=max_bytes,
+        backupCount=backup_count
     )
 
     if formatter:
@@ -277,10 +241,10 @@ def setup_rotating_handler(
 
 def setup_timed_rotating_handler(
     log_path: str,
-    when: str = "midnight",
+    when: str = 'midnight',
     interval: int = 1,
     backup_count: int = 7,
-    formatter: logging.Formatter | None = None,
+    formatter: Optional[logging.Formatter] = None
 ) -> logging.handlers.TimedRotatingFileHandler:
     """
     Setup time-based rotating file handler.
@@ -298,7 +262,10 @@ def setup_timed_rotating_handler(
     os.makedirs(os.path.dirname(log_path), exist_ok=True)
 
     handler = logging.handlers.TimedRotatingFileHandler(
-        log_path, when=when, interval=interval, backupCount=backup_count
+        log_path,
+        when=when,
+        interval=interval,
+        backupCount=backup_count
     )
 
     if formatter:
@@ -311,16 +278,15 @@ def setup_timed_rotating_handler(
 # LOG LEVEL MANAGEMENT (Task 17)
 # ============================================================================
 
-
 class LogLevelManager:
     """Manage log levels at runtime."""
 
     _levels = {
-        "DEBUG": logging.DEBUG,
-        "INFO": logging.INFO,
-        "WARNING": logging.WARNING,
-        "ERROR": logging.ERROR,
-        "CRITICAL": logging.CRITICAL,
+        'DEBUG': logging.DEBUG,
+        'INFO': logging.INFO,
+        'WARNING': logging.WARNING,
+        'ERROR': logging.ERROR,
+        'CRITICAL': logging.CRITICAL,
     }
 
     _loggers = {}
@@ -365,7 +331,7 @@ class LogLevelManager:
             for name, level in cls._levels.items():
                 if level == level_int:
                     return name
-        return "INFO"
+        return 'INFO'
 
     @classmethod
     def set_global_level(cls, level: str) -> None:
@@ -383,13 +349,12 @@ class LogLevelManager:
 # COMPREHENSIVE LOGGING SETUP (Task 13)
 # ============================================================================
 
-
 def configure_logging(
-    log_dir: str = "/var/log/residency-scheduler",
-    level: str = "INFO",
+    log_dir: str = '/var/log/residency-scheduler',
+    level: str = 'INFO',
     console: bool = True,
     file: bool = True,
-    json_format: bool = True,
+    json_format: bool = True
 ) -> None:
     """
     Configure comprehensive logging system.
@@ -407,7 +372,7 @@ def configure_logging(
     # Setup formatters
     json_formatter = JSONFormatter()
     text_formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - [%(correlation_id)s] - %(message)s"
+        '%(asctime)s - %(name)s - %(levelname)s - [%(correlation_id)s] - %(message)s'
     )
 
     # Setup root logger
@@ -428,16 +393,16 @@ def configure_logging(
     if file:
         # General application logs
         app_handler = setup_rotating_handler(
-            os.path.join(log_dir, "app.log"),
-            formatter=json_formatter if json_format else text_formatter,
+            os.path.join(log_dir, 'app.log'),
+            formatter=json_formatter if json_format else text_formatter
         )
         app_handler.addFilter(CorrelationIdFilter())
         root_logger.addHandler(app_handler)
 
         # Error logs
         error_handler = setup_rotating_handler(
-            os.path.join(log_dir, "error.log"),
-            formatter=json_formatter if json_format else text_formatter,
+            os.path.join(log_dir, 'error.log'),
+            formatter=json_formatter if json_format else text_formatter
         )
         error_handler.setLevel(logging.ERROR)
         error_handler.addFilter(CorrelationIdFilter())
@@ -447,7 +412,7 @@ def configure_logging(
     setup_category_loggers(log_dir, json_formatter)
 
     # Register loggers for management
-    LogLevelManager.register_logger("root", root_logger)
+    LogLevelManager.register_logger('root', root_logger)
 
 
 def setup_category_loggers(log_dir: str, formatter: logging.Formatter) -> None:
@@ -459,34 +424,34 @@ def setup_category_loggers(log_dir: str, formatter: logging.Formatter) -> None:
         formatter: Log formatter
     """
     categories = {
-        "audit": ("audit.log", logging.INFO),
-        "security": ("security.log", logging.WARNING),
-        "performance": ("performance.log", logging.INFO),
-        "compliance": ("compliance.log", logging.INFO),
+        'audit': ('audit.log', logging.INFO),
+        'security': ('security.log', logging.WARNING),
+        'performance': ('performance.log', logging.INFO),
+        'compliance': ('compliance.log', logging.INFO),
     }
 
     for category, (log_file, level) in categories.items():
-        logger = logging.getLogger(f"app.{category}")
+        logger = logging.getLogger(f'app.{category}')
         logger.setLevel(level)
 
         handler = setup_rotating_handler(
-            os.path.join(log_dir, log_file), formatter=formatter
+            os.path.join(log_dir, log_file),
+            formatter=formatter
         )
         handler.addFilter(CorrelationIdFilter())
         logger.addHandler(handler)
 
-        LogLevelManager.register_logger(f"app.{category}", logger)
+        LogLevelManager.register_logger(f'app.{category}', logger)
 
 
 # ============================================================================
 # AUDIT TRAIL LOGGING (Task 19)
 # ============================================================================
 
-
 class AuditLogger:
     """Log audit events for compliance."""
 
-    def __init__(self, logger_name: str = "app.audit"):
+    def __init__(self, logger_name: str = 'app.audit'):
         """Initialize audit logger."""
         self.logger = logging.getLogger(logger_name)
 
@@ -495,7 +460,7 @@ class AuditLogger:
         action: str,
         user_id: str,
         resource: str,
-        details: dict[str, Any] | None = None,
+        details: Optional[Dict[str, Any]] = None
     ) -> None:
         """
         Log user action.
@@ -507,23 +472,23 @@ class AuditLogger:
             details: Additional details
         """
         log_data = {
-            "action": action,
-            "user_id": user_id,
-            "resource": resource,
-            "timestamp": datetime.utcnow().isoformat(),
+            'action': action,
+            'user_id': user_id,
+            'resource': resource,
+            'timestamp': datetime.utcnow().isoformat(),
         }
 
         if details:
-            log_data["details"] = SensitiveDataRedactor.redact_dict(details)
+            log_data['details'] = SensitiveDataRedactor.redact_dict(details)
 
-        self.logger.info(f"AUDIT: {action}", extra={"context": log_data})
+        self.logger.info(f"AUDIT: {action}", extra={'context': log_data})
 
     def log_access(
         self,
         user_id: str,
         resource: str,
         status: str,
-        details: dict[str, Any] | None = None,
+        details: Optional[Dict[str, Any]] = None
     ) -> None:
         """
         Log resource access.
@@ -535,20 +500,24 @@ class AuditLogger:
             details: Additional details
         """
         log_data = {
-            "user_id": user_id,
-            "resource": resource,
-            "status": status,
-            "timestamp": datetime.utcnow().isoformat(),
+            'user_id': user_id,
+            'resource': resource,
+            'status': status,
+            'timestamp': datetime.utcnow().isoformat(),
         }
 
         if details:
-            log_data["details"] = SensitiveDataRedactor.redact_dict(details)
+            log_data['details'] = SensitiveDataRedactor.redact_dict(details)
 
-        level = logging.WARNING if status == "denied" else logging.INFO
-        self.logger.log(level, f"ACCESS: {status}", extra={"context": log_data})
+        level = logging.WARNING if status == 'denied' else logging.INFO
+        self.logger.log(level, f"ACCESS: {status}", extra={'context': log_data})
 
     def log_configuration_change(
-        self, user_id: str, config_key: str, old_value: Any, new_value: Any
+        self,
+        user_id: str,
+        config_key: str,
+        old_value: Any,
+        new_value: Any
     ) -> None:
         """
         Log configuration change.
@@ -560,25 +529,24 @@ class AuditLogger:
             new_value: New value
         """
         log_data = {
-            "user_id": user_id,
-            "config_key": config_key,
-            "old_value": str(SensitiveDataRedactor.redact(str(old_value))),
-            "new_value": str(SensitiveDataRedactor.redact(str(new_value))),
-            "timestamp": datetime.utcnow().isoformat(),
+            'user_id': user_id,
+            'config_key': config_key,
+            'old_value': str(SensitiveDataRedactor.redact(str(old_value))),
+            'new_value': str(SensitiveDataRedactor.redact(str(new_value))),
+            'timestamp': datetime.utcnow().isoformat(),
         }
 
-        self.logger.info("CONFIG_CHANGE", extra={"context": log_data})
+        self.logger.info("CONFIG_CHANGE", extra={'context': log_data})
 
 
 # ============================================================================
 # PERFORMANCE LOGGING (Task 20)
 # ============================================================================
 
-
 class PerformanceLogger:
     """Log performance metrics."""
 
-    def __init__(self, logger_name: str = "app.performance"):
+    def __init__(self, logger_name: str = 'app.performance'):
         """Initialize performance logger."""
         self.logger = logging.getLogger(logger_name)
 
@@ -587,7 +555,7 @@ class PerformanceLogger:
         query: str,
         duration_ms: float,
         rows_affected: int,
-        slow_threshold_ms: float = 100.0,
+        slow_threshold_ms: float = 100.0
     ) -> None:
         """
         Log database query performance.
@@ -601,13 +569,13 @@ class PerformanceLogger:
         level = logging.WARNING if duration_ms > slow_threshold_ms else logging.INFO
 
         log_data = {
-            "query": query,
-            "duration_ms": duration_ms,
-            "rows_affected": rows_affected,
-            "slow": duration_ms > slow_threshold_ms,
+            'query': query,
+            'duration_ms': duration_ms,
+            'rows_affected': rows_affected,
+            'slow': duration_ms > slow_threshold_ms,
         }
 
-        self.logger.log(level, "DB_QUERY", extra={"context": log_data})
+        self.logger.log(level, "DB_QUERY", extra={'context': log_data})
 
     def log_endpoint_performance(
         self,
@@ -615,7 +583,7 @@ class PerformanceLogger:
         method: str,
         duration_ms: float,
         status_code: int,
-        slow_threshold_ms: float = 500.0,
+        slow_threshold_ms: float = 500.0
     ) -> None:
         """
         Log API endpoint performance.
@@ -630,30 +598,33 @@ class PerformanceLogger:
         level = logging.WARNING if duration_ms > slow_threshold_ms else logging.INFO
 
         log_data = {
-            "endpoint": endpoint,
-            "method": method,
-            "duration_ms": duration_ms,
-            "status_code": status_code,
-            "slow": duration_ms > slow_threshold_ms,
+            'endpoint': endpoint,
+            'method': method,
+            'duration_ms': duration_ms,
+            'status_code': status_code,
+            'slow': duration_ms > slow_threshold_ms,
         }
 
-        self.logger.log(level, "ENDPOINT_PERFORMANCE", extra={"context": log_data})
+        self.logger.log(level, "ENDPOINT_PERFORMANCE", extra={'context': log_data})
 
 
 # ============================================================================
 # SECURITY EVENT LOGGING (Task 21)
 # ============================================================================
 
-
 class SecurityLogger:
     """Log security events."""
 
-    def __init__(self, logger_name: str = "app.security"):
+    def __init__(self, logger_name: str = 'app.security'):
         """Initialize security logger."""
         self.logger = logging.getLogger(logger_name)
 
     def log_authentication_attempt(
-        self, username: str, success: bool, ip_address: str, reason: str | None = None
+        self,
+        username: str,
+        success: bool,
+        ip_address: str,
+        reason: Optional[str] = None
     ) -> None:
         """
         Log authentication attempt.
@@ -667,17 +638,21 @@ class SecurityLogger:
         level = logging.WARNING if not success else logging.INFO
 
         log_data = {
-            "username": username,
-            "success": success,
-            "ip_address": ip_address,
-            "reason": reason,
-            "timestamp": datetime.utcnow().isoformat(),
+            'username': username,
+            'success': success,
+            'ip_address': ip_address,
+            'reason': reason,
+            'timestamp': datetime.utcnow().isoformat(),
         }
 
-        self.logger.log(level, "AUTH_ATTEMPT", extra={"context": log_data})
+        self.logger.log(level, "AUTH_ATTEMPT", extra={'context': log_data})
 
     def log_authorization_failure(
-        self, user_id: str, action: str, resource: str, reason: str
+        self,
+        user_id: str,
+        action: str,
+        resource: str,
+        reason: str
     ) -> None:
         """
         Log authorization failure.
@@ -689,20 +664,20 @@ class SecurityLogger:
             reason: Reason for failure
         """
         log_data = {
-            "user_id": user_id,
-            "action": action,
-            "resource": resource,
-            "reason": reason,
-            "timestamp": datetime.utcnow().isoformat(),
+            'user_id': user_id,
+            'action': action,
+            'resource': resource,
+            'reason': reason,
+            'timestamp': datetime.utcnow().isoformat(),
         }
 
-        self.logger.warning("AUTHZ_FAILURE", extra={"context": log_data})
+        self.logger.warning("AUTHZ_FAILURE", extra={'context': log_data})
 
     def log_suspicious_activity(
         self,
         activity_type: str,
-        user_id: str | None = None,
-        details: dict[str, Any] | None = None,
+        user_id: Optional[str] = None,
+        details: Optional[Dict[str, Any]] = None
     ) -> None:
         """
         Log suspicious activity.
@@ -713,15 +688,15 @@ class SecurityLogger:
             details: Additional details
         """
         log_data = {
-            "activity_type": activity_type,
-            "user_id": user_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            'activity_type': activity_type,
+            'user_id': user_id,
+            'timestamp': datetime.utcnow().isoformat(),
         }
 
         if details:
-            log_data["details"] = SensitiveDataRedactor.redact_dict(details)
+            log_data['details'] = SensitiveDataRedactor.redact_dict(details)
 
-        self.logger.warning("SUSPICIOUS_ACTIVITY", extra={"context": log_data})
+        self.logger.warning("SUSPICIOUS_ACTIVITY", extra={'context': log_data})
 
 
 # ============================================================================

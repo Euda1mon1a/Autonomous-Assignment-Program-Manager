@@ -91,7 +91,7 @@ class EmailLogger:
 
         # Trim if exceeds max
         if len(self._logs) > self._max_entries:
-            self._logs = self._logs[-self._max_entries :]
+            self._logs = self._logs[-self._max_entries:]
 
         logger.debug(
             "Logged email event: %s - %s (%s)",

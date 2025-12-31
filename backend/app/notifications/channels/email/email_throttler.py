@@ -90,7 +90,8 @@ class EmailThrottler:
         # Count sends in last hour
         one_hour_ago = datetime.utcnow() - timedelta(hours=1)
         recent_sends = [
-            ts for ts in self._recipient_counts[recipient] if ts >= one_hour_ago
+            ts for ts in self._recipient_counts[recipient]
+            if ts >= one_hour_ago
         ]
 
         # Update counts

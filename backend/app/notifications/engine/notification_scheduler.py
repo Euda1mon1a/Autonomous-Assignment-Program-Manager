@@ -110,4 +110,6 @@ class NotificationScheduler:
 
     def get_pending_count(self) -> int:
         """Get count of pending scheduled notifications."""
-        return sum(1 for item in self._scheduled.values() if item.status == "pending")
+        return sum(
+            1 for item in self._scheduled.values() if item.status == "pending"
+        )

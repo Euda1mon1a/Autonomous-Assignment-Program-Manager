@@ -2,7 +2,6 @@
 
 Provides a central interface for managing caching across different layers.
 """
-
 import asyncio
 import logging
 from datetime import timedelta
@@ -32,14 +31,14 @@ class CacheConfig(BaseModel):
 class CacheManager:
     """Central cache manager with Redis backend."""
 
-    def __init__(self, config: CacheConfig | None = None):
+    def __init__(self, config: Optional[CacheConfig] = None):
         """Initialize cache manager.
 
         Args:
             config: Cache configuration, defaults if None
         """
         self.config = config or CacheConfig()
-        self._redis: redis.Redis | None = None
+        self._redis: Optional[redis.Redis] = None
         self._lock = asyncio.Lock()
         self.stats = {
             "hits": 0,
@@ -75,8 +74,8 @@ class CacheManager:
     async def get(
         self,
         key: str,
-        default: T | None = None,
-    ) -> T | None:
+        default: Optional[T] = None,
+    ) -> Optional[T]:
         """Get value from cache.
 
         Args:
@@ -107,7 +106,7 @@ class CacheManager:
         self,
         key: str,
         value: Any,
-        ttl: int | None = None,
+        ttl: Optional[int] = None,
     ) -> bool:
         """Set value in cache.
 
@@ -175,7 +174,7 @@ class CacheManager:
         self,
         key: str,
         fetch_fn: Callable[[], Any],
-        ttl: int | None = None,
+        ttl: Optional[int] = None,
     ) -> Any:
         """Get from cache or fetch and cache if not found.
 
@@ -216,7 +215,9 @@ class CacheManager:
             count = 0
 
             while True:
-                cursor, keys = await self._redis.scan(cursor, match=pattern, count=100)
+                cursor, keys = await self._redis.scan(
+                    cursor, match=pattern, count=100
+                )
                 if keys:
                     deleted = await self._redis.delete(*keys)
                     count += deleted
@@ -337,7 +338,9 @@ class CacheManager:
             Dictionary with cache statistics
         """
         total = self.stats["hits"] + self.stats["misses"]
-        hit_rate = self.stats["hits"] / total * 100 if total > 0 else 0
+        hit_rate = (
+            self.stats["hits"] / total * 100 if total > 0 else 0
+        )
 
         return {
             **self.stats,
@@ -376,7 +379,7 @@ class CacheManager:
 
 
 # Global cache instance
-_cache_instance: CacheManager | None = None
+_cache_instance: Optional[CacheManager] = None
 
 
 def get_cache_manager() -> CacheManager:

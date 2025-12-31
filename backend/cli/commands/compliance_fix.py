@@ -159,7 +159,7 @@ async def auto_fix_violations(block: int, year: int, max_fixes: int):
         fixed_count = response.get("fixed_count", 0)
         skipped_count = response.get("skipped_count", 0)
 
-        console.print("\n[bold]Auto-Fix Results:[/bold]")
+        console.print(f"\n[bold]Auto-Fix Results:[/bold]")
         console.print(f"Fixed: {fixed_count}")
         console.print(f"Skipped: {skipped_count}")
 

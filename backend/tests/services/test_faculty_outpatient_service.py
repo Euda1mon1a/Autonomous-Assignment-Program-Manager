@@ -287,7 +287,9 @@ class TestFacultyOutpatientService:
         outpatient_service: FacultyOutpatientService,
     ):
         """Test exporting clinic schedule."""
-        result = outpatient_service.export_schedule(filename="clinic_schedule.csv")
+        result = outpatient_service.export_schedule(
+            filename="clinic_schedule.csv"
+        )
 
         assert isinstance(result, bool)
 

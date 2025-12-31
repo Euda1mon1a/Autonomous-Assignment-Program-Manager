@@ -123,7 +123,7 @@ async def show_alert(alert_id: str):
         console.print(f"Status: {alert.get('status')}")
 
         if alert.get("details"):
-            console.print("\nDetails:")
+            console.print(f"\nDetails:")
             console.print(f"  {alert.get('details')}")
 
         if alert.get("acknowledged_by"):

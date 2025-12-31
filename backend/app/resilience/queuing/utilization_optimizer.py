@@ -40,7 +40,7 @@ class UtilizationOptimizer:
     - Service level (want high for quality)
     """
 
-    def __init__(self, erlang_calculator: ErlangC | None = None):
+    def __init__(self, erlang_calculator: Optional[ErlangC] = None):
         """Initialize optimizer."""
         self.erlang = erlang_calculator or ErlangC()
 
@@ -71,9 +71,7 @@ class UtilizationOptimizer:
         min_servers = int(np.ceil(arrival_rate / service_rate)) + 1
 
         # Calculate servers needed for target utilization
-        servers_for_util = int(
-            np.ceil(arrival_rate / (service_rate * target_utilization))
-        )
+        servers_for_util = int(np.ceil(arrival_rate / (service_rate * target_utilization)))
 
         # Search for optimal servers meeting all constraints
         optimal_servers = None
@@ -104,12 +102,8 @@ class UtilizationOptimizer:
             optimal_servers = servers_for_util
 
         # Calculate final metrics
-        final_result = self.erlang.calculate(
-            arrival_rate, service_rate, optimal_servers
-        )
-        current_result = self.erlang.calculate(
-            arrival_rate, service_rate, current_servers
-        )
+        final_result = self.erlang.calculate(arrival_rate, service_rate, optimal_servers)
+        current_result = self.erlang.calculate(arrival_rate, service_rate, current_servers)
 
         # Calculate cost savings
         if current_servers > 0:
@@ -162,9 +156,7 @@ class UtilizationOptimizer:
 
         # Optimize for each period
         peak_opt = self.optimize_utilization(peak_rate, service_rate, current_servers)
-        offpeak_opt = self.optimize_utilization(
-            offpeak_rate, service_rate, current_servers
-        )
+        offpeak_opt = self.optimize_utilization(offpeak_rate, service_rate, current_servers)
         avg_opt = self.optimize_utilization(avg_rate, service_rate, current_servers)
 
         return {

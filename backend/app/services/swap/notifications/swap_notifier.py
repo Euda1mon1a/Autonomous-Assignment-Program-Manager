@@ -81,9 +81,7 @@ class SwapNotifier:
 
         # Send email to target faculty
         email_sent = await self._send_email(
-            recipient=target_faculty.email
-            if hasattr(target_faculty, "email")
-            else None,
+            recipient=target_faculty.email if hasattr(target_faculty, "email") else None,
             subject="New Swap Request",
             body=self.email_templates.swap_request_email(
                 source_name=source_faculty.name,
@@ -111,7 +109,10 @@ class SwapNotifier:
         else:
             failed_channels.append("in_app")
 
-        logger.info(f"Sent swap creation notifications for {swap.id}: {channels_sent}")
+        logger.info(
+            f"Sent swap creation notifications for {swap.id}: "
+            f"{channels_sent}"
+        )
 
         return NotificationResult(
             success=len(channels_sent) > 0,
@@ -273,9 +274,7 @@ class SwapNotifier:
 
         # Send notification
         email_sent = await self._send_email(
-            recipient=source_faculty.email
-            if hasattr(source_faculty, "email")
-            else None,
+            recipient=source_faculty.email if hasattr(source_faculty, "email") else None,
             subject="Compatible Swap Match Found",
             body=self.email_templates.swap_match_email(
                 faculty_name=source_faculty.name,
@@ -299,7 +298,9 @@ class SwapNotifier:
 
     async def _get_faculty(self, faculty_id: UUID) -> Person | None:
         """Get faculty member by ID."""
-        result = await self.db.execute(select(Person).where(Person.id == faculty_id))
+        result = await self.db.execute(
+            select(Person).where(Person.id == faculty_id)
+        )
         return result.scalar_one_or_none()
 
     async def _send_email(

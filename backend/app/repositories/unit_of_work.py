@@ -42,7 +42,7 @@ class UnitOfWork:
         """
         self._repositories[name] = repository
 
-    def get_repository(self, name: str) -> AsyncBaseRepository | None:
+    def get_repository(self, name: str) -> Optional[AsyncBaseRepository]:
         """
         Get registered repository by name.
 

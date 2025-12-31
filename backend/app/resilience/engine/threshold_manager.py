@@ -19,12 +19,12 @@ class Threshold:
     """Dynamic threshold definition."""
 
     name: str
-    lower_bound: float | None  # None = no lower limit
-    upper_bound: float | None  # None = no upper limit
-    warning_lower: float | None  # Warning zone
-    warning_upper: float | None  # Warning zone
-    critical_lower: float | None  # Critical zone
-    critical_upper: float | None  # Critical zone
+    lower_bound: Optional[float]  # None = no lower limit
+    upper_bound: Optional[float]  # None = no upper limit
+    warning_lower: Optional[float]  # Warning zone
+    warning_upper: Optional[float]  # Warning zone
+    critical_lower: Optional[float]  # Critical zone
+    critical_upper: Optional[float]  # Critical zone
     last_updated: datetime
     sample_count: int  # Number of samples used to calculate
     is_adaptive: bool  # Whether threshold adapts over time
@@ -64,12 +64,12 @@ class ThresholdManager:
     def create_static_threshold(
         self,
         name: str,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
-        warning_lower: float | None = None,
-        warning_upper: float | None = None,
-        critical_lower: float | None = None,
-        critical_upper: float | None = None,
+        lower_bound: Optional[float] = None,
+        upper_bound: Optional[float] = None,
+        warning_lower: Optional[float] = None,
+        warning_upper: Optional[float] = None,
+        critical_lower: Optional[float] = None,
+        critical_upper: Optional[float] = None,
     ) -> Threshold:
         """
         Create a static threshold (does not adapt).
@@ -210,7 +210,7 @@ class ThresholdManager:
 
         return threshold
 
-    def check_threshold(self, name: str, value: float) -> ThresholdViolation | None:
+    def check_threshold(self, name: str, value: float) -> Optional[ThresholdViolation]:
         """
         Check if value violates threshold.
 
@@ -291,7 +291,7 @@ class ThresholdManager:
 
         return None
 
-    def get_threshold(self, name: str) -> Threshold | None:
+    def get_threshold(self, name: str) -> Optional[Threshold]:
         """Get threshold by name."""
         return self.thresholds.get(name)
 

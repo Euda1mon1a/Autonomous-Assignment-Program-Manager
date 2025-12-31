@@ -17,7 +17,7 @@ class ComparisonData:
         self.db = db
         self.comparator = PeriodComparison(db)
 
-    async def get_week_over_week(self) -> dict[str, Any]:
+    async def get_week_over_week(self) -> Dict[str, Any]:
         """Get week-over-week comparison."""
         today = date.today()
         this_week_start = today - timedelta(days=today.weekday())
@@ -27,10 +27,8 @@ class ComparisonData:
         last_week_end = last_week_start + timedelta(days=6)
 
         comparison = await self.comparator.compare(
-            last_week_start,
-            last_week_end,
-            this_week_start,
-            this_week_end,
+            last_week_start, last_week_end,
+            this_week_start, this_week_end,
         )
 
         return {
@@ -38,7 +36,7 @@ class ComparisonData:
             "comparison": comparison,
         }
 
-    async def get_month_over_month(self) -> dict[str, Any]:
+    async def get_month_over_month(self) -> Dict[str, Any]:
         """Get month-over-month comparison."""
         today = date.today()
         this_month_start = date(today.year, today.month, 1)
@@ -52,21 +50,17 @@ class ComparisonData:
             last_month_year = today.year
 
         import calendar
-
         last_month_start = date(last_month_year, last_month, 1)
         last_month_end = date(
-            last_month_year,
-            last_month,
-            calendar.monthrange(last_month_year, last_month)[1],
+            last_month_year, last_month,
+            calendar.monthrange(last_month_year, last_month)[1]
         )
 
         this_month_end = today
 
         comparison = await self.comparator.compare(
-            last_month_start,
-            last_month_end,
-            this_month_start,
-            this_month_end,
+            last_month_start, last_month_end,
+            this_month_start, this_month_end,
         )
 
         return {

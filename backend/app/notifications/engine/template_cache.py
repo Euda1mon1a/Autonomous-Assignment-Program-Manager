@@ -53,10 +53,7 @@ class TemplateCache:
         return None
 
     def set(
-        self,
-        notification_type: NotificationType,
-        data: dict[str, Any],
-        rendered: dict[str, str],
+        self, notification_type: NotificationType, data: dict[str, Any], rendered: dict[str, str]
     ) -> None:
         """
         Cache rendered template.
@@ -75,9 +72,7 @@ class TemplateCache:
 
         self._cache[cache_key] = rendered
 
-    def _make_key(
-        self, notification_type: NotificationType, data: dict[str, Any]
-    ) -> str:
+    def _make_key(self, notification_type: NotificationType, data: dict[str, Any]) -> str:
         """Generate cache key."""
         # Simple key: type + sorted data keys
         data_keys = tuple(sorted(data.keys()))
@@ -88,8 +83,7 @@ class TemplateCache:
         if notification_type:
             # Invalidate specific type
             keys_to_remove = [
-                k
-                for k in self._cache.keys()
+                k for k in self._cache.keys()
                 if k.startswith(f"{notification_type.value}:")
             ]
             for key in keys_to_remove:

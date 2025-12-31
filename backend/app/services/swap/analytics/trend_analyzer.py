@@ -81,7 +81,9 @@ class SwapTrendAnalyzer:
 
         # Get all swaps in period
         result = await self.db.execute(
-            select(SwapRecord).where(SwapRecord.requested_at >= start_date)
+            select(SwapRecord).where(
+                SwapRecord.requested_at >= start_date
+            )
         )
 
         swaps = list(result.scalars().all())
@@ -97,11 +99,7 @@ class SwapTrendAnalyzer:
 
         # Analyze success rates
         success_by_week = self._calculate_success_by_week(swaps)
-        avg_success = (
-            sum(success_by_week.values()) / len(success_by_week)
-            if success_by_week
-            else 0.0
-        )
+        avg_success = sum(success_by_week.values()) / len(success_by_week) if success_by_week else 0.0
 
         # Generate recommendations
         recommendations = self._generate_recommendations(
@@ -168,16 +166,14 @@ class SwapTrendAnalyzer:
         for i in range(1, weeks_ahead + 1):
             week_start = datetime.utcnow().date() + timedelta(weeks=i)
 
-            predictions.append(
-                {
-                    "week_starting": week_start.isoformat(),
-                    "predicted_requests": int(avg_requests),
-                    "confidence_interval": [
-                        int(avg_requests * 0.7),
-                        int(avg_requests * 1.3),
-                    ],
-                }
-            )
+            predictions.append({
+                "week_starting": week_start.isoformat(),
+                "predicted_requests": int(avg_requests),
+                "confidence_interval": [
+                    int(avg_requests * 0.7),
+                    int(avg_requests * 1.3),
+                ],
+            })
 
         return {
             "predictions": predictions,
@@ -208,15 +204,13 @@ class SwapTrendAnalyzer:
         old_pending = list(result.scalars().all())
 
         if len(old_pending) > 5:
-            bottlenecks.append(
-                {
-                    "type": "slow_processing",
-                    "severity": "high",
-                    "count": len(old_pending),
-                    "description": f"{len(old_pending)} requests pending over 7 days",
-                    "recommendation": "Review approval workflow, consider auto-matching",
-                }
-            )
+            bottlenecks.append({
+                "type": "slow_processing",
+                "severity": "high",
+                "count": len(old_pending),
+                "description": f"{len(old_pending)} requests pending over 7 days",
+                "recommendation": "Review approval workflow, consider auto-matching",
+            })
 
         # Check for low match rates
         # (Would analyze match success)
@@ -257,11 +251,13 @@ class SwapTrendAnalyzer:
         # Compare first half to second half
         midpoint = len(weeks) // 2
 
-        first_half = sum(requests_by_week[w] for w in weeks[:midpoint]) / midpoint
+        first_half = sum(
+            requests_by_week[w] for w in weeks[:midpoint]
+        ) / midpoint
 
-        second_half = sum(requests_by_week[w] for w in weeks[midpoint:]) / (
-            len(weeks) - midpoint
-        )
+        second_half = sum(
+            requests_by_week[w] for w in weeks[midpoint:]
+        ) / (len(weeks) - midpoint)
 
         if first_half == 0:
             change_pct = 100.0 if second_half > 0 else 0.0
@@ -293,13 +289,8 @@ class SwapTrendAnalyzer:
         )[:3]
 
         day_names = [
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-            "Sunday",
+            "Monday", "Tuesday", "Wednesday", "Thursday",
+            "Friday", "Saturday", "Sunday",
         ]
 
         return [day_names[day] for day, _ in top_days]
@@ -319,18 +310,8 @@ class SwapTrendAnalyzer:
         )[:3]
 
         month_names = [
-            "January",
-            "February",
-            "March",
-            "April",
-            "May",
-            "June",
-            "July",
-            "August",
-            "September",
-            "October",
-            "November",
-            "December",
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December",
         ]
 
         return [month_names[month - 1] for month, _ in top_months]

@@ -37,7 +37,7 @@ Dear {target_name},
 {source_name} has requested a swap with you.
 
 Details:
-- {source_name} offers: Week of {source_week.strftime("%B %d, %Y")}
+- {source_name} offers: Week of {source_week.strftime('%B %d, %Y')}
 """
 
         if target_week:
@@ -77,9 +77,7 @@ Residency Scheduling System
         Returns:
             Formatted email body
         """
-        exec_time = (
-            executed_at.strftime("%B %d, %Y at %I:%M %p") if executed_at else "recently"
-        )
+        exec_time = executed_at.strftime('%B %d, %Y at %I:%M %p') if executed_at else "recently"
 
         email = f"""
 Dear {faculty_name},
@@ -87,7 +85,7 @@ Dear {faculty_name},
 Your swap has been executed ({exec_time}).
 
 Your schedule has been updated:
-- You gave: Week of {source_week.strftime("%B %d, %Y")}
+- You gave: Week of {source_week.strftime('%B %d, %Y')}
 """
 
         if target_week:
@@ -128,7 +126,7 @@ Dear {faculty_name},
 
 A swap involving your schedule has been rolled back.
 
-Week affected: {source_week.strftime("%B %d, %Y")}
+Week affected: {source_week.strftime('%B %d, %Y')}
 """
 
         if reason:
@@ -174,7 +172,7 @@ We found a compatible swap match for your request!
 
 Match details:
 - Faculty: {match_name}
-- Week: {match_week.strftime("%B %d, %Y")}
+- Week: {match_week.strftime('%B %d, %Y')}
 - Compatibility: {score_pct}% match
 
 This appears to be a good match based on your preferences and schedules.
@@ -246,7 +244,7 @@ Residency Scheduling System
         email = f"""
 Dear {faculty_name},
 
-Your swap request for the week of {week.strftime("%B %d, %Y")} has
+Your swap request for the week of {week.strftime('%B %d, %Y')} has
 expired because the week has passed.
 
 If you still need schedule changes, please create a new swap request

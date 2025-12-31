@@ -2,7 +2,6 @@
 
 Provides advanced connection pool management with monitoring and automatic tuning.
 """
-
 import asyncio
 import logging
 import time
@@ -190,7 +189,9 @@ class OptimizedConnectionPool:
             warnings.append(f"Using overflow connections ({metrics.overflow_count})")
 
         if metrics.avg_checkout_time > 1.0:
-            warnings.append(f"High avg checkout time ({metrics.avg_checkout_time}s)")
+            warnings.append(
+                f"High avg checkout time ({metrics.avg_checkout_time}s)"
+            )
 
         return {
             "healthy": is_healthy,
@@ -219,7 +220,7 @@ class OptimizedConnectionPool:
 
 
 # Global pool instance
-_pool_instance: OptimizedConnectionPool | None = None
+_pool_instance: Optional[OptimizedConnectionPool] = None
 
 
 def get_connection_pool() -> OptimizedConnectionPool:

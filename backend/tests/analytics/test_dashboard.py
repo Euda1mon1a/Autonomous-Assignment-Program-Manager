@@ -20,12 +20,10 @@ class TestDashboardData:
         dashboard = DashboardData(async_db_session)
 
         # Mock dependencies
-        dashboard.analytics_engine.get_dashboard_summary = AsyncMock(
-            return_value={
-                "kpis": {},
-                "trends": {},
-            }
-        )
+        dashboard.analytics_engine.get_dashboard_summary = AsyncMock(return_value={
+            "kpis": {},
+            "trends": {},
+        })
         dashboard.kpi_calculator.calculate_kpis = AsyncMock(return_value={})
         dashboard.realtime_stats.get_stats = AsyncMock(return_value={})
 
@@ -103,13 +101,11 @@ class TestComparisonData:
         comparison = ComparisonData(async_db_session)
 
         # Mock comparator
-        comparison.comparator.compare = AsyncMock(
-            return_value={
-                "period1": {},
-                "period2": {},
-                "comparison": {},
-            }
-        )
+        comparison.comparator.compare = AsyncMock(return_value={
+            "period1": {},
+            "period2": {},
+            "comparison": {},
+        })
 
         data = await comparison.get_week_over_week()
 

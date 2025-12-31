@@ -115,17 +115,13 @@ async def list_tables():
                 )
                 row_count = count_result.scalar()
 
-                tables_data.append(
-                    {
-                        "table": table,
-                        "rows": row_count,
-                        "size": size,
-                    }
-                )
+                tables_data.append({
+                    "table": table,
+                    "rows": row_count,
+                    "size": size,
+                })
 
-            print_table(
-                tables_data, title="Database Tables", columns=["table", "rows", "size"]
-            )
+            print_table(tables_data, title="Database Tables", columns=["table", "rows", "size"])
 
     except Exception as e:
         print_error(f"Failed to list tables: {str(e)}")
@@ -160,18 +156,14 @@ async def show_connections():
             for row in result:
                 pid, user, app, addr, state, query_start, state_change = row
 
-                connections_data.append(
-                    {
-                        "pid": pid,
-                        "user": user,
-                        "application": app or "-",
-                        "address": str(addr) if addr else "local",
-                        "state": state,
-                        "since": query_start.strftime("%H:%M:%S")
-                        if query_start
-                        else "-",
-                    }
-                )
+                connections_data.append({
+                    "pid": pid,
+                    "user": user,
+                    "application": app or "-",
+                    "address": str(addr) if addr else "local",
+                    "state": state,
+                    "since": query_start.strftime("%H:%M:%S") if query_start else "-",
+                })
 
             print_table(
                 connections_data,
