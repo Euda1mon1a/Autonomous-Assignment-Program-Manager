@@ -11,12 +11,15 @@ primary case at time t.
 Uses Cori method (EpiEstim package) for real-time Rt estimation.
 """
 
+import logging
 from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Optional
 
 import numpy as np
 from scipy.stats import gamma
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -69,7 +72,9 @@ class RtCalculator:
         Returns:
             List of RtEstimate objects, one per day
         """
+        logger.info("Calculating Rt for %d days of incidence data (window=%d)", len(incidence), window_size)
         if len(incidence) < window_size:
+            logger.warning("Insufficient data for Rt calculation: need >= %d days", window_size)
             return []
 
         estimates = []
@@ -90,6 +95,7 @@ class RtCalculator:
                 interpretation = "declining"
             elif rt_mean > 1.1:
                 interpretation = "growing"
+                logger.warning("Rt > 1.1 detected: burnout is spreading (Rt=%.2f)", rt_mean)
             else:
                 interpretation = "stable"
 

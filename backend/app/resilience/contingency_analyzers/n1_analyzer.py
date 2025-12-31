@@ -21,6 +21,30 @@ import networkx as nx
 
 logger = logging.getLogger(__name__)
 
+# N-1 Criticality Thresholds
+CRITICALITY_LOW_WITH_BACKUP = 0.5
+CRITICALITY_HIGH_NO_BACKUP = 0.5
+CRITICALITY_SPOF_THRESHOLD = 0.7
+CRITICALITY_SPECIALTY_SINGLE = 0.9
+CRITICALITY_SPECIALTY_DUAL = 0.6
+CRITICALITY_SPECIALTY_MULTIPLE = 0.3
+
+# Recovery Time Constants (hours)
+RECOVERY_TIME_WITH_BACKUP = 2.0
+RECOVERY_TIME_PER_SLOT_NO_BACKUP = 4.0
+RECOVERY_TIME_SPECIALTY_WITH_BACKUP_MULTIPLIER = 2.0
+RECOVERY_TIME_SPECIALTY_NO_BACKUP_MULTIPLIER = 8.0
+
+# Cascade Thresholds
+CASCADE_POTENTIAL_WITH_BACKUP = 0.0
+CASCADE_SPECIALTY_SINGLE = 0.7
+CASCADE_SPECIALTY_DUAL = 0.4
+CASCADE_SPECIALTY_MULTIPLE = 0.1
+
+# Assignment Thresholds
+ASSIGNMENTS_PER_CRITICALITY_UNIT = 20.0
+ASSIGNMENTS_PER_BACKUP = 10
+
 
 @dataclass
 class N1FailureScenario:
@@ -92,21 +116,21 @@ class N1Analyzer:
             criticality = 0.0
         elif has_backup:
             # Low criticality if backups available
-            criticality = min(0.5, num_affected / 20.0)
+            criticality = min(CRITICALITY_LOW_WITH_BACKUP, num_affected / ASSIGNMENTS_PER_CRITICALITY_UNIT)
         else:
             # High criticality if no backups
-            criticality = min(1.0, 0.5 + num_affected / 10.0)
+            criticality = min(1.0, CRITICALITY_HIGH_NO_BACKUP + num_affected / ASSIGNMENTS_PER_BACKUP)
 
         logger.debug("Criticality score: %.2f, backup available: %s", criticality, has_backup)
 
         # Estimate recovery time
         if has_backup:
-            recovery_hours = 2.0  # Quick swap
+            recovery_hours = RECOVERY_TIME_WITH_BACKUP  # Quick swap
         else:
-            recovery_hours = num_affected * 4.0  # Need to find coverage
+            recovery_hours = num_affected * RECOVERY_TIME_PER_SLOT_NO_BACKUP  # Need to find coverage
 
         # Cascade potential - higher if no backups
-        cascade_potential = 0.0 if has_backup else min(0.8, num_affected / 15.0)
+        cascade_potential = CASCADE_POTENTIAL_WITH_BACKUP if has_backup else min(0.8, num_affected / 15.0)
 
         # Determine mitigation strategy
         if has_backup:

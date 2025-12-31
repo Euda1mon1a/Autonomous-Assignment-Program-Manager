@@ -401,28 +401,41 @@ class QUBOTemplateFormulation:
         Objective: Satisfy resident preferences.
 
         Add linear bonus for assignments matching stated preferences.
+        Integrates with context.preferences when available.
         """
         matrix = self.objective_matrices["preference"]
         valid_templates = [
             t for t in self.context.templates if not t.requires_procedure_credential
         ]
 
-        # TODO: Integrate with actual preference data from context
-        # For now, use desirability as proxy
+        # Check if context has explicit preference data
+        has_preferences = hasattr(self.context, "preferences") and self.context.preferences
+
         for (r_i, p_i, t_i), idx in self.var_index.items():
             template = valid_templates[t_i] if t_i < len(valid_templates) else None
-            if template:
-                desirability = self.desirability_map.get(
-                    template.name, TemplateDesirability.NEUTRAL
-                )
+            resident = self.context.residents[r_i] if r_i < len(self.context.residents) else None
 
-                # Bonus for desirable templates
-                if desirability == TemplateDesirability.HIGHLY_DESIRABLE:
+            if template and resident:
+                # Use explicit preferences if available
+                if has_preferences and resident.id in self.context.preferences:
+                    resident_prefs = self.context.preferences[resident.id]
+                    template_pref = resident_prefs.get(template.id, 0.0)
+                    # Apply preference weight (positive = preferred)
                     key = (idx, idx)
-                    matrix[key] = matrix.get(key, 0.0) - 0.5
-                elif desirability == TemplateDesirability.UNDESIRABLE:
-                    key = (idx, idx)
-                    matrix[key] = matrix.get(key, 0.0) + 0.2
+                    matrix[key] = matrix.get(key, 0.0) - template_pref
+                else:
+                    # Fall back to desirability as proxy
+                    desirability = self.desirability_map.get(
+                        template.name, TemplateDesirability.NEUTRAL
+                    )
+
+                    # Bonus for desirable templates
+                    if desirability == TemplateDesirability.HIGHLY_DESIRABLE:
+                        key = (idx, idx)
+                        matrix[key] = matrix.get(key, 0.0) - 0.5
+                    elif desirability == TemplateDesirability.UNDESIRABLE:
+                        key = (idx, idx)
+                        matrix[key] = matrix.get(key, 0.0) + 0.2
 
     def _add_learning_goal_objective(self):
         """
