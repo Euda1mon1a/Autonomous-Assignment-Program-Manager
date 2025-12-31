@@ -1,0 +1,273 @@
+{
+  "version": "1.0",
+  "created_at": "2025-01-01T00:00:00Z",
+  "description": "Baseline performance metrics for Residency Scheduler",
+  "system_info": {
+    "cpu_cores": 4,
+    "memory_gb": 16,
+    "postgres_version": "15",
+    "python_version": "3.11"
+  },
+  "benchmarks": {
+    "schedule_generation": {
+      "small_program": {
+        "residents": 10,
+        "weeks": 2,
+        "avg_duration_seconds": 2.5,
+        "p95_duration_seconds": 3.0,
+        "throughput_residents_per_sec": 4.0,
+        "memory_mb": 150
+      },
+      "medium_program": {
+        "residents": 25,
+        "weeks": 4,
+        "avg_duration_seconds": 8.0,
+        "p95_duration_seconds": 10.0,
+        "throughput_residents_per_sec": 3.1,
+        "memory_mb": 250
+      },
+      "large_program": {
+        "residents": 50,
+        "weeks": 4,
+        "avg_duration_seconds": 18.0,
+        "p95_duration_seconds": 22.0,
+        "throughput_residents_per_sec": 2.8,
+        "memory_mb": 400
+      },
+      "xlarge_program": {
+        "residents": 100,
+        "weeks": 4,
+        "avg_duration_seconds": 40.0,
+        "p95_duration_seconds": 48.0,
+        "throughput_residents_per_sec": 2.5,
+        "memory_mb": 650
+      }
+    },
+    "acgme_validation": {
+      "small_validation": {
+        "residents": 25,
+        "weeks": 4,
+        "avg_duration_seconds": 0.8,
+        "p95_duration_seconds": 1.0,
+        "throughput_residents_per_sec": 31.3,
+        "memory_mb": 80
+      },
+      "medium_validation": {
+        "residents": 50,
+        "weeks": 4,
+        "avg_duration_seconds": 1.5,
+        "p95_duration_seconds": 1.8,
+        "throughput_residents_per_sec": 33.3,
+        "memory_mb": 120
+      },
+      "large_validation": {
+        "residents": 100,
+        "weeks": 4,
+        "avg_duration_seconds": 4.0,
+        "p95_duration_seconds": 4.8,
+        "throughput_residents_per_sec": 25.0,
+        "memory_mb": 200
+      },
+      "extended_validation": {
+        "residents": 100,
+        "weeks": 12,
+        "avg_duration_seconds": 12.0,
+        "p95_duration_seconds": 14.5,
+        "throughput_residents_per_sec": 8.3,
+        "memory_mb": 350
+      }
+    },
+    "database_queries": {
+      "simple_queries": {
+        "avg_duration_ms": 5.0,
+        "p95_duration_ms": 8.0,
+        "throughput_ops_per_sec": 200
+      },
+      "join_queries": {
+        "avg_duration_ms": 25.0,
+        "p95_duration_ms": 40.0,
+        "throughput_ops_per_sec": 40
+      },
+      "bulk_insert_50": {
+        "batch_size": 50,
+        "avg_duration_ms": 80.0,
+        "p95_duration_ms": 120.0,
+        "throughput_ops_per_sec": 625
+      },
+      "bulk_insert_500": {
+        "batch_size": 500,
+        "avg_duration_ms": 450.0,
+        "p95_duration_ms": 600.0,
+        "throughput_ops_per_sec": 1111
+      }
+    },
+    "resilience_calculations": {
+      "n1_contingency_small": {
+        "people": 25,
+        "weeks": 4,
+        "avg_duration_seconds": 2.0,
+        "p95_duration_seconds": 2.5,
+        "memory_mb": 100
+      },
+      "n1_contingency_large": {
+        "people": 100,
+        "weeks": 4,
+        "avg_duration_seconds": 8.0,
+        "p95_duration_seconds": 10.0,
+        "memory_mb": 250
+      },
+      "burnout_epidemiology": {
+        "residents": 50,
+        "weeks": 12,
+        "avg_duration_seconds": 3.5,
+        "p95_duration_seconds": 4.5,
+        "memory_mb": 150
+      },
+      "spc_monitoring": {
+        "weeks": 12,
+        "avg_duration_seconds": 2.0,
+        "p95_duration_seconds": 2.5,
+        "memory_mb": 80
+      }
+    },
+    "swap_matching": {
+      "small_faculty_pool": {
+        "faculty": 10,
+        "weeks": 4,
+        "avg_duration_seconds": 0.3,
+        "p95_duration_seconds": 0.4,
+        "avg_matches_found": 3.5
+      },
+      "medium_faculty_pool": {
+        "faculty": 30,
+        "weeks": 4,
+        "avg_duration_seconds": 0.8,
+        "p95_duration_seconds": 1.0,
+        "avg_matches_found": 8.2
+      },
+      "large_faculty_pool": {
+        "faculty": 100,
+        "weeks": 4,
+        "avg_duration_seconds": 2.5,
+        "p95_duration_seconds": 3.2,
+        "avg_matches_found": 15.3
+      }
+    },
+    "concurrent_operations": {
+      "concurrent_reads_low": {
+        "workers": 10,
+        "duration_seconds": 10,
+        "avg_duration_ms": 15,
+        "throughput_ops_per_sec": 60,
+        "success_rate": 99.5
+      },
+      "concurrent_reads_high": {
+        "workers": 50,
+        "duration_seconds": 10,
+        "avg_duration_ms": 35,
+        "throughput_ops_per_sec": 250,
+        "success_rate": 98.0
+      },
+      "concurrent_writes": {
+        "workers": 20,
+        "duration_seconds": 10,
+        "avg_duration_ms": 50,
+        "throughput_ops_per_sec": 35,
+        "success_rate": 97.5
+      }
+    },
+    "memory_usage": {
+      "schedule_generation_memory": {
+        "iterations": 10,
+        "baseline_mb": 200,
+        "peak_mb": 420,
+        "growth_mb": 15,
+        "leak_detected": false
+      },
+      "validation_memory": {
+        "iterations": 20,
+        "baseline_mb": 180,
+        "peak_mb": 280,
+        "growth_mb": 8,
+        "leak_detected": false
+      }
+    },
+    "startup_time": {
+      "config_loading": {
+        "avg_duration_ms": 25,
+        "p95_duration_ms": 40
+      },
+      "module_import": {
+        "total_modules": 10,
+        "total_duration_ms": 3500,
+        "slowest_module": "app.scheduling.engine",
+        "slowest_duration_ms": 800
+      },
+      "database_connection": {
+        "avg_duration_ms": 250,
+        "p95_duration_ms": 400
+      },
+      "app_initialization": {
+        "avg_duration_seconds": 7.5,
+        "cold_start_seconds": 9.0,
+        "warm_start_seconds": 6.5
+      }
+    }
+  },
+  "api_endpoints": {
+    "schedule_view": {
+      "avg_duration_ms": 180,
+      "p95_duration_ms": 300,
+      "p99_duration_ms": 500
+    },
+    "schedule_generate": {
+      "avg_duration_ms": 12000,
+      "p95_duration_ms": 18000,
+      "p99_duration_ms": 25000
+    },
+    "acgme_validate": {
+      "avg_duration_ms": 2500,
+      "p95_duration_ms": 4000,
+      "p99_duration_ms": 6000
+    },
+    "swap_request": {
+      "avg_duration_ms": 120,
+      "p95_duration_ms": 200,
+      "p99_duration_ms": 350
+    },
+    "resilience_dashboard": {
+      "avg_duration_ms": 800,
+      "p95_duration_ms": 1200,
+      "p99_duration_ms": 1800
+    }
+  },
+  "load_test_targets": {
+    "concurrent_users": {
+      "normal_load": 50,
+      "peak_load": 150,
+      "maximum_load": 200
+    },
+    "response_time_thresholds": {
+      "normal_load_p95_ms": 2000,
+      "peak_load_p95_ms": 5000,
+      "maximum_load_p95_ms": 10000
+    },
+    "error_rate_thresholds": {
+      "normal_load": 0.02,
+      "peak_load": 0.10,
+      "maximum_load": 0.20
+    },
+    "throughput_targets": {
+      "requests_per_second": 100,
+      "schedule_generations_per_hour": 20
+    }
+  },
+  "notes": {
+    "measurement_conditions": "Baseline measured on development environment with dedicated resources",
+    "database_state": "Empty database with minimal test data",
+    "network": "Local network, minimal latency",
+    "concurrency": "Single-threaded execution unless specified",
+    "last_updated": "2025-01-01",
+    "update_frequency": "Update baselines after major optimizations or infrastructure changes"
+  }
+}

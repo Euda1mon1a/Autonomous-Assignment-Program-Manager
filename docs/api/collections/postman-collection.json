@@ -1,0 +1,913 @@
+{
+  "info": {
+    "name": "Residency Scheduler API",
+    "description": "Complete API collection for Residency Scheduler - Medical residency program schedule management with ACGME compliance",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "residency-scheduler-api-v1",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "person_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "assignment_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "swap_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains tokens\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('access_token');",
+                  "    pm.expect(jsonData).to.have.property('refresh_token');",
+                  "    ",
+                  "    // Save tokens to collection variables",
+                  "    pm.collectionVariables.set('access_token', jsonData.access_token);",
+                  "    pm.collectionVariables.set('refresh_token', jsonData.refresh_token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user@example.com\",\n  \"password\": \"your_password\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login/json",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login", "json"]
+            }
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"newuser\",\n  \"email\": \"newuser@example.com\",\n  \"password\": \"SecureP@ssw0rd123\",\n  \"role\": \"coordinator\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', jsonData.access_token);",
+                  "pm.collectionVariables.set('refresh_token', jsonData.refresh_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Schedule",
+      "item": [
+        {
+          "name": "Generate Schedule",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 207\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 207]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains run_id\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('run_id');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"start_date\": \"2024-07-01\",\n  \"end_date\": \"2024-07-31\",\n  \"algorithm\": \"hybrid\",\n  \"timeout_seconds\": 120\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/schedule/generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "schedule", "generate"]
+            }
+          }
+        },
+        {
+          "name": "Validate Schedule",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/schedule/validate?start_date=2024-07-01&end_date=2024-07-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "schedule", "validate"],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2024-07-01"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2024-07-31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Schedule",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/schedule/2024-07-01/2024-07-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "schedule", "2024-07-01", "2024-07-31"]
+            }
+          }
+        },
+        {
+          "name": "Emergency Coverage",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"person_id\": \"{{person_id}}\",\n  \"start_date\": \"2024-07-15\",\n  \"end_date\": \"2024-07-22\",\n  \"reason\": \"Military deployment\",\n  \"is_deployment\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/schedule/emergency-coverage",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "schedule", "emergency-coverage"]
+            }
+          }
+        },
+        {
+          "name": "Generate Faculty Outpatient",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/schedule/faculty-outpatient/generate?block_number=10&regenerate=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "schedule", "faculty-outpatient", "generate"],
+              "query": [
+                {
+                  "key": "block_number",
+                  "value": "10"
+                },
+                {
+                  "key": "regenerate",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assignments",
+      "item": [
+        {
+          "name": "List Assignments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assignments?page=1&page_size=100",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "assignments"],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2024-07-01",
+                  "disabled": true
+                },
+                {
+                  "key": "end_date",
+                  "value": "2024-07-31",
+                  "disabled": true
+                },
+                {
+                  "key": "person_id",
+                  "value": "{{person_id}}",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "100"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Assignment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assignments/{{assignment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "assignments", "{{assignment_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Assignment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('assignment_id', jsonData.assignment.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"block_id\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"person_id\": \"{{person_id}}\",\n  \"rotation_template_id\": \"550e8400-e29b-41d4-a716-446655440003\",\n  \"role\": \"resident\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/assignments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "assignments"]
+            }
+          }
+        },
+        {
+          "name": "Update Assignment",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"person_id\": \"{{person_id}}\",\n  \"version\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/assignments/{{assignment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "assignments", "{{assignment_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Assignment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assignments/{{assignment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "assignments", "{{assignment_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Bulk Delete Assignments",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assignments?start_date=2024-07-01&end_date=2024-07-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "assignments"],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2024-07-01"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2024-07-31"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Persons",
+      "item": [
+        {
+          "name": "List People",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/people",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "people"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "resident",
+                  "disabled": true
+                },
+                {
+                  "key": "pgy_level",
+                  "value": "1",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Residents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/people/residents?pgy_level=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "people", "residents"],
+              "query": [
+                {
+                  "key": "pgy_level",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Faculty",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/people/faculty",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "people", "faculty"]
+            }
+          }
+        },
+        {
+          "name": "Get Person",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/people/{{person_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "people", "{{person_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Resident",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('person_id', jsonData.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"PGY1-04\",\n  \"type\": \"resident\",\n  \"pgy_level\": 1,\n  \"email\": \"pgy1-04@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/people",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "people"]
+            }
+          }
+        },
+        {
+          "name": "Create Faculty",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"FAC-CORE-02\",\n  \"type\": \"faculty\",\n  \"email\": \"core-02@example.com\",\n  \"specialty\": \"Sports Medicine\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/people",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "people"]
+            }
+          }
+        },
+        {
+          "name": "Update Person",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pgy_level\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/people/{{person_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "people", "{{person_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Person",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/people/{{person_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "people", "{{person_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Person Credentials",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/people/{{person_id}}/credentials",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "people", "{{person_id}}", "credentials"]
+            }
+          }
+        },
+        {
+          "name": "Get Credential Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/people/{{person_id}}/credentials/summary",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "people", "{{person_id}}", "credentials", "summary"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Swaps",
+      "item": [
+        {
+          "name": "Execute Swap",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.swap_id) {",
+                  "        pm.collectionVariables.set('swap_id', jsonData.swap_id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source_faculty_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"source_week\": \"2024-07-08\",\n  \"target_faculty_id\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"target_week\": \"2024-07-15\",\n  \"swap_type\": \"one_to_one\",\n  \"reason\": \"Family commitment\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/swaps/execute",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "swaps", "execute"]
+            }
+          }
+        },
+        {
+          "name": "Validate Swap",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source_faculty_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"source_week\": \"2024-07-08\",\n  \"target_faculty_id\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"target_week\": \"2024-07-15\",\n  \"swap_type\": \"one_to_one\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/swaps/validate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "swaps", "validate"]
+            }
+          }
+        },
+        {
+          "name": "Get Swap History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/swaps/history?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "swaps", "history"],
+              "query": [
+                {
+                  "key": "faculty_id",
+                  "value": "{{person_id}}",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "executed",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Swap",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/swaps/{{swap_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "swaps", "{{swap_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Rollback Swap",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Faculty requested reversal\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/swaps/{{swap_id}}/rollback",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "swaps", "{{swap_id}}", "rollback"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Resilience",
+      "item": [
+        {
+          "name": "Get System Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/resilience/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resilience", "health"],
+              "query": [
+                {
+                  "key": "include_contingency",
+                  "value": "true",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Activate Crisis",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"severity\": \"high\",\n  \"reason\": \"Multiple faculty deployments\",\n  \"expected_duration_hours\": 168,\n  \"activate_fallback\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/resilience/crisis/activate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resilience", "crisis", "activate"]
+            }
+          }
+        },
+        {
+          "name": "Deactivate Crisis",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Staffing restored\",\n  \"deactivate_fallback\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/resilience/crisis/deactivate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resilience", "crisis", "deactivate"]
+            }
+          }
+        },
+        {
+          "name": "List Fallbacks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/resilience/fallbacks",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resilience", "fallbacks"]
+            }
+          }
+        },
+        {
+          "name": "Get Vulnerability Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/resilience/vulnerability?start_date=2024-07-01&end_date=2024-07-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resilience", "vulnerability"],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2024-07-01"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2024-07-31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Health History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/resilience/health/history?limit=50",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resilience", "health", "history"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Event History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/resilience/events?limit=50",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resilience", "events"],
+              "query": [
+                {
+                  "key": "event_type",
+                  "value": "crisis",
+                  "disabled": true
+                },
+                {
+                  "key": "severity",
+                  "value": "high",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
