@@ -187,6 +187,81 @@ def handle_integration_point(task: Task, active_streams: list) -> Action:
 
 ---
 
+***REMOVED******REMOVED*** Level 4: Speculative Parallelism (Read Optimization)
+
+While Levels 1-3 focus on write conflict prevention, Level 4 optimizes read operations for maximum parallelism.
+
+***REMOVED******REMOVED******REMOVED*** When to Use Speculative Reads
+
+Apply speculative parallelism when:
+- Exploring a feature across multiple files
+- Debugging interconnected components
+- Initial research phase for new capability
+- Uncertainty about which files are needed
+
+***REMOVED******REMOVED******REMOVED*** The Pattern
+
+1. **Identify candidates** - List 5-10 likely-needed files (don't overthink)
+2. **Batch read** - Read ALL in single parallel request
+3. **Process together** - Analyze results in unified context
+4. **No penalty** - Extra reads have negligible latency cost
+
+***REMOVED******REMOVED******REMOVED*** Example: Understanding Swap Feature
+
+Instead of reading sequentially:
+```
+Read swap_service.py
+→ "Ah, I need the models"
+Read swap_models.py
+→ "Ah, I need the routes"
+Read swap_routes.py
+→ "Ah, I need the tests"
+```
+
+Speculative parallel read:
+```
+Read in parallel:
+├── swap_service.py      (core logic)
+├── swap_models.py       (data structures)
+├── swap_routes.py       (API interface)
+├── swap_auto_matcher.py (matching algorithm)
+└── test_swap*.py        (tests reveal intent)
+```
+
+***REMOVED******REMOVED******REMOVED*** Decision Rule
+
+```python
+def use_speculative_reads(task: Task) -> bool:
+    """Should we speculatively read multiple files?"""
+
+    SPECULATIVE_TRIGGERS = [
+        task.phase == "exploration",
+        "understand" in task.goal.lower(),
+        "debug" in task.goal.lower(),
+        "investigate" in task.goal.lower(),
+        not task.exact_files_known,
+    ]
+
+    return any(SPECULATIVE_TRIGGERS)
+```
+
+***REMOVED******REMOVED******REMOVED*** Anti-Pattern
+
+| BAD | GOOD |
+|--------|---------|
+| Read A, then decide to read B, then C | Batch read [A, B, C, D, E] upfront |
+| 3 sequential round trips | 1 parallel round trip |
+| ~3x latency | ~1x latency |
+
+***REMOVED******REMOVED******REMOVED*** Integration with Explore Subagent
+
+The `Explore` subagent type is optimized for speculative reads:
+- Fast model (haiku/sonnet)
+- Context-aware (sees prior conversation)
+- Pattern: Spawn multiple Explore agents with different search foci
+
+---
+
 ***REMOVED******REMOVED*** Decision Tree for All Agents
 
 ```

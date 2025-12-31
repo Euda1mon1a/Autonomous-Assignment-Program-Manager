@@ -714,6 +714,58 @@ def allocate_agents(tasks, resource_limits):
     return assignments
 ```
 
+***REMOVED******REMOVED******REMOVED*** III.E Auto-Tier Selection Algorithm
+
+When delegating via Task tool, ORCHESTRATOR should auto-select model tier based on task complexity:
+
+| Complexity Score | Model Tier | Use For |
+|-----------------|------------|---------|
+| 0-5 | haiku | Information gathering, simple searches, documentation lookup |
+| 6-12 | sonnet | Standard implementation, testing, code review |
+| 13+ | opus | Architecture decisions, complex coordination, multi-domain work |
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Selection Logic
+
+```python
+def select_model_tier(task_complexity: int, agent_spec: dict) -> str:
+    """
+    Select appropriate model tier for task delegation.
+
+    Priority:
+    1. Agent's declared model_tier (if specified)
+    2. Complexity-based selection
+    """
+    ***REMOVED*** Respect agent's declared preference
+    if agent_spec.get("model_tier"):
+        return agent_spec["model_tier"]
+
+    ***REMOVED*** Auto-select based on complexity
+    if task_complexity <= 5:
+        return "haiku"
+    elif task_complexity <= 12:
+        return "sonnet"
+    return "opus"
+```
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Tier Cost Weights
+
+For capacity management, apply these weights:
+
+```python
+TIER_WEIGHTS = {
+    'haiku': 0.5,   ***REMOVED*** 2x more haikus before capacity hit
+    'sonnet': 1.0,  ***REMOVED*** Baseline
+    'opus': 1.5     ***REMOVED*** Premium resource, reduced capacity
+}
+```
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** Override Guidance
+
+Force specific tier when:
+- **Force haiku**: Pure exploration, no code changes needed
+- **Force sonnet**: Standard coding tasks with known patterns
+- **Force opus**: Architectural decisions, complex debugging, multi-agent coordination
+
 ---
 
 ***REMOVED******REMOVED*** IV. SYNTHESIS PATTERNS
