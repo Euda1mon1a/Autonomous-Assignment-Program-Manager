@@ -7,10 +7,11 @@ schedule conflicts with safety checks and impact assessment.
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.user import User
 from app.schemas.conflict_resolution import (
     BatchResolutionReport,
@@ -24,9 +25,9 @@ router = APIRouter()
 
 
 @router.get("/{conflict_id}/analyze", response_model=ConflictAnalysis)
-def analyze_conflict(
+async def analyze_conflict(
     conflict_id: UUID,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -61,10 +62,10 @@ def analyze_conflict(
 
 
 @router.get("/{conflict_id}/options", response_model=list[ResolutionOption])
-def get_resolution_options(
+async def get_resolution_options(
     conflict_id: UUID,
     max_options: int = Query(5, ge=1, le=10, description="Maximum options to return"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -97,10 +98,10 @@ def get_resolution_options(
 
 
 @router.post("/{conflict_id}/resolve", response_model=ResolutionResult)
-def resolve_conflict(
+async def resolve_conflict(
     conflict_id: UUID,
     strategy: str | None = Query(None, description="Specific strategy to use"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -131,7 +132,7 @@ def resolve_conflict(
 
 
 @router.post("/batch/resolve", response_model=BatchResolutionReport)
-def batch_resolve_conflicts(
+async def batch_resolve_conflicts(
     conflict_ids: list[UUID] | None = Query(
         None, description="Specific conflicts to resolve"
     ),
@@ -142,7 +143,7 @@ def batch_resolve_conflicts(
         None, description="Filter by severity: HIGH, MEDIUM, LOW"
     ),
     dry_run: bool = Query(False, description="Simulate without applying changes"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -171,9 +172,9 @@ def batch_resolve_conflicts(
 
 
 @router.get("/{conflict_id}/can-auto-resolve")
-def can_auto_resolve(
+async def can_auto_resolve(
     conflict_id: UUID,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """

@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.controllers.procedure_controller import ProcedureController
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.user import User
 from app.schemas.procedure import (
     ProcedureCreate,
@@ -22,7 +22,7 @@ router = APIRouter()
 
 
 @router.get("", response_model=ProcedureListResponse)
-def list_procedures(
+async def list_procedures(
     specialty: str | None = Query(None, description="Filter by specialty"),
     category: str | None = Query(None, description="Filter by category"),
     is_active: bool | None = Query(None, description="Filter by active status"),
@@ -42,21 +42,21 @@ def list_procedures(
 
 
 @router.get("/specialties", response_model=list[str])
-def get_specialties(db=Depends(get_db)):
+async def get_specialties(db=Depends(get_db)):
     """Get all unique specialties from procedures."""
     controller = ProcedureController(db)
     return controller.get_specialties()
 
 
 @router.get("/categories", response_model=list[str])
-def get_categories(db=Depends(get_db)):
+async def get_categories(db=Depends(get_db)):
     """Get all unique categories from procedures."""
     controller = ProcedureController(db)
     return controller.get_categories()
 
 
 @router.get("/by-name/{name}", response_model=ProcedureResponse)
-def get_procedure_by_name(
+async def get_procedure_by_name(
     name: str,
     db=Depends(get_db),
 ):
@@ -66,7 +66,7 @@ def get_procedure_by_name(
 
 
 @router.get("/{procedure_id}", response_model=ProcedureResponse)
-def get_procedure(
+async def get_procedure(
     procedure_id: UUID,
     db=Depends(get_db),
 ):
@@ -76,7 +76,7 @@ def get_procedure(
 
 
 @router.post("", response_model=ProcedureResponse, status_code=201)
-def create_procedure(
+async def create_procedure(
     procedure_in: ProcedureCreate,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -87,7 +87,7 @@ def create_procedure(
 
 
 @router.put("/{procedure_id}", response_model=ProcedureResponse)
-def update_procedure(
+async def update_procedure(
     procedure_id: UUID,
     procedure_in: ProcedureUpdate,
     db=Depends(get_db),
@@ -99,7 +99,7 @@ def update_procedure(
 
 
 @router.delete("/{procedure_id}", status_code=204)
-def delete_procedure(
+async def delete_procedure(
     procedure_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -110,7 +110,7 @@ def delete_procedure(
 
 
 @router.post("/{procedure_id}/deactivate", response_model=ProcedureResponse)
-def deactivate_procedure(
+async def deactivate_procedure(
     procedure_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -121,7 +121,7 @@ def deactivate_procedure(
 
 
 @router.post("/{procedure_id}/activate", response_model=ProcedureResponse)
-def activate_procedure(
+async def activate_procedure(
     procedure_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),

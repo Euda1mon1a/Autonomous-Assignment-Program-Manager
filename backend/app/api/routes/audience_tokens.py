@@ -27,7 +27,8 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from jose import jwt, JWTError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.api.deps import get_db
 from app.core.audience_auth import (
@@ -158,7 +159,7 @@ def get_token_owner_id(db: Session, jti: str) -> str | None:
         determine ownership from the database. In that case, we must
         decode the token to get the user_id from the 'sub' claim.
     """
-    record = db.query(TokenBlacklist).filter(TokenBlacklist.jti == jti).first()
+    record = (await db.execute(select(TokenBlacklist).where(TokenBlacklist.jti == jti))).scalar_one_or_none()
     if record and record.user_id:
         return str(record.user_id)
     return None
@@ -298,7 +299,7 @@ async def request_audience_token(
 async def revoke_token(
     request: RevokeTokenRequest,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> RevokeTokenResponse:
     """
     Revoke an audience-scoped token.
@@ -469,7 +470,7 @@ async def abort_job_example(
     job_id: str,
     current_user: User = Depends(get_current_active_user),
     audience_token: AudienceTokenPayload = Depends(require_audience("jobs.abort")),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Example endpoint showing audience authentication usage.

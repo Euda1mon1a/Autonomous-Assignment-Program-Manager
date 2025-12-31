@@ -5,6 +5,7 @@ This module provides async HTTP client functionality for MCP tools
 to call the FastAPI backend instead of accessing the database directly.
 """
 
+import asyncio
 import logging
 import os
 from typing import Any
@@ -13,6 +14,11 @@ import httpx
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
+
+# Retry configuration
+DEFAULT_MAX_RETRIES = 3
+DEFAULT_RETRY_DELAY = 1.0  # seconds
+RETRYABLE_STATUS_CODES = {408, 429, 500, 502, 503, 504}
 
 
 class APIConfig(BaseModel):
@@ -74,12 +80,77 @@ class SchedulerAPIClient:
         self._token = data["access_token"]
         logger.info("Successfully authenticated with backend API")
 
+    async def _request_with_retry(
+        self,
+        method: str,
+        url: str,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+        **kwargs: Any,
+    ) -> httpx.Response:
+        """
+        Make HTTP request with exponential backoff retry logic.
+
+        Args:
+            method: HTTP method (GET, POST, PUT, DELETE)
+            url: URL to request
+            max_retries: Maximum number of retry attempts
+            **kwargs: Additional arguments to pass to httpx request
+
+        Returns:
+            httpx.Response
+
+        Raises:
+            httpx.HTTPError: If all retries fail
+        """
+        last_exception = None
+
+        for attempt in range(max_retries + 1):
+            try:
+                response = await self.client.request(method, url, **kwargs)
+
+                # Don't retry on success or client errors (4xx except 408, 429)
+                if response.status_code < 400:
+                    return response
+                if 400 <= response.status_code < 500 and response.status_code not in RETRYABLE_STATUS_CODES:
+                    response.raise_for_status()
+                    return response
+
+                # Retry on server errors and specific client errors
+                if attempt < max_retries and response.status_code in RETRYABLE_STATUS_CODES:
+                    delay = DEFAULT_RETRY_DELAY * (2 ** attempt)
+                    logger.warning(
+                        f"Request failed with status {response.status_code}, "
+                        f"retrying in {delay}s (attempt {attempt + 1}/{max_retries})"
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+
+                response.raise_for_status()
+                return response
+
+            except httpx.RequestError as e:
+                last_exception = e
+                if attempt < max_retries:
+                    delay = DEFAULT_RETRY_DELAY * (2 ** attempt)
+                    logger.warning(
+                        f"Request failed with error: {e}, "
+                        f"retrying in {delay}s (attempt {attempt + 1}/{max_retries})"
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+                raise
+
+        # If we get here, all retries failed
+        if last_exception:
+            raise last_exception
+        raise httpx.HTTPError(f"All {max_retries} retry attempts failed")
+
     async def health_check(self) -> bool:
         """Check if FastAPI backend is available."""
         try:
-            response = await self.client.get("/health")
+            response = await self._request_with_retry("GET", "/health", max_retries=1)
             return response.status_code == 200
-        except httpx.RequestError:
+        except (httpx.RequestError, httpx.HTTPError):
             return False
 
     async def validate_schedule(
@@ -87,7 +158,8 @@ class SchedulerAPIClient:
     ) -> dict[str, Any]:
         """Validate schedule via API (ACGME compliance check)."""
         # Note: Uses GET /schedule/validate endpoint (not POST /schedules/validate)
-        response = await self.client.get(
+        response = await self._request_with_retry(
+            "GET",
             f"{self.config.api_prefix}/schedule/validate",
             params={"start_date": start_date, "end_date": end_date},
         )
@@ -98,7 +170,8 @@ class SchedulerAPIClient:
         """Get schedule conflicts via API (conflict analysis)."""
         # Note: Uses GET /conflicts/analyze endpoint (requires auth)
         headers = await self._ensure_authenticated()
-        response = await self.client.get(
+        response = await self._request_with_retry(
+            "GET",
             f"{self.config.api_prefix}/conflicts/analyze",
             headers=headers,
             params={"start_date": start_date, "end_date": end_date},
@@ -128,7 +201,8 @@ class SchedulerAPIClient:
             SwapCandidateJsonResponse with ranked candidates
         """
         headers = await self._ensure_authenticated()
-        response = await self.client.post(
+        response = await self._request_with_retry(
+            "POST",
             f"{self.config.api_prefix}/schedule/swaps/candidates",
             headers=headers,
             json={
@@ -150,7 +224,8 @@ class SchedulerAPIClient:
         The scenario and affected_ids parameters are not used by current backend.
         """
         headers = await self._ensure_authenticated()
-        response = await self.client.get(
+        response = await self._request_with_retry(
+            "GET",
             f"{self.config.api_prefix}/resilience/vulnerability",
             headers=headers,
             params={"start_date": start_date, "end_date": end_date},
@@ -184,7 +259,8 @@ class SchedulerAPIClient:
         # Clear existing assignments if requested
         if clear_existing:
             logger.info(f"Clearing existing assignments from {start_date} to {end_date}")
-            delete_response = await self.client.delete(
+            delete_response = await self._request_with_retry(
+                "DELETE",
                 f"{self.config.api_prefix}/assignments",
                 headers=headers,
                 params={"start_date": start_date, "end_date": end_date},
@@ -195,7 +271,8 @@ class SchedulerAPIClient:
 
         # Generate new schedule
         logger.info(f"Generating schedule from {start_date} to {end_date} using {algorithm}")
-        response = await self.client.post(
+        response = await self._request_with_retry(
+            "POST",
             f"{self.config.api_prefix}/schedule/generate",
             headers=headers,
             json={
@@ -223,7 +300,8 @@ class SchedulerAPIClient:
         if end_date:
             params["end_date"] = end_date
 
-        response = await self.client.get(
+        response = await self._request_with_retry(
+            "GET",
             f"{self.config.api_prefix}/assignments",
             headers=headers,
             params=params,
@@ -234,7 +312,8 @@ class SchedulerAPIClient:
     async def get_people(self, limit: int = 100) -> dict[str, Any]:
         """Get all people (residents and faculty)."""
         headers = await self._ensure_authenticated()
-        response = await self.client.get(
+        response = await self._request_with_retry(
+            "GET",
             f"{self.config.api_prefix}/people",
             headers=headers,
             params={"limit": limit},
@@ -263,10 +342,432 @@ class SchedulerAPIClient:
             - severity: healthy/warning/critical/emergency
         """
         headers = await self._ensure_authenticated()
-        response = await self.client.get(
+        response = await self._request_with_retry(
+            "GET",
             f"{self.config.api_prefix}/resilience/mtf-compliance",
             headers=headers,
             params={"check_circuit_breaker": check_circuit_breaker},
+        )
+        response.raise_for_status()
+        return response.json()
+
+    # ==================== ASSIGNMENT CRUD METHODS ====================
+
+    async def create_assignment(
+        self,
+        person_id: str,
+        block_date: str,
+        block_session: str,
+        rotation_id: str | None = None,
+        notes: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a new schedule assignment."""
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "POST",
+            f"{self.config.api_prefix}/assignments",
+            headers=headers,
+            json={
+                "person_id": person_id,
+                "block_date": block_date,
+                "block_session": block_session,
+                "rotation_id": rotation_id,
+                "notes": notes,
+            },
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def update_assignment(
+        self,
+        assignment_id: str,
+        person_id: str | None = None,
+        rotation_id: str | None = None,
+        notes: str | None = None,
+    ) -> dict[str, Any]:
+        """Update an existing assignment (PATCH method)."""
+        headers = await self._ensure_authenticated()
+        payload = {}
+        if person_id is not None:
+            payload["person_id"] = person_id
+        if rotation_id is not None:
+            payload["rotation_id"] = rotation_id
+        if notes is not None:
+            payload["notes"] = notes
+
+        response = await self._request_with_retry(
+            "PATCH",
+            f"{self.config.api_prefix}/assignments/{assignment_id}",
+            headers=headers,
+            json=payload,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def delete_assignment(self, assignment_id: str) -> dict[str, Any]:
+        """Delete a specific assignment."""
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "DELETE",
+            f"{self.config.api_prefix}/assignments/{assignment_id}",
+            headers=headers,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    # ==================== COMPLIANCE METHODS ====================
+
+    async def check_work_hours(
+        self,
+        start_date: str,
+        end_date: str,
+        person_id: str | None = None,
+        include_details: bool = True,
+    ) -> dict[str, Any]:
+        """Check ACGME 80-hour work week compliance."""
+        headers = await self._ensure_authenticated()
+        params: dict[str, Any] = {
+            "start_date": start_date,
+            "end_date": end_date,
+            "include_details": include_details,
+        }
+        if person_id:
+            params["person_id"] = person_id
+
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/compliance/work-hours",
+            headers=headers,
+            params=params,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def check_day_off(
+        self,
+        start_date: str,
+        end_date: str,
+        person_id: str | None = None,
+        include_details: bool = True,
+    ) -> dict[str, Any]:
+        """Check ACGME 1-in-7 day off rule compliance."""
+        headers = await self._ensure_authenticated()
+        params: dict[str, Any] = {
+            "start_date": start_date,
+            "end_date": end_date,
+            "include_details": include_details,
+        }
+        if person_id:
+            params["person_id"] = person_id
+
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/compliance/day-off",
+            headers=headers,
+            params=params,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def check_supervision(
+        self,
+        date: str,
+        session: str,
+    ) -> dict[str, Any]:
+        """Check ACGME supervision ratio compliance for a specific date/session."""
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/compliance/supervision",
+            headers=headers,
+            params={
+                "date": date,
+                "session": session,
+            },
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def get_violations(
+        self,
+        start_date: str,
+        end_date: str,
+        rule_types: list[str] | None = None,
+        severity: str | None = None,
+    ) -> dict[str, Any]:
+        """Get compliance violations for date range."""
+        headers = await self._ensure_authenticated()
+        params: dict[str, Any] = {
+            "start_date": start_date,
+            "end_date": end_date,
+        }
+        if rule_types:
+            params["rule_types"] = ",".join(rule_types)
+        if severity:
+            params["severity"] = severity
+
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/compliance/violations",
+            headers=headers,
+            params=params,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def generate_compliance_report(
+        self,
+        start_date: str,
+        end_date: str,
+        include_violations: bool = True,
+        include_recommendations: bool = True,
+        format: str = "json",
+    ) -> dict[str, Any]:
+        """Generate comprehensive compliance report."""
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "POST",
+            f"{self.config.api_prefix}/compliance/report",
+            headers=headers,
+            json={
+                "start_date": start_date,
+                "end_date": end_date,
+                "include_violations": include_violations,
+                "include_recommendations": include_recommendations,
+                "format": format,
+            },
+        )
+        response.raise_for_status()
+        return response.json()
+
+    # ==================== SWAP METHODS ====================
+
+    async def create_swap(
+        self,
+        person_id: str,
+        assignment_id: str,
+        swap_type: str = "one_to_one",
+        target_person_id: str | None = None,
+        notes: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a new swap request."""
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "POST",
+            f"{self.config.api_prefix}/swaps",
+            headers=headers,
+            json={
+                "person_id": person_id,
+                "assignment_id": assignment_id,
+                "swap_type": swap_type,
+                "target_person_id": target_person_id,
+                "notes": notes,
+            },
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def execute_swap(self, swap_id: str) -> dict[str, Any]:
+        """Execute a pending swap request."""
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "POST",
+            f"{self.config.api_prefix}/swaps/{swap_id}/execute",
+            headers=headers,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def rollback_swap(self, swap_id: str) -> dict[str, Any]:
+        """Rollback an executed swap (within 24-hour window)."""
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "POST",
+            f"{self.config.api_prefix}/swaps/{swap_id}/rollback",
+            headers=headers,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def get_swap_history(
+        self,
+        person_id: str | None = None,
+        status: str | None = None,
+        limit: int = 100,
+    ) -> dict[str, Any]:
+        """Get swap history, optionally filtered."""
+        headers = await self._ensure_authenticated()
+        params: dict[str, Any] = {"limit": limit}
+        if person_id:
+            params["person_id"] = person_id
+        if status:
+            params["status"] = status
+
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/swaps",
+            headers=headers,
+            params=params,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    # ==================== RESILIENCE METHODS ====================
+
+    async def get_defense_level(self, date: str | None = None) -> dict[str, Any]:
+        """Get current resilience defense level (GREEN/YELLOW/ORANGE/RED/BLACK)."""
+        headers = await self._ensure_authenticated()
+        params: dict[str, Any] = {}
+        if date:
+            params["date"] = date
+
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/resilience/defense-level",
+            headers=headers,
+            params=params,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def get_utilization(
+        self,
+        start_date: str,
+        end_date: str,
+        person_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Get utilization metrics (80% threshold monitoring)."""
+        headers = await self._ensure_authenticated()
+        params: dict[str, Any] = {
+            "start_date": start_date,
+            "end_date": end_date,
+        }
+        if person_id:
+            params["person_id"] = person_id
+
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/resilience/utilization",
+            headers=headers,
+            params=params,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def get_burnout_rt(
+        self,
+        start_date: str,
+        end_date: str,
+        person_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Get burnout reproduction number (Rt) from SIR model."""
+        headers = await self._ensure_authenticated()
+        params: dict[str, Any] = {
+            "start_date": start_date,
+            "end_date": end_date,
+        }
+        if person_id:
+            params["person_id"] = person_id
+
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/resilience/burnout-rt",
+            headers=headers,
+            params=params,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def get_early_warnings(
+        self,
+        start_date: str,
+        end_date: str,
+        warning_types: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Get early warning signals (SPC, STA/LTA, etc)."""
+        headers = await self._ensure_authenticated()
+        params: dict[str, Any] = {
+            "start_date": start_date,
+            "end_date": end_date,
+        }
+        if warning_types:
+            params["warning_types"] = ",".join(warning_types)
+
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/resilience/early-warnings",
+            headers=headers,
+            params=params,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    # ==================== ANALYTICS METHODS ====================
+
+    async def get_coverage_metrics(
+        self,
+        start_date: str,
+        end_date: str,
+        by_rotation: bool = True,
+    ) -> dict[str, Any]:
+        """Get schedule coverage analysis."""
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/analytics/coverage",
+            headers=headers,
+            params={
+                "start_date": start_date,
+                "end_date": end_date,
+                "by_rotation": by_rotation,
+            },
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def get_workload_distribution(
+        self,
+        start_date: str,
+        end_date: str,
+        by_person: bool = True,
+    ) -> dict[str, Any]:
+        """Get workload distribution analysis."""
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/analytics/workload",
+            headers=headers,
+            params={
+                "start_date": start_date,
+                "end_date": end_date,
+                "by_person": by_person,
+            },
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def get_trend_analysis(
+        self,
+        start_date: str,
+        end_date: str,
+        metrics: list[str] | None = None,
+        window_days: int = 7,
+    ) -> dict[str, Any]:
+        """Get trend analysis for schedule metrics."""
+        headers = await self._ensure_authenticated()
+        params: dict[str, Any] = {
+            "start_date": start_date,
+            "end_date": end_date,
+            "window_days": window_days,
+        }
+        if metrics:
+            params["metrics"] = ",".join(metrics)
+
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/analytics/trends",
+            headers=headers,
+            params=params,
         )
         response.raise_for_status()
         return response.json()

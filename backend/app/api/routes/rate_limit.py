@@ -77,7 +77,7 @@ def get_redis_client() -> redis.Redis:
 
 @router.get("/status", response_model=RateLimitStatus)
 async def get_rate_limit_status(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
     redis_client: redis.Redis = Depends(get_redis_client),
 ):
     """
@@ -213,7 +213,7 @@ async def get_rate_limit_status(
 
 @router.get("/tiers", response_model=AllTiersResponse)
 async def get_all_tiers(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get information about all rate limit tiers.
@@ -277,7 +277,7 @@ async def get_all_tiers(
 
 @router.get("/endpoints", response_model=EndpointLimitsResponse)
 async def get_endpoint_limits(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get endpoint-specific rate limits.

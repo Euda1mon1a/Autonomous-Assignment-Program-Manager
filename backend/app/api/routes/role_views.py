@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 @router.get("/views/permissions/{role}", response_model=ViewPermissions)
-def get_role_permissions(
+async def get_role_permissions(
     role: StaffRole, current_user: User = Depends(get_current_active_user)
 ):
     """
@@ -37,7 +37,7 @@ def get_role_permissions(
 
 
 @router.get("/views/config/{role}", response_model=RoleViewConfig)
-def get_role_config(
+async def get_role_config(
     role: StaffRole, current_user: User = Depends(get_current_active_user)
 ):
     """
@@ -60,7 +60,7 @@ def get_role_config(
 
 
 @router.get("/views/config")
-def get_current_user_view_config(current_user: User = Depends(get_current_active_user)):
+async def get_current_user_view_config(current_user: User = Depends(get_current_active_user)):
     """
     Get view configuration for current user.
 
@@ -78,7 +78,7 @@ def get_current_user_view_config(current_user: User = Depends(get_current_active
 
 
 @router.post("/views/check-access")
-def check_endpoint_access(
+async def check_endpoint_access(
     role: StaffRole,
     endpoint_category: str,
     current_user: User = Depends(get_current_active_user),
@@ -109,7 +109,7 @@ def check_endpoint_access(
 
 
 @router.get("/views/roles", response_model=list)
-def list_all_roles(current_user: User = Depends(get_current_active_user)):
+async def list_all_roles(current_user: User = Depends(get_current_active_user)):
     """
     List all available staff roles.
 
@@ -120,7 +120,7 @@ def list_all_roles(current_user: User = Depends(get_current_active_user)):
 
 
 @router.get("/views/permissions", response_model=dict)
-def get_all_role_permissions(current_user: User = Depends(get_current_active_user)):
+async def get_all_role_permissions(current_user: User = Depends(get_current_active_user)):
     """
     Get permissions for all roles.
 

@@ -13,16 +13,18 @@ Pool settings are configurable via environment variables:
 - DB_POOL_PRE_PING: Verify connections (default: True)
 """
 
-from collections.abc import Generator
+from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager, contextmanager
 
 from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import get_settings
 
 settings = get_settings()
 
+# Synchronous engine (legacy support)
 engine = create_engine(
     settings.DATABASE_URL,
     # Connection pool settings
@@ -35,10 +37,30 @@ engine = create_engine(
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# Async engine (preferred for all new code)
+async_engine = create_async_engine(
+    settings.SQLALCHEMY_DATABASE_URI,
+    # Connection pool settings
+    pool_pre_ping=settings.DB_POOL_PRE_PING,
+    pool_size=settings.DB_POOL_SIZE,
+    max_overflow=settings.DB_POOL_MAX_OVERFLOW,
+    pool_timeout=settings.DB_POOL_TIMEOUT,
+    pool_recycle=settings.DB_POOL_RECYCLE,
+    echo=False,
+)
+
+AsyncSessionLocal = async_sessionmaker(
+    async_engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=False,
+)
+
 
 def get_db() -> Generator[Session, None, None]:
     """
-    Get database session dependency for FastAPI routes.
+    Get database session dependency for FastAPI routes (DEPRECATED - use get_async_db).
 
     Provides a transactional session that:
     - Rolls back uncommitted changes on exception (prevents dirty state)
@@ -57,6 +79,33 @@ def get_db() -> Generator[Session, None, None]:
         raise
     finally:
         db.close()
+
+
+async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
+    """
+    Get async database session dependency for FastAPI routes (PREFERRED).
+
+    Provides a transactional async session that:
+    - Rolls back uncommitted changes on exception (prevents dirty state)
+    - Always closes the connection (prevents connection leaks)
+    - Supports concurrent request handling with proper transaction isolation
+
+    Routes should call await db.commit() explicitly when they want to persist changes.
+
+    Usage:
+        @router.get("/items")
+        async def get_items(db: AsyncSession = Depends(get_async_db)):
+            result = await db.execute(select(Item))
+            return result.scalars().all()
+    """
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
 
 
 @contextmanager

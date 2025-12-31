@@ -116,24 +116,13 @@ class GetViolationsTool(BaseTool[GetViolationsRequest, GetViolationsResponse]):
         client = self._require_api_client()
 
         try:
-            # Build params
-            params: dict[str, Any] = {
-                "start_date": request.start_date,
-                "end_date": request.end_date,
-            }
-            if request.rule_types:
-                params["rule_types"] = ",".join(request.rule_types)
-            if request.severity:
-                params["severity"] = request.severity
-
-            # Get violations via API
-            result = await client.client.get(
-                f"{client.config.api_prefix}/compliance/violations",
-                headers=await client._ensure_authenticated(),
-                params=params,
+            # Get violations via API client
+            data = await client.get_violations(
+                start_date=request.start_date,
+                end_date=request.end_date,
+                rule_types=request.rule_types,
+                severity=request.severity,
             )
-            result.raise_for_status()
-            data = result.json()
 
             # Parse violations
             violations = []

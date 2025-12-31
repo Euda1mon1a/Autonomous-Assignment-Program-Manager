@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.controllers.credential_controller import CredentialController
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.user import User
 from app.schemas.procedure_credential import (
     CredentialCreate,
@@ -24,7 +24,7 @@ router = APIRouter()
 
 
 @router.get("/expiring", response_model=CredentialListResponse)
-def list_expiring_credentials(
+async def list_expiring_credentials(
     days: int = Query(30, description="Number of days to look ahead"),
     db=Depends(get_db),
 ):
@@ -34,7 +34,7 @@ def list_expiring_credentials(
 
 
 @router.get("/by-person/{person_id}", response_model=CredentialListResponse)
-def list_credentials_for_person(
+async def list_credentials_for_person(
     person_id: UUID,
     status: str | None = Query(None, description="Filter by status"),
     include_expired: bool = Query(False, description="Include expired credentials"),
@@ -50,7 +50,7 @@ def list_credentials_for_person(
 
 
 @router.get("/by-procedure/{procedure_id}", response_model=CredentialListResponse)
-def list_credentials_for_procedure(
+async def list_credentials_for_procedure(
     procedure_id: UUID,
     status: str | None = Query(None, description="Filter by status"),
     include_expired: bool = Query(False, description="Include expired credentials"),
@@ -68,7 +68,7 @@ def list_credentials_for_procedure(
 @router.get(
     "/qualified-faculty/{procedure_id}", response_model=QualifiedFacultyResponse
 )
-def get_qualified_faculty(
+async def get_qualified_faculty(
     procedure_id: UUID,
     db=Depends(get_db),
 ):
@@ -78,7 +78,7 @@ def get_qualified_faculty(
 
 
 @router.get("/check/{person_id}/{procedure_id}")
-def check_qualification(
+async def check_qualification(
     person_id: UUID,
     procedure_id: UUID,
     db=Depends(get_db),
@@ -89,7 +89,7 @@ def check_qualification(
 
 
 @router.get("/summary/{person_id}", response_model=FacultyCredentialSummary)
-def get_faculty_credential_summary(
+async def get_faculty_credential_summary(
     person_id: UUID,
     db=Depends(get_db),
 ):
@@ -99,7 +99,7 @@ def get_faculty_credential_summary(
 
 
 @router.get("/{credential_id}", response_model=CredentialResponse)
-def get_credential(
+async def get_credential(
     credential_id: UUID,
     db=Depends(get_db),
 ):
@@ -109,7 +109,7 @@ def get_credential(
 
 
 @router.post("", response_model=CredentialResponse, status_code=201)
-def create_credential(
+async def create_credential(
     credential_in: CredentialCreate,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -120,7 +120,7 @@ def create_credential(
 
 
 @router.put("/{credential_id}", response_model=CredentialResponse)
-def update_credential(
+async def update_credential(
     credential_id: UUID,
     credential_in: CredentialUpdate,
     db=Depends(get_db),
@@ -132,7 +132,7 @@ def update_credential(
 
 
 @router.delete("/{credential_id}", status_code=204)
-def delete_credential(
+async def delete_credential(
     credential_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -143,7 +143,7 @@ def delete_credential(
 
 
 @router.post("/{credential_id}/suspend", response_model=CredentialResponse)
-def suspend_credential(
+async def suspend_credential(
     credential_id: UUID,
     notes: str | None = Query(None, description="Suspension notes"),
     db=Depends(get_db),
@@ -155,7 +155,7 @@ def suspend_credential(
 
 
 @router.post("/{credential_id}/activate", response_model=CredentialResponse)
-def activate_credential(
+async def activate_credential(
     credential_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -166,7 +166,7 @@ def activate_credential(
 
 
 @router.post("/{credential_id}/verify", response_model=CredentialResponse)
-def verify_credential(
+async def verify_credential(
     credential_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),

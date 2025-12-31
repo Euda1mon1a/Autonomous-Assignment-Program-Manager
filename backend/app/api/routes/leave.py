@@ -23,12 +23,13 @@ from fastapi import (
     Request,
     status,
 )
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.api.dependencies.role_filter import require_admin
 from app.core.config import get_settings
 from app.core.security import get_current_active_user, get_current_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.absence import Absence
 from app.models.person import Person
 from app.models.user import User
@@ -117,14 +118,14 @@ async def verify_webhook_signature(
 
 
 @router.get("/", response_model=LeaveListResponse)
-def list_leave(
+async def list_leave(
     faculty_id: UUID | None = None,
     start_date: date | None = None,
     end_date: date | None = None,
     page: int = 1,
     page_size: int = 20,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     List leave records with optional filters.
@@ -171,11 +172,11 @@ def list_leave(
 
 
 @router.get("/calendar", response_model=LeaveCalendarResponse)
-def get_leave_calendar(
+async def get_leave_calendar(
     start_date: date,
     end_date: date,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get leave calendar for a date range.
@@ -230,11 +231,11 @@ def get_leave_calendar(
 
 
 @router.post("/", response_model=LeaveResponse, status_code=status.HTTP_201_CREATED)
-def create_leave(
+async def create_leave(
     request: LeaveCreateRequest,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Create a new leave record.
@@ -242,7 +243,7 @@ def create_leave(
     Automatically triggers conflict detection in the background.
     """
     # Verify faculty exists
-    person = db.query(Person).filter(Person.id == request.faculty_id).first()
+    person = (await db.execute(select(Person).where(Person.id == request.faculty_id))).scalar_one_or_none()
     if not person:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -258,8 +259,8 @@ def create_leave(
         notes=request.description,
     )
     db.add(absence)
-    db.commit()
-    db.refresh(absence)
+    await db.commit()
+    await db.refresh(absence)
 
     # Trigger conflict detection in background using Celery
     from app.notifications.tasks import detect_leave_conflicts
@@ -281,14 +282,14 @@ def create_leave(
 
 
 @router.put("/{leave_id}", response_model=LeaveResponse)
-def update_leave(
+async def update_leave(
     leave_id: UUID,
     request: LeaveUpdateRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """Update an existing leave record."""
-    absence = db.query(Absence).filter(Absence.id == leave_id).first()
+    absence = (await db.execute(select(Absence).where(Absence.id == leave_id))).scalar_one_or_none()
     if not absence:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -306,8 +307,8 @@ def update_leave(
     if request.description is not None:
         absence.notes = request.description
 
-    db.commit()
-    db.refresh(absence)
+    await db.commit()
+    await db.refresh(absence)
 
     return LeaveResponse(
         id=absence.id,
@@ -324,13 +325,13 @@ def update_leave(
 
 
 @router.delete("/{leave_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_leave(
+async def delete_leave(
     leave_id: UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """Delete a leave record."""
-    absence = db.query(Absence).filter(Absence.id == leave_id).first()
+    absence = (await db.execute(select(Absence).where(Absence.id == leave_id))).scalar_one_or_none()
     if not absence:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -338,14 +339,14 @@ def delete_leave(
         )
 
     db.delete(absence)
-    db.commit()
+    await db.commit()
 
 
 @router.post("/webhook")
 async def leave_webhook(
     payload: LeaveWebhookPayload,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     _: None = Depends(verify_webhook_signature),
 ):
     """
@@ -369,9 +370,9 @@ async def leave_webhook(
 
 
 @router.post("/bulk-import", response_model=BulkLeaveImportResponse)
-def bulk_import_leave(
+async def bulk_import_leave(
     request: BulkLeaveImportRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ):
@@ -415,7 +416,7 @@ def bulk_import_leave(
         except Exception as e:
             errors.append(f"Failed to import record for {record.faculty_id}: {str(e)}")
 
-    db.commit()
+    await db.commit()
 
     return BulkLeaveImportResponse(
         success=len(errors) == 0,

@@ -11,8 +11,8 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import and_
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import select, and_
+from sqlalchemy.ext.asyncio import AsyncSession, joinedload
 
 from app.analytics.engine import AnalyticsEngine
 from app.analytics.metrics import (
@@ -21,7 +21,7 @@ from app.analytics.metrics import (
     calculate_fairness_index,
 )
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
@@ -86,7 +86,7 @@ def _anonymize_id(original_id: str, salt: str = "research") -> str:
 
 @router.get("/analytics/metrics/current", response_model=ScheduleVersionMetrics)
 async def get_current_metrics(
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> ScheduleVersionMetrics:
     """
@@ -172,7 +172,7 @@ async def get_metrics_history(
     ),
     start_date: datetime = Query(..., description="Start date (ISO format)"),
     end_date: datetime = Query(..., description="End date (ISO format)"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> list[MetricTimeSeries]:
     """
@@ -285,7 +285,7 @@ async def get_metrics_history(
 @router.get("/analytics/fairness/trend", response_model=FairnessTrendReport)
 async def get_fairness_trend(
     months: int = Query(6, ge=1, le=24, description="Number of months to analyze"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> FairnessTrendReport:
     """
@@ -422,7 +422,7 @@ async def get_fairness_trend(
 async def compare_versions(
     version_a: str,
     version_b: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> VersionComparison:
     """
@@ -436,8 +436,8 @@ async def compare_versions(
 
         # For now, treat version as run_id
         # In a more sophisticated system, you might have version management
-        run_a = db.query(ScheduleRun).filter(ScheduleRun.id == version_a).first()
-        run_b = db.query(ScheduleRun).filter(ScheduleRun.id == version_b).first()
+        run_a = (await db.execute(select(ScheduleRun).where(ScheduleRun.id == version_a))).scalar_one_or_none()
+        run_b = (await db.execute(select(ScheduleRun).where(ScheduleRun.id == version_b))).scalar_one_or_none()
 
         if not run_a or not run_b:
             raise HTTPException(
@@ -559,7 +559,7 @@ async def compare_versions(
 @router.post("/analytics/what-if", response_model=WhatIfResult)
 async def what_if_analysis(
     proposed_changes: list[AssignmentChange],
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> WhatIfResult:
     """
@@ -602,7 +602,7 @@ async def what_if_analysis(
 
         # Analyze each change
         for change in proposed_changes:
-            person = db.query(Person).filter(Person.id == change.person_id).first()
+            person = (await db.execute(select(Person).where(Person.id == change.person_id))).scalar_one_or_none()
             if person:
                 affected_residents.add(person.name)
 
@@ -716,7 +716,7 @@ async def export_for_research(
     start_date: datetime = Query(..., description="Start date (ISO format)"),
     end_date: datetime = Query(..., description="End date (ISO format)"),
     anonymize: bool = Query(True, description="Anonymize sensitive data"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> ResearchDataExport:
     """
