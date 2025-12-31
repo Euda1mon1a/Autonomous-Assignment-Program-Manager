@@ -60,6 +60,17 @@ class RotationTemplate(Base):
         uselist=False,  # One-to-one relationship
         cascade="all, delete-orphan",
     )
+    preferences = relationship(
+        "RotationPreference",
+        back_populates="rotation_template",
+        cascade="all, delete-orphan",
+    )
+    weekly_patterns = relationship(
+        "WeeklyPattern",
+        back_populates="rotation_template",
+        foreign_keys="[WeeklyPattern.rotation_template_id]",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self):
         return f"<RotationTemplate(name='{self.name}', type='{self.activity_type}')>"

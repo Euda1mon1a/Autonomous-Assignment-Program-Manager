@@ -77,13 +77,9 @@ def create_test_context(
     """Create a test scheduling context."""
     residents = [MockPerson() for _ in range(n_residents)]
     blocks = [
-        MockBlock(block_date=date.today() + timedelta(days=i))
-        for i in range(n_blocks)
+        MockBlock(block_date=date.today() + timedelta(days=i)) for i in range(n_blocks)
     ]
-    templates = [
-        MockTemplate(name=f"Template_{i}")
-        for i in range(n_templates)
-    ]
+    templates = [MockTemplate(name=f"Template_{i}") for i in range(n_templates)]
 
     return SchedulingContext(
         blocks=blocks,
@@ -143,7 +139,7 @@ class TestQUBOTemplateFormulation:
             assert isinstance(coef, (int, float))
 
         # Matrix should be upper triangular (i <= j)
-        for (i, j) in Q.keys():
+        for i, j in Q.keys():
             assert i <= j
 
     def test_objective_matrices_populated(self):
@@ -167,9 +163,7 @@ class TestQUBOTemplateFormulation:
 
         # Coverage matrix should have negative diagonal terms
         coverage_matrix = formulation.objective_matrices["coverage"]
-        diagonal_sum = sum(
-            coef for (i, j), coef in coverage_matrix.items() if i == j
-        )
+        diagonal_sum = sum(coef for (i, j), coef in coverage_matrix.items() if i == j)
         assert diagonal_sum < 0  # Negative encourages x[i] = 1
 
     def test_solution_decoding(self):
@@ -179,7 +173,7 @@ class TestQUBOTemplateFormulation:
         formulation.build()
 
         # Create a sample solution where first variable is 1
-        sample = {i: 0 for i in range(formulation.num_variables)}
+        sample = dict.fromkeys(range(formulation.num_variables), 0)
         sample[0] = 1
 
         assignments = formulation.decode_solution(sample)

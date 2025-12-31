@@ -256,7 +256,10 @@ class FeedbackProcessor:
 
         # If reason mentions specific objective, decrease that weight
         for obj in self.active_objectives:
-            if obj.name.lower() in reason.lower() or obj.display_name.lower() in reason.lower():
+            if (
+                obj.name.lower() in reason.lower()
+                or obj.display_name.lower() in reason.lower()
+            ):
                 deltas[obj.name] = -self.learning_rate * 0.5
 
         return deltas

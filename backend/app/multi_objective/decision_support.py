@@ -204,7 +204,9 @@ class TradeOffAnalyzer:
         Returns:
             List of (solution, trade-offs) with favorable trade-offs
         """
-        obj_config = next((o for o in self.active_objectives if o.name == objective), None)
+        obj_config = next(
+            (o for o in self.active_objectives if o.name == objective), None
+        )
         if obj_config is None:
             return []
 
@@ -260,9 +262,7 @@ class TradeOffAnalyzer:
         # Sort by objective_a
         obj_a = next(o for o in self.active_objectives if o.name == objective_a)
         if obj_a.direction == ObjectiveDirection.MAXIMIZE:
-            solutions.sort(
-                key=lambda s: s.objective_values.get(objective_a, 0.0)
-            )
+            solutions.sort(key=lambda s: s.objective_values.get(objective_a, 0.0))
         else:
             solutions.sort(
                 key=lambda s: s.objective_values.get(objective_a, 0.0), reverse=True
@@ -642,7 +642,9 @@ class PreferenceElicitor:
         self.reference_point: dict[str, float] = {}
 
         # History
-        self.comparisons: list[tuple[Solution, Solution, int]] = []  # (a, b, preferred: 0=a, 1=b)
+        self.comparisons: list[
+            tuple[Solution, Solution, int]
+        ] = []  # (a, b, preferred: 0=a, 1=b)
         self.selections: list[Solution] = []
 
     def record_comparison(
@@ -690,7 +692,9 @@ class PreferenceElicitor:
         # Normalize weights
         total = sum(self.inferred_weights.values())
         if total > 0:
-            self.inferred_weights = {k: v / total for k, v in self.inferred_weights.items()}
+            self.inferred_weights = {
+                k: v / total for k, v in self.inferred_weights.items()
+            }
 
     def _update_reference_from_selection(self, solution: Solution) -> None:
         """Update reference point based on selection."""
@@ -899,9 +903,7 @@ class DecisionMaker:
 
         return ranked[0][0] if ranked else None
 
-    def compare_solutions(
-        self, sol_a: Solution, sol_b: Solution
-    ) -> SolutionComparison:
+    def compare_solutions(self, sol_a: Solution, sol_b: Solution) -> SolutionComparison:
         """Compare two solutions in detail."""
         dominance = compare_dominance(sol_a, sol_b, self.objectives)
         trade_offs = self.trade_off_analyzer.analyze_trade_off(sol_a, sol_b)
@@ -943,25 +945,29 @@ class DecisionMaker:
         """Record a preference between two solutions."""
         self.preference_elicitor.record_comparison(sol_a, sol_b, preferred)
 
-        self.decision_history.append({
-            "type": "comparison",
-            "solution_a": str(sol_a.id),
-            "solution_b": str(sol_b.id),
-            "preferred": preferred,
-            "timestamp": datetime.now().isoformat(),
-        })
+        self.decision_history.append(
+            {
+                "type": "comparison",
+                "solution_a": str(sol_a.id),
+                "solution_b": str(sol_b.id),
+                "preferred": preferred,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
     def select_solution(self, solution: Solution) -> None:
         """Select a solution as the final choice."""
         self.selected_solution = solution
         self.preference_elicitor.record_selection(solution)
 
-        self.decision_history.append({
-            "type": "selection",
-            "solution": str(solution.id),
-            "objective_values": solution.objective_values,
-            "timestamp": datetime.now().isoformat(),
-        })
+        self.decision_history.append(
+            {
+                "type": "selection",
+                "solution": str(solution.id),
+                "objective_values": solution.objective_values,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
     def get_recommendation(self) -> tuple[Solution | None, str]:
         """
@@ -970,7 +976,10 @@ class DecisionMaker:
         Returns:
             Tuple of (recommended solution, explanation)
         """
-        if not self.preference_elicitor.comparisons and not self.preference_elicitor.selections:
+        if (
+            not self.preference_elicitor.comparisons
+            and not self.preference_elicitor.selections
+        ):
             knee = self.frontier.get_knee_solution()
             return knee, "Balanced knee solution (no preferences recorded yet)"
 

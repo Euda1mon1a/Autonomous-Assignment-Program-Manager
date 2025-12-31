@@ -1,8 +1,13 @@
 import { render, screen, within } from '@testing-library/react'
 import { ScheduleCalendar } from '@/components/ScheduleCalendar'
 
+// Helper to create a local date (avoiding timezone issues)
+function localDate(year: number, month: number, day: number): Date {
+  return new Date(year, month - 1, day) // month is 0-indexed
+}
+
 describe('ScheduleCalendar', () => {
-  const weekStart = new Date('2024-02-12') // Monday, Feb 12, 2024
+  const weekStart = localDate(2024, 2, 12) // Monday, Feb 12, 2024
 
   const mockSchedule = {
     '2024-02-12': {
@@ -218,15 +223,16 @@ describe('ScheduleCalendar', () => {
         <ScheduleCalendar weekStart={weekStart} schedule={scheduleWithMultipleResidents} />
       )
 
-      const personRows = container.querySelectorAll('.grid.grid-cols-8.border-b')
-      const firstPersonName = within(personRows[0] as HTMLElement).getByText(/Dr\./i)
-      const secondPersonName = within(personRows[1] as HTMLElement).getByText(/Dr\./i)
-      const thirdPersonName = within(personRows[2] as HTMLElement).getByText(/Dr\./i)
+      // Get person rows (exclude header row which has bg-gray-50)
+      const personRows = container.querySelectorAll('.grid.grid-cols-8.border-b.hover\\:bg-gray-50')
 
-      // Should be sorted PGY-1, PGY-2, PGY-3
-      expect(firstPersonName).toHaveTextContent('Dr. Bob Smith')
-      expect(secondPersonName).toHaveTextContent('Dr. Charlie Jones')
-      expect(thirdPersonName).toHaveTextContent('Dr. Alice Brown')
+      // Should have 3 person rows sorted by PGY level
+      expect(personRows.length).toBe(3)
+
+      // Check order - PGY-1 (Bob), PGY-2 (Charlie), PGY-3 (Alice)
+      expect(personRows[0].textContent).toContain('Dr. Bob Smith')
+      expect(personRows[1].textContent).toContain('Dr. Charlie Jones')
+      expect(personRows[2].textContent).toContain('Dr. Alice Brown')
     })
 
     it('should sort by name when PGY levels are equal', () => {
@@ -266,13 +272,13 @@ describe('ScheduleCalendar', () => {
         <ScheduleCalendar weekStart={weekStart} schedule={scheduleWithSamePGY} />
       )
 
-      const personRows = container.querySelectorAll('.grid.grid-cols-8.border-b')
-      const firstPersonName = within(personRows[0] as HTMLElement).getByText(/Dr\./i)
-      const secondPersonName = within(personRows[1] as HTMLElement).getByText(/Dr\./i)
+      // Get person rows (exclude header row)
+      const personRows = container.querySelectorAll('.grid.grid-cols-8.border-b.hover\\:bg-gray-50')
 
-      // Should be sorted alphabetically
-      expect(firstPersonName).toHaveTextContent('Dr. Alice Jones')
-      expect(secondPersonName).toHaveTextContent('Dr. Zachary Smith')
+      // Should have 2 person rows sorted alphabetically
+      expect(personRows.length).toBe(2)
+      expect(personRows[0].textContent).toContain('Dr. Alice Jones')
+      expect(personRows[1].textContent).toContain('Dr. Zachary Smith')
     })
   })
 
@@ -312,8 +318,9 @@ describe('ScheduleCalendar', () => {
         <ScheduleCalendar weekStart={weekStart} schedule={mockSchedule} />
       )
 
-      const saturdayHeader = screen.getByText('Sat').closest('div')
-      expect(saturdayHeader).toHaveClass('bg-gray-100')
+      // Saturday header - the parent div should have bg-gray-100
+      const saturdayHeader = screen.getByText('Sat').parentElement
+      expect(saturdayHeader?.className).toMatch(/bg-gray-100/)
     })
 
     it('should apply weekend styling to Sunday header', () => {
@@ -321,8 +328,9 @@ describe('ScheduleCalendar', () => {
         <ScheduleCalendar weekStart={weekStart} schedule={mockSchedule} />
       )
 
-      const sundayHeader = screen.getByText('Sun').closest('div')
-      expect(sundayHeader).toHaveClass('bg-gray-100')
+      // Sunday header - the parent div should have bg-gray-100
+      const sundayHeader = screen.getByText('Sun').parentElement
+      expect(sundayHeader?.className).toMatch(/bg-gray-100/)
     })
 
     it('should not apply weekend styling to weekday headers', () => {
@@ -330,8 +338,8 @@ describe('ScheduleCalendar', () => {
         <ScheduleCalendar weekStart={weekStart} schedule={mockSchedule} />
       )
 
-      const mondayHeader = screen.getByText('Mon').closest('div')
-      expect(mondayHeader).not.toHaveClass('bg-gray-100')
+      const mondayHeader = screen.getByText('Mon').parentElement
+      expect(mondayHeader?.className).not.toMatch(/bg-gray-100/)
     })
   })
 
@@ -353,7 +361,8 @@ describe('ScheduleCalendar', () => {
         <ScheduleCalendar weekStart={weekStart} schedule={{}} />
       )
 
-      const personRows = container.querySelectorAll('.grid.grid-cols-8.border-b')
+      // Only the header row with border-b exists, no person rows with hover:bg-gray-50
+      const personRows = container.querySelectorAll('.grid.grid-cols-8.border-b.hover\\:bg-gray-50')
       expect(personRows.length).toBe(0)
     })
 
@@ -467,7 +476,7 @@ describe('ScheduleCalendar', () => {
 
   describe('Week Start Handling', () => {
     it('should handle different week start dates', () => {
-      const differentWeekStart = new Date('2024-03-18') // Different week
+      const differentWeekStart = localDate(2024, 3, 18) // Different week
 
       render(<ScheduleCalendar weekStart={differentWeekStart} schedule={{}} />)
 
@@ -475,7 +484,7 @@ describe('ScheduleCalendar', () => {
     })
 
     it('should always render 7 consecutive days from weekStart', () => {
-      const differentWeekStart = new Date('2024-03-18')
+      const differentWeekStart = localDate(2024, 3, 18)
 
       render(<ScheduleCalendar weekStart={differentWeekStart} schedule={{}} />)
 

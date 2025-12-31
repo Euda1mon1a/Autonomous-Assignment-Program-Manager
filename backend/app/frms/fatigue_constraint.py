@@ -44,18 +44,12 @@ logger = logging.getLogger(__name__)
 
 
 # =============================================================================
-# Constraint Type Extension
+# Constraint Type Aliases (FRMS types now in base ConstraintType)
 # =============================================================================
 
-# Add FRMS-specific constraint types
-class FRMSConstraintType(ConstraintType):
-    """Extended constraint types for FRMS integration."""
-
-    FATIGUE_LIMIT = "fatigue_limit"
-    CIRCADIAN_PROTECTION = "circadian_protection"
-    WOCL_RESTRICTION = "wocl_restriction"
-    RECOVERY_REQUIREMENT = "recovery_requirement"
-    SHIFT_DURATION_LIMIT = "shift_duration_limit"
+# FRMS constraint types are now defined in ConstraintType enum.
+# These aliases provide backward compatibility.
+FRMSConstraintType = ConstraintType  # Alias for backward compatibility
 
 
 # =============================================================================
@@ -236,12 +230,16 @@ class FatigueConstraint(HardConstraint):
         # Get assignment variables
         x = variables.get("x")  # x[r, b, t] binary assignment vars
         if x is None:
-            logger.warning("No assignment variables found - skipping fatigue constraint")
+            logger.warning(
+                "No assignment variables found - skipping fatigue constraint"
+            )
             return
 
         # Initialize states if not done
         if not self._alertness_states:
-            self.initialize_states(context, datetime.combine(context.start_date, datetime.min.time()))
+            self.initialize_states(
+                context, datetime.combine(context.start_date, datetime.min.time())
+            )
 
         blocked_count = 0
 
@@ -303,7 +301,9 @@ class FatigueConstraint(HardConstraint):
             return
 
         if not self._alertness_states:
-            self.initialize_states(context, datetime.combine(context.start_date, datetime.min.time()))
+            self.initialize_states(
+                context, datetime.combine(context.start_date, datetime.min.time())
+            )
 
         for resident in context.residents:
             r_idx = context.resident_idx.get(resident.id)
@@ -323,7 +323,10 @@ class FatigueConstraint(HardConstraint):
                             key = (r_idx, b_idx, t_idx)
                             if key in x:
                                 # PuLP: x == 0 constraint
-                                model += x[key] == 0, f"fatigue_block_{r_idx}_{b_idx}_{t_idx}"
+                                model += (
+                                    x[key] == 0,
+                                    f"fatigue_block_{r_idx}_{b_idx}_{t_idx}",
+                                )
 
     def validate(
         self,
@@ -365,7 +368,9 @@ class FatigueConstraint(HardConstraint):
                     violation_type="effectiveness_below_threshold",
                     predicted_effectiveness=effectiveness,
                     threshold=self.threshold,
-                    severity="HIGH" if effectiveness < self.CRITICAL_THRESHOLD else "MEDIUM",
+                    severity="HIGH"
+                    if effectiveness < self.CRITICAL_THRESHOLD
+                    else "MEDIUM",
                     recommendation="Reduce prior workload or reschedule",
                 )
                 violations.append(fatigue_violation.to_constraint_violation())
@@ -491,7 +496,9 @@ class FatigueSoftConstraint(SoftConstraint):
                         t_idx = context.template_idx.get(template.id)
                         if t_idx is not None and (r_idx, b_idx, t_idx) in x:
                             # Add penalty term: penalty * x[r,b,t]
-                            objective_terms.append((int(penalty), x[r_idx, b_idx, t_idx]))
+                            objective_terms.append(
+                                (int(penalty), x[r_idx, b_idx, t_idx])
+                            )
 
         variables["objective_terms"] = objective_terms
 
@@ -652,9 +659,7 @@ class CircadianConstraint(SoftConstraint):
         # Check if shift overlaps WOCL
         wocl_overlap = False
         if shift_start_hour <= self.WOCL_END or shift_end_hour >= self.WOCL_START:
-            wocl_overlap = self._check_wocl_overlap(
-                shift_start_hour, shift_duration
-            )
+            wocl_overlap = self._check_wocl_overlap(shift_start_hour, shift_duration)
 
         if wocl_overlap:
             wocl_hours = self._calculate_wocl_hours(shift_start_hour, shift_duration)
@@ -662,7 +667,9 @@ class CircadianConstraint(SoftConstraint):
 
             # Extra penalty for procedures during WOCL
             if has_procedure:
-                if procedure_type.lower() in [p.lower() for p in self.HIGH_RISK_PROCEDURES]:
+                if procedure_type.lower() in [
+                    p.lower() for p in self.HIGH_RISK_PROCEDURES
+                ]:
                     penalty *= self.wocl_multiplier
 
         # Shift duration penalty
@@ -694,7 +701,9 @@ class CircadianConstraint(SoftConstraint):
         if end_hour > 24:
             # Overnight shift
             # First check 2-6 AM on next day
-            wocl_start_next = max(0, min(self.WOCL_END, end_hour % 24) - self.WOCL_START)
+            wocl_start_next = max(
+                0, min(self.WOCL_END, end_hour % 24) - self.WOCL_START
+            )
             wocl_hours += max(0, wocl_start_next)
 
             # Check if shift started before WOCL ended

@@ -225,9 +225,7 @@ class PropagationAnalyzer:
             # Get assignments at this depth
             assignments_at_depth = set()
             for block_id in blocks_at_depth:
-                assignments_at_depth.update(
-                    self._get_assignments_for_block(block_id)
-                )
+                assignments_at_depth.update(self._get_assignments_for_block(block_id))
 
             # Estimate constraint density at this depth
             constraint_density = self._estimate_constraint_density(blocks_at_depth)
@@ -453,7 +451,7 @@ class AndersonLocalizer:
             boundary_factor = 1.0
 
         # Combine factors
-        escape_prob = (size_factor * 0.4 + decay_factor * 0.3 + boundary_factor * 0.3)
+        escape_prob = size_factor * 0.4 + decay_factor * 0.3 + boundary_factor * 0.3
 
         return min(1.0, max(0.0, escape_prob))
 

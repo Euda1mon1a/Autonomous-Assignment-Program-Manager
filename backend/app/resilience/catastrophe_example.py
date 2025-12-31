@@ -33,9 +33,7 @@ def example_deployment_season_monitoring():
     print()
 
     # Initialize catastrophe detector
-    detector = CatastropheDetector(
-        demand_range=(0.5, 1.2), strictness_range=(0.0, 1.0)
-    )
+    detector = CatastropheDetector(demand_range=(0.5, 1.2), strictness_range=(0.0, 1.0))
 
     # Initialize defense in depth
     defense = DefenseInDepth()
@@ -46,7 +44,9 @@ def example_deployment_season_monitoring():
     # Map the feasibility surface
     surface = detector.map_constraint_space(resolution=(30, 30))
 
-    print(f"✓ Surface mapped: {surface.grid_resolution[0]}x{surface.grid_resolution[1]} grid")
+    print(
+        f"✓ Surface mapped: {surface.grid_resolution[0]}x{surface.grid_resolution[1]} grid"
+    )
     print(f"  Computation time: {surface.computation_time_seconds:.2f}s")
     print()
 
@@ -101,7 +101,7 @@ def example_deployment_season_monitoring():
         )
         trajectory.append(params)
 
-        print(f"  {i+1:5d} | {demand:6.2f} | {strictness:6.2f} | {description}")
+        print(f"  {i + 1:5d} | {demand:6.2f} | {strictness:6.2f} | {description}")
 
     print()
 
@@ -110,8 +110,10 @@ def example_deployment_season_monitoring():
     print()
 
     for i, params in enumerate(trajectory):
-        print(f"Month {i+1}: {params.metadata['scenario']}")
-        print(f"  Parameters: demand={params.demand:.2f}, strictness={params.strictness:.2f}")
+        print(f"Month {i + 1}: {params.metadata['scenario']}")
+        print(
+            f"  Parameters: demand={params.demand:.2f}, strictness={params.strictness:.2f}"
+        )
 
         # Compute distance to catastrophe
         distance = detector.compute_distance_to_catastrophe(params, analysis)
@@ -124,7 +126,9 @@ def example_deployment_season_monitoring():
             print(f"  ⚠️  ALERT: {alert.severity.upper()}")
             print(f"      Region: {alert.region.value}")
             print(f"      Message: {alert.message}")
-            print(f"      Recommended defense level: {alert.recommended_defense_level.name}")
+            print(
+                f"      Recommended defense level: {alert.recommended_defense_level.name}"
+            )
 
             # Activate appropriate defense level
             defense_level = alert.recommended_defense_level
@@ -224,7 +228,7 @@ def example_multi_scenario_comparison():
     }
 
     print(f"{'Scenario':<40} | Distance | Risk Level")
-    print(f"{'-'*40}-|----------|------------")
+    print(f"{'-' * 40}-|----------|------------")
 
     for name, params in scenarios.items():
         distance = detector.compute_distance_to_catastrophe(params, analysis)

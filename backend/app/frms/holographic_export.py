@@ -260,22 +260,25 @@ class HolographicExporter:
             max_eff = max(max_eff, score.overall)
 
             # Create data point
-            data_points.append({
-                "timestamp": current_time.isoformat(),
-                "timestamp_epoch": current_time.timestamp(),
-                "effectiveness": round(score.overall, 2),
-                "homeostatic": round(score.homeostatic, 2),
-                "circadian": round(score.circadian, 2),
-                "sleep_inertia": round(score.sleep_inertia, 2),
-                "risk_level": score.risk_level,
-                "circadian_phase": state.circadian_phase.value,
-                "color": self._effectiveness_to_color(score.overall),
-                "position": {
-                    "x": (current_time - start_time).total_seconds() / 3600.0,  # hours
-                    "y": score.overall / 100.0,  # normalized
-                    "z": 0,  # can be used for 3D trajectory
-                },
-            })
+            data_points.append(
+                {
+                    "timestamp": current_time.isoformat(),
+                    "timestamp_epoch": current_time.timestamp(),
+                    "effectiveness": round(score.overall, 2),
+                    "homeostatic": round(score.homeostatic, 2),
+                    "circadian": round(score.circadian, 2),
+                    "sleep_inertia": round(score.sleep_inertia, 2),
+                    "risk_level": score.risk_level,
+                    "circadian_phase": state.circadian_phase.value,
+                    "color": self._effectiveness_to_color(score.overall),
+                    "position": {
+                        "x": (current_time - start_time).total_seconds()
+                        / 3600.0,  # hours
+                        "y": score.overall / 100.0,  # normalized
+                        "z": 0,  # can be used for 3D trajectory
+                    },
+                }
+            )
 
             current_time += timedelta(minutes=sample_interval_minutes)
 
@@ -336,27 +339,41 @@ class HolographicExporter:
         for hour in range(24):
             values = hourly_bins[hour]
             if values:
-                circadian_pattern.append({
-                    "hour": hour,
-                    "avg_effectiveness": round(sum(values) / len(values), 2),
-                    "std_dev": round(self._std_dev(values), 2),
-                    "sample_count": len(values),
-                    "color": self._effectiveness_to_color(sum(values) / len(values)),
-                })
+                circadian_pattern.append(
+                    {
+                        "hour": hour,
+                        "avg_effectiveness": round(sum(values) / len(values), 2),
+                        "std_dev": round(self._std_dev(values), 2),
+                        "sample_count": len(values),
+                        "color": self._effectiveness_to_color(
+                            sum(values) / len(values)
+                        ),
+                    }
+                )
 
         # Calculate weekly pattern
-        day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        day_names = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+        ]
         weekly_pattern = []
         for day in range(7):
             values = daily_bins[day]
             if values:
-                weekly_pattern.append({
-                    "day_of_week": day,
-                    "day_name": day_names[day],
-                    "avg_effectiveness": round(sum(values) / len(values), 2),
-                    "std_dev": round(self._std_dev(values), 2),
-                    "sample_count": len(values),
-                })
+                weekly_pattern.append(
+                    {
+                        "day_of_week": day,
+                        "day_name": day_names[day],
+                        "avg_effectiveness": round(sum(values) / len(values), 2),
+                        "std_dev": round(self._std_dev(values), 2),
+                        "sample_count": len(values),
+                    }
+                )
 
         # Build heatmap matrix
         heatmap_data = []
@@ -413,21 +430,21 @@ class HolographicExporter:
         sorted_blocks = sorted(
             blocks,
             key=lambda b: (
-                b.get("date") if isinstance(b.get("date"), (date, datetime))
+                b.get("date")
+                if isinstance(b.get("date"), (date, datetime))
                 else date.fromisoformat(str(b.get("date", "2000-01-01")))
-            )
+            ),
         )
 
         # Sort persons by PGY level
         sorted_persons = sorted(
-            persons,
-            key=lambda p: (p.get("pgy_level", 0), p.get("name", ""))
+            persons, key=lambda p: (p.get("pgy_level", 0), p.get("name", ""))
         )
 
         # Activity types
-        activity_types = sorted(list(set(
-            a.get("rotation_type", "unknown") for a in assignments
-        )))
+        activity_types = sorted(
+            list(set(a.get("rotation_type", "unknown") for a in assignments))
+        )
 
         # Build index maps
         block_idx = {b.get("id"): i for i, b in enumerate(sorted_blocks)}
@@ -454,16 +471,18 @@ class HolographicExporter:
             else:
                 effectiveness = 85.0  # Default
 
-            voxels.append({
-                "position": {"x": x, "y": y, "z": z},
-                "person_id": str(person_id),
-                "block_id": str(block_id),
-                "effectiveness": round(effectiveness, 2),
-                "color": self._effectiveness_to_color(effectiveness),
-                "opacity": min(1.0, effectiveness / 100.0),
-                "is_critical": effectiveness < 70,
-                "is_warning": 70 <= effectiveness < 77,
-            })
+            voxels.append(
+                {
+                    "position": {"x": x, "y": y, "z": z},
+                    "person_id": str(person_id),
+                    "block_id": str(block_id),
+                    "effectiveness": round(effectiveness, 2),
+                    "color": self._effectiveness_to_color(effectiveness),
+                    "opacity": min(1.0, effectiveness / 100.0),
+                    "is_critical": effectiveness < 70,
+                    "is_warning": 70 <= effectiveness < 77,
+                }
+            )
 
         return SpatialFatigueMap(
             export_time=now,
@@ -532,21 +551,27 @@ class HolographicExporter:
                 hours_ahead = (current_time - now).total_seconds() / 3600.0
                 confidence_width = 5.0 + hours_ahead * 0.5  # Wider bands further out
 
-                predictions.append({
-                    "timestamp": current_time.isoformat(),
-                    "effectiveness": round(score.overall, 2),
-                    "hours_ahead": round(hours_ahead, 1),
-                })
+                predictions.append(
+                    {
+                        "timestamp": current_time.isoformat(),
+                        "effectiveness": round(score.overall, 2),
+                        "hours_ahead": round(hours_ahead, 1),
+                    }
+                )
 
-                confidence_high.append({
-                    "timestamp": current_time.isoformat(),
-                    "value": round(min(100, score.overall + confidence_width), 2),
-                })
+                confidence_high.append(
+                    {
+                        "timestamp": current_time.isoformat(),
+                        "value": round(min(100, score.overall + confidence_width), 2),
+                    }
+                )
 
-                confidence_low.append({
-                    "timestamp": current_time.isoformat(),
-                    "value": round(max(0, score.overall - confidence_width), 2),
-                })
+                confidence_low.append(
+                    {
+                        "timestamp": current_time.isoformat(),
+                        "value": round(max(0, score.overall - confidence_width), 2),
+                    }
+                )
 
                 current_time += timedelta(hours=1)
 
@@ -585,7 +610,7 @@ class HolographicExporter:
             return 0.0
         mean = sum(values) / len(values)
         variance = sum((x - mean) ** 2 for x in values) / len(values)
-        return variance ** 0.5
+        return variance**0.5
 
     def _detect_resonance_patterns(
         self,
@@ -603,30 +628,38 @@ class HolographicExporter:
         if wocl_hours:
             wocl_avg = sum(p["avg_effectiveness"] for p in wocl_hours) / len(wocl_hours)
             if wocl_avg < 75:
-                patterns.append({
-                    "type": "wocl_fatigue",
-                    "description": "Low effectiveness during WOCL (2-6 AM)",
-                    "avg_effectiveness": round(wocl_avg, 2),
-                    "severity": "high" if wocl_avg < 70 else "moderate",
-                    "hours_affected": [p["hour"] for p in wocl_hours],
-                })
+                patterns.append(
+                    {
+                        "type": "wocl_fatigue",
+                        "description": "Low effectiveness during WOCL (2-6 AM)",
+                        "avg_effectiveness": round(wocl_avg, 2),
+                        "severity": "high" if wocl_avg < 70 else "moderate",
+                        "hours_affected": [p["hour"] for p in wocl_hours],
+                    }
+                )
 
         # Find post-lunch dip
         lunch_hours = [p for p in circadian_pattern if 13 <= p["hour"] < 16]
         if lunch_hours:
-            lunch_avg = sum(p["avg_effectiveness"] for p in lunch_hours) / len(lunch_hours)
+            lunch_avg = sum(p["avg_effectiveness"] for p in lunch_hours) / len(
+                lunch_hours
+            )
             # Compare to morning peak
             morning_hours = [p for p in circadian_pattern if 9 <= p["hour"] < 12]
             if morning_hours:
-                morning_avg = sum(p["avg_effectiveness"] for p in morning_hours) / len(morning_hours)
+                morning_avg = sum(p["avg_effectiveness"] for p in morning_hours) / len(
+                    morning_hours
+                )
                 if lunch_avg < morning_avg - 5:
-                    patterns.append({
-                        "type": "post_lunch_dip",
-                        "description": "Significant post-lunch fatigue drop",
-                        "morning_avg": round(morning_avg, 2),
-                        "afternoon_avg": round(lunch_avg, 2),
-                        "severity": "low" if lunch_avg > 80 else "moderate",
-                    })
+                    patterns.append(
+                        {
+                            "type": "post_lunch_dip",
+                            "description": "Significant post-lunch fatigue drop",
+                            "morning_avg": round(morning_avg, 2),
+                            "afternoon_avg": round(lunch_avg, 2),
+                            "severity": "low" if lunch_avg > 80 else "moderate",
+                        }
+                    )
 
         return patterns
 
@@ -649,22 +682,27 @@ class HolographicExporter:
             elif effectiveness >= 77 and in_risk:
                 # End of risk period
                 in_risk = False
-                risk_periods.append({
-                    "start": risk_start,
-                    "end": p["timestamp"],
-                    "min_effectiveness": min(
-                        x["effectiveness"] for x in predictions
-                        if risk_start <= x["timestamp"] <= p["timestamp"]
-                    ),
-                })
+                risk_periods.append(
+                    {
+                        "start": risk_start,
+                        "end": p["timestamp"],
+                        "min_effectiveness": min(
+                            x["effectiveness"]
+                            for x in predictions
+                            if risk_start <= x["timestamp"] <= p["timestamp"]
+                        ),
+                    }
+                )
 
         # Close any open risk period
         if in_risk and predictions:
-            risk_periods.append({
-                "start": risk_start,
-                "end": predictions[-1]["timestamp"],
-                "min_effectiveness": predictions[-1]["effectiveness"],
-            })
+            risk_periods.append(
+                {
+                    "start": risk_start,
+                    "end": predictions[-1]["timestamp"],
+                    "min_effectiveness": predictions[-1]["effectiveness"],
+                }
+            )
 
         return risk_periods
 

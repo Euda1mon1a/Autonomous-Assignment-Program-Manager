@@ -10,6 +10,7 @@ Security Note:
     - Manifest validation fails fast with descriptive error messages
     - No sensitive data (names, schedules) included in manifest
 """
+
 import hashlib
 import json
 import logging
@@ -49,29 +50,17 @@ class ExportManifest(BaseModel):
     """
 
     schema_version: str = Field(
-        ...,
-        description="Manifest schema version (semver)",
-        pattern=r"^\d+\.\d+\.\d+$"
+        ..., description="Manifest schema version (semver)", pattern=r"^\d+\.\d+\.\d+$"
     )
-    row_count: int = Field(
-        ...,
-        ge=0,
-        description="Number of rows in export"
-    )
+    row_count: int = Field(..., ge=0, description="Number of rows in export")
     sha256_rows: str = Field(
         ...,
         description="SHA256 hash of canonicalized rows",
         min_length=64,
-        max_length=64
+        max_length=64,
     )
-    generated_at: str = Field(
-        ...,
-        description="UTC timestamp in ISO8601 format"
-    )
-    export_type: ExportType = Field(
-        ...,
-        description="Type of export file"
-    )
+    generated_at: str = Field(..., description="UTC timestamp in ISO8601 format")
+    export_type: ExportType = Field(..., description="Type of export file")
 
     @field_validator("generated_at")
     @classmethod
@@ -140,9 +129,7 @@ def _compute_rows_hash(rows: list[dict]) -> str:
 
 
 def generate_manifest(
-    rows: list[dict],
-    schema_version: str,
-    export_type: ExportType
+    rows: list[dict], schema_version: str, export_type: ExportType
 ) -> dict:
     """
     Generate export manifest with integrity metadata.
@@ -188,7 +175,7 @@ def generate_manifest(
         row_count=len(rows),
         sha256_rows=sha256_rows,
         generated_at=generated_at,
-        export_type=export_type
+        export_type=export_type,
     )
 
     logger.debug(f"Generated manifest hash: {sha256_rows[:16]}...")
@@ -270,8 +257,7 @@ def verify_manifest(rows: list[dict], manifest_path: Path) -> tuple[bool, str]:
     # Verify row count
     if len(rows) != manifest.row_count:
         return False, (
-            f"Row count mismatch: expected {manifest.row_count}, "
-            f"got {len(rows)}"
+            f"Row count mismatch: expected {manifest.row_count}, got {len(rows)}"
         )
 
     # Recompute hash

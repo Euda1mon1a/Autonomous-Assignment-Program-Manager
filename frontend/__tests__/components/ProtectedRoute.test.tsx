@@ -488,6 +488,25 @@ describe('ProtectedRoute', () => {
       expect(screen.getByText(/access denied/i)).toBeInTheDocument()
     })
 
+    it('should handle empty string role gracefully', () => {
+      mockAuthContext.isLoading = false
+      mockAuthContext.isAuthenticated = true
+      mockAuthContext.user = {
+        id: '1',
+        username: 'testuser',
+        role: '', // Empty string role
+      }
+
+      render(
+        <ProtectedRoute requireAdmin>
+          <div>Content</div>
+        </ProtectedRoute>
+      )
+
+      // Should show access denied since role is not 'admin'
+      expect(screen.getByText(/access denied/i)).toBeInTheDocument()
+    })
+
     it('should handle empty children gracefully', () => {
       mockAuthContext.isLoading = false
       mockAuthContext.isAuthenticated = true
@@ -529,6 +548,154 @@ describe('ProtectedRoute', () => {
       expect(screen.getByText('First Child')).toBeInTheDocument()
       expect(screen.getByText('Second Child')).toBeInTheDocument()
       expect(screen.getByText('Third Child')).toBeInTheDocument()
+    })
+
+    it('should handle requireAdmin explicitly set to false', () => {
+      mockAuthContext.isLoading = false
+      mockAuthContext.isAuthenticated = true
+      mockAuthContext.user = {
+        id: '1',
+        username: 'testuser',
+        role: 'resident',
+      }
+
+      render(
+        <ProtectedRoute requireAdmin={false}>
+          <div data-testid="content">Regular Content</div>
+        </ProtectedRoute>
+      )
+
+      // Should render content for any authenticated user
+      expect(screen.getByTestId('content')).toBeInTheDocument()
+      expect(screen.queryByText(/access denied/i)).not.toBeInTheDocument()
+    })
+
+    it('should handle role case sensitivity correctly', () => {
+      mockAuthContext.isLoading = false
+      mockAuthContext.isAuthenticated = true
+      mockAuthContext.user = {
+        id: '1',
+        username: 'testuser',
+        role: 'Admin', // Capitalized 'Admin' instead of 'admin'
+      }
+
+      render(
+        <ProtectedRoute requireAdmin>
+          <div>Content</div>
+        </ProtectedRoute>
+      )
+
+      // Should show access denied since role check is case-sensitive ('Admin' !== 'admin')
+      expect(screen.getByText(/access denied/i)).toBeInTheDocument()
+    })
+
+    it('should handle ADMIN in all caps', () => {
+      mockAuthContext.isLoading = false
+      mockAuthContext.isAuthenticated = true
+      mockAuthContext.user = {
+        id: '1',
+        username: 'testuser',
+        role: 'ADMIN', // All caps
+      }
+
+      render(
+        <ProtectedRoute requireAdmin>
+          <div>Content</div>
+        </ProtectedRoute>
+      )
+
+      // Should show access denied since role check is case-sensitive ('ADMIN' !== 'admin')
+      expect(screen.getByText(/access denied/i)).toBeInTheDocument()
+    })
+
+    it('should allow clinical_staff role on non-admin routes', () => {
+      mockAuthContext.isLoading = false
+      mockAuthContext.isAuthenticated = true
+      mockAuthContext.user = {
+        id: '1',
+        username: 'clinicaluser',
+        role: 'clinical_staff',
+      }
+
+      render(
+        <ProtectedRoute>
+          <div data-testid="content">Clinical Content</div>
+        </ProtectedRoute>
+      )
+
+      expect(screen.getByTestId('content')).toBeInTheDocument()
+    })
+
+    it('should deny clinical_staff role on admin routes', () => {
+      mockAuthContext.isLoading = false
+      mockAuthContext.isAuthenticated = true
+      mockAuthContext.user = {
+        id: '1',
+        username: 'clinicaluser',
+        role: 'clinical_staff',
+      }
+
+      render(
+        <ProtectedRoute requireAdmin>
+          <div>Admin Content</div>
+        </ProtectedRoute>
+      )
+
+      expect(screen.getByText(/access denied/i)).toBeInTheDocument()
+    })
+
+    it('should allow rn role on non-admin routes', () => {
+      mockAuthContext.isLoading = false
+      mockAuthContext.isAuthenticated = true
+      mockAuthContext.user = {
+        id: '1',
+        username: 'nurseuser',
+        role: 'rn',
+      }
+
+      render(
+        <ProtectedRoute>
+          <div data-testid="content">RN Content</div>
+        </ProtectedRoute>
+      )
+
+      expect(screen.getByTestId('content')).toBeInTheDocument()
+    })
+
+    it('should allow lpn role on non-admin routes', () => {
+      mockAuthContext.isLoading = false
+      mockAuthContext.isAuthenticated = true
+      mockAuthContext.user = {
+        id: '1',
+        username: 'lpnuser',
+        role: 'lpn',
+      }
+
+      render(
+        <ProtectedRoute>
+          <div data-testid="content">LPN Content</div>
+        </ProtectedRoute>
+      )
+
+      expect(screen.getByTestId('content')).toBeInTheDocument()
+    })
+
+    it('should allow msa role on non-admin routes', () => {
+      mockAuthContext.isLoading = false
+      mockAuthContext.isAuthenticated = true
+      mockAuthContext.user = {
+        id: '1',
+        username: 'msauser',
+        role: 'msa',
+      }
+
+      render(
+        <ProtectedRoute>
+          <div data-testid="content">MSA Content</div>
+        </ProtectedRoute>
+      )
+
+      expect(screen.getByTestId('content')).toBeInTheDocument()
     })
   })
 

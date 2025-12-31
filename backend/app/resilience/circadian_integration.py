@@ -41,6 +41,7 @@ try:
 except ImportError:
     # Standalone import (for testing)
     import circadian_model
+
     CircadianImpact = circadian_model.CircadianImpact
     CircadianQualityLevel = circadian_model.CircadianQualityLevel
     CircadianScheduleAnalyzer = circadian_model.CircadianScheduleAnalyzer
@@ -186,7 +187,9 @@ class CircadianObjective:
                 )
 
         # Calculate overall metrics
-        avg_quality = sum(quality_scores) / len(quality_scores) if quality_scores else 1.0
+        avg_quality = (
+            sum(quality_scores) / len(quality_scores) if quality_scores else 1.0
+        )
         satisfied = len(violations) == 0
 
         # Penalty for violations
@@ -271,15 +274,17 @@ class CircadianScheduleOptimizer:
                     CircadianQualityLevel.POOR,
                     CircadianQualityLevel.CRITICAL,
                 ]:
-                    analysis["residents_at_risk"].append({
-                        "resident_id": str(resident_id),
-                        "quality_score": impact.quality_score,
-                        "quality_level": impact.quality_level.value,
-                        "phase_drift": impact.phase_drift,
-                        "amplitude": self.analyzer.get_or_create_oscillator(
-                            resident_id
-                        ).amplitude,
-                    })
+                    analysis["residents_at_risk"].append(
+                        {
+                            "resident_id": str(resident_id),
+                            "quality_score": impact.quality_score,
+                            "quality_level": impact.quality_level.value,
+                            "phase_drift": impact.phase_drift,
+                            "amplitude": self.analyzer.get_or_create_oscillator(
+                                resident_id
+                            ).amplitude,
+                        }
+                    )
 
                     # Add recommendation
                     if impact.quality_level == CircadianQualityLevel.CRITICAL:
@@ -377,12 +382,14 @@ class CircadianScheduleOptimizer:
             mini_schedule = [shift]
             impact = self.analyzer.analyze_schedule_impact(resident_id, mini_schedule)
 
-            scored_shifts.append({
-                "shift": shift,
-                "quality_score": impact.quality_score,
-                "phase_drift": impact.phase_drift,
-                "impact": impact,
-            })
+            scored_shifts.append(
+                {
+                    "shift": shift,
+                    "quality_score": impact.quality_score,
+                    "phase_drift": impact.phase_drift,
+                    "impact": impact,
+                }
+            )
 
         # Sort by quality (descending)
         scored_shifts.sort(key=lambda x: x["quality_score"], reverse=True)
@@ -408,7 +415,9 @@ class CircadianScheduleOptimizer:
                 "Consider:"
             )
             recommendations.append("- Reduce consecutive night shifts")
-            recommendations.append("- Add recovery days after circadian-disrupting shifts")
+            recommendations.append(
+                "- Add recovery days after circadian-disrupting shifts"
+            )
             recommendations.append("- Prefer forward rotation (day→evening→night)")
             recommendations.append("- Avoid rapid shift type changes")
 

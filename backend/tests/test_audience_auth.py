@@ -67,7 +67,9 @@ class TestCreateAudienceToken:
         assert isinstance(response.expires_at, datetime)
 
         # Verify token can be decoded
-        payload = jwt.decode(response.token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            response.token, settings.SECRET_KEY, algorithms=[ALGORITHM]
+        )
         assert payload["sub"] == user_id
         assert payload["aud"] == audience
         assert payload["type"] == "audience"
@@ -208,7 +210,9 @@ class TestVerifyAudienceToken:
         )
 
         # Decode to get jti
-        payload = jwt.decode(response.token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            response.token, settings.SECRET_KEY, algorithms=[ALGORITHM]
+        )
         jti = payload["jti"]
 
         # Blacklist the token
@@ -347,7 +351,9 @@ class TestRevokeAudienceToken:
         )
 
         # Decode to get jti
-        payload = jwt.decode(response.token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            response.token, settings.SECRET_KEY, algorithms=[ALGORITHM]
+        )
 
         # Revoke immediately
         revoke_audience_token(
@@ -600,10 +606,12 @@ class TestIntegrationScenarios:
 
 # Fixtures
 
+
 @pytest.fixture
 def db():
     """Mock database session for testing."""
     from unittest.mock import MagicMock
+
     db_mock = MagicMock()
 
     # Mock TokenBlacklist.is_blacklisted to track blacklisted tokens
@@ -619,5 +627,5 @@ def db():
     db_mock.commit.return_value = None
 
     # Patch TokenBlacklist.is_blacklisted
-    with patch.object(TokenBlacklist, 'is_blacklisted', side_effect=is_blacklisted):
+    with patch.object(TokenBlacklist, "is_blacklisted", side_effect=is_blacklisted):
         yield db_mock

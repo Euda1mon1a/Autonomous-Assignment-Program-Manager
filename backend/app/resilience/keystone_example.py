@@ -150,9 +150,7 @@ def example_keystone_analysis():
                 for candidate_id, candidate_name, suitability in plan.backup_candidates[
                     :3
                 ]:
-                    print(
-                        f"    - {candidate_name}: {suitability:.0%} suitability"
-                    )
+                    print(f"    - {candidate_name}: {suitability:.0%} suitability")
                 print()
 
             if plan.cross_training_needed:

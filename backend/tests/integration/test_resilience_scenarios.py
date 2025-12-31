@@ -26,7 +26,7 @@ from sqlalchemy.orm import Session
 from app.models.person import Person
 from app.models.block import Block
 from app.models.assignment import Assignment
-from app.models.credential import Credential
+from app.models.certification import PersonCertification, CertificationType
 from app.resilience.contingency import (
     ContingencyAnalyzer,
     Vulnerability,
@@ -57,14 +57,23 @@ def pals_certified_faculty(db: Session) -> Person:
     db.commit()
     db.refresh(faculty)
 
-    # Add PALS credential
-    pals = Credential(
+    # Add PALS credential (requires certification type first)
+    pals_type = CertificationType(
+        id=uuid4(),
+        name="PALS",
+        full_name="Pediatric Advanced Life Support",
+        renewal_period_months=24,
+    )
+    db.add(pals_type)
+    db.commit()
+
+    pals = PersonCertification(
         id=uuid4(),
         person_id=faculty.id,
-        credential_type="PALS",
+        certification_type_id=pals_type.id,
         issued_date=date(2024, 1, 1),
         expiration_date=date(2026, 1, 1),
-        is_valid=True,
+        status="current",
     )
     db.add(pals)
     db.commit()

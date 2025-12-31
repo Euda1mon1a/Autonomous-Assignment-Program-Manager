@@ -583,10 +583,7 @@ class MOEADAlgorithm:
                     best_wv = wv
 
             if best_wv is not None:
-                if (
-                    best_wv.current_solution is None
-                    or value < best_wv.subproblem_value
-                ):
+                if best_wv.current_solution is None or value < best_wv.subproblem_value:
                     best_wv.current_solution = sol
                     best_wv.subproblem_value = value
 
@@ -637,7 +634,9 @@ class MOEADAlgorithm:
 
         # Try to update neighbors
         neighbor_indices = (
-            wv.neighbors if np.random.random() < self.config.delta else list(range(len(self.weight_vectors)))
+            wv.neighbors
+            if np.random.random() < self.config.delta
+            else list(range(len(self.weight_vectors)))
         )
 
         for idx in neighbor_indices:
@@ -662,7 +661,9 @@ class MOEADAlgorithm:
         self, objective_name: str, top_k: int = 10
     ) -> list[Solution]:
         """Get top solutions for a specific objective."""
-        obj = next((o for o in self.active_objectives if o.name == objective_name), None)
+        obj = next(
+            (o for o in self.active_objectives if o.name == objective_name), None
+        )
         if obj is None:
             return []
 

@@ -41,11 +41,13 @@ logger = logging.getLogger(__name__)
 # CONSTANTS AND CONFIGURATION
 # ============================================================================
 
+
 class TemplateDesirability(str, Enum):
     """Classification of rotation template desirability."""
+
     HIGHLY_DESIRABLE = "highly_desirable"  # e.g., Sports Medicine, Electives
-    NEUTRAL = "neutral"                     # e.g., Standard Clinic
-    UNDESIRABLE = "undesirable"             # e.g., Night Float, Weekend Call
+    NEUTRAL = "neutral"  # e.g., Standard Clinic
+    UNDESIRABLE = "undesirable"  # e.g., Night Float, Weekend Call
 
 
 # Default desirability mappings (can be overridden)
@@ -85,7 +87,7 @@ class TemplateSelectionConfig:
     # Adaptive temperature parameters
     use_adaptive_temperature: bool = True
     reheat_threshold: float = 0.001  # Reheat if improvement < threshold
-    reheat_factor: float = 0.5       # Multiply beta by this on reheat
+    reheat_factor: float = 0.5  # Multiply beta by this on reheat
 
     # Pareto parameters
     pareto_population: int = 50
@@ -122,9 +124,9 @@ class ParetoSolution:
         """Check if this solution dominates another."""
         dominated = False
         for obj in self.objectives:
-            if self.objectives[obj] > other.objectives.get(obj, float('inf')):
+            if self.objectives[obj] > other.objectives.get(obj, float("inf")):
                 return False
-            if self.objectives[obj] < other.objectives.get(obj, float('inf')):
+            if self.objectives[obj] < other.objectives.get(obj, float("inf")):
                 dominated = True
         return dominated
 
@@ -175,6 +177,7 @@ class TemplateSelectionResult:
 # ============================================================================
 # QUBO TEMPLATE FORMULATION
 # ============================================================================
+
 
 class QUBOTemplateFormulation:
     """
@@ -231,8 +234,7 @@ class QUBOTemplateFormulation:
     def _build_rotation_periods(self) -> list[list[Any]]:
         """Aggregate blocks into rotation periods (2-week chunks)."""
         workday_blocks = sorted(
-            [b for b in self.context.blocks if not b.is_weekend],
-            key=lambda b: b.date
+            [b for b in self.context.blocks if not b.is_weekend], key=lambda b: b.date
         )
 
         if not workday_blocks:
@@ -257,8 +259,7 @@ class QUBOTemplateFormulation:
         """Build mapping from (resident, period, template) to flat index."""
         idx = 0
         valid_templates = [
-            t for t in self.context.templates
-            if not t.requires_procedure_credential
+            t for t in self.context.templates if not t.requires_procedure_credential
         ]
 
         for r_i, resident in enumerate(self.context.residents):
@@ -276,8 +277,7 @@ class QUBOTemplateFormulation:
         return len(self.var_index)
 
     def build(
-        self,
-        objective_weights: dict[str, float] | None = None
+        self, objective_weights: dict[str, float] | None = None
     ) -> dict[tuple[int, int], float]:
         """
         Build the complete QUBO matrix.
@@ -322,8 +322,7 @@ class QUBOTemplateFormulation:
                 self._add_to_Q(i, j, weight * coef)
 
         logger.info(
-            f"QUBO built: {self.num_variables} variables, "
-            f"{len(self.Q)} non-zero terms"
+            f"QUBO built: {self.num_variables} variables, {len(self.Q)} non-zero terms"
         )
 
         return self.Q
@@ -350,8 +349,7 @@ class QUBOTemplateFormulation:
         """
         matrix = self.objective_matrices["fairness"]
         valid_templates = [
-            t for t in self.context.templates
-            if not t.requires_procedure_credential
+            t for t in self.context.templates if not t.requires_procedure_credential
         ]
 
         n_residents = len(self.context.residents)
@@ -378,9 +376,7 @@ class QUBOTemplateFormulation:
 
             # Expected count per resident for this category
             n_periods = len(self.rotation_periods)
-            expected_per_resident = (
-                len(template_indices) * n_periods / n_residents
-            )
+            expected_per_resident = len(template_indices) * n_periods / n_residents
 
             # Penalty weight inversely proportional to expected count
             penalty = self.config.fairness_penalty / max(expected_per_resident, 1)
@@ -392,13 +388,11 @@ class QUBOTemplateFormulation:
                 for p_i in range(n_periods):
                     for t_i in template_indices:
                         if (r_i, p_i, t_i) in self.var_index:
-                            vars_for_resident.append(
-                                self.var_index[(r_i, p_i, t_i)]
-                            )
+                            vars_for_resident.append(self.var_index[(r_i, p_i, t_i)])
 
                 # Small penalty for each pair (discourages hoarding)
                 for i, idx1 in enumerate(vars_for_resident):
-                    for idx2 in vars_for_resident[i + 1:]:
+                    for idx2 in vars_for_resident[i + 1 :]:
                         key = (min(idx1, idx2), max(idx1, idx2))
                         matrix[key] = matrix.get(key, 0.0) + penalty * 0.1
 
@@ -410,8 +404,7 @@ class QUBOTemplateFormulation:
         """
         matrix = self.objective_matrices["preference"]
         valid_templates = [
-            t for t in self.context.templates
-            if not t.requires_procedure_credential
+            t for t in self.context.templates if not t.requires_procedure_credential
         ]
 
         # TODO: Integrate with actual preference data from context
@@ -439,8 +432,7 @@ class QUBOTemplateFormulation:
         """
         matrix = self.objective_matrices["learning"]
         valid_templates = [
-            t for t in self.context.templates
-            if not t.requires_procedure_credential
+            t for t in self.context.templates if not t.requires_procedure_credential
         ]
 
         n_periods = len(self.rotation_periods)
@@ -468,8 +460,7 @@ class QUBOTemplateFormulation:
         matrix = self.objective_matrices["constraints"]
         n_periods = len(self.rotation_periods)
         valid_templates = [
-            t for t in self.context.templates
-            if not t.requires_procedure_credential
+            t for t in self.context.templates if not t.requires_procedure_credential
         ]
 
         for r_i in range(len(self.context.residents)):
@@ -498,7 +489,7 @@ class QUBOTemplateFormulation:
 
                 # Quadratic terms (penalize multiple selections)
                 for i, idx1 in enumerate(period_vars):
-                    for idx2 in period_vars[i + 1:]:
+                    for idx2 in period_vars[i + 1 :]:
                         key = (min(idx1, idx2), max(idx1, idx2))
                         matrix[key] = matrix.get(key, 0.0) + 2 * penalty
 
@@ -510,14 +501,13 @@ class QUBOTemplateFormulation:
         """
         matrix = self.objective_matrices["constraints"]
         valid_templates = [
-            t for t in self.context.templates
-            if not t.requires_procedure_credential
+            t for t in self.context.templates if not t.requires_procedure_credential
         ]
         n_residents = len(self.context.residents)
         n_periods = len(self.rotation_periods)
 
         for t_i, template in enumerate(valid_templates):
-            max_capacity = getattr(template, 'max_residents', None)
+            max_capacity = getattr(template, "max_residents", None)
             if max_capacity is None or max_capacity >= n_residents:
                 continue
 
@@ -536,7 +526,7 @@ class QUBOTemplateFormulation:
                 penalty = self.config.soft_constraint_penalty * 10
 
                 for i, idx1 in enumerate(period_vars):
-                    for idx2 in period_vars[i + 1:]:
+                    for idx2 in period_vars[i + 1 :]:
                         key = (min(idx1, idx2), max(idx1, idx2))
                         matrix[key] = matrix.get(key, 0.0) + penalty / max_capacity
 
@@ -548,8 +538,7 @@ class QUBOTemplateFormulation:
         """
         matrix = self.objective_matrices["constraints"]
         valid_templates = [
-            t for t in self.context.templates
-            if not t.requires_procedure_credential
+            t for t in self.context.templates if not t.requires_procedure_credential
         ]
 
         for r_i, resident in enumerate(self.context.residents):
@@ -570,8 +559,10 @@ class QUBOTemplateFormulation:
                         if (r_i, p_i, t_i) in self.var_index:
                             idx = self.var_index[(r_i, p_i, t_i)]
                             key = (idx, idx)
-                            matrix[key] = matrix.get(key, 0.0) + \
-                                self.config.hard_constraint_penalty
+                            matrix[key] = (
+                                matrix.get(key, 0.0)
+                                + self.config.hard_constraint_penalty
+                            )
 
     def _add_to_Q(self, i: int, j: int, value: float):
         """Add value to Q matrix (symmetric)."""
@@ -581,8 +572,7 @@ class QUBOTemplateFormulation:
         self.Q[key] = self.Q.get(key, 0.0) + value
 
     def decode_solution(
-        self,
-        sample: dict[int, int]
+        self, sample: dict[int, int]
     ) -> list[tuple[UUID, UUID, UUID | None]]:
         """
         Decode QUBO solution to assignment list.
@@ -595,33 +585,33 @@ class QUBOTemplateFormulation:
         """
         assignments = []
         valid_templates = [
-            t for t in self.context.templates
-            if not t.requires_procedure_credential
+            t for t in self.context.templates if not t.requires_procedure_credential
         ]
 
         for idx, value in sample.items():
             if value == 1 and idx in self.index_to_var:
                 r_i, p_i, t_i = self.index_to_var[idx]
 
-                resident = self.context.residents[r_i] if r_i < len(self.context.residents) else None
+                resident = (
+                    self.context.residents[r_i]
+                    if r_i < len(self.context.residents)
+                    else None
+                )
                 template = valid_templates[t_i] if t_i < len(valid_templates) else None
-                period_blocks = self.rotation_periods[p_i] if p_i < len(self.rotation_periods) else []
+                period_blocks = (
+                    self.rotation_periods[p_i]
+                    if p_i < len(self.rotation_periods)
+                    else []
+                )
 
                 if resident and template and period_blocks:
                     # Create assignment for each block in the period
                     for block in period_blocks:
-                        assignments.append((
-                            resident.id,
-                            block.id,
-                            template.id
-                        ))
+                        assignments.append((resident.id, block.id, template.id))
 
         return assignments
 
-    def compute_objectives(
-        self,
-        sample: dict[int, int]
-    ) -> dict[str, float]:
+    def compute_objectives(self, sample: dict[int, int]) -> dict[str, float]:
         """
         Compute individual objective values for a solution.
 
@@ -648,6 +638,7 @@ class QUBOTemplateFormulation:
 # ============================================================================
 # ADAPTIVE TEMPERATURE SIMULATED ANNEALING
 # ============================================================================
+
 
 class AdaptiveTemperatureSchedule:
     """
@@ -676,7 +667,7 @@ class AdaptiveTemperatureSchedule:
         # Tracking
         self.current_sweep = 0
         self.current_beta = beta_start
-        self.best_energy = float('inf')
+        self.best_energy = float("inf")
         self.last_improvement_sweep = 0
         self.energy_history: list[float] = []
         self.reheat_count = 0
@@ -717,9 +708,7 @@ class AdaptiveTemperatureSchedule:
         return self.current_beta
 
     def get_tunneling_probability(
-        self,
-        energy_barrier: float,
-        barrier_width: float = 1.0
+        self, energy_barrier: float, barrier_width: float = 1.0
     ) -> float:
         """
         Compute quantum tunneling probability through energy barrier.
@@ -754,6 +743,7 @@ class AdaptiveTemperatureSchedule:
 # ============================================================================
 # ENERGY LANDSCAPE EXPLORER
 # ============================================================================
+
 
 class EnergyLandscapeExplorer:
     """
@@ -812,9 +802,7 @@ class EnergyLandscapeExplorer:
         return self.points
 
     def _compute_energy(
-        self,
-        state: dict[int, int],
-        Q: dict[tuple[int, int], float]
+        self, state: dict[int, int], Q: dict[tuple[int, int], float]
     ) -> float:
         """Compute QUBO energy for a state."""
         energy = 0.0
@@ -843,10 +831,7 @@ class EnergyLandscapeExplorer:
             point.is_local_minimum = is_minimum
 
     def _compute_delta_energy(
-        self,
-        state: dict[int, int],
-        Q: dict,
-        flip_idx: int
+        self, state: dict[int, int], Q: dict, flip_idx: int
     ) -> float:
         """Compute energy change from flipping one variable."""
         current_val = state.get(flip_idx, 0)
@@ -881,9 +866,7 @@ class EnergyLandscapeExplorer:
                 point.tunneling_probability = 1.0
             else:
                 barrier = point.energy - best_minimum.energy
-                point.tunneling_probability = math.exp(
-                    -math.sqrt(max(0, barrier))
-                )
+                point.tunneling_probability = math.exp(-math.sqrt(max(0, barrier)))
 
     def _estimate_basin_sizes(self, Q: dict):
         """Estimate basin of attraction size for each local minimum."""
@@ -893,9 +876,10 @@ class EnergyLandscapeExplorer:
             # Count how many non-minima points would descend to this one
             if point.is_local_minimum:
                 basin = sum(
-                    1 for p in self.points
-                    if not p.is_local_minimum and
-                    abs(p.energy - point.energy) < 100  # Rough proximity
+                    1
+                    for p in self.points
+                    if not p.is_local_minimum
+                    and abs(p.energy - point.energy) < 100  # Rough proximity
                 )
                 point.basin_size = max(1, basin)
 
@@ -906,7 +890,9 @@ class EnergyLandscapeExplorer:
         return {
             "num_samples": len(self.points),
             "num_local_minima": len(minima),
-            "global_minimum_energy": min(p.energy for p in self.points) if self.points else 0,
+            "global_minimum_energy": min(p.energy for p in self.points)
+            if self.points
+            else 0,
             "energy_range": {
                 "min": min(p.energy for p in self.points) if self.points else 0,
                 "max": max(p.energy for p in self.points) if self.points else 0,
@@ -935,6 +921,7 @@ class EnergyLandscapeExplorer:
 # ============================================================================
 # PARETO FRONT EXPLORER
 # ============================================================================
+
 
 class ParetoFrontExplorer:
     """
@@ -977,9 +964,7 @@ class ParetoFrontExplorer:
         for gen in range(self.generations):
             for weights in weight_vectors:
                 # Create weighted objective
-                weight_dict = {
-                    obj: w for obj, w in zip(self.objectives, weights)
-                }
+                weight_dict = {obj: w for obj, w in zip(self.objectives, weights)}
 
                 # Solve with these weights
                 Q = self.formulation.build(weight_dict)
@@ -1043,9 +1028,7 @@ class ParetoFrontExplorer:
         return vectors
 
     def _quick_anneal(
-        self,
-        Q: dict,
-        num_sweeps: int = 100
+        self, Q: dict, num_sweeps: int = 100
     ) -> tuple[dict[int, int], float]:
         """Quick simulated annealing for single solution."""
         n = self.formulation.num_variables
@@ -1138,7 +1121,7 @@ class ParetoFrontExplorer:
 
         if len(frontier) <= 2:
             for sol in frontier:
-                sol.crowding_distance = float('inf')
+                sol.crowding_distance = float("inf")
             return
 
         for obj in self.objectives:
@@ -1146,21 +1129,19 @@ class ParetoFrontExplorer:
             frontier.sort(key=lambda s: s.objectives.get(obj, 0))
 
             # Boundary solutions get infinite distance
-            frontier[0].crowding_distance = float('inf')
-            frontier[-1].crowding_distance = float('inf')
+            frontier[0].crowding_distance = float("inf")
+            frontier[-1].crowding_distance = float("inf")
 
             # Interior solutions
-            obj_range = (
-                frontier[-1].objectives.get(obj, 0) -
-                frontier[0].objectives.get(obj, 0)
-            )
+            obj_range = frontier[-1].objectives.get(obj, 0) - frontier[
+                0
+            ].objectives.get(obj, 0)
 
             if obj_range > 0:
                 for i in range(1, len(frontier) - 1):
-                    diff = (
-                        frontier[i + 1].objectives.get(obj, 0) -
-                        frontier[i - 1].objectives.get(obj, 0)
-                    )
+                    diff = frontier[i + 1].objectives.get(obj, 0) - frontier[
+                        i - 1
+                    ].objectives.get(obj, 0)
                     frontier[i].crowding_distance += diff / obj_range
 
     def export_for_visualization(self) -> dict:
@@ -1176,7 +1157,9 @@ class ParetoFrontExplorer:
                     "crowding_distance": s.crowding_distance,
                     "num_assignments": len(s.assignments),
                 }
-                for s in sorted(self.frontier, key=lambda x: x.crowding_distance, reverse=True)
+                for s in sorted(
+                    self.frontier, key=lambda x: x.crowding_distance, reverse=True
+                )
             ],
             "hypervolume_estimate": self._estimate_hypervolume(),
         }
@@ -1219,6 +1202,7 @@ class ParetoFrontExplorer:
 # ============================================================================
 # HYBRID CLASSICAL-QUANTUM PIPELINE
 # ============================================================================
+
 
 class HybridTemplatePipeline:
     """
@@ -1279,9 +1263,7 @@ class HybridTemplatePipeline:
 
         # Stage 2: Classical refinement (gradient-like descent)
         logger.info("Pipeline Stage 2: Classical refinement")
-        refined_sample, refined_energy = self._classical_refinement(
-            sample, energy, Q
-        )
+        refined_sample, refined_energy = self._classical_refinement(sample, energy, Q)
 
         self.refinement_result = {
             "sample": refined_sample,
@@ -1328,10 +1310,7 @@ class HybridTemplatePipeline:
         recommended_id = None
         if pareto_frontier:
             # Recommend solution with best coverage
-            best = min(
-                pareto_frontier,
-                key=lambda s: s.objectives.get("coverage", 0)
-            )
+            best = min(pareto_frontier, key=lambda s: s.objectives.get("coverage", 0))
             recommended_id = best.solution_id
 
         return TemplateSelectionResult(
@@ -1349,7 +1328,9 @@ class HybridTemplatePipeline:
                 "num_assignments": len(final_assignments),
                 "objectives": final_objectives,
                 "pareto_frontier_size": len(pareto_frontier),
-                "num_local_minima": sum(1 for p in energy_landscape if p.is_local_minimum),
+                "num_local_minima": sum(
+                    1 for p in energy_landscape if p.is_local_minimum
+                ),
             },
             runtime_seconds=runtime,
             recommended_solution_id=recommended_id,
@@ -1440,8 +1421,7 @@ class HybridTemplatePipeline:
         repaired = sample.copy()
         n_periods = len(self.formulation.rotation_periods)
         valid_templates = [
-            t for t in self.context.templates
-            if not t.requires_procedure_credential
+            t for t in self.context.templates if not t.requires_procedure_credential
         ]
 
         # Ensure exactly one template per resident per period
@@ -1454,7 +1434,9 @@ class HybridTemplatePipeline:
                         period_vars.append((idx, t_i))
 
                 # Count assigned
-                assigned = [idx for idx, t_i in period_vars if repaired.get(idx, 0) == 1]
+                assigned = [
+                    idx for idx, t_i in period_vars if repaired.get(idx, 0) == 1
+                ]
 
                 if len(assigned) == 0:
                     # Assign first available template
@@ -1498,6 +1480,7 @@ class HybridTemplatePipeline:
 # ============================================================================
 # MAIN SOLVER CLASS
 # ============================================================================
+
 
 class QUBOTemplateSolver(BaseSolver):
     """
@@ -1587,6 +1570,7 @@ class QUBOTemplateSolver(BaseSolver):
 # BENCHMARKING
 # ============================================================================
 
+
 class TemplateBenchmark:
     """Benchmark QUBO template selection vs classical approaches."""
 
@@ -1663,8 +1647,7 @@ class TemplateBenchmark:
         """Simple greedy template assignment."""
         assignments = []
         valid_templates = [
-            t for t in self.context.templates
-            if not t.requires_procedure_credential
+            t for t in self.context.templates if not t.requires_procedure_credential
         ]
 
         if not valid_templates:
@@ -1683,8 +1666,7 @@ class TemplateBenchmark:
         """Random template assignment baseline."""
         assignments = []
         valid_templates = [
-            t for t in self.context.templates
-            if not t.requires_procedure_credential
+            t for t in self.context.templates if not t.requires_procedure_credential
         ]
 
         if not valid_templates:
@@ -1715,6 +1697,7 @@ class TemplateBenchmark:
 # ============================================================================
 # UTILITY FUNCTIONS
 # ============================================================================
+
 
 def get_template_selector_status() -> dict[str, Any]:
     """Get status of QUBO template selector capabilities."""

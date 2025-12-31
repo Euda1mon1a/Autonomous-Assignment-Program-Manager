@@ -9,30 +9,52 @@ import { HeatmapView, HeatmapViewSkeleton } from '@/features/heatmap/HeatmapView
 import { heatmapMockFactories } from './heatmap-mocks';
 import { createWrapper } from '../../utils/test-utils';
 
-// Mock react-plotly.js to avoid SSR issues and simplify testing
-const MockPlot = jest.fn(({ data, layout, config, onClick, style }) => (
-  <div
-    data-testid="plotly-plot"
-    data-plot-data={JSON.stringify(data)}
-    data-plot-layout={JSON.stringify(layout)}
-    data-plot-config={JSON.stringify(config)}
-    onClick={onClick}
-    style={style}
-  >
-    Plotly Mock
-  </div>
-));
+// Store the onClick handler for later invocation in tests
+let capturedOnClick: ((event: any) => void) | null = null;
 
+// Mock react-plotly.js to avoid SSR issues and simplify testing
 jest.mock('react-plotly.js', () => ({
   __esModule: true,
-  default: MockPlot,
+  default: jest.fn(({ data, layout, config, onClick, style }: any) => {
+    const React = require('react');
+    capturedOnClick = onClick;
+    return React.createElement('div', {
+      'data-testid': 'plotly-plot',
+      'data-plot-data': JSON.stringify(data),
+      'data-plot-layout': JSON.stringify(layout),
+      'data-plot-config': JSON.stringify(config),
+      style,
+    }, 'Plotly Mock');
+  }),
 }));
 
-// Mock dynamic import for next/dynamic
+// Mock dynamic import for next/dynamic - returns the mocked Plot component
 jest.mock('next/dynamic', () => ({
   __esModule: true,
-  default: () => MockPlot,
+  default: () => {
+    const React = require('react');
+    return jest.fn(({ data, layout, config, onClick, style }: any) => {
+      capturedOnClick = onClick;
+      return React.createElement('div', {
+        'data-testid': 'plotly-plot',
+        'data-plot-data': JSON.stringify(data),
+        'data-plot-layout': JSON.stringify(layout),
+        'data-plot-config': JSON.stringify(config),
+        style,
+      }, 'Plotly Mock');
+    });
+  },
 }));
+
+// Helper to get the captured onClick handler
+export function getCapturedOnClick() {
+  return capturedOnClick;
+}
+
+// Reset captured handler before each test
+beforeEach(() => {
+  capturedOnClick = null;
+});
 
 describe('HeatmapView', () => {
   const mockData = heatmapMockFactories.heatmapData();
@@ -317,11 +339,9 @@ describe('HeatmapView', () => {
   describe('Click Handler', () => {
     it('should call onCellClick with correct data when cell is clicked', () => {
       const onCellClick = jest.fn();
-      const { rerender } = render(<HeatmapView data={mockData} onCellClick={onCellClick} />, {
+      render(<HeatmapView data={mockData} onCellClick={onCellClick} />, {
         wrapper: createWrapper(),
       });
-
-      const plotElement = screen.getByTestId('plotly-plot');
 
       // Simulate click event with Plotly event structure
       const mockEvent = {
@@ -335,8 +355,9 @@ describe('HeatmapView', () => {
         ],
       };
 
-      if (plotElement.onclick) {
-        plotElement.onclick(mockEvent as any);
+      // Use the captured onClick handler directly
+      if (capturedOnClick) {
+        capturedOnClick(mockEvent);
       }
 
       expect(onCellClick).toHaveBeenCalledWith({
@@ -350,8 +371,6 @@ describe('HeatmapView', () => {
     it('should not call onCellClick when not provided', () => {
       render(<HeatmapView data={mockData} />, { wrapper: createWrapper() });
 
-      const plotElement = screen.getByTestId('plotly-plot');
-
       const mockEvent = {
         points: [
           {
@@ -363,10 +382,10 @@ describe('HeatmapView', () => {
         ],
       };
 
-      // Should not throw error
+      // Should not throw error when capturedOnClick is called without onCellClick
       expect(() => {
-        if (plotElement.onclick) {
-          plotElement.onclick(mockEvent as any);
+        if (capturedOnClick) {
+          capturedOnClick(mockEvent);
         }
       }).not.toThrow();
     });
@@ -377,14 +396,12 @@ describe('HeatmapView', () => {
         wrapper: createWrapper(),
       });
 
-      const plotElement = screen.getByTestId('plotly-plot');
-
       const mockEvent = {
         points: [],
       };
 
-      if (plotElement.onclick) {
-        plotElement.onclick(mockEvent as any);
+      if (capturedOnClick) {
+        capturedOnClick(mockEvent);
       }
 
       expect(onCellClick).not.toHaveBeenCalled();

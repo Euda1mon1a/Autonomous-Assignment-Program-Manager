@@ -49,8 +49,14 @@ class AssignmentRepository(BaseRepository[Assignment]):
         person_id: UUID | None = None,
         role: str | None = None,
         activity_type: str | None = None,
-    ) -> list[Assignment]:
-        """List assignments with optional filters and eager loading."""
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[list[Assignment], int]:
+        """List assignments with optional filters, eager loading, and pagination.
+
+        Returns:
+            Tuple of (assignments list, total count)
+        """
         query = self.db.query(Assignment).options(
             joinedload(Assignment.block),
             joinedload(Assignment.person),
@@ -74,7 +80,25 @@ class AssignmentRepository(BaseRepository[Assignment]):
                 Assignment.rotation_template.has(activity_type=activity_type)
             )
 
-        return query.all()
+        # Get total count before pagination (using a subquery for efficiency)
+        total = query.count()
+
+        # Apply deterministic ordering for stable pagination
+        # Order by block date if available, then by assignment id for stability
+        if start_date or end_date:
+            # Block is already joined, order by date then id
+            query = query.order_by(Block.date, Assignment.id)
+        else:
+            # No block join, just order by id for deterministic results
+            query = query.order_by(Assignment.id)
+
+        # Apply pagination at database level
+        if offset is not None:
+            query = query.offset(offset)
+        if limit is not None:
+            query = query.limit(limit)
+
+        return query.all(), total
 
     def get_by_person_and_date_range(
         self, person_id: UUID, start_date: date, end_date: date

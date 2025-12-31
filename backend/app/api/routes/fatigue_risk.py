@@ -73,6 +73,7 @@ async def get_samn_perelli_levels():
     for use in medical residency fatigue assessment.
     """
     from app.resilience.frms.samn_perelli import get_all_levels
+
     return {"levels": get_all_levels()}
 
 
@@ -313,9 +314,17 @@ async def scan_all_residents_for_hazards(
     return {
         "scanned_at": datetime.utcnow(),
         "total_residents": len(profiles),
-        "hazards_found": len([p for p in profiles if p.hazard_level != HazardLevel.GREEN]),
+        "hazards_found": len(
+            [p for p in profiles if p.hazard_level != HazardLevel.GREEN]
+        ),
         "by_level": level_counts,
-        "critical_count": len([p for p in profiles if p.hazard_level in [HazardLevel.RED, HazardLevel.BLACK]]),
+        "critical_count": len(
+            [
+                p
+                for p in profiles
+                if p.hazard_level in [HazardLevel.RED, HazardLevel.BLACK]
+            ]
+        ),
         "acgme_risk_count": len([p for p in profiles if p.acgme_violation_risk]),
         "residents": [p.to_dict() for p in profiles],
     }
@@ -353,11 +362,15 @@ async def get_sleep_debt_state(
             "recovery_sleep_needed": profile.recovery_sleep_needed,
             "chronic_debt": profile.sleep_debt_hours > 15,
             "debt_severity": (
-                "critical" if profile.sleep_debt_hours > 20 else
-                "severe" if profile.sleep_debt_hours > 15 else
-                "moderate" if profile.sleep_debt_hours > 10 else
-                "mild" if profile.sleep_debt_hours > 5 else
-                "none"
+                "critical"
+                if profile.sleep_debt_hours > 20
+                else "severe"
+                if profile.sleep_debt_hours > 15
+                else "moderate"
+                if profile.sleep_debt_hours > 10
+                else "mild"
+                if profile.sleep_debt_hours > 5
+                else "none"
             ),
             "impairment_equivalent_bac": min(0.15, profile.sleep_debt_hours * 0.005),
         }
@@ -530,15 +543,19 @@ async def validate_acgme_with_fatigue(
     # Identify fatigue risk periods
     fatigue_risks = []
     if profile.hazard_level != HazardLevel.GREEN:
-        fatigue_risks.append({
-            "time": profile.generated_at.isoformat(),
-            "hazard_level": profile.hazard_level.value,
-            "alertness": profile.current_alertness,
-            "triggers": profile.hazard_triggers,
-        })
+        fatigue_risks.append(
+            {
+                "time": profile.generated_at.isoformat(),
+                "hazard_level": profile.hazard_level.value,
+                "alertness": profile.current_alertness,
+                "triggers": profile.hazard_triggers,
+            }
+        )
 
     # Determine compliance
-    acgme_compliant = profile.hours_worked_week <= 80.0 and not profile.acgme_violation_risk
+    acgme_compliant = (
+        profile.hours_worked_week <= 80.0 and not profile.acgme_violation_risk
+    )
     fatigue_compliant = profile.hazard_level in [HazardLevel.GREEN, HazardLevel.YELLOW]
 
     # Generate recommendations
@@ -548,10 +565,14 @@ async def validate_acgme_with_fatigue(
     if not fatigue_compliant:
         recommendations.extend(profile.required_mitigations)
     if profile.sleep_debt_hours > 10:
-        recommendations.append(f"Accumulated sleep debt of {profile.sleep_debt_hours:.1f} hours requires recovery")
+        recommendations.append(
+            f"Accumulated sleep debt of {profile.sleep_debt_hours:.1f} hours requires recovery"
+        )
 
     if not recommendations:
-        recommendations.append("Schedule meets both ACGME and fatigue safety requirements")
+        recommendations.append(
+            "Schedule meets both ACGME and fatigue safety requirements"
+        )
 
     return {
         "resident_id": str(resident_id),

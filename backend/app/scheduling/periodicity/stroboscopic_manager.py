@@ -179,9 +179,7 @@ class CheckpointEvent(BaseEvent):
     """
 
     aggregate_type: str = "Schedule"
-    checkpoint_boundary: CheckpointBoundary = field(
-        default=CheckpointBoundary.MANUAL
-    )
+    checkpoint_boundary: CheckpointBoundary = field(default=CheckpointBoundary.MANUAL)
     previous_state_id: str | None = None
     new_state_id: str = ""
     checkpoint_time: datetime = field(default_factory=datetime.utcnow)
@@ -320,9 +318,7 @@ class StroboscopicScheduleManager:
             RuntimeError: If manager not initialized
         """
         if self._authoritative_state is None:
-            raise RuntimeError(
-                "Manager not initialized. Call initialize() first."
-            )
+            raise RuntimeError("Manager not initialized. Call initialize() first.")
 
         return self._authoritative_state
 
@@ -353,9 +349,7 @@ class StroboscopicScheduleManager:
             ValueError: If validation fails and validate=True
         """
         if self._authoritative_state is None:
-            raise RuntimeError(
-                "Manager not initialized. Call initialize() first."
-            )
+            raise RuntimeError("Manager not initialized. Call initialize() first.")
 
         # Use current authoritative state as base if no assignments provided
         if assignments is None:
@@ -462,9 +456,7 @@ class StroboscopicScheduleManager:
             RuntimeError: If manager not initialized
         """
         if self._authoritative_state is None:
-            raise RuntimeError(
-                "Manager not initialized. Call initialize() first."
-            )
+            raise RuntimeError("Manager not initialized. Call initialize() first.")
 
         # Check if draft exists
         if self._draft_state is None and not force:
@@ -493,9 +485,7 @@ class StroboscopicScheduleManager:
                 )
                 return False
 
-            logger.debug(
-                f"Acquired checkpoint lock for schedule {self.schedule_id}"
-            )
+            logger.debug(f"Acquired checkpoint lock for schedule {self.schedule_id}")
 
             # Archive previous authoritative state
             previous_state = self._authoritative_state
@@ -576,9 +566,7 @@ class StroboscopicScheduleManager:
             except Exception as e:
                 logger.error(f"Error releasing checkpoint lock: {e}")
 
-    async def get_checkpoint_history(
-        self, limit: int = 10
-    ) -> list[ScheduleState]:
+    async def get_checkpoint_history(self, limit: int = 10) -> list[ScheduleState]:
         """
         Get recent checkpoint history.
 
@@ -670,12 +658,8 @@ class StroboscopicScheduleManager:
             return 0
 
         # Convert assignments to sets for comparison
-        old_assignments = {
-            self._assignment_key(a) for a in old_state.assignments
-        }
-        new_assignments = {
-            self._assignment_key(a) for a in new_state.assignments
-        }
+        old_assignments = {self._assignment_key(a) for a in old_state.assignments}
+        new_assignments = {self._assignment_key(a) for a in new_state.assignments}
 
         # Count added and removed assignments
         added = new_assignments - old_assignments
@@ -803,9 +787,7 @@ class CheckpointScheduler:
 
         return None
 
-    async def run_checkpoint_if_needed(
-        self, triggered_by: str = "scheduler"
-    ) -> bool:
+    async def run_checkpoint_if_needed(self, triggered_by: str = "scheduler") -> bool:
         """
         Run checkpoint if time boundary has been reached.
 

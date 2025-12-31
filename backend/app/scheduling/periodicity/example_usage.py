@@ -148,9 +148,7 @@ async def example_concurrent_draft_and_observe():
         for i in range(3):
             await asyncio.sleep(0.15)
             draft = await manager.propose_draft(
-                assignments=[
-                    {"person_id": f"person-{i:03d}", "block_id": "block-001"}
-                ],
+                assignments=[{"person_id": f"person-{i:03d}", "block_id": "block-001"}],
                 metadata={"iteration": i},
             )
             print(
@@ -162,9 +160,7 @@ async def example_concurrent_draft_and_observe():
     print("\n1. Running concurrent observer and draft proposer:")
     await asyncio.gather(observer_task(), draft_proposer_task())
 
-    print(
-        "\n   ✓ Observer always saw stable state, never saw in-progress drafts"
-    )
+    print("\n   ✓ Observer always saw stable state, never saw in-progress drafts")
 
     await redis_client.close()
 
@@ -249,14 +245,10 @@ async def example_metrics_monitoring():
     )
 
     # Create some activity
-    await manager.propose_draft(
-        assignments=[{"person_id": "p1", "block_id": "b1"}]
-    )
+    await manager.propose_draft(assignments=[{"person_id": "p1", "block_id": "b1"}])
     await manager.advance_checkpoint()
 
-    await manager.propose_draft(
-        assignments=[{"person_id": "p2", "block_id": "b2"}]
-    )
+    await manager.propose_draft(assignments=[{"person_id": "p2", "block_id": "b2"}])
     await manager.advance_checkpoint()
 
     # Get metrics

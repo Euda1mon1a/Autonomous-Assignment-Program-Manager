@@ -287,9 +287,8 @@ class FreeEnergySolverAdapter:
             try:
                 forecast = await self.forecast_generator.generate_forecast(
                     start_date=context.start_date,
-                    end_date=context.end_date or (
-                        context.start_date + timedelta(days=28)
-                    ),
+                    end_date=context.end_date
+                    or (context.start_date + timedelta(days=28)),
                     lookback_days=lookback_days,
                 )
 
@@ -327,14 +326,10 @@ class FreeEnergySolverAdapter:
                 for s in solver.surprise_history[-10:]  # Last 10
             ],
             "final_forecast_confidence": (
-                solver.current_forecast.confidence
-                if solver.current_forecast
-                else 0.0
+                solver.current_forecast.confidence if solver.current_forecast else 0.0
             ),
             "model_outcomes_seen": (
-                solver.generative_model.outcomes_seen
-                if solver.generative_model
-                else 0
+                solver.generative_model.outcomes_seen if solver.generative_model else 0
             ),
         }
 
@@ -377,9 +372,7 @@ class FreeEnergySolverAdapter:
         for outcome in outcomes:
             model.update(outcome, template_order)
 
-        logger.info(
-            f"Trained generative model on {len(outcomes)} historical outcomes"
-        )
+        logger.info(f"Trained generative model on {len(outcomes)} historical outcomes")
 
         return model
 
@@ -492,6 +485,7 @@ class HybridFreeEnergySolver:
 
 # Utility functions for integration
 
+
 async def get_default_forecast(
     db: AsyncSession,
     context: SchedulingContext,
@@ -514,9 +508,7 @@ async def get_default_forecast(
         try:
             return await generator.generate_forecast(
                 start_date=context.start_date,
-                end_date=context.end_date or (
-                    context.start_date + timedelta(days=28)
-                ),
+                end_date=context.end_date or (context.start_date + timedelta(days=28)),
                 lookback_days=lookback_days,
             )
         except Exception as e:

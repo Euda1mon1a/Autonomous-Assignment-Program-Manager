@@ -1,0 +1,744 @@
+{
+  "authentication": {
+    "login_success": {
+      "description": "Successful authentication",
+      "status": 200,
+      "body": {
+        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "token_type": "bearer"
+      }
+    },
+    "login_failed": {
+      "description": "Invalid credentials",
+      "status": 401,
+      "body": {
+        "detail": "Incorrect email or password"
+      }
+    },
+    "register_success": {
+      "description": "User registered successfully",
+      "status": 201,
+      "body": {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "username": "newuser",
+        "email": "newuser@example.com",
+        "role": "coordinator",
+        "is_active": true
+      }
+    },
+    "current_user": {
+      "description": "Get current authenticated user",
+      "status": 200,
+      "body": {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "username": "user@example.com",
+        "email": "user@example.com",
+        "role": "coordinator",
+        "is_active": true
+      }
+    }
+  },
+  "schedule": {
+    "generate_success": {
+      "description": "Schedule generated successfully",
+      "status": 200,
+      "body": {
+        "status": "success",
+        "message": "Schedule generated successfully",
+        "total_blocks_assigned": 248,
+        "total_blocks": 248,
+        "validation": {
+          "valid": true,
+          "total_violations": 0,
+          "violations": [],
+          "coverage_rate": 1.0,
+          "statistics": {
+            "total_residents": 9,
+            "total_faculty": 12,
+            "avg_hours_per_week": 68.5
+          }
+        },
+        "run_id": "123e4567-e89b-12d3-a456-426614174000",
+        "solver_stats": {
+          "total_blocks": 248,
+          "total_residents": 9,
+          "coverage_rate": 1.0,
+          "branches": 1247,
+          "conflicts": 89
+        },
+        "nf_pc_audit": {
+          "compliant": true,
+          "total_nf_transitions": 12,
+          "violations": [],
+          "message": "All Night Float -> Post-Call transitions properly covered"
+        }
+      }
+    },
+    "generate_partial": {
+      "description": "Schedule generated with some violations",
+      "status": 207,
+      "body": {
+        "status": "partial",
+        "message": "Schedule generated with some violations",
+        "total_blocks_assigned": 230,
+        "total_blocks": 248,
+        "validation": {
+          "valid": false,
+          "total_violations": 3,
+          "violations": [
+            {
+              "type": "SUPERVISION_RATIO",
+              "severity": "HIGH",
+              "person_id": "550e8400-e29b-41d4-a716-446655440001",
+              "person_name": "Dr. Smith",
+              "block_id": "550e8400-e29b-41d4-a716-446655440002",
+              "message": "Supervision ratio violated: 1:5 (required: 1:4)",
+              "details": {
+                "actual_ratio": 5,
+                "required_ratio": 4,
+                "date": "2024-07-15"
+              }
+            }
+          ],
+          "coverage_rate": 0.93
+        },
+        "run_id": "123e4567-e89b-12d3-a456-426614174000"
+      }
+    },
+    "generate_failed": {
+      "description": "Schedule generation failed",
+      "status": 422,
+      "body": {
+        "detail": "Schedule generation failed: insufficient residents for date range"
+      }
+    },
+    "validate_compliant": {
+      "description": "Schedule is ACGME compliant",
+      "status": 200,
+      "body": {
+        "valid": true,
+        "total_violations": 0,
+        "violations": [],
+        "coverage_rate": 1.0,
+        "statistics": {
+          "total_residents": 9,
+          "residents_checked": 9,
+          "date_range_days": 31,
+          "80_hour_violations": 0,
+          "1_in_7_violations": 0,
+          "supervision_violations": 0,
+          "avg_hours_per_week": 68.5,
+          "max_hours_per_week": 76.0,
+          "min_hours_per_week": 60.5
+        }
+      }
+    },
+    "validate_violations": {
+      "description": "Schedule has ACGME violations",
+      "status": 200,
+      "body": {
+        "valid": false,
+        "total_violations": 2,
+        "violations": [
+          {
+            "type": "80_HOUR_RULE",
+            "severity": "CRITICAL",
+            "person_id": "550e8400-e29b-41d4-a716-446655440000",
+            "person_name": "PGY1-01",
+            "block_id": null,
+            "message": "80-hour rule violated: 84.5 hours in 4-week period ending 2024-07-28",
+            "details": {
+              "actual_hours": 84.5,
+              "max_hours": 80.0,
+              "period_start": "2024-07-01",
+              "period_end": "2024-07-28",
+              "excess_hours": 4.5
+            }
+          },
+          {
+            "type": "SUPERVISION_RATIO",
+            "severity": "HIGH",
+            "person_id": null,
+            "person_name": null,
+            "block_id": "550e8400-e29b-41d4-a716-446655440001",
+            "message": "Supervision ratio violated on 2024-07-15 AM: 1:5 (required: 1:2 for PGY-1)",
+            "details": {
+              "actual_ratio": 5,
+              "required_ratio": 2,
+              "pgy_level": 1,
+              "date": "2024-07-15",
+              "session": "AM"
+            }
+          }
+        ],
+        "coverage_rate": 0.98,
+        "statistics": {
+          "total_residents": 9,
+          "80_hour_violations": 1,
+          "supervision_violations": 1
+        }
+      }
+    },
+    "get_schedule": {
+      "description": "Retrieve schedule for date range",
+      "status": 200,
+      "body": {
+        "start_date": "2024-07-01",
+        "end_date": "2024-07-31",
+        "total_assignments": 496,
+        "schedule": {
+          "2024-07-01": {
+            "AM": [
+              {
+                "id": "550e8400-e29b-41d4-a716-446655440000",
+                "person": {
+                  "id": "550e8400-e29b-41d4-a716-446655440001",
+                  "name": "PGY1-01",
+                  "type": "resident",
+                  "pgy_level": 1
+                },
+                "role": "resident",
+                "activity": "Clinic",
+                "abbreviation": "CLN"
+              }
+            ],
+            "PM": [
+              {
+                "id": "550e8400-e29b-41d4-a716-446655440002",
+                "person": {
+                  "id": "550e8400-e29b-41d4-a716-446655440001",
+                  "name": "PGY1-01",
+                  "type": "resident",
+                  "pgy_level": 1
+                },
+                "role": "resident",
+                "activity": "Clinic",
+                "abbreviation": "CLN"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "emergency_coverage_success": {
+      "description": "Emergency coverage found successfully",
+      "status": 200,
+      "body": {
+        "status": "success",
+        "replacements_found": 12,
+        "coverage_gaps": [],
+        "requires_manual_review": false,
+        "details": {
+          "affected_assignments": 14,
+          "replacements": [
+            {
+              "original_person": "PGY2-03",
+              "replacement_person": "PGY2-04",
+              "date": "2024-07-15",
+              "session": "AM",
+              "activity": "Inpatient"
+            }
+          ],
+          "critical_services_covered": true
+        }
+      }
+    }
+  },
+  "assignments": {
+    "list": {
+      "description": "List assignments with pagination",
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "block_id": "550e8400-e29b-41d4-a716-446655440001",
+            "person_id": "550e8400-e29b-41d4-a716-446655440002",
+            "rotation_template_id": "550e8400-e29b-41d4-a716-446655440003",
+            "role": "resident",
+            "activity_name": "Clinic",
+            "abbreviation": "CLN",
+            "created_at": "2024-07-01T10:00:00Z",
+            "updated_at": "2024-07-01T10:00:00Z",
+            "version": 1,
+            "person": {
+              "id": "550e8400-e29b-41d4-a716-446655440002",
+              "name": "PGY1-01",
+              "type": "resident",
+              "pgy_level": 1
+            },
+            "block": {
+              "id": "550e8400-e29b-41d4-a716-446655440001",
+              "date": "2024-07-01",
+              "time_of_day": "AM",
+              "session": "AM"
+            }
+          }
+        ],
+        "total": 248,
+        "page": 1,
+        "page_size": 100,
+        "pages": 3
+      }
+    },
+    "get": {
+      "description": "Get single assignment",
+      "status": 200,
+      "body": {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "block_id": "550e8400-e29b-41d4-a716-446655440001",
+        "person_id": "550e8400-e29b-41d4-a716-446655440002",
+        "rotation_template_id": "550e8400-e29b-41d4-a716-446655440003",
+        "role": "resident",
+        "activity_name": "Clinic",
+        "abbreviation": "CLN",
+        "created_at": "2024-07-01T10:00:00Z",
+        "updated_at": "2024-07-01T10:00:00Z",
+        "version": 1
+      }
+    },
+    "create_success": {
+      "description": "Assignment created successfully",
+      "status": 201,
+      "body": {
+        "assignment": {
+          "id": "550e8400-e29b-41d4-a716-446655440000",
+          "block_id": "550e8400-e29b-41d4-a716-446655440001",
+          "person_id": "550e8400-e29b-41d4-a716-446655440002",
+          "rotation_template_id": "550e8400-e29b-41d4-a716-446655440003",
+          "role": "resident",
+          "activity_name": "Clinic",
+          "abbreviation": "CLN",
+          "created_at": "2024-07-01T10:00:00Z",
+          "updated_at": "2024-07-01T10:00:00Z",
+          "version": 1
+        },
+        "warnings": []
+      }
+    },
+    "create_with_warnings": {
+      "description": "Assignment created with ACGME warnings",
+      "status": 201,
+      "body": {
+        "assignment": {
+          "id": "550e8400-e29b-41d4-a716-446655440000",
+          "block_id": "550e8400-e29b-41d4-a716-446655440001",
+          "person_id": "550e8400-e29b-41d4-a716-446655440002",
+          "rotation_template_id": "550e8400-e29b-41d4-a716-446655440003",
+          "role": "resident",
+          "activity_name": "Clinic",
+          "abbreviation": "CLN",
+          "created_at": "2024-07-01T10:00:00Z",
+          "version": 1
+        },
+        "warnings": [
+          {
+            "type": "SUPERVISION_RATIO",
+            "severity": "MEDIUM",
+            "person_id": "550e8400-e29b-41d4-a716-446655440002",
+            "person_name": "PGY1-01",
+            "message": "Supervision ratio slightly high: 1:3 (recommended: 1:2)",
+            "details": {
+              "actual_ratio": 3,
+              "recommended_ratio": 2
+            }
+          }
+        ]
+      }
+    },
+    "not_found": {
+      "description": "Assignment not found",
+      "status": 404,
+      "body": {
+        "detail": "Assignment with ID 550e8400-e29b-41d4-a716-446655440000 not found"
+      }
+    },
+    "version_conflict": {
+      "description": "Optimistic locking conflict",
+      "status": 409,
+      "body": {
+        "detail": "Assignment has been modified by another user. Please refresh and try again."
+      }
+    }
+  },
+  "persons": {
+    "list": {
+      "description": "List all people",
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "name": "PGY1-01",
+            "type": "resident",
+            "pgy_level": 1,
+            "email": "pgy1-01@example.com",
+            "phone": null,
+            "specialty": null,
+            "is_active": true,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+          },
+          {
+            "id": "550e8400-e29b-41d4-a716-446655440001",
+            "name": "FAC-PD",
+            "type": "faculty",
+            "pgy_level": null,
+            "email": "pd@example.com",
+            "phone": "+1-808-555-1234",
+            "specialty": "Family Medicine",
+            "is_active": true,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z"
+          }
+        ],
+        "total": 21
+      }
+    },
+    "create_success": {
+      "description": "Person created successfully",
+      "status": 201,
+      "body": {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "name": "PGY1-04",
+        "type": "resident",
+        "pgy_level": 1,
+        "email": "pgy1-04@example.com",
+        "phone": "+1-808-555-5678",
+        "specialty": null,
+        "is_active": true,
+        "created_at": "2024-07-01T10:00:00Z",
+        "updated_at": "2024-07-01T10:00:00Z"
+      }
+    },
+    "credentials": {
+      "description": "Get faculty credentials",
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "faculty_id": "550e8400-e29b-41d4-a716-446655440001",
+            "procedure_id": "550e8400-e29b-41d4-a716-446655440002",
+            "credential_type": "BLS",
+            "status": "active",
+            "certified_date": "2024-01-01",
+            "expiration_date": "2026-01-01",
+            "certification_number": "BLS-123456",
+            "issuing_organization": "American Heart Association",
+            "notes": "Recertified 2024",
+            "procedure": {
+              "id": "550e8400-e29b-41d4-a716-446655440002",
+              "name": "Basic Life Support",
+              "code": "BLS",
+              "category": "resuscitation"
+            }
+          }
+        ],
+        "total": 5
+      }
+    },
+    "credential_summary": {
+      "description": "Get faculty credential summary",
+      "status": 200,
+      "body": {
+        "faculty_id": "550e8400-e29b-41d4-a716-446655440000",
+        "faculty_name": "FAC-PD",
+        "total_credentials": 8,
+        "active_credentials": 6,
+        "expired_credentials": 2,
+        "expiring_soon": 1,
+        "credentials_by_category": {
+          "resuscitation": 3,
+          "procedures": 2,
+          "certifications": 3
+        },
+        "upcoming_expirations": [
+          {
+            "credential_type": "ACLS",
+            "procedure_name": "Advanced Cardiac Life Support",
+            "expiration_date": "2024-08-15",
+            "days_until_expiration": 45
+          }
+        ]
+      }
+    }
+  },
+  "swaps": {
+    "execute_success": {
+      "description": "Swap executed successfully",
+      "status": 200,
+      "body": {
+        "success": true,
+        "swap_id": "550e8400-e29b-41d4-a716-446655440002",
+        "message": "Swap executed successfully",
+        "validation": {
+          "valid": true,
+          "errors": [],
+          "warnings": [],
+          "back_to_back_conflict": false,
+          "external_conflict": false
+        }
+      }
+    },
+    "execute_failed": {
+      "description": "Swap validation failed",
+      "status": 200,
+      "body": {
+        "success": false,
+        "swap_id": null,
+        "message": "Swap validation failed",
+        "validation": {
+          "valid": false,
+          "errors": [
+            "Back-to-back weeks detected: FAC-PD would have weeks 2024-07-01 and 2024-07-08"
+          ],
+          "warnings": [
+            "Faculty will have 3 FMIT weeks in 4-week period"
+          ],
+          "back_to_back_conflict": true,
+          "external_conflict": false
+        }
+      }
+    },
+    "validate_success": {
+      "description": "Swap validation passed",
+      "status": 200,
+      "body": {
+        "valid": true,
+        "errors": [],
+        "warnings": [
+          "Target faculty will have 3 FMIT weeks in 4-week period (above recommended 2)"
+        ],
+        "back_to_back_conflict": false,
+        "external_conflict": false
+      }
+    },
+    "history": {
+      "description": "Get swap history",
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "source_faculty_id": "550e8400-e29b-41d4-a716-446655440001",
+            "source_faculty_name": "FAC-PD",
+            "source_week": "2024-07-08",
+            "target_faculty_id": "550e8400-e29b-41d4-a716-446655440002",
+            "target_faculty_name": "FAC-APD",
+            "target_week": "2024-07-15",
+            "swap_type": "one_to_one",
+            "status": "executed",
+            "reason": "Family commitment",
+            "requested_at": "2024-06-25T10:00:00Z",
+            "executed_at": "2024-06-25T10:05:00Z"
+          }
+        ],
+        "total": 45,
+        "page": 1,
+        "page_size": 20,
+        "pages": 3
+      }
+    },
+    "rollback_success": {
+      "description": "Swap rolled back successfully",
+      "status": 200,
+      "body": {
+        "success": true,
+        "message": "Swap rolled back successfully"
+      }
+    },
+    "rollback_failed": {
+      "description": "Rollback failed (outside window)",
+      "status": 400,
+      "body": {
+        "detail": "Swap cannot be rolled back (either not found, already rolled back, or outside rollback window)"
+      }
+    }
+  },
+  "resilience": {
+    "health_healthy": {
+      "description": "System health is normal",
+      "status": 200,
+      "body": {
+        "timestamp": "2024-07-01T10:00:00Z",
+        "overall_status": "healthy",
+        "utilization": {
+          "utilization_rate": 0.72,
+          "level": "normal",
+          "buffer_remaining": 0.28,
+          "max_sustainable": 0.80,
+          "residents_working": 6,
+          "residents_available": 9,
+          "faculty_working": 8,
+          "faculty_available": 12
+        },
+        "defense_level": "GREEN",
+        "load_shedding_level": null,
+        "n1_pass": true,
+        "n2_pass": true,
+        "phase_transition_risk": 0.05,
+        "active_fallbacks": 0,
+        "crisis_mode": false,
+        "immediate_actions": [],
+        "watch_items": [
+          "Utilization approaching 75% - monitor for next 7 days"
+        ]
+      }
+    },
+    "health_critical": {
+      "description": "System health is critical",
+      "status": 200,
+      "body": {
+        "timestamp": "2024-07-01T10:00:00Z",
+        "overall_status": "critical",
+        "utilization": {
+          "utilization_rate": 0.88,
+          "level": "critical",
+          "buffer_remaining": 0.12,
+          "max_sustainable": 0.80,
+          "residents_working": 8,
+          "residents_available": 9
+        },
+        "defense_level": "RED",
+        "load_shedding_level": "medium",
+        "n1_pass": false,
+        "n2_pass": false,
+        "phase_transition_risk": 0.65,
+        "active_fallbacks": 1,
+        "crisis_mode": true,
+        "immediate_actions": [
+          "Activate fallback schedule",
+          "Cancel non-essential activities",
+          "Alert program director"
+        ],
+        "watch_items": []
+      }
+    },
+    "crisis_activated": {
+      "description": "Crisis mode activated",
+      "status": 200,
+      "body": {
+        "status": "activated",
+        "severity": "high",
+        "activated_at": "2024-07-01T10:00:00Z",
+        "activated_by": "admin@example.com",
+        "fallback_activated": true,
+        "load_shedding_level": "medium",
+        "message": "Crisis mode activated. Fallback schedule in effect."
+      }
+    },
+    "crisis_deactivated": {
+      "description": "Crisis mode deactivated",
+      "status": 200,
+      "body": {
+        "status": "deactivated",
+        "deactivated_at": "2024-07-08T10:00:00Z",
+        "deactivated_by": "admin@example.com",
+        "fallback_deactivated": true,
+        "message": "Crisis mode deactivated. Normal operations resumed."
+      }
+    },
+    "fallback_list": {
+      "description": "List fallback schedules",
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "name": "N-1 Fallback: Faculty Deployment",
+            "scenario": "n1_faculty_deployment",
+            "start_date": "2024-07-01",
+            "end_date": "2024-07-31",
+            "created_at": "2024-06-15T10:00:00Z",
+            "is_active": false,
+            "metadata": {
+              "missing_faculty": 1,
+              "coverage_rate": 0.95,
+              "residents_affected": 3
+            }
+          }
+        ],
+        "total": 5
+      }
+    },
+    "vulnerability_report": {
+      "description": "Vulnerability analysis results",
+      "status": 200,
+      "body": {
+        "timestamp": "2024-07-01T10:00:00Z",
+        "n1_pass": true,
+        "n2_pass": false,
+        "scenarios_tested": ["faculty_deployment", "resident_illness", "dual_deployment"],
+        "vulnerabilities": [
+          {
+            "scenario": "dual_deployment",
+            "severity": "high",
+            "description": "System fails with 2 faculty deployed simultaneously",
+            "impact": {
+              "coverage_drop": 0.12,
+              "supervision_violations": 8,
+              "residents_affected": 5
+            },
+            "mitigation": "Pre-compute N-2 fallback schedule"
+          }
+        ],
+        "recommendations": [
+          "Create N-2 fallback schedule for dual deployment scenario",
+          "Cross-train additional faculty for critical specialties"
+        ]
+      }
+    }
+  },
+  "common_errors": {
+    "unauthorized": {
+      "description": "Authentication required or invalid token",
+      "status": 401,
+      "body": {
+        "detail": "Could not validate credentials"
+      }
+    },
+    "forbidden": {
+      "description": "Insufficient permissions",
+      "status": 403,
+      "body": {
+        "detail": "Insufficient permissions. Admin role required."
+      }
+    },
+    "not_found": {
+      "description": "Resource not found",
+      "status": 404,
+      "body": {
+        "detail": "Resource with ID 550e8400-e29b-41d4-a716-446655440000 not found"
+      }
+    },
+    "validation_error": {
+      "description": "Request validation failed",
+      "status": 422,
+      "body": {
+        "detail": [
+          {
+            "loc": ["body", "email"],
+            "msg": "Invalid email format",
+            "type": "value_error"
+          }
+        ]
+      }
+    },
+    "rate_limit": {
+      "description": "Rate limit exceeded",
+      "status": 429,
+      "body": {
+        "detail": "Rate limit exceeded. Try again in 60 seconds."
+      }
+    },
+    "server_error": {
+      "description": "Internal server error",
+      "status": 500,
+      "body": {
+        "detail": "An internal error occurred"
+      }
+    }
+  }
+}

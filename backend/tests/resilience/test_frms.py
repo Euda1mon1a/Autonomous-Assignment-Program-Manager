@@ -90,7 +90,10 @@ class TestSamnPerelliScale:
 
         # Level 3 (Okay) - should be safe for all duties
         assessment_3 = assess_fatigue_level(level=3, resident_id=resident_id)
-        assert assessment_3.duty_restrictions is None or len(assessment_3.duty_restrictions) == 0
+        assert (
+            assessment_3.duty_restrictions is None
+            or len(assessment_3.duty_restrictions) == 0
+        )
 
         # Level 5 (Moderately tired) - should restrict some duties
         assessment_5 = assess_fatigue_level(level=5, resident_id=resident_id)
@@ -432,7 +435,9 @@ class TestHazardThresholds:
 
         assert hazard.hazard_level == HazardLevel.YELLOW
         assert len(hazard.triggers) > 0
-        assert MitigationType.MONITORING.value in [m.value for m in hazard.required_mitigations]
+        assert MitigationType.MONITORING.value in [
+            m.value for m in hazard.required_mitigations
+        ]
 
     def test_evaluate_red_hazard(self):
         """Test RED hazard (warning)."""
@@ -568,8 +573,7 @@ class TestACGMEFRMSIntegration:
         # Verify circadian constraints exist
         hard_constraints = export["scheduling_constraints"]["hard_constraints"]
         nadir_constraint = next(
-            (c for c in hard_constraints if "nadir" in c["name"]),
-            None
+            (c for c in hard_constraints if "nadir" in c["name"]), None
         )
         assert nadir_constraint is not None
         assert "2-6 AM" in nadir_constraint["description"]

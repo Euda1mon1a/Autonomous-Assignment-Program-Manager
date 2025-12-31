@@ -51,6 +51,7 @@ class CallScheduleInput:
         eligibility: Which faculty are eligible for each day (date -> set of faculty_ids)
         max_calls: Optional hard caps on calls per faculty (faculty_id -> max_count)
     """
+
     days: list[date]
     faculty: list[str]
     target_calls: dict[str, int]
@@ -71,6 +72,7 @@ class CallScheduleResult:
         status: Solver status ("optimal", "feasible", "infeasible", "unknown")
         objective_value: Final objective value (sum of absolute deviations in phase 2)
     """
+
     schedule: dict[date, str]
     deviations: dict[str, int]
     max_deviation: int
@@ -178,9 +180,7 @@ class CallScheduleModel:
         """Link binary assignment variables to total call counts per faculty."""
         for fac in self.input.faculty:
             # Sum of assignments across all days equals total calls for this faculty
-            total_calls = sum(
-                self.is_assigned[day][fac] for day in self.input.days
-            )
+            total_calls = sum(self.is_assigned[day][fac] for day in self.input.days)
             self.model.Add(self.calls_assigned[fac] == total_calls)
 
     def _add_deviation_constraints(self) -> None:
@@ -195,9 +195,7 @@ class CallScheduleModel:
             target = self.input.target_calls.get(fac, 0)
 
             # deviation = actual - target
-            self.model.Add(
-                self.deviation[fac] == self.calls_assigned[fac] - target
-            )
+            self.model.Add(self.deviation[fac] == self.calls_assigned[fac] - target)
 
             # Absolute value linearization:
             # abs_deviation >= deviation
@@ -215,7 +213,9 @@ class CallScheduleModel:
                 if fac in self.input.faculty:
                     self.model.Add(self.calls_assigned[fac] <= max_cap)
 
-    def minimize_max_deviation(self, time_limit_seconds: float) -> cp_model.CpSolverStatus:
+    def minimize_max_deviation(
+        self, time_limit_seconds: float
+    ) -> cp_model.CpSolverStatus:
         """
         Phase 1: Minimize the maximum deviation (max-min fairness).
 
@@ -242,9 +242,7 @@ class CallScheduleModel:
         return status
 
     def minimize_sum_deviations(
-        self,
-        fixed_max_dev: int,
-        time_limit_seconds: float
+        self, fixed_max_dev: int, time_limit_seconds: float
     ) -> tuple[cp_model.CpSolverStatus, cp_model.CpSolver]:
         """
         Phase 2: Minimize sum of absolute deviations with max_deviation fixed.
@@ -305,15 +303,11 @@ class CallScheduleModel:
         Returns:
             Dictionary mapping faculty_id to (actual - target) deviation
         """
-        return {
-            fac: solver.Value(self.deviation[fac])
-            for fac in self.input.faculty
-        }
+        return {fac: solver.Value(self.deviation[fac]) for fac in self.input.faculty}
 
 
 def optimize_call_schedule(
-    input_data: CallScheduleInput,
-    time_limit_seconds: float = 30.0
+    input_data: CallScheduleInput, time_limit_seconds: float = 30.0
 ) -> CallScheduleResult:
     """
     Optimize call schedule using max-min fairness with two-phase approach.
@@ -375,7 +369,7 @@ def optimize_call_schedule(
             deviations={},
             max_deviation=0,
             solve_time_seconds=total_time,
-            status=status_name
+            status=status_name,
         )
 
     # Extract the optimal max_deviation value from phase 1
@@ -404,7 +398,7 @@ def optimize_call_schedule(
             max_deviation=max_dev,
             solve_time_seconds=total_time,
             status=_status_to_string(phase1_status),
-            objective_value=sum(abs(d) for d in deviations.values())
+            objective_value=sum(abs(d) for d in deviations.values()),
         )
 
     # Extract final solution from phase 2
@@ -430,7 +424,7 @@ def optimize_call_schedule(
         max_deviation=max_dev,
         solve_time_seconds=total_time,
         status=final_status,
-        objective_value=int(final_solver.ObjectiveValue())
+        objective_value=int(final_solver.ObjectiveValue()),
     )
 
 
@@ -468,9 +462,7 @@ def _validate_input(input_data: CallScheduleInput) -> None:
     for day, eligible in input_data.eligibility.items():
         invalid = eligible - all_faculty_set
         if invalid:
-            raise ValueError(
-                f"Day {day} references unknown faculty: {invalid}"
-            )
+            raise ValueError(f"Day {day} references unknown faculty: {invalid}")
 
 
 def _status_to_string(status: cp_model.CpSolverStatus) -> str:

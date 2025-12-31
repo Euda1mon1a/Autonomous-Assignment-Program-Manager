@@ -216,9 +216,7 @@ class TestCircuitBreakerHealthCheck:
             assert "timeout" in result["error"].lower()
 
     @pytest.mark.asyncio
-    async def test_check_critical_breakers_only(
-        self, health_checker, sample_breakers
-    ):
+    async def test_check_critical_breakers_only(self, health_checker, sample_breakers):
         """Test critical breakers check returns only critical breaker status."""
         result = await health_checker.check_critical_breakers()
 
@@ -289,9 +287,7 @@ class TestCircuitBreakerHealthCheckIntegration:
     """Integration tests for circuit breaker health check with health aggregator."""
 
     @pytest.mark.asyncio
-    async def test_health_aggregator_includes_circuit_breakers(
-        self, sample_breakers
-    ):
+    async def test_health_aggregator_includes_circuit_breakers(self, sample_breakers):
         """Test health aggregator includes circuit breaker check."""
         from app.health.aggregator import HealthAggregator
 
@@ -316,9 +312,7 @@ class TestCircuitBreakerHealthCheckIntegration:
         assert "breaker_details" in result.details
 
     @pytest.mark.asyncio
-    async def test_overall_status_degraded_with_open_breakers(
-        self, sample_breakers
-    ):
+    async def test_overall_status_degraded_with_open_breakers(self, sample_breakers):
         """Test overall health status is degraded when breakers are open."""
         from app.health.aggregator import HealthAggregator
 

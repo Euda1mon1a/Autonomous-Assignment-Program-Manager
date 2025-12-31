@@ -255,8 +255,7 @@ class ValidationStudy:
 
         # Filter to points with actual reports
         with_actual = [
-            dp for dp in self.data_points
-            if dp.actual_fatigue_score is not None
+            dp for dp in self.data_points if dp.actual_fatigue_score is not None
         ]
 
         if not with_actual:
@@ -309,7 +308,7 @@ class ValidationStudy:
             actual_effectiveness = 100 - (dp.actual_fatigue_score - 1) * (100 / 9)
 
             error = dp.predicted_effectiveness - actual_effectiveness
-            squared_errors.append(error ** 2)
+            squared_errors.append(error**2)
             absolute_errors.append(abs(error))
 
         rmse = math.sqrt(sum(squared_errors) / len(squared_errors))
@@ -335,8 +334,7 @@ class ValidationStudy:
 
         # Calculate correlation
         numerator = sum(
-            (p - mean_pred) * (a - mean_actual)
-            for p, a in zip(predicted, actual)
+            (p - mean_pred) * (a - mean_actual) for p, a in zip(predicted, actual)
         )
 
         sum_sq_pred = sum((p - mean_pred) ** 2 for p in predicted)
@@ -357,7 +355,9 @@ class ValidationStudy:
         """Calculate TP, TN, FP, FN and derived metrics."""
         for dp in data_points:
             # FRMS prediction: at-risk if below threshold
-            predicted_at_risk = dp.predicted_effectiveness < self.effectiveness_threshold
+            predicted_at_risk = (
+                dp.predicted_effectiveness < self.effectiveness_threshold
+            )
 
             # Actual: fatigued if self-report above threshold
             actual_fatigued = dp.actual_fatigue_score >= self.fatigue_threshold
@@ -373,8 +373,10 @@ class ValidationStudy:
 
         # Calculate derived metrics
         total = (
-            accuracy.true_positives + accuracy.true_negatives +
-            accuracy.false_positives + accuracy.false_negatives
+            accuracy.true_positives
+            + accuracy.true_negatives
+            + accuracy.false_positives
+            + accuracy.false_negatives
         )
 
         if total > 0:
@@ -422,9 +424,9 @@ class ValidationStudy:
         sum_x = sum(predicted)
         sum_y = sum(actual)
         sum_xy = sum(x * y for x, y in zip(predicted, actual))
-        sum_xx = sum(x ** 2 for x in predicted)
+        sum_xx = sum(x**2 for x in predicted)
 
-        denominator = n * sum_xx - sum_x ** 2
+        denominator = n * sum_xx - sum_x**2
         if denominator == 0:
             return 1.0, 0.0
 
@@ -446,15 +448,11 @@ class ValidationStudy:
             return 0.5
 
         # Sort by predicted effectiveness (descending = higher risk first)
-        sorted_points = sorted(
-            data_points,
-            key=lambda dp: dp.predicted_effectiveness
-        )
+        sorted_points = sorted(data_points, key=lambda dp: dp.predicted_effectiveness)
 
         # Calculate TPR and FPR at each threshold
         n_positive = sum(
-            1 for dp in data_points
-            if dp.actual_fatigue_score >= self.fatigue_threshold
+            1 for dp in data_points if dp.actual_fatigue_score >= self.fatigue_threshold
         )
         n_negative = len(data_points) - n_positive
 
@@ -530,18 +528,14 @@ class ValidationStudy:
             return {}
 
         with_actual = [
-            dp for dp in self.data_points
-            if dp.actual_fatigue_score is not None
+            dp for dp in self.data_points if dp.actual_fatigue_score is not None
         ]
 
         if not with_actual:
             return {}
 
         # Sort by predicted effectiveness
-        sorted_points = sorted(
-            with_actual,
-            key=lambda dp: dp.predicted_effectiveness
-        )
+        sorted_points = sorted(with_actual, key=lambda dp: dp.predicted_effectiveness)
 
         # Create decile bins
         n = len(sorted_points)
@@ -549,20 +543,23 @@ class ValidationStudy:
 
         bins = []
         for i in range(0, n, bin_size):
-            bin_points = sorted_points[i:i + bin_size]
+            bin_points = sorted_points[i : i + bin_size]
             if bin_points:
-                avg_predicted = sum(dp.predicted_effectiveness for dp in bin_points) / len(bin_points)
+                avg_predicted = sum(
+                    dp.predicted_effectiveness for dp in bin_points
+                ) / len(bin_points)
                 avg_actual = sum(
-                    100 - (dp.actual_fatigue_score - 1) * (100 / 9)
-                    for dp in bin_points
+                    100 - (dp.actual_fatigue_score - 1) * (100 / 9) for dp in bin_points
                 ) / len(bin_points)
 
-                bins.append({
-                    "bin_index": len(bins),
-                    "count": len(bin_points),
-                    "avg_predicted": round(avg_predicted, 2),
-                    "avg_actual": round(avg_actual, 2),
-                })
+                bins.append(
+                    {
+                        "bin_index": len(bins),
+                        "count": len(bin_points),
+                        "avg_predicted": round(avg_predicted, 2),
+                        "avg_actual": round(avg_actual, 2),
+                    }
+                )
 
         return {
             "bins": bins,

@@ -58,6 +58,12 @@ class ConstraintType(Enum):
     ZONE_BOUNDARY = "zone_boundary"
     PREFERENCE_TRAIL = "preference_trail"
     N1_VULNERABILITY = "n1_vulnerability"
+    # FRMS-specific constraint types
+    FATIGUE_LIMIT = "fatigue_limit"
+    CIRCADIAN_PROTECTION = "circadian_protection"
+    WOCL_RESTRICTION = "wocl_restriction"
+    RECOVERY_REQUIREMENT = "recovery_requirement"
+    SHIFT_DURATION_LIMIT = "shift_duration_limit"
 
 
 @dataclass

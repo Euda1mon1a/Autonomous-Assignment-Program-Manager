@@ -68,12 +68,14 @@ def day_shift_schedule():
     schedule = []
 
     for i in range(5):  # 5 day shifts
-        schedule.append({
-            "start_time": base_time + timedelta(days=i),
-            "duration": 8.0,
-            "type": CircadianShiftType.DAY.value,
-            "resident_id": uuid4(),
-        })
+        schedule.append(
+            {
+                "start_time": base_time + timedelta(days=i),
+                "duration": 8.0,
+                "type": CircadianShiftType.DAY.value,
+                "resident_id": uuid4(),
+            }
+        )
 
     return schedule
 
@@ -85,12 +87,14 @@ def night_shift_schedule():
     schedule = []
 
     for i in range(5):  # 5 night shifts
-        schedule.append({
-            "start_time": base_time + timedelta(days=i),
-            "duration": 12.0,
-            "type": CircadianShiftType.NIGHT.value,
-            "resident_id": uuid4(),
-        })
+        schedule.append(
+            {
+                "start_time": base_time + timedelta(days=i),
+                "duration": 12.0,
+                "type": CircadianShiftType.NIGHT.value,
+                "resident_id": uuid4(),
+            }
+        )
 
     return schedule
 
@@ -113,12 +117,14 @@ def rotating_shift_schedule():
     for i, (shift_type, start_hour, duration) in enumerate(shift_types):
         shift_time = base_time + timedelta(days=i)
         shift_time = shift_time.replace(hour=start_hour)
-        schedule.append({
-            "start_time": shift_time,
-            "duration": duration,
-            "type": shift_type.value,
-            "resident_id": uuid4(),
-        })
+        schedule.append(
+            {
+                "start_time": shift_time,
+                "duration": duration,
+                "type": shift_type.value,
+                "resident_id": uuid4(),
+            }
+        )
 
     return schedule
 
@@ -160,9 +166,7 @@ class TestCircadianOscillator:
     def test_compute_phase_shift_morning(self, oscillator):
         """Test phase shift from morning shift (should advance)."""
         shift_start = datetime(2024, 1, 1, 7, 0)  # 7 AM
-        shift = oscillator.compute_phase_shift(
-            shift_start, 8.0, CircadianShiftType.DAY
-        )
+        shift = oscillator.compute_phase_shift(shift_start, 8.0, CircadianShiftType.DAY)
 
         # Morning light should cause phase advance (positive shift)
         assert shift > 0, "Morning shift should advance circadian phase"
@@ -180,9 +184,7 @@ class TestCircadianOscillator:
     def test_compute_phase_shift_dead_zone(self, oscillator):
         """Test phase shift during circadian dead zone (minimal effect)."""
         shift_start = datetime(2024, 1, 1, 13, 0)  # 1 PM (dead zone)
-        shift = oscillator.compute_phase_shift(
-            shift_start, 2.0, CircadianShiftType.DAY
-        )
+        shift = oscillator.compute_phase_shift(shift_start, 2.0, CircadianShiftType.DAY)
 
         # Dead zone should have minimal effect
         assert abs(shift) < 0.5, "Dead zone should have minimal phase shift"
@@ -344,7 +346,9 @@ class TestCircadianScheduleAnalyzer:
         assert osc1 is osc2
         assert osc2.phase == 15.0
 
-    def test_analyze_schedule_impact_day_shifts(self, analyzer, resident_id, day_shift_schedule):
+    def test_analyze_schedule_impact_day_shifts(
+        self, analyzer, resident_id, day_shift_schedule
+    ):
         """Test analyzing regular day shift schedule."""
         # Add resident_id to schedule
         for shift in day_shift_schedule:
@@ -543,7 +547,9 @@ class TestCircadianObjective:
         """Test constraint evaluation with violations."""
         obj = CircadianObjective()
 
-        result = obj.evaluate_constraints(rotating_shift_schedule, quality_threshold=0.9)
+        result = obj.evaluate_constraints(
+            rotating_shift_schedule, quality_threshold=0.9
+        )
 
         # High threshold may produce violations
         assert isinstance(result, CircadianConstraintResult)
@@ -591,7 +597,9 @@ class TestCircadianScheduleOptimizer:
         """Test post-solver validation for good schedule."""
         optimizer = CircadianScheduleOptimizer()
 
-        report = optimizer.post_solver_validation(day_shift_schedule, quality_threshold=0.5)
+        report = optimizer.post_solver_validation(
+            day_shift_schedule, quality_threshold=0.5
+        )
 
         assert "passed" in report
         assert "overall_quality" in report
@@ -837,12 +845,14 @@ class TestIntegration:
         schedule = []
 
         for i, resident_id in enumerate(residents):
-            schedule.append({
-                "start_time": datetime(2024, 1, 1, 7 + i * 8, 0),
-                "duration": 8.0,
-                "type": CircadianShiftType.DAY.value,
-                "resident_id": resident_id,
-            })
+            schedule.append(
+                {
+                    "start_time": datetime(2024, 1, 1, 7 + i * 8, 0),
+                    "duration": 8.0,
+                    "type": CircadianShiftType.DAY.value,
+                    "resident_id": resident_id,
+                }
+            )
 
         # Validate
         report = optimizer.post_solver_validation(schedule)

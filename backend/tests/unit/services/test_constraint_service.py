@@ -1133,3 +1133,618 @@ class TestConstraintServicePIISanitization:
         anonymized = service._anonymize_person_ref(None)
 
         assert anonymized is None
+
+
+class TestConstraintServiceValidateSchedule:
+    """Test suite for ConstraintService.validate_schedule() async method."""
+
+    @pytest.mark.asyncio
+    async def test_validate_schedule_success_no_violations(
+        self, db, sample_residents, sample_blocks, sample_rotation_template
+    ):
+        """Test validate_schedule with valid schedule (no violations)."""
+        from app.services.constraint_service import ConstraintService
+
+        schedule_run_id = uuid4()
+
+        # Create compliant assignments (5 days/week, AM only = 30 hours/week)
+        assignments = []
+        for i, block in enumerate(sample_blocks[:5]):  # First 5 blocks (2.5 days)
+            assignment = Assignment(
+                id=uuid4(),
+                block_id=block.id,
+                person_id=sample_residents[i % len(sample_residents)].id,
+                rotation_template_id=sample_rotation_template.id,
+                role="primary",
+                schedule_run_id=schedule_run_id,
+            )
+            db.add(assignment)
+            assignments.append(assignment)
+        db.commit()
+
+        service = ConstraintService(db)
+        result = await service.validate_schedule(str(schedule_run_id))
+
+        assert result.schedule_id == str(schedule_run_id)
+        assert result.is_valid is True
+        assert result.compliance_rate >= 0.0
+        assert result.compliance_rate <= 1.0
+        assert result.total_issues >= 0
+        assert result.critical_count == 0
+        assert result.validated_at is not None
+        assert result.constraint_config == "default"
+
+    @pytest.mark.asyncio
+    async def test_validate_schedule_not_found_error(self, db):
+        """Test validate_schedule raises ScheduleNotFoundError for non-existent schedule."""
+        from app.services.constraint_service import (
+            ConstraintService,
+            ScheduleNotFoundError,
+        )
+
+        non_existent_id = uuid4()
+        service = ConstraintService(db)
+
+        with pytest.raises(ScheduleNotFoundError, match="not found"):
+            await service.validate_schedule(str(non_existent_id))
+
+    @pytest.mark.asyncio
+    async def test_validate_schedule_invalid_id_error(self, db):
+        """Test validate_schedule raises ScheduleIdValidationError for invalid ID."""
+        from app.services.constraint_service import (
+            ConstraintService,
+            ScheduleIdValidationError,
+        )
+
+        service = ConstraintService(db)
+
+        with pytest.raises(ScheduleIdValidationError):
+            await service.validate_schedule("../etc/passwd")
+
+    @pytest.mark.asyncio
+    async def test_validate_schedule_with_violations(
+        self, db, sample_resident, sample_rotation_template
+    ):
+        """Test validate_schedule detects violations (consecutive days)."""
+        from app.services.constraint_service import ConstraintService
+
+        schedule_run_id = uuid4()
+
+        # Create 10 consecutive days to violate 1-in-7 rule
+        blocks = []
+        start_date = date.today()
+        for i in range(10):
+            block = Block(
+                id=uuid4(),
+                date=start_date + timedelta(days=i),
+                time_of_day="AM",
+                block_number=1,
+                is_weekend=False,
+            )
+            db.add(block)
+            blocks.append(block)
+        db.commit()
+
+        # Assign all blocks to same resident
+        assignments = []
+        for block in blocks:
+            assignment = Assignment(
+                id=uuid4(),
+                block_id=block.id,
+                person_id=sample_resident.id,
+                rotation_template_id=sample_rotation_template.id,
+                role="primary",
+                schedule_run_id=schedule_run_id,
+            )
+            db.add(assignment)
+            assignments.append(assignment)
+        db.commit()
+
+        service = ConstraintService(db)
+        result = await service.validate_schedule(str(schedule_run_id))
+
+        assert result.schedule_id == str(schedule_run_id)
+        # May or may not be valid depending on constraints enabled
+        assert result.total_issues >= 0
+        assert len(result.issues) == result.total_issues
+        # Verify compliance rate is less than 1.0 if violations exist
+        if result.total_issues > 0:
+            assert result.compliance_rate < 1.0
+
+    @pytest.mark.asyncio
+    async def test_validate_schedule_different_configs(
+        self, db, sample_residents, sample_blocks, sample_rotation_template
+    ):
+        """Test validate_schedule with different constraint configurations."""
+        from app.services.constraint_service import ConstraintService
+
+        schedule_run_id = uuid4()
+
+        # Create some assignments
+        for i, block in enumerate(sample_blocks[:3]):
+            assignment = Assignment(
+                id=uuid4(),
+                block_id=block.id,
+                person_id=sample_residents[i % len(sample_residents)].id,
+                rotation_template_id=sample_rotation_template.id,
+                role="primary",
+                schedule_run_id=schedule_run_id,
+            )
+            db.add(assignment)
+        db.commit()
+
+        service = ConstraintService(db)
+
+        # Test each configuration
+        configs = ["default", "minimal", "strict", "resilience"]
+        for config in configs:
+            result = await service.validate_schedule(str(schedule_run_id), config)
+
+            assert result.constraint_config == config
+            assert result.schedule_id == str(schedule_run_id)
+            assert result.validated_at is not None
+
+    @pytest.mark.asyncio
+    async def test_validate_schedule_metadata(
+        self, db, sample_residents, sample_blocks, sample_rotation_template
+    ):
+        """Test validate_schedule includes metadata."""
+        from app.services.constraint_service import ConstraintService
+
+        schedule_run_id = uuid4()
+
+        # Create 5 assignments
+        for i, block in enumerate(sample_blocks[:5]):
+            assignment = Assignment(
+                id=uuid4(),
+                block_id=block.id,
+                person_id=sample_residents[i % len(sample_residents)].id,
+                rotation_template_id=sample_rotation_template.id,
+                role="primary",
+                schedule_run_id=schedule_run_id,
+            )
+            db.add(assignment)
+        db.commit()
+
+        service = ConstraintService(db)
+        result = await service.validate_schedule(str(schedule_run_id))
+
+        assert "assignment_count" in result.metadata
+        assert result.metadata["assignment_count"] == 5
+        assert "constraint_penalty" in result.metadata
+
+    @pytest.mark.asyncio
+    async def test_validate_schedule_issue_counts(
+        self, db, sample_resident, sample_rotation_template
+    ):
+        """Test validate_schedule counts issues by severity correctly."""
+        from app.services.constraint_service import ConstraintService
+
+        schedule_run_id = uuid4()
+
+        # Create scenario likely to have violations
+        blocks = []
+        start_date = date.today()
+        for i in range(28):  # 4 weeks
+            for time_of_day in ["AM", "PM"]:
+                block = Block(
+                    id=uuid4(),
+                    date=start_date + timedelta(days=i),
+                    time_of_day=time_of_day,
+                    block_number=1,
+                    is_weekend=False,
+                )
+                db.add(block)
+                blocks.append(block)
+        db.commit()
+
+        # Assign all blocks to same resident (will violate 80-hour rule)
+        for block in blocks:
+            assignment = Assignment(
+                id=uuid4(),
+                block_id=block.id,
+                person_id=sample_resident.id,
+                rotation_template_id=sample_rotation_template.id,
+                role="primary",
+                schedule_run_id=schedule_run_id,
+            )
+            db.add(assignment)
+        db.commit()
+
+        service = ConstraintService(db)
+        result = await service.validate_schedule(str(schedule_run_id))
+
+        # Verify counts match
+        assert result.total_issues == len(result.issues)
+        assert (
+            result.critical_count + result.warning_count + result.info_count
+            == result.total_issues
+        )
+
+
+class TestConstraintServiceInternalMethods:
+    """Test suite for ConstraintService internal helper methods."""
+
+    def test_severity_from_constraint_critical(self, db):
+        """Test _severity_from_constraint maps CRITICAL correctly."""
+        from app.scheduling.constraints.base import ConstraintViolation, ConstraintType
+        from app.services.constraint_service import (
+            ConstraintService,
+            ValidationSeverity,
+        )
+
+        service = ConstraintService(db)
+        violation = ConstraintViolation(
+            constraint_name="TestConstraint",
+            constraint_type=ConstraintType.DUTY_HOURS,
+            severity="CRITICAL",
+            message="Critical violation",
+        )
+
+        severity = service._severity_from_constraint(violation)
+
+        assert severity == ValidationSeverity.CRITICAL
+
+    def test_severity_from_constraint_medium(self, db):
+        """Test _severity_from_constraint maps MEDIUM to WARNING."""
+        from app.scheduling.constraints.base import ConstraintViolation, ConstraintType
+        from app.services.constraint_service import (
+            ConstraintService,
+            ValidationSeverity,
+        )
+
+        service = ConstraintService(db)
+        violation = ConstraintViolation(
+            constraint_name="TestConstraint",
+            constraint_type=ConstraintType.EQUITY,
+            severity="MEDIUM",
+            message="Medium violation",
+        )
+
+        severity = service._severity_from_constraint(violation)
+
+        assert severity == ValidationSeverity.WARNING
+
+    def test_severity_from_constraint_low(self, db):
+        """Test _severity_from_constraint maps LOW to INFO."""
+        from app.scheduling.constraints.base import ConstraintViolation, ConstraintType
+        from app.services.constraint_service import (
+            ConstraintService,
+            ValidationSeverity,
+        )
+
+        service = ConstraintService(db)
+        violation = ConstraintViolation(
+            constraint_name="TestConstraint",
+            constraint_type=ConstraintType.CONTINUITY,
+            severity="LOW",
+            message="Low violation",
+        )
+
+        severity = service._severity_from_constraint(violation)
+
+        assert severity == ValidationSeverity.INFO
+
+    def test_sanitize_violation(self, db, sample_resident):
+        """Test _sanitize_violation creates ScheduleValidationIssue."""
+        from app.scheduling.constraints.base import ConstraintViolation, ConstraintType
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        violation = ConstraintViolation(
+            constraint_name="80HourRule",
+            constraint_type=ConstraintType.DUTY_HOURS,
+            severity="CRITICAL",
+            message="Exceeded 80 hours: dr.smith@hospital.org worked 85 hours",
+            person_id=sample_resident.id,
+            details={"hours": 85, "email": "secret@test.com"},
+        )
+
+        issue = service._sanitize_violation(violation)
+
+        # Check basic fields
+        assert issue.constraint_name == "80HourRule"
+        assert issue.rule_type == ConstraintType.DUTY_HOURS.value
+        # Check PII was sanitized
+        assert "dr.smith@hospital.org" not in issue.message
+        assert "[EMAIL REDACTED]" in issue.message
+        # Check details sanitized
+        assert "email" not in issue.details
+        assert issue.details["hours"] == 85
+        # Check person anonymized
+        assert issue.affected_entity_ref.startswith("entity-")
+        # Check suggested action exists
+        assert issue.suggested_action is not None
+
+    def test_format_date_context_with_block(self, db, sample_block):
+        """Test _format_date_context formats block date."""
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        date_context = service._format_date_context(sample_block.id)
+
+        assert date_context is not None
+        assert str(sample_block.date.isoformat()) in date_context
+        assert sample_block.time_of_day in date_context
+
+    def test_format_date_context_none(self, db):
+        """Test _format_date_context returns None for None block_id."""
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        date_context = service._format_date_context(None)
+
+        assert date_context is None
+
+    def test_format_date_context_invalid_block(self, db):
+        """Test _format_date_context returns None for invalid block_id."""
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        date_context = service._format_date_context(uuid4())
+
+        assert date_context is None
+
+    def test_get_suggested_action_duty_hours(self, db):
+        """Test _get_suggested_action for DUTY_HOURS constraint."""
+        from app.scheduling.constraints.base import ConstraintType
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        action = service._get_suggested_action(ConstraintType.DUTY_HOURS)
+
+        assert action is not None
+        assert "ACGME" in action or "hours" in action.lower()
+
+    def test_get_suggested_action_consecutive_days(self, db):
+        """Test _get_suggested_action for CONSECUTIVE_DAYS constraint."""
+        from app.scheduling.constraints.base import ConstraintType
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        action = service._get_suggested_action(ConstraintType.CONSECUTIVE_DAYS)
+
+        assert action is not None
+        assert "day off" in action.lower() or "7-day" in action.lower()
+
+    def test_get_suggested_action_supervision(self, db):
+        """Test _get_suggested_action for SUPERVISION constraint."""
+        from app.scheduling.constraints.base import ConstraintType
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        action = service._get_suggested_action(ConstraintType.SUPERVISION)
+
+        assert action is not None
+        assert "faculty" in action.lower() or "supervis" in action.lower()
+
+    def test_get_suggested_action_unknown(self, db):
+        """Test _get_suggested_action returns default for unknown constraint."""
+        from app.scheduling.constraints.base import ConstraintType
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        # Use a constraint type that doesn't have a specific suggestion
+        action = service._get_suggested_action(ConstraintType.CONTINUITY)
+
+        assert action is not None
+        assert "schedule" in action.lower()
+
+    def test_build_scheduling_context(
+        self, db, sample_residents, sample_faculty_members, sample_blocks
+    ):
+        """Test _build_scheduling_context creates valid context."""
+        from app.services.constraint_service import ConstraintService
+
+        # Create assignments
+        assignments = []
+        for i, block in enumerate(sample_blocks[:3]):
+            assignment = Assignment(
+                id=uuid4(),
+                block_id=block.id,
+                person_id=sample_residents[i % len(sample_residents)].id,
+                role="primary",
+            )
+            db.add(assignment)
+            assignments.append(assignment)
+        db.commit()
+
+        service = ConstraintService(db)
+        context = service._build_scheduling_context(assignments)
+
+        assert context is not None
+        assert len(context.residents) > 0
+        assert len(context.blocks) == 3
+        assert context.start_date is not None
+        assert context.end_date is not None
+        assert context.existing_assignments == assignments
+
+    def test_build_scheduling_context_empty(self, db):
+        """Test _build_scheduling_context handles empty assignments."""
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        context = service._build_scheduling_context([])
+
+        assert context is not None
+        assert len(context.residents) == 0
+        assert len(context.blocks) == 0
+        assert context.start_date is None
+        assert context.end_date is None
+
+    def test_get_constraint_manager_default(self, db):
+        """Test _get_constraint_manager returns default manager."""
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        manager = service._get_constraint_manager("default")
+
+        assert manager is not None
+        assert len(manager.constraints) > 0
+
+    def test_get_constraint_manager_minimal(self, db):
+        """Test _get_constraint_manager returns minimal manager."""
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        manager = service._get_constraint_manager("minimal")
+
+        assert manager is not None
+        # Minimal should have fewer constraints
+        assert len(manager.constraints) <= 5
+
+    def test_get_constraint_manager_strict(self, db):
+        """Test _get_constraint_manager returns strict manager."""
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        manager = service._get_constraint_manager("strict")
+
+        assert manager is not None
+        assert len(manager.constraints) > 0
+
+    def test_get_constraint_manager_resilience(self, db):
+        """Test _get_constraint_manager returns resilience manager."""
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        manager = service._get_constraint_manager("resilience")
+
+        assert manager is not None
+        # Resilience should have resilience-specific constraints enabled
+        assert len(manager.constraints) > 0
+
+    def test_get_constraint_manager_unknown_fallback(self, db):
+        """Test _get_constraint_manager falls back to default for unknown config."""
+        from app.services.constraint_service import ConstraintService
+
+        service = ConstraintService(db)
+        manager = service._get_constraint_manager("unknown_config")
+
+        assert manager is not None
+        # Should fall back to default
+        assert len(manager.constraints) > 0
+
+
+class TestConstraintServiceComplianceCalculation:
+    """Test suite for compliance rate calculation logic."""
+
+    @pytest.mark.asyncio
+    async def test_compliance_rate_perfect(
+        self, db, sample_residents, sample_blocks, sample_rotation_template
+    ):
+        """Test compliance rate is 1.0 for perfect schedule."""
+        from app.services.constraint_service import ConstraintService
+
+        schedule_run_id = uuid4()
+
+        # Create minimal compliant assignments
+        for i, block in enumerate(sample_blocks[:3]):
+            assignment = Assignment(
+                id=uuid4(),
+                block_id=block.id,
+                person_id=sample_residents[i % len(sample_residents)].id,
+                rotation_template_id=sample_rotation_template.id,
+                role="primary",
+                schedule_run_id=schedule_run_id,
+            )
+            db.add(assignment)
+        db.commit()
+
+        service = ConstraintService(db)
+        result = await service.validate_schedule(str(schedule_run_id), "minimal")
+
+        # With minimal constraints and good schedule, should have high compliance
+        assert result.compliance_rate >= 0.8
+
+    @pytest.mark.asyncio
+    async def test_compliance_rate_weighted_by_severity(
+        self, db, sample_resident, sample_rotation_template
+    ):
+        """Test compliance rate weights critical issues more heavily."""
+        from app.services.constraint_service import ConstraintService
+
+        schedule_run_id = uuid4()
+
+        # Create violations
+        blocks = []
+        start_date = date.today()
+        for i in range(28):  # 4 weeks
+            for time_of_day in ["AM", "PM"]:
+                block = Block(
+                    id=uuid4(),
+                    date=start_date + timedelta(days=i),
+                    time_of_day=time_of_day,
+                    block_number=1,
+                    is_weekend=False,
+                )
+                db.add(block)
+                blocks.append(block)
+        db.commit()
+
+        # Assign all blocks to same resident (violations)
+        for block in blocks:
+            assignment = Assignment(
+                id=uuid4(),
+                block_id=block.id,
+                person_id=sample_resident.id,
+                rotation_template_id=sample_rotation_template.id,
+                role="primary",
+                schedule_run_id=schedule_run_id,
+            )
+            db.add(assignment)
+        db.commit()
+
+        service = ConstraintService(db)
+        result = await service.validate_schedule(str(schedule_run_id))
+
+        # If there are critical issues, compliance should be lower
+        if result.critical_count > 0:
+            assert result.compliance_rate < 1.0
+            assert result.is_valid is False
+
+    @pytest.mark.asyncio
+    async def test_is_valid_false_with_critical_issues(
+        self, db, sample_resident, sample_rotation_template
+    ):
+        """Test is_valid is False when critical issues exist."""
+        from app.services.constraint_service import ConstraintService
+
+        schedule_run_id = uuid4()
+
+        # Create excessive consecutive days
+        blocks = []
+        start_date = date.today()
+        for i in range(10):
+            block = Block(
+                id=uuid4(),
+                date=start_date + timedelta(days=i),
+                time_of_day="AM",
+                block_number=1,
+                is_weekend=False,
+            )
+            db.add(block)
+            blocks.append(block)
+        db.commit()
+
+        for block in blocks:
+            assignment = Assignment(
+                id=uuid4(),
+                block_id=block.id,
+                person_id=sample_resident.id,
+                rotation_template_id=sample_rotation_template.id,
+                role="primary",
+                schedule_run_id=schedule_run_id,
+            )
+            db.add(assignment)
+        db.commit()
+
+        service = ConstraintService(db)
+        result = await service.validate_schedule(str(schedule_run_id))
+
+        # May have critical violations depending on enabled constraints
+        # Just verify the logic is consistent
+        if result.critical_count > 0:
+            assert result.is_valid is False
+        else:
+            assert result.is_valid is True

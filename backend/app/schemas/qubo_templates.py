@@ -187,9 +187,7 @@ class ParetoSolutionSchema(BaseModel):
     objectives: dict[str, float] = Field(
         ..., description="Objective values for this solution"
     )
-    rank: int = Field(
-        default=0, description="Pareto rank (0 = non-dominated frontier)"
-    )
+    rank: int = Field(default=0, description="Pareto rank (0 = non-dominated frontier)")
     crowding_distance: float = Field(
         default=0.0, description="Crowding distance for diversity"
     )
@@ -222,9 +220,7 @@ class EnergyLandscapeSchema(BaseModel):
     global_minimum_energy: float = Field(
         ..., description="Energy of the global minimum"
     )
-    energy_range: dict[str, float] = Field(
-        ..., description="Min/max energy range"
-    )
+    energy_range: dict[str, float] = Field(..., description="Min/max energy range")
     points: list[EnergyLandscapePointSchema] = Field(
         default=[], description="Sampled landscape points"
     )
@@ -352,15 +348,15 @@ class QuantumAdvantageScenario(BaseModel):
     expected_speedup: str = Field(
         ..., description="Expected speedup over classical (e.g., '2-10x')"
     )
-    conditions: list[str] = Field(
-        ..., description="Conditions required for advantage"
-    )
+    conditions: list[str] = Field(..., description="Conditions required for advantage")
 
 
 class QuantumAdvantageDocResponse(BaseModel):
     """Response schema for quantum advantage documentation."""
 
-    overview: str = Field(..., description="Overview of quantum advantage in scheduling")
+    overview: str = Field(
+        ..., description="Overview of quantum advantage in scheduling"
+    )
     scenarios: list[QuantumAdvantageScenario] = Field(
         ..., description="Scenarios where quantum advantage applies"
     )

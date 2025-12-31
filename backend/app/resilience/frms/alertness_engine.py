@@ -38,7 +38,10 @@ from typing import Optional
 from uuid import UUID
 
 from app.core.logging import get_logger
-from app.resilience.frms.samn_perelli import SamnPerelliLevel, estimate_level_from_factors
+from app.resilience.frms.samn_perelli import (
+    SamnPerelliLevel,
+    estimate_level_from_factors,
+)
 from app.resilience.frms.sleep_debt import (
     CircadianPhase,
     SleepDebtModel,
@@ -155,16 +158,14 @@ class ShiftPattern:
     @property
     def fatigue_factor(self) -> float:
         """Get fatigue factor for this shift type."""
-        return SHIFT_CHARACTERISTICS.get(
-            self.shift_type, {}
-        ).get("fatigue_factor", 1.0)
+        return SHIFT_CHARACTERISTICS.get(self.shift_type, {}).get("fatigue_factor", 1.0)
 
     @property
     def is_circadian_aligned(self) -> bool:
         """Check if shift is aligned with normal circadian rhythm."""
-        return SHIFT_CHARACTERISTICS.get(
-            self.shift_type, {}
-        ).get("circadian_aligned", True)
+        return SHIFT_CHARACTERISTICS.get(self.shift_type, {}).get(
+            "circadian_aligned", True
+        )
 
 
 @dataclass
@@ -324,16 +325,16 @@ class AlertnessPredictor:
 
         # Apply hours awake penalty (exponential decay after 16 hours)
         awake_penalty = self._hours_awake_penalty(hours_awake)
-        alertness *= (1.0 - awake_penalty)
+        alertness *= 1.0 - awake_penalty
 
         # Apply sleep debt penalty
-        alertness *= (1.0 - debt_impact)
+        alertness *= 1.0 - debt_impact
 
         # Apply workload impact
-        alertness *= (1.0 - workload_impact)
+        alertness *= 1.0 - workload_impact
 
         # Apply sleep inertia if recently woke
-        alertness *= (1.0 - sleep_inertia)
+        alertness *= 1.0 - sleep_inertia
 
         # Clamp to valid range
         alertness = max(0.1, min(1.0, alertness))
@@ -434,7 +435,7 @@ class AlertnessPredictor:
                 prediction = self.predict_alertness(
                     resident_id=resident_id,
                     target_time=midpoint,
-                    recent_shifts=upcoming_shifts[:i+1],
+                    recent_shifts=upcoming_shifts[: i + 1],
                     sleep_history=sleep_history,
                     current_sleep_debt=running_debt,
                 )
@@ -448,7 +449,9 @@ class AlertnessPredictor:
                 running_debt = max(0, running_debt - recovery)
             else:
                 # Accumulate debt from inadequate sleep
-                debt_change = self.sleep_model.baseline_sleep_need - shift.prior_sleep_hours
+                debt_change = (
+                    self.sleep_model.baseline_sleep_need - shift.prior_sleep_hours
+                )
                 if debt_change > 0:
                     running_debt += debt_change
 
@@ -473,14 +476,16 @@ class AlertnessPredictor:
 
         for pred in trajectory:
             if pred.alertness_score < threshold:
-                high_risk.append({
-                    "time": pred.prediction_time.isoformat(),
-                    "alertness": round(pred.alertness_score, 3),
-                    "samn_perelli": pred.samn_perelli_estimate.value,
-                    "risk_level": pred.risk_level,
-                    "factors": pred.contributing_factors,
-                    "recommendations": pred.recommendations,
-                })
+                high_risk.append(
+                    {
+                        "time": pred.prediction_time.isoformat(),
+                        "alertness": round(pred.alertness_score, 3),
+                        "samn_perelli": pred.samn_perelli_estimate.value,
+                        "risk_level": pred.risk_level,
+                        "factors": pred.contributing_factors,
+                        "recommendations": pred.recommendations,
+                    }
+                )
 
         return high_risk
 
@@ -520,11 +525,16 @@ class AlertnessPredictor:
         most_recent = max(sleep_history, key=lambda s: s.end_time)
         minutes_since_wake = (target_time - most_recent.end_time).total_seconds() / 60
 
-        if minutes_since_wake < 0 or minutes_since_wake > self.SLEEP_INERTIA_DURATION_MINUTES:
+        if (
+            minutes_since_wake < 0
+            or minutes_since_wake > self.SLEEP_INERTIA_DURATION_MINUTES
+        ):
             return 0.0
 
         # Linear decay of inertia
-        inertia_fraction = 1.0 - (minutes_since_wake / self.SLEEP_INERTIA_DURATION_MINUTES)
+        inertia_fraction = 1.0 - (
+            minutes_since_wake / self.SLEEP_INERTIA_DURATION_MINUTES
+        )
         return self.SLEEP_INERTIA_IMPACT * inertia_fraction
 
     def _calculate_workload_impact(
@@ -677,7 +687,9 @@ class AlertnessPredictor:
         # Circadian-specific advice
         phase = self.sleep_model.get_circadian_phase(target_time)
         if phase == CircadianPhase.NADIR:
-            recommendations.append("High vigilance needed during circadian low (2-6 AM)")
+            recommendations.append(
+                "High vigilance needed during circadian low (2-6 AM)"
+            )
 
         if not recommendations:
             recommendations.append("Current alertness adequate for clinical duties")

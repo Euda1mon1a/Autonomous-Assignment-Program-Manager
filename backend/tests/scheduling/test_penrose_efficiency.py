@@ -418,9 +418,7 @@ class TestPenroseEfficiencyExtractor:
 
         assert len(ergospheres) > 0
         # Should find at least one week-end ergosphere
-        week_end_ergospheres = [
-            e for e in ergospheres if e.boundary_type == "week_end"
-        ]
+        week_end_ergospheres = [e for e in ergospheres if e.boundary_type == "week_end"]
         assert len(week_end_ergospheres) > 0
 
     async def test_decompose_into_phases(self, extractor):
@@ -669,7 +667,9 @@ class TestPenroseVisualizer:
 
         plt.close(fig)
 
-    def test_generate_summary_report(self, visualizer, sample_ergospheres, sample_swaps):
+    def test_generate_summary_report(
+        self, visualizer, sample_ergospheres, sample_swaps
+    ):
         """Test summary report generation."""
         efficiency = 0.15
 

@@ -22,10 +22,12 @@ class TestCUSUMDetection:
     def test_detects_upward_mean_shift(self):
         """CUSUM should detect upward mean shifts."""
         # Create series with clear mean shift at index 50
-        series = np.concatenate([
-            np.random.normal(8.0, 0.5, 50),  # Low mean
-            np.random.normal(12.0, 0.5, 50),  # High mean
-        ])
+        series = np.concatenate(
+            [
+                np.random.normal(8.0, 0.5, 50),  # Low mean
+                np.random.normal(12.0, 0.5, 50),  # High mean
+            ]
+        )
 
         processor = WorkloadSignalProcessor()
         change_points = processor.detect_change_points_cusum(series, threshold=4.0)
@@ -40,10 +42,12 @@ class TestCUSUMDetection:
 
     def test_detects_downward_mean_shift(self):
         """CUSUM should detect downward mean shifts."""
-        series = np.concatenate([
-            np.random.normal(12.0, 0.5, 50),  # High mean
-            np.random.normal(8.0, 0.5, 50),   # Low mean
-        ])
+        series = np.concatenate(
+            [
+                np.random.normal(12.0, 0.5, 50),  # High mean
+                np.random.normal(8.0, 0.5, 50),  # Low mean
+            ]
+        )
 
         processor = WorkloadSignalProcessor()
         change_points = processor.detect_change_points_cusum(series, threshold=4.0)
@@ -77,11 +81,13 @@ class TestPELTDetection:
     def test_detects_multiple_segments(self):
         """PELT should detect multiple change points."""
         # Create series with 3 distinct segments
-        series = np.concatenate([
-            np.random.normal(5.0, 0.3, 30),   # Segment 1
-            np.random.normal(10.0, 0.3, 30),  # Segment 2
-            np.random.normal(7.0, 0.3, 30),   # Segment 3
-        ])
+        series = np.concatenate(
+            [
+                np.random.normal(5.0, 0.3, 30),  # Segment 1
+                np.random.normal(10.0, 0.3, 30),  # Segment 2
+                np.random.normal(7.0, 0.3, 30),  # Segment 3
+            ]
+        )
 
         processor = WorkloadSignalProcessor()
         change_points = processor.detect_change_points_pelt(
@@ -104,7 +110,7 @@ class TestPELTDetection:
         if len(change_points) >= 2:
             indices = sorted(cp["index"] for cp in change_points)
             for i in range(1, len(indices)):
-                assert indices[i] - indices[i-1] >= 10
+                assert indices[i] - indices[i - 1] >= 10
 
     def test_handles_short_series(self):
         """PELT should handle short series gracefully."""

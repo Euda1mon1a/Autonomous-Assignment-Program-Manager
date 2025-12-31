@@ -186,14 +186,14 @@ class TestQUBOFormulation:
         formulation.build()
 
         # All zeros should have a specific energy
-        all_zeros = {i: 0 for i in range(formulation.num_variables)}
+        all_zeros = dict.fromkeys(range(formulation.num_variables), 0)
         energy_zeros = formulation.compute_energy(all_zeros)
 
         # Energy should be deterministic
         assert formulation.compute_energy(all_zeros) == energy_zeros
 
         # All ones should have different (higher) energy due to coverage constraints
-        all_ones = {i: 1 for i in range(formulation.num_variables)}
+        all_ones = dict.fromkeys(range(formulation.num_variables), 1)
         energy_ones = formulation.compute_energy(all_ones)
 
         # Multiple residents per night should increase energy due to penalties
@@ -247,7 +247,9 @@ class TestSimulatedAnnealing:
         assert solution1.energy == solution2.energy
         assert solution1.sample == solution2.sample
 
-    def test_tunneling_strength_affects_results(self, minimal_candidates, minimal_nights):
+    def test_tunneling_strength_affects_results(
+        self, minimal_candidates, minimal_nights
+    ):
         """Verify tunneling strength parameter has effect."""
         formulation = CallAssignmentQUBO(minimal_nights, minimal_candidates)
         formulation.build()
@@ -307,7 +309,9 @@ class TestConstraintSatisfaction:
         for night in small_nights:
             key = (night.date, night.call_type)
             if key in night_counts:
-                assert night_counts[key] == 1, f"Night {key} has {night_counts[key]} assignments"
+                assert night_counts[key] == 1, (
+                    f"Night {key} has {night_counts[key]} assignments"
+                )
 
     def test_no_consecutive_calls(self, small_candidates, small_nights):
         """Verify no resident has consecutive call nights."""
@@ -658,9 +662,7 @@ class TestEdgeCases:
                 pgy_level=1,
             )
         ]
-        nights = [
-            CallNight(date=base_date, call_type=CallType.OVERNIGHT)
-        ]
+        nights = [CallNight(date=base_date, call_type=CallType.OVERNIGHT)]
 
         formulation = CallAssignmentQUBO(nights, candidates)
         assert formulation.num_variables == 1

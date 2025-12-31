@@ -189,7 +189,9 @@ async def parse_xlsx_file(
             if isinstance(cell, MergedCell):
                 # For merged cells, we'll use empty string (merged headers are unusual)
                 headers.append("")
-                warnings.append(f"Merged cell found in header row at column {len(headers)}")
+                warnings.append(
+                    f"Merged cell found in header row at column {len(headers)}"
+                )
             else:
                 value = cell.value
                 if value is not None:
@@ -236,9 +238,13 @@ async def parse_xlsx_file(
     empty_row_count = 0
 
     try:
-        for row_idx, row in enumerate(ws.iter_rows(min_row=header_row + 1), start=header_row + 1):
+        for row_idx, row in enumerate(
+            ws.iter_rows(min_row=header_row + 1), start=header_row + 1
+        ):
             if row_idx > header_row + max_rows:
-                warnings.append(f"Row limit ({max_rows}) reached. File may contain more data.")
+                warnings.append(
+                    f"Row limit ({max_rows}) reached. File may contain more data."
+                )
                 break
 
             row_data: dict[str, Any] = {}

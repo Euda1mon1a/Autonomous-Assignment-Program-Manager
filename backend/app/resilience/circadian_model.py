@@ -132,12 +132,13 @@ class CircadianOscillator:
         self.phase = self.phase % 24.0  # Keep phase in [0, 24)
         self.amplitude = max(MIN_AMPLITUDE, min(MAX_AMPLITUDE, self.amplitude))
         if not 22.0 <= self.period <= 26.0:
-            logger.warning(
-                f"Unusual circadian period: {self.period}h (typical 24-25h)"
-            )
+            logger.warning(f"Unusual circadian period: {self.period}h (typical 24-25h)")
 
     def compute_phase_shift(
-        self, shift_start: datetime, shift_duration: float, shift_type: CircadianShiftType
+        self,
+        shift_start: datetime,
+        shift_duration: float,
+        shift_type: CircadianShiftType,
     ) -> float:
         """
         Calculate circadian phase shift from a work shift.
@@ -524,18 +525,22 @@ class CircadianScheduleAnalyzer:
                 regularity = 1.0 if shift_type == prev_type else 0.3
                 schedule_regularity_scores.append(regularity)
 
-            shift_impacts.append({
-                "shift_index": i,
-                "start_time": start_time.isoformat(),
-                "type": shift_type.value,
-                "phase_shift": round(phase_shift, 2),
-                "phase_after": round(osc.phase, 2),
-                "misalignment": round(misalignment, 2),
-            })
+            shift_impacts.append(
+                {
+                    "shift_index": i,
+                    "start_time": start_time.isoformat(),
+                    "type": shift_type.value,
+                    "phase_shift": round(phase_shift, 2),
+                    "phase_after": round(osc.phase, 2),
+                    "misalignment": round(misalignment, 2),
+                }
+            )
 
         # Calculate overall schedule regularity
         if schedule_regularity_scores:
-            avg_regularity = sum(schedule_regularity_scores) / len(schedule_regularity_scores)
+            avg_regularity = sum(schedule_regularity_scores) / len(
+                schedule_regularity_scores
+            )
         else:
             avg_regularity = 1.0  # Single shift = perfectly regular
 
@@ -543,7 +548,9 @@ class CircadianScheduleAnalyzer:
         osc.update_amplitude(avg_regularity)
 
         # Calculate impact metrics
-        phase_drift = (osc.phase - initial_phase + 12) % 24 - 12  # Normalized to [-12, 12]
+        phase_drift = (
+            osc.phase - initial_phase + 12
+        ) % 24 - 12  # Normalized to [-12, 12]
         amplitude_change = osc.amplitude - initial_amplitude
         avg_misalignment = total_misalignment / len(schedule) if schedule else 0
 
@@ -614,7 +621,9 @@ class CircadianScheduleAnalyzer:
             quality_scores.append(impact.quality_score)
 
         # Average across all residents
-        avg_quality = sum(quality_scores) / len(quality_scores) if quality_scores else 1.0
+        avg_quality = (
+            sum(quality_scores) / len(quality_scores) if quality_scores else 1.0
+        )
 
         logger.debug(
             f"Schedule circadian quality: {avg_quality:.3f} "
@@ -751,7 +760,5 @@ class CircadianScheduleAnalyzer:
         """Get summary of all tracked oscillators."""
         return {
             "total_residents": len(self._oscillators),
-            "oscillators": [
-                osc.to_dict() for osc in self._oscillators.values()
-            ],
+            "oscillators": [osc.to_dict() for osc in self._oscillators.values()],
         }

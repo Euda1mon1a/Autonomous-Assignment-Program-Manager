@@ -402,14 +402,16 @@ class SleepDebtModel:
             phase = self.get_circadian_phase(current)
             multiplier = CIRCADIAN_MULTIPLIERS[phase]
 
-            curve.append({
-                "time": current.isoformat(),
-                "hour": current.hour,
-                "phase": phase.value,
-                "phase_name": phase.name,
-                "alertness_multiplier": multiplier,
-                "alertness_percent": int(multiplier * 100),
-            })
+            curve.append(
+                {
+                    "time": current.isoformat(),
+                    "hour": current.hour,
+                    "phase": phase.value,
+                    "phase_name": phase.name,
+                    "alertness_multiplier": multiplier,
+                    "alertness_percent": int(multiplier * 100),
+                }
+            )
 
             current += timedelta(hours=1)
 
@@ -471,15 +473,17 @@ class SleepDebtModel:
             severity = self._classify_debt_severity(current_debt)
             impairment = self._calculate_impairment_equivalent(current_debt)
 
-            trajectory.append({
-                "day": day + 1,
-                "planned_sleep_hours": sleep_hours,
-                "debt_change": round(daily_change, 1),
-                "cumulative_debt": round(current_debt, 1),
-                "severity": severity,
-                "impairment_bac": round(impairment, 3),
-                "deficit_days": deficit_days,
-            })
+            trajectory.append(
+                {
+                    "day": day + 1,
+                    "planned_sleep_hours": sleep_hours,
+                    "debt_change": round(daily_change, 1),
+                    "cumulative_debt": round(current_debt, 1),
+                    "severity": severity,
+                    "impairment_bac": round(impairment, 3),
+                    "deficit_days": deficit_days,
+                }
+            )
 
         return trajectory
 
@@ -621,8 +625,7 @@ def _get_phase_description(phase: CircadianPhase) -> str:
             "Secondary alertness peak. Good for sustained attention tasks."
         ),
         CircadianPhase.EVENING: (
-            "Declining alertness as body prepares for sleep. "
-            "Adequate for routine work."
+            "Declining alertness as body prepares for sleep. Adequate for routine work."
         ),
         CircadianPhase.NIGHT: (
             "Pre-sleep decline. Reduced cognitive performance. "

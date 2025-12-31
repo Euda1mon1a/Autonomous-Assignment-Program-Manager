@@ -142,7 +142,9 @@ async def example_semantic_search(db: Session):
             min_similarity=0.3,  # Lower threshold for demo
         )
 
-        print(f"📊 Found {response.total_results} results in {response.execution_time_ms:.2f}ms")
+        print(
+            f"📊 Found {response.total_results} results in {response.execution_time_ms:.2f}ms"
+        )
 
         for i, doc in enumerate(response.documents, 1):
             print(f"\n  Result {i} (similarity: {doc.similarity_score:.3f}):")
@@ -151,7 +153,7 @@ async def example_semantic_search(db: Session):
             if doc.metadata:
                 print(f"  Metadata: {doc.metadata}")
 
-        print("\n" + "="*80 + "\n")
+        print("\n" + "=" * 80 + "\n")
 
 
 async def example_build_context(db: Session):
@@ -168,15 +170,15 @@ async def example_build_context(db: Session):
     )
 
     print(f"\n📝 Generated Context ({context.token_count} tokens):")
-    print("="*80)
+    print("=" * 80)
     print(context.context)
-    print("="*80)
+    print("=" * 80)
 
     print(f"\n📚 Used {len(context.sources)} source documents:")
     for i, source in enumerate(context.sources, 1):
         print(f"  {i}. {source.doc_type} (similarity: {source.similarity_score:.3f})")
 
-    print(f"\n💡 This context can now be injected into an LLM prompt!")
+    print("\n💡 This context can now be injected into an LLM prompt!")
     print()
 
 
@@ -208,7 +210,9 @@ async def example_health_check(db: Session):
 
     print(f"Status: {health.status}")
     print(f"Total documents: {health.total_documents}")
-    print(f"Embedding model: {health.embedding_model} ({health.embedding_dimensions} dimensions)")
+    print(
+        f"Embedding model: {health.embedding_model} ({health.embedding_dimensions} dimensions)"
+    )
     print(f"Vector index status: {health.vector_index_status}")
 
     print("\nDocuments by type:")
@@ -240,9 +244,9 @@ async def example_cleanup(db: Session):
 
 async def main():
     """Run all examples."""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("RAG Service Usage Examples")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     db = SessionLocal()
     try:
@@ -273,6 +277,7 @@ async def main():
     except Exception as e:
         print(f"❌ Error: {str(e)}")
         import traceback
+
         traceback.print_exc()
 
     finally:

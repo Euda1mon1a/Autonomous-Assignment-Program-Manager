@@ -131,9 +131,7 @@ class FatigueQUBOIntegration:
         quadratic_terms_added = 0
 
         # 1. Add linear fatigue penalties (per-assignment)
-        linear_terms_added = self._add_linear_fatigue_penalties(
-            Q, formulation, context
-        )
+        linear_terms_added = self._add_linear_fatigue_penalties(Q, formulation, context)
 
         # 2. Add consecutive day penalties (quadratic, same person across days)
         if self.config.enable_consecutive_days:
@@ -149,9 +147,7 @@ class FatigueQUBOIntegration:
 
         # 4. Add WOCL protection penalties
         if self.config.enable_circadian:
-            linear_terms_added += self._add_wocl_penalties(
-                Q, formulation, context
-            )
+            linear_terms_added += self._add_wocl_penalties(Q, formulation, context)
 
         # 5. Add recovery requirement penalties
         if self.config.enable_recovery_requirements:
@@ -290,7 +286,9 @@ class FatigueQUBOIntegration:
         terms_added = 0
 
         # Identify PM (night) blocks
-        night_blocks = [b for b in context.blocks if getattr(b, "time_of_day", "") == "PM"]
+        night_blocks = [
+            b for b in context.blocks if getattr(b, "time_of_day", "") == "PM"
+        ]
 
         # Group by date
         nights_by_date: dict[date, list] = {}
@@ -364,8 +362,8 @@ class FatigueQUBOIntegration:
 
                 if has_wocl:
                     wocl_penalty = (
-                        self.config.fatigue_penalty_base *
-                        self.config.wocl_penalty_multiplier
+                        self.config.fatigue_penalty_base
+                        * self.config.wocl_penalty_multiplier
                     )
 
                     for template in context.templates:
@@ -398,7 +396,7 @@ class FatigueQUBOIntegration:
         # Group blocks by date and time
         blocks_ordered = sorted(
             context.blocks,
-            key=lambda b: (b.date, 0 if getattr(b, "time_of_day", "AM") == "AM" else 1)
+            key=lambda b: (b.date, 0 if getattr(b, "time_of_day", "AM") == "AM" else 1),
         )
 
         for resident in context.residents:
@@ -408,7 +406,7 @@ class FatigueQUBOIntegration:
 
             # Check pairs of blocks for recovery violations
             for i, block1 in enumerate(blocks_ordered):
-                for block2 in blocks_ordered[i + 1:i + 3]:  # Check next 2 blocks
+                for block2 in blocks_ordered[i + 1 : i + 3]:  # Check next 2 blocks
                     # Calculate time gap
                     gap_hours = self._calculate_gap_hours(block1, block2)
 

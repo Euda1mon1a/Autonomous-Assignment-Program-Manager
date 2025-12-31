@@ -199,9 +199,7 @@ class LLMAdvisor:
         self.schema = SuggestionSchema()
         self.prompt_manager = PromptManager()
 
-        logger.info(
-            f"LLMAdvisor initialized (model={model}, airgap={airgap_mode})"
-        )
+        logger.info(f"LLMAdvisor initialized (model={model}, airgap={airgap_mode})")
 
     async def suggest(
         self,

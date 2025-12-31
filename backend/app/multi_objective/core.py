@@ -188,7 +188,9 @@ class Solution:
 
     def get_objective_vector(self, objective_names: list[str]) -> np.ndarray:
         """Get objective values as numpy array in specified order."""
-        return np.array([self.objective_values.get(name, 0.0) for name in objective_names])
+        return np.array(
+            [self.objective_values.get(name, 0.0) for name in objective_names]
+        )
 
     def get_normalized_vector(self, objective_names: list[str]) -> np.ndarray:
         """Get normalized objective values as numpy array."""
@@ -376,7 +378,10 @@ class ParetoFrontier:
             if obj.is_constraint:
                 continue
 
-            values = [(s.objective_values.get(obj.name, 0.0), j) for j, s in enumerate(self.solutions)]
+            values = [
+                (s.objective_values.get(obj.name, 0.0), j)
+                for j, s in enumerate(self.solutions)
+            ]
 
             if obj.direction == ObjectiveDirection.MINIMIZE:
                 best_idx = min(values, key=lambda x: x[0])[1]
@@ -467,7 +472,10 @@ class SolutionArchive:
         # Check if dominated by any existing solution
         for existing in self.solutions:
             relation = compare_dominance(solution, existing, self.objectives)
-            if relation == DominanceRelation.DOMINATED or relation == DominanceRelation.EQUAL:
+            if (
+                relation == DominanceRelation.DOMINATED
+                or relation == DominanceRelation.EQUAL
+            ):
                 return False
 
         # Remove solutions dominated by the new one
@@ -494,12 +502,17 @@ class SolutionArchive:
         if self.pruning_method == "crowding":
             self._update_crowding_distances()
             # Remove solution with minimum crowding distance
-            min_idx = min(range(len(self.solutions)), key=lambda i: self.solutions[i].crowding_distance)
+            min_idx = min(
+                range(len(self.solutions)),
+                key=lambda i: self.solutions[i].crowding_distance,
+            )
             self.solutions.pop(min_idx)
 
         elif self.pruning_method == "age":
             # Remove oldest solution
-            oldest_idx = min(range(len(self.solutions)), key=lambda i: self.solutions[i].created_at)
+            oldest_idx = min(
+                range(len(self.solutions)), key=lambda i: self.solutions[i].created_at
+            )
             self.solutions.pop(oldest_idx)
 
         else:  # random
@@ -527,7 +540,8 @@ class SolutionArchive:
 
             # Sort by this objective
             sorted_indices = sorted(
-                range(n), key=lambda i: self.solutions[i].objective_values.get(obj.name, 0.0)
+                range(n),
+                key=lambda i: self.solutions[i].objective_values.get(obj.name, 0.0),
             )
 
             # Boundary solutions get infinite distance
@@ -535,8 +549,12 @@ class SolutionArchive:
             self.solutions[sorted_indices[-1]].crowding_distance = float("inf")
 
             # Calculate objective range
-            min_val = self.solutions[sorted_indices[0]].objective_values.get(obj.name, 0.0)
-            max_val = self.solutions[sorted_indices[-1]].objective_values.get(obj.name, 0.0)
+            min_val = self.solutions[sorted_indices[0]].objective_values.get(
+                obj.name, 0.0
+            )
+            max_val = self.solutions[sorted_indices[-1]].objective_values.get(
+                obj.name, 0.0
+            )
             obj_range = max_val - min_val
 
             if obj_range == 0:
@@ -551,7 +569,9 @@ class SolutionArchive:
                 next_val = self.solutions[sorted_indices[i + 1]].objective_values.get(
                     obj.name, 0.0
                 )
-                self.solutions[idx].crowding_distance += (next_val - prev_val) / obj_range
+                self.solutions[idx].crowding_distance += (
+                    next_val - prev_val
+                ) / obj_range
 
     def get_frontier(self) -> ParetoFrontier:
         """Extract the Pareto frontier from the archive."""

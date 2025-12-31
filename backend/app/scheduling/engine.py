@@ -270,9 +270,7 @@ class SchedulingEngine:
                 for recommendation in validation_result.recommendations:
                     logger.info(f"  Recommendation: {recommendation}")
 
-                self._update_run_status(
-                    run, "failed", 0, 0, time.time() - start_time
-                )
+                self._update_run_status(run, "failed", 0, 0, time.time() - start_time)
                 self.db.commit()
 
                 return {

@@ -1,4 +1,5 @@
 """SQLAlchemy models for agent memory and vector storage."""
+
 from datetime import datetime
 from typing import Optional
 

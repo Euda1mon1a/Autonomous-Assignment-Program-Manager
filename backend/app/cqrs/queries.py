@@ -544,7 +544,7 @@ class ReadDatabaseConnectionManager:
 
 
 # Example query implementations for reference
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class ExampleGetByIdQuery(Query):
     """Example query for getting an entity by ID."""
 
@@ -560,7 +560,7 @@ class ExampleListQuery(Query):
     offset: int = 0
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class ExampleSearchQuery(Query):
     """Example query for searching entities."""
 

@@ -643,7 +643,9 @@ async def test_concurrent_utilization_checks(
 @pytest.mark.resilience
 @pytest.mark.performance
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="SQLAlchemy object lifecycle issue in concurrent test fixture - requires test isolation fix")
+@pytest.mark.skip(
+    reason="SQLAlchemy object lifecycle issue in concurrent test fixture - requires test isolation fix"
+)
 async def test_concurrent_contingency_analyses(
     contingency_analyzer: ContingencyAnalyzer,
     large_faculty_pool: list[Person],

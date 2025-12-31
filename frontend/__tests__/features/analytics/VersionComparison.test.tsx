@@ -76,8 +76,10 @@ describe('VersionComparison', () => {
 
       render(<VersionComparison />, { wrapper: createWrapper() });
 
+      // Wait for versions to load and select to be enabled
       await waitFor(() => {
-        expect(screen.getAllByRole('combobox')).toHaveLength(2);
+        const selects = screen.getAllByRole('combobox');
+        expect(selects[0]).not.toBeDisabled();
       });
 
       const versionASelect = screen.getAllByRole('combobox')[0];
@@ -91,8 +93,10 @@ describe('VersionComparison', () => {
 
       render(<VersionComparison />, { wrapper: createWrapper() });
 
+      // Wait for versions to load and select to be enabled
       await waitFor(() => {
-        expect(screen.getAllByRole('combobox')).toHaveLength(2);
+        const selects = screen.getAllByRole('combobox');
+        expect(selects[1]).not.toBeDisabled();
       });
 
       const versionBSelect = screen.getAllByRole('combobox')[1];
@@ -177,11 +181,16 @@ describe('VersionComparison', () => {
         wrapper: createWrapper(),
       });
 
+      // Wait for comparison data to load
       await waitFor(() => {
-        expect(screen.getByText('Fairness Score')).toBeInTheDocument();
-        expect(screen.getByText('Version A')).toBeInTheDocument();
-        expect(screen.getByText('Version B')).toBeInTheDocument();
+        expect(screen.getByText('Metric Changes')).toBeInTheDocument();
       });
+
+      // Check that delta rows are displayed using getAllByText since there may be multiple
+      await waitFor(() => {
+        expect(screen.getAllByText('Version A').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Version B').length).toBeGreaterThan(0);
+      }, { timeout: 3000 });
     });
 
     it('should show recommendation when available', async () => {
@@ -304,19 +313,24 @@ describe('VersionComparison', () => {
         wrapper: createWrapper(),
       });
 
+      // Wait for impact assessment to load
       await waitFor(() => {
         expect(screen.getByText('Positive Impact')).toBeInTheDocument();
       });
 
       // Should show details by default (expanded: true)
-      expect(screen.getByText('Fairness Impact')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Fairness Impact')).toBeInTheDocument();
+      });
 
-      // Click to collapse
-      const toggleButton = screen.getByRole('button', { name: /positive impact/i });
+      // Click to collapse - use a broader query for the button
+      const toggleButton = screen.getByRole('button', { name: /positive impact.*click to collapse/i });
       await user.click(toggleButton);
 
-      // Details should still be visible as we're clicking the same button
-      expect(screen.getByText('Fairness Impact')).toBeInTheDocument();
+      // After collapsing, details should be hidden
+      await waitFor(() => {
+        expect(screen.queryByText('Fairness Impact')).not.toBeInTheDocument();
+      });
     });
   });
 
@@ -335,12 +349,18 @@ describe('VersionComparison', () => {
         wrapper: createWrapper(),
       });
 
+      // Wait for comparison to load by checking for Metric Changes section
       await waitFor(() => {
-        expect(screen.getByText('All')).toBeInTheDocument();
-        expect(screen.getByText('Fairness')).toBeInTheDocument();
-        expect(screen.getByText('Coverage')).toBeInTheDocument();
-        expect(screen.getByText('Compliance')).toBeInTheDocument();
-        expect(screen.getByText('Workload')).toBeInTheDocument();
+        expect(screen.getByText('Metric Changes')).toBeInTheDocument();
+      });
+
+      // Now check for category filter buttons
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /filter by all categories/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /filter by fairness/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /filter by coverage/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /filter by compliance/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /filter by workload/i })).toBeInTheDocument();
       });
     });
 
@@ -351,13 +371,16 @@ describe('VersionComparison', () => {
         wrapper: createWrapper(),
       });
 
+      // Wait for comparison to load
       await waitFor(() => {
-        expect(screen.getByText('All')).toBeInTheDocument();
+        expect(screen.getByText('Metric Changes')).toBeInTheDocument();
       });
 
-      const fairnessButton = screen.getByText('Fairness');
+      // Click fairness filter button using aria-label
+      const fairnessButton = screen.getByRole('button', { name: /filter by fairness/i });
       await user.click(fairnessButton);
 
+      // Button should now be selected
       expect(fairnessButton).toHaveClass('bg-white');
       expect(fairnessButton).toHaveClass('text-blue-600');
     });

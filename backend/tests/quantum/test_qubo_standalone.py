@@ -353,7 +353,9 @@ class QuantumTunnelingAnnealingSolver:
         runtime = time.time() - start_time
         assignments = formulation.decode_solution(best_sample)
         violations, is_valid = self._validate_solution(formulation, best_sample)
-        landscape_data = self._export_landscape_data(formulation) if self.track_landscape else None
+        landscape_data = (
+            self._export_landscape_data(formulation) if self.track_landscape else None
+        )
 
         return QUBOSolution(
             sample=best_sample,
@@ -447,7 +449,9 @@ def test_basic_qubo():
 
     formulation = CallAssignmentQUBO(nights, candidates)
     expected_vars = 10 * 7
-    assert formulation.num_variables == expected_vars, f"Expected {expected_vars} variables"
+    assert formulation.num_variables == expected_vars, (
+        f"Expected {expected_vars} variables"
+    )
 
     Q = formulation.build()
     assert len(Q) > 0, "QUBO should have non-zero terms"
@@ -592,9 +596,7 @@ def test_scalability():
     current = base_date
     while len(nights) < 30:
         if current.weekday() not in (4, 5):  # Exclude Fri/Sat
-            nights.append(
-                CallNight(date=current, call_type=CallType.OVERNIGHT)
-            )
+            nights.append(CallNight(date=current, call_type=CallType.OVERNIGHT))
         current += timedelta(days=1)
 
     formulation = CallAssignmentQUBO(nights, candidates)

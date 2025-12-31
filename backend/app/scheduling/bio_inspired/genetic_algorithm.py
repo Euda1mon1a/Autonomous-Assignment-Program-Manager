@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 
 class SelectionMethod(Enum):
     """Selection methods for parent selection."""
+
     TOURNAMENT = "tournament"
     ROULETTE = "roulette"
     RANK = "rank"
@@ -45,6 +46,7 @@ class SelectionMethod(Enum):
 
 class CrossoverMethod(Enum):
     """Crossover methods for recombination."""
+
     UNIFORM = "uniform"
     SINGLE_POINT = "single_point"
     TWO_POINT = "two_point"
@@ -54,6 +56,7 @@ class CrossoverMethod(Enum):
 
 class MutationMethod(Enum):
     """Mutation methods for exploration."""
+
     SWAP = "swap"  # Swap two assignments
     INSERT = "insert"  # Insert new assignment
     DELETE = "delete"  # Remove assignment
@@ -120,13 +123,12 @@ class SelectionOperator:
         for _ in range(n_parents):
             # Select random tournament participants
             tournament = random.sample(
-                population,
-                min(self.tournament_size, len(population))
+                population, min(self.tournament_size, len(population))
             )
             # Winner is the one with best fitness
             winner = max(
                 tournament,
-                key=lambda ind: ind.fitness.weighted_sum() if ind.fitness else 0
+                key=lambda ind: ind.fitness.weighted_sum() if ind.fitness else 0,
             )
             parents.append(winner)
         return parents
@@ -165,7 +167,7 @@ class SelectionOperator:
         sorted_pop = sorted(
             population,
             key=lambda ind: ind.fitness.weighted_sum() if ind.fitness else 0,
-            reverse=True
+            reverse=True,
         )
 
         # Assign ranks (1 = best)
@@ -173,7 +175,9 @@ class SelectionOperator:
         probabilities = []
         for rank in range(1, n + 1):
             # Linear ranking with pressure
-            prob = (2 - self.pressure + 2 * (self.pressure - 1) * (n - rank) / (n - 1)) / n
+            prob = (
+                2 - self.pressure + 2 * (self.pressure - 1) * (n - rank) / (n - 1)
+            ) / n
             probabilities.append(max(0.001, prob))
 
         # Normalize
@@ -182,10 +186,7 @@ class SelectionOperator:
 
         # Select
         indices = np.random.choice(
-            range(n),
-            size=n_parents,
-            p=probabilities,
-            replace=True
+            range(n), size=n_parents, p=probabilities, replace=True
         )
         return [sorted_pop[i] for i in indices]
 
@@ -295,16 +296,8 @@ class CrossoverOperator:
         points = sorted(random.sample(range(1, len(flat1)), 2))
         p1, p2 = points
 
-        child1_flat = np.concatenate([
-            flat1[:p1],
-            flat2[p1:p2],
-            flat1[p2:]
-        ])
-        child2_flat = np.concatenate([
-            flat2[:p1],
-            flat1[p1:p2],
-            flat2[p2:]
-        ])
+        child1_flat = np.concatenate([flat1[:p1], flat2[p1:p2], flat1[p2:]])
+        child2_flat = np.concatenate([flat2[:p1], flat1[p1:p2], flat2[p2:]])
 
         child1_genes = child1_flat.reshape(c1.genes.shape)
         child2_genes = child2_flat.reshape(c2.genes.shape)
@@ -322,16 +315,8 @@ class CrossoverOperator:
         # Randomly select rows to swap
         swap_mask = np.random.random(n_rows) < 0.5
 
-        child1_genes = np.where(
-            swap_mask[:, np.newaxis],
-            c2.genes,
-            c1.genes
-        )
-        child2_genes = np.where(
-            swap_mask[:, np.newaxis],
-            c1.genes,
-            c2.genes
-        )
+        child1_genes = np.where(swap_mask[:, np.newaxis], c2.genes, c1.genes)
+        child2_genes = np.where(swap_mask[:, np.newaxis], c1.genes, c2.genes)
 
         return Chromosome(child1_genes), Chromosome(child2_genes)
 
@@ -346,16 +331,8 @@ class CrossoverOperator:
         # Randomly select columns to swap
         swap_mask = np.random.random(n_cols) < 0.5
 
-        child1_genes = np.where(
-            swap_mask[np.newaxis, :],
-            c2.genes,
-            c1.genes
-        )
-        child2_genes = np.where(
-            swap_mask[np.newaxis, :],
-            c1.genes,
-            c2.genes
-        )
+        child1_genes = np.where(swap_mask[np.newaxis, :], c2.genes, c1.genes)
+        child2_genes = np.where(swap_mask[np.newaxis, :], c1.genes, c2.genes)
 
         return Chromosome(child1_genes), Chromosome(child2_genes)
 
@@ -448,8 +425,10 @@ class MutationOperator:
             # Swap with another position in same row
             n_cols = chromosome.genes.shape[1]
             other_col = random.randint(0, n_cols - 1)
-            chromosome.genes[row, col], chromosome.genes[row, other_col] = \
-                chromosome.genes[row, other_col], chromosome.genes[row, col]
+            chromosome.genes[row, col], chromosome.genes[row, other_col] = (
+                chromosome.genes[row, other_col],
+                chromosome.genes[row, col],
+            )
 
         elif self.method == MutationMethod.INSERT:
             # Insert random assignment
@@ -495,7 +474,9 @@ class MutationOperator:
             self._improvement_history.pop(0)
 
         # Calculate improvement rate over last 10 generations
-        improvement_rate = sum(self._improvement_history) / len(self._improvement_history)
+        improvement_rate = sum(self._improvement_history) / len(
+            self._improvement_history
+        )
 
         if improved:
             self._stagnation_counter = 0
@@ -505,42 +486,30 @@ class MutationOperator:
         # Adapt rate
         if self._stagnation_counter > 10:
             # Strong stagnation: increase rate significantly
-            self.current_rate = min(
-                self.max_rate,
-                self.current_rate * 1.5
+            self.current_rate = min(self.max_rate, self.current_rate * 1.5)
+            logger.debug(
+                f"Stagnation detected, increasing mutation rate to {self.current_rate:.4f}"
             )
-            logger.debug(f"Stagnation detected, increasing mutation rate to {self.current_rate:.4f}")
         elif improvement_rate > 0.5:
             # Good progress: decrease rate to exploit
-            self.current_rate = max(
-                self.min_rate,
-                self.current_rate * 0.95
-            )
+            self.current_rate = max(self.min_rate, self.current_rate * 0.95)
         elif improvement_rate < 0.2:
             # Poor progress: increase rate to explore
-            self.current_rate = min(
-                self.max_rate,
-                self.current_rate * 1.1
-            )
+            self.current_rate = min(self.max_rate, self.current_rate * 1.1)
 
         # Consider diversity
         if diversity < 0.1:
             # Very low diversity: increase rate
-            self.current_rate = min(
-                self.max_rate,
-                self.current_rate * 1.2
-            )
+            self.current_rate = min(self.max_rate, self.current_rate * 1.2)
         elif diversity > 0.5:
             # High diversity: slight decrease
-            self.current_rate = max(
-                self.min_rate,
-                self.current_rate * 0.98
-            )
+            self.current_rate = max(self.min_rate, self.current_rate * 0.98)
 
 
 @dataclass
 class GAConfig:
     """Configuration for Genetic Algorithm."""
+
     population_size: int = 100
     max_generations: int = 200
     elite_size: int = 5
@@ -626,16 +595,16 @@ class GeneticAlgorithmSolver(BioInspiredSolver):
         start_time = time.time()
 
         # Calculate number of templates
-        self._n_templates = max(1, len([
-            t for t in context.templates
-            if not t.requires_procedure_credential
-        ]))
+        self._n_templates = max(
+            1,
+            len([t for t in context.templates if not t.requires_procedure_credential]),
+        )
 
         # Initialize population
         self.population = self.initialize_population(context)
         self.best_individual = max(
             self.population,
-            key=lambda ind: ind.fitness.weighted_sum() if ind.fitness else 0
+            key=lambda ind: ind.fitness.weighted_sum() if ind.fitness else 0,
         )
 
         logger.info(
@@ -668,7 +637,11 @@ class GeneticAlgorithmSolver(BioInspiredSolver):
 
             # Log progress
             if generation % 20 == 0:
-                best_fit = self.best_individual.fitness.weighted_sum() if self.best_individual.fitness else 0
+                best_fit = (
+                    self.best_individual.fitness.weighted_sum()
+                    if self.best_individual.fitness
+                    else 0
+                )
                 logger.info(
                     f"GA gen {generation}: best={best_fit:.4f}, "
                     f"mut_rate={self.mutation.current_rate:.4f}, "
@@ -702,9 +675,9 @@ class GeneticAlgorithmSolver(BioInspiredSolver):
         sorted_pop = sorted(
             self.population,
             key=lambda ind: ind.fitness.weighted_sum() if ind.fitness else 0,
-            reverse=True
+            reverse=True,
         )
-        elite = sorted_pop[:self.config.elite_size]
+        elite = sorted_pop[: self.config.elite_size]
 
         # Create new population
         new_population = [ind.copy() for ind in elite]
@@ -754,12 +727,13 @@ class GeneticAlgorithmSolver(BioInspiredSolver):
         # Update best individual
         current_best = max(
             self.population,
-            key=lambda ind: ind.fitness.weighted_sum() if ind.fitness else 0
+            key=lambda ind: ind.fitness.weighted_sum() if ind.fitness else 0,
         )
-        if (
-            current_best.fitness and
-            (not self.best_individual or not self.best_individual.fitness or
-             current_best.fitness.weighted_sum() > self.best_individual.fitness.weighted_sum())
+        if current_best.fitness and (
+            not self.best_individual
+            or not self.best_individual.fitness
+            or current_best.fitness.weighted_sum()
+            > self.best_individual.fitness.weighted_sum()
         ):
             self.best_individual = current_best.copy()
 
