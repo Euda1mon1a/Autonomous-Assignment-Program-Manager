@@ -752,6 +752,12 @@ modified_file.py
 
 ---
 
+## Notes
+
+Read-only agent. Never modifies code. Escalates security findings immediately to ORCHESTRATOR. Coordinates with COORD_INTEL for forensic investigations.
+
+---
+
 **Primary Stakeholder:** ORCHESTRATOR (strategic intelligence)
 
 **Supporting:** All coordinators (domain-specific reconnaissance)
