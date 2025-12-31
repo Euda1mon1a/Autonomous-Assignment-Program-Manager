@@ -14,7 +14,7 @@ export function debounce<T extends (...args: any[]) => any>(
 ): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout | null = null;
 
-  return function (this: any, ...args: Parameters<T>) {
+  return function (this: unknown, ...args: Parameters<T>) {
     if (timeout) {
       clearTimeout(timeout);
     }
@@ -34,7 +34,7 @@ export function debounceLeading<T extends (...args: any[]) => any>(
 ): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout | null = null;
 
-  return function (this: any, ...args: Parameters<T>) {
+  return function (this: unknown, ...args: Parameters<T>) {
     const callNow = !timeout;
 
     if (timeout) {
@@ -61,7 +61,7 @@ export function throttle<T extends (...args: any[]) => any>(
   let timeout: NodeJS.Timeout | null = null;
   let lastRan: number | null = null;
 
-  return function (this: any, ...args: Parameters<T>) {
+  return function (this: unknown, ...args: Parameters<T>) {
     if (!lastRan) {
       func.apply(this, args);
       lastRan = Date.now();
@@ -88,7 +88,7 @@ export function rafThrottle<T extends (...args: any[]) => any>(
 ): (...args: Parameters<T>) => void {
   let rafId: number | null = null;
 
-  return function (this: any, ...args: Parameters<T>) {
+  return function (this: unknown, ...args: Parameters<T>) {
     if (rafId) {
       return;
     }
@@ -304,7 +304,7 @@ export function debounceWithMonitoring<T extends (...args: any[]) => any>(
 ): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout | null = null;
 
-  return function (this: any, ...args: Parameters<T>) {
+  return function (this: unknown, ...args: Parameters<T>) {
     monitor.recordCall(false);
 
     if (timeout) {

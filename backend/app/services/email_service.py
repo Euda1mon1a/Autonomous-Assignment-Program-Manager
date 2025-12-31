@@ -40,6 +40,18 @@ class EmailConfig:
         use_tls: bool = True,
         enabled: bool = True,
     ):
+        """Initialize email configuration.
+
+        Args:
+            host: SMTP server hostname.
+            port: SMTP server port.
+            user: SMTP authentication username (optional).
+            password: SMTP authentication password (optional).
+            from_email: Email address to use as sender.
+            from_name: Display name for sender.
+            use_tls: Whether to use TLS encryption.
+            enabled: Whether email sending is enabled globally.
+        """
         self.host = host
         self.port = port
         self.user = user
@@ -51,7 +63,21 @@ class EmailConfig:
 
     @classmethod
     def from_env(cls) -> "EmailConfig":
-        """Load configuration from environment variables."""
+        """Load email configuration from environment variables.
+
+        Reads the following environment variables:
+        - SMTP_HOST: SMTP server hostname (default: localhost)
+        - SMTP_PORT: SMTP server port (default: 587)
+        - SMTP_USER: SMTP username (optional)
+        - SMTP_PASSWORD: SMTP password (optional)
+        - SMTP_FROM_EMAIL: From email address (default: noreply@hospital.org)
+        - SMTP_FROM_NAME: From name (default: Residency Scheduler)
+        - SMTP_USE_TLS: Use TLS (default: true)
+        - SMTP_ENABLED: Enable email sending (default: true)
+
+        Returns:
+            EmailConfig instance populated from environment variables.
+        """
         import os
 
         return cls(
@@ -70,6 +96,11 @@ class EmailService:
     """Service for sending emails."""
 
     def __init__(self, config: EmailConfig | None = None):
+        """Initialize email service.
+
+        Args:
+            config: Email configuration. If None, loads from environment variables.
+        """
         self.config = config or EmailConfig.from_env()
 
     def send_email(
@@ -79,10 +110,20 @@ class EmailService:
         body_html: str,
         body_text: str | None = None,
     ) -> bool:
-        """
-        Send an email.
+        """Send an email via SMTP.
 
-        Returns True if successful, False otherwise.
+        Args:
+            to_email: Recipient email address.
+            subject: Email subject line.
+            body_html: HTML version of email body.
+            body_text: Plain text version of email body (optional but recommended for accessibility).
+
+        Returns:
+            True if email was sent successfully, False otherwise.
+
+        Note:
+            If email is disabled in configuration, logs the message and returns True without sending.
+            Always prefers HTML body, falls back to plain text if provided.
         """
         if not self.config.enabled:
             logger.info(f"Email disabled. Would send to {to_email}: {subject}")
@@ -124,7 +165,23 @@ class EmailService:
         certification: PersonCertification,
         days_until_expiration: int,
     ) -> bool:
-        """Send a certification expiration reminder email."""
+        """Send a certification expiration reminder email with urgency-based styling.
+
+        Args:
+            person: Person object with email address and name.
+            certification: PersonCertification object containing expiration details.
+            days_until_expiration: Number of days remaining until certification expires.
+
+        Returns:
+            True if email sent successfully, False if person has no email or send failed.
+
+        Note:
+            Urgency levels are determined by days remaining:
+            - <= 7 days: URGENT (red)
+            - <= 30 days: ACTION REQUIRED (orange)
+            - <= 90 days: REMINDER (yellow)
+            - > 90 days: NOTICE (blue)
+        """
         if not person.email:
             logger.warning(f"No email for {person.name}, skipping reminder")
             return False
@@ -221,7 +278,22 @@ This is an automated message from the Residency Scheduling System.
         expiring_certs: list[PersonCertification],
         expired_certs: list[PersonCertification],
     ) -> bool:
-        """Send a compliance summary email to administrators."""
+        """Send a compliance summary email to administrators.
+
+        Generates a formatted HTML email with tables showing expired and expiring
+        certifications. Used for daily/weekly compliance reports.
+
+        Args:
+            to_email: Administrator email address to receive the summary.
+            expiring_certs: List of certifications expiring within 6 months.
+            expired_certs: List of certifications that have already expired.
+
+        Returns:
+            True if email sent successfully, False otherwise.
+
+        Note:
+            If both lists are empty, sends a "All certifications current" message.
+        """
         subject = (
             f"Certification Compliance Summary - {date.today().strftime('%B %d, %Y')}"
         )

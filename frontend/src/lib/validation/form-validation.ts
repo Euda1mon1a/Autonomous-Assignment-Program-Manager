@@ -8,7 +8,7 @@ import { formatZodError } from "./error-messages";
 /**
  * Form field state.
  */
-export interface FieldState<T = any> {
+export interface FieldState<T = unknown> {
   value: T;
   error?: string;
   touched: boolean;
@@ -18,7 +18,7 @@ export interface FieldState<T = any> {
 /**
  * Form state.
  */
-export interface FormState<T extends Record<string, any>> {
+export interface FormState<T extends Record<string, unknown>> {
   values: T;
   errors: Partial<Record<keyof T, string>>;
   touched: Partial<Record<keyof T, boolean>>;
@@ -37,7 +37,7 @@ export function validateField<T>(
   try {
     schema.parse(value);
     return { isValid: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     const errors = formatZodError(error);
     const firstError = Object.values(errors)[0];
     return { isValid: false, error: firstError };
@@ -47,7 +47,7 @@ export function validateField<T>(
 /**
  * Validate entire form with schema.
  */
-export function validateForm<T extends Record<string, any>>(
+export function validateForm<T extends Record<string, unknown>>(
   values: T,
   schema: ZodSchema<T>
 ): {
@@ -57,7 +57,7 @@ export function validateForm<T extends Record<string, any>>(
   try {
     schema.parse(values);
     return { isValid: true, errors: {} };
-  } catch (error: any) {
+  } catch (error: unknown) {
     const errors = formatZodError(error) as Partial<Record<keyof T, string>>;
     return { isValid: false, errors };
   }
@@ -98,7 +98,7 @@ export function debounceValidation<T>(
 /**
  * Validate required field.
  */
-export function validateRequired(value: any): string | undefined {
+export function validateRequired(value: unknown): string | undefined {
   if (value === null || value === undefined || value === "") {
     return "This field is required";
   }
@@ -108,7 +108,7 @@ export function validateRequired(value: any): string | undefined {
 /**
  * Validate required array field.
  */
-export function validateRequiredArray(value: any[]): string | undefined {
+export function validateRequiredArray<T>(value: T[]): string | undefined {
   if (!value || value.length === 0) {
     return "At least one item is required";
   }
@@ -172,7 +172,7 @@ export function createChangeHandler<T>(
 /**
  * Check if form has errors.
  */
-export function hasFormErrors<T extends Record<string, any>>(
+export function hasFormErrors<T extends Record<string, unknown>>(
   errors: Partial<Record<keyof T, string>>
 ): boolean {
   return Object.values(errors).some((error) => error !== undefined);
@@ -181,7 +181,7 @@ export function hasFormErrors<T extends Record<string, any>>(
 /**
  * Get first error in form.
  */
-export function getFirstFormError<T extends Record<string, any>>(
+export function getFirstFormError<T extends Record<string, unknown>>(
   errors: Partial<Record<keyof T, string>>
 ): string | undefined {
   return Object.values(errors).find((error) => error !== undefined);

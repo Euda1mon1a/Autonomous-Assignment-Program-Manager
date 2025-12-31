@@ -8,6 +8,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 
+export interface MutationContext<T> {
+  previousData?: T;
+}
+
 export interface OptimisticUpdateOptions<T, V> {
   /** Query key to update */
   queryKey: string[];
@@ -16,7 +20,7 @@ export interface OptimisticUpdateOptions<T, V> {
   /** Optimistic update function */
   optimisticUpdate: (currentData: T | undefined, variables: V) => T;
   /** Rollback function on error */
-  onError?: (error: Error, variables: V, context: any) => void;
+  onError?: (error: Error, variables: V, context: MutationContext<T> | undefined) => void;
   /** Success callback */
   onSuccess?: (data: T, variables: V) => void;
 }
@@ -47,7 +51,7 @@ export function useOptimisticUpdate<T, V>({
       // Return snapshot for rollback
       return { previousData };
     },
-    onError: (error: Error, variables: V, context: any) => {
+    onError: (error: Error, variables: V, context: MutationContext<T> | undefined) => {
       // Rollback to previous value
       if (context?.previousData) {
         queryClient.setQueryData(queryKey, context.previousData);
@@ -169,7 +173,7 @@ export function useOptimisticUpdateWithConflictResolution<T, V>({
 
       return { previousData };
     },
-    onSuccess: (serverData: T, variables: V, context: any) => {
+    onSuccess: (serverData: T, variables: V, context: MutationContext<T> | undefined) => {
       const localData = queryClient.getQueryData<T>(queryKey);
 
       // Check for conflicts
