@@ -451,16 +451,17 @@ Both security controls are fully implemented:
 **Priority:** HIGH
 **Location:** `.github/workflows/cd.yml`
 **Found:** G2_RECON audit (2025-12-30)
+**Status:** ✅ FIXED (Session 025, 2025-12-30)
 
-- `deploy` job exists but contains only placeholder comments
-- No actual deployment logic (no kubectl, no helm, no container registry push)
-- CI passes but no automated deployment to staging/production
-- **Impact:** Manual deployment required, no CD automation
+- ~~`deploy` job exists but contains only placeholder comments~~
+- ~~No actual deployment logic (no kubectl, no helm, no container registry push)~~
+- ~~CI passes but no automated deployment to staging/production~~
+- ~~**Impact:** Manual deployment required, no CD automation~~
 
-**Action needed:**
-- Define deployment target (Kubernetes, Docker Swarm, VM, cloud service)
-- Add deployment steps (push to registry, deploy to cluster)
-- Configure environment-specific secrets
+**Resolution (Session 025):**
+- Implemented full deployment pipeline with container registry push
+- Added staging and production deployment stages
+- Integrated with existing CI workflow
 
 #### 8. MCP Server - Missing from Production Compose
 **Priority:** HIGH
@@ -481,17 +482,20 @@ Both security controls are fully implemented:
 **Priority:** HIGH
 **Location:** `/frontend/src/hooks/useProcedures.ts`
 **Found:** G2_RECON audit (2025-12-30)
+**Status:** ✅ FIXED (Session 025, 2025-12-30)
 
-All 12 hooks return mock/stub implementations:
-- `useProcedures()` - Returns empty array
-- `useProcedure()` - Returns null
-- `useCreateProcedure()` - Logs to console only
-- `useUpdateProcedure()` - Logs to console only
-- `useDeleteProcedure()` - Logs to console only
-- Plus 7 more stubs
+~~All 12 hooks return mock/stub implementations:~~
+- ~~`useProcedures()` - Returns empty array~~
+- ~~`useProcedure()` - Returns null~~
+- ~~`useCreateProcedure()` - Logs to console only~~
+- ~~`useUpdateProcedure()` - Logs to console only~~
+- ~~`useDeleteProcedure()` - Logs to console only~~
+- ~~Plus 7 more stubs~~
 
-**Impact:** Procedure credentialing features non-functional
-**Action needed:** Wire to `/api/credentials/*` endpoints
+**Resolution (Session 025):**
+- All 12 hooks wired to backend `/api/credentials/*` endpoints
+- Uses TanStack Query patterns consistent with other hooks
+- Includes error handling and loading states
 
 #### 10. Frontend Resilience Components - Skeleton Only
 **Priority:** HIGH
@@ -507,14 +511,35 @@ All 12 hooks return mock/stub implementations:
 **Impact:** Resilience monitoring dashboard non-functional
 **Action needed:** Wire to `/api/resilience/*` endpoints
 
+#### 11. Frontend TypeScript Errors - Pre-existing Build Issues
+**Priority:** HIGH
+**Location:** Various frontend components
+**Found:** Session 025 reconnaissance (2025-12-30)
+**Status:** ✅ FIXED (Session 025, 2025-12-30)
+
+Pre-existing TypeScript errors discovered during Session 025 audit:
+
+| File | Error | Resolution |
+|------|-------|------------|
+| Various hooks | `zod` module not found | ✅ Added `zod` to dependencies |
+| `EmptyState` component | Missing export | ✅ Added named export |
+| `SearchInput` component | Props type mismatch | ✅ Fixed prop interface |
+
+**Resolution (Session 025):**
+- All TypeScript errors resolved
+- `npm run type-check` now passes cleanly
+- Build succeeds without type errors
+
+---
+
 ### 🟢 MEDIUM PRIORITY - Post-Launch Sprint
 
-#### 11. Frontend Accessibility Gaps
+#### 13. Frontend Accessibility Gaps
 - Only 24/80 core components have ARIA attributes
 - Missing `<thead>` in ScheduleGrid tables
 - Missing `aria-label` on icon-only buttons
 
-#### 12. Token Refresh Not Implemented - ✅ RESOLVED
+#### 14. Token Refresh Not Implemented - ✅ RESOLVED
 **Priority:** MEDIUM → RESOLVED
 **Location:** `/frontend/src/lib/auth.ts`
 **Verified:** 2025-12-30 (G2_RECON audit)
@@ -524,15 +549,15 @@ All 12 hooks return mock/stub implementations:
 - ✅ Reactive refresh: Intercepts 401 responses and refreshes before retrying
 - ✅ Users no longer silently logged out
 
-#### 13. MCP Placeholder Tools (11 tools)
+#### 15. MCP Placeholder Tools (11 tools)
 - Hopfield networks, immune system, game theory return synthetic data
 - Shapley value returns uniform distribution
 
-#### 14. Frontend WebSocket Client Missing
+#### 16. Frontend WebSocket Client Missing
 - Backend WebSocket fully implemented (8 event types)
 - Frontend only has SSE, no native WebSocket client
 
-#### 15. Admin Email Invitations Never Sent
+#### 17. Admin Email Invitations Never Sent
 **Priority:** MEDIUM
 **Location:** `/backend/app/api/routes/admin_users.py:232`
 **Found:** G2_RECON audit (2025-12-30)
@@ -547,7 +572,7 @@ All 12 hooks return mock/stub implementations:
 - Create email template for user invitations
 - Add SMTP configuration validation
 
-#### 16. Activity Logging Not Implemented
+#### 18. Activity Logging Not Implemented
 **Priority:** MEDIUM
 **Location:** Backend audit logging system
 **Found:** G2_RECON audit (2025-12-30)
@@ -562,7 +587,7 @@ All 12 hooks return mock/stub implementations:
 - Implement activity logging service
 - Wire into schedule modification endpoints
 
-#### 17. Penrose Efficiency - Placeholder Logic
+#### 19. Penrose Efficiency - Placeholder Logic
 **Priority:** MEDIUM
 **Location:** `/backend/app/resilience/exotic/penrose_efficiency.py`
 **Found:** G2_RECON audit (2025-12-30)
@@ -596,4 +621,4 @@ See also:
 
 ---
 
-*Last updated: 2025-12-30 (Session 023 - Critical items verified resolved)*
+*Last updated: 2025-12-30 (Session 025 - CD pipeline, procedure hooks, TypeScript errors fixed)*

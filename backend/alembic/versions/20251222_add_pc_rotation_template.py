@@ -25,6 +25,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Insert PC rotation template (idempotent - skip if already exists)
+    # Note: Using WHERE NOT EXISTS instead of ON CONFLICT because
+    # abbreviation column lacks a unique constraint
     op.execute(
         sa.text("""
             INSERT INTO rotation_templates (
@@ -32,13 +34,15 @@ def upgrade() -> None:
                 leave_eligible, is_block_half_rotation,
                 supervision_required, max_supervision_ratio,
                 created_at
-            ) VALUES (
+            )
+            SELECT
                 :id, 'Post-Call Recovery', 'PC', 'recovery',
                 false, false,
                 false, NULL,
                 NOW()
+            WHERE NOT EXISTS (
+                SELECT 1 FROM rotation_templates WHERE abbreviation = 'PC'
             )
-            ON CONFLICT (abbreviation) DO NOTHING
         """).bindparams(id=str(uuid.uuid4()))
     )
 

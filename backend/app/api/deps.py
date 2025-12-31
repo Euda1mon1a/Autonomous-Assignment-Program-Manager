@@ -5,7 +5,7 @@ This module provides a convenient import location for common FastAPI dependencie
 """
 
 from app.core.security import get_current_user, get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_db, get_async_db
 
 
 # Optional user retrieval (returns None if not authenticated)
@@ -28,5 +28,6 @@ __all__ = [
     "get_current_active_user",
     "get_current_user_optional",
     "get_db",
+    "get_async_db",
     "get_user_from_token",
 ]

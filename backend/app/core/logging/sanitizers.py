@@ -397,7 +397,7 @@ def create_custom_rule(
         # Redact military ID numbers
         rule = create_custom_rule(
             name="military_id",
-            pattern=r"\bM\d{8}\b",
+            pattern=r"\\bM\\d{8}\\b",
             replacement="[REDACTED-MIL-ID]"
         )
         sanitizer = DataSanitizer(custom_rules=[rule])
