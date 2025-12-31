@@ -33,9 +33,7 @@ trace_id_ctx: contextvars.ContextVar[str | None] = contextvars.ContextVar(
 span_id_ctx: contextvars.ContextVar[str | None] = contextvars.ContextVar(
     "span_id", default=None
 )
-custom_ctx: contextvars.ContextVar[dict[str, Any]] = contextvars.ContextVar(
-    "custom"
-)
+custom_ctx: contextvars.ContextVar[dict[str, Any]] = contextvars.ContextVar("custom")
 
 
 def _get_custom_ctx_default() -> dict[str, Any]:

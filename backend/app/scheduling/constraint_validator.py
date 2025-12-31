@@ -53,7 +53,7 @@ class ValidationError:
     level: str  # 'ERROR', 'WARNING', 'INFO'
     category: str  # 'SYNTAX', 'FEASIBILITY', 'CONFLICT', 'COVERAGE', 'PERFORMANCE'
     message: str
-    constraint_name: Optional[str] = None
+    constraint_name: str | None = None
     details: dict = field(default_factory=dict)
 
     def __str__(self) -> str:
@@ -69,7 +69,7 @@ class ValidationReport:
     errors: list[ValidationError] = field(default_factory=list)
     warnings: list[ValidationError] = field(default_factory=list)
     summary: dict = field(default_factory=dict)
-    timestamp: Optional[str] = None
+    timestamp: str | None = None
 
     @property
     def is_valid(self) -> bool:
@@ -85,8 +85,8 @@ class ValidationReport:
         self,
         category: str,
         message: str,
-        constraint_name: Optional[str] = None,
-        details: Optional[dict] = None,
+        constraint_name: str | None = None,
+        details: dict | None = None,
     ) -> None:
         """Add error to report."""
         self.errors.append(
@@ -104,8 +104,8 @@ class ValidationReport:
         self,
         category: str,
         message: str,
-        constraint_name: Optional[str] = None,
-        details: Optional[dict] = None,
+        constraint_name: str | None = None,
+        details: dict | None = None,
     ) -> None:
         """Add warning to report."""
         self.warnings.append(
@@ -167,9 +167,7 @@ class ConstraintValidator:
 
         # Phase 1: Syntax validation
         logger.info("Phase 1: Validating constraint syntax...")
-        self.syntax_validator.validate_all(
-            self.manager.constraints, report
-        )
+        self.syntax_validator.validate_all(self.manager.constraints, report)
 
         # Phase 2: Feasibility checking
         logger.info("Phase 2: Checking constraint feasibility...")
@@ -179,21 +177,15 @@ class ConstraintValidator:
 
         # Phase 3: Conflict detection
         logger.info("Phase 3: Detecting constraint conflicts...")
-        self.conflict_detector.detect_conflicts(
-            self.manager.get_enabled(), report
-        )
+        self.conflict_detector.detect_conflicts(self.manager.get_enabled(), report)
 
         # Phase 4: Coverage analysis
         logger.info("Phase 4: Analyzing coverage...")
-        self.coverage_analyzer.analyze_coverage(
-            self.manager.get_enabled(), report
-        )
+        self.coverage_analyzer.analyze_coverage(self.manager.get_enabled(), report)
 
         # Phase 5: Dependency analysis
         logger.info("Phase 5: Analyzing dependencies...")
-        self.dependency_analyzer.analyze_dependencies(
-            self.manager.constraints, report
-        )
+        self.dependency_analyzer.analyze_dependencies(self.manager.constraints, report)
 
         # Phase 6: Performance profiling
         logger.info("Phase 6: Profiling performance...")
@@ -479,6 +471,7 @@ class ConstraintPerformanceProfiler:
 
 
 # Convenience functions
+
 
 def validate_constraint_manager(
     manager: Any,

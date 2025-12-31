@@ -61,9 +61,7 @@ class TestSwapAutoMatcher:
         return faculty
 
     @pytest.fixture
-    def swap_request_1(
-        self, db: Session, faculty_1: Person
-    ) -> SwapRecord:
+    def swap_request_1(self, db: Session, faculty_1: Person) -> SwapRecord:
         """Create first swap request."""
         swap = SwapRecord(
             id=uuid4(),
@@ -79,9 +77,7 @@ class TestSwapAutoMatcher:
         return swap
 
     @pytest.fixture
-    def swap_request_2(
-        self, db: Session, faculty_2: Person
-    ) -> SwapRecord:
+    def swap_request_2(self, db: Session, faculty_2: Person) -> SwapRecord:
         """Create second swap request."""
         swap = SwapRecord(
             id=uuid4(),

@@ -23,7 +23,7 @@ class ResidentReport:
 
     async def generate(
         self, start_date: date, end_date: date, resident_id: str = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate resident hours report."""
         metrics = await self.analytics_engine.calculate_all_metrics(
             start_date, end_date, person_id=resident_id

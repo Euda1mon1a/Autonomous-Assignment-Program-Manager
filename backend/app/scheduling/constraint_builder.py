@@ -498,7 +498,7 @@ class ConstraintSerializer:
         return json.dumps(ConstraintSerializer.to_dict(constraint), indent=2)
 
     @staticmethod
-    def from_dict(data: dict) -> Optional[Constraint]:
+    def from_dict(data: dict) -> Constraint | None:
         """
         Deserialize constraint from dictionary.
 
@@ -554,7 +554,7 @@ class ConstraintSerializer:
             return None
 
     @staticmethod
-    def from_json(json_str: str) -> Optional[Constraint]:
+    def from_json(json_str: str) -> Constraint | None:
         """
         Deserialize constraint from JSON string.
 
@@ -574,6 +574,7 @@ class ConstraintSerializer:
 
 # Convenience functions
 
+
 def build_hard_constraint(
     name: str,
     constraint_type: ConstraintType,
@@ -590,7 +591,14 @@ def build_hard_constraint(
     Returns:
         HardConstraint instance
     """
-    return ConstraintBuilder().hard().name(name).type(constraint_type).priority(priority).build()
+    return (
+        ConstraintBuilder()
+        .hard()
+        .name(name)
+        .type(constraint_type)
+        .priority(priority)
+        .build()
+    )
 
 
 def build_soft_constraint(

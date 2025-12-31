@@ -25,10 +25,10 @@ class ForecastEngine:
 
     def forecast(
         self,
-        time_series_data: Dict[str, pd.Series],
+        time_series_data: dict[str, pd.Series],
         periods: int = 4,
         method: str = "auto",
-    ) -> Dict[str, Dict[str, Any]]:
+    ) -> dict[str, dict[str, Any]]:
         """
         Forecast multiple metrics.
 
@@ -76,7 +76,7 @@ class ForecastEngine:
         y = series.values
         slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
 
-        has_strong_trend = (abs(slope) > 0.1 and r_value ** 2 > 0.5)
+        has_strong_trend = abs(slope) > 0.1 and r_value**2 > 0.5
 
         # Check for seasonality
         if len(series) > 7:
@@ -98,7 +98,7 @@ class ForecastEngine:
         series: pd.Series,
         periods: int,
         method: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Forecast a single time series.
 
@@ -126,7 +126,7 @@ class ForecastEngine:
         series: pd.Series,
         periods: int,
         window: int = 4,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Forecast using simple moving average."""
         if len(series) < window:
             window = len(series)
@@ -161,7 +161,7 @@ class ForecastEngine:
         series: pd.Series,
         periods: int,
         alpha: float = 0.3,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Forecast using exponential smoothing."""
         # Calculate exponential moving average
         ema = series.ewm(alpha=alpha, adjust=False).mean()
@@ -193,7 +193,7 @@ class ForecastEngine:
         self,
         series: pd.Series,
         periods: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Forecast using linear trend projection."""
         x = np.arange(len(series))
         y = series.values
@@ -213,16 +213,18 @@ class ForecastEngine:
         for i, pred in enumerate(predicted_values):
             # Wider intervals for further predictions
             interval_width = std * (1 + i * 0.1)
-            confidence_intervals.append({
-                "lower": pred - 2 * interval_width,
-                "upper": pred + 2 * interval_width,
-            })
+            confidence_intervals.append(
+                {
+                    "lower": pred - 2 * interval_width,
+                    "upper": pred + 2 * interval_width,
+                }
+            )
 
         return {
             "method": "linear_trend",
             "slope": float(slope),
             "intercept": float(intercept),
-            "r_squared": float(r_value ** 2),
+            "r_squared": float(r_value**2),
             "predicted_values": [float(v) for v in predicted_values],
             "predicted_mean": float(np.mean(predicted_values)),
             "confidence_intervals": [
@@ -235,7 +237,7 @@ class ForecastEngine:
         self,
         violation_series: pd.Series,
         periods: int = 4,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Forecast ACGME violations.
 
@@ -268,7 +270,7 @@ class ForecastEngine:
         self,
         utilization_series: pd.Series,
         periods: int = 4,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Forecast utilization with capacity warnings.
 
@@ -285,17 +287,21 @@ class ForecastEngine:
         warnings = []
         for i, value in enumerate(forecast["predicted_values"]):
             if value > 0.9:
-                warnings.append({
-                    "period": i + 1,
-                    "utilization": float(value),
-                    "message": "Critical: Utilization approaching capacity",
-                })
+                warnings.append(
+                    {
+                        "period": i + 1,
+                        "utilization": float(value),
+                        "message": "Critical: Utilization approaching capacity",
+                    }
+                )
             elif value > 0.8:
-                warnings.append({
-                    "period": i + 1,
-                    "utilization": float(value),
-                    "message": "Warning: High utilization threshold exceeded",
-                })
+                warnings.append(
+                    {
+                        "period": i + 1,
+                        "utilization": float(value),
+                        "message": "Warning: High utilization threshold exceeded",
+                    }
+                )
 
         forecast["warnings"] = warnings
         forecast["metric_type"] = "utilization"

@@ -91,7 +91,9 @@ class SpinGlassModel:
         np.fill_diagonal(J, 0)
 
         # Add frustration by randomly flipping signs
-        frustration_mask = np.random.rand(self.num_spins, self.num_spins) < self.frustration_level
+        frustration_mask = (
+            np.random.rand(self.num_spins, self.num_spins) < self.frustration_level
+        )
         J[frustration_mask] *= -1
 
         return J
@@ -150,7 +152,7 @@ class SpinGlassModel:
     def generate_replica(
         self,
         num_iterations: int = 1000,
-        initial_spins: Optional[np.ndarray] = None,
+        initial_spins: np.ndarray | None = None,
     ) -> SpinConfiguration:
         """
         Generate single replica using simulated annealing.
@@ -328,7 +330,9 @@ class SpinGlassModel:
         num_local_minima_estimate = int(np.sqrt(num_samples))  # Rough estimate
 
         # Ruggedness score: normalized variance
-        ruggedness = min(1.0, energy_variance / (energy_range**2) if energy_range > 0 else 0.0)
+        ruggedness = min(
+            1.0, energy_variance / (energy_range**2) if energy_range > 0 else 0.0
+        )
 
         if ruggedness > 0.7:
             difficulty = "very_hard"

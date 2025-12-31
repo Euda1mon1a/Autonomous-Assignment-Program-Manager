@@ -1,4 +1,5 @@
 """Tests for query caching functionality."""
+
 import asyncio
 import json
 import pytest
@@ -81,6 +82,7 @@ async def test_query_cache_invalidate_pattern(query_cache):
 @pytest.mark.asyncio
 async def test_query_cache_metrics(query_cache):
     """Test cache metrics tracking."""
+
     async def fetch_fn():
         return {"data": "test"}
 
@@ -187,10 +189,9 @@ async def test_query_cache_concurrent_access(query_cache):
         return {"data": "test"}
 
     # Make multiple concurrent requests
-    results = await asyncio.gather(*[
-        query_cache.get_or_fetch("concurrent_key", fetch_fn)
-        for _ in range(5)
-    ])
+    results = await asyncio.gather(
+        *[query_cache.get_or_fetch("concurrent_key", fetch_fn) for _ in range(5)]
+    )
 
     # All results should be the same
     assert all(r == results[0] for r in results)

@@ -45,7 +45,7 @@ class ControlChartPoint:
     timestamp: datetime
     value: float
     is_in_control: bool
-    violated_rule: Optional[str] = None  # Which rule was violated
+    violated_rule: str | None = None  # Which rule was violated
     zone: str = "A"  # Zone: A (within 1σ), B (1-2σ), C (2-3σ), Out (>3σ)
 
 
@@ -70,13 +70,13 @@ class ControlChart:
         """
         self.chart_type = chart_type
         self.sigma_multiplier = sigma_multiplier
-        self.limits: Optional[ControlLimits] = None
+        self.limits: ControlLimits | None = None
         self.data_points: list[float] = []
 
     def calculate_limits(
         self,
         baseline_data: list[float],
-        target: Optional[float] = None,
+        target: float | None = None,
     ) -> ControlLimits:
         """
         Calculate control limits from baseline data.
@@ -120,7 +120,7 @@ class ControlChart:
     def add_point(
         self,
         value: float,
-        timestamp: Optional[datetime] = None,
+        timestamp: datetime | None = None,
     ) -> ControlChartPoint:
         """
         Add point to control chart and check limits.
@@ -195,7 +195,11 @@ class ControlChart:
 
         sigma = self.limits.sigma
         if sigma == 0:
-            return {"cp": float("inf"), "cpk": float("inf"), "interpretation": "no_variation"}
+            return {
+                "cp": float("inf"),
+                "cpk": float("inf"),
+                "interpretation": "no_variation",
+            }
 
         # Process capability
         cp = (self.limits.ucl - self.limits.lcl) / (6.0 * sigma)
@@ -309,7 +313,7 @@ class CUSUMChart:
     def add_point(
         self,
         value: float,
-        timestamp: Optional[datetime] = None,
+        timestamp: datetime | None = None,
     ) -> CUSUMPoint:
         """
         Add point to CUSUM chart.
@@ -393,7 +397,7 @@ class EWMAChart:
     def add_point(
         self,
         value: float,
-        timestamp: Optional[datetime] = None,
+        timestamp: datetime | None = None,
     ) -> EWMAPoint:
         """
         Add point to EWMA chart.

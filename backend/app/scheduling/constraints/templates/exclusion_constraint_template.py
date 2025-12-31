@@ -44,12 +44,14 @@ class ExclusionConstraintTemplate(HardConstraint):
 
             # Check person type exclusions
             if self._should_be_excluded(person, rotation):
-                violations.append({
-                    'constraint_name': self.name,
-                    'message': f'{self.excluded_person_type} cannot work {rotation.name}',
-                    'person_id': assignment.person_id,
-                    'rotation_id': assignment.rotation_id,
-                })
+                violations.append(
+                    {
+                        "constraint_name": self.name,
+                        "message": f"{self.excluded_person_type} cannot work {rotation.name}",
+                        "person_id": assignment.person_id,
+                        "rotation_id": assignment.rotation_id,
+                    }
+                )
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
@@ -75,9 +77,9 @@ class ExclusionConstraintTemplate(HardConstraint):
     def _matches_person_type(self, person, person_type=None):
         """Check if person matches type."""
         check_type = person_type or self.excluded_person_type
-        if check_type == 'adjunct':
-            return person.faculty_type == 'ADJUNCT'
-        elif check_type == 'new':
+        if check_type == "adjunct":
+            return person.faculty_type == "ADJUNCT"
+        elif check_type == "new":
             return person.is_new
         return False
 

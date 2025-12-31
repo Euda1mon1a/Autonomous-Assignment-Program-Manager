@@ -42,7 +42,7 @@ class PeriodComparison:
         period1_end: date,
         period2_start: date,
         period2_end: date,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Compare metrics between two periods.
 
@@ -104,7 +104,7 @@ class PeriodComparison:
         self,
         start_date: date,
         end_date: date,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get all metrics for a period."""
         schedule = await self.metric_calculator.calculate_schedule_metrics(
             start_date, end_date
@@ -124,9 +124,9 @@ class PeriodComparison:
 
     def _compare_dict_metrics(
         self,
-        period1: Dict[str, Any],
-        period2: Dict[str, Any],
-    ) -> Dict[str, Dict[str, Any]]:
+        period1: dict[str, Any],
+        period2: dict[str, Any],
+    ) -> dict[str, dict[str, Any]]:
         """
         Compare two metric dictionaries.
 
@@ -145,7 +145,9 @@ class PeriodComparison:
                 value2 = period2[key]
 
                 # Only compare numeric values
-                if isinstance(value1, (int, float)) and isinstance(value2, (int, float)):
+                if isinstance(value1, (int, float)) and isinstance(
+                    value2, (int, float)
+                ):
                     comparison[key] = self._compare_values(value1, value2)
 
         return comparison
@@ -154,7 +156,7 @@ class PeriodComparison:
         self,
         value1: float,
         value2: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Compare two numeric values.
 
@@ -170,7 +172,7 @@ class PeriodComparison:
         if value1 != 0:
             percent_change = (delta / value1) * 100
         else:
-            percent_change = 0 if delta == 0 else float('inf')
+            percent_change = 0 if delta == 0 else float("inf")
 
         # Determine direction
         if abs(delta) < 0.01:
@@ -199,10 +201,10 @@ class PeriodComparison:
 
     def _generate_summary(
         self,
-        schedule_comparison: Dict[str, Any],
-        compliance_comparison: Dict[str, Any],
-        resilience_comparison: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        schedule_comparison: dict[str, Any],
+        compliance_comparison: dict[str, Any],
+        resilience_comparison: dict[str, Any],
+    ) -> dict[str, Any]:
         """Generate high-level summary of comparison."""
         # Key metrics to highlight
         key_metrics = {
@@ -215,11 +217,13 @@ class PeriodComparison:
         significant_changes = []
         for metric_name, comparison in key_metrics.items():
             if comparison.get("magnitude") == "significant":
-                significant_changes.append({
-                    "metric": metric_name,
-                    "direction": comparison.get("direction"),
-                    "percent_change": comparison.get("percent_change"),
-                })
+                significant_changes.append(
+                    {
+                        "metric": metric_name,
+                        "direction": comparison.get("direction"),
+                        "percent_change": comparison.get("percent_change"),
+                    }
+                )
 
         # Overall assessment
         if not significant_changes:
@@ -227,12 +231,16 @@ class PeriodComparison:
         else:
             # Check if changes are mostly positive or negative
             positive_changes = sum(
-                1 for c in significant_changes
-                if c["direction"] == "increase" and c["metric"] in ["coverage_rate", "compliance_score"]
+                1
+                for c in significant_changes
+                if c["direction"] == "increase"
+                and c["metric"] in ["coverage_rate", "compliance_score"]
             )
             negative_changes = sum(
-                1 for c in significant_changes
-                if c["direction"] == "decrease" and c["metric"] in ["coverage_rate", "compliance_score"]
+                1
+                for c in significant_changes
+                if c["direction"] == "decrease"
+                and c["metric"] in ["coverage_rate", "compliance_score"]
             )
 
             if positive_changes > negative_changes:
@@ -252,7 +260,7 @@ class PeriodComparison:
         self,
         base_year: int,
         comparison_year: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Compare full year metrics.
 
@@ -269,8 +277,10 @@ class PeriodComparison:
         period2_end = date(comparison_year, 12, 31)
 
         return await self.compare(
-            period1_start, period1_end,
-            period2_start, period2_end,
+            period1_start,
+            period1_end,
+            period2_start,
+            period2_end,
         )
 
     async def compare_quarters(
@@ -278,7 +288,7 @@ class PeriodComparison:
         year: int,
         quarter1: int,
         quarter2: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Compare two quarters.
 
@@ -290,12 +300,11 @@ class PeriodComparison:
         Returns:
             Quarter comparison
         """
+
         def get_quarter_dates(year: int, quarter: int):
             start_month = (quarter - 1) * 3 + 1
             end_month = start_month + 2
-            if end_month == 12:
-                end_day = 31
-            elif end_month in [1, 3, 5, 7, 8, 10]:
+            if end_month == 12 or end_month in [1, 3, 5, 7, 8, 10]:
                 end_day = 31
             elif end_month in [4, 6, 9, 11]:
                 end_day = 30

@@ -621,6 +621,50 @@ def schedule_quality_checks(task: Task, urgency: str) -> Schedule:
 
 ---
 
+## QA_PARTY: Scaled 120-Agent Deployment
+
+### Overview
+
+For comprehensive validation requiring massive parallelism, COORD_QUALITY commands QA_PARTY deployments as **IG (Inspector General)** - the inspection/quality function (distinct from G-2 Intel/Recon):
+
+```
+ORCHESTRATOR
+    └── COORD_QUALITY (IG Commander - Inspections & Quality)
+            ├── QA-IG-BACKEND-ROUTES (10 workers)
+            ├── QA-IG-BACKEND-SERVICES (10 workers)
+            ├── QA-IG-BACKEND-MODELS (10 workers)
+            ├── QA-IG-BACKEND-SCHEDULING (10 workers)
+            ├── QA-IG-BACKEND-RESILIENCE (10 workers)
+            ├── QA-IG-BACKEND-ACGME (10 workers)
+            ├── QA-IG-FRONTEND-COMPONENTS (10 workers)
+            ├── QA-IG-FRONTEND-HOOKS (10 workers)
+            ├── QA-IG-FRONTEND-PAGES (10 workers)
+            ├── QA-IG-LINT-BACKEND (10 workers)
+            ├── QA-IG-LINT-FRONTEND (10 workers)
+            └── QA-IG-SECURITY (10 workers)
+                    = 120 QA agents
+```
+
+### Invocation
+
+```
+/qa-party --scale 120
+```
+
+### Triggering QA_PARTY
+
+COORD_QUALITY deploys QA_PARTY when:
+- CCW completes a major workstream
+- Pre-PR comprehensive validation requested
+- Regression testing after major merge
+- Post-incident verification
+
+### Skill Reference
+
+Full QA_PARTY protocol: `.claude/skills/qa-party/SKILL.md`
+
+---
+
 ## Coordination Patterns
 
 ### Pattern 1: Parallel Quality Validation

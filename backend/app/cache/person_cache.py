@@ -2,6 +2,7 @@
 
 Caches person and related data with intelligent invalidation.
 """
+
 import json
 import logging
 from typing import Optional
@@ -19,7 +20,7 @@ class PersonCache:
         self.cache = get_cache_manager()
         self.ttl = 7200  # 2 hours - person data changes infrequently
 
-    async def get_person(self, person_id: str) -> Optional[dict]:
+    async def get_person(self, person_id: str) -> dict | None:
         """Get cached person data.
 
         Args:
@@ -38,7 +39,7 @@ class PersonCache:
         self,
         person_id: str,
         person_data: dict,
-        ttl: Optional[int] = None,
+        ttl: int | None = None,
     ) -> None:
         """Cache person data.
 
@@ -50,7 +51,7 @@ class PersonCache:
         key = f"person:{person_id}"
         await self.cache.set(key, json.dumps(person_data), ttl or self.ttl)
 
-    async def get_persons_by_type(self, person_type: str) -> Optional[list]:
+    async def get_persons_by_type(self, person_type: str) -> list | None:
         """Get cached persons by type.
 
         Args:
@@ -69,7 +70,7 @@ class PersonCache:
         self,
         person_type: str,
         persons: list,
-        ttl: Optional[int] = None,
+        ttl: int | None = None,
     ) -> None:
         """Cache persons by type.
 
@@ -81,7 +82,7 @@ class PersonCache:
         key = f"persons_by_type:{person_type}"
         await self.cache.set(key, json.dumps(persons), ttl or self.ttl)
 
-    async def get_person_preferences(self, person_id: str) -> Optional[dict]:
+    async def get_person_preferences(self, person_id: str) -> dict | None:
         """Get cached person preferences.
 
         Args:
@@ -100,7 +101,7 @@ class PersonCache:
         self,
         person_id: str,
         preferences: dict,
-        ttl: Optional[int] = None,
+        ttl: int | None = None,
     ) -> None:
         """Cache person preferences.
 
@@ -155,7 +156,7 @@ class PersonCache:
 
 
 # Global instance
-_person_cache: Optional[PersonCache] = None
+_person_cache: PersonCache | None = None
 
 
 def get_person_cache() -> PersonCache:

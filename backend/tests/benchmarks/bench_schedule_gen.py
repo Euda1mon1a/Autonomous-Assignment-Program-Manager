@@ -14,7 +14,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.scheduling.engine import ScheduleGenerator
 from app.scheduling.algorithms.greedy import GreedyScheduler
-from app.scheduling.algorithms.constraint_programming import ConstraintProgrammingScheduler
+from app.scheduling.algorithms.constraint_programming import (
+    ConstraintProgrammingScheduler,
+)
 from app.models.person import Person
 from app.models.rotation import Rotation
 from app.models.block import Block
@@ -36,7 +38,7 @@ class TestScheduleGenerationBenchmarks:
                 email=f"person{i}@benchmark.com",
                 role="RESIDENT" if i < 15 else "FACULTY",
                 pgy_year=(i % 3) + 1 if i < 15 else None,
-                is_active=True
+                is_active=True,
             )
             db.add(person)
             persons.append(person)
@@ -50,7 +52,7 @@ class TestScheduleGenerationBenchmarks:
                 rotation_type=rot_type,
                 is_active=True,
                 requires_supervision=rot_type in ["PROCEDURES", "INPATIENT"],
-                max_consecutive_days=7 if rot_type == "CALL" else 14
+                max_consecutive_days=7 if rot_type == "CALL" else 14,
             )
             db.add(rotation)
             rotations.append(rotation)
@@ -65,7 +67,7 @@ class TestScheduleGenerationBenchmarks:
                     date=current_date,
                     session_type=session_type,
                     is_holiday=False,
-                    is_weekend=current_date.weekday() >= 5
+                    is_weekend=current_date.weekday() >= 5,
                 )
                 db.add(block)
                 blocks.append(block)
@@ -84,7 +86,7 @@ class TestScheduleGenerationBenchmarks:
             "rotations": rotations,
             "blocks": blocks,
             "start_date": start_date,
-            "end_date": start_date + timedelta(days=29)
+            "end_date": start_date + timedelta(days=29),
         }
 
     def test_greedy_scheduler_small(self, benchmark, db: AsyncSession, schedule_data):
@@ -99,7 +101,7 @@ class TestScheduleGenerationBenchmarks:
                 rotations=schedule_data["rotations"],
                 blocks=schedule_data["blocks"][:20],  # 10 days
                 start_date=schedule_data["start_date"],
-                end_date=schedule_data["start_date"] + timedelta(days=9)
+                end_date=schedule_data["start_date"] + timedelta(days=9),
             )
 
         result = benchmark(run_scheduler)
@@ -115,7 +117,7 @@ class TestScheduleGenerationBenchmarks:
                 rotations=schedule_data["rotations"],
                 blocks=schedule_data["blocks"],
                 start_date=schedule_data["start_date"],
-                end_date=schedule_data["end_date"]
+                end_date=schedule_data["end_date"],
             )
 
         result = benchmark(run_scheduler)
@@ -133,7 +135,7 @@ class TestScheduleGenerationBenchmarks:
                 blocks=schedule_data["blocks"][:20],
                 start_date=schedule_data["start_date"],
                 end_date=schedule_data["start_date"] + timedelta(days=9),
-                max_runtime_seconds=10
+                max_runtime_seconds=10,
             )
 
         result = benchmark.pedantic(run_scheduler, rounds=3, iterations=1)
@@ -185,10 +187,7 @@ class TestConstraintBenchmarks:
         from app.scheduling.constraints.acgme import check_supervision_ratio
 
         result = benchmark(
-            check_supervision_ratio,
-            residents_count=10,
-            faculty_count=3,
-            pgy_level=1
+            check_supervision_ratio, residents_count=10, faculty_count=3, pgy_level=1
         )
         assert isinstance(result, bool)
 
@@ -208,7 +207,7 @@ class TestDatabaseBenchmarks:
                 person_id=f"person-{i}",
                 block_id=f"block-{i}",
                 rotation_id=f"rotation-{i % 5}",
-                status="SCHEDULED"
+                status="SCHEDULED",
             )
             for i in range(100)
         ]
@@ -221,9 +220,7 @@ class TestDatabaseBenchmarks:
         # You'd need to use a sync wrapper or pytest-benchmark-asyncio
         # This is a simplified example
         result = benchmark.pedantic(
-            lambda: create_assignments(),
-            rounds=5,
-            iterations=1
+            lambda: create_assignments(), rounds=5, iterations=1
         )
 
     @pytest.mark.asyncio
@@ -246,11 +243,7 @@ class TestDatabaseBenchmarks:
             result = await db.execute(stmt)
             return result.scalars().all()
 
-        result = benchmark.pedantic(
-            lambda: run_query(),
-            rounds=10,
-            iterations=1
-        )
+        result = benchmark.pedantic(lambda: run_query(), rounds=10, iterations=1)
 
 
 @pytest.mark.benchmark
@@ -276,13 +269,11 @@ class TestResilienceBenchmarks:
         schedule = {
             "assignments": [],  # Populate with test data
             "persons": [],
-            "rotations": []
+            "rotations": [],
         }
 
         result = benchmark.pedantic(
-            lambda: analyze_n_minus_one(schedule),
-            rounds=5,
-            iterations=1
+            lambda: analyze_n_minus_one(schedule), rounds=5, iterations=1
         )
 
     def test_burnout_risk_calculation(self, benchmark):
@@ -299,11 +290,5 @@ class TestResilienceBenchmarks:
 # Benchmark configuration
 def pytest_configure(config):
     """Configure pytest-benchmark"""
-    config.addinivalue_line(
-        "markers",
-        "benchmark: mark test as a benchmark"
-    )
-    config.addinivalue_line(
-        "markers",
-        "slow: mark test as slow (expensive benchmarks)"
-    )
+    config.addinivalue_line("markers", "benchmark: mark test as a benchmark")
+    config.addinivalue_line("markers", "slow: mark test as slow (expensive benchmarks)")

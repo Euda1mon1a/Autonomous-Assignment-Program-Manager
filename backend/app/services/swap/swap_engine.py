@@ -203,12 +203,16 @@ class SwapEngine:
                         # Fast fail on first error
                         break
                 except Exception as e:
-                    logger.warning(f"Validator {validator.__class__.__name__} failed: {e}")
-                    validation_results.append({
-                        "validator": validator.__class__.__name__,
-                        "valid": False,
-                        "error": str(e),
-                    })
+                    logger.warning(
+                        f"Validator {validator.__class__.__name__} failed: {e}"
+                    )
+                    validation_results.append(
+                        {
+                            "validator": validator.__class__.__name__,
+                            "valid": False,
+                            "error": str(e),
+                        }
+                    )
 
             all_valid = all(r.get("valid", False) for r in validation_results)
 
@@ -308,7 +312,9 @@ class SwapEngine:
                 metadata={
                     "executed_at": execution_time.isoformat(),
                     "source_week": swap.source_week.isoformat(),
-                    "target_week": swap.target_week.isoformat() if swap.target_week else None,
+                    "target_week": swap.target_week.isoformat()
+                    if swap.target_week
+                    else None,
                 },
             )
 
@@ -417,11 +423,13 @@ class SwapEngine:
         if swap.target_week:
             execution_steps.append(f"Transfer assignments for week {swap.target_week}")
 
-        execution_steps.extend([
-            "Update call cascades",
-            "Update swap record status",
-            "Send confirmation notifications",
-        ])
+        execution_steps.extend(
+            [
+                "Update call cascades",
+                "Update swap record status",
+                "Send confirmation notifications",
+            ]
+        )
 
         rollback_steps = [
             f"Reverse assignments for week {swap.source_week}",
@@ -430,11 +438,13 @@ class SwapEngine:
         if swap.target_week:
             rollback_steps.append(f"Reverse assignments for week {swap.target_week}")
 
-        rollback_steps.extend([
-            "Reverse call cascades",
-            "Update swap record to rolled_back",
-            "Send rollback notifications",
-        ])
+        rollback_steps.extend(
+            [
+                "Reverse call cascades",
+                "Update swap record to rolled_back",
+                "Send rollback notifications",
+            ]
+        )
 
         return SwapExecutionPlan(
             swap_id=swap.id,

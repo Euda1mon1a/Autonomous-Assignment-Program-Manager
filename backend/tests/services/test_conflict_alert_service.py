@@ -256,9 +256,7 @@ class TestConflictAlertService:
             # Method may not be implemented
             pass
 
-    def test_get_conflicts_by_date_range(
-        self, alert_service: ConflictAlertService
-    ):
+    def test_get_conflicts_by_date_range(self, alert_service: ConflictAlertService):
         """Test getting conflicts for a date range."""
         start_date = date.today()
         end_date = date.today() + timedelta(days=7)
@@ -332,9 +330,7 @@ class TestConflictAlertService:
         # This is implementation-dependent
         pass
 
-    def test_conflict_severity_levels(
-        self, alert_service: ConflictAlertService
-    ):
+    def test_conflict_severity_levels(self, alert_service: ConflictAlertService):
         """Test that conflicts have severity levels."""
         conflicts = alert_service.get_all_conflicts()
 
@@ -380,9 +376,7 @@ class TestConflictAlertService:
 
         assert isinstance(conflicts, list)
 
-    def test_conflict_alert_notifications(
-        self, alert_service: ConflictAlertService
-    ):
+    def test_conflict_alert_notifications(self, alert_service: ConflictAlertService):
         """Test that conflict alerts can be created."""
         # May have method to create/send alerts
         try:

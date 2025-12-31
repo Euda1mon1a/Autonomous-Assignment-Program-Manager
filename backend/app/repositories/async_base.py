@@ -115,7 +115,7 @@ class AsyncBaseRepository(Generic[ModelType]):
         await self.db.flush()
         return db_obj
 
-    async def get_by_id(self, id: UUID | str) -> Optional[ModelType]:
+    async def get_by_id(self, id: UUID | str) -> ModelType | None:
         """
         Get entity by primary key.
 
@@ -129,8 +129,8 @@ class AsyncBaseRepository(Generic[ModelType]):
 
     async def get_all(
         self,
-        pagination: Optional[PaginationParams] = None,
-        eager_fields: Optional[list[str]] = None,
+        pagination: PaginationParams | None = None,
+        eager_fields: list[str] | None = None,
     ) -> list[ModelType]:
         """
         Get all entities with optional pagination.
@@ -157,9 +157,7 @@ class AsyncBaseRepository(Generic[ModelType]):
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def update(
-        self, db_obj: ModelType, obj_in: UpdateSchemaType
-    ) -> ModelType:
+    async def update(self, db_obj: ModelType, obj_in: UpdateSchemaType) -> ModelType:
         """
         Update an existing entity.
 
@@ -210,9 +208,9 @@ class AsyncBaseRepository(Generic[ModelType]):
     async def get_paginated(
         self,
         pagination: PaginationParams,
-        eager_fields: Optional[list[str]] = None,
-        order_by: Optional[str] = None,
-        filters: Optional[dict[str, Any]] = None,
+        eager_fields: list[str] | None = None,
+        order_by: str | None = None,
+        filters: dict[str, Any] | None = None,
     ) -> PaginatedResponse:
         """
         Get paginated results with optional filtering and sorting.
@@ -239,9 +237,7 @@ class AsyncBaseRepository(Generic[ModelType]):
         if filters:
             for field, value in filters.items():
                 if value is not None and hasattr(self.model, field):
-                    count_query = count_query.where(
-                        getattr(self.model, field) == value
-                    )
+                    count_query = count_query.where(getattr(self.model, field) == value)
         total_result = await self.db.execute(count_query)
         total = total_result.scalar() or 0
 
@@ -282,8 +278,8 @@ class AsyncBaseRepository(Generic[ModelType]):
     async def get_by_filters(
         self,
         filters: dict[str, Any],
-        eager_fields: Optional[list[str]] = None,
-        order_by: Optional[str] = None,
+        eager_fields: list[str] | None = None,
+        order_by: str | None = None,
         limit: int = 100,
     ) -> list[ModelType]:
         """
@@ -329,9 +325,7 @@ class AsyncBaseRepository(Generic[ModelType]):
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def get_first_by_filters(
-        self, filters: dict[str, Any]
-    ) -> Optional[ModelType]:
+    async def get_first_by_filters(self, filters: dict[str, Any]) -> ModelType | None:
         """
         Get first entity matching filters.
 
@@ -357,7 +351,7 @@ class AsyncBaseRepository(Generic[ModelType]):
 
     async def get_by_id_with_relations(
         self, id: UUID | str, relations: list[str]
-    ) -> Optional[ModelType]:
+    ) -> ModelType | None:
         """
         Get entity by ID with specified relationships eagerly loaded.
 
@@ -380,7 +374,7 @@ class AsyncBaseRepository(Generic[ModelType]):
     async def get_all_with_relations(
         self,
         relations: list[str],
-        pagination: Optional[PaginationParams] = None,
+        pagination: PaginationParams | None = None,
     ) -> list[ModelType]:
         """
         Get all entities with specified relationships eagerly loaded.
@@ -406,7 +400,7 @@ class AsyncBaseRepository(Generic[ModelType]):
 
     # ============= Counting and Existence Operations =============
 
-    async def count(self, filters: Optional[dict[str, Any]] = None) -> int:
+    async def count(self, filters: dict[str, Any] | None = None) -> int:
         """
         Count entities matching optional filters.
 
@@ -441,9 +435,7 @@ class AsyncBaseRepository(Generic[ModelType]):
 
     # ============= Bulk Operations =============
 
-    async def bulk_create(
-        self, objects_in: list[CreateSchemaType]
-    ) -> list[ModelType]:
+    async def bulk_create(self, objects_in: list[CreateSchemaType]) -> list[ModelType]:
         """
         Create multiple entities efficiently.
 
@@ -460,9 +452,7 @@ class AsyncBaseRepository(Generic[ModelType]):
         await self.db.flush()
         return db_objects
 
-    async def bulk_update(
-        self, objects: list[ModelType]
-    ) -> list[ModelType]:
+    async def bulk_update(self, objects: list[ModelType]) -> list[ModelType]:
         """
         Update multiple entities efficiently.
 
@@ -545,9 +535,7 @@ class AsyncBaseRepository(Generic[ModelType]):
 
     # ============= Advanced Querying =============
 
-    async def get_with_custom_query(
-        self, query: Any
-    ) -> list[ModelType]:
+    async def get_with_custom_query(self, query: Any) -> list[ModelType]:
         """
         Execute custom select query.
 

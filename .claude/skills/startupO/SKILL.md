@@ -7,8 +7,11 @@ description: Initialize session as ORCHESTRATOR agent with multi-agent coordinat
 
 > **Purpose:** Initialize session as ORCHESTRATOR agent with multi-agent coordination capability
 > **Created:** 2025-12-27
+> **Updated:** 2025-12-31 (Added SEARCH_PARTY and QA_PARTY references)
 > **Trigger:** `/startupO` command
 > **Persona:** ORCHESTRATOR (Parallel Agent Coordination & Delegation)
+> **Default Search:** Use `/search-party` for comprehensive reconnaissance (G-2)
+> **Default Validation:** Use `/qa-party` for comprehensive QA validation (IG)
 
 ---
 
@@ -38,6 +41,53 @@ Philosophy: "The whole is greater than the sum of its parts - when properly coor
 - Integrate diverse perspectives
 - Resolve contradictions when agents disagree
 - Create coherent output (not just concatenated results)
+
+---
+
+## ⚠️ CRITICAL: IDE Crash Prevention
+
+**YOU (ORCHESTRATOR) MUST NOT spawn 8+ agents directly.** This causes IDE seizure and crashes.
+
+### The Rule
+
+| Spawning | Limit | Result |
+|----------|-------|--------|
+| ORCHESTRATOR → Agents directly | **MAX 2** | IDE stable |
+| ORCHESTRATOR → Agents directly | 8+ | **IDE CRASH** |
+
+### Correct Pattern
+
+```
+ORCHESTRATOR → spawns 1-2 Coordinators
+                    ↓
+              Coordinator manages N agents internally
+```
+
+### Available Coordinators
+
+| Task | Coordinator | Protocol |
+|------|-------------|----------|
+| Reconnaissance | G2_RECON | `/search-party` |
+| QA Validation | COORD_QUALITY | `/qa-party` |
+| Quality Review | COORD_QUALITY | Direct spawn |
+| Platform Work | COORD_PLATFORM | Direct spawn |
+| Resilience | COORD_RESILIENCE | Direct spawn |
+
+### Example
+
+```python
+# WRONG - Will crash IDE
+for domain in 12_domains:
+    Task(description=f"Explore {domain}", ...)  # 12 spawns = CRASH
+
+# CORRECT - Route through coordinator
+Task(
+    description="G2_RECON: Deploy SEARCH_PARTY",
+    prompt="You are G2_RECON. Deploy 12 G-2 teams..."
+)  # 1 spawn, coordinator handles the rest
+```
+
+**Parallel execution is the default. Just route through a coordinator.**
 
 ---
 
@@ -153,6 +203,13 @@ Spawned agents have **isolated context** - they don't inherit your conversation.
 - Write self-contained prompts with explicit file paths
 - Include all context the agent needs to succeed
 - See `/context-aware-delegation` skill for templates
+
+### Reconnaissance Protocol
+For comprehensive codebase exploration, deploy **`/search-party`** (SEARCH_PARTY protocol):
+- 12 G-2 RECON agents × 10 probes = **120 parallel probes**
+- D&D-inspired lenses: PERCEPTION, INVESTIGATION, ARCANA, HISTORY, INSIGHT, RELIGION, NATURE, MEDICINE, SURVIVAL, STEALTH
+- Zero marginal wall-clock cost (parallel execution)
+- **Discrepancies between probes = high-signal findings**
 
 Ready to orchestrate. What's the task?
 ```
@@ -530,12 +587,49 @@ Ready to orchestrate. What's the task?
 
 ---
 
+## Party Protocols (Scaled Agent Deployment)
+
+### Available Protocols
+
+| Protocol | Staff | Purpose | Invocation |
+|----------|-------|---------|------------|
+| **SEARCH_PARTY** | G-2 (Intel) | 120-probe reconnaissance | `/search-party` |
+| **QA_PARTY** | IG (Inspector General) | 120-agent QA validation | `/qa-party` |
+
+### IDE Crash Prevention (CRITICAL)
+
+**DO NOT** spawn 8+ agents directly from ORCHESTRATOR. This causes IDE seizure and crashes.
+
+**CORRECT Pattern:**
+```
+ORCHESTRATOR → spawns 1 Coordinator (COORD_QUALITY, G2_RECON)
+                    ↓
+              Coordinator manages teams internally
+```
+
+**WRONG Pattern:**
+```
+ORCHESTRATOR → spawns 8+ agents directly → IDE CRASH
+```
+
+### Staff Distinction
+
+| Staff | Function | Coordinator |
+|-------|----------|-------------|
+| G-2 | Intelligence/Reconnaissance | G2_RECON |
+| IG | Inspection/Quality Assurance | COORD_QUALITY |
+
+---
+
 ## Related Files
 
 - `.claude/Agents/ORCHESTRATOR.md` - Full ORCHESTRATOR specification
 - `.claude/Scratchpad/ORCHESTRATOR_ADVISOR_NOTES.md` - Cross-session institutional memory
 - `.claude/CONSTITUTION.md` - Foundational rules
 - `.claude/skills/startup/SKILL.md` - Basic startup (non-orchestrator)
+- `.claude/skills/search-party/SKILL.md` - **SEARCH_PARTY reconnaissance (G-2, 120 probes)**
+- `.claude/skills/qa-party/SKILL.md` - **QA_PARTY validation (IG, 120 agents)**
+- `.claude/protocols/SEARCH_PARTY.md` - Full SEARCH_PARTY protocol documentation
 - `.claude/skills/check-codex/SKILL.md` - Codex feedback checking (rate-limiting step before merge)
 - `.claude/skills/context-aware-delegation/SKILL.md` - Agent context isolation and prompt templates
 - `.claude/skills/CORE/delegation-patterns.md` - Execution patterns (parallel, sequential, hybrid)

@@ -84,7 +84,9 @@ class AttachmentHandler:
             filename=filename or file_path.name,
         )
 
-        logger.debug("Created attachment: %s (%s)", filename or file_path.name, mime_type)
+        logger.debug(
+            "Created attachment: %s (%s)", filename or file_path.name, mime_type
+        )
 
         return part
 

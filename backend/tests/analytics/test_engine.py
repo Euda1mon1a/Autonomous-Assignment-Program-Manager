@@ -26,16 +26,22 @@ class TestAnalyticsEngine:
         end_date = date(2024, 1, 31)
 
         # Mock the metric calculator methods
-        engine.metric_calculator.calculate_schedule_metrics = AsyncMock(return_value={
-            "coverage_rate": 95.0,
-            "total_assignments": 100,
-        })
-        engine.metric_calculator.calculate_compliance_metrics = AsyncMock(return_value={
-            "compliance_score": 98.0,
-        })
-        engine.metric_calculator.calculate_resilience_metrics = AsyncMock(return_value={
-            "avg_utilization": 0.75,
-        })
+        engine.metric_calculator.calculate_schedule_metrics = AsyncMock(
+            return_value={
+                "coverage_rate": 95.0,
+                "total_assignments": 100,
+            }
+        )
+        engine.metric_calculator.calculate_compliance_metrics = AsyncMock(
+            return_value={
+                "compliance_score": 98.0,
+            }
+        )
+        engine.metric_calculator.calculate_resilience_metrics = AsyncMock(
+            return_value={
+                "avg_utilization": 0.75,
+            }
+        )
         engine.time_series.get_time_series = AsyncMock(return_value={})
         engine.trend_detector.detect_trends = Mock(return_value={})
         engine.anomaly_finder.find_anomalies = Mock(return_value=[])
@@ -53,15 +59,24 @@ class TestAnalyticsEngine:
         engine = AnalyticsEngine(async_db_session)
 
         # Mock calculate_all_metrics
-        engine.calculate_all_metrics = AsyncMock(return_value={
-            "schedule_metrics": {"coverage_rate": 95.0, "avg_workload_hours": 60.0},
-            "compliance_metrics": {"compliance_score": 98.0, "total_violations": 2},
-            "resilience_metrics": {"avg_utilization": 0.75, "high_utilization_count": 3},
-            "trends": {},
-            "anomalies": [],
-            "forecasts": {},
-            "period": {"start_date": "2024-01-01", "end_date": "2024-01-31", "days": 31},
-        })
+        engine.calculate_all_metrics = AsyncMock(
+            return_value={
+                "schedule_metrics": {"coverage_rate": 95.0, "avg_workload_hours": 60.0},
+                "compliance_metrics": {"compliance_score": 98.0, "total_violations": 2},
+                "resilience_metrics": {
+                    "avg_utilization": 0.75,
+                    "high_utilization_count": 3,
+                },
+                "trends": {},
+                "anomalies": [],
+                "forecasts": {},
+                "period": {
+                    "start_date": "2024-01-01",
+                    "end_date": "2024-01-31",
+                    "days": 31,
+                },
+            }
+        )
 
         summary = await engine.get_dashboard_summary(30)
 
@@ -197,8 +212,10 @@ class TestPeriodComparison:
         period2_end = date(2024, 2, 29)
 
         comparison = await comparator.compare(
-            period1_start, period1_end,
-            period2_start, period2_end,
+            period1_start,
+            period1_end,
+            period2_start,
+            period2_end,
         )
 
         assert "period1" in comparison

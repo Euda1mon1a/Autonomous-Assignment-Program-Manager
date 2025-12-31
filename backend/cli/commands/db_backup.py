@@ -31,7 +31,9 @@ def get_backup_dir() -> Path:
 @app.command()
 def create(
     name: str = typer.Option(None, "--name", "-n", help="Backup name"),
-    compress: bool = typer.Option(True, "--compress/--no-compress", help="Compress backup"),
+    compress: bool = typer.Option(
+        True, "--compress/--no-compress", help="Compress backup"
+    ),
 ):
     """
     Create database backup.
@@ -71,11 +73,16 @@ def create(
         # Use pg_dump
         cmd = [
             "pg_dump",
-            "-h", host,
-            "-p", port,
-            "-U", user,
-            "-d", database,
-            "-F", "p",  # Plain text format
+            "-h",
+            host,
+            "-p",
+            port,
+            "-U",
+            user,
+            "-d",
+            database,
+            "-F",
+            "p",  # Plain text format
         ]
 
         if compress:
@@ -111,7 +118,9 @@ def list():
     from rich.table import Table
 
     backup_dir = get_backup_dir()
-    backups = sorted(backup_dir.glob("*.sql*"), key=lambda p: p.stat().st_mtime, reverse=True)
+    backups = sorted(
+        backup_dir.glob("*.sql*"), key=lambda p: p.stat().st_mtime, reverse=True
+    )
 
     if not backups:
         console.print("[yellow]No backups found[/yellow]")
@@ -168,7 +177,9 @@ def delete(
 @app.command()
 def cleanup(
     keep: int = typer.Option(5, "--keep", "-k", help="Number of backups to keep"),
-    days: int = typer.Option(30, "--days", "-d", help="Delete backups older than N days"),
+    days: int = typer.Option(
+        30, "--days", "-d", help="Delete backups older than N days"
+    ),
 ):
     """
     Cleanup old backups.
@@ -180,7 +191,9 @@ def cleanup(
     from datetime import timedelta
 
     backup_dir = get_backup_dir()
-    backups = sorted(backup_dir.glob("*.sql*"), key=lambda p: p.stat().st_mtime, reverse=True)
+    backups = sorted(
+        backup_dir.glob("*.sql*"), key=lambda p: p.stat().st_mtime, reverse=True
+    )
 
     deleted_count = 0
     cutoff_date = datetime.now() - timedelta(days=days)

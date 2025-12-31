@@ -14,7 +14,16 @@ from app.models.user import User
 logger = get_logger(__name__)
 
 # Valid roles as defined in the User model
-VALID_ROLES = ['admin', 'coordinator', 'faculty', 'clinical_staff', 'rn', 'lpn', 'msa', 'resident']
+VALID_ROLES = [
+    "admin",
+    "coordinator",
+    "faculty",
+    "clinical_staff",
+    "rn",
+    "lpn",
+    "msa",
+    "resident",
+]
 
 
 @click.group()
@@ -63,8 +72,8 @@ def create(
     email: str,
     password: str,
     role: str,
-    first_name: Optional[str],
-    last_name: Optional[str],
+    first_name: str | None,
+    last_name: str | None,
     active: bool,
 ) -> None:
     """
@@ -115,7 +124,7 @@ def create(
         db.commit()
         db.refresh(user_obj)
 
-        click.echo(f"User created successfully")
+        click.echo("User created successfully")
         click.echo(f"  ID: {user_obj.id}")
         click.echo(f"  Email: {user_obj.email}")
         click.echo(f"  Role: {user_obj.role}")
@@ -149,8 +158,8 @@ def create(
     help="Output format",
 )
 def list(
-    role: Optional[str],
-    active: Optional[bool],
+    role: str | None,
+    active: bool | None,
     format: str,
 ) -> None:
     """
@@ -216,13 +225,15 @@ def list(
             writer.writerow(["ID", "Email", "Role", "Active", "Created"])
 
             for u in users:
-                writer.writerow([
-                    str(u.id),
-                    u.email,
-                    u.role,
-                    u.is_active,
-                    u.created_at.isoformat(),
-                ])
+                writer.writerow(
+                    [
+                        str(u.id),
+                        u.email,
+                        u.role,
+                        u.is_active,
+                        u.created_at.isoformat(),
+                    ]
+                )
 
     except Exception as e:
         logger.error(f"User list failed: {e}", exc_info=True)

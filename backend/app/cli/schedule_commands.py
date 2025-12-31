@@ -65,7 +65,7 @@ def generate(
     algorithm: str,
     timeout: int,
     dry_run: bool,
-    output: Optional[str],
+    output: str | None,
 ) -> None:
     """
     Generate a new schedule for the specified date range.
@@ -99,9 +99,7 @@ def generate(
         )
 
         # Generate schedule
-        with click.progressbar(
-            length=100, label="Generating schedule"
-        ) as bar:
+        with click.progressbar(length=100, label="Generating schedule") as bar:
             result = engine.generate(
                 algorithm=algorithm,
                 timeout_seconds=timeout,
@@ -191,9 +189,9 @@ def generate(
     help="Generate detailed validation report",
 )
 def validate(
-    block: Optional[int],
-    start: Optional[datetime],
-    end: Optional[datetime],
+    block: int | None,
+    start: datetime | None,
+    end: datetime | None,
     report: bool,
 ) -> None:
     """
@@ -247,17 +245,21 @@ def validate(
         click.echo(f"Validating schedule from {start_date} to {end_date}")
 
         # Load assignments
-        assignments = db.execute(
-            select(Assignment)
-            .join(Block)
-            .where(Block.date >= start_date)
-            .where(Block.date <= end_date)
-            .options(
-                selectinload(Assignment.person),
-                selectinload(Assignment.block),
-                selectinload(Assignment.rotation),
+        assignments = (
+            db.execute(
+                select(Assignment)
+                .join(Block)
+                .where(Block.date >= start_date)
+                .where(Block.date <= end_date)
+                .options(
+                    selectinload(Assignment.person),
+                    selectinload(Assignment.block),
+                    selectinload(Assignment.rotation),
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         click.echo(f"Loaded {len(assignments)} assignments")
 
@@ -285,7 +287,7 @@ def validate(
         if report:
             report_path = Path(f"schedule_validation_{start_date}_{end_date}.md")
             with open(report_path, "w") as f:
-                f.write(f"# Schedule Validation Report\n\n")
+                f.write("# Schedule Validation Report\n\n")
                 f.write(f"**Date Range:** {start_date} to {end_date}\n")
                 f.write(f"**Assignments:** {len(assignments)}\n")
                 f.write(f"**Violations:** {len(violations)}\n\n")
@@ -343,9 +345,9 @@ def validate(
 def export(
     format: str,
     output: str,
-    start: Optional[datetime],
-    end: Optional[datetime],
-    person: Optional[str],
+    start: datetime | None,
+    end: datetime | None,
+    person: str | None,
 ) -> None:
     """
     Export schedule to various formats.
@@ -381,9 +383,7 @@ def export(
         if person:
             # Filter by person
             person_obj = db.execute(
-                select(Person).where(
-                    (Person.id == person) | (Person.email == person)
-                )
+                select(Person).where((Person.id == person) | (Person.email == person))
             ).scalar_one_or_none()
 
             if not person_obj:
@@ -422,18 +422,18 @@ def export(
 
             with open(output_path, "w", newline="") as f:
                 writer = csv.writer(f)
-                writer.writerow(
-                    ["Person", "Date", "Session", "Rotation", "Person ID"]
-                )
+                writer.writerow(["Person", "Date", "Session", "Rotation", "Person ID"])
 
                 for a in assignments:
-                    writer.writerow([
-                        f"{a.person.first_name} {a.person.last_name}",
-                        a.block.date.isoformat(),
-                        a.block.session,
-                        a.rotation.name if a.rotation else "",
-                        a.person_id,
-                    ])
+                    writer.writerow(
+                        [
+                            f"{a.person.first_name} {a.person.last_name}",
+                            a.block.date.isoformat(),
+                            a.block.session,
+                            a.rotation.name if a.rotation else "",
+                            a.person_id,
+                        ]
+                    )
 
         elif format == "excel":
             try:
@@ -518,8 +518,8 @@ def export(
     help="Confirm deletion without prompt",
 )
 def clear(
-    start: Optional[datetime],
-    end: Optional[datetime],
+    start: datetime | None,
+    end: datetime | None,
     confirm: bool,
 ) -> None:
     """
@@ -537,12 +537,16 @@ def clear(
         end_date = end.date() if end else start_date + timedelta(days=90)
 
         # Count assignments
-        count = db.execute(
-            select(Assignment)
-            .join(Block)
-            .where(Block.date >= start_date)
-            .where(Block.date <= end_date)
-        ).scalars().all()
+        count = (
+            db.execute(
+                select(Assignment)
+                .join(Block)
+                .where(Block.date >= start_date)
+                .where(Block.date <= end_date)
+            )
+            .scalars()
+            .all()
+        )
 
         count = len(count)
 

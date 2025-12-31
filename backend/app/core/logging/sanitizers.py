@@ -12,17 +12,13 @@ import re
 from typing import Any, Callable, Pattern
 
 # Patterns for PII detection
-EMAIL_PATTERN = re.compile(
-    r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
-)
+EMAIL_PATTERN = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")
 PHONE_PATTERN = re.compile(
     r"\b(?:\+?1[-.]?)?\(?([0-9]{3})\)?[-.]?([0-9]{3})[-.]?([0-9]{4})\b"
 )
 SSN_PATTERN = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 CREDIT_CARD_PATTERN = re.compile(r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b")
-IP_ADDRESS_PATTERN = re.compile(
-    r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b"
-)
+IP_ADDRESS_PATTERN = re.compile(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b")
 
 # Default sensitive field names
 SENSITIVE_FIELDS = {

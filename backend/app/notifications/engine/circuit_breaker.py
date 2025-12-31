@@ -119,7 +119,9 @@ class CircuitBreaker:
     def _open_circuit(self, channel: str) -> None:
         """Open circuit for a channel."""
         self._channels[channel]["state"] = CircuitState.OPEN
-        self._channels[channel]["open_until"] = datetime.utcnow() + self.recovery_timeout
+        self._channels[channel]["open_until"] = (
+            datetime.utcnow() + self.recovery_timeout
+        )
         self._channels[channel]["success_count"] = 0
 
     def _half_open_circuit(self, channel: str) -> None:

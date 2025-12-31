@@ -257,7 +257,9 @@ class SIRModel:
             Dict with before/after comparison
         """
         # Baseline (no intervention)
-        baseline_model = SIRModel(transmission_rate=current_beta, recovery_rate=self.gamma)
+        baseline_model = SIRModel(
+            transmission_rate=current_beta, recovery_rate=self.gamma
+        )
         baseline_forecast = baseline_model.simulate(
             initial_susceptible=total_population - current_infected,
             initial_infected=current_infected,
@@ -277,8 +279,12 @@ class SIRModel:
         )
 
         # Calculate impact
-        cases_prevented = baseline_forecast.total_cases - intervention_forecast.total_cases
-        peak_reduction = baseline_forecast.peak_infected - intervention_forecast.peak_infected
+        cases_prevented = (
+            baseline_forecast.total_cases - intervention_forecast.total_cases
+        )
+        peak_reduction = (
+            baseline_forecast.peak_infected - intervention_forecast.peak_infected
+        )
         peak_delay = intervention_forecast.time_to_peak - baseline_forecast.time_to_peak
 
         return {
@@ -298,7 +304,9 @@ class SIRModel:
             "intervention_r0": intervention_model.r0,
         }
 
-    def classify_epidemic_phase(self, infected_count: int, total_population: int) -> str:
+    def classify_epidemic_phase(
+        self, infected_count: int, total_population: int
+    ) -> str:
         """
         Classify current epidemic phase.
 

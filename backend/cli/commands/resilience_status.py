@@ -30,7 +30,9 @@ def summary():
 
 @app.command()
 def metrics(
-    period: str = typer.Option("week", "--period", "-p", help="Period (day/week/month)"),
+    period: str = typer.Option(
+        "week", "--period", "-p", help="Period (day/week/month)"
+    ),
 ):
     """
     Show resilience metrics.
@@ -75,7 +77,9 @@ async def show_resilience_status():
             "critical": "red",
         }.get(health.lower(), "white")
 
-        console.print(f"[bold]Overall Health:[/bold] [{health_color}]{health.upper()}[/{health_color}]")
+        console.print(
+            f"[bold]Overall Health:[/bold] [{health_color}]{health.upper()}[/{health_color}]"
+        )
 
         # Defense levels
         defense_level = status.get("defense_level", "UNKNOWN")
@@ -83,7 +87,7 @@ async def show_resilience_status():
 
         # Key metrics
         metrics = status.get("metrics", {})
-        console.print(f"\n[bold]Key Metrics:[/bold]")
+        console.print("\n[bold]Key Metrics:[/bold]")
         console.print(f"  Utilization: {metrics.get('utilization', 0):.1f}%")
         console.print(f"  Critical Index: {metrics.get('critical_index', 0):.2f}")
         console.print(f"  Burnout Rt: {metrics.get('burnout_rt', 0):.2f}")
@@ -92,7 +96,9 @@ async def show_resilience_status():
         # Alerts
         alerts = status.get("alerts", [])
         if alerts:
-            console.print(f"\n[bold yellow]Active Alerts ({len(alerts)}):[/bold yellow]")
+            console.print(
+                f"\n[bold yellow]Active Alerts ({len(alerts)}):[/bold yellow]"
+            )
             for alert in alerts[:5]:
                 console.print(f"  • {alert.get('message')}")
 
@@ -152,7 +158,13 @@ async def show_resilience_metrics(period: str):
         print_table(
             metrics,
             title=f"Resilience Metrics ({period})",
-            columns=["timestamp", "utilization", "critical_index", "burnout_rt", "defense_level"],
+            columns=[
+                "timestamp",
+                "utilization",
+                "critical_index",
+                "burnout_rt",
+                "defense_level",
+            ],
         )
 
     except Exception as e:

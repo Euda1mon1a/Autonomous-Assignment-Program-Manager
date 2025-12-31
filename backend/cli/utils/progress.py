@@ -28,7 +28,7 @@ console = Console()
 
 
 @contextmanager
-def progress_bar(description: str = "Processing", total: Optional[int] = None):
+def progress_bar(description: str = "Processing", total: int | None = None):
     """
     Context manager for progress bar.
 
@@ -116,7 +116,7 @@ class StatusTracker:
         self.tasks = {}
         self._current_id = 0
 
-    def add_task(self, description: str, total: Optional[int] = None) -> int:
+    def add_task(self, description: str, total: int | None = None) -> int:
         """Add a new task to track."""
         task_id = self._current_id
         self._current_id += 1
@@ -133,9 +133,9 @@ class StatusTracker:
     def update(
         self,
         task_id: int,
-        completed: Optional[int] = None,
-        status: Optional[str] = None,
-        description: Optional[str] = None,
+        completed: int | None = None,
+        status: str | None = None,
+        description: str | None = None,
     ):
         """Update task status."""
         if task_id in self.tasks:

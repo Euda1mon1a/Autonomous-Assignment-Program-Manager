@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class PDFGenerator:
     """Generates PDF reports from structured data."""
 
-    def generate_pdf(self, report: Dict[str, Any]) -> bytes:
+    def generate_pdf(self, report: dict[str, Any]) -> bytes:
         """Generate PDF from report data."""
         # Placeholder: would use reportlab or weasyprint
         logger.info(f"Generating PDF for report: {report.get('title')}")
@@ -20,9 +20,9 @@ class PDFGenerator:
         pdf_content += f"Generated: {report.get('generated_at')}\\n"
         pdf_content += f"Sections: {len(report.get('sections', []))}\\n"
 
-        return pdf_content.encode('utf-8')
+        return pdf_content.encode("utf-8")
 
     def save_pdf(self, pdf_bytes: bytes, file_path: str) -> None:
         """Save PDF to file."""
-        with open(file_path, 'wb') as f:
+        with open(file_path, "wb") as f:
             f.write(pdf_bytes)
