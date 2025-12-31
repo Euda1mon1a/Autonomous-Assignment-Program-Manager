@@ -235,7 +235,9 @@ describe('DailyManifest', () => {
 
       render(<DailyManifest />, { wrapper: createWrapper() });
 
-      expect(screen.getByText('Error Loading Manifest')).toBeInTheDocument();
+      // The actual component uses "Unable to Load Manifest" for the error title
+      expect(screen.getByText('Unable to Load Manifest')).toBeInTheDocument();
+      // Error message is shown based on error.message or status
       expect(screen.getByText('Failed to load data')).toBeInTheDocument();
     });
 
@@ -251,7 +253,9 @@ describe('DailyManifest', () => {
 
       render(<DailyManifest />, { wrapper: createWrapper() });
 
-      expect(screen.getByText('Failed to load daily manifest data')).toBeInTheDocument();
+      // The component shows a default error message when error is null
+      expect(screen.getByText('Unable to Load Manifest')).toBeInTheDocument();
+      expect(screen.getByText('An unexpected error occurred. Please try again.')).toBeInTheDocument();
     });
 
     it('should show retry button when error occurs', () => {
@@ -374,9 +378,10 @@ describe('DailyManifest', () => {
       render(<DailyManifest />, { wrapper: createWrapper() });
 
       await waitFor(() => {
-        expect(screen.getByText('No locations found')).toBeInTheDocument();
+        // The component shows "No Schedule Data for [date]" when no locations are available
+        expect(screen.getByText(/No Schedule Data for/)).toBeInTheDocument();
         expect(
-          screen.getByText('No assignments scheduled for this date and time')
+          screen.getByText(/There are no staff assignments scheduled for this/)
         ).toBeInTheDocument();
       });
     });
@@ -390,8 +395,9 @@ describe('DailyManifest', () => {
       await user.type(searchInput, 'NonexistentLocation');
 
       await waitFor(() => {
-        expect(screen.getByText('No locations found')).toBeInTheDocument();
-        expect(screen.getByText('Try adjusting your search criteria')).toBeInTheDocument();
+        expect(screen.getByText('No results found')).toBeInTheDocument();
+        // The component shows "No locations or staff match" instead of generic text
+        expect(screen.getByText(/No locations or staff match/)).toBeInTheDocument();
       });
     });
   });

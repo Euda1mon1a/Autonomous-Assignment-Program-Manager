@@ -186,6 +186,29 @@ export {
 } from './useAdminUsers'
 
 // ============================================================================
+// Procedure Credentialing Hooks
+// ============================================================================
+export {
+  useProcedures,
+  useProcedure,
+  useCredentials,
+  useCredential,
+  useFacultyCredentials,
+  useQualifiedFaculty,
+  useCreateCredential,
+  useUpdateCredential,
+  useDeleteCredential,
+  useCreateProcedure,
+  useUpdateProcedure,
+  procedureKeys,
+  credentialKeys,
+  type Procedure,
+  type Credential,
+  type CredentialWithProcedure,
+  type FacultyCredentialSummary,
+} from './useProcedures'
+
+// ============================================================================
 // RAG Hooks
 // ============================================================================
 export {

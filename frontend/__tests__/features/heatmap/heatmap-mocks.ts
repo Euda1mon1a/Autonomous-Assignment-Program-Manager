@@ -70,7 +70,7 @@ export const heatmapMockFactories = {
     person_ids: [],
     rotation_ids: [],
     include_fmit: true,
-    group_by: 'day',
+    group_by: 'person',
     ...overrides,
   }),
 

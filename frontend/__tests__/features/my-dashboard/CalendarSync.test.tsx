@@ -84,8 +84,13 @@ describe('CalendarSync', () => {
       const button = screen.getByRole('button', { name: /sync to calendar/i });
       await user.click(button);
 
-      expect(screen.getByText('Sync to Calendar')).toBeInTheDocument();
-      expect(screen.getByText('Choose Calendar Format')).toBeInTheDocument();
+      // Wait for and verify modal content is visible
+      // Note: "Sync to Calendar" appears twice (button + header), so we check for modal-specific content
+      await waitFor(() => {
+        expect(screen.getByText('Choose Calendar Format')).toBeInTheDocument();
+      });
+      // Also verify the format options are visible
+      expect(screen.getByText('ICS File Download')).toBeInTheDocument();
     });
 
     it('should close modal when X button is clicked', async () => {
@@ -97,9 +102,18 @@ describe('CalendarSync', () => {
       const button = screen.getByRole('button', { name: /sync to calendar/i });
       await user.click(button);
 
-      // Close modal
+      // Wait for modal to open
+      await waitFor(() => {
+        expect(screen.getByText('Choose Calendar Format')).toBeInTheDocument();
+      });
+
+      // Close modal - find the X button which is in the header area and has an X icon
+      // The X button is the one with the lucide-x class on its SVG
       const closeButtons = screen.getAllByRole('button');
-      const closeButton = closeButtons.find((btn) => btn.querySelector('svg'));
+      const closeButton = closeButtons.find((btn) => {
+        const svg = btn.querySelector('svg');
+        return svg && svg.classList.contains('lucide-x');
+      });
       expect(closeButton).toBeDefined();
       await user.click(closeButton!);
 
