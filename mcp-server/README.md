@@ -217,6 +217,82 @@ The project includes pre-configured `.mcp.json` for Claude Code CLI.
 - `.claude/SESSION_STARTUP_TODOS.md` - Startup checklist
 - `.claude/MCP_USAGE_TODOS.md` - MCP tool usage patterns
 
+### Remote Deployment (Render, Railway, Fly.io)
+
+Deploy the MCP server to a cloud platform for remote AI agent access:
+
+#### Render Deployment
+
+1. **Blueprint Deployment** (Recommended)
+
+   The `render.yaml` in the project root includes the MCP server configuration.
+   Connect your repo to Render and the MCP service will be created automatically.
+
+2. **Manual Configuration**
+
+   | Setting | Value |
+   |---------|-------|
+   | **Type** | Web Service |
+   | **Dockerfile** | `./mcp-server/Dockerfile` |
+   | **Port** | 8080 |
+   | **Health Check** | `/health` |
+
+3. **Environment Variables**
+
+   Set these in the Render dashboard:
+
+   ```bash
+   # MCP Transport (required)
+   MCP_TRANSPORT=http
+   MCP_HOST=0.0.0.0
+   MCP_PORT=8080
+
+   # Authentication (required for production)
+   # Generate with: python -c 'import secrets; print(secrets.token_urlsafe(32))'
+   MCP_API_KEY=<your-generated-secret>
+
+   # Backend API connection
+   API_BASE_URL=https://residency-scheduler-backend.onrender.com
+   API_USERNAME=<your-api-user>
+   API_PASSWORD=<your-api-password>
+   ```
+
+4. **Connect Claude Code to Remote MCP**
+
+   Add to `~/.config/claude-code/settings.json`:
+
+   ```json
+   {
+     "mcpServers": {
+       "residency-scheduler-remote": {
+         "type": "http",
+         "url": "https://residency-scheduler-mcp.onrender.com/mcp",
+         "headers": {
+           "Authorization": "Bearer <your-mcp-api-key>"
+         }
+       }
+     }
+   }
+   ```
+
+5. **Verify Connection**
+
+   ```bash
+   # Health check (no auth required)
+   curl https://residency-scheduler-mcp.onrender.com/health
+
+   # MCP endpoint (requires auth)
+   curl -H "Authorization: Bearer <your-key>" \
+        https://residency-scheduler-mcp.onrender.com/mcp
+   ```
+
+#### Security Notes
+
+- **Always set MCP_API_KEY** in production to prevent unauthorized access
+- Health endpoint (`/health`) is unauthenticated for load balancer compatibility
+- All MCP tool calls require valid API key
+- Use HTTPS endpoints only
+
 ## Development
 
 ### Project Structure

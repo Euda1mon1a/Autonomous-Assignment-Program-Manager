@@ -110,6 +110,55 @@ services:
     dockerCommand: celery -A app.core.celery_app worker --loglevel=info -Q default,resilience,notifications,metrics
 
   # ==========================================================================
+  # MCP Server - AI Tool Integration via Model Context Protocol
+  # ==========================================================================
+  # Provides 34+ scheduling tools for Claude Code and other AI agents
+  # Exposes HTTP transport for remote MCP client connections
+  - type: web
+    name: residency-scheduler-mcp
+    runtime: docker
+    dockerfilePath: ./mcp-server/Dockerfile
+    dockerContext: ./mcp-server
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      # MCP Transport Configuration
+      - key: MCP_TRANSPORT
+        value: http
+      - key: MCP_HOST
+        value: "0.0.0.0"
+      - key: MCP_PORT
+        value: "8080"
+      # API Integration - connects to FastAPI backend
+      - key: API_BASE_URL
+        value: https://residency-scheduler-backend.onrender.com
+      # API Credentials for backend authentication
+      # Set these manually in Render dashboard:
+      - key: API_USERNAME
+        sync: false
+      - key: API_PASSWORD
+        sync: false
+      # MCP API Key for remote client authentication
+      # Generate with: python -c 'import secrets; print(secrets.token_urlsafe(32))'
+      - key: MCP_API_KEY
+        sync: false
+      # Celery for async task management
+      - key: CELERY_BROKER_URL
+        fromService:
+          name: residency-redis
+          type: redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          name: residency-redis
+          type: redis
+          property: connectionString
+      # Logging
+      - key: LOG_LEVEL
+        value: INFO
+    dockerCommand: python -m scheduler_mcp.server --transport http --host 0.0.0.0 --port 8080
+
+  # ==========================================================================
   # Redis - Message Broker and Cache
   # ==========================================================================
   - type: redis
