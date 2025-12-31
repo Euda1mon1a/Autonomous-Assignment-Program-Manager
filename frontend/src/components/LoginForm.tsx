@@ -51,22 +51,18 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    console.log('[LoginForm] Form submitted', { username, password: '***', isFormValid, formErrors })
 
     // Mark all fields as touched
     setTouched({ username: true, password: true });
 
     // Check for validation errors
     const errors = validateForm();
-    console.log('[LoginForm] Validation errors:', errors)
     if (Object.keys(errors).length > 0) {
-      console.log('[LoginForm] Validation failed, not submitting')
       return;
     }
 
     setError(null)
     setIsSubmitting(true)
-    console.log('[LoginForm] Starting login request...')
 
     try {
       await login({ username, password })
