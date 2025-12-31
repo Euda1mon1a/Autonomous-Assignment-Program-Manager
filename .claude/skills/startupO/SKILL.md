@@ -7,8 +7,10 @@ description: Initialize session as ORCHESTRATOR agent with multi-agent coordinat
 
 > **Purpose:** Initialize session as ORCHESTRATOR agent with multi-agent coordination capability
 > **Created:** 2025-12-27
+> **Updated:** 2025-12-31 (Added SEARCH_PARTY reference)
 > **Trigger:** `/startupO` command
 > **Persona:** ORCHESTRATOR (Parallel Agent Coordination & Delegation)
+> **Default Search:** Use `/search-party` for comprehensive reconnaissance
 
 ---
 
@@ -153,6 +155,13 @@ Spawned agents have **isolated context** - they don't inherit your conversation.
 - Write self-contained prompts with explicit file paths
 - Include all context the agent needs to succeed
 - See `/context-aware-delegation` skill for templates
+
+### Reconnaissance Protocol
+For comprehensive codebase exploration, deploy **`/search-party`** (SEARCH_PARTY protocol):
+- 12 G-2 RECON agents × 10 probes = **120 parallel probes**
+- D&D-inspired lenses: PERCEPTION, INVESTIGATION, ARCANA, HISTORY, INSIGHT, RELIGION, NATURE, MEDICINE, SURVIVAL, STEALTH
+- Zero marginal wall-clock cost (parallel execution)
+- **Discrepancies between probes = high-signal findings**
 
 Ready to orchestrate. What's the task?
 ```
@@ -536,6 +545,8 @@ Ready to orchestrate. What's the task?
 - `.claude/Scratchpad/ORCHESTRATOR_ADVISOR_NOTES.md` - Cross-session institutional memory
 - `.claude/CONSTITUTION.md` - Foundational rules
 - `.claude/skills/startup/SKILL.md` - Basic startup (non-orchestrator)
+- `.claude/skills/search-party/SKILL.md` - **SEARCH_PARTY reconnaissance (120 probes)**
+- `.claude/protocols/SEARCH_PARTY.md` - Full SEARCH_PARTY protocol documentation
 - `.claude/skills/check-codex/SKILL.md` - Codex feedback checking (rate-limiting step before merge)
 - `.claude/skills/context-aware-delegation/SKILL.md` - Agent context isolation and prompt templates
 - `.claude/skills/CORE/delegation-patterns.md` - Execution patterns (parallel, sequential, hybrid)
