@@ -297,7 +297,9 @@ def run_suite(verbose: bool = False):
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(description="Benchmark ACGME validation performance")
+    parser = argparse.ArgumentParser(
+        description="Benchmark ACGME validation performance"
+    )
     parser.add_argument("--residents", type=int, default=50, help="Number of residents")
     parser.add_argument("--weeks", type=int, default=4, help="Number of weeks")
     parser.add_argument(
@@ -307,7 +309,9 @@ def main():
         choices=["full", "80hour", "1in7", "supervision"],
         help="Validation type",
     )
-    parser.add_argument("--iterations", type=int, default=5, help="Number of iterations")
+    parser.add_argument(
+        "--iterations", type=int, default=5, help="Number of iterations"
+    )
     parser.add_argument("--suite", action="store_true", help="Run full suite")
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
 

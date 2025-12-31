@@ -28,7 +28,9 @@ from app.scheduling.constraints.capacity import (
 
 # Mock classes (same as in test file)
 class MockPerson:
-    def __init__(self, person_id=None, name="Test", person_type="resident", pgy_level=None):
+    def __init__(
+        self, person_id=None, name="Test", person_type="resident", pgy_level=None
+    ):
         self.id = person_id or uuid4()
         self.name = name
         self.type = person_type
@@ -36,7 +38,9 @@ class MockPerson:
 
 
 class MockBlock:
-    def __init__(self, block_id=None, block_date=None, time_of_day="AM", is_weekend=False):
+    def __init__(
+        self, block_id=None, block_date=None, time_of_day="AM", is_weekend=False
+    ):
         self.id = block_id or uuid4()
         self.date = block_date or date.today()
         self.time_of_day = time_of_day
@@ -44,7 +48,13 @@ class MockBlock:
 
 
 class MockTemplate:
-    def __init__(self, template_id=None, name="Test", activity_type="outpatient", max_residents=None):
+    def __init__(
+        self,
+        template_id=None,
+        name="Test",
+        activity_type="outpatient",
+        max_residents=None,
+    ):
         self.id = template_id or uuid4()
         self.name = name
         self.activity_type = activity_type
@@ -52,7 +62,14 @@ class MockTemplate:
 
 
 class MockAssignment:
-    def __init__(self, assignment_id=None, person_id=None, block_id=None, rotation_template_id=None, role="primary"):
+    def __init__(
+        self,
+        assignment_id=None,
+        person_id=None,
+        block_id=None,
+        rotation_template_id=None,
+        role="primary",
+    ):
         self.id = assignment_id or uuid4()
         self.person_id = person_id
         self.block_id = block_id
@@ -74,8 +91,12 @@ def test_one_person_per_block_basic():
     residents = [MockPerson() for _ in range(2)]
 
     assignments = [
-        MockAssignment(person_id=residents[0].id, block_id=blocks[0].id, role="primary"),
-        MockAssignment(person_id=residents[1].id, block_id=blocks[1].id, role="primary"),
+        MockAssignment(
+            person_id=residents[0].id, block_id=blocks[0].id, role="primary"
+        ),
+        MockAssignment(
+            person_id=residents[1].id, block_id=blocks[1].id, role="primary"
+        ),
     ]
 
     context = SchedulingContext(
@@ -116,7 +137,7 @@ def test_clinic_capacity_basic():
         MockAssignment(
             person_id=residents[i].id,
             block_id=blocks[0].id,
-            rotation_template_id=template.id
+            rotation_template_id=template.id,
         )
         for i in range(3)
     ]
@@ -132,18 +153,20 @@ def test_clinic_capacity_basic():
     assert result.satisfied is True, "Should pass with 3 residents (limit 4)"
 
     # Test exceeds capacity
-    assignments.extend([
-        MockAssignment(
-            person_id=residents[3].id,
-            block_id=blocks[0].id,
-            rotation_template_id=template.id
-        ),
-        MockAssignment(
-            person_id=residents[4].id,
-            block_id=blocks[0].id,
-            rotation_template_id=template.id
-        ),
-    ])
+    assignments.extend(
+        [
+            MockAssignment(
+                person_id=residents[3].id,
+                block_id=blocks[0].id,
+                rotation_template_id=template.id,
+            ),
+            MockAssignment(
+                person_id=residents[4].id,
+                block_id=blocks[0].id,
+                rotation_template_id=template.id,
+            ),
+        ]
+    )
 
     result = constraint.validate(assignments, context)
     assert result.satisfied is False, "Should fail with 5 residents (limit 4)"
@@ -170,11 +193,15 @@ def test_max_physicians_in_clinic_basic():
     assignments = []
     for r in residents:
         assignments.append(
-            MockAssignment(person_id=r.id, block_id=blocks[0].id, rotation_template_id=template.id)
+            MockAssignment(
+                person_id=r.id, block_id=blocks[0].id, rotation_template_id=template.id
+            )
         )
     for f in faculty[:2]:
         assignments.append(
-            MockAssignment(person_id=f.id, block_id=blocks[0].id, rotation_template_id=template.id)
+            MockAssignment(
+                person_id=f.id, block_id=blocks[0].id, rotation_template_id=template.id
+            )
         )
 
     context = SchedulingContext(
@@ -189,7 +216,11 @@ def test_max_physicians_in_clinic_basic():
 
     # Add one more faculty - should exceed
     assignments.append(
-        MockAssignment(person_id=faculty[2].id, block_id=blocks[0].id, rotation_template_id=template.id)
+        MockAssignment(
+            person_id=faculty[2].id,
+            block_id=blocks[0].id,
+            rotation_template_id=template.id,
+        )
     )
 
     result = constraint.validate(assignments, context)
@@ -216,7 +247,7 @@ def test_coverage_constraint_basic():
         MockAssignment(
             person_id=residents[i % len(residents)].id,
             block_id=blocks[i].id,
-            rotation_template_id=template.id
+            rotation_template_id=template.id,
         )
         for i in range(5)
     ]
@@ -273,6 +304,7 @@ def main():
     except Exception as e:
         print(f"\n✗ Unexpected error: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

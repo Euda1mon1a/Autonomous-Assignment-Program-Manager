@@ -21,9 +21,7 @@ class DashboardData:
         self.kpi_calculator = KPICalculator(db)
         self.realtime_stats = RealtimeStats(db)
 
-    async def get_dashboard_data(
-        self, date_range: int = 30
-    ) -> Dict[str, Any]:
+    async def get_dashboard_data(self, date_range: int = 30) -> dict[str, Any]:
         """Get all dashboard data."""
         summary = await self.analytics_engine.get_dashboard_summary(date_range)
         kpis = await self.kpi_calculator.calculate_kpis()

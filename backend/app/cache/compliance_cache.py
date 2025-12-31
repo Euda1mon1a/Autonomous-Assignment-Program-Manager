@@ -2,6 +2,7 @@
 
 Caches expensive compliance calculations with smart invalidation.
 """
+
 import hashlib
 import json
 import logging
@@ -25,7 +26,7 @@ class ComplianceCache:
         self,
         person_id: str,
         week_start: date,
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """Get cached work hours for a week.
 
         Args:
@@ -61,7 +62,7 @@ class ComplianceCache:
         self,
         person_id: str,
         end_date: date,
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """Get cached rolling 4-week hours.
 
         Args:
@@ -97,7 +98,7 @@ class ComplianceCache:
         self,
         person_id: str,
         period_start: date,
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """Get cached 1-in-7 compliance check.
 
         Args:
@@ -174,7 +175,9 @@ class ComplianceCache:
             week_start = current_date - timedelta(days=current_date.weekday())
 
             total += await self.cache.invalidate_pattern(f"work_hours:*:{week_start}")
-            total += await self.cache.invalidate_pattern(f"rolling_4week:*:{current_date}")
+            total += await self.cache.invalidate_pattern(
+                f"rolling_4week:*:{current_date}"
+            )
             total += await self.cache.invalidate_pattern(f"one_in_seven:*:{week_start}")
 
             current_date += timedelta(days=1)
@@ -184,7 +187,7 @@ class ComplianceCache:
 
 
 # Global instance
-_compliance_cache: Optional[ComplianceCache] = None
+_compliance_cache: ComplianceCache | None = None
 
 
 def get_compliance_cache() -> ComplianceCache:

@@ -33,7 +33,7 @@ class PoolMetrics:
     pool_utilization_percent: float
     timestamp: datetime
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
 
@@ -49,7 +49,7 @@ class QueryMetrics:
     slow_query_count: int
     timestamp: datetime
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
 
@@ -64,7 +64,7 @@ class TableMetrics:
     index_count: int
     timestamp: datetime
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
 
@@ -80,7 +80,7 @@ class ConnectionPoolMonitor:
             engine: SQLAlchemy engine
         """
         self.engine = engine
-        self.metrics: List[PoolMetrics] = []
+        self.metrics: list[PoolMetrics] = []
 
     def get_current_metrics(self) -> PoolMetrics:
         """
@@ -126,7 +126,7 @@ class ConnectionPoolMonitor:
         current = self.get_current_metrics()
         return current.pool_utilization_percent < max_utilization
 
-    def get_metrics_summary(self) -> Dict[str, Any]:
+    def get_metrics_summary(self) -> dict[str, Any]:
         """
         Get summary of pool metrics over time.
 
@@ -158,8 +158,8 @@ class QueryLatencyTracker:
             slow_query_threshold_ms: Threshold for slow queries
         """
         self.slow_query_threshold_ms = slow_query_threshold_ms
-        self.query_times: List[float] = []
-        self.slow_queries: List[Dict[str, Any]] = []
+        self.query_times: list[float] = []
+        self.slow_queries: list[dict[str, Any]] = []
 
     def record_query(self, query: str, duration_ms: float) -> None:
         """
@@ -172,11 +172,13 @@ class QueryLatencyTracker:
         self.query_times.append(duration_ms)
 
         if duration_ms > self.slow_query_threshold_ms:
-            self.slow_queries.append({
-                "query": query[:200],  # Truncate long queries
-                "duration_ms": duration_ms,
-                "timestamp": datetime.utcnow(),
-            })
+            self.slow_queries.append(
+                {
+                    "query": query[:200],  # Truncate long queries
+                    "duration_ms": duration_ms,
+                    "timestamp": datetime.utcnow(),
+                }
+            )
 
         # Keep only last 1000 queries
         if len(self.query_times) > 1000:
@@ -212,7 +214,7 @@ class QueryLatencyTracker:
             timestamp=datetime.utcnow(),
         )
 
-    def get_slow_queries(self, limit: int = 10) -> List[Dict[str, Any]]:
+    def get_slow_queries(self, limit: int = 10) -> list[dict[str, Any]]:
         """
         Get slowest queries.
 
@@ -240,9 +242,9 @@ class DeadlockDetector:
             session: Database session
         """
         self.session = session
-        self.deadlocks: List[Dict[str, Any]] = []
+        self.deadlocks: list[dict[str, Any]] = []
 
-    def check_for_deadlocks(self) -> Tuple[bool, List[Dict[str, Any]]]:
+    def check_for_deadlocks(self) -> tuple[bool, list[dict[str, Any]]]:
         """
         Check for recent deadlocks (PostgreSQL specific).
 
@@ -266,7 +268,8 @@ class DeadlockDetector:
             # Keep only recent deadlocks
             cutoff = datetime.utcnow() - timedelta(hours=24)
             self.deadlocks = [
-                d for d in self.deadlocks
+                d
+                for d in self.deadlocks
                 if d.get("timestamp", datetime.utcnow()) > cutoff
             ]
 
@@ -276,7 +279,7 @@ class DeadlockDetector:
             logger.debug(f"Could not check for deadlocks: {e}")
             return False, []
 
-    def get_deadlock_summary(self) -> Dict[str, Any]:
+    def get_deadlock_summary(self) -> dict[str, Any]:
         """
         Get deadlock summary.
 
@@ -301,7 +304,7 @@ class IndexUsageAnalyzer:
         """
         self.session = session
 
-    def get_unused_indexes(self) -> List[Dict[str, Any]]:
+    def get_unused_indexes(self) -> list[dict[str, Any]]:
         """
         Get unused indexes (PostgreSQL specific).
 
@@ -324,7 +327,7 @@ class IndexUsageAnalyzer:
             logger.debug(f"Could not get unused indexes: {e}")
             return []
 
-    def get_index_efficiency(self) -> List[Dict[str, Any]]:
+    def get_index_efficiency(self) -> list[dict[str, Any]]:
         """
         Get index usage efficiency metrics.
 
@@ -360,9 +363,9 @@ class TableSizeMonitor:
             session: Database session
         """
         self.session = session
-        self.table_metrics: List[TableMetrics] = []
+        self.table_metrics: list[TableMetrics] = []
 
-    def get_table_sizes(self) -> List[TableMetrics]:
+    def get_table_sizes(self) -> list[TableMetrics]:
         """
         Get sizes of all tables.
 
@@ -402,7 +405,7 @@ class TableSizeMonitor:
             logger.debug(f"Could not get table sizes: {e}")
             return []
 
-    def get_largest_tables(self, limit: int = 10) -> List[TableMetrics]:
+    def get_largest_tables(self, limit: int = 10) -> list[TableMetrics]:
         """
         Get largest tables.
 
@@ -415,7 +418,7 @@ class TableSizeMonitor:
         metrics = self.get_table_sizes()
         return sorted(metrics, key=lambda m: m.size_mb, reverse=True)[:limit]
 
-    def get_growth_trend(self, table_name: str) -> Dict[str, Any]:
+    def get_growth_trend(self, table_name: str) -> dict[str, Any]:
         """
         Get growth trend for a specific table.
 
@@ -442,7 +445,9 @@ class TableSizeMonitor:
             "size_growth_mb": size_growth_mb,
             "row_growth": row_growth,
             "time_span_hours": time_span,
-            "growth_rate_mb_per_hour": size_growth_mb / time_span if time_span > 0 else 0,
+            "growth_rate_mb_per_hour": size_growth_mb / time_span
+            if time_span > 0
+            else 0,
         }
 
 
@@ -465,7 +470,7 @@ class DatabaseHealthCheck:
         self.index_analyzer = IndexUsageAnalyzer(session)
         self.table_monitor = TableSizeMonitor(session)
 
-    def run_full_check(self) -> Dict[str, Any]:
+    def run_full_check(self) -> dict[str, Any]:
         """
         Run comprehensive health check.
 
@@ -479,7 +484,9 @@ class DatabaseHealthCheck:
             "slow_queries": self.latency_tracker.get_slow_queries(limit=5),
             "deadlocks": self.deadlock_detector.get_deadlock_summary(),
             "unused_indexes": self.index_analyzer.get_unused_indexes()[:5],
-            "largest_tables": [m.to_dict() for m in self.table_monitor.get_largest_tables(limit=5)],
+            "largest_tables": [
+                m.to_dict() for m in self.table_monitor.get_largest_tables(limit=5)
+            ],
         }
 
     def is_healthy(
@@ -503,7 +510,7 @@ class DatabaseHealthCheck:
 
         return pool_healthy and query_healthy
 
-    def get_health_status(self) -> Dict[str, Any]:
+    def get_health_status(self) -> dict[str, Any]:
         """
         Get current health status.
 
@@ -515,7 +522,8 @@ class DatabaseHealthCheck:
             "timestamp": datetime.utcnow().isoformat(),
             "checks": {
                 "connection_pool": self.pool_monitor.is_healthy(),
-                "query_latency": self.latency_tracker.get_metrics().avg_duration_ms < 200.0,
+                "query_latency": self.latency_tracker.get_metrics().avg_duration_ms
+                < 200.0,
                 "no_deadlocks": len(self.deadlock_detector.deadlocks) == 0,
             },
         }

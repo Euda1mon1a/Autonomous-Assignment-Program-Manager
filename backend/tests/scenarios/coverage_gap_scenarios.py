@@ -25,9 +25,7 @@ class CoverageGapScenarios:
         )
 
     @staticmethod
-    def create_overlapping_absences(
-        db: Session, num_absences: int = 4
-    ) -> dict:
+    def create_overlapping_absences(db: Session, num_absences: int = 4) -> dict:
         """
         Create scenario with multiple overlapping absences.
 
@@ -102,7 +100,9 @@ class CoverageGapScenarios:
         absences = []
         for resident in schedule["residents"][:3]:
             absence = LeaveFactory.create_medical_leave(
-                db, person=resident, days=3  # Short but simultaneous
+                db,
+                person=resident,
+                days=3,  # Short but simultaneous
             )
             absences.append(absence)
 
@@ -117,7 +117,8 @@ class CoverageGapScenarios:
         Not enough faculty for 24/7 inpatient coverage.
         """
         return ScheduleFactory.create_fmit_week_schedule(
-            db, num_faculty=4  # Need 7 for daily rotation
+            db,
+            num_faculty=4,  # Need 7 for daily rotation
         )
 
     @staticmethod
@@ -192,7 +193,10 @@ class CoverageGapScenarios:
         """
         # Create minimal staffing (exactly what's needed, no buffer)
         schedule = ScheduleFactory.create_complete_schedule(
-            db, num_residents=4, num_faculty=1, num_days=7  # Minimal faculty
+            db,
+            num_residents=4,
+            num_faculty=1,
+            num_days=7,  # Minimal faculty
         )
 
         # Remove one resident (emergency absence)
@@ -213,7 +217,10 @@ class CoverageGapScenarios:
         Resident on 12-week maternity leave.
         """
         schedule = ScheduleFactory.create_complete_schedule(
-            db, num_residents=6, num_faculty=3, num_days=84  # 12 weeks
+            db,
+            num_residents=6,
+            num_faculty=3,
+            num_days=84,  # 12 weeks
         )
 
         # Create maternity leave for one resident

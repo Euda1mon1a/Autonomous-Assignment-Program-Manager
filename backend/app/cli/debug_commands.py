@@ -256,7 +256,9 @@ def sql(query: str, format: str) -> None:
 
             # Print rows
             for row in rows:
-                line = " | ".join(str(val).ljust(widths[i]) for i, val in enumerate(row))
+                line = " | ".join(
+                    str(val).ljust(widths[i]) for i, val in enumerate(row)
+                )
                 click.echo(line)
 
             click.echo(f"\n{len(rows)} rows")
@@ -352,14 +354,16 @@ def _sanitize_url(url: str) -> str:
         if parsed.port:
             netloc += f":{parsed.port}"
 
-        sanitized = urlunparse((
-            parsed.scheme,
-            netloc,
-            parsed.path,
-            parsed.params,
-            parsed.query,
-            parsed.fragment,
-        ))
+        sanitized = urlunparse(
+            (
+                parsed.scheme,
+                netloc,
+                parsed.path,
+                parsed.params,
+                parsed.query,
+                parsed.fragment,
+            )
+        )
         return sanitized
 
     return url

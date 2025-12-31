@@ -47,9 +47,9 @@ def academic_year_setup(db: Session) -> dict:
         for i in range(2):  # 2 residents per PGY level
             resident = Person(
                 id=uuid4(),
-                name=f"Dr. Resident PGY{pgy}-{i+1}",
+                name=f"Dr. Resident PGY{pgy}-{i + 1}",
                 type="resident",
-                email=f"resident.pgy{pgy}.{i+1}@hospital.org",
+                email=f"resident.pgy{pgy}.{i + 1}@hospital.org",
                 pgy_level=pgy,
             )
             db.add(resident)
@@ -60,9 +60,9 @@ def academic_year_setup(db: Session) -> dict:
     for i in range(5):
         fac = Person(
             id=uuid4(),
-            name=f"Dr. Faculty {i+1}",
+            name=f"Dr. Faculty {i + 1}",
             type="faculty",
-            email=f"faculty{i+1}@hospital.org",
+            email=f"faculty{i + 1}@hospital.org",
             performs_procedures=(i < 2),  # First 2 can do procedures
             specialties=["General Medicine", "Primary Care"],
         )
@@ -325,9 +325,9 @@ class TestScheduleGenerationE2E:
             # If there are assignments, they should be absence-type rotations
             if assignment.rotation_template:
                 db.refresh(assignment.rotation_template)
-                assert (
-                    assignment.rotation_template.activity_type == "absence"
-                ), "Resident assigned to non-absence rotation during blocking absence"
+                assert assignment.rotation_template.activity_type == "absence", (
+                    "Resident assigned to non-absence rotation during blocking absence"
+                )
 
     def test_schedule_generation_with_pgy_level_filter(
         self, db: Session, academic_year_setup: dict
@@ -373,9 +373,9 @@ class TestScheduleGenerationE2E:
         for assignment in assignments:
             db.refresh(assignment.person)
             if assignment.person.type == "resident":
-                assert (
-                    assignment.person.pgy_level == 1
-                ), f"Non-PGY-1 resident assigned: {assignment.person.name}"
+                assert assignment.person.pgy_level == 1, (
+                    f"Non-PGY-1 resident assigned: {assignment.person.name}"
+                )
 
     def test_schedule_generation_creates_faculty_supervision(
         self, db: Session, academic_year_setup: dict
@@ -418,7 +418,9 @@ class TestScheduleGenerationE2E:
         )
 
         # Should have faculty assignments for supervision
-        assert len(faculty_assignments) > 0, "No faculty supervision assignments created"
+        assert len(faculty_assignments) > 0, (
+            "No faculty supervision assignments created"
+        )
 
         # Verify faculty assignments have correct role
         for assignment in faculty_assignments:
@@ -534,9 +536,9 @@ class TestACGMEValidationE2E:
         for i in range(10):
             resident = Person(
                 id=uuid4(),
-                name=f"Dr. Extra Resident {i+1}",
+                name=f"Dr. Extra Resident {i + 1}",
                 type="resident",
-                email=f"extra.resident{i+1}@hospital.org",
+                email=f"extra.resident{i + 1}@hospital.org",
                 pgy_level=1,
             )
             db.add(resident)
@@ -634,9 +636,7 @@ class TestScheduleExportE2E:
             assert assignment.rotation_template_id is not None
 
     @pytest.mark.asyncio
-    async def test_export_schedule_to_csv(
-        self, db: Session, academic_year_setup: dict
-    ):
+    async def test_export_schedule_to_csv(self, db: Session, academic_year_setup: dict):
         """
         Test exporting generated schedule to CSV format.
 

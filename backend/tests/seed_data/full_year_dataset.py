@@ -58,7 +58,9 @@ class FullYearDataset:
                 certs = CredentialFactory.create_mixed_status_certifications(
                     db, person=resident, certification_types=cert_types
                 )
-            all_certifications.extend(list(certs.values()) if isinstance(certs, dict) else certs)
+            all_certifications.extend(
+                list(certs.values()) if isinstance(certs, dict) else certs
+            )
 
         # Add absences throughout the year
         absences = LeaveFactory.create_batch_absences(
@@ -121,7 +123,10 @@ class FullYearDataset:
             week_blocks = first_blocks[week_start : week_start + 14]
 
             week_assignments = AssignmentFactory.create_week_assignments(
-                db, person=resident, blocks=week_blocks, rotation_template=clinic_template
+                db,
+                person=resident,
+                blocks=week_blocks,
+                rotation_template=clinic_template,
             )
             assignments.extend(week_assignments)
 
@@ -164,19 +169,11 @@ class FullYearDataset:
         # Create realistic faculty mix
         faculty = []
         faculty.append(PersonFactory.create_program_director(db))  # PD
-        faculty.append(
-            PersonFactory.create_faculty(db, faculty_role="apd")
-        )  # APD
-        faculty.append(
-            PersonFactory.create_faculty(db, faculty_role="oic")
-        )  # OIC
+        faculty.append(PersonFactory.create_faculty(db, faculty_role="apd"))  # APD
+        faculty.append(PersonFactory.create_faculty(db, faculty_role="oic"))  # OIC
         faculty.append(PersonFactory.create_sports_medicine_faculty(db))  # SM
-        faculty.append(
-            PersonFactory.create_faculty(db, faculty_role="core")
-        )  # Core 1
-        faculty.append(
-            PersonFactory.create_faculty(db, faculty_role="core")
-        )  # Core 2
+        faculty.append(PersonFactory.create_faculty(db, faculty_role="core"))  # Core 1
+        faculty.append(PersonFactory.create_faculty(db, faculty_role="core"))  # Core 2
 
         # Create full year blocks
         blocks = BlockFactory.create_academic_year_blocks(db, year=year)
@@ -194,7 +191,11 @@ class FullYearDataset:
                 db,
                 persons=[resident],
                 certification_type=cert_types["BLS"],
-                status_distribution={"current": 0.6, "expiring_soon": 0.3, "expired": 0.1},
+                status_distribution={
+                    "current": 0.6,
+                    "expiring_soon": 0.3,
+                    "expired": 0.1,
+                },
             )
             all_certifications.extend(certs)
 

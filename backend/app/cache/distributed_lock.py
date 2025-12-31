@@ -2,6 +2,7 @@
 
 Provides distributed locks to prevent race conditions in cache updates.
 """
+
 import asyncio
 import logging
 import time
@@ -36,7 +37,9 @@ class DistributedLock:
         self.identifier = str(uuid.uuid4())
         self.cache = get_cache_manager()
 
-    async def acquire(self, blocking: bool = True, timeout: Optional[float] = None) -> bool:
+    async def acquire(
+        self, blocking: bool = True, timeout: float | None = None
+    ) -> bool:
         """Acquire the lock.
 
         Args:
@@ -148,7 +151,7 @@ class DistributedLock:
         await self.cache.connect()
         return await self.cache.exists(self.name)
 
-    async def get_owner(self) -> Optional[str]:
+    async def get_owner(self) -> str | None:
         """Get current lock owner identifier.
 
         Returns:
@@ -158,7 +161,7 @@ class DistributedLock:
         return await self.cache.get(self.name)
 
     @asynccontextmanager
-    async def __call__(self, blocking: bool = True, timeout: Optional[float] = None):
+    async def __call__(self, blocking: bool = True, timeout: float | None = None):
         """Context manager for automatic lock acquire/release.
 
         Args:
@@ -217,7 +220,7 @@ class LockManager:
         self,
         name: str,
         blocking: bool = True,
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
     ):
         """Context manager for lock acquisition.
 
@@ -239,7 +242,7 @@ class LockManager:
 
 
 # Global lock manager
-_lock_manager: Optional[LockManager] = None
+_lock_manager: LockManager | None = None
 
 
 def get_lock_manager() -> LockManager:

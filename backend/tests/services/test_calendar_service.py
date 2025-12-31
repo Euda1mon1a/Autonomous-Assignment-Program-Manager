@@ -812,7 +812,10 @@ class TestCalendarService:
         base_url = "https://scheduler.hospital.org/api/calendar"
         url = CalendarService.generate_subscription_url(token, base_url)
 
-        assert url == "webcal://scheduler.hospital.org/api/calendar/subscribe/test-token-123"
+        assert (
+            url
+            == "webcal://scheduler.hospital.org/api/calendar/subscribe/test-token-123"
+        )
 
     def test_generate_subscription_url_custom_http_base(self):
         """Test generating subscription URL with custom HTTP base."""
@@ -820,7 +823,9 @@ class TestCalendarService:
         base_url = "http://192.168.1.100:8000/api/calendar"
         url = CalendarService.generate_subscription_url(token, base_url)
 
-        assert url == "webcal://192.168.1.100:8000/api/calendar/subscribe/test-token-123"
+        assert (
+            url == "webcal://192.168.1.100:8000/api/calendar/subscribe/test-token-123"
+        )
 
     def test_create_subscription_token_legacy(
         self,

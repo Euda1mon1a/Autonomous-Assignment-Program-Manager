@@ -37,13 +37,17 @@ class TestClaudeServiceInitialization:
     @patch.dict(os.environ, {}, clear=True)
     def test_initialization_without_api_key(self):
         """Test initialization fails without API key."""
-        with pytest.raises(ValueError, match="ANTHROPIC_API_KEY environment variable not set"):
+        with pytest.raises(
+            ValueError, match="ANTHROPIC_API_KEY environment variable not set"
+        ):
             ClaudeService()
 
     @patch.dict(os.environ, {"ANTHROPIC_API_KEY": ""}, clear=True)
     def test_initialization_with_empty_api_key(self):
         """Test initialization fails with empty API key."""
-        with pytest.raises(ValueError, match="ANTHROPIC_API_KEY environment variable not set"):
+        with pytest.raises(
+            ValueError, match="ANTHROPIC_API_KEY environment variable not set"
+        ):
             ClaudeService()
 
 

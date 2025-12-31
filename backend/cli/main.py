@@ -43,6 +43,7 @@ def callback():
 def version():
     """Show CLI version information."""
     from cli import __version__
+
     console.print(f"[bold blue]Residency Scheduler CLI v{__version__}[/bold blue]")
     console.print("Military Medical Residency Scheduling System")
 
@@ -51,6 +52,7 @@ def version():
 def info():
     """Show system information and health status."""
     from cli.utils.output import print_system_info
+
     print_system_info()
 
 

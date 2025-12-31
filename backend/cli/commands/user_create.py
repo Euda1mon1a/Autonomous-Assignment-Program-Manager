@@ -23,7 +23,9 @@ def user(
     last_name: str = typer.Option(None, "--last-name", help="Last name"),
     role: str = typer.Option(None, "--role", "-r", help="User role"),
     pgy_level: str = typer.Option(None, "--pgy", help="PGY level (for residents)"),
-    interactive: bool = typer.Option(True, "--interactive/--batch", help="Interactive mode"),
+    interactive: bool = typer.Option(
+        True, "--interactive/--batch", help="Interactive mode"
+    ),
 ):
     """
     Create a new user.
@@ -52,7 +54,16 @@ def user(
 
             role = choose(
                 "Select role",
-                ["ADMIN", "COORDINATOR", "FACULTY", "RESIDENT", "CLINICAL_STAFF", "RN", "LPN", "MSA"],
+                [
+                    "ADMIN",
+                    "COORDINATOR",
+                    "FACULTY",
+                    "RESIDENT",
+                    "CLINICAL_STAFF",
+                    "RN",
+                    "LPN",
+                    "MSA",
+                ],
             )
 
         if role == "RESIDENT" and not pgy_level:
@@ -160,7 +171,9 @@ async def create_user(
 
         # Show temporary password if included
         if "temp_password" in response:
-            console.print(f"\n[yellow]Temporary password:[/yellow] {response['temp_password']}")
+            console.print(
+                f"\n[yellow]Temporary password:[/yellow] {response['temp_password']}"
+            )
             console.print("[dim]User must change password on first login[/dim]")
 
     except Exception as e:
@@ -185,7 +198,7 @@ async def create_users_from_csv(file_path: str):
         raise typer.Exit(1)
 
     try:
-        with open(csv_file, "r") as f:
+        with open(csv_file) as f:
             reader = csv.DictReader(f)
             users = list(reader)
 
@@ -212,7 +225,7 @@ async def create_users_from_csv(file_path: str):
                 print_error(f"Failed to create {user['email']}: {str(e)}")
                 failed += 1
 
-        console.print(f"\n[bold]Summary:[/bold]")
+        console.print("\n[bold]Summary:[/bold]")
         console.print(f"Created: {created}")
         console.print(f"Failed: {failed}")
 

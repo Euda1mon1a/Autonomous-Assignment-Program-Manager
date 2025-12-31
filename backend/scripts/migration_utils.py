@@ -21,7 +21,7 @@ import json
 class MigrationUtils:
     """Utilities for managing Alembic migrations."""
 
-    def __init__(self, project_root: Optional[str] = None):
+    def __init__(self, project_root: str | None = None):
         """
         Initialize migration utilities.
 
@@ -47,7 +47,7 @@ class MigrationUtils:
         self,
         message: str,
         autogenerate: bool = True,
-    ) -> Tuple[bool, str]:
+    ) -> tuple[bool, str]:
         """
         Generate a new migration.
 
@@ -81,7 +81,7 @@ class MigrationUtils:
         except Exception as e:
             return False, f"Error generating migration: {str(e)}"
 
-    def validate_migrations(self) -> Tuple[bool, List[str]]:
+    def validate_migrations(self) -> tuple[bool, list[str]]:
         """
         Validate all migrations for consistency.
 
@@ -115,9 +115,10 @@ class MigrationUtils:
                 content = migration_file.read_text()
 
                 # Extract revision
-                if 'revision = ' in content:
+                if "revision = " in content:
                     rev_line = [
-                        l for l in content.split("\n")
+                        l
+                        for l in content.split("\n")
                         if l.strip().startswith("revision = ")
                     ][0]
                     revision = rev_line.split("'")[1]
@@ -127,9 +128,10 @@ class MigrationUtils:
                     self._validate_migration_syntax(migration_file)
 
                     # Check down_revision
-                    if 'down_revision = ' in content:
+                    if "down_revision = " in content:
                         down_rev_line = [
-                            l for l in content.split("\n")
+                            l
+                            for l in content.split("\n")
                             if l.strip().startswith("down_revision = ")
                         ][0]
                         down_rev = down_rev_line.split("'")[1]
@@ -158,7 +160,7 @@ class MigrationUtils:
         except SyntaxError as e:
             raise SyntaxError(f"Syntax error in {migration_file.name}: {e}")
 
-    def list_migrations(self) -> List[dict]:
+    def list_migrations(self) -> list[dict]:
         """
         List all migrations with metadata.
 
@@ -183,17 +185,19 @@ class MigrationUtils:
                 }
 
                 # Extract revision
-                if 'revision = ' in content:
+                if "revision = " in content:
                     rev_line = [
-                        l for l in content.split("\n")
+                        l
+                        for l in content.split("\n")
                         if l.strip().startswith("revision = ")
                     ][0]
                     migration_info["revision"] = rev_line.split("'")[1]
 
                 # Extract down_revision
-                if 'down_revision = ' in content:
+                if "down_revision = " in content:
                     down_rev_line = [
-                        l for l in content.split("\n")
+                        l
+                        for l in content.split("\n")
                         if l.strip().startswith("down_revision = ")
                     ][0]
                     down_rev = down_rev_line.split("'")[1]
@@ -210,14 +214,16 @@ class MigrationUtils:
                 migrations.append(migration_info)
 
             except Exception as e:
-                migrations.append({
-                    "filename": migration_file.name,
-                    "error": str(e),
-                })
+                migrations.append(
+                    {
+                        "filename": migration_file.name,
+                        "error": str(e),
+                    }
+                )
 
         return migrations
 
-    def detect_migration_conflicts(self) -> List[str]:
+    def detect_migration_conflicts(self) -> list[str]:
         """
         Detect potential migration conflicts.
 
@@ -246,7 +252,7 @@ class MigrationUtils:
 
         return conflicts
 
-    def show_migration_status(self) -> Tuple[bool, dict]:
+    def show_migration_status(self) -> tuple[bool, dict]:
         """
         Show current migration status.
 
@@ -272,7 +278,7 @@ class MigrationUtils:
         except Exception as e:
             return False, {"error": str(e)}
 
-    def get_migration_history(self) -> Tuple[bool, List[dict]]:
+    def get_migration_history(self) -> tuple[bool, list[dict]]:
         """
         Get migration application history.
 
@@ -294,10 +300,12 @@ class MigrationUtils:
             for line in result.stdout.strip().split("\n"):
                 if "->" in line:
                     parts = line.split("->")
-                    history.append({
-                        "from": parts[0].strip(),
-                        "to": parts[1].strip(),
-                    })
+                    history.append(
+                        {
+                            "from": parts[0].strip(),
+                            "to": parts[1].strip(),
+                        }
+                    )
 
             return True, history
 
@@ -311,8 +319,8 @@ class MigrationDryRun:
     @staticmethod
     def dry_run_upgrade(
         target: str = "head",
-        backend_dir: Optional[str] = None,
-    ) -> Tuple[bool, str]:
+        backend_dir: str | None = None,
+    ) -> tuple[bool, str]:
         """
         Dry-run an upgrade.
 
@@ -341,8 +349,8 @@ class MigrationDryRun:
     @staticmethod
     def dry_run_downgrade(
         target: str = "-1",
-        backend_dir: Optional[str] = None,
-    ) -> Tuple[bool, str]:
+        backend_dir: str | None = None,
+    ) -> tuple[bool, str]:
         """
         Dry-run a downgrade.
 

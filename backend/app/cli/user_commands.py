@@ -60,8 +60,8 @@ def create(
     email: str,
     password: str,
     role: str,
-    first_name: Optional[str],
-    last_name: Optional[str],
+    first_name: str | None,
+    last_name: str | None,
     active: bool,
 ) -> None:
     """
@@ -108,7 +108,7 @@ def create(
         db.commit()
         db.refresh(user)
 
-        click.echo(f"✓ User created successfully")
+        click.echo("✓ User created successfully")
         click.echo(f"  ID: {user.id}")
         click.echo(f"  Email: {user.email}")
         click.echo(f"  Role: {user.role.value}")
@@ -142,8 +142,8 @@ def create(
     help="Output format",
 )
 def list(
-    role: Optional[str],
-    active: Optional[bool],
+    role: str | None,
+    active: bool | None,
     format: str,
 ) -> None:
     """
@@ -209,13 +209,15 @@ def list(
             writer.writerow(["ID", "Email", "Role", "Active", "Created"])
 
             for u in users:
-                writer.writerow([
-                    str(u.id),
-                    u.email,
-                    u.role.value,
-                    u.is_active,
-                    u.created_at.isoformat(),
-                ])
+                writer.writerow(
+                    [
+                        str(u.id),
+                        u.email,
+                        u.role.value,
+                        u.is_active,
+                        u.created_at.isoformat(),
+                    ]
+                )
 
     except Exception as e:
         logger.error(f"User list failed: {e}", exc_info=True)
@@ -251,9 +253,7 @@ def reset_password(email: str, new_password: str) -> None:
     db = SessionLocal()
 
     try:
-        user = db.execute(
-            select(User).where(User.email == email)
-        ).scalar_one_or_none()
+        user = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
 
         if not user:
             click.echo(f"Error: User not found: {email}", err=True)
@@ -298,9 +298,7 @@ def delete(email: str, confirm: bool) -> None:
     db = SessionLocal()
 
     try:
-        user = db.execute(
-            select(User).where(User.email == email)
-        ).scalar_one_or_none()
+        user = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
 
         if not user:
             click.echo(f"Error: User not found: {email}", err=True)
@@ -349,9 +347,7 @@ def set_active(email: str, active: bool) -> None:
     db = SessionLocal()
 
     try:
-        user = db.execute(
-            select(User).where(User.email == email)
-        ).scalar_one_or_none()
+        user = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
 
         if not user:
             click.echo(f"Error: User not found: {email}", err=True)

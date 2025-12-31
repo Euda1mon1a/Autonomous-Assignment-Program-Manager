@@ -30,8 +30,7 @@ class FreeEnergyMetrics:
 
 
 def calculate_free_energy(
-    assignments: list[Any],
-    temperature: float = 1.0
+    assignments: list[Any], temperature: float = 1.0
 ) -> FreeEnergyMetrics:
     """
     Calculate free energy of a schedule (STUB).
@@ -78,9 +77,7 @@ class EnergyLandscapeAnalyzer:
 
 
 def adaptive_temperature(
-    iteration: int,
-    initial_temp: float = 10.0,
-    cooling_rate: float = 0.95
+    iteration: int, initial_temp: float = 10.0, cooling_rate: float = 0.95
 ) -> float:
     """
     Calculate adaptive temperature for simulated annealing (STUB).
@@ -95,4 +92,4 @@ def adaptive_temperature(
 
     TODO: Implement sophisticated adaptive temperature schedules
     """
-    return initial_temp * (cooling_rate ** iteration)
+    return initial_temp * (cooling_rate**iteration)

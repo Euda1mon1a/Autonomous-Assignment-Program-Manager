@@ -306,7 +306,7 @@ class KeystoneVisualizer:
                 va="center",
                 fontsize=12,
                 fontweight="bold",
-                bbox=dict(boxstyle="circle", facecolor="white", edgecolor="black"),
+                bbox={"boxstyle": "circle", "facecolor": "white", "edgecolor": "black"},
             )
 
             # Draw arrows to next level
@@ -339,7 +339,11 @@ class KeystoneVisualizer:
             ha="center",
             va="center",
             fontsize=10,
-            bbox=dict(boxstyle="round", facecolor="lightyellow", edgecolor="black"),
+            bbox={
+                "boxstyle": "round",
+                "facecolor": "lightyellow",
+                "edgecolor": "black",
+            },
         )
 
         ax.set_xlim(0, 1)

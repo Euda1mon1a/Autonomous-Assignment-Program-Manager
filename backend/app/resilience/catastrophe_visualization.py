@@ -240,7 +240,7 @@ class CatastropheVisualizer:
                     z=surface.feasibility_grid,
                     colorscale="Viridis",
                     name="Feasibility Surface",
-                    colorbar=dict(title="Feasibility"),
+                    colorbar={"title": "Feasibility"},
                 )
             ]
         )
@@ -256,7 +256,7 @@ class CatastropheVisualizer:
                         y=[cusp_s],
                         z=[cusp_f],
                         mode="markers",
-                        marker=dict(size=15, color="red", symbol="diamond"),
+                        marker={"size": 15, "color": "red", "symbol": "diamond"},
                         name="Cusp Point",
                     )
                 )
@@ -276,8 +276,8 @@ class CatastropheVisualizer:
                     y=traj_strictness,
                     z=traj_feas,
                     mode="lines+markers",
-                    line=dict(color="red", width=4),
-                    marker=dict(size=5),
+                    line={"color": "red", "width": 4},
+                    marker={"size": 5},
                     name="System Trajectory",
                 )
             )
@@ -285,12 +285,12 @@ class CatastropheVisualizer:
         # Layout
         fig.update_layout(
             title="Schedule Feasibility Surface (Interactive 3D)",
-            scene=dict(
-                xaxis_title="Coverage Demand",
-                yaxis_title="Constraint Strictness",
-                zaxis_title="Feasibility Score",
-                camera=dict(eye=dict(x=1.5, y=1.5, z=1.3)),
-            ),
+            scene={
+                "xaxis_title": "Coverage Demand",
+                "yaxis_title": "Constraint Strictness",
+                "zaxis_title": "Feasibility Score",
+                "camera": {"eye": {"x": 1.5, "y": 1.5, "z": 1.3}},
+            },
             width=1000,
             height=700,
         )
@@ -408,7 +408,7 @@ class CatastropheVisualizer:
                     "",
                     xy=(trajectory[-1].demand, trajectory[-1].strictness),
                     xytext=(trajectory[-2].demand, trajectory[-2].strictness),
-                    arrowprops=dict(arrowstyle="->", lw=2, color="black"),
+                    arrowprops={"arrowstyle": "->", "lw": 2, "color": "black"},
                 )
 
         # Mark current state
@@ -498,7 +498,7 @@ class CatastropheVisualizer:
             "",
             xy=(surface.demand_values[-1], feasibility_curve[-1]),
             xytext=(surface.demand_values[-2], feasibility_curve[-2]),
-            arrowprops=dict(arrowstyle="->", lw=2, color="blue"),
+            arrowprops={"arrowstyle": "->", "lw": 2, "color": "blue"},
         )
 
         # Mark critical points

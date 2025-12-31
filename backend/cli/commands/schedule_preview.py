@@ -19,7 +19,9 @@ console = Console()
 def block(
     block_number: int = typer.Argument(..., help="Block number to preview"),
     year: int = typer.Option(2024, "--year", "-y", help="Academic year"),
-    format: str = typer.Option("table", "--format", "-f", help="Format (table/calendar)"),
+    format: str = typer.Option(
+        "table", "--format", "-f", help="Format (table/calendar)"
+    ),
 ):
     """
     Preview schedule for a block.

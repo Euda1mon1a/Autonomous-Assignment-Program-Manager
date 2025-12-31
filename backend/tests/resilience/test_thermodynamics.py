@@ -168,9 +168,7 @@ class TestScheduleEntropy:
     def test_schedule_entropy_normalized(self):
         """Test normalized entropy calculation."""
         # Balanced distribution
-        assignments = [
-            MockAssignment(f"P{i}", "R1", i) for i in range(1, 5)
-        ]
+        assignments = [MockAssignment(f"P{i}", "R1", i) for i in range(1, 5)]
 
         metrics = calculate_schedule_entropy(assignments)
 
@@ -336,14 +334,10 @@ class TestEntropyProductionRate:
     def test_entropy_production_increasing_entropy(self):
         """Test production rate with increasing entropy."""
         # Old schedule: concentrated (low entropy)
-        old_assignments = [
-            MockAssignment("P1", "R1", i) for i in range(10)
-        ]
+        old_assignments = [MockAssignment("P1", "R1", i) for i in range(10)]
 
         # New schedule: distributed (high entropy)
-        new_assignments = [
-            MockAssignment(f"P{i % 5}", "R1", i) for i in range(10)
-        ]
+        new_assignments = [MockAssignment(f"P{i % 5}", "R1", i) for i in range(10)]
 
         rate = entropy_production_rate(old_assignments, new_assignments, time_delta=1.0)
 
@@ -353,14 +347,10 @@ class TestEntropyProductionRate:
     def test_entropy_production_decreasing_entropy(self):
         """Test production rate with decreasing entropy."""
         # Old schedule: distributed (high entropy)
-        old_assignments = [
-            MockAssignment(f"P{i % 5}", "R1", i) for i in range(10)
-        ]
+        old_assignments = [MockAssignment(f"P{i % 5}", "R1", i) for i in range(10)]
 
         # New schedule: concentrated (low entropy)
-        new_assignments = [
-            MockAssignment("P1", "R1", i) for i in range(10)
-        ]
+        new_assignments = [MockAssignment("P1", "R1", i) for i in range(10)]
 
         rate = entropy_production_rate(old_assignments, new_assignments, time_delta=1.0)
 
@@ -369,9 +359,7 @@ class TestEntropyProductionRate:
 
     def test_entropy_production_no_change(self):
         """Test production rate with no entropy change."""
-        assignments = [
-            MockAssignment(f"P{i % 3}", "R1", i) for i in range(10)
-        ]
+        assignments = [MockAssignment(f"P{i % 3}", "R1", i) for i in range(10)]
 
         rate = entropy_production_rate(assignments, assignments, time_delta=1.0)
 
@@ -383,8 +371,12 @@ class TestEntropyProductionRate:
         old_assignments = [MockAssignment("P1", "R1", i) for i in range(10)]
         new_assignments = [MockAssignment(f"P{i % 5}", "R1", i) for i in range(10)]
 
-        rate_1hr = entropy_production_rate(old_assignments, new_assignments, time_delta=1.0)
-        rate_2hr = entropy_production_rate(old_assignments, new_assignments, time_delta=2.0)
+        rate_1hr = entropy_production_rate(
+            old_assignments, new_assignments, time_delta=1.0
+        )
+        rate_2hr = entropy_production_rate(
+            old_assignments, new_assignments, time_delta=2.0
+        )
 
         # Same entropy change, double time → half rate
         assert rate_2hr == pytest.approx(rate_1hr / 2.0, rel=0.01)
@@ -425,7 +417,7 @@ class TestScheduleEntropyMonitor:
         monitor = ScheduleEntropyMonitor()
 
         for i in range(10):
-            assignments = [MockAssignment(f"P{j % (i+1)}", "R1", j) for j in range(5)]
+            assignments = [MockAssignment(f"P{j % (i + 1)}", "R1", j) for j in range(5)]
             monitor.update(assignments)
 
         assert len(monitor.entropy_history) == 10
@@ -465,7 +457,9 @@ class TestScheduleEntropyMonitor:
         # Create increasing entropy trend
         for i in range(10):
             num_people = i + 1
-            assignments = [MockAssignment(f"P{j % num_people}", "R1", j) for j in range(10)]
+            assignments = [
+                MockAssignment(f"P{j % num_people}", "R1", j) for j in range(10)
+            ]
             monitor.update(assignments)
 
         rate = monitor.get_entropy_rate_of_change()
@@ -504,7 +498,9 @@ class TestScheduleEntropyMonitor:
         # Continuously changing entropy
         for i in range(20):
             num_people = (i % 5) + 1
-            assignments = [MockAssignment(f"P{j % num_people}", "R1", j) for j in range(10)]
+            assignments = [
+                MockAssignment(f"P{j % num_people}", "R1", j) for j in range(10)
+            ]
             monitor.update(assignments)
 
         is_slowing = monitor.detect_critical_slowing()
@@ -593,7 +589,9 @@ class TestPhaseTransitionDetector:
         risk = detector.detect_critical_phenomena()
 
         # Should detect variance increase
-        variance_signals = [s for s in risk.signals if s.signal_type == "increasing_variance"]
+        variance_signals = [
+            s for s in risk.signals if s.signal_type == "increasing_variance"
+        ]
         assert len(variance_signals) > 0
 
     def test_detector_autocorrelation_detection(self):
@@ -698,11 +696,13 @@ class TestPhaseTransitionDetector:
 
         # Create multiple independent signals
         for i in range(50):
-            detector.update({
-                "metric1": 50.0,  # Constant
-                "metric2": 50.0,  # Constant
-                "metric3": 50.0,  # Constant
-            })
+            detector.update(
+                {
+                    "metric1": 50.0,  # Constant
+                    "metric2": 50.0,  # Constant
+                    "metric3": 50.0,  # Constant
+                }
+            )
 
         risk = detector.detect_critical_phenomena()
 
@@ -781,8 +781,10 @@ class TestCriticalPhenomenaMonitor:
 
         # Check if callback was triggered for critical/imminent severities
         critical_risks = [
-            r for r in monitor.risk_history
-            if r.overall_severity in [
+            r
+            for r in monitor.risk_history
+            if r.overall_severity
+            in [
                 TransitionSeverity.CRITICAL,
                 TransitionSeverity.IMMINENT,
             ]
@@ -992,11 +994,13 @@ class TestEdgeCases:
 
         # All metrics constant
         for i in range(50):
-            detector.update({
-                "metric1": 42.0,
-                "metric2": 100.0,
-                "metric3": 75.0,
-            })
+            detector.update(
+                {
+                    "metric1": 42.0,
+                    "metric2": 100.0,
+                    "metric3": 75.0,
+                }
+            )
 
         risk = detector.detect_critical_phenomena()
 
@@ -1051,17 +1055,18 @@ class TestIntegration:
         for i in range(50):
             num_people = min(i + 1, 10)
             assignments = [
-                MockAssignment(f"P{j % num_people}", "R1", j)
-                for j in range(20)
+                MockAssignment(f"P{j % num_people}", "R1", j) for j in range(20)
             ]
             entropy_monitor.update(assignments)
 
             # Feed entropy metrics to phase detector
             metrics = entropy_monitor.get_current_metrics()
-            phase_detector.update({
-                "entropy": metrics["current_entropy"],
-                "entropy_rate": metrics["rate_of_change"],
-            })
+            phase_detector.update(
+                {
+                    "entropy": metrics["current_entropy"],
+                    "entropy_rate": metrics["rate_of_change"],
+                }
+            )
 
         # Should produce valid risk assessment
         risk = phase_detector.detect_critical_phenomena()
@@ -1086,8 +1091,7 @@ class TestIntegration:
             # Create assignments with decreasing diversity
             num_people = max(10 - i // 5, 1)
             assignments = [
-                MockAssignment(f"P{j % num_people}", "R1", j)
-                for j in range(20)
+                MockAssignment(f"P{j % num_people}", "R1", j) for j in range(20)
             ]
 
             # Update entropy monitor
@@ -1095,17 +1099,20 @@ class TestIntegration:
 
             # Get metrics and update phase monitor
             ent_metrics = entropy_monitor.get_current_metrics()
-            risk = await phenomena_monitor.update_and_assess({
-                "entropy": ent_metrics["current_entropy"],
-                "production_rate": ent_metrics["production_rate"],
-            })
+            risk = await phenomena_monitor.update_and_assess(
+                {
+                    "entropy": ent_metrics["current_entropy"],
+                    "production_rate": ent_metrics["production_rate"],
+                }
+            )
 
         # Should have detected issues
         assert len(phenomena_monitor.risk_history) == 50
 
         # Check for elevated risk levels
         elevated_risks = [
-            r for r in phenomena_monitor.risk_history
+            r
+            for r in phenomena_monitor.risk_history
             if r.overall_severity != TransitionSeverity.NORMAL
         ]
 

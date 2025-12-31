@@ -27,7 +27,7 @@ class ScheduleFactory:
         num_residents: int = 10,
         num_faculty: int = 5,
         num_days: int = 28,
-        start_date: Optional[date] = None,
+        start_date: date | None = None,
         include_absences: bool = False,
         include_certifications: bool = False,
     ) -> dict:
@@ -65,7 +65,9 @@ class ScheduleFactory:
         )
 
         # Create blocks
-        blocks = BlockFactory.create_block_period(db, start_date=start_date, days=num_days)
+        blocks = BlockFactory.create_block_period(
+            db, start_date=start_date, days=num_days
+        )
 
         # Create rotation templates
         templates = RotationFactory.create_standard_template_set(db)
@@ -80,7 +82,10 @@ class ScheduleFactory:
             week_blocks = blocks[week_start * 14 : (week_start + 1) * 14]
 
             week_assignments = AssignmentFactory.create_week_assignments(
-                db, person=resident, blocks=week_blocks, rotation_template=clinic_template
+                db,
+                person=resident,
+                blocks=week_blocks,
+                rotation_template=clinic_template,
             )
             assignments.extend(week_assignments)
 
@@ -122,7 +127,7 @@ class ScheduleFactory:
         db: Session,
         num_residents: int = 4,
         num_faculty: int = 2,
-        clinic_date: Optional[date] = None,
+        clinic_date: date | None = None,
     ) -> dict:
         """
         Create a single clinic day schedule (AM and PM sessions).
@@ -179,7 +184,7 @@ class ScheduleFactory:
     @staticmethod
     def create_academic_year_skeleton(
         db: Session,
-        year: Optional[int] = None,
+        year: int | None = None,
         num_residents: int = 10,
         num_faculty: int = 5,
     ) -> dict:

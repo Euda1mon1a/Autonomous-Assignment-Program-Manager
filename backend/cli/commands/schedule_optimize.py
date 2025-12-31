@@ -19,7 +19,9 @@ console = Console()
 def block(
     block_number: int = typer.Argument(..., help="Block number to optimize"),
     year: int = typer.Option(2024, "--year", "-y", help="Academic year"),
-    objective: str = typer.Option("balanced", "--objective", "-obj", help="Optimization objective"),
+    objective: str = typer.Option(
+        "balanced", "--objective", "-obj", help="Optimization objective"
+    ),
     max_iterations: int = typer.Option(1000, "--max-iter", help="Maximum iterations"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Preview without applying"),
 ):
@@ -150,14 +152,19 @@ async def optimize_block_schedule(
         results = response.get("results", {})
         improvements = results.get("improvements", {})
 
-        console.print(f"\n[bold]Optimization Results[/bold]\n")
+        console.print("\n[bold]Optimization Results[/bold]\n")
         console.print(f"Objective: {objective}")
         console.print(f"Iterations: {results.get('iterations', 0)}")
         console.print(f"Status: {results.get('status', 'unknown')}")
 
         if improvements:
             improvement_data = [
-                {"metric": k, "before": v["before"], "after": v["after"], "change": v["change"]}
+                {
+                    "metric": k,
+                    "before": v["before"],
+                    "after": v["after"],
+                    "change": v["change"],
+                }
                 for k, v in improvements.items()
             ]
 

@@ -149,7 +149,7 @@ def create_residents(count=3):
     residents = []
     for i in range(count):
         resident = MockPerson(
-            name=f"Dr. Resident {i+1}",
+            name=f"Dr. Resident {i + 1}",
             person_type="resident",
             pgy_level=(i % 3) + 1,  # PGY-1, PGY-2, PGY-3
         )
@@ -170,7 +170,7 @@ def create_faculty(count=2):
     faculty = []
     for i in range(count):
         fac = MockPerson(
-            name=f"Dr. Faculty {i+1}",
+            name=f"Dr. Faculty {i + 1}",
             person_type="faculty",
         )
         faculty.append(fac)

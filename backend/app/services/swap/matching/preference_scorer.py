@@ -111,8 +111,7 @@ class PreferenceScorer:
         }
 
         logger.debug(
-            f"Preference score for {request_a.id} <-> {request_b.id}: "
-            f"{overall:.3f}"
+            f"Preference score for {request_a.id} <-> {request_b.id}: {overall:.3f}"
         )
 
         return PreferenceScore(
@@ -160,13 +159,9 @@ class PreferenceScorer:
             }
 
         # Analyze patterns
-        accepted_swaps = [
-            s for s in swaps if s.status == SwapStatus.EXECUTED
-        ]
+        accepted_swaps = [s for s in swaps if s.status == SwapStatus.EXECUTED]
 
-        rejected_swaps = [
-            s for s in swaps if s.status == SwapStatus.REJECTED
-        ]
+        rejected_swaps = [s for s in swaps if s.status == SwapStatus.REJECTED]
 
         # Preferred months
         accepted_months = [s.source_week.month for s in accepted_swaps]
@@ -192,9 +187,7 @@ class PreferenceScorer:
                 accept_times.append(time_diff)
 
         avg_accept_time = (
-            sum(accept_times) / len(accept_times)
-            if accept_times
-            else None
+            sum(accept_times) / len(accept_times) if accept_times else None
         )
 
         return {
@@ -326,17 +319,17 @@ class PreferenceScorer:
         """
         # Get total swaps for each faculty
         result_a = await self.db.execute(
-            select(func.count()).select_from(SwapRecord).where(
-                SwapRecord.source_faculty_id == faculty_a_id
-            )
+            select(func.count())
+            .select_from(SwapRecord)
+            .where(SwapRecord.source_faculty_id == faculty_a_id)
         )
 
         count_a = result_a.scalar() or 0
 
         result_b = await self.db.execute(
-            select(func.count()).select_from(SwapRecord).where(
-                SwapRecord.source_faculty_id == faculty_b_id
-            )
+            select(func.count())
+            .select_from(SwapRecord)
+            .where(SwapRecord.source_faculty_id == faculty_b_id)
         )
 
         count_b = result_b.scalar() or 0

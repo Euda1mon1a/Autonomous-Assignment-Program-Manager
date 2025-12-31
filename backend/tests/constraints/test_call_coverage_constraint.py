@@ -730,11 +730,7 @@ class TestCallAvailabilityConstraint:
             faculty=[faculty],
             blocks=blocks,
             templates=[],
-            availability={
-                faculty.id: {
-                    first_night.id: {"available": True}
-                }
-            },
+            availability={faculty.id: {first_night.id: {"available": True}}},
         )
 
         result = constraint.validate([assignment], context)
@@ -810,11 +806,7 @@ class TestCallAvailabilityConstraint:
             faculty=[faculty],
             blocks=blocks,
             templates=[],
-            availability={
-                faculty.id: {
-                    blocks[0].id: {"available": False}
-                }
-            },
+            availability={faculty.id: {blocks[0].id: {"available": False}}},
         )
 
         result = constraint.validate([assignment], context)
@@ -856,9 +848,7 @@ class TestCallAvailabilityConstraint:
             blocks=blocks,
             templates=[],
             availability={
-                faculty1.id: {
-                    night1.id: {"available": True}
-                },
+                faculty1.id: {night1.id: {"available": True}},
                 faculty2.id: {
                     night2.id: {"available": False, "replacement": "deployment"}
                 },
@@ -891,11 +881,7 @@ class TestCallAvailabilityConstraint:
             faculty=[faculty],
             blocks=blocks,
             templates=[],
-            availability={
-                faculty.id: {
-                    unknown_block_id: {"available": False}
-                }
-            },
+            availability={faculty.id: {unknown_block_id: {"available": False}}},
         )
 
         result = constraint.validate([assignment], context)

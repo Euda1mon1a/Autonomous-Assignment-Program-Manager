@@ -29,7 +29,7 @@ from app.core.security import get_password_hash
 class SeedData:
     """Base seed data generator."""
 
-    def __init__(self, db: Session, start_date: Optional[date] = None):
+    def __init__(self, db: Session, start_date: date | None = None):
         """
         Initialize seed data generator.
 
@@ -76,7 +76,7 @@ class SeedData:
 class DevelopmentSeed(SeedData):
     """Development environment seed data (sanitized)."""
 
-    def seed(self) -> Dict[str, Any]:
+    def seed(self) -> dict[str, Any]:
         """
         Seed development database.
 
@@ -97,7 +97,7 @@ class DevelopmentSeed(SeedData):
         self.db.commit()
         return resources
 
-    def _create_users(self) -> List[User]:
+    def _create_users(self) -> list[User]:
         """Create development users."""
         users = [
             User(
@@ -134,7 +134,7 @@ class DevelopmentSeed(SeedData):
 
         return users
 
-    def _create_persons(self) -> List[Person]:
+    def _create_persons(self) -> list[Person]:
         """Create development persons."""
         persons = []
 
@@ -167,7 +167,7 @@ class DevelopmentSeed(SeedData):
 
         return persons
 
-    def _create_rotation_templates(self) -> List[RotationTemplate]:
+    def _create_rotation_templates(self) -> list[RotationTemplate]:
         """Create rotation templates."""
         templates = [
             RotationTemplate(
@@ -201,7 +201,7 @@ class DevelopmentSeed(SeedData):
 
         return templates
 
-    def _create_blocks(self) -> List[Block]:
+    def _create_blocks(self) -> list[Block]:
         """Create block schedule."""
         blocks = []
         current_date = self.start_date
@@ -221,7 +221,7 @@ class DevelopmentSeed(SeedData):
 
         return blocks
 
-    def _create_assignments(self) -> List[Assignment]:
+    def _create_assignments(self) -> list[Assignment]:
         """Create sample assignments."""
         assignments = []
 
@@ -248,7 +248,7 @@ class DevelopmentSeed(SeedData):
 class TestFixtureSeed(SeedData):
     """Test fixture seed data with minimal required data."""
 
-    def seed(self) -> Dict[str, Any]:
+    def seed(self) -> dict[str, Any]:
         """
         Seed minimal test data.
 
@@ -265,7 +265,7 @@ class TestFixtureSeed(SeedData):
         self.db.commit()
         return resources
 
-    def _create_test_users(self) -> List[User]:
+    def _create_test_users(self) -> list[User]:
         """Create test users."""
         user = User(
             id="test-user-1",
@@ -278,7 +278,7 @@ class TestFixtureSeed(SeedData):
         self.db.add(user)
         return [user]
 
-    def _create_test_persons(self) -> List[Person]:
+    def _create_test_persons(self) -> list[Person]:
         """Create test persons."""
         persons = [
             Person(
@@ -302,7 +302,7 @@ class TestFixtureSeed(SeedData):
 
         return persons
 
-    def _create_test_templates(self) -> List[RotationTemplate]:
+    def _create_test_templates(self) -> list[RotationTemplate]:
         """Create test rotation templates."""
         templates = [
             RotationTemplate(
@@ -317,7 +317,7 @@ class TestFixtureSeed(SeedData):
 
         return templates
 
-    def _create_test_blocks(self) -> List[Block]:
+    def _create_test_blocks(self) -> list[Block]:
         """Create test blocks."""
         blocks = [
             Block(
@@ -343,7 +343,7 @@ class TestFixtureSeed(SeedData):
 class DemoSeed(SeedData):
     """Demo environment seed data."""
 
-    def seed(self) -> Dict[str, Any]:
+    def seed(self) -> dict[str, Any]:
         """
         Seed demo database.
 
@@ -357,19 +357,21 @@ class SeedDataManager:
     """Manager for all seeding operations."""
 
     @staticmethod
-    def seed_development(db: Session, start_date: Optional[date] = None) -> Dict[str, Any]:
+    def seed_development(db: Session, start_date: date | None = None) -> dict[str, Any]:
         """Seed development data."""
         seeder = DevelopmentSeed(db, start_date)
         return seeder.seed()
 
     @staticmethod
-    def seed_test_fixtures(db: Session, start_date: Optional[date] = None) -> Dict[str, Any]:
+    def seed_test_fixtures(
+        db: Session, start_date: date | None = None
+    ) -> dict[str, Any]:
         """Seed test fixtures."""
         seeder = TestFixtureSeed(db, start_date)
         return seeder.seed()
 
     @staticmethod
-    def seed_demo(db: Session, start_date: Optional[date] = None) -> Dict[str, Any]:
+    def seed_demo(db: Session, start_date: date | None = None) -> dict[str, Any]:
         """Seed demo data."""
         seeder = DemoSeed(db, start_date)
         return seeder.seed()
@@ -410,17 +412,23 @@ def main():
         if args.command == "dev":
             print("Seeding development data...")
             result = SeedDataManager.seed_development(db)
-            print(f"Created: {json.dumps({k: len(v) for k, v in result.items()}, indent=2)}")
+            print(
+                f"Created: {json.dumps({k: len(v) for k, v in result.items()}, indent=2)}"
+            )
 
         elif args.command == "test":
             print("Seeding test fixtures...")
             result = SeedDataManager.seed_test_fixtures(db)
-            print(f"Created: {json.dumps({k: len(v) for k, v in result.items()}, indent=2)}")
+            print(
+                f"Created: {json.dumps({k: len(v) for k, v in result.items()}, indent=2)}"
+            )
 
         elif args.command == "demo":
             print("Seeding demo data...")
             result = SeedDataManager.seed_demo(db)
-            print(f"Created: {json.dumps({k: len(v) for k, v in result.items()}, indent=2)}")
+            print(
+                f"Created: {json.dumps({k: len(v) for k, v in result.items()}, indent=2)}"
+            )
 
         elif args.command == "validate":
             is_valid = SeedDataManager.validate_environment(db)

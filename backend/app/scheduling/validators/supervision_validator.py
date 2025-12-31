@@ -27,7 +27,7 @@ OTHER_RATIO = 4  # 1 faculty per 4 PGY-2/3 residents
 class SupervisionViolation:
     """Represents a supervision ratio compliance violation."""
 
-    block_id: Optional[UUID]
+    block_id: UUID | None
     block_date: date
     residents: int
     pgy1_count: int
@@ -59,9 +59,7 @@ class SupervisionValidator:
         self.pgy1_ratio = PGY1_RATIO
         self.other_ratio = OTHER_RATIO
 
-    def calculate_required_faculty(
-        self, pgy1_count: int, other_count: int
-    ) -> int:
+    def calculate_required_faculty(self, pgy1_count: int, other_count: int) -> int:
         """
         Calculate required faculty using fractional supervision units.
 
@@ -90,12 +88,12 @@ class SupervisionValidator:
 
     def validate_block_supervision(
         self,
-        block_id: Optional[UUID],
+        block_id: UUID | None,
         block_date: date,
         pgy1_residents: list[UUID],
         other_residents: list[UUID],
         faculty_assigned: list[UUID],
-    ) -> Optional[SupervisionViolation]:
+    ) -> SupervisionViolation | None:
         """
         Validate supervision for a single clinical block.
 
@@ -170,33 +168,35 @@ class SupervisionValidator:
 
         # Track supervision load distribution
         load_distribution = {
-            'all_compliant': 0,
-            'single_deficit': 0,
-            'multi_deficit': 0,
-            'no_residents': 0,
+            "all_compliant": 0,
+            "single_deficit": 0,
+            "multi_deficit": 0,
+            "no_residents": 0,
         }
 
         for block_data in period_blocks:
             violation = self.validate_block_supervision(
-                block_id=block_data.get('block_id'),
-                block_date=block_data.get('block_date'),
-                pgy1_residents=block_data.get('pgy1_residents', []),
-                other_residents=block_data.get('other_residents', []),
-                faculty_assigned=block_data.get('faculty_assigned', []),
+                block_id=block_data.get("block_id"),
+                block_date=block_data.get("block_date"),
+                pgy1_residents=block_data.get("pgy1_residents", []),
+                other_residents=block_data.get("other_residents", []),
+                faculty_assigned=block_data.get("faculty_assigned", []),
             )
 
             if violation:
                 violations.append(violation)
                 blocks_with_violations_count += 1
                 if violation.deficit >= 2:
-                    load_distribution['multi_deficit'] += 1
+                    load_distribution["multi_deficit"] += 1
                 else:
-                    load_distribution['single_deficit'] += 1
-            elif (len(block_data.get('pgy1_residents', [])) +
-                  len(block_data.get('other_residents', []))) == 0:
-                load_distribution['no_residents'] += 1
+                    load_distribution["single_deficit"] += 1
+            elif (
+                len(block_data.get("pgy1_residents", []))
+                + len(block_data.get("other_residents", []))
+            ) == 0:
+                load_distribution["no_residents"] += 1
             else:
-                load_distribution['all_compliant'] += 1
+                load_distribution["all_compliant"] += 1
 
         # Calculate compliance rate
         compliance_rate = (
@@ -206,10 +206,10 @@ class SupervisionValidator:
         )
 
         metrics = {
-            'total_blocks': total_blocks,
-            'blocks_with_violations': blocks_with_violations_count,
-            'compliance_rate': compliance_rate,
-            'supervision_load_factors': load_distribution,
+            "total_blocks": total_blocks,
+            "blocks_with_violations": blocks_with_violations_count,
+            "compliance_rate": compliance_rate,
+            "supervision_load_factors": load_distribution,
         }
 
         return violations, metrics
@@ -219,7 +219,7 @@ class SupervisionValidator:
         faculty_id: UUID,
         faculty_availability: dict[date, bool],
         required_dates: list[date],
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Validate that supervising faculty are available for required dates.
 
@@ -232,8 +232,7 @@ class SupervisionValidator:
             Message if unavailable, None if all required dates covered
         """
         unavailable_dates = [
-            d for d in required_dates
-            if not faculty_availability.get(d, False)
+            d for d in required_dates if not faculty_availability.get(d, False)
         ]
 
         if unavailable_dates:
@@ -248,7 +247,7 @@ class SupervisionValidator:
         self,
         specialty_rotation: str,
         supervising_faculty: list[dict],
-    ) -> tuple[bool, Optional[str]]:
+    ) -> tuple[bool, str | None]:
         """
         Validate that specialty rotation has appropriate supervising faculty.
 
@@ -261,7 +260,7 @@ class SupervisionValidator:
         """
         # Check if any faculty has required specialty
         for faculty in supervising_faculty:
-            specialties = faculty.get('specialties', [])
+            specialties = faculty.get("specialties", [])
             if specialty_rotation in specialties:
                 return True, None
 
@@ -274,7 +273,7 @@ class SupervisionValidator:
         self,
         procedure_type: str,
         supervising_faculty: list[dict],
-    ) -> tuple[bool, Optional[str]]:
+    ) -> tuple[bool, str | None]:
         """
         Validate that procedure rotation has qualified supervising faculty.
 
@@ -287,7 +286,7 @@ class SupervisionValidator:
         """
         # Check if any faculty certified for procedure
         for faculty in supervising_faculty:
-            certifications = faculty.get('procedure_certifications', [])
+            certifications = faculty.get("procedure_certifications", [])
             if procedure_type in certifications:
                 return True, None
 
@@ -316,12 +315,12 @@ class SupervisionValidator:
         """
         if not violations:
             return {
-                'total_violations': 0,
-                'critical_count': 0,
-                'high_count': 0,
-                'total_deficit': 0,
-                'worst_case': None,
-                'by_date': {},
+                "total_violations": 0,
+                "critical_count": 0,
+                "high_count": 0,
+                "total_deficit": 0,
+                "worst_case": None,
+                "by_date": {},
             }
 
         critical = [v for v in violations if v.deficit >= 2]
@@ -338,14 +337,14 @@ class SupervisionValidator:
             by_date[date_key].append(violation.message)
 
         return {
-            'total_violations': len(violations),
-            'critical_count': len(critical),
-            'high_count': len(high),
-            'total_deficit': total_deficit,
-            'worst_case': {
-                'date': worst_case.block_date,
-                'deficit': worst_case.deficit,
-                'message': worst_case.message,
+            "total_violations": len(violations),
+            "critical_count": len(critical),
+            "high_count": len(high),
+            "total_deficit": total_deficit,
+            "worst_case": {
+                "date": worst_case.block_date,
+                "deficit": worst_case.deficit,
+                "message": worst_case.message,
             },
-            'by_date': by_date,
+            "by_date": by_date,
         }

@@ -24,8 +24,8 @@ class ComplianceFactory:
     @staticmethod
     def create_80_hour_violation(
         db: Session,
-        resident: Optional[Person] = None,
-        start_date: Optional[date] = None,
+        resident: Person | None = None,
+        start_date: date | None = None,
     ) -> dict:
         """
         Create a schedule that violates the 80-hour work week rule.
@@ -73,8 +73,8 @@ class ComplianceFactory:
     @staticmethod
     def create_1_in_7_violation(
         db: Session,
-        resident: Optional[Person] = None,
-        start_date: Optional[date] = None,
+        resident: Person | None = None,
+        start_date: date | None = None,
     ) -> dict:
         """
         Create a schedule that violates the 1-in-7 rule (no 24-hour rest period).
@@ -193,7 +193,7 @@ class ComplianceFactory:
     @staticmethod
     def create_double_booked_violation(
         db: Session,
-        resident: Optional[Person] = None,
+        resident: Person | None = None,
     ) -> dict:
         """
         Create a double-booking violation (same person, same block, different rotations).
@@ -218,7 +218,10 @@ class ComplianceFactory:
         # Try to create double-booked assignments
         # NOTE: This will violate unique_person_per_block constraint
         assignments = AssignmentFactory.create_double_booked_assignment(
-            db, person=resident, block=block, rotation_templates=[clinic_template, procedure_template]
+            db,
+            person=resident,
+            block=block,
+            rotation_templates=[clinic_template, procedure_template],
         )
 
         return {
@@ -365,7 +368,7 @@ class ComplianceFactory:
     @staticmethod
     def create_consecutive_weeks_violation(
         db: Session,
-        resident: Optional[Person] = None,
+        resident: Person | None = None,
         num_weeks: int = 5,
     ) -> dict:
         """

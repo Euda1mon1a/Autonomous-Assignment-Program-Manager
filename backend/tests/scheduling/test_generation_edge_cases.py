@@ -114,9 +114,7 @@ def exclusive_rotation(db: Session) -> RotationTemplate:
     return rotation
 
 
-def create_blocks_range(
-    db: Session, start_date: date, end_date: date
-) -> list[Block]:
+def create_blocks_range(db: Session, start_date: date, end_date: date) -> list[Block]:
     """Create blocks for a date range."""
     blocks = []
     current = start_date
@@ -146,8 +144,11 @@ class TestInsufficientResources:
     """Tests for scenarios with insufficient personnel."""
 
     def test_insufficient_faculty_for_coverage(
-        self, db: Session, scheduling_engine: SchedulingEngine,
-        minimal_faculty: list[Person], high_capacity_rotation: RotationTemplate
+        self,
+        db: Session,
+        scheduling_engine: SchedulingEngine,
+        minimal_faculty: list[Person],
+        high_capacity_rotation: RotationTemplate,
     ):
         """Test scheduling when not enough faculty available."""
         start_date = date.today()
@@ -161,13 +162,17 @@ class TestInsufficientResources:
         )
 
         assert result.success is False
-        assert "insufficient" in result.error_message.lower() or \
-               "capacity" in result.error_message.lower()
+        assert (
+            "insufficient" in result.error_message.lower()
+            or "capacity" in result.error_message.lower()
+        )
 
     def test_all_residents_on_leave(
-        self, db: Session, scheduling_engine: SchedulingEngine,
+        self,
+        db: Session,
+        scheduling_engine: SchedulingEngine,
         residents_all_pgys: list[Person],
-        sample_rotation_template: RotationTemplate
+        sample_rotation_template: RotationTemplate,
     ):
         """Test scheduling when all residents are on leave."""
         start_date = date.today() + timedelta(days=7)
@@ -194,9 +199,11 @@ class TestInsufficientResources:
         assert result.success is False
 
     def test_partial_availability_scheduling(
-        self, db: Session, scheduling_engine: SchedulingEngine,
+        self,
+        db: Session,
+        scheduling_engine: SchedulingEngine,
         residents_all_pgys: list[Person],
-        sample_rotation_template: RotationTemplate
+        sample_rotation_template: RotationTemplate,
     ):
         """Test scheduling with partial resident availability."""
         start_date = date.today() + timedelta(days=7)
@@ -234,9 +241,12 @@ class TestConflictingConstraints:
     """Tests for impossible schedules due to conflicting constraints."""
 
     def test_mutually_exclusive_rotations_same_time(
-        self, db: Session, scheduling_engine: SchedulingEngine,
-        sample_resident: Person, exclusive_rotation: RotationTemplate,
-        sample_rotation_template: RotationTemplate
+        self,
+        db: Session,
+        scheduling_engine: SchedulingEngine,
+        sample_resident: Person,
+        exclusive_rotation: RotationTemplate,
+        sample_rotation_template: RotationTemplate,
     ):
         """Test scheduling exclusive rotations at same time."""
         start_date = date.today() + timedelta(days=7)
@@ -268,12 +278,17 @@ class TestConflictingConstraints:
         )
 
         assert result.success is False
-        assert "exclusive" in result.error_message.lower() or \
-               "conflict" in result.error_message.lower()
+        assert (
+            "exclusive" in result.error_message.lower()
+            or "conflict" in result.error_message.lower()
+        )
 
     def test_supervision_ratio_impossible_to_meet(
-        self, db: Session, scheduling_engine: SchedulingEngine,
-        minimal_faculty: list[Person], residents_all_pgys: list[Person]
+        self,
+        db: Session,
+        scheduling_engine: SchedulingEngine,
+        minimal_faculty: list[Person],
+        residents_all_pgys: list[Person],
     ):
         """Test when supervision ratio can't be met."""
         # Create rotation requiring 1:1 supervision
@@ -302,8 +317,7 @@ class TestConflictingConstraints:
         assert result.success is False or result.assignments_created <= 1
 
     def test_acgme_hours_make_schedule_impossible(
-        self, db: Session, scheduling_engine: SchedulingEngine,
-        sample_resident: Person
+        self, db: Session, scheduling_engine: SchedulingEngine, sample_resident: Person
     ):
         """Test when ACGME constraints make schedule impossible."""
         start_date = date.today() + timedelta(days=7)
@@ -350,8 +364,11 @@ class TestHolidayWeekendHandling:
     """Tests for holiday and weekend edge cases."""
 
     def test_schedule_over_major_holiday(
-        self, db: Session, scheduling_engine: SchedulingEngine,
-        sample_resident: Person, sample_rotation_template: RotationTemplate
+        self,
+        db: Session,
+        scheduling_engine: SchedulingEngine,
+        sample_resident: Person,
+        sample_rotation_template: RotationTemplate,
     ):
         """Test scheduling over major holiday period."""
         # December 25, 2024 (Christmas)
@@ -378,8 +395,10 @@ class TestHolidayWeekendHandling:
         assert result.success is not None
 
     def test_weekend_coverage_requirements(
-        self, db: Session, scheduling_engine: SchedulingEngine,
-        residents_all_pgys: list[Person]
+        self,
+        db: Session,
+        scheduling_engine: SchedulingEngine,
+        residents_all_pgys: list[Person],
     ):
         """Test that weekend coverage is properly distributed."""
         start_date = date.today()
@@ -423,8 +442,11 @@ class TestBoundaryConditions:
     """Tests for boundary conditions in scheduling."""
 
     def test_schedule_single_block(
-        self, db: Session, scheduling_engine: SchedulingEngine,
-        sample_resident: Person, sample_rotation_template: RotationTemplate
+        self,
+        db: Session,
+        scheduling_engine: SchedulingEngine,
+        sample_resident: Person,
+        sample_rotation_template: RotationTemplate,
     ):
         """Test scheduling for a single block (minimum unit)."""
         block = Block(
@@ -445,8 +467,11 @@ class TestBoundaryConditions:
         assert result.success is True
 
     def test_schedule_full_year(
-        self, db: Session, scheduling_engine: SchedulingEngine,
-        sample_resident: Person, sample_rotation_template: RotationTemplate
+        self,
+        db: Session,
+        scheduling_engine: SchedulingEngine,
+        sample_resident: Person,
+        sample_rotation_template: RotationTemplate,
     ):
         """Test scheduling for full academic year (365 days)."""
         start_date = date.today() + timedelta(days=7)
@@ -465,8 +490,7 @@ class TestBoundaryConditions:
         assert result.success is not None
 
     def test_midnight_boundary_handling(
-        self, db: Session, scheduling_engine: SchedulingEngine,
-        sample_resident: Person
+        self, db: Session, scheduling_engine: SchedulingEngine, sample_resident: Person
     ):
         """Test that PM to next day AM transition is handled correctly."""
         today = date.today()
@@ -529,8 +553,11 @@ class TestEmergencyCoverage:
     """Tests for emergency coverage scenarios."""
 
     def test_last_minute_absence_coverage(
-        self, db: Session, scheduling_engine: SchedulingEngine,
-        residents_all_pgys: list[Person], sample_rotation_template: RotationTemplate
+        self,
+        db: Session,
+        scheduling_engine: SchedulingEngine,
+        residents_all_pgys: list[Person],
+        sample_rotation_template: RotationTemplate,
     ):
         """Test emergency coverage when resident calls in sick."""
         tomorrow = date.today() + timedelta(days=1)
@@ -578,8 +605,11 @@ class TestEmergencyCoverage:
         assert result.success is True or result.available_count >= 0
 
     def test_deployment_coverage_planning(
-        self, db: Session, scheduling_engine: SchedulingEngine,
-        sample_faculty_members: list[Person], sample_rotation_template: RotationTemplate
+        self,
+        db: Session,
+        scheduling_engine: SchedulingEngine,
+        sample_faculty_members: list[Person],
+        sample_rotation_template: RotationTemplate,
     ):
         """Test coverage when faculty member is deployed."""
         start_date = date.today() + timedelta(days=30)

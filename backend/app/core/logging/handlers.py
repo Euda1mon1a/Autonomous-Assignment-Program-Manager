@@ -53,7 +53,7 @@ class AsyncLogHandler(ABC):
         self.buffer_size = buffer_size
         self.flush_interval = flush_interval
         self.max_retries = max_retries
-        self._buffer: Deque[dict[str, Any]] = deque(maxlen=buffer_size)
+        self._buffer: deque[dict[str, Any]] = deque(maxlen=buffer_size)
         self._last_flush = datetime.utcnow()
         self._flush_lock = asyncio.Lock()
 
@@ -113,7 +113,9 @@ class AsyncLogHandler(ABC):
                     if attempt < self.max_retries - 1:
                         await asyncio.sleep(2**attempt)  # Exponential backoff
                     else:
-                        logger.error(f"Failed to flush {len(entries)} log entries after retries")
+                        logger.error(
+                            f"Failed to flush {len(entries)} log entries after retries"
+                        )
 
 
 class DatabaseLogHandler(AsyncLogHandler):
@@ -197,7 +199,9 @@ class RedisLogHandler(AsyncLogHandler):
             await self.redis.rpush(key, *[json.dumps(e) for e in entries])
             await self.redis.expire(key, self.ttl)
 
-            logger.debug(f"Flushed {len(entries)} log entries to Redis channel {self.channel}")
+            logger.debug(
+                f"Flushed {len(entries)} log entries to Redis channel {self.channel}"
+            )
         except Exception as e:
             logger.error(f"Failed to flush logs to Redis: {e}")
             raise
@@ -317,7 +321,9 @@ class CompressedRotatingFileHandler:
 
         # Rotate existing backups
         for i in range(self.backup_count - 1, 0, -1):
-            old_file = self.filepath.with_suffix(f".{i}.gz" if self.compress else f".{i}")
+            old_file = self.filepath.with_suffix(
+                f".{i}.gz" if self.compress else f".{i}"
+            )
             new_file = self.filepath.with_suffix(
                 f".{i + 1}.gz" if self.compress else f".{i + 1}"
             )

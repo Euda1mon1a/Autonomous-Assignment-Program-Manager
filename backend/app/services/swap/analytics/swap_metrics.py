@@ -105,28 +105,18 @@ class SwapMetricsCollector:
         # Calculate volume metrics
         total_requests = len(swaps)
 
-        pending_requests = sum(
-            1 for s in swaps if s.status == SwapStatus.PENDING
-        )
+        pending_requests = sum(1 for s in swaps if s.status == SwapStatus.PENDING)
 
-        executed_swaps = sum(
-            1 for s in swaps if s.status == SwapStatus.EXECUTED
-        )
+        executed_swaps = sum(1 for s in swaps if s.status == SwapStatus.EXECUTED)
 
-        rejected_swaps = sum(
-            1 for s in swaps if s.status == SwapStatus.REJECTED
-        )
+        rejected_swaps = sum(1 for s in swaps if s.status == SwapStatus.REJECTED)
 
-        rolled_back_swaps = sum(
-            1 for s in swaps if s.status == SwapStatus.ROLLED_BACK
-        )
+        rolled_back_swaps = sum(1 for s in swaps if s.status == SwapStatus.ROLLED_BACK)
 
         # Calculate success metrics
         completed = executed_swaps + rejected_swaps
 
-        success_rate = (
-            executed_swaps / completed if completed > 0 else 0.0
-        )
+        success_rate = executed_swaps / completed if completed > 0 else 0.0
 
         # Calculate average time to execution
         execution_times = []
@@ -136,9 +126,7 @@ class SwapMetricsCollector:
                 execution_times.append(time_to_exec)
 
         avg_time_to_execution = (
-            sum(execution_times) / len(execution_times)
-            if execution_times
-            else 0.0
+            sum(execution_times) / len(execution_times) if execution_times else 0.0
         )
 
         rollback_rate = (
@@ -146,13 +134,9 @@ class SwapMetricsCollector:
         )
 
         # Type breakdown
-        one_to_one = sum(
-            1 for s in swaps if s.swap_type == SwapType.ONE_TO_ONE
-        )
+        one_to_one = sum(1 for s in swaps if s.swap_type == SwapType.ONE_TO_ONE)
 
-        absorb = sum(
-            1 for s in swaps if s.swap_type == SwapType.ABSORB
-        )
+        absorb = sum(1 for s in swaps if s.swap_type == SwapType.ABSORB)
 
         chain_swaps = 0  # Would calculate from chain swap records
 
@@ -177,7 +161,7 @@ class SwapMetricsCollector:
             counts = list(faculty_counts.values())
             mean = sum(counts) / len(counts)
             variance = sum((x - mean) ** 2 for x in counts) / len(counts)
-            std_dev = variance ** 0.5
+            std_dev = variance**0.5
 
             # Normalize to 0-1 scale (lower std_dev = higher fairness)
             fairness = max(0.0, 1.0 - (std_dev / mean)) if mean > 0 else 1.0

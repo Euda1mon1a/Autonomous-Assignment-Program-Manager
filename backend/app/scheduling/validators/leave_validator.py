@@ -24,18 +24,21 @@ logger = logging.getLogger(__name__)
 
 # Leave Type Constants
 BLOCKING_LEAVE_TYPES = {
-    'deployment', 'tdy', 'family_emergency', 'bereavement',
-    'emergency_leave', 'maternity_paternity', 'convalescent'
+    "deployment",
+    "tdy",
+    "family_emergency",
+    "bereavement",
+    "emergency_leave",
+    "maternity_paternity",
+    "convalescent",
 }
 
 CONDITIONAL_BLOCKING_LEAVE_TYPES = {
-    'medical': 7,  # Block if > 7 days
-    'sick': 3,     # Block if > 3 days
+    "medical": 7,  # Block if > 7 days
+    "sick": 3,  # Block if > 3 days
 }
 
-NON_BLOCKING_LEAVE_TYPES = {
-    'vacation', 'conference'
-}
+NON_BLOCKING_LEAVE_TYPES = {"vacation", "conference"}
 
 # Recovery periods
 POST_DEPLOYMENT_RECOVERY_DAYS = 7
@@ -88,7 +91,7 @@ class LeaveValidator:
         absence_type: str,
         start_date: date,
         end_date: date,
-        is_blocking_override: Optional[bool] = None,
+        is_blocking_override: bool | None = None,
     ) -> bool:
         """
         Determine if absence should block assignments.
@@ -137,8 +140,8 @@ class LeaveValidator:
         start_date: date,
         end_date: date,
         assigned_dates: list[date],
-        is_blocking: Optional[bool] = None,
-    ) -> Optional[LeaveViolation]:
+        is_blocking: bool | None = None,
+    ) -> LeaveViolation | None:
         """
         Validate that resident is not assigned during blocking absence.
 
@@ -161,10 +164,7 @@ class LeaveValidator:
             return None  # Non-blocking, no violation possible
 
         # Check for assignments during absence
-        conflict_dates = [
-            d for d in assigned_dates
-            if start_date <= d <= end_date
-        ]
+        conflict_dates = [d for d in assigned_dates if start_date <= d <= end_date]
 
         if not conflict_dates:
             return None  # No conflicts
@@ -191,8 +191,8 @@ class LeaveValidator:
         absence_id: UUID,
         start_date: date,
         end_date: date,
-        days_blocked: Optional[list[date]] = None,
-    ) -> Optional[LeaveViolation]:
+        days_blocked: list[date] | None = None,
+    ) -> LeaveViolation | None:
         """
         Validate sick leave compliance (duration-based blocking).
 
@@ -237,8 +237,8 @@ class LeaveValidator:
         absence_id: UUID,
         start_date: date,
         end_date: date,
-        recovery_status: Optional[str] = None,
-    ) -> Optional[LeaveViolation]:
+        recovery_status: str | None = None,
+    ) -> LeaveViolation | None:
         """
         Validate medical leave compliance (surgery/illness recovery).
 
@@ -253,7 +253,7 @@ class LeaveValidator:
             LeaveViolation if cleared to return before end_date, None otherwise
         """
         # If medically cleared before end_date, should reduce absence duration
-        if recovery_status == 'cleared':
+        if recovery_status == "cleared":
             return LeaveViolation(
                 person_id=person_id,
                 violation_type="assignment_during_block",
@@ -275,8 +275,8 @@ class LeaveValidator:
         start_date: date,
         end_date: date,
         deployment_orders: bool = False,
-        tdy_location: Optional[str] = None,
-    ) -> Optional[LeaveViolation]:
+        tdy_location: str | None = None,
+    ) -> LeaveViolation | None:
         """
         Validate TDY/Deployment absence (military-specific).
 
@@ -292,7 +292,7 @@ class LeaveValidator:
             LeaveViolation if missing required info, None otherwise
         """
         # TDY requires destination
-        if not tdy_location and 'tdy' in str(absence_id):
+        if not tdy_location and "tdy" in str(absence_id):
             return LeaveViolation(
                 person_id=person_id,
                 violation_type="assignment_during_block",
@@ -303,7 +303,7 @@ class LeaveValidator:
             )
 
         # Deployment should have orders
-        if not deployment_orders and 'deployment' in str(absence_id):
+        if not deployment_orders and "deployment" in str(absence_id):
             return LeaveViolation(
                 person_id=person_id,
                 violation_type="assignment_during_block",
@@ -320,7 +320,7 @@ class LeaveValidator:
         person_id: UUID,
         deployment_end_date: date,
         assignments_after_return: list[date],
-    ) -> Optional[LeaveViolation]:
+    ) -> LeaveViolation | None:
         """
         Validate post-deployment recovery period.
 
@@ -340,7 +340,8 @@ class LeaveValidator:
         )
 
         early_assignments = [
-            d for d in assignments_after_return
+            d
+            for d in assignments_after_return
             if deployment_end_date < d < recovery_end_date
         ]
 
@@ -354,7 +355,7 @@ class LeaveValidator:
                     f"{len(early_assignments)} assignments before "
                     f"recovery end {recovery_end_date}"
                 ),
-                absence_id=UUID('00000000-0000-0000-0000-000000000000'),
+                absence_id=UUID("00000000-0000-0000-0000-000000000000"),
                 conflict_dates=early_assignments,
             )
 
@@ -367,7 +368,7 @@ class LeaveValidator:
         return_date_tentative: bool,
         return_date: date,
         today: date,
-    ) -> Optional[LeaveWarning]:
+    ) -> LeaveWarning | None:
         """
         Check tentative return dates and flag for follow-up.
 
@@ -406,8 +407,8 @@ class LeaveValidator:
         absence_id: UUID,
         start_date: date,
         end_date: date,
-        procedure_type: Optional[str] = None,
-    ) -> Optional[LeaveWarning]:
+        procedure_type: str | None = None,
+    ) -> LeaveWarning | None:
         """
         Validate convalescent leave duration matches typical recovery.
 
@@ -425,11 +426,11 @@ class LeaveValidator:
 
         # Common minimum recovery times (in days)
         minimum_recovery = {
-            'appendectomy': 14,
-            'acl_repair': 42,
-            'childbirth_vaginal': 42,
-            'childbirth_csection': 56,
-            'hysterectomy': 42,
+            "appendectomy": 14,
+            "acl_repair": 42,
+            "childbirth_vaginal": 42,
+            "childbirth_csection": 56,
+            "hysterectomy": 42,
         }
 
         if procedure_type and procedure_type in minimum_recovery:
@@ -471,13 +472,13 @@ class LeaveValidator:
         non_blocking_days = 0
 
         for leave in leave_records:
-            start = leave.get('start_date')
-            end = leave.get('end_date')
+            start = leave.get("start_date")
+            end = leave.get("end_date")
             if not start or not end:
                 continue
 
             duration = (end - start).days + 1
-            if leave.get('is_blocking', False):
+            if leave.get("is_blocking", False):
                 blocking_days += duration
             else:
                 non_blocking_days += duration
@@ -487,14 +488,13 @@ class LeaveValidator:
         work_hours_limit = 80 * 4  # 80h/week × 4 weeks
 
         return {
-            'total_leave_days': total_leave_days,
-            'blocking_days': blocking_days,
-            'non_blocking_days': non_blocking_days,
-            'work_days_available': schedule_period_days - blocking_days,
-            'work_capacity_hours': work_capacity_hours,
-            'hours_limit': work_hours_limit,
-            'capacity_utilization': (
-                work_hours_limit / work_capacity_hours
-                if work_capacity_hours > 0 else 0
+            "total_leave_days": total_leave_days,
+            "blocking_days": blocking_days,
+            "non_blocking_days": non_blocking_days,
+            "work_days_available": schedule_period_days - blocking_days,
+            "work_capacity_hours": work_capacity_hours,
+            "hours_limit": work_hours_limit,
+            "capacity_utilization": (
+                work_hours_limit / work_capacity_hours if work_capacity_hours > 0 else 0
             ),
         }

@@ -18,7 +18,7 @@ console = Console()
 class APIClient:
     """HTTP client for backend API."""
 
-    def __init__(self, base_url: Optional[str] = None):
+    def __init__(self, base_url: str | None = None):
         """
         Initialize API client.
 
@@ -30,11 +30,11 @@ class APIClient:
         self.auth = AuthManager()
         self.timeout = 30.0
 
-    def _get_headers(self) -> Dict[str, str]:
+    def _get_headers(self) -> dict[str, str]:
         """Get request headers with authentication."""
         return self.auth.get_headers()
 
-    def get(self, endpoint: str, params: Optional[Dict] = None) -> Dict[str, Any]:
+    def get(self, endpoint: str, params: dict | None = None) -> dict[str, Any]:
         """
         Make GET request to API.
 
@@ -58,7 +58,9 @@ class APIClient:
             return response.json()
 
         except httpx.HTTPStatusError as e:
-            console.print(f"[red]HTTP Error {e.response.status_code}: {e.response.text}[/red]")
+            console.print(
+                f"[red]HTTP Error {e.response.status_code}: {e.response.text}[/red]"
+            )
             raise
         except httpx.RequestError as e:
             console.print(f"[red]Request Error: {str(e)}[/red]")
@@ -67,9 +69,9 @@ class APIClient:
     def post(
         self,
         endpoint: str,
-        data: Optional[Dict] = None,
-        json: Optional[Dict] = None,
-    ) -> Dict[str, Any]:
+        data: dict | None = None,
+        json: dict | None = None,
+    ) -> dict[str, Any]:
         """
         Make POST request to API.
 
@@ -95,13 +97,15 @@ class APIClient:
             return response.json()
 
         except httpx.HTTPStatusError as e:
-            console.print(f"[red]HTTP Error {e.response.status_code}: {e.response.text}[/red]")
+            console.print(
+                f"[red]HTTP Error {e.response.status_code}: {e.response.text}[/red]"
+            )
             raise
         except httpx.RequestError as e:
             console.print(f"[red]Request Error: {str(e)}[/red]")
             raise
 
-    def put(self, endpoint: str, json: Dict) -> Dict[str, Any]:
+    def put(self, endpoint: str, json: dict) -> dict[str, Any]:
         """
         Make PUT request to API.
 
@@ -125,7 +129,9 @@ class APIClient:
             return response.json()
 
         except httpx.HTTPStatusError as e:
-            console.print(f"[red]HTTP Error {e.response.status_code}: {e.response.text}[/red]")
+            console.print(
+                f"[red]HTTP Error {e.response.status_code}: {e.response.text}[/red]"
+            )
             raise
         except httpx.RequestError as e:
             console.print(f"[red]Request Error: {str(e)}[/red]")
@@ -149,7 +155,9 @@ class APIClient:
             response.raise_for_status()
 
         except httpx.HTTPStatusError as e:
-            console.print(f"[red]HTTP Error {e.response.status_code}: {e.response.text}[/red]")
+            console.print(
+                f"[red]HTTP Error {e.response.status_code}: {e.response.text}[/red]"
+            )
             raise
         except httpx.RequestError as e:
             console.print(f"[red]Request Error: {str(e)}[/red]")

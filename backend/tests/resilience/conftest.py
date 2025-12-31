@@ -11,6 +11,7 @@ import pytest
 @pytest.fixture
 def mock_assignments():
     """Create mock assignments for testing."""
+
     class MockAssignment:
         def __init__(self, person_id, rotation_template_id=None, block_id=0):
             self.person_id = person_id

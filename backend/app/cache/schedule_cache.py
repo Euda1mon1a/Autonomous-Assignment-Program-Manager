@@ -2,6 +2,7 @@
 
 Optimized caching for schedule data with intelligent invalidation.
 """
+
 import hashlib
 import json
 import logging
@@ -25,8 +26,8 @@ class ScheduleCache:
         self,
         start_date: date,
         end_date: date,
-        filters: Optional[dict] = None,
-    ) -> Optional[dict]:
+        filters: dict | None = None,
+    ) -> dict | None:
         """Get cached schedule for date range.
 
         Args:
@@ -45,8 +46,8 @@ class ScheduleCache:
         start_date: date,
         end_date: date,
         schedule_data: dict,
-        filters: Optional[dict] = None,
-        ttl: Optional[int] = None,
+        filters: dict | None = None,
+        ttl: int | None = None,
     ) -> None:
         """Cache schedule data.
 
@@ -65,7 +66,7 @@ class ScheduleCache:
         person_id: str,
         start_date: date,
         end_date: date,
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """Get cached schedule for a specific person.
 
         Args:
@@ -88,7 +89,7 @@ class ScheduleCache:
         start_date: date,
         end_date: date,
         schedule_data: dict,
-        ttl: Optional[int] = None,
+        ttl: int | None = None,
     ) -> None:
         """Cache person-specific schedule.
 
@@ -106,7 +107,7 @@ class ScheduleCache:
         self,
         rotation_id: str,
         target_date: date,
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """Get cached rotation coverage for a date.
 
         Args:
@@ -127,7 +128,7 @@ class ScheduleCache:
         rotation_id: str,
         target_date: date,
         coverage_data: dict,
-        ttl: Optional[int] = None,
+        ttl: int | None = None,
     ) -> None:
         """Cache rotation coverage data.
 
@@ -142,8 +143,8 @@ class ScheduleCache:
 
     async def invalidate_schedule(
         self,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
     ) -> int:
         """Invalidate schedule cache for date range.
 
@@ -176,7 +177,9 @@ class ScheduleCache:
         """
         pattern = f"person_schedule:{person_id}:*"
         count = await self.cache.invalidate_pattern(pattern)
-        logger.info(f"Invalidated {count} person schedule cache entries for {person_id}")
+        logger.info(
+            f"Invalidated {count} person schedule cache entries for {person_id}"
+        )
         return count
 
     async def invalidate_rotation_coverage(self, rotation_id: str) -> int:
@@ -255,7 +258,7 @@ class ScheduleCache:
         self,
         start_date: date,
         end_date: date,
-        filters: Optional[dict],
+        filters: dict | None,
     ) -> str:
         """Generate cache key for schedule query.
 
@@ -276,7 +279,7 @@ class ScheduleCache:
 
 
 # Global instance
-_schedule_cache: Optional[ScheduleCache] = None
+_schedule_cache: ScheduleCache | None = None
 
 
 def get_schedule_cache() -> ScheduleCache:

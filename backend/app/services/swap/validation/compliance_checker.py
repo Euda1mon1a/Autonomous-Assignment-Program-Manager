@@ -90,9 +90,7 @@ class ACGMEComplianceChecker:
             )
 
         if source_result["warnings"]:
-            warnings.extend(
-                [f"Source faculty: {w}" for w in source_result["warnings"]]
-            )
+            warnings.extend([f"Source faculty: {w}" for w in source_result["warnings"]])
 
         metrics["source_faculty"] = source_result["metrics"]
 
@@ -111,9 +109,7 @@ class ACGMEComplianceChecker:
             )
 
         if target_result["warnings"]:
-            warnings.extend(
-                [f"Target faculty: {w}" for w in target_result["warnings"]]
-            )
+            warnings.extend([f"Target faculty: {w}" for w in target_result["warnings"]])
 
         metrics["target_faculty"] = target_result["metrics"]
 
@@ -179,9 +175,7 @@ class ACGMEComplianceChecker:
         if removing_week and adding_week:
             # Remove assignments from removed week
             assignments = [
-                a
-                for a in assignments
-                if not self._is_in_week(a, removing_week)
+                a for a in assignments if not self._is_in_week(a, removing_week)
             ]
 
             # Would add assignments for new week

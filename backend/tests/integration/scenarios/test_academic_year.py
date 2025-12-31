@@ -18,7 +18,7 @@ class TestAcademicYearScenarios:
     ):
         """Test generating schedule for full academic year."""
         start_date = date(2024, 7, 1)  # July 1
-        end_date = date(2025, 6, 30)    # June 30
+        end_date = date(2025, 6, 30)  # June 30
 
         response = client.post(
             "/api/scheduler/generate",

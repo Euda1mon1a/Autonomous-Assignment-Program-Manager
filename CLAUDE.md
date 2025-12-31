@@ -1,6 +1,6 @@
 # CLAUDE.md - Project Guidelines for Autonomous Claude Work
 
-> **Last Updated:** 2025-12-29
+> **Last Updated:** 2025-12-31 (Session 37: Documentation Restructure)
 > **Purpose:** Guidelines for autonomous AI-assisted development on the Residency Scheduler project
 
 ---
@@ -1155,32 +1155,47 @@ When making changes, update relevant documentation:
 
 ## Getting Help
 
-### Documentation
+### Documentation Structure (Updated 2025-12-31)
 
+**For Humans:**
 - **README.md**: Project overview and quick start
-- **docs/**: Comprehensive documentation
-  - `docs/architecture/`: System design
+- **docs/**: Human-readable documentation
+  - `docs/user-guide/`: End-user guides
+  - `docs/admin-manual/`: Administrator manuals
+  - `docs/architecture/`: High-level system design
+  - `docs/development/`: Developer workflows
   - `docs/api/`: API reference
-  - `docs/user-guide/`: User documentation
-  - `docs/development/`: Development guides
-  - `docs/admin-manual/`: Administrator guides (includes AI Interface Guide)
 - **HUMAN_TODO.md**: Tasks requiring human action
 
-### AI-Specific Documentation
+**For AI Agents:**
+- **.claude/dontreadme/**: LLM-focused documentation (Session 37 restructure)
+  - `.claude/dontreadme/INDEX.md`: Master index (start here)
+  - `.claude/dontreadme/sessions/`: Session reports and completion summaries
+  - `.claude/dontreadme/reconnaissance/`: Exploration findings and recon reports
+  - `.claude/dontreadme/technical/`: Implementation deep dives
+  - `.claude/dontreadme/synthesis/`: Cross-session patterns, decisions, lessons learned
 
-- **[Agent Skills Reference](docs/development/AGENT_SKILLS.md)**: Complete guide to AI agent skills (12 skills)
-- **[AI Agent User Guide](docs/guides/AI_AGENT_USER_GUIDE.md)**: Skills, MCP tools, and Claude Code setup
-- **[AI Interface Guide](docs/admin-manual/ai-interface-guide.md)**: Web vs CLI comparison for clinician administrators
-- **[AI Rules of Engagement](docs/development/AI_RULES_OF_ENGAGEMENT.md)**: Complete rules with environment detection
-- **[CI/CD Troubleshooting](docs/development/CI_CD_TROUBLESHOOTING.md)**: Error codes, auto-fixes, and LLM failure patterns
-- **[Git Safe Sync Checklist](docs/development/CLAUDE_GIT_SAFE_SYNC_CHECKLIST.md)**: Daily sync procedures
+### AI Agent Quick Start
 
-### Technical Deep Dives
+**New Session Startup:**
+1. Read `.claude/dontreadme/INDEX.md` for orientation
+2. Review `.claude/dontreadme/synthesis/PATTERNS.md` for recurring patterns
+3. Check `.claude/dontreadme/synthesis/DECISIONS.md` for architectural constraints
+4. Dive into specific areas as needed
 
-- **[Solver Algorithm](docs/architecture/SOLVER_ALGORITHM.md)**: Comprehensive scheduling engine documentation (constraints, solvers, optimization)
-- **[MCP Placeholder Plan](docs/planning/MCP_PLACEHOLDER_IMPLEMENTATION_PLAN.md)**: Implementation roadmap for MCP tool integrations
-- **[Security Pattern Audit](docs/security/SECURITY_PATTERN_AUDIT.md)**: Security architecture review and OWASP compliance
-- **[Cross-Disciplinary Resilience](docs/architecture/cross-disciplinary-resilience.md)**: Resilience framework concepts (queuing theory, epidemiology, materials science)
+**Key AI Documentation:**
+- **[Agent Skills Reference](docs/development/AGENT_SKILLS.md)**: Complete guide to AI agent skills
+- **[AI Rules of Engagement](docs/development/AI_RULES_OF_ENGAGEMENT.md)**: Permission tiers, branching, guardrails
+- **[CI/CD Troubleshooting](docs/development/CI_CD_TROUBLESHOOTING.md)**: Error codes and auto-fixes
+- **[Patterns](.claude/dontreadme/synthesis/PATTERNS.md)**: Recurring implementation patterns
+- **[Decisions](.claude/dontreadme/synthesis/DECISIONS.md)**: Architectural decision record (ADR)
+- **[Lessons Learned](.claude/dontreadme/synthesis/LESSONS_LEARNED.md)**: Cross-session insights
+
+### Technical Deep Dives (Human-Readable)
+
+- **[Solver Algorithm](docs/architecture/SOLVER_ALGORITHM.md)**: Scheduling engine overview
+- **[Cross-Disciplinary Resilience](docs/architecture/cross-disciplinary-resilience.md)**: Resilience framework concepts
+- **[Security Pattern Audit](docs/security/SECURITY_PATTERN_AUDIT.md)**: Security architecture review
 
 ### Agent Skills (`.claude/skills/`)
 

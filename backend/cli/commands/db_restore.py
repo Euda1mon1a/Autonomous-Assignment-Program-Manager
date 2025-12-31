@@ -75,11 +75,16 @@ def from_file(
             # Direct restore
             cmd = [
                 "psql",
-                "-h", host,
-                "-p", port,
-                "-U", user,
-                "-d", database,
-                "-f", str(backup_file),
+                "-h",
+                host,
+                "-p",
+                port,
+                "-U",
+                user,
+                "-d",
+                database,
+                "-f",
+                str(backup_file),
             ]
             shell = False
 
@@ -168,7 +173,7 @@ def verify(
         else:
             # Basic SQL file check
             try:
-                with open(backup_file, "r") as f:
+                with open(backup_file) as f:
                     content = f.read(1000)  # Read first 1KB
 
                 if "PostgreSQL database dump" in content:

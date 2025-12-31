@@ -169,7 +169,9 @@ class PrometheusExporter(MetricExporter):
                 registry=self.registry,
             )
 
-            logger.debug(f"Pushed metrics to Prometheus Gateway: {self.push_gateway_url}")
+            logger.debug(
+                f"Pushed metrics to Prometheus Gateway: {self.push_gateway_url}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to push metrics to Prometheus: {e}")
@@ -330,7 +332,9 @@ class DatadogExporter(MetricExporter):
                     "metric": metric_name,
                     "points": [[timestamp, value]],
                     "type": "gauge",
-                    "tags": [f"instance:{self.config.metadata.get('instance_id', 'unknown')}"],
+                    "tags": [
+                        f"instance:{self.config.metadata.get('instance_id', 'unknown')}"
+                    ],
                 }
             )
 

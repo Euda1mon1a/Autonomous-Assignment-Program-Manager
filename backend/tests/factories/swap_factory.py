@@ -22,12 +22,12 @@ class SwapFactory:
         db: Session,
         source_faculty: Person,
         target_faculty: Person,
-        source_week: Optional[date] = None,
-        target_week: Optional[date] = None,
+        source_week: date | None = None,
+        target_week: date | None = None,
         swap_type: SwapType = SwapType.ONE_TO_ONE,
         status: SwapStatus = SwapStatus.PENDING,
-        reason: Optional[str] = None,
-        requested_by: Optional[User] = None,
+        reason: str | None = None,
+        requested_by: User | None = None,
     ) -> SwapRecord:
         """
         Create a swap request.
@@ -94,8 +94,8 @@ class SwapFactory:
         db: Session,
         source_faculty: Person,
         target_faculty: Person,
-        source_week: Optional[date] = None,
-        target_week: Optional[date] = None,
+        source_week: date | None = None,
+        target_week: date | None = None,
         status: SwapStatus = SwapStatus.PENDING,
     ) -> SwapRecord:
         """
@@ -128,7 +128,7 @@ class SwapFactory:
         db: Session,
         source_faculty: Person,
         target_faculty: Person,
-        source_week: Optional[date] = None,
+        source_week: date | None = None,
         status: SwapStatus = SwapStatus.PENDING,
     ) -> SwapRecord:
         """
@@ -160,7 +160,7 @@ class SwapFactory:
         db: Session,
         source_faculty: Person,
         target_faculty: Person,
-        approved_by: Optional[User] = None,
+        approved_by: User | None = None,
     ) -> SwapRecord:
         """
         Create an approved swap (ready for execution).
@@ -193,7 +193,7 @@ class SwapFactory:
         db: Session,
         source_faculty: Person,
         target_faculty: Person,
-        executed_by: Optional[User] = None,
+        executed_by: User | None = None,
     ) -> SwapRecord:
         """
         Create an executed swap (already completed).
@@ -257,7 +257,7 @@ class SwapFactory:
         source_faculty: Person,
         target_faculty: Person,
         rollback_reason: str = "Error detected in swap execution",
-        rolled_back_by: Optional[User] = None,
+        rolled_back_by: User | None = None,
     ) -> SwapRecord:
         """
         Create a rolled-back swap (executed then reversed).
@@ -290,7 +290,7 @@ class SwapFactory:
         db: Session,
         faculty: list[Person],
         num_swaps: int = 5,
-        swap_type: Optional[SwapType] = None,
+        swap_type: SwapType | None = None,
     ) -> list[SwapRecord]:
         """
         Create multiple swap requests between faculty.

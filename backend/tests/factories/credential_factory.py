@@ -29,7 +29,7 @@ class CredentialFactory:
     def create_certification_type(
         db: Session,
         name: str,
-        full_name: Optional[str] = None,
+        full_name: str | None = None,
         renewal_period_months: int = 24,
         required_for_residents: bool = True,
         required_for_faculty: bool = True,
@@ -66,10 +66,10 @@ class CredentialFactory:
         db: Session,
         person: Person,
         certification_type: CertificationType,
-        issued_date: Optional[date] = None,
-        expiration_date: Optional[date] = None,
+        issued_date: date | None = None,
+        expiration_date: date | None = None,
         status: str = "current",
-        certification_number: Optional[str] = None,
+        certification_number: str | None = None,
     ) -> PersonCertification:
         """
         Create a person certification.
@@ -95,7 +95,9 @@ class CredentialFactory:
             )
 
         if certification_number is None:
-            certification_number = fake.bothify(text="???-######", letters="ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+            certification_number = fake.bothify(
+                text="???-######", letters="ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            )
 
         person_cert = PersonCertification(
             id=uuid4(),
@@ -209,7 +211,9 @@ class CredentialFactory:
         )
 
     @staticmethod
-    def create_standard_certification_types(db: Session) -> dict[str, CertificationType]:
+    def create_standard_certification_types(
+        db: Session,
+    ) -> dict[str, CertificationType]:
         """
         Create all standard certification types (BLS, ACLS, PALS, etc.).
 
@@ -221,7 +225,10 @@ class CredentialFactory:
         """
         cert_types = {}
 
-        for name, (full_name, renewal_months) in CredentialFactory.STANDARD_CERTIFICATIONS.items():
+        for name, (
+            full_name,
+            renewal_months,
+        ) in CredentialFactory.STANDARD_CERTIFICATIONS.items():
             cert_type = CredentialFactory.create_certification_type(
                 db,
                 name=name,
@@ -236,7 +243,7 @@ class CredentialFactory:
     def certify_person_all_standard(
         db: Session,
         person: Person,
-        certification_types: Optional[dict[str, CertificationType]] = None,
+        certification_types: dict[str, CertificationType] | None = None,
     ) -> list[PersonCertification]:
         """
         Certify a person in all standard certifications (BLS, ACLS, PALS, NRP).
@@ -250,7 +257,9 @@ class CredentialFactory:
             list[PersonCertification]: List of person certifications
         """
         if certification_types is None:
-            certification_types = CredentialFactory.create_standard_certification_types(db)
+            certification_types = CredentialFactory.create_standard_certification_types(
+                db
+            )
 
         certifications = []
         for cert_type in certification_types.values():
@@ -265,7 +274,7 @@ class CredentialFactory:
     def create_mixed_status_certifications(
         db: Session,
         person: Person,
-        certification_types: Optional[dict[str, CertificationType]] = None,
+        certification_types: dict[str, CertificationType] | None = None,
     ) -> dict[str, PersonCertification]:
         """
         Create certifications with mixed statuses for testing.
@@ -285,7 +294,9 @@ class CredentialFactory:
             dict[str, PersonCertification]: Dictionary of certification name -> person cert
         """
         if certification_types is None:
-            certification_types = CredentialFactory.create_standard_certification_types(db)
+            certification_types = CredentialFactory.create_standard_certification_types(
+                db
+            )
 
         certifications = {}
 
@@ -296,17 +307,26 @@ class CredentialFactory:
 
         # ACLS: expiring in 30 days
         certifications["ACLS"] = CredentialFactory.create_expiring_soon_certification(
-            db, person=person, certification_type=certification_types["ACLS"], days_until_expiration=30
+            db,
+            person=person,
+            certification_type=certification_types["ACLS"],
+            days_until_expiration=30,
         )
 
         # PALS: expiring in 7 days
         certifications["PALS"] = CredentialFactory.create_expiring_soon_certification(
-            db, person=person, certification_type=certification_types["PALS"], days_until_expiration=7
+            db,
+            person=person,
+            certification_type=certification_types["PALS"],
+            days_until_expiration=7,
         )
 
         # NRP: expired 5 days ago
         certifications["NRP"] = CredentialFactory.create_expired_certification(
-            db, person=person, certification_type=certification_types["NRP"], days_expired=5
+            db,
+            person=person,
+            certification_type=certification_types["NRP"],
+            days_expired=5,
         )
 
         return certifications
@@ -316,7 +336,7 @@ class CredentialFactory:
         db: Session,
         persons: list[Person],
         certification_type: CertificationType,
-        status_distribution: Optional[dict[str, float]] = None,
+        status_distribution: dict[str, float] | None = None,
     ) -> list[PersonCertification]:
         """
         Create certifications for multiple people with status distribution.

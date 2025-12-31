@@ -110,7 +110,9 @@ api_router.include_router(
     prefix="/resilience/exotic",
     tags=["exotic-resilience"],
 )
-api_router.include_router(fatigue_risk.router)  # prefix="/fatigue-risk" defined in router
+api_router.include_router(
+    fatigue_risk.router
+)  # prefix="/fatigue-risk" defined in router
 api_router.include_router(
     game_theory.router, prefix="/game-theory", tags=["game-theory"]
 )

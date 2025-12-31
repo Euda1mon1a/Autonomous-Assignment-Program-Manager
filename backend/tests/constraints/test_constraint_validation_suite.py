@@ -691,7 +691,9 @@ class TestConstraintInteractions:
         from app.scheduling.constraints.equity import EquityConstraint
 
         # Use Coverage (which has penalty on empty) + Equity
-        manager.add(CoverageConstraint(weight=1000.0)).add(EquityConstraint(weight=10.0))
+        manager.add(CoverageConstraint(weight=1000.0)).add(
+            EquityConstraint(weight=10.0)
+        )
 
         context = create_basic_context()
 
@@ -717,7 +719,9 @@ class TestConstraintInteractions:
         assert result.penalty > 0
 
         # Validate individual constraints to check additive behavior
-        coverage_result = CoverageConstraint(weight=1000.0).validate(assignments, context)
+        coverage_result = CoverageConstraint(weight=1000.0).validate(
+            assignments, context
+        )
         equity_result = EquityConstraint(weight=10.0).validate(assignments, context)
 
         # Total penalty should be sum of individual penalties

@@ -21,9 +21,7 @@ class AssignmentPatterns:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def detect_patterns(
-        self, start_date: date, end_date: date
-    ) -> Dict[str, Any]:
+    async def detect_patterns(self, start_date: date, end_date: date) -> dict[str, Any]:
         """Detect assignment patterns."""
         # Most common assignment combinations
         combo_patterns = await self._find_common_combinations(start_date, end_date)
@@ -38,7 +36,7 @@ class AssignmentPatterns:
 
     async def _find_common_combinations(
         self, start_date: date, end_date: date, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Find most common person-rotation combinations."""
         query = (
             select(
@@ -64,7 +62,7 @@ class AssignmentPatterns:
 
     async def _find_consecutive_patterns(
         self, start_date: date, end_date: date
-    ) -> Dict[str, int]:
+    ) -> dict[str, int]:
         """Find consecutive assignment patterns."""
         # Simplified: count streaks
         return {"consecutive_days_worked": 0}  # Placeholder

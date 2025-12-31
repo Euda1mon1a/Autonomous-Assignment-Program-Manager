@@ -232,7 +232,11 @@ class NotificationQueueManager:
             notification = self._index[notification_id]
 
             # Find and remove from appropriate queue
-            for queue in [self._high_priority, self._normal_priority, self._low_priority]:
+            for queue in [
+                self._high_priority,
+                self._normal_priority,
+                self._low_priority,
+            ]:
                 if notification in queue:
                     queue.remove(notification)
                     break
@@ -291,10 +295,7 @@ class NotificationQueueManager:
 
             # Age statistics
             now = datetime.utcnow()
-            ages = [
-                (now - n.queued_at).total_seconds()
-                for n in self._index.values()
-            ]
+            ages = [(now - n.queued_at).total_seconds() for n in self._index.values()]
 
             return {
                 "total": len(self._index),

@@ -74,7 +74,10 @@ from .fmit import (
     PostFMITRecoveryConstraint,
     PostFMITSundayBlockingConstraint,
 )
-from .inpatient import FMITResidentClinicDayConstraint, ResidentInpatientHeadcountConstraint
+from .inpatient import (
+    FMITResidentClinicDayConstraint,
+    ResidentInpatientHeadcountConstraint,
+)
 
 # Overnight call constraints
 from .call_coverage import (

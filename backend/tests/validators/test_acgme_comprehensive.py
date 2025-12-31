@@ -167,8 +167,11 @@ class TestEightyHourWeeklyLimit:
     """Tests for the 80-hour weekly work limit."""
 
     def test_compliant_schedule_under_80_hours(
-        self, db: Session, validator: AdvancedACGMEValidator, pgy2_resident: Person,
-        clinic_rotation: RotationTemplate
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        pgy2_resident: Person,
+        clinic_rotation: RotationTemplate,
     ):
         """Test that a schedule with <80 hours per week is compliant."""
         start_date = date.today()
@@ -194,8 +197,11 @@ class TestEightyHourWeeklyLimit:
         assert len(violations) == 0
 
     def test_violation_exceeding_80_hours_single_week(
-        self, db: Session, validator: AdvancedACGMEValidator, pgy2_resident: Person,
-        call_rotation: RotationTemplate
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        pgy2_resident: Person,
+        call_rotation: RotationTemplate,
     ):
         """Test detection of 80-hour violation in a single week."""
         start_date = date.today()
@@ -217,8 +223,12 @@ class TestEightyHourWeeklyLimit:
         assert len(violations) > 0
 
     def test_rolling_4_week_average_calculation(
-        self, db: Session, validator: AdvancedACGMEValidator, pgy2_resident: Person,
-        call_rotation: RotationTemplate, clinic_rotation: RotationTemplate
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        pgy2_resident: Person,
+        call_rotation: RotationTemplate,
+        clinic_rotation: RotationTemplate,
     ):
         """Test that rolling 4-week average is calculated correctly."""
         start_date = date.today()
@@ -256,8 +266,11 @@ class TestEightyHourWeeklyLimit:
         # Should detect violations even if overall average is acceptable
 
     def test_boundary_exactly_80_hours(
-        self, db: Session, validator: AdvancedACGMEValidator, pgy2_resident: Person,
-        clinic_rotation: RotationTemplate
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        pgy2_resident: Person,
+        clinic_rotation: RotationTemplate,
     ):
         """Test boundary condition: exactly 80 hours should be compliant."""
         start_date = date.today()
@@ -290,8 +303,11 @@ class TestOneInSevenDayOff:
     """Tests for the 1-in-7 day off rule."""
 
     def test_compliant_schedule_with_weekly_days_off(
-        self, db: Session, validator: AdvancedACGMEValidator, pgy2_resident: Person,
-        clinic_rotation: RotationTemplate
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        pgy2_resident: Person,
+        clinic_rotation: RotationTemplate,
     ):
         """Test compliant schedule with at least one day off per week."""
         start_date = date.today()
@@ -316,8 +332,11 @@ class TestOneInSevenDayOff:
         assert len(violations) == 0
 
     def test_violation_no_day_off_in_8_days(
-        self, db: Session, validator: AdvancedACGMEValidator, pgy2_resident: Person,
-        call_rotation: RotationTemplate
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        pgy2_resident: Person,
+        call_rotation: RotationTemplate,
     ):
         """Test violation when no day off for 8+ consecutive days."""
         start_date = date.today()
@@ -341,8 +360,11 @@ class TestOneInSevenDayOff:
         assert len(violations) > 0
 
     def test_day_off_resets_counter(
-        self, db: Session, validator: AdvancedACGMEValidator, pgy2_resident: Person,
-        clinic_rotation: RotationTemplate
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        pgy2_resident: Person,
+        clinic_rotation: RotationTemplate,
     ):
         """Test that a day off resets the consecutive work day counter."""
         start_date = date.today()
@@ -382,8 +404,11 @@ class TestMaximumShiftLength:
     """Tests for maximum shift length rules."""
 
     def test_pgy1_16_hour_limit_compliant(
-        self, db: Session, validator: AdvancedACGMEValidator, pgy1_resident: Person,
-        clinic_rotation: RotationTemplate
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        pgy1_resident: Person,
+        clinic_rotation: RotationTemplate,
     ):
         """Test PGY-1 with shifts ≤16 hours is compliant."""
         start_date = date.today()
@@ -405,8 +430,11 @@ class TestMaximumShiftLength:
         assert len(violations) == 0
 
     def test_pgy1_exceeds_16_hour_limit(
-        self, db: Session, validator: AdvancedACGMEValidator, pgy1_resident: Person,
-        call_rotation: RotationTemplate
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        pgy1_resident: Person,
+        call_rotation: RotationTemplate,
     ):
         """Test PGY-1 violation when shift exceeds 16 hours."""
         start_date = date.today()
@@ -428,8 +456,11 @@ class TestMaximumShiftLength:
         assert len(violations) > 0
 
     def test_pgy2_24_plus_4_hour_limit_compliant(
-        self, db: Session, validator: AdvancedACGMEValidator, pgy2_resident: Person,
-        call_rotation: RotationTemplate
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        pgy2_resident: Person,
+        call_rotation: RotationTemplate,
     ):
         """Test PGY-2+ with 24+4 hour shift is compliant."""
         start_date = date.today()
@@ -452,8 +483,11 @@ class TestMaximumShiftLength:
         assert len(violations) == 0
 
     def test_pgy3_extended_shift_with_strategic_nap(
-        self, db: Session, validator: AdvancedACGMEValidator, pgy3_resident: Person,
-        call_rotation: RotationTemplate
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        pgy3_resident: Person,
+        call_rotation: RotationTemplate,
     ):
         """Test PGY-3 on extended call with strategic nap allowance."""
         start_date = date.today()
@@ -484,8 +518,11 @@ class TestNightFloatLimits:
     """Tests for night float rotation limits."""
 
     def test_compliant_night_float_under_6_consecutive(
-        self, db: Session, validator: AdvancedACGMEValidator, pgy2_resident: Person,
-        night_float_rotation: RotationTemplate
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        pgy2_resident: Person,
+        night_float_rotation: RotationTemplate,
     ):
         """Test compliant night float schedule with <6 consecutive nights."""
         start_date = date.today()
@@ -507,8 +544,11 @@ class TestNightFloatLimits:
         assert len(violations) == 0
 
     def test_violation_exceeds_6_consecutive_nights(
-        self, db: Session, validator: AdvancedACGMEValidator, pgy2_resident: Person,
-        night_float_rotation: RotationTemplate
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        pgy2_resident: Person,
+        night_float_rotation: RotationTemplate,
     ):
         """Test violation when exceeding 6 consecutive night float shifts."""
         start_date = date.today()
@@ -530,8 +570,11 @@ class TestNightFloatLimits:
         assert len(violations) > 0
 
     def test_night_float_reset_after_day_off(
-        self, db: Session, validator: AdvancedACGMEValidator, pgy2_resident: Person,
-        night_float_rotation: RotationTemplate
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        pgy2_resident: Person,
+        night_float_rotation: RotationTemplate,
     ):
         """Test that night float counter resets after a day off."""
         start_date = date.today()
@@ -584,8 +627,11 @@ class TestACGMEEdgeCases:
         assert len(violations) == 0  # No violations if no work
 
     def test_validation_across_month_boundary(
-        self, db: Session, validator: AdvancedACGMEValidator, pgy2_resident: Person,
-        clinic_rotation: RotationTemplate
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        pgy2_resident: Person,
+        clinic_rotation: RotationTemplate,
     ):
         """Test validation that spans month boundaries."""
         # Start on last day of month
@@ -611,8 +657,11 @@ class TestACGMEEdgeCases:
         # Should handle month transition correctly
 
     def test_leap_year_february_handling(
-        self, db: Session, validator: AdvancedACGMEValidator, pgy2_resident: Person,
-        clinic_rotation: RotationTemplate
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        pgy2_resident: Person,
+        clinic_rotation: RotationTemplate,
     ):
         """Test that leap year February (29 days) is handled correctly."""
         # Leap year February
@@ -634,9 +683,13 @@ class TestACGMEEdgeCases:
         # Should detect violations in 29-day February
 
     def test_multiple_residents_independent_validation(
-        self, db: Session, validator: AdvancedACGMEValidator,
-        pgy1_resident: Person, pgy2_resident: Person, pgy3_resident: Person,
-        call_rotation: RotationTemplate
+        self,
+        db: Session,
+        validator: AdvancedACGMEValidator,
+        pgy1_resident: Person,
+        pgy2_resident: Person,
+        pgy3_resident: Person,
+        call_rotation: RotationTemplate,
     ):
         """Test that violations for one resident don't affect others."""
         start_date = date.today()

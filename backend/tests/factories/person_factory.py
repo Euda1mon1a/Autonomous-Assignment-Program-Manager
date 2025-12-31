@@ -28,10 +28,10 @@ class PersonFactory:
     @staticmethod
     def create_resident(
         db: Session,
-        name: Optional[str] = None,
-        pgy_level: Optional[int] = None,
-        email: Optional[str] = None,
-        target_clinical_blocks: Optional[int] = None,
+        name: str | None = None,
+        pgy_level: int | None = None,
+        email: str | None = None,
+        target_clinical_blocks: int | None = None,
     ) -> Person:
         """
         Create a single resident.
@@ -75,11 +75,11 @@ class PersonFactory:
     @staticmethod
     def create_faculty(
         db: Session,
-        name: Optional[str] = None,
-        faculty_role: Optional[str] = None,
+        name: str | None = None,
+        faculty_role: str | None = None,
         performs_procedures: bool = False,
-        specialties: Optional[list[str]] = None,
-        email: Optional[str] = None,
+        specialties: list[str] | None = None,
+        email: str | None = None,
     ) -> Person:
         """
         Create a single faculty member.
@@ -134,9 +134,9 @@ class PersonFactory:
     @staticmethod
     def create_screener(
         db: Session,
-        name: Optional[str] = None,
-        screener_role: Optional[str] = None,
-        screening_efficiency: Optional[int] = None,
+        name: str | None = None,
+        screener_role: str | None = None,
+        screening_efficiency: int | None = None,
     ) -> Person:
         """
         Create a screener (can be resident or dedicated staff).
@@ -193,7 +193,7 @@ class PersonFactory:
         return screener
 
     @staticmethod
-    def create_program_director(db: Session, name: Optional[str] = None) -> Person:
+    def create_program_director(db: Session, name: str | None = None) -> Person:
         """Create a Program Director."""
         if name is None:
             name = f"Dr. {fake.first_name()} {fake.last_name()}"
@@ -212,9 +212,7 @@ class PersonFactory:
         return pd
 
     @staticmethod
-    def create_sports_medicine_faculty(
-        db: Session, name: Optional[str] = None
-    ) -> Person:
+    def create_sports_medicine_faculty(db: Session, name: str | None = None) -> Person:
         """Create a Sports Medicine faculty member."""
         if name is None:
             name = f"Dr. {fake.first_name()} {fake.last_name()}"
@@ -237,7 +235,7 @@ class PersonFactory:
     def create_batch_residents(
         db: Session,
         count: int = 10,
-        pgy_distribution: Optional[dict[int, int]] = None,
+        pgy_distribution: dict[int, int] | None = None,
     ) -> list[Person]:
         """
         Create multiple residents with controlled PGY distribution.
@@ -256,9 +254,7 @@ class PersonFactory:
         if pgy_distribution:
             for pgy_level, pgy_count in pgy_distribution.items():
                 for _ in range(pgy_count):
-                    resident = PersonFactory.create_resident(
-                        db, pgy_level=pgy_level
-                    )
+                    resident = PersonFactory.create_resident(db, pgy_level=pgy_level)
                     residents.append(resident)
         else:
             # Even distribution across PGY levels
@@ -319,7 +315,7 @@ class PersonFactory:
 
     @staticmethod
     def create_chief_resident(
-        db: Session, name: Optional[str] = None, pgy_level: int = 3
+        db: Session, name: str | None = None, pgy_level: int = 3
     ) -> Person:
         """
         Create a chief resident with reduced clinical load.
@@ -354,7 +350,7 @@ class PersonFactory:
 
     @staticmethod
     def create_research_resident(
-        db: Session, name: Optional[str] = None, pgy_level: int = 2
+        db: Session, name: str | None = None, pgy_level: int = 2
     ) -> Person:
         """
         Create a research track resident with minimal clinical load.

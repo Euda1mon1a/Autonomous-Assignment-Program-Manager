@@ -85,7 +85,9 @@ async def benchmark_concurrent_reads(
         pool_size=num_workers,
         max_overflow=num_workers * 2,
     )
-    AsyncSessionLocal = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
+    AsyncSessionLocal = sessionmaker(
+        async_engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     # Setup test data (using sync engine)
     sync_engine = create_engine(settings.DATABASE_URL)
@@ -201,7 +203,9 @@ async def benchmark_concurrent_writes(
         pool_size=num_workers,
         max_overflow=num_workers * 2,
     )
-    AsyncSessionLocal = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
+    AsyncSessionLocal = sessionmaker(
+        async_engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     # Setup test data
     sync_engine = create_engine(settings.DATABASE_URL)
@@ -337,9 +341,15 @@ def run_suite(verbose: bool = False):
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(description="Benchmark concurrent request performance")
-    parser.add_argument("--workers", type=int, default=20, help="Number of concurrent workers")
-    parser.add_argument("--duration", type=int, default=10, help="Test duration in seconds")
+    parser = argparse.ArgumentParser(
+        description="Benchmark concurrent request performance"
+    )
+    parser.add_argument(
+        "--workers", type=int, default=20, help="Number of concurrent workers"
+    )
+    parser.add_argument(
+        "--duration", type=int, default=10, help="Test duration in seconds"
+    )
     parser.add_argument(
         "--operation",
         type=str,

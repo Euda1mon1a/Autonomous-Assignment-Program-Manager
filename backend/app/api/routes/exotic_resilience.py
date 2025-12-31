@@ -49,6 +49,13 @@ from app.scheduling.periodicity import (
     calculate_schedule_rigidity,
 )
 
+# Import exotic frontier modules (Tier 5)
+from app.resilience.exotic import (
+    MetastabilityDetector,
+    SpinGlassModel,
+    CatastropheTheory,
+)
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -80,9 +87,7 @@ class EntropyMetricsResponse(BaseModel):
         ..., description="Entropy of rotation assignment distribution"
     )
     time_entropy: float = Field(..., description="Entropy of temporal distribution")
-    joint_entropy: float = Field(
-        ..., description="Joint entropy across all dimensions"
-    )
+    joint_entropy: float = Field(..., description="Joint entropy across all dimensions")
     mutual_information: float = Field(
         ..., description="Information shared between dimensions"
     )
@@ -99,9 +104,7 @@ class EntropyMetricsResponse(BaseModel):
     recommendations: list[str] = Field(
         default_factory=list, description="Optimization recommendations"
     )
-    computed_at: str = Field(
-        ..., description="Timestamp of analysis (ISO format)"
-    )
+    computed_at: str = Field(..., description="Timestamp of analysis (ISO format)")
     source: str = Field("backend", description="Data source")
 
 
@@ -109,9 +112,7 @@ class EntropyMetricsResponse(BaseModel):
 class PhaseTransitionRequest(BaseModel):
     """Request for phase transition detection."""
 
-    schedule_id: UUID | None = Field(
-        None, description="Schedule ID to analyze"
-    )
+    schedule_id: UUID | None = Field(None, description="Schedule ID to analyze")
     lookback_days: int = Field(
         30, ge=7, le=365, description="Days of history to analyze"
     )
@@ -145,9 +146,7 @@ class PhaseTransitionResponse(BaseModel):
     time_to_transition: float | None = Field(
         None, description="Estimated time until transition (hours)"
     )
-    confidence: float = Field(
-        ..., ge=0.0, le=1.0, description="Prediction confidence"
-    )
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Prediction confidence")
     recommendations: list[str] = Field(
         default_factory=list, description="Suggested interventions"
     )
@@ -174,9 +173,7 @@ class ImmuneAssessmentResponse(BaseModel):
     matching_detectors: int = Field(
         ..., description="Number of detectors that triggered"
     )
-    total_detectors: int = Field(
-        ..., description="Total number of active detectors"
-    )
+    total_detectors: int = Field(..., description="Total number of active detectors")
     closest_detector_distance: float = Field(
         ..., description="Distance to nearest detector"
     )
@@ -194,12 +191,8 @@ class ImmuneAssessmentResponse(BaseModel):
 class MemoryCellsResponse(BaseModel):
     """Memory cells status (past anomaly patterns)."""
 
-    total_memory_cells: int = Field(
-        ..., description="Total stored anomaly patterns"
-    )
-    recent_activations: int = Field(
-        ..., description="Activations in last 30 days"
-    )
+    total_memory_cells: int = Field(..., description="Total stored anomaly patterns")
+    recent_activations: int = Field(..., description="Activations in last 30 days")
     pattern_categories: dict[str, int] = Field(
         default_factory=dict, description="Count by pattern category"
     )
@@ -236,9 +229,7 @@ class AntibodyResponse(BaseModel):
 class AntibodyAnalysisResponse(BaseModel):
     """Antibody analysis results."""
 
-    total_antibodies: int = Field(
-        ..., description="Total available repair strategies"
-    )
+    total_antibodies: int = Field(..., description="Total available repair strategies")
     matching_antibodies: list[AntibodyResponse] = Field(
         default_factory=list, description="Best matching antibodies"
     )
@@ -255,9 +246,7 @@ class AntibodyAnalysisResponse(BaseModel):
 class RigidityRequest(BaseModel):
     """Request for schedule rigidity calculation."""
 
-    current_schedule_id: UUID | None = Field(
-        None, description="Current schedule ID"
-    )
+    current_schedule_id: UUID | None = Field(None, description="Current schedule ID")
     proposed_schedule_id: UUID | None = Field(
         None, description="Proposed schedule ID to compare"
     )
@@ -279,12 +268,8 @@ class RigidityResponse(BaseModel):
         le=1.0,
         description="Schedule rigidity (1.0 = no changes, 0.0 = complete overhaul)",
     )
-    changed_assignments: int = Field(
-        ..., description="Number of assignments changed"
-    )
-    total_assignments: int = Field(
-        ..., description="Total assignments compared"
-    )
+    changed_assignments: int = Field(..., description="Number of assignments changed")
+    total_assignments: int = Field(..., description="Total assignments compared")
     change_rate: float = Field(
         ..., ge=0.0, le=1.0, description="Fraction of assignments changed"
     )
@@ -320,9 +305,7 @@ class SubharmonicResponse(BaseModel):
     detected_periods: list[dict[str, Any]] = Field(
         default_factory=list, description="Detected periodic patterns"
     )
-    dominant_period_days: int | None = Field(
-        None, description="Most prominent period"
-    )
+    dominant_period_days: int | None = Field(None, description="Most prominent period")
     dominant_period_confidence: float = Field(
         0.0, description="Confidence in dominant period"
     )
@@ -342,20 +325,193 @@ class CheckpointResponse(BaseModel):
     total_checkpoints: int = Field(
         ..., description="Total checkpoints in schedule period"
     )
-    next_checkpoint: str | None = Field(
-        None, description="Next checkpoint timestamp"
-    )
-    last_checkpoint: str | None = Field(
-        None, description="Last checkpoint timestamp"
-    )
-    checkpoint_interval_days: int = Field(
-        7, description="Days between checkpoints"
-    )
+    next_checkpoint: str | None = Field(None, description="Next checkpoint timestamp")
+    last_checkpoint: str | None = Field(None, description="Last checkpoint timestamp")
+    checkpoint_interval_days: int = Field(7, description="Days between checkpoints")
     state_changes_since_last: int = Field(
         ..., description="Assignments changed since last checkpoint"
     )
     stability_since_last: float = Field(
         ..., ge=0.0, le=1.0, description="Stability score since last checkpoint"
+    )
+    source: str = Field("backend", description="Data source")
+
+
+# --- Exotic: Metastability Detection ---
+class MetastabilityRequest(BaseModel):
+    """Request for metastability detection."""
+
+    current_energy: float = Field(..., description="Current state energy level")
+    energy_landscape: list[float] = Field(
+        default_factory=list, description="Energies of nearby states"
+    )
+    barrier_samples: list[float] = Field(
+        default_factory=list, description="Energy barriers to nearby states"
+    )
+    temperature: float = Field(1.0, ge=0.1, le=10.0, description="System temperature")
+
+
+class MetastabilityResponse(BaseModel):
+    """Metastability analysis results."""
+
+    energy: float = Field(..., description="Current energy level")
+    barrier_height: float = Field(
+        ..., description="Energy barrier to nearest stable state"
+    )
+    escape_rate: float = Field(
+        ..., description="Probability of spontaneous escape per time unit"
+    )
+    lifetime: float = Field(..., description="Expected lifetime in current state")
+    is_metastable: bool = Field(..., description="True if trapped in local minimum")
+    stability_score: float = Field(
+        ..., ge=0.0, le=1.0, description="Stability score (0-1)"
+    )
+    nearest_stable_state: float | None = Field(
+        None, description="Energy of nearest true minimum"
+    )
+    risk_level: str = Field(
+        ..., description="Risk level: low, moderate, high, critical"
+    )
+    recommendations: list[str] = Field(
+        default_factory=list, description="Recommendations"
+    )
+    source: str = Field("backend", description="Data source")
+
+
+class ReorganizationRiskRequest(BaseModel):
+    """Request for reorganization risk prediction."""
+
+    current_stability: float = Field(
+        ..., ge=0.0, le=1.0, description="Current stability score"
+    )
+    external_perturbation: float = Field(
+        ..., ge=0.0, description="Magnitude of external stress"
+    )
+    system_temperature: float = Field(
+        1.0, ge=0.1, le=10.0, description="System agitation level"
+    )
+
+
+class ReorganizationRiskResponse(BaseModel):
+    """Reorganization risk assessment."""
+
+    risk_level: str = Field(
+        ..., description="Risk level: low, moderate, high, critical"
+    )
+    risk_score: float = Field(..., ge=0.0, le=1.0, description="Risk score (0-1)")
+    interpretation: str = Field(..., description="Human-readable interpretation")
+    effective_barrier: float = Field(..., description="Effective energy barrier")
+    estimated_time_to_reorganization: float = Field(
+        ..., description="Estimated time units until reorganization"
+    )
+    recommendations: list[str] = Field(
+        default_factory=list, description="Recommendations"
+    )
+    source: str = Field("backend", description="Data source")
+
+
+# --- Exotic: Spin Glass Model ---
+class SpinGlassRequest(BaseModel):
+    """Request for spin glass replica generation."""
+
+    num_spins: int = Field(
+        100, ge=10, le=1000, description="Number of binary variables"
+    )
+    num_replicas: int = Field(
+        5, ge=1, le=20, description="Number of diverse replicas to generate"
+    )
+    temperature: float = Field(
+        1.0, ge=0.1, le=10.0, description="System temperature for sampling"
+    )
+    frustration_level: float = Field(
+        0.3, ge=0.0, le=1.0, description="Degree of conflicting constraints"
+    )
+    num_iterations: int = Field(
+        1000, ge=100, le=10000, description="Monte Carlo iterations per replica"
+    )
+
+
+class SpinConfigurationResponse(BaseModel):
+    """A single spin glass configuration."""
+
+    energy: float = Field(..., description="Schedule quality (lower = better)")
+    frustration: float = Field(
+        ..., ge=0.0, le=1.0, description="Degree of constraint conflict"
+    )
+    magnetization: float = Field(
+        ..., description="Overall bias (should be ~0 for balanced)"
+    )
+    overlap: float = Field(
+        ..., ge=-1.0, le=1.0, description="Overlap with reference configuration"
+    )
+
+
+class SpinGlassResponse(BaseModel):
+    """Spin glass ensemble results."""
+
+    configurations: list[SpinConfigurationResponse] = Field(
+        default_factory=list, description="Generated schedule replicas"
+    )
+    mean_energy: float = Field(..., description="Average energy across replicas")
+    energy_std: float = Field(..., description="Energy standard deviation")
+    mean_overlap: float = Field(..., description="Average pairwise overlap")
+    diversity_score: float = Field(
+        ..., ge=0.0, le=1.0, description="Diversity score (1 - mean_overlap)"
+    )
+    landscape_ruggedness: float = Field(
+        ..., ge=0.0, le=1.0, description="Energy landscape ruggedness"
+    )
+    difficulty: str = Field(
+        ..., description="Optimization difficulty: easy, moderate, hard, very_hard"
+    )
+    source: str = Field("backend", description="Data source")
+
+
+# --- Exotic: Catastrophe Theory ---
+class CatastropheRequest(BaseModel):
+    """Request for catastrophe prediction."""
+
+    current_a: float = Field(..., description="Current asymmetry parameter")
+    current_b: float = Field(..., description="Current bias parameter")
+    da: float = Field(..., description="Change in asymmetry")
+    db: float = Field(..., description="Change in bias")
+    num_steps: int = Field(
+        100, ge=10, le=1000, description="Number of simulation steps"
+    )
+
+
+class CatastrophePointResponse(BaseModel):
+    """Detected catastrophe point."""
+
+    a_critical: float = Field(..., description="Critical asymmetry value")
+    b_critical: float = Field(..., description="Critical bias value")
+    x_before: float = Field(..., description="State before jump")
+    x_after: float = Field(..., description="State after jump")
+    jump_magnitude: float = Field(..., description="Size of discontinuous jump")
+    hysteresis_width: float = Field(..., description="Width of hysteresis region")
+
+
+class CatastropheResponse(BaseModel):
+    """Catastrophe theory analysis results."""
+
+    catastrophe_detected: bool = Field(
+        ..., description="Whether catastrophe is predicted"
+    )
+    catastrophe_point: CatastrophePointResponse | None = Field(
+        None, description="Detected catastrophe point"
+    )
+    resilience_score: float = Field(..., ge=0.0, le=1.0, description="Resilience score")
+    status: str = Field(..., description="Status: robust, stable, vulnerable, critical")
+    is_safe: bool = Field(..., description="Whether system is safe from catastrophe")
+    distance_to_catastrophe: float = Field(
+        ..., description="Distance to catastrophe boundary"
+    )
+    current_distance_to_bifurcation: float = Field(
+        ..., description="Current distance to bifurcation set"
+    )
+    warning: str = Field(..., description="Warning message")
+    recommendations: list[str] = Field(
+        default_factory=list, description="Recommendations"
     )
     source: str = Field("backend", description="Data source")
 
@@ -555,11 +711,15 @@ async def assess_immune_response(
         antibody_result = immune.select_antibody(schedule_state)
         if antibody_result:
             name, antibody = antibody_result
-            repairs.append({
-                "name": name,
-                "description": antibody.description,
-                "affinity": antibody.get_affinity(immune.extract_features(schedule_state)),
-            })
+            repairs.append(
+                {
+                    "name": name,
+                    "description": antibody.description,
+                    "affinity": antibody.get_affinity(
+                        immune.extract_features(schedule_state)
+                    ),
+                }
+            )
 
     # Determine immune health based on detector coverage
     total_detectors = immune.detector_count
@@ -597,7 +757,10 @@ async def get_memory_cells(
     return MemoryCellsResponse(
         total_memory_cells=len(immune.detectors),
         recent_activations=stats.get("anomalies_detected", 0),
-        pattern_categories={"detectors": len(immune.detectors), "antibodies": len(immune.antibodies)},
+        pattern_categories={
+            "detectors": len(immune.detectors),
+            "antibodies": len(immune.antibodies),
+        },
         oldest_pattern_age_days=0,  # No memory persistence in current implementation
         memory_utilization=len(immune.detectors) / max(immune.detector_count, 1),
         source="backend",
@@ -629,6 +792,7 @@ async def analyze_antibodies(
 
     if request.anomaly_signature:
         import numpy as np
+
         feature_array = np.array(request.anomaly_signature)
 
         # Rank antibodies by affinity
@@ -639,7 +803,7 @@ async def analyze_antibodies(
                 ranked.append((name, antibody, affinity))
 
         ranked.sort(key=lambda x: x[2], reverse=True)
-        ranked = ranked[:request.top_k]
+        ranked = ranked[: request.top_k]
 
         matching = [
             AntibodyResponse(
@@ -816,8 +980,12 @@ async def get_stroboscopic_checkpoints(
 
     return CheckpointResponse(
         total_checkpoints=status.total_checkpoints,
-        next_checkpoint=status.next_checkpoint.isoformat() if status.next_checkpoint else None,
-        last_checkpoint=status.last_checkpoint.isoformat() if status.last_checkpoint else None,
+        next_checkpoint=status.next_checkpoint.isoformat()
+        if status.next_checkpoint
+        else None,
+        last_checkpoint=status.last_checkpoint.isoformat()
+        if status.last_checkpoint
+        else None,
         checkpoint_interval_days=status.interval_days,
         state_changes_since_last=status.changes_since_last,
         stability_since_last=status.stability_score,
@@ -893,9 +1061,15 @@ def _extract_schedule_features(assignments: list) -> list[float]:
 
     # Simple feature extraction
     total = len(assignments)
-    unique_faculty = len(set(a.person_id for a in assignments if hasattr(a, "person_id")))
+    unique_faculty = len(
+        set(a.person_id for a in assignments if hasattr(a, "person_id"))
+    )
     unique_rotations = len(
-        set(a.rotation_template_id for a in assignments if hasattr(a, "rotation_template_id") and a.rotation_template_id)
+        set(
+            a.rotation_template_id
+            for a in assignments
+            if hasattr(a, "rotation_template_id") and a.rotation_template_id
+        )
     )
 
     # Normalize features
@@ -905,7 +1079,11 @@ def _extract_schedule_features(assignments: list) -> list[float]:
         unique_rotations / 10.0,  # Normalized rotation count
         unique_faculty / max(total, 1),  # Faculty utilization
         unique_rotations / max(total, 1),  # Rotation diversity
-        0.0, 0.0, 0.0, 0.0, 0.0,  # Placeholder features
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,  # Placeholder features
     ]
 
 
@@ -972,3 +1150,272 @@ def _grade_stability(rigidity: float) -> str:
         return "poor"
     else:
         return "unstable"
+
+
+# =============================================================================
+# Exotic Frontier Endpoints (Tier 5)
+# =============================================================================
+
+
+@router.post("/exotic/metastability", response_model=MetastabilityResponse)
+async def analyze_metastability(
+    request: MetastabilityRequest,
+    db: AsyncSession = Depends(get_async_db),
+) -> MetastabilityResponse:
+    """
+    Detect metastable states using statistical mechanics.
+
+    Metastability occurs when a system is trapped in a local energy minimum
+    (locally optimal but globally suboptimal). Uses Kramers escape rate theory
+    to predict spontaneous transitions to more stable states.
+
+    Applications:
+    - Solver trapped in suboptimal schedule
+    - Organization stuck in inefficient pattern
+    - Risk of sudden reorganization (morale collapse, mass resignations)
+    """
+    logger.info(f"Analyzing metastability: {request}")
+
+    # Initialize detector
+    detector = MetastabilityDetector(temperature=request.temperature)
+
+    # Analyze current state
+    state = detector.analyze_state(
+        current_energy=request.current_energy,
+        energy_landscape=request.energy_landscape,
+        barrier_samples=request.barrier_samples,
+    )
+
+    # Determine risk level
+    if state.is_metastable:
+        if state.barrier_height < 0.5:
+            risk_level = "critical"
+        elif state.barrier_height < 1.0:
+            risk_level = "high"
+        elif state.barrier_height < 2.0:
+            risk_level = "moderate"
+        else:
+            risk_level = "low"
+    else:
+        risk_level = "low"
+
+    # Generate recommendations
+    recommendations = []
+    if state.is_metastable:
+        recommendations.append(
+            f"System trapped in local minimum (barrier height: {state.barrier_height:.2f})"
+        )
+        if state.nearest_stable_state:
+            recommendations.append(
+                f"More stable state exists at energy {state.nearest_stable_state:.2f}"
+            )
+        if state.escape_rate > 0.1:
+            recommendations.append(
+                f"High escape probability: {state.escape_rate:.3f} per time unit"
+            )
+            recommendations.append(
+                "Consider proactive reorganization before spontaneous transition"
+            )
+        else:
+            recommendations.append(
+                "Barrier is high - system relatively stable in current state"
+            )
+    else:
+        recommendations.append(
+            "No metastability detected - system in stable configuration"
+        )
+
+    return MetastabilityResponse(
+        energy=state.energy,
+        barrier_height=state.barrier_height,
+        escape_rate=state.escape_rate,
+        lifetime=state.lifetime,
+        is_metastable=state.is_metastable,
+        stability_score=state.stability_score,
+        nearest_stable_state=state.nearest_stable_state,
+        risk_level=risk_level,
+        recommendations=recommendations,
+        source="backend",
+    )
+
+
+@router.post("/exotic/reorganization-risk", response_model=ReorganizationRiskResponse)
+async def predict_reorganization_risk(
+    request: ReorganizationRiskRequest,
+    db: AsyncSession = Depends(get_async_db),
+) -> ReorganizationRiskResponse:
+    """
+    Predict risk of sudden system reorganization.
+
+    Uses metastability theory to assess whether external perturbations
+    could trigger sudden transitions (e.g., mass resignations, strikes,
+    morale collapse).
+    """
+    logger.info(f"Predicting reorganization risk: {request}")
+
+    # Initialize detector
+    detector = MetastabilityDetector(temperature=request.system_temperature)
+
+    # Assess risk
+    result = detector.predict_reorganization_risk(
+        current_stability=request.current_stability,
+        external_perturbation=request.external_perturbation,
+        system_temperature=request.system_temperature,
+    )
+
+    return ReorganizationRiskResponse(
+        risk_level=result["risk_level"],
+        risk_score=result["risk_score"],
+        interpretation=result["interpretation"],
+        effective_barrier=result["effective_barrier"],
+        estimated_time_to_reorganization=result["estimated_time_to_reorganization"],
+        recommendations=result["recommendations"],
+        source="backend",
+    )
+
+
+@router.post("/exotic/spin-glass", response_model=SpinGlassResponse)
+async def generate_spin_glass_replicas(
+    request: SpinGlassRequest,
+    db: AsyncSession = Depends(get_async_db),
+) -> SpinGlassResponse:
+    """
+    Generate diverse schedule replicas using spin glass model.
+
+    Spin glass physics models frustrated systems where constraints conflict.
+    Generates multiple equally-good but different schedules for:
+    - Ensemble averaging (robustness)
+    - Exploring solution space diversity
+    - Understanding constraint frustration
+
+    Uses Edwards-Anderson spin glass model with simulated annealing.
+    """
+    logger.info(f"Generating spin glass replicas: {request}")
+
+    # Initialize spin glass model
+    model = SpinGlassModel(
+        num_spins=request.num_spins,
+        temperature=request.temperature,
+        frustration_level=request.frustration_level,
+    )
+
+    # Generate replica ensemble
+    ensemble = model.generate_replica_ensemble(
+        num_replicas=request.num_replicas,
+        num_iterations=request.num_iterations,
+    )
+
+    # Assess landscape ruggedness
+    ruggedness_info = model.assess_landscape_ruggedness(num_samples=100)
+
+    # Convert configurations to response format
+    config_responses = [
+        SpinConfigurationResponse(
+            energy=config.energy,
+            frustration=config.frustration,
+            magnetization=config.magnetization,
+            overlap=config.overlap,
+        )
+        for config in ensemble.configurations
+    ]
+
+    return SpinGlassResponse(
+        configurations=config_responses,
+        mean_energy=ensemble.mean_energy,
+        energy_std=ensemble.energy_std,
+        mean_overlap=ensemble.mean_overlap,
+        diversity_score=ensemble.diversity_score,
+        landscape_ruggedness=ruggedness_info["ruggedness_score"],
+        difficulty=ruggedness_info["difficulty"],
+        source="backend",
+    )
+
+
+@router.post("/exotic/catastrophe", response_model=CatastropheResponse)
+async def predict_catastrophe(
+    request: CatastropheRequest,
+    db: AsyncSession = Depends(get_async_db),
+) -> CatastropheResponse:
+    """
+    Predict sudden system failures using catastrophe theory.
+
+    Catastrophe theory (René Thom, 1972) studies how smooth parameter changes
+    can cause sudden discontinuous transitions. Uses cusp catastrophe model
+    to identify tipping points.
+
+    Applications:
+    - Predict sudden morale collapses from gradual stress accumulation
+    - Identify bifurcation points where behavior changes qualitatively
+    - Model hysteresis (forward/backward paths differ)
+
+    Parameters:
+    - a: Asymmetry factor (splitting parameter)
+    - b: Bias factor (normal parameter)
+    """
+    logger.info(f"Predicting catastrophe: {request}")
+
+    # Initialize catastrophe theory model
+    model = CatastropheTheory()
+
+    # Predict catastrophe jump
+    catastrophe_point = model.predict_catastrophe_jump(
+        current_a=request.current_a,
+        current_b=request.current_b,
+        da=request.da,
+        db=request.db,
+        num_steps=request.num_steps,
+    )
+
+    # Calculate resilience from catastrophe
+    resilience = model.calculate_resilience_from_catastrophe(
+        current_state=(request.current_a, request.current_b, 0.0),
+        stress_direction=(request.da, request.db),
+    )
+
+    # Convert catastrophe point to response format
+    catastrophe_point_response = None
+    if catastrophe_point:
+        catastrophe_point_response = CatastrophePointResponse(
+            a_critical=catastrophe_point.a_critical,
+            b_critical=catastrophe_point.b_critical,
+            x_before=catastrophe_point.x_before,
+            x_after=catastrophe_point.x_after,
+            jump_magnitude=catastrophe_point.jump_magnitude,
+            hysteresis_width=catastrophe_point.hysteresis_width,
+        )
+
+    # Generate recommendations based on status
+    recommendations = []
+    if resilience["status"] == "critical":
+        recommendations.extend(
+            [
+                "URGENT: System approaching catastrophe boundary",
+                "Reduce stress parameters immediately",
+                "Prepare for potential sudden transition",
+            ]
+        )
+    elif resilience["status"] == "vulnerable":
+        recommendations.extend(
+            [
+                "System vulnerable to catastrophic transition",
+                "Monitor stress parameters closely",
+                "Plan contingency responses",
+            ]
+        )
+    elif resilience["status"] == "stable":
+        recommendations.append("System stable, continue monitoring")
+    else:
+        recommendations.append("System robust, low catastrophe risk")
+
+    return CatastropheResponse(
+        catastrophe_detected=catastrophe_point is not None,
+        catastrophe_point=catastrophe_point_response,
+        resilience_score=resilience["resilience_score"],
+        status=resilience["status"],
+        is_safe=resilience["is_safe"],
+        distance_to_catastrophe=resilience["distance_to_catastrophe"],
+        current_distance_to_bifurcation=resilience["current_distance_to_bifurcation"],
+        warning=resilience["warning"],
+        recommendations=recommendations,
+        source="backend",
+    )

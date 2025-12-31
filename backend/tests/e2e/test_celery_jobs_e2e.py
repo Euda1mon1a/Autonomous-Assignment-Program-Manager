@@ -498,7 +498,10 @@ class TestCeleryQueueManagementE2E:
         assert active_tasks is not None
         assert "worker1" in active_tasks
         assert len(active_tasks["worker1"]) == 1
-        assert active_tasks["worker1"][0]["name"] == "app.resilience.tasks.periodic_health_check"
+        assert (
+            active_tasks["worker1"][0]["name"]
+            == "app.resilience.tasks.periodic_health_check"
+        )
 
 
 @pytest.mark.e2e
@@ -670,9 +673,7 @@ class TestCeleryTaskTypesE2E:
         mock_get_db.return_value = db
 
         try:
-            result = generate_utilization_forecast.apply(
-                kwargs={"days_ahead": 14}
-            )
+            result = generate_utilization_forecast.apply(kwargs={"days_ahead": 14})
 
             if result.successful():
                 data = result.result
@@ -817,17 +818,21 @@ class TestCeleryMonitoringE2E:
 
         def mock_get(key):
             results = {
-                b"celery-task-meta-task-1": json.dumps({
-                    "status": "SUCCESS",
-                    "task_name": "app.resilience.tasks.periodic_health_check",
-                    "date_done": completed_time,
-                }),
-                b"celery-task-meta-task-2": json.dumps({
-                    "status": "FAILURE",
-                    "task_name": "app.resilience.tasks.run_contingency_analysis",
-                    "date_done": completed_time,
-                    "result": {"exc_message": "Test error"},
-                }),
+                b"celery-task-meta-task-1": json.dumps(
+                    {
+                        "status": "SUCCESS",
+                        "task_name": "app.resilience.tasks.periodic_health_check",
+                        "date_done": completed_time,
+                    }
+                ),
+                b"celery-task-meta-task-2": json.dumps(
+                    {
+                        "status": "FAILURE",
+                        "task_name": "app.resilience.tasks.run_contingency_analysis",
+                        "date_done": completed_time,
+                        "result": {"exc_message": "Test error"},
+                    }
+                ),
             }
             return results.get(key)
 

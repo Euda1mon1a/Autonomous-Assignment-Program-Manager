@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 class TestAPIClient:
     """Test API client with convenience methods."""
 
-    def __init__(self, client: TestClient, auth_headers: Optional[dict] = None):
+    def __init__(self, client: TestClient, auth_headers: dict | None = None):
         """
         Initialize test API client.
 
@@ -80,7 +80,7 @@ class TestAPIClient:
         self,
         response: Any,
         expected_status: int = 200,
-        expected_keys: Optional[list[str]] = None,
+        expected_keys: list[str] | None = None,
     ) -> Any:
         """
         Check response status and structure.

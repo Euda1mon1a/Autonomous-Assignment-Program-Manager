@@ -24,10 +24,7 @@ class MultiSortParams(BaseModel):
     """Multiple field sorting parameters."""
 
     sorts: list[SortParams] = Field(
-        ...,
-        description="List of sort parameters",
-        min_length=1,
-        max_length=5
+        ..., description="List of sort parameters", min_length=1, max_length=5
     )
 
     @field_validator("sorts")
@@ -52,7 +49,9 @@ class PersonSortField(str, Enum):
 class PersonSort(BaseModel):
     """Sort parameters for Person queries."""
 
-    sort_by: PersonSortField = Field(PersonSortField.NAME, description="Field to sort by")
+    sort_by: PersonSortField = Field(
+        PersonSortField.NAME, description="Field to sort by"
+    )
     sort_order: SortOrder = Field(SortOrder.ASC, description="Sort order")
 
 
@@ -68,7 +67,9 @@ class AssignmentSortField(str, Enum):
 class AssignmentSort(BaseModel):
     """Sort parameters for Assignment queries."""
 
-    sort_by: AssignmentSortField = Field(AssignmentSortField.DATE, description="Field to sort by")
+    sort_by: AssignmentSortField = Field(
+        AssignmentSortField.DATE, description="Field to sort by"
+    )
     sort_order: SortOrder = Field(SortOrder.ASC, description="Sort order")
 
 
@@ -98,5 +99,7 @@ class SwapSortField(str, Enum):
 class SwapSort(BaseModel):
     """Sort parameters for Swap queries."""
 
-    sort_by: SwapSortField = Field(SwapSortField.CREATED_AT, description="Field to sort by")
+    sort_by: SwapSortField = Field(
+        SwapSortField.CREATED_AT, description="Field to sort by"
+    )
     sort_order: SortOrder = Field(SortOrder.DESC, description="Sort order")

@@ -16,7 +16,10 @@ class TestUserCommands:
         result = cli_runner.invoke(app, ["whoami"])
 
         assert result.exit_code == 0
-        assert "not logged in" in result.stdout.lower() or "logged in as" in result.stdout.lower()
+        assert (
+            "not logged in" in result.stdout.lower()
+            or "logged in as" in result.stdout.lower()
+        )
 
     def test_login_command_exists(self, cli_runner):
         """Test login command exists."""
@@ -37,6 +40,7 @@ class TestUserCreateCommands:
 
     def test_create_resident(self, cli_runner, monkeypatch):
         """Test create resident command."""
+
         class MockAPI:
             def post(self, endpoint, json=None):
                 return {"id": "user123", "email": json.get("email")}
@@ -54,6 +58,7 @@ class TestUserCreateCommands:
 
     def test_create_faculty(self, cli_runner, monkeypatch):
         """Test create faculty command."""
+
         class MockAPI:
             def post(self, endpoint, json=None):
                 return {"id": "fac123", "email": json.get("email")}
@@ -75,6 +80,7 @@ class TestUserListCommands:
 
     def test_list_all_users(self, cli_runner, monkeypatch):
         """Test list all users."""
+
         class MockAPI:
             def get(self, endpoint, params=None):
                 return {
@@ -100,6 +106,7 @@ class TestUserListCommands:
 
     def test_list_residents(self, cli_runner, monkeypatch):
         """Test list residents."""
+
         class MockAPI:
             def get(self, endpoint, params=None):
                 return {"users": []}
@@ -118,6 +125,7 @@ class TestUserUpdateCommands:
 
     def test_update_role(self, cli_runner, monkeypatch):
         """Test update user role."""
+
         class MockAPI:
             def put(self, endpoint, json=None):
                 return {"status": "success"}
@@ -136,6 +144,7 @@ class TestUserUpdateCommands:
 
     def test_activate_user(self, cli_runner, monkeypatch):
         """Test activate user."""
+
         class MockAPI:
             def put(self, endpoint, json=None):
                 return {"status": "success"}

@@ -56,28 +56,33 @@ def run_quick_benchmarks(verbose: bool = False):
 
     # Quick schedule generation (1 size, 1 iteration)
     print("Running quick schedule generation benchmark...")
-    results.append(benchmark_schedule_generation(
-        num_residents=25,
-        num_weeks=2,
-        iterations=1,
-        verbose=verbose,
-    ))
+    results.append(
+        benchmark_schedule_generation(
+            num_residents=25,
+            num_weeks=2,
+            iterations=1,
+            verbose=verbose,
+        )
+    )
     print()
 
     # Quick ACGME validation (1 size, 3 iterations)
     print("Running quick ACGME validation benchmark...")
-    results.append(benchmark_acgme_validation(
-        num_residents=25,
-        num_weeks=2,
-        validation_type="full",
-        iterations=3,
-        verbose=verbose,
-    ))
+    results.append(
+        benchmark_acgme_validation(
+            num_residents=25,
+            num_weeks=2,
+            validation_type="full",
+            iterations=3,
+            verbose=verbose,
+        )
+    )
     print()
 
     # Quick startup benchmark
     print("Running quick startup benchmark...")
     from benchmarks.startup_time_bench import benchmark_config_loading
+
     results.append(benchmark_config_loading(iterations=10, verbose=verbose))
     print()
 

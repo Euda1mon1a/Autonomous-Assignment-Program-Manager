@@ -743,7 +743,9 @@ class TestConnectionManagerE2E:
             pytest.skip("Authentication not available")
 
         # Get stats endpoint
-        response = client.get("/ws/stats", headers={"Authorization": f"Bearer {access_token}"})
+        response = client.get(
+            "/ws/stats", headers={"Authorization": f"Bearer {access_token}"}
+        )
 
         if response.status_code == 200:
             stats = response.json()

@@ -75,9 +75,7 @@ async def validate_rotation_eligibility(
     # Procedure requirements
     if rotation_type in ["surgery", "ob_gyn", "procedures"]:
         if person.type == "resident" and not person.performs_procedures:
-            reasons.append(
-                f"{rotation_type} rotation requires procedural credentials"
-            )
+            reasons.append(f"{rotation_type} rotation requires procedural credentials")
 
     return {
         "is_eligible": len(reasons) == 0,
@@ -191,8 +189,12 @@ async def validate_call_equity(
     all_residents = result.scalars().all()
 
     # Calculate averages
-    avg_sunday_calls = sum(r.sunday_call_count for r in all_residents) / len(all_residents)
-    avg_weekday_calls = sum(r.weekday_call_count for r in all_residents) / len(all_residents)
+    avg_sunday_calls = sum(r.sunday_call_count for r in all_residents) / len(
+        all_residents
+    )
+    avg_weekday_calls = sum(r.weekday_call_count for r in all_residents) / len(
+        all_residents
+    )
 
     issues = []
 
@@ -328,7 +330,9 @@ async def check_rotation_eligibility(
     Returns:
         bool: True if eligible, False otherwise
     """
-    result = await validate_rotation_eligibility(db, person_id, rotation_type, check_date)
+    result = await validate_rotation_eligibility(
+        db, person_id, rotation_type, check_date
+    )
     return result["is_eligible"]
 
 

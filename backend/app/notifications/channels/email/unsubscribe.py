@@ -132,7 +132,9 @@ class UnsubscribeManager:
 
         return False
 
-    def resubscribe(self, email: str, notification_types: list[str] | None = None) -> bool:
+    def resubscribe(
+        self, email: str, notification_types: list[str] | None = None
+    ) -> bool:
         """
         Resubscribe a recipient.
 
@@ -162,7 +164,9 @@ class UnsubscribeManager:
     def get_statistics(self) -> dict[str, Any]:
         """Get unsubscribe statistics."""
         total = len(self._unsubscribes)
-        all_types = sum(1 for r in self._unsubscribes.values() if not r.notification_types)
+        all_types = sum(
+            1 for r in self._unsubscribes.values() if not r.notification_types
+        )
         partial = total - all_types
 
         return {

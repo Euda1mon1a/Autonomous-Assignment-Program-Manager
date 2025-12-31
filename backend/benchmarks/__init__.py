@@ -60,10 +60,10 @@ class BenchmarkResult:
     min_duration: float
     max_duration: float
     std_deviation: float
-    throughput: Optional[float] = None  # Operations per second
-    memory_mb: Optional[float] = None
-    peak_memory_mb: Optional[float] = None
-    metadata: Optional[dict[str, Any]] = None
+    throughput: float | None = None  # Operations per second
+    memory_mb: float | None = None
+    peak_memory_mb: float | None = None
+    metadata: dict[str, Any] | None = None
 
     def to_json(self) -> str:
         """Convert result to JSON string."""
@@ -72,7 +72,9 @@ class BenchmarkResult:
     def save(self, output_dir: Path):
         """Save result to file."""
         output_dir.mkdir(parents=True, exist_ok=True)
-        filename = f"{self.benchmark_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        filename = (
+            f"{self.benchmark_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
         filepath = output_dir / filename
         filepath.write_text(self.to_json())
         print(f"Saved benchmark result to {filepath}")

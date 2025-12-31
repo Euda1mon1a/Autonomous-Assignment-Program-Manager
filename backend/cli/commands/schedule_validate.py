@@ -18,7 +18,9 @@ console = Console()
 def block(
     block_number: int = typer.Argument(..., help="Block number to validate"),
     year: int = typer.Option(2024, "--year", "-y", help="Academic year"),
-    detailed: bool = typer.Option(False, "--detailed", "-d", help="Show detailed violations"),
+    detailed: bool = typer.Option(
+        False, "--detailed", "-d", help="Show detailed violations"
+    ),
 ):
     """
     Validate schedule for a block.

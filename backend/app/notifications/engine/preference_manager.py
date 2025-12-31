@@ -236,10 +236,7 @@ class PreferenceManager:
 
     async def _is_in_quiet_hours(self, preferences: UserPreferences) -> bool:
         """Check if current time is within quiet hours."""
-        if (
-            preferences.quiet_hours_start is None
-            or preferences.quiet_hours_end is None
-        ):
+        if preferences.quiet_hours_start is None or preferences.quiet_hours_end is None:
             return False
 
         # Get current hour in user's timezone
@@ -311,9 +308,9 @@ class PreferenceManager:
             if quiet_hours_end is not None:
                 record.quiet_hours_end = quiet_hours_end
             if digest_enabled is not None:
-                setattr(record, "digest_enabled", digest_enabled)
+                record.digest_enabled = digest_enabled
             if digest_frequency is not None:
-                setattr(record, "digest_frequency", digest_frequency)
+                record.digest_frequency = digest_frequency
 
             record.updated_at = datetime.utcnow()
         else:

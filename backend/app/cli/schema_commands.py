@@ -64,7 +64,9 @@ def create(message: str, autogenerate: bool) -> None:
         click.echo("✓ Migration created successfully")
 
         if autogenerate:
-            click.echo("\nWARNING: Review the generated migration file before applying!")
+            click.echo(
+                "\nWARNING: Review the generated migration file before applying!"
+            )
             click.echo("Autogenerate is not perfect and may miss some changes.")
 
     except Exception as e:
@@ -155,9 +157,7 @@ def downgrade(revision: str, sql: bool) -> None:
         click.echo(f"Downgrading database to: {revision}")
 
         if not sql:
-            if not click.confirm(
-                "WARNING: Downgrading may cause data loss. Continue?"
-            ):
+            if not click.confirm("WARNING: Downgrading may cause data loss. Continue?"):
                 click.echo("Aborted")
                 return
 

@@ -19,7 +19,7 @@ class RealtimeStats:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_stats(self) -> Dict[str, Any]:
+    async def get_stats(self) -> dict[str, Any]:
         """Get real-time statistics."""
         today_stats = await self._get_today_stats()
         active_counts = await self._get_active_counts()
@@ -32,14 +32,12 @@ class RealtimeStats:
             "timestamp": datetime.utcnow().isoformat(),
         }
 
-    async def _get_today_stats(self) -> Dict[str, Any]:
+    async def _get_today_stats(self) -> dict[str, Any]:
         """Get today's statistics."""
         today = date.today()
 
         assignments_result = await self.db.execute(
-            select(func.count(Assignment.id))
-            .join(Block)
-            .where(Block.date == today)
+            select(func.count(Assignment.id)).join(Block).where(Block.date == today)
         )
         today_assignments = assignments_result.scalar() or 0
 
@@ -48,7 +46,7 @@ class RealtimeStats:
             "assignments": today_assignments,
         }
 
-    async def _get_active_counts(self) -> Dict[str, int]:
+    async def _get_active_counts(self) -> dict[str, int]:
         """Get active entity counts."""
         person_result = await self.db.execute(select(func.count(Person.id)))
         total_persons = person_result.scalar() or 0
@@ -69,13 +67,11 @@ class RealtimeStats:
             "faculty": total_faculty,
         }
 
-    async def _get_recent_activity(self) -> Dict[str, int]:
+    async def _get_recent_activity(self) -> dict[str, int]:
         """Get recent activity counts."""
         # Recent swaps
         recent_swaps_result = await self.db.execute(
-            select(func.count(SwapRequest.id)).where(
-                SwapRequest.status == "pending"
-            )
+            select(func.count(SwapRequest.id)).where(SwapRequest.status == "pending")
         )
         pending_swaps = recent_swaps_result.scalar() or 0
 

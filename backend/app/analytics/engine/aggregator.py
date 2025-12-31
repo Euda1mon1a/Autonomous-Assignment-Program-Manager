@@ -43,8 +43,8 @@ class DataAggregator:
         self,
         start_date: date,
         end_date: date,
-        person_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        person_id: str | None = None,
+    ) -> dict[str, Any]:
         """
         Get workload distribution statistics.
 
@@ -87,32 +87,36 @@ class DataAggregator:
         distribution = []
         for row in workload_data:
             estimated_hours = row.assignment_count * 4  # 4 hours per half-day
-            distribution.append({
-                "person_id": str(row.id),
-                "person_name": row.name,
-                "person_type": row.type,
-                "pgy_level": row.pgy_level,
-                "assignment_count": row.assignment_count,
-                "estimated_hours": estimated_hours,
-            })
+            distribution.append(
+                {
+                    "person_id": str(row.id),
+                    "person_name": row.name,
+                    "person_type": row.type,
+                    "pgy_level": row.pgy_level,
+                    "assignment_count": row.assignment_count,
+                    "estimated_hours": estimated_hours,
+                }
+            )
 
         return {
             "distribution": distribution,
             "stats": {
-                "mean": sum(assignment_counts) / len(assignment_counts) if assignment_counts else 0,
+                "mean": sum(assignment_counts) / len(assignment_counts)
+                if assignment_counts
+                else 0,
                 "min": min(assignment_counts) if assignment_counts else 0,
                 "max": max(assignment_counts) if assignment_counts else 0,
                 "total": sum(assignment_counts),
                 "person_count": len(assignment_counts),
-            }
+            },
         }
 
     async def get_rotation_history(
         self,
         start_date: date,
         end_date: date,
-        person_id: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        person_id: str | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Get rotation assignment history.
 
@@ -148,14 +152,18 @@ class DataAggregator:
         history = []
         for assignment in assignments:
             if assignment.block:
-                history.append({
-                    "date": assignment.block.date.isoformat(),
-                    "person_id": str(assignment.person_id),
-                    "person_name": assignment.person.name if assignment.person else "Unknown",
-                    "rotation": assignment.activity_name,
-                    "role": assignment.role,
-                    "block_session": assignment.block.session,
-                })
+                history.append(
+                    {
+                        "date": assignment.block.date.isoformat(),
+                        "person_id": str(assignment.person_id),
+                        "person_name": assignment.person.name
+                        if assignment.person
+                        else "Unknown",
+                        "rotation": assignment.activity_name,
+                        "role": assignment.role,
+                        "block_session": assignment.block.session,
+                    }
+                )
 
         return history
 
@@ -163,7 +171,7 @@ class DataAggregator:
         self,
         start_date: date,
         end_date: date,
-    ) -> Dict[str, Dict[str, Any]]:
+    ) -> dict[str, dict[str, Any]]:
         """
         Aggregate assignments by rotation type.
 
@@ -179,7 +187,11 @@ class DataAggregator:
                 RotationTemplate.name,
                 func.count(Assignment.id).label("count"),
             )
-            .join(Assignment, RotationTemplate.id == Assignment.rotation_template_id, isouter=True)
+            .join(
+                Assignment,
+                RotationTemplate.id == Assignment.rotation_template_id,
+                isouter=True,
+            )
             .join(Block, Assignment.block_id == Block.id)
             .where(
                 and_(
@@ -244,10 +256,12 @@ class DataAggregator:
         daily_data = result.all()
 
         # Convert to DataFrame
-        df = pd.DataFrame([
-            {"date": row.date, "assignment_count": row.assignment_count}
-            for row in daily_data
-        ])
+        df = pd.DataFrame(
+            [
+                {"date": row.date, "assignment_count": row.assignment_count}
+                for row in daily_data
+            ]
+        )
 
         if df.empty:
             return df
@@ -268,7 +282,7 @@ class DataAggregator:
         start_date: date,
         end_date: date,
         threshold: float = 0.5,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Find coverage gaps (blocks with low assignment rates).
 
@@ -307,13 +321,15 @@ class DataAggregator:
         for row in daily_data:
             coverage_rate = row.assignment_count / total_capacity
             if coverage_rate < threshold:
-                gaps.append({
-                    "date": row.date.isoformat(),
-                    "coverage_rate": round(coverage_rate, 3),
-                    "assignments": row.assignment_count,
-                    "capacity": total_capacity,
-                    "gap_size": total_capacity - row.assignment_count,
-                })
+                gaps.append(
+                    {
+                        "date": row.date.isoformat(),
+                        "coverage_rate": round(coverage_rate, 3),
+                        "assignments": row.assignment_count,
+                        "capacity": total_capacity,
+                        "gap_size": total_capacity - row.assignment_count,
+                    }
+                )
 
         return gaps
 
@@ -322,7 +338,7 @@ class DataAggregator:
         person_id: str,
         start_date: date,
         end_date: date,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get rotation summary for a specific person.
 
@@ -357,11 +373,15 @@ class DataAggregator:
         rotations = []
         total_blocks = 0
         for row in rotation_data:
-            rotations.append({
-                "rotation": row.name,
-                "blocks": row.count,
-                "weeks": round(row.count / 4, 2),  # 4 blocks per week (AM/PM * 2.5 days)
-            })
+            rotations.append(
+                {
+                    "rotation": row.name,
+                    "blocks": row.count,
+                    "weeks": round(
+                        row.count / 4, 2
+                    ),  # 4 blocks per week (AM/PM * 2.5 days)
+                }
+            )
             total_blocks += row.count
 
         return {

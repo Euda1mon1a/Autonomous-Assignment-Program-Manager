@@ -45,7 +45,9 @@ from app.services.xlsx_import import (
 def create_clinic_schedule_xlsx(
     providers: list[str],
     dates: list[date],
-    schedule_data: dict[str, dict[date, tuple[str, str]]],  # provider -> date -> (AM, PM)
+    schedule_data: dict[
+        str, dict[date, tuple[str, str]]
+    ],  # provider -> date -> (AM, PM)
 ) -> bytes:
     """
     Create a test clinic schedule Excel file.

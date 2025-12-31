@@ -123,7 +123,9 @@ async def validate_80_hour_rule(
                     "period_end": period_end.isoformat(),
                     "average_hours": round(average_weekly_hours, 1),
                     "max_hours": MAX_HOURS_PER_WEEK,
-                    "violation_hours": round(average_weekly_hours - MAX_HOURS_PER_WEEK, 1),
+                    "violation_hours": round(
+                        average_weekly_hours - MAX_HOURS_PER_WEEK, 1
+                    ),
                     "message": f"{person.name}: {average_weekly_hours:.1f} hours/week "
                     f"exceeds {MAX_HOURS_PER_WEEK}-hour limit "
                     f"({period_start} to {period_end})",
@@ -274,9 +276,7 @@ async def validate_supervision_ratio(
 
     # Get all assignments for this block
     result = await db.execute(
-        select(Assignment)
-        .join(Person)
-        .where(Assignment.block_id == block_id)
+        select(Assignment).join(Person).where(Assignment.block_id == block_id)
     )
     assignments = result.scalars().all()
 
@@ -296,7 +296,9 @@ async def validate_supervision_ratio(
                 supervising_faculty_count += 1
 
     # Calculate required faculty
-    required_for_pgy1 = (pgy1_count + PGY1_SUPERVISION_RATIO - 1) // PGY1_SUPERVISION_RATIO
+    required_for_pgy1 = (
+        pgy1_count + PGY1_SUPERVISION_RATIO - 1
+    ) // PGY1_SUPERVISION_RATIO
     required_for_pgy23 = (
         pgy23_count + PGY23_SUPERVISION_RATIO - 1
     ) // PGY23_SUPERVISION_RATIO
@@ -411,7 +413,9 @@ async def validate_acgme_compliance(
     all_violations.extend(violations_80hr)
 
     # 1-in-7 rule
-    violations_1in7 = await validate_one_in_seven_rule(db, person_id, start_date, end_date)
+    violations_1in7 = await validate_one_in_seven_rule(
+        db, person_id, start_date, end_date
+    )
     all_violations.extend(violations_1in7)
 
     # Check each date for 24+4 rule
@@ -474,7 +478,9 @@ async def validate_assignment_acgme_compliance(
     check_start = block.date - timedelta(days=6)
     check_end = block.date + timedelta(days=6)
 
-    violations_1in7 = await validate_one_in_seven_rule(db, person_id, check_start, check_end)
+    violations_1in7 = await validate_one_in_seven_rule(
+        db, person_id, check_start, check_end
+    )
     violations.extend(violations_1in7)
 
     # Check 80-hour rule for 4-week period around this date

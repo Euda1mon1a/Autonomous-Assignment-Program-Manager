@@ -20,14 +20,14 @@ class LeaveFactory:
     def create_absence(
         db: Session,
         person: Person,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
         absence_type: str = "vacation",
-        is_blocking: Optional[bool] = None,
+        is_blocking: bool | None = None,
         deployment_orders: bool = False,
-        tdy_location: Optional[str] = None,
-        replacement_activity: Optional[str] = None,
-        notes: Optional[str] = None,
+        tdy_location: str | None = None,
+        replacement_activity: str | None = None,
+        notes: str | None = None,
         return_date_tentative: bool = False,
     ) -> Absence:
         """
@@ -71,7 +71,9 @@ class LeaveFactory:
             end_date = start_date + timedelta(days=days - 1)
 
         if absence_type not in ABSENCE_TYPES:
-            raise ValueError(f"Invalid absence_type: {absence_type}. Must be one of {list(ABSENCE_TYPES.keys())}")
+            raise ValueError(
+                f"Invalid absence_type: {absence_type}. Must be one of {list(ABSENCE_TYPES.keys())}"
+            )
 
         absence = Absence(
             id=uuid4(),
@@ -95,7 +97,7 @@ class LeaveFactory:
     def create_vacation(
         db: Session,
         person: Person,
-        start_date: Optional[date] = None,
+        start_date: date | None = None,
         days: int = 7,
     ) -> Absence:
         """
@@ -129,7 +131,7 @@ class LeaveFactory:
     def create_deployment(
         db: Session,
         person: Person,
-        start_date: Optional[date] = None,
+        start_date: date | None = None,
         days: int = 180,
         deployment_location: str = "Undisclosed",
     ) -> Absence:
@@ -167,7 +169,7 @@ class LeaveFactory:
     def create_tdy(
         db: Session,
         person: Person,
-        start_date: Optional[date] = None,
+        start_date: date | None = None,
         days: int = 14,
         location: str = "CONUS",
     ) -> Absence:
@@ -205,7 +207,7 @@ class LeaveFactory:
     def create_medical_leave(
         db: Session,
         person: Person,
-        start_date: Optional[date] = None,
+        start_date: date | None = None,
         days: int = 10,
     ) -> Absence:
         """
@@ -242,7 +244,7 @@ class LeaveFactory:
     def create_family_emergency(
         db: Session,
         person: Person,
-        start_date: Optional[date] = None,
+        start_date: date | None = None,
         return_date_known: bool = False,
     ) -> Absence:
         """
@@ -278,9 +280,9 @@ class LeaveFactory:
     def create_conference(
         db: Session,
         person: Person,
-        start_date: Optional[date] = None,
+        start_date: date | None = None,
         days: int = 3,
-        conference_name: Optional[str] = None,
+        conference_name: str | None = None,
     ) -> Absence:
         """
         Create a conference absence.
@@ -318,7 +320,7 @@ class LeaveFactory:
     def create_maternity_paternity_leave(
         db: Session,
         person: Person,
-        start_date: Optional[date] = None,
+        start_date: date | None = None,
         days: int = 84,
     ) -> Absence:
         """
@@ -352,7 +354,7 @@ class LeaveFactory:
     def create_overlapping_absences(
         db: Session,
         persons: list[Person],
-        start_date: Optional[date] = None,
+        start_date: date | None = None,
         days: int = 7,
     ) -> list[Absence]:
         """
@@ -383,7 +385,7 @@ class LeaveFactory:
     def create_batch_absences(
         db: Session,
         persons: list[Person],
-        absence_type: Optional[str] = None,
+        absence_type: str | None = None,
         count_per_person: int = 1,
     ) -> list[Absence]:
         """

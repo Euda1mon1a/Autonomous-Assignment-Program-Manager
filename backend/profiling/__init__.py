@@ -41,7 +41,7 @@ class ProfilerContext:
     def __init__(self, name: str = "profile"):
         self.name = name
         self.profiler = cProfile.Profile()
-        self.stats: Optional[pstats.Stats] = None
+        self.stats: pstats.Stats | None = None
 
     def __enter__(self):
         """Start profiling."""
@@ -89,7 +89,7 @@ class ProfilerContext:
 
 
 @contextmanager
-def profile_block(name: str = "code_block", save_dir: Optional[Path] = None):
+def profile_block(name: str = "code_block", save_dir: Path | None = None):
     """
     Context manager for profiling a code block.
 
@@ -180,7 +180,7 @@ def compare_profiles(baseline_file: Path, current_file: Path):
     current_stats = pstats.Stats(str(current_file))
 
     print(f"\n{'=' * 80}")
-    print(f"PROFILE COMPARISON")
+    print("PROFILE COMPARISON")
     print(f"Baseline: {baseline_file.name}")
     print(f"Current:  {current_file.name}")
     print(f"{'=' * 80}\n")

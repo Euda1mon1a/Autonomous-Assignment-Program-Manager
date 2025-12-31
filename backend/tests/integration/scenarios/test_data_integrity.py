@@ -33,9 +33,11 @@ class TestDataIntegrityScenarios:
         # Should prevent or cascade properly
         if response.status_code in [200, 204]:
             # Verify assignments handled
-            assignment_check = db.query(Assignment).filter(
-                Assignment.id == sample_assignment.id
-            ).first()
+            assignment_check = (
+                db.query(Assignment)
+                .filter(Assignment.id == sample_assignment.id)
+                .first()
+            )
             # Should be deleted or orphaned properly
 
     def test_unique_constraint_scenario(
@@ -120,9 +122,9 @@ class TestDataIntegrityScenarios:
 
         if response.status_code in [200, 204]:
             # Verify no orphaned assignments
-            orphaned = db.query(Assignment).filter(
-                Assignment.block_id == block.id
-            ).first()
+            orphaned = (
+                db.query(Assignment).filter(Assignment.block_id == block.id).first()
+            )
             assert orphaned is None
 
     def test_audit_trail_scenario(

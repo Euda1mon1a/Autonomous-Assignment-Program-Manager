@@ -75,9 +75,9 @@ def faculty_pool(db: Session) -> list[Person]:
     for i in range(5):
         person = Person(
             id=uuid4(),
-            name=f"Dr. Faculty {i+1}",
+            name=f"Dr. Faculty {i + 1}",
             type="faculty",
-            email=f"faculty{i+1}@test.org",
+            email=f"faculty{i + 1}@test.org",
             performs_procedures=(i < 3),  # First 3 can do procedures
         )
         db.add(person)
@@ -96,9 +96,9 @@ def resident_pool(db: Session) -> list[Person]:
         for i in range(2):
             resident = Person(
                 id=uuid4(),
-                name=f"Dr. PGY{pgy}-{i+1}",
+                name=f"Dr. PGY{pgy}-{i + 1}",
                 type="resident",
-                email=f"pgy{pgy}.{i+1}@test.org",
+                email=f"pgy{pgy}.{i + 1}@test.org",
                 pgy_level=pgy,
             )
             db.add(resident)
@@ -110,8 +110,11 @@ def resident_pool(db: Session) -> list[Person]:
 
 
 def create_heavy_schedule(
-    db: Session, persons: list[Person], rotation: RotationTemplate,
-    start_date: date, days: int
+    db: Session,
+    persons: list[Person],
+    rotation: RotationTemplate,
+    start_date: date,
+    days: int,
 ) -> list[Assignment]:
     """Create heavy schedule approaching 80% utilization."""
     assignments = []
@@ -152,8 +155,11 @@ class TestDefenseLevelTransitions:
     """Tests for defense level escalation and de-escalation."""
 
     def test_green_to_yellow_transition_on_threshold(
-        self, db: Session, defense_manager: DefenseLevelManager,
-        faculty_pool: list[Person], sample_rotation_template: RotationTemplate
+        self,
+        db: Session,
+        defense_manager: DefenseLevelManager,
+        faculty_pool: list[Person],
+        sample_rotation_template: RotationTemplate,
     ):
         """Test transition from GREEN to YELLOW when utilization exceeds 60%."""
         start_date = date.today()
@@ -186,8 +192,11 @@ class TestDefenseLevelTransitions:
         assert current_level >= DefenseLevel.YELLOW
 
     def test_yellow_to_orange_on_80_percent_utilization(
-        self, db: Session, defense_manager: DefenseLevelManager,
-        faculty_pool: list[Person], sample_rotation_template: RotationTemplate
+        self,
+        db: Session,
+        defense_manager: DefenseLevelManager,
+        faculty_pool: list[Person],
+        sample_rotation_template: RotationTemplate,
     ):
         """Test transition to ORANGE when utilization hits 80%."""
         start_date = date.today()
@@ -197,8 +206,11 @@ class TestDefenseLevelTransitions:
         assert current_level >= DefenseLevel.ORANGE
 
     def test_orange_to_red_on_n_minus_1_failure(
-        self, db: Session, defense_manager: DefenseLevelManager,
-        faculty_pool: list[Person], sample_rotation_template: RotationTemplate
+        self,
+        db: Session,
+        defense_manager: DefenseLevelManager,
+        faculty_pool: list[Person],
+        sample_rotation_template: RotationTemplate,
     ):
         """Test transition to RED when N-1 contingency fails."""
         start_date = date.today()
@@ -232,8 +244,11 @@ class TestDefenseLevelTransitions:
         assert current_level >= DefenseLevel.ORANGE
 
     def test_de_escalation_when_utilization_drops(
-        self, db: Session, defense_manager: DefenseLevelManager,
-        faculty_pool: list[Person], sample_rotation_template: RotationTemplate
+        self,
+        db: Session,
+        defense_manager: DefenseLevelManager,
+        faculty_pool: list[Person],
+        sample_rotation_template: RotationTemplate,
     ):
         """Test de-escalation when utilization decreases."""
         start_date = date.today()
@@ -244,9 +259,12 @@ class TestDefenseLevelTransitions:
         initial_level = defense_manager.assess_defense_level(start_date)
 
         # Remove some assignments to reduce utilization
-        assignments = db.query(Assignment).filter(
-            Assignment.person_id.in_([f.id for f in faculty_pool])
-        ).limit(10).all()
+        assignments = (
+            db.query(Assignment)
+            .filter(Assignment.person_id.in_([f.id for f in faculty_pool]))
+            .limit(10)
+            .all()
+        )
 
         for assignment in assignments:
             db.delete(assignment)
@@ -265,8 +283,11 @@ class TestNMinus1Contingency:
     """Tests for N-1 contingency analysis."""
 
     def test_n_minus_1_passes_with_adequate_backup(
-        self, db: Session, n_minus_analyzer: NMinusAnalyzer,
-        faculty_pool: list[Person], sample_rotation_template: RotationTemplate
+        self,
+        db: Session,
+        n_minus_analyzer: NMinusAnalyzer,
+        faculty_pool: list[Person],
+        sample_rotation_template: RotationTemplate,
     ):
         """Test N-1 analysis passes when adequate backup exists."""
         start_date = date.today()
@@ -299,8 +320,11 @@ class TestNMinus1Contingency:
         assert len(result.vulnerable_dates) == 0
 
     def test_n_minus_1_fails_at_capacity(
-        self, db: Session, n_minus_analyzer: NMinusAnalyzer,
-        faculty_pool: list[Person], sample_rotation_template: RotationTemplate
+        self,
+        db: Session,
+        n_minus_analyzer: NMinusAnalyzer,
+        faculty_pool: list[Person],
+        sample_rotation_template: RotationTemplate,
     ):
         """Test N-1 analysis fails when at full capacity."""
         start_date = date.today()
@@ -333,8 +357,7 @@ class TestNMinus1Contingency:
         assert len(result.vulnerable_dates) > 0
 
     def test_n_minus_1_identifies_critical_personnel(
-        self, db: Session, n_minus_analyzer: NMinusAnalyzer,
-        faculty_pool: list[Person]
+        self, db: Session, n_minus_analyzer: NMinusAnalyzer, faculty_pool: list[Person]
     ):
         """Test identification of critical single points of failure."""
         start_date = date.today()
@@ -383,8 +406,11 @@ class TestNMinus2Contingency:
     """Tests for N-2 contingency analysis (double failure)."""
 
     def test_n_minus_2_passes_with_deep_bench(
-        self, db: Session, n_minus_analyzer: NMinusAnalyzer,
-        resident_pool: list[Person], sample_rotation_template: RotationTemplate
+        self,
+        db: Session,
+        n_minus_analyzer: NMinusAnalyzer,
+        resident_pool: list[Person],
+        sample_rotation_template: RotationTemplate,
     ):
         """Test N-2 passes with sufficient depth."""
         start_date = date.today()
@@ -416,14 +442,19 @@ class TestNMinus2Contingency:
         assert result.passes is True
 
     def test_n_minus_2_fails_with_thin_margins(
-        self, db: Session, n_minus_analyzer: NMinusAnalyzer,
-        faculty_pool: list[Person], sample_rotation_template: RotationTemplate
+        self,
+        db: Session,
+        n_minus_analyzer: NMinusAnalyzer,
+        faculty_pool: list[Person],
+        sample_rotation_template: RotationTemplate,
     ):
         """Test N-2 fails when margins are too thin."""
         start_date = date.today()
 
         # Use 4 out of 5 faculty (80% utilization)
-        create_heavy_schedule(db, faculty_pool[:4], sample_rotation_template, start_date, 7)
+        create_heavy_schedule(
+            db, faculty_pool[:4], sample_rotation_template, start_date, 7
+        )
 
         result = n_minus_analyzer.analyze_n_minus_2(start_date)
         assert result.passes is False
@@ -439,8 +470,11 @@ class TestUtilizationMonitoring:
     """Tests for utilization threshold monitoring."""
 
     def test_utilization_below_80_percent_threshold(
-        self, db: Session, utilization_monitor: UtilizationMonitor,
-        faculty_pool: list[Person], sample_rotation_template: RotationTemplate
+        self,
+        db: Session,
+        utilization_monitor: UtilizationMonitor,
+        faculty_pool: list[Person],
+        sample_rotation_template: RotationTemplate,
     ):
         """Test normal utilization below 80% threshold."""
         start_date = date.today()
@@ -472,8 +506,11 @@ class TestUtilizationMonitoring:
         assert utilization < 0.80
 
     def test_utilization_exceeds_80_percent_triggers_alert(
-        self, db: Session, utilization_monitor: UtilizationMonitor,
-        faculty_pool: list[Person], sample_rotation_template: RotationTemplate
+        self,
+        db: Session,
+        utilization_monitor: UtilizationMonitor,
+        faculty_pool: list[Person],
+        sample_rotation_template: RotationTemplate,
     ):
         """Test alert when utilization exceeds 80%."""
         start_date = date.today()
@@ -496,8 +533,10 @@ class TestBlastRadiusIsolation:
     """Tests for blast radius containment."""
 
     def test_failure_contained_to_single_rotation(
-        self, db: Session, blast_radius_analyzer: BlastRadiusAnalyzer,
-        faculty_pool: list[Person]
+        self,
+        db: Session,
+        blast_radius_analyzer: BlastRadiusAnalyzer,
+        faculty_pool: list[Person],
     ):
         """Test that rotation failure doesn't cascade to others."""
         start_date = date.today()
@@ -558,8 +597,10 @@ class TestBlastRadiusIsolation:
         assert rotation_b.id not in blast_radius.affected_rotations
 
     def test_cascade_detection_in_dependent_rotations(
-        self, db: Session, blast_radius_analyzer: BlastRadiusAnalyzer,
-        resident_pool: list[Person]
+        self,
+        db: Session,
+        blast_radius_analyzer: BlastRadiusAnalyzer,
+        resident_pool: list[Person],
     ):
         """Test detection of cascading failures in dependent rotations."""
         start_date = date.today()
@@ -601,8 +642,11 @@ class TestHomeostasisFeedback:
     """Tests for homeostasis feedback loops."""
 
     def test_workload_balancing_feedback(
-        self, db: Session, homeostasis_controller: HomeostasisController,
-        faculty_pool: list[Person], sample_rotation_template: RotationTemplate
+        self,
+        db: Session,
+        homeostasis_controller: HomeostasisController,
+        faculty_pool: list[Person],
+        sample_rotation_template: RotationTemplate,
     ):
         """Test feedback loop that balances workload."""
         start_date = date.today()
@@ -637,8 +681,11 @@ class TestHomeostasisFeedback:
         assert corrections[0].adjustment_type == "reduce_workload"
 
     def test_equilibrium_restoration_after_perturbation(
-        self, db: Session, homeostasis_controller: HomeostasisController,
-        resident_pool: list[Person], sample_rotation_template: RotationTemplate
+        self,
+        db: Session,
+        homeostasis_controller: HomeostasisController,
+        resident_pool: list[Person],
+        sample_rotation_template: RotationTemplate,
     ):
         """Test system returns to equilibrium after perturbation."""
         start_date = date.today()
@@ -669,9 +716,11 @@ class TestHomeostasisFeedback:
         initial_balance = homeostasis_controller.measure_balance(start_date)
 
         # Apply perturbation (remove one resident's assignments)
-        assignments = db.query(Assignment).filter(
-            Assignment.person_id == resident_pool[0].id
-        ).all()
+        assignments = (
+            db.query(Assignment)
+            .filter(Assignment.person_id == resident_pool[0].id)
+            .all()
+        )
         for assignment in assignments:
             db.delete(assignment)
         db.commit()

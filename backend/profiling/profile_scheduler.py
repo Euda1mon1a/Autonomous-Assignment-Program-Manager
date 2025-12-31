@@ -90,7 +90,7 @@ def profile_schedule_generation(
 ):
     """Profile schedule generation."""
     print(f"\n{'=' * 80}")
-    print(f"PROFILING SCHEDULE GENERATION")
+    print("PROFILING SCHEDULE GENERATION")
     print(f"Residents: {num_residents}, Weeks: {num_weeks}")
     print(f"{'=' * 80}\n")
 

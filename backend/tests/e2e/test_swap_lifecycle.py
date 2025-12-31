@@ -450,7 +450,9 @@ class TestSwapRequestApprovalExecutionFlow:
         assert original_swap.status == SwapStatus.REJECTED
 
         # New counter-offer request should exist
-        counter_swap = db.query(SwapRecord).filter_by(id=response_result.new_request_id).first()
+        counter_swap = (
+            db.query(SwapRecord).filter_by(id=response_result.new_request_id).first()
+        )
         assert counter_swap is not None
         assert counter_swap.source_faculty_id == faculty_b.id
         assert counter_swap.source_week == week_c
@@ -908,7 +910,9 @@ class TestSwapNotifications:
         )
 
         assert notification is not None
-        assert notification.notification_type == SwapNotificationType.SWAP_REQUEST_RECEIVED
+        assert (
+            notification.notification_type == SwapNotificationType.SWAP_REQUEST_RECEIVED
+        )
         assert faculty_a.name in notification.subject
         assert notification.recipient_email == faculty_b.email
 
@@ -935,7 +939,9 @@ class TestSwapNotifications:
         )
 
         assert notification is not None
-        assert notification.notification_type == SwapNotificationType.SWAP_REQUEST_ACCEPTED
+        assert (
+            notification.notification_type == SwapNotificationType.SWAP_REQUEST_ACCEPTED
+        )
         assert faculty_b.name in notification.subject
         assert "accepted" in notification.body.lower()
 
@@ -960,7 +966,9 @@ class TestSwapNotifications:
         )
 
         assert notification is not None
-        assert notification.notification_type == SwapNotificationType.SWAP_REQUEST_REJECTED
+        assert (
+            notification.notification_type == SwapNotificationType.SWAP_REQUEST_REJECTED
+        )
         assert faculty_b.name in notification.subject
         assert "declined" in notification.body.lower()
         assert "Already have another commitment" in notification.body
@@ -1014,7 +1022,9 @@ class TestSwapNotifications:
         assert len(notifications) == 2
 
         for notification in notifications:
-            assert notification.notification_type == SwapNotificationType.SWAP_ROLLED_BACK
+            assert (
+                notification.notification_type == SwapNotificationType.SWAP_ROLLED_BACK
+            )
             assert "Rolled Back" in notification.subject
             assert "Executed in error" in notification.body
 

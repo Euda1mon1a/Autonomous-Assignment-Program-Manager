@@ -101,10 +101,8 @@ def sample_rotation(db: Session) -> RotationTemplate:
 class TestTaskExecution:
     """Tests for basic task execution."""
 
-    @patch('app.tasks.resilience_tasks.ResilienceMonitor')
-    def test_resilience_health_check_task_executes(
-        self, mock_monitor, db: Session
-    ):
+    @patch("app.tasks.resilience_tasks.ResilienceMonitor")
+    def test_resilience_health_check_task_executes(self, mock_monitor, db: Session):
         """Test resilience health check task executes successfully."""
         mock_instance = Mock()
         mock_instance.check_health.return_value = {"status": "GREEN"}
@@ -116,7 +114,7 @@ class TestTaskExecution:
         assert result.successful()
         assert result.result["status"] == "GREEN"
 
-    @patch('app.tasks.notification_tasks.EmailService')
+    @patch("app.tasks.notification_tasks.EmailService")
     def test_notification_task_sends_email(
         self, mock_email_service, db: Session, sample_person: Person
     ):
@@ -136,7 +134,7 @@ class TestTaskExecution:
         assert result.successful()
         mock_service.send_email.assert_called_once()
 
-    @patch('app.tasks.schedule_tasks.SchedulingEngine')
+    @patch("app.tasks.schedule_tasks.SchedulingEngine")
     def test_schedule_generation_task_executes(
         self, mock_engine, db: Session, sample_rotation: RotationTemplate
     ):
@@ -169,7 +167,7 @@ class TestTaskExecution:
 class TestRetryLogic:
     """Tests for task retry behavior."""
 
-    @patch('app.tasks.notification_tasks.EmailService')
+    @patch("app.tasks.notification_tasks.EmailService")
     def test_task_retries_on_failure(self, mock_email_service):
         """Test task retries when it fails."""
         mock_service = Mock()
@@ -183,7 +181,7 @@ class TestRetryLogic:
         # Task should retry automatically
         # Implementation depends on Celery retry configuration
 
-    @patch('app.tasks.resilience_tasks.NMinusAnalyzer')
+    @patch("app.tasks.resilience_tasks.NMinusAnalyzer")
     def test_task_retries_with_exponential_backoff(self, mock_analyzer):
         """Test task retries with exponential backoff."""
         mock_instance = Mock()
@@ -200,7 +198,7 @@ class TestRetryLogic:
     def test_task_gives_up_after_max_retries(self):
         """Test task stops retrying after max attempts."""
         # Mock a task that always fails
-        with patch('app.tasks.notification_tasks.EmailService') as mock_service:
+        with patch("app.tasks.notification_tasks.EmailService") as mock_service:
             mock_instance = Mock()
             mock_instance.send_email.side_effect = Exception("Permanent failure")
             mock_service.return_value = mock_instance
@@ -217,10 +215,8 @@ class TestRetryLogic:
 class TestTaskResults:
     """Tests for task result storage and retrieval."""
 
-    @patch('app.tasks.schedule_tasks.SchedulingEngine')
-    def test_task_result_stored_and_retrievable(
-        self, mock_engine, db: Session
-    ):
+    @patch("app.tasks.schedule_tasks.SchedulingEngine")
+    def test_task_result_stored_and_retrievable(self, mock_engine, db: Session):
         """Test task results are stored and can be retrieved."""
         mock_instance = Mock()
         mock_instance.generate_schedule.return_value = Mock(
@@ -241,7 +237,7 @@ class TestTaskResults:
 
     def test_failed_task_stores_error_info(self):
         """Test failed task stores error information."""
-        with patch('app.tasks.resilience_tasks.ResilienceMonitor') as mock_monitor:
+        with patch("app.tasks.resilience_tasks.ResilienceMonitor") as mock_monitor:
             mock_instance = Mock()
             mock_instance.check_health.side_effect = ValueError("Test error")
             mock_monitor.return_value = mock_instance
@@ -261,7 +257,7 @@ class TestTaskResults:
 class TestPeriodicTasks:
     """Tests for scheduled periodic tasks."""
 
-    @patch('app.tasks.resilience_tasks.ResilienceMonitor')
+    @patch("app.tasks.resilience_tasks.ResilienceMonitor")
     def test_resilience_check_runs_periodically(self, mock_monitor):
         """Test resilience health check is scheduled to run periodically."""
         # Verify task is registered with Celery Beat
@@ -269,10 +265,12 @@ class TestPeriodicTasks:
 
         # Check if task is in beat schedule
         schedule = celery_app.conf.beat_schedule
-        assert 'check-resilience-health' in schedule or \
-               'resilience-health-check' in schedule
+        assert (
+            "check-resilience-health" in schedule
+            or "resilience-health-check" in schedule
+        )
 
-    @patch('app.tasks.schedule_tasks.NMinusAnalyzer')
+    @patch("app.tasks.schedule_tasks.NMinusAnalyzer")
     def test_n_minus_analysis_scheduled_daily(self, mock_analyzer):
         """Test N-1/N-2 analysis is scheduled to run daily."""
         from app.core.celery_app import celery_app
@@ -290,7 +288,7 @@ class TestPeriodicTasks:
 class TestTaskTimeouts:
     """Tests for task timeout handling."""
 
-    @patch('app.tasks.schedule_tasks.SchedulingEngine')
+    @patch("app.tasks.schedule_tasks.SchedulingEngine")
     def test_long_running_task_times_out(self, mock_engine):
         """Test long-running task times out appropriately."""
         import time
@@ -321,8 +319,8 @@ class TestTaskTimeouts:
 class TestTaskChainsAndGroups:
     """Tests for task chaining and grouping."""
 
-    @patch('app.tasks.schedule_tasks.SchedulingEngine')
-    @patch('app.tasks.schedule_tasks.ACGMEValidator')
+    @patch("app.tasks.schedule_tasks.SchedulingEngine")
+    @patch("app.tasks.schedule_tasks.ACGMEValidator")
     def test_schedule_generation_then_validation_chain(
         self, mock_validator, mock_engine, db: Session
     ):
@@ -350,7 +348,7 @@ class TestTaskChainsAndGroups:
         result = task_chain.apply()
         assert result.successful()
 
-    @patch('app.tasks.notification_tasks.EmailService')
+    @patch("app.tasks.notification_tasks.EmailService")
     def test_bulk_notifications_as_group(self, mock_email_service, db: Session):
         """Test sending bulk notifications as a group."""
         from celery import group
@@ -375,9 +373,7 @@ class TestTaskChainsAndGroups:
 
         # Send notifications as group
         notification_group = group(
-            send_assignment_notification.s(
-                str(person.id), "Subject", "Message"
-            )
+            send_assignment_notification.s(str(person.id), "Subject", "Message")
             for person in people
         )
 
@@ -394,7 +390,7 @@ class TestTaskChainsAndGroups:
 class TestErrorHandling:
     """Tests for task error handling."""
 
-    @patch('app.tasks.resilience_tasks.ResilienceMonitor')
+    @patch("app.tasks.resilience_tasks.ResilienceMonitor")
     def test_task_handles_database_error_gracefully(self, mock_monitor, db: Session):
         """Test task handles database errors gracefully."""
         mock_instance = Mock()
@@ -406,14 +402,14 @@ class TestErrorHandling:
         # Task should fail but not crash
         assert result.failed()
 
-    @patch('app.tasks.notification_tasks.EmailService')
+    @patch("app.tasks.notification_tasks.EmailService")
     def test_task_logs_error_on_failure(self, mock_email_service):
         """Test task logs errors when it fails."""
         mock_service = Mock()
         mock_service.send_email.side_effect = Exception("SMTP connection failed")
         mock_email_service.return_value = mock_service
 
-        with patch('app.tasks.notification_tasks.logger') as mock_logger:
+        with patch("app.tasks.notification_tasks.logger") as mock_logger:
             result = send_assignment_notification.apply(
                 args=["person_id", "Subject", "Message"]
             )
@@ -430,7 +426,7 @@ class TestErrorHandling:
 class TestTaskStatusTracking:
     """Tests for tracking task status and progress."""
 
-    @patch('app.tasks.schedule_tasks.SchedulingEngine')
+    @patch("app.tasks.schedule_tasks.SchedulingEngine")
     def test_task_progress_can_be_monitored(self, mock_engine):
         """Test task progress can be monitored during execution."""
         mock_instance = Mock()
@@ -441,11 +437,11 @@ class TestTaskStatusTracking:
         result = generate_schedule_async.apply_async()
 
         # Should be able to check status
-        assert result.state in ['PENDING', 'STARTED', 'SUCCESS', 'FAILURE']
+        assert result.state in ["PENDING", "STARTED", "SUCCESS", "FAILURE"]
 
     def test_task_state_transitions(self):
         """Test task state transitions through lifecycle."""
-        with patch('app.tasks.resilience_tasks.ResilienceMonitor') as mock_monitor:
+        with patch("app.tasks.resilience_tasks.ResilienceMonitor") as mock_monitor:
             mock_instance = Mock()
             mock_instance.check_health.return_value = {"status": "GREEN"}
             mock_monitor.return_value = mock_instance
@@ -453,10 +449,10 @@ class TestTaskStatusTracking:
             result = check_resilience_health.apply_async()
 
             # Initial state
-            assert result.state in ['PENDING', 'STARTED']
+            assert result.state in ["PENDING", "STARTED"]
 
             # Wait for completion
             result.get(timeout=5)
 
             # Final state
-            assert result.state == 'SUCCESS'
+            assert result.state == "SUCCESS"

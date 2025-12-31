@@ -78,6 +78,7 @@ from app.auth.permissions.decorators import (
 from app.auth.permissions.models import (
     DEFAULT_ROLE_PERMISSIONS,
     ROLE_HIERARCHY,
+    ROLE_LEVELS,
     Permission,
     PermissionAction,
     PermissionCheckResult,
@@ -100,6 +101,7 @@ __all__ = [
     "UserRole",
     "DEFAULT_ROLE_PERMISSIONS",
     "ROLE_HIERARCHY",
+    "ROLE_LEVELS",
     # Cache
     "PermissionCache",
     "get_permission_cache",
@@ -128,6 +130,7 @@ __all__ = [
     # Utilities
     "warm_permission_cache",
     "invalidate_permission_cache",
+    "invalidate_user_role_cache",
 ]
 
 
@@ -185,3 +188,65 @@ async def invalidate_permission_cache(
     else:
         # No specific target, do nothing
         return False
+
+
+async def invalidate_user_role_cache(
+    user_id: str, old_role: str | None = None, new_role: str | None = None
+) -> bool:
+    """
+    Invalidate permission cache when a user's role changes.
+
+    SECURITY: This MUST be called whenever a user's role is updated to ensure
+    they immediately get the correct permissions for their new role.
+
+    Args:
+        user_id: User ID whose role changed
+        old_role: Previous role (for logging)
+        new_role: New role (for logging)
+
+    Returns:
+        True if invalidation successful, False otherwise
+
+    Example:
+        ```python
+        from app.auth.permissions import invalidate_user_role_cache
+
+        # In your user update service/endpoint:
+        user.role = "coordinator"
+        await db.commit()
+
+        # CRITICAL: Invalidate cache immediately after role change
+        await invalidate_user_role_cache(
+            user_id=str(user.id),
+            old_role="faculty",
+            new_role="coordinator"
+        )
+        ```
+    """
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    cache = await get_permission_cache()
+
+    # Invalidate user's permission cache
+    success = await cache.invalidate_user_permissions(user_id)
+
+    if success:
+        if old_role and new_role:
+            logger.info(
+                f"SECURITY: Invalidated permission cache for user {user_id} "
+                f"after role change: {old_role} -> {new_role}"
+            )
+        else:
+            logger.info(
+                f"SECURITY: Invalidated permission cache for user {user_id} "
+                f"after role change"
+            )
+    else:
+        logger.warning(
+            f"SECURITY WARNING: Failed to invalidate permission cache for user {user_id} "
+            f"after role change. Permissions may be stale!"
+        )
+
+    return success

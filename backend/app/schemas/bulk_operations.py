@@ -18,10 +18,7 @@ class BulkCreateRequest(BaseModel):
     """Request for bulk create operation."""
 
     items: list[dict] = Field(
-        ...,
-        description="List of items to create",
-        min_length=1,
-        max_length=1000
+        ..., description="List of items to create", min_length=1, max_length=1000
     )
 
     @field_validator("items")
@@ -40,7 +37,7 @@ class BulkUpdateRequest(BaseModel):
         ...,
         description="List of updates (each with id and fields to update)",
         min_length=1,
-        max_length=1000
+        max_length=1000,
     )
 
     @field_validator("updates")
@@ -60,10 +57,7 @@ class BulkDeleteRequest(BaseModel):
     """Request for bulk delete operation."""
 
     ids: list[UUID] = Field(
-        ...,
-        description="List of IDs to delete",
-        min_length=1,
-        max_length=1000
+        ..., description="List of IDs to delete", min_length=1, max_length=1000
     )
 
     soft_delete: bool = Field(False, description="Use soft delete (if supported)")
@@ -95,12 +89,10 @@ class BulkOperationResponse(BaseModel):
     failed: int = Field(..., description="Failed items")
     results: list[ItemResult] = Field(..., description="Per-item results")
     started_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        description="Operation start time"
+        default_factory=datetime.utcnow, description="Operation start time"
     )
     completed_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        description="Operation completion time"
+        default_factory=datetime.utcnow, description="Operation completion time"
     )
 
 
@@ -109,10 +101,7 @@ class BatchAssignmentCreate(BaseModel):
 
     person_id: UUID = Field(..., description="Person being assigned")
     block_ids: list[UUID] = Field(
-        ...,
-        description="List of block IDs to assign",
-        min_length=1,
-        max_length=100
+        ..., description="List of block IDs to assign", min_length=1, max_length=100
     )
     rotation_template_id: UUID | None = Field(None, description="Rotation template")
     role: str = Field("primary", description="Assignment role")
@@ -134,8 +123,7 @@ class BatchAssignmentDelete(BaseModel):
     start_date: str = Field(..., description="Start date for deletion range")
     end_date: str = Field(..., description="End date for deletion range")
     rotation_template_id: UUID | None = Field(
-        None,
-        description="Optional: only delete assignments for this rotation"
+        None, description="Optional: only delete assignments for this rotation"
     )
 
 
@@ -143,10 +131,7 @@ class BulkSwapApproval(BaseModel):
     """Bulk approve swap requests."""
 
     swap_ids: list[UUID] = Field(
-        ...,
-        description="List of swap IDs to approve",
-        min_length=1,
-        max_length=100
+        ..., description="List of swap IDs to approve", min_length=1, max_length=100
     )
     approved_by: str = Field(..., description="User approving the swaps")
     notes: str | None = Field(None, description="Approval notes")
@@ -164,10 +149,7 @@ class BulkCredentialUpdate(BaseModel):
     """Bulk update credentials."""
 
     updates: list[dict] = Field(
-        ...,
-        description="List of credential updates",
-        min_length=1,
-        max_length=500
+        ..., description="List of credential updates", min_length=1, max_length=500
     )
 
     @field_validator("updates")
@@ -192,12 +174,11 @@ class AsyncBulkOperationRequest(BaseModel):
 
     operation_type: str = Field(..., description="Type of bulk operation")
     items: list[dict] = Field(
-        ...,
-        description="List of items to process",
-        min_length=1,
-        max_length=10000
+        ..., description="List of items to process", min_length=1, max_length=10000
     )
-    callback_url: str | None = Field(None, description="URL to call when operation completes")
+    callback_url: str | None = Field(
+        None, description="URL to call when operation completes"
+    )
 
     @field_validator("operation_type")
     @classmethod
@@ -213,7 +194,9 @@ class AsyncBulkOperationStatus(BaseModel):
     """Status of asynchronous bulk operation."""
 
     operation_id: UUID = Field(..., description="Operation ID")
-    status: str = Field(..., description="Operation status (pending, running, completed, failed)")
+    status: str = Field(
+        ..., description="Operation status (pending, running, completed, failed)"
+    )
     total: int = Field(..., description="Total items to process")
     processed: int = Field(..., description="Items processed so far")
     successful: int = Field(..., description="Successfully processed items")

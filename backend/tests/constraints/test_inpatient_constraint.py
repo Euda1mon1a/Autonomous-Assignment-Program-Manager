@@ -783,23 +783,25 @@ class TestInpatientConstraintsIntegration:
         assignments = []
 
         # Day 1: One of each PGY on FMIT
-        assignments.extend([
-            MockAssignment(
-                person_id=residents_by_pgy[1][0].id,
-                block_id=blocks[0].id,
-                rotation_template_id=fmit_templates[0].id,
-            ),
-            MockAssignment(
-                person_id=residents_by_pgy[2][0].id,
-                block_id=blocks[0].id,
-                rotation_template_id=fmit_templates[1].id,
-            ),
-            MockAssignment(
-                person_id=residents_by_pgy[3][0].id,
-                block_id=blocks[0].id,
-                rotation_template_id=fmit_templates[2].id,
-            ),
-        ])
+        assignments.extend(
+            [
+                MockAssignment(
+                    person_id=residents_by_pgy[1][0].id,
+                    block_id=blocks[0].id,
+                    rotation_template_id=fmit_templates[0].id,
+                ),
+                MockAssignment(
+                    person_id=residents_by_pgy[2][0].id,
+                    block_id=blocks[0].id,
+                    rotation_template_id=fmit_templates[1].id,
+                ),
+                MockAssignment(
+                    person_id=residents_by_pgy[3][0].id,
+                    block_id=blocks[0].id,
+                    rotation_template_id=fmit_templates[2].id,
+                ),
+            ]
+        )
 
         # Day 1 PM: One resident on Night Float
         assignments.append(
@@ -895,16 +897,10 @@ class TestInpatientConstraintsIntegration:
         ]
 
         # Check for PGY-1 FMIT violation
-        assert any(
-            pgy == 1 and "FMIT" in msg for pgy, msg in violation_details
-        )
+        assert any(pgy == 1 and "FMIT" in msg for pgy, msg in violation_details)
 
         # Check for Night Float violation
-        assert any(
-            "Night Float" in msg for _, msg in violation_details
-        )
+        assert any("Night Float" in msg for _, msg in violation_details)
 
         # Check for PGY-2 FMIT violation
-        assert any(
-            pgy == 2 and "FMIT" in msg for pgy, msg in violation_details
-        )
+        assert any(pgy == 2 and "FMIT" in msg for pgy, msg in violation_details)
