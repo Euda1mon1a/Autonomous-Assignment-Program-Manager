@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen } from '@/test-utils'
 import { ComplianceAlert } from '@/components/dashboard/ComplianceAlert'
 import { useValidateSchedule } from '@/lib/hooks'
 import { createWrapper } from '../utils/test-utils'

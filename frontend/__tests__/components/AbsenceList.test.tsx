@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, within } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { AbsenceList } from '@/components/AbsenceList'
 import { mockFactories } from '../utils/test-utils'

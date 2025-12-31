@@ -2,7 +2,7 @@
  * Tests for TemplateShareModal Component
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { TemplateShareModal } from '@/features/templates/components/TemplateShareModal';
 import type { ScheduleTemplate } from '@/features/templates/types';

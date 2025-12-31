@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { SwapFilters } from '@/features/swap-marketplace/SwapFilters';
 import { SwapStatus, SwapType } from '@/features/swap-marketplace/types';

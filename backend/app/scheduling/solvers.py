@@ -1621,19 +1621,35 @@ class SolverFactory:
 
         Note:
             These solvers have optional dependencies:
-            - quantum/quantum_sa: Works with pure Python fallback
+            - quantum/quantum_sa: Works with pure Python fallback (no dependencies)
             - qubo: Requires PyQUBO (pip install pyqubo)
+
+        Environment Configuration:
+            - USE_QUANTUM_SOLVER: Enable quantum solver (default: false)
+            - DWAVE_API_TOKEN: D-Wave API token
+            - QUANTUM_SOLVER_BACKEND: "classical" or "quantum" (default: classical)
+
+        The solver gracefully falls back to classical simulated annealing if:
+            - D-Wave libraries not installed
+            - API token missing or invalid
+            - D-Wave service unreachable
         """
         if cls._solvers[solver_type] is None:
-            from app.scheduling.quantum import (
-                QuantumInspiredSolver,
-                QUBOSolver,
-                SimulatedQuantumAnnealingSolver,
-            )
+            try:
+                from app.scheduling.quantum import (
+                    QuantumInspiredSolver,
+                    QUBOSolver,
+                    SimulatedQuantumAnnealingSolver,
+                )
 
-            cls._solvers["quantum"] = QuantumInspiredSolver
-            cls._solvers["qubo"] = QUBOSolver
-            cls._solvers["quantum_sa"] = SimulatedQuantumAnnealingSolver
+                cls._solvers["quantum"] = QuantumInspiredSolver
+                cls._solvers["qubo"] = QUBOSolver
+                cls._solvers["quantum_sa"] = SimulatedQuantumAnnealingSolver
+            except ImportError as e:
+                raise ValueError(
+                    f"Quantum solver '{solver_type}' requires quantum module. "
+                    f"Error: {e}"
+                )
         return cls._solvers[solver_type]
 
     @classmethod

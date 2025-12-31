@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { AuditLogTable } from '@/features/audit/AuditLogTable';
 import type { AuditLogSort } from '@/features/audit/types';

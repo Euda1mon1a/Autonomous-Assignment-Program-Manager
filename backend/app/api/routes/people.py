@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, Query
 from app.controllers.credential_controller import CredentialController
 from app.controllers.person_controller import PersonController
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.user import User
 from app.schemas.person import (
     PersonCreate,
@@ -30,7 +30,7 @@ router = APIRouter()
 
 
 @router.get("", response_model=PersonListResponse)
-def list_people(
+async def list_people(
     type: str | None = Query(
         None, description="Filter by type: 'resident' or 'faculty'"
     ),
@@ -44,7 +44,7 @@ def list_people(
 
 
 @router.get("/residents", response_model=PersonListResponse)
-def list_residents(
+async def list_residents(
     pgy_level: int | None = Query(None, description="Filter by PGY level (1, 2, or 3)"),
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -55,7 +55,7 @@ def list_residents(
 
 
 @router.get("/faculty", response_model=PersonListResponse)
-def list_faculty(
+async def list_faculty(
     specialty: str | None = Query(None, description="Filter by specialty"),
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -66,7 +66,7 @@ def list_faculty(
 
 
 @router.get("/{person_id}", response_model=PersonResponse)
-def get_person(
+async def get_person(
     person_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -77,7 +77,7 @@ def get_person(
 
 
 @router.post("", response_model=PersonResponse, status_code=201)
-def create_person(
+async def create_person(
     person_in: PersonCreate,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -88,7 +88,7 @@ def create_person(
 
 
 @router.put("/{person_id}", response_model=PersonResponse)
-def update_person(
+async def update_person(
     person_id: UUID,
     person_in: PersonUpdate,
     db=Depends(get_db),
@@ -100,7 +100,7 @@ def update_person(
 
 
 @router.delete("/{person_id}", status_code=204)
-def delete_person(
+async def delete_person(
     person_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -116,7 +116,7 @@ def delete_person(
 
 
 @router.get("/{person_id}/credentials", response_model=CredentialListResponse)
-def get_person_credentials(
+async def get_person_credentials(
     person_id: UUID,
     status: str | None = Query(None, description="Filter by status"),
     include_expired: bool = Query(False, description="Include expired credentials"),
@@ -133,7 +133,7 @@ def get_person_credentials(
 
 
 @router.get("/{person_id}/credentials/summary", response_model=FacultyCredentialSummary)
-def get_person_credential_summary(
+async def get_person_credential_summary(
     person_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -144,7 +144,7 @@ def get_person_credential_summary(
 
 
 @router.get("/{person_id}/procedures", response_model=ProcedureListResponse)
-def get_person_procedures(
+async def get_person_procedures(
     person_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),

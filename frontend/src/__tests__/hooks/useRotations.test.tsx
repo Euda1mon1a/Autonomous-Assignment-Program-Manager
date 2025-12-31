@@ -4,7 +4,7 @@
  * Tests for the useRotationTemplates, useRotationTemplate, useCreateTemplate,
  * useUpdateTemplate, and useDeleteTemplate hooks using jest.mock() for API mocking.
  */
-import { renderHook, waitFor } from '@testing-library/react'
+import { renderHook, waitFor } from '@/test-utils'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'
 import {

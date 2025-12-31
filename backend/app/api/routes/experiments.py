@@ -10,9 +10,10 @@ Admin endpoints for managing experiments:
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.core.security import get_admin_user, get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.experiments import (
     Experiment,
     ExperimentService,

@@ -54,12 +54,8 @@ class DeleteAssignmentTool(BaseTool[DeleteAssignmentRequest, DeleteAssignmentRes
         client = self._require_api_client()
 
         try:
-            # Delete assignment via API
-            result = await client.client.delete(
-                f"{client.config.api_prefix}/assignments/{request.assignment_id}",
-                headers=await client._ensure_authenticated(),
-            )
-            result.raise_for_status()
+            # Delete assignment via API client
+            await client.delete_assignment(request.assignment_id)
 
             return DeleteAssignmentResponse(
                 success=True,

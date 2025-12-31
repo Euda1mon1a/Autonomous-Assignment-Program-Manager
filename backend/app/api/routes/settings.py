@@ -4,10 +4,11 @@ import logging
 from datetime import datetime
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.core.security import get_admin_user, get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.settings import ApplicationSettings
 from app.models.user import User
 from app.schemas.settings import SettingsBase, SettingsResponse, SettingsUpdate
@@ -37,14 +38,14 @@ def get_or_create_settings(db: Session) -> ApplicationSettings:
         logger.info("No settings found, creating defaults")
         settings = ApplicationSettings(**DEFAULT_SETTINGS)
         db.add(settings)
-        db.commit()
-        db.refresh(settings)
+        await db.commit()
+        await db.refresh(settings)
     return settings
 
 
 @router.get("", response_model=SettingsResponse)
-def get_settings(
-    db: Session = Depends(get_db),
+async def get_settings(
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Get current application settings."""
@@ -53,9 +54,9 @@ def get_settings(
 
 
 @router.post("", response_model=SettingsResponse)
-def update_settings(
+async def update_settings(
     settings_in: SettingsBase,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """Update application settings (full replacement)."""
@@ -66,8 +67,8 @@ def update_settings(
         setattr(settings, field, value)
 
     settings.updated_at = datetime.utcnow()
-    db.commit()
-    db.refresh(settings)
+    await db.commit()
+    await db.refresh(settings)
 
     logger.info(
         "Settings updated: algorithm=%s, work_hours=%d",
@@ -78,9 +79,9 @@ def update_settings(
 
 
 @router.patch("", response_model=SettingsResponse)
-def patch_settings(
+async def patch_settings(
     settings_in: SettingsUpdate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """Partially update application settings."""
@@ -95,16 +96,16 @@ def patch_settings(
         setattr(settings, field, value)
 
     settings.updated_at = datetime.utcnow()
-    db.commit()
-    db.refresh(settings)
+    await db.commit()
+    await db.refresh(settings)
 
     logger.info("Settings patched: %s", list(update_data.keys()))
     return SettingsResponse(**settings.to_dict())
 
 
 @router.delete("", status_code=204)
-def reset_settings(
-    db: Session = Depends(get_db),
+async def reset_settings(
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """Reset settings to defaults."""
@@ -115,6 +116,6 @@ def reset_settings(
         setattr(settings, field, value)
 
     settings.updated_at = datetime.utcnow()
-    db.commit()
+    await db.commit()
 
     logger.info("Settings reset to defaults")

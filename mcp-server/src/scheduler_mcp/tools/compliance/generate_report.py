@@ -108,20 +108,14 @@ class GenerateComplianceReportTool(
         client = self._require_api_client()
 
         try:
-            # Generate report via API
-            result = await client.client.post(
-                f"{client.config.api_prefix}/compliance/report",
-                headers=await client._ensure_authenticated(),
-                json={
-                    "start_date": request.start_date,
-                    "end_date": request.end_date,
-                    "include_violations": request.include_violations,
-                    "include_recommendations": request.include_recommendations,
-                    "format": request.format,
-                },
+            # Generate report via API client
+            data = await client.generate_compliance_report(
+                start_date=request.start_date,
+                end_date=request.end_date,
+                include_violations=request.include_violations,
+                include_recommendations=request.include_recommendations,
+                format=request.format,
             )
-            result.raise_for_status()
-            data = result.json()
 
             # Parse summaries
             summaries = []

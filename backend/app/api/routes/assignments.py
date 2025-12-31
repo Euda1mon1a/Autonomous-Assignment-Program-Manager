@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.controllers.assignment_controller import AssignmentController
 from app.core.security import get_current_active_user, get_scheduler_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.user import User
 from app.schemas.assignment import (
     AssignmentCreate,
@@ -25,7 +25,7 @@ router = APIRouter()
 
 
 @router.get("", response_model=AssignmentListResponse)
-def list_assignments(
+async def list_assignments(
     start_date: date | None = Query(None, description="Filter from this date"),
     end_date: date | None = Query(None, description="Filter until this date"),
     person_id: UUID | None = Query(None, description="Filter by person"),
@@ -52,7 +52,7 @@ def list_assignments(
 
 
 @router.get("/{assignment_id}", response_model=AssignmentResponse)
-def get_assignment(
+async def get_assignment(
     assignment_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -63,7 +63,7 @@ def get_assignment(
 
 
 @router.post("", response_model=AssignmentWithWarnings, status_code=201)
-def create_assignment(
+async def create_assignment(
     assignment_in: AssignmentCreate,
     db=Depends(get_db),
     current_user: User = Depends(get_scheduler_user),
@@ -75,11 +75,11 @@ def create_assignment(
     Violations do not block creation but should be acknowledged with override_reason.
     """
     controller = AssignmentController(db)
-    return controller.create_assignment(assignment_in, current_user)
+    return await cawait ontroller.create_assignment(assignment_in, current_user)
 
 
 @router.put("/{assignment_id}", response_model=AssignmentWithWarnings)
-def update_assignment(
+async def update_assignment(
     assignment_id: UUID,
     assignment_in: AssignmentUpdate,
     db=Depends(get_db),
@@ -93,22 +93,22 @@ def update_assignment(
     Violations do not block update but should be acknowledged with override_reason.
     """
     controller = AssignmentController(db)
-    return controller.update_assignment(assignment_id, assignment_in)
+    return await cawait ontroller.update_assignment(assignment_id, assignment_in)
 
 
 @router.delete("/{assignment_id}", status_code=204)
-def delete_assignment(
+async def delete_assignment(
     assignment_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_scheduler_user),
 ):
     """Delete an assignment. Requires scheduler role (admin or coordinator)."""
     controller = AssignmentController(db)
-    controller.delete_assignment(assignment_id)
+    await cawait ontroller.delete_assignment(assignment_id)
 
 
 @router.delete("", status_code=204)
-def delete_assignments_bulk(
+async def delete_assignments_bulk(
     start_date: date = Query(..., description="Delete assignments from this date"),
     end_date: date = Query(..., description="Delete assignments until this date"),
     db=Depends(get_db),

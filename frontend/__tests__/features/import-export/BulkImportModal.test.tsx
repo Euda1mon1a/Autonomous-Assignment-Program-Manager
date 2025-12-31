@@ -4,7 +4,7 @@
  * Tests file upload, drag-and-drop, preview, import execution, and error handling
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { BulkImportModal } from '@/features/import-export/BulkImportModal';
 import * as useImportModule from '@/features/import-export/useImport';

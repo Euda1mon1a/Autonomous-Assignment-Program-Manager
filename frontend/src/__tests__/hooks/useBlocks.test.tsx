@@ -4,7 +4,7 @@
  * Tests for block fetching and management hooks
  * using jest.mock() for API mocking.
  */
-import { renderHook, waitFor } from '@testing-library/react'
+import { renderHook, waitFor } from '@/test-utils'
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
 import { ReactNode } from 'react'
 import * as api from '@/lib/api'

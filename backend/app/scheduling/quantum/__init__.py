@@ -32,6 +32,8 @@ from app.scheduling.quantum.qubo_solver import (
     QUBOSolver,
     SimulatedQuantumAnnealingSolver,
     get_quantum_library_status,
+    get_quantum_solver_config,
+    create_quantum_solver_from_env,
 )
 
 from app.scheduling.quantum.call_assignment_qubo import (
@@ -55,6 +57,8 @@ __all__ = [
     "QuantumInspiredSolver",
     "SimulatedQuantumAnnealingSolver",
     "get_quantum_library_status",
+    "get_quantum_solver_config",
+    "create_quantum_solver_from_env",
     # Call assignment QUBO
     "CallAssignmentQUBO",
     "CallCandidate",

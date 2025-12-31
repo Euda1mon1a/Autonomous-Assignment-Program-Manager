@@ -1,10 +1,11 @@
+import { renderWithProviders } from '@/test-utils';
 /**
  * Tests for Dropdown Component
  * Component: 38 - Dropdown menu
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { renderWithProviders as render, screen, fireEvent, waitFor } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { Dropdown, DropdownItem } from '../Dropdown';
 

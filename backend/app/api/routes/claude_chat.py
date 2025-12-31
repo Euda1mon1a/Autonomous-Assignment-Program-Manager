@@ -246,7 +246,7 @@ async def execute_tool(tool_name: str, tool_input: dict, db) -> dict[str, Any]:
                 # Validate by schedule ID
                 service = ConstraintService(db)
                 try:
-                    result = await service.validate_schedule(schedule_id)
+                    result = await sawait ervice.validate_schedule(schedule_id)
                     return {
                         "status": "validated",
                         "is_valid": result.is_valid,
@@ -339,7 +339,7 @@ async def execute_tool(tool_name: str, tool_input: dict, db) -> dict[str, Any]:
                 end_date = start_date + timedelta(days=30)
 
             # Get faculty and assignments for the period
-            faculty = db.query(Person).filter(Person.type == "faculty").all()
+            faculty = (await db.execute(select(Person).where(Person.type == "faculty"))).scalars().all()
             blocks = (
                 db.query(Block)
                 .filter(Block.date >= start_date, Block.date <= end_date)

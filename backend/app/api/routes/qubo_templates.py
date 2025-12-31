@@ -13,10 +13,11 @@ import logging
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.block import Block
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
@@ -94,7 +95,7 @@ def build_scheduling_context(
     residents = residents_query.all()
 
     # Query faculty
-    faculty = db.query(Person).filter(Person.role == "FACULTY").all()
+    faculty = (await db.execute(select(Person).where(Person.role == "FACULTY"))).scalars().all()
 
     # Query templates
     templates_query = db.query(RotationTemplate)
@@ -142,7 +143,7 @@ def convert_desirability_mappings(
 @router.post("/optimize", response_model=QUBOTemplateOptimizeResponse)
 async def optimize_template_selection(
     request: QUBOTemplateOptimizeRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -537,7 +538,7 @@ async def explore_energy_landscape(
         default=200, ge=50, le=1000, description="Number of samples"
     ),
     seed: int | None = Query(default=None, description="Random seed"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -598,7 +599,7 @@ async def explore_pareto_frontier(
     population_size: int = Query(default=50, ge=10, le=200),
     generations: int = Query(default=50, ge=10, le=200),
     seed: int | None = Query(default=None),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -652,7 +653,7 @@ async def explore_pareto_frontier(
 async def run_benchmark(
     start_date: date = Query(..., description="Start date"),
     end_date: date = Query(..., description="End date"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """

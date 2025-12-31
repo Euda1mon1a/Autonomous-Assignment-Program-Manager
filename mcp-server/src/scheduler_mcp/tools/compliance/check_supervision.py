@@ -88,17 +88,11 @@ class CheckSupervisionTool(
         client = self._require_api_client()
 
         try:
-            # Check supervision via API
-            result = await client.client.get(
-                f"{client.config.api_prefix}/compliance/supervision",
-                headers=await client._ensure_authenticated(),
-                params={
-                    "date": request.date,
-                    "session": request.session,
-                },
+            # Check supervision via API client
+            data = await client.check_supervision(
+                date=request.date,
+                session=request.session,
             )
-            result.raise_for_status()
-            data = result.json()
 
             # Parse ratios
             ratios = []

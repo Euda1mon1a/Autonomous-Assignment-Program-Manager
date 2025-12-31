@@ -1,10 +1,11 @@
+import { renderWithProviders } from '@/test-utils';
 /**
  * Tests for Tabs Component
  * Component: 47 - Tab navigation
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { renderWithProviders as render, screen, fireEvent } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { Tabs, Tab } from '../Tabs';
 

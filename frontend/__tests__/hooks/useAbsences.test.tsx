@@ -4,7 +4,7 @@
  * Tests all absence management hooks including fetching, filtering, CRUD operations,
  * military leave, leave balance, leave calendar, and approval workflows.
  */
-import { renderHook, waitFor, act } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@/test-utils'
 import {
   useAbsence,
   useAbsences,

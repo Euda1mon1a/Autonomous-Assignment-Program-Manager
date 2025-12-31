@@ -91,6 +91,22 @@ global.IntersectionObserver = jest.fn().mockImplementation(() => ({
 }))
 
 // ============================================================================
+// Next.js Module Mocks
+// ============================================================================
+
+// Mock next/router (Pages Router)
+jest.mock('next/router', () => require('@/__mocks__/next/router'))
+
+// Mock next/navigation (App Router)
+jest.mock('next/navigation', () => require('@/__mocks__/next/navigation'))
+
+// Mock next/image
+jest.mock('next/image', () => require('@/__mocks__/next/image').default)
+
+// Mock next/link
+jest.mock('next/link', () => require('@/__mocks__/next/link').default)
+
+// ============================================================================
 // Global Test Cleanup
 // ============================================================================
 
