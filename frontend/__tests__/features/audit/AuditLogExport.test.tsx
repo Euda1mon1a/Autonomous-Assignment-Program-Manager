@@ -49,10 +49,12 @@ describe('AuditLogExport', () => {
     });
 
     it('should not show count badge when totalCount equals logs length', () => {
-      render(<AuditLogExport {...defaultProps} logs={getMockLogs(50)} totalCount={50} />);
+      const logs = getMockLogs(10);
+      // When totalCount equals logs.length, badge should not appear
+      render(<AuditLogExport {...defaultProps} logs={logs} totalCount={logs.length} />);
 
-      // When counts match, "All 50" badge should not appear
-      expect(screen.queryByText(/All\s*50/i)).not.toBeInTheDocument();
+      // "All X" badge should not appear
+      expect(screen.queryByText(/All\s*\d+/i)).not.toBeInTheDocument();
     });
 
     it('should not render export modal by default', () => {

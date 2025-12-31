@@ -199,11 +199,9 @@ describe('AuditLogTable', () => {
     it('should display current page information', () => {
       render(<AuditLogTable {...defaultProps} />);
 
-      // Page info shows entries count - text is in a span
-      const pageInfo = screen.getByText((content, element) => {
-        return element?.textContent?.includes('Showing') && element?.textContent?.includes('entries') || false;
-      });
-      expect(pageInfo).toBeInTheDocument();
+      // Page info shows entries count - verify text exists in the document
+      const bodyText = document.body.textContent || '';
+      expect(bodyText).toMatch(/Showing.*entries/i);
     });
 
     it('should call onPageChange when clicking Next button', async () => {

@@ -179,6 +179,8 @@ describe('FairnessTrend', () => {
 
   describe('PGY Comparison', () => {
     beforeEach(() => {
+      // Reset mock to clear any previous implementations
+      mockedApi.get.mockReset();
       mockedApi.get.mockResolvedValue(analyticsMockResponses.fairnessTrend);
       mockedApi.get.mockResolvedValueOnce(analyticsMockResponses.fairnessTrend);
       mockedApi.get.mockResolvedValueOnce(analyticsMockResponses.pgyEquity);
@@ -259,6 +261,11 @@ describe('FairnessTrend', () => {
   });
 
   describe('API Integration', () => {
+    beforeEach(() => {
+      // Reset mock completely to clear any previous implementations
+      mockedApi.get.mockReset();
+    });
+
     it('should fetch fairness trend data with correct period for 3 months', async () => {
       mockedApi.get.mockResolvedValue(analyticsMockResponses.fairnessTrend);
 
@@ -296,9 +303,16 @@ describe('FairnessTrend', () => {
     });
 
     it('should fetch PGY equity data when showPgyComparison is true', async () => {
-      mockedApi.get.mockResolvedValue(analyticsMockResponses.fairnessTrend);
-      mockedApi.get.mockResolvedValueOnce(analyticsMockResponses.fairnessTrend);
-      mockedApi.get.mockResolvedValueOnce(analyticsMockResponses.pgyEquity);
+      // Use mockImplementation to properly route URLs
+      mockedApi.get.mockImplementation((url: string) => {
+        if (url.includes('/analytics/trends/fairness')) {
+          return Promise.resolve(analyticsMockResponses.fairnessTrend);
+        }
+        if (url.includes('/analytics/equity/pgy')) {
+          return Promise.resolve(analyticsMockResponses.pgyEquity);
+        }
+        return Promise.resolve([]);
+      });
 
       render(<FairnessTrend months={3} showPgyComparison={true} />, {
         wrapper: createWrapper(),
@@ -314,6 +328,7 @@ describe('FairnessTrend', () => {
 
   describe('Custom ClassName', () => {
     beforeEach(() => {
+      mockedApi.get.mockReset();
       mockedApi.get.mockResolvedValue(analyticsMockResponses.fairnessTrend);
       mockedApi.get.mockResolvedValueOnce(analyticsMockResponses.fairnessTrend);
       mockedApi.get.mockResolvedValueOnce(analyticsMockResponses.pgyEquity);
