@@ -215,9 +215,7 @@ class TestConstraintCoverageAnalyzer:
         report = validator.validate_all()
 
         # Should have coverage error
-        coverage_errors = [
-            e for e in report.errors if e.category == "COVERAGE"
-        ]
+        coverage_errors = [e for e in report.errors if e.category == "COVERAGE"]
         assert len(coverage_errors) > 0
 
 

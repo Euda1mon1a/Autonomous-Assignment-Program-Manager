@@ -22,16 +22,17 @@ from opentelemetry.instrumentation.requests import RequestsInstrumentor
 # TRACING CONFIGURATION
 # ============================================================================
 
+
 class TracingConfig:
     """Configuration for distributed tracing."""
 
     def __init__(
         self,
-        service_name: str = 'residency-scheduler',
-        environment: str = 'production',
-        jaeger_host: str = 'localhost',
+        service_name: str = "residency-scheduler",
+        environment: str = "production",
+        jaeger_host: str = "localhost",
         jaeger_port: int = 6831,
-        otlp_endpoint: str = 'http://localhost:4317',
+        otlp_endpoint: str = "http://localhost:4317",
         sample_rate: float = 1.0,
         enable_jaeger: bool = True,
         enable_otlp: bool = False,
@@ -58,7 +59,7 @@ class TracingConfig:
         self.enable_jaeger = enable_jaeger
         self.enable_otlp = enable_otlp
 
-        self.logger = logging.getLogger('app.tracing')
+        self.logger = logging.getLogger("app.tracing")
 
 
 class TracingSetup:
@@ -72,9 +73,9 @@ class TracingSetup:
             config: Tracing configuration
         """
         self.config = config
-        self.tracer_provider: Optional[TracerProvider] = None
-        self.meter_provider: Optional[MeterProvider] = None
-        self.logger = logging.getLogger('app.tracing')
+        self.tracer_provider: TracerProvider | None = None
+        self.meter_provider: MeterProvider | None = None
+        self.logger = logging.getLogger("app.tracing")
 
     def setup_tracer_provider(self) -> TracerProvider:
         """
@@ -84,11 +85,13 @@ class TracingSetup:
             Configured TracerProvider instance
         """
         # Create resource
-        resource = Resource.create({
-            SERVICE_NAME: self.config.service_name,
-            'environment': self.config.environment,
-            'service.version': '1.0.0',
-        })
+        resource = Resource.create(
+            {
+                SERVICE_NAME: self.config.service_name,
+                "environment": self.config.environment,
+                "service.version": "1.0.0",
+            }
+        )
 
         # Create tracer provider
         tracer_provider = TracerProvider(resource=resource)
@@ -100,9 +103,7 @@ class TracingSetup:
                     agent_host_name=self.config.jaeger_host,
                     agent_port=self.config.jaeger_port,
                 )
-                tracer_provider.add_span_processor(
-                    BatchSpanProcessor(jaeger_exporter)
-                )
+                tracer_provider.add_span_processor(BatchSpanProcessor(jaeger_exporter))
                 self.logger.info(
                     f"Jaeger exporter configured: {self.config.jaeger_host}:{self.config.jaeger_port}"
                 )
@@ -112,13 +113,11 @@ class TracingSetup:
         # Add OTLP exporter
         if self.config.enable_otlp:
             try:
-                otlp_exporter = OTLPSpanExporter(
-                    endpoint=self.config.otlp_endpoint
+                otlp_exporter = OTLPSpanExporter(endpoint=self.config.otlp_endpoint)
+                tracer_provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
+                self.logger.info(
+                    f"OTLP exporter configured: {self.config.otlp_endpoint}"
                 )
-                tracer_provider.add_span_processor(
-                    BatchSpanProcessor(otlp_exporter)
-                )
-                self.logger.info(f"OTLP exporter configured: {self.config.otlp_endpoint}")
             except Exception as e:
                 self.logger.warning(f"Failed to configure OTLP: {e}")
 
@@ -136,10 +135,12 @@ class TracingSetup:
             Configured MeterProvider instance
         """
         # Create resource
-        resource = Resource.create({
-            SERVICE_NAME: self.config.service_name,
-            'environment': self.config.environment,
-        })
+        resource = Resource.create(
+            {
+                SERVICE_NAME: self.config.service_name,
+                "environment": self.config.environment,
+            }
+        )
 
         # Create readers for exporters
         readers = []
@@ -152,15 +153,12 @@ class TracingSetup:
                 )
                 reader = PeriodicExportingMetricReader(otlp_metric_exporter)
                 readers.append(reader)
-                self.logger.info(f"OTLP metrics exporter configured")
+                self.logger.info("OTLP metrics exporter configured")
             except Exception as e:
                 self.logger.warning(f"Failed to configure OTLP metrics: {e}")
 
         # Create meter provider
-        meter_provider = MeterProvider(
-            resource=resource,
-            metric_readers=readers
-        )
+        meter_provider = MeterProvider(resource=resource, metric_readers=readers)
 
         # Set global meter provider
         metrics.set_meter_provider(meter_provider)
@@ -220,7 +218,7 @@ class TracingSetup:
         except Exception as e:
             self.logger.warning(f"Failed to instrument Requests: {e}")
 
-    def setup_all(self, app: Optional[Any] = None) -> None:
+    def setup_all(self, app: Any | None = None) -> None:
         """
         Setup all tracing infrastructure.
 
@@ -243,7 +241,8 @@ class TracingSetup:
 # SPAN HELPERS
 # ============================================================================
 
-def get_tracer(name: str = 'app') -> Any:
+
+def get_tracer(name: str = "app") -> Any:
     """
     Get tracer instance.
 
@@ -256,10 +255,7 @@ def get_tracer(name: str = 'app') -> Any:
     return trace.get_tracer(name)
 
 
-def create_span(
-    name: str,
-    attributes: Optional[Dict[str, Any]] = None
-) -> Any:
+def create_span(name: str, attributes: dict[str, Any] | None = None) -> Any:
     """
     Create a span.
 
@@ -284,15 +280,16 @@ def create_span(
 # TRACE CONTEXT MANAGEMENT
 # ============================================================================
 
+
 class TraceContext:
     """Manage trace context information."""
 
     def __init__(self):
         """Initialize trace context."""
-        self.logger = logging.getLogger('app.tracing')
+        self.logger = logging.getLogger("app.tracing")
 
     @staticmethod
-    def get_current_span() -> Optional[Any]:
+    def get_current_span() -> Any | None:
         """
         Get current active span.
 
@@ -324,8 +321,8 @@ class TraceContext:
         """
         span = trace.get_current_span()
         if span and span.get_span_context():
-            return format(span.get_span_context().trace_id, '032x')
-        return ''
+            return format(span.get_span_context().trace_id, "032x")
+        return ""
 
     @staticmethod
     def get_span_id() -> str:
@@ -337,18 +334,19 @@ class TraceContext:
         """
         span = trace.get_current_span()
         if span and span.get_span_context():
-            return format(span.get_span_context().span_id, '016x')
-        return ''
+            return format(span.get_span_context().span_id, "016x")
+        return ""
 
 
 # ============================================================================
 # PERFORMANCE TRACING
 # ============================================================================
 
+
 class PerformanceTracer:
     """Trace performance metrics."""
 
-    def __init__(self, tracer_name: str = 'performance'):
+    def __init__(self, tracer_name: str = "performance"):
         """
         Initialize performance tracer.
 
@@ -356,14 +354,10 @@ class PerformanceTracer:
             tracer_name: Name of tracer
         """
         self.tracer = get_tracer(tracer_name)
-        self.logger = logging.getLogger('app.tracing')
+        self.logger = logging.getLogger("app.tracing")
 
     def trace_database_query(
-        self,
-        operation: str,
-        table: str,
-        query_time_ms: float,
-        rows_affected: int
+        self, operation: str, table: str, query_time_ms: float, rows_affected: int
     ) -> None:
         """
         Trace database query performance.
@@ -375,16 +369,13 @@ class PerformanceTracer:
             rows_affected: Number of rows affected
         """
         attributes = {
-            'db.operation': operation,
-            'db.table': table,
-            'db.query_time_ms': query_time_ms,
-            'db.rows_affected': rows_affected,
+            "db.operation": operation,
+            "db.table": table,
+            "db.query_time_ms": query_time_ms,
+            "db.rows_affected": rows_affected,
         }
 
-        with self.tracer.start_as_current_span(
-            'db.query',
-            attributes=attributes
-        ):
+        with self.tracer.start_as_current_span("db.query", attributes=attributes):
             pass
 
         # Log slow queries
@@ -398,7 +389,7 @@ class PerformanceTracer:
         execution_time_ms: float,
         block_count: int,
         success: bool,
-        error: Optional[str] = None
+        error: str | None = None,
     ) -> None:
         """
         Trace scheduler execution.
@@ -410,26 +401,21 @@ class PerformanceTracer:
             error: Error message if failed
         """
         attributes = {
-            'scheduler.execution_time_ms': execution_time_ms,
-            'scheduler.block_count': block_count,
-            'scheduler.success': success,
+            "scheduler.execution_time_ms": execution_time_ms,
+            "scheduler.block_count": block_count,
+            "scheduler.success": success,
         }
 
         if error:
-            attributes['scheduler.error'] = error
+            attributes["scheduler.error"] = error
 
         with self.tracer.start_as_current_span(
-            'scheduler.execute',
-            attributes=attributes
+            "scheduler.execute", attributes=attributes
         ):
             pass
 
     def trace_api_call(
-        self,
-        endpoint: str,
-        method: str,
-        status_code: int,
-        response_time_ms: float
+        self, endpoint: str, method: str, status_code: int, response_time_ms: float
     ) -> None:
         """
         Trace API call.
@@ -441,16 +427,13 @@ class PerformanceTracer:
             response_time_ms: Response time in milliseconds
         """
         attributes = {
-            'http.method': method,
-            'http.endpoint': endpoint,
-            'http.status_code': status_code,
-            'http.response_time_ms': response_time_ms,
+            "http.method": method,
+            "http.endpoint": endpoint,
+            "http.status_code": status_code,
+            "http.response_time_ms": response_time_ms,
         }
 
-        with self.tracer.start_as_current_span(
-            'http.request',
-            attributes=attributes
-        ):
+        with self.tracer.start_as_current_span("http.request", attributes=attributes):
             pass
 
 
