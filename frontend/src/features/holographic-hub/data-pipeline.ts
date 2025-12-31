@@ -37,7 +37,7 @@ import {
  */
 export function projectPCA(
   data: number[][],
-  nComponents: number = 3
+  nComponents = 3
 ): { projected: number[][]; explainedVariance: number[] } {
   if (data.length === 0) {
     return { projected: [], explainedVariance: [] };
@@ -566,6 +566,16 @@ export function buildHolographicDataset(
  * Generate mock session data for testing
  */
 export function generateMockSessionData(sessionLayer: SpectralLayer): SessionDataExport {
+  const layerIndexMap: Record<SpectralLayer, number> = {
+    quantum: 0,
+    temporal: 1,
+    topological: 2,
+    spectral: 3,
+    evolutionary: 4,
+    gravitational: 5,
+    phase: 6,
+    thermodynamic: 7,
+  };
   const constraintTypes: ConstraintType[] = [
     "acgme",
     "fairness",
@@ -614,7 +624,7 @@ export function generateMockSessionData(sessionLayer: SpectralLayer): SessionDat
   const criticalCount = constraints.filter((c) => c.severity > 0.8).length;
 
   return {
-    sessionId: ["quantum", "temporal", "topological", "spectral", "evolutionary", "gravitational", "phase", "thermodynamic"].indexOf(sessionLayer) + 1,
+    sessionId: (layerIndexMap[sessionLayer] ?? 0) + 1,
     sessionName: sessionLayer,
     timestamp: new Date().toISOString(),
     version: "1.0.0",

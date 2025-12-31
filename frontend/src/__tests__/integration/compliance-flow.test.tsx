@@ -51,8 +51,75 @@ function renderWithProviders(ui: React.ReactElement) {
   )
 }
 
+// ============================================================================
+// Type Definitions
+// ============================================================================
+
+interface ComplianceStatus {
+  person_id: string;
+  period_start: string;
+  period_end: string;
+  total_hours: number;
+  max_hours: number;
+  hours_remaining: number;
+  compliance_status: 'green' | 'yellow' | 'red';
+  violations: string[];
+  warnings: string[];
+  gauge_color?: string;
+  warning?: string;
+  session_expires_in?: number;
+  show_warning?: boolean;
+  exemption_applied?: boolean;
+  pgy_level?: number;
+}
+
+interface ComplianceViolation {
+  id: string;
+  person_id: string;
+  rule: string;
+  severity: 'high' | 'medium' | 'low' | 'critical';
+  description: string;
+  detected_at: string;
+  resolved: boolean;
+  hours_over?: number;
+  requires_immediate_action?: boolean;
+}
+
+interface WorkHours {
+  person_id: string;
+  week_start: string;
+  week_end: string;
+  total_hours: number;
+  clinical_hours: number;
+  non_clinical_hours: number;
+}
+
+interface ComplianceListResponse<T> {
+  items: T[];
+  total: number;
+}
+
+interface ComplianceReport {
+  report_id: string;
+  type: string;
+  generated_at?: string;
+  download_url?: string;
+  month?: string;
+  format?: string;
+  summary?: {
+    total_violations: number;
+    resolved_violations: number;
+    active_violations: number;
+  };
+}
+
+interface ApiError {
+  message: string;
+  status: number;
+}
+
 // Mock compliance data
-const mockComplianceStatus = {
+const mockComplianceStatus: ComplianceStatus = {
   person_id: 'person-1',
   period_start: '2024-01-01',
   period_end: '2024-01-28',
@@ -64,7 +131,7 @@ const mockComplianceStatus = {
   warnings: [],
 }
 
-const mockViolations = [
+const mockViolations: ComplianceViolation[] = [
   {
     id: 'violation-1',
     person_id: 'person-1',
@@ -77,7 +144,7 @@ const mockViolations = [
   },
 ]
 
-const mockWorkHours = [
+const mockWorkHours: WorkHours[] = [
   {
     person_id: 'person-1',
     week_start: '2024-01-01',
@@ -98,11 +165,11 @@ const mockWorkHours = [
 
 // API mock helper
 function setupApiMock(options: {
-  status?: typeof mockComplianceStatus | 'error'
-  violations?: typeof mockViolations | 'error'
-  workHours?: typeof mockWorkHours | 'error'
-} = {}) {
-  mockedApi.get.mockImplementation((url: string) => {
+  status?: ComplianceStatus | 'error'
+  violations?: ComplianceViolation[] | 'error'
+  workHours?: WorkHours[] | 'error'
+} = {}): void {
+  mockedApi.get.mockImplementation((url: string): Promise<unknown> => {
     if (url.includes('/compliance/status')) {
       if (options.status === 'error') {
         return Promise.reject({ message: 'Failed to fetch compliance', status: 500 })
@@ -157,9 +224,9 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result = await mockedApi.get('/api/compliance/status')
+      const result = await mockedApi.get('/api/compliance/status') as ComplianceListResponse<ComplianceStatus>
       expect(result.items).toHaveLength(3)
-      expect(result.items.some((s: any) => s.compliance_status === 'red')).toBe(true)
+      expect(result.items.some((s) => s.compliance_status === 'red')).toBe(true)
     })
 
     it('should group residents by compliance status', async () => {
@@ -174,10 +241,10 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result = await mockedApi.get('/api/compliance/status')
-      const green = result.items.filter((s: any) => s.compliance_status === 'green')
-      const yellow = result.items.filter((s: any) => s.compliance_status === 'yellow')
-      const red = result.items.filter((s: any) => s.compliance_status === 'red')
+      const result = await mockedApi.get('/api/compliance/status') as ComplianceListResponse<ComplianceStatus>
+      const green = result.items.filter((s) => s.compliance_status === 'green')
+      const yellow = result.items.filter((s) => s.compliance_status === 'yellow')
+      const red = result.items.filter((s) => s.compliance_status === 'red')
 
       expect(green).toHaveLength(2)
       expect(yellow).toHaveLength(1)
@@ -263,8 +330,8 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
 
       setupApiMock({ violations })
 
-      const result = await mockedApi.get('/api/compliance/violations')
-      const highSeverity = result.items.filter((v: any) => v.severity === 'high')
+      const result = await mockedApi.get('/api/compliance/violations') as ComplianceListResponse<ComplianceViolation>
+      const highSeverity = result.items.filter((v) => v.severity === 'high')
       expect(highSeverity).toHaveLength(1)
     })
 
@@ -392,8 +459,8 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
     it('should show weekly hour trends', async () => {
       setupApiMock()
 
-      const result = await mockedApi.get('/api/compliance/work-hours?person_id=person-1')
-      const hours = result.items.map((w: any) => w.total_hours)
+      const result = await mockedApi.get('/api/compliance/work-hours?person_id=person-1') as ComplianceListResponse<WorkHours>
+      const hours = result.items.map((w) => w.total_hours)
       expect(hours).toEqual([78, 75])
     })
 
@@ -406,16 +473,16 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
 
       setupApiMock({ workHours })
 
-      const result = await mockedApi.get('/api/compliance/work-hours?person_id=person-1')
-      const nearViolations = result.items.filter((w: any) => w.total_hours >= 78)
+      const result = await mockedApi.get('/api/compliance/work-hours?person_id=person-1') as ComplianceListResponse<WorkHours>
+      const nearViolations = result.items.filter((w) => w.total_hours >= 78)
       expect(nearViolations).toHaveLength(3)
     })
 
     it('should calculate average weekly hours', async () => {
       setupApiMock()
 
-      const result = await mockedApi.get('/api/compliance/work-hours?person_id=person-1')
-      const total = result.items.reduce((sum: number, w: any) => sum + w.total_hours, 0)
+      const result = await mockedApi.get('/api/compliance/work-hours?person_id=person-1') as ComplianceListResponse<WorkHours>
+      const total = result.items.reduce((sum, w) => sum + w.total_hours, 0)
       const average = total / result.items.length
       expect(average).toBeCloseTo(76.5, 1)
     })
@@ -773,8 +840,8 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result = await mockedApi.get('/api/compliance/status?pgy_level=1')
-      expect(result.items.every((s: any) => s.pgy_level === 1)).toBe(true)
+      const result = await mockedApi.get('/api/compliance/status?pgy_level=1') as ComplianceListResponse<ComplianceStatus>
+      expect(result.items.every((s) => s.pgy_level === 1)).toBe(true)
     })
 
     it('should filter by date range', async () => {

@@ -7,7 +7,7 @@
  * with recommendation summary.
  */
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   Plus,
   Trash2,
@@ -218,9 +218,15 @@ function ConstraintImpactItem({
     violationSeverity?: 'minor' | 'major' | 'critical';
   };
 }) {
-  const isIncrease = constraint.projectedValue > constraint.currentValue;
-  const change = constraint.projectedValue - constraint.currentValue;
-  const changePercentage = (change / constraint.currentValue) * 100;
+  // Performance: Memoize expensive calculations to avoid recalculating on every render
+  const { isIncrease, change, changePercentage } = useMemo(() => {
+    const change = constraint.projectedValue - constraint.currentValue;
+    return {
+      isIncrease: constraint.projectedValue > constraint.currentValue,
+      change,
+      changePercentage: (change / constraint.currentValue) * 100,
+    };
+  }, [constraint.projectedValue, constraint.currentValue]);
 
   return (
     <div
@@ -457,28 +463,31 @@ export function WhatIfAnalysis({ baseVersionId, className = '' }: WhatIfAnalysis
   const { data: versions } = useScheduleVersions();
   const { mutate: runAnalysis, data: result, isPending, error } = useWhatIfAnalysis();
 
-  const handleAddChange = () => {
-    setChanges([
-      ...changes,
+  // Performance: Memoize change handlers to prevent re-creation on every render
+  const handleAddChange = useCallback(() => {
+    setChanges(prev => [
+      ...prev,
       {
         type: 'add_shift',
         description: '',
         parameters: {},
       },
     ]);
-  };
+  }, []);
 
-  const handleUpdateChange = (index: number, change: ProposedChange) => {
-    const newChanges = [...changes];
-    newChanges[index] = change;
-    setChanges(newChanges);
-  };
+  const handleUpdateChange = useCallback((index: number, change: ProposedChange) => {
+    setChanges(prev => {
+      const newChanges = [...prev];
+      newChanges[index] = change;
+      return newChanges;
+    });
+  }, []);
 
-  const handleRemoveChange = (index: number) => {
-    setChanges(changes.filter((_, i) => i !== index));
-  };
+  const handleRemoveChange = useCallback((index: number) => {
+    setChanges(prev => prev.filter((_, i) => i !== index));
+  }, []);
 
-  const handleRunAnalysis = () => {
+  const handleRunAnalysis = useCallback(() => {
     if (!selectedVersionId || changes.length === 0) return;
 
     const request: WhatIfAnalysisRequest = {
@@ -488,9 +497,31 @@ export function WhatIfAnalysis({ baseVersionId, className = '' }: WhatIfAnalysis
     };
 
     runAnalysis(request);
-  };
+  }, [selectedVersionId, changes, analysisScope, runAnalysis]);
 
-  const canRunAnalysis = selectedVersionId && changes.length > 0 && changes.every((c) => c.description);
+  // Performance: Memoize validation check to avoid recalculating on every render
+  const canRunAnalysis = useMemo(() =>
+    selectedVersionId && changes.length > 0 && changes.every((c) => c.description),
+    [selectedVersionId, changes]
+  );
+
+  // Performance: Memoize sorted and grouped constraint impacts
+  const sortedConstraintImpacts = useMemo(() => {
+    if (!result?.predictedImpact?.constraints) return [];
+    return [...result.predictedImpact.constraints].sort((a, b) => {
+      if (a.violated !== b.violated) return a.violated ? -1 : 1;
+      return Math.abs(b.projectedValue - b.currentValue) - Math.abs(a.projectedValue - a.currentValue);
+    });
+  }, [result?.predictedImpact?.constraints]);
+
+  // Performance: Memoize warning counts by severity
+  const warningCounts = useMemo(() => {
+    if (!result?.predictedImpact?.warnings) return { info: 0, warning: 0, error: 0 };
+    return result.predictedImpact.warnings.reduce((acc, w) => {
+      acc[w.severity] = (acc[w.severity] || 0) + 1;
+      return acc;
+    }, { info: 0, warning: 0, error: 0 } as Record<string, number>);
+  }, [result?.predictedImpact?.warnings]);
 
   return (
     <div className={`space-y-6 ${className}`}>

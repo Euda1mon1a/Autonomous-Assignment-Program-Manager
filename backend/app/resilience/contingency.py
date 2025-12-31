@@ -21,6 +21,7 @@ Uses NetworkX for advanced graph-based centrality analysis:
 - PageRank: Google's algorithm adapted for faculty importance
 """
 
+import functools
 import logging
 from dataclasses import dataclass, field
 from datetime import date, timedelta

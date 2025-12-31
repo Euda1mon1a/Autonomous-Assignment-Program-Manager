@@ -59,6 +59,7 @@ class MockWebSocket {
 }
 
 // Mock global WebSocket
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 global.WebSocket = MockWebSocket as any;
 
 // Test event data

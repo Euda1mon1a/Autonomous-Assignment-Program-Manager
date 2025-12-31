@@ -7,7 +7,7 @@
  * quick stats summary, and alert cards for metric thresholds.
  */
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   BarChart3,
   TrendingUp,

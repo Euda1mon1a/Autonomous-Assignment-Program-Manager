@@ -24,6 +24,7 @@ Formulas:
 - Service Level: P(wait within target) = 1 - P(wait) * e^(-(c-A)t/μ)
 """
 
+import functools
 import logging
 from dataclasses import dataclass
 

@@ -92,7 +92,7 @@ class CallScheduleModel:
     - Max deviation variable for min-max fairness
     """
 
-    def __init__(self, input_data: CallScheduleInput):
+    def __init__(self, input_data: CallScheduleInput) -> None:
         """
         Initialize the call schedule model.
 

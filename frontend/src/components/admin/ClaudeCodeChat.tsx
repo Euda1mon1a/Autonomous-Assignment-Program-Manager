@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useClaudeChatContext } from '../../contexts/ClaudeChatContext';
-import { ChatMessage, StreamUpdate } from '../../types/chat';
+import { ChatMessage, StreamUpdate, ChatArtifact, ClaudeCodeExecutionContext } from '../../types/chat';
 import './ClaudeCodeChat.css';
 
 interface ClaudeCodeChatProps {
   programId: string;
   adminId: string;
-  onTaskComplete?: (artifact: any) => void;
+  onTaskComplete?: (artifact: ChatArtifact) => void;
 }
 
 const ClaudeCodeChat: React.FC<ClaudeCodeChatProps> = ({
@@ -26,9 +26,9 @@ const ClaudeCodeChat: React.FC<ClaudeCodeChatProps> = ({
   } = useClaudeChatContext();
 
   const [input, setInput] = useState('');
-  const [context, setContext] = useState<any>(null);
+  const [context, setContext] = useState<Partial<ClaudeCodeExecutionContext> | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [selectedArtifact, setSelectedArtifact] = useState<any>(null);
+  const [selectedArtifact, setSelectedArtifact] = useState<ChatArtifact | null>(null);
 
   // Initialize session on mount
   useEffect(() => {
@@ -72,7 +72,7 @@ const ClaudeCodeChat: React.FC<ClaudeCodeChatProps> = ({
     ));
   };
 
-  const renderCodeBlock = (code: any, index: number) => (
+  const renderCodeBlock = (code: { language: string; code: string; filename?: string }, index: number): React.ReactElement => (
     <div key={index} className="code-block">
       <div className="code-header">
         <span className="language">{code.language}</span>

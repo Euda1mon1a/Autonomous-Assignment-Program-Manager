@@ -14,7 +14,12 @@ class ConstraintPruner:
     """Prune infeasible assignments before solver runs."""
 
     def __init__(self):
-        """Initialize constraint pruner."""
+        """
+        Initialize constraint pruner.
+
+        Creates a new pruner instance with zero counters for tracking
+        pruning statistics across prune_assignments calls.
+        """
         self.pruned_count = 0
         self.total_evaluated = 0
 
@@ -190,13 +195,24 @@ class ConstraintPruner:
         self,
         pruning_result: dict,
     ) -> dict:
-        """Estimate search space reduction from pruning.
+        """
+        Estimate search space reduction from pruning.
+
+        Calculates how much the solver search space was reduced by
+        constraint pruning. Uses exponential estimation based on the
+        assumption that pruning reduces combinatorial explosion.
 
         Args:
-            pruning_result: Result from prune_assignments
+            pruning_result: Result dictionary from prune_assignments
 
         Returns:
-            Dictionary with reduction statistics
+            Dictionary with reduction statistics including:
+                - total_combinations: Total assignments evaluated
+                - pruned_combinations: Number pruned as infeasible
+                - remaining_combinations: Number still feasible
+                - reduction_ratio: Fraction pruned (0.0-1.0)
+                - estimated_search_space_reduction_factor: Exponential reduction
+                - estimated_solver_speedup: Expected solver speedup multiplier
         """
         total = pruning_result["total_evaluated"]
         pruned = pruning_result["pruned_count"]
@@ -221,15 +237,24 @@ def prune_infeasible_assignments(
     rotations: list[dict],
     blocks: list[dict],
 ) -> dict:
-    """Utility function to prune infeasible assignments.
+    """
+    Utility function to prune infeasible assignments.
+
+    Convenience wrapper that creates a ConstraintPruner instance
+    and runs pruning on the provided scheduling data.
 
     Args:
-        persons: List of persons
-        rotations: List of rotations
-        blocks: List of blocks
+        persons: List of person dictionaries
+        rotations: List of rotation dictionaries
+        blocks: List of block dictionaries
 
     Returns:
-        Pruning result dictionary
+        Pruning result dictionary with feasible assignments and statistics
+
+    Example:
+        >>> result = prune_infeasible_assignments(persons, rotations, blocks)
+        >>> print(f"Pruned {result['pruned_count']} infeasible assignments")
+        >>> feasible = result['feasible_assignments']
     """
     pruner = ConstraintPruner()
     return pruner.prune_assignments(persons, rotations, blocks)

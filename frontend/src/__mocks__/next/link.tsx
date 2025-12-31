@@ -4,7 +4,13 @@
 
 import React from 'react';
 
-const NextLink = ({ children, href, ...props }: any) => {
+interface NextLinkProps {
+  children: React.ReactNode;
+  href: string;
+  [key: string]: unknown;
+}
+
+const NextLink: React.FC<NextLinkProps> = ({ children, href, ...props }) => {
   return (
     <a href={href} {...props}>
       {children}

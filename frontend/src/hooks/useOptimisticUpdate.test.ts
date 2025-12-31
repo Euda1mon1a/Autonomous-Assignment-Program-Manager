@@ -37,11 +37,19 @@ describe('useOptimisticUpdate', () => {
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 
-    const mutationFn = jest.fn(() =>
+    interface TestData {
+      value: number;
+    }
+
+    interface TestVariables {
+      newValue: number;
+    }
+
+    const mutationFn = jest.fn((): Promise<TestData> =>
       Promise.resolve({ value: 1 })
     );
 
-    const optimisticUpdate = (old: any, variables: any) => ({
+    const optimisticUpdate = (old: TestData | undefined, variables: TestVariables): TestData => ({
       value: variables.newValue,
     });
 
@@ -77,11 +85,19 @@ describe('useOptimisticUpdate', () => {
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 
-    const mutationFn = jest.fn(() =>
+    interface TestData {
+      value: number;
+    }
+
+    interface TestVariables {
+      newValue: number;
+    }
+
+    const mutationFn = jest.fn((): Promise<TestData> =>
       Promise.reject(new Error('Update failed'))
     );
 
-    const optimisticUpdate = (old: any, variables: any) => ({
+    const optimisticUpdate = (old: TestData | undefined, variables: TestVariables): TestData => ({
       value: variables.newValue,
     });
 
@@ -121,11 +137,19 @@ describe('useOptimisticUpdate', () => {
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 
-    const mutationFn = jest.fn(() =>
+    interface TestData {
+      value: number;
+    }
+
+    interface TestVariables {
+      newValue: number;
+    }
+
+    const mutationFn = jest.fn((): Promise<TestData> =>
       Promise.resolve({ value: 2 }) // Server returns different value
     );
 
-    const optimisticUpdate = (old: any, variables: any) => ({
+    const optimisticUpdate = (old: TestData | undefined, variables: TestVariables): TestData => ({
       value: variables.newValue,
     });
 
@@ -164,8 +188,16 @@ describe('useOptimisticUpdate', () => {
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 
-    const mutationFn = jest.fn(() => Promise.resolve({ value: 1 }));
-    const optimisticUpdate = (old: any, variables: any) => ({ value: variables.newValue });
+    interface TestData {
+      value: number;
+    }
+
+    interface TestVariables {
+      newValue: number;
+    }
+
+    const mutationFn = jest.fn((): Promise<TestData> => Promise.resolve({ value: 1 }));
+    const optimisticUpdate = (old: TestData | undefined, variables: TestVariables): TestData => ({ value: variables.newValue });
 
     const { result } = renderHook(
       () =>
@@ -187,8 +219,13 @@ describe('useOptimisticUpdate', () => {
 
 describe('useOptimisticList', () => {
   it('adds item optimistically', () => {
+    interface ListItem {
+      id: number;
+      name: string;
+    }
+
     const queryClient = new QueryClient();
-    queryClient.setQueryData(['items'], [{ id: 1, name: 'Item 1' }]);
+    queryClient.setQueryData<ListItem[]>(['items'], [{ id: 1, name: 'Item 1' }]);
 
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -196,9 +233,9 @@ describe('useOptimisticList', () => {
 
     const { result } = renderHook(
       () =>
-        useOptimisticList({
+        useOptimisticList<ListItem, number>({
           queryKey: ['items'],
-          getId: (item: any) => item.id,
+          getId: (item) => item.id,
         }),
       { wrapper }
     );
@@ -213,8 +250,13 @@ describe('useOptimisticList', () => {
   });
 
   it('updates item optimistically', () => {
+    interface ListItem {
+      id: number;
+      name: string;
+    }
+
     const queryClient = new QueryClient();
-    queryClient.setQueryData(['items'], [{ id: 1, name: 'Item 1' }]);
+    queryClient.setQueryData<ListItem[]>(['items'], [{ id: 1, name: 'Item 1' }]);
 
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -222,9 +264,9 @@ describe('useOptimisticList', () => {
 
     const { result } = renderHook(
       () =>
-        useOptimisticList({
+        useOptimisticList<ListItem, number>({
           queryKey: ['items'],
-          getId: (item: any) => item.id,
+          getId: (item) => item.id,
         }),
       { wrapper }
     );
@@ -238,8 +280,13 @@ describe('useOptimisticList', () => {
   });
 
   it('deletes item optimistically', () => {
+    interface ListItem {
+      id: number;
+      name: string;
+    }
+
     const queryClient = new QueryClient();
-    queryClient.setQueryData(['items'], [
+    queryClient.setQueryData<ListItem[]>(['items'], [
       { id: 1, name: 'Item 1' },
       { id: 2, name: 'Item 2' },
     ]);
@@ -250,9 +297,9 @@ describe('useOptimisticList', () => {
 
     const { result } = renderHook(
       () =>
-        useOptimisticList({
+        useOptimisticList<ListItem, number>({
           queryKey: ['items'],
-          getId: (item: any) => item.id,
+          getId: (item) => item.id,
         }),
       { wrapper }
     );
@@ -267,8 +314,13 @@ describe('useOptimisticList', () => {
   });
 
   it('replaces item optimistically', () => {
+    interface ListItem {
+      id: number;
+      name: string;
+    }
+
     const queryClient = new QueryClient();
-    queryClient.setQueryData(['items'], [{ id: 1, name: 'Item 1' }]);
+    queryClient.setQueryData<ListItem[]>(['items'], [{ id: 1, name: 'Item 1' }]);
 
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -276,9 +328,9 @@ describe('useOptimisticList', () => {
 
     const { result } = renderHook(
       () =>
-        useOptimisticList({
+        useOptimisticList<ListItem, number>({
           queryKey: ['items'],
-          getId: (item: any) => item.id,
+          getId: (item) => item.id,
         }),
       { wrapper }
     );
@@ -294,25 +346,34 @@ describe('useOptimisticList', () => {
 
 describe('useOptimisticUpdateWithConflictResolution', () => {
   it('detects conflicts', async () => {
+    interface VersionedData {
+      value: number;
+      version: number;
+    }
+
+    interface TestVariables {
+      newValue: number;
+    }
+
     const queryClient = new QueryClient();
-    queryClient.setQueryData(['test'], { value: 0, version: 1 });
+    queryClient.setQueryData<VersionedData>(['test'], { value: 0, version: 1 });
 
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 
-    const mutationFn = jest.fn(() =>
+    const mutationFn = jest.fn((): Promise<VersionedData> =>
       Promise.resolve({ value: 10, version: 2 })
     );
 
-    const optimisticUpdate = (old: any, variables: any) => ({
+    const optimisticUpdate = (old: VersionedData | undefined, variables: TestVariables): VersionedData => ({
       value: variables.newValue,
       version: 1,
     });
 
     const conflictResolution = {
-      hasConflict: (local: any, server: any) => local.version !== server.version,
-      resolve: (local: any, server: any) => server, // Server wins
+      hasConflict: (local: VersionedData, server: VersionedData): boolean => local.version !== server.version,
+      resolve: (local: VersionedData, server: VersionedData): VersionedData => server, // Server wins
     };
 
     const onConflict = jest.fn();
@@ -342,18 +403,26 @@ describe('useOptimisticUpdateWithConflictResolution', () => {
   });
 
   it('clears conflict history', async () => {
+    interface TestData {
+      value: number;
+    }
+
+    interface TestVariables {
+      newValue: number;
+    }
+
     const queryClient = new QueryClient();
-    queryClient.setQueryData(['test'], { value: 0 });
+    queryClient.setQueryData<TestData>(['test'], { value: 0 });
 
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 
-    const mutationFn = jest.fn(() => Promise.resolve({ value: 10 }));
-    const optimisticUpdate = (old: any, variables: any) => ({ value: variables.newValue });
+    const mutationFn = jest.fn((): Promise<TestData> => Promise.resolve({ value: 10 }));
+    const optimisticUpdate = (old: TestData | undefined, variables: TestVariables): TestData => ({ value: variables.newValue });
     const conflictResolution = {
-      hasConflict: () => true,
-      resolve: (local: any, server: any) => server,
+      hasConflict: (): boolean => true,
+      resolve: (local: TestData, server: TestData): TestData => server,
     };
 
     const { result } = renderHook(

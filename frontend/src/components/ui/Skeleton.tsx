@@ -23,7 +23,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   className = '',
   animate = true,
 }) => {
-  const getVariantClasses = () => {
+  const getVariantClasses = (): string => {
     switch (variant) {
       case 'circular':
         return 'rounded-full';
@@ -37,7 +37,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
     }
   };
 
-  const getDefaultSize = () => {
+  const getDefaultSize = (): { width: string; height: string } => {
     switch (variant) {
       case 'circular':
         return { width: '40px', height: '40px' };

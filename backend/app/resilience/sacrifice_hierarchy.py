@@ -19,6 +19,7 @@ Activity Sacrifice Order (Most to Least Protected):
 7. Education (Optional) - Pure growth opportunities
 """
 
+import functools
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime

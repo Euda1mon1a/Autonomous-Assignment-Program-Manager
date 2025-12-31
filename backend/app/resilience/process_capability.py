@@ -26,6 +26,7 @@ Application to Scheduling:
 - Utilization: LSL=0.0, USL=0.8, Target=0.65
 """
 
+import functools
 import logging
 import statistics
 from dataclasses import dataclass

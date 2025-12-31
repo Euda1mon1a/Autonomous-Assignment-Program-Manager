@@ -1,5 +1,6 @@
 """Heatmap service for schedule visualization using Plotly."""
 
+import functools
 from datetime import date, timedelta
 from typing import Any
 from uuid import UUID

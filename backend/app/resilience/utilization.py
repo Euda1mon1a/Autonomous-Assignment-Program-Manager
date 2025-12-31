@@ -15,6 +15,7 @@ approaches capacity:
 The 20% buffer absorbs variance, sick days, and emergencies.
 """
 
+import functools
 import logging
 from dataclasses import dataclass, field
 from datetime import date, timedelta
@@ -345,6 +346,7 @@ class UtilizationMonitor:
 
         return forecasts
 
+    @functools.lru_cache(maxsize=256)
     def calculate_wait_time_multiplier(self, utilization: float) -> float:
         """
         Calculate expected wait time multiplier based on queuing theory.

@@ -4,17 +4,19 @@ import React, { useState } from 'react';
 import { Filter, X, ChevronDown } from 'lucide-react';
 import { Button } from '../ui/Button';
 
+export type FilterValue = string | string[] | boolean | { start: string; end: string } | null | undefined;
+
 export interface FilterOption {
   key: string;
   label: string;
   type: 'select' | 'multiselect' | 'daterange' | 'checkbox';
   options?: Array<{ label: string; value: string }>;
-  value?: any;
+  value?: FilterValue;
 }
 
 export interface FilterPanelProps {
   filters: FilterOption[];
-  onFilterChange: (key: string, value: any) => void;
+  onFilterChange: (key: string, value: FilterValue) => void;
   onClearAll: () => void;
   activeFiltersCount?: number;
   collapsible?: boolean;

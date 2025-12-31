@@ -109,7 +109,7 @@ class LocalizationMetricsTracker:
     - Performance characteristics
     """
 
-    def __init__(self, window_size: int = 100):
+    def __init__(self, window_size: int = 100) -> None:
         """
         Initialize metrics tracker.
 

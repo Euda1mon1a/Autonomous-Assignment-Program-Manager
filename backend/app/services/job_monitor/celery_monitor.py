@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class CeleryMonitorService:
     """Service for monitoring and managing Celery tasks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the Celery monitor service."""
         self.celery_app: Celery = get_celery_app()
 

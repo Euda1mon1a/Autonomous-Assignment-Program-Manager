@@ -7,6 +7,7 @@ Provides endpoints for:
 - Dead letter queue management
 """
 
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -34,6 +35,7 @@ from app.webhooks.models import WebhookDeliveryStatus, WebhookStatus
 from app.webhooks.service import WebhookService
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def get_webhook_service() -> WebhookService:
@@ -49,7 +51,7 @@ def get_webhook_service() -> WebhookService:
 @router.post("", response_model=WebhookResponse, status_code=status.HTTP_201_CREATED)
 async def create_webhook(
     webhook_data: WebhookCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
 ):
@@ -77,7 +79,11 @@ async def create_webhook(
         )
         return webhook
     except ValueError as e:
+        logger.error(f"Validation error creating webhook: {e}", exc_info=True)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except (TypeError, KeyError) as e:
+        logger.error(f"Data error creating webhook: {e}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid webhook data")
 
 
 @router.get("", response_model=WebhookListResponse)
@@ -85,7 +91,7 @@ async def list_webhooks(
     status_filter: WebhookStatus | None = Query(None, alias="status"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
 ):
@@ -114,7 +120,7 @@ async def list_webhooks(
 @router.get("/{webhook_id}", response_model=WebhookResponse)
 async def get_webhook(
     webhook_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
 ):
@@ -138,7 +144,7 @@ async def get_webhook(
 async def update_webhook(
     webhook_id: UUID,
     webhook_data: WebhookUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
 ):
@@ -168,7 +174,7 @@ async def update_webhook(
 @router.delete("/{webhook_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_webhook(
     webhook_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
 ):
@@ -189,7 +195,7 @@ async def delete_webhook(
 @router.post("/{webhook_id}/pause", response_model=WebhookResponse)
 async def pause_webhook(
     webhook_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
 ):
@@ -215,7 +221,7 @@ async def pause_webhook(
 @router.post("/{webhook_id}/resume", response_model=WebhookResponse)
 async def resume_webhook(
     webhook_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
 ):
@@ -243,7 +249,7 @@ async def resume_webhook(
 @router.post("/events/trigger", response_model=WebhookEventTriggerResponse)
 async def trigger_event(
     event_data: WebhookEventTrigger,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
 ):
@@ -281,7 +287,7 @@ async def list_deliveries(
     event_type: str | None = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
 ):
@@ -317,7 +323,7 @@ async def list_deliveries(
 @router.get("/deliveries/{delivery_id}", response_model=WebhookDeliveryResponse)
 async def get_delivery(
     delivery_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
 ):
@@ -340,7 +346,7 @@ async def get_delivery(
 @router.post("/deliveries/retry", response_model=WebhookDeliveryResponse)
 async def retry_delivery(
     retry_data: WebhookDeliveryRetryRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
 ):
@@ -373,7 +379,7 @@ async def list_dead_letters(
     resolved: bool | None = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
 ):
@@ -409,7 +415,7 @@ async def list_dead_letters(
 async def resolve_dead_letter(
     dead_letter_id: UUID,
     resolve_data: WebhookDeadLetterResolveRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
 ):

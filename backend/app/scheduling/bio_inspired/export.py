@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class NumpyEncoder(json.JSONEncoder):
     """JSON encoder that handles numpy types."""
 
-    def default(self, obj):
+    def default(self, obj) -> Any:
         if isinstance(obj, np.integer):
             return int(obj)
         elif isinstance(obj, np.floating):
@@ -225,7 +225,7 @@ class ParetoExporter:
         pareto_front: list[Individual],
         output_path: str | Path,
         **kwargs,
-    ):
+    ) -> None:
         """Export Pareto front to JSON file."""
         data = self.export(pareto_front, **kwargs)
 
@@ -420,7 +420,7 @@ class EvolutionExporter:
         evolution_history: list[PopulationStats],
         output_path: str | Path,
         **kwargs,
-    ):
+    ) -> None:
         """Export evolution history to JSON file."""
         data = self.export(evolution_history, **kwargs)
 
@@ -617,7 +617,7 @@ class HolographicExporter:
         self,
         output_path: str | Path,
         **kwargs,
-    ):
+    ) -> None:
         """Export to JSON file."""
         data = self.export_complete(**kwargs)
 

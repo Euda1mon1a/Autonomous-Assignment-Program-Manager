@@ -107,7 +107,7 @@ function parseCSVLine(line: string): string[] {
 /**
  * Parse a string value into appropriate type
  */
-export function parseValue(value: string | undefined | null): unknown {
+export function parseValue(value: string | undefined | null): string | number | boolean | null {
   if (value === undefined || value === null || value === '') {
     return null;
   }
@@ -371,7 +371,7 @@ function escapeCSVValue(value: string): string {
  * Get nested value from object using dot notation
  */
 export function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
-  return path.split('.').reduce((acc: unknown, key: string) => {
+  return path.split('.').reduce<unknown>((acc, key) => {
     if (acc && typeof acc === 'object' && key in acc) {
       return (acc as Record<string, unknown>)[key];
     }
@@ -428,7 +428,7 @@ export function getFileExtension(format: ExportFormat): string {
 /**
  * Parse date string in various formats
  */
-export function parseDate(value: string, format = 'YYYY-MM-DD'): Date | null {
+export function parseDate(value: string, _format = 'YYYY-MM-DD'): Date | null {
   if (!value) return null;
 
   // Try ISO format first

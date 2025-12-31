@@ -8,7 +8,7 @@
  * and creating new swap requests.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   ShoppingCart,
   List,

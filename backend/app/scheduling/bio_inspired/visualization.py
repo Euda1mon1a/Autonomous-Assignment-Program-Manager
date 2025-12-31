@@ -108,7 +108,7 @@ class EvolutionTracker:
         generation: int,
         population: list[Individual],
         pareto_front: list[Individual] | None = None,
-    ):
+    ) -> None:
         """
         Record a generation snapshot.
 
@@ -212,7 +212,7 @@ class EvolutionTracker:
 
         return 1.0 - np.mean(similarities) if similarities else 0.0
 
-    def _update_pca_basis(self):
+    def _update_pca_basis(self) -> None:
         """Update PCA basis from collected chromosome samples."""
         if len(self._chromosome_samples) < 10:
             return

@@ -104,7 +104,7 @@ class PreferenceTrail:
         default_factory=list
     )
 
-    def reinforce(self, signal_type: SignalType, amount: float = 0.1):
+    def reinforce(self, signal_type: SignalType, amount: float = 0.1) -> None:
         """
         Reinforce the trail (deposit pheromone).
 
@@ -127,7 +127,7 @@ class PreferenceTrail:
             f"Trail {self.id} reinforced: {old_strength:.3f} -> {self.strength:.3f}"
         )
 
-    def weaken(self, signal_type: SignalType, amount: float = 0.1):
+    def weaken(self, signal_type: SignalType, amount: float = 0.1) -> None:
         """
         Weaken the trail (negative signal).
 
@@ -143,7 +143,7 @@ class PreferenceTrail:
             f"Trail {self.id} weakened: {old_strength:.3f} -> {self.strength:.3f}"
         )
 
-    def evaporate(self, days_elapsed: float = 1.0):
+    def evaporate(self, days_elapsed: float = 1.0) -> None:
         """
         Apply evaporation (time decay).
 

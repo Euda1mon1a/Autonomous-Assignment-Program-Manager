@@ -25,7 +25,7 @@ async def list_blocks(
     block_number: int | None = Query(
         None, description="Filter by academic block number"
     ),
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """List blocks, optionally filtered by date range or block number. Requires authentication."""
@@ -40,7 +40,7 @@ async def list_blocks(
 @router.get("/{block_id}", response_model=BlockResponse)
 async def get_block(
     block_id: UUID,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Get a block by ID. Requires authentication."""
@@ -51,7 +51,7 @@ async def get_block(
 @router.post("", response_model=BlockResponse, status_code=201)
 async def create_block(
     block_in: BlockCreate,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Create a new block. Requires authentication."""
@@ -64,7 +64,7 @@ async def generate_blocks(
     start_date: date,
     end_date: date,
     base_block_number: int = Query(1, description="Starting block number"),
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -83,7 +83,7 @@ async def generate_blocks(
 @router.delete("/{block_id}", status_code=204)
 async def delete_block(
     block_id: UUID,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Delete a block. Requires authentication."""

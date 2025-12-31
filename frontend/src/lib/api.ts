@@ -21,7 +21,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/a
 // These will be dynamically imported when needed
 let authModule: typeof import('./auth') | null = null
 
-async function getAuthModule() {
+async function getAuthModule(): Promise<typeof import('./auth')> {
   if (!authModule) {
     authModule = await import('./auth')
   }

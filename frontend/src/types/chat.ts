@@ -17,11 +17,18 @@ export interface CodeBlock {
   filename?: string;
 }
 
+export type ArtifactData =
+  | { scheduleId: string; assignments: unknown[] }
+  | { analysisType: string; results: unknown[] }
+  | { reportType: string; content: unknown }
+  | { configKey: string; value: unknown }
+  | Record<string, unknown>;
+
 export interface ChatArtifact {
   id: string;
   type: 'schedule' | 'analysis' | 'report' | 'configuration';
   title: string;
-  data: Record<string, any>;
+  data: ArtifactData;
   createdAt: Date;
 }
 
@@ -74,24 +81,33 @@ export interface ResidentContext {
   absences?: { startDate: Date; endDate: Date }[];
 }
 
+export type RequestParameters = Record<string, string | number | boolean | string[] | null | undefined>;
+
 export interface ClaudeCodeRequest {
   action: 'generate_schedule' | 'analyze_violations' | 'optimize_fairness' | 'validate_compliance' | 'export_report' | 'custom';
   context: ClaudeCodeExecutionContext;
-  parameters?: Record<string, any>;
+  parameters?: RequestParameters;
   userQuery: string;
 }
+
+export type ResponseResult =
+  | { status: string; data: unknown }
+  | { error: string; details: unknown }
+  | Record<string, unknown>;
 
 export interface ClaudeCodeResponse {
   success: boolean;
   message: string;
-  result?: Record<string, any>;
+  result?: ResponseResult;
   artifacts?: ChatArtifact[];
   nextActions?: string[];
   error?: string;
 }
 
+export type StreamMetadata = Record<string, string | number | boolean | null | undefined>;
+
 export interface StreamUpdate {
   type: 'text' | 'code' | 'artifact' | 'status' | 'error';
   content: string;
-  metadata?: Record<string, any>;
+  metadata?: StreamMetadata;
 }

@@ -40,6 +40,25 @@ from app.models.rotation_template import RotationTemplate
 logger = logging.getLogger(__name__)
 
 
+***REMOVED*** Penrose Process Constants
+PENROSE_EFFICIENCY_LIMIT = 0.29  ***REMOVED*** Theoretical maximum extraction from rotating black holes (29%)
+PM_HOUR_OFFSET = 12  ***REMOVED*** Hour offset for PM blocks (noon)
+AM_HOUR_OFFSET = 8  ***REMOVED*** Hour offset for AM blocks (8 AM)
+HALF_DAY_BLOCK_HOURS = 4  ***REMOVED*** Duration of a half-day block
+MIN_REST_HOURS = 8  ***REMOVED*** Minimum rest period between shifts
+PRE_TRANSITION_HOURS = 12  ***REMOVED*** Hours before transition for pre-phase
+POST_TRANSITION_HOURS = 12  ***REMOVED*** Hours after transition for post-phase
+
+***REMOVED*** Rotation Velocity Calculation Constants
+BASE_VELOCITY_SWAPS_PER_DAY = 1.5  ***REMOVED*** Base average swaps per day
+WEEKEND_FACTOR = 2.0  ***REMOVED*** Multiplier for weekend swap activity
+BLOCK_TRANSITION_FACTOR = 1.5  ***REMOVED*** Multiplier near block boundaries
+HOLIDAY_FACTOR = 1.3  ***REMOVED*** Multiplier during holiday periods
+ROTATION_VELOCITY_MULTIPLIER = 0.1  ***REMOVED*** Multiplier for extraction potential from velocity
+BLOCK_TRANSITION_VELOCITY_MULTIPLIER = 0.15  ***REMOVED*** Higher multiplier for block transitions
+HOURS_PER_DAY = 24  ***REMOVED*** Hours in a day
+
+
 @dataclass
 class ErgospherePeriod:
     """
@@ -67,10 +86,10 @@ class ErgospherePeriod:
 
     def __post_init__(self):
         """Validate ergosphere parameters."""
-        if not 0 <= self.extraction_potential <= 0.29:
+        if not 0 <= self.extraction_potential <= PENROSE_EFFICIENCY_LIMIT:
             logger.warning(
                 f"Extraction potential {self.extraction_potential} exceeds "
-                f"Penrose limit of 0.29 (29%)"
+                f"Penrose limit of {PENROSE_EFFICIENCY_LIMIT} ({PENROSE_EFFICIENCY_LIMIT * 100:.0f}%)"
             )
         if self.start_time >= self.end_time:
             raise ValueError("Ergosphere start_time must be before end_time")
@@ -78,7 +97,7 @@ class ErgospherePeriod:
     @property
     def duration_hours(self) -> float:
         """Calculate duration of ergosphere in hours."""
-        return (self.end_time - self.start_time).total_seconds() / 3600
+        return (self.end_time - self.start_time).total_seconds() / (60 * 60)  ***REMOVED*** Convert seconds to hours
 
     @property
     def is_high_potential(self) -> bool:
@@ -212,7 +231,7 @@ class RotationEnergyTracker:
         """
         self.initial_rotation_energy = initial_rotation_energy
         self.extracted_energy = 0.0
-        self.max_extraction_fraction = 0.29  ***REMOVED*** Penrose theoretical limit
+        self.max_extraction_fraction = PENROSE_EFFICIENCY_LIMIT  ***REMOVED*** Penrose theoretical limit
         self.extraction_history: list[dict[str, Any]] = []
 
     @property
@@ -367,14 +386,14 @@ class PenroseEfficiencyExtractor:
 
                 ***REMOVED*** Estimate extraction potential based on transition complexity
                 extraction_potential = min(
-                    0.29, rotation_velocity * 0.1
+                    PENROSE_EFFICIENCY_LIMIT, rotation_velocity * ROTATION_VELOCITY_MULTIPLIER
                 )  ***REMOVED*** Cap at Penrose limit
 
                 ergosphere = ErgospherePeriod(
                     start_time=datetime.combine(friday_pm.date, datetime.min.time())
-                    + timedelta(hours=12),  ***REMOVED*** Friday PM
+                    + timedelta(hours=PM_HOUR_OFFSET),  ***REMOVED*** Friday PM
                     end_time=datetime.combine(monday_am.date, datetime.min.time())
-                    + timedelta(hours=8),  ***REMOVED*** Monday AM
+                    + timedelta(hours=AM_HOUR_OFFSET),  ***REMOVED*** Monday AM
                     rotation_velocity=rotation_velocity,
                     extraction_potential=extraction_potential,
                     boundary_type="week_end",
@@ -421,25 +440,25 @@ class PenroseEfficiencyExtractor:
         if days == 0:
             return 0.0
 
-        ***REMOVED*** Base velocity: 1.5 swaps/day on average
-        base_velocity = 1.5
+        ***REMOVED*** Base velocity on average
+        base_velocity = BASE_VELOCITY_SWAPS_PER_DAY
 
         ***REMOVED*** Weekend factor: More swaps happen around weekends
-        weekend_factor = 2.0 if start_date.weekday() >= 4 else 1.0
+        weekend_factor = WEEKEND_FACTOR if start_date.weekday() >= 4 else 1.0
 
         ***REMOVED*** Block transition factor: Check if this period is near a block boundary
         ***REMOVED*** Blocks typically start on the 1st and 15th of months
-        block_transition_factor = 1.0
+        transition_factor = 1.0
         if start_date.day in range(1, 8) or start_date.day in range(15, 22):
-            block_transition_factor = 1.5
+            transition_factor = BLOCK_TRANSITION_FACTOR
 
         ***REMOVED*** Time of year factor: More swaps during holiday periods
         month = start_date.month
-        holiday_factor = 1.0
+        holiday_multiplier = 1.0
         if month in [11, 12, 6, 7]:  ***REMOVED*** November, December, June, July (holidays)
-            holiday_factor = 1.3
+            holiday_multiplier = HOLIDAY_FACTOR
 
-        return base_velocity * weekend_factor * block_transition_factor * holiday_factor
+        return base_velocity * weekend_factor * transition_factor * holiday_multiplier
 
     async def _get_assignments_in_period(
         self, start_date: date, end_date: date
@@ -505,15 +524,15 @@ class PenroseEfficiencyExtractor:
                     )
 
                     ***REMOVED*** Block transitions have higher extraction potential
-                    extraction_potential = min(0.29, rotation_velocity * 0.15)
+                    extraction_potential = min(PENROSE_EFFICIENCY_LIMIT, rotation_velocity * BLOCK_TRANSITION_VELOCITY_MULTIPLIER)
 
                     ergosphere = ErgospherePeriod(
                         start_time=datetime.combine(
                             last_block.date, datetime.min.time()
                         )
-                        + timedelta(hours=12 if last_block.time_of_day == "PM" else 0),
+                        + timedelta(hours=PM_HOUR_OFFSET if last_block.time_of_day == "PM" else 0),
                         end_time=datetime.combine(first_block.date, datetime.min.time())
-                        + timedelta(hours=8 if first_block.time_of_day == "AM" else 12),
+                        + timedelta(hours=AM_HOUR_OFFSET if first_block.time_of_day == "AM" else PM_HOUR_OFFSET),
                         rotation_velocity=rotation_velocity,
                         extraction_potential=extraction_potential,
                         boundary_type="block_transition",
@@ -563,21 +582,21 @@ class PenroseEfficiencyExtractor:
 
             ***REMOVED*** Convert other assignment to datetime
             other_dt = datetime.combine(other.block.date, datetime.min.time()) + timedelta(
-                hours=12 if other.block.time_of_day == "PM" else 0
+                hours=PM_HOUR_OFFSET if other.block.time_of_day == "PM" else 0
             )
 
             ***REMOVED*** Check for overlap with the period
             if start_time <= other_dt < end_time:
                 conflict_count += 1
 
-            ***REMOVED*** Check for back-to-back shifts (less than 8 hours apart)
+            ***REMOVED*** Check for back-to-back shifts (less than minimum rest hours apart)
             if assignment.block:
                 assignment_dt = datetime.combine(
                     assignment.block.date, datetime.min.time()
-                ) + timedelta(hours=12 if assignment.block.time_of_day == "PM" else 0)
+                ) + timedelta(hours=PM_HOUR_OFFSET if assignment.block.time_of_day == "PM" else 0)
 
-                time_between = abs((other_dt - assignment_dt).total_seconds() / 3600)
-                if 0 < time_between < 8:
+                time_between = abs((other_dt - assignment_dt).total_seconds() / (60 * 60))  ***REMOVED*** Convert to hours
+                if 0 < time_between < MIN_REST_HOURS:
                     conflict_count += 1
 
         return conflict_count
@@ -708,20 +727,20 @@ class PenroseEfficiencyExtractor:
 
         ***REMOVED*** Convert block to datetime
         assignment_dt = datetime.combine(block_date, datetime.min.time()) + timedelta(
-            hours=12 if block_time == "PM" else 0
+            hours=PM_HOUR_OFFSET if block_time == "PM" else 0
         )
 
-        ***REMOVED*** Pre-transition phase (12 hours before)
-        pre_start = assignment_dt - timedelta(hours=12)
+        ***REMOVED*** Pre-transition phase
+        pre_start = assignment_dt - timedelta(hours=PRE_TRANSITION_HOURS)
         pre_end = assignment_dt
 
         ***REMOVED*** Transition phase (current block)
         trans_start = assignment_dt
-        trans_end = assignment_dt + timedelta(hours=4)  ***REMOVED*** Half-day block
+        trans_end = assignment_dt + timedelta(hours=HALF_DAY_BLOCK_HOURS)  ***REMOVED*** Half-day block
 
-        ***REMOVED*** Post-transition phase (12 hours after)
+        ***REMOVED*** Post-transition phase
         post_start = trans_end
-        post_end = trans_end + timedelta(hours=12)
+        post_end = trans_end + timedelta(hours=POST_TRANSITION_HOURS)
 
         ***REMOVED*** Calculate conflict scores for each phase
         pre_conflicts = await self._count_conflicts_in_period(assignment, pre_start, pre_end)
@@ -990,10 +1009,10 @@ class PenroseEfficiencyExtractor:
         ***REMOVED*** Normalize by initial rotation energy if tracker is initialized
         if self.energy_tracker:
             efficiency = total_extraction / self.energy_tracker.initial_rotation_energy
-            efficiency = min(efficiency, 0.29)  ***REMOVED*** Cap at Penrose limit
+            efficiency = min(efficiency, PENROSE_EFFICIENCY_LIMIT)  ***REMOVED*** Cap at Penrose limit
         else:
             ***REMOVED*** Without tracker, estimate based on number of swaps
-            efficiency = min(len(swaps_executed) * 0.05, 0.29)
+            efficiency = min(len(swaps_executed) * 0.05, PENROSE_EFFICIENCY_LIMIT)
 
         logger.info(
             f"Computed extraction efficiency: {efficiency:.2%} "
@@ -1126,10 +1145,10 @@ class PenroseEfficiencyExtractor:
                 ***REMOVED*** Count conflicts for this assignment
                 assignment_dt = datetime.combine(
                     assignment.block.date, datetime.min.time()
-                ) + timedelta(hours=12 if assignment.block.time_of_day == "PM" else 0)
+                ) + timedelta(hours=PM_HOUR_OFFSET if assignment.block.time_of_day == "PM" else 0)
 
-                period_start = assignment_dt - timedelta(hours=24)
-                period_end = assignment_dt + timedelta(hours=24)
+                period_start = assignment_dt - timedelta(hours=HOURS_PER_DAY)
+                period_end = assignment_dt + timedelta(hours=HOURS_PER_DAY)
 
                 conflicts = await self._count_conflicts_in_period(
                     assignment, period_start, period_end

@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 async def get_websocket_user(
-    websocket: WebSocket, token: str | None = Query(None), db=Depends(get_db)
+    websocket: WebSocket, token: str | None = Query(None), db=Depends(get_async_db)
 ) -> User | None:
     """
     Authenticate WebSocket connection via token query parameter.

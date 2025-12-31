@@ -31,7 +31,7 @@ from app.services.export.formatters import (
 class JSONEncoder(json.JSONEncoder):
     """Custom JSON encoder for database models."""
 
-    def default(self, obj):
+    def default(self, obj) -> str:
         """Handle special types."""
         if isinstance(obj, (datetime, date)):
             return obj.isoformat()
@@ -43,7 +43,7 @@ class JSONEncoder(json.JSONEncoder):
 class JSONExporter:
     """JSON export service with streaming and compression support."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize JSON exporter.
 
