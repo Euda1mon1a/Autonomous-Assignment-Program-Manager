@@ -623,10 +623,13 @@ class AutocompleteService:
             return suggestions
 
         except redis.ConnectionError as e:
-            logger.warning(f"Redis error getting popular suggestions: {e}")
+            logger.warning(f"Redis error getting popular suggestions: {e}", exc_info=True)
             return []
-        except Exception as e:
-            logger.error(f"Error getting popular suggestions: {e}")
+        except (ValueError, TypeError) as e:
+            logger.error(f"Data validation error getting popular suggestions: {e}", exc_info=True)
+            return []
+        except redis.RedisError as e:
+            logger.error(f"Redis error getting popular suggestions: {e}", exc_info=True)
             return []
 
     async def _get_personalized_suggestions(
@@ -683,10 +686,13 @@ class AutocompleteService:
             return suggestions
 
         except redis.ConnectionError as e:
-            logger.warning(f"Redis error getting personalized suggestions: {e}")
+            logger.warning(f"Redis error getting personalized suggestions: {e}", exc_info=True)
             return []
-        except Exception as e:
-            logger.error(f"Error getting personalized suggestions: {e}")
+        except (ValueError, TypeError) as e:
+            logger.error(f"Data validation error getting personalized suggestions: {e}", exc_info=True)
+            return []
+        except redis.RedisError as e:
+            logger.error(f"Redis error getting personalized suggestions: {e}", exc_info=True)
             return []
 
     async def _get_typo_tolerant_suggestions(
@@ -750,10 +756,13 @@ class AutocompleteService:
             return suggestions[:limit]
 
         except redis.ConnectionError as e:
-            logger.warning(f"Redis error getting typo suggestions: {e}")
+            logger.warning(f"Redis error getting typo suggestions: {e}", exc_info=True)
             return []
-        except Exception as e:
-            logger.error(f"Error getting typo suggestions: {e}")
+        except (ValueError, TypeError) as e:
+            logger.error(f"Data validation error getting typo suggestions: {e}", exc_info=True)
+            return []
+        except redis.RedisError as e:
+            logger.error(f"Redis error getting typo suggestions: {e}", exc_info=True)
             return []
 
     def _levenshtein_distance(self, s1: str, s2: str) -> int:

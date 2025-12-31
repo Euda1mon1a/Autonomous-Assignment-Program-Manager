@@ -571,7 +571,7 @@ class ParticleSwarmSolver(BioInspiredSolver):
 
         return chromosome
 
-    def _adapt_inertia(self, iteration: int):
+    def _adapt_inertia(self, iteration: int) -> None:
         """
         Adapt inertia weight based on progress.
 
@@ -592,7 +592,7 @@ class ParticleSwarmSolver(BioInspiredSolver):
             self.config.inertia_max - self.config.inertia_min
         )
 
-    def _track_iteration(self, iteration: int):
+    def _track_iteration(self, iteration: int) -> None:
         """
         Track statistics for this iteration.
 

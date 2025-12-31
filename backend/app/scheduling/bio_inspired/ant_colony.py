@@ -57,7 +57,13 @@ class AntPath:
     pheromone_contribution: float = 0.0
 
     def to_chromosome_row(self) -> np.ndarray:
-        """Convert path to chromosome row."""
+        """
+        Convert path to chromosome row.
+
+        Returns:
+            np.ndarray: Integer array representing the sequence of template
+                assignments for each block in the path.
+        """
         return np.array(self.path, dtype=np.int32)
 
     @classmethod
@@ -66,7 +72,16 @@ class AntPath:
         resident_idx: int,
         row: np.ndarray,
     ) -> "AntPath":
-        """Create path from chromosome row."""
+        """
+        Create path from chromosome row.
+
+        Args:
+            resident_idx: Index of the resident this path belongs to
+            row: Chromosome row containing template assignments
+
+        Returns:
+            AntPath: New AntPath instance created from the chromosome row
+        """
         return cls(
             resident_idx=resident_idx,
             path=row.tolist(),
@@ -221,7 +236,22 @@ class PheromoneMatrix:
             return np.ones(self.n_templates) / self.n_templates
 
     def to_dict(self) -> dict:
-        """Convert to dictionary for serialization."""
+        """
+        Convert to dictionary for serialization.
+
+        Creates a summary of the pheromone matrix state for logging and
+        analysis purposes.
+
+        Returns:
+            dict: Dictionary containing:
+                - n_residents: Number of residents
+                - n_blocks: Number of blocks
+                - n_templates: Number of templates
+                - evaporation_rate: Pheromone evaporation rate
+                - assignment_mean: Mean assignment pheromone level
+                - assignment_std: Std dev of assignment pheromones
+                - transition_mean: Mean transition pheromone level
+        """
         return {
             "n_residents": self.n_residents,
             "n_blocks": self.n_blocks,
@@ -569,7 +599,19 @@ class AntColonySolver(BioInspiredSolver):
         return best
 
     def _chromosome_to_paths(self, chromosome: Chromosome) -> list[AntPath]:
-        """Convert chromosome to list of ant paths."""
+        """
+        Convert chromosome to list of ant paths.
+
+        Extracts each resident's rotation sequence from the chromosome and
+        creates an AntPath object for pheromone deposition.
+
+        Args:
+            chromosome: Schedule chromosome to convert
+
+        Returns:
+            list[AntPath]: One AntPath per resident, containing their
+                complete rotation sequence.
+        """
         paths = []
         for r_idx in range(chromosome.genes.shape[0]):
             path = AntPath(
@@ -630,7 +672,20 @@ class AntColonySolver(BioInspiredSolver):
         self.evolution_history.append(stats)
 
     def _check_convergence(self) -> bool:
-        """Check if ACO has converged."""
+        """
+        Check if ACO has converged.
+
+        Examines recent best fitness history to determine if the algorithm
+        has stagnated (no significant improvement).
+
+        Returns:
+            bool: True if improvement over last early_stop_iterations is less
+                than 0.001, False otherwise or if insufficient history.
+
+        Note:
+            Requires at least config.early_stop_iterations of history to
+            assess convergence.
+        """
         if len(self._best_fitness_history) < self.config.early_stop_iterations:
             return False
 
@@ -643,8 +698,18 @@ class AntColonySolver(BioInspiredSolver):
         """
         Analyze pheromone distribution for insights.
 
+        Identifies high-pheromone regions (hotspots) and common transition
+        patterns that emerged during optimization.
+
         Returns:
-            Dictionary with pheromone analysis
+            dict: Analysis containing:
+                - pheromone_matrix: Summary statistics
+                - n_hotspots: Count of high-pheromone assignments
+                - hotspot_examples: Sample hotspot coordinates
+                - top_transitions: Most common template transitions
+
+        Note:
+            Returns empty dict if pheromone matrix hasn't been initialized.
         """
         if self.pheromone is None:
             return {}
@@ -676,7 +741,19 @@ class AntColonySolver(BioInspiredSolver):
         }
 
     def get_evolution_data(self) -> dict:
-        """Get evolution data including ACO-specific information."""
+        """
+        Get evolution data including ACO-specific information.
+
+        Returns:
+            dict: Evolution data containing:
+                - Base evolution data from parent class
+                - aco_config: ACO-specific parameters
+                - pheromone_analysis: Pheromone distribution insights
+
+        Note:
+            Extends the base class get_evolution_data with ACO-specific
+            metrics and pheromone analysis.
+        """
         base_data = super().get_evolution_data()
 
         base_data["aco_config"] = {
