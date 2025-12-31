@@ -601,8 +601,9 @@ describe('Schedule Management Flow - Integration Tests', () => {
 
       try {
         await mockedApi.get('/api/blocks')
-      } catch (error: any) {
-        expect(error.message).toBe('Failed to fetch blocks')
+      } catch (error) {
+        const apiError = error as { message: string; status: number }
+        expect(apiError.message).toBe('Failed to fetch blocks')
       }
     })
 
@@ -613,8 +614,9 @@ describe('Schedule Management Flow - Integration Tests', () => {
       // First call fails
       try {
         await mockedApi.get('/api/blocks?start_date=2024-01-01')
-      } catch (error: any) {
-        expect(error.status).toBe(500)
+      } catch (error) {
+        const apiError = error as { message: string; status: number }
+        expect(apiError.status).toBe(500)
       }
 
       // Setup successful response for retry

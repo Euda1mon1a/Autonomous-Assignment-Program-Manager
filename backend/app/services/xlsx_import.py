@@ -79,7 +79,7 @@ class ScheduleConflict:
     severity: str = "warning"  # "error", "warning", "info"
     message: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.message:
             self.message = self._generate_message()
 
@@ -293,7 +293,7 @@ class ClinicScheduleImporter:
         "dfm": SlotType.ADMIN,  # DFM administrative
     }
 
-    def __init__(self, db: Session | None = None):
+    def __init__(self, db: Session | None = None) -> None:
         self.db = db
         self.known_providers: dict[str, Person] = {}
 
@@ -1537,7 +1537,7 @@ class BlockScheduleParser:
         "IPAP",
     }
 
-    def __init__(self, known_people: list[str] | None = None):
+    def __init__(self, known_people: list[str] | None = None) -> None:
         """
         Initialize parser.
 

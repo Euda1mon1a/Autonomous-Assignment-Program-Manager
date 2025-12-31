@@ -53,7 +53,7 @@ class SchedulingProfiler:
     - JSON export for analysis
     """
 
-    def __init__(self, track_memory: bool = True):
+    def __init__(self, track_memory: bool = True) -> None:
         """
         Initialize profiler.
 

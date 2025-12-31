@@ -24,12 +24,18 @@ class SwapTypeSchema(str, Enum):
 
 
 class SwapExecuteRequest(BaseModel):
-    source_faculty_id: UUID
-    source_week: date
-    target_faculty_id: UUID
-    target_week: date | None = None
-    swap_type: SwapTypeSchema
-    reason: str | None = Field(None, max_length=500)
+    source_faculty_id: UUID = Field(..., description="ID of faculty member requesting swap")
+    source_week: date = Field(..., description="Week date for source faculty")
+    target_faculty_id: UUID = Field(
+        ..., description="ID of faculty member to swap with"
+    )
+    target_week: date | None = Field(
+        None, description="Week date for target faculty (required for one-to-one swaps)"
+    )
+    swap_type: SwapTypeSchema = Field(..., description="Type of swap (one-to-one or absorb)")
+    reason: str | None = Field(
+        None, min_length=1, max_length=500, description="Reason for swap request"
+    )
 
     @field_validator("source_week", "target_week")
     @classmethod
@@ -74,11 +80,17 @@ class SwapHistoryFilter(BaseModel):
 
 
 class SwapValidationResult(BaseModel):
-    valid: bool
-    errors: list[str] = []
-    warnings: list[str] = []
-    back_to_back_conflict: bool = False
-    external_conflict: str | None = None
+    valid: bool = Field(..., description="Whether swap is valid")
+    errors: list[str] = Field(default_factory=list, description="List of validation errors")
+    warnings: list[str] = Field(
+        default_factory=list, description="List of validation warnings"
+    )
+    back_to_back_conflict: bool = Field(
+        False, description="Whether swap creates back-to-back shifts"
+    )
+    external_conflict: str | None = Field(
+        None, min_length=1, max_length=500, description="External conflict description"
+    )
 
 
 class SwapRecordResponse(BaseModel):

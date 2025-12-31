@@ -43,7 +43,7 @@ router = APIRouter()
 def get_dashboard(
     block_number: int = Query(..., ge=0, le=13, description="Academic block (0-13)"),
     academic_year: int = Query(..., ge=2020, le=2100, description="Academic year"),
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Get dashboard for block scheduler."""
@@ -72,7 +72,7 @@ def get_dashboard(
 )
 def schedule_block(
     request: BlockScheduleRequest,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Schedule residents for a block."""
@@ -87,7 +87,7 @@ def schedule_block(
 )
 async def get_assignment(
     assignment_id: UUID,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Get a single block assignment by ID."""
@@ -109,7 +109,7 @@ async def get_assignment(
 )
 async def create_assignment(
     assignment_in: BlockAssignmentCreate,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Create a manual block assignment."""
@@ -129,7 +129,7 @@ async def create_assignment(
 async def update_assignment(
     assignment_id: UUID,
     assignment_in: BlockAssignmentUpdate,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Update a block assignment."""
@@ -144,7 +144,7 @@ async def update_assignment(
 )
 async def delete_assignment(
     assignment_id: UUID,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Delete a block assignment."""

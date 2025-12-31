@@ -14,6 +14,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.security import get_current_active_user
 from app.db.session import get_async_db
@@ -69,7 +70,7 @@ async def create_export_job(
             created_by=current_user.username,
         )
         return job
-    except Exception as e:
+    except (SQLAlchemyError, ValueError, TypeError) as e:
         logger.error(f"Failed to create export job: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to create export job")
 
@@ -103,7 +104,7 @@ async def list_export_jobs(
             page_size=page_size,
             total_pages=total_pages,
         )
-    except Exception as e:
+    except (SQLAlchemyError, ValueError) as e:
         logger.error(f"Failed to list export jobs: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to list export jobs")
 
@@ -153,7 +154,7 @@ async def update_export_job(
         return job
     except HTTPException:
         raise
-    except Exception as e:
+    except (SQLAlchemyError, ValueError, KeyError) as e:
         logger.error(f"Failed to update export job: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to update export job")
 
@@ -220,7 +221,7 @@ async def run_export_job(
             message="Export job queued for execution",
         )
 
-    except Exception as e:
+    except (SQLAlchemyError, ValueError, TypeError) as e:
         logger.error(f"Failed to queue export job: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to queue export job")
 
@@ -283,7 +284,7 @@ async def list_job_executions(
             total_pages=total_pages,
         )
 
-    except Exception as e:
+    except (SQLAlchemyError, ValueError) as e:
         logger.error(f"Failed to list job executions: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to list job executions")
 
@@ -514,6 +515,6 @@ async def get_export_stats(
             totalBytesExported=int(total_bytes),
         )
 
-    except Exception as e:
+    except (SQLAlchemyError, ValueError, KeyError) as e:
         logger.error(f"Failed to get export stats: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get export statistics")

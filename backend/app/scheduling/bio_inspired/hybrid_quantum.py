@@ -326,7 +326,7 @@ class HybridGAQUBOSolver(BioInspiredSolver):
         context: SchedulingContext,
         n_residents: int,
         n_blocks: int,
-    ):
+    ) -> None:
         """Initialize island populations with different decomposition strategies."""
         self.islands = []
         pop_per_island = self.config.population_size // self.config.n_islands
@@ -383,7 +383,7 @@ class HybridGAQUBOSolver(BioInspiredSolver):
         generation: int,
         n_residents: int,
         n_blocks: int,
-    ):
+    ) -> list[Individual]:
         """Evolve a single island population."""
         # Sort by fitness
         sorted_island = sorted(
@@ -692,7 +692,7 @@ class HybridGAQUBOSolver(BioInspiredSolver):
 
         return mutated
 
-    def _migrate_between_islands(self):
+    def _migrate_between_islands(self) -> None:
         """Migrate best individuals between islands."""
         # Ring topology: island i sends to island (i+1) % n
         migrants = []
@@ -720,7 +720,7 @@ class HybridGAQUBOSolver(BioInspiredSolver):
 
         logger.debug(f"Migration complete: {self.config.migration_size} per island")
 
-    def _update_best(self):
+    def _update_best(self) -> None:
         """Update best individual across all islands."""
         all_individuals = [ind for island in self.islands for ind in island]
         current_best = max(

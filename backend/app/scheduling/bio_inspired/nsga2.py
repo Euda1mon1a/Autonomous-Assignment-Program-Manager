@@ -32,6 +32,17 @@ from app.scheduling.bio_inspired.base import (
     Individual,
     PopulationStats,
 )
+from app.scheduling.bio_inspired.constants import (
+    NSGA2_DEFAULT_POPULATION_SIZE,
+    NSGA2_DEFAULT_MAX_GENERATIONS,
+    NSGA2_DEFAULT_CROSSOVER_RATE,
+    NSGA2_DEFAULT_MUTATION_RATE,
+    NSGA2_DEFAULT_TOURNAMENT_SIZE,
+    NSGA2_EARLY_STOP_GENERATIONS,
+    NSGA2_CONVERGENCE_THRESHOLD,
+    NSGA2_LOG_INTERVAL,
+    NSGA2_TOP_RISK_RESIDENTS,
+)
 from app.scheduling.bio_inspired.genetic_algorithm import (
     CrossoverMethod,
     CrossoverOperator,
@@ -56,7 +67,7 @@ class ParetoFront:
     individuals: list[Individual] = field(default_factory=list)
     generation: int = 0
 
-    def add(self, individual: Individual):
+    def add(self, individual: Individual) -> None:
         """Add individual if it's non-dominated."""
         # Check if dominated by any existing member
         for existing in self.individuals:
@@ -286,15 +297,15 @@ class CrowdingDistance:
 class NSGA2Config:
     """Configuration for NSGA-II algorithm."""
 
-    population_size: int = 100
-    max_generations: int = 200
+    population_size: int = NSGA2_DEFAULT_POPULATION_SIZE
+    max_generations: int = NSGA2_DEFAULT_MAX_GENERATIONS
     crossover_method: CrossoverMethod = CrossoverMethod.UNIFORM
     mutation_method: MutationMethod = MutationMethod.FLIP
-    crossover_rate: float = 0.9
-    mutation_rate: float = 0.1
+    crossover_rate: float = NSGA2_DEFAULT_CROSSOVER_RATE
+    mutation_rate: float = NSGA2_DEFAULT_MUTATION_RATE
     adaptive_mutation: bool = True
-    tournament_size: int = 2  # Binary tournament for NSGA-II
-    early_stop_generations: int = 50
+    tournament_size: int = NSGA2_DEFAULT_TOURNAMENT_SIZE  # Binary tournament for NSGA-II
+    early_stop_generations: int = NSGA2_EARLY_STOP_GENERATIONS
 
 
 class NSGA2Solver(BioInspiredSolver):
@@ -442,7 +453,7 @@ class NSGA2Solver(BioInspiredSolver):
                 break
 
             # Log progress
-            if generation % 20 == 0:
+            if generation % NSGA2_LOG_INTERVAL == 0:
                 logger.info(
                     f"NSGA-II gen {generation}: fronts={len(self.fronts)}, "
                     f"front_0={len(self.fronts[0]) if self.fronts else 0}, "
@@ -516,7 +527,7 @@ class NSGA2Solver(BioInspiredSolver):
 
         return fronts
 
-    def _assign_crowding_distance(self):
+    def _assign_crowding_distance(self) -> None:
         """Assign crowding distance to all individuals in each front."""
         for front in self.fronts:
             CrowdingDistance.compute(front, self.objectives)
@@ -662,7 +673,7 @@ class NSGA2Solver(BioInspiredSolver):
         ]
         hv_range = max(recent_hv) - min(recent_hv)
 
-        return hv_range < 0.001
+        return hv_range < NSGA2_CONVERGENCE_THRESHOLD
 
     def get_pareto_solutions(self) -> list[dict]:
         """

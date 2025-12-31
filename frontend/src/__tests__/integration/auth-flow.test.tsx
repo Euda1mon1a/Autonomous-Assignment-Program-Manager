@@ -45,8 +45,51 @@ function createTestQueryClient() {
   })
 }
 
+// ============================================================================
+// Type Definitions
+// ============================================================================
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: 'coordinator' | 'admin' | 'resident' | 'faculty';
+  person_id: string;
+  requires_password_change?: boolean;
+}
+
+interface AuthResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  user: User;
+  remember_token?: string;
+  mfa_required?: boolean;
+  mfa_method?: string;
+  mfa_verified?: boolean;
+  sso_provider?: string;
+}
+
+interface RefreshTokenResponse {
+  access_token: string;
+}
+
+interface ApiError {
+  message: string;
+  status: number;
+  failed_attempts?: number;
+  max_attempts?: number;
+  locked_until?: string;
+  retry_after?: number;
+}
+
+interface ApiConfig {
+  headers?: Record<string, string>;
+  responseType?: string;
+}
+
 // Mock auth data
-const mockUser = {
+const mockUser: User = {
   id: 'user-1',
   email: 'test@hospital.org',
   name: 'Dr. Test User',
@@ -54,7 +97,7 @@ const mockUser = {
   person_id: 'person-1',
 }
 
-const mockAuthResponse = {
+const mockAuthResponse: AuthResponse = {
   access_token: 'mock-jwt-token',
   token_type: 'bearer',
   expires_in: 3600,
@@ -63,11 +106,11 @@ const mockAuthResponse = {
 
 // API mock helper
 function setupApiMock(options: {
-  login?: typeof mockAuthResponse | 'error'
-  user?: typeof mockUser | 'error'
-  refresh?: { access_token: string } | 'error'
-} = {}) {
-  mockedApi.post.mockImplementation((url: string, data?: any) => {
+  login?: AuthResponse | 'error'
+  user?: User | 'error'
+  refresh?: RefreshTokenResponse | 'error'
+} = {}): void {
+  mockedApi.post.mockImplementation((url: string, data?: unknown, config?: ApiConfig): Promise<unknown> => {
     if (url.includes('/auth/login')) {
       if (options.login === 'error') {
         return Promise.reject({ message: 'Invalid credentials', status: 401 })
@@ -242,10 +285,11 @@ describe('Authentication Flow - Integration Tests', () => {
 
       try {
         await mockedApi.get('/api/auth/me')
-      } catch (error: any) {
-        if (error.status === 401) {
+      } catch (error) {
+        const apiError = error as ApiError
+        if (apiError.status === 401) {
           // Would trigger redirect in real implementation
-          expect(error.status).toBe(401)
+          expect(apiError.status).toBe(401)
         }
       }
     })
@@ -468,8 +512,9 @@ describe('Authentication Flow - Integration Tests', () => {
 
       try {
         await mockedApi.get('/api/auth/me')
-      } catch (error: any) {
-        expect(error.status).toBe(401)
+      } catch (error) {
+        const apiError = error as ApiError
+        expect(apiError.status).toBe(401)
         // Would redirect to /login
       }
     })
@@ -579,8 +624,9 @@ describe('Authentication Flow - Integration Tests', () => {
           email: 'test@hospital.org',
           password: 'wrong',
         })
-      } catch (error: any) {
-        expect(error.failed_attempts).toBe(3)
+      } catch (error) {
+        const apiError = error as ApiError
+        expect(apiError.failed_attempts).toBe(3)
       }
     })
 
@@ -689,8 +735,8 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should authenticate with API key', async () => {
       setupApiMock()
 
-      mockedApi.get.mockImplementation((url, config) => {
-        const headers = config?.headers as any
+      mockedApi.get.mockImplementation((url: string, config?: ApiConfig): Promise<unknown> => {
+        const headers = config?.headers
         if (headers?.['X-API-Key'] === 'valid-api-key') {
           return Promise.resolve(mockUser)
         }
@@ -925,8 +971,8 @@ describe('Authentication Flow - Integration Tests', () => {
 
       const csrfToken = 'csrf-token-123'
 
-      mockedApi.post.mockImplementation((url, data, config) => {
-        const headers = config?.headers as any
+      mockedApi.post.mockImplementation((url: string, data: unknown, config?: ApiConfig): Promise<unknown> => {
+        const headers = config?.headers
         if (headers?.['X-CSRF-Token'] === csrfToken) {
           return Promise.resolve({ success: true })
         }

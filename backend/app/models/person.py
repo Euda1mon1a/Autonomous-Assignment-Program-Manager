@@ -49,17 +49,27 @@ class Person(Base):
 
     Residents have PGY levels (1-3) and are supervised.
     Faculty have specialties and can perform procedures.
+
+    Performance Optimization Notes:
+    - Consider adding composite index on (type, pgy_level) for resident queries
+    - Consider adding index on faculty_role for faculty queries
+    - Email already has unique constraint which creates an index
+
+    Suggested indexes (add via Alembic migration):
+    CREATE INDEX idx_people_type_pgy ON people(type, pgy_level) WHERE type = 'resident';
+    CREATE INDEX idx_people_faculty_role ON people(faculty_role) WHERE type = 'faculty';
+    CREATE INDEX idx_people_type_name ON people(type, name);
     """
 
     __tablename__ = "people"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    name = Column(String(255), nullable=False)
-    type = Column(String(50), nullable=False)  # 'resident' or 'faculty'
-    email = Column(String(255), unique=True)
+    name = Column(String(255), nullable=False, index=True)  # Performance: Indexed for name-based searches
+    type = Column(String(50), nullable=False, index=True)  # Performance: Indexed for filtering by type
+    email = Column(String(255), unique=True)  # Unique constraint creates index automatically
 
     # Resident-specific fields
-    pgy_level = Column(Integer)  # 1, 2, or 3 for residents
+    pgy_level = Column(Integer, index=True)  # Performance: Indexed for PGY-level filtering
 
     # Capacity/workload fields
     target_clinical_blocks = Column(

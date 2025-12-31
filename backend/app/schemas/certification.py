@@ -15,19 +15,29 @@ from app.validators.date_validators import validate_date_range
 class CertificationTypeBase(BaseModel):
     """Base certification type schema."""
 
-    name: str
-    full_name: str | None = None
-    description: str | None = None
-    renewal_period_months: int = 24
-    required_for_residents: bool = True
-    required_for_faculty: bool = True
-    required_for_specialties: str | None = None
-    reminder_days_180: bool = True
-    reminder_days_90: bool = True
-    reminder_days_30: bool = True
-    reminder_days_14: bool = True
-    reminder_days_7: bool = True
-    is_active: bool = True
+    name: str = Field(..., min_length=1, max_length=100, description="Certification name")
+    full_name: str | None = Field(
+        None, min_length=1, max_length=200, description="Full certification name"
+    )
+    description: str | None = Field(
+        None, min_length=1, max_length=1000, description="Certification description"
+    )
+    renewal_period_months: int = Field(
+        24, ge=1, le=120, description="Renewal period in months (1-120)"
+    )
+    required_for_residents: bool = Field(
+        True, description="Whether required for residents"
+    )
+    required_for_faculty: bool = Field(True, description="Whether required for faculty")
+    required_for_specialties: str | None = Field(
+        None, min_length=1, max_length=500, description="Comma-separated specialty list"
+    )
+    reminder_days_180: bool = Field(True, description="Send reminder at 180 days")
+    reminder_days_90: bool = Field(True, description="Send reminder at 90 days")
+    reminder_days_30: bool = Field(True, description="Send reminder at 30 days")
+    reminder_days_14: bool = Field(True, description="Send reminder at 14 days")
+    reminder_days_7: bool = Field(True, description="Send reminder at 7 days")
+    is_active: bool = Field(True, description="Whether certification type is active")
 
 
 class CertificationTypeCreate(CertificationTypeBase):
@@ -91,14 +101,26 @@ class CertificationTypeSummary(BaseModel):
 class PersonCertificationBase(BaseModel):
     """Base person certification schema."""
 
-    certification_number: str | None = None
-    issued_date: date
-    expiration_date: date
-    status: str = "current"
-    verified_by: str | None = None
-    verified_date: date | None = None
-    document_url: str | None = None
-    notes: str | None = None
+    certification_number: str | None = Field(
+        None, min_length=1, max_length=100, description="Certification number or ID"
+    )
+    issued_date: date = Field(..., description="Date certification was issued")
+    expiration_date: date = Field(..., description="Date certification expires")
+    status: str = Field(
+        "current",
+        pattern="^(current|expiring_soon|expired|pending)$",
+        description="Certification status",
+    )
+    verified_by: str | None = Field(
+        None, min_length=1, max_length=200, description="Person who verified certification"
+    )
+    verified_date: date | None = Field(None, description="Date certification was verified")
+    document_url: str | None = Field(
+        None, min_length=1, max_length=500, description="URL to certification document"
+    )
+    notes: str | None = Field(
+        None, min_length=1, max_length=2000, description="Additional notes"
+    )
 
     @field_validator("issued_date", "expiration_date", "verified_date")
     @classmethod

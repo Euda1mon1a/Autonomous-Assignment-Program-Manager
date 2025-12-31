@@ -11,6 +11,7 @@ This validator ensures residents work within regulatory limits while
 tracking workload distribution and violation severity.
 """
 
+import functools
 import logging
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
@@ -70,7 +71,7 @@ class WorkHourValidator:
     4. Moonlighting integration: All moonlighting hours count toward 80-hour limit
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize work hour validator."""
         self.max_weekly_hours = MAX_WEEKLY_HOURS
         self.rolling_days = ROLLING_DAYS
@@ -344,6 +345,7 @@ class WorkHourValidator:
 
         return violations, warnings
 
+    @functools.lru_cache(maxsize=128)
     def calculate_violation_severity_level(self, violation_percentage: float) -> str:
         """
         Calculate severity level based on violation magnitude.
@@ -361,6 +363,7 @@ class WorkHourValidator:
         else:
             return "MEDIUM"
 
+    @functools.lru_cache(maxsize=256)
     def create_violation_notification_level(self, hours: float) -> str | None:
         """
         Determine notification threshold for approaching limit.

@@ -11,6 +11,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.transaction import transactional, transactional_with_retry
 from app.models.assignment import Assignment
@@ -400,7 +401,8 @@ class ConflictAutoResolver:
                     pending_approvals.append(best_option)
                     report.resolutions_deferred += 1
 
-            except Exception as e:
+            except (SQLAlchemyError, ValueError, KeyError, TypeError) as e:
+                logger.error(f"Error processing conflict {conflict_id}: {e}", exc_info=True)
                 failed_conflicts.append(conflict_id)
                 report.resolutions_failed += 1
                 results.append(
@@ -1506,7 +1508,8 @@ class ConflictAutoResolver:
                 rollback_instructions="Contact scheduling coordinator to reverse changes",
             )
 
-        except Exception as e:
+        except (SQLAlchemyError, ValueError, KeyError, TypeError) as e:
+            logger.error(f"Error applying resolution for conflict {alert.id}: {e}", exc_info=True)
             return ResolutionResult(
                 resolution_option_id=option.id,
                 conflict_id=alert.id,

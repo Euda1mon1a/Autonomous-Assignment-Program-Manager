@@ -46,16 +46,28 @@ class SimulationStatus(str, Enum):
 class StrategyCreate(BaseModel):
     """Request to create a new configuration strategy."""
 
-    name: str = Field(..., min_length=1, max_length=100)
-    description: str | None = None
-    strategy_type: StrategyType
+    name: str = Field(..., min_length=1, max_length=100, description="Strategy name")
+    description: str | None = Field(
+        None, min_length=1, max_length=1000, description="Strategy description"
+    )
+    strategy_type: StrategyType = Field(..., description="Type of strategy")
 
     # Configuration parameters
-    utilization_target: float = Field(0.80, ge=0.0, le=1.0)
-    cross_zone_borrowing: bool = True
-    sacrifice_willingness: str = Field("medium", pattern="^(low|medium|high)$")
-    defense_activation_threshold: int = Field(3, ge=1, le=5)
-    response_timeout_ms: int = Field(5000, ge=100, le=60000)
+    utilization_target: float = Field(
+        0.80, ge=0.0, le=1.0, description="Target utilization rate (0.0-1.0)"
+    )
+    cross_zone_borrowing: bool = Field(
+        True, description="Allow cross-zone resource borrowing"
+    )
+    sacrifice_willingness: str = Field(
+        "medium", pattern="^(low|medium|high)$", description="Willingness to sacrifice"
+    )
+    defense_activation_threshold: int = Field(
+        3, ge=1, le=5, description="Defense level activation threshold (1-5)"
+    )
+    response_timeout_ms: int = Field(
+        5000, ge=100, le=60000, description="Response timeout in milliseconds (100-60000)"
+    )
 
     # Strategy behavior
     initial_action: str = Field("cooperate", pattern="^(cooperate|defect)$")

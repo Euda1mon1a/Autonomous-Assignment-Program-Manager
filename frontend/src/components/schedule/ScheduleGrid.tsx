@@ -7,6 +7,19 @@ import { motion } from 'framer-motion'
 import { get } from '@/lib/api'
 import { usePeople, useRotationTemplates, ListResponse } from '@/lib/hooks'
 import type { Person, RotationTemplate, Assignment, Block } from '@/types/api'
+import {
+  BLOCKS_STALE_TIME_MS,
+  BLOCKS_GC_TIME_MS,
+  ASSIGNMENTS_STALE_TIME_MS,
+  ASSIGNMENTS_GC_TIME_MS,
+  PGY_LEVEL_1,
+  PGY_LEVEL_2,
+  PGY_LEVEL_3,
+  ABBREVIATION_LENGTH,
+  SCHEDULE_GRID_MAX_HEIGHT,
+  FADE_IN_DURATION,
+  ROW_HOVER_TRANSITION_MS,
+} from '@/constants/schedule'
 import { ScheduleHeader } from './ScheduleHeader'
 import { ScheduleCell, ScheduleSeparatorRow } from './ScheduleCell'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
@@ -42,8 +55,8 @@ function useBlocks(startDate: string, endDate: string) {
     queryKey: ['blocks', startDate, endDate],
     queryFn: () =>
       get<ListResponse<Block>>(`/blocks?start_date=${startDate}&end_date=${endDate}`),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
+    staleTime: BLOCKS_STALE_TIME_MS,
+    gcTime: BLOCKS_GC_TIME_MS,
   })
 }
 
@@ -57,8 +70,8 @@ function useAssignmentsForRange(startDate: string, endDate: string) {
       get<ListResponse<Assignment>>(
         `/assignments?start_date=${startDate}&end_date=${endDate}`
       ),
-    staleTime: 60 * 1000,
-    gcTime: 30 * 60 * 1000,
+    staleTime: ASSIGNMENTS_STALE_TIME_MS,
+    gcTime: ASSIGNMENTS_GC_TIME_MS,
   })
 }
 
@@ -114,7 +127,7 @@ export function ScheduleGrid({ startDate, endDate }: ScheduleGridProps) {
         abbreviation:
           assignment.activity_override ||
           template?.abbreviation ||
-          template?.name?.substring(0, 3).toUpperCase() ||
+          template?.name?.substring(0, ABBREVIATION_LENGTH).toUpperCase() ||
           '???',
         activityType: template?.activity_type || 'default',
         fontColor: template?.font_color || undefined,
@@ -157,11 +170,11 @@ export function ScheduleGrid({ startDate, endDate }: ScheduleGridProps) {
     peopleData.items.forEach((person) => {
       if (person.type === 'faculty') {
         faculty.push(person)
-      } else if (person.pgy_level === 1) {
+      } else if (person.pgy_level === PGY_LEVEL_1) {
         pgy1.push(person)
-      } else if (person.pgy_level === 2) {
+      } else if (person.pgy_level === PGY_LEVEL_2) {
         pgy2.push(person)
-      } else if (person.pgy_level === 3) {
+      } else if (person.pgy_level === PGY_LEVEL_3) {
         pgy3.push(person)
       } else {
         pgyOther.push(person)
@@ -239,8 +252,8 @@ export function ScheduleGrid({ startDate, endDate }: ScheduleGridProps) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
-      className="glass-panel overflow-auto max-h-[calc(100vh-220px)]"
+      transition={{ duration: FADE_IN_DURATION, ease: 'easeOut' }}
+      className={`glass-panel overflow-auto max-h-[${SCHEDULE_GRID_MAX_HEIGHT}]`}
     >
       <table className="min-w-full divide-y divide-gray-200/50 schedule-grid-table" role="grid" aria-label="Schedule grid showing assignments by person and date">
         <ScheduleHeader days={days} />
@@ -345,7 +358,7 @@ function PersonRow({ person, days, todayStr, getAssignment }: PersonRowProps) {
   }, [person.type, person.pgy_level])
 
   return (
-    <tr className="group hover:bg-blue-50/30 transition-colors duration-150">
+    <tr className={`group hover:bg-blue-50/30 transition-colors duration-[${ROW_HOVER_TRANSITION_MS}ms]`}>
       {/* Sticky person name column */}
       <th scope="row" className="sticky left-0 z-10 bg-white group-hover:bg-blue-50/50 px-4 py-2 border-r border-gray-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] transition-colors duration-150 text-left font-normal">
         <div className="flex flex-col gap-1">

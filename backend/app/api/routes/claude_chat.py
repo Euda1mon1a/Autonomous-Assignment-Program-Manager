@@ -48,8 +48,9 @@ from fastapi import (
 )
 from pydantic import BaseModel
 
-from app.api.deps import get_current_active_user, get_db
+from app.api.deps import get_current_active_user
 from app.core.config import settings
+from app.db.session import get_async_db
 from app.models.user import User
 
 logger = logging.getLogger(__name__)
@@ -246,7 +247,7 @@ async def execute_tool(tool_name: str, tool_input: dict, db) -> dict[str, Any]:
                 # Validate by schedule ID
                 service = ConstraintService(db)
                 try:
-                    result = await sawait ervice.validate_schedule(schedule_id)
+                    result = await service.validate_schedule(schedule_id)
                     return {
                         "status": "validated",
                         "is_valid": result.is_valid,
@@ -864,7 +865,7 @@ async def get_session_history(
     }
 
 
-@router.delete("/sessions/{session_id}")
+@router.delete("/sessions/{session_id}", status_code=204)
 async def delete_session(
     session_id: str,
     current_user: User = Depends(get_current_active_user),
@@ -878,4 +879,3 @@ async def delete_session(
         raise HTTPException(status_code=403, detail="Not your session")
 
     del _sessions[session_id]
-    return {"message": "Session deleted"}

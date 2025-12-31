@@ -507,7 +507,7 @@ class PyomoSolver(BaseSolver):
 
 
 # Register with SolverFactory
-def register_pyomo_solver():
+def register_pyomo_solver() -> None:
     """Register PyomoSolver with the SolverFactory."""
     from app.scheduling.solvers import SolverFactory
 

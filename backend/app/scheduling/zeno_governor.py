@@ -38,6 +38,38 @@ from typing import Any
 from uuid import UUID, uuid4
 
 
+# Quantum Zeno Governor Constants
+DEFAULT_MAX_CHECKS_PER_DAY = 3  # Default maximum schedule reviews per day
+DEFAULT_MIN_INTERVAL_HOURS = 8  # Default minimum hours between interventions
+DEFAULT_AUTO_LOCK_THRESHOLD = 0.95  # Default confidence threshold for auto-locking (95%)
+
+# Zeno Risk Level Thresholds
+LOW_RISK_MAX_INTERVENTIONS = 3  # Low risk: < 3 interventions/day
+MODERATE_RISK_MAX_INTERVENTIONS = 6  # Moderate risk: 3-6 interventions/day
+HIGH_RISK_MAX_INTERVENTIONS = 12  # High risk: 6-12 interventions/day
+
+# Intervention Policy Configurations by Risk Level
+LOW_RISK_MAX_CHECKS = 1
+LOW_RISK_MIN_HOURS = 24
+LOW_RISK_THRESHOLD = 0.99
+
+MODERATE_RISK_MAX_CHECKS = 2
+MODERATE_RISK_MIN_HOURS = 12
+MODERATE_RISK_THRESHOLD = 0.97
+
+HIGH_RISK_MAX_CHECKS = 3
+HIGH_RISK_MIN_HOURS = 8
+HIGH_RISK_THRESHOLD = 0.95
+
+CRITICAL_RISK_MAX_CHECKS = 6
+CRITICAL_RISK_MIN_HOURS = 4
+CRITICAL_RISK_THRESHOLD = 0.90
+
+# Monitoring Window Constants
+DEFAULT_DURATION_HOURS = 8  # Default duration for optimization freedom window
+DEFAULT_AVG_INTERVAL_HOURS = 24.0  # Default average interval between interventions
+
+
 class ZenoRisk(str, Enum):
     """Risk level of Quantum Zeno effect freezing optimization."""
 
@@ -52,10 +84,10 @@ class InterventionPolicy:
     """Recommended intervention policy to prevent Zeno freezing."""
 
     max_checks_per_day: int = field(
-        default=3, metadata={"description": "Maximum schedule reviews per day"}
+        default=DEFAULT_MAX_CHECKS_PER_DAY, metadata={"description": "Maximum schedule reviews per day"}
     )
     min_interval_hours: int = field(
-        default=8, metadata={"description": "Minimum hours between interventions"}
+        default=DEFAULT_MIN_INTERVAL_HOURS, metadata={"description": "Minimum hours between interventions"}
     )
     recommended_windows: list[str] = field(
         default_factory=lambda: ["08:00-09:00", "14:00-15:00", "17:00-18:00"],
@@ -66,7 +98,7 @@ class InterventionPolicy:
         metadata={"description": "Periods when solver should run uninterrupted"},
     )
     auto_lock_threshold: float = field(
-        default=0.95,
+        default=DEFAULT_AUTO_LOCK_THRESHOLD,
         metadata={
             "description": "Confidence threshold for auto-locking assignments (0-1)"
         },
@@ -342,8 +374,8 @@ class ZenoGovernor:
 
         if risk == ZenoRisk.CRITICAL:
             return InterventionPolicy(
-                max_checks_per_day=1,
-                min_interval_hours=24,
+                max_checks_per_day=LOW_RISK_MAX_CHECKS,
+                min_interval_hours=LOW_RISK_MIN_HOURS,
                 recommended_windows=["09:00-10:00"],
                 hands_off_periods=[
                     {
@@ -353,7 +385,7 @@ class ZenoGovernor:
                         "reason": "CRITICAL: Allow solver extended exploration time",
                     }
                 ],
-                auto_lock_threshold=0.99,
+                auto_lock_threshold=LOW_RISK_THRESHOLD,
                 explanation=(
                     f"CRITICAL Zeno risk detected. Frozen ratio: {frozen_ratio:.1%}, "
                     f"Intervention frequency: {measurement_freq:.2f}/hour. "
@@ -363,8 +395,8 @@ class ZenoGovernor:
 
         elif risk == ZenoRisk.HIGH:
             return InterventionPolicy(
-                max_checks_per_day=2,
-                min_interval_hours=12,
+                max_checks_per_day=MODERATE_RISK_MAX_CHECKS,
+                min_interval_hours=MODERATE_RISK_MIN_HOURS,
                 recommended_windows=["09:00-10:00", "17:00-18:00"],
                 hands_off_periods=[
                     {
@@ -374,7 +406,7 @@ class ZenoGovernor:
                         "reason": "HIGH risk: Morning solver exploration window",
                     }
                 ],
-                auto_lock_threshold=0.97,
+                auto_lock_threshold=MODERATE_RISK_THRESHOLD,
                 explanation=(
                     f"HIGH Zeno risk. Frozen ratio: {frozen_ratio:.1%}, "
                     f"Intervention frequency: {measurement_freq:.2f}/hour. "
@@ -384,8 +416,8 @@ class ZenoGovernor:
 
         elif risk == ZenoRisk.MODERATE:
             return InterventionPolicy(
-                max_checks_per_day=3,
-                min_interval_hours=8,
+                max_checks_per_day=HIGH_RISK_MAX_CHECKS,
+                min_interval_hours=HIGH_RISK_MIN_HOURS,
                 recommended_windows=["08:00-09:00", "14:00-15:00", "17:00-18:00"],
                 hands_off_periods=[
                     {
@@ -395,7 +427,7 @@ class ZenoGovernor:
                         "reason": "MODERATE risk: Allow mid-day solver exploration",
                     }
                 ],
-                auto_lock_threshold=0.95,
+                auto_lock_threshold=HIGH_RISK_THRESHOLD,
                 explanation=(
                     f"MODERATE Zeno risk. Frozen ratio: {frozen_ratio:.1%}, "
                     f"Intervention frequency: {measurement_freq:.2f}/hour. "
@@ -405,8 +437,8 @@ class ZenoGovernor:
 
         else:  # LOW risk
             return InterventionPolicy(
-                max_checks_per_day=6,
-                min_interval_hours=4,
+                max_checks_per_day=CRITICAL_RISK_MAX_CHECKS,
+                min_interval_hours=CRITICAL_RISK_MIN_HOURS,
                 recommended_windows=[
                     "08:00-09:00",
                     "10:00-11:00",
@@ -416,7 +448,7 @@ class ZenoGovernor:
                     "20:00-21:00",
                 ],
                 hands_off_periods=[],
-                auto_lock_threshold=0.90,
+                auto_lock_threshold=CRITICAL_RISK_THRESHOLD,
                 explanation=(
                     f"LOW Zeno risk. Frozen ratio: {frozen_ratio:.1%}, "
                     f"Intervention frequency: {measurement_freq:.2f}/hour. "
@@ -464,7 +496,7 @@ class ZenoGovernor:
 
         Example:
             window = await governor.create_freedom_window(
-                duration_hours=8,
+                duration_hours=DEFAULT_DURATION_HOURS,
                 reason="Overnight optimization run"
             )
         """
@@ -534,7 +566,7 @@ class ZenoGovernor:
             ]
             avg_interval = sum(intervals) / len(intervals) if intervals else 24.0
         else:
-            avg_interval = 24.0
+            avg_interval = DEFAULT_AVG_INTERVAL_HOURS
 
         # Get frozen breakdown by user
         frozen_by_user = {

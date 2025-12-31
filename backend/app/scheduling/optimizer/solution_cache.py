@@ -17,8 +17,13 @@ logger = logging.getLogger(__name__)
 class SolutionCache:
     """Cache for schedule generation solutions."""
 
-    def __init__(self):
-        """Initialize solution cache."""
+    def __init__(self) -> None:
+        """
+        Initialize solution cache.
+
+        Sets up cache manager connection and default TTL (time to live)
+        of 1 hour for cached solutions.
+        """
         self.cache = get_cache_manager()
         self.ttl = 3600  # 1 hour
 
@@ -181,10 +186,14 @@ class IncrementalSolutionBuilder:
     """Build solutions incrementally and cache intermediate results."""
 
     def __init__(self, solution_cache: SolutionCache):
-        """Initialize incremental solution builder.
+        """
+        Initialize incremental solution builder.
+
+        Sets up builder with reference to solution cache for loading
+        and storing intermediate results during incremental build.
 
         Args:
-            solution_cache: SolutionCache instance
+            solution_cache: SolutionCache instance for caching operations
         """
         self.cache = solution_cache
         self.current_solution: dict = {}
@@ -197,13 +206,17 @@ class IncrementalSolutionBuilder:
         blocks: list[dict],
         constraints: dict,
     ) -> None:
-        """Initialize with problem definition.
+        """
+        Initialize with problem definition.
+
+        Generates problem hash and attempts to load previously cached solution.
+        If no cached solution exists, initializes empty solution structure.
 
         Args:
-            persons: List of persons
-            rotations: List of rotations
-            blocks: List of blocks
-            constraints: Constraint parameters
+            persons: List of persons in the scheduling problem
+            rotations: List of available rotations
+            blocks: List of time blocks to schedule
+            constraints: Constraint parameters for the problem
         """
         self.problem_hash = self.cache.generate_problem_hash(
             persons, rotations, blocks, constraints
@@ -222,11 +235,15 @@ class IncrementalSolutionBuilder:
         assignments: list[dict],
         date_range: tuple[date, date],
     ) -> None:
-        """Add assignments for date range.
+        """
+        Add assignments for date range.
+
+        Appends new assignments to current solution and caches them as
+        a partial solution for the specified date range.
 
         Args:
-            assignments: List of assignments
-            date_range: Date range for these assignments
+            assignments: List of assignment dictionaries to add
+            date_range: Tuple of (start_date, end_date) for these assignments
         """
         self.current_solution["assignments"].extend(assignments)
 
@@ -239,10 +256,14 @@ class IncrementalSolutionBuilder:
             )
 
     async def finalize(self) -> dict:
-        """Finalize and cache complete solution.
+        """
+        Finalize and cache complete solution.
+
+        Stores the complete assembled solution in cache and returns it.
+        Should be called after all assignments have been added.
 
         Returns:
-            Complete solution
+            Complete solution dictionary with all assignments
         """
         if self.problem_hash:
             await self.cache.set_solution(
@@ -259,10 +280,19 @@ _solution_cache: SolutionCache | None = None
 
 
 def get_solution_cache() -> SolutionCache:
-    """Get global solution cache instance.
+    """
+    Get global solution cache instance.
+
+    Implements singleton pattern for the solution cache. Creates a new
+    instance on first call, returns existing instance on subsequent calls.
 
     Returns:
-        SolutionCache singleton
+        SolutionCache: Global singleton cache instance
+
+    Example:
+        >>> cache = get_solution_cache()
+        >>> problem_hash = cache.generate_problem_hash(persons, rotations, blocks, constraints)
+        >>> cached_solution = await cache.get_solution(problem_hash)
     """
     global _solution_cache
     if _solution_cache is None:

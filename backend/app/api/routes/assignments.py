@@ -35,7 +35,7 @@ async def list_assignments(
     ),
     page: int = Query(1, ge=1, description="Page number (1-indexed)"),
     page_size: int = Query(100, ge=1, le=500, description="Items per page (max 500)"),
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """List schedule assignments with filters and pagination.
@@ -72,7 +72,7 @@ async def list_assignments(
 @router.get("/{assignment_id}", response_model=AssignmentResponse)
 async def get_assignment(
     assignment_id: UUID,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Get a schedule assignment by ID.
@@ -98,7 +98,7 @@ async def get_assignment(
 @router.post("", response_model=AssignmentWithWarnings, status_code=201)
 async def create_assignment(
     assignment_in: AssignmentCreate,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_scheduler_user),
 ):
     """Create a new schedule assignment with ACGME validation.
@@ -131,7 +131,7 @@ async def create_assignment(
 async def update_assignment(
     assignment_id: UUID,
     assignment_in: AssignmentUpdate,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_scheduler_user),
 ):
     """Update an existing assignment with optimistic locking and ACGME validation.
@@ -165,21 +165,21 @@ async def update_assignment(
 @router.delete("/{assignment_id}", status_code=204)
 async def delete_assignment(
     assignment_id: UUID,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_scheduler_user),
 ):
     """Delete an assignment. Requires scheduler role (admin or coordinator)."""
     controller = AssignmentController(db)
-    await cawait ontroller.delete_assignment(assignment_id)
+    await controller.delete_assignment(assignment_id)
 
 
 @router.delete("", status_code=204)
 async def delete_assignments_bulk(
     start_date: date = Query(..., description="Delete assignments from this date"),
     end_date: date = Query(..., description="Delete assignments until this date"),
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_scheduler_user),
 ):
     """Delete all assignments in a date range. Requires scheduler role (admin or coordinator)."""
     controller = AssignmentController(db)
-    return controller.delete_assignments_bulk(start_date, end_date)
+    await controller.delete_assignments_bulk(start_date, end_date)

@@ -45,6 +45,15 @@ class LLMProvider(ABC):
     """Abstract base class for LLM providers."""
 
     def __init__(self, name: str):
+        """
+        Initialize LLM provider base class.
+
+        Sets up provider state tracking including availability status,
+        failure count, and latency history.
+
+        Args:
+            name: Provider name (e.g., "ollama", "anthropic")
+        """
         self.name = name
         self._is_available = True
         self._last_check = datetime.utcnow()
@@ -176,8 +185,16 @@ class LLMProvider(ABC):
                 error_message=str(e),
             )
 
-    def _record_success(self, latency_ms: float):
-        """Record successful request."""
+    def _record_success(self, latency_ms: float) -> None:
+        """
+        Record successful request and update provider metrics.
+
+        Resets failure count, marks provider as available, and tracks latency.
+        Maintains a rolling window of the last 100 latency measurements.
+
+        Args:
+            latency_ms: Request latency in milliseconds
+        """
         self._failure_count = 0
         self._is_available = True
         self._latencies.append(latency_ms)
@@ -185,8 +202,13 @@ class LLMProvider(ABC):
         if len(self._latencies) > 100:
             self._latencies = self._latencies[-100:]
 
-    def _record_failure(self):
-        """Record failed request."""
+    def _record_failure(self) -> None:
+        """
+        Record failed request and update provider availability.
+
+        Increments failure count and marks provider as unavailable after
+        reaching failure threshold (3 consecutive failures).
+        """
         self._failure_count += 1
         if self._failure_count >= 3:
             self._is_available = False
@@ -204,6 +226,17 @@ class OllamaProvider(LLMProvider):
         default_model: str = "llama3.2",
         timeout: float = 60.0,
     ):
+        """
+        Initialize Ollama provider.
+
+        Sets up connection to Ollama API server with configured model
+        and timeout settings. Creates async HTTP client for requests.
+
+        Args:
+            base_url: Ollama API base URL (default: OLLAMA_URL env or http://ollama:11434)
+            default_model: Default model to use (default: llama3.2)
+            timeout: Request timeout in seconds (default: 60.0)
+        """
         super().__init__(name="ollama")
         self.base_url = base_url or os.getenv("OLLAMA_URL", "http://ollama:11434")
         self.default_model = default_model
@@ -414,7 +447,15 @@ class OllamaProvider(LLMProvider):
             raise LLMProviderError(f"Ollama streaming failed: {str(e)}") from e
 
     def is_available(self) -> bool:
-        """Check if Ollama is available."""
+        """
+        Check if Ollama is available.
+
+        Implements automatic recovery: if provider was marked unavailable,
+        attempts to reset availability after 60-second cooldown period.
+
+        Returns:
+            True if provider can accept requests, False otherwise
+        """
         if not self._is_available:
             # Try to recover after 60 seconds
             if (datetime.utcnow() - self._last_check).seconds > 60:
@@ -424,8 +465,14 @@ class OllamaProvider(LLMProvider):
 
         return self._is_available
 
-    async def close(self):
-        """Close HTTP client."""
+    async def close(self) -> None:
+        """
+        Close HTTP client.
+
+        Gracefully shuts down the async HTTP client and releases
+        any associated resources. Should be called when provider
+        is no longer needed.
+        """
         await self._client.aclose()
 
 
@@ -437,6 +484,16 @@ class AnthropicProvider(LLMProvider):
         api_key: str | None = None,
         default_model: str = "claude-3-5-sonnet-20241022",
     ):
+        """
+        Initialize Anthropic Claude provider.
+
+        Sets up Anthropic API client with configured API key and default model.
+        Marks provider as unavailable if API key is not configured.
+
+        Args:
+            api_key: Anthropic API key (default: ANTHROPIC_API_KEY env variable)
+            default_model: Default Claude model to use (default: claude-3-5-sonnet-20241022)
+        """
         super().__init__(name="anthropic")
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         self.default_model = default_model
@@ -614,7 +671,15 @@ class AnthropicProvider(LLMProvider):
             raise LLMProviderError(f"Anthropic streaming failed: {str(e)}") from e
 
     def is_available(self) -> bool:
-        """Check if Anthropic is available."""
+        """
+        Check if Anthropic is available.
+
+        Provider is available only if API key was configured and
+        client initialization succeeded.
+
+        Returns:
+            True if provider can accept requests, False otherwise
+        """
         return self._is_available and self._client is not None
 
 
@@ -627,6 +692,17 @@ class CircuitBreaker:
         recovery_timeout: int = 60,
         half_open_max_calls: int = 3,
     ):
+        """
+        Initialize circuit breaker.
+
+        Sets up circuit breaker with configurable failure threshold and
+        recovery settings. Maintains state for each provider.
+
+        Args:
+            failure_threshold: Number of failures before opening circuit (default: 5)
+            recovery_timeout: Seconds before attempting recovery (default: 60)
+            half_open_max_calls: Max calls allowed in half-open state (default: 3)
+        """
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.half_open_max_calls = half_open_max_calls
@@ -634,7 +710,18 @@ class CircuitBreaker:
         self._states: dict[str, CircuitBreakerState] = {}
 
     def get_state(self, provider: str) -> CircuitBreakerState:
-        """Get circuit breaker state for provider."""
+        """
+        Get circuit breaker state for provider.
+
+        Creates a new state with default values (closed, zero failures)
+        if provider has no existing state.
+
+        Args:
+            provider: Provider name to get state for
+
+        Returns:
+            CircuitBreakerState for the provider
+        """
         if provider not in self._states:
             self._states[provider] = CircuitBreakerState(
                 provider=provider,
@@ -644,7 +731,20 @@ class CircuitBreaker:
         return self._states[provider]
 
     def can_execute(self, provider: str) -> bool:
-        """Check if request can be executed."""
+        """
+        Check if request can be executed for provider.
+
+        Implements circuit breaker logic:
+        - CLOSED: Allow requests
+        - OPEN: Block requests until recovery timeout, then transition to HALF_OPEN
+        - HALF_OPEN: Allow limited requests to test recovery
+
+        Args:
+            provider: Provider name to check
+
+        Returns:
+            True if requests are allowed, False if circuit is open
+        """
         state = self.get_state(provider)
 
         if state.state == "closed":
@@ -659,16 +759,32 @@ class CircuitBreaker:
         else:  # half_open
             return True
 
-    def record_success(self, provider: str):
-        """Record successful request."""
+    def record_success(self, provider: str) -> None:
+        """
+        Record successful request for circuit breaker.
+
+        If in HALF_OPEN state, successful request closes the circuit
+        and resets failure count.
+
+        Args:
+            provider: Provider name that succeeded
+        """
         state = self.get_state(provider)
         if state.state == "half_open":
             state.state = "closed"
             state.failure_count = 0
             logger.info(f"Circuit breaker for {provider} closed after recovery")
 
-    def record_failure(self, provider: str):
-        """Record failed request."""
+    def record_failure(self, provider: str) -> None:
+        """
+        Record failed request for circuit breaker.
+
+        Increments failure count and opens circuit if threshold is exceeded.
+        Sets next retry time based on recovery timeout configuration.
+
+        Args:
+            provider: Provider name that failed
+        """
         state = self.get_state(provider)
         state.failure_count += 1
         state.last_failure = datetime.utcnow()
@@ -808,7 +924,30 @@ class LLMRouter:
         temperature: float,
         tools: list[dict[str, Any]] | None,
     ) -> LLMResponse:
-        """Generate with specific provider."""
+        """
+        Generate with specific provider.
+
+        Internal method that handles circuit breaker checks, provider
+        selection, and appropriate method dispatch (with/without tools).
+        Updates circuit breaker state based on success/failure.
+
+        Args:
+            provider_name: Name of provider to use
+            prompt: User prompt
+            system: Optional system prompt
+            model: Optional specific model
+            max_tokens: Maximum tokens to generate
+            temperature: Sampling temperature
+            tools: Optional tools for function calling
+
+        Returns:
+            LLMResponse from the provider
+
+        Raises:
+            ProviderUnavailableError: If circuit breaker is open or provider unavailable
+            LLMProviderError: If provider is unknown
+            Exception: Any provider-specific errors (updates circuit breaker)
+        """
         # Check circuit breaker
         if not self.circuit_breaker.can_execute(provider_name):
             raise ProviderUnavailableError(f"Circuit breaker open for {provider_name}")
@@ -848,7 +987,23 @@ class LLMRouter:
     async def _fallback_generate(
         self, request: LLMRequest, failed_provider: str
     ) -> LLMResponse:
-        """Try fallback providers in chain."""
+        """
+        Try fallback providers in chain.
+
+        Attempts to fulfill request using alternative providers when primary
+        provider fails. Tries each provider in fallback chain order, skipping
+        the failed provider. Updates statistics for successful fallback.
+
+        Args:
+            request: Original LLM request
+            failed_provider: Name of provider that failed
+
+        Returns:
+            LLMResponse from successful fallback provider
+
+        Raises:
+            LLMProviderError: If all providers in fallback chain fail
+        """
         for provider_name in self.fallback_chain:
             if provider_name == failed_provider:
                 continue  # Skip the failed provider
@@ -1004,17 +1159,38 @@ class LLMRouter:
         return health_status
 
     def get_stats(self) -> LLMRouterStats:
-        """Get router statistics."""
+        """
+        Get router statistics.
+
+        Returns cumulative statistics including total requests, requests
+        per provider, error counts, and fallback usage.
+
+        Returns:
+            LLMRouterStats with usage metrics
+        """
         return self.stats
 
     def get_circuit_breaker_states(self) -> dict[str, CircuitBreakerState]:
-        """Get circuit breaker states for all providers."""
+        """
+        Get circuit breaker states for all providers.
+
+        Returns current state (open/closed/half-open) and failure
+        counts for each registered provider.
+
+        Returns:
+            Dictionary mapping provider names to CircuitBreakerState objects
+        """
         return {
             name: self.circuit_breaker.get_state(name) for name in self.providers.keys()
         }
 
-    async def close(self):
-        """Close all provider connections."""
+    async def close(self) -> None:
+        """
+        Close all provider connections.
+
+        Gracefully shuts down all provider clients and releases resources.
+        Should be called during application shutdown.
+        """
         for provider in self.providers.values():
             if hasattr(provider, "close"):
                 await provider.close()
