@@ -68,7 +68,7 @@ function formatValue(value: unknown): string {
     try {
       return format(parseISO(value), 'MMM d, yyyy HH:mm');
     } catch (error) {
-      console.error('Failed to parse date:', error);
+      // console.error('Failed to parse date:', error);
       return value;
     }
   }

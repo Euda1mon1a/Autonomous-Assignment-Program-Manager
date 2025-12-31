@@ -45,7 +45,7 @@ function isValidCalendarUrl(url: string): boolean {
     const allowedProtocols = ['webcal:', 'https:', 'http:'];
     return allowedProtocols.includes(parsed.protocol);
   } catch (error) {
-    console.error('Invalid URL provided:', error);
+    // console.error('Invalid URL provided:', error);
     return false;
   }
 }
@@ -89,7 +89,7 @@ export function CalendarSync({ className = '' }: CalendarSyncProps) {
         setShowModal(false);
       }, 2000);
     } catch (error) {
-      console.error('Failed to sync calendar:', error);
+      // console.error('Failed to sync calendar:', error);
     }
   };
 

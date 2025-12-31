@@ -348,7 +348,7 @@ export function getRecentRotations(): string[] {
     const stored = localStorage.getItem(RECENT_ROTATIONS_KEY);
     return stored ? JSON.parse(stored) : [];
   } catch (error) {
-    console.error('Failed to read recent rotations from localStorage:', error);
+    // console.error('Failed to read recent rotations from localStorage:', error);
     return [];
   }
 }
@@ -363,7 +363,7 @@ export function addRecentRotation(rotationId: string): void {
     localStorage.setItem(RECENT_ROTATIONS_KEY, JSON.stringify(updated));
   } catch (error) {
     // Silently fail if localStorage is not available
-    console.error('Failed to save recent rotation to localStorage:', error);
+    // console.error('Failed to save recent rotation to localStorage:', error);
   }
 }
 
@@ -373,7 +373,7 @@ export function clearRecentRotations(): void {
     localStorage.removeItem(RECENT_ROTATIONS_KEY);
   } catch (error) {
     // Silently fail if localStorage is not available
-    console.error('Failed to clear recent rotations from localStorage:', error);
+    // console.error('Failed to clear recent rotations from localStorage:', error);
   }
 }
 

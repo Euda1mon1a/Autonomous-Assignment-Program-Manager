@@ -16,7 +16,7 @@
  * import { TemplateLibrary } from '@/features/templates';
  *
  * function TemplatesPage() {
- *   return <TemplateLibrary onTemplateApplied={(result) => console.log(result)} />;
+ *   return <TemplateLibrary onTemplateApplied={(result) => // console.log(result)} />;
  * }
  * ```
  */

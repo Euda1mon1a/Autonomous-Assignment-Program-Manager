@@ -502,7 +502,7 @@ export function useRealTimeUpdates(options: RealTimeUpdateOptions = {}) {
 
         onUpdate?.(data);
       } catch (err) {
-        console.error("Failed to parse real-time update:", err);
+        // console.error("Failed to parse real-time update:", err);
       }
     };
 

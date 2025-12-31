@@ -46,7 +46,7 @@ const variantConfig = {
  *   Your changes have been saved.
  * </Alert>
  *
- * <Alert variant="error" dismissible onDismiss={() => console.log('dismissed')}>
+ * <Alert variant="error" dismissible onDismiss={() => // console.log('dismissed')}>
  *   An error occurred.
  * </Alert>
  * ```
