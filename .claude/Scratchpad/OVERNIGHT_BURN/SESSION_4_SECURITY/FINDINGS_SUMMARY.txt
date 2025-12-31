@@ -1,0 +1,147 @@
+SECURITY ERROR HANDLING AUDIT - FINDINGS SUMMARY
+================================================
+
+OVERALL RISK LEVEL: MEDIUM (mostly mitigated)
+
+KEY FINDINGS:
+
+STRENGTH AREAS:
+===============
+1. RFC 7807 Problem Details Implementation - EXCELLENT
+   - Structured error responses
+   - Machine-readable error codes
+   - Consistent formatting across API
+
+2. DEBUG Mode Gating - STRONG
+   - Stack traces only in DEBUG=true
+   - Exception details filtered in production
+   - Separate responses for dev vs. prod
+
+3. Sensitive Data Sanitization - GOOD
+   - Headers redacted (auth, cookie, tokens)
+   - Passwords excluded from validation errors
+   - Context collection filters PII
+
+4. Structured Logging - EXCELLENT
+   - JSON output for production
+   - Request correlation with X-Request-ID
+   - Full exception context server-side
+
+5. CLAUDE.md Compliance - FULL
+   - No stack traces in production responses
+   - Proper separation of concerns
+   - Exception hierarchy designed for safety
+
+RISK AREAS (4 findings):
+========================
+
+FINDING 1: DEBUG Mode Exception Details (MEDIUM)
+- File: backend/app/main.py:277
+- Risk: If DEBUG left true, exposes exception messages and types
+- Impact: Infrastructure leakage
+- Mitigation: Currently documented as dev-only
+- Recommendation: Add startup validation to enforce DEBUG=false in production
+
+FINDING 2: Telemetry Span Exception Strings (MEDIUM)
+- Files: backend/app/telemetry/middleware.py, decorators.py
+- Risk: str(exc) sent to external tracing services (Zipkin, Jaeger)
+- Impact: Sensitive details in monitoring UIs
+- Mitigation: Partial (DEBUG=false filters most cases)
+- Recommendation: Sanitize exception messages before span attributes
+
+FINDING 3: Task Queue Exception Storage (LOW-MEDIUM)
+- Files: backend/app/outbox/tasks.py, backend/app/queue/tasks.py
+- Risk: Full exception strings in database/task records
+- Impact: Visible in admin interfaces and backups
+- Mitigation: Loguru already sanitizes structured logs
+- Recommendation: Store exception type + fingerprint instead of message
+
+FINDING 4: Missing Error ID in Production Response (LOW)
+- File: backend/app/main.py:283
+- Risk: Operations can't correlate errors without error_id
+- Impact: Harder for support team to debug issues
+- Mitigation: Error ID is generated internally
+- Recommendation: Include error_id in production error responses
+
+ARCHITECTURE REVIEW:
+====================
+
+Error Handling Flow:
+  Exception
+    ↓
+  Global Handler (main.py)
+    ↓
+  ErrorHandlerMiddleware (errors/handler.py)
+    ↓
+  ErrorFormatter (errors/formatters.py)
+    ↓
+  RFC 7807 Response with sanitized content
+
+3-Layer System:
+  1. Exception Handlers (FastAPI)
+  2. Middleware (Custom RFC 7807)
+  3. Structured Logging (Loguru)
+
+Response Sanitization:
+  - Custom exceptions: Safe .message attribute
+  - Generic exceptions: "An internal error occurred"
+  - Validation errors: Fields + sanitized input
+  - Database errors: Generic with include_details=false
+  - Headers: Sensitive headers redacted
+
+RECOMMENDATIONS (Priority Order):
+==================================
+
+HIGH (Do Immediately):
+1. Expose error_id in production responses for client correlation
+2. Enforce DEBUG=false at startup in production environments
+
+MEDIUM (Next Sprint):
+3. Sanitize exception strings in telemetry spans
+4. Activate PII sanitizers in logging pipeline
+5. Change task error storage from str(exc) to type+fingerprint
+
+LOW (Future):
+6. Add error aggregation dashboard using fingerprints
+7. Audit error handling in critical/sensitive operation paths
+
+COMPLIANCE CHECKLIST:
+=====================
+[X] No stack traces in production responses (CLAUDE.md requirement)
+[X] Custom exceptions with safe messages
+[X] Structured error codes (ErrorCode enum)
+[X] DEBUG-mode conditional behavior
+[X] Sensitive header sanitization
+[X] Request ID correlation
+[X] Exception hierarchy designed for safety
+[X] Comprehensive logging setup
+[X] Pydantic validation error handling
+[ ] Telemetry sanitization (FINDING 2)
+[ ] Task exception sanitization (FINDING 3)
+[ ] Production error_id exposure (FINDING 4)
+[ ] Enforce DEBUG=false in production (FINDING 1)
+
+FILES TO REVIEW:
+================
+Priority Review:
+- backend/app/main.py (global handlers)
+- backend/app/middleware/errors/handler.py (middleware)
+- backend/app/middleware/errors/formatters.py (formatting)
+
+Secondary Review:
+- backend/app/telemetry/middleware.py (span attributes)
+- backend/app/outbox/tasks.py (task storage)
+- backend/app/core/logging.py (logging setup)
+
+Reference:
+- backend/app/core/exceptions.py (exception hierarchy)
+- backend/app/core/error_codes.py (error codes)
+- backend/app/middleware/errors/context.py (context collection)
+
+CONCLUSION:
+===========
+Strong security posture with RFC 7807 compliance and good DEBUG-mode handling.
+Most findings are edge cases or enhancements. No critical vulnerabilities found.
+Stack traces properly hidden in production. Exception details appropriately filtered.
+
+Recommended next step: Implement HIGH priority findings (error_id + DEBUG validation).
