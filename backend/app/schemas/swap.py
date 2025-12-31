@@ -4,7 +4,7 @@ from datetime import date, datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.validators.date_validators import validate_academic_year_date
 
@@ -95,8 +95,7 @@ class SwapRecordResponse(BaseModel):
     requested_at: datetime
     executed_at: datetime | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SwapExecuteResponse(BaseModel):

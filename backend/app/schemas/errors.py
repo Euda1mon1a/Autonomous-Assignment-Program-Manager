@@ -8,7 +8,7 @@ Based on RFC 7807 Problem Details for HTTP APIs.
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.error_codes import ErrorCode
 
@@ -35,10 +35,8 @@ class ErrorDetail(BaseModel):
         example="body",
     )
 
-    class Config:
-        """Pydantic configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "field": "email",
                 "message": "Invalid email format",
@@ -46,6 +44,7 @@ class ErrorDetail(BaseModel):
                 "location": "body",
             }
         }
+    )
 
 
 class ErrorResponse(BaseModel):
@@ -86,10 +85,8 @@ class ErrorResponse(BaseModel):
         example="2025-12-31T10:30:00Z",
     )
 
-    class Config:
-        """Pydantic configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "type": "https://api.residency-scheduler.example.com/errors/validation-error",
                 "title": "Validation Failed",
@@ -101,6 +98,7 @@ class ErrorResponse(BaseModel):
                 "timestamp": "2025-12-31T10:30:00Z",
             }
         }
+    )
 
 
 class ValidationErrorResponse(ErrorResponse):
