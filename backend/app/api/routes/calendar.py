@@ -430,12 +430,12 @@ async def list_subscriptions(
     )
 
 
-@router.delete("/subscribe/{token}")
+@router.delete("/subscribe/{token}", status_code=204)
 async def revoke_subscription(
     token: str,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> dict:
+):
     """
     Revoke a calendar subscription.
 
@@ -448,7 +448,7 @@ async def revoke_subscription(
         current_user: Authenticated user
 
     Returns:
-        Success message
+        No content (204 status)
     """
     # Verify the subscription exists and belongs to the user
     subscription = CalendarService.get_subscription(db, token)
@@ -463,8 +463,6 @@ async def revoke_subscription(
     success = CalendarService.revoke_subscription(db, token)
     if not success:
         raise HTTPException(status_code=500, detail="Failed to revoke subscription")
-
-    return {"success": True, "message": "Subscription revoked successfully"}
 
 
 # Legacy endpoint for backward compatibility
