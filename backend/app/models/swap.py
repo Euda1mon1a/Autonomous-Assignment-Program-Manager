@@ -69,7 +69,13 @@ class SwapRecord(Base):
 
 
 class SwapApproval(Base):
-    """Approval record for a swap request."""
+    """
+    Approval record for a swap request.
+
+    Tracks individual approvals required for swap execution.
+    Different swap types require different approval workflows
+    (e.g., source, target, coordinator approvals).
+    """
 
     __tablename__ = "swap_approvals"
 

@@ -51,6 +51,22 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, v: str) -> str:
+        """Validate username is not empty."""
+        if not v or not v.strip():
+            raise ValueError("username cannot be empty")
+        return v.strip()
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_not_empty(cls, v: str) -> str:
+        """Validate password is provided."""
+        if not v:
+            raise ValueError("password cannot be empty")
+        return v
+
 
 class UserCreate(BaseModel):
     """User creation request.

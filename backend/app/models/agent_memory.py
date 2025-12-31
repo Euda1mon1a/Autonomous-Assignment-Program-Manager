@@ -11,7 +11,12 @@ from app.db.base import Base
 
 
 class ModelTier(Base):
-    """Static lookup table for default model assignments per agent."""
+    """
+    Static lookup table for default model assignments per agent.
+
+    Maps agent names to their default Claude model tier (haiku, sonnet, opus).
+    Updated timestamps track when model tier assignments change.
+    """
 
     __tablename__ = "model_tiers"
 
@@ -29,7 +34,13 @@ class ModelTier(Base):
 
 
 class AgentEmbedding(Base):
-    """Pre-computed embeddings of agent specification files."""
+    """
+    Pre-computed embeddings of agent specification files.
+
+    Stores vector embeddings of agent specifications for semantic search
+    and agent capability matching. Uses sentence-transformers all-MiniLM-L6-v2
+    model (384 dimensions).
+    """
 
     __tablename__ = "agent_embeddings"
 
@@ -52,7 +63,13 @@ class AgentEmbedding(Base):
 
 
 class TaskHistory(Base):
-    """Historical record of task executions for learning optimal agent/model pairs."""
+    """
+    Historical record of task executions for learning optimal agent/model pairs.
+
+    Stores task execution history with embeddings for learning which agent/model
+    combinations work best for different types of tasks. Used for intelligent
+    agent selection and model tier optimization.
+    """
 
     __tablename__ = "task_history"
 
