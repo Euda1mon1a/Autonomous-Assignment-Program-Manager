@@ -1,6 +1,26 @@
 #!/bin/bash
-# Backup Script for Monitoring Data
-# Creates backups of Prometheus, Grafana, and Loki data
+# ============================================================
+# Script: backup-monitoring.sh
+# Purpose: Backup monitoring stack data volumes
+# Usage: ./monitoring/scripts/backup-monitoring.sh
+#
+# Description:
+#   Creates compressed backups of Prometheus metrics,
+#   Grafana dashboards/configs, and Loki logs.
+#   Uses Docker volumes for data extraction.
+#
+# Backup Contents:
+#   - Prometheus TSDB data and configuration
+#   - Grafana dashboards, datasources, and users
+#   - Loki log data and index
+#   - Alertmanager configuration and state
+#
+# Output Location:
+#   $BACKUP_DIR/$TIMESTAMP/ (default: /var/backups/monitoring/)
+#
+# Environment Variables:
+#   BACKUP_DIR  - Base backup directory (default: /var/backups/monitoring)
+# ============================================================
 
 set -e
 

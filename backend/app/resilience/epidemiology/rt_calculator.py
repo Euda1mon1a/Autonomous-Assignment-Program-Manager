@@ -97,14 +97,14 @@ class RtCalculator:
 
             # Determine confidence based on case counts
             total_cases = sum(window)
-            confidence = min(1.0, total_cases / 10.0)  # Need ~10 cases for confidence
+            confidence = min(1.0, total_cases / MIN_CASES_FOR_CONFIDENCE)  # Need ~10 cases for confidence
 
             # Interpret trend
-            if rt_mean < 0.9:
+            if rt_mean < RT_DECLINING_THRESHOLD:
                 interpretation = "declining"
-            elif rt_mean > 1.1:
+            elif rt_mean > RT_GROWING_THRESHOLD:
                 interpretation = "growing"
-                logger.warning("Rt > 1.1 detected: burnout is spreading (Rt=%.2f)", rt_mean)
+                logger.warning("Rt > %.1f detected: burnout is spreading (Rt=%.2f)", RT_GROWING_THRESHOLD, rt_mean)
             else:
                 interpretation = "stable"
 

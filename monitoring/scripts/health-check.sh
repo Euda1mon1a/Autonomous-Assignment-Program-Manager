@@ -1,6 +1,32 @@
 #!/bin/bash
-# Health Check Script for Residency Scheduler Monitoring Stack
-# Run this script to verify all monitoring services are healthy
+# ============================================================
+# Script: health-check.sh (monitoring)
+# Purpose: Verify monitoring stack health
+# Usage: ./monitoring/scripts/health-check.sh
+#
+# Description:
+#   Checks health status of all monitoring services:
+#   Prometheus, Grafana, Alertmanager, Loki, and backend metrics.
+#   Validates HTTP endpoints and service responsiveness.
+#
+# Services Checked:
+#   - Prometheus (metrics collection)
+#   - Grafana (visualization)
+#   - Alertmanager (alert routing)
+#   - Loki (log aggregation)
+#   - Backend metrics endpoint
+#
+# Exit Codes:
+#   0 - All services healthy
+#   1 - One or more services degraded
+#   2 - Critical service failure
+#
+# Environment Variables:
+#   PROMETHEUS_URL    - Prometheus endpoint (default: http://localhost:9090)
+#   GRAFANA_URL       - Grafana endpoint (default: http://localhost:3001)
+#   ALERTMANAGER_URL  - Alertmanager endpoint (default: http://localhost:9093)
+#   LOKI_URL          - Loki endpoint (default: http://localhost:3100)
+# ============================================================
 
 set -e
 

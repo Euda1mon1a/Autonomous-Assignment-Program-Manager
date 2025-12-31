@@ -24,6 +24,14 @@ class AssignmentBase(BaseModel):
             raise ValueError("role must be 'primary', 'supervising', or 'backup'")
         return v
 
+    @field_validator("notes")
+    @classmethod
+    def validate_notes_length(cls, v: str | None) -> str | None:
+        """Validate notes field length."""
+        if v is not None and len(v) > 1000:
+            raise ValueError("notes must be less than 1000 characters")
+        return v
+
 
 class AssignmentCreate(AssignmentBase):
     """Schema for creating an assignment."""
@@ -49,6 +57,14 @@ class AssignmentUpdate(BaseModel):
     def validate_role(cls, v: str | None) -> str | None:
         if v is not None and v not in ("primary", "supervising", "backup"):
             raise ValueError("role must be 'primary', 'supervising', or 'backup'")
+        return v
+
+    @field_validator("notes")
+    @classmethod
+    def validate_notes_length(cls, v: str | None) -> str | None:
+        """Validate notes field length."""
+        if v is not None and len(v) > 1000:
+            raise ValueError("notes must be less than 1000 characters")
         return v
 
 

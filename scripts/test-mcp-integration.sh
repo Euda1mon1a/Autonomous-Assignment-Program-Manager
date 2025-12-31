@@ -1,5 +1,30 @@
 #!/bin/bash
-# Integration test for MCP + FastAPI + Claude Code
+# ============================================================
+# Script: test-mcp-integration.sh
+# Purpose: Integration testing for MCP server with FastAPI backend
+# Usage: ./scripts/test-mcp-integration.sh
+#
+# Description:
+#   Comprehensive integration test suite for Model Context Protocol
+#   server integration with FastAPI backend and Claude Code.
+#   Verifies module imports, PII compliance, and core functionality.
+#
+# Test Categories:
+#   1. MCP module imports and dependencies
+#   2. PII/security compliance verification
+#   3. Domain context abbreviation expansion
+#   4. Constraint explanation functionality
+#   5. API client connectivity
+#
+# Requirements:
+#   - MCP server code in mcp-server/src/
+#   - Python environment with scheduler_mcp installed
+#   - FastAPI backend accessible (optional for some tests)
+#
+# Exit Codes:
+#   0 - All tests passed
+#   1 - One or more tests failed
+# ============================================================
 
 set -e
 

@@ -1,6 +1,31 @@
 #!/bin/bash
-# Setup Script for Residency Scheduler Monitoring Stack
-# This script initializes the monitoring infrastructure
+# ============================================================
+# Script: setup-monitoring.sh
+# Purpose: Initialize monitoring infrastructure
+# Usage: ./monitoring/scripts/setup-monitoring.sh
+#
+# Description:
+#   Sets up the complete monitoring stack for Residency Scheduler.
+#   Creates directories, configures services, and starts containers.
+#   Includes Prometheus, Grafana, Alertmanager, and Loki.
+#
+# Setup Tasks:
+#   1. Create directory structure for configs and data
+#   2. Create log directories with proper permissions
+#   3. Verify Docker is running
+#   4. Generate configuration files from templates
+#   5. Start monitoring services with docker-compose
+#
+# Requirements:
+#   - Docker and docker-compose installed
+#   - Sudo access for log directory creation
+#   - At least 2GB free disk space
+#
+# Post-Setup Access:
+#   Grafana:      http://localhost:3001 (admin/password)
+#   Prometheus:   http://localhost:9090
+#   Alertmanager: http://localhost:9093
+# ============================================================
 
 set -e
 
