@@ -97,8 +97,7 @@ class PerformanceDegradation:
             },
             "recommended_actions": self.recommended_actions,
             "optimal_break_time": (
-                self.optimal_break_time.isoformat()
-                if self.optimal_break_time else None
+                self.optimal_break_time.isoformat() if self.optimal_break_time else None
             ),
             "hours_to_recovery": round(self.hours_to_recovery, 1),
         }
@@ -259,8 +258,9 @@ class PerformancePredictor:
         # Sort assignments by date
         sorted_assignments = sorted(
             assignments,
-            key=lambda a: a.get("date", date.min) if isinstance(a.get("date"), date)
-            else date.fromisoformat(str(a.get("date", "2000-01-01")))
+            key=lambda a: a.get("date", date.min)
+            if isinstance(a.get("date"), date)
+            else date.fromisoformat(str(a.get("date", "2000-01-01"))),
         )
 
         current_date = current_time.date()
@@ -538,9 +538,7 @@ class PerformancePredictor:
             )
 
         if features.night_shifts_7d >= 3:
-            recommendations.append(
-                "Limit additional night shifts this week"
-            )
+            recommendations.append("Limit additional night shifts this week")
 
         if features.hours_in_wocl_7d > 10:
             recommendations.append(
@@ -722,9 +720,7 @@ class PerformancePredictor:
 
         return len(weekend_dates)
 
-    def _days_since_off(
-        self, assignments: list[dict], current_date: date
-    ) -> int:
+    def _days_since_off(self, assignments: list[dict], current_date: date) -> int:
         """Calculate days since last full day off."""
         dates_worked = set()
         for a in assignments:

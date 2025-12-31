@@ -181,20 +181,15 @@ describe('CreateTemplateModal', () => {
     })
 
     it('should update abbreviation when typed', async () => {
-      const user = userEvent.setup()
-
       render(
         <CreateTemplateModal {...defaultProps} />,
         { wrapper: createWrapper() }
       )
 
       const abbreviationInput = screen.getByPlaceholderText(/e.g., IM/i)
-      await user.click(abbreviationInput)
-      await user.keyboard('CARD')
+      fireEvent.change(abbreviationInput, { target: { value: 'CARD' } })
 
-      await waitFor(() => {
-        expect((abbreviationInput as HTMLInputElement).value).toBe('CARD')
-      })
+      expect((abbreviationInput as HTMLInputElement).value).toBe('CARD')
     })
 
     it('should toggle supervision required checkbox', async () => {
@@ -267,20 +262,16 @@ describe('CreateTemplateModal', () => {
     })
 
     it('should validate supervision ratio is between 1 and 10', async () => {
-      const user = userEvent.setup()
-
       const { container } = render(
         <CreateTemplateModal {...defaultProps} />,
         { wrapper: createWrapper() }
       )
 
       const nameInput = screen.getByPlaceholderText(/inpatient medicine/i)
-      await user.click(nameInput)
-      await user.keyboard('Test Template')
+      fireEvent.change(nameInput, { target: { value: 'Test Template' } })
 
       const supervisionRatioInput = screen.getByLabelText(/supervision ratio/i)
-      await user.clear(supervisionRatioInput)
-      await user.type(supervisionRatioInput, '15')
+      fireEvent.change(supervisionRatioInput, { target: { value: '15' } })
 
       const form = container.querySelector('form')!
       fireEvent.submit(form)
@@ -309,20 +300,16 @@ describe('CreateTemplateModal', () => {
 
   describe('Form Submission', () => {
     it('should call createTemplate with correct data on submit', async () => {
-      const user = userEvent.setup()
-
       const { container } = render(
         <CreateTemplateModal {...defaultProps} />,
         { wrapper: createWrapper() }
       )
 
       const nameInput = screen.getByPlaceholderText(/inpatient medicine/i)
-      await user.click(nameInput)
-      await user.keyboard('Cardiology Clinic')
+      fireEvent.change(nameInput, { target: { value: 'Cardiology Clinic' } })
 
       const abbreviationInput = screen.getByPlaceholderText(/e.g., IM/i)
-      await user.click(abbreviationInput)
-      await user.keyboard('CARD')
+      fireEvent.change(abbreviationInput, { target: { value: 'CARD' } })
 
       const form = container.querySelector('form')!
       fireEvent.submit(form)
@@ -381,35 +368,28 @@ describe('CreateTemplateModal', () => {
     })
 
     it('should include all optional fields when provided', async () => {
-      const user = userEvent.setup()
-
       const { container } = render(
         <CreateTemplateModal {...defaultProps} />,
         { wrapper: createWrapper() }
       )
 
       const nameInput = screen.getByPlaceholderText(/inpatient medicine/i)
-      await user.click(nameInput)
-      await user.keyboard('Advanced Procedures')
+      fireEvent.change(nameInput, { target: { value: 'Advanced Procedures' } })
 
       const abbreviationInput = screen.getByPlaceholderText(/e.g., IM/i)
-      await user.click(abbreviationInput)
-      await user.keyboard('ADV')
+      fireEvent.change(abbreviationInput, { target: { value: 'ADV' } })
 
       const clinicLocationInput = screen.getByPlaceholderText(/building a/i)
-      await user.click(clinicLocationInput)
-      await user.keyboard('Building A, Room 101')
+      fireEvent.change(clinicLocationInput, { target: { value: 'Building A, Room 101' } })
 
       const maxResidentsInput = screen.getByPlaceholderText(/e.g., 4/i)
-      await user.click(maxResidentsInput)
-      await user.keyboard('3')
+      fireEvent.change(maxResidentsInput, { target: { value: '3' } })
 
       const requiresSpecialtyInput = screen.getByPlaceholderText(/cardiology/i)
-      await user.click(requiresSpecialtyInput)
-      await user.keyboard('Cardiology')
+      fireEvent.change(requiresSpecialtyInput, { target: { value: 'Cardiology' } })
 
       const procedureCheckbox = screen.getByLabelText(/requires procedure credential/i)
-      await user.click(procedureCheckbox)
+      fireEvent.click(procedureCheckbox)
 
       const form = container.querySelector('form')!
       fireEvent.submit(form)

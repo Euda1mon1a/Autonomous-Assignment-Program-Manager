@@ -428,7 +428,9 @@ class CatastropheVisualizer:
         # Labels and title
         ax.set_xlabel("Coverage Demand", fontsize=12)
         ax.set_ylabel("Constraint Strictness", fontsize=12)
-        ax.set_title("Schedule Feasibility Contour Map\n(Catastrophe Boundaries)", fontsize=14)
+        ax.set_title(
+            "Schedule Feasibility Contour Map\n(Catastrophe Boundaries)", fontsize=14
+        )
 
         # Colorbar
         cbar = plt.colorbar(contour, ax=ax, label="Feasibility Score")
@@ -514,8 +516,12 @@ class CatastropheVisualizer:
         )
 
         # Add regions
-        ax.axhline(y=0.7, color="green", linestyle="--", alpha=0.5, label="Safe Threshold")
-        ax.axhline(y=0.3, color="red", linestyle="--", alpha=0.5, label="Failure Threshold")
+        ax.axhline(
+            y=0.7, color="green", linestyle="--", alpha=0.5, label="Safe Threshold"
+        )
+        ax.axhline(
+            y=0.3, color="red", linestyle="--", alpha=0.5, label="Failure Threshold"
+        )
 
         ax.set_xlabel("Coverage Demand", fontsize=12)
         ax.set_ylabel("Feasibility Score", fontsize=12)
@@ -649,7 +655,9 @@ class CatastropheVisualizer:
         # Hysteresis loop
         hysteresis_path = output_dir / "hysteresis_loop.png"
         self.plot_hysteresis_loop(
-            surface, strictness_level=current_params.strictness, output_path=hysteresis_path
+            surface,
+            strictness_level=current_params.strictness,
+            output_path=hysteresis_path,
         )
         figures["hysteresis"] = str(hysteresis_path)
 
@@ -711,5 +719,8 @@ def visualize_system_trajectory(
     """
     viz = CatastropheVisualizer()
     return viz.plot_contour_map_2d(
-        surface, cusp_analysis=cusp_analysis, trajectory=trajectory, output_path=output_path
+        surface,
+        cusp_analysis=cusp_analysis,
+        trajectory=trajectory,
+        output_path=output_path,
     )

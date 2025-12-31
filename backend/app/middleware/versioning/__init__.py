@@ -20,6 +20,7 @@ from app.middleware.versioning.deprecation import (
     DeprecationManager,
     DeprecationWarning,
     VersionStatus,
+    get_deprecation_manager,
 )
 from app.middleware.versioning.middleware import (
     APIVersion,
@@ -31,6 +32,7 @@ from app.middleware.versioning.transformers import (
     ResponseTransformer,
     TransformRegistry,
     register_transformer,
+    transform_response,
 )
 
 __all__ = [
@@ -44,8 +46,10 @@ __all__ = [
     "DeprecationManager",
     "DeprecationWarning",
     "VersionStatus",
+    "get_deprecation_manager",
     # Transformers
     "ResponseTransformer",
     "TransformRegistry",
     "register_transformer",
+    "transform_response",
 ]

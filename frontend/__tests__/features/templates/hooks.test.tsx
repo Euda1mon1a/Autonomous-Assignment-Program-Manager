@@ -225,14 +225,20 @@ describe('Template Hooks', () => {
 
   describe('useUpdateTemplate', () => {
     it('should update an existing template', async () => {
-      // First create a template
-      const createHook = renderHook(() => useCreateTemplate(), {
-        wrapper: createWrapper(),
-      });
+      // Use a single renderHook to access both hooks
+      const { result } = renderHook(
+        () => ({
+          create: useCreateTemplate(),
+          update: useUpdateTemplate(),
+        }),
+        { wrapper: createWrapper() }
+      );
 
       let templateId = '';
+
+      // Create a template
       await act(async () => {
-        const created = await createHook.result.current.mutateAsync({
+        const created = await result.current.create.mutateAsync({
           name: 'Original Name',
           category: 'clinic',
           durationWeeks: 1,
@@ -240,20 +246,21 @@ describe('Template Hooks', () => {
         templateId = created.id;
       });
 
-      // Now update it
-      const { result } = renderHook(() => useUpdateTemplate(), {
-        wrapper: createWrapper(),
+      // Wait for creation to fully complete
+      await waitFor(() => {
+        expect(result.current.create.isSuccess).toBe(true);
       });
 
+      // Now update it
       await act(async () => {
-        const updated = await result.current.mutateAsync({
+        const updated = await result.current.update.mutateAsync({
           id: templateId,
           data: { name: 'Updated Name' },
         });
         expect(updated.name).toBe('Updated Name');
       });
 
-      expect(result.current.isSuccess).toBe(true);
+      expect(result.current.update.isSuccess).toBe(true);
     });
 
     it('should handle non-existent template', async () => {
@@ -272,14 +279,20 @@ describe('Template Hooks', () => {
 
   describe('useDeleteTemplate', () => {
     it('should delete a template', async () => {
-      // First create a template
-      const createHook = renderHook(() => useCreateTemplate(), {
-        wrapper: createWrapper(),
-      });
+      // Use a single renderHook to access both hooks
+      const { result } = renderHook(
+        () => ({
+          create: useCreateTemplate(),
+          delete: useDeleteTemplate(),
+        }),
+        { wrapper: createWrapper() }
+      );
 
       let templateId = '';
+
+      // Create a template
       await act(async () => {
-        const created = await createHook.result.current.mutateAsync({
+        const created = await result.current.create.mutateAsync({
           name: 'To Delete',
           category: 'clinic',
           durationWeeks: 1,
@@ -288,28 +301,30 @@ describe('Template Hooks', () => {
       });
 
       // Now delete it
-      const { result } = renderHook(() => useDeleteTemplate(), {
-        wrapper: createWrapper(),
-      });
-
       await act(async () => {
-        await result.current.mutateAsync(templateId);
+        await result.current.delete.mutateAsync(templateId);
       });
 
-      expect(result.current.isSuccess).toBe(true);
+      expect(result.current.delete.isSuccess).toBe(true);
     });
   });
 
   describe('useDuplicateTemplate', () => {
     it('should duplicate a template', async () => {
-      // First create a template
-      const createHook = renderHook(() => useCreateTemplate(), {
-        wrapper: createWrapper(),
-      });
+      // Use a single renderHook to access both hooks
+      const { result } = renderHook(
+        () => ({
+          create: useCreateTemplate(),
+          duplicate: useDuplicateTemplate(),
+        }),
+        { wrapper: createWrapper() }
+      );
 
       let templateId = '';
+
+      // Create a template
       await act(async () => {
-        const created = await createHook.result.current.mutateAsync({
+        const created = await result.current.create.mutateAsync({
           name: 'Original',
           category: 'clinic',
           durationWeeks: 1,
@@ -319,12 +334,8 @@ describe('Template Hooks', () => {
       });
 
       // Now duplicate it
-      const { result } = renderHook(() => useDuplicateTemplate(), {
-        wrapper: createWrapper(),
-      });
-
       await act(async () => {
-        const duplicate = await result.current.mutateAsync({
+        const duplicate = await result.current.duplicate.mutateAsync({
           templateId,
           newName: 'Duplicate',
           includePatterns: true,
@@ -334,18 +345,24 @@ describe('Template Hooks', () => {
         expect(duplicate.sourceTemplateId).toBe(templateId);
       });
 
-      expect(result.current.isSuccess).toBe(true);
+      expect(result.current.duplicate.isSuccess).toBe(true);
     });
 
     it('should use default name if not provided', async () => {
-      // First create a template
-      const createHook = renderHook(() => useCreateTemplate(), {
-        wrapper: createWrapper(),
-      });
+      // Use a single renderHook to access both hooks
+      const { result } = renderHook(
+        () => ({
+          create: useCreateTemplate(),
+          duplicate: useDuplicateTemplate(),
+        }),
+        { wrapper: createWrapper() }
+      );
 
       let templateId = '';
+
+      // Create a template
       await act(async () => {
-        const created = await createHook.result.current.mutateAsync({
+        const created = await result.current.create.mutateAsync({
           name: 'Original',
           category: 'clinic',
           durationWeeks: 1,
@@ -354,12 +371,8 @@ describe('Template Hooks', () => {
       });
 
       // Duplicate without custom name
-      const { result } = renderHook(() => useDuplicateTemplate(), {
-        wrapper: createWrapper(),
-      });
-
       await act(async () => {
-        const duplicate = await result.current.mutateAsync({
+        const duplicate = await result.current.duplicate.mutateAsync({
           templateId,
         });
         expect(duplicate.name).toBe('Original (Copy)');
@@ -369,14 +382,20 @@ describe('Template Hooks', () => {
 
   describe('useShareTemplate', () => {
     it('should share a template publicly', async () => {
-      // First create a template
-      const createHook = renderHook(() => useCreateTemplate(), {
-        wrapper: createWrapper(),
-      });
+      // Use a single renderHook to access both hooks
+      const { result } = renderHook(
+        () => ({
+          create: useCreateTemplate(),
+          share: useShareTemplate(),
+        }),
+        { wrapper: createWrapper() }
+      );
 
       let templateId = '';
+
+      // Create a template
       await act(async () => {
-        const created = await createHook.result.current.mutateAsync({
+        const created = await result.current.create.mutateAsync({
           name: 'To Share',
           category: 'clinic',
           durationWeeks: 1,
@@ -385,12 +404,8 @@ describe('Template Hooks', () => {
       });
 
       // Share it
-      const { result } = renderHook(() => useShareTemplate(), {
-        wrapper: createWrapper(),
-      });
-
       await act(async () => {
-        const shared = await result.current.mutateAsync({
+        const shared = await result.current.share.mutateAsync({
           templateId,
           makePublic: true,
         });
@@ -398,18 +413,24 @@ describe('Template Hooks', () => {
         expect(shared.visibility).toBe('public');
       });
 
-      expect(result.current.isSuccess).toBe(true);
+      expect(result.current.share.isSuccess).toBe(true);
     });
 
     it('should share with specific users', async () => {
-      // First create a template
-      const createHook = renderHook(() => useCreateTemplate(), {
-        wrapper: createWrapper(),
-      });
+      // Use a single renderHook to access both hooks
+      const { result } = renderHook(
+        () => ({
+          create: useCreateTemplate(),
+          share: useShareTemplate(),
+        }),
+        { wrapper: createWrapper() }
+      );
 
       let templateId = '';
+
+      // Create a template
       await act(async () => {
-        const created = await createHook.result.current.mutateAsync({
+        const created = await result.current.create.mutateAsync({
           name: 'To Share',
           category: 'clinic',
           durationWeeks: 1,
@@ -418,12 +439,8 @@ describe('Template Hooks', () => {
       });
 
       // Share with users
-      const { result } = renderHook(() => useShareTemplate(), {
-        wrapper: createWrapper(),
-      });
-
       await act(async () => {
-        const shared = await result.current.mutateAsync({
+        const shared = await result.current.share.mutateAsync({
           templateId,
           userIds: ['user-1', 'user-2'],
         });
@@ -435,14 +452,20 @@ describe('Template Hooks', () => {
 
   describe('useApplyTemplate', () => {
     it('should apply a template and update usage count', async () => {
-      // First create a template
-      const createHook = renderHook(() => useCreateTemplate(), {
-        wrapper: createWrapper(),
-      });
+      // Use a single renderHook to access both hooks
+      const { result } = renderHook(
+        () => ({
+          create: useCreateTemplate(),
+          apply: useApplyTemplate(),
+        }),
+        { wrapper: createWrapper() }
+      );
 
       let templateId = '';
+
+      // Create a template
       await act(async () => {
-        const created = await createHook.result.current.mutateAsync({
+        const created = await result.current.create.mutateAsync({
           name: 'To Apply',
           category: 'clinic',
           durationWeeks: 1,
@@ -460,12 +483,8 @@ describe('Template Hooks', () => {
       });
 
       // Apply it
-      const { result } = renderHook(() => useApplyTemplate(), {
-        wrapper: createWrapper(),
-      });
-
       await act(async () => {
-        const result_data = await result.current.mutateAsync({
+        const result_data = await result.current.apply.mutateAsync({
           templateId,
           config: {
             startDate: new Date('2025-01-01'),
@@ -478,7 +497,7 @@ describe('Template Hooks', () => {
         expect(result_data.assignmentsCreated).toBeGreaterThan(0);
       });
 
-      expect(result.current.isSuccess).toBe(true);
+      expect(result.current.apply.isSuccess).toBe(true);
     });
   });
 

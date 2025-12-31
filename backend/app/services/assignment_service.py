@@ -49,22 +49,29 @@ class AssignmentService:
         person_id: UUID | None = None,
         role: str | None = None,
         activity_type: str | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
     ) -> dict:
         """
-        List assignments with optional filters.
+        List assignments with optional filters and database-level pagination.
 
         N+1 Optimization: The repository's list_with_filters method uses joinedload
         to eagerly fetch Person, Block, and RotationTemplate relationships, preventing
         N+1 queries when iterating over results.
+
+        Performance: Pagination is applied at the database level, not in Python,
+        avoiding loading all records into memory.
         """
-        assignments = self.assignment_repo.list_with_filters(
+        assignments, total = self.assignment_repo.list_with_filters(
             start_date=start_date,
             end_date=end_date,
             person_id=person_id,
             role=role,
             activity_type=activity_type,
+            offset=offset,
+            limit=limit,
         )
-        return {"items": assignments, "total": len(assignments)}
+        return {"items": assignments, "total": total}
 
     def create_assignment(
         self,

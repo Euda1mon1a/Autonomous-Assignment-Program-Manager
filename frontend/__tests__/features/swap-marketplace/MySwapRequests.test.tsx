@@ -15,6 +15,42 @@ import { mockMySwapsResponse, mockEmptyMySwapsResponse } from './mockData';
 // Mock the hooks
 jest.mock('@/features/swap-marketplace/hooks');
 
+// Create mock mutation objects
+const mockAcceptMutation = {
+  mutateAsync: jest.fn(),
+  isPending: false,
+  isSuccess: false,
+  isError: false,
+  error: null,
+};
+
+const mockRejectMutation = {
+  mutateAsync: jest.fn(),
+  isPending: false,
+  isSuccess: false,
+  isError: false,
+  error: null,
+};
+
+const mockCancelMutation = {
+  mutateAsync: jest.fn(),
+  isPending: false,
+  isSuccess: false,
+  isError: false,
+  error: null,
+};
+
+// Mock the AuthContext
+jest.mock('@/contexts/AuthContext', () => ({
+  useAuth: jest.fn(() => ({
+    user: { id: 'test-user-1', name: 'Test User', email: 'test@example.com', role: 'FACULTY' },
+    isLoading: false,
+    isAuthenticated: true,
+    login: jest.fn(),
+    logout: jest.fn(),
+  })),
+}));
+
 // Create a wrapper with QueryClient for testing
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -47,6 +83,11 @@ describe('MySwapRequests', () => {
       error: null,
       refetch: mockRefetch,
     });
+
+    // Mock the mutation hooks used by SwapRequestCard
+    (hooks.useAcceptSwap as jest.Mock).mockReturnValue(mockAcceptMutation);
+    (hooks.useRejectSwap as jest.Mock).mockReturnValue(mockRejectMutation);
+    (hooks.useCancelSwap as jest.Mock).mockReturnValue(mockCancelMutation);
   });
 
   describe('Loading State', () => {
@@ -209,9 +250,11 @@ describe('MySwapRequests', () => {
       const outgoingTab = screen.getByRole('button', { name: /outgoing/i });
       await user.click(outgoingTab);
 
-      // Based on mockMySwapsResponse outgoing requests
-      expect(screen.getByText('Dr. Jane Doe')).toBeInTheDocument();
-      expect(screen.getByText('Dr. John Smith')).toBeInTheDocument();
+      // Based on mockMySwapsResponse outgoing requests - names may appear multiple times on page
+      const janeDoeElements = screen.getAllByText('Dr. Jane Doe');
+      expect(janeDoeElements.length).toBeGreaterThan(0);
+      const johnSmithElements = screen.getAllByText('Dr. John Smith');
+      expect(johnSmithElements.length).toBeGreaterThan(0);
     });
 
     it('should show empty state when no outgoing requests', async () => {

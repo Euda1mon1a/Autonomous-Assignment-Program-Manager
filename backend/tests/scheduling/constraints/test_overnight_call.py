@@ -61,19 +61,20 @@ class TestIsOvernightCallNight:
         # Start from Sunday January 5, 2025
         start_date = date(2025, 1, 5)
         expected = [
-            True,   # Sun - call night
-            True,   # Mon - call night
-            True,   # Tue - call night
-            True,   # Wed - call night
-            True,   # Thu - call night
+            True,  # Sun - call night
+            True,  # Mon - call night
+            True,  # Tue - call night
+            True,  # Wed - call night
+            True,  # Thu - call night
             False,  # Fri - FMIT handles
             False,  # Sat - FMIT handles
         ]
 
         for i, expected_result in enumerate(expected):
             test_date = start_date + timedelta(days=i)
-            assert is_overnight_call_night(test_date) == expected_result, \
+            assert is_overnight_call_night(test_date) == expected_result, (
                 f"Failed for {test_date} (weekday {test_date.weekday()})"
+            )
 
 
 class TestOvernightCallGenerationConstraint:

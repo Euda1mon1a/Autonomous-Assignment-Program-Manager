@@ -97,7 +97,9 @@ class PeriodicityReport:
 
     def __str__(self) -> str:
         """Human-readable summary."""
-        patterns_str = "\n  - ".join(self.detected_patterns) if self.detected_patterns else "None"
+        patterns_str = (
+            "\n  - ".join(self.detected_patterns) if self.detected_patterns else "None"
+        )
         return (
             f"PeriodicityReport:\n"
             f"  Fundamental Period: {self.fundamental_period:.1f} days\n"
@@ -127,9 +129,13 @@ class TimeSeriesData:
     def __post_init__(self) -> None:
         """Validate time series data."""
         if len(self.values) != len(self.dates):
-            raise ValueError(f"Values length ({len(self.values)}) != dates length ({len(self.dates)})")
+            raise ValueError(
+                f"Values length ({len(self.values)}) != dates length ({len(self.dates)})"
+            )
         if len(self.values) < 4:
-            raise ValueError(f"Time series too short ({len(self.values)} points), need at least 4")
+            raise ValueError(
+                f"Time series too short ({len(self.values)} points), need at least 4"
+            )
 
 
 # =============================================================================
@@ -185,7 +191,9 @@ def build_assignment_time_series(
             assignment_date = assignment.block.date
             assignments_by_date[assignment_date].append(assignment)
         else:
-            logger.warning(f"Assignment {assignment.id} missing block or block.date, skipping")
+            logger.warning(
+                f"Assignment {assignment.id} missing block or block.date, skipping"
+            )
 
     if not assignments_by_date:
         raise ValueError("No valid assignments with block dates found")
@@ -204,9 +212,7 @@ def build_assignment_time_series(
             values.append(float(len(day_assignments)))
         elif aggregation == "hours":
             # Sum hours if available, otherwise count × 12 (half-day assumption)
-            total_hours = sum(
-                getattr(a, "hours", 12.0) for a in day_assignments
-            )
+            total_hours = sum(getattr(a, "hours", 12.0) for a in day_assignments)
             values.append(float(total_hours))
         elif aggregation == "binary":
             values.append(1.0 if day_assignments else 0.0)
@@ -461,7 +467,9 @@ def analyze_periodicity(
         "date_range": f"{ts.dates[0]} to {ts.dates[-1]}",
         "mean_assignments_per_day": float(np.mean(ts.values)),
         "std_assignments_per_day": float(np.std(ts.values)),
-        "autocorr_at_base": float(autocorr[base_period]) if len(autocorr) > base_period else 0.0,
+        "autocorr_at_base": float(autocorr[base_period])
+        if len(autocorr) > base_period
+        else 0.0,
     }
 
     logger.info(
@@ -642,13 +650,19 @@ class SubharmonicDetector:
         # Trend analysis
         if len(self.history) >= 3:
             recent_strengths = [r.periodicity_strength for r in self.history[-3:]]
-            trend = "improving" if all(
-                recent_strengths[i] < recent_strengths[i + 1]
-                for i in range(len(recent_strengths) - 1)
-            ) else "declining" if all(
-                recent_strengths[i] > recent_strengths[i + 1]
-                for i in range(len(recent_strengths) - 1)
-            ) else "stable"
+            trend = (
+                "improving"
+                if all(
+                    recent_strengths[i] < recent_strengths[i + 1]
+                    for i in range(len(recent_strengths) - 1)
+                )
+                else "declining"
+                if all(
+                    recent_strengths[i] > recent_strengths[i + 1]
+                    for i in range(len(recent_strengths) - 1)
+                )
+                else "stable"
+            )
         else:
             trend = "unknown"
 

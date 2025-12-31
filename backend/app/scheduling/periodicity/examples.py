@@ -22,6 +22,7 @@ from app.scheduling.periodicity import (
 # Example 1: Basic Rigidity Check
 # ================================
 
+
 def example_basic_rigidity_check():
     """
     Check if proposed schedule changes too much from current.
@@ -65,6 +66,7 @@ def example_basic_rigidity_check():
 # Example 2: Detailed Impact Analysis
 # ===================================
 
+
 def example_detailed_impact_analysis():
     """
     Get detailed breakdown of schedule changes.
@@ -73,13 +75,13 @@ def example_detailed_impact_analysis():
     to a new schedule.
     """
     # Create example schedules
-    current = ScheduleSnapshot.from_tuples([
-        (uuid4(), uuid4(), uuid4()) for _ in range(100)
-    ])
+    current = ScheduleSnapshot.from_tuples(
+        [(uuid4(), uuid4(), uuid4()) for _ in range(100)]
+    )
 
-    proposed = ScheduleSnapshot.from_tuples([
-        (uuid4(), uuid4(), uuid4()) for _ in range(100)
-    ])
+    proposed = ScheduleSnapshot.from_tuples(
+        [(uuid4(), uuid4(), uuid4()) for _ in range(100)]
+    )
 
     # Analyze impact
     impact = estimate_churn_impact(current, proposed)
@@ -100,6 +102,7 @@ def example_detailed_impact_analysis():
 # Example 3: Time Crystal Objective Function
 # ==========================================
 
+
 def example_time_crystal_objective():
     """
     Use time crystal objective to score proposed schedules.
@@ -107,21 +110,27 @@ def example_time_crystal_objective():
     Use case: When evaluating multiple solver results, choose the one
     with best balance of constraint satisfaction and stability.
     """
-    current = ScheduleSnapshot.from_tuples([
-        (uuid4(), uuid4(), uuid4()) for _ in range(50)
-    ])
+    current = ScheduleSnapshot.from_tuples(
+        [(uuid4(), uuid4(), uuid4()) for _ in range(50)]
+    )
 
     # Option A: High churn but perfect constraints
-    option_a = ScheduleSnapshot.from_tuples([
-        (uuid4(), uuid4(), uuid4()) for _ in range(50)  # Completely different
-    ])
+    option_a = ScheduleSnapshot.from_tuples(
+        [
+            (uuid4(), uuid4(), uuid4())
+            for _ in range(50)  # Completely different
+        ]
+    )
     constraints_a = [ConstraintResult(satisfied=True, penalty=0.0)]
 
     # Option B: Low churn but one soft constraint violation
     option_b_tuples = list(current.assignments)[:45]  # Keep 90% the same
-    option_b_tuples.extend([
-        (uuid4(), uuid4(), uuid4()) for _ in range(5)  # Change 10%
-    ])
+    option_b_tuples.extend(
+        [
+            (uuid4(), uuid4(), uuid4())
+            for _ in range(5)  # Change 10%
+        ]
+    )
     option_b = ScheduleSnapshot.from_tuples(option_b_tuples)
     constraints_b = [ConstraintResult(satisfied=True, penalty=2.0)]  # Soft penalty
 
@@ -144,6 +153,7 @@ def example_time_crystal_objective():
 # Example 4: Per-Person Churn Tracking
 # ====================================
 
+
 def example_per_person_churn():
     """
     Identify which residents are most affected by schedule changes.
@@ -161,24 +171,28 @@ def example_per_person_churn():
     }
 
     # Current schedule
-    current = ScheduleSnapshot.from_tuples([
-        (person_ids["Dr. Smith"], uuid4(), uuid4()),
-        (person_ids["Dr. Smith"], uuid4(), uuid4()),
-        (person_ids["Dr. Jones"], uuid4(), uuid4()),
-        (person_ids["Dr. Lee"], uuid4(), uuid4()),
-        (person_ids["Dr. Lee"], uuid4(), uuid4()),
-        (person_ids["Dr. Lee"], uuid4(), uuid4()),
-    ])
+    current = ScheduleSnapshot.from_tuples(
+        [
+            (person_ids["Dr. Smith"], uuid4(), uuid4()),
+            (person_ids["Dr. Smith"], uuid4(), uuid4()),
+            (person_ids["Dr. Jones"], uuid4(), uuid4()),
+            (person_ids["Dr. Lee"], uuid4(), uuid4()),
+            (person_ids["Dr. Lee"], uuid4(), uuid4()),
+            (person_ids["Dr. Lee"], uuid4(), uuid4()),
+        ]
+    )
 
     # Proposed schedule - Dr. Lee has all assignments changed
-    proposed = ScheduleSnapshot.from_tuples([
-        (person_ids["Dr. Smith"], uuid4(), uuid4()),  # Same
-        (person_ids["Dr. Smith"], uuid4(), uuid4()),  # Same
-        (person_ids["Dr. Jones"], uuid4(), uuid4()),  # Same
-        (person_ids["Dr. Lee"], uuid4(), uuid4()),    # Different
-        (person_ids["Dr. Lee"], uuid4(), uuid4()),    # Different
-        (person_ids["Dr. Lee"], uuid4(), uuid4()),    # Different
-    ])
+    proposed = ScheduleSnapshot.from_tuples(
+        [
+            (person_ids["Dr. Smith"], uuid4(), uuid4()),  # Same
+            (person_ids["Dr. Smith"], uuid4(), uuid4()),  # Same
+            (person_ids["Dr. Jones"], uuid4(), uuid4()),  # Same
+            (person_ids["Dr. Lee"], uuid4(), uuid4()),  # Different
+            (person_ids["Dr. Lee"], uuid4(), uuid4()),  # Different
+            (person_ids["Dr. Lee"], uuid4(), uuid4()),  # Different
+        ]
+    )
 
     # Calculate per-person churn
     churn_by_person = hamming_distance_by_person(current, proposed)
@@ -200,6 +214,7 @@ def example_per_person_churn():
 # Example 5: Tuning Alpha Parameter
 # =================================
 
+
 def example_tuning_alpha():
     """
     Demonstrate how alpha parameter affects objective function.
@@ -207,15 +222,18 @@ def example_tuning_alpha():
     Use case: Help administrators understand the trade-off between
     constraint optimization and schedule stability.
     """
-    current = ScheduleSnapshot.from_tuples([
-        (uuid4(), uuid4(), uuid4()) for _ in range(50)
-    ])
+    current = ScheduleSnapshot.from_tuples(
+        [(uuid4(), uuid4(), uuid4()) for _ in range(50)]
+    )
 
     # Proposed schedule with moderate churn
     proposed_tuples = list(current.assignments)[:35]  # Keep 70%
-    proposed_tuples.extend([
-        (uuid4(), uuid4(), uuid4()) for _ in range(15)  # Change 30%
-    ])
+    proposed_tuples.extend(
+        [
+            (uuid4(), uuid4(), uuid4())
+            for _ in range(15)  # Change 30%
+        ]
+    )
     proposed = ScheduleSnapshot.from_tuples(proposed_tuples)
 
     # Constraints: one soft violation
@@ -232,7 +250,9 @@ def example_tuning_alpha():
         score = time_crystal_objective(proposed, current, constraints, alpha=alpha)
         constraint_weight = (1.0 - alpha) * 100
         rigidity_weight = alpha * 100
-        print(f"{alpha:.1f}   | {constraint_weight:5.0f}%           | {rigidity_weight:5.0f}%          | {score:.3f}")
+        print(
+            f"{alpha:.1f}   | {constraint_weight:5.0f}%           | {rigidity_weight:5.0f}%          | {score:.3f}"
+        )
 
     print("\nInterpretation:")
     print("- α=0.0: Pure optimization (ignores stability)")
@@ -244,6 +264,7 @@ def example_tuning_alpha():
 # Example 6: Integration with Solver
 # ==================================
 
+
 def example_solver_integration(solver_result, current_assignments):
     """
     Example of integrating anti-churn into solver workflow.
@@ -253,7 +274,7 @@ def example_solver_integration(solver_result, current_assignments):
     # Convert current assignments to snapshot
     current_snapshot = ScheduleSnapshot.from_assignments(
         current_assignments,
-        metadata={"source": "database", "timestamp": datetime.utcnow()}
+        metadata={"source": "database", "timestamp": datetime.utcnow()},
     )
 
     # Convert solver result to snapshot
@@ -263,7 +284,7 @@ def example_solver_integration(solver_result, current_assignments):
             "source": "solver",
             "algorithm": solver_result.solver_status,
             "runtime": solver_result.runtime_seconds,
-        }
+        },
     )
 
     # Evaluate with time crystal objective
@@ -308,6 +329,7 @@ def example_solver_integration(solver_result, current_assignments):
 
 # Example 7: Monitoring and Alerting
 # ==================================
+
 
 def example_monitoring_setup():
     """

@@ -100,7 +100,10 @@ class OvernightCallGenerationConstraint(HardConstraint):
 
         for faculty in context.faculty:
             # Rule 1: Exclude ADJUNCT faculty
-            if hasattr(faculty, "role_enum") and faculty.role_enum == FacultyRole.ADJUNCT:
+            if (
+                hasattr(faculty, "role_enum")
+                and faculty.role_enum == FacultyRole.ADJUNCT
+            ):
                 continue
             if hasattr(faculty, "faculty_role") and faculty.faculty_role == "adjunct":
                 continue
@@ -225,7 +228,9 @@ class OvernightCallGenerationConstraint(HardConstraint):
             eligible = self._get_eligible_faculty(context, target_date, fmit_weeks)
 
             if not eligible:
-                logger.warning(f"No eligible faculty for overnight call on {target_date}")
+                logger.warning(
+                    f"No eligible faculty for overnight call on {target_date}"
+                )
                 continue
 
             # Find block index for this date (use AM block as reference)
@@ -370,9 +375,15 @@ class OvernightCallGenerationConstraint(HardConstraint):
                 if faculty:
                     # Check ADJUNCT exclusion
                     is_adjunct = False
-                    if hasattr(faculty, "role_enum") and faculty.role_enum == FacultyRole.ADJUNCT:
+                    if (
+                        hasattr(faculty, "role_enum")
+                        and faculty.role_enum == FacultyRole.ADJUNCT
+                    ):
                         is_adjunct = True
-                    if hasattr(faculty, "faculty_role") and faculty.faculty_role == "adjunct":
+                    if (
+                        hasattr(faculty, "faculty_role")
+                        and faculty.faculty_role == "adjunct"
+                    ):
                         is_adjunct = True
 
                     if is_adjunct:

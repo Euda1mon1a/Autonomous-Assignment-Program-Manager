@@ -1,4 +1,5 @@
 """Tests for NSGA-II implementation."""
+
 import numpy as np
 import pytest
 
@@ -158,55 +159,58 @@ class TestCrowdingDistance:
 
     def test_boundary_points_infinite_distance(self):
         """Test boundary points get infinite crowding distance."""
-        individuals = self._create_individuals([
-            (0.1, 0.9),  # Boundary
-            (0.5, 0.5),  # Middle
-            (0.9, 0.1),  # Boundary
-        ])
+        individuals = self._create_individuals(
+            [
+                (0.1, 0.9),  # Boundary
+                (0.5, 0.5),  # Middle
+                (0.9, 0.1),  # Boundary
+            ]
+        )
 
         CrowdingDistance.compute(individuals, ["coverage", "fairness"])
 
         # First and last (by coverage) should have infinite distance
-        sorted_by_cov = sorted(
-            individuals,
-            key=lambda ind: ind.fitness.coverage
-        )
-        assert sorted_by_cov[0].crowding_distance == float('inf')
-        assert sorted_by_cov[-1].crowding_distance == float('inf')
+        sorted_by_cov = sorted(individuals, key=lambda ind: ind.fitness.coverage)
+        assert sorted_by_cov[0].crowding_distance == float("inf")
+        assert sorted_by_cov[-1].crowding_distance == float("inf")
 
     def test_crowding_distance_middle_points(self):
         """Test middle points get finite crowding distance."""
-        individuals = self._create_individuals([
-            (0.1, 0.9),
-            (0.3, 0.7),  # Middle
-            (0.5, 0.5),  # Middle
-            (0.7, 0.3),  # Middle
-            (0.9, 0.1),
-        ])
+        individuals = self._create_individuals(
+            [
+                (0.1, 0.9),
+                (0.3, 0.7),  # Middle
+                (0.5, 0.5),  # Middle
+                (0.7, 0.3),  # Middle
+                (0.9, 0.1),
+            ]
+        )
 
         CrowdingDistance.compute(individuals, ["coverage", "fairness"])
 
         # Middle points should have finite distance > 0
         for ind in individuals[1:-1]:
-            assert 0 < ind.crowding_distance < float('inf')
+            assert 0 < ind.crowding_distance < float("inf")
 
     def test_single_individual(self):
         """Test single individual gets infinite distance."""
         individuals = self._create_individuals([(0.5, 0.5)])
         CrowdingDistance.compute(individuals, ["coverage"])
 
-        assert individuals[0].crowding_distance == float('inf')
+        assert individuals[0].crowding_distance == float("inf")
 
     def test_two_individuals(self):
         """Test two individuals both get infinite distance."""
-        individuals = self._create_individuals([
-            (0.3, 0.7),
-            (0.7, 0.3),
-        ])
+        individuals = self._create_individuals(
+            [
+                (0.3, 0.7),
+                (0.7, 0.3),
+            ]
+        )
         CrowdingDistance.compute(individuals, ["coverage", "fairness"])
 
-        assert individuals[0].crowding_distance == float('inf')
-        assert individuals[1].crowding_distance == float('inf')
+        assert individuals[0].crowding_distance == float("inf")
+        assert individuals[1].crowding_distance == float("inf")
 
 
 class TestNSGA2Config:
@@ -308,18 +312,20 @@ class TestNSGA2Solver:
         solver = NSGA2Solver(config=NSGA2Config(population_size=3))
 
         # Set up mock fronts
-        solver.fronts = [[
-            Individual(
-                chromosome=Chromosome.create_empty(3, 5),
-                fitness=FitnessVector(coverage=0.8, fairness=0.6),
-                id=1,
-            ),
-            Individual(
-                chromosome=Chromosome.create_empty(3, 5),
-                fitness=FitnessVector(coverage=0.6, fairness=0.8),
-                id=2,
-            ),
-        ]]
+        solver.fronts = [
+            [
+                Individual(
+                    chromosome=Chromosome.create_empty(3, 5),
+                    fitness=FitnessVector(coverage=0.8, fairness=0.6),
+                    id=1,
+                ),
+                Individual(
+                    chromosome=Chromosome.create_empty(3, 5),
+                    fitness=FitnessVector(coverage=0.6, fairness=0.8),
+                    id=2,
+                ),
+            ]
+        ]
 
         solutions = solver.get_pareto_solutions()
 

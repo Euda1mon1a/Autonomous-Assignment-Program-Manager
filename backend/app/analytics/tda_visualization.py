@@ -437,9 +437,7 @@ def visualize_point_cloud(
     return fig.to_dict()
 
 
-def create_tda_summary_report(
-    analysis_result: dict[str, Any]
-) -> dict[str, Any]:
+def create_tda_summary_report(analysis_result: dict[str, Any]) -> dict[str, Any]:
     """
     Create a summary report from TDA analysis results.
 
@@ -495,9 +493,7 @@ def create_tda_summary_report(
     # Cyclic patterns
     cycles = analysis_result.get("cyclic_patterns", [])
     if cycles:
-        report["findings"].append(
-            f"Detected {len(cycles)} cyclic rotation patterns."
-        )
+        report["findings"].append(f"Detected {len(cycles)} cyclic rotation patterns.")
         strong_cycles = [c for c in cycles if c["strength"] > 0.7]
         if strong_cycles:
             report["recommendations"].append(

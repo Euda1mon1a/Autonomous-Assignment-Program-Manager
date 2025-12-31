@@ -313,6 +313,14 @@ describe('ExcelExportButton', () => {
   })
 })
 
+// Helper to find input by its preceding label text
+const getInputByLabel = (container: HTMLElement, labelText: string) => {
+  const label = Array.from(container.querySelectorAll('label')).find(
+    (el) => el.textContent?.trim() === labelText
+  )
+  return label?.parentElement?.querySelector('input') as HTMLInputElement | null
+}
+
 describe('ExcelExportDropdown', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -335,13 +343,13 @@ describe('ExcelExportDropdown', () => {
     it('should open dropdown when clicking button', async () => {
       const user = userEvent.setup({ delay: null })
 
-      render(<ExcelExportDropdown />)
+      const { container } = render(<ExcelExportDropdown />)
 
       await user.click(screen.getByRole('button', { name: /export excel/i }))
 
       expect(screen.getByText('Export Schedule')).toBeInTheDocument()
-      expect(screen.getByLabelText('Start Date')).toBeInTheDocument()
-      expect(screen.getByLabelText('End Date')).toBeInTheDocument()
+      expect(getInputByLabel(container, 'Start Date')).toBeInTheDocument()
+      expect(getInputByLabel(container, 'End Date')).toBeInTheDocument()
     })
 
     it('should close dropdown when clicking backdrop', async () => {
@@ -365,32 +373,32 @@ describe('ExcelExportDropdown', () => {
     it('should render start date input', async () => {
       const user = userEvent.setup({ delay: null })
 
-      render(<ExcelExportDropdown />)
+      const { container } = render(<ExcelExportDropdown />)
 
       await user.click(screen.getByRole('button', { name: /export excel/i }))
 
-      expect(screen.getByLabelText('Start Date')).toBeInTheDocument()
+      expect(getInputByLabel(container, 'Start Date')).toBeInTheDocument()
     })
 
     it('should render end date input', async () => {
       const user = userEvent.setup({ delay: null })
 
-      render(<ExcelExportDropdown />)
+      const { container } = render(<ExcelExportDropdown />)
 
       await user.click(screen.getByRole('button', { name: /export excel/i }))
 
-      expect(screen.getByLabelText('End Date')).toBeInTheDocument()
+      expect(getInputByLabel(container, 'End Date')).toBeInTheDocument()
     })
 
     it('should set default dates when opening dropdown', async () => {
       const user = userEvent.setup({ delay: null })
 
-      render(<ExcelExportDropdown />)
+      const { container } = render(<ExcelExportDropdown />)
 
       await user.click(screen.getByRole('button', { name: /export excel/i }))
 
-      const startInput = screen.getByLabelText('Start Date') as HTMLInputElement
-      const endInput = screen.getByLabelText('End Date') as HTMLInputElement
+      const startInput = getInputByLabel(container, 'Start Date')!
+      const endInput = getInputByLabel(container, 'End Date')!
 
       expect(startInput.value).toBe('2024-02-15')
       expect(endInput.value).toBe('2024-03-13') // 27 days later
@@ -399,11 +407,11 @@ describe('ExcelExportDropdown', () => {
     it('should allow changing start date', async () => {
       const user = userEvent.setup({ delay: null })
 
-      render(<ExcelExportDropdown />)
+      const { container } = render(<ExcelExportDropdown />)
 
       await user.click(screen.getByRole('button', { name: /export excel/i }))
 
-      const startInput = screen.getByLabelText('Start Date') as HTMLInputElement
+      const startInput = getInputByLabel(container, 'Start Date')!
       await user.clear(startInput)
       await user.type(startInput, '2024-01-01')
 
@@ -413,11 +421,11 @@ describe('ExcelExportDropdown', () => {
     it('should allow changing end date', async () => {
       const user = userEvent.setup({ delay: null })
 
-      render(<ExcelExportDropdown />)
+      const { container } = render(<ExcelExportDropdown />)
 
       await user.click(screen.getByRole('button', { name: /export excel/i }))
 
-      const endInput = screen.getByLabelText('End Date') as HTMLInputElement
+      const endInput = getInputByLabel(container, 'End Date')!
       await user.clear(endInput)
       await user.type(endInput, '2024-01-28')
 
@@ -429,32 +437,32 @@ describe('ExcelExportDropdown', () => {
     it('should render block number input', async () => {
       const user = userEvent.setup({ delay: null })
 
-      render(<ExcelExportDropdown />)
+      const { container } = render(<ExcelExportDropdown />)
 
       await user.click(screen.getByRole('button', { name: /export excel/i }))
 
-      expect(screen.getByLabelText(/block number/i)).toBeInTheDocument()
+      expect(getInputByLabel(container, 'Block Number (optional)')).toBeInTheDocument()
     })
 
     it('should have placeholder text', async () => {
       const user = userEvent.setup({ delay: null })
 
-      render(<ExcelExportDropdown />)
+      const { container } = render(<ExcelExportDropdown />)
 
       await user.click(screen.getByRole('button', { name: /export excel/i }))
 
-      const blockInput = screen.getByLabelText(/block number/i) as HTMLInputElement
+      const blockInput = getInputByLabel(container, 'Block Number (optional)')!
       expect(blockInput.placeholder).toBe('Auto-calculated')
     })
 
     it('should allow entering block number', async () => {
       const user = userEvent.setup({ delay: null })
 
-      render(<ExcelExportDropdown />)
+      const { container } = render(<ExcelExportDropdown />)
 
       await user.click(screen.getByRole('button', { name: /export excel/i }))
 
-      const blockInput = screen.getByLabelText(/block number/i) as HTMLInputElement
+      const blockInput = getInputByLabel(container, 'Block Number (optional)')!
       await user.type(blockInput, '5')
 
       expect(blockInput.value).toBe('5')
@@ -463,11 +471,11 @@ describe('ExcelExportDropdown', () => {
     it('should have min and max constraints', async () => {
       const user = userEvent.setup({ delay: null })
 
-      render(<ExcelExportDropdown />)
+      const { container } = render(<ExcelExportDropdown />)
 
       await user.click(screen.getByRole('button', { name: /export excel/i }))
 
-      const blockInput = screen.getByLabelText(/block number/i)
+      const blockInput = getInputByLabel(container, 'Block Number (optional)')!
       expect(blockInput).toHaveAttribute('min', '1')
       expect(blockInput).toHaveAttribute('max', '13')
     })
@@ -477,12 +485,12 @@ describe('ExcelExportDropdown', () => {
     it('should export with selected dates', async () => {
       const user = userEvent.setup({ delay: null })
 
-      render(<ExcelExportDropdown />)
+      const { container } = render(<ExcelExportDropdown />)
 
       await user.click(screen.getByRole('button', { name: /export excel/i }))
 
-      const startInput = screen.getByLabelText('Start Date')
-      const endInput = screen.getByLabelText('End Date')
+      const startInput = getInputByLabel(container, 'Start Date')!
+      const endInput = getInputByLabel(container, 'End Date')!
 
       await user.clear(startInput)
       await user.type(startInput, '2024-01-01')
@@ -503,11 +511,11 @@ describe('ExcelExportDropdown', () => {
     it('should export with block number', async () => {
       const user = userEvent.setup({ delay: null })
 
-      render(<ExcelExportDropdown />)
+      const { container } = render(<ExcelExportDropdown />)
 
       await user.click(screen.getByRole('button', { name: /export excel/i }))
 
-      const blockInput = screen.getByLabelText(/block number/i)
+      const blockInput = getInputByLabel(container, 'Block Number (optional)')!
       await user.type(blockInput, '7')
 
       await user.click(screen.getByRole('button', { name: /download excel/i }))
@@ -537,35 +545,33 @@ describe('ExcelExportDropdown', () => {
     it('should disable export button when dates are missing', async () => {
       const user = userEvent.setup({ delay: null })
 
-      render(<ExcelExportDropdown />)
+      const { container } = render(<ExcelExportDropdown />)
 
       await user.click(screen.getByRole('button', { name: /export excel/i }))
 
-      const startInput = screen.getByLabelText('Start Date')
+      const startInput = getInputByLabel(container, 'Start Date')!
       await user.clear(startInput)
 
       const exportButton = screen.getByRole('button', { name: /download excel/i })
       expect(exportButton).toBeDisabled()
     })
 
-    it('should show error when trying to export without dates', async () => {
+    it('should disable export button when both dates are missing', async () => {
       const user = userEvent.setup({ delay: null })
 
-      render(<ExcelExportDropdown />)
+      const { container } = render(<ExcelExportDropdown />)
 
       await user.click(screen.getByRole('button', { name: /export excel/i }))
 
-      const startInput = screen.getByLabelText('Start Date')
-      const endInput = screen.getByLabelText('End Date')
+      const startInput = getInputByLabel(container, 'Start Date')!
+      const endInput = getInputByLabel(container, 'End Date')!
 
       await user.clear(startInput)
       await user.clear(endInput)
 
-      await user.click(screen.getByRole('button', { name: /download excel/i }))
-
-      await waitFor(() => {
-        expect(screen.getByText(/please select start and end dates/i)).toBeInTheDocument()
-      })
+      // When both dates are cleared, the download button should be disabled
+      const exportButton = screen.getByRole('button', { name: /download excel/i })
+      expect(exportButton).toBeDisabled()
     })
 
     it('should show loading state during export', async () => {

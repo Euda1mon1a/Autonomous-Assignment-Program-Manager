@@ -155,7 +155,9 @@ class TestFMITSchedulerService:
         pass
 
     @pytest.mark.skip(reason="DEBT-016: Placeholder - needs fixtures and assertions")
-    async def test_assign_fmit_week_already_assigned(self, db, sample_faculty, sample_blocks):
+    async def test_assign_fmit_week_already_assigned(
+        self, db, sample_faculty, sample_blocks
+    ):
         """Test assigning to already-assigned week fails."""
         # Create existing assignment first
         # service = FMITSchedulerService(db)

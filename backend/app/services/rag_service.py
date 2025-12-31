@@ -189,9 +189,7 @@ class RAGService:
             if metadata_filters:
                 for key, value in metadata_filters.items():
                     # Use PostgreSQL JSON operators for metadata filtering
-                    stmt = stmt.where(
-                        RAGDocument.metadata_[key].astext == str(value)
-                    )
+                    stmt = stmt.where(RAGDocument.metadata_[key].astext == str(value))
 
             # Filter by minimum similarity
             # Note: This is done in SQL for efficiency
@@ -282,9 +280,7 @@ class RAGService:
             doc_text = doc.content
             if include_metadata and doc.metadata:
                 # Add metadata as context
-                metadata_str = ", ".join(
-                    f"{k}: {v}" for k, v in doc.metadata.items()
-                )
+                metadata_str = ", ".join(f"{k}: {v}" for k, v in doc.metadata.items())
                 doc_text = f"[{metadata_str}]\n{doc_text}"
 
             doc_tokens = len(doc_text) // self.APPROX_CHARS_PER_TOKEN
@@ -315,9 +311,7 @@ class RAGService:
         # Calculate final token count
         token_count = len(context) // self.APPROX_CHARS_PER_TOKEN
 
-        logger.info(
-            f"Built context with {len(sources)} sources, ~{token_count} tokens"
-        )
+        logger.info(f"Built context with {len(sources)} sources, ~{token_count} tokens")
 
         return RAGContext(
             query=query,
@@ -339,9 +333,7 @@ class RAGService:
         """
         try:
             # Get total document count
-            total_docs = self.db.scalar(
-                select(func.count()).select_from(RAGDocument)
-            )
+            total_docs = self.db.scalar(select(func.count()).select_from(RAGDocument))
 
             # Get counts by doc_type
             type_counts = {}
@@ -356,7 +348,9 @@ class RAGService:
 
             # Check if pgvector extension is enabled
             vector_enabled = self.db.execute(
-                text("SELECT EXISTS(SELECT 1 FROM pg_extension WHERE extname = 'vector')")
+                text(
+                    "SELECT EXISTS(SELECT 1 FROM pg_extension WHERE extname = 'vector')"
+                )
             ).scalar()
 
             # Check if indexes exist
@@ -374,7 +368,9 @@ class RAGService:
             # Generate recommendations
             recommendations = []
             if total_docs == 0:
-                recommendations.append("No documents ingested yet. Use ingest_document() to add content.")
+                recommendations.append(
+                    "No documents ingested yet. Use ingest_document() to add content."
+                )
             elif total_docs < 10:
                 recommendations.append(
                     "Low document count. Consider ingesting more reference materials for better retrieval."
@@ -458,7 +454,9 @@ class RAGService:
                     if sentence_start > 2:
                         overlap_text = overlap_text[sentence_start:]
 
-                current_chunk = [overlap_text, sentence] if overlap_chars > 0 else [sentence]
+                current_chunk = (
+                    [overlap_text, sentence] if overlap_chars > 0 else [sentence]
+                )
                 current_length = len(" ".join(current_chunk))
             else:
                 current_chunk.append(sentence)
@@ -503,9 +501,11 @@ class RAGService:
             Number of documents deleted
         """
         try:
-            count = self.db.query(RAGDocument).filter(
-                RAGDocument.doc_type == doc_type
-            ).delete()
+            count = (
+                self.db.query(RAGDocument)
+                .filter(RAGDocument.doc_type == doc_type)
+                .delete()
+            )
             self.db.commit()
             logger.info(f"Deleted {count} documents of type {doc_type}")
             return count
@@ -524,9 +524,9 @@ class RAGService:
             True if deleted, False if not found
         """
         try:
-            doc = self.db.query(RAGDocument).filter(
-                RAGDocument.id == document_id
-            ).first()
+            doc = (
+                self.db.query(RAGDocument).filter(RAGDocument.id == document_id).first()
+            )
             if doc:
                 self.db.delete(doc)
                 self.db.commit()

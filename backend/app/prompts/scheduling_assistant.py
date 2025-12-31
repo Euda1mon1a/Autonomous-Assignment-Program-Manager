@@ -236,11 +236,12 @@ Prioritize patient safety and ACGME compliance in your recommendations.
 # RAG CONTEXT INJECTION
 # =============================================================================
 
+
 def build_rag_prompt(
     query: str,
     context: str,
     system_prompt: str = SCHEDULING_ASSISTANT_SYSTEM_PROMPT,
-    task_prompt: str | None = None
+    task_prompt: str | None = None,
 ) -> str:
     """
     Build a complete prompt with RAG context injected.
@@ -288,9 +289,7 @@ def build_rag_prompt(
 
 
 def build_tool_response_prompt(
-    original_query: str,
-    tool_results: str,
-    task_type: str = "general"
+    original_query: str, tool_results: str, task_type: str = "general"
 ) -> str:
     """
     Build a prompt for the LLM to synthesize tool results into a user-friendly response.
@@ -319,7 +318,7 @@ def build_tool_response_prompt(
         "compliance": COMPLIANCE_CHECK_PROMPT,
         "coverage": COVERAGE_ANALYSIS_PROMPT,
         "schedule": SCHEDULE_EXPLANATION_PROMPT,
-        "general": None
+        "general": None,
     }
 
     task_prompt = task_prompts.get(task_type)
@@ -330,7 +329,7 @@ def build_tool_response_prompt(
         "You called tools to gather information. Here are the results:\n\n",
         "--- TOOL RESULTS ---\n",
         tool_results,
-        "\n--- END TOOL RESULTS ---\n\n"
+        "\n--- END TOOL RESULTS ---\n\n",
     ]
 
     if task_prompt:
@@ -364,7 +363,7 @@ FEW_SHOT_EXAMPLES = {
             "2. Submit a formal swap request through the system\n"
             "3. Await approval from the scheduling coordinator\n\n"
             "The swap must maintain ACGME compliance for both parties."
-        )
+        ),
     },
     "hours_check": {
         "query": "Am I over hours this week?",
@@ -375,7 +374,7 @@ FEW_SHOT_EXAMPLES = {
             "Total: {total_hours} hours\n"
             "Status: {status}\n\n"
             "{details}"
-        )
+        ),
     },
     "schedule_query": {
         "query": "Who's on call tomorrow?",
@@ -385,7 +384,7 @@ FEW_SHOT_EXAMPLES = {
             "Call schedule for {date}:\n\n"
             "{schedule_list}\n\n"
             "All shifts are currently filled."
-        )
+        ),
     },
     "assignment_explanation": {
         "query": "Why was I assigned to clinic this week?",
@@ -397,7 +396,7 @@ FEW_SHOT_EXAMPLES = {
             "2. Coverage needs: {coverage_reason}\n"
             "3. ACGME compliance: {acgme_reason}\n\n"
             "Your schedule is designed to meet training requirements while maintaining work-life balance."
-        )
+        ),
     },
     "coverage_gap": {
         "query": "Are there any gaps in next week's coverage?",
@@ -408,8 +407,8 @@ FEW_SHOT_EXAMPLES = {
             "Overall: {coverage_percent}% filled\n\n"
             "Critical gaps:\n{critical_gaps}\n\n"
             "Recommendations:\n{recommendations}"
-        )
-    }
+        ),
+    },
 }
 
 
@@ -478,13 +477,14 @@ ERROR_HANDLING_PROMPTS = {
         "- Specific dates\n"
         "- Rotation or shift type\n"
         "- Whether this is for you or someone else"
-    )
+    ),
 }
 
 
 # =============================================================================
 # PROMPT MANAGER CLASS
 # =============================================================================
+
 
 class PromptManager:
     """
@@ -530,7 +530,7 @@ class PromptManager:
         query: str,
         context: str | None = None,
         task_type: str | None = None,
-        include_examples: bool = False
+        include_examples: bool = False,
     ) -> str:
         """
         Build a complete prompt for the LLM.
@@ -559,7 +559,7 @@ class PromptManager:
             query=query,
             context=context or "",
             system_prompt=self.system_prompt,
-            task_prompt=task_prompt
+            task_prompt=task_prompt,
         )
 
         # Optionally include few-shot examples
@@ -572,10 +572,7 @@ class PromptManager:
         return prompt
 
     def build_tool_response(
-        self,
-        original_query: str,
-        tool_results: str,
-        task_type: str = "general"
+        self, original_query: str, tool_results: str, task_type: str = "general"
     ) -> str:
         """
         Build a prompt for synthesizing tool results into a user response.
@@ -590,11 +587,7 @@ class PromptManager:
         """
         return build_tool_response_prompt(original_query, tool_results, task_type)
 
-    def get_error_prompt(
-        self,
-        error_type: str,
-        **kwargs
-    ) -> str:
+    def get_error_prompt(self, error_type: str, **kwargs) -> str:
         """
         Get a formatted error handling prompt.
 
@@ -613,7 +606,9 @@ class PromptManager:
             ...     date="Jan 19"
             ... )
         """
-        template = self.error_prompts.get(error_type, "An error occurred. Please try again.")
+        template = self.error_prompts.get(
+            error_type, "An error occurred. Please try again."
+        )
         try:
             return template.format(**kwargs)
         except KeyError:
@@ -695,11 +690,7 @@ class PromptManager:
         """
         return self.version
 
-    def add_custom_task_prompt(
-        self,
-        task_name: str,
-        prompt_template: str
-    ) -> None:
+    def add_custom_task_prompt(self, task_name: str, prompt_template: str) -> None:
         """
         Add a custom task-specific prompt.
 
@@ -738,6 +729,7 @@ class PromptManager:
 # =============================================================================
 # CONVENIENCE FUNCTIONS
 # =============================================================================
+
 
 def get_default_prompt_manager() -> PromptManager:
     """

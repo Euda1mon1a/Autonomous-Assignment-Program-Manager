@@ -50,6 +50,7 @@ class AntPath:
 
     Represents a complete rotation sequence for a resident.
     """
+
     resident_idx: int
     path: list[int]  # Sequence of template indices for each block
     fitness: float = 0.0
@@ -112,22 +113,18 @@ class PheromoneMatrix:
 
         # Assignment pheromone: [resident, block, template]
         self.assignment = np.full(
-            (n_residents, n_blocks, self.n_templates),
-            initial_value,
-            dtype=np.float64
+            (n_residents, n_blocks, self.n_templates), initial_value, dtype=np.float64
         )
 
         # Transition pheromone: [from_template, to_template]
         self.transition = np.full(
-            (self.n_templates, self.n_templates),
-            initial_value,
-            dtype=np.float64
+            (self.n_templates, self.n_templates), initial_value, dtype=np.float64
         )
 
     def evaporate(self):
         """Apply pheromone evaporation."""
-        self.assignment *= (1 - self.evaporation_rate)
-        self.transition *= (1 - self.evaporation_rate)
+        self.assignment *= 1 - self.evaporation_rate
+        self.transition *= 1 - self.evaporation_rate
 
         # Apply minimum
         self.assignment = np.maximum(self.assignment, self.min_pheromone)
@@ -188,7 +185,7 @@ class PheromoneMatrix:
             heuristic = np.ones(self.n_templates)
 
         # Combine pheromone and heuristic
-        combined = (pheromone ** alpha) * (heuristic ** beta)
+        combined = (pheromone**alpha) * (heuristic**beta)
 
         # Normalize to probability
         total = np.sum(combined)
@@ -239,12 +236,13 @@ class PheromoneMatrix:
 @dataclass
 class ACOConfig:
     """Configuration for Ant Colony Optimization."""
+
     colony_size: int = 50  # Number of ants
     max_iterations: int = 200
 
     # ACO parameters
     alpha: float = 1.0  # Pheromone importance
-    beta: float = 2.0   # Heuristic importance
+    beta: float = 2.0  # Heuristic importance
     evaporation_rate: float = 0.1
     initial_pheromone: float = 1.0
 
@@ -322,10 +320,10 @@ class AntColonySolver(BioInspiredSolver):
 
         n_residents = len(context.residents)
         n_blocks = len([b for b in context.blocks if not b.is_weekend])
-        self._n_templates = max(1, len([
-            t for t in context.templates
-            if not t.requires_procedure_credential
-        ]))
+        self._n_templates = max(
+            1,
+            len([t for t in context.templates if not t.requires_procedure_credential]),
+        )
 
         # Initialize pheromone matrix
         self.pheromone = PheromoneMatrix(
@@ -343,7 +341,7 @@ class AntColonySolver(BioInspiredSolver):
 
         # Initialize best solution
         best_chromosome = None
-        best_fitness = float('-inf')
+        best_fitness = float("-inf")
 
         logger.info(
             f"ACO initialized: colony_size={self.config.colony_size}, "
@@ -449,8 +447,7 @@ class AntColonySolver(BioInspiredSolver):
         - Educational goals
         """
         self.heuristic_matrix = np.ones(
-            (n_residents, n_blocks, self._n_templates + 1),
-            dtype=np.float64
+            (n_residents, n_blocks, self._n_templates + 1), dtype=np.float64
         )
 
         # Penalize unavailable slots
@@ -493,7 +490,8 @@ class AntColonySolver(BioInspiredSolver):
             for b_idx in range(n_blocks):
                 # Get probability distribution
                 prob = self.pheromone.get_assignment_probability(
-                    r_idx, b_idx,
+                    r_idx,
+                    b_idx,
                     heuristic=self.heuristic_matrix[r_idx, b_idx],
                     alpha=self.config.alpha,
                     beta=self.config.beta,
@@ -512,10 +510,7 @@ class AntColonySolver(BioInspiredSolver):
                     combined_prob /= total
 
                 # Select template
-                template = np.random.choice(
-                    len(combined_prob),
-                    p=combined_prob
-                )
+                template = np.random.choice(len(combined_prob), p=combined_prob)
 
                 genes[r_idx, b_idx] = template
                 prev_template = template
@@ -546,8 +541,10 @@ class AntColonySolver(BioInspiredSolver):
             if b1 != b2:
                 # Try swap
                 candidate = best.copy()
-                candidate.genes[r_idx, b1], candidate.genes[r_idx, b2] = \
-                    candidate.genes[r_idx, b2], candidate.genes[r_idx, b1]
+                candidate.genes[r_idx, b1], candidate.genes[r_idx, b2] = (
+                    candidate.genes[r_idx, b2],
+                    candidate.genes[r_idx, b1],
+                )
 
                 new_fitness = self.evaluate_fitness(candidate, context).weighted_sum()
                 if new_fitness > best_fitness:
@@ -596,7 +593,9 @@ class AntColonySolver(BioInspiredSolver):
         sorted_solutions = sorted(solutions, key=lambda x: x[2], reverse=True)
 
         # Deposit for top solutions
-        for rank, (chromosome, fitness, weighted) in enumerate(sorted_solutions[:self.config.elite_count]):
+        for rank, (chromosome, fitness, weighted) in enumerate(
+            sorted_solutions[: self.config.elite_count]
+        ):
             paths = self._chromosome_to_paths(chromosome)
 
             # Pheromone amount based on fitness and rank
@@ -635,7 +634,7 @@ class AntColonySolver(BioInspiredSolver):
         if len(self._best_fitness_history) < self.config.early_stop_iterations:
             return False
 
-        recent = self._best_fitness_history[-self.config.early_stop_iterations:]
+        recent = self._best_fitness_history[-self.config.early_stop_iterations :]
         improvement = max(recent) - min(recent)
 
         return improvement < 0.001
@@ -659,20 +658,20 @@ class AntColonySolver(BioInspiredSolver):
         for from_t in range(self.pheromone.n_templates):
             for to_t in range(self.pheromone.n_templates):
                 if self.pheromone.transition[from_t, to_t] > 2.0:
-                    top_transitions.append({
-                        "from": from_t,
-                        "to": to_t,
-                        "pheromone": float(self.pheromone.transition[from_t, to_t]),
-                    })
+                    top_transitions.append(
+                        {
+                            "from": from_t,
+                            "to": to_t,
+                            "pheromone": float(self.pheromone.transition[from_t, to_t]),
+                        }
+                    )
 
         return {
             "pheromone_matrix": self.pheromone.to_dict(),
             "n_hotspots": len(hotspots),
             "hotspot_examples": hotspots[:10].tolist() if len(hotspots) > 0 else [],
             "top_transitions": sorted(
-                top_transitions,
-                key=lambda x: x["pheromone"],
-                reverse=True
+                top_transitions, key=lambda x: x["pheromone"], reverse=True
             )[:10],
         }
 

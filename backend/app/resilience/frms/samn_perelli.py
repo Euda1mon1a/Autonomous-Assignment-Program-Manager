@@ -225,9 +225,15 @@ def is_safe_for_duty(
     threshold = DUTY_THRESHOLDS.get(duty_type, SamnPerelliLevel.MODERATELY_TIRED)
 
     if level <= threshold:
-        return True, f"Level {level.value} within threshold of {threshold.value} for {duty_type}"
+        return (
+            True,
+            f"Level {level.value} within threshold of {threshold.value} for {duty_type}",
+        )
     else:
-        return False, f"Level {level.value} exceeds threshold of {threshold.value} for {duty_type}"
+        return (
+            False,
+            f"Level {level.value} exceeds threshold of {threshold.value} for {duty_type}",
+        )
 
 
 def _calculate_recommended_rest(level: SamnPerelliLevel) -> float:

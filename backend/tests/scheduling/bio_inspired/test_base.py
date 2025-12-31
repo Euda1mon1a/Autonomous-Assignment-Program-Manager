@@ -1,4 +1,5 @@
 """Tests for bio-inspired optimization base classes."""
+
 import numpy as np
 import pytest
 
@@ -59,12 +60,20 @@ class TestFitnessVector:
         """Test Pareto dominance relation."""
         # f1 dominates f2 (better in all objectives)
         f1 = FitnessVector(
-            coverage=0.9, fairness=0.8, preferences=0.7,
-            learning_goals=0.6, acgme_compliance=0.9, continuity=0.5
+            coverage=0.9,
+            fairness=0.8,
+            preferences=0.7,
+            learning_goals=0.6,
+            acgme_compliance=0.9,
+            continuity=0.5,
         )
         f2 = FitnessVector(
-            coverage=0.8, fairness=0.7, preferences=0.6,
-            learning_goals=0.5, acgme_compliance=0.8, continuity=0.4
+            coverage=0.8,
+            fairness=0.7,
+            preferences=0.6,
+            learning_goals=0.5,
+            acgme_compliance=0.8,
+            continuity=0.4,
         )
 
         assert f1.dominates(f2)
@@ -96,8 +105,14 @@ class TestFitnessVector:
     def test_weighted_sum_custom_weights(self):
         """Test weighted sum with custom weights."""
         fitness = FitnessVector(coverage=1.0, fairness=0.0)
-        weights = {"coverage": 1.0, "fairness": 0.0, "preferences": 0.0,
-                  "learning_goals": 0.0, "acgme_compliance": 0.0, "continuity": 0.0}
+        weights = {
+            "coverage": 1.0,
+            "fairness": 0.0,
+            "preferences": 0.0,
+            "learning_goals": 0.0,
+            "acgme_compliance": 0.0,
+            "continuity": 0.0,
+        }
 
         weighted = fitness.weighted_sum(weights)
         assert weighted == 1.0

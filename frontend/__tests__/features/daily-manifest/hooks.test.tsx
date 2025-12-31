@@ -102,8 +102,9 @@ describe('Daily Manifest Hooks', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
+      // For ALL, the hook omits the time_of_day param (backend returns all if not specified)
       expect(mockGet).toHaveBeenCalledWith(
-        '/daily-manifest?date=2025-12-21&time_of_day=ALL'
+        '/daily-manifest?date=2025-12-21'
       );
     });
 
@@ -330,9 +331,10 @@ describe('Daily Manifest Hooks', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
+      // For ALL, the hook omits the time_of_day param (backend returns all if not specified)
       const today = new Date().toISOString().split('T')[0];
       expect(mockGet).toHaveBeenCalledWith(
-        `/daily-manifest?date=${today}&time_of_day=ALL`
+        `/daily-manifest?date=${today}`
       );
     });
 

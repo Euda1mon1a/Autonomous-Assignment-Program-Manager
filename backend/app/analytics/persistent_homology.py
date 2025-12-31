@@ -279,7 +279,9 @@ class PersistentScheduleAnalyzer:
         else:
             # Fallback: use first n_components dimensions
             logger.warning(f"Unknown method '{method}', using manual embedding")
-            point_cloud = features_scaled[:, : min(n_components, features_scaled.shape[1])]
+            point_cloud = features_scaled[
+                :, : min(n_components, features_scaled.shape[1])
+            ]
 
         logger.info(
             f"Embedded {len(assignments)} assignments to {point_cloud.shape[1]}D point cloud"
@@ -310,9 +312,7 @@ class PersistentScheduleAnalyzer:
         # Build lookup maps for categorical encoding
         unique_persons = list(set(a.person_id for a in assignments))
         unique_rotations = list(
-            set(
-                a.rotation_template_id for a in assignments if a.rotation_template_id
-            )
+            set(a.rotation_template_id for a in assignments if a.rotation_template_id)
         )
 
         person_to_idx = {pid: idx for idx, pid in enumerate(unique_persons)}
@@ -323,9 +323,7 @@ class PersistentScheduleAnalyzer:
 
         for assignment in assignments:
             # Get block for temporal features
-            block = (
-                self.db.query(Block).filter(Block.id == assignment.block_id).first()
-            )
+            block = self.db.query(Block).filter(Block.id == assignment.block_id).first()
 
             if not block or not block.date:
                 # Skip assignments without valid blocks
@@ -352,7 +350,9 @@ class PersistentScheduleAnalyzer:
             return np.array([])
 
         features = np.array(features_list, dtype=float)
-        logger.info(f"Extracted {features.shape[1]} features from {features.shape[0]} assignments")
+        logger.info(
+            f"Extracted {features.shape[1]} features from {features.shape[0]} assignments"
+        )
         return features
 
     def compute_persistence_diagram(
@@ -544,7 +544,9 @@ class PersistentScheduleAnalyzer:
 
             # Estimate start date (proportional to birth time)
             offset_days = int(
-                feature.birth * date_range_days / (np.max([f.death for f in significant_h2]) + 1e-8)
+                feature.birth
+                * date_range_days
+                / (np.max([f.death for f in significant_h2]) + 1e-8)
             )
             void_start = start_date + np.timedelta64(offset_days, "D")
             void_end = void_start + np.timedelta64(void_span_days, "D")
@@ -620,9 +622,7 @@ class PersistentScheduleAnalyzer:
         logger.info(f"Detected {len(patterns)} cyclic patterns from H1 features")
         return patterns
 
-    def compute_structural_anomaly_score(
-        self, diagram: PersistenceDiagram
-    ) -> float:
+    def compute_structural_anomaly_score(self, diagram: PersistenceDiagram) -> float:
         """
         Compute an overall structural anomaly score from topological features.
 
@@ -709,34 +709,22 @@ class PersistentScheduleAnalyzer:
         try:
             # H0 distance
             if dgm_a.h0_features and dgm_b.h0_features:
-                dgm_a_h0 = np.array(
-                    [[f.birth, f.death] for f in dgm_a.h0_features]
-                )
-                dgm_b_h0 = np.array(
-                    [[f.birth, f.death] for f in dgm_b.h0_features]
-                )
+                dgm_a_h0 = np.array([[f.birth, f.death] for f in dgm_a.h0_features])
+                dgm_b_h0 = np.array([[f.birth, f.death] for f in dgm_b.h0_features])
                 dist_h0 = bottleneck(dgm_a_h0, dgm_b_h0)
                 distances.append(dist_h0)
 
             # H1 distance
             if dgm_a.h1_features and dgm_b.h1_features:
-                dgm_a_h1 = np.array(
-                    [[f.birth, f.death] for f in dgm_a.h1_features]
-                )
-                dgm_b_h1 = np.array(
-                    [[f.birth, f.death] for f in dgm_b.h1_features]
-                )
+                dgm_a_h1 = np.array([[f.birth, f.death] for f in dgm_a.h1_features])
+                dgm_b_h1 = np.array([[f.birth, f.death] for f in dgm_b.h1_features])
                 dist_h1 = bottleneck(dgm_a_h1, dgm_b_h1)
                 distances.append(dist_h1)
 
             # H2 distance
             if dgm_a.h2_features and dgm_b.h2_features:
-                dgm_a_h2 = np.array(
-                    [[f.birth, f.death] for f in dgm_a.h2_features]
-                )
-                dgm_b_h2 = np.array(
-                    [[f.birth, f.death] for f in dgm_b.h2_features]
-                )
+                dgm_a_h2 = np.array([[f.birth, f.death] for f in dgm_a.h2_features])
+                dgm_b_h2 = np.array([[f.birth, f.death] for f in dgm_b.h2_features])
                 dist_h2 = bottleneck(dgm_a_h2, dgm_b_h2)
                 distances.append(dist_h2)
 

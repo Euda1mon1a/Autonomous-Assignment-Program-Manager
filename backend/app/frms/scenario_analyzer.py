@@ -243,9 +243,7 @@ class ScenarioAnalyzer:
         """
         reports = []
         for scenario in scenarios:
-            report = self.analyze(
-                baseline_assignments, scenario, persons, blocks
-            )
+            report = self.analyze(baseline_assignments, scenario, persons, blocks)
             reports.append(report)
 
         # Sort by overall fatigue score (lower is better)
@@ -287,29 +285,35 @@ class ScenarioAnalyzer:
                         "action": "add",
                         "person_id": person.get("id"),
                         "block_id": block_to_cover.get("id"),
-                        "rotation_type": block_to_cover.get("rotation_type", "coverage"),
+                        "rotation_type": block_to_cover.get(
+                            "rotation_type", "coverage"
+                        ),
                     }
                 ],
             )
 
-            report = self.analyze(
-                baseline_assignments, scenario, [person], blocks
-            )
+            report = self.analyze(baseline_assignments, scenario, [person], blocks)
 
-            results.append({
-                "person_id": person.get("id"),
-                "person_name": person.get("name"),
-                "fatigue_impact": report.impact_summary.get("fatigue_change", 0),
-                "post_coverage_effectiveness": report.proposed_metrics.get(
-                    "min_effectiveness", 100
-                ),
-                "risk_level": report.proposed_metrics.get("highest_risk_level", "low"),
-                "recommendation": (
-                    "SAFE" if report.proposed_metrics.get("min_effectiveness", 100) >= 77
-                    else "CAUTION" if report.proposed_metrics.get("min_effectiveness", 100) >= 70
-                    else "NOT RECOMMENDED"
-                ),
-            })
+            results.append(
+                {
+                    "person_id": person.get("id"),
+                    "person_name": person.get("name"),
+                    "fatigue_impact": report.impact_summary.get("fatigue_change", 0),
+                    "post_coverage_effectiveness": report.proposed_metrics.get(
+                        "min_effectiveness", 100
+                    ),
+                    "risk_level": report.proposed_metrics.get(
+                        "highest_risk_level", "low"
+                    ),
+                    "recommendation": (
+                        "SAFE"
+                        if report.proposed_metrics.get("min_effectiveness", 100) >= 77
+                        else "CAUTION"
+                        if report.proposed_metrics.get("min_effectiveness", 100) >= 70
+                        else "NOT RECOMMENDED"
+                    ),
+                }
+            )
 
         # Sort by fatigue impact (lowest impact first)
         results.sort(key=lambda r: r["fatigue_impact"])
@@ -348,12 +352,13 @@ class ScenarioAnalyzer:
 
             # Simulate through assignments
             for assignment in sorted(
-                person_assignments,
-                key=lambda a: a.get("date", date.min)
+                person_assignments, key=lambda a: a.get("date", date.min)
             ):
                 # Update state for this assignment
                 state = self.model.update_wakefulness(state, 6.0)  # 6 hour block
-                all_effectiveness.append(state.effectiveness.overall if state.effectiveness else 100)
+                all_effectiveness.append(
+                    state.effectiveness.overall if state.effectiveness else 100
+                )
 
             # Extract features for predictor
             features = self.predictor.extract_features(
@@ -365,7 +370,9 @@ class ScenarioAnalyzer:
             )
 
             person_scores[person_id] = {
-                "final_effectiveness": state.effectiveness.overall if state.effectiveness else 100,
+                "final_effectiveness": state.effectiveness.overall
+                if state.effectiveness
+                else 100,
                 "degradation_probability": prediction.degradation_probability,
                 "risk_level": prediction.clinical_risk.value,
                 "assignments": len(person_assignments),
@@ -375,7 +382,9 @@ class ScenarioAnalyzer:
 
         # Aggregate metrics
         if all_effectiveness:
-            metrics["avg_effectiveness"] = sum(all_effectiveness) / len(all_effectiveness)
+            metrics["avg_effectiveness"] = sum(all_effectiveness) / len(
+                all_effectiveness
+            )
             metrics["min_effectiveness"] = min(all_effectiveness)
             metrics["max_effectiveness"] = max(all_effectiveness)
         else:
@@ -399,9 +408,12 @@ class ScenarioAnalyzer:
 
         metrics["risk_distribution"] = risk_counts
         metrics["highest_risk_level"] = (
-            "severe" if risk_counts["severe"] > 0
-            else "high" if risk_counts["high"] > 0
-            else "moderate" if risk_counts["moderate"] > 0
+            "severe"
+            if risk_counts["severe"] > 0
+            else "high"
+            if risk_counts["high"] > 0
+            else "moderate"
+            if risk_counts["moderate"] > 0
             else "low"
         )
 
@@ -476,20 +488,24 @@ class ScenarioAnalyzer:
         """Calculate impact summary comparing baseline to proposed."""
         return {
             "fatigue_change": (
-                proposed.get("avg_fatigue_score", 0) -
-                baseline.get("avg_fatigue_score", 0)
+                proposed.get("avg_fatigue_score", 0)
+                - baseline.get("avg_fatigue_score", 0)
             ),
             "effectiveness_change": (
-                proposed.get("avg_effectiveness", 100) -
-                baseline.get("avg_effectiveness", 100)
+                proposed.get("avg_effectiveness", 100)
+                - baseline.get("avg_effectiveness", 100)
             ),
             "min_effectiveness_change": (
-                proposed.get("min_effectiveness", 100) -
-                baseline.get("min_effectiveness", 100)
+                proposed.get("min_effectiveness", 100)
+                - baseline.get("min_effectiveness", 100)
             ),
             "overall_change": (
-                "IMPROVEMENT" if proposed.get("avg_fatigue_score", 0) < baseline.get("avg_fatigue_score", 0)
-                else "NO_CHANGE" if proposed.get("avg_fatigue_score", 0) == baseline.get("avg_fatigue_score", 0)
+                "IMPROVEMENT"
+                if proposed.get("avg_fatigue_score", 0)
+                < baseline.get("avg_fatigue_score", 0)
+                else "NO_CHANGE"
+                if proposed.get("avg_fatigue_score", 0)
+                == baseline.get("avg_fatigue_score", 0)
                 else "DEGRADATION"
             ),
             "risk_level_change": (
@@ -512,21 +528,31 @@ class ScenarioAnalyzer:
         for person in persons:
             person_id = person.get("id")
 
-            baseline_person = [a for a in baseline_assignments if a.get("person_id") == person_id]
-            proposed_person = [a for a in proposed_assignments if a.get("person_id") == person_id]
+            baseline_person = [
+                a for a in baseline_assignments if a.get("person_id") == person_id
+            ]
+            proposed_person = [
+                a for a in proposed_assignments if a.get("person_id") == person_id
+            ]
 
             # Calculate change
             baseline_count = len(baseline_person)
             proposed_count = len(proposed_person)
 
-            impacts.append({
-                "person_id": person_id,
-                "person_name": person.get("name", "Unknown"),
-                "baseline_assignments": baseline_count,
-                "proposed_assignments": proposed_count,
-                "change": proposed_count - baseline_count,
-                "impact": "increased" if proposed_count > baseline_count else "decreased" if proposed_count < baseline_count else "unchanged",
-            })
+            impacts.append(
+                {
+                    "person_id": person_id,
+                    "person_name": person.get("name", "Unknown"),
+                    "baseline_assignments": baseline_count,
+                    "proposed_assignments": proposed_count,
+                    "change": proposed_count - baseline_count,
+                    "impact": "increased"
+                    if proposed_count > baseline_count
+                    else "decreased"
+                    if proposed_count < baseline_count
+                    else "unchanged",
+                }
+            )
 
         return impacts
 

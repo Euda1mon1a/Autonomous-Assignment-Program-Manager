@@ -274,7 +274,9 @@ class OllamaProvider(LLMProvider):
 
         except httpx.HTTPStatusError as e:
             self._record_failure()
-            logger.error(f"Ollama HTTP error: {e.response.status_code} - {e.response.text}")
+            logger.error(
+                f"Ollama HTTP error: {e.response.status_code} - {e.response.text}"
+            )
             raise LLMProviderError(
                 f"Ollama generation failed: {e.response.status_code}"
             ) from e
@@ -440,9 +442,7 @@ class AnthropicProvider(LLMProvider):
         self.default_model = default_model
 
         if not self.api_key:
-            logger.warning(
-                "ANTHROPIC_API_KEY not set - Anthropic provider unavailable"
-            )
+            logger.warning("ANTHROPIC_API_KEY not set - Anthropic provider unavailable")
             self._is_available = False
             self._client = None
         else:
@@ -792,7 +792,9 @@ class LLMRouter:
 
             # Try fallback chain if enabled
             if self.enable_fallback:
-                return await self._fallback_generate(request, failed_provider=provider_name)
+                return await self._fallback_generate(
+                    request, failed_provider=provider_name
+                )
             else:
                 raise
 
@@ -809,9 +811,7 @@ class LLMRouter:
         """Generate with specific provider."""
         # Check circuit breaker
         if not self.circuit_breaker.can_execute(provider_name):
-            raise ProviderUnavailableError(
-                f"Circuit breaker open for {provider_name}"
-            )
+            raise ProviderUnavailableError(f"Circuit breaker open for {provider_name}")
 
         provider = self.providers.get(provider_name)
         if not provider:
@@ -930,19 +930,7 @@ class LLMRouter:
         # Heuristic-based classification
         word_count = len(prompt.split())
 
-        # Simple query (< 20 words)
-        if word_count < 20:
-            return TaskClassification(
-                task_type="simple_query",
-                complexity_score=0.2,
-                recommended_provider="ollama",
-                recommended_model="llama3.2",
-                reasoning="Short prompt, using fast local model",
-                requires_tools=False,
-                is_privacy_sensitive=False,
-            )
-
-        # Multi-step reasoning keywords
+        # Multi-step reasoning keywords (check before word count)
         multi_step_keywords = [
             "analyze",
             "compare",
@@ -965,7 +953,7 @@ class LLMRouter:
                 is_privacy_sensitive=False,
             )
 
-        # Code generation
+        # Code generation (check before word count)
         code_keywords = ["code", "function", "script", "implement", "write a"]
         is_code = any(kw in prompt_lower for kw in code_keywords)
 
@@ -976,6 +964,18 @@ class LLMRouter:
                 recommended_provider="ollama",
                 recommended_model="qwen2.5",
                 reasoning="Code generation task, using code-specialized model",
+                requires_tools=False,
+                is_privacy_sensitive=False,
+            )
+
+        # Simple query (< 20 words, no specific keywords detected)
+        if word_count < 20:
+            return TaskClassification(
+                task_type="simple_query",
+                complexity_score=0.2,
+                recommended_provider="ollama",
+                recommended_model="llama3.2",
+                reasoning="Short prompt, using fast local model",
                 requires_tools=False,
                 is_privacy_sensitive=False,
             )

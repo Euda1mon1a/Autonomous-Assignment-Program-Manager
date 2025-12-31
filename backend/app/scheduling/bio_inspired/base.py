@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 class ObjectiveType(Enum):
     """Types of objectives for multi-objective optimization."""
+
     MINIMIZE = "minimize"
     MAXIMIZE = "maximize"
 
@@ -51,6 +52,7 @@ class FitnessVector:
 
     All values are normalized to [0, 1] for Pareto comparison.
     """
+
     coverage: float = 0.0
     fairness: float = 0.0
     preferences: float = 0.0
@@ -59,25 +61,29 @@ class FitnessVector:
     continuity: float = 0.0
 
     # Objective directions (all maximized after normalization)
-    _objectives: dict = field(default_factory=lambda: {
-        "coverage": ObjectiveType.MAXIMIZE,
-        "fairness": ObjectiveType.MAXIMIZE,  # Higher = more fair
-        "preferences": ObjectiveType.MAXIMIZE,
-        "learning_goals": ObjectiveType.MAXIMIZE,
-        "acgme_compliance": ObjectiveType.MAXIMIZE,
-        "continuity": ObjectiveType.MAXIMIZE,
-    })
+    _objectives: dict = field(
+        default_factory=lambda: {
+            "coverage": ObjectiveType.MAXIMIZE,
+            "fairness": ObjectiveType.MAXIMIZE,  # Higher = more fair
+            "preferences": ObjectiveType.MAXIMIZE,
+            "learning_goals": ObjectiveType.MAXIMIZE,
+            "acgme_compliance": ObjectiveType.MAXIMIZE,
+            "continuity": ObjectiveType.MAXIMIZE,
+        }
+    )
 
     def to_array(self) -> np.ndarray:
         """Convert to numpy array for vectorized operations."""
-        return np.array([
-            self.coverage,
-            self.fairness,
-            self.preferences,
-            self.learning_goals,
-            self.acgme_compliance,
-            self.continuity,
-        ])
+        return np.array(
+            [
+                self.coverage,
+                self.fairness,
+                self.preferences,
+                self.learning_goals,
+                self.acgme_compliance,
+                self.continuity,
+            ]
+        )
 
     @classmethod
     def from_array(cls, arr: np.ndarray) -> "FitnessVector":
@@ -124,12 +130,12 @@ class FitnessVector:
             }
 
         return (
-            weights.get("coverage", 0) * self.coverage +
-            weights.get("fairness", 0) * self.fairness +
-            weights.get("preferences", 0) * self.preferences +
-            weights.get("learning_goals", 0) * self.learning_goals +
-            weights.get("acgme_compliance", 0) * self.acgme_compliance +
-            weights.get("continuity", 0) * self.continuity
+            weights.get("coverage", 0) * self.coverage
+            + weights.get("fairness", 0) * self.fairness
+            + weights.get("preferences", 0) * self.preferences
+            + weights.get("learning_goals", 0) * self.learning_goals
+            + weights.get("acgme_compliance", 0) * self.acgme_compliance
+            + weights.get("continuity", 0) * self.continuity
         )
 
     def to_dict(self) -> dict:
@@ -160,6 +166,7 @@ class Chromosome:
     - Local mutations (swap, insert, delete assignments)
     - Constraint-aware repair operators
     """
+
     genes: np.ndarray  # Shape: (n_residents, n_blocks)
 
     def __post_init__(self):
@@ -213,9 +220,7 @@ class Chromosome:
         """Get template index for a resident-block pair (0 = unassigned)."""
         return int(self.genes[resident_idx, block_idx])
 
-    def set_assignment(
-        self, resident_idx: int, block_idx: int, template_idx: int
-    ):
+    def set_assignment(self, resident_idx: int, block_idx: int, template_idx: int):
         """Set template index for a resident-block pair."""
         self.genes[resident_idx, block_idx] = template_idx
 
@@ -327,6 +332,7 @@ class Individual:
     - Pareto ranking and crowding distance for NSGA-II
     - Lineage information for genealogy tracking
     """
+
     chromosome: Chromosome
     fitness: FitnessVector | None = None
     rank: int = 0  # Pareto rank (0 = non-dominated)
@@ -357,6 +363,7 @@ class Individual:
 @dataclass
 class PopulationStats:
     """Statistics for a population at a given generation."""
+
     generation: int
     population_size: int
     best_fitness: float
@@ -582,12 +589,13 @@ class BioInspiredSolver(BaseSolver, ABC):
         coverage = total_assigned / total_possible if total_possible > 0 else 0.0
 
         # Fairness: 1 - normalized variance in resident workload
-        resident_counts = np.array([
-            chromosome.count_resident_assignments(r)
-            for r in range(n_residents)
-        ])
+        resident_counts = np.array(
+            [chromosome.count_resident_assignments(r) for r in range(n_residents)]
+        )
         if len(resident_counts) > 1 and np.mean(resident_counts) > 0:
-            cv = np.std(resident_counts) / np.mean(resident_counts)  # Coefficient of variation
+            cv = np.std(resident_counts) / np.mean(
+                resident_counts
+            )  # Coefficient of variation
             fairness = 1.0 / (1.0 + cv)  # Higher = more fair
         else:
             fairness = 1.0
@@ -608,7 +616,9 @@ class BioInspiredSolver(BaseSolver, ABC):
                     acgme_violations += 1
 
         max_violations = n_residents * (n_blocks // blocks_per_week + 1)
-        acgme_compliance = 1.0 - (acgme_violations / max_violations if max_violations > 0 else 0)
+        acgme_compliance = 1.0 - (
+            acgme_violations / max_violations if max_violations > 0 else 0
+        )
 
         # Continuity: Reward consecutive assignments to same template
         continuity_score = 0
@@ -622,7 +632,9 @@ class BioInspiredSolver(BaseSolver, ABC):
                     if assignments[b] == assignments[b + 1]:
                         continuity_score += 1
 
-        continuity = continuity_score / total_transitions if total_transitions > 0 else 1.0
+        continuity = (
+            continuity_score / total_transitions if total_transitions > 0 else 1.0
+        )
 
         # Preferences: Placeholder (would need preference data)
         preferences = 0.5  # Neutral
@@ -656,7 +668,9 @@ class BioInspiredSolver(BaseSolver, ABC):
         """
         n_residents = len(context.residents)
         n_blocks = len([b for b in context.blocks if not b.is_weekend])
-        n_templates = len([t for t in context.templates if not t.requires_procedure_credential])
+        n_templates = len(
+            [t for t in context.templates if not t.requires_procedure_credential]
+        )
 
         population = []
         for i in range(self.population_size):
@@ -737,9 +751,7 @@ class BioInspiredSolver(BaseSolver, ABC):
             PopulationStats for this generation
         """
         fitness_values = [
-            ind.fitness.weighted_sum()
-            for ind in population
-            if ind.fitness is not None
+            ind.fitness.weighted_sum() for ind in population if ind.fitness is not None
         ]
 
         if not fitness_values:
@@ -767,7 +779,7 @@ class BioInspiredSolver(BaseSolver, ABC):
             sample = random.sample(population, sample_size)
             similarities = []
             for i, ind1 in enumerate(sample):
-                for ind2 in sample[i + 1:]:
+                for ind2 in sample[i + 1 :]:
                     similarities.append(ind1.chromosome.similarity(ind2.chromosome))
             diversity = 1.0 - np.mean(similarities) if similarities else 0.0
         else:
@@ -778,16 +790,14 @@ class BioInspiredSolver(BaseSolver, ABC):
 
         # Best objectives
         best_coverage = max(
-            (ind.fitness.coverage for ind in population if ind.fitness),
-            default=0.0
+            (ind.fitness.coverage for ind in population if ind.fitness), default=0.0
         )
         best_fairness = max(
-            (ind.fitness.fairness for ind in population if ind.fitness),
-            default=0.0
+            (ind.fitness.fairness for ind in population if ind.fitness), default=0.0
         )
         best_acgme = max(
             (ind.fitness.acgme_compliance for ind in population if ind.fitness),
-            default=0.0
+            default=0.0,
         )
 
         # Hypervolume (simplified 2D projection)
@@ -796,7 +806,11 @@ class BioInspiredSolver(BaseSolver, ABC):
             # Reference point: worst possible
             ref_point = np.array([0.0, 0.0])
             hypervolume = self._compute_hypervolume_2d(
-                [(ind.fitness.coverage, ind.fitness.fairness) for ind in self.pareto_front if ind.fitness],
+                [
+                    (ind.fitness.coverage, ind.fitness.fairness)
+                    for ind in self.pareto_front
+                    if ind.fitness
+                ],
                 ref_point,
             )
         else:
@@ -879,6 +893,10 @@ class BioInspiredSolver(BaseSolver, ABC):
             ],
             "best_individual": {
                 "id": self.best_individual.id if self.best_individual else None,
-                "fitness": self.best_individual.fitness.to_dict() if self.best_individual and self.best_individual.fitness else {},
-            } if self.best_individual else None,
+                "fitness": self.best_individual.fitness.to_dict()
+                if self.best_individual and self.best_individual.fitness
+                else {},
+            }
+            if self.best_individual
+            else None,
         }

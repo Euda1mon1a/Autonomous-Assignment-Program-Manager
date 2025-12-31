@@ -417,10 +417,11 @@ describe('SettingsPanel', () => {
       const algorithmSelect = screen.getByLabelText(/default algorithm/i)
       const options = algorithmSelect.querySelectorAll('option')
 
-      expect(options).toHaveLength(3)
+      expect(options).toHaveLength(4)
       expect(options[0].textContent).toContain('Greedy')
-      expect(options[1].textContent).toContain('Min Conflicts')
-      expect(options[2].textContent).toContain('CP-SAT')
+      expect(options[1].textContent).toContain('CP-SAT')
+      expect(options[2].textContent).toContain('PuLP')
+      expect(options[3].textContent).toContain('Hybrid')
     })
   })
 
@@ -432,6 +433,7 @@ describe('SettingsPanel', () => {
       const options = supervisionSelect.querySelectorAll('option')
 
       expect(options).toHaveLength(2)
+      // The inline SettingsPanel component uses numeric values for the select
       expect(options[0].value).toBe('1')
       expect(options[1].value).toBe('2')
     })

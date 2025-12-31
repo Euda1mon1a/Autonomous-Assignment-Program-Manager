@@ -1,4 +1,5 @@
 """Tests for Genetic Algorithm implementation."""
+
 import numpy as np
 import pytest
 
@@ -311,6 +312,7 @@ class TestGeneticAlgorithmSolver:
 
         # Add some mock history
         from app.scheduling.bio_inspired.base import PopulationStats
+
         solver.evolution_history = [
             PopulationStats(
                 generation=i,

@@ -181,12 +181,18 @@ describe('UpcomingSchedule', () => {
     });
 
     it('should highlight upcoming assignments with ring', () => {
-      const { container } = render(<UpcomingSchedule assignments={[mockAssignmentToday]} />, {
+      // Use tomorrow's assignment to avoid timezone edge cases where "today" might
+      // already be in the past when parsed and compared
+      const { container } = render(<UpcomingSchedule assignments={[mockAssignmentTomorrow]} />, {
         wrapper: createWrapper(),
       });
 
-      const ringElement = container.querySelector('.ring-2.ring-blue-500\\/20');
+      // Check for ring-2 class - the ring-blue-500/20 class contains a slash
+      // which needs special escaping in CSS selectors
+      const ringElement = container.querySelector('.ring-2');
       expect(ringElement).toBeInTheDocument();
+      // Also verify the blue ring class is present by checking the className directly
+      expect(ringElement?.className).toContain('ring-blue-500/20');
     });
   });
 
@@ -346,8 +352,19 @@ describe('UpcomingSchedule', () => {
       const cancelButton = screen.getByRole('button', { name: /cancel/i });
       await user.click(cancelButton);
 
-      // Reopen form
-      await user.click(requestButton);
+      // Wait for form to close
+      await waitFor(() => {
+        expect(screen.queryByPlaceholderText(/reason for swap request/i)).not.toBeInTheDocument();
+      });
+
+      // Reopen form - need to get the button again since component may have re-rendered
+      const reopenButton = screen.getByRole('button', { name: /request swap/i });
+      await user.click(reopenButton);
+
+      // Wait for form to appear
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText(/reason for swap request/i)).toBeInTheDocument();
+      });
 
       const newTextarea = screen.getByPlaceholderText(/reason for swap request/i);
       expect(newTextarea).toHaveValue('');

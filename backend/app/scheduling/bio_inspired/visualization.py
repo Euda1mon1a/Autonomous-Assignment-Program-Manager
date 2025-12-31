@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class FitnessLandscapePoint:
     """A point in the fitness landscape."""
+
     x: float  # First principal component
     y: float  # Second principal component
     fitness: float
@@ -55,6 +56,7 @@ class FitnessLandscapePoint:
 @dataclass
 class EvolutionFrame:
     """A frame in the evolution animation."""
+
     generation: int
     points: list[FitnessLandscapePoint]
     best_fitness: float
@@ -119,15 +121,14 @@ class EvolutionTracker:
             # Just record fitness
             best = max(
                 (ind.fitness.weighted_sum() for ind in population if ind.fitness),
-                default=0
+                default=0,
             )
             self.fitness_history.append(best)
             return
 
         # Full snapshot
         best_ind = max(
-            population,
-            key=lambda ind: ind.fitness.weighted_sum() if ind.fitness else 0
+            population, key=lambda ind: ind.fitness.weighted_sum() if ind.fitness else 0
         )
         best_fitness = best_ind.fitness.weighted_sum() if best_ind.fitness else 0
         self.fitness_history.append(best_fitness)
@@ -169,21 +170,21 @@ class EvolutionTracker:
         if pareto_front:
             for ind in pareto_front:
                 if ind.fitness:
-                    pareto_dicts.append({
-                        "id": ind.id,
-                        "fitness": ind.fitness.to_dict(),
-                        "coverage": ind.fitness.coverage,
-                        "fairness": ind.fitness.fairness,
-                    })
+                    pareto_dicts.append(
+                        {
+                            "id": ind.id,
+                            "fitness": ind.fitness.to_dict(),
+                            "coverage": ind.fitness.coverage,
+                            "fairness": ind.fitness.fairness,
+                        }
+                    )
 
         self.pareto_history.append(pareto_dicts)
 
         # Create frame
-        mean_fitness = np.mean([
-            ind.fitness.weighted_sum()
-            for ind in population
-            if ind.fitness
-        ])
+        mean_fitness = np.mean(
+            [ind.fitness.weighted_sum() for ind in population if ind.fitness]
+        )
 
         frame = EvolutionFrame(
             generation=generation,
@@ -201,11 +202,11 @@ class EvolutionTracker:
             return 0.0
 
         # Sample for efficiency
-        sample = population[:min(20, len(population))]
+        sample = population[: min(20, len(population))]
 
         similarities = []
         for i, ind1 in enumerate(sample):
-            for ind2 in sample[i + 1:]:
+            for ind2 in sample[i + 1 :]:
                 sim = ind1.chromosome.similarity(ind2.chromosome)
                 similarities.append(sim)
 
@@ -247,8 +248,7 @@ class EvolutionTracker:
     def get_fitness_trajectory(self) -> list[dict]:
         """Get fitness trajectory over generations."""
         return [
-            {"generation": i, "fitness": f}
-            for i, f in enumerate(self.fitness_history)
+            {"generation": i, "fitness": f} for i, f in enumerate(self.fitness_history)
         ]
 
     def get_diversity_trajectory(self) -> list[dict]:
@@ -328,9 +328,7 @@ class FitnessLandscapeVisualizer:
         for gen, ind in all_individuals:
             flat = ind.chromosome.genes.flatten()
             chromosomes.append(flat)
-            fitness_values.append(
-                ind.fitness.weighted_sum() if ind.fitness else 0
-            )
+            fitness_values.append(ind.fitness.weighted_sum() if ind.fitness else 0)
 
         # Compute 2D projection using PCA
         X = np.array(chromosomes, dtype=np.float64)
@@ -345,8 +343,7 @@ class FitnessLandscapeVisualizer:
 
         # Interpolate fitness on grid (using RBF-like smoothing)
         z_grid = self._interpolate_landscape(
-            x_2d, y_2d, np.array(fitness_values),
-            x_grid, y_grid
+            x_2d, y_2d, np.array(fitness_values), x_grid, y_grid
         )
 
         # Find peaks (local optima)
@@ -424,11 +421,11 @@ class FitnessLandscapeVisualizer:
         for i, yi in enumerate(y_grid):
             for j, xj in enumerate(x_grid):
                 # Compute distances to all points
-                distances = np.sqrt((x - xj)**2 + (y - yi)**2)
+                distances = np.sqrt((x - xj) ** 2 + (y - yi) ** 2)
                 distances = np.maximum(distances, 0.001)  # Avoid division by zero
 
                 # Inverse distance weighting
-                weights = 1.0 / (distances ** 2)
+                weights = 1.0 / (distances**2)
                 z_grid[i, j] = np.sum(weights * z) / np.sum(weights)
 
         return z_grid.tolist()
@@ -448,17 +445,23 @@ class FitnessLandscapeVisualizer:
                 val = z[i, j]
                 # Check if local maximum
                 neighbors = [
-                    z[i-1, j], z[i+1, j],
-                    z[i, j-1], z[i, j+1],
-                    z[i-1, j-1], z[i-1, j+1],
-                    z[i+1, j-1], z[i+1, j+1],
+                    z[i - 1, j],
+                    z[i + 1, j],
+                    z[i, j - 1],
+                    z[i, j + 1],
+                    z[i - 1, j - 1],
+                    z[i - 1, j + 1],
+                    z[i + 1, j - 1],
+                    z[i + 1, j + 1],
                 ]
                 if val > max(neighbors):
-                    peaks.append({
-                        "x": float(x_grid[j]),
-                        "y": float(y_grid[i]),
-                        "fitness": float(val),
-                    })
+                    peaks.append(
+                        {
+                            "x": float(x_grid[j]),
+                            "y": float(y_grid[i]),
+                            "fitness": float(val),
+                        }
+                    )
 
         # Sort by fitness and return top peaks
         peaks.sort(key=lambda p: p["fitness"], reverse=True)

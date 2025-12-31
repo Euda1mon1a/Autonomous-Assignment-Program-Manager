@@ -329,16 +329,29 @@ describe('ViewToggle', () => {
 
   describe('View Validation', () => {
     it('should accept all valid view values', () => {
-      const validViews = ['day', 'week', 'month', 'block', 'resident-year', 'faculty-inpatient']
+      // Map view values to their button labels and title patterns
+      const viewConfig: Record<string, { label: string; isAnnual: boolean }> = {
+        'day': { label: 'Day', isAnnual: false },
+        'week': { label: 'Week', isAnnual: false },
+        'month': { label: 'Month', isAnnual: false },
+        'block': { label: 'Block', isAnnual: false },
+        'resident-year': { label: 'Resident Year', isAnnual: true },
+        'faculty-inpatient': { label: 'Faculty Inpatient', isAnnual: true },
+      }
+      const validViews = Object.keys(viewConfig)
       const onChange = jest.fn()
 
+      // Render once and test all button clicks
+      render(<ViewToggle currentView="block" onChange={onChange} />)
+
       validViews.forEach((view) => {
-        mockSearchParams.get.mockReturnValue(view)
-        onChange.mockClear()
-
-        render(<ViewToggle currentView="block" onChange={onChange} />)
-
+        const config = viewConfig[view]
+        // Annual views have "(drag-and-drop)" suffix in title
+        const titleSuffix = config.isAnnual ? ' (drag-and-drop)' : ''
+        const button = screen.getByTitle(`Switch to ${config.label} view${titleSuffix}`)
+        fireEvent.click(button)
         expect(onChange).toHaveBeenCalledWith(view)
+        onChange.mockClear()
       })
     })
   })

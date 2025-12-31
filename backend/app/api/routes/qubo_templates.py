@@ -224,9 +224,7 @@ async def optimize_template_selection(
         )
 
         # Convert desirability mappings
-        desirability_map = convert_desirability_mappings(
-            request.desirability_mappings
-        )
+        desirability_map = convert_desirability_mappings(request.desirability_mappings)
 
         # Run optimization
         solver = QUBOTemplateSolver(config=config)
@@ -272,12 +270,16 @@ async def optimize_template_selection(
             energy_landscape = EnergyLandscapeSchema(
                 num_samples=len(result.energy_landscape),
                 num_local_minima=len(minima),
-                global_minimum_energy=min(
-                    p.energy for p in result.energy_landscape
-                ) if result.energy_landscape else 0,
+                global_minimum_energy=min(p.energy for p in result.energy_landscape)
+                if result.energy_landscape
+                else 0,
                 energy_range={
-                    "min": min(p.energy for p in result.energy_landscape) if result.energy_landscape else 0,
-                    "max": max(p.energy for p in result.energy_landscape) if result.energy_landscape else 0,
+                    "min": min(p.energy for p in result.energy_landscape)
+                    if result.energy_landscape
+                    else 0,
+                    "max": max(p.energy for p in result.energy_landscape)
+                    if result.energy_landscape
+                    else 0,
                 },
                 points=points,
                 minima=minima[:20],
@@ -311,8 +313,12 @@ async def optimize_template_selection(
                     runtime_seconds=bench_results["random"]["runtime_seconds"],
                     objective_value=None,
                 ),
-                qubo_vs_greedy_improvement=bench_results["comparison"]["qubo_vs_greedy_improvement"],
-                qubo_vs_random_improvement=bench_results["comparison"]["qubo_vs_random_improvement"],
+                qubo_vs_greedy_improvement=bench_results["comparison"][
+                    "qubo_vs_greedy_improvement"
+                ],
+                qubo_vs_random_improvement=bench_results["comparison"][
+                    "qubo_vs_random_improvement"
+                ],
             )
 
         # Statistics
@@ -527,7 +533,9 @@ combined with quantum tunneling finds better adjustments faster.
 async def explore_energy_landscape(
     start_date: date = Query(..., description="Start date"),
     end_date: date = Query(..., description="End date"),
-    sample_count: int = Query(default=200, ge=50, le=1000, description="Number of samples"),
+    sample_count: int = Query(
+        default=200, ge=50, le=1000, description="Number of samples"
+    ),
     seed: int | None = Query(default=None, description="Random seed"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),

@@ -270,18 +270,17 @@ describe('EditTemplateModal', () => {
 
   describe('Form Validation', () => {
     it('should show error when name is empty', async () => {
-      const user = userEvent.setup()
-
       render(
         <EditTemplateModal {...defaultProps} />,
         { wrapper: createWrapper() }
       )
 
       const nameInput = screen.getByLabelText(/^name$/i)
-      await user.clear(nameInput)
+      // Use fireEvent to clear and set empty value
+      fireEvent.change(nameInput, { target: { value: '' } })
 
-      const submitButton = screen.getByRole('button', { name: /save changes/i })
-      await user.click(submitButton)
+      const form = nameInput.closest('form')!
+      fireEvent.submit(form)
 
       await waitFor(() => {
         expect(screen.getByText(/name is required/i)).toBeInTheDocument()
@@ -289,19 +288,17 @@ describe('EditTemplateModal', () => {
     })
 
     it('should validate supervision ratio is between 1 and 10', async () => {
-      const user = userEvent.setup()
-
       render(
         <EditTemplateModal {...defaultProps} />,
         { wrapper: createWrapper() }
       )
 
       const supervisionRatioInput = screen.getByLabelText(/supervision ratio/i)
-      await user.clear(supervisionRatioInput)
-      await user.type(supervisionRatioInput, '15')
+      // Use fireEvent to set an invalid value
+      fireEvent.change(supervisionRatioInput, { target: { value: '15' } })
 
-      const submitButton = screen.getByRole('button', { name: /save changes/i })
-      await user.click(submitButton)
+      const form = supervisionRatioInput.closest('form')!
+      fireEvent.submit(form)
 
       await waitFor(() => {
         expect(screen.getByText(/supervision ratio must be between 1 and 10/i)).toBeInTheDocument()
@@ -309,18 +306,17 @@ describe('EditTemplateModal', () => {
     })
 
     it('should not submit form with validation errors', async () => {
-      const user = userEvent.setup()
-
       render(
         <EditTemplateModal {...defaultProps} />,
         { wrapper: createWrapper() }
       )
 
       const nameInput = screen.getByLabelText(/^name$/i)
-      await user.clear(nameInput)
+      // Use fireEvent to clear the value
+      fireEvent.change(nameInput, { target: { value: '' } })
 
-      const submitButton = screen.getByRole('button', { name: /save changes/i })
-      await user.click(submitButton)
+      const form = nameInput.closest('form')!
+      fireEvent.submit(form)
 
       await waitFor(() => {
         expect(screen.getByText(/name is required/i)).toBeInTheDocument()
@@ -487,9 +483,10 @@ describe('EditTemplateModal', () => {
 
       // Trigger validation error
       const nameInput = screen.getByLabelText(/^name$/i)
-      await user.clear(nameInput)
-      const submitButton = screen.getByRole('button', { name: /save changes/i })
-      await user.click(submitButton)
+      fireEvent.change(nameInput, { target: { value: '' } })
+
+      const form = nameInput.closest('form')!
+      fireEvent.submit(form)
 
       await waitFor(() => {
         expect(screen.getByText(/name is required/i)).toBeInTheDocument()

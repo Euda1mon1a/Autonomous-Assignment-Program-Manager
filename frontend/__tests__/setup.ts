@@ -27,13 +27,26 @@ import '@testing-library/jest-dom'
 // Browser API Mocks
 // ============================================================================
 
-// Mock localStorage
-const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+// Mock localStorage with actual storage functionality
+const createLocalStorageMock = () => {
+  let store: Record<string, string> = {}
+  return {
+    getItem: jest.fn((key: string) => store[key] || null),
+    setItem: jest.fn((key: string, value: string) => {
+      store[key] = value
+    }),
+    removeItem: jest.fn((key: string) => {
+      delete store[key]
+    }),
+    clear: jest.fn(() => {
+      store = {}
+    }),
+    // Expose store for testing
+    _getStore: () => store,
+  }
 }
+
+const localStorageMock = createLocalStorageMock()
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 
 // Mock window.location for auth redirect tests

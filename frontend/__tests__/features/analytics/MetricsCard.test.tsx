@@ -18,7 +18,8 @@ describe('MetricsCard', () => {
 
       render(<MetricsCard metric={metric} />);
 
-      expect(screen.getByText('85.5')).toBeInTheDocument();
+      // The MetricsCard formats 'score' unit with 2 decimal places
+      expect(screen.getByText('85.50')).toBeInTheDocument();
     });
 
     it('should render metric description', () => {

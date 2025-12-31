@@ -141,7 +141,9 @@ class TestScheduleSnapshot:
 
         # frozenset should prevent modification
         with pytest.raises(AttributeError):
-            snapshot.assignments.add((person_ids[1], block_ids[1], template_ids["procedures"]))
+            snapshot.assignments.add(
+                (person_ids[1], block_ids[1], template_ids["procedures"])
+            )
 
 
 class TestHammingDistance:
@@ -373,7 +375,10 @@ class TestEstimateChurnImpact:
         assert impact["total_changes"] > 5
         assert impact["affected_people"] >= 2
         assert impact["severity"] in ["high", "critical"]
-        assert "Investigate" in impact["recommendation"] or "Review" in impact["recommendation"]
+        assert (
+            "Investigate" in impact["recommendation"]
+            or "Review" in impact["recommendation"]
+        )
 
 
 class TestDetectPeriodicPatterns:

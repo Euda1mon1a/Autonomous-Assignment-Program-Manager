@@ -38,6 +38,7 @@
     "react-dom": "^18.2.0",
     "react-plotly.js": "^2.6.0",
     "recharts": "^3.6.0",
+    "uuid": "^13.0.0",
     "xlsx": "^0.18.5"
   },
   "overrides": {
@@ -54,7 +55,6 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/react-plotly.js": "^2.6.4",
-    "@types/uuid": "^11.0.0",
     "autoprefixer": "10.4.17",
     "eslint": "^8.57.0",
     "eslint-config-next": "14.2.35",

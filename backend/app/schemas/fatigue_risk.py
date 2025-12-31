@@ -194,8 +194,10 @@ class SleepDebtTrajectoryRequest(BaseModel):
     """Request to predict sleep debt trajectory."""
 
     planned_sleep_hours: list[float] = Field(
-        ..., min_length=1, max_length=30,
-        description="Planned sleep hours for each upcoming day"
+        ...,
+        min_length=1,
+        max_length=30,
+        description="Planned sleep hours for each upcoming day",
     )
     start_debt: float | None = Field(None, ge=0)
 

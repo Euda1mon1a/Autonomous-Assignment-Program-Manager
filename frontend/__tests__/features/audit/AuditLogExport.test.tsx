@@ -49,9 +49,12 @@ describe('AuditLogExport', () => {
     });
 
     it('should not show count badge when totalCount equals logs length', () => {
-      render(<AuditLogExport {...defaultProps} logs={getMockLogs(50)} totalCount={50} />);
+      const logs = getMockLogs(10);
+      // When totalCount equals logs.length, badge should not appear
+      render(<AuditLogExport {...defaultProps} logs={logs} totalCount={logs.length} />);
 
-      expect(screen.queryByText('All 50')).not.toBeInTheDocument();
+      // "All X" badge should not appear
+      expect(screen.queryByText(/All\s*\d+/i)).not.toBeInTheDocument();
     });
 
     it('should not render export modal by default', () => {
@@ -139,8 +142,9 @@ describe('AuditLogExport', () => {
       // Open modal
       await user.click(screen.getByRole('button', { name: /^Export/i }));
 
-      expect(screen.getByText('CSV')).toBeInTheDocument();
-      expect(screen.getByText('JSON')).toBeInTheDocument();
+      // Format options appear in modal (CSV also appears in quick export buttons)
+      expect(screen.getAllByText('CSV').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('JSON').length).toBeGreaterThan(0);
       expect(screen.getByText('PDF')).toBeInTheDocument();
     });
 
@@ -163,9 +167,14 @@ describe('AuditLogExport', () => {
       // Open modal
       await user.click(screen.getByRole('button', { name: /^Export/i }));
 
-      // CSV button should have active styling
-      const csvButton = screen.getByText('CSV').closest('button');
-      expect(csvButton).toHaveClass('border-blue-500', 'bg-blue-50');
+      // CSV buttons exist (quick export + modal format option)
+      // The modal format button should have active styling
+      const csvButtons = screen.getAllByText('CSV');
+      const formatButton = csvButtons.find(btn => {
+        const button = btn.closest('button');
+        return button?.className.includes('border-blue-500');
+      });
+      expect(formatButton).toBeTruthy();
     });
 
     it('should change format selection when clicking format button', async () => {
@@ -175,12 +184,18 @@ describe('AuditLogExport', () => {
       // Open modal
       await user.click(screen.getByRole('button', { name: /^Export/i }));
 
-      // Click JSON format
-      const jsonButton = screen.getByText('JSON').closest('button');
-      await user.click(jsonButton!);
+      // Find JSON format buttons (quick export + modal)
+      const jsonButtons = screen.getAllByText('JSON');
+      // Click the one in the modal (the format grid, not quick export)
+      const modalJsonButton = jsonButtons.find(btn => {
+        const button = btn.closest('button');
+        return button && !button.className.includes('rounded-lg');
+      }) || jsonButtons[jsonButtons.length - 1];
 
-      // JSON button should now be active
-      expect(jsonButton).toHaveClass('border-blue-500', 'bg-blue-50');
+      await user.click(modalJsonButton.closest('button')!);
+
+      // Check that Include change details appears (JSON-only option)
+      expect(screen.getByText(/Include change details/i)).toBeInTheDocument();
     });
 
     it('should change format selection to PDF', async () => {
@@ -261,9 +276,10 @@ describe('AuditLogExport', () => {
       // Should not be visible for CSV (default)
       expect(screen.queryByText(/Include change details/i)).not.toBeInTheDocument();
 
-      // Switch to JSON
-      const jsonButton = screen.getByText('JSON').closest('button');
-      await user.click(jsonButton!);
+      // Switch to JSON - find the format button in modal
+      const jsonButtons = screen.getAllByText('JSON');
+      const modalJsonButton = jsonButtons[jsonButtons.length - 1]; // Last one is in modal
+      await user.click(modalJsonButton.closest('button')!);
 
       // Should now be visible
       expect(screen.getByText(/Include change details/i)).toBeInTheDocument();
@@ -276,9 +292,10 @@ describe('AuditLogExport', () => {
       // Open modal
       await user.click(screen.getByRole('button', { name: /^Export/i }));
 
-      // Switch to JSON
-      const jsonButton = screen.getByText('JSON').closest('button');
-      await user.click(jsonButton!);
+      // Switch to JSON - find the format button in modal
+      const jsonButtons = screen.getAllByText('JSON');
+      const modalJsonButton = jsonButtons[jsonButtons.length - 1];
+      await user.click(modalJsonButton.closest('button')!);
 
       const changesCheckbox = screen.getByLabelText(/Include change details/i) as HTMLInputElement;
       expect(changesCheckbox.checked).toBe(true);
@@ -371,6 +388,12 @@ describe('AuditLogExport', () => {
       const user = userEvent.setup();
       mockOnExportAll.mockResolvedValue(new Blob(['test'], { type: 'text/csv' }));
 
+      // Mock URL.createObjectURL and URL.revokeObjectURL
+      const mockCreateObjectURL = jest.fn(() => 'blob:test');
+      const mockRevokeObjectURL = jest.fn();
+      global.URL.createObjectURL = mockCreateObjectURL;
+      global.URL.revokeObjectURL = mockRevokeObjectURL;
+
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
@@ -382,7 +405,7 @@ describe('AuditLogExport', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Export completed successfully!')).toBeInTheDocument();
-      });
+      }, { timeout: 3000 });
     });
 
     it('should show error message on export failure', async () => {

@@ -25,9 +25,9 @@ async def faculty_members(db_session):
     for i in range(3):
         person = Person(
             id=uuid4(),
-            name=f"Dr. Faculty{i+1}",
+            name=f"Dr. Faculty{i + 1}",
             type="faculty",
-            email=f"faculty{i+1}@test.mil",
+            email=f"faculty{i + 1}@test.mil",
             performs_procedures=True,
             faculty_role="core",
         )
@@ -107,7 +107,9 @@ class TestShapleyValueCalculation:
         shapley_values = [r.shapley_value for r in results.values()]
         expected = 1.0 / 3  # Three faculty, equal split
         for sv in shapley_values:
-            assert abs(sv - expected) < 0.05, f"Shapley value {sv} not close to {expected}"
+            assert abs(sv - expected) < 0.05, (
+                f"Shapley value {sv} not close to {expected}"
+            )
 
         # Verify: Sum of Shapley values = 1.0 (efficiency property)
         assert abs(sum(shapley_values) - 1.0) < 0.01
@@ -145,7 +147,9 @@ class TestShapleyValueCalculation:
         )
 
         # Verify: Shapley values roughly proportional to contributions
-        sorted_results = sorted(results.values(), key=lambda x: x.shapley_value, reverse=True)
+        sorted_results = sorted(
+            results.values(), key=lambda x: x.shapley_value, reverse=True
+        )
 
         # Faculty 1 should have highest Shapley value (~0.5)
         assert sorted_results[0].shapley_value > 0.4

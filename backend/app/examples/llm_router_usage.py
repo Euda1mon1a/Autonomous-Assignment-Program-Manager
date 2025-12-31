@@ -119,7 +119,9 @@ async def example_task_classification():
         print(f"\nTask: {task}")
         print(f"  Type: {classification.task_type}")
         print(f"  Complexity: {classification.complexity_score:.2f}")
-        print(f"  Recommended: {classification.recommended_provider}/{classification.recommended_model}")
+        print(
+            f"  Recommended: {classification.recommended_provider}/{classification.recommended_model}"
+        )
         print(f"  Reasoning: {classification.reasoning}")
 
 
@@ -183,7 +185,9 @@ async def example_airgap_mode():
     response = await router.generate(request)
 
     print(f"Provider used: {response.provider}")
-    assert response.provider == "ollama", "Should only use local provider in airgap mode"
+    assert response.provider == "ollama", (
+        "Should only use local provider in airgap mode"
+    )
 
 
 async def example_fallback_behavior():

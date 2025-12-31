@@ -318,7 +318,9 @@ class RepairOperator(ABC):
     """
 
     @abstractmethod
-    def can_repair(self, solution: Solution, violations: list[ConstraintViolation]) -> bool:
+    def can_repair(
+        self, solution: Solution, violations: list[ConstraintViolation]
+    ) -> bool:
         """Check if this operator can repair the given violations."""
         pass
 
@@ -366,7 +368,9 @@ class GreedyRepairOperator(RepairOperator):
         self.max_iterations = max_iterations
         self.repair_functions = repair_functions or {}
 
-    def can_repair(self, solution: Solution, violations: list[ConstraintViolation]) -> bool:
+    def can_repair(
+        self, solution: Solution, violations: list[ConstraintViolation]
+    ) -> bool:
         """Check if violations are repairable."""
         for v in violations:
             if v.is_hard and not v.relaxable:
@@ -430,7 +434,9 @@ class RandomRepairOperator(RepairOperator):
         self.max_attempts = max_attempts
         self.perturbation_strength = perturbation_strength
 
-    def can_repair(self, solution: Solution, violations: list[ConstraintViolation]) -> bool:
+    def can_repair(
+        self, solution: Solution, violations: list[ConstraintViolation]
+    ) -> bool:
         """Random repair can always attempt repair."""
         return True
 
@@ -467,7 +473,9 @@ class RandomRepairOperator(RepairOperator):
 
         return best_solution, best_violation == 0
 
-    def _evaluate_constraints(self, solution: Solution, context: Any) -> list[ConstraintViolation]:
+    def _evaluate_constraints(
+        self, solution: Solution, context: Any
+    ) -> list[ConstraintViolation]:
         """Evaluate constraints for a solution (to be overridden)."""
         return []
 
@@ -656,12 +664,16 @@ class ConstraintRelaxer:
             if level.is_relaxed:
                 # Move toward original
                 if level.current_threshold > level.original_threshold:
-                    level.current_threshold -= level.relaxation_step * self.recovery_rate
+                    level.current_threshold -= (
+                        level.relaxation_step * self.recovery_rate
+                    )
                     level.current_threshold = max(
                         level.current_threshold, level.original_threshold
                     )
                 else:
-                    level.current_threshold += level.relaxation_step * self.recovery_rate
+                    level.current_threshold += (
+                        level.relaxation_step * self.recovery_rate
+                    )
                     level.current_threshold = min(
                         level.current_threshold, level.original_threshold
                     )
@@ -673,7 +685,9 @@ class ConstraintRelaxer:
 
     def get_current_thresholds(self) -> dict[str, float]:
         """Get current relaxed thresholds."""
-        return {name: level.current_threshold for name, level in self.relaxations.items()}
+        return {
+            name: level.current_threshold for name, level in self.relaxations.items()
+        }
 
     def is_any_relaxed(self) -> bool:
         """Check if any constraint is currently relaxed."""
@@ -782,8 +796,12 @@ class ConstraintHandler:
             solution.metadata["constraint_penalty"] = penalty
 
         elif self.method == ConstraintHandlingMethod.REPAIR:
-            if self.repair_operator and self.repair_operator.can_repair(solution, violations):
-                repaired, success = self.repair_operator.repair(solution, violations, context)
+            if self.repair_operator and self.repair_operator.can_repair(
+                solution, violations
+            ):
+                repaired, success = self.repair_operator.repair(
+                    solution, violations, context
+                )
                 if success:
                     self.repaired_count += 1
                     repaired.is_feasible = True
@@ -799,8 +817,12 @@ class ConstraintHandler:
 
         elif self.method == ConstraintHandlingMethod.HYBRID:
             # Try repair first, then apply penalty to remaining violations
-            if self.repair_operator and self.repair_operator.can_repair(solution, violations):
-                repaired, success = self.repair_operator.repair(solution, violations, context)
+            if self.repair_operator and self.repair_operator.can_repair(
+                solution, violations
+            ):
+                repaired, success = self.repair_operator.repair(
+                    solution, violations, context
+                )
                 if success:
                     self.repaired_count += 1
                     repaired.is_feasible = True

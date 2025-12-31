@@ -126,7 +126,9 @@ class PenroseVisualizer:
 
             # Color intensity based on extraction potential
             alpha = self.config.alpha_ergosphere + (
-                ergosphere.extraction_potential / 0.29 * (1 - self.config.alpha_ergosphere)
+                ergosphere.extraction_potential
+                / 0.29
+                * (1 - self.config.alpha_ergosphere)
             )
 
             # Draw ergosphere rectangle
@@ -256,7 +258,9 @@ class PenroseVisualizer:
         )
 
         # Add Penrose limit line
-        max_theoretical = cumulative_extraction[-1] / 0.29 if cumulative_extraction else 100
+        max_theoretical = (
+            cumulative_extraction[-1] / 0.29 if cumulative_extraction else 100
+        )
         penrose_limit = [max_theoretical * 0.29] * len(swap_numbers)
         ax1.plot(
             swap_numbers,
@@ -392,7 +396,10 @@ class PenroseVisualizer:
 
         # Add edge labels for executed swaps
         executed_edges = {
-            (str(s.assignment_a)[:8], str(s.assignment_b)[:8]): f"{s.net_extraction:.1f}"
+            (
+                str(s.assignment_a)[:8],
+                str(s.assignment_b)[:8],
+            ): f"{s.net_extraction:.1f}"
             for s in swaps
             if s.executed
         }
@@ -594,14 +601,18 @@ class PenroseVisualizer:
         report = {
             "summary": {
                 "total_ergospheres": len(ergospheres),
-                "high_potential_ergospheres": sum(1 for e in ergospheres if e.is_high_potential),
+                "high_potential_ergospheres": sum(
+                    1 for e in ergospheres if e.is_high_potential
+                ),
                 "total_swaps_proposed": len(swaps),
                 "total_swaps_executed": len(executed_swaps),
                 "efficiency_extracted": f"{efficiency:.2%}",
                 "penrose_limit_usage": f"{(efficiency / 0.29):.1%}",
             },
             "ergosphere_breakdown": {
-                boundary_type: len([e for e in ergospheres if e.boundary_type == boundary_type])
+                boundary_type: len(
+                    [e for e in ergospheres if e.boundary_type == boundary_type]
+                )
                 for boundary_type in set(e.boundary_type for e in ergospheres)
             },
             "top_extractions": [
@@ -612,7 +623,9 @@ class PenroseVisualizer:
                     "global_benefit": f"{s.global_benefit:.2f}",
                     "ratio": f"{s.extraction_ratio:.2f}x",
                 }
-                for s in sorted(executed_swaps, key=lambda s: s.net_extraction, reverse=True)[:10]
+                for s in sorted(
+                    executed_swaps, key=lambda s: s.net_extraction, reverse=True
+                )[:10]
             ],
             "recommendations": self._generate_recommendations(
                 ergospheres, swaps, efficiency

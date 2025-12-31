@@ -786,7 +786,11 @@ class TestIntegrationScenarios:
             resident_id, 0.75, timedelta(days=42)
         )
         # Should be transitioning to secondary or beyond
-        assert analysis_week6.creep_stage in [CreepStage.PRIMARY, CreepStage.SECONDARY, CreepStage.TERTIARY]
+        assert analysis_week6.creep_stage in [
+            CreepStage.PRIMARY,
+            CreepStage.SECONDARY,
+            CreepStage.TERTIARY,
+        ]
 
         # Week 1-12: High risk
         analysis_week12 = model.predict_time_to_burnout(

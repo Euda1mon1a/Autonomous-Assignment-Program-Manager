@@ -87,7 +87,9 @@ api_router.include_router(
 api_router.include_router(
     assignments.router, prefix="/assignments", tags=["assignments"]
 )
-api_router.include_router(call_assignments.router)  # prefix="/call-assignments" defined in router
+api_router.include_router(
+    call_assignments.router
+)  # prefix="/call-assignments" defined in router
 api_router.include_router(batch.router, prefix="/batch", tags=["batch"])
 api_router.include_router(absences.router, prefix="/absences", tags=["absences"])
 api_router.include_router(schedule.router, prefix="/schedule", tags=["schedule"])
@@ -102,7 +104,9 @@ api_router.include_router(export.router, prefix="/export", tags=["export"])
 api_router.include_router(exports.router, prefix="/exports", tags=["exports"])
 api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
 api_router.include_router(resilience.router, prefix="/resilience", tags=["resilience"])
-api_router.include_router(fatigue_risk.router)  # prefix="/fatigue-risk" defined in router
+api_router.include_router(
+    fatigue_risk.router
+)  # prefix="/fatigue-risk" defined in router
 api_router.include_router(
     game_theory.router, prefix="/game-theory", tags=["game-theory"]
 )

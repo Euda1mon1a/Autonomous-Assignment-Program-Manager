@@ -115,14 +115,18 @@ class TestOvernightCallCoverageConstraint:
         """Constraint should be enabled by default."""
         assert constraint.enabled
 
-    def test_validate_with_complete_coverage(self, constraint, context, faculty, blocks):
+    def test_validate_with_complete_coverage(
+        self, constraint, context, faculty, blocks
+    ):
         """Validate passes with complete overnight call coverage."""
         # Create mock assignments with one faculty per overnight call day
         assignments = []
         call_dates_assigned = set()
 
         for block in blocks:
-            if block.date not in call_dates_assigned and is_overnight_call_day(block.date):
+            if block.date not in call_dates_assigned and is_overnight_call_day(
+                block.date
+            ):
                 # Assign first faculty to this date
                 assignments.append(
                     type(
@@ -157,8 +161,15 @@ class TestAdjunctCallExclusionConstraint:
     def test_adjunct_excluded_from_call_eligible(self):
         """Adjunct faculty should be excluded from call-eligible list."""
         all_faculty = [
-            Person(id=uuid4(), name="Core Faculty", type="faculty", faculty_role="core"),
-            Person(id=uuid4(), name="Adjunct Faculty", type="faculty", faculty_role="adjunct"),
+            Person(
+                id=uuid4(), name="Core Faculty", type="faculty", faculty_role="core"
+            ),
+            Person(
+                id=uuid4(),
+                name="Adjunct Faculty",
+                type="faculty",
+                faculty_role="adjunct",
+            ),
             Person(id=uuid4(), name="PD Faculty", type="faculty", faculty_role="pd"),
         ]
 
@@ -485,9 +496,7 @@ class TestSolverSundayNightCallCoverage:
         """
         # Simulate the fixed solver logic: filter by weekday, not is_weekend
         call_blocks = [
-            block
-            for block in week_blocks
-            if block.date.weekday() in (0, 1, 2, 3, 6)
+            block for block in week_blocks if block.date.weekday() in (0, 1, 2, 3, 6)
         ]
 
         # Get unique call dates

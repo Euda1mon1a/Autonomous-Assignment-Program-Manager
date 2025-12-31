@@ -104,3 +104,4 @@ async def async_task_session_scope():
 
 # Alias for backwards compatibility
 get_async_session_context = async_task_session_scope
+async_session = async_task_session_scope

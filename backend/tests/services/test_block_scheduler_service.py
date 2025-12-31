@@ -121,9 +121,9 @@ class TestBlockSchedulerService:
         for i in range(3):
             r = Person(
                 id=uuid4(),
-                name=f"Dr. Available {i+1}",
+                name=f"Dr. Available {i + 1}",
                 type="resident",
-                email=f"available{i+1}@test.org",
+                email=f"available{i + 1}@test.org",
                 pgy_level=(i % 3) + 1,
             )
             db.add(r)
@@ -181,16 +181,12 @@ class TestBlockSchedulerService:
         assert len(result) == 2
 
         # Check full vacation resident
-        full_leave = next(
-            r for r in result if r.resident.name == "Dr. Vacation Full"
-        )
+        full_leave = next(r for r in result if r.resident.name == "Dr. Vacation Full")
         assert full_leave.leave_days == 28
         assert "vacation" in full_leave.leave_types
 
         # Check partial leave resident
-        partial_leave = next(
-            r for r in result if r.resident.name == "Dr. Conference"
-        )
+        partial_leave = next(r for r in result if r.resident.name == "Dr. Conference")
         assert partial_leave.leave_days == 4
         assert "conference" in partial_leave.leave_types
 
@@ -281,8 +277,7 @@ class TestBlockSchedulerService:
 
         # Check that non-leave-eligible rotation gets priority
         coverage_assignments = [
-            a for a in result.assignments
-            if not a.is_leave_eligible_rotation
+            a for a in result.assignments if not a.is_leave_eligible_rotation
         ]
 
         # Should have assignments to non-leave-eligible (FMIT)
@@ -306,10 +301,14 @@ class TestBlockSchedulerService:
         assert result.dry_run is True
 
         # Check database has no assignments
-        assignments = db.query(BlockAssignment).filter(
-            BlockAssignment.block_number == 5,
-            BlockAssignment.academic_year == 2025,
-        ).all()
+        assignments = (
+            db.query(BlockAssignment)
+            .filter(
+                BlockAssignment.block_number == 5,
+                BlockAssignment.academic_year == 2025,
+            )
+            .all()
+        )
 
         assert len(assignments) == 0
 
@@ -331,10 +330,14 @@ class TestBlockSchedulerService:
         assert result.dry_run is False
 
         # Check database has assignments
-        assignments = db.query(BlockAssignment).filter(
-            BlockAssignment.block_number == 5,
-            BlockAssignment.academic_year == 2025,
-        ).all()
+        assignments = (
+            db.query(BlockAssignment)
+            .filter(
+                BlockAssignment.block_number == 5,
+                BlockAssignment.academic_year == 2025,
+            )
+            .all()
+        )
 
         assert len(assignments) == len(result.assignments)
 
@@ -353,8 +356,7 @@ class TestBlockSchedulerService:
 
         # Find gap for non-leave-eligible rotation
         fmit_gaps = [
-            g for g in result.coverage_gaps
-            if g.rotation_name == "FMIT Inpatient"
+            g for g in result.coverage_gaps if g.rotation_name == "FMIT Inpatient"
         ]
 
         assert len(fmit_gaps) == 1

@@ -1,8 +1,13 @@
 import { render, screen } from '@testing-library/react'
 import { DayCell } from '@/components/DayCell'
 
+// Helper to create a local date (avoiding timezone issues)
+function localDate(year: number, month: number, day: number): Date {
+  return new Date(year, month - 1, day) // month is 0-indexed
+}
+
 describe('DayCell', () => {
-  const mockDate = new Date('2024-02-15') // Thursday
+  const mockDate = localDate(2024, 2, 15) // Thursday
 
   const mockAmAssignment = {
     id: 'assignment-1',
@@ -34,7 +39,7 @@ describe('DayCell', () => {
     })
 
     it('should apply gray background for weekend with no assignments', () => {
-      const saturdayDate = new Date('2024-02-17') // Saturday
+      const saturdayDate = localDate(2024, 2, 17) // Saturday
       const { container } = render(<DayCell date={saturdayDate} />)
 
       const cell = container.querySelector('.schedule-cell')
@@ -42,7 +47,7 @@ describe('DayCell', () => {
     })
 
     it('should apply gray background for Sunday', () => {
-      const sundayDate = new Date('2024-02-18') // Sunday
+      const sundayDate = localDate(2024, 2, 18) // Sunday
       const { container } = render(<DayCell date={sundayDate} />)
 
       const cell = container.querySelector('.schedule-cell')
@@ -322,8 +327,8 @@ describe('DayCell', () => {
       const { container } = render(<DayCell date={mockDate} amAssignment={mockAmAssignment} />)
 
       const timeIndicator = screen.getByText('AM')
-      const parent = timeIndicator.parentElement
-      expect(parent).toHaveClass('opacity-75')
+      // The opacity class is on the span itself containing 'AM'
+      expect(timeIndicator).toHaveClass('opacity-75')
     })
 
     it('should apply spacing between AM and PM blocks', () => {
@@ -350,7 +355,7 @@ describe('DayCell', () => {
 
   describe('Weekend Behavior', () => {
     it('should maintain assignment display on weekends', () => {
-      const saturdayDate = new Date('2024-02-17') // Saturday
+      const saturdayDate = localDate(2024, 2, 17) // Saturday
 
       render(<DayCell date={saturdayDate} amAssignment={mockAmAssignment} />)
 
@@ -359,7 +364,7 @@ describe('DayCell', () => {
     })
 
     it('should apply gray background for weekend with split assignments', () => {
-      const saturdayDate = new Date('2024-02-17') // Saturday
+      const saturdayDate = localDate(2024, 2, 17) // Saturday
 
       const { container } = render(
         <DayCell

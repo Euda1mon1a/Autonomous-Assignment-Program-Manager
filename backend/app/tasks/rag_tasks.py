@@ -183,18 +183,22 @@ def initialize_embeddings(
 
                 if not content.strip():
                     logger.warning(f"Document {filename} is empty, skipping")
-                    results.append({
-                        "filename": filename,
-                        "status": "skipped",
-                        "reason": "empty_content",
-                    })
+                    results.append(
+                        {
+                            "filename": filename,
+                            "status": "skipped",
+                            "reason": "empty_content",
+                        }
+                    )
                     continue
 
                 # Clear existing docs of this type (idempotent)
                 if not force_refresh:  # Already cleared if force_refresh
                     existing_count = rag_service.delete_by_doc_type(doc_type)
                     if existing_count > 0:
-                        logger.info(f"Cleared {existing_count} existing chunks for {doc_type}")
+                        logger.info(
+                            f"Cleared {existing_count} existing chunks for {doc_type}"
+                        )
 
                 # Ingest document
                 metadata = {
@@ -218,30 +222,38 @@ def initialize_embeddings(
                     logger.info(
                         f"✓ Created {ingest_result.chunks_created} chunks for {filename}"
                     )
-                    results.append({
-                        "filename": filename,
-                        "status": "success",
-                        "chunks_created": ingest_result.chunks_created,
-                        "doc_type": doc_type,
-                    })
+                    results.append(
+                        {
+                            "filename": filename,
+                            "status": "success",
+                            "chunks_created": ingest_result.chunks_created,
+                            "doc_type": doc_type,
+                        }
+                    )
                     total_chunks += ingest_result.chunks_created
                 else:
-                    logger.error(f"✗ Failed to ingest {filename}: {ingest_result.message}")
-                    results.append({
-                        "filename": filename,
-                        "status": "error",
-                        "error": ingest_result.message,
-                        "doc_type": doc_type,
-                    })
+                    logger.error(
+                        f"✗ Failed to ingest {filename}: {ingest_result.message}"
+                    )
+                    results.append(
+                        {
+                            "filename": filename,
+                            "status": "error",
+                            "error": ingest_result.message,
+                            "doc_type": doc_type,
+                        }
+                    )
 
             except Exception as e:
                 logger.error(f"Error processing {filename}: {e}", exc_info=True)
-                results.append({
-                    "filename": filename,
-                    "status": "error",
-                    "error": str(e),
-                    "doc_type": doc_type,
-                })
+                results.append(
+                    {
+                        "filename": filename,
+                        "status": "error",
+                        "error": str(e),
+                        "doc_type": doc_type,
+                    }
+                )
 
         # Calculate summary
         success_count = sum(1 for r in results if r["status"] == "success")

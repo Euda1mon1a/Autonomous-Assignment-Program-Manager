@@ -123,9 +123,7 @@ class TestPreSolverValidator:
     def basic_context(self):
         """Create a basic valid scheduling context."""
         # Create 3 residents
-        residents = [
-            MockPerson(f"Resident {i}", "resident") for i in range(1, 4)
-        ]
+        residents = [MockPerson(f"Resident {i}", "resident") for i in range(1, 4)]
 
         # Create 1 week of blocks (Mon-Fri, AM/PM = 10 blocks)
         base_date = date(2025, 1, 6)  # Monday
@@ -334,10 +332,7 @@ class TestPreSolverValidator:
         """Test detection of over-constrained problems from existing assignments."""
         residents = [MockPerson()]
         base_date = date(2025, 1, 6)
-        blocks = [
-            MockBlock(base_date + timedelta(days=i), "AM")
-            for i in range(5)
-        ]
+        blocks = [MockBlock(base_date + timedelta(days=i), "AM") for i in range(5)]
 
         # Pre-assign 4 out of 5 blocks (80%)
         existing = [MockAssignment(residents[0].id, blocks[i].id) for i in range(4)]
@@ -438,10 +433,7 @@ class TestPreSolverValidator:
         """Test handling of residents with partial availability."""
         residents = [MockPerson(f"R{i}") for i in range(3)]
         base_date = date(2025, 1, 6)
-        blocks = [
-            MockBlock(base_date + timedelta(days=i), "AM")
-            for i in range(10)
-        ]
+        blocks = [MockBlock(base_date + timedelta(days=i), "AM") for i in range(10)]
 
         # One resident available for only 20% of blocks
         availability = {
@@ -492,10 +484,7 @@ class TestPreSolverValidator:
         """Test warning for residents with limited availability."""
         residents = [MockPerson("Limited Availability")]
         base_date = date(2025, 1, 6)
-        blocks = [
-            MockBlock(base_date + timedelta(days=i), "AM")
-            for i in range(10)
-        ]
+        blocks = [MockBlock(base_date + timedelta(days=i), "AM") for i in range(10)]
 
         # Resident only available for 30% of blocks (below 50% threshold)
         availability = {

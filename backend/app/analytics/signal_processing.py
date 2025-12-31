@@ -211,7 +211,7 @@ class SignalAnalysisResult(TypedDict, total=False):
     constraint_violations: list[ConstraintViolation]
     harmonic_analysis: dict | None
     adaptive_filtered: dict | None
-    changepoint_analysis: dict[str, ChangePointAnalysisResult] | None
+    changepoint_analysis: dict[str, "ChangePointAnalysisResult"] | None
     recommendations: list[str]
 
 
@@ -690,7 +690,9 @@ class WorkloadSignalProcessor:
 
         # Normalize magnitudes
         max_magnitude = np.max(magnitudes) if len(magnitudes) > 0 else 1.0
-        normalized_magnitudes = magnitudes / max_magnitude if max_magnitude > 0 else magnitudes
+        normalized_magnitudes = (
+            magnitudes / max_magnitude if max_magnitude > 0 else magnitudes
+        )
 
         # Find dominant frequencies
         dominant = []
@@ -887,11 +889,15 @@ class WorkloadSignalProcessor:
                 anomaly = AnomalyEvent(
                     anomaly_type=atype,
                     index=int(start_idx),
-                    timestamp=ts.dates[start_idx] if start_idx < len(ts.dates) else ts.dates[-1],
+                    timestamp=ts.dates[start_idx]
+                    if start_idx < len(ts.dates)
+                    else ts.dates[-1],
                     severity=severity,
                     sta_lta_ratio=float(cf[start_idx]),
                     description=desc,
-                    related_indices=list(range(start_idx, min(event_end + 1, len(ts.values)))),
+                    related_indices=list(
+                        range(start_idx, min(event_end + 1, len(ts.values)))
+                    ),
                 )
                 anomalies.append(anomaly)
 
@@ -989,7 +995,9 @@ class WorkloadSignalProcessor:
                 method = "simple_fallback"
         else:
             # Simple decomposition without statsmodels
-            trend, seasonal_component, residual = self._simple_decomposition(ts.values, period)
+            trend, seasonal_component, residual = self._simple_decomposition(
+                ts.values, period
+            )
             method = "simple"
 
         # Calculate strength metrics
@@ -997,8 +1005,12 @@ class WorkloadSignalProcessor:
         var_detrended = np.var(ts.values - trend)
         var_deseasoned = np.var(ts.values - seasonal_component)
 
-        trend_strength = max(0, 1 - var_residual / var_deseasoned) if var_deseasoned > 0 else 0
-        seasonal_strength = max(0, 1 - var_residual / var_detrended) if var_detrended > 0 else 0
+        trend_strength = (
+            max(0, 1 - var_residual / var_deseasoned) if var_deseasoned > 0 else 0
+        )
+        seasonal_strength = (
+            max(0, 1 - var_residual / var_detrended) if var_detrended > 0 else 0
+        )
 
         return {
             "trend": trend.tolist() if isinstance(trend, np.ndarray) else list(trend),
@@ -1008,7 +1020,9 @@ class WorkloadSignalProcessor:
                 else list(seasonal_component)
             ),
             "residual": (
-                residual.tolist() if isinstance(residual, np.ndarray) else list(residual)
+                residual.tolist()
+                if isinstance(residual, np.ndarray)
+                else list(residual)
             ),
             "method": method,
             "period": period,
@@ -1112,7 +1126,7 @@ class WorkloadSignalProcessor:
                                 "severity": constraint.severity,
                                 "description": (
                                     f"{constraint.description}: detected frequency "
-                                    f"{freq:.3f} cycles/day (period: {1/freq:.1f} days) "
+                                    f"{freq:.3f} cycles/day (period: {1 / freq:.1f} days) "
                                     f"exceeds max {constraint.max_frequency:.3f} cycles/day"
                                 ),
                             }
@@ -1123,7 +1137,9 @@ class WorkloadSignalProcessor:
         alternation_violations = self._check_rapid_alternation(ts)
         violations.extend(alternation_violations)
 
-        logger.debug(f"Frequency constraint validation: {len(violations)} violations found")
+        logger.debug(
+            f"Frequency constraint validation: {len(violations)} violations found"
+        )
 
         return violations
 
@@ -1217,7 +1233,11 @@ class WorkloadSignalProcessor:
             # Window must be odd
             win = window_size if window_size % 2 == 1 else window_size + 1
             if win >= len(ts.values):
-                win = len(ts.values) - 1 if len(ts.values) % 2 == 0 else len(ts.values) - 2
+                win = (
+                    len(ts.values) - 1
+                    if len(ts.values) % 2 == 0
+                    else len(ts.values) - 2
+                )
             if win < 3:
                 filtered = ts.values.copy()
             else:
@@ -1304,7 +1324,9 @@ class WorkloadSignalProcessor:
             else:
                 fundamental = fft_result["dominant_frequencies"][0]["frequency"]
 
-        fundamental_period_detected = 1.0 / fundamental if fundamental > 0 else float("inf")
+        fundamental_period_detected = (
+            1.0 / fundamental if fundamental > 0 else float("inf")
+        )
 
         # Find harmonics
         harmonics: list[HarmonicPeak] = []
@@ -1370,7 +1392,11 @@ class WorkloadSignalProcessor:
         if harmonics and harmonics[0]["magnitude"] > 0:
             fundamental_power = harmonics[0]["magnitude"] ** 2
             harmonic_power = sum(h["magnitude"] ** 2 for h in harmonics[1:])
-            thd = math.sqrt(harmonic_power / fundamental_power) if fundamental_power > 0 else 0
+            thd = (
+                math.sqrt(harmonic_power / fundamental_power)
+                if fundamental_power > 0
+                else 0
+            )
         else:
             thd = 0.0
 
@@ -1579,9 +1605,7 @@ class WorkloadSignalProcessor:
                         )
 
                     # Estimate confidence based on effect size
-                    effect_size = mean_change / (
-                        (pre_std + post_std) / 2 + 1e-10
-                    )
+                    effect_size = mean_change / ((pre_std + post_std) / 2 + 1e-10)
                     confidence = min(1.0, effect_size / 3.0)
 
                     change_points.append(
@@ -1596,8 +1620,7 @@ class WorkloadSignalProcessor:
                     )
 
             logger.debug(
-                f"PELT detected {len(change_points)} change points "
-                f"(penalty={penalty})"
+                f"PELT detected {len(change_points)} change points (penalty={penalty})"
             )
             return change_points
 
@@ -1644,9 +1667,7 @@ class WorkloadSignalProcessor:
                 # Cost of two segments vs. one segment
                 cost_one = segment_cost(current_pos, n)
                 cost_two = (
-                    segment_cost(current_pos, split)
-                    + segment_cost(split, n)
-                    + penalty
+                    segment_cost(current_pos, split) + segment_cost(split, n) + penalty
                 )
 
                 if cost_two < cost_one and cost_two < best_cost:
@@ -1679,9 +1700,7 @@ class WorkloadSignalProcessor:
                 }
             )
 
-        logger.debug(
-            f"Simplified PELT detected {len(change_points)} change points"
-        )
+        logger.debug(f"Simplified PELT detected {len(change_points)} change points")
         return change_points
 
     def analyze_schedule_changepoints(
@@ -2117,7 +2136,9 @@ class WorkloadSignalProcessor:
             harmonic = result["harmonic_analysis"]
             frequency_domain["harmonics"] = harmonic.get("harmonics", [])
             frequency_domain["resonances"] = harmonic.get("resonances", [])
-            metadata["harmonic_distortion"] = harmonic.get("total_harmonic_distortion", 0)
+            metadata["harmonic_distortion"] = harmonic.get(
+                "total_harmonic_distortion", 0
+            )
 
         return {
             "version": "1.0",

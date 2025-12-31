@@ -553,12 +553,14 @@ class HolographicExporter:
         comparisons = []
         for event in dm.decision_history:
             if event["type"] == "comparison":
-                comparisons.append({
-                    "solution_a": event["solution_a"],
-                    "solution_b": event["solution_b"],
-                    "preferred": event["preferred"],
-                    "timestamp": event["timestamp"],
-                })
+                comparisons.append(
+                    {
+                        "solution_a": event["solution_a"],
+                        "solution_b": event["solution_b"],
+                        "preferred": event["preferred"],
+                        "timestamp": event["timestamp"],
+                    }
+                )
 
         return DecisionJourneyExport(
             session_id=str(UUID(int=hash(str(datetime.now())) & (2**128 - 1))),

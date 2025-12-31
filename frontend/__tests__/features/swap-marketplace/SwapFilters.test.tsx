@@ -66,15 +66,31 @@ describe('SwapFilters', () => {
     it('should call onFiltersChange when search query is entered', async () => {
       const user = userEvent.setup();
 
-      render(<SwapFilters filters={{}} onFiltersChange={mockOnFiltersChange} />);
+      // Use a state-tracking wrapper to simulate controlled component behavior
+      let currentFilters = {};
+      const trackingOnChange = jest.fn((newFilters) => {
+        currentFilters = newFilters;
+        mockOnFiltersChange(newFilters);
+      });
+
+      const { rerender } = render(
+        <SwapFilters filters={currentFilters} onFiltersChange={trackingOnChange} />
+      );
 
       const searchInput = screen.getByPlaceholderText('Search by faculty name or reason...');
-      await user.type(searchInput, 'Dr. Smith');
 
-      await waitFor(() => {
-        expect(mockOnFiltersChange).toHaveBeenLastCalledWith({
-          searchQuery: 'Dr. Smith',
-        });
+      // Type character by character and rerender to simulate controlled component
+      for (const char of 'Dr. Smith') {
+        await user.type(searchInput, char);
+        rerender(<SwapFilters filters={currentFilters} onFiltersChange={trackingOnChange} />);
+      }
+
+      // Verify the callback was called for each character with cumulative text
+      expect(mockOnFiltersChange).toHaveBeenCalled();
+
+      // The last call should contain the full search query
+      expect(mockOnFiltersChange).toHaveBeenLastCalledWith({
+        searchQuery: 'Dr. Smith',
       });
     });
 

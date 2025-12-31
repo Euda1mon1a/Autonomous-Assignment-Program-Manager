@@ -131,7 +131,9 @@ class TestWorkloadTimeSeries:
         assert ts.sample_rate_per_day == 1.0
         assert ts.nyquist_frequency == 0.5
 
-    def test_create_with_mismatched_lengths_raises(self, sample_dates: list[date]) -> None:
+    def test_create_with_mismatched_lengths_raises(
+        self, sample_dates: list[date]
+    ) -> None:
         """Test that mismatched values/dates lengths raise error."""
         with pytest.raises(ValueError, match="same length"):
             WorkloadTimeSeries(
@@ -178,7 +180,9 @@ class TestFFTAnalysis:
         assert result["periodicity_detected"] is False
 
     def test_fft_detects_weekly_pattern(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test FFT detects 7-day periodicity."""
         result = processor.fft_analysis(weekly_pattern_workload)
@@ -195,7 +199,9 @@ class TestFFTAnalysis:
         assert abs(closest["period_days"] - 7.0) < 1.0  # Within 1 day of 7
 
     def test_fft_result_structure(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test FFT result has correct structure."""
         result = processor.fft_analysis(weekly_pattern_workload)
@@ -214,7 +220,9 @@ class TestFFTAnalysis:
             assert "phase" in dom
 
     def test_fft_inverse_filter(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test inverse FFT filtering."""
         # Filter to keep only weekly frequency
@@ -239,7 +247,9 @@ class TestWaveletTransform:
     """Tests for wavelet analysis."""
 
     def test_dwt_decomposes_signal(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test DWT produces multi-level decomposition."""
         result = processor.discrete_wavelet_transform(weekly_pattern_workload)
@@ -254,7 +264,9 @@ class TestWaveletTransform:
         assert len(result["details"]) == result["level"]
 
     def test_dwt_preserves_energy(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test wavelet decomposition preserves signal energy (approximately)."""
         result = processor.discrete_wavelet_transform(weekly_pattern_workload)
@@ -272,7 +284,9 @@ class TestWaveletTransform:
         assert reconstructed_energy > 0  # Sanity check
 
     def test_dwt_frequency_bands_mapping(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test frequency bands are mapped correctly."""
         result = processor.discrete_wavelet_transform(weekly_pattern_workload, level=4)
@@ -285,7 +299,9 @@ class TestWaveletTransform:
         ]
 
     def test_cwt_produces_time_frequency_map(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test CWT produces 2D time-frequency representation."""
         result = processor.continuous_wavelet_transform(weekly_pattern_workload)
@@ -302,7 +318,9 @@ class TestWaveletTransform:
             assert isinstance(coeffs[0], list)
 
     def test_wavelet_reconstruct(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test signal reconstruction from wavelet coefficients."""
         dwt_result = processor.discrete_wavelet_transform(weekly_pattern_workload)
@@ -312,10 +330,14 @@ class TestWaveletTransform:
         assert len(reconstructed) >= len(weekly_pattern_workload.values) - 2
 
     def test_wavelet_reconstruct_with_level_filter(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test reconstruction keeping only specific levels."""
-        dwt_result = processor.discrete_wavelet_transform(weekly_pattern_workload, level=4)
+        dwt_result = processor.discrete_wavelet_transform(
+            weekly_pattern_workload, level=4
+        )
 
         # Keep only level 0 (highest frequency)
         high_freq = processor.wavelet_reconstruct(dwt_result, keep_levels=[0])
@@ -353,7 +375,9 @@ class TestSTALTADetector:
         assert len(anomalies) > 0
 
         # At least one should be a spike
-        spike_types = [a for a in anomalies if a["type"] == AnomalyType.WORKLOAD_SPIKE.value]
+        spike_types = [
+            a for a in anomalies if a["type"] == AnomalyType.WORKLOAD_SPIKE.value
+        ]
         assert len(spike_types) > 0
 
     def test_sta_lta_no_anomalies_uniform(
@@ -382,7 +406,9 @@ class TestSTALTADetector:
 
         assert sensitive_anomalies >= strict_anomalies
 
-    def test_sta_lta_window_parameters(self, spike_workload: WorkloadTimeSeries) -> None:
+    def test_sta_lta_window_parameters(
+        self, spike_workload: WorkloadTimeSeries
+    ) -> None:
         """Test STA/LTA with different window sizes."""
         short_sta = WorkloadSignalProcessor(sta_window=3, lta_window=10)
         long_sta = WorkloadSignalProcessor(sta_window=7, lta_window=30)
@@ -391,7 +417,9 @@ class TestSTALTADetector:
         result_long = long_sta.sta_lta_detector(spike_workload)
 
         # Both should produce valid results
-        assert len(result_short["characteristic_function"]) == len(spike_workload.values)
+        assert len(result_short["characteristic_function"]) == len(
+            spike_workload.values
+        )
         assert len(result_long["characteristic_function"]) == len(spike_workload.values)
 
     def test_sta_lta_anomaly_structure(
@@ -421,7 +449,9 @@ class TestSpectralDecomposition:
     """Tests for trend/seasonal/residual decomposition."""
 
     def test_decomposition_produces_components(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test decomposition produces trend, seasonal, and residual."""
         result = processor.spectral_decomposition(weekly_pattern_workload)
@@ -437,7 +467,9 @@ class TestSpectralDecomposition:
         assert len(result["residual"]) == len(weekly_pattern_workload.values)
 
     def test_decomposition_sum_equals_original(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test trend + seasonal + residual ≈ original."""
         result = processor.spectral_decomposition(weekly_pattern_workload)
@@ -468,7 +500,9 @@ class TestSpectralDecomposition:
         assert result["statistics"]["trend_strength"] > 0.3
 
     def test_decomposition_detects_seasonal(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test decomposition detects weekly seasonality."""
         result = processor.spectral_decomposition(weekly_pattern_workload, period=7)
@@ -504,7 +538,9 @@ class TestConstraintValidation:
     """Tests for frequency-based constraint validation."""
 
     def test_validates_against_default_constraints(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test validation against default constraints."""
         violations = processor.validate_frequency_constraints(weekly_pattern_workload)
@@ -514,7 +550,9 @@ class TestConstraintValidation:
         assert isinstance(violations, list)
 
     def test_detects_rapid_alternation(
-        self, processor: WorkloadSignalProcessor, alternating_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        alternating_workload: WorkloadTimeSeries,
     ) -> None:
         """Test detection of too-rapid alternation pattern."""
         violations = processor.validate_frequency_constraints(alternating_workload)
@@ -529,7 +567,8 @@ class TestConstraintValidation:
         assert isinstance(violations, list)
 
     def test_custom_constraint(
-        self, weekly_pattern_workload: WorkloadTimeSeries,
+        self,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test validation with custom constraints."""
         custom_constraint = FrequencyConstraint(
@@ -548,7 +587,9 @@ class TestConstraintValidation:
         assert isinstance(violations, list)
 
     def test_violation_structure(
-        self, processor: WorkloadSignalProcessor, alternating_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        alternating_workload: WorkloadTimeSeries,
     ) -> None:
         """Test violation result structure."""
         violations = processor.validate_frequency_constraints(alternating_workload)
@@ -571,7 +612,9 @@ class TestAdaptiveFiltering:
     """Tests for adaptive noise filtering."""
 
     def test_wiener_filter(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test Wiener filter produces valid output."""
         result = processor.adaptive_filter(weekly_pattern_workload, method="wiener")
@@ -583,7 +626,9 @@ class TestAdaptiveFiltering:
         assert len(result["filtered_values"]) == len(weekly_pattern_workload.values)
 
     def test_savgol_filter(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test Savitzky-Golay filter."""
         result = processor.adaptive_filter(
@@ -594,7 +639,9 @@ class TestAdaptiveFiltering:
         assert result["method"] == "savgol"
 
     def test_kalman_filter(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test Kalman-like exponential smoothing."""
         result = processor.adaptive_filter(weekly_pattern_workload, method="kalman")
@@ -621,7 +668,9 @@ class TestAdaptiveFiltering:
         assert filtered_error < noisy_error
 
     def test_quality_metrics(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test quality metrics are computed."""
         result = processor.adaptive_filter(weekly_pattern_workload)
@@ -644,7 +693,9 @@ class TestHarmonicAnalysis:
     """Tests for harmonic analysis."""
 
     def test_harmonic_analysis_structure(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test harmonic analysis result structure."""
         result = processor.harmonic_analysis(weekly_pattern_workload)
@@ -656,7 +707,9 @@ class TestHarmonicAnalysis:
         assert "total_harmonic_distortion" in result
 
     def test_harmonic_analysis_detects_fundamental(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test harmonic analysis identifies fundamental frequency."""
         result = processor.harmonic_analysis(weekly_pattern_workload)
@@ -666,7 +719,9 @@ class TestHarmonicAnalysis:
             assert 5.0 < result["fundamental_period"] < 10.0
 
     def test_harmonic_analysis_with_specified_fundamental(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test harmonic analysis with user-specified fundamental."""
         result = processor.harmonic_analysis(
@@ -677,7 +732,9 @@ class TestHarmonicAnalysis:
         assert abs(result["fundamental_frequency"] - 1.0 / 7.0) < 0.01
 
     def test_thd_calculation(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test Total Harmonic Distortion calculation."""
         result = processor.harmonic_analysis(weekly_pattern_workload)
@@ -696,7 +753,9 @@ class TestAnalysisPipeline:
     """Tests for the full analysis pipeline."""
 
     def test_full_analysis_all_types(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test running all analysis types."""
         result = processor.analyze_workload_patterns(
@@ -715,7 +774,9 @@ class TestAnalysisPipeline:
         assert "spectral_decomposition" in result
 
     def test_full_analysis_selected_types(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test running only selected analysis types."""
         result = processor.analyze_workload_patterns(
@@ -730,7 +791,9 @@ class TestAnalysisPipeline:
         # (implementation may include as None or exclude)
 
     def test_analysis_generates_recommendations(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test that analysis generates recommendations."""
         result = processor.analyze_workload_patterns(weekly_pattern_workload)
@@ -740,7 +803,9 @@ class TestAnalysisPipeline:
         assert len(result["recommendations"]) > 0
 
     def test_input_summary_computed(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test input summary is correctly computed."""
         result = processor.analyze_workload_patterns(weekly_pattern_workload)
@@ -764,7 +829,9 @@ class TestHolographicExport:
     """Tests for holographic visualization export."""
 
     def test_export_structure(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test export produces correct structure."""
         result = processor.analyze_workload_patterns(weekly_pattern_workload)
@@ -780,7 +847,9 @@ class TestHolographicExport:
         assert "metadata" in export
 
     def test_export_time_domain(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test time domain data in export."""
         result = processor.analyze_workload_patterns(weekly_pattern_workload)
@@ -793,7 +862,9 @@ class TestHolographicExport:
         assert len(time_domain["values"]) == 90
 
     def test_export_is_json_serializable(
-        self, processor: WorkloadSignalProcessor, weekly_pattern_workload: WorkloadTimeSeries
+        self,
+        processor: WorkloadSignalProcessor,
+        weekly_pattern_workload: WorkloadTimeSeries,
     ) -> None:
         """Test export can be serialized to JSON."""
         result = processor.analyze_workload_patterns(weekly_pattern_workload)

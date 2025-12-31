@@ -168,8 +168,11 @@ describe('TemplateCard', () => {
         ],
       };
       const { container } = render(<TemplateCard template={multiDayTemplate} />);
-      const dayIndicators = container.querySelectorAll('.flex-1');
-      expect(dayIndicators.length).toBe(7); // All 7 days should be shown
+      // Find the day coverage indicator row specifically (flex gap-1 mb-3)
+      const dayRow = container.querySelector('.flex.gap-1.mb-3');
+      expect(dayRow).toBeInTheDocument();
+      const dayIndicators = dayRow?.querySelectorAll('.flex-1');
+      expect(dayIndicators?.length).toBe(7); // All 7 days should be shown
     });
   });
 
@@ -209,8 +212,11 @@ describe('TemplateCard', () => {
         expect(screen.getByText('Edit')).toBeInTheDocument();
       });
 
-      // Click outside
-      await user.click(document.body);
+      // The component uses a fixed overlay div to catch outside clicks
+      // Find and click the overlay (fixed inset-0 z-10 element)
+      const overlay = document.querySelector('.fixed.inset-0.z-10');
+      expect(overlay).toBeInTheDocument();
+      await user.click(overlay!);
 
       await waitFor(() => {
         expect(screen.queryByText('Edit')).not.toBeInTheDocument();
@@ -490,13 +496,13 @@ describe('TemplateCard', () => {
         />
       );
 
+      // Tab order: actions menu button first (top right of card), then Apply button (bottom)
+      await user.tab();
+      expect(screen.getByLabelText('Template actions')).toHaveFocus();
+
       // Tab to Apply button
       await user.tab();
       expect(screen.getByText('Apply')).toHaveFocus();
-
-      // Tab to actions menu
-      await user.tab();
-      expect(screen.getByLabelText('Template actions')).toHaveFocus();
     });
   });
 });

@@ -478,7 +478,9 @@ class TestPenaltyMethods:
 
     def test_adaptive_penalty_updates(self):
         """Test adaptive penalty coefficient updates."""
-        penalty = AdaptivePenaltyMethod(initial_coefficient=100.0, target_feasibility=0.5)
+        penalty = AdaptivePenaltyMethod(
+            initial_coefficient=100.0, target_feasibility=0.5
+        )
 
         initial = penalty.coefficient
         penalty.update_feasibility(0.2)  # Too few feasible
@@ -758,7 +760,9 @@ class TestEpsilonDominance:
         archive: list[Solution] = []
 
         sol1 = Solution(objective_values={"coverage": 0.8, "equity": 0.2})
-        sol2 = Solution(objective_values={"coverage": 0.81, "equity": 0.21})  # Same cell
+        sol2 = Solution(
+            objective_values={"coverage": 0.81, "equity": 0.21}
+        )  # Same cell
 
         archive = eps_dom.update_archive(archive, sol1)
         archive = eps_dom.update_archive(archive, sol2)
@@ -819,7 +823,9 @@ class TestObjectiveAdjuster:
 
     def test_weight_bounds(self, two_objective_config):
         """Test weight bounds enforcement."""
-        adjuster = ObjectiveAdjuster(two_objective_config, min_weight=0.1, max_weight=0.9)
+        adjuster = ObjectiveAdjuster(
+            two_objective_config, min_weight=0.1, max_weight=0.9
+        )
 
         # Try to set extreme weight
         deltas = {"coverage": 10.0}

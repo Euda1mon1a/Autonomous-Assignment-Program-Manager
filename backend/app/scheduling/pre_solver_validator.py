@@ -184,7 +184,9 @@ class PreSolverValidator:
                 for block in workday_blocks
                 if self._is_person_available(resident.id, block.id, context)
             )
-            min_needed = len(workday_blocks) // 2  # Should have at least 50% availability
+            min_needed = (
+                len(workday_blocks) // 2
+            )  # Should have at least 50% availability
 
             if available_blocks < min_needed:
                 result.warnings.append(
@@ -350,7 +352,9 @@ class PreSolverValidator:
         # Check if pre-assignments reduce available capacity too much
         total_pre_assigned = len(occupied_slots)
         total_slots = len(workday_blocks) * len(context.residents)
-        pre_assignment_ratio = total_pre_assigned / total_slots if total_slots > 0 else 0
+        pre_assignment_ratio = (
+            total_pre_assigned / total_slots if total_slots > 0 else 0
+        )
 
         if pre_assignment_ratio > 0.7:
             result.warnings.append(

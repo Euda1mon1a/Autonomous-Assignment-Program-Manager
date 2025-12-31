@@ -36,6 +36,22 @@ logger = logging.getLogger(__name__)
 OVERNIGHT_CALL_DAYS = {0, 1, 2, 3, 6}  # Mon-Thu + Sunday
 
 
+def is_overnight_call_day(date) -> bool:
+    """
+    Check if a date is an overnight call day.
+
+    Overnight call happens Sun-Thu nights.
+    Friday-Saturday nights are covered by FMIT faculty (not solver-generated).
+
+    Args:
+        date: A date object to check
+
+    Returns:
+        True if the date is a Sun-Thu (overnight call day), False otherwise
+    """
+    return date.weekday() in OVERNIGHT_CALL_DAYS
+
+
 class OvernightCallCoverageConstraint(HardConstraint):
     """
     Ensures exactly one faculty member is on overnight call each Sun-Thurs night.
