@@ -339,7 +339,7 @@ class HealthCheck:
                 ):
                     try:
                         details = response.json()
-                    except Exception:
+                    except (ValueError, TypeError, json.JSONDecodeError):
                         pass
 
                 return HealthCheckResult(
@@ -349,13 +349,21 @@ class HealthCheck:
                     message=f"HTTP {response.status_code}",
                     details=details,
                 )
-        except Exception as e:
+        except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as e:
             elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
             return HealthCheckResult(
                 check_type=HealthCheckType.HTTP_ENDPOINT,
                 is_healthy=False,
                 response_time_ms=elapsed_ms,
-                message=f"Health check failed: {str(e)}",
+                message=f"Network error during health check: {str(e)}",
+            )
+        except httpx.HTTPError as e:
+            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            return HealthCheckResult(
+                check_type=HealthCheckType.HTTP_ENDPOINT,
+                is_healthy=False,
+                response_time_ms=elapsed_ms,
+                message=f"HTTP error during health check: {str(e)}",
             )
 
     async def check_database_connectivity(self) -> HealthCheckResult:
@@ -382,13 +390,21 @@ class HealthCheck:
                         "Database connected" if is_healthy else "Database unreachable"
                     ),
                 )
-        except Exception as e:
+        except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as e:
             elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
             return HealthCheckResult(
                 check_type=HealthCheckType.DATABASE_CONNECTIVITY,
                 is_healthy=False,
                 response_time_ms=elapsed_ms,
-                message=f"Database check failed: {str(e)}",
+                message=f"Network error during database check: {str(e)}",
+            )
+        except httpx.HTTPError as e:
+            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            return HealthCheckResult(
+                check_type=HealthCheckType.DATABASE_CONNECTIVITY,
+                is_healthy=False,
+                response_time_ms=elapsed_ms,
+                message=f"HTTP error during database check: {str(e)}",
             )
 
     async def check_redis_connectivity(self) -> HealthCheckResult:
@@ -413,13 +429,21 @@ class HealthCheck:
                     response_time_ms=elapsed_ms,
                     message="Redis connected" if is_healthy else "Redis unreachable",
                 )
-        except Exception as e:
+        except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as e:
             elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
             return HealthCheckResult(
                 check_type=HealthCheckType.REDIS_CONNECTIVITY,
                 is_healthy=False,
                 response_time_ms=elapsed_ms,
-                message=f"Redis check failed: {str(e)}",
+                message=f"Network error during Redis check: {str(e)}",
+            )
+        except httpx.HTTPError as e:
+            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            return HealthCheckResult(
+                check_type=HealthCheckType.REDIS_CONNECTIVITY,
+                is_healthy=False,
+                response_time_ms=elapsed_ms,
+                message=f"HTTP error during Redis check: {str(e)}",
             )
 
     async def check_celery_workers(self) -> HealthCheckResult:
@@ -444,7 +468,7 @@ class HealthCheck:
                 ):
                     try:
                         details = response.json()
-                    except Exception:
+                    except (ValueError, TypeError, json.JSONDecodeError):
                         pass
 
                 return HealthCheckResult(
@@ -458,13 +482,21 @@ class HealthCheck:
                     ),
                     details=details,
                 )
-        except Exception as e:
+        except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as e:
             elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
             return HealthCheckResult(
                 check_type=HealthCheckType.CELERY_WORKERS,
                 is_healthy=False,
                 response_time_ms=elapsed_ms,
-                message=f"Celery check failed: {str(e)}",
+                message=f"Network error during Celery check: {str(e)}",
+            )
+        except httpx.HTTPError as e:
+            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            return HealthCheckResult(
+                check_type=HealthCheckType.CELERY_WORKERS,
+                is_healthy=False,
+                response_time_ms=elapsed_ms,
+                message=f"HTTP error during Celery check: {str(e)}",
             )
 
     async def check_critical_endpoints(self) -> HealthCheckResult:
@@ -497,13 +529,22 @@ class HealthCheck:
                                 in (200, 401, 403),  # Auth errors are OK
                             }
                         )
-                    except Exception as e:
+                    except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as e:
                         results.append(
                             {
                                 "endpoint": endpoint,
                                 "status": 0,
                                 "healthy": False,
-                                "error": str(e),
+                                "error": f"Network error: {str(e)}",
+                            }
+                        )
+                    except httpx.HTTPError as e:
+                        results.append(
+                            {
+                                "endpoint": endpoint,
+                                "status": 0,
+                                "healthy": False,
+                                "error": f"HTTP error: {str(e)}",
                             }
                         )
 
@@ -517,13 +558,21 @@ class HealthCheck:
                 message=f"{len([r for r in results if r['healthy']])}/{len(results)} endpoints healthy",
                 details={"endpoints": results},
             )
-        except Exception as e:
+        except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as e:
             elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
             return HealthCheckResult(
                 check_type=HealthCheckType.CRITICAL_ENDPOINTS,
                 is_healthy=False,
                 response_time_ms=elapsed_ms,
-                message=f"Critical endpoints check failed: {str(e)}",
+                message=f"Network error checking critical endpoints: {str(e)}",
+            )
+        except httpx.HTTPError as e:
+            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            return HealthCheckResult(
+                check_type=HealthCheckType.CRITICAL_ENDPOINTS,
+                is_healthy=False,
+                response_time_ms=elapsed_ms,
+                message=f"HTTP error checking critical endpoints: {str(e)}",
             )
 
     async def run_all_checks(self) -> list[HealthCheckResult]:
@@ -546,8 +595,8 @@ class HealthCheck:
             try:
                 result = await check
                 results.append(result)
-            except Exception as e:
-                logger.error(f"Health check error: {e}")
+            except (httpx.HTTPError, ValueError, RuntimeError) as e:
+                logger.error(f"Health check error: {e}", exc_info=True)
 
         return results
 
@@ -846,14 +895,25 @@ class BlueGreenDeploymentManager:
             )
             return True
 
-        except Exception as e:
-            logger.error(f"Traffic switch failed: {e}")
+        except RuntimeError as e:
+            logger.error(f"Traffic switch failed: {e}", exc_info=True)
 
             # Send notification
             if self.config.notify_on_failure:
                 await self._send_notification(
                     "Traffic Switch Failed",
                     f"Failed to switch traffic: {str(e)}",
+                    "error",
+                )
+
+            return False
+        except (ValueError, TypeError) as e:
+            logger.error(f"Invalid configuration during traffic switch: {e}", exc_info=True)
+
+            if self.config.notify_on_failure:
+                await self._send_notification(
+                    "Traffic Switch Failed",
+                    f"Configuration error: {str(e)}",
                     "error",
                 )
 
@@ -1110,8 +1170,11 @@ class BlueGreenDeploymentManager:
             logger.info(f"Rollback complete for deployment {deployment_id}")
             return True
 
-        except Exception as e:
-            logger.error(f"Rollback failed: {e}")
+        except RuntimeError as e:
+            logger.error(f"Rollback failed: {e}", exc_info=True)
+            return False
+        except (ValueError, TypeError) as e:
+            logger.error(f"Invalid state during rollback: {e}", exc_info=True)
             return False
 
     async def complete_deployment(
@@ -1198,10 +1261,21 @@ class BlueGreenDeploymentManager:
             logger.info("Database migrations completed successfully")
             return True
 
-        except Exception as e:
-            logger.error(f"Database migration failed: {e}")
+        except RuntimeError as e:
+            logger.error(f"Database migration failed: {e}", exc_info=True)
 
             # Rollback if configured
+            if self.config.migration_rollback_on_failure and deployment_id:
+                await self.rollback_deployment(
+                    deployment_id,
+                    RollbackReason.DATABASE_MIGRATION_FAILED,
+                    str(e),
+                )
+
+            return False
+        except (OSError, IOError) as e:
+            logger.error(f"File I/O error during migration: {e}", exc_info=True)
+
             if self.config.migration_rollback_on_failure and deployment_id:
                 await self.rollback_deployment(
                     deployment_id,
@@ -1275,8 +1349,8 @@ class BlueGreenDeploymentManager:
         for handler in handlers:
             try:
                 handler(data)
-            except Exception as e:
-                logger.error(f"Event handler error ({event_type}): {e}")
+            except (ValueError, TypeError, RuntimeError) as e:
+                logger.error(f"Event handler error ({event_type}): {e}", exc_info=True)
 
     async def _send_notification(
         self,

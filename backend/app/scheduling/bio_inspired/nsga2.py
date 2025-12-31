@@ -56,7 +56,7 @@ class ParetoFront:
     individuals: list[Individual] = field(default_factory=list)
     generation: int = 0
 
-    def add(self, individual: Individual):
+    def add(self, individual: Individual) -> None:
         """Add individual if it's non-dominated."""
         # Check if dominated by any existing member
         for existing in self.individuals:
@@ -516,7 +516,7 @@ class NSGA2Solver(BioInspiredSolver):
 
         return fronts
 
-    def _assign_crowding_distance(self):
+    def _assign_crowding_distance(self) -> None:
         """Assign crowding distance to all individuals in each front."""
         for front in self.fronts:
             CrowdingDistance.compute(front, self.objectives)

@@ -121,7 +121,7 @@ class PheromoneMatrix:
             (self.n_templates, self.n_templates), initial_value, dtype=np.float64
         )
 
-    def evaporate(self):
+    def evaporate(self) -> None:
         """Apply pheromone evaporation."""
         self.assignment *= 1 - self.evaporation_rate
         self.transition *= 1 - self.evaporation_rate
@@ -134,7 +134,7 @@ class PheromoneMatrix:
         self,
         paths: list[AntPath],
         elite_factor: float = 1.0,
-    ):
+    ) -> None:
         """
         Deposit pheromone on paths.
 
@@ -437,7 +437,7 @@ class AntColonySolver(BioInspiredSolver):
         context: SchedulingContext,
         n_residents: int,
         n_blocks: int,
-    ):
+    ) -> None:
         """
         Build heuristic matrix for ant decisions.
 
@@ -582,7 +582,7 @@ class AntColonySolver(BioInspiredSolver):
     def _deposit_pheromone(
         self,
         solutions: list[tuple[Chromosome, FitnessVector, float]],
-    ):
+    ) -> None:
         """
         Deposit pheromone based on solution quality.
 
@@ -611,7 +611,7 @@ class AntColonySolver(BioInspiredSolver):
         iteration: int,
         solutions: list[tuple[Chromosome, FitnessVector, float]],
         best_fitness: float,
-    ):
+    ) -> None:
         """Track statistics for this iteration."""
         fitness_values = [s[2] for s in solutions]
 
