@@ -158,10 +158,9 @@ function createApiClient(): AxiosInstance {
     withCredentials: true,
   })
 
-  // Request interceptor - debug logging
+  // Request interceptor
   client.interceptors.request.use(
     (config) => {
-      console.log(`[api.ts] REQUEST: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`)
       return config
     },
     (error) => {
@@ -173,7 +172,6 @@ function createApiClient(): AxiosInstance {
   // Response interceptor - transform errors and handle token refresh
   client.interceptors.response.use(
     (response) => {
-      console.log(`[api.ts] RESPONSE: ${response.status} ${response.config.url}`)
       // Issue #5: Handle 207 Multi-Status as a successful response (partial success)
       // This is used for schedule generation that completes but has validation warnings
       return response
@@ -195,8 +193,6 @@ function createApiClient(): AxiosInstance {
         // Don't try to refresh for auth endpoints (prevents infinite loops)
         // Don't retry if we already tried to refresh
         if (apiError.status === 401 && !isAuthEndpoint && !originalRequest._retry) {
-          console.log('[api.ts] 401 received, attempting token refresh...')
-
           try {
             const auth = await getAuthModule()
 
@@ -206,7 +202,6 @@ function createApiClient(): AxiosInstance {
               const refreshed = await auth.attemptTokenRefresh()
 
               if (refreshed) {
-                console.log('[api.ts] Token refresh successful, retrying original request')
                 // Retry the original request - the new access token is already
                 // set as httpOnly cookie by the refresh endpoint
                 return client(originalRequest)
@@ -219,7 +214,6 @@ function createApiClient(): AxiosInstance {
           // Refresh failed or not available - redirect to login
           // Don't redirect if already on login page (prevents infinite loop)
           if (!window.location.pathname.includes('/login')) {
-            console.log('[api.ts] Token refresh failed, redirecting to login')
             window.location.href = '/login'
           }
         }
