@@ -3,13 +3,18 @@
 > **From:** Session 025 (ORCHESTRATOR)
 > **Date:** 2025-12-30
 > **Branch:** `claude/session-025-handoff`
-> **Status:** Clean, reconnaissance complete
+> **PR:** #563 (ready for merge)
+> **Status:** Complete - reconnaissance + signal amplification
 
 ---
 
 ## Executive Summary
 
-Session 025 was a **comprehensive reconnaissance session**. 12 parallel G2_RECON agents audited the entire codebase to determine actual vs claimed status. Key finding: **HUMAN_TODO.md was significantly stale** - multiple items marked "open" were already fixed.
+Session 025 had **two phases**:
+
+**Phase 1: Reconnaissance** - 12 parallel G2_RECON agents audited the codebase. Key finding: **HUMAN_TODO.md was significantly stale** - multiple items marked "open" were already fixed.
+
+**Phase 2: Signal Amplification** - 11 parallel agents implemented all 8 recommendations from PR #561 (CCW Parallelization Analysis). Added parallel_hints to skills, auto-tier selection, new protocols, and slash commands.
 
 ### What This Session Discovered
 
@@ -122,16 +127,87 @@ The plan file contains ready-to-use prompts for:
 
 ---
 
-## Recommended Next Session Actions
+## Signal Amplification Implemented (PR #563)
 
-### If Continuing Locally:
-1. Rebuild database with fresh seed data (fixes MCP mock faculty)
-2. Implement actual CD deployment logic
-3. Add MCP server to docker-compose.prod.yml
+### New Capabilities Added
 
-### If Using CCW:
-Copy prompts from `.claude/plans/ancient-leaping-riddle.md`
+| Priority | Recommendation | Files |
+|----------|---------------|-------|
+| P0 | parallel_hints + model_tier to 10 skills | 10 SKILL.md files |
+| P0 | Auto-tier selection (III.E) | ORCHESTRATOR.md |
+| P1 | Level 4 speculative reads | PARALLELISM_FRAMEWORK.md |
+| P1 | Result streaming protocol | protocols/RESULT_STREAMING.md |
+| P2 | 4 quick-invoke commands | commands/*.md |
+| P2 | Todo parallel metadata | docs/TODO_PARALLEL_SCHEMA.md |
+| P2 | Signal propagation protocol | protocols/SIGNAL_PROPAGATION.md |
+| P3 | Multi-terminal handoff | protocols/MULTI_TERMINAL_HANDOFF.md |
+
+### New Slash Commands
+- `/parallel-explore` - Auto-decompose exploration queries
+- `/parallel-implement` - Multi-agent implementation
+- `/parallel-test` - Parallel test execution
+- `/handoff-session` - Marathon session coordination
 
 ---
 
-*Session 025 Complete - Reconnaissance Synthesis Delivered*
+## Retrospective Findings
+
+### What Went Well
+- 23 agents total, zero failures
+- Single-message parallel spawning worked flawlessly
+- HISTORIAN documentation captured the "architecture vs ergonomics" insight
+
+### What Needs Attention Next Session
+1. **Validate skill YAML** - Never tested that parallel_hints parses correctly
+2. **Test new slash commands** - Created but never invoked
+3. **Protocol docs are aspirational** - They describe patterns, not implementations
+
+### Open Process Issue
+**COORD_AAR never auto-triggers at session end.** Need to investigate Claude Code hooks system.
+
+---
+
+## Recommended Next Session Actions
+
+### Priority 1: Validate Signal Amplification
+1. Test one slash command (e.g., `/parallel-explore "test query"`)
+2. Verify skill YAML parses: `for f in .claude/skills/*/SKILL.md; do head -20 "$f"; done`
+3. Decide: Are protocols "proposed" or do we build infrastructure?
+
+### Priority 2: Critical Items (Still Unresolved)
+1. CD pipeline - needs infrastructure decision (SSH/K8s/Swarm?)
+2. MCP in prod compose - straightforward copy
+3. Procedure hooks - 12 stubs need API integration
+
+### Priority 3: CCW Delegation
+Use prompts from `.claude/plans/ancient-leaping-riddle.md`:
+- HUMAN_TODO.md cleanup
+- Console.log removal
+- API documentation stubs
+
+---
+
+## CCW Prompt: Session Lifecycle Hooks Investigation
+
+```
+Investigate how to reliably auto-trigger actions at the end of a Claude Code session.
+
+Context:
+- COORD_AAR agent should auto-trigger at session end for After Action Review
+- This never happens - requires manual invocation
+- Claude Code has hooks system but unclear if "session end" is hookable
+
+Questions:
+1. What events does Claude Code support for hooks?
+2. Is there a "session end" event?
+3. If not, alternatives: time-based? token-based? explicit /end-session command?
+4. How do other AI agent frameworks handle session lifecycle?
+
+Check: .claude/hooks/, .claude/settings.json, Claude Code docs
+
+Output to: .claude/docs/SESSION_LIFECYCLE_HOOKS.md
+```
+
+---
+
+*Session 025 Complete - PR #563 ready for sacred timeline*
