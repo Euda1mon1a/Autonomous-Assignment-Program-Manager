@@ -198,6 +198,48 @@ services:
       retries: 3
       start_period: 40s
 
+  # MCP Server - Production Settings
+  # Model Context Protocol for AI Assistant Integration
+  # Provides 29+ specialized scheduling tools for Claude Code and other AI agents
+  mcp-server:
+    restart: always
+    environment:
+      # Transport mode - STDIO for production security (internal use only)
+      MCP_TRANSPORT: stdio
+      # API Integration - connects to FastAPI backend via internal network
+      API_BASE_URL: http://backend:8000
+      API_USERNAME: ${API_USERNAME}
+      API_PASSWORD: ${API_PASSWORD}
+      # Celery for async task management
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/0
+      # Production logging
+      LOG_LEVEL: WARNING
+      # Python path for imports
+      PYTHONPATH: /app/src
+    # No port exposure - internal network only for production security
+    # Access via: docker exec -i residency-scheduler-mcp python -m scheduler_mcp.server
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+    healthcheck:
+      test: ["CMD", "python", "-c", "from scheduler_mcp.server import mcp; print('healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
   # Nginx Reverse Proxy (Production)
   nginx:
     image: nginx:alpine
