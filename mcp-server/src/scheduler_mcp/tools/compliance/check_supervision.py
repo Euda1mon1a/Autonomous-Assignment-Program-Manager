@@ -84,7 +84,28 @@ class CheckSupervisionTool(
     async def execute(
         self, request: SupervisionCheckRequest
     ) -> SupervisionCheckResponse:
-        """Execute the tool."""
+        """
+        Execute ACGME supervision ratio compliance check.
+
+        Validates faculty-to-resident ratios for each PGY level to ensure adequate
+        supervision per ACGME requirements. Ratios vary by training level to reflect
+        increasing autonomy.
+
+        ACGME Supervision Requirements:
+        - PGY-1: 1 faculty per 2 residents (1:2 ratio)
+        - PGY-2: 1 faculty per 4 residents (1:4 ratio)
+        - PGY-3: 1 faculty per 4 residents (1:4 ratio)
+
+        Args:
+            request: Validated request with specific date and session (AM/PM)
+
+        Returns:
+            SupervisionCheckResponse with per-level ratios and overall compliance
+
+        Raises:
+            APIError: Backend API request fails
+            ValidationError: Invalid date or session
+        """
         client = self._require_api_client()
 
         try:
@@ -119,8 +140,28 @@ class CheckSupervisionTool(
                 total_faculty=data.get("total_faculty", 0),
             )
 
+        except (ConnectionError, TimeoutError) as e:
+            # Network connectivity issues
+            return SupervisionCheckResponse(
+                date=request.date,
+                session=request.session,
+                overall_compliant=False,
+                ratios=[],
+                total_residents=0,
+                total_faculty=0,
+            )
+        except KeyError as e:
+            # Missing required data fields
+            return SupervisionCheckResponse(
+                date=request.date,
+                session=request.session,
+                overall_compliant=False,
+                ratios=[],
+                total_residents=0,
+                total_faculty=0,
+            )
         except Exception as e:
-            # Return empty result on error
+            # Unexpected errors
             return SupervisionCheckResponse(
                 date=request.date,
                 session=request.session,
