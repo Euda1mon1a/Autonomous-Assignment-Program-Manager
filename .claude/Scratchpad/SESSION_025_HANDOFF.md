@@ -211,3 +211,78 @@ Output to: .claude/docs/SESSION_LIFECYCLE_HOOKS.md
 ---
 
 *Session 025 Complete - PR #563 ready for sacred timeline*
+
+### Docker State
+- MCP mock data is DB issue (needs data seeding), not code issue
+- MCP server works in dev compose, missing from prod compose
+
+---
+
+## CRITICAL: Production Blockers
+
+### 1. CD Pipeline - No Deployment Logic
+**File:** `.github/workflows/cd.yml` (lines 135-205)
+**Status:** 100% placeholder - all deployment commands are comments
+```yaml
+deploy-staging:
+  # Option 1: SSH deployment - COMMENTED
+  # Option 2: Kubernetes deployment - COMMENTED
+  # Option 3: Docker Swarm deployment - COMMENTED
+```
+
+### 2. MCP Server Missing from Production
+**File:** `docker-compose.prod.yml`
+**Status:** Service definition not present (exists in dev compose)
+
+### 3. Frontend Procedure Hooks
+**File:** `frontend/src/hooks/useProcedures.ts`
+**Status:** All 12 hooks throw "Not implemented"
+
+---
+
+## HIGH Priority Items
+
+| Issue | Location | Effort |
+|-------|----------|--------|
+| 4 resilience component skeletons | `frontend/src/features/resilience/` | MEDIUM |
+| 102 skipped backend tests | `backend/tests/**/test_*.py` | HIGH |
+| Admin email never sent | `backend/app/api/routes/admin_users.py:232` | MEDIUM |
+| Penrose efficiency 10+ TODOs | `backend/app/scheduling/penrose_efficiency.py` | HIGH |
+| 44 console.log statements | `frontend/src/lib/auth.ts` + others | LOW |
+
+---
+
+## CCW-Delegable Tasks (6 Prompts in Plan)
+
+The plan file contains ready-to-use prompts for:
+1. **HUMAN_TODO.md Cleanup** - Mark fixed items, add new discoveries
+2. **Console.log Cleanup** - Remove 44 debug statements
+3. **API Documentation Stubs** - 5 core route modules
+4. **Add MCP to Production Compose** - Copy from dev
+5. **.env.example Update** - 25+ missing vars
+6. **Agent Notes Sections** - 4 incomplete agent specs
+
+---
+
+## User Context from Session
+
+- MCP returning mock faculty data is a **database seeding issue**, not code
+- User prefers LOCAL work for Docker/git, CCW for documentation
+- 12 parallel G2_RECON agents provided comprehensive coverage
+- HISTORIAN created educational doc on Explorer vs G2_RECON distinction
+
+---
+
+## Recommended Next Session Actions
+
+### If Continuing Locally:
+1. Rebuild database with fresh seed data (fixes MCP mock faculty)
+2. Implement actual CD deployment logic
+3. Add MCP server to docker-compose.prod.yml
+
+### If Using CCW:
+Copy prompts from `.claude/plans/ancient-leaping-riddle.md`
+
+---
+
+*Session 025 Complete - Reconnaissance Synthesis Delivered*

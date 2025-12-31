@@ -262,7 +262,7 @@ FRONTEND_ENGINEER should return:
 - [ ] Manual: [instructions for visual verification]
 
 ## Notes
-[Any caveats, TODOs, or coordination needed with other agents]
+Coordinates with ARCHITECT for API contract changes. Escalates accessibility concerns to COORD_QUALITY. Works under COORD_FRONTEND for UI initiatives.
 ```
 
 **For Bug Fixes:**
