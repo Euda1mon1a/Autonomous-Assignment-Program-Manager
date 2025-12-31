@@ -53,7 +53,7 @@ class ConstraintMetadata:
     description: str = ""
     is_deprecated: bool = False
     deprecation_message: str = ""
-    replacement_constraint: Optional[str] = None  # Name of replacement if deprecated
+    replacement_constraint: str | None = None  # Name of replacement if deprecated
     tags: list[str] = field(default_factory=list)
     constraints_types: list[ConstraintType] = field(default_factory=list)
     is_enabled: bool = True
@@ -64,13 +64,15 @@ class ConstraintMetadata:
         """String representation."""
         status = "(DEPRECATED)" if self.is_deprecated else ""
         enabled = "[DISABLED]" if not self.is_enabled else ""
-        return f"{self.name} v{self.version} [{self.category}] {status} {enabled}".strip()
+        return (
+            f"{self.name} v{self.version} [{self.category}] {status} {enabled}".strip()
+        )
 
     def is_active(self) -> bool:
         """Check if constraint is active (not deprecated and enabled)."""
         return not self.is_deprecated and self.is_enabled
 
-    def get_deprecation_info(self) -> Optional[dict]:
+    def get_deprecation_info(self) -> dict | None:
         """Get deprecation information if applicable."""
         if not self.is_deprecated:
             return None
@@ -118,8 +120,8 @@ class ConstraintRegistry:
         version: str,
         category: str,
         description: str = "",
-        tags: Optional[list[str]] = None,
-        constraint_types: Optional[list[ConstraintType]] = None,
+        tags: list[str] | None = None,
+        constraint_types: list[ConstraintType] | None = None,
         author: str = "",
         since_version: str = "",
     ) -> Callable:
@@ -150,6 +152,7 @@ class ConstraintRegistry:
             ... class MyConstraint(HardConstraint):
             ...     ...
         """
+
         def decorator(constraint_class: type) -> type:
             # Create metadata
             metadata = ConstraintMetadata(
@@ -179,8 +182,8 @@ class ConstraintRegistry:
     def get(
         cls,
         name: str,
-        version: Optional[str] = None,
-    ) -> Optional[type]:
+        version: str | None = None,
+    ) -> type | None:
         """
         Get constraint class by name and optional version.
 
@@ -222,8 +225,8 @@ class ConstraintRegistry:
     def get_metadata(
         cls,
         name: str,
-        version: Optional[str] = None,
-    ) -> Optional[ConstraintMetadata]:
+        version: str | None = None,
+    ) -> ConstraintMetadata | None:
         """
         Get constraint metadata.
 
@@ -267,9 +270,9 @@ class ConstraintRegistry:
     @classmethod
     def find(
         cls,
-        category: Optional[str] = None,
-        tag: Optional[str] = None,
-        constraint_type: Optional[ConstraintType] = None,
+        category: str | None = None,
+        tag: str | None = None,
+        constraint_type: ConstraintType | None = None,
         active_only: bool = False,
     ) -> list[ConstraintMetadata]:
         """
@@ -312,8 +315,8 @@ class ConstraintRegistry:
         cls,
         name: str,
         message: str,
-        replacement: Optional[str] = None,
-        version: Optional[str] = None,
+        replacement: str | None = None,
+        version: str | None = None,
     ) -> bool:
         """
         Mark constraint as deprecated.
@@ -361,7 +364,7 @@ class ConstraintRegistry:
     def enable(
         cls,
         name: str,
-        version: Optional[str] = None,
+        version: str | None = None,
     ) -> bool:
         """
         Enable a constraint.
@@ -390,7 +393,7 @@ class ConstraintRegistry:
     def disable(
         cls,
         name: str,
-        version: Optional[str] = None,
+        version: str | None = None,
     ) -> bool:
         """
         Disable a constraint.
@@ -477,7 +480,7 @@ class ConstraintRegistry:
         deprecated = sum(1 for m in cls._constraints.values() if m.is_deprecated)
         disabled = sum(1 for m in cls._constraints.values() if not m.is_enabled)
 
-        lines.append(f"\nStatus:")
+        lines.append("\nStatus:")
         lines.append(f"  Active: {active}")
         lines.append(f"  Deprecated: {deprecated}")
         lines.append(f"  Disabled: {disabled}")

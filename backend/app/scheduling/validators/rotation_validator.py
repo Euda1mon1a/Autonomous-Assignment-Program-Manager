@@ -96,7 +96,7 @@ class RotationValidator:
         rotation_name: str,
         start_date: date,
         end_date: date,
-    ) -> Optional[RotationViolation]:
+    ) -> RotationViolation | None:
         """
         Validate rotation meets minimum duration.
 
@@ -133,7 +133,7 @@ class RotationValidator:
         pgy_level: int,
         clinic_blocks_completed: int,
         year_to_date: bool = False,
-    ) -> Optional[RotationViolation]:
+    ) -> RotationViolation | None:
         """
         Validate PGY-level minimum clinic block requirements.
 
@@ -179,7 +179,7 @@ class RotationValidator:
         person_id: UUID,
         pgy_level: int,
         specialty_blocks_completed: int,
-    ) -> Optional[RotationViolation]:
+    ) -> RotationViolation | None:
         """
         Validate specialty/elective rotation requirements (PGY-2/3).
 
@@ -218,8 +218,8 @@ class RotationValidator:
         person_id: UUID,
         pgy_level: int,
         procedures_completed: int,
-        target_volume: Optional[int] = None,
-    ) -> tuple[Optional[RotationViolation], Optional[RotationWarning]]:
+        target_volume: int | None = None,
+    ) -> tuple[RotationViolation | None, RotationWarning | None]:
         """
         Validate procedure volume requirements.
 
@@ -253,7 +253,7 @@ class RotationValidator:
                 message=(
                     f"Low procedure volume: {procedures_completed} procedures "
                     f"(target {target_volume}, only "
-                    f"{procedures_completed/target_volume*100:.0f}% complete)"
+                    f"{procedures_completed / target_volume * 100:.0f}% complete)"
                 ),
                 rotation_name="Procedures",
                 actual_value=procedures_completed,
@@ -266,7 +266,7 @@ class RotationValidator:
                 warning_type="low_volume",
                 message=(
                     f"Procedure volume below target: {procedures_completed}/"
-                    f"{target_volume} ({procedures_completed/target_volume*100:.0f}%)"
+                    f"{target_volume} ({procedures_completed / target_volume * 100:.0f}%)"
                 ),
                 rotation_name="Procedures",
                 current_value=procedures_completed,
@@ -298,12 +298,13 @@ class RotationValidator:
         # PGY-1 specific rules
         if pgy_level == 1:
             # FMIT should be early (first 6 months ideally)
-            rotation_names = [r.get('rotation_name', '').upper()
-                             for r in completed_rotations]
+            rotation_names = [
+                r.get("rotation_name", "").upper() for r in completed_rotations
+            ]
 
             # Check if FMIT appears late
-            if 'FMIT' in rotation_names:
-                fmit_index = rotation_names.index('FMIT')
+            if "FMIT" in rotation_names:
+                fmit_index = rotation_names.index("FMIT")
                 if fmit_index > 5:  # After 5 other rotations
                     violations.append(
                         RotationViolation(
@@ -323,19 +324,20 @@ class RotationValidator:
         # PGY-2/3 rules
         if pgy_level >= 2:
             # Specialty rotations should be distributed (not clustered)
-            rotation_names = [r.get('rotation_name', '').upper()
-                             for r in completed_rotations]
+            rotation_names = [
+                r.get("rotation_name", "").upper() for r in completed_rotations
+            ]
             specialty_indices = [
-                i for i, r in enumerate(rotation_names)
-                if 'SPECIALTY' in r or 'ELECTIVE' in r or 'DERM' in r
-                or 'NEURO' in r
+                i
+                for i, r in enumerate(rotation_names)
+                if "SPECIALTY" in r or "ELECTIVE" in r or "DERM" in r or "NEURO" in r
             ]
 
             # Check for clustering (more than 2 consecutive specialty rotations)
             if len(specialty_indices) >= 3:
                 consecutive_count = 1
                 for i in range(1, len(specialty_indices)):
-                    if specialty_indices[i] == specialty_indices[i-1] + 1:
+                    if specialty_indices[i] == specialty_indices[i - 1] + 1:
                         consecutive_count += 1
                         if consecutive_count > 2:
                             violations.append(
@@ -362,7 +364,7 @@ class RotationValidator:
         person_id: UUID,
         pgy_level: int,
         continuity_blocks_per_month: float,
-    ) -> Optional[RotationWarning]:
+    ) -> RotationWarning | None:
         """
         Validate longitudinal continuity clinic frequency.
 
@@ -451,30 +453,33 @@ class RotationValidator:
         total_blocks = 0
 
         for rotation in completed_rotations:
-            rot_type = rotation.get('rotation_type', 'Other')
-            blocks = rotation.get('blocks', 1)
+            rot_type = rotation.get("rotation_type", "Other")
+            blocks = rotation.get("blocks", 1)
             total_blocks += blocks
 
             if rot_type not in rotation_by_type:
                 rotation_by_type[rot_type] = 0
             rotation_by_type[rot_type] += blocks
 
-        clinic_blocks = (
-            rotation_by_type.get('Clinic', 0) +
-            rotation_by_type.get('Continuity Clinic', 0)
+        clinic_blocks = rotation_by_type.get("Clinic", 0) + rotation_by_type.get(
+            "Continuity Clinic", 0
         )
-        specialty_blocks = rotation_by_type.get('Specialty', 0)
-        inpatient_blocks = rotation_by_type.get('Inpatient', 0)
+        specialty_blocks = rotation_by_type.get("Specialty", 0)
+        inpatient_blocks = rotation_by_type.get("Inpatient", 0)
 
         return {
-            'person_id': str(person_id),
-            'pgy_level': pgy_level,
-            'total_blocks_completed': total_blocks,
-            'blocks_available': total_blocks_available,
-            'utilization_rate': total_blocks / total_blocks_available if total_blocks_available > 0 else 0,
-            'rotation_breakdown': rotation_by_type,
-            'clinic_blocks': clinic_blocks,
-            'specialty_blocks': specialty_blocks,
-            'inpatient_blocks': inpatient_blocks,
-            'diversity_score': len(rotation_by_type),  # Number of distinct rotation types
+            "person_id": str(person_id),
+            "pgy_level": pgy_level,
+            "total_blocks_completed": total_blocks,
+            "blocks_available": total_blocks_available,
+            "utilization_rate": total_blocks / total_blocks_available
+            if total_blocks_available > 0
+            else 0,
+            "rotation_breakdown": rotation_by_type,
+            "clinic_blocks": clinic_blocks,
+            "specialty_blocks": specialty_blocks,
+            "inpatient_blocks": inpatient_blocks,
+            "diversity_score": len(
+                rotation_by_type
+            ),  # Number of distinct rotation types
         }

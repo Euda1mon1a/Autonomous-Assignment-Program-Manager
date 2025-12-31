@@ -149,9 +149,7 @@ class CoverageValidator:
 
         # Simulate swap effect
         if removing_faculty:
-            assignments = [
-                a for a in assignments if a.person_id != removing_faculty
-            ]
+            assignments = [a for a in assignments if a.person_id != removing_faculty]
 
         # Would add assignments for adding_faculty
         # (simplified - actual implementation would create new assignments)
@@ -172,13 +170,15 @@ class CoverageValidator:
             actual_count = len(rotation_counts.get(rotation_type, set()))
 
             if actual_count < min_count:
-                gaps.append({
-                    "rotation_type": rotation_type,
-                    "week": week_start.isoformat(),
-                    "required": min_count,
-                    "actual": actual_count,
-                    "severity": "critical" if actual_count == 0 else "warning",
-                })
+                gaps.append(
+                    {
+                        "rotation_type": rotation_type,
+                        "week": week_start.isoformat(),
+                        "required": min_count,
+                        "actual": actual_count,
+                        "severity": "critical" if actual_count == 0 else "warning",
+                    }
+                )
 
             elif actual_count == min_count:
                 warnings.append(
@@ -186,13 +186,9 @@ class CoverageValidator:
                     f"for week {week_start}"
                 )
 
-        metrics["rotation_counts"] = {
-            k: len(v) for k, v in rotation_counts.items()
-        }
+        metrics["rotation_counts"] = {k: len(v) for k, v in rotation_counts.items()}
 
-        metrics["total_faculty"] = len(
-            set(a.person_id for a in assignments)
-        )
+        metrics["total_faculty"] = len(set(a.person_id for a in assignments))
 
         return {
             "gaps": gaps,
@@ -210,13 +206,9 @@ class CoverageValidator:
         Some rotations may require specific specialty expertise.
         """
         # Get specialties of faculty involved
-        source_faculty = await self._get_faculty_specialty(
-            swap.source_faculty_id
-        )
+        source_faculty = await self._get_faculty_specialty(swap.source_faculty_id)
 
-        target_faculty = await self._get_faculty_specialty(
-            swap.target_faculty_id
-        )
+        target_faculty = await self._get_faculty_specialty(swap.target_faculty_id)
 
         gaps = []
 
@@ -231,9 +223,7 @@ class CoverageValidator:
 
     async def _get_faculty_specialty(self, faculty_id: UUID) -> str | None:
         """Get faculty member's specialty."""
-        result = await self.db.execute(
-            select(Person).where(Person.id == faculty_id)
-        )
+        result = await self.db.execute(select(Person).where(Person.id == faculty_id))
 
         faculty = result.scalar_one_or_none()
 

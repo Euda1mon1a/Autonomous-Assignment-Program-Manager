@@ -7,7 +7,12 @@ Tests Shewhart charts, CUSUM, EWMA, and Western Electric rules.
 import pytest
 from datetime import datetime
 
-from app.resilience.spc.control_chart import ControlChart, ControlChartType, CUSUMChart, EWMAChart
+from app.resilience.spc.control_chart import (
+    ControlChart,
+    ControlChartType,
+    CUSUMChart,
+    EWMAChart,
+)
 from app.resilience.spc.western_electric import WesternElectricRules
 
 
@@ -241,4 +246,9 @@ class TestWesternElectricRules:
 
         assert summary["total_violations"] >= 0
         assert "status" in summary
-        assert summary["status"] in ["in_control", "warning", "out_of_control", "stable"]
+        assert summary["status"] in [
+            "in_control",
+            "warning",
+            "out_of_control",
+            "stable",
+        ]

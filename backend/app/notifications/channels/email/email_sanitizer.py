@@ -21,10 +21,33 @@ class EmailSanitizer:
 
     # Allowed HTML tags
     ALLOWED_TAGS = {
-        "a", "b", "i", "u", "strong", "em", "p", "br",
-        "div", "span", "h1", "h2", "h3", "h4", "h5", "h6",
-        "ul", "ol", "li", "table", "tr", "td", "th",
-        "img", "pre", "code", "blockquote",
+        "a",
+        "b",
+        "i",
+        "u",
+        "strong",
+        "em",
+        "p",
+        "br",
+        "div",
+        "span",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "ul",
+        "ol",
+        "li",
+        "table",
+        "tr",
+        "td",
+        "th",
+        "img",
+        "pre",
+        "code",
+        "blockquote",
     }
 
     # Allowed attributes
@@ -63,7 +86,7 @@ class EmailSanitizer:
 
         # Remove javascript: URLs
         html_content = re.sub(
-            r'javascript:',
+            r"javascript:",
             "",
             html_content,
             flags=re.IGNORECASE,
@@ -97,21 +120,21 @@ class EmailSanitizer:
         """
         # Remove email addresses (for privacy)
         text = re.sub(
-            r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
+            r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
             "[EMAIL REDACTED]",
             text,
         )
 
         # Remove phone numbers
         text = re.sub(
-            r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b',
+            r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b",
             "[PHONE REDACTED]",
             text,
         )
 
         # Remove SSNs
         text = re.sub(
-            r'\b\d{3}-\d{2}-\d{4}\b',
+            r"\b\d{3}-\d{2}-\d{4}\b",
             "[SSN REDACTED]",
             text,
         )

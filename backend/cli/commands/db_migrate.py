@@ -48,7 +48,9 @@ def upgrade(
 
 @app.command()
 def downgrade(
-    revision: str = typer.Argument("-1", help="Target revision (default: -1 for previous)"),
+    revision: str = typer.Argument(
+        "-1", help="Target revision (default: -1 for previous)"
+    ),
 ):
     """
     Downgrade database to a previous version.
@@ -126,7 +128,9 @@ def current():
 @app.command()
 def create(
     message: str = typer.Argument(..., help="Migration message"),
-    autogenerate: bool = typer.Option(True, "--autogenerate/--manual", help="Auto-generate migration"),
+    autogenerate: bool = typer.Option(
+        True, "--autogenerate/--manual", help="Auto-generate migration"
+    ),
 ):
     """
     Create a new migration.

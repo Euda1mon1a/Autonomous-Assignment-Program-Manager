@@ -15,7 +15,7 @@ from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
 from app.models.absence import Absence
-from app.models.swap import SwapRequest
+from app.models.swap import SwapRecord
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +43,9 @@ class MetricCalculator:
         self,
         start_date: date,
         end_date: date,
-        person_id: Optional[str] = None,
-        rotation_type: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        person_id: str | None = None,
+        rotation_type: str | None = None,
+    ) -> dict[str, Any]:
         """
         Calculate schedule-related metrics.
 
@@ -109,7 +109,7 @@ class MetricCalculator:
         avg_weekly_hours = total_hours / weeks if weeks > 0 else 0
 
         # Rotation distribution
-        rotation_counts: Dict[str, int] = {}
+        rotation_counts: dict[str, int] = {}
         for assignment in assignments:
             rotation_name = assignment.activity_name
             rotation_counts[rotation_name] = rotation_counts.get(rotation_name, 0) + 1
@@ -129,8 +129,8 @@ class MetricCalculator:
         self,
         start_date: date,
         end_date: date,
-        person_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        person_id: str | None = None,
+    ) -> dict[str, Any]:
         """
         Calculate ACGME compliance metrics.
 
@@ -218,7 +218,7 @@ class MetricCalculator:
         self,
         start_date: date,
         end_date: date,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate resilience framework metrics.
 
@@ -272,11 +272,11 @@ class MetricCalculator:
                     n1_vulnerable_count += 1
 
         # Get swap count
-        swap_query = select(func.count(SwapRequest.id)).where(
+        swap_query = select(func.count(SwapRecord.id)).where(
             and_(
-                SwapRequest.created_at >= start_date,
-                SwapRequest.created_at <= end_date,
-                SwapRequest.status == "approved",
+                SwapRecord.requested_at >= start_date,
+                SwapRecord.requested_at <= end_date,
+                SwapRecord.status == "approved",
             )
         )
         swap_result = await self.db.execute(swap_query)
@@ -295,7 +295,9 @@ class MetricCalculator:
             "total_capacity": total_capacity,
         }
 
-    def _check_80_hour_rule(self, assignments: List[Assignment]) -> List[Dict[str, Any]]:
+    def _check_80_hour_rule(
+        self, assignments: list[Assignment]
+    ) -> list[dict[str, Any]]:
         """
         Check for 80-hour rule violations.
 
@@ -304,7 +306,7 @@ class MetricCalculator:
         violations = []
 
         # Group by week
-        weeks: Dict[int, List[Assignment]] = {}
+        weeks: dict[int, list[Assignment]] = {}
         for assignment in assignments:
             if assignment.block and assignment.block.date:
                 week_num = assignment.block.date.isocalendar()[1]
@@ -323,15 +325,17 @@ class MetricCalculator:
             total_hours = len(window_assignments) * 4
 
             if total_hours > 80 * 4:  # 80 hours/week * 4 weeks
-                violations.append({
-                    "type": "80_hour_rule",
-                    "week_start": week_nums[i],
-                    "hours": total_hours,
-                })
+                violations.append(
+                    {
+                        "type": "80_hour_rule",
+                        "week_start": week_nums[i],
+                        "hours": total_hours,
+                    }
+                )
 
         return violations
 
-    def _check_1_in_7_rule(self, assignments: List[Assignment]) -> List[Dict[str, Any]]:
+    def _check_1_in_7_rule(self, assignments: list[Assignment]) -> list[dict[str, Any]]:
         """
         Check for 1-in-7 day off rule violations.
 
@@ -344,8 +348,7 @@ class MetricCalculator:
 
         # Sort by date
         sorted_assignments = sorted(
-            assignments,
-            key=lambda a: a.block.date if a.block else date.min
+            assignments, key=lambda a: a.block.date if a.block else date.min
         )
 
         # Check for 7 consecutive days with assignments
@@ -364,23 +367,25 @@ class MetricCalculator:
                 consecutive_days = 1
 
             if consecutive_days >= 7:
-                violations.append({
-                    "type": "1_in_7_rule",
-                    "date": current_date.isoformat(),
-                    "consecutive_days": consecutive_days,
-                })
+                violations.append(
+                    {
+                        "type": "1_in_7_rule",
+                        "date": current_date.isoformat(),
+                        "consecutive_days": consecutive_days,
+                    }
+                )
 
             last_date = current_date
 
         return violations
 
-    def _calculate_weekly_hours(self, assignments: List[Assignment]) -> List[float]:
+    def _calculate_weekly_hours(self, assignments: list[Assignment]) -> list[float]:
         """
         Calculate hours per week for assignments.
 
         Returns list of weekly hour totals.
         """
-        weeks: Dict[int, int] = {}
+        weeks: dict[int, int] = {}
 
         for assignment in assignments:
             if assignment.block and assignment.block.date:

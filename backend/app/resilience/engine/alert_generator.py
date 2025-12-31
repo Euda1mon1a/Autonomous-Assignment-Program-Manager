@@ -44,7 +44,7 @@ class Alert:
     metrics: dict
     recommendations: list[str]
     requires_ack: bool = False
-    escalation_time_minutes: Optional[int] = None
+    escalation_time_minutes: int | None = None
 
 
 class AlertGenerator:
@@ -68,7 +68,7 @@ class AlertGenerator:
         self,
         utilization: float,
         threshold: float = 0.90,
-    ) -> Optional[Alert]:
+    ) -> Alert | None:
         """
         Generate utilization alert.
 
@@ -123,7 +123,7 @@ class AlertGenerator:
         infected_count: int,
         total_population: int,
         rt: float,
-    ) -> Optional[Alert]:
+    ) -> Alert | None:
         """
         Generate burnout epidemic alert.
 
@@ -181,7 +181,7 @@ class AlertGenerator:
         self,
         spof_count: int,
         critical_scenarios: list,
-    ) -> Optional[Alert]:
+    ) -> Alert | None:
         """
         Generate N-1 contingency alert.
 
@@ -198,7 +198,9 @@ class AlertGenerator:
         severity = (
             AlertSeverity.CRITICAL
             if spof_count >= 5
-            else AlertSeverity.WARNING if spof_count >= 3 else AlertSeverity.INFO
+            else AlertSeverity.WARNING
+            if spof_count >= 3
+            else AlertSeverity.INFO
         )
 
         alert = Alert(

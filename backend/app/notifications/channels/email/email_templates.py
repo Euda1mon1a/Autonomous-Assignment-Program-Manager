@@ -89,7 +89,9 @@ def get_email_template(template_name: str) -> dict[str, str] | None:
     return EMAIL_TEMPLATES.get(template_name)
 
 
-def render_email_template(template_name: str, data: dict[str, Any]) -> dict[str, str] | None:
+def render_email_template(
+    template_name: str, data: dict[str, Any]
+) -> dict[str, str] | None:
     """
     Render email template with data.
 

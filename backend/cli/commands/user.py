@@ -42,7 +42,9 @@ def whoami():
 @app.command()
 def login(
     email: str = typer.Option(..., "--email", "-e", prompt=True, help="Email address"),
-    password: str = typer.Option(..., "--password", "-p", prompt=True, hide_input=True, help="Password"),
+    password: str = typer.Option(
+        ..., "--password", "-p", prompt=True, hide_input=True, help="Password"
+    ),
 ):
     """
     Login to the system.

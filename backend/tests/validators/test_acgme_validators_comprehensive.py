@@ -51,10 +51,7 @@ class TestWorkHourValidator:
         """Test that exactly 80 hours/week is COMPLIANT (not >=)."""
         # 28 days of 10 hours = 280 hours = 70 hours/week average
         start_date = date(2025, 1, 1)
-        hours_by_date = {
-            start_date + timedelta(days=i): 10.0
-            for i in range(28)
-        }
+        hours_by_date = {start_date + timedelta(days=i): 10.0 for i in range(28)}
 
         violations, warnings = validator.validate_80_hour_rolling_average(
             resident_id, hours_by_date
@@ -67,10 +64,7 @@ class TestWorkHourValidator:
         """Test that > 80 hours/week is VIOLATION."""
         # 28 days of 11.5 hours = 322 hours = 80.5 hours/week
         start_date = date(2025, 1, 1)
-        hours_by_date = {
-            start_date + timedelta(days=i): 11.5
-            for i in range(28)
-        }
+        hours_by_date = {start_date + timedelta(days=i): 11.5 for i in range(28)}
 
         violations, warnings = validator.validate_80_hour_rolling_average(
             resident_id, hours_by_date
@@ -84,10 +78,7 @@ class TestWorkHourValidator:
         """Test warning when approaching 80-hour limit (76+ hours)."""
         # 28 days of 10.85 hours = 304 hours = 76 hours/week
         start_date = date(2025, 1, 1)
-        hours_by_date = {
-            start_date + timedelta(days=i): 10.85
-            for i in range(28)
-        }
+        hours_by_date = {start_date + timedelta(days=i): 10.85 for i in range(28)}
 
         violations, warnings = validator.validate_80_hour_rolling_average(
             resident_id, hours_by_date
@@ -101,10 +92,10 @@ class TestWorkHourValidator:
         """Test 24+4 rule compliance."""
         shift_data = [
             {
-                'date': date(2025, 1, 1),
-                'start_time': '06:00',
-                'end_time': '18:00',
-                'duration_hours': 12.0,
+                "date": date(2025, 1, 1),
+                "start_time": "06:00",
+                "end_time": "18:00",
+                "duration_hours": 12.0,
             }
         ]
 
@@ -118,10 +109,10 @@ class TestWorkHourValidator:
         """Test 24+4 rule violation when shift exceeds 28 hours."""
         shift_data = [
             {
-                'date': date(2025, 1, 1),
-                'start_time': '06:00',
-                'end_time': '14:00',  # 32 hours
-                'duration_hours': 32.0,
+                "date": date(2025, 1, 1),
+                "start_time": "06:00",
+                "end_time": "14:00",  # 32 hours
+                "duration_hours": 32.0,
             }
         ]
 
@@ -136,13 +127,9 @@ class TestWorkHourValidator:
         """Test moonlighting hours integration with 80-hour limit."""
         # Regular hours: 70/week, Moonlighting: 15/week = 85/week total
         start_date = date(2025, 1, 1)
-        regular_hours = {
-            start_date + timedelta(days=i): 10.0
-            for i in range(28)
-        }
+        regular_hours = {start_date + timedelta(days=i): 10.0 for i in range(28)}
         moonlighting_hours = {
-            start_date + timedelta(days=i): 2.14
-            for i in range(28)
+            start_date + timedelta(days=i): 2.14 for i in range(28)
         }  # ~15 hours/week
 
         violations, warnings = validator.validate_80_hour_rolling_average(
@@ -249,25 +236,25 @@ class TestSupervisionValidator:
         """Test period-wide supervision validation."""
         blocks = [
             {
-                'block_id': uuid4(),
-                'block_date': date(2025, 1, 1),
-                'pgy1_residents': [uuid4(), uuid4()],
-                'other_residents': [],
-                'faculty_assigned': [uuid4()],
+                "block_id": uuid4(),
+                "block_date": date(2025, 1, 1),
+                "pgy1_residents": [uuid4(), uuid4()],
+                "other_residents": [],
+                "faculty_assigned": [uuid4()],
             },
             {
-                'block_id': uuid4(),
-                'block_date': date(2025, 1, 2),
-                'pgy1_residents': [uuid4(), uuid4(), uuid4()],
-                'other_residents': [],
-                'faculty_assigned': [uuid4()],
-            }
+                "block_id": uuid4(),
+                "block_date": date(2025, 1, 2),
+                "pgy1_residents": [uuid4(), uuid4(), uuid4()],
+                "other_residents": [],
+                "faculty_assigned": [uuid4()],
+            },
         ]
 
         violations, metrics = validator.validate_period_supervision(blocks)
 
         assert len(violations) == 1, "Only second block should violate"
-        assert metrics['compliance_rate'] < 100
+        assert metrics["compliance_rate"] < 100
 
 
 # ==============================================================================
@@ -292,22 +279,20 @@ class TestCallValidator:
         """Test compliant call frequency (every 3rd night)."""
         # ~9 calls in 28 days is compliant
         start_date = date(2025, 1, 1)
-        call_dates = [start_date + timedelta(days=i*3) for i in range(9)]
+        call_dates = [start_date + timedelta(days=i * 3) for i in range(9)]
 
-        violations, warnings = validator.validate_call_frequency(
-            faculty_id, call_dates
-        )
+        violations, warnings = validator.validate_call_frequency(faculty_id, call_dates)
 
         assert len(violations) == 0, "9 calls in 28 days should be compliant"
 
     def test_call_frequency_exceeds_limit(self, validator, faculty_id):
         """Test excessive call frequency."""
         start_date = date(2025, 1, 1)
-        call_dates = [start_date + timedelta(days=i) for i in range(12)]  # 12 calls in 12 days
+        call_dates = [
+            start_date + timedelta(days=i) for i in range(12)
+        ]  # 12 calls in 12 days
 
-        violations, warnings = validator.validate_call_frequency(
-            faculty_id, call_dates
-        )
+        violations, warnings = validator.validate_call_frequency(faculty_id, call_dates)
 
         assert len(violations) > 0, "Too many calls should violate"
         assert violations[0].violation_type == "frequency"
@@ -350,9 +335,7 @@ class TestCallValidator:
             date(2025, 1, 2),
         ]
 
-        violations, warnings = validator.validate_call_spacing(
-            faculty_id, call_dates
-        )
+        violations, warnings = validator.validate_call_spacing(faculty_id, call_dates)
 
         assert len(violations) > 0, "1-day spacing violates 2-day requirement"
 
@@ -369,7 +352,7 @@ class TestCallValidator:
             assignments,
         )
 
-        assert metrics['imbalance_ratio'] > 1.5, "Should detect imbalance"
+        assert metrics["imbalance_ratio"] > 1.5, "Should detect imbalance"
         assert len(warnings) > 0, "Should warn about imbalance"
 
 
@@ -393,51 +376,69 @@ class TestLeaveValidator:
 
     def test_blocking_leave_types(self, validator):
         """Test identification of blocking leave types."""
-        assert validator.should_block_assignment(
-            'deployment',
-            date(2025, 1, 1),
-            date(2025, 1, 31),
-        ) is True
+        assert (
+            validator.should_block_assignment(
+                "deployment",
+                date(2025, 1, 1),
+                date(2025, 1, 31),
+            )
+            is True
+        )
 
-        assert validator.should_block_assignment(
-            'vacation',
-            date(2025, 1, 1),
-            date(2025, 1, 31),
-        ) is False
+        assert (
+            validator.should_block_assignment(
+                "vacation",
+                date(2025, 1, 1),
+                date(2025, 1, 31),
+            )
+            is False
+        )
 
     def test_conditional_blocking_medical_short(self, validator):
         """Test medical leave <7 days is non-blocking."""
         # 5 days should not block
-        assert validator.should_block_assignment(
-            'medical',
-            date(2025, 1, 1),
-            date(2025, 1, 5),
-        ) is False
+        assert (
+            validator.should_block_assignment(
+                "medical",
+                date(2025, 1, 1),
+                date(2025, 1, 5),
+            )
+            is False
+        )
 
     def test_conditional_blocking_medical_long(self, validator):
         """Test medical leave >7 days is blocking."""
         # 10 days should block
-        assert validator.should_block_assignment(
-            'medical',
-            date(2025, 1, 1),
-            date(2025, 1, 10),
-        ) is True
+        assert (
+            validator.should_block_assignment(
+                "medical",
+                date(2025, 1, 1),
+                date(2025, 1, 10),
+            )
+            is True
+        )
 
     def test_conditional_blocking_sick_short(self, validator):
         """Test sick leave <=3 days is non-blocking."""
-        assert validator.should_block_assignment(
-            'sick',
-            date(2025, 1, 1),
-            date(2025, 1, 3),
-        ) is False
+        assert (
+            validator.should_block_assignment(
+                "sick",
+                date(2025, 1, 1),
+                date(2025, 1, 3),
+            )
+            is False
+        )
 
     def test_conditional_blocking_sick_long(self, validator):
         """Test sick leave >3 days is blocking."""
-        assert validator.should_block_assignment(
-            'sick',
-            date(2025, 1, 1),
-            date(2025, 1, 5),
-        ) is True
+        assert (
+            validator.should_block_assignment(
+                "sick",
+                date(2025, 1, 1),
+                date(2025, 1, 5),
+            )
+            is True
+        )
 
     def test_no_assignment_during_blocking(self, validator, resident_id):
         """Test detection of assignments during blocking absence."""
@@ -449,7 +450,7 @@ class TestLeaveValidator:
         violation = validator.validate_no_assignment_during_block(
             person_id=resident_id,
             absence_id=uuid4(),
-            absence_type='deployment',
+            absence_type="deployment",
             start_date=date(2025, 1, 1),
             end_date=date(2025, 1, 31),
             assigned_dates=assigned_dates,
@@ -481,7 +482,7 @@ class TestRotationValidator:
         """Test rotation meets minimum length."""
         violation = validator.validate_minimum_rotation_length(
             resident_id,
-            'FMIT',
+            "FMIT",
             date(2025, 1, 1),
             date(2025, 1, 14),
         )
@@ -492,7 +493,7 @@ class TestRotationValidator:
         """Test rotation is too short."""
         violation = validator.validate_minimum_rotation_length(
             resident_id,
-            'FMIT',
+            "FMIT",
             date(2025, 1, 1),
             date(2025, 1, 3),
         )
@@ -562,8 +563,7 @@ class TestComplianceIntegration:
 
         # Create hours data with violation
         hours_by_date = {
-            start_date + timedelta(days=i): 12.0
-            for i in range(28)
+            start_date + timedelta(days=i): 12.0 for i in range(28)
         }  # 84 hours/week
 
         # Check work hours
@@ -586,16 +586,16 @@ class TestComplianceIntegration:
     def test_full_schedule_scenario(self):
         """Test realistic full schedule with multiple residents."""
         validators = {
-            'work_hour': WorkHourValidator(),
-            'supervision': SupervisionValidator(),
-            'call': CallValidator(),
+            "work_hour": WorkHourValidator(),
+            "supervision": SupervisionValidator(),
+            "call": CallValidator(),
         }
 
         # Simulate 3 residents
         residents = [
-            {'id': uuid4(), 'pgy_level': 1},
-            {'id': uuid4(), 'pgy_level': 2},
-            {'id': uuid4(), 'pgy_level': 3},
+            {"id": uuid4(), "pgy_level": 1},
+            {"id": uuid4(), "pgy_level": 2},
+            {"id": uuid4(), "pgy_level": 3},
         ]
 
         period_start = date(2025, 1, 1)
@@ -604,24 +604,23 @@ class TestComplianceIntegration:
         results = []
         for resident in residents:
             hours_by_date = {
-                period_start + timedelta(days=i): 8.0
-                for i in range(28)
+                period_start + timedelta(days=i): 8.0 for i in range(28)
             }  # 56 hours/week - compliant
 
-            wh_violations, _ = (
-                validators['work_hour'].validate_80_hour_rolling_average(
-                    resident['id'], hours_by_date
-                )
+            wh_violations, _ = validators["work_hour"].validate_80_hour_rolling_average(
+                resident["id"], hours_by_date
             )
 
-            results.append({
-                'resident_id': resident['id'],
-                'pgy_level': resident['pgy_level'],
-                'work_hour_violations': len(wh_violations),
-            })
+            results.append(
+                {
+                    "resident_id": resident["id"],
+                    "pgy_level": resident["pgy_level"],
+                    "work_hour_violations": len(wh_violations),
+                }
+            )
 
-        assert all(r['work_hour_violations'] == 0 for r in results)
+        assert all(r["work_hour_violations"] == 0 for r in results)
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

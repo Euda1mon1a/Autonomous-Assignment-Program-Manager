@@ -49,11 +49,13 @@ class CoverageConstraintTemplate(SoftConstraint):
         for slot in self.required_slots or []:
             if coverage.get(slot, 0) < self.min_coverage:
                 uncovered_count += 1
-                violations.append({
-                    'constraint_name': self.name,
-                    'message': f'Slot {slot} not covered',
-                    'block_id': slot[0],
-                })
+                violations.append(
+                    {
+                        "constraint_name": self.name,
+                        "message": f"Slot {slot} not covered",
+                        "block_id": slot[0],
+                    }
+                )
 
         penalty = self.get_penalty(uncovered_count)
         return ConstraintResult(

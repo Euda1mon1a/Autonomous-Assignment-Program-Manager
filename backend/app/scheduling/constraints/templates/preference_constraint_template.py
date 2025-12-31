@@ -44,12 +44,14 @@ class PreferenceConstraintTemplate(SoftConstraint):
         for assignment in assignments:
             if self._violates_preference(assignment, context):
                 violation_count += 1
-                violations.append({
-                    'constraint_name': self.name,
-                    'message': f'Assignment violates {self.preference_type} preference',
-                    'person_id': assignment.person_id,
-                    'preferred': self.preferred_value,
-                })
+                violations.append(
+                    {
+                        "constraint_name": self.name,
+                        "message": f"Assignment violates {self.preference_type} preference",
+                        "person_id": assignment.person_id,
+                        "preferred": self.preferred_value,
+                    }
+                )
 
         penalty = self.get_penalty(violation_count * self.penalty_for_violation)
         return ConstraintResult(

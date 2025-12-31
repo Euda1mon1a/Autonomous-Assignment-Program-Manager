@@ -128,16 +128,16 @@ class GraphMatcher:
             total_weight += weight
 
         # Find unmatched requests
-        unmatched = [
-            r.id for r in requests if r.id not in matched_request_ids
-        ]
+        unmatched = [r.id for r in requests if r.id not in matched_request_ids]
 
         graph_stats = {
             "nodes": graph.number_of_nodes(),
             "edges": graph.number_of_edges(),
             "matched_pairs": len(matched_pairs),
             "unmatched": len(unmatched),
-            "average_weight": total_weight / len(matched_pairs) if matched_pairs else 0.0,
+            "average_weight": total_weight / len(matched_pairs)
+            if matched_pairs
+            else 0.0,
         }
 
         logger.info(

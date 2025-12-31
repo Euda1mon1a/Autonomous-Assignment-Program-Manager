@@ -25,9 +25,9 @@ class TrendDetector:
 
     def detect_trends(
         self,
-        time_series_data: Dict[str, pd.Series],
+        time_series_data: dict[str, pd.Series],
         min_observations: int = 4,
-    ) -> Dict[str, Dict[str, Any]]:
+    ) -> dict[str, dict[str, Any]]:
         """
         Detect trends in multiple time series.
 
@@ -52,7 +52,7 @@ class TrendDetector:
 
         return trends
 
-    def _analyze_trend(self, series: pd.Series) -> Dict[str, Any]:
+    def _analyze_trend(self, series: pd.Series) -> dict[str, Any]:
         """
         Analyze trend for a single time series.
 
@@ -87,9 +87,9 @@ class TrendDetector:
             direction = "decreasing"
 
         # Determine confidence based on p-value and R²
-        if p_value < 0.01 and r_value ** 2 > 0.7:
+        if p_value < 0.01 and r_value**2 > 0.7:
             confidence = "high"
-        elif p_value < 0.05 and r_value ** 2 > 0.5:
+        elif p_value < 0.05 and r_value**2 > 0.5:
             confidence = "medium"
         else:
             confidence = "low"
@@ -109,7 +109,7 @@ class TrendDetector:
             "direction": direction,
             "confidence": confidence,
             "slope": float(slope),
-            "r_squared": float(r_value ** 2),
+            "r_squared": float(r_value**2),
             "p_value": float(p_value),
             "percent_change": float(percent_change),
             "first_value": float(series.iloc[0]),
@@ -120,7 +120,7 @@ class TrendDetector:
         self,
         series: pd.Series,
         threshold: float = 2.0,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Detect significant change points in time series.
 
@@ -152,13 +152,17 @@ class TrendDetector:
         change_points = []
         for idx, z_score in z_scores.items():
             if abs(z_score) > threshold:
-                change_points.append({
-                    "date": idx.isoformat() if hasattr(idx, "isoformat") else str(idx),
-                    "z_score": float(z_score),
-                    "value_change": float(diffs.loc[idx]),
-                    "value_before": float(series.loc[idx] - diffs.loc[idx]),
-                    "value_after": float(series.loc[idx]),
-                })
+                change_points.append(
+                    {
+                        "date": idx.isoformat()
+                        if hasattr(idx, "isoformat")
+                        else str(idx),
+                        "z_score": float(z_score),
+                        "value_change": float(diffs.loc[idx]),
+                        "value_before": float(series.loc[idx] - diffs.loc[idx]),
+                        "value_after": float(series.loc[idx]),
+                    }
+                )
 
         return change_points
 
@@ -166,7 +170,7 @@ class TrendDetector:
         self,
         series: pd.Series,
         max_period: int = 30,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Detect cyclic patterns in time series.
 
@@ -219,7 +223,7 @@ class TrendDetector:
         self,
         series: pd.Series,
         window: int = 7,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Calculate volatility metrics.
 
@@ -264,7 +268,7 @@ class TrendDetector:
         series: pd.Series,
         method: str = "zscore",
         threshold: float = 3.0,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Detect outliers in time series.
 
@@ -294,12 +298,16 @@ class TrendDetector:
 
             for idx, z_score in z_scores.items():
                 if abs(z_score) > threshold:
-                    outliers.append({
-                        "date": idx.isoformat() if hasattr(idx, "isoformat") else str(idx),
-                        "value": float(series.loc[idx]),
-                        "z_score": float(z_score),
-                        "method": "zscore",
-                    })
+                    outliers.append(
+                        {
+                            "date": idx.isoformat()
+                            if hasattr(idx, "isoformat")
+                            else str(idx),
+                            "value": float(series.loc[idx]),
+                            "z_score": float(z_score),
+                            "method": "zscore",
+                        }
+                    )
 
         elif method == "iqr":
             q1 = series.quantile(0.25)
@@ -311,12 +319,16 @@ class TrendDetector:
 
             for idx, value in series.items():
                 if value < lower_bound or value > upper_bound:
-                    outliers.append({
-                        "date": idx.isoformat() if hasattr(idx, "isoformat") else str(idx),
-                        "value": float(value),
-                        "lower_bound": float(lower_bound),
-                        "upper_bound": float(upper_bound),
-                        "method": "iqr",
-                    })
+                    outliers.append(
+                        {
+                            "date": idx.isoformat()
+                            if hasattr(idx, "isoformat")
+                            else str(idx),
+                            "value": float(value),
+                            "lower_bound": float(lower_bound),
+                            "upper_bound": float(upper_bound),
+                            "method": "iqr",
+                        }
+                    )
 
         return outliers

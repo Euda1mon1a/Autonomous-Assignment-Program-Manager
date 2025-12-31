@@ -169,9 +169,7 @@ class TestAuditService:
 
     def test_get_audit_logs_with_multiple_actions(self, db: Session):
         """Test filtering by multiple actions simultaneously."""
-        logs, total = get_audit_logs(
-            db, actions=["insert", "update", "delete"]
-        )
+        logs, total = get_audit_logs(db, actions=["insert", "update", "delete"])
         assert isinstance(logs, list)
 
     def test_get_audit_logs_with_null_filters(self, db: Session):
@@ -205,7 +203,7 @@ class TestAuditService:
         # Should handle gracefully or raise appropriate error
         try:
             logs, total = get_audit_logs(db, start_date="invalid-date")
-            assert isinstance(logs, list) or isinstance(logs, type(None))
+            assert isinstance(logs, (list, type(None)))
         except (ValueError, Exception):
             # Expected to fail gracefully
             pass

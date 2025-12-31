@@ -3,9 +3,10 @@
 Provides utilities for running multiple async operations in parallel with
 proper error handling and resource management.
 """
+
 import asyncio
 import logging
-from typing import Any, Callable, Sequence, TypeVar
+from typing import Any, Callable, Optional, Sequence, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +41,7 @@ class ParallelExecutor:
         Returns:
             List of results in same order as items
         """
+
         async def bounded_func(item):
             async with self.semaphore:
                 return await func(item)
@@ -114,7 +116,7 @@ class ParallelExecutor:
         try:
             result = await asyncio.wait_for(coroutine, timeout=timeout)
             return result
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(f"Operation timed out after {timeout}s")
             return default
 
@@ -150,7 +152,11 @@ class ParallelExecutor:
                 logger.warning(f"Attempt {attempt + 1}/{max_retries + 1} failed: {e}")
 
                 if attempt < max_retries:
-                    delay = retry_delay * (2 ** attempt) if exponential_backoff else retry_delay
+                    delay = (
+                        retry_delay * (2**attempt)
+                        if exponential_backoff
+                        else retry_delay
+                    )
                     await asyncio.sleep(delay)
 
         raise last_exception
@@ -195,8 +201,7 @@ class BatchedParallelExecutor:
             results.append(result)
 
             logger.debug(
-                f"Processed batch {i // self.batch_size + 1}: "
-                f"{len(batch)} items"
+                f"Processed batch {i // self.batch_size + 1}: {len(batch)} items"
             )
 
         return results
@@ -254,7 +259,9 @@ async def gather_with_concurrency(
             return await coro
 
     bounded_coroutines = [bounded_coroutine(coro) for coro in coroutines]
-    return await asyncio.gather(*bounded_coroutines, return_exceptions=return_exceptions)
+    return await asyncio.gather(
+        *bounded_coroutines, return_exceptions=return_exceptions
+    )
 
 
 async def run_tasks_with_progress(

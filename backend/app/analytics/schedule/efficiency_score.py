@@ -23,7 +23,7 @@ class EfficiencyScore:
 
     async def calculate_efficiency(
         self, start_date: date, end_date: date
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Calculate overall schedule efficiency score."""
         # Coverage rate
         blocks_result = await self.db.execute(
@@ -52,9 +52,12 @@ class EfficiencyScore:
         counts = [row[0] for row in person_counts.all()]
 
         import numpy as np
+
         workload_std = float(np.std(counts)) if counts else 0
         workload_mean = float(np.mean(counts)) if counts else 1
-        balance_score = 1 - min(workload_std / workload_mean, 1) if workload_mean > 0 else 0
+        balance_score = (
+            1 - min(workload_std / workload_mean, 1) if workload_mean > 0 else 0
+        )
 
         # Combined efficiency score (0-100)
         efficiency = (coverage_rate * 0.6 + balance_score * 0.4) * 100

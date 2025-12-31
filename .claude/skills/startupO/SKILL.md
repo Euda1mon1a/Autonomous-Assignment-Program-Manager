@@ -7,10 +7,11 @@ description: Initialize session as ORCHESTRATOR agent with multi-agent coordinat
 
 > **Purpose:** Initialize session as ORCHESTRATOR agent with multi-agent coordination capability
 > **Created:** 2025-12-27
-> **Updated:** 2025-12-31 (Added SEARCH_PARTY reference)
+> **Updated:** 2025-12-31 (Added SEARCH_PARTY and QA_PARTY references)
 > **Trigger:** `/startupO` command
 > **Persona:** ORCHESTRATOR (Parallel Agent Coordination & Delegation)
-> **Default Search:** Use `/search-party` for comprehensive reconnaissance
+> **Default Search:** Use `/search-party` for comprehensive reconnaissance (G-2)
+> **Default Validation:** Use `/qa-party` for comprehensive QA validation (IG)
 
 ---
 
@@ -539,13 +540,48 @@ Ready to orchestrate. What's the task?
 
 ---
 
+## Party Protocols (Scaled Agent Deployment)
+
+### Available Protocols
+
+| Protocol | Staff | Purpose | Invocation |
+|----------|-------|---------|------------|
+| **SEARCH_PARTY** | G-2 (Intel) | 120-probe reconnaissance | `/search-party` |
+| **QA_PARTY** | IG (Inspector General) | 120-agent QA validation | `/qa-party` |
+
+### IDE Crash Prevention (CRITICAL)
+
+**DO NOT** spawn 8+ agents directly from ORCHESTRATOR. This causes IDE seizure and crashes.
+
+**CORRECT Pattern:**
+```
+ORCHESTRATOR → spawns 1 Coordinator (COORD_QUALITY, G2_RECON)
+                    ↓
+              Coordinator manages teams internally
+```
+
+**WRONG Pattern:**
+```
+ORCHESTRATOR → spawns 8+ agents directly → IDE CRASH
+```
+
+### Staff Distinction
+
+| Staff | Function | Coordinator |
+|-------|----------|-------------|
+| G-2 | Intelligence/Reconnaissance | G2_RECON |
+| IG | Inspection/Quality Assurance | COORD_QUALITY |
+
+---
+
 ## Related Files
 
 - `.claude/Agents/ORCHESTRATOR.md` - Full ORCHESTRATOR specification
 - `.claude/Scratchpad/ORCHESTRATOR_ADVISOR_NOTES.md` - Cross-session institutional memory
 - `.claude/CONSTITUTION.md` - Foundational rules
 - `.claude/skills/startup/SKILL.md` - Basic startup (non-orchestrator)
-- `.claude/skills/search-party/SKILL.md` - **SEARCH_PARTY reconnaissance (120 probes)**
+- `.claude/skills/search-party/SKILL.md` - **SEARCH_PARTY reconnaissance (G-2, 120 probes)**
+- `.claude/skills/qa-party/SKILL.md` - **QA_PARTY validation (IG, 120 agents)**
 - `.claude/protocols/SEARCH_PARTY.md` - Full SEARCH_PARTY protocol documentation
 - `.claude/skills/check-codex/SKILL.md` - Codex feedback checking (rate-limiting step before merge)
 - `.claude/skills/context-aware-delegation/SKILL.md` - Agent context isolation and prompt templates

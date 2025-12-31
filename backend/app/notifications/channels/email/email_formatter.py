@@ -83,9 +83,7 @@ class EmailFormatter:
 
     def _linkify(self, text: str) -> str:
         """Convert URLs to clickable links."""
-        url_pattern = re.compile(
-            r'(https?://[^\s<>"\']+|www\.[^\s<>"\']+)'
-        )
+        url_pattern = re.compile(r'(https?://[^\s<>"\']+|www\.[^\s<>"\']+)')
 
         def replace_url(match):
             url = match.group(0)

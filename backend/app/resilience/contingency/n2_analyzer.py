@@ -368,10 +368,14 @@ class N2Analyzer:
             }
 
         catastrophic = self.find_catastrophic_n2_scenarios()
-        coupled_scenarios = [s for s in self.scenarios if s.interdependency_type == "coupled"]
+        coupled_scenarios = [
+            s for s in self.scenarios if s.interdependency_type == "coupled"
+        ]
         resilience_score = self.calculate_n2_resilience_score()
 
-        avg_criticality = sum(s.criticality_score for s in self.scenarios) / len(self.scenarios)
+        avg_criticality = sum(s.criticality_score for s in self.scenarios) / len(
+            self.scenarios
+        )
 
         return {
             "total_scenarios": len(self.scenarios),
@@ -379,6 +383,10 @@ class N2Analyzer:
             "avg_criticality": round(avg_criticality, 2),
             "resilience_score": round(resilience_score, 2),
             "coupled_pairs": len(coupled_scenarios),
-            "scenarios_without_backup": sum(1 for s in self.scenarios if not s.backup_available),
-            "high_cascade_risk": sum(1 for s in self.scenarios if s.cascade_probability >= 0.7),
+            "scenarios_without_backup": sum(
+                1 for s in self.scenarios if not s.backup_available
+            ),
+            "high_cascade_risk": sum(
+                1 for s in self.scenarios if s.cascade_probability >= 0.7
+            ),
         }

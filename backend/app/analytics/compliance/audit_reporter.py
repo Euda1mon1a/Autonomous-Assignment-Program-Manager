@@ -3,7 +3,7 @@ Audit Reporter - Generates compliance audit reports.
 """
 
 from datetime import date
-from typing import Any, Dict
+from typing import Any, Dict, List
 import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,21 +23,24 @@ class AuditReporter:
 
     async def generate_audit_report(
         self, start_date: date, end_date: date
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate comprehensive audit report."""
         violations = await self.violation_tracker.track_violations(start_date, end_date)
         score = await self.compliance_score.calculate_score(start_date, end_date)
 
         return {
-            "audit_period": {"start": start_date.isoformat(), "end": end_date.isoformat()},
+            "audit_period": {
+                "start": start_date.isoformat(),
+                "end": end_date.isoformat(),
+            },
             "compliance_score": score,
             "violations": violations,
             "recommendations": self._generate_recommendations(violations, score),
         }
 
     def _generate_recommendations(
-        self, violations: Dict[str, Any], score: Dict[str, Any]
-    ) -> List[str]:
+        self, violations: dict[str, Any], score: dict[str, Any]
+    ) -> list[str]:
         """Generate improvement recommendations."""
         recommendations = []
 

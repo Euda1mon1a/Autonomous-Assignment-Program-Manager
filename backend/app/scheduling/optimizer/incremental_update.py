@@ -2,6 +2,7 @@
 
 Updates schedules incrementally instead of regenerating from scratch.
 """
+
 import logging
 from datetime import date, timedelta
 from typing import Any, Optional
@@ -63,7 +64,7 @@ class IncrementalScheduleUpdater:
         self,
         schedule: dict,
         person_id: str,
-        date_range: Optional[tuple[date, date]] = None,
+        date_range: tuple[date, date] | None = None,
     ) -> dict:
         """Remove person from schedule.
 
@@ -81,7 +82,8 @@ class IncrementalScheduleUpdater:
             start_date, end_date = date_range
             # Remove assignments in date range
             schedule["assignments"] = [
-                a for a in schedule["assignments"]
+                a
+                for a in schedule["assignments"]
                 if not (
                     a["person_id"] == person_id
                     and start_date <= a["block_date"] <= end_date
@@ -89,13 +91,11 @@ class IncrementalScheduleUpdater:
             ]
         else:
             # Remove all assignments
-            removed_count = len([
-                a for a in schedule["assignments"]
-                if a["person_id"] == person_id
-            ])
+            removed_count = len(
+                [a for a in schedule["assignments"] if a["person_id"] == person_id]
+            )
             schedule["assignments"] = [
-                a for a in schedule["assignments"]
-                if a["person_id"] != person_id
+                a for a in schedule["assignments"] if a["person_id"] != person_id
             ]
             logger.info(f"Removed {removed_count} assignments")
 
@@ -124,18 +124,26 @@ class IncrementalScheduleUpdater:
         Returns:
             Updated schedule if swap is valid
         """
-        logger.info(f"Swapping assignments: {person1_id}@{date1} <-> {person2_id}@{date2}")
+        logger.info(
+            f"Swapping assignments: {person1_id}@{date1} <-> {person2_id}@{date2}"
+        )
 
         # Find assignments to swap
         assign1 = next(
-            (a for a in schedule["assignments"]
-             if a["person_id"] == person1_id and a["block_date"] == date1),
+            (
+                a
+                for a in schedule["assignments"]
+                if a["person_id"] == person1_id and a["block_date"] == date1
+            ),
             None,
         )
 
         assign2 = next(
-            (a for a in schedule["assignments"]
-             if a["person_id"] == person2_id and a["block_date"] == date2),
+            (
+                a
+                for a in schedule["assignments"]
+                if a["person_id"] == person2_id and a["block_date"] == date2
+            ),
             None,
         )
 
@@ -185,7 +193,8 @@ class IncrementalScheduleUpdater:
         while current_date <= end_date:
             # Count assignments for this rotation on this date
             assignments = [
-                a for a in schedule["assignments"]
+                a
+                for a in schedule["assignments"]
                 if a["rotation_id"] == rotation_id and a["block_date"] == current_date
             ]
 
@@ -235,18 +244,24 @@ class IncrementalScheduleUpdater:
         while current_date <= end_date:
             # Check if person is already assigned
             existing = next(
-                (a for a in schedule["assignments"]
-                 if a["person_id"] == person["id"] and a["block_date"] == current_date),
+                (
+                    a
+                    for a in schedule["assignments"]
+                    if a["person_id"] == person["id"]
+                    and a["block_date"] == current_date
+                ),
                 None,
             )
 
             if not existing:
-                available.append({
-                    "date": current_date,
-                    "rotations": self._get_available_rotations(
-                        schedule, person, current_date, constraints
-                    ),
-                })
+                available.append(
+                    {
+                        "date": current_date,
+                        "rotations": self._get_available_rotations(
+                            schedule, person, current_date, constraints
+                        ),
+                    }
+                )
 
             current_date += timedelta(days=1)
 
@@ -297,12 +312,14 @@ class IncrementalScheduleUpdater:
                 # Pick best rotation for this slot
                 rotation_id = slot["rotations"][0]  # Simplified
 
-                assignments.append({
-                    "person_id": person["id"],
-                    "block_date": slot["date"],
-                    "rotation_id": rotation_id,
-                    "priority": 5,
-                })
+                assignments.append(
+                    {
+                        "person_id": person["id"],
+                        "block_date": slot["date"],
+                        "rotation_id": rotation_id,
+                        "priority": 5,
+                    }
+                )
 
         return assignments
 

@@ -43,8 +43,8 @@ class CoverageAnalyzer:
         self,
         start_date: date,
         end_date: date,
-        rotation_type: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        rotation_type: str | None = None,
+    ) -> dict[str, Any]:
         """
         Analyze overall coverage for a period.
 
@@ -78,9 +78,9 @@ class CoverageAnalyzer:
             )
         )
         if rotation_type:
-            assignments_query = assignments_query.join(Assignment.rotation_template).where(
-                Assignment.rotation_template.has(name=rotation_type)
-            )
+            assignments_query = assignments_query.join(
+                Assignment.rotation_template
+            ).where(Assignment.rotation_template.has(name=rotation_type))
 
         assignments_result = await self.db.execute(assignments_query)
         total_assignments = assignments_result.scalar() or 0
@@ -118,9 +118,9 @@ class CoverageAnalyzer:
         self,
         start_date: date,
         end_date: date,
-        rotation_type: Optional[str] = None,
+        rotation_type: str | None = None,
         threshold: float = 0.5,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Find blocks with low coverage."""
         # Get daily coverage
         query = (
@@ -150,13 +150,15 @@ class CoverageAnalyzer:
         for day_date, assignment_count in daily_coverage:
             coverage = assignment_count / total_capacity
             if coverage < threshold:
-                gaps.append({
-                    "date": day_date.isoformat(),
-                    "coverage_rate": round(coverage, 3),
-                    "assignments": assignment_count,
-                    "capacity": total_capacity,
-                    "severity": "high" if coverage < 0.3 else "medium",
-                })
+                gaps.append(
+                    {
+                        "date": day_date.isoformat(),
+                        "coverage_rate": round(coverage, 3),
+                        "assignments": assignment_count,
+                        "capacity": total_capacity,
+                        "severity": "high" if coverage < 0.3 else "medium",
+                    }
+                )
 
         return gaps
 
@@ -164,8 +166,8 @@ class CoverageAnalyzer:
         self,
         start_date: date,
         end_date: date,
-        rotation_type: Optional[str] = None,
-    ) -> Dict[str, Dict[str, Any]]:
+        rotation_type: str | None = None,
+    ) -> dict[str, dict[str, Any]]:
         """Analyze coverage by day of week."""
         query = (
             select(Block.date, func.count(Assignment.id))
@@ -183,14 +185,22 @@ class CoverageAnalyzer:
         daily_data = result.all()
 
         # Group by day of week
-        dow_coverage: Dict[int, List[int]] = {i: [] for i in range(7)}
+        dow_coverage: dict[int, list[int]] = {i: [] for i in range(7)}
 
         for day_date, assignment_count in daily_data:
             dow = day_date.weekday()  # 0 = Monday, 6 = Sunday
             dow_coverage[dow].append(assignment_count)
 
         # Calculate stats for each day
-        dow_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        dow_names = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+        ]
         day_stats = {}
 
         for dow, assignments in dow_coverage.items():
@@ -209,7 +219,7 @@ class CoverageAnalyzer:
         self,
         start_date: date,
         end_date: date,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Calculate redundancy (backup coverage)."""
         # Get blocks with multiple assignments
         query = (
@@ -288,13 +298,15 @@ class CoverageAnalyzer:
         capacity = capacity_result.scalar() or 1
 
         # Create DataFrame
-        df = pd.DataFrame([
-            {
-                "date": row.date,
-                "coverage_rate": row.assignments / capacity,
-            }
-            for row in daily_data
-        ])
+        df = pd.DataFrame(
+            [
+                {
+                    "date": row.date,
+                    "coverage_rate": row.assignments / capacity,
+                }
+                for row in daily_data
+            ]
+        )
 
         if df.empty:
             return df

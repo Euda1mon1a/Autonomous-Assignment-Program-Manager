@@ -171,9 +171,7 @@ class DeduplicationEngine:
         max_age = timedelta(days=7)  # Keep fingerprints for 7 days max
 
         expired = [
-            fp
-            for fp, timestamp in self._cache.items()
-            if (now - timestamp) > max_age
+            fp for fp, timestamp in self._cache.items() if (now - timestamp) > max_age
         ]
 
         for fp in expired:

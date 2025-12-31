@@ -25,7 +25,7 @@ class WorkloadDistribution:
 
     async def analyze_distribution(
         self, start_date: date, end_date: date
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Analyze workload distribution across all people."""
         query = (
             select(
@@ -70,11 +70,20 @@ class WorkloadDistribution:
             },
         }
 
-    def _calculate_gini(self, values: List[float]) -> float:
+    def _calculate_gini(self, values: list[float]) -> float:
         """Calculate Gini coefficient for inequality measure."""
         if not values:
             return 0
         sorted_values = sorted(values)
         n = len(sorted_values)
         cumsum = np.cumsum(sorted_values)
-        return (2 * sum((i + 1) * v for i, v in enumerate(sorted_values)) / (n * cumsum[-1]) - (n + 1) / n) if cumsum[-1] > 0 else 0
+        return (
+            (
+                2
+                * sum((i + 1) * v for i, v in enumerate(sorted_values))
+                / (n * cumsum[-1])
+                - (n + 1) / n
+            )
+            if cumsum[-1] > 0
+            else 0
+        )

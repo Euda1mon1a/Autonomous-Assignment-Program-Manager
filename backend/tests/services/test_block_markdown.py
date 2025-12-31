@@ -141,10 +141,7 @@ class TestBlockMarkdownService:
         # Should be valid markdown
         assert isinstance(markdown, str)
         # May contain common markdown syntax
-        assert any(
-            char in markdown
-            for char in ["#", "|", "-", "*", "[", "```"]
-        )
+        assert any(char in markdown for char in ["#", "|", "-", "*", "[", "```"])
 
     def test_export_to_file(
         self,

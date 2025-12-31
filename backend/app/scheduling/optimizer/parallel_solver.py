@@ -2,6 +2,7 @@
 
 Runs multiple solver instances in parallel to explore different solution spaces.
 """
+
 import asyncio
 import logging
 from dataclasses import dataclass
@@ -17,11 +18,11 @@ class SolverResult:
 
     solver_id: int
     success: bool
-    solution: Optional[dict]
+    solution: dict | None
     objective_value: float
     duration_seconds: float
     iterations: int
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class ParallelSolver:
@@ -31,7 +32,7 @@ class ParallelSolver:
         self,
         num_solvers: int = 4,
         timeout_seconds: int = 300,
-        early_stop_threshold: Optional[float] = None,
+        early_stop_threshold: float | None = None,
     ):
         """Initialize parallel solver.
 
@@ -49,7 +50,7 @@ class ParallelSolver:
         self,
         problem_data: dict,
         solver_func: Callable[[dict, int], Any],
-        strategy_variants: Optional[list[dict]] = None,
+        strategy_variants: list[dict] | None = None,
     ) -> SolverResult:
         """Run solvers in parallel and return best solution.
 
@@ -155,7 +156,7 @@ class ParallelSolver:
                 iterations=iterations,
             )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             duration = (datetime.utcnow() - start_time).total_seconds()
             logger.warning(f"Solver {solver_id} timeout after {duration:.2f}s")
 

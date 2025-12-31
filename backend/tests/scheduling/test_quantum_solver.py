@@ -292,7 +292,9 @@ class TestQUBOConstraints:
 class TestPyQUBOIntegration:
     """Tests requiring PyQUBO library."""
 
-    @pytest.mark.skip(reason="D-Wave sampler C extension causes fatal Python abort - LOCAL BURN fix")
+    @pytest.mark.skip(
+        reason="D-Wave sampler C extension causes fatal Python abort - LOCAL BURN fix"
+    )
     def test_pyqubo_solver(self):
         """Test the PyQUBO-based solver."""
         from app.scheduling.quantum.qubo_solver import QUBOSolver

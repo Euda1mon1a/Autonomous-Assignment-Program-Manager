@@ -105,7 +105,9 @@ async def analyze_n1_contingency(block: int, year: int):
             print_warning("Schedule is NOT N-1 viable")
 
         if vulnerabilities:
-            console.print(f"\n[yellow]Found {len(vulnerabilities)} vulnerabilities[/yellow]\n")
+            console.print(
+                f"\n[yellow]Found {len(vulnerabilities)} vulnerabilities[/yellow]\n"
+            )
 
             print_table(
                 vulnerabilities,
@@ -145,7 +147,9 @@ async def analyze_n2_contingency(block: int, year: int):
             print_warning("Schedule is NOT N-2 viable")
 
         if critical_pairs:
-            console.print(f"\n[yellow]Found {len(critical_pairs)} critical pairs[/yellow]\n")
+            console.print(
+                f"\n[yellow]Found {len(critical_pairs)} critical pairs[/yellow]\n"
+            )
 
             print_table(
                 critical_pairs,
