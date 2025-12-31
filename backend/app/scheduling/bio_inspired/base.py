@@ -26,6 +26,19 @@ import numpy as np
 from app.models.assignment import Assignment
 from app.scheduling.constraints import ConstraintManager, SchedulingContext
 from app.scheduling.solvers import BaseSolver, SolverResult
+from app.scheduling.bio_inspired.constants import (
+    DEFAULT_COVERAGE_WEIGHT,
+    DEFAULT_FAIRNESS_WEIGHT,
+    DEFAULT_PREFERENCES_WEIGHT,
+    DEFAULT_LEARNING_GOALS_WEIGHT,
+    DEFAULT_ACGME_COMPLIANCE_WEIGHT,
+    DEFAULT_CONTINUITY_WEIGHT,
+    MAX_BLOCKS_PER_WEEK,
+    APPROXIMATE_BLOCKS_PER_WEEK,
+    DENSITY_VARIATION_MIN,
+    DENSITY_VARIATION_RANGE,
+    DIVERSITY_SAMPLE_SIZE,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -121,12 +134,12 @@ class FitnessVector:
         """
         if weights is None:
             weights = {
-                "coverage": 0.25,
-                "fairness": 0.15,
-                "preferences": 0.10,
-                "learning_goals": 0.10,
-                "acgme_compliance": 0.30,
-                "continuity": 0.10,
+                "coverage": DEFAULT_COVERAGE_WEIGHT,
+                "fairness": DEFAULT_FAIRNESS_WEIGHT,
+                "preferences": DEFAULT_PREFERENCES_WEIGHT,
+                "learning_goals": DEFAULT_LEARNING_GOALS_WEIGHT,
+                "acgme_compliance": DEFAULT_ACGME_COMPLIANCE_WEIGHT,
+                "continuity": DEFAULT_CONTINUITY_WEIGHT,
             }
 
         return (
@@ -602,20 +615,18 @@ class BioInspiredSolver(BaseSolver, ABC):
 
         # ACGME Compliance: Check 80-hour rule approximation
         # Simplified: penalize if any resident exceeds threshold
-        max_blocks_per_week = 13  # ~80 hours at 6 hours/block
-        blocks_per_week = 10  # Approximate
         acgme_violations = 0
 
         for r in range(n_residents):
             assignments = chromosome.get_resident_assignments(r)
             # Check weekly chunks
-            for week_start in range(0, n_blocks, blocks_per_week):
-                week_end = min(week_start + blocks_per_week, n_blocks)
+            for week_start in range(0, n_blocks, APPROXIMATE_BLOCKS_PER_WEEK):
+                week_end = min(week_start + APPROXIMATE_BLOCKS_PER_WEEK, n_blocks)
                 week_count = np.sum(assignments[week_start:week_end] > 0)
-                if week_count > max_blocks_per_week:
+                if week_count > MAX_BLOCKS_PER_WEEK:
                     acgme_violations += 1
 
-        max_violations = n_residents * (n_blocks // blocks_per_week + 1)
+        max_violations = n_residents * (n_blocks // APPROXIMATE_BLOCKS_PER_WEEK + 1)
         acgme_compliance = 1.0 - (
             acgme_violations / max_violations if max_violations > 0 else 0
         )
@@ -675,7 +686,7 @@ class BioInspiredSolver(BaseSolver, ABC):
         population = []
         for i in range(self.population_size):
             # Vary density for diversity
-            ind_density = density * (0.8 + 0.4 * random.random())
+            ind_density = density * (DENSITY_VARIATION_MIN + DENSITY_VARIATION_RANGE * random.random())
 
             chromosome = Chromosome.create_random(
                 n_residents=n_residents,
@@ -775,7 +786,7 @@ class BioInspiredSolver(BaseSolver, ABC):
 
         # Diversity: average pairwise similarity
         if len(population) > 1:
-            sample_size = min(20, len(population))
+            sample_size = min(DIVERSITY_SAMPLE_SIZE, len(population))
             sample = random.sample(population, sample_size)
             similarities = []
             for i, ind1 in enumerate(sample):

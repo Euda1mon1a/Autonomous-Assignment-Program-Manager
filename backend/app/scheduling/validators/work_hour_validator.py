@@ -11,6 +11,7 @@ This validator ensures residents work within regulatory limits while
 tracking workload distribution and violation severity.
 """
 
+import functools
 import logging
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
@@ -344,6 +345,7 @@ class WorkHourValidator:
 
         return violations, warnings
 
+    @functools.lru_cache(maxsize=128)
     def calculate_violation_severity_level(self, violation_percentage: float) -> str:
         """
         Calculate severity level based on violation magnitude.
@@ -361,6 +363,7 @@ class WorkHourValidator:
         else:
             return "MEDIUM"
 
+    @functools.lru_cache(maxsize=256)
     def create_violation_notification_level(self, hours: float) -> str | None:
         """
         Determine notification threshold for approaching limit.

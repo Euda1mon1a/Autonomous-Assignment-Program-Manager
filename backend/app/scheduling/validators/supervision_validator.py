@@ -9,6 +9,7 @@ This validator uses fractional load approach for mixed PGY scenarios,
 ensuring accurate calculation of required faculty coverage.
 """
 
+import functools
 import logging
 from dataclasses import dataclass
 from datetime import date

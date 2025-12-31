@@ -36,6 +36,30 @@ from app.scheduling.bio_inspired.base import (
     Individual,
     PopulationStats,
 )
+from app.scheduling.bio_inspired.constants import (
+    PSO_DEFAULT_SWARM_SIZE,
+    PSO_DEFAULT_MAX_ITERATIONS,
+    PSO_DEFAULT_INERTIA_WEIGHT,
+    PSO_DEFAULT_COGNITIVE_COEFF,
+    PSO_DEFAULT_SOCIAL_COEFF,
+    PSO_DEFAULT_VELOCITY_CLAMP,
+    PSO_INERTIA_MIN,
+    PSO_INERTIA_MAX,
+    PSO_DEFAULT_DIMENSION,
+    PSO_POSITION_MIN,
+    PSO_POSITION_MAX,
+    PSO_EARLY_STOP_ITERATIONS,
+    PSO_CONVERGENCE_THRESHOLD,
+    PSO_LOG_INTERVAL,
+    PSO_VELOCITY_RANGE_MULTIPLIER,
+    PSO_RANDOM_TOPOLOGY_MIN_NEIGHBORS,
+    PSO_MIN_WEIGHT_VALUE,
+    PSO_DENSITY_BASE,
+    PSO_DENSITY_RANGE,
+    PSO_ASSIGNMENT_MULTIPLIER,
+    PSO_WEEKLY_LOOKBACK_BLOCKS,
+    ACGME_WEEKLY_LIMIT_BLOCKS,
+)
 from app.scheduling.constraints import ConstraintManager, SchedulingContext
 
 logger = logging.getLogger(__name__)
@@ -117,28 +141,28 @@ class Particle:
 class PSOConfig:
     """Configuration for Particle Swarm Optimization."""
 
-    swarm_size: int = 50
-    max_iterations: int = 200
+    swarm_size: int = PSO_DEFAULT_SWARM_SIZE
+    max_iterations: int = PSO_DEFAULT_MAX_ITERATIONS
     topology: SwarmTopology = SwarmTopology.GLOBAL
 
     # PSO parameters
-    inertia_weight: float = 0.7  # w: momentum
-    cognitive_coeff: float = 1.5  # c1: attraction to personal best
-    social_coeff: float = 1.5  # c2: attraction to global/local best
-    velocity_clamp: float = 0.5  # Max velocity magnitude
+    inertia_weight: float = PSO_DEFAULT_INERTIA_WEIGHT  # w: momentum
+    cognitive_coeff: float = PSO_DEFAULT_COGNITIVE_COEFF  # c1: attraction to personal best
+    social_coeff: float = PSO_DEFAULT_SOCIAL_COEFF  # c2: attraction to global/local best
+    velocity_clamp: float = PSO_DEFAULT_VELOCITY_CLAMP  # Max velocity magnitude
 
     # Adaptive parameters
-    inertia_min: float = 0.4
-    inertia_max: float = 0.9
+    inertia_min: float = PSO_INERTIA_MIN
+    inertia_max: float = PSO_INERTIA_MAX
     adaptive_inertia: bool = True
 
     # Search space bounds
-    dimension: int = 6  # Number of objective weights to optimize
-    position_min: float = 0.0
-    position_max: float = 1.0
+    dimension: int = PSO_DEFAULT_DIMENSION  # Number of objective weights to optimize
+    position_min: float = PSO_POSITION_MIN
+    position_max: float = PSO_POSITION_MAX
 
     # Convergence
-    early_stop_iterations: int = 30
+    early_stop_iterations: int = PSO_EARLY_STOP_ITERATIONS
 
 
 class ParticleSwarmSolver(BioInspiredSolver):
@@ -255,7 +279,7 @@ class ParticleSwarmSolver(BioInspiredSolver):
                 break
 
             # Log progress
-            if iteration % 20 == 0:
+            if iteration % PSO_LOG_INTERVAL == 0:
                 logger.info(
                     f"PSO iter {iteration}: best={self.global_best_fitness:.4f}, "
                     f"inertia={self.current_inertia:.4f}"
@@ -297,7 +321,7 @@ class ParticleSwarmSolver(BioInspiredSolver):
             )
 
             # Random initial velocity
-            velocity_range = (self.config.position_max - self.config.position_min) * 0.1
+            velocity_range = (self.config.position_max - self.config.position_min) * PSO_VELOCITY_RANGE_MULTIPLIER
             velocity = np.random.uniform(
                 -velocity_range, velocity_range, self.config.dimension
             )
@@ -339,7 +363,7 @@ class ParticleSwarmSolver(BioInspiredSolver):
 
         elif self.config.topology == SwarmTopology.RANDOM:
             # Random subset of neighbors (sqrt(n) neighbors)
-            k = max(3, int(math.sqrt(n)))
+            k = max(PSO_RANDOM_TOPOLOGY_MIN_NEIGHBORS, int(math.sqrt(n)))
             for i, particle in enumerate(self.swarm):
                 others = [j for j in range(n) if j != i]
                 particle.neighbors = [i] + random.sample(others, min(k, len(others)))
@@ -507,7 +531,7 @@ class ParticleSwarmSolver(BioInspiredSolver):
                 to prevent zero weights.
         """
         # Ensure all positive
-        weights = np.maximum(position, 0.001)
+        weights = np.maximum(position, PSO_MIN_WEIGHT_VALUE)
         # Normalize
         return weights / np.sum(weights)
 
@@ -533,7 +557,7 @@ class ParticleSwarmSolver(BioInspiredSolver):
         # Higher weight on fairness = balance workload
         # Higher weight on ACGME = respect limits
 
-        target_density = 0.3 + 0.4 * weights[0]  # Coverage weight affects density
+        target_density = PSO_DENSITY_BASE + PSO_DENSITY_RANGE * weights[0]  # Coverage weight affects density
         target_per_resident = int(n_blocks * target_density / n_residents)
 
         # Track assignments per resident for fairness
@@ -541,7 +565,7 @@ class ParticleSwarmSolver(BioInspiredSolver):
 
         for b_idx in range(n_blocks):
             # Decide how many residents to assign this block
-            n_to_assign = max(1, int(n_residents * 0.3 * weights[0]))
+            n_to_assign = max(1, int(n_residents * PSO_ASSIGNMENT_MULTIPLIER * weights[0]))
 
             # Score each resident for this block
             scores = []
@@ -555,9 +579,9 @@ class ParticleSwarmSolver(BioInspiredSolver):
 
                 # ACGME: respect weekly limits
                 weekly_count = sum(
-                    chromosome.genes[r_idx, max(0, b_idx - 10) : b_idx] > 0
+                    chromosome.genes[r_idx, max(0, b_idx - PSO_WEEKLY_LOOKBACK_BLOCKS) : b_idx] > 0
                 )
-                if weekly_count >= 13:  # ~80 hours
+                if weekly_count >= ACGME_WEEKLY_LIMIT_BLOCKS:  # ~80 hours
                     score -= weights[4] * 2.0  # Heavy penalty
 
                 scores.append((r_idx, score))
@@ -656,7 +680,7 @@ class ParticleSwarmSolver(BioInspiredSolver):
         recent = self._fitness_history[-self.config.early_stop_iterations :]
         improvement = max(recent) - min(recent)
 
-        return improvement < 0.001
+        return improvement < PSO_CONVERGENCE_THRESHOLD
 
     def get_optimized_weights(self) -> dict[str, float]:
         """
