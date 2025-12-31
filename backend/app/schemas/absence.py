@@ -4,7 +4,7 @@ from datetime import date, datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from app.validators.date_validators import validate_academic_year_date
 
@@ -127,8 +127,7 @@ class AbsenceResponse(AbsenceBase):
     created_by_id: UUID | None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AbsenceListResponse(BaseModel):
@@ -139,5 +138,4 @@ class AbsenceListResponse(BaseModel):
     page: int | None = None
     page_size: int | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

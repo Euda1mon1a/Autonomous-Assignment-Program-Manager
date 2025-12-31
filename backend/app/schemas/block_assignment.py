@@ -81,8 +81,7 @@ class ResidentInfo(BaseModel):
     name: str
     pgy_level: int | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BlockAssignmentResponse(BaseModel):
@@ -105,8 +104,7 @@ class BlockAssignmentResponse(BaseModel):
     resident: ResidentInfo | None = None
     rotation_template: RotationTemplateInfo | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BlockAssignmentListResponse(BaseModel):
