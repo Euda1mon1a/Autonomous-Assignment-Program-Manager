@@ -64,28 +64,40 @@ class ProtectionLevel(str, Enum):
 class BurdenCalculationRequest(BaseModel):
     """Request to calculate shift burden."""
 
-    shift_id: UUID
-    faculty_id: UUID
-    date: datetime
-    shift_type: str
-    hours: float = Field(..., gt=0)
-    is_weekend: bool = False
-    is_holiday: bool = False
-    is_night: bool = False
-    custom_factors: list[str] = Field(default_factory=list)
+    shift_id: UUID = Field(..., description="Unique shift identifier")
+    faculty_id: UUID = Field(..., description="Faculty member ID")
+    date: datetime = Field(..., description="Shift date and time")
+    shift_type: str = Field(
+        ..., min_length=1, max_length=50, description="Type of shift"
+    )
+    hours: float = Field(..., gt=0, le=24, description="Duration in hours (0-24)")
+    is_weekend: bool = Field(False, description="Whether shift is on weekend")
+    is_holiday: bool = Field(False, description="Whether shift is on holiday")
+    is_night: bool = Field(False, description="Whether shift is night shift")
+    custom_factors: list[str] = Field(
+        default_factory=list, description="Additional burden factors"
+    )
 
 
 class SwapRecordInput(BaseModel):
     """Input for recording a swap in the network."""
 
-    source_id: UUID
-    source_name: str
-    target_id: UUID
-    target_name: str
-    initiated_by: UUID
-    source_burden: float = Field(default=10.0, ge=0)
-    target_burden: float = Field(default=0.0, ge=0)
-    was_successful: bool = True
+    source_id: UUID = Field(..., description="Source faculty member ID")
+    source_name: str = Field(
+        ..., min_length=1, max_length=200, description="Source faculty name"
+    )
+    target_id: UUID = Field(..., description="Target faculty member ID")
+    target_name: str = Field(
+        ..., min_length=1, max_length=200, description="Target faculty name"
+    )
+    initiated_by: UUID = Field(..., description="ID of person who initiated swap")
+    source_burden: float = Field(
+        default=10.0, ge=0, le=100, description="Source shift burden score (0-100)"
+    )
+    target_burden: float = Field(
+        default=0.0, ge=0, le=100, description="Target shift burden score (0-100)"
+    )
+    was_successful: bool = Field(True, description="Whether swap was successful")
 
 
 class MartyrProtectionCheckRequest(BaseModel):
