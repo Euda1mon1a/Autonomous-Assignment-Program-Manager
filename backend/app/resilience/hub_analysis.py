@@ -100,7 +100,7 @@ class FacultyCentrality:
     # Replacement difficulty (0.0 easy - 1.0 impossible)
     replacement_difficulty: float = 0.0
 
-    def calculate_composite(self, weights: dict = None):
+    def calculate_composite(self, weights: dict = None) -> float:
         """Calculate weighted composite centrality score."""
         weights = weights or {
             "degree": 0.2,
@@ -847,7 +847,7 @@ class HubAnalyzer:
         centrality_list = list(self.centrality_cache.values())
         return sorted(centrality_list, key=lambda c: -c.composite_score)[:n]
 
-    def activate_protection_plan(self, plan_id: UUID):
+    def activate_protection_plan(self, plan_id: UUID) -> None:
         """Activate a protection plan."""
         for _fac_id, plan in self.protection_plans.items():
             if plan.id == plan_id:
@@ -856,7 +856,7 @@ class HubAnalyzer:
                 logger.info(f"Activated protection plan {plan_id}")
                 return
 
-    def deactivate_protection_plan(self, plan_id: UUID):
+    def deactivate_protection_plan(self, plan_id: UUID) -> None:
         """Deactivate a protection plan."""
         for _fac_id, plan in self.protection_plans.items():
             if plan.id == plan_id:

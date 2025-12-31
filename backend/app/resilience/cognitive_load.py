@@ -164,13 +164,13 @@ class CognitiveSession:
     # Completion
     ended_at: datetime | None = None
 
-    def add_decision(self, decision: Decision):
+    def add_decision(self, decision: Decision) -> None:
         """Add a decided decision to session."""
         self.decisions_made.append(decision)
         self.total_cognitive_cost += decision.get_cognitive_cost()
         self._update_state()
 
-    def _update_state(self):
+    def _update_state(self) -> None:
         """Update cognitive state based on load."""
         cost = self.total_cognitive_cost
 
@@ -189,7 +189,7 @@ class CognitiveSession:
             self.current_state = new_state
             self.state_changed_at = datetime.now()
 
-    def take_break(self):
+    def take_break(self) -> None:
         """Record a break taken."""
         self.breaks_taken += 1
         self.last_break_at = datetime.now()
@@ -308,7 +308,7 @@ class CognitiveLoadManager:
 
         return session
 
-    def end_session(self, session_id: UUID):
+    def end_session(self, session_id: UUID) -> None:
         """End a cognitive session."""
         session = self.sessions.get(session_id)
         if session:
@@ -419,7 +419,7 @@ class CognitiveLoadManager:
         chosen_option: str,
         decided_by: str,
         actual_time_seconds: float = None,
-    ):
+    ) -> None:
         """
         Record a decision that was made.
 
@@ -481,7 +481,7 @@ class CognitiveLoadManager:
 
         return None, DecisionOutcome.DEFERRED
 
-    def _check_state_change(self, session: CognitiveSession):
+    def _check_state_change(self, session: CognitiveSession) -> None:
         """Check for state changes and notify handlers."""
         # Notification handlers would be called here
         for handler in self._on_state_change:
@@ -757,7 +757,7 @@ class CognitiveLoadManager:
         self,
         category: DecisionCategory,
         handler: Callable[[Decision], str],
-    ):
+    ) -> None:
         """Register a handler for auto-deciding a category."""
         self._default_handlers[category] = handler
         logger.info(f"Registered default handler for {category.value}")
@@ -765,7 +765,7 @@ class CognitiveLoadManager:
     def register_state_handler(
         self,
         handler: Callable[[CognitiveSession], None],
-    ):
+    ) -> None:
         """Register handler for cognitive state changes."""
         self._on_state_change.append(handler)
 
