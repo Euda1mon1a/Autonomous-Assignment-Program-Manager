@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class AssignmentBase(BaseModel):
@@ -69,8 +69,7 @@ class AssignmentResponse(AssignmentBase):
     )
     score: float | None = Field(None, description="Objective score for this assignment")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AssignmentWithWarnings(AssignmentResponse):
@@ -88,8 +87,7 @@ class AssignmentListResponse(BaseModel):
     page: int | None = None
     page_size: int | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AssignmentWithExplanation(AssignmentResponse):
@@ -113,8 +111,7 @@ class AssignmentWithExplanation(AssignmentResponse):
         None, description="Plain-English trade-off explanation"
     )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
     @classmethod
     def from_assignment(cls, assignment, include_explanation: bool = True):
