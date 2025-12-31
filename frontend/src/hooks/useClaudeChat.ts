@@ -39,7 +39,7 @@ const loadFromStorage = <T>(key: string): T | null => {
       return JSON.parse(stored, reviveDates);
     }
   } catch (e) {
-    console.warn(`Failed to load ${key} from localStorage:`, e);
+    // Silent failure - localStorage may be unavailable
   }
   return null;
 };
@@ -56,7 +56,7 @@ const saveToStorage = (key: string, value: unknown): void => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (e) {
-    console.warn(`Failed to save ${key} to localStorage:`, e);
+    // Silent failure - localStorage may be full or unavailable
   }
 };
 
@@ -378,8 +378,11 @@ export const useClaudeChat = () => {
                       : msg
                   )
                 );
-              } catch (e) {
+              } catch (error) {
                 // Continue on JSON parse error
+                if (error instanceof Error) {
+                  console.warn('[useClaudeChat] Failed to parse stream chunk:', error.message);
+                }
               }
             }
           }
@@ -399,10 +402,20 @@ export const useClaudeChat = () => {
               : msg
           )
         );
-      } catch (err) {
+      } catch (error) {
         const errorMessage =
-          err instanceof Error ? err.message : 'Unknown error occurred';
+          error instanceof Error ? error.message : 'Unknown error occurred';
         setError(errorMessage);
+
+        // Log detailed error for debugging
+        if (error instanceof Error) {
+          console.error('[useClaudeChat] Stream error:', {
+            message: error.message,
+            name: error.name,
+            stack: error.stack,
+          });
+        }
+
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === assistantMessage.id

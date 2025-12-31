@@ -101,7 +101,32 @@ class FindSwapMatchesTool(
     async def execute(
         self, request: FindSwapMatchesRequest
     ) -> FindSwapMatchesResponse:
-        """Execute the tool."""
+        """
+        Execute swap candidate discovery.
+
+        Finds compatible swap candidates for a person using multi-factor matching:
+        - Availability: Candidate has open block at same time
+        - Qualifications: Both parties qualified for each other's rotations
+        - Preferences: Alignment with stated rotation preferences
+        - ACGME Compliance: Swap doesn't violate work hour rules for either party
+        - Balance: Maintains equitable workload distribution
+
+        Compatibility Score (0.0-1.0):
+        - 1.0: Perfect match (mutual preference, qualified, no conflicts)
+        - 0.7-0.9: Good match (qualified, minor preference mismatch)
+        - 0.5-0.7: Acceptable match (qualified, neutral preferences)
+        - < 0.5: Poor match (low preference alignment or marginal qualifications)
+
+        Args:
+            request: Validated request with person_id and optional filters
+
+        Returns:
+            FindSwapMatchesResponse with ranked candidate list (sorted by score)
+
+        Raises:
+            APIError: Backend API request fails
+            ValidationError: Invalid person_id or missing person data
+        """
         client = self._require_api_client()
 
         try:
@@ -133,8 +158,22 @@ class FindSwapMatchesTool(
                 candidates=candidates,
             )
 
+        except (ConnectionError, TimeoutError) as e:
+            # Network connectivity issues
+            return FindSwapMatchesResponse(
+                person_id=request.person_id,
+                total_candidates=0,
+                candidates=[],
+            )
+        except KeyError as e:
+            # Person not found or missing data
+            return FindSwapMatchesResponse(
+                person_id=request.person_id,
+                total_candidates=0,
+                candidates=[],
+            )
         except Exception as e:
-            # Return empty result on error
+            # Unexpected errors
             return FindSwapMatchesResponse(
                 person_id=request.person_id,
                 total_candidates=0,
