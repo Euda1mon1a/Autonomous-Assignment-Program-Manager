@@ -112,11 +112,75 @@ Deploys 6 critical probes (PERCEPTION, INVESTIGATION, ARCANA, HISTORY, INSIGHT, 
 
 ---
 
+## IDE Crash Prevention (CRITICAL)
+
+**DO NOT** have ORCHESTRATOR spawn 12 G-2 agents directly. This causes IDE seizure and crashes.
+
+**CORRECT Pattern:**
+```
+ORCHESTRATOR → spawns 1 G2_RECON (G-2 Commander)
+                    ↓
+              G2_RECON deploys 12 G-2 teams internally
+              (manages parallelism, synthesizes results)
+```
+
+**WRONG Pattern:**
+```
+ORCHESTRATOR → spawns 12 G-2 agents directly → IDE CRASH
+```
+
+The G-2 Commander (G2_RECON) absorbs the parallelism complexity. ORCHESTRATOR only ever spawns 1 coordinator.
+
+---
+
 ## Spawn Pattern
+
+### Via G2_RECON Commander (CORRECT)
+
+```python
+# ORCHESTRATOR spawns G2_RECON who manages the 12 G-2 teams
+Task(
+    subagent_type="general-purpose",
+    description="G2_RECON: SEARCH_PARTY Commander",
+    prompt="""
+## Agent: G2_RECON (G-2 Commander)
+
+You are the G-2 Intelligence Commander for SEARCH_PARTY deployment.
+
+## Mission
+Deploy 12 G-2 reconnaissance teams in parallel. Each team runs 10 probes.
+Collect all reports and synthesize into unified intel brief.
+
+## Your G-2 Teams to Deploy
+1. G2-BACKEND-CORE
+2. G2-BACKEND-MODELS
+3. G2-SCHEDULING
+4. G2-RESILIENCE
+5. G2-FRONTEND-CORE
+6. G2-FRONTEND-HOOKS
+7. G2-TESTS-BACKEND
+8. G2-TESTS-FRONTEND
+9. G2-MCP
+10. G2-DOCS
+11. G2-INFRASTRUCTURE
+12. G2-SECURITY
+
+## Spawn each using Task tool with subagent_type="Explore"
+
+## After all report back:
+1. Cross-reference findings
+2. Flag discrepancies (high-signal)
+3. Generate consolidated intel brief
+4. Report to ORCHESTRATOR
+"""
+)
+```
+
+### Direct Deployment (Only if G2_RECON unavailable)
 
 ```python
 # Deploy all 12 G-2s in parallel
-# Each G-2 deploys 10 probes in parallel
+# WARNING: Only use if spawning from within a coordinator, NOT from ORCHESTRATOR
 # Total: 120 probes, wall-clock = single probe timeout
 
 spawn_parallel([
