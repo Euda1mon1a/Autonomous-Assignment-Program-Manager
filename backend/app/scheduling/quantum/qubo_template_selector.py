@@ -401,14 +401,47 @@ class QUBOTemplateFormulation:
         Objective: Satisfy resident preferences.
 
         Add linear bonus for assignments matching stated preferences.
+
+        **Preference Integration Guide:**
+
+        To integrate actual resident preferences, add a `preferences` field to SchedulingContext:
+
+        ```python
+        # In SchedulingContext:
+        preferences: dict[UUID, dict[UUID, float]]  # {resident_id: {template_id: score}}
+
+        # Example preference data:
+        preferences = {
+            resident_1_id: {
+                sports_med_template_id: 1.0,   # Highly preferred
+                clinic_template_id: 0.5,        # Neutral
+                night_float_template_id: -0.5, # Avoid if possible
+            },
+            # ... more residents
+        }
+        ```
+
+        Then replace the desirability proxy below with:
+
+        ```python
+        resident = self.context.residents[r_i]
+        template_prefs = self.context.preferences.get(resident.id, {})
+        pref_score = template_prefs.get(template.id, 0.0)
+
+        key = (idx, idx)
+        matrix[key] = matrix.get(key, 0.0) - pref_score  # Negative = better (minimize energy)
+        ```
+
+        **Current Implementation:**
+        Uses template desirability categories as a proxy until actual preference data is available.
         """
         matrix = self.objective_matrices["preference"]
         valid_templates = [
             t for t in self.context.templates if not t.requires_procedure_credential
         ]
 
-        # TODO: Integrate with actual preference data from context
-        # For now, use desirability as proxy
+        # Current: Use desirability as proxy for preferences
+        # Future: Replace with actual preference data from context (see docstring above)
         for (r_i, p_i, t_i), idx in self.var_index.items():
             template = valid_templates[t_i] if t_i < len(valid_templates) else None
             if template:
