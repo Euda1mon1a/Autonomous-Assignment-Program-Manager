@@ -2,6 +2,8 @@
 **Operation:** G2_RECON SEARCH_PARTY
 **Date:** 2025-12-30
 
+**Last Updated:** 2025-12-31
+
 ***REMOVED******REMOVED*** Deliverable
 
 ***REMOVED******REMOVED******REMOVED*** Main Document: acgme-work-hour-rules.md
