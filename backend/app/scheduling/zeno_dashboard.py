@@ -215,9 +215,7 @@ class ZenoDashboard:
 
         return warnings
 
-    async def get_intervention_history(
-        self, hours: int = 24
-    ) -> list[dict[str, Any]]:
+    async def get_intervention_history(self, hours: int = 24) -> list[dict[str, Any]]:
         """
         Get intervention history for specified time window.
 
@@ -228,9 +226,7 @@ class ZenoDashboard:
             List of intervention records
         """
         cutoff = datetime.now() - timedelta(hours=hours)
-        recent = [
-            i for i in self.governor.interventions if i.timestamp >= cutoff
-        ]
+        recent = [i for i in self.governor.interventions if i.timestamp >= cutoff]
 
         return [
             {
@@ -264,9 +260,7 @@ class ZenoDashboard:
                     "window_id": str(w.window_id),
                     "start_time": w.start_time.isoformat(),
                     "end_time": w.end_time.isoformat(),
-                    "duration_hours": (
-                        w.end_time - w.start_time
-                    ).total_seconds()
+                    "duration_hours": (w.end_time - w.start_time).total_seconds()
                     / 3600,
                     "is_active": w.is_active,
                     "reason": w.reason,
@@ -295,8 +289,12 @@ class ZenoDashboard:
             }
 
         total = len(self.governor.solver_attempts)
-        successful = sum(1 for a in self.governor.solver_attempts if a.get("successful", False))
-        blocked = sum(1 for a in self.governor.solver_attempts if a.get("blocked", False))
+        successful = sum(
+            1 for a in self.governor.solver_attempts if a.get("successful", False)
+        )
+        blocked = sum(
+            1 for a in self.governor.solver_attempts if a.get("blocked", False)
+        )
 
         return {
             "total_attempts": total,
@@ -479,7 +477,11 @@ def generate_zeno_report(metrics: ZenoMetrics) -> str:
         for user_id, count in sorted(
             metrics.frozen_by_user.items(), key=lambda x: x[1], reverse=True
         ):
-            pct = (count / metrics.total_assignments * 100) if metrics.total_assignments > 0 else 0
+            pct = (
+                (count / metrics.total_assignments * 100)
+                if metrics.total_assignments > 0
+                else 0
+            )
             lines.append(f"{user_id}: {count} ({pct:.1f}%)")
         lines.append("")
 

@@ -98,8 +98,10 @@ describe('WhatIfAnalysis', () => {
 
       render(<WhatIfAnalysis />, { wrapper: createWrapper() });
 
+      // Wait for versions to load and populate the select
       await waitFor(() => {
-        expect(screen.getByRole('combobox')).toBeInTheDocument();
+        const select = screen.getByRole('combobox');
+        expect(select.querySelectorAll('option').length).toBeGreaterThan(1);
       });
 
       const versionSelect = screen.getByRole('combobox');
@@ -252,21 +254,23 @@ describe('WhatIfAnalysis', () => {
       const addButton = screen.getByText('Add Change');
       await user.click(addButton);
 
+      // Wait for the change type selector to appear
       await waitFor(() => {
-        const select = screen.getByRole('combobox', { name: '' });
-        expect(select).toBeInTheDocument();
-
-        // Check if options are in the select
-        const options = Array.from(select.querySelectorAll('option'));
-        const optionTexts = options.map((opt) => opt.textContent);
-
-        expect(optionTexts).toContain('Add Shift');
-        expect(optionTexts).toContain('Remove Shift');
-        expect(optionTexts).toContain('Swap Shifts');
-        expect(optionTexts).toContain('Add Constraint');
-        expect(optionTexts).toContain('Modify Rotation');
-        expect(optionTexts).toContain('Adjust Staffing');
+        expect(screen.getByRole('combobox', { name: /select change type/i })).toBeInTheDocument();
       });
+
+      const select = screen.getByRole('combobox', { name: /select change type/i });
+
+      // Check if options are in the select
+      const options = Array.from(select.querySelectorAll('option'));
+      const optionTexts = options.map((opt) => opt.textContent);
+
+      expect(optionTexts).toContain('Add Shift');
+      expect(optionTexts).toContain('Remove Shift');
+      expect(optionTexts).toContain('Swap Shifts');
+      expect(optionTexts).toContain('Add Constraint');
+      expect(optionTexts).toContain('Modify Rotation');
+      expect(optionTexts).toContain('Adjust Staffing');
     });
   });
 

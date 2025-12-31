@@ -181,9 +181,7 @@ class RAGContext(BaseModel):
     """Formatted context for LLM injection."""
 
     query: str
-    context: str = Field(
-        description="Formatted context string ready for LLM injection"
-    )
+    context: str = Field(description="Formatted context string ready for LLM injection")
     sources: list[RetrievedDocument] = Field(
         default_factory=list,
         description="Source documents used to build context",

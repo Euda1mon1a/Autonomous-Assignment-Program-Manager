@@ -442,7 +442,11 @@ class TestCatastropheDetector:
 
         ***REMOVED*** Direction classification depends on algorithm's interpretation
         ***REMOVED*** Just verify valid direction is returned
-        assert prediction.trajectory_direction in ["toward_cusp", "away_from_cusp", "parallel"]
+        assert prediction.trajectory_direction in [
+            "toward_cusp",
+            "away_from_cusp",
+            "parallel",
+        ]
 
     def test_predict_system_failure_away_from_cusp(self):
         """Test failure prediction when trajectory moves away from cusp."""

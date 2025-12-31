@@ -102,7 +102,9 @@ class TestCallAssignmentService:
 
     @pytest.mark.skip(reason="DEBT-016: Placeholder - needs fixtures and assertions")
     @pytest.mark.asyncio
-    async def test_create_call_assignment_success(self, db, sample_faculty, sample_residents):
+    async def test_create_call_assignment_success(
+        self, db, sample_faculty, sample_residents
+    ):
         """Test creating a new call assignment."""
         ***REMOVED*** service = CallAssignmentService(db)
         ***REMOVED*** result = await service.create_call_assignment(
@@ -115,7 +117,9 @@ class TestCallAssignmentService:
 
     @pytest.mark.skip(reason="DEBT-016: Placeholder - needs fixtures and assertions")
     @pytest.mark.asyncio
-    async def test_create_call_assignment_conflict(self, db, sample_faculty, sample_residents):
+    async def test_create_call_assignment_conflict(
+        self, db, sample_faculty, sample_residents
+    ):
         """Test creating call assignment that conflicts."""
         ***REMOVED*** Create one assignment, then try to create overlapping
         ***REMOVED*** service = CallAssignmentService(db)

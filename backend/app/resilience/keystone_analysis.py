@@ -213,9 +213,7 @@ class SuccessionPlan:
     )  ***REMOVED*** (id, name, suitability_score)
 
     ***REMOVED*** Training requirements
-    cross_training_needed: list[str] = field(
-        default_factory=list
-    )  ***REMOVED*** Skills to train
+    cross_training_needed: list[str] = field(default_factory=list)  ***REMOVED*** Skills to train
     estimated_training_hours: int = 0
     training_priority: str = "medium"  ***REMOVED*** low, medium, high, urgent
 
@@ -225,9 +223,7 @@ class SuccessionPlan:
     assigned_trainers: list[UUID] = field(default_factory=list)
 
     ***REMOVED*** Risk mitigation
-    interim_measures: list[str] = field(
-        default_factory=list
-    )  ***REMOVED*** Temporary workarounds
+    interim_measures: list[str] = field(default_factory=list)  ***REMOVED*** Temporary workarounds
     risk_reduction: float = 0.0  ***REMOVED*** Expected risk reduction (0.0-1.0)
 
     ***REMOVED*** Tracking
@@ -479,7 +475,9 @@ class KeystoneAnalyzer:
             return 0.0
 
         ***REMOVED*** Count services this entity can provide
-        my_services = [sid for sid, providers in services.items() if entity_uuid in providers]
+        my_services = [
+            sid for sid, providers in services.items() if entity_uuid in providers
+        ]
 
         if not my_services:
             return 1.0  ***REMOVED*** Not providing services, fully redundant
@@ -546,9 +544,7 @@ class KeystoneAnalyzer:
             entity_id = entity.id if hasattr(entity, "id") else entity["id"]
             entity_name = getattr(entity, "name", str(entity_id))
             entity_type = (
-                EntityType.FACULTY
-                if entity in faculty
-                else EntityType.RESIDENT
+                EntityType.FACULTY if entity in faculty else EntityType.RESIDENT
             )
 
             entity_str = str(entity_id)
@@ -575,14 +571,10 @@ class KeystoneAnalyzer:
                 sid for sid, providers in services.items() if entity_id in providers
             ]
             unique_caps = [
-                str(sid)
-                for sid in my_services
-                if len(services.get(sid, [])) == 1
+                str(sid) for sid in my_services if len(services.get(sid, [])) == 1
             ]
             shared_caps = [
-                str(sid)
-                for sid in my_services
-                if len(services.get(sid, [])) > 1
+                str(sid) for sid in my_services if len(services.get(sid, [])) > 1
             ]
 
             ***REMOVED*** Calculate metrics
@@ -713,7 +705,11 @@ class KeystoneAnalyzer:
         )
 
         ***REMOVED*** Level 0: Entity removed
-        affected_at_level = {EntityType.FACULTY: [], EntityType.SERVICE: [], EntityType.ROTATION: []}
+        affected_at_level = {
+            EntityType.FACULTY: [],
+            EntityType.SERVICE: [],
+            EntityType.ROTATION: [],
+        }
         affected_at_level[entity_type].append(entity_id)
 
         ***REMOVED*** Level 1: Services lost
@@ -877,9 +873,7 @@ class KeystoneAnalyzer:
                 if best_candidate_id in providers
             ]
             training_needed = [
-                str(sid)
-                for sid in keystone_services
-                if sid not in candidate_services
+                str(sid) for sid in keystone_services if sid not in candidate_services
             ]
 
         ***REMOVED*** Estimate training hours (rough heuristic)
@@ -964,7 +958,9 @@ class KeystoneAnalyzer:
             "total_keystones": len(keystones),
             "by_risk_level": {
                 "catastrophic": sum(
-                    1 for k in keystones if k.risk_level == KeystoneRiskLevel.CATASTROPHIC
+                    1
+                    for k in keystones
+                    if k.risk_level == KeystoneRiskLevel.CATASTROPHIC
                 ),
                 "critical": sum(
                     1 for k in keystones if k.risk_level == KeystoneRiskLevel.CRITICAL

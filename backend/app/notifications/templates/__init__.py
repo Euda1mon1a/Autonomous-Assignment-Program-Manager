@@ -23,6 +23,15 @@ from app.notifications.templates.validators import (
     validate_template_syntax,
 )
 
+***REMOVED*** Backward compatibility: export NotificationType from notification_types
+***REMOVED*** This was previously in templates.py before the templates/ package was created
+from app.notifications.notification_types import (
+    NotificationType,
+    NotificationTemplate,
+    get_template,
+    render_notification,
+)
+
 __all__ = [
     "TemplateEngine",
     "TemplateRenderError",
@@ -32,4 +41,9 @@ __all__ = [
     "TemplateValidator",
     "ValidationError",
     "validate_template_syntax",
+    ***REMOVED*** Backward compatibility
+    "NotificationType",
+    "NotificationTemplate",
+    "get_template",
+    "render_notification",
 ]

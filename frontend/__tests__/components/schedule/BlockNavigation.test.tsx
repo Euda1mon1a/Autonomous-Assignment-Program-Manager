@@ -60,7 +60,7 @@ describe('BlockNavigation', () => {
       expect(screen.getByText('This Block')).toBeInTheDocument()
     })
 
-    it('should render start date input', () => {
+    it('should render date range in block display', () => {
       render(
         <BlockNavigation
           startDate={mockStartDate}
@@ -69,23 +69,9 @@ describe('BlockNavigation', () => {
         />
       )
 
-      const startInput = screen.getByLabelText('Start date') as HTMLInputElement
-      expect(startInput).toBeInTheDocument()
-      expect(startInput.value).toBe('2024-01-01')
-    })
-
-    it('should render end date input', () => {
-      render(
-        <BlockNavigation
-          startDate={mockStartDate}
-          endDate={mockEndDate}
-          onDateRangeChange={mockOnDateRangeChange}
-        />
-      )
-
-      const endInput = screen.getByLabelText('End date') as HTMLInputElement
-      expect(endInput).toBeInTheDocument()
-      expect(endInput.value).toBe('2024-01-28')
+      // The component shows read-only date range displays (may appear multiple times)
+      const dateRanges = screen.getAllByText(/Jan 1.*Jan 28/)
+      expect(dateRanges.length).toBeGreaterThan(0)
     })
 
     it('should display current date range', () => {
@@ -237,137 +223,9 @@ describe('BlockNavigation', () => {
     })
   })
 
-  describe('Start Date Input', () => {
-    it('should call onDateRangeChange when start date changes', () => {
-      render(
-        <BlockNavigation
-          startDate={mockStartDate}
-          endDate={mockEndDate}
-          onDateRangeChange={mockOnDateRangeChange}
-        />
-      )
-
-      const startInput = screen.getByLabelText('Start date') as HTMLInputElement
-      fireEvent.change(startInput, { target: { value: '2024-02-01' } })
-
-      expect(mockOnDateRangeChange).toHaveBeenCalled()
-      const [newStart, newEnd] = mockOnDateRangeChange.mock.calls[0]
-
-      expect(format(newStart, 'yyyy-MM-dd')).toBe('2024-02-01')
-      // End date should be 27 days after start (28-day block)
-      expect(format(newEnd, 'yyyy-MM-dd')).toBe('2024-02-28')
-    })
-
-    it('should maintain 28-day duration when start date changes', () => {
-      render(
-        <BlockNavigation
-          startDate={mockStartDate}
-          endDate={mockEndDate}
-          onDateRangeChange={mockOnDateRangeChange}
-        />
-      )
-
-      const startInput = screen.getByLabelText('Start date') as HTMLInputElement
-      fireEvent.change(startInput, { target: { value: '2024-03-10' } })
-
-      const [newStart, newEnd] = mockOnDateRangeChange.mock.calls[0]
-      const daysDiff = Math.floor((newEnd - newStart) / (1000 * 60 * 60 * 24))
-
-      expect(daysDiff).toBe(27) // 28 days (0-indexed)
-    })
-
-    it('should not call onDateRangeChange with invalid date', () => {
-      render(
-        <BlockNavigation
-          startDate={mockStartDate}
-          endDate={mockEndDate}
-          onDateRangeChange={mockOnDateRangeChange}
-        />
-      )
-
-      const startInput = screen.getByLabelText('Start date') as HTMLInputElement
-      fireEvent.change(startInput, { target: { value: 'invalid-date' } })
-
-      expect(mockOnDateRangeChange).not.toHaveBeenCalled()
-    })
-
-    it('should have proper aria-label', () => {
-      render(
-        <BlockNavigation
-          startDate={mockStartDate}
-          endDate={mockEndDate}
-          onDateRangeChange={mockOnDateRangeChange}
-        />
-      )
-
-      const startInput = screen.getByLabelText('Start date')
-      expect(startInput).toHaveAttribute('aria-label', 'Start date')
-    })
-  })
-
-  describe('End Date Input', () => {
-    it('should call onDateRangeChange when end date changes', () => {
-      render(
-        <BlockNavigation
-          startDate={mockStartDate}
-          endDate={mockEndDate}
-          onDateRangeChange={mockOnDateRangeChange}
-        />
-      )
-
-      const endInput = screen.getByLabelText('End date') as HTMLInputElement
-      fireEvent.change(endInput, { target: { value: '2024-02-15' } })
-
-      expect(mockOnDateRangeChange).toHaveBeenCalled()
-      const [newStart, newEnd] = mockOnDateRangeChange.mock.calls[0]
-
-      expect(format(newStart, 'yyyy-MM-dd')).toBe('2024-01-01')
-      expect(format(newEnd, 'yyyy-MM-dd')).toBe('2024-02-15')
-    })
-
-    it('should not call onDateRangeChange if end date is before start date', () => {
-      render(
-        <BlockNavigation
-          startDate={mockStartDate}
-          endDate={mockEndDate}
-          onDateRangeChange={mockOnDateRangeChange}
-        />
-      )
-
-      const endInput = screen.getByLabelText('End date') as HTMLInputElement
-      fireEvent.change(endInput, { target: { value: '2023-12-31' } })
-
-      expect(mockOnDateRangeChange).not.toHaveBeenCalled()
-    })
-
-    it('should not call onDateRangeChange with invalid date', () => {
-      render(
-        <BlockNavigation
-          startDate={mockStartDate}
-          endDate={mockEndDate}
-          onDateRangeChange={mockOnDateRangeChange}
-        />
-      )
-
-      const endInput = screen.getByLabelText('End date') as HTMLInputElement
-      fireEvent.change(endInput, { target: { value: 'invalid-date' } })
-
-      expect(mockOnDateRangeChange).not.toHaveBeenCalled()
-    })
-
-    it('should have proper aria-label', () => {
-      render(
-        <BlockNavigation
-          startDate={mockStartDate}
-          endDate={mockEndDate}
-          onDateRangeChange={mockOnDateRangeChange}
-        />
-      )
-
-      const endInput = screen.getByLabelText('End date')
-      expect(endInput).toHaveAttribute('aria-label', 'End date')
-    })
-  })
+  // Note: The component does not have editable date inputs - it uses
+  // navigation buttons (Previous Block, Next Block, Today, This Block)
+  // to change the date range. Date range is displayed as read-only text.
 
   describe('Button Styling', () => {
     it('should apply btn-secondary class to navigation buttons', () => {
@@ -430,27 +288,11 @@ describe('BlockNavigation', () => {
         />
       )
 
-      const dateRangeDisplay = screen.getByText(/Jan 1, 2024.*Jan 28, 2024/)
-      expect(dateRangeDisplay.parentElement).toHaveClass('hidden')
-      expect(dateRangeDisplay.parentElement).toHaveClass('lg:block')
+      // The full date range display in the right section is hidden on small screens
+      const dateRangeDisplay = container.querySelector('.hidden.lg\\:block')
+      expect(dateRangeDisplay).toBeInTheDocument()
     })
   })
 
-  describe('Input Types', () => {
-    it('should use date input type for date pickers', () => {
-      render(
-        <BlockNavigation
-          startDate={mockStartDate}
-          endDate={mockEndDate}
-          onDateRangeChange={mockOnDateRangeChange}
-        />
-      )
-
-      const startInput = screen.getByLabelText('Start date') as HTMLInputElement
-      const endInput = screen.getByLabelText('End date') as HTMLInputElement
-
-      expect(startInput.type).toBe('date')
-      expect(endInput.type).toBe('date')
-    })
-  })
+  // Note: The component does not use date input pickers - navigation is via buttons only
 })

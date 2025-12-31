@@ -140,7 +140,9 @@ class CrowdingDistance:
                 prev_val = sorted_solutions[i - 1].objective_values.get(obj.name, 0.0)
                 next_val = sorted_solutions[i + 1].objective_values.get(obj.name, 0.0)
 
-                sorted_solutions[i].crowding_distance += (next_val - prev_val) / obj_range
+                sorted_solutions[i].crowding_distance += (
+                    next_val - prev_val
+                ) / obj_range
 
     def select_by_crowding(
         self,
@@ -722,7 +724,9 @@ class DiversityMechanism:
         elif self.primary_metric == DiversityMetric.NICHING:
             niche_counts = self.niching.calculate_niche_count(solutions)
             for sol in solutions:
-                sol.crowding_distance = 1.0 / max(niche_counts.get(str(sol.id), 1.0), 1.0)
+                sol.crowding_distance = 1.0 / max(
+                    niche_counts.get(str(sol.id), 1.0), 1.0
+                )
 
         elif self.primary_metric == DiversityMetric.REFERENCE_POINT:
             associations = self.reference_points.associate(solutions)
@@ -813,7 +817,9 @@ class DiversityMechanism:
 
         self.calculate_diversity(solutions)
 
-        distances = [s.crowding_distance for s in solutions if s.crowding_distance < float("inf")]
+        distances = [
+            s.crowding_distance for s in solutions if s.crowding_distance < float("inf")
+        ]
 
         if not distances:
             distances = [0.0]

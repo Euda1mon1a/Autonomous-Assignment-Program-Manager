@@ -25,7 +25,9 @@ class FacultyRole(str, Enum):
     DEPT_CHIEF = "dept_chief"  ***REMOVED*** Department Chief: 1/week, prefers Wed call
     SPORTS_MED = "sports_med"  ***REMOVED*** Sports Medicine: 0 regular clinic, 4 SM clinic/week
     CORE = "core"  ***REMOVED*** Core Faculty: max 4/week
-    ADJUNCT = "adjunct"  ***REMOVED*** Adjunct Faculty: not auto-scheduled, can be pre-loaded to FMIT
+    ADJUNCT = (
+        "adjunct"  ***REMOVED*** Adjunct Faculty: not auto-scheduled, can be pre-loaded to FMIT
+    )
 
 
 class ScreenerRole(str, Enum):

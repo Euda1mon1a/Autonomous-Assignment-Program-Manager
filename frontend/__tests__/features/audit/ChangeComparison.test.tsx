@@ -27,7 +27,9 @@ describe('ChangeComparison', () => {
       const entry = getMockLogs(1)[0];
       render(<ChangeComparison entry={entry} onClose={mockOnClose} />);
 
-      expect(screen.getByText('Entry Details')).toBeInTheDocument();
+      // Component has "Entry Details" in two places: header and label
+      const entryDetails = screen.getAllByText('Entry Details');
+      expect(entryDetails.length).toBeGreaterThan(0);
     });
 
     it('should display entry header information', () => {
@@ -35,13 +37,15 @@ describe('ChangeComparison', () => {
       render(<ChangeComparison entry={entry} onClose={mockOnClose} />);
 
       expect(screen.getByText('Created')).toBeInTheDocument();
-      expect(screen.getByText(/Assignment/i)).toBeInTheDocument();
+      // "Assignment" appears in multiple places (entity type and "Assignment Date")
+      const assignmentTexts = screen.getAllByText(/Assignment/i);
+      expect(assignmentTexts.length).toBeGreaterThan(0);
       expect(screen.getByText(/Dr. John Doe - ICU/i)).toBeInTheDocument();
     });
 
     it('should display user and timestamp', () => {
       const entry = getMockLogs(1)[0];
-      render(<ChangeComparison entry={entry} onClose="{mockOnClose}" />);
+      render(<ChangeComparison entry={entry} onClose={mockOnClose} />);
 
       expect(screen.getByText('Dr. Sarah Chen')).toBeInTheDocument();
       expect(screen.getByText(/Dec 17, 2025/i)).toBeInTheDocument();
@@ -235,8 +239,11 @@ describe('ChangeComparison', () => {
       const entry = getMockLogs(1)[0];
       render(<ChangeComparison entry={entry} onClose={mockOnClose} />);
 
-      expect(screen.getByText('Before')).toBeInTheDocument();
-      expect(screen.getByText('After')).toBeInTheDocument();
+      // Multiple fields means multiple Before/After labels
+      const beforeElements = screen.getAllByText('Before');
+      const afterElements = screen.getAllByText('After');
+      expect(beforeElements.length).toBeGreaterThan(0);
+      expect(afterElements.length).toBeGreaterThan(0);
     });
 
     it('should display old value as struck through', () => {
@@ -306,8 +313,9 @@ describe('ChangeComparison', () => {
       };
       render(<ChangeComparison entry={entry} onClose={mockOnClose} />);
 
-      // Should format dates as "Dec 1, 2025 00:00"
-      expect(screen.getByText(/Dec/i)).toBeInTheDocument();
+      // Should format dates - multiple Dec texts expected from header and changes
+      const decTexts = screen.getAllByText(/Dec/i);
+      expect(decTexts.length).toBeGreaterThan(0);
     });
 
     it('should display field display names when available', () => {
@@ -476,7 +484,9 @@ describe('ChangeComparison', () => {
       };
       render(<ChangeComparison entry={entry} onClose={mockOnClose} />);
 
-      expect(screen.getByText(/Cardiology.*Neurology/)).toBeInTheDocument();
+      // Array values are formatted as comma-separated list (appears in both before/after)
+      const arrayValues = screen.getAllByText(/Cardiology, Neurology/);
+      expect(arrayValues.length).toBeGreaterThan(0);
     });
 
     it('should show "(empty array)" for empty arrays', () => {
@@ -514,8 +524,9 @@ describe('ChangeComparison', () => {
       const entry = getMockLogs(1)[0];
       render(<ChangeComparison entry={entry} onClose={mockOnClose} />);
 
-      const heading = screen.getByText('Entry Details');
-      expect(heading).toBeInTheDocument();
+      // Component has "Entry Details" in multiple places
+      const headings = screen.getAllByText('Entry Details');
+      expect(headings.length).toBeGreaterThan(0);
     });
 
     it('should have readable text contrast', () => {

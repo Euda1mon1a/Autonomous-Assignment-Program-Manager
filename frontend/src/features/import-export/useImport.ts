@@ -315,7 +315,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
       });
 
       // Validate the data
-      let preview = validateImportData(normalizedData, detectedType, columns);
+      const preview = validateImportData(normalizedData, detectedType, columns);
       preview.detectedFormat = detectFileFormat(file);
 
       // Add duplicate warnings

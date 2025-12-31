@@ -148,7 +148,9 @@ class LocalizationMetricsTracker:
             computation_time_ms=computation_time_ms,
             quality=quality,
             metadata={
-                "person_id": str(disruption.person_id) if disruption.person_id else None,
+                "person_id": str(disruption.person_id)
+                if disruption.person_id
+                else None,
                 "num_blocks": len(disruption.block_ids),
             },
         )
@@ -382,9 +384,7 @@ class LocalizationMetricsResponse(BaseModel):
     """API response for localization metrics."""
 
     summary: dict[str, float] = Field(..., description="Summary metrics")
-    region_types: dict[str, int] = Field(
-        ..., description="Distribution by region type"
-    )
+    region_types: dict[str, int] = Field(..., description="Distribution by region type")
     quality_distribution: dict[str, float] = Field(
         ..., description="Quality percentages"
     )

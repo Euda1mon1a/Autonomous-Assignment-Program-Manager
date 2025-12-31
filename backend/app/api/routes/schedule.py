@@ -1233,7 +1233,9 @@ def generate_faculty_outpatient(
         This endpoint modifies the database. Ensure backup before use.
         Use the safe-schedule-generation skill pre-flight checklist.
     """
-    from app.services.faculty_outpatient_service import FacultyOutpatientAssignmentService
+    from app.services.faculty_outpatient_service import (
+        FacultyOutpatientAssignmentService,
+    )
 
     logger.info(
         f"Generating faculty outpatient assignments for block {block_number}",

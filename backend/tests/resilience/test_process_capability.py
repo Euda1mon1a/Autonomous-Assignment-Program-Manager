@@ -200,14 +200,74 @@ class TestCpCalculation:
     @pytest.fixture
     def centered_data(self):
         """Well-centered data (mean=60, sigma~5, within 40-80)."""
-        return [62, 58, 65, 55, 68, 57, 63, 61, 59, 64, 60, 62, 58, 66, 54,
-                67, 59, 61, 63, 58, 64, 60, 57, 65, 62, 59, 61, 63, 58, 66]
+        return [
+            62,
+            58,
+            65,
+            55,
+            68,
+            57,
+            63,
+            61,
+            59,
+            64,
+            60,
+            62,
+            58,
+            66,
+            54,
+            67,
+            59,
+            61,
+            63,
+            58,
+            64,
+            60,
+            57,
+            65,
+            62,
+            59,
+            61,
+            63,
+            58,
+            66,
+        ]
 
     @pytest.fixture
     def high_variation_data(self):
         """High variation data (mean=60, sigma~10)."""
-        return [45, 75, 50, 70, 55, 65, 42, 78, 48, 72, 52, 68, 46, 74, 54,
-                66, 40, 80, 44, 76, 56, 64, 58, 62, 60, 50, 70, 55, 65, 60]
+        return [
+            45,
+            75,
+            50,
+            70,
+            55,
+            65,
+            42,
+            78,
+            48,
+            72,
+            52,
+            68,
+            46,
+            74,
+            54,
+            66,
+            40,
+            80,
+            44,
+            76,
+            56,
+            64,
+            58,
+            62,
+            60,
+            50,
+            70,
+            55,
+            65,
+            60,
+        ]
 
     def test_cp_perfect_process(self, analyzer):
         """Test Cp with perfectly controlled process (σ=1, range=40)."""
@@ -280,14 +340,74 @@ class TestCpkCalculation:
     @pytest.fixture
     def centered_data(self):
         """Well-centered data."""
-        return [62, 58, 65, 55, 68, 57, 63, 61, 59, 64, 60, 62, 58, 66, 54,
-                67, 59, 61, 63, 58, 64, 60, 57, 65, 62, 59, 61, 63, 58, 66]
+        return [
+            62,
+            58,
+            65,
+            55,
+            68,
+            57,
+            63,
+            61,
+            59,
+            64,
+            60,
+            62,
+            58,
+            66,
+            54,
+            67,
+            59,
+            61,
+            63,
+            58,
+            64,
+            60,
+            57,
+            65,
+            62,
+            59,
+            61,
+            63,
+            58,
+            66,
+        ]
 
     @pytest.fixture
     def off_center_data(self):
         """Off-center data (mean=65, shifted toward USL)."""
-        return [67, 63, 70, 60, 73, 62, 68, 66, 64, 69, 65, 67, 63, 71, 59,
-                72, 64, 66, 68, 63, 69, 65, 62, 70, 67, 64, 66, 68, 63, 71]
+        return [
+            67,
+            63,
+            70,
+            60,
+            73,
+            62,
+            68,
+            66,
+            64,
+            69,
+            65,
+            67,
+            63,
+            71,
+            59,
+            72,
+            64,
+            66,
+            68,
+            63,
+            69,
+            65,
+            62,
+            70,
+            67,
+            64,
+            66,
+            68,
+            63,
+            71,
+        ]
 
     def test_cpk_centered_process(self, analyzer, centered_data):
         """Test Cpk with well-centered process."""
@@ -375,8 +495,38 @@ class TestPpAndPpkCalculation:
     @pytest.fixture
     def centered_data(self):
         """Well-centered data."""
-        return [62, 58, 65, 55, 68, 57, 63, 61, 59, 64, 60, 62, 58, 66, 54,
-                67, 59, 61, 63, 58, 64, 60, 57, 65, 62, 59, 61, 63, 58, 66]
+        return [
+            62,
+            58,
+            65,
+            55,
+            68,
+            57,
+            63,
+            61,
+            59,
+            64,
+            60,
+            62,
+            58,
+            66,
+            54,
+            67,
+            59,
+            61,
+            63,
+            58,
+            64,
+            60,
+            57,
+            65,
+            62,
+            59,
+            61,
+            63,
+            58,
+            66,
+        ]
 
     def test_pp_equals_cp(self, analyzer, centered_data):
         """Test that Pp equals Cp for single time series."""
@@ -535,20 +685,110 @@ class TestWorkloadCapabilityAnalysis:
     @pytest.fixture
     def centered_data(self):
         """Well-centered data."""
-        return [62, 58, 65, 55, 68, 57, 63, 61, 59, 64, 60, 62, 58, 66, 54,
-                67, 59, 61, 63, 58, 64, 60, 57, 65, 62, 59, 61, 63, 58, 66]
+        return [
+            62,
+            58,
+            65,
+            55,
+            68,
+            57,
+            63,
+            61,
+            59,
+            64,
+            60,
+            62,
+            58,
+            66,
+            54,
+            67,
+            59,
+            61,
+            63,
+            58,
+            64,
+            60,
+            57,
+            65,
+            62,
+            59,
+            61,
+            63,
+            58,
+            66,
+        ]
 
     @pytest.fixture
     def high_variation_data(self):
         """High variation data."""
-        return [45, 75, 50, 70, 55, 65, 42, 78, 48, 72, 52, 68, 46, 74, 54,
-                66, 40, 80, 44, 76, 56, 64, 58, 62, 60, 50, 70, 55, 65, 60]
+        return [
+            45,
+            75,
+            50,
+            70,
+            55,
+            65,
+            42,
+            78,
+            48,
+            72,
+            52,
+            68,
+            46,
+            74,
+            54,
+            66,
+            40,
+            80,
+            44,
+            76,
+            56,
+            64,
+            58,
+            62,
+            60,
+            50,
+            70,
+            55,
+            65,
+            60,
+        ]
 
     @pytest.fixture
     def off_center_data(self):
         """Off-center data (mean=65, shifted toward USL)."""
-        return [67, 63, 70, 60, 73, 62, 68, 66, 64, 69, 65, 67, 63, 71, 59,
-                72, 64, 66, 68, 63, 69, 65, 62, 70, 67, 64, 66, 68, 63, 71]
+        return [
+            67,
+            63,
+            70,
+            60,
+            73,
+            62,
+            68,
+            66,
+            64,
+            69,
+            65,
+            67,
+            63,
+            71,
+            59,
+            72,
+            64,
+            66,
+            68,
+            63,
+            69,
+            65,
+            62,
+            70,
+            67,
+            64,
+            66,
+            68,
+            63,
+            71,
+        ]
 
     def test_analyze_centered_workload(self, analyzer, centered_data):
         """Test analysis of well-centered workload data."""

@@ -17,7 +17,9 @@ import pytest
 
 from app.models.absence import Absence
 from app.models.assignment import Assignment
-from app.models.block import Block, Session
+from sqlalchemy.orm import Session
+
+from app.models.block import Block
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.scheduling.constraints.base import (

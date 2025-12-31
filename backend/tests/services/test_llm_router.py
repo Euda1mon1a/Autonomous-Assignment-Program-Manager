@@ -127,18 +127,24 @@ class TestCircuitBreaker:
 
     def test_circuit_breaker_half_open_after_timeout(self):
         """Test circuit breaker enters half-open state after timeout."""
-        breaker = CircuitBreaker(failure_threshold=3, recovery_timeout=0)
+        import time
+        from datetime import datetime, timedelta
+
+        ***REMOVED*** Use a 1 second timeout so we can test the transition
+        breaker = CircuitBreaker(failure_threshold=3, recovery_timeout=1)
 
         ***REMOVED*** Record failures to open circuit
         for _ in range(3):
             breaker.record_failure("test_provider")
 
+        ***REMOVED*** Circuit should be open
         assert breaker.can_execute("test_provider") is False
 
-        ***REMOVED*** After timeout (0 seconds), should enter half-open
-        import time
+        ***REMOVED*** Manually set next_retry to the past to simulate timeout
+        state = breaker.get_state("test_provider")
+        state.next_retry = datetime.utcnow() - timedelta(seconds=1)
 
-        time.sleep(0.1)
+        ***REMOVED*** Now it should allow execution and transition to half-open
         assert breaker.can_execute("test_provider") is True
 
         ***REMOVED*** State should be half_open
@@ -240,7 +246,9 @@ class TestLLMRouter:
         """Test task classification for code tasks."""
         router = LLMRouter()
 
-        classification = await router.classify_task("Write a function to validate dates")
+        classification = await router.classify_task(
+            "Write a function to validate dates"
+        )
 
         assert classification.task_type == "code_generation"
         assert classification.recommended_model == "qwen2.5"
@@ -284,7 +292,7 @@ class TestLLMRouter:
             "generate",
             side_effect=LLMProviderError("Ollama failed"),
         ):
-            ***REMOVED*** Mock anthropic to succeed
+            ***REMOVED*** Mock anthropic to be available and succeed
             mock_response = LLMResponse(
                 content="Fallback response",
                 provider="anthropic",
@@ -293,14 +301,19 @@ class TestLLMRouter:
 
             with patch.object(
                 router.providers["anthropic"],
-                "generate",
-                return_value=mock_response,
+                "is_available",
+                return_value=True,
             ):
-                request = LLMRequest(
-                    prompt="Test prompt",
-                    provider="ollama",
-                )
-                response = await router.generate(request)
+                with patch.object(
+                    router.providers["anthropic"],
+                    "generate",
+                    return_value=mock_response,
+                ):
+                    request = LLMRequest(
+                        prompt="Test prompt",
+                        provider="ollama",
+                    )
+                    response = await router.generate(request)
 
         assert response.content == "Fallback response"
         assert response.provider == "anthropic"

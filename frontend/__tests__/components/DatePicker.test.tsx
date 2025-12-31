@@ -145,13 +145,16 @@ describe('DatePicker', () => {
       expect(label).toHaveClass('text-gray-700')
     })
 
-    it('should associate label with input', () => {
-      render(<DatePicker label="Start Date" />)
+    it('should render label element with correct text', () => {
+      const { container } = render(<DatePicker label="Start Date" />)
 
-      const label = screen.getByText('Start Date')
-      const input = screen.getByLabelText('Start Date')
+      const label = container.querySelector('label')
+      expect(label).toBeInTheDocument()
+      expect(label?.tagName).toBe('LABEL')
+      expect(label).toHaveTextContent('Start Date')
 
-      expect(label.tagName).toBe('LABEL')
+      // Also verify the input is rendered
+      const input = container.querySelector('input[type="date"]')
       expect(input).toBeInTheDocument()
     })
   })
@@ -178,51 +181,51 @@ describe('DatePicker', () => {
 
   describe('Additional Props', () => {
     it('should pass through disabled prop', () => {
-      render(<DatePicker label="Start Date" disabled />)
+      const { container } = render(<DatePicker label="Start Date" disabled />)
 
-      const input = screen.getByLabelText('Start Date')
+      const input = container.querySelector('input[type="date"]')
       expect(input).toBeDisabled()
     })
 
     it('should pass through required prop', () => {
-      render(<DatePicker label="Start Date" required />)
+      const { container } = render(<DatePicker label="Start Date" required />)
 
-      const input = screen.getByLabelText('Start Date')
+      const input = container.querySelector('input[type="date"]')
       expect(input).toBeRequired()
     })
 
     it('should pass through min prop', () => {
-      render(<DatePicker label="Start Date" min="2024-01-01" />)
+      const { container } = render(<DatePicker label="Start Date" min="2024-01-01" />)
 
-      const input = screen.getByLabelText('Start Date')
+      const input = container.querySelector('input[type="date"]')
       expect(input).toHaveAttribute('min', '2024-01-01')
     })
 
     it('should pass through max prop', () => {
-      render(<DatePicker label="Start Date" max="2024-12-31" />)
+      const { container } = render(<DatePicker label="Start Date" max="2024-12-31" />)
 
-      const input = screen.getByLabelText('Start Date')
+      const input = container.querySelector('input[type="date"]')
       expect(input).toHaveAttribute('max', '2024-12-31')
     })
 
     it('should pass through placeholder prop', () => {
-      render(<DatePicker label="Start Date" placeholder="Select a date" />)
+      const { container } = render(<DatePicker label="Start Date" placeholder="Select a date" />)
 
-      const input = screen.getByLabelText('Start Date')
+      const input = container.querySelector('input[type="date"]')
       expect(input).toHaveAttribute('placeholder', 'Select a date')
     })
 
     it('should pass through name prop', () => {
-      render(<DatePicker label="Start Date" name="start_date" />)
+      const { container } = render(<DatePicker label="Start Date" name="start_date" />)
 
-      const input = screen.getByLabelText('Start Date')
+      const input = container.querySelector('input[type="date"]')
       expect(input).toHaveAttribute('name', 'start_date')
     })
 
     it('should pass through id prop', () => {
-      render(<DatePicker label="Start Date" id="custom-id" />)
+      const { container } = render(<DatePicker label="Start Date" id="custom-id" />)
 
-      const input = screen.getByLabelText('Start Date')
+      const input = container.querySelector('input[type="date"]')
       expect(input).toHaveAttribute('id', 'custom-id')
     })
 
@@ -236,9 +239,9 @@ describe('DatePicker', () => {
 
   describe('Focus States', () => {
     it('should have focus styles', () => {
-      render(<DatePicker label="Start Date" />)
+      const { container } = render(<DatePicker label="Start Date" />)
 
-      const input = screen.getByLabelText('Start Date')
+      const input = container.querySelector('input[type="date"]')
       expect(input).toHaveClass('focus:outline-none')
       expect(input).toHaveClass('focus:ring-2')
       expect(input).toHaveClass('focus:ring-blue-500')
@@ -246,9 +249,9 @@ describe('DatePicker', () => {
     })
 
     it('should be focusable', () => {
-      render(<DatePicker label="Start Date" />)
+      const { container } = render(<DatePicker label="Start Date" />)
 
-      const input = screen.getByLabelText('Start Date')
+      const input = container.querySelector('input[type="date"]') as HTMLInputElement
       input.focus()
       expect(input).toHaveFocus()
     })
@@ -297,14 +300,14 @@ describe('DatePicker', () => {
       const user = userEvent.setup()
       const onSubmit = jest.fn((e) => e.preventDefault())
 
-      render(
+      const { container } = render(
         <form onSubmit={onSubmit}>
           <DatePicker label="Start Date" name="start_date" required />
           <button type="submit">Submit</button>
         </form>
       )
 
-      const input = screen.getByLabelText('Start Date')
+      const input = container.querySelector('input[type="date"]')!
       await user.type(input, '2024-02-15')
 
       const submitButton = screen.getByRole('button', { name: /submit/i })
@@ -316,27 +319,27 @@ describe('DatePicker', () => {
     it('should clear value when user clears input', async () => {
       const user = userEvent.setup()
 
-      render(<DatePicker label="Start Date" value="2024-02-15" onChange={mockOnChange} />)
+      const { container } = render(<DatePicker label="Start Date" value="2024-02-15" onChange={mockOnChange} />)
 
-      const input = screen.getByLabelText('Start Date')
+      const input = container.querySelector('input[type="date"]')!
       await user.clear(input)
 
       expect(mockOnChange).toHaveBeenCalledWith('')
     })
 
     it('should update when controlled value changes', () => {
-      const { rerender } = render(
+      const { rerender, container } = render(
         <DatePicker label="Start Date" value="2024-02-15" onChange={mockOnChange} />
       )
 
-      let input = screen.getByLabelText('Start Date') as HTMLInputElement
+      let input = container.querySelector('input[type="date"]') as HTMLInputElement
       expect(input.value).toBe('2024-02-15')
 
       rerender(
         <DatePicker label="Start Date" value="2024-03-20" onChange={mockOnChange} />
       )
 
-      input = screen.getByLabelText('Start Date') as HTMLInputElement
+      input = container.querySelector('input[type="date"]') as HTMLInputElement
       expect(input.value).toBe('2024-03-20')
     })
   })

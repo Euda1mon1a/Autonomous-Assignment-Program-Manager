@@ -129,7 +129,9 @@ class RotationTemplateGUIFields(BaseModel):
     pattern_type: Literal["regular", "split", "mirrored", "alternating"] = "regular"
     setting_type: Literal["inpatient", "outpatient"] = "outpatient"
     paired_template_id: UUID | None = None
-    split_day: int | None = Field(None, ge=1, le=27, description="Day where split occurs (1-27)")
+    split_day: int | None = Field(
+        None, ge=1, le=27, description="Day where split occurs (1-27)"
+    )
     is_mirror_primary: bool = True
 
 

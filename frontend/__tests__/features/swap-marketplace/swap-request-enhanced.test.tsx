@@ -78,7 +78,7 @@ describe('SwapRequestForm - Enhanced Tests', () => {
         wrapper: createWrapper(),
       });
 
-      const weekSelect = screen.getByLabelText(/week to offload/i);
+      const weekSelect = screen.getAllByRole('combobox')[0];
       await user.selectOptions(weekSelect, mockAvailableWeeks[0].date);
 
       const submitButton = screen.getByRole('button', { name: /create request/i });
@@ -102,10 +102,10 @@ describe('SwapRequestForm - Enhanced Tests', () => {
         wrapper: createWrapper(),
       });
 
-      const weekSelect = screen.getByLabelText(/week to offload/i);
+      const weekSelect = screen.getAllByRole('combobox')[0];
       await user.selectOptions(weekSelect, mockAvailableWeeks[0].date);
 
-      const reasonTextarea = screen.getByLabelText(/reason \/ notes/i);
+      const reasonTextarea = screen.getByRole('textbox');
       await user.type(reasonTextarea, '   Conference attendance   ');
 
       const submitButton = screen.getByRole('button', { name: /create request/i });
@@ -128,7 +128,7 @@ describe('SwapRequestForm - Enhanced Tests', () => {
         wrapper: createWrapper(),
       });
 
-      const select = screen.getByLabelText(/week to offload/i) as HTMLSelectElement;
+      const select = screen.getAllByRole('combobox')[0] as HTMLSelectElement;
       expect(select.options.length).toBe(2); // placeholder + 1 week
     });
 
@@ -144,10 +144,10 @@ describe('SwapRequestForm - Enhanced Tests', () => {
         wrapper: createWrapper(),
       });
 
-      const specificRadio = screen.getByLabelText(/request specific faculty/i);
+      const specificRadio = screen.getAllByRole('radio')[1];
       await user.click(specificRadio);
 
-      const facultySelect = screen.getByLabelText(/target faculty/i) as HTMLSelectElement;
+      const facultySelect = screen.getAllByRole('combobox')[1] as HTMLSelectElement;
       expect(facultySelect.options.length).toBe(2); // placeholder + 1 faculty
     });
 
@@ -167,7 +167,7 @@ describe('SwapRequestForm - Enhanced Tests', () => {
       });
 
       // Now select a week
-      const weekSelect = screen.getByLabelText(/week to offload/i);
+      const weekSelect = screen.getAllByRole('combobox')[0];
       await user.selectOptions(weekSelect, mockAvailableWeeks[0].date);
 
       // Error should still be visible until next submit
@@ -199,11 +199,11 @@ describe('SwapRequestForm - Enhanced Tests', () => {
       });
 
       // Select a week
-      const weekSelect = screen.getByLabelText(/week to offload/i) as HTMLSelectElement;
+      const weekSelect = screen.getAllByRole('combobox')[0] as HTMLSelectElement;
       await user.selectOptions(weekSelect, mockAvailableWeeks[0].date);
 
       // Switch to specific mode
-      const specificRadio = screen.getByLabelText(/request specific faculty/i);
+      const specificRadio = screen.getAllByRole('radio')[1];
       await user.click(specificRadio);
 
       // Week should still be selected
@@ -218,11 +218,11 @@ describe('SwapRequestForm - Enhanced Tests', () => {
       });
 
       // Type a reason
-      const reasonTextarea = screen.getByLabelText(/reason \/ notes/i) as HTMLTextAreaElement;
+      const reasonTextarea = screen.getByRole('textbox') as HTMLTextAreaElement;
       await user.type(reasonTextarea, 'Medical appointment');
 
       // Switch to specific mode
-      const specificRadio = screen.getByLabelText(/request specific faculty/i);
+      const specificRadio = screen.getAllByRole('radio')[1];
       await user.click(specificRadio);
 
       // Reason should still be there
@@ -237,15 +237,15 @@ describe('SwapRequestForm - Enhanced Tests', () => {
       });
 
       // Switch to specific mode
-      const specificRadio = screen.getByLabelText(/request specific faculty/i);
+      const specificRadio = screen.getAllByRole('radio')[1];
       await user.click(specificRadio);
 
       // Select a faculty
-      const facultySelect = screen.getByLabelText(/target faculty/i);
+      const facultySelect = screen.getAllByRole('combobox')[1];
       await user.selectOptions(facultySelect, mockFacultyMembers[0].id);
 
       // Switch back to auto mode
-      const autoRadio = screen.getByLabelText(/auto-find candidates/i);
+      const autoRadio = screen.getAllByRole('radio')[0];
       await user.click(autoRadio);
 
       // Faculty field should be hidden
@@ -267,7 +267,7 @@ describe('SwapRequestForm - Enhanced Tests', () => {
         wrapper: createWrapper(),
       });
 
-      const weekSelect = screen.getByLabelText(/week to offload/i);
+      const weekSelect = screen.getAllByRole('combobox')[0];
       await user.selectOptions(weekSelect, mockAvailableWeeks[0].date);
 
       const submitButton = screen.getByRole('button', { name: /create request/i });
@@ -286,7 +286,7 @@ describe('SwapRequestForm - Enhanced Tests', () => {
         wrapper: createWrapper(),
       });
 
-      const weekSelect = screen.getByLabelText(/week to offload/i);
+      const weekSelect = screen.getAllByRole('combobox')[0];
       await user.selectOptions(weekSelect, mockAvailableWeeks[0].date);
 
       const submitButton = screen.getByRole('button', { name: /create request/i });
@@ -319,7 +319,7 @@ describe('SwapRequestForm - Enhanced Tests', () => {
         wrapper: createWrapper(),
       });
 
-      const weekSelect = screen.getByLabelText(/week to offload/i);
+      const weekSelect = screen.getAllByRole('combobox')[0];
       await user.selectOptions(weekSelect, mockAvailableWeeks[0].date);
 
       const submitButton = screen.getByRole('button', { name: /create request/i });
@@ -339,7 +339,7 @@ describe('SwapRequestForm - Enhanced Tests', () => {
         wrapper: createWrapper(),
       });
 
-      const weekSelect = screen.getByLabelText(/week to offload/i);
+      const weekSelect = screen.getAllByRole('combobox')[0];
       await user.selectOptions(weekSelect, mockAvailableWeeks[0].date);
 
       const submitButton = screen.getByRole('button', { name: /create request/i });
@@ -432,10 +432,10 @@ describe('SwapRequestForm - Enhanced Tests', () => {
         wrapper: createWrapper(),
       });
 
-      expect(screen.getByLabelText(/week to offload/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/auto-find candidates/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/request specific faculty/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/reason \/ notes/i)).toBeInTheDocument();
+      expect(screen.getAllByRole('combobox')[0]).toBeInTheDocument();
+      expect(screen.getAllByRole('radio')[0]).toBeInTheDocument();
+      expect(screen.getAllByRole('radio')[1]).toBeInTheDocument();
+      expect(screen.getByRole('textbox')).toBeInTheDocument();
     });
 
     it('should have accessible error messages linked to fields', async () => {
@@ -449,7 +449,7 @@ describe('SwapRequestForm - Enhanced Tests', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        const weekSelect = screen.getByLabelText(/week to offload/i);
+        const weekSelect = screen.getAllByRole('combobox')[0];
         const errorMessage = screen.getByText(/please select a week to offload/i);
 
         // Error should be near the field
@@ -470,10 +470,10 @@ describe('SwapRequestForm - Enhanced Tests', () => {
         wrapper: createWrapper(),
       });
 
-      expect(screen.getByLabelText(/week to offload/i)).toBeDisabled();
-      expect(screen.getByLabelText(/auto-find candidates/i)).toBeDisabled();
-      expect(screen.getByLabelText(/request specific faculty/i)).toBeDisabled();
-      expect(screen.getByLabelText(/reason \/ notes/i)).toBeDisabled();
+      expect(screen.getAllByRole('combobox')[0]).toBeDisabled();
+      expect(screen.getAllByRole('radio')[0]).toBeDisabled();
+      expect(screen.getAllByRole('radio')[1]).toBeDisabled();
+      expect(screen.getByRole('textbox')).toBeDisabled();
       expect(screen.getByRole('button', { name: /creating\.\.\./i })).toBeDisabled();
     });
 
@@ -558,15 +558,15 @@ describe('SwapRequestForm - Enhanced Tests', () => {
       });
 
       // 1. Select week
-      const weekSelect = screen.getByLabelText(/week to offload/i);
+      const weekSelect = screen.getAllByRole('combobox')[0];
       await user.selectOptions(weekSelect, mockAvailableWeeks[0].date);
 
       // 2. Ensure auto mode is selected (default)
-      const autoRadio = screen.getByLabelText(/auto-find candidates/i) as HTMLInputElement;
+      const autoRadio = screen.getAllByRole('radio')[0] as HTMLInputElement;
       expect(autoRadio).toBeChecked();
 
       // 3. Add reason
-      const reasonTextarea = screen.getByLabelText(/reason \/ notes/i);
+      const reasonTextarea = screen.getByRole('textbox');
       await user.type(reasonTextarea, 'Conference in another city');
 
       // 4. Submit
@@ -596,19 +596,19 @@ describe('SwapRequestForm - Enhanced Tests', () => {
       });
 
       // 1. Select week
-      const weekSelect = screen.getByLabelText(/week to offload/i);
+      const weekSelect = screen.getAllByRole('combobox')[0];
       await user.selectOptions(weekSelect, mockAvailableWeeks[1].date);
 
       // 2. Switch to specific mode
-      const specificRadio = screen.getByLabelText(/request specific faculty/i);
+      const specificRadio = screen.getAllByRole('radio')[1];
       await user.click(specificRadio);
 
       // 3. Select faculty
-      const facultySelect = screen.getByLabelText(/target faculty/i);
+      const facultySelect = screen.getAllByRole('combobox')[1];
       await user.selectOptions(facultySelect, mockFacultyMembers[2].id);
 
       // 4. Add reason
-      const reasonTextarea = screen.getByLabelText(/reason \/ notes/i);
+      const reasonTextarea = screen.getByRole('textbox');
       await user.type(reasonTextarea, 'Personal request');
 
       // 5. Submit
@@ -646,7 +646,7 @@ describe('SwapRequestForm - Enhanced Tests', () => {
       });
 
       // 3. Fix the issue
-      const weekSelect = screen.getByLabelText(/week to offload/i);
+      const weekSelect = screen.getAllByRole('combobox')[0];
       await user.selectOptions(weekSelect, mockAvailableWeeks[0].date);
 
       // 4. Submit again

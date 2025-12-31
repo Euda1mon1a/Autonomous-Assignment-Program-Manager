@@ -265,7 +265,8 @@ describe('ConflictDashboard', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('resolution-suggestions')).toBeInTheDocument();
-        expect(screen.getByText('Resolution Suggestions')).toBeInTheDocument();
+        // There are two elements with "Resolution Suggestions" text - the panel label and the mock
+        expect(screen.getAllByText('Resolution Suggestions').length).toBeGreaterThan(0);
       });
     });
 

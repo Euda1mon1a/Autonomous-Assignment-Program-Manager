@@ -139,15 +139,6 @@ describe('Swap Marketplace Hooks', () => {
 
   describe('useMySwapRequests', () => {
     it('should fetch my swaps data successfully', async () => {
-      // Mock localStorage
-      const mockUser = { id: 'user-1' };
-      Object.defineProperty(window, 'localStorage', {
-        value: {
-          getItem: jest.fn(() => JSON.stringify(mockUser)),
-        },
-        writable: true,
-      });
-
       const mockData = {
         incoming_requests: [
           {
@@ -170,7 +161,8 @@ describe('Swap Marketplace Hooks', () => {
 
       (api.get as jest.Mock).mockResolvedValue(mockData);
 
-      const { result } = renderHook(() => useMySwapRequests(), {
+      // Pass currentUserId to properly compute isIncoming/canAccept
+      const { result } = renderHook(() => useMySwapRequests('user-1'), {
         wrapper: createWrapper(),
       });
 

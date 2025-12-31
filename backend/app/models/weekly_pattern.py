@@ -134,7 +134,15 @@ class WeeklyPattern(Base):
     @property
     def day_name(self) -> str:
         """Return human-readable day name."""
-        days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+        days = [
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+        ]
         return days[self.day_of_week]
 
     @property

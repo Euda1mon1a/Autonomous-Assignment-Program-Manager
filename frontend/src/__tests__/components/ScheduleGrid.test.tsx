@@ -132,9 +132,46 @@ function renderWithProviders(ui: React.ReactElement) {
   )
 }
 
+// Helper to create a local date (avoiding timezone issues)
+function localDate(year: number, month: number, day: number): Date {
+  return new Date(year, month - 1, day) // month is 0-indexed
+}
+
 describe('ScheduleGrid', () => {
-  const startDate = new Date('2024-01-01')
-  const endDate = new Date('2024-01-07')
+  const startDate = localDate(2024, 1, 1)
+  const endDate = localDate(2024, 1, 7)
+
+  // Helper to setup API mocks based on URL pattern
+  function setupApiMock(options: {
+    blocks?: typeof mockBlocks | 'error' | 'never',
+    assignments?: typeof mockAssignments | 'error' | 'never',
+    people?: typeof mockPeople | 'error' | 'never',
+    templates?: typeof mockTemplates | 'error' | 'never',
+  }) {
+    mockedApi.get.mockImplementation((url: string) => {
+      if (url.includes('/blocks')) {
+        if (options.blocks === 'error') return Promise.reject({ message: 'Failed to fetch blocks', status: 500 })
+        if (options.blocks === 'never') return new Promise(() => {})
+        return Promise.resolve({ items: options.blocks ?? mockBlocks, total: (options.blocks ?? mockBlocks).length })
+      }
+      if (url.includes('/assignments')) {
+        if (options.assignments === 'error') return Promise.reject({ message: 'Failed to fetch assignments', status: 500 })
+        if (options.assignments === 'never') return new Promise(() => {})
+        return Promise.resolve({ items: options.assignments ?? mockAssignments, total: (options.assignments ?? mockAssignments).length })
+      }
+      if (url.includes('/people')) {
+        if (options.people === 'error') return Promise.reject({ message: 'Failed to fetch people', status: 500 })
+        if (options.people === 'never') return new Promise(() => {})
+        return Promise.resolve({ items: options.people ?? mockPeople, total: (options.people ?? mockPeople).length })
+      }
+      if (url.includes('/rotation-templates')) {
+        if (options.templates === 'error') return Promise.reject({ message: 'Failed to fetch templates', status: 500 })
+        if (options.templates === 'never') return new Promise(() => {})
+        return Promise.resolve({ items: options.templates ?? mockTemplates, total: (options.templates ?? mockTemplates).length })
+      }
+      return Promise.reject({ message: 'Unknown endpoint', status: 404 })
+    })
+  }
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -143,7 +180,7 @@ describe('ScheduleGrid', () => {
   describe('Loading State', () => {
     it('should show loading spinner while fetching data', () => {
       // Mock API to never resolve (keeps loading state)
-      mockedApi.get.mockImplementation(() => new Promise(() => {}))
+      setupApiMock({ blocks: 'never', assignments: 'never', people: 'never', templates: 'never' })
 
       renderWithProviders(
         <ScheduleGrid startDate={startDate} endDate={endDate} />
@@ -155,7 +192,7 @@ describe('ScheduleGrid', () => {
 
   describe('Error State', () => {
     it('should display error when blocks fail to load', async () => {
-      mockedApi.get.mockRejectedValueOnce({ message: 'Failed to fetch blocks', status: 500 })
+      setupApiMock({ blocks: 'error' })
 
       renderWithProviders(
         <ScheduleGrid startDate={startDate} endDate={endDate} />
@@ -167,9 +204,7 @@ describe('ScheduleGrid', () => {
     })
 
     it('should display error when assignments fail to load', async () => {
-      mockedApi.get
-        .mockResolvedValueOnce({ items: mockBlocks, total: mockBlocks.length })
-        .mockRejectedValueOnce({ message: 'Failed to fetch assignments', status: 500 })
+      setupApiMock({ assignments: 'error' })
 
       renderWithProviders(
         <ScheduleGrid startDate={startDate} endDate={endDate} />
@@ -181,10 +216,7 @@ describe('ScheduleGrid', () => {
     })
 
     it('should display error when people fail to load', async () => {
-      mockedApi.get
-        .mockResolvedValueOnce({ items: mockBlocks, total: mockBlocks.length })
-        .mockResolvedValueOnce({ items: mockAssignments, total: mockAssignments.length })
-        .mockRejectedValueOnce({ message: 'Failed to fetch people', status: 500 })
+      setupApiMock({ people: 'error' })
 
       renderWithProviders(
         <ScheduleGrid startDate={startDate} endDate={endDate} />
@@ -198,11 +230,7 @@ describe('ScheduleGrid', () => {
 
   describe('Empty State', () => {
     it('should show empty state when no people exist', async () => {
-      mockedApi.get
-        .mockResolvedValueOnce({ items: mockBlocks, total: mockBlocks.length })
-        .mockResolvedValueOnce({ items: mockAssignments, total: mockAssignments.length })
-        .mockResolvedValueOnce({ items: [], total: 0 }) // No people
-        .mockResolvedValueOnce({ items: mockTemplates, total: mockTemplates.length })
+      setupApiMock({ people: [] as typeof mockPeople })
 
       renderWithProviders(
         <ScheduleGrid startDate={startDate} endDate={endDate} />
@@ -218,12 +246,8 @@ describe('ScheduleGrid', () => {
 
   describe('Successful Rendering', () => {
     beforeEach(() => {
-      // Mock all required API calls
-      mockedApi.get
-        .mockResolvedValueOnce({ items: mockBlocks, total: mockBlocks.length })
-        .mockResolvedValueOnce({ items: mockAssignments, total: mockAssignments.length })
-        .mockResolvedValueOnce({ items: mockPeople, total: mockPeople.length })
-        .mockResolvedValueOnce({ items: mockTemplates, total: mockTemplates.length })
+      // Mock all required API calls with default mock data
+      setupApiMock({})
     })
 
     it('should render schedule grid with header', async () => {
@@ -235,9 +259,9 @@ describe('ScheduleGrid', () => {
         expect(screen.queryByText(/loading schedule/i)).not.toBeInTheDocument()
       })
 
-      // Schedule grid should be rendered as a table
-      const table = screen.getByRole('table')
-      expect(table).toBeInTheDocument()
+      // Schedule grid should be rendered with role="grid" (ARIA grid pattern)
+      const grid = screen.getByRole('grid')
+      expect(grid).toBeInTheDocument()
     })
 
     it('should group people by PGY level', async () => {
@@ -246,11 +270,12 @@ describe('ScheduleGrid', () => {
       )
 
       await waitFor(() => {
-        expect(screen.getByText('PGY-1')).toBeInTheDocument()
+        // PGY-1 appears multiple times (group header and badge), so use getAllByText
+        expect(screen.getAllByText('PGY-1').length).toBeGreaterThan(0)
       })
 
-      expect(screen.getByText('PGY-2')).toBeInTheDocument()
-      expect(screen.getByText('Faculty')).toBeInTheDocument()
+      expect(screen.getAllByText('PGY-2').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('Faculty').length).toBeGreaterThan(0)
     })
 
     it('should display person names in the grid', async () => {
@@ -272,10 +297,11 @@ describe('ScheduleGrid', () => {
       )
 
       await waitFor(() => {
-        expect(screen.getByText('PGY-1')).toBeInTheDocument()
+        // PGY badges appear with text PGY-N
+        expect(screen.getAllByText('PGY-1').length).toBeGreaterThan(0)
       })
 
-      expect(screen.getByText('PGY-2')).toBeInTheDocument()
+      expect(screen.getAllByText('PGY-2').length).toBeGreaterThan(0)
     })
 
     it('should display faculty badge for faculty members', async () => {
@@ -284,18 +310,15 @@ describe('ScheduleGrid', () => {
       )
 
       await waitFor(() => {
-        expect(screen.getByText('Faculty')).toBeInTheDocument()
+        // Faculty text appears in group header and badge
+        expect(screen.getAllByText('Faculty').length).toBeGreaterThan(0)
       })
     })
   })
 
   describe('Date Range Handling', () => {
     it('should render days in the specified date range', async () => {
-      mockedApi.get
-        .mockResolvedValueOnce({ items: mockBlocks, total: mockBlocks.length })
-        .mockResolvedValueOnce({ items: mockAssignments, total: mockAssignments.length })
-        .mockResolvedValueOnce({ items: mockPeople, total: mockPeople.length })
-        .mockResolvedValueOnce({ items: mockTemplates, total: mockTemplates.length })
+      setupApiMock({})
 
       renderWithProviders(
         <ScheduleGrid startDate={startDate} endDate={endDate} />
@@ -315,13 +338,9 @@ describe('ScheduleGrid', () => {
     })
 
     it('should handle single day range', async () => {
-      mockedApi.get
-        .mockResolvedValueOnce({ items: mockBlocks, total: mockBlocks.length })
-        .mockResolvedValueOnce({ items: mockAssignments, total: mockAssignments.length })
-        .mockResolvedValueOnce({ items: mockPeople, total: mockPeople.length })
-        .mockResolvedValueOnce({ items: mockTemplates, total: mockTemplates.length })
+      setupApiMock({})
 
-      const singleDay = new Date('2024-01-01')
+      const singleDay = localDate(2024, 1, 1)
       renderWithProviders(
         <ScheduleGrid startDate={singleDay} endDate={singleDay} />
       )
@@ -338,11 +357,7 @@ describe('ScheduleGrid', () => {
 
   describe('Assignment Display', () => {
     it('should display assignments with abbreviations', async () => {
-      mockedApi.get
-        .mockResolvedValueOnce({ items: mockBlocks, total: mockBlocks.length })
-        .mockResolvedValueOnce({ items: mockAssignments, total: mockAssignments.length })
-        .mockResolvedValueOnce({ items: mockPeople, total: mockPeople.length })
-        .mockResolvedValueOnce({ items: mockTemplates, total: mockTemplates.length })
+      setupApiMock({})
 
       renderWithProviders(
         <ScheduleGrid startDate={startDate} endDate={endDate} />
@@ -368,11 +383,7 @@ describe('ScheduleGrid', () => {
         { ...mockPeople[0], id: 'p3', name: 'Dr. Mike PGY1', pgy_level: 1 },
       ]
 
-      mockedApi.get
-        .mockResolvedValueOnce({ items: mockBlocks, total: mockBlocks.length })
-        .mockResolvedValueOnce({ items: mockAssignments, total: mockAssignments.length })
-        .mockResolvedValueOnce({ items: multiplePGY1, total: multiplePGY1.length })
-        .mockResolvedValueOnce({ items: mockTemplates, total: mockTemplates.length })
+      setupApiMock({ people: multiplePGY1 as typeof mockPeople })
 
       renderWithProviders(
         <ScheduleGrid startDate={startDate} endDate={endDate} />

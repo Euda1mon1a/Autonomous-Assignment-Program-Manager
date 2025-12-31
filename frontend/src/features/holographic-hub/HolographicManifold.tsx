@@ -506,7 +506,7 @@ export function HolographicManifold({
       if (screenPos.depth <= 0) continue;
 
       // Pulse effect for animated points
-      let opacity = point.visual.opacity;
+      const opacity = point.visual.opacity;
       let size = point.visual.size * POINT_BASE_SIZE;
 
       if (state.isAnimating && point.severity > 0.5) {

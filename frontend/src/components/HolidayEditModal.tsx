@@ -30,7 +30,7 @@ const getDefaultHolidays = (year: number): Holiday[] => [
 function getNthWeekdayOfMonth(year: number, month: number, weekday: number, n: number): string {
   const firstDay = new Date(year, month, 1)
   const firstWeekday = firstDay.getDay()
-  let date = 1 + ((weekday - firstWeekday + 7) % 7) + (n - 1) * 7
+  const date = 1 + ((weekday - firstWeekday + 7) % 7) + (n - 1) * 7
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`
 }
 

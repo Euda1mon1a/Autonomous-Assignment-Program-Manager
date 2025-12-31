@@ -86,8 +86,11 @@ describe('PatternEditor', () => {
     const patternButton = screen.getByText('Morning Clinic');
     await user.click(patternButton);
 
+    // Verify the expanded form shows role selector and notes field
+    // The labels shown are: Name, Time of Day, Role, Notes
     await waitFor(() => {
-      expect(screen.getByLabelText('Name')).toBeInTheDocument();
+      expect(screen.getByText('Role')).toBeInTheDocument();
+      expect(screen.getByText('Notes')).toBeInTheDocument();
     });
   });
 

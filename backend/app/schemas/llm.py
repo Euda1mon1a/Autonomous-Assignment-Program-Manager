@@ -58,9 +58,7 @@ class LLMRequest(BaseModel):
     max_tokens: int = Field(
         4096, description="Maximum tokens to generate", ge=1, le=100000
     )
-    temperature: float = Field(
-        0.7, description="Sampling temperature", ge=0.0, le=2.0
-    )
+    temperature: float = Field(0.7, description="Sampling temperature", ge=0.0, le=2.0)
     stream: bool = Field(False, description="Enable streaming response")
     tools: list[dict[str, Any]] | None = Field(
         None, description="Available tools for tool calling"
@@ -152,6 +150,4 @@ class StreamChunk(BaseModel):
     provider: str = Field(..., description="Provider name")
     model: str = Field(..., description="Model name")
     finish_reason: str | None = Field(None, description="Finish reason if final chunk")
-    tool_calls: list[ToolCall] | None = Field(
-        None, description="Tool calls if present"
-    )
+    tool_calls: list[ToolCall] | None = Field(None, description="Tool calls if present")

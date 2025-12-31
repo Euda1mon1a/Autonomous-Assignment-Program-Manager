@@ -1,4 +1,5 @@
 """Tests for Particle Swarm and Ant Colony Optimization."""
+
 import numpy as np
 import pytest
 
@@ -38,7 +39,7 @@ class TestParticle:
 
         assert particle.id == 1
         assert np.array_equal(particle.position, position)
-        assert particle.personal_best_fitness == float('-inf')
+        assert particle.personal_best_fitness == float("-inf")
 
     def test_particle_update_personal_best(self):
         """Test updating personal best."""
@@ -372,9 +373,7 @@ class TestAntColonySolver:
 
     def test_aco_get_evolution_data(self):
         """Test evolution data export."""
-        solver = AntColonySolver(
-            config=ACOConfig(alpha=1.5, beta=2.5)
-        )
+        solver = AntColonySolver(config=ACOConfig(alpha=1.5, beta=2.5))
 
         data = solver.get_evolution_data()
 

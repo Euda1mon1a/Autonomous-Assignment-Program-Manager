@@ -261,7 +261,7 @@ export function getWeeksInRange(startDate: string, endDate: string): TimePeriod[
   const end = new Date(endDate);
   const today = new Date();
 
-  let current = new Date(start);
+  const current = new Date(start);
   let weekNum = 1;
 
   while (current <= end) {
@@ -294,7 +294,7 @@ export function getMonthsInRange(startDate: string, endDate: string): TimePeriod
   const end = new Date(endDate);
   const today = new Date();
 
-  let current = new Date(start.getFullYear(), start.getMonth(), 1);
+  const current = new Date(start.getFullYear(), start.getMonth(), 1);
 
   while (current <= end) {
     const monthStart = new Date(current);
@@ -326,7 +326,7 @@ export function getQuartersInRange(startDate: string, endDate: string): TimePeri
   const end = new Date(endDate);
   const today = new Date();
 
-  let current = new Date(start.getFullYear(), Math.floor(start.getMonth() / 3) * 3, 1);
+  const current = new Date(start.getFullYear(), Math.floor(start.getMonth() / 3) * 3, 1);
 
   while (current <= end) {
     const quarterStart = new Date(current);

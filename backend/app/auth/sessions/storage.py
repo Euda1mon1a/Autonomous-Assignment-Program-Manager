@@ -8,6 +8,8 @@ Provides storage implementations for session data:
 All storage backends implement the SessionStorage protocol.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
 from typing import Protocol

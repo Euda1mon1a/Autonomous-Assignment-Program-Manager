@@ -348,34 +348,51 @@ describe('MyLifeDashboard', () => {
     });
 
     it('should show loading state during refresh', async () => {
+      // Clear mocks to ensure clean state
+      jest.clearAllMocks();
       const user = userEvent.setup();
-      (api.get as jest.Mock).mockImplementation(() => new Promise(() => {})); // Never resolves
+      // First call resolves with data, subsequent calls never resolve
+      (api.get as jest.Mock)
+        .mockResolvedValueOnce(mockDashboardApiResponse)
+        .mockImplementation(() => new Promise(() => {})); // Never resolves
 
       render(<MyLifeDashboard />, { wrapper: createWrapper() });
 
-      await waitFor(() => {
-        const refreshButton = screen.getByRole('button', { name: /refresh/i });
-        expect(refreshButton).toBeInTheDocument();
-      });
+      // Wait for initial data to load
+      await waitFor(
+        () => {
+          expect(screen.getByText(/Dr\. John Smith/)).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
 
       const refreshButton = screen.getByRole('button', { name: /refresh/i });
       await user.click(refreshButton);
 
+      // Check button is disabled during refetch
       await waitFor(() => {
         expect(refreshButton).toBeDisabled();
       });
     });
 
     it('should show spinning icon during refresh', async () => {
+      // Clear mocks to ensure clean state
+      jest.clearAllMocks();
       const user = userEvent.setup();
-      (api.get as jest.Mock).mockImplementation(() => new Promise(() => {}));
+      // First call resolves with data, subsequent calls never resolve
+      (api.get as jest.Mock)
+        .mockResolvedValueOnce(mockDashboardApiResponse)
+        .mockImplementation(() => new Promise(() => {}));
 
       render(<MyLifeDashboard />, { wrapper: createWrapper() });
 
-      await waitFor(() => {
-        const refreshButton = screen.getByRole('button', { name: /refresh/i });
-        expect(refreshButton).toBeInTheDocument();
-      });
+      // Wait for initial data to load
+      await waitFor(
+        () => {
+          expect(screen.getByText(/Dr\. John Smith/)).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
 
       const refreshButton = screen.getByRole('button', { name: /refresh/i });
       await user.click(refreshButton);
@@ -389,14 +406,18 @@ describe('MyLifeDashboard', () => {
 
   describe('Error Handling', () => {
     it('should display error message when data fetch fails', async () => {
-      const error = new Error('Failed to load dashboard');
+      const error = new Error('API request failed');
       (api.get as jest.Mock).mockRejectedValue(error);
 
       render(<MyLifeDashboard />, { wrapper: createWrapper() });
 
-      await waitFor(() => {
-        expect(screen.getByText('Failed to load dashboard')).toBeInTheDocument();
-      });
+      // Wait for the error state to be rendered - the component shows "Failed to load dashboard" as title
+      await waitFor(
+        () => {
+          expect(screen.getByText('Failed to load dashboard')).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
     });
 
     it('should show error details', async () => {
@@ -527,6 +548,8 @@ describe('MyLifeDashboard', () => {
 
   describe('Empty Dashboard', () => {
     it('should handle empty dashboard gracefully', async () => {
+      // Clear any existing mocks and set up empty response
+      jest.clearAllMocks();
       const emptyResponse = {
         user: mockDashboardApiResponse.user,
         upcoming_schedule: [],
@@ -543,11 +566,18 @@ describe('MyLifeDashboard', () => {
 
       render(<MyLifeDashboard />, { wrapper: createWrapper() });
 
-      await waitFor(() => {
-        expect(screen.getByText('My Schedule')).toBeInTheDocument();
-      });
+      // Wait for loading to complete - check for user name which appears after data loads
+      await waitFor(
+        () => {
+          expect(screen.getByText(/Dr\. John Smith/)).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
 
-      expect(screen.getByText('No upcoming assignments')).toBeInTheDocument();
+      // Now verify empty state is shown
+      await waitFor(() => {
+        expect(screen.getByText('No upcoming assignments')).toBeInTheDocument();
+      });
       expect(screen.queryByText('Pending Swap Requests')).not.toBeInTheDocument();
       expect(screen.queryByText('Upcoming Absences')).not.toBeInTheDocument();
     });

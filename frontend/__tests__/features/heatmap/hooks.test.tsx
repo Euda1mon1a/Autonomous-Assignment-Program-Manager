@@ -511,15 +511,23 @@ describe('Heatmap Mutation Hooks', () => {
     let revokeObjectURLSpy: jest.Mock;
     let appendChildSpy: jest.SpyInstance;
     let removeChildSpy: jest.SpyInstance;
+    let mockLink: any;
 
     beforeEach(() => {
-      const mockLink = {
+      mockLink = {
         href: '',
         download: '',
         click: jest.fn(),
       };
 
-      createElementSpy = jest.spyOn(document, 'createElement').mockReturnValue(mockLink as any);
+      // Only mock createElement for 'a' elements, pass through for others
+      const originalCreateElement = document.createElement.bind(document);
+      createElementSpy = jest.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
+        if (tagName === 'a') {
+          return mockLink;
+        }
+        return originalCreateElement(tagName);
+      });
 
       // Mock URL methods
       createObjectURLSpy = jest.fn().mockReturnValue('blob:url');
@@ -529,8 +537,8 @@ describe('Heatmap Mutation Hooks', () => {
         revokeObjectURL: revokeObjectURLSpy,
       };
 
-      appendChildSpy = jest.spyOn(document.body, 'appendChild').mockImplementation();
-      removeChildSpy = jest.spyOn(document.body, 'removeChild').mockImplementation();
+      appendChildSpy = jest.spyOn(document.body, 'appendChild').mockImplementation((node) => node as any);
+      removeChildSpy = jest.spyOn(document.body, 'removeChild').mockImplementation((node) => node as any);
     });
 
     afterEach(() => {

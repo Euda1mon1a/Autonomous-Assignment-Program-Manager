@@ -346,8 +346,10 @@ describe('ComplianceAlert', () => {
 
       const { container } = render(<ComplianceAlert />, { wrapper: createWrapper() })
 
-      const mainDiv = container.querySelector('.bg-white.rounded-lg.shadow-sm')
-      expect(mainDiv).toBeInTheDocument()
+      // Check that the main container has styling classes
+      const mainDiv = container.firstChild as HTMLElement
+      expect(mainDiv).toHaveClass('glass-panel')
+      expect(mainDiv).toHaveClass('p-6')
     })
 
     it('should always show title', () => {

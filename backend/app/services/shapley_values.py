@@ -291,7 +291,9 @@ class ShapleyValueService:
         return float(result.scalar_one())
 
     async def _calculate_workloads(
-        self, faculty_ids: list[UUID], assignments_by_faculty: dict[UUID, list[Assignment]]
+        self,
+        faculty_ids: list[UUID],
+        assignments_by_faculty: dict[UUID, list[Assignment]],
     ) -> dict[UUID, float]:
         """
         Calculate current workload (hours) for each faculty member.

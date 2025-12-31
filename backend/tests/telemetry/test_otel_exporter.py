@@ -82,9 +82,7 @@ class TestTracerManagerExporter:
         )
         manager = TracerManager(config)
 
-        with patch(
-            "app.telemetry.tracer.OTLPSpanExporter"
-        ) as mock_otlp_exporter:
+        with patch("app.telemetry.tracer.OTLPSpanExporter") as mock_otlp_exporter:
             mock_exporter_instance = MagicMock()
             mock_otlp_exporter.return_value = mock_exporter_instance
 

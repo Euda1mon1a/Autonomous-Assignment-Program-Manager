@@ -24,15 +24,15 @@ jest.mock('@/features/conflicts/ConflictCard', () => ({
     onViewSuggestions,
   }: {
     conflict: { id: string; title: string };
-    onSelect?: () => void;
-    onResolve?: () => void;
-    onViewSuggestions?: () => void;
+    onSelect?: (conflict: { id: string; title: string }) => void;
+    onResolve?: (conflict: { id: string; title: string }) => void;
+    onViewSuggestions?: (conflict: { id: string; title: string }) => void;
   }) => (
     <div data-testid={`conflict-card-${conflict.id}`}>
       <div>{conflict.title}</div>
-      {onSelect && <button onClick={onSelect}>Select</button>}
-      {onResolve && <button onClick={onResolve}>Resolve</button>}
-      {onViewSuggestions && <button onClick={onViewSuggestions}>View Suggestions</button>}
+      {onSelect && <button onClick={() => onSelect(conflict)}>Select</button>}
+      {onResolve && <button onClick={() => onResolve(conflict)}>Resolve</button>}
+      {onViewSuggestions && <button onClick={() => onViewSuggestions(conflict)}>View Suggestions</button>}
     </div>
   ),
 }));
@@ -101,10 +101,11 @@ describe('ConflictList', () => {
       expect(screen.getByText(/filters/i)).toBeInTheDocument();
     });
 
-    it('should render sort dropdown', () => {
+    it('should render sort label and buttons', () => {
       render(<ConflictList />, { wrapper: createWrapper() });
 
-      expect(screen.getByText(/sort by/i)).toBeInTheDocument();
+      // The component shows "Sort:" followed by individual sort buttons
+      expect(screen.getByText(/sort:/i)).toBeInTheDocument();
     });
   });
 
@@ -158,10 +159,12 @@ describe('ConflictList', () => {
       const filterButton = screen.getByText(/filters/i);
       await user.click(filterButton);
 
+      // Filter panel shows the multiselect placeholder text
       await waitFor(() => {
-        expect(screen.getByText(/severity/i)).toBeInTheDocument();
-        expect(screen.getByText(/type/i)).toBeInTheDocument();
-        expect(screen.getByText(/status/i)).toBeInTheDocument();
+        // Look for the multi-select placeholder texts that are only visible when filter panel is open
+        expect(screen.getByText('All severities')).toBeInTheDocument();
+        expect(screen.getByText('All types')).toBeInTheDocument();
+        expect(screen.getByText('All statuses')).toBeInTheDocument();
       });
     });
 
@@ -175,7 +178,9 @@ describe('ConflictList', () => {
       await user.click(filterButton);
 
       await waitFor(() => {
-        expect(screen.queryByText(/severity/i)).not.toBeInTheDocument();
+        // When filter panel is closed, the filter labels are not visible
+        // Use queryByText to check they no longer exist
+        expect(screen.queryByText('All severities')).not.toBeInTheDocument();
       });
     });
 
@@ -186,6 +191,12 @@ describe('ConflictList', () => {
 
       const filterButton = screen.getByText(/filters/i);
       await user.click(filterButton);
+
+      // Click on the severity multi-select to open it
+      await waitFor(() => {
+        expect(screen.getByText('All severities')).toBeInTheDocument();
+      });
+      await user.click(screen.getByText('All severities'));
 
       await waitFor(() => {
         expect(screen.getByText('Critical')).toBeInTheDocument();
@@ -203,6 +214,12 @@ describe('ConflictList', () => {
       const filterButton = screen.getByText(/filters/i);
       await user.click(filterButton);
 
+      // Click on the status multi-select to open it
+      await waitFor(() => {
+        expect(screen.getByText('All statuses')).toBeInTheDocument();
+      });
+      await user.click(screen.getByText('All statuses'));
+
       await waitFor(() => {
         expect(screen.getByText('Unresolved')).toBeInTheDocument();
         expect(screen.getByText('Pending Review')).toBeInTheDocument();
@@ -218,6 +235,12 @@ describe('ConflictList', () => {
 
       const filterButton = screen.getByText(/filters/i);
       await user.click(filterButton);
+
+      // Click on the type multi-select to open it
+      await waitFor(() => {
+        expect(screen.getByText('All types')).toBeInTheDocument();
+      });
+      await user.click(screen.getByText('All types'));
 
       await waitFor(() => {
         expect(screen.getByText('Scheduling Overlap')).toBeInTheDocument();
@@ -235,20 +258,16 @@ describe('ConflictList', () => {
       await user.click(filterButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/clear filters/i)).toBeInTheDocument();
+        expect(screen.getByText(/clear all/i)).toBeInTheDocument();
       });
     });
   });
 
   describe('Sort Functionality', () => {
     it('should show sort options when sort button clicked', async () => {
-      const user = userEvent.setup();
-
       render(<ConflictList />, { wrapper: createWrapper() });
 
-      const sortButton = screen.getByText(/sort by/i);
-      await user.click(sortButton);
-
+      // Sort options are always visible as buttons, not in a dropdown
       await waitFor(() => {
         expect(screen.getByText('Severity')).toBeInTheDocument();
         expect(screen.getByText('Conflict Date')).toBeInTheDocument();
@@ -274,11 +293,9 @@ describe('ConflictList', () => {
 
       render(<ConflictList />, { wrapper: createWrapper() });
 
-      const sortButton = screen.getByText(/sort by/i);
-      await user.click(sortButton);
-
-      const severityOption = screen.getByText('Severity');
-      await user.click(severityOption);
+      // Sort buttons are always visible - click on Severity to toggle direction
+      const severityButton = screen.getByText('Severity');
+      await user.click(severityButton);
 
       await waitFor(() => {
         expect(mockedUseConflicts).toHaveBeenCalledWith(

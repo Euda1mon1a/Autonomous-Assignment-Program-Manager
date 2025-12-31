@@ -407,9 +407,10 @@ describe('AuditLogPage', () => {
       if (rows.length > 1) {
         await user.click(rows[1]); // Skip header row
 
-        // Detail panel should appear
+        // Detail panel should appear - use getAllByText since component has multiple "Entry Details" labels
         await waitFor(() => {
-          expect(screen.getByText('Entry Details')).toBeInTheDocument();
+          const entryDetails = screen.getAllByText('Entry Details');
+          expect(entryDetails.length).toBeGreaterThan(0);
         });
       }
     });
@@ -431,9 +432,10 @@ describe('AuditLogPage', () => {
       if (eventCards.length > 0) {
         await user.click(eventCards[0]);
 
-        // Detail panel should appear
+        // Detail panel should appear - use getAllByText since component has multiple "Entry Details" labels
         await waitFor(() => {
-          expect(screen.getByText('Entry Details')).toBeInTheDocument();
+          const entryDetails = screen.getAllByText('Entry Details');
+          expect(entryDetails.length).toBeGreaterThan(0);
         });
       }
     });
@@ -448,7 +450,8 @@ describe('AuditLogPage', () => {
         await user.click(rows[1]);
 
         await waitFor(() => {
-          expect(screen.getByText('Entry Details')).toBeInTheDocument();
+          const entryDetails = screen.getAllByText('Entry Details');
+          expect(entryDetails.length).toBeGreaterThan(0);
         });
 
         // Click close button
@@ -558,7 +561,8 @@ describe('AuditLogPage', () => {
         await user.click(rows[1]);
 
         await waitFor(() => {
-          expect(screen.getByText('Entry Details')).toBeInTheDocument();
+          const entryDetails = screen.getAllByText('Entry Details');
+          expect(entryDetails.length).toBeGreaterThan(0);
         });
 
         // Change page
@@ -587,6 +591,13 @@ describe('AuditLogPage', () => {
       if (rows.length > 1) {
         await user.click(rows[1]);
 
+        // First verify detail panel appears
+        await waitFor(() => {
+          const entryDetails = screen.getAllByText('Entry Details');
+          expect(entryDetails.length).toBeGreaterThan(0);
+        });
+
+        // Then check layout
         await waitFor(() => {
           // Should have 2-column layout (lg:col-span-2 and lg:col-span-1)
           const mainContent = document.querySelector('.lg\\:col-span-2');

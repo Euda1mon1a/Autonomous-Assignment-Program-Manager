@@ -1,4 +1,5 @@
 """Embedding service using sentence-transformers for local vector generation."""
+
 import hashlib
 from functools import lru_cache
 from typing import List, Optional

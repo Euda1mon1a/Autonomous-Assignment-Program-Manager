@@ -370,6 +370,5 @@ class CircadianProfile(Base):
 
     def __repr__(self):
         return (
-            f"<CircadianProfile(person={self.person_id}, "
-            f"chronotype={self.chronotype})>"
+            f"<CircadianProfile(person={self.person_id}, chronotype={self.chronotype})>"
         )

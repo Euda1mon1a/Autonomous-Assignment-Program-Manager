@@ -383,8 +383,7 @@ class TestMetastabilityDetector:
 
         ***REMOVED*** Continuously improving trajectory
         trajectory = [
-            SolverState(iteration=i, objective_value=100 - i * 0.5)
-            for i in range(100)
+            SolverState(iteration=i, objective_value=100 - i * 0.5) for i in range(100)
         ]
 
         analysis = detector.analyze_solver_trajectory(trajectory)
@@ -426,7 +425,9 @@ class TestMetastabilityDetector:
         ***REMOVED*** Plateau but infeasible
         trajectory = [
             SolverState(
-                iteration=i, objective_value=50.0, constraint_violations=5  ***REMOVED*** Infeasible
+                iteration=i,
+                objective_value=50.0,
+                constraint_violations=5,  ***REMOVED*** Infeasible
             )
             for i in range(100)
         ]

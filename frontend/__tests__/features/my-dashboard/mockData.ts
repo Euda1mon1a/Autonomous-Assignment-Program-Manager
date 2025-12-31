@@ -27,9 +27,29 @@ export const mockUser = {
 // Mock Upcoming Assignments
 // ============================================================================
 
+/**
+ * Helper to get a local date string in YYYY-MM-DD format
+ * This avoids timezone issues when comparing dates
+ */
+function getLocalDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Helper to get a date offset from today in local timezone
+ */
+function getLocalDateOffset(daysOffset: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + daysOffset);
+  return getLocalDateString(date);
+}
+
 export const mockAssignmentToday: UpcomingAssignment = {
   id: 'assignment-1',
-  date: new Date().toISOString().split('T')[0], // Today
+  date: getLocalDateOffset(0), // Today in local timezone
   timeOfDay: TimeOfDay.AM,
   activity: 'Inpatient Medicine',
   location: Location.WARD,
@@ -39,7 +59,7 @@ export const mockAssignmentToday: UpcomingAssignment = {
 
 export const mockAssignmentTomorrow: UpcomingAssignment = {
   id: 'assignment-2',
-  date: new Date(Date.now() + 86400000).toISOString().split('T')[0], // Tomorrow
+  date: getLocalDateOffset(1), // Tomorrow in local timezone
   timeOfDay: TimeOfDay.PM,
   activity: 'Emergency Department',
   location: Location.ER,
@@ -49,7 +69,7 @@ export const mockAssignmentTomorrow: UpcomingAssignment = {
 
 export const mockAssignmentNextWeek: UpcomingAssignment = {
   id: 'assignment-3',
-  date: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0], // Next week
+  date: getLocalDateOffset(7), // Next week in local timezone
   timeOfDay: TimeOfDay.NIGHT,
   activity: 'ICU Coverage',
   location: Location.ICU,
@@ -231,7 +251,7 @@ export const mockDashboardApiResponse = {
   upcoming_schedule: [
     {
       id: 'assignment-1',
-      date: new Date().toISOString().split('T')[0],
+      date: getLocalDateOffset(0), // Today in local timezone
       time_of_day: 'AM',
       activity: 'Inpatient Medicine',
       location: 'Ward',
@@ -240,7 +260,7 @@ export const mockDashboardApiResponse = {
     },
     {
       id: 'assignment-2',
-      date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+      date: getLocalDateOffset(1), // Tomorrow in local timezone
       time_of_day: 'PM',
       activity: 'Emergency Department',
       location: 'ER',

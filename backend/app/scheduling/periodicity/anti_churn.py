@@ -331,8 +331,7 @@ def time_crystal_objective(
     """
     if alpha + beta > 1.0:
         raise ValueError(
-            f"alpha ({alpha}) + beta ({beta}) must be <= 1.0 "
-            f"(got {alpha + beta:.3f})"
+            f"alpha ({alpha}) + beta ({beta}) must be <= 1.0 (got {alpha + beta:.3f})"
         )
 
     if not 0.0 <= alpha <= 1.0:
@@ -436,7 +435,9 @@ def estimate_churn_impact(
     affected_people = sum(1 for count in churn_by_person.values() if count > 0)
     max_person_churn = max(churn_by_person.values()) if churn_by_person else 0
     mean_person_churn = (
-        np.mean([c for c in churn_by_person.values() if c > 0]) if affected_people > 0 else 0.0
+        np.mean([c for c in churn_by_person.values() if c > 0])
+        if affected_people > 0
+        else 0.0
     )
 
     rigidity = calculate_schedule_rigidity(proposed_schedule, current_schedule)
@@ -473,7 +474,9 @@ def _generate_churn_recommendation(rigidity: float, affected_people: int) -> str
     elif rigidity >= 0.70:
         return f"Moderate churn affecting {affected_people} people. Review changes carefully."
     elif rigidity >= 0.50:
-        return f"High churn affecting {affected_people} people. Consider phased rollout."
+        return (
+            f"High churn affecting {affected_people} people. Consider phased rollout."
+        )
     else:
         return (
             f"Critical churn affecting {affected_people} people. "

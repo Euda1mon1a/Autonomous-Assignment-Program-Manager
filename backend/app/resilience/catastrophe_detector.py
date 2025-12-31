@@ -617,7 +617,9 @@ class CatastropheDetector:
 
         return float(normalized_distance)
 
-    def measure_hysteresis_gap(self, boundary_points: list[tuple[float, float]]) -> float:
+    def measure_hysteresis_gap(
+        self, boundary_points: list[tuple[float, float]]
+    ) -> float:
         """
         Measure hysteresis gap width from boundary points.
 
@@ -769,7 +771,9 @@ class CatastropheDetector:
             else:
                 current_state = SystemState.INFEASIBLE
         else:
-            current_state = SystemState.FEASIBLE if distance > 0.3 else SystemState.MARGINAL
+            current_state = (
+                SystemState.FEASIBLE if distance > 0.3 else SystemState.MARGINAL
+            )
 
         predicted_state = SystemState.INFEASIBLE if will_fail else current_state
 
@@ -799,9 +803,7 @@ class CatastropheDetector:
             defense_level_needed=defense_level,
         )
 
-    def find_critical_thresholds(
-        self, surface: FeasibilitySurface
-    ) -> dict[str, float]:
+    def find_critical_thresholds(self, surface: FeasibilitySurface) -> dict[str, float]:
         """
         Find exact critical thresholds where catastrophes occur.
 
@@ -869,7 +871,9 @@ class CatastropheDetector:
         recommendations = []
 
         if will_fail:
-            recommendations.append("URGENT: Reduce coverage demand or relax constraints")
+            recommendations.append(
+                "URGENT: Reduce coverage demand or relax constraints"
+            )
             recommendations.append("Activate emergency contingency plans")
             recommendations.append("Consider load shedding non-essential activities")
 
@@ -879,14 +883,18 @@ class CatastropheDetector:
 
         if direction == "toward_cusp":
             recommendations.append("Parameter trajectory heading toward instability")
-            recommendations.append("Reverse trend: decrease demand or increase flexibility")
+            recommendations.append(
+                "Reverse trend: decrease demand or increase flexibility"
+            )
 
         if current_state == SystemState.MARGINAL:
             recommendations.append("Schedule currently marginal - add safety margin")
 
         return recommendations
 
-    def _recommend_defense_level(self, distance: float, will_fail: bool) -> DefenseLevel:
+    def _recommend_defense_level(
+        self, distance: float, will_fail: bool
+    ) -> DefenseLevel:
         """Recommend defense in depth level based on catastrophe proximity."""
         if will_fail or distance < 0.1:
             return DefenseLevel.EMERGENCY
@@ -923,11 +931,15 @@ class CatastropheDetector:
         if distance < 0.1:
             region = CatastropheRegion.CATASTROPHIC
             severity = "critical"
-            message = "CRITICAL: System at catastrophe boundary - immediate action required"
+            message = (
+                "CRITICAL: System at catastrophe boundary - immediate action required"
+            )
         elif distance < 0.2:
             region = CatastropheRegion.CRITICAL
             severity = "high"
-            message = "System approaching catastrophe boundary - urgent intervention needed"
+            message = (
+                "System approaching catastrophe boundary - urgent intervention needed"
+            )
         elif distance < 0.3:
             region = CatastropheRegion.WARNING
             severity = "medium"

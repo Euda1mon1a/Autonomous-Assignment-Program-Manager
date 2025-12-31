@@ -302,11 +302,11 @@ async def get_task_status_endpoint(
         raise HTTPException(status_code=500, detail="Error fetching task status")
 
 
-@router.get("/tasks/{task_id}/progress", response_model=TaskProgressResponse | None)
+@router.get("/tasks/{task_id}/progress", response_model=None)
 async def get_task_progress(
     task_id: str,
     current_user: User = Depends(get_current_active_user),
-):
+) -> TaskProgressResponse | None:
     """
     Get task progress information.
 

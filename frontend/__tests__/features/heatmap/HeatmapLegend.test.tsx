@@ -165,10 +165,10 @@ describe('HeatmapLegend', () => {
         wrapper: createWrapper(),
       });
 
-      // The capitalize class capitalizes first letter, so "full" becomes "Full"
+      // The capitalize class visually capitalizes, but textContent returns the raw lowercase text
       const indicators = container.querySelectorAll('.capitalize');
       const texts = Array.from(indicators).map((el) => el.textContent);
-      expect(texts).toContain('Full');
+      expect(texts).toContain('full');
     });
 
     it('should display partial coverage indicator', () => {
@@ -178,7 +178,7 @@ describe('HeatmapLegend', () => {
 
       const indicators = container.querySelectorAll('.capitalize');
       const texts = Array.from(indicators).map((el) => el.textContent);
-      expect(texts).toContain('Partial');
+      expect(texts).toContain('partial');
     });
 
     it('should display gap indicator', () => {
@@ -188,7 +188,7 @@ describe('HeatmapLegend', () => {
 
       const indicators = container.querySelectorAll('.capitalize');
       const texts = Array.from(indicators).map((el) => el.textContent);
-      expect(texts).toContain('Gap');
+      expect(texts).toContain('gap');
     });
 
     it('should display overcovered indicator', () => {
@@ -198,7 +198,7 @@ describe('HeatmapLegend', () => {
 
       const indicators = container.querySelectorAll('.capitalize');
       const texts = Array.from(indicators).map((el) => el.textContent);
-      expect(texts).toContain('Overcovered');
+      expect(texts).toContain('overcovered');
     });
   });
 
@@ -207,7 +207,7 @@ describe('HeatmapLegend', () => {
       render(<HeatmapLegend viewMode="coverage" />, { wrapper: createWrapper() });
 
       expect(
-        screen.getByText(/Shows rotation coverage percentage over time/)
+        screen.getByText(/Shows rotation coverage percentage/)
       ).toBeInTheDocument();
     });
 
@@ -215,7 +215,7 @@ describe('HeatmapLegend', () => {
       render(<HeatmapLegend viewMode="workload" />, { wrapper: createWrapper() });
 
       expect(
-        screen.getByText(/Shows workload distribution across people/)
+        screen.getByText(/Shows workload distribution/)
       ).toBeInTheDocument();
     });
 
@@ -223,26 +223,26 @@ describe('HeatmapLegend', () => {
       render(<HeatmapLegend viewMode="custom" />, { wrapper: createWrapper() });
 
       expect(
-        screen.getByText(/Custom visualization showing filtered data/)
+        screen.getByText(/Custom visualization/)
       ).toBeInTheDocument();
     });
 
     it('should describe coverage color meanings', () => {
       render(<HeatmapLegend viewMode="coverage" />, { wrapper: createWrapper() });
 
-      const description = screen.getByText(/Shows rotation coverage percentage over time/);
-      expect(description).toHaveTextContent('Green indicates full coverage');
-      expect(description).toHaveTextContent('yellow indicates partial coverage');
-      expect(description).toHaveTextContent('red indicates gaps');
+      const description = screen.getByText(/Shows rotation coverage percentage/);
+      expect(description).toHaveTextContent('Green = full coverage');
+      expect(description).toHaveTextContent('yellow = partial');
+      expect(description).toHaveTextContent('red = low coverage');
     });
 
     it('should describe workload color meanings', () => {
       render(<HeatmapLegend viewMode="workload" />, { wrapper: createWrapper() });
 
-      const description = screen.getByText(/Shows workload distribution across people/);
-      expect(description).toHaveTextContent('Green indicates light workload');
-      expect(description).toHaveTextContent('yellow indicates moderate workload');
-      expect(description).toHaveTextContent('red indicates heavy workload');
+      const description = screen.getByText(/Shows workload distribution/);
+      expect(description).toHaveTextContent('Blue = light');
+      expect(description).toHaveTextContent('yellow = moderate');
+      expect(description).toHaveTextContent('red = heavy');
     });
   });
 

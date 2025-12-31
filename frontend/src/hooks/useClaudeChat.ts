@@ -221,8 +221,8 @@ export const useClaudeChat = () => {
 
         const decoder = new TextDecoder();
         let fullContent = '';
-        let codeBlocks: any[] = [];
-        let artifacts: any[] = [];
+        const codeBlocks: any[] = [];
+        const artifacts: any[] = [];
 
         while (true) {
           const { done, value } = await reader.read();

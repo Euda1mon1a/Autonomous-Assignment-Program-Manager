@@ -13,6 +13,31 @@ jest.mock('@/lib/api', () => ({
 
 const mockedApi = api as jest.Mocked<typeof api>;
 
+/**
+ * Helper function to set up mock API responses based on URL
+ * This ensures all endpoints return appropriate data types
+ */
+function setupDefaultMocks() {
+  mockedApi.get.mockImplementation((url: string) => {
+    if (url.includes('/analytics/metrics/current')) {
+      return Promise.resolve(analyticsMockResponses.currentMetrics);
+    }
+    if (url.includes('/analytics/alerts')) {
+      return Promise.resolve(analyticsMockResponses.alerts);
+    }
+    if (url.includes('/analytics/trends/fairness')) {
+      return Promise.resolve(analyticsMockResponses.fairnessTrend);
+    }
+    if (url.includes('/analytics/equity/pgy')) {
+      return Promise.resolve(analyticsMockResponses.pgyEquity);
+    }
+    if (url.includes('/analytics/versions')) {
+      return Promise.resolve(analyticsMockResponses.versions);
+    }
+    return Promise.resolve([]);
+  });
+}
+
 describe('AnalyticsDashboard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -20,7 +45,7 @@ describe('AnalyticsDashboard', () => {
 
   describe('Initial Rendering', () => {
     beforeEach(() => {
-      mockedApi.get.mockResolvedValue(analyticsMockResponses.currentMetrics);
+      setupDefaultMocks();
     });
 
     it('should render dashboard title', async () => {
@@ -60,7 +85,7 @@ describe('AnalyticsDashboard', () => {
 
   describe('View Navigation', () => {
     beforeEach(() => {
-      mockedApi.get.mockResolvedValue(analyticsMockResponses.currentMetrics);
+      setupDefaultMocks();
     });
 
     it('should render all view tabs', async () => {
@@ -75,10 +100,11 @@ describe('AnalyticsDashboard', () => {
     });
 
     it('should default to overview tab', async () => {
-      const { container } = render(<AnalyticsDashboard />, { wrapper: createWrapper() });
+      render(<AnalyticsDashboard />, { wrapper: createWrapper() });
 
       await waitFor(() => {
-        const overviewButton = screen.getByText('Overview');
+        // Use getByRole to get the actual button element, not the text span
+        const overviewButton = screen.getByRole('tab', { name: /overview/i });
         expect(overviewButton).toHaveClass('bg-white');
         expect(overviewButton).toHaveClass('text-blue-600');
       });
@@ -86,18 +112,15 @@ describe('AnalyticsDashboard', () => {
 
     it('should switch to trends view when clicked', async () => {
       const user = userEvent.setup();
-      mockedApi.get.mockResolvedValue(analyticsMockResponses.currentMetrics);
-      mockedApi.get.mockResolvedValueOnce(analyticsMockResponses.currentMetrics);
-      mockedApi.get.mockResolvedValueOnce(analyticsMockResponses.fairnessTrend);
-      mockedApi.get.mockResolvedValueOnce(analyticsMockResponses.pgyEquity);
 
       render(<AnalyticsDashboard />, { wrapper: createWrapper() });
 
       await waitFor(() => {
-        expect(screen.getByText('Trends')).toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: /trends/i })).toBeInTheDocument();
       });
 
-      const trendsButton = screen.getByText('Trends');
+      // Use getByRole to get the actual button element
+      const trendsButton = screen.getByRole('tab', { name: /trends/i });
       await user.click(trendsButton);
 
       await waitFor(() => {
@@ -109,7 +132,7 @@ describe('AnalyticsDashboard', () => {
 
   describe('Quick Stats', () => {
     beforeEach(() => {
-      mockedApi.get.mockResolvedValue(analyticsMockResponses.currentMetrics);
+      setupDefaultMocks();
     });
 
     it('should display total metrics count', async () => {
@@ -148,7 +171,7 @@ describe('AnalyticsDashboard', () => {
 
   describe('Metrics Display', () => {
     beforeEach(() => {
-      mockedApi.get.mockResolvedValue(analyticsMockResponses.currentMetrics);
+      setupDefaultMocks();
     });
 
     it('should render key metrics section', async () => {
@@ -160,21 +183,26 @@ describe('AnalyticsDashboard', () => {
     });
 
     it('should display all metric cards', async () => {
-      render(<AnalyticsDashboard />, { wrapper: createWrapper() });
+      const { container } = render(<AnalyticsDashboard />, { wrapper: createWrapper() });
 
+      // Wait for metrics to load by checking for a specific metric card
       await waitFor(() => {
-        expect(screen.getByText('Fairness Score')).toBeInTheDocument();
-        expect(screen.getByText('Gini Coefficient')).toBeInTheDocument();
-        expect(screen.getByText('Workload Variance')).toBeInTheDocument();
-        expect(screen.getByText('PGY Equity Score')).toBeInTheDocument();
-        expect(screen.getByText('Coverage Score')).toBeInTheDocument();
-        expect(screen.getByText('Compliance Score')).toBeInTheDocument();
-        expect(screen.getByText('ACGME Violations')).toBeInTheDocument();
-      });
+        const metricCards = container.querySelectorAll('button[id^="metric-card-"]');
+        expect(metricCards.length).toBe(7); // 7 metric cards
+      }, { timeout: 3000 });
+
+      // Verify the heading is present
+      expect(screen.getByText('Key Metrics')).toBeInTheDocument();
     });
 
     it('should show loading skeletons while fetching metrics', async () => {
-      mockedApi.get.mockImplementation(() => new Promise(() => {})); // Never resolves
+      // Override default mocks to never resolve metrics but resolve alerts
+      mockedApi.get.mockImplementation((url: string) => {
+        if (url.includes('/analytics/alerts')) {
+          return Promise.resolve([]); // Return empty alerts to avoid filter error
+        }
+        return new Promise(() => {}); // Never resolves for other endpoints
+      });
 
       const { container } = render(<AnalyticsDashboard />, { wrapper: createWrapper() });
 
@@ -185,7 +213,12 @@ describe('AnalyticsDashboard', () => {
     });
 
     it('should show error message when metrics fail to load', async () => {
-      mockedApi.get.mockRejectedValue(new Error('API Error'));
+      mockedApi.get.mockImplementation((url: string) => {
+        if (url.includes('/analytics/alerts')) {
+          return Promise.resolve([]);
+        }
+        return Promise.reject(new Error('API Error'));
+      });
 
       render(<AnalyticsDashboard />, { wrapper: createWrapper() });
 
@@ -197,15 +230,7 @@ describe('AnalyticsDashboard', () => {
 
   describe('Alerts Section', () => {
     beforeEach(() => {
-      mockedApi.get.mockImplementation((url) => {
-        if (url.includes('/analytics/metrics/current')) {
-          return Promise.resolve(analyticsMockResponses.currentMetrics);
-        }
-        if (url.includes('/analytics/alerts')) {
-          return Promise.resolve(analyticsMockResponses.alerts);
-        }
-        return Promise.resolve([]);
-      });
+      setupDefaultMocks();
     });
 
     it('should render metric alerts section', async () => {
@@ -250,12 +275,18 @@ describe('AnalyticsDashboard', () => {
     });
 
     it('should display empty state when no alerts', async () => {
-      mockedApi.get.mockImplementation((url) => {
+      mockedApi.get.mockImplementation((url: string) => {
         if (url.includes('/analytics/metrics/current')) {
           return Promise.resolve(analyticsMockResponses.currentMetrics);
         }
         if (url.includes('/analytics/alerts')) {
-          return Promise.resolve([]);
+          return Promise.resolve([]); // Empty alerts
+        }
+        if (url.includes('/analytics/trends/fairness')) {
+          return Promise.resolve(analyticsMockResponses.fairnessTrend);
+        }
+        if (url.includes('/analytics/equity/pgy')) {
+          return Promise.resolve(analyticsMockResponses.pgyEquity);
         }
         return Promise.resolve([]);
       });
@@ -270,7 +301,9 @@ describe('AnalyticsDashboard', () => {
 
   describe('Fairness Trends Preview', () => {
     beforeEach(() => {
-      mockedApi.get.mockImplementation((url) => {
+      setupDefaultMocks();
+      // Override alerts to be empty for this section
+      mockedApi.get.mockImplementation((url: string) => {
         if (url.includes('/analytics/metrics/current')) {
           return Promise.resolve(analyticsMockResponses.currentMetrics);
         }
@@ -298,7 +331,7 @@ describe('AnalyticsDashboard', () => {
 
   describe('Refresh Functionality', () => {
     beforeEach(() => {
-      mockedApi.get.mockResolvedValue(analyticsMockResponses.currentMetrics);
+      setupDefaultMocks();
       mockedApi.post.mockResolvedValue(analyticsMockResponses.currentMetrics);
     });
 
@@ -329,7 +362,8 @@ describe('AnalyticsDashboard', () => {
         expect(screen.getByText('Refresh')).toBeInTheDocument();
       });
 
-      const refreshButton = screen.getByText('Refresh');
+      // Get the button element (not just the text node)
+      const refreshButton = screen.getByRole('button', { name: /refresh/i });
       await user.click(refreshButton);
 
       await waitFor(() => {
@@ -340,7 +374,7 @@ describe('AnalyticsDashboard', () => {
 
   describe('Export Functionality', () => {
     beforeEach(() => {
-      mockedApi.get.mockResolvedValue(analyticsMockResponses.currentMetrics);
+      setupDefaultMocks();
       mockedApi.post.mockResolvedValue(new Blob(['test data']));
     });
 
@@ -456,7 +490,7 @@ describe('AnalyticsDashboard', () => {
 
   describe('API Integration', () => {
     it('should fetch current metrics on mount', async () => {
-      mockedApi.get.mockResolvedValue(analyticsMockResponses.currentMetrics);
+      setupDefaultMocks();
 
       render(<AnalyticsDashboard />, { wrapper: createWrapper() });
 
@@ -466,12 +500,18 @@ describe('AnalyticsDashboard', () => {
     });
 
     it('should fetch alerts on mount', async () => {
-      mockedApi.get.mockImplementation((url) => {
+      mockedApi.get.mockImplementation((url: string) => {
         if (url.includes('/analytics/metrics/current')) {
           return Promise.resolve(analyticsMockResponses.currentMetrics);
         }
         if (url.includes('/analytics/alerts')) {
           return Promise.resolve([]);
+        }
+        if (url.includes('/analytics/trends/fairness')) {
+          return Promise.resolve(analyticsMockResponses.fairnessTrend);
+        }
+        if (url.includes('/analytics/equity/pgy')) {
+          return Promise.resolve(analyticsMockResponses.pgyEquity);
         }
         return Promise.resolve([]);
       });
@@ -488,7 +528,7 @@ describe('AnalyticsDashboard', () => {
 
   describe('Custom ClassName', () => {
     beforeEach(() => {
-      mockedApi.get.mockResolvedValue(analyticsMockResponses.currentMetrics);
+      setupDefaultMocks();
     });
 
     it('should apply custom className', async () => {
