@@ -241,9 +241,7 @@ class NotificationEventLogger:
         cutoff = datetime.utcnow().timestamp() - (days * 24 * 60 * 60)
 
         old_count = len(self._events)
-        self._events = [
-            e for e in self._events if e.timestamp.timestamp() >= cutoff
-        ]
+        self._events = [e for e in self._events if e.timestamp.timestamp() >= cutoff]
         new_count = len(self._events)
 
         cleared = old_count - new_count

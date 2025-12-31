@@ -298,15 +298,21 @@ class N1Analyzer:
 
         critical_scenarios = [s for s in self.scenarios if s.criticality_score >= 0.7]
         spof_scenarios = [
-            s for s in self.scenarios if s.criticality_score >= 0.9 and not s.backup_available
+            s
+            for s in self.scenarios
+            if s.criticality_score >= 0.9 and not s.backup_available
         ]
 
-        avg_criticality = sum(s.criticality_score for s in self.scenarios) / len(self.scenarios)
+        avg_criticality = sum(s.criticality_score for s in self.scenarios) / len(
+            self.scenarios
+        )
 
         return {
             "total_scenarios": len(self.scenarios),
             "critical_scenarios": len(critical_scenarios),
             "avg_criticality": round(avg_criticality, 2),
             "spof_count": len(spof_scenarios),
-            "scenarios_without_backup": sum(1 for s in self.scenarios if not s.backup_available),
+            "scenarios_without_backup": sum(
+                1 for s in self.scenarios if not s.backup_available
+            ),
         }

@@ -303,7 +303,9 @@ async def get_system_health(
             wait_time_multiplier=getattr(util, "wait_time_multiplier", 1.0),
             safe_capacity=getattr(util, "safe_capacity", util.total_capacity),
             current_demand=getattr(util, "current_demand", util.current_assignments),
-            theoretical_capacity=getattr(util, "theoretical_capacity", util.total_capacity),
+            theoretical_capacity=getattr(
+                util, "theoretical_capacity", util.total_capacity
+            ),
         ),
         defense_level=DefenseLevel(report.defense_level.name),
         redundancy_status=[

@@ -19,14 +19,12 @@ class ConflictTrends:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def analyze_trends(
-        self, start_date: date, end_date: date
-    ) -> Dict[str, Any]:
+    async def analyze_trends(self, start_date: date, end_date: date) -> dict[str, Any]:
         """Analyze conflict trends over time."""
         query = (
             select(
-                func.date_trunc('week', ConflictAlert.created_at).label('week'),
-                func.count(ConflictAlert.id).label('count'),
+                func.date_trunc("week", ConflictAlert.created_at).label("week"),
+                func.count(ConflictAlert.id).label("count"),
             )
             .where(
                 and_(
@@ -34,8 +32,8 @@ class ConflictTrends:
                     ConflictAlert.created_at <= end_date,
                 )
             )
-            .group_by('week')
-            .order_by('week')
+            .group_by("week")
+            .order_by("week")
         )
 
         result = await self.db.execute(query)

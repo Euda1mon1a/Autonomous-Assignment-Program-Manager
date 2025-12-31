@@ -1,4 +1,5 @@
 """Tests for async optimization utilities."""
+
 import asyncio
 import pytest
 import time

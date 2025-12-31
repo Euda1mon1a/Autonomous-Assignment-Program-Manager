@@ -35,7 +35,7 @@ class MetastableState:
     lifetime: float  ***REMOVED*** Expected lifetime in current state
     is_metastable: bool  ***REMOVED*** True if trapped in local minimum
     stability_score: float  ***REMOVED*** 0-1, higher = more stable
-    nearest_stable_state: Optional[float] = None  ***REMOVED*** Energy of nearest true minimum
+    nearest_stable_state: float | None = None  ***REMOVED*** Energy of nearest true minimum
 
 
 class MetastabilityDetector:
@@ -159,7 +159,9 @@ class MetastabilityDetector:
             Transition probability (0-1)
         """
         ***REMOVED*** Escape rate
-        escape_rate = np.exp(-barrier_height / (self.boltzmann_constant * self.temperature))
+        escape_rate = np.exp(
+            -barrier_height / (self.boltzmann_constant * self.temperature)
+        )
 
         ***REMOVED*** Probability: P = 1 - exp(-k*t)
         prob = 1.0 - np.exp(-escape_rate * time_elapsed)
@@ -197,9 +199,7 @@ class MetastabilityDetector:
             ***REMOVED*** Calculate barrier (maximum energy along linear path)
             ***REMOVED*** Simplified - linear interpolation
             barrier = max(
-                energy_function(
-                    np.array(current_state) + t * perturbation
-                )
+                energy_function(np.array(current_state) + t * perturbation)
                 for t in np.linspace(0, 1, 10)
             )
 

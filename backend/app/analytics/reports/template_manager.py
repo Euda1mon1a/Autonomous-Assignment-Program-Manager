@@ -58,16 +58,16 @@ class TemplateManager:
         },
     }
 
-    def get_template(self, template_name: str) -> Dict[str, Any]:
+    def get_template(self, template_name: str) -> dict[str, Any]:
         """Get a report template."""
-        return self.TEMPLATES.get(template_name, {
-            "title": "Custom Report",
-            "sections": [],
-        })
+        return self.TEMPLATES.get(
+            template_name,
+            {
+                "title": "Custom Report",
+                "sections": [],
+            },
+        )
 
-    def list_templates(self) -> Dict[str, str]:
+    def list_templates(self) -> dict[str, str]:
         """List available templates."""
-        return {
-            name: template["title"]
-            for name, template in self.TEMPLATES.items()
-        }
+        return {name: template["title"] for name, template in self.TEMPLATES.items()}

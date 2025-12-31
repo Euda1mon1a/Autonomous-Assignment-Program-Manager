@@ -22,8 +22,8 @@ class RotationMetrics:
         self.db = db
 
     async def analyze_rotation_metrics(
-        self, start_date: date, end_date: date, rotation_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, start_date: date, end_date: date, rotation_id: str | None = None
+    ) -> dict[str, Any]:
         """Analyze metrics for all rotations or a specific rotation."""
         query = (
             select(
@@ -35,7 +35,11 @@ class RotationMetrics:
             .join(Assignment)
             .join(Block)
             .where(and_(Block.date >= start_date, Block.date <= end_date))
-            .group_by(RotationTemplate.id, RotationTemplate.name, RotationTemplate.abbreviation)
+            .group_by(
+                RotationTemplate.id,
+                RotationTemplate.name,
+                RotationTemplate.abbreviation,
+            )
         )
 
         if rotation_id:
@@ -53,7 +57,11 @@ class RotationMetrics:
                     "name": row.name,
                     "abbreviation": row.abbreviation,
                     "assignment_count": row.assignment_count,
-                    "percentage": round(row.assignment_count / total_assignments * 100, 2) if total_assignments > 0 else 0,
+                    "percentage": round(
+                        row.assignment_count / total_assignments * 100, 2
+                    )
+                    if total_assignments > 0
+                    else 0,
                 }
                 for row in rotation_data
             ],

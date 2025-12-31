@@ -22,17 +22,14 @@ class CLIConfig(BaseSettings):
     ***REMOVED*** Database
     database_url: str = Field(
         default="postgresql+asyncpg://scheduler:scheduler@localhost:5432/residency_scheduler",
-        env="DATABASE_URL"
+        env="DATABASE_URL",
     )
 
     ***REMOVED*** API
-    api_url: str = Field(
-        default="http://localhost:8000",
-        env="API_URL"
-    )
+    api_url: str = Field(default="http://localhost:8000", env="API_URL")
 
     ***REMOVED*** Authentication
-    api_token: Optional[str] = Field(default=None, env="CLI_API_TOKEN")
+    api_token: str | None = Field(default=None, env="CLI_API_TOKEN")
 
     ***REMOVED*** Output
     output_format: str = Field(default="table", env="CLI_OUTPUT_FORMAT")
@@ -44,8 +41,7 @@ class CLIConfig(BaseSettings):
 
     ***REMOVED*** Config file
     config_file: Path = Field(
-        default=Path.home() / ".scheduler-cli" / "config.yaml",
-        env="CLI_CONFIG_FILE"
+        default=Path.home() / ".scheduler-cli" / "config.yaml", env="CLI_CONFIG_FILE"
     )
 
     class Config:

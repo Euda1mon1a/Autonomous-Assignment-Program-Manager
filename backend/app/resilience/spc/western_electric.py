@@ -124,7 +124,9 @@ class WesternElectricRules:
 
         return violations
 
-    def _rule_2_two_of_three_beyond_2sigma(self, data: list[float]) -> list[RuleViolation]:
+    def _rule_2_two_of_three_beyond_2sigma(
+        self, data: list[float]
+    ) -> list[RuleViolation]:
         """Rule 2: Two of three consecutive points beyond 2σ (same side)."""
         violations = []
         uwl = self.center_line + 2 * self.sigma
@@ -140,7 +142,7 @@ class WesternElectricRules:
                     RuleViolation(
                         rule_number=2,
                         rule_name="2 of 3 Beyond 2 Sigma",
-                        description=f"Points {i}-{i+2} have 2+ above +2σ ({uwl:.2f})",
+                        description=f"Points {i}-{i + 2} have 2+ above +2σ ({uwl:.2f})",
                         severity="warning",
                         points_involved=list(range(i, i + 3)),
                     )
@@ -150,7 +152,7 @@ class WesternElectricRules:
                     RuleViolation(
                         rule_number=2,
                         rule_name="2 of 3 Beyond 2 Sigma",
-                        description=f"Points {i}-{i+2} have 2+ below -2σ ({lwl:.2f})",
+                        description=f"Points {i}-{i + 2} have 2+ below -2σ ({lwl:.2f})",
                         severity="warning",
                         points_involved=list(range(i, i + 3)),
                     )
@@ -158,7 +160,9 @@ class WesternElectricRules:
 
         return violations
 
-    def _rule_3_four_of_five_beyond_1sigma(self, data: list[float]) -> list[RuleViolation]:
+    def _rule_3_four_of_five_beyond_1sigma(
+        self, data: list[float]
+    ) -> list[RuleViolation]:
         """Rule 3: Four of five consecutive points beyond 1σ (same side)."""
         violations = []
 
@@ -172,7 +176,7 @@ class WesternElectricRules:
                     RuleViolation(
                         rule_number=3,
                         rule_name="4 of 5 Beyond 1 Sigma",
-                        description=f"Points {i}-{i+4} have 4+ above +1σ",
+                        description=f"Points {i}-{i + 4} have 4+ above +1σ",
                         severity="warning",
                         points_involved=list(range(i, i + 5)),
                     )
@@ -182,7 +186,7 @@ class WesternElectricRules:
                     RuleViolation(
                         rule_number=3,
                         rule_name="4 of 5 Beyond 1 Sigma",
-                        description=f"Points {i}-{i+4} have 4+ below -1σ",
+                        description=f"Points {i}-{i + 4} have 4+ below -1σ",
                         severity="warning",
                         points_involved=list(range(i, i + 5)),
                     )
@@ -205,7 +209,7 @@ class WesternElectricRules:
                     RuleViolation(
                         rule_number=4,
                         rule_name="8 Consecutive Same Side",
-                        description=f"Points {i}-{i+7} all {side} center line",
+                        description=f"Points {i}-{i + 7} all {side} center line",
                         severity="warning",
                         points_involved=list(range(i, i + 8)),
                     )
@@ -227,7 +231,7 @@ class WesternElectricRules:
                     RuleViolation(
                         rule_number=5,
                         rule_name="6 Consecutive Trending",
-                        description=f"Points {i}-{i+5} trending upward",
+                        description=f"Points {i}-{i + 5} trending upward",
                         severity="warning",
                         points_involved=list(range(i, i + 6)),
                     )
@@ -237,7 +241,7 @@ class WesternElectricRules:
                     RuleViolation(
                         rule_number=5,
                         rule_name="6 Consecutive Trending",
-                        description=f"Points {i}-{i+5} trending downward",
+                        description=f"Points {i}-{i + 5} trending downward",
                         severity="warning",
                         points_involved=list(range(i, i + 6)),
                     )
@@ -260,7 +264,7 @@ class WesternElectricRules:
                     RuleViolation(
                         rule_number=6,
                         rule_name="15 Within 1 Sigma",
-                        description=f"Points {i}-{i+14} suspiciously stable (all within 1σ)",
+                        description=f"Points {i}-{i + 14} suspiciously stable (all within 1σ)",
                         severity="info",
                         points_involved=list(range(i, i + 15)),
                     )
@@ -285,7 +289,7 @@ class WesternElectricRules:
                     RuleViolation(
                         rule_number=7,
                         rule_name="14 Alternating",
-                        description=f"Points {i}-{i+13} alternating up/down (systematic variation)",
+                        description=f"Points {i}-{i + 13} alternating up/down (systematic variation)",
                         severity="info",
                         points_involved=list(range(i, i + 14)),
                     )
@@ -308,7 +312,7 @@ class WesternElectricRules:
                     RuleViolation(
                         rule_number=8,
                         rule_name="8 Beyond 1 Sigma",
-                        description=f"Points {i}-{i+7} all beyond ±1σ (excessive variation)",
+                        description=f"Points {i}-{i + 7} all beyond ±1σ (excessive variation)",
                         severity="warning",
                         points_involved=list(range(i, i + 8)),
                     )
@@ -357,7 +361,10 @@ class WesternElectricRules:
             "rules_violated": rules_violated,
             "status": status,
             "most_frequent_rule": (
-                max(rules_violated, key=lambda r: sum(1 for v in violations if v.rule_number == r))
+                max(
+                    rules_violated,
+                    key=lambda r: sum(1 for v in violations if v.rule_number == r),
+                )
                 if rules_violated
                 else None
             ),

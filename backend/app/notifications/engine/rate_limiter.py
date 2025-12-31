@@ -263,8 +263,8 @@ class NotificationRateLimiter:
                     bucket.refill()
                     quota[f"type_{notification_type.value}"] = bucket.tokens
                 else:
-                    quota[f"type_{notification_type.value}"] = self.TYPE_LIMITS_PER_HOUR.get(
-                        notification_type, 20
+                    quota[f"type_{notification_type.value}"] = (
+                        self.TYPE_LIMITS_PER_HOUR.get(notification_type, 20)
                     )
 
             return quota

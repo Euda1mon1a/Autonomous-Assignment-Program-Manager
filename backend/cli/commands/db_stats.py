@@ -124,13 +124,15 @@ async def show_table_stats(top: int):
 
             stats = []
             for row in result:
-                stats.append({
-                    "table": row[0].replace("public.", ""),
-                    "rows": f"{row[1]:,}",
-                    "total": row[2],
-                    "table_size": row[3],
-                    "indexes": row[4],
-                })
+                stats.append(
+                    {
+                        "table": row[0].replace("public.", ""),
+                        "rows": f"{row[1]:,}",
+                        "total": row[2],
+                        "table_size": row[3],
+                        "indexes": row[4],
+                    }
+                )
 
             print_table(
                 stats,
@@ -168,13 +170,15 @@ async def show_index_stats():
 
             stats = []
             for row in result:
-                stats.append({
-                    "table": row[0].replace("public.", ""),
-                    "index": row[1],
-                    "scans": f"{row[2]:,}",
-                    "tuples_read": f"{row[3]:,}",
-                    "size": row[5],
-                })
+                stats.append(
+                    {
+                        "table": row[0].replace("public.", ""),
+                        "index": row[1],
+                        "scans": f"{row[2]:,}",
+                        "tuples_read": f"{row[3]:,}",
+                        "size": row[5],
+                    }
+                )
 
             print_table(
                 stats,
@@ -215,12 +219,14 @@ async def show_cache_stats():
 
             stats = []
             for row in result:
-                stats.append({
-                    "table": row[0].replace("public.", ""),
-                    "disk_reads": f"{row[1]:,}",
-                    "cache_hits": f"{row[2]:,}",
-                    "hit_ratio": f"{row[3]:.2f}%",
-                })
+                stats.append(
+                    {
+                        "table": row[0].replace("public.", ""),
+                        "disk_reads": f"{row[1]:,}",
+                        "cache_hits": f"{row[2]:,}",
+                        "hit_ratio": f"{row[3]:.2f}%",
+                    }
+                )
 
             print_table(
                 stats,

@@ -29,7 +29,7 @@ class ComplianceBenchmark:
 
     async def benchmark_program(
         self, start_date: date, end_date: date
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Benchmark program against industry standards."""
         score = await self.compliance_score.calculate_score(start_date, end_date)
 
@@ -49,7 +49,7 @@ class ComplianceBenchmark:
             "comparison": self._generate_comparison(score["compliance_score"]),
         }
 
-    def _generate_comparison(self, score: float) -> Dict[str, Any]:
+    def _generate_comparison(self, score: float) -> dict[str, Any]:
         """Generate comparison to benchmarks."""
         return {
             "vs_excellent": round(95 - score, 2),

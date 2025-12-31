@@ -193,7 +193,7 @@ class HTMLEmailBuilder:
         if "action_url" in data:
             content += f"""
             <div style="text-align: center; margin-top: 20px;">
-                <a href="{data['action_url']}" class="button">View Details</a>
+                <a href="{data["action_url"]}" class="button">View Details</a>
             </div>
             """
 

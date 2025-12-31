@@ -19,12 +19,12 @@ class Threshold:
     """Dynamic threshold definition."""
 
     name: str
-    lower_bound: Optional[float]  ***REMOVED*** None = no lower limit
-    upper_bound: Optional[float]  ***REMOVED*** None = no upper limit
-    warning_lower: Optional[float]  ***REMOVED*** Warning zone
-    warning_upper: Optional[float]  ***REMOVED*** Warning zone
-    critical_lower: Optional[float]  ***REMOVED*** Critical zone
-    critical_upper: Optional[float]  ***REMOVED*** Critical zone
+    lower_bound: float | None  ***REMOVED*** None = no lower limit
+    upper_bound: float | None  ***REMOVED*** None = no upper limit
+    warning_lower: float | None  ***REMOVED*** Warning zone
+    warning_upper: float | None  ***REMOVED*** Warning zone
+    critical_lower: float | None  ***REMOVED*** Critical zone
+    critical_upper: float | None  ***REMOVED*** Critical zone
     last_updated: datetime
     sample_count: int  ***REMOVED*** Number of samples used to calculate
     is_adaptive: bool  ***REMOVED*** Whether threshold adapts over time
@@ -64,12 +64,12 @@ class ThresholdManager:
     def create_static_threshold(
         self,
         name: str,
-        lower_bound: Optional[float] = None,
-        upper_bound: Optional[float] = None,
-        warning_lower: Optional[float] = None,
-        warning_upper: Optional[float] = None,
-        critical_lower: Optional[float] = None,
-        critical_upper: Optional[float] = None,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
+        warning_lower: float | None = None,
+        warning_upper: float | None = None,
+        critical_lower: float | None = None,
+        critical_upper: float | None = None,
     ) -> Threshold:
         """
         Create a static threshold (does not adapt).
@@ -210,7 +210,7 @@ class ThresholdManager:
 
         return threshold
 
-    def check_threshold(self, name: str, value: float) -> Optional[ThresholdViolation]:
+    def check_threshold(self, name: str, value: float) -> ThresholdViolation | None:
         """
         Check if value violates threshold.
 
@@ -291,7 +291,7 @@ class ThresholdManager:
 
         return None
 
-    def get_threshold(self, name: str) -> Optional[Threshold]:
+    def get_threshold(self, name: str) -> Threshold | None:
         """Get threshold by name."""
         return self.thresholds.get(name)
 

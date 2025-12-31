@@ -19,7 +19,7 @@ class KPICalculator:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def calculate_kpis(self, days_back: int = 30) -> Dict[str, Any]:
+    async def calculate_kpis(self, days_back: int = 30) -> dict[str, Any]:
         """Calculate all KPIs."""
         end_date = date.today()
         start_date = end_date - timedelta(days=days_back)
@@ -37,7 +37,7 @@ class KPICalculator:
 
     async def _calculate_coverage_kpi(
         self, start_date: date, end_date: date
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Calculate coverage KPI."""
         blocks_result = await self.db.execute(
             select(func.count(Block.id)).where(
@@ -64,7 +64,7 @@ class KPICalculator:
 
     async def _calculate_workload_kpi(
         self, start_date: date, end_date: date
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Calculate workload KPI."""
         assignments_result = await self.db.execute(
             select(func.count(Assignment.id))
@@ -86,7 +86,7 @@ class KPICalculator:
 
     async def _calculate_utilization_kpi(
         self, start_date: date, end_date: date
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Calculate utilization KPI."""
         capacity_result = await self.db.execute(select(func.count(Person.id)))
         capacity = capacity_result.scalar() or 1

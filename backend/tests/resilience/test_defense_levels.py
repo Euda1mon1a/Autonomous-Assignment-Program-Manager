@@ -56,7 +56,10 @@ class TestDefenseLevelCalculator:
         )
 
         assert result.level == DefenseLevel.ORANGE
-        assert "degraded" in result.rationale.lower() or "orange" in result.rationale.lower()
+        assert (
+            "degraded" in result.rationale.lower()
+            or "orange" in result.rationale.lower()
+        )
 
     def test_red_level_critical_utilization(self):
         """Test RED level with >95% utilization."""
@@ -70,7 +73,10 @@ class TestDefenseLevelCalculator:
         )
 
         assert result.level in [DefenseLevel.RED, DefenseLevel.ORANGE]
-        assert any("CRITICAL" in rec or "urgent" in rec.lower() for rec in result.recommendations)
+        assert any(
+            "CRITICAL" in rec or "urgent" in rec.lower()
+            for rec in result.recommendations
+        )
 
     def test_black_level_emergency(self):
         """Test BLACK level with catastrophic conditions."""
@@ -85,7 +91,10 @@ class TestDefenseLevelCalculator:
         )
 
         assert result.level in [DefenseLevel.BLACK, DefenseLevel.RED]
-        assert any("EMERGENCY" in rec or "emergency" in rec.lower() for rec in result.recommendations)
+        assert any(
+            "EMERGENCY" in rec or "emergency" in rec.lower()
+            for rec in result.recommendations
+        )
 
     def test_n2_failures_increase_severity(self):
         """Test that N-2 failures significantly increase severity."""

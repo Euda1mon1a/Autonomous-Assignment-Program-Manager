@@ -19,9 +19,7 @@ class ComplianceScore:
         self.db = db
         self.violation_tracker = ViolationTracker(db)
 
-    async def calculate_score(
-        self, start_date: date, end_date: date
-    ) -> Dict[str, Any]:
+    async def calculate_score(self, start_date: date, end_date: date) -> dict[str, Any]:
         """Calculate overall compliance score (0-100)."""
         violations = await self.violation_tracker.track_violations(start_date, end_date)
 

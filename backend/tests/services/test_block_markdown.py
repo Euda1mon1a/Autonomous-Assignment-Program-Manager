@@ -141,10 +141,7 @@ class TestBlockMarkdownService:
         ***REMOVED*** Should be valid markdown
         assert isinstance(markdown, str)
         ***REMOVED*** May contain common markdown syntax
-        assert any(
-            char in markdown
-            for char in ["***REMOVED***", "|", "-", "*", "[", "```"]
-        )
+        assert any(char in markdown for char in ["***REMOVED***", "|", "-", "*", "[", "```"])
 
     def test_export_to_file(
         self,

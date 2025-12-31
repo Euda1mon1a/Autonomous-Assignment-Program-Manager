@@ -23,9 +23,9 @@ console = Console()
 
 
 def print_table(
-    data: List[Dict[str, Any]],
-    title: Optional[str] = None,
-    columns: Optional[List[str]] = None,
+    data: list[dict[str, Any]],
+    title: str | None = None,
+    columns: list[str] | None = None,
 ) -> None:
     """
     Print data as a formatted table.
@@ -93,7 +93,7 @@ def print_panel(content: str, title: str, style: str = "blue") -> None:
     console.print(panel)
 
 
-def print_tree(data: Dict[str, Any], title: str = "Tree") -> None:
+def print_tree(data: dict[str, Any], title: str = "Tree") -> None:
     """Print hierarchical data as a tree."""
     tree = Tree(title)
 

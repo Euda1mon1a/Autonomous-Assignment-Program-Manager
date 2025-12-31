@@ -3,6 +3,7 @@
 Provides advanced semaphore utilities for controlling concurrent access
 to resources and rate limiting.
 """
+
 import asyncio
 import logging
 import time
@@ -18,7 +19,7 @@ class SemaphorePool:
     def __init__(
         self,
         max_concurrent: int = 10,
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
     ):
         """Initialize semaphore pool.
 
@@ -38,7 +39,7 @@ class SemaphorePool:
         }
 
     @asynccontextmanager
-    async def acquire(self, timeout: Optional[float] = None):
+    async def acquire(self, timeout: float | None = None):
         """Acquire semaphore with optional timeout.
 
         Args:
@@ -66,7 +67,7 @@ class SemaphorePool:
                     yield
                     self._track_release()
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self.stats["timeouts"] += 1
             logger.warning(f"Semaphore acquisition timeout after {timeout_val}s")
             raise
@@ -106,9 +107,7 @@ class SemaphorePool:
             **self.stats,
             "max_concurrent": self.max_concurrent,
             "available": self.max_concurrent - self.stats["current_active"],
-            "utilization": (
-                self.stats["current_active"] / self.max_concurrent * 100
-            ),
+            "utilization": (self.stats["current_active"] / self.max_concurrent * 100),
             "average_wait_time": round(avg_wait, 4),
         }
 
@@ -120,7 +119,7 @@ class RateLimiter:
         self,
         rate: int,
         per: float = 1.0,
-        burst: Optional[int] = None,
+        burst: int | None = None,
     ):
         """Initialize rate limiter.
 

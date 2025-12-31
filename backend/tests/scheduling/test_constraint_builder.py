@@ -116,10 +116,7 @@ class TestConstraintBuilder:
     def test_builder_reset(self):
         """Test builder reset."""
         builder = (
-            ConstraintBuilder()
-            .hard()
-            .name("Test")
-            .type(ConstraintType.AVAILABILITY)
+            ConstraintBuilder().hard().name("Test").type(ConstraintType.AVAILABILITY)
         )
         builder.reset()
 
