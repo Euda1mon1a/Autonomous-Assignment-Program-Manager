@@ -33,12 +33,16 @@ echo "Current directory: $(pwd)"
 echo ""
 
 # First, run audit to see current status
+# npm audit checks all dependencies for known security vulnerabilities
+# Output shows severity levels: low, moderate, high, critical
 echo "1. Running npm audit to assess vulnerabilities..."
 echo "-------------------------------------------"
 npm audit || true
 echo ""
 
 # Create backup of package-lock.json
+# This allows rollback if audit fix breaks the build
+# Backup file should be committed if fix is successful
 echo "2. Creating backup of package-lock.json..."
 cp package-lock.json package-lock.json.backup
 echo "   Backup created: package-lock.json.backup"

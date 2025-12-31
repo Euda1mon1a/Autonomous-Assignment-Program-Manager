@@ -22,8 +22,13 @@ set -euo pipefail
 WHEELHOUSE_DIR="backend/vendor/wheels"
 REQ_FILE="backend/requirements.txt"
 
+# Create wheelhouse directory if it doesn't exist
+# This directory will contain all downloaded Python packages
 mkdir -p "${WHEELHOUSE_DIR}"
 
+# Download all packages from requirements.txt
+# Packages are downloaded as .whl files for offline installation
+# This avoids network dependency during Docker builds
 python3 -m pip download -r "${REQ_FILE}" -d "${WHEELHOUSE_DIR}"
 
 echo "Wheelhouse ready at ${WHEELHOUSE_DIR}"

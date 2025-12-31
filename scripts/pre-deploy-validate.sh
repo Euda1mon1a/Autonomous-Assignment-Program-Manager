@@ -56,22 +56,28 @@ echo "1. Checking environment configuration..."
 echo "-------------------------------------------"
 
 # Check for required environment variables
+# .env file must exist and contain critical configuration
 if [ -f ".env" ]; then
     check_pass "Environment file (.env) exists"
 
-    # Check critical variables
+    # Check SECRET_KEY - must be at least 32 characters for security
+    # Used for JWT token signing and session encryption
     if grep -q "SECRET_KEY=" .env && [ "$(grep SECRET_KEY= .env | cut -d= -f2 | wc -c)" -gt 32 ]; then
         check_pass "SECRET_KEY is set and has minimum length"
     else
         check_fail "SECRET_KEY is missing or too short (min 32 chars)"
     fi
 
+    # Check DATABASE_URL - required for all database operations
+    # Format: postgresql://user:password@host:port/database
     if grep -q "DATABASE_URL=" .env; then
         check_pass "DATABASE_URL is configured"
     else
         check_fail "DATABASE_URL is not configured"
     fi
 
+    # Check REDIS_URL - required for Celery task queue
+    # Missing Redis will prevent background task processing
     if grep -q "REDIS_URL=" .env; then
         check_pass "REDIS_URL is configured"
     else
@@ -85,13 +91,17 @@ echo ""
 echo "2. Checking code quality..."
 echo "-------------------------------------------"
 
-# Check for debug statements
+# Check for debug statements that should not be in production
+# These can leak sensitive information or cause performance issues
 if grep -rn --include="*.py" "breakpoint()\|pdb\|debugger" backend/app/ 2>/dev/null | grep -v "^Binary"; then
     check_fail "Debug statements found in backend code"
 else
     check_pass "No debug statements in backend code"
 fi
 
+# Check for console.log and debugger in frontend code
+# console.log is less critical but should be reviewed
+# debugger statements will halt execution in browser dev tools
 if grep -rn --include="*.ts" --include="*.tsx" "debugger\|console.log" frontend/src/ 2>/dev/null | head -5; then
     check_warn "Console.log statements found in frontend (review before deploy)"
 else

@@ -31,6 +31,8 @@ set -e
 echo "=== MCP Integration Test ==="
 
 # 1. Check if we can import MCP modules
+# Tests that all required dependencies are installed
+# and Python path is configured correctly
 echo "1. Testing MCP module imports..."
 cd mcp-server/src
 python -c "from scheduler_mcp.server import mcp; print('MCP server imports OK')" || exit 1
@@ -38,6 +40,8 @@ python -c "from scheduler_mcp.api_client import SchedulerAPIClient; print('API c
 python -c "from scheduler_mcp.domain_context import expand_abbreviations; print('Domain context imports OK')" || exit 1
 
 # 2. Test no PII in MCP code
+# Ensures PERSEC compliance by detecting person_name references
+# person_name was removed to avoid exposing military personnel data
 echo "2. Verifying no PII in MCP code..."
 if grep -r "person_name" scheduler_mcp/*.py 2>/dev/null | grep -v "# REMOVED" | grep -v "^#"; then
     echo "WARNING: person_name still found in MCP code"
