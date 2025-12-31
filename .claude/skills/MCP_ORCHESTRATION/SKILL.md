@@ -1,6 +1,11 @@
 ---
 name: MCP_ORCHESTRATION
 description: Tool discovery, routing, chaining, error handling, and composition for the 34+ MCP scheduling tools. Use when orchestrating complex multi-tool workflows, handling MCP errors, or discovering available capabilities.
+model_tier: haiku
+parallel_hints:
+  can_parallel_with: [code-review, test-writer, security-audit]
+  must_serialize_with: [database-migration]
+  preferred_batch_size: 5
 ---
 
 # MCP Orchestration Skill

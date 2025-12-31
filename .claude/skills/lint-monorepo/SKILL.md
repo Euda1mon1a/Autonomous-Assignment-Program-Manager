@@ -1,6 +1,11 @@
 ---
 name: lint-monorepo
 description: Unified linting and auto-fix for Python (Ruff) and TypeScript (ESLint) in monorepo. Use when fixing lint errors, running pre-commit checks, or diagnosing persistent code quality issues. Orchestrates auto-fix first, then root-cause analysis.
+model_tier: haiku
+parallel_hints:
+  can_parallel_with: [code-review, test-writer, security-audit]
+  must_serialize_with: []
+  preferred_batch_size: 10
 ---
 
 # Lint Monorepo Skill

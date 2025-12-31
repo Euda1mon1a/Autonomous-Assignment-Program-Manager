@@ -1,6 +1,15 @@
 ---
 name: fastapi-production
 description: Production-grade FastAPI patterns for async APIs, SQLAlchemy 2.0, Pydantic v2, and robust error handling. Use when building API endpoints, handling database operations, implementing middleware, or optimizing performance.
+model_tier: opus
+parallel_hints:
+  can_parallel_with:
+    - test-writer
+    - security-audit
+    - code-review
+  must_serialize_with:
+    - database-migration
+  preferred_batch_size: 5
 ---
 
 # FastAPI Production Patterns Skill

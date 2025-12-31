@@ -1,6 +1,11 @@
 ---
 name: test-writer
 description: Test generation expertise for Python (pytest) and TypeScript (Jest). Use when writing new tests, improving coverage, or creating test fixtures. Ensures comprehensive coverage including edge cases, error scenarios, and integration tests.
+model_tier: opus
+parallel_hints:
+  can_parallel_with: [code-review, lint-monorepo, security-audit]
+  must_serialize_with: [database-migration]
+  preferred_batch_size: 3
 ---
 
 # Test Writer Skill

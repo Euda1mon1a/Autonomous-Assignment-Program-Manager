@@ -714,6 +714,58 @@ def allocate_agents(tasks, resource_limits):
     return assignments
 ```
 
+### III.E Auto-Tier Selection Algorithm
+
+When delegating via Task tool, ORCHESTRATOR should auto-select model tier based on task complexity:
+
+| Complexity Score | Model Tier | Use For |
+|-----------------|------------|---------|
+| 0-5 | haiku | Information gathering, simple searches, documentation lookup |
+| 6-12 | sonnet | Standard implementation, testing, code review |
+| 13+ | opus | Architecture decisions, complex coordination, multi-domain work |
+
+#### Selection Logic
+
+```python
+def select_model_tier(task_complexity: int, agent_spec: dict) -> str:
+    """
+    Select appropriate model tier for task delegation.
+
+    Priority:
+    1. Agent's declared model_tier (if specified)
+    2. Complexity-based selection
+    """
+    # Respect agent's declared preference
+    if agent_spec.get("model_tier"):
+        return agent_spec["model_tier"]
+
+    # Auto-select based on complexity
+    if task_complexity <= 5:
+        return "haiku"
+    elif task_complexity <= 12:
+        return "sonnet"
+    return "opus"
+```
+
+#### Tier Cost Weights
+
+For capacity management, apply these weights:
+
+```python
+TIER_WEIGHTS = {
+    'haiku': 0.5,   # 2x more haikus before capacity hit
+    'sonnet': 1.0,  # Baseline
+    'opus': 1.5     # Premium resource, reduced capacity
+}
+```
+
+#### Override Guidance
+
+Force specific tier when:
+- **Force haiku**: Pure exploration, no code changes needed
+- **Force sonnet**: Standard coding tasks with known patterns
+- **Force opus**: Architectural decisions, complex debugging, multi-agent coordination
+
 ---
 
 ## IV. SYNTHESIS PATTERNS

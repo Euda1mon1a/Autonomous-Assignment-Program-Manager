@@ -1,6 +1,14 @@
 ---
 name: database-migration
 description: Database schema change and Alembic migration expertise. Use when modifying database models, creating migrations, handling rollbacks, or troubleshooting migration issues. Ensures data integrity and safe schema evolution.
+model_tier: opus
+parallel_hints:
+  can_parallel_with: []
+  must_serialize_with:
+    - code-review
+    - test-writer
+    - automated-code-fixer
+  preferred_batch_size: 1
 ---
 
 # Database Migration Skill

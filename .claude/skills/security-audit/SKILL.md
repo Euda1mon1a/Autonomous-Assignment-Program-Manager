@@ -1,6 +1,14 @@
 ---
 name: security-audit
 description: Security-focused code audit for healthcare and military contexts. Use when reviewing authentication, authorization, data handling, HIPAA compliance, or OPSEC/PERSEC requirements. Essential for PHI handling and military medical residency schedules.
+model_tier: opus
+parallel_hints:
+  can_parallel_with:
+    - code-review
+    - test-writer
+    - lint-monorepo
+  must_serialize_with: []
+  preferred_batch_size: 3
 ---
 
 # Security Audit Skill
