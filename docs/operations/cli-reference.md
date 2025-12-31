@@ -732,8 +732,231 @@ fi
 
 ---
 
+## Troubleshooting Common CLI Issues
+
+### Command Not Found
+
+**Problem:** `python: No module named app.cli`
+
+**Solution:**
+```bash
+# Ensure you're in the backend directory
+cd backend
+
+# Activate virtual environment
+source venv/bin/activate  # Linux/macOS
+# OR
+venv\Scripts\activate  # Windows
+
+# Verify Python path
+python -c "import sys; print(sys.path)"
+```
+
+### Database Connection Errors
+
+**Problem:** `sqlalchemy.exc.OperationalError: could not connect to server`
+
+**Solution:**
+```bash
+# 1. Check if PostgreSQL is running
+docker-compose ps db
+
+# 2. Check database credentials in .env
+cat .env | grep DATABASE
+
+# 3. Test connection manually
+psql postgresql://scheduler:password@localhost:5432/residency_scheduler
+
+# 4. Restart database if needed
+docker-compose restart db
+```
+
+### Permission Denied Errors
+
+**Problem:** `PermissionError: [Errno 13] Permission denied`
+
+**Solution:**
+```bash
+# Check file ownership
+ls -la output_file.xlsx
+
+# Fix permissions
+chmod 644 output_file.xlsx
+
+# Run with sudo if needed (not recommended for production)
+sudo python -m app.cli maintenance backup
+```
+
+### Import Errors
+
+**Problem:** `ModuleNotFoundError: No module named 'package_name'`
+
+**Solution:**
+```bash
+# Reinstall dependencies
+pip install -r requirements.txt
+
+# Check for version conflicts
+pip list | grep package_name
+
+# Update specific package
+pip install --upgrade package_name
+```
+
+### Schedule Generation Hangs
+
+**Problem:** CLI hangs during schedule generation
+
+**Solution:**
+```bash
+# 1. Use shorter timeout
+python -m app.cli schedule generate \
+  --start 2025-07-01 --end 2025-07-31 \
+  --timeout 60
+
+# 2. Use simpler algorithm
+python -m app.cli schedule generate \
+  --start 2025-07-01 --end 2025-07-31 \
+  --algorithm greedy
+
+# 3. Check logs in another terminal
+tail -f backend/app.log
+```
+
+---
+
+## Advanced Usage Tips
+
+### 1. Chaining Commands
+
+```bash
+# Generate, validate, and export in one line
+python -m app.cli schedule generate --start 2025-07-01 --end 2025-09-30 && \
+python -m app.cli compliance check && \
+python -m app.cli schedule export --format excel --output schedule.xlsx
+```
+
+### 2. Using with Cron Jobs
+
+```bash
+# Edit crontab
+crontab -e
+
+# Add daily backup at 2 AM
+0 2 * * * cd /path/to/backend && source venv/bin/activate && python -m app.cli maintenance backup --compress >> /var/log/scheduler_backup.log 2>&1
+
+# Weekly compliance check on Mondays at 9 AM
+0 9 * * 1 cd /path/to/backend && source venv/bin/activate && python -m app.cli compliance check --email admin@example.com
+```
+
+### 3. JSON Output for Scripting
+
+```bash
+# Get compliance data as JSON
+python -m app.cli compliance check --format json > compliance.json
+
+# Process with jq
+python -m app.cli compliance check --format json | jq '.violations[] | select(.severity == "CRITICAL")'
+
+# Use in shell scripts
+VIOLATIONS=$(python -m app.cli compliance check --format json | jq '.violations | length')
+if [ $VIOLATIONS -gt 0 ]; then
+    echo "⚠️  Found $VIOLATIONS violations!"
+    # Send alert
+fi
+```
+
+### 4. Environment-Specific Configurations
+
+```bash
+# Development
+export ENV=development
+python -m app.cli schedule generate --start 2025-07-01 --end 2025-07-31
+
+# Staging
+export ENV=staging
+python -m app.cli schedule generate --start 2025-07-01 --end 2025-07-31
+
+# Production
+export ENV=production
+python -m app.cli schedule generate --start 2025-07-01 --end 2025-07-31
+```
+
+### 5. Dry Run Mode
+
+```bash
+# Preview changes without applying
+python -m app.cli maintenance cleanup --dry-run
+python -m app.cli schedule generate --start 2025-07-01 --end 2025-07-31 --dry-run
+python -m app.cli data seed --type residents --dry-run
+```
+
+### 6. Logging and Debugging
+
+```bash
+# Enable debug logging
+python -m app.cli --debug schedule generate --start 2025-07-01 --end 2025-07-31
+
+# Save logs to file
+python -m app.cli schedule generate --start 2025-07-01 --end 2025-07-31 2>&1 | tee generation.log
+
+# Verbose output
+python -m app.cli compliance check --verbose
+```
+
+### 7. Batch Operations
+
+```bash
+# Process multiple users from file
+while read email; do
+    python -m app.cli user reset-password --email "$email"
+done < users_to_reset.txt
+
+# Generate schedules for multiple blocks
+for block in {1..13}; do
+    python -m app.cli schedule generate \
+        --block $block \
+        --algorithm greedy
+done
+```
+
+---
+
+## Performance Optimization
+
+### Large Data Sets
+
+When working with large data sets:
+
+```bash
+# Use pagination
+python -m app.cli data export --limit 1000 --offset 0
+python -m app.cli data export --limit 1000 --offset 1000
+
+# Enable compression
+python -m app.cli maintenance backup --compress --format tar.gz
+
+# Parallel processing (if supported)
+python -m app.cli schedule generate --workers 4
+```
+
+### Memory Management
+
+```bash
+# Monitor memory usage
+/usr/bin/time -v python -m app.cli schedule generate --start 2025-07-01 --end 2025-09-30
+
+# Limit memory (Linux)
+ulimit -v 2000000  # 2GB
+python -m app.cli schedule generate --start 2025-07-01 --end 2025-09-30
+```
+
+---
+
 ## See Also
 
 - [Scripts Guide](scripts-guide.md) - Standalone operational scripts
 - [API Documentation](../api/README.md) - REST API reference
 - [Database Guide](../architecture/database.md) - Database schema
+- [Schedule Generation Runbook](../guides/SCHEDULE_GENERATION_RUNBOOK.md) - Detailed generation workflow
+- [Troubleshooting Guide](../development/CI_CD_TROUBLESHOOTING.md) - Common issues and solutions

@@ -27,7 +27,7 @@
 #   Alertmanager: http://localhost:9093
 # ============================================================
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MONITORING_DIR="$(dirname "$SCRIPT_DIR")"
@@ -37,19 +37,36 @@ echo "  Residency Scheduler Monitoring Setup"
 echo "============================================"
 echo ""
 
-# Create necessary directories
+# Verify required commands are available
+if ! command -v docker >/dev/null 2>&1; then
+    echo "ERROR: Docker command not found" >&2
+    exit 1
+fi
+
+if ! command -v docker-compose >/dev/null 2>&1 && ! docker compose version >/dev/null 2>&1; then
+    echo "ERROR: docker-compose or 'docker compose' command not found" >&2
+    exit 1
+fi
+
+# Create necessary directories with error handling
 echo "Creating directories..."
-mkdir -p "$MONITORING_DIR"/{prometheus/rules,grafana/{provisioning/{datasources,dashboards},dashboards},alertmanager/templates,loki,promtail}
+if ! mkdir -p "$MONITORING_DIR"/{prometheus/rules,grafana/{provisioning/{datasources,dashboards},dashboards},alertmanager/templates,loki,promtail}; then
+    echo "ERROR: Failed to create monitoring directories" >&2
+    exit 1
+fi
 
 # Create log directories if needed
+# Requires sudo access for system directories
 echo "Creating log directories..."
-sudo mkdir -p /var/log/residency-scheduler/backend
-sudo mkdir -p /var/log/nginx
+if ! sudo mkdir -p /var/log/residency-scheduler/backend /var/log/nginx; then
+    echo "ERROR: Failed to create log directories (sudo required)" >&2
+    exit 1
+fi
 sudo chmod 755 /var/log/residency-scheduler /var/log/residency-scheduler/backend
 
 # Check if Docker is running
-if ! docker info > /dev/null 2>&1; then
-    echo "Error: Docker is not running. Please start Docker and try again."
+if ! docker info >/dev/null 2>&1; then
+    echo "ERROR: Docker daemon is not running. Please start Docker and try again." >&2
     exit 1
 fi
 

@@ -357,3 +357,22 @@ Additional community-maintained documentation: [Project Wiki](https://github.com
 Version: 1.0.0 | Last Updated: 2025-12-31 (Documentation restructure)
 
 </div>
+
+---
+
+## Quick Links
+
+- **[Quick Reference Guide](QUICK_REFERENCE.md)** - Fast reference for common operations
+- **[Installation](guides/installation.md)** - Setup instructions
+- **[API Documentation](api/README.md)** - Complete API reference
+- **[Schedule Generation](guides/SCHEDULE_GENERATION_RUNBOOK.md)** - Step-by-step schedule generation
+- **[Troubleshooting](guides/SCHEDULE_GENERATION_RUNBOOK.md#troubleshooting)** - Common issues and solutions
+- **[CLI Reference](operations/cli-reference.md)** - Command-line interface
+- **[AI Guidelines](CLAUDE.md)** - For AI-assisted development
+
+---
+
+**For Immediate Help:**
+- Check [Quick Reference](QUICK_REFERENCE.md) for common commands
+- See [Troubleshooting](guides/SCHEDULE_GENERATION_RUNBOOK.md#troubleshooting) for issues
+- Review [API Docs](api/README.md) for endpoint reference

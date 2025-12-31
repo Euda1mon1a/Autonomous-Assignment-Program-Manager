@@ -22,7 +22,7 @@
 #   1 - Critical errors found (do not deploy)
 # ============================================================
 
-set -e
+set -euo pipefail
 
 echo "=============================================="
 echo "Pre-Deployment Validation Script"
@@ -37,6 +37,12 @@ NC='\033[0m' # No Color
 
 ERRORS=0
 WARNINGS=0
+
+# Verify we're in project root
+if [ ! -f "docker-compose.yml" ] || [ ! -d "backend" ] || [ ! -d "frontend" ]; then
+    echo -e "${RED}ERROR: Must be run from project root directory${NC}" >&2
+    exit 1
+fi
 
 check_pass() {
     echo -e "${GREEN}[PASS]${NC} $1"

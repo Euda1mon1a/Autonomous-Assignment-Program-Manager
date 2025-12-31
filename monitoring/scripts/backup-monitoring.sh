@@ -22,7 +22,7 @@
 #   BACKUP_DIR  - Base backup directory (default: /var/backups/monitoring)
 # ============================================================
 
-set -e
+set -euo pipefail
 
 BACKUP_DIR="${BACKUP_DIR:-/var/backups/monitoring}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
@@ -33,29 +33,60 @@ echo "  Monitoring Data Backup"
 echo "============================================"
 echo ""
 
-# Create backup directory
-mkdir -p "$BACKUP_PATH"
+# Verify Docker is available
+if ! command -v docker >/dev/null 2>&1; then
+    echo "ERROR: Docker command not found" >&2
+    exit 1
+fi
+
+# Verify Docker daemon is running
+if ! docker info >/dev/null 2>&1; then
+    echo "ERROR: Docker daemon is not running" >&2
+    exit 1
+fi
+
+# Create backup directory with error handling
+mkdir -p "$BACKUP_PATH" || {
+    echo "ERROR: Failed to create backup directory: $BACKUP_PATH" >&2
+    exit 1
+}
 
 # Function to backup a Docker volume
+# Uses Alpine container to create tar.gz archive from Docker volume
 backup_volume() {
     local volume_name=$1
     local backup_file=$2
 
     echo "Backing up $volume_name..."
-    docker run --rm \
+
+    # Verify volume exists before attempting backup
+    if ! docker volume inspect "${volume_name}" >/dev/null 2>&1; then
+        echo "WARNING: Volume ${volume_name} not found, skipping..." >&2
+        return 0
+    fi
+
+    # Create backup with error handling
+    if ! docker run --rm \
         -v "${volume_name}:/source:ro" \
         -v "$BACKUP_PATH:/backup" \
-        alpine tar czf "/backup/${backup_file}" -C /source .
-    echo "  -> $BACKUP_PATH/$backup_file"
+        alpine tar czf "/backup/${backup_file}" -C /source .; then
+        echo "ERROR: Failed to backup ${volume_name}" >&2
+        return 1
+    fi
+
+    echo "  ✓ $BACKUP_PATH/$backup_file"
 }
 
 # Backup Prometheus data
+# Contains time-series metrics database and configuration
 backup_volume "monitoring_prometheus_data" "prometheus_data.tar.gz"
 
 # Backup Grafana data (dashboards, settings)
+# Includes user-created dashboards and data source configurations
 backup_volume "monitoring_grafana_data" "grafana_data.tar.gz"
 
 # Backup Alertmanager data
+# Contains alert routing configuration and notification state
 backup_volume "monitoring_alertmanager_data" "alertmanager_data.tar.gz"
 
 # Backup Loki data

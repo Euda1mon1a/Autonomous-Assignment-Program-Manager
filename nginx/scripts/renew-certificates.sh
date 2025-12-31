@@ -9,13 +9,25 @@
 #   30 3,15 * * * /path/to/renew-certificates.sh >> /var/log/certbot-renew.log 2>&1
 # =============================================================================
 
-set -e
+set -euo pipefail
 
 # Paths
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 NGINX_DIR="$(dirname "$SCRIPT_DIR")"
 PROJECT_ROOT="$(dirname "$NGINX_DIR")"
 COMPOSE_FILE="${PROJECT_ROOT}/docker-compose.yml"
+
+# Verify Docker Compose is available
+if ! command -v docker-compose >/dev/null 2>&1 && ! docker compose version >/dev/null 2>&1; then
+    echo -e "${RED}ERROR: docker-compose not found${NC}" >&2
+    exit 1
+fi
+
+# Verify compose file exists
+if [ ! -f "$COMPOSE_FILE" ]; then
+    echo -e "${RED}ERROR: docker-compose.yml not found at $COMPOSE_FILE${NC}" >&2
+    exit 1
+fi
 
 # Colors for output
 RED='\033[0;31m'

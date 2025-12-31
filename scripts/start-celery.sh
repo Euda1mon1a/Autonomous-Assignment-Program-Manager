@@ -178,6 +178,7 @@ echo "Press Ctrl+C to stop gracefully"
 echo ""
 
 # Monitor processes
+# Display PID file locations for process management
 if [ "$MODE" == "both" ] || [ "$MODE" == "worker" ]; then
     echo "Worker PID file: $WORKER_PIDFILE"
 fi
@@ -187,11 +188,14 @@ if [ "$MODE" == "both" ] || [ "$MODE" == "beat" ]; then
 fi
 
 # Keep script running to handle signals
+# This allows graceful cleanup on Ctrl+C or SIGTERM
 if [ -n "$BASH" ]; then
     # In bash, wait for all background jobs
+    # More efficient than polling
     wait
 else
-    # In other shells, just sleep
+    # In other shells, poll with sleep
+    # Keeps script alive for signal handling
     while true; do
         sleep 60
     done

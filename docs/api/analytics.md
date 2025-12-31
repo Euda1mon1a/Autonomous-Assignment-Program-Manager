@@ -77,3 +77,39 @@ Reporting and analytics API endpoints.
 <span class="endpoint-badge post">POST</span> `/api/v1/analytics/what-if`
 
 Analyze impact of hypothetical changes.
+
+---
+
+## Quick Examples
+
+### Get System Statistics
+
+```bash
+curl "http://localhost:8000/api/v1/analytics/stats" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### View Compliance Metrics
+
+```python
+import requests
+
+response = requests.get(
+    "http://localhost:8000/api/v1/analytics/compliance",
+    headers={"Authorization": f"Bearer {token}"},
+    params={
+        "start_date": "2025-07-01",
+        "end_date": "2025-09-30"
+    }
+)
+
+metrics = response.json()
+print(f"80-Hour Violations: {metrics['violations_80_hour']}")
+print(f"1-in-7 Violations: {metrics['violations_1_in_7']}")
+```
+
+## See Also
+
+- [Compliance API](endpoints/compliance.md) - ACGME validation
+- [Schedules API](endpoints/schedules.md) - Schedule management
+- [Metrics Guide](../operations/metrics.md) - Metrics documentation
