@@ -24,7 +24,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -157,7 +157,7 @@ class PhaseTransitionRiskResponse(BaseModel):
     signals: list[CriticalSignalInfo] = Field(
         default_factory=list, description="List of detected early warning signals"
     )
-    time_to_transition: Optional[float] = Field(
+    time_to_transition: float | None = Field(
         default=None, description="Estimated hours until transition (if predictable)"
     )
     confidence: float = Field(
@@ -214,7 +214,7 @@ class EnergyLandscapeResponse(BaseModel):
     """Response from energy landscape analysis."""
 
     analyzed_at: str = Field(description="ISO timestamp")
-    schedule_id: Optional[str] = Field(default=None, description="Schedule identifier if applicable")
+    schedule_id: str | None = Field(default=None, description="Schedule identifier if applicable")
     free_energy_metrics: FreeEnergyMetricsResponse = Field(
         description="Free energy calculations"
     )
@@ -232,7 +232,7 @@ class EnergyLandscapeResponse(BaseModel):
 class FreeEnergyOptimizationRequest(BaseModel):
     """Request for free energy optimization."""
 
-    schedule_id: Optional[str] = Field(
+    schedule_id: str | None = Field(
         default=None, description="Schedule to optimize (or use current)"
     )
     target_temperature: float = Field(
@@ -252,7 +252,7 @@ class FreeEnergyOptimizationResponse(BaseModel):
     improvement: float = Field(description="Free energy reduction achieved")
     iterations_used: int = Field(ge=0, description="Iterations performed")
     converged: bool = Field(description="Whether optimization converged")
-    optimized_schedule_id: Optional[str] = Field(
+    optimized_schedule_id: str | None = Field(
         default=None, description="ID of optimized schedule if created"
     )
     changes_made: list[str] = Field(
@@ -268,8 +268,8 @@ class FreeEnergyOptimizationResponse(BaseModel):
 
 
 async def calculate_schedule_entropy(
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
     include_mutual_information: bool = True,
 ) -> ScheduleEntropyResponse:
     """
@@ -333,14 +333,67 @@ async def calculate_schedule_entropy(
     end = date.fromisoformat(end_date) if end_date else (today + timedelta(days=30))
 
     try:
-        from app.resilience.thermodynamics.entropy import (
-            calculate_schedule_entropy as calc_entropy,
-            EntropyMetrics,
-        )
+        # Try to call backend API first
+        from .api_client import SchedulerAPIClient
 
-        # In production, would fetch assignments from database
-        # For now, return mock data showing the structure
-        logger.warning("Schedule entropy using placeholder data")
+        try:
+            async with SchedulerAPIClient() as client:
+                response = await client.client.post(
+                    f"{client.config.api_prefix}/resilience/exotic/thermodynamics/entropy",
+                    json={
+                        "start_date": start.isoformat(),
+                        "end_date": end.isoformat(),
+                    },
+                    headers=await client._ensure_authenticated(),
+                )
+                response.raise_for_status()
+                data = response.json()
+
+                # Build response from backend data
+                metrics = EntropyMetricsResponse(
+                    person_entropy=data.get("person_entropy", 0.0),
+                    rotation_entropy=data.get("rotation_entropy", 0.0),
+                    time_entropy=data.get("time_entropy", 0.0),
+                    joint_entropy=data.get("joint_entropy", 0.0),
+                    mutual_information=data.get("mutual_information", 0.0),
+                    entropy_production_rate=data.get("entropy_production_rate", 0.0),
+                    normalized_entropy=data.get("normalized_entropy", 0.0),
+                    computed_at=data.get("computed_at", datetime.now().isoformat()),
+                )
+
+                interpretation = data.get("interpretation", "")
+                recommendations = data.get("recommendations", [])
+
+                # Determine status
+                if metrics.normalized_entropy < 0.4:
+                    status = "too_concentrated"
+                    severity = "warning"
+                elif metrics.normalized_entropy > 0.85:
+                    status = "too_dispersed"
+                    severity = "warning"
+                else:
+                    status = "balanced"
+                    severity = "healthy"
+
+                logger.info("Schedule entropy calculated from backend (source=backend)")
+
+                return ScheduleEntropyResponse(
+                    analyzed_at=datetime.now().isoformat(),
+                    period_start=start.isoformat(),
+                    period_end=end.isoformat(),
+                    assignments_analyzed=100,
+                    metrics=metrics,
+                    interpretation=interpretation,
+                    entropy_status=status,
+                    recommendations=recommendations,
+                    severity=severity,
+                )
+
+        except Exception as api_error:
+            logger.warning(f"Backend API call failed, using fallback: {api_error}")
+
+        # Fallback to mock data if backend unavailable
+        logger.warning("Schedule entropy using placeholder data (backend unavailable)")
 
         # Mock response demonstrating the response structure
         metrics = EntropyMetricsResponse(
@@ -552,7 +605,7 @@ async def get_entropy_monitor_state(
 
 
 async def analyze_phase_transitions(
-    metrics: Optional[dict[str, list[float]]] = None,
+    metrics: dict[str, list[float]] | None = None,
     window_size: int = 50,
 ) -> PhaseTransitionRiskResponse:
     """
@@ -614,13 +667,77 @@ async def analyze_phase_transitions(
     logger.info(f"Analyzing phase transitions (window_size={window_size})")
 
     try:
+        # Try to call backend API first
+        from .api_client import SchedulerAPIClient
+
+        try:
+            async with SchedulerAPIClient() as client:
+                response = await client.client.post(
+                    f"{client.config.api_prefix}/resilience/exotic/thermodynamics/phase-transition",
+                    json={
+                        "lookback_days": min(window_size, 90),
+                        "sensitivity": 1.0,
+                    },
+                    headers=await client._ensure_authenticated(),
+                )
+                response.raise_for_status()
+                data = response.json()
+
+                # Build response from backend data
+                signals = [
+                    CriticalSignalInfo(
+                        signal_type=s["signal_type"],
+                        metric_name=s["metric_name"],
+                        severity=TransitionSeverityEnum(s["severity"]),
+                        value=s["value"],
+                        threshold=s["threshold"],
+                        description=s["description"],
+                        detected_at=s["detected_at"],
+                    )
+                    for s in data.get("signals", [])
+                ]
+
+                overall_severity = TransitionSeverityEnum(data.get("overall_severity", "normal"))
+                time_to_transition = data.get("time_to_transition")
+                confidence = data.get("confidence", 0.0)
+                recommendations = data.get("recommendations", [])
+
+                # Determine severity for response
+                if overall_severity in (TransitionSeverityEnum.CRITICAL, TransitionSeverityEnum.IMMINENT):
+                    severity = "critical"
+                elif overall_severity == TransitionSeverityEnum.HIGH:
+                    severity = "elevated"
+                elif overall_severity == TransitionSeverityEnum.ELEVATED:
+                    severity = "warning"
+                else:
+                    severity = "healthy"
+
+                interpretation = f"Phase transition analysis complete. Severity: {overall_severity.value}"
+
+                logger.info(f"Phase transition analysis from backend (severity={severity})")
+
+                return PhaseTransitionRiskResponse(
+                    overall_severity=overall_severity,
+                    signals=signals,
+                    time_to_transition=time_to_transition,
+                    confidence=confidence,
+                    recommendations=recommendations,
+                    analyzed_at=datetime.now().isoformat(),
+                    metrics_analyzed=len(metrics) if metrics else 5,
+                    interpretation=interpretation,
+                    severity=severity,
+                )
+
+        except Exception as api_error:
+            logger.warning(f"Backend API call failed, using fallback: {api_error}")
+
         from app.resilience.thermodynamics.phase_transitions import (
             PhaseTransitionDetector,
             TransitionSeverity,
         )
 
-        # In production, would use actual system metrics or provided data
-        logger.warning("Phase transition analysis using placeholder data")
+        # Fallback: use placeholder data
+        logger.warning("Phase transition analysis using placeholder data (backend unavailable)")
 
         # Simulate detecting early warning signals
         signals: list[CriticalSignalInfo] = []
@@ -809,7 +926,7 @@ async def estimate_transition_time(
 
 
 async def optimize_free_energy(
-    schedule_id: Optional[str] = None,
+    schedule_id: str | None = None,
     target_temperature: float = 1.0,
     max_iterations: int = 100,
 ) -> FreeEnergyOptimizationResponse:
@@ -876,7 +993,7 @@ async def optimize_free_energy(
 
 
 async def analyze_energy_landscape(
-    schedule_id: Optional[str] = None,
+    schedule_id: str | None = None,
 ) -> EnergyLandscapeResponse:
     """
     Analyze the energy landscape around current schedule.

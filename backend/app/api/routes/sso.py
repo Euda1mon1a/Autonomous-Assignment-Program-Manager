@@ -5,6 +5,8 @@ Provides endpoints for SAML and OAuth2/OIDC authentication flows.
 Includes user provisioning (JIT) and session creation.
 """
 
+import logging
+import urllib.parse
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -20,11 +22,64 @@ from app.core.security import create_access_token, get_password_hash
 from app.db.session import get_db
 from app.models.user import User
 
+logger = logging.getLogger(__name__)
+
 settings = get_settings()
 router = APIRouter()
 
 # Load SSO configuration
 sso_config = load_sso_config()
+
+# Security: Allowed redirect hosts to prevent open redirect attacks
+# Add production domain(s) to this list in production
+ALLOWED_REDIRECT_HOSTS = ["localhost", "127.0.0.1"]
+
+
+def validate_redirect_url(url: str | None) -> str:
+    """
+    Validate redirect URL is safe, preventing open redirect attacks.
+
+    Open redirect vulnerabilities allow attackers to redirect users to arbitrary
+    external sites after successful authentication, enabling phishing attacks.
+
+    Args:
+        url: User-supplied redirect URL (from relay_state or redirect_uri)
+
+    Returns:
+        Validated redirect URL (safe) or default /dashboard if validation fails
+
+    Security:
+        - Only allows relative URLs (starting with / but not //)
+        - Validates absolute URLs against ALLOWED_REDIRECT_HOSTS whitelist
+        - Logs blocked redirect attempts for security monitoring
+    """
+    if not url:
+        return "/dashboard"
+
+    # Allow relative URLs (safe - same-origin)
+    # Block protocol-relative URLs (//) which could redirect to external sites
+    if url.startswith("/") and not url.startswith("//"):
+        return url
+
+    # Validate absolute URLs against whitelist
+    try:
+        parsed = urllib.parse.urlparse(url)
+        if parsed.netloc:
+            # Has a hostname - must be in whitelist
+            if parsed.netloc not in ALLOWED_REDIRECT_HOSTS:
+                logger.warning(
+                    f"SECURITY: Blocked open redirect attempt to: {parsed.netloc}"
+                )
+                return "/dashboard"
+        # No netloc but has scheme (e.g., javascript:) - block
+        elif parsed.scheme:
+            logger.warning(f"SECURITY: Blocked redirect with scheme: {parsed.scheme}")
+            return "/dashboard"
+    except Exception as e:
+        logger.warning(f"SECURITY: Invalid redirect URL: {e}")
+        return "/dashboard"
+
+    return url
 
 
 class SSOSessionState(BaseModel):
@@ -278,7 +333,8 @@ async def saml_acs(
     session_data = create_session(response, user)
 
     # Redirect to relay state or default dashboard
-    redirect_url = relay_state if relay_state else "/dashboard"
+    # Security: Validate redirect URL to prevent open redirect attacks
+    redirect_url = validate_redirect_url(relay_state)
 
     # Return HTML that redirects (since this is a POST response)
     html_content = f"""
@@ -427,9 +483,8 @@ async def oauth2_callback(
     del _sso_sessions[state]
 
     # Redirect to relay state or default dashboard
-    redirect_url = (
-        session_state.relay_state if session_state.relay_state else "/dashboard"
-    )
+    # Security: Validate redirect URL to prevent open redirect attacks
+    redirect_url = validate_redirect_url(session_state.relay_state)
 
     return RedirectResponse(url=redirect_url)
 

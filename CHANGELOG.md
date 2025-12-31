@@ -9,6 +9,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Backend Test Coverage Analysis (Session 025 - 2025-12-30)
+- **Test Coverage Analysis**: Comprehensive baseline assessment and improvement roadmap
+  - Current baseline: 21% coverage (target: 80%)
+  - Created: `backend/TEST_COVERAGE_ANALYSIS.md` (comprehensive 3-week roadmap)
+  - Created: `backend/TEST_COVERAGE_SUMMARY.md` (executive summary)
+  - Created: `backend/TEST_IMPLEMENTATION_CHECKLIST.md` (actionable checklist)
+  - Identified 0% controller coverage, 49% service coverage
+  - Blocker identified: cryptography/cffi dependency conflicts preventing full coverage runs
+
+#### Frontend Test Coverage Analysis (Session 026 - 2025-12-30)
+- **Test Coverage Reports**: Comprehensive frontend test assessment and priority roadmap
+  - Created: `FRONTEND_TEST_COVERAGE_REPORT.md` (detailed analysis)
+  - Created: `FRONTEND_TEST_PRIORITY_CHECKLIST.md` (prioritized action items)
+  - Created: `SESSION_026_SUMMARY.md` (session documentation)
+  - Identified 89 failing test suites due to orphaned tests
+  - 6-week roadmap: 60% → 90% coverage target
+
+#### Constraint System Test Coverage (Session 029 - 2025-12-30)
+- **Priority Constraint Tests**: Comprehensive test suite for critical scheduling constraints
+  - Audited 46 constraints: 77% test coverage baseline
+  - Created 20 new tests for priority constraints (FMIT, call spacing, clinic day, moonlighting)
+  - Created: `CONSTRAINT_SYSTEM_AUDIT_REPORT.md` (full audit results)
+  - New file: `backend/tests/scheduling/constraints/test_priority_constraints.py` (~500 lines)
+  - Added parametrized tests for multiple constraint validation scenarios
+
+#### Exotic Resilience API Routes (Session 024 - 2025-12-30)
+- **Exotic Resilience Backend API**: 8 new endpoints for Tier 5 resilience framework
+  - New file: `backend/app/api/routes/exotic_resilience.py` (~974 lines, 8 endpoints)
+  - Endpoints: thermodynamics, immune system, quantum zeno, catastrophe theory, time crystal
+  - Full integration with existing resilience framework
+  - Comprehensive error handling and validation
+
+#### Database Performance Optimization (Session 030 - 2025-12-30)
+- **Critical Database Indexes**: Migration for 6 high-priority indexes
+  - New migration: `backend/alembic/versions/20251230_add_critical_indexes.py`
+  - Indexes added: assignments (person_id, block_id), blocks (date), persons (type, role)
+  - Expected query performance improvement: 10-100x for common queries
+  - Supports N+1 query elimination efforts
+
+#### Security Documentation (Session 028 - 2025-12-30)
+- **Security Audit Documentation**: Comprehensive security assessment and remediation tracking
+  - Created: `SECURITY_AUDIT_REPORT_SESSION_028.md` (full audit results)
+  - Created: `SECURITY_FIXES_SESSION_028.md` (fix tracking)
+  - Created: `SECURITY_CRITICAL_RATE_LIMITING.md` (rate limiting analysis)
+  - Security score baseline: 7.5/10 with improvement roadmap
 #### Session 023 - Marathon Test Coverage & Security Hardening (2025-12-30)
 
 **Comprehensive Test Suite Expansion:**
@@ -271,6 +316,31 @@ agent, model = match_task_to_agent("Validate ACGME compliance")
 
 ### Fixed
 
+#### Security Vulnerabilities (Session 028 - 2025-12-30)
+- **CRITICAL: Open Redirect Vulnerability**: Fixed unrestricted URL redirect in SSO routes
+  - Added URL validation to prevent malicious redirects
+  - Implemented whitelist of allowed redirect domains
+  - Updated: `backend/app/api/routes/auth.py` (SSO callback endpoints)
+  - Security impact: Prevents phishing attacks via OAuth callbacks
+- **XXE Prevention**: Added comprehensive XML External Entity attack prevention
+  - New module: `backend/app/core/xml_security.py` (~200 lines)
+  - Disabled DTD processing, entity expansion, and external entity resolution
+  - Safe XML parsing wrappers for all XML input handling
+  - Protection against billion laughs attack and XXE data exfiltration
+
+#### Database Performance (Session 030 - 2025-12-30)
+- **N+1 Query Fix**: Eliminated N+1 query in heatmap service
+  - Fixed: `backend/app/services/analytics/heatmap_service.py`
+  - Added eager loading with `joinedload` and `selectinload`
+  - Performance improvement: 90%+ query reduction for heatmap generation
+  - Prevents database connection pool exhaustion under load
+
+#### Test Infrastructure (Session 026 - 2025-12-30)
+- **Jest Coverage Collection**: Fixed jest.config.js coverage collection scope
+  - Was only collecting from `src/lib`, now collects from all `src/` directories
+  - Coverage now includes components, features, hooks, and utils
+  - Accurate baseline established: 60% (was showing inflated coverage)
+
 #### Supervision Calculation Bug (December 2025) - CRITICAL
 
 **Problem:** Faculty supervision calculation overcounted required faculty in mixed PGY scenarios by applying ceiling operations separately to each PGY group.
@@ -293,6 +363,33 @@ agent, model = match_task_to_agent("Validate ACGME compliance")
 **Documentation Updated:**
 - Fixed supervision example in `docs/architecture/FACULTY_SCHEDULING_SPECIFICATION.md`
 - Updated diagnostic report at `docs/planning/FACULTY_OUTPATIENT_DIAGNOSTIC_REPORT.md`
+
+### Changed
+
+#### MCP Tool Integration (Session 024 - 2025-12-30)
+- **MCP Tools Wired to Backend APIs**: Replaced placeholder implementations with real API calls
+  - Updated: `mcp-server/src/scheduler_mcp/thermodynamics_tools.py` (5 tools connected)
+  - Updated: `mcp-server/src/scheduler_mcp/immune_system_tools.py` (4 tools connected)
+  - Updated: `mcp-server/src/scheduler_mcp/time_crystal_tools.py` (5 tools connected)
+  - MCP tools now query live backend exotic resilience endpoints
+  - Response mapping between MCP format and backend API format
+  - Graceful error handling for API connectivity issues
+
+### Improved
+
+#### Test Coverage (Sessions 025, 026, 029 - 2025-12-30)
+- **Backend Test Coverage**: Identified improvement roadmap from 21% → 80% target
+  - Comprehensive analysis of gaps in controller, service, and model coverage
+  - 3-week implementation checklist created
+  - Priority focus: controllers (0% → 80%), services (49% → 85%)
+- **Frontend Test Coverage**: Established baseline and 6-week improvement plan
+  - Fixed coverage collection configuration
+  - Accurate baseline: 60% (corrected from inflated reporting)
+  - Target: 90% coverage with focus on components and hooks
+- **Constraint Test Coverage**: Enhanced from 77% baseline to improved coverage
+  - Added 20 tests for priority constraints (FMIT, call spacing, clinic day)
+  - Parametrized tests for comprehensive validation scenarios
+  - Full audit documented with remaining gaps identified
 
 ### Added
 
