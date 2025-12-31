@@ -12,11 +12,32 @@ Key features:
 
 import logging
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
-import axelrod as axl
 from sqlalchemy.orm import Session
+
+# Optional dependency - game theory features require axelrod
+try:
+    import axelrod as axl
+    AXELROD_AVAILABLE = True
+except ImportError:
+    AXELROD_AVAILABLE = False
+    if not TYPE_CHECKING:
+        # Create dummy module for runtime
+        class DummyAxelrod:
+            Player = Any
+            Action = Any
+            Game = Any
+            Tournament = Any
+            MoranProcess = Any
+            TitForTat = Any
+            Cooperator = Any
+            Defector = Any
+            Random = Any
+            Grudger = Any
+            Match = Any
+        axl = DummyAxelrod()  # type: ignore
 
 from app.models.game_theory import (
     ConfigStrategy,
@@ -31,126 +52,136 @@ from app.models.game_theory import (
 logger = logging.getLogger(__name__)
 
 
-class ResilienceConfigPlayer(axl.Player):
-    """
-    Custom Axelrod player that maps resilience configuration to PD strategy.
+# Only define ResilienceConfigPlayer if axelrod is available
+if AXELROD_AVAILABLE:
+    class ResilienceConfigPlayer(axl.Player):  # type: ignore
+        """
+        Custom Axelrod player that maps resilience configuration to PD strategy.
 
-    Translates scheduling/resilience behavior to cooperation/defection:
-    - Cooperate: Follow protocol, share resources, respond quickly
-    - Defect: Hoard resources, ignore constraints, slow response
-    """
+        Translates scheduling/resilience behavior to cooperation/defection:
+        - Cooperate: Follow protocol, share resources, respond quickly
+        - Defect: Hoard resources, ignore constraints, slow response
+        """
 
-    name = "Resilience Config"
-    classifier = {
-        "memory_depth": 1,
-        "stochastic": False,
-        "long_run_time": False,
-        "inspects_source": False,
-        "manipulates_source": False,
-        "manipulates_state": False,
-    }
+        name = "Resilience Config"
+        classifier = {
+            "memory_depth": 1,
+            "stochastic": False,
+            "long_run_time": False,
+            "inspects_source": False,
+            "manipulates_source": False,
+            "manipulates_state": False,
+        }
 
-    def __init__(
-        self,
-        strategy_type: str = "tit_for_tat",
-        utilization_target: float = 0.80,
-        initial_action: str = "cooperate",
-        forgiveness_probability: float = 0.0,
-        retaliation_memory: int = 1,
-        **kwargs,
-    ):
-        super().__init__()
-        self.strategy_type = strategy_type
-        self.utilization_target = utilization_target
-        self.initial_action = initial_action
-        self.forgiveness_probability = forgiveness_probability
-        self.retaliation_memory = retaliation_memory
-        self._betrayed = False
+        def __init__(
+            self,
+            strategy_type: str = "tit_for_tat",
+            utilization_target: float = 0.80,
+            initial_action: str = "cooperate",
+            forgiveness_probability: float = 0.0,
+            retaliation_memory: int = 1,
+            **kwargs,
+        ):
+            super().__init__()
+            self.strategy_type = strategy_type
+            self.utilization_target = utilization_target
+            self.initial_action = initial_action
+            self.forgiveness_probability = forgiveness_probability
+            self.retaliation_memory = retaliation_memory
+            self._betrayed = False
 
-    def strategy(self, opponent: axl.Player) -> axl.Action:
-        """Decide to cooperate or defect based on configuration behavior."""
-        import random
+        def strategy(self, opponent: axl.Player) -> axl.Action:
+            """Decide to cooperate or defect based on configuration behavior."""
+            import random
 
-        # First move
-        if len(self.history) == 0:
-            if self.initial_action == "defect":
-                return axl.Action.D
-            return axl.Action.C
-
-        # Strategy-specific behavior
-        if self.strategy_type == "cooperative":
-            return axl.Action.C
-
-        elif self.strategy_type == "aggressive":
-            return axl.Action.D
-
-        elif self.strategy_type == "tit_for_tat":
-            # Mirror opponent's last move
-            if (
-                self.forgiveness_probability > 0
-                and opponent.history[-1] == axl.Action.D
-            ):
-                if random.random() < self.forgiveness_probability:
-                    return axl.Action.C
-            return opponent.history[-1]
-
-        elif self.strategy_type == "grudger":
-            if axl.Action.D in opponent.history:
-                self._betrayed = True
-            return axl.Action.D if self._betrayed else axl.Action.C
-
-        elif self.strategy_type == "pavlov":
-            # Win-stay, lose-shift
+            # First move
             if len(self.history) == 0:
+                if self.initial_action == "defect":
+                    return axl.Action.D
                 return axl.Action.C
-            last_payoff = self._calculate_last_payoff(opponent)
-            if last_payoff >= 3:  # Good outcome (CC or DC)
-                return self.history[-1]
-            else:
-                return (
-                    axl.Action.C if self.history[-1] == axl.Action.D else axl.Action.D
-                )
 
-        elif self.strategy_type == "random":
-            return axl.Action.C if random.random() > 0.5 else axl.Action.D
+            # Strategy-specific behavior
+            if self.strategy_type == "cooperative":
+                return axl.Action.C
 
-        elif self.strategy_type == "suspicious_tft":
-            # Defect first, then TFT
+            elif self.strategy_type == "aggressive":
+                return axl.Action.D
+
+            elif self.strategy_type == "tit_for_tat":
+                # Mirror opponent's last move
+                if (
+                    self.forgiveness_probability > 0
+                    and opponent.history[-1] == axl.Action.D
+                ):
+                    if random.random() < self.forgiveness_probability:
+                        return axl.Action.C
+                return opponent.history[-1]
+
+            elif self.strategy_type == "grudger":
+                if axl.Action.D in opponent.history:
+                    self._betrayed = True
+                return axl.Action.D if self._betrayed else axl.Action.C
+
+            elif self.strategy_type == "pavlov":
+                # Win-stay, lose-shift
+                if len(self.history) == 0:
+                    return axl.Action.C
+                last_payoff = self._calculate_last_payoff(opponent)
+                if last_payoff >= 3:  # Good outcome (CC or DC)
+                    return self.history[-1]
+                else:
+                    return (
+                        axl.Action.C if self.history[-1] == axl.Action.D else axl.Action.D
+                    )
+
+            elif self.strategy_type == "random":
+                return axl.Action.C if random.random() > 0.5 else axl.Action.D
+
+            elif self.strategy_type == "suspicious_tft":
+                # Defect first, then TFT
+                if len(self.history) == 0:
+                    return axl.Action.D
+                return opponent.history[-1]
+
+            elif self.strategy_type == "forgiving_tft":
+                # TFT but only retaliate if opponent defected multiple times
+                recent = opponent.history[-self.retaliation_memory :]
+                defection_count = recent.count(axl.Action.D)
+                if defection_count >= self.retaliation_memory:
+                    return axl.Action.D
+                return axl.Action.C
+
+            # Default: TFT
+            return opponent.history[-1] if len(opponent.history) > 0 else axl.Action.C
+
+        def _calculate_last_payoff(self, opponent: axl.Player) -> float:
+            """Calculate payoff from last round."""
             if len(self.history) == 0:
-                return axl.Action.D
-            return opponent.history[-1]
-
-        elif self.strategy_type == "forgiving_tft":
-            # TFT but only retaliate if opponent defected multiple times
-            recent = opponent.history[-self.retaliation_memory :]
-            defection_count = recent.count(axl.Action.D)
-            if defection_count >= self.retaliation_memory:
-                return axl.Action.D
-            return axl.Action.C
-
-        # Default: TFT
-        return opponent.history[-1] if len(opponent.history) > 0 else axl.Action.C
-
-    def _calculate_last_payoff(self, opponent: axl.Player) -> float:
-        """Calculate payoff from last round."""
-        if len(self.history) == 0:
-            return 0
-        my_last = self.history[-1]
-        their_last = opponent.history[-1]
-        if my_last == axl.Action.C and their_last == axl.Action.C:
-            return 3
-        elif my_last == axl.Action.D and their_last == axl.Action.C:
-            return 5
-        elif my_last == axl.Action.C and their_last == axl.Action.D:
-            return 0
-        else:
-            return 1
+                return 0
+            my_last = self.history[-1]
+            their_last = opponent.history[-1]
+            if my_last == axl.Action.C and their_last == axl.Action.C:
+                return 3
+            elif my_last == axl.Action.D and their_last == axl.Action.C:
+                return 5
+            elif my_last == axl.Action.C and their_last == axl.Action.D:
+                return 0
+            else:
+                return 1
+else:
+    # Create a stub class when axelrod is not available
+    ResilienceConfigPlayer = None  # type: ignore
 
 
 class GameTheoryService:
     """Service for running game theory simulations."""
 
     def __init__(self, db: Session):
+        if not AXELROD_AVAILABLE:
+            logger.warning(
+                "Axelrod library not available. Game theory features disabled. "
+                "Install with: pip install axelrod"
+            )
         self.db = db
 
     # =========================================================================

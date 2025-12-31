@@ -61,12 +61,36 @@ from .temporal import (
 # Block 10 constraints - call equity and inpatient headcount
 from .call_equity import (
     CallSpacingConstraint,
+    DeptChiefWednesdayPreferenceConstraint,
     SundayCallEquityConstraint,
     TuesdayCallPreferenceConstraint,
     WeekdayCallEquityConstraint,
 )
-from .fmit import PostFMITRecoveryConstraint, PostFMITSundayBlockingConstraint
-from .inpatient import ResidentInpatientHeadcountConstraint
+from .fmit import (
+    FMITContinuityTurfConstraint,
+    FMITMandatoryCallConstraint,
+    FMITStaffingFloorConstraint,
+    FMITWeekBlockingConstraint,
+    PostFMITRecoveryConstraint,
+    PostFMITSundayBlockingConstraint,
+)
+from .inpatient import FMITResidentClinicDayConstraint, ResidentInpatientHeadcountConstraint
+
+# Overnight call constraints
+from .call_coverage import (
+    AdjunctCallExclusionConstraint,
+    CallAvailabilityConstraint,
+    OvernightCallCoverageConstraint,
+)
+from .overnight_call import OvernightCallGenerationConstraint
+
+# Post-call and faculty constraints
+from .post_call import PostCallAutoAssignmentConstraint
+from .faculty import PreferenceConstraint
+from .faculty_role import FacultyRoleClinicConstraint, SMFacultyClinicConstraint
+
+# Sports Medicine constraints
+from .sports_medicine import SMResidentFacultyAlignmentConstraint
 
 logger = logging.getLogger(__name__)
 
@@ -309,6 +333,31 @@ class ConstraintManager:
         manager.add(FacultyPrimaryDutyClinicConstraint())
         manager.add(FacultyDayAvailabilityConstraint())
 
+        # Faculty role-based constraints
+        manager.add(FacultyRoleClinicConstraint())
+
+        # Overnight call generation (disabled by default - opt-in via factory method)
+        manager.add(OvernightCallGenerationConstraint())
+        manager.disable("OvernightCallGeneration")
+
+        # Post-call auto-assignment (disabled by default - opt-in via factory method)
+        manager.add(PostCallAutoAssignmentConstraint())
+        manager.disable("PostCallAutoAssignment")
+
+        # Sports Medicine coordination (disabled by default - enable if SM program exists)
+        manager.add(SMResidentFacultyAlignmentConstraint())
+        manager.add(SMFacultyClinicConstraint())
+        manager.disable("SMResidentFacultyAlignment")
+        manager.disable("SMFacultyNoRegularClinic")
+
+        # Additional FMIT constraints (disabled by default - opt-in via factory method)
+        manager.add(FMITWeekBlockingConstraint())
+        manager.add(FMITMandatoryCallConstraint())
+        manager.add(FMITResidentClinicDayConstraint())
+        manager.disable("FMITWeekBlocking")
+        manager.disable("FMITMandatoryCall")
+        manager.disable("FMITResidentClinicDay")
+
         # Soft constraints (optimization)
         manager.add(CoverageConstraint(weight=1000.0))
         manager.add(EquityConstraint(weight=10.0))
@@ -382,6 +431,31 @@ class ConstraintManager:
         # Faculty primary duty constraints (Airtable-driven)
         manager.add(FacultyPrimaryDutyClinicConstraint())
         manager.add(FacultyDayAvailabilityConstraint())
+
+        # Faculty role-based constraints
+        manager.add(FacultyRoleClinicConstraint())
+
+        # Overnight call generation (disabled by default)
+        manager.add(OvernightCallGenerationConstraint())
+        manager.disable("OvernightCallGeneration")
+
+        # Post-call auto-assignment (disabled by default)
+        manager.add(PostCallAutoAssignmentConstraint())
+        manager.disable("PostCallAutoAssignment")
+
+        # Sports Medicine coordination (disabled by default)
+        manager.add(SMResidentFacultyAlignmentConstraint())
+        manager.add(SMFacultyClinicConstraint())
+        manager.disable("SMResidentFacultyAlignment")
+        manager.disable("SMFacultyNoRegularClinic")
+
+        # Additional FMIT constraints (disabled by default)
+        manager.add(FMITWeekBlockingConstraint())
+        manager.add(FMITMandatoryCallConstraint())
+        manager.add(FMITResidentClinicDayConstraint())
+        manager.disable("FMITWeekBlocking")
+        manager.disable("FMITMandatoryCall")
+        manager.disable("FMITResidentClinicDay")
 
         # Soft constraints (optimization)
         manager.add(CoverageConstraint(weight=1000.0))
