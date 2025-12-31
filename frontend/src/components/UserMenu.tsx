@@ -48,6 +48,7 @@ export function UserMenu() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-gray-100 transition-colors"
+        aria-label={`User menu for ${user.username}`}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
@@ -110,6 +111,7 @@ export function UserMenu() {
                 logout()
               }}
               className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+              aria-label="Logout from application"
             >
               <LogOut className="w-4 h-4" />
               Logout

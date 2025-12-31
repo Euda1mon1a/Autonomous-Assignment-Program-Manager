@@ -34,7 +34,7 @@ router = APIRouter()
 @router.post("/retrieve", response_model=RetrievalResponse)
 async def retrieve_documents(
     request: RAGRetrievalRequest,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -79,14 +79,14 @@ async def retrieve_documents(
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except (KeyError, AttributeError) as e:
         logger.error(f"RAG retrieval failed: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Retrieval failed")
 
 
 @router.get("/health", response_model=RAGHealthResponse)
 async def get_rag_health(
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -126,7 +126,7 @@ async def get_rag_health(
 @router.post("/ingest", response_model=IngestResponse)
 async def ingest_document(
     request: DocumentIngestRequest,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -174,7 +174,7 @@ async def ingest_document(
 @router.post("/context", response_model=RAGContext)
 async def build_context(
     request: ContextBuildRequest,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -220,7 +220,7 @@ async def build_context(
 @router.delete("/documents/{doc_type}")
 async def delete_documents_by_type(
     doc_type: str,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> dict[str, Any]:
     """
@@ -253,7 +253,7 @@ async def delete_documents_by_type(
 
 @router.get("/stats")
 async def get_rag_stats(
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> dict[str, Any]:
     """
