@@ -12,11 +12,14 @@ Detects:
 - Coverage vulnerabilities
 """
 
+import logging
 from dataclasses import dataclass
 from datetime import date
 from typing import Optional
 
 import networkx as nx
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -69,6 +72,7 @@ class N1Analyzer:
         Returns:
             N1FailureScenario with impact analysis
         """
+        logger.info("Analyzing N-1 person failure for %s with %d assigned slots", person_id, len(assigned_slots))
         num_affected = len(assigned_slots)
 
         # Check backup coverage
@@ -80,6 +84,9 @@ class N1Analyzer:
 
         has_backup = len(viable_backups) > 0
 
+        if not has_backup:
+            logger.warning("No viable backups found for person %s affecting %d slots", person_id, num_affected)
+
         # Calculate criticality
         if num_affected == 0:
             criticality = 0.0
@@ -89,6 +96,8 @@ class N1Analyzer:
         else:
             # High criticality if no backups
             criticality = min(1.0, 0.5 + num_affected / 10.0)
+
+        logger.debug("Criticality score: %.2f, backup available: %s", criticality, has_backup)
 
         # Estimate recovery time
         if has_backup:

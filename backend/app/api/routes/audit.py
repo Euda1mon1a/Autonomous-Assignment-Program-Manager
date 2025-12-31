@@ -428,8 +428,8 @@ async def get_audit_logs(
                 pageSize=page_size,
                 totalPages=total_pages,
             )
-    except Exception as e:
-        logger.warning(f"Error fetching real audit data, falling back to mock: {e}")
+    except (ValueError, KeyError, AttributeError) as e:
+        logger.warning(f"Error fetching real audit data, falling back to mock: {e}", exc_info=True)
 
     # Fall back to mock data if no real data or error occurred
     logger.info("Using mock audit data as fallback")
@@ -521,9 +521,9 @@ async def get_audit_statistics(
                 uniqueUsers=stats["uniqueUsers"],
                 dateRange=DateRange(start=actual_start, end=actual_end),
             )
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError) as e:
         logger.warning(
-            f"Error fetching real audit statistics, falling back to mock: {e}"
+            f"Error fetching real audit statistics, falling back to mock: {e}", exc_info=True
         )
 
     # Fall back to mock data
@@ -600,8 +600,8 @@ async def get_audit_users(
         if users:
             logger.info(f"Retrieved {len(users)} real audit users")
             return users
-    except Exception as e:
-        logger.warning(f"Error fetching real audit users, falling back to mock: {e}")
+    except (ValueError, KeyError, AttributeError) as e:
+        logger.warning(f"Error fetching real audit users, falling back to mock: {e}", exc_info=True)
 
     # Fall back to mock data
     logger.info("Using mock audit users as fallback")
@@ -660,9 +660,9 @@ async def export_audit_logs(
         )
         if entries:
             logger.info(f"Exporting {len(entries)} real audit entries")
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError) as e:
         logger.warning(
-            f"Error fetching real audit data for export, falling back to mock: {e}"
+            f"Error fetching real audit data for export, falling back to mock: {e}", exc_info=True
         )
 
     # Fall back to mock data if needed

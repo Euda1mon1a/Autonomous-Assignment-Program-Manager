@@ -68,22 +68,33 @@ jobs:
         with:
           python-version: '3.11'
 
+      # Install security scanning tools for Python dependencies
+      # Safety and pip-audit check for known CVEs in packages
       - name: Install Safety
         run: pip install safety pip-audit
 
+      # Scan Python dependencies for known vulnerabilities
+      # Allows informational findings without failing CI
+      # Remove continue-on-error once all critical issues are resolved
       - name: Run Safety check
         working-directory: backend
-        continue-on-error: true
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
         run: |
-          safety check -r requirements.txt --full-report || echo "Safety scan completed with findings"
+          safety check -r requirements.txt --full-report
 
+      # Run pip-audit for additional vulnerability scanning
+      # Provides JSON output for artifact storage
+      # Additional audit with pip-audit for comprehensive coverage
+      # Allows informational findings on PRs without blocking
       - name: Run pip-audit
         working-directory: backend
-        continue-on-error: true
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
         run: |
           pip-audit -r requirements.txt --format json --output pip-audit-results.json || true
-          pip-audit -r requirements.txt || echo "pip-audit scan completed with findings"
+          pip-audit -r requirements.txt
 
+      # Store audit results as artifacts for review
+      # Retained for 30 days for compliance tracking
       - name: Upload pip-audit results
         uses: actions/upload-artifact@v4
         if: always()
@@ -109,13 +120,16 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      # Scan npm dependencies for security vulnerabilities
+      # Allows informational findings on PRs, fails on push to main
       - name: Run npm audit
         working-directory: frontend
-        continue-on-error: true
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
         run: |
           npm audit --json > npm-audit-results.json || true
-          npm audit || echo "npm audit completed with findings"
+          npm audit
 
+      # Store npm audit results for security review
       - name: Upload npm audit results
         uses: actions/upload-artifact@v4
         if: always()
@@ -137,16 +151,22 @@ jobs:
         with:
           python-version: '3.11'
 
+      # Install Bandit Python security linter
+      # Detects common security issues in Python code
       - name: Install Bandit
         run: pip install bandit[toml]
 
+      # Run static security analysis with Bandit
+      # Scans for SQL injection, hardcoded passwords, etc.
+      # Allows warnings on PRs without blocking
       - name: Run Bandit
         working-directory: backend
-        continue-on-error: true
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
         run: |
           bandit -r app -f json -o bandit-results.json || true
-          bandit -r app -f txt || echo "Bandit scan completed"
+          bandit -r app -f txt
 
+      # Upload Bandit security scan results
       - name: Upload Bandit results
         uses: actions/upload-artifact@v4
         if: always()
@@ -166,6 +186,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      # Scan filesystem for vulnerabilities and misconfigurations
+      # Checks dependencies, IaC files, and Dockerfiles
+      # Reports CRITICAL, HIGH, and MEDIUM severity issues
       - name: Run Trivy filesystem scan
         uses: aquasecurity/trivy-action@master
         with:
@@ -175,6 +198,8 @@ jobs:
           output: 'trivy-fs-results.sarif'
           severity: 'CRITICAL,HIGH,MEDIUM'
 
+      # Upload security findings to GitHub Security tab
+      # Integrates with GitHub Advanced Security
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v4
         if: always()

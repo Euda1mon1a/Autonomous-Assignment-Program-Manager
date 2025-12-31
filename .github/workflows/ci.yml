@@ -72,6 +72,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      # Set up Python with dependency caching for faster builds
+      # Uses pip cache to avoid re-downloading packages
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -79,12 +81,15 @@ jobs:
           cache: 'pip'
           cache-dependency-path: 'backend/requirements*.txt'
 
+      # Install Python dependencies from requirements.txt
       - name: Install dependencies
         working-directory: backend
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # Apply Alembic database migrations to test database
+      # Ensures test database schema is up to date
       - name: Run database migrations
         working-directory: backend
         env:
@@ -92,6 +97,8 @@ jobs:
         run: |
           alembic upgrade head
 
+      # Run pytest with coverage reporting
+      # Generates XML, HTML, and terminal coverage reports
       - name: Run tests with coverage
         working-directory: backend
         env:
@@ -101,6 +108,8 @@ jobs:
         run: |
           pytest --cov=app --cov-report=xml --cov-report=html --cov-report=term-missing -v
 
+      # Upload coverage data to Codecov for trend tracking
+      # Does not fail CI if upload fails (non-blocking)
       - name: Upload coverage reports
         uses: codecov/codecov-action@v5
         with:
@@ -110,6 +119,8 @@ jobs:
           name: backend-coverage
           fail_ci_if_error: false
 
+      # Store HTML coverage report as workflow artifact
+      # Available for 7 days for detailed review
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
@@ -182,6 +193,8 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      # Extract Playwright version for cache key generation
+      # Ensures cache is invalidated when Playwright version changes
       - name: Get Playwright version
         id: playwright-version
         working-directory: frontend
@@ -189,6 +202,8 @@ jobs:
           PLAYWRIGHT_VERSION=$(npm ls @playwright/test --json 2>/dev/null | grep -o '"version": "[^"]*"' | head -1 | cut -d'"' -f4)
           echo "version=${PLAYWRIGHT_VERSION}" >> $GITHUB_OUTPUT
 
+      # Cache Playwright browser binaries to speed up E2E tests
+      # Browsers are large (~300MB) and slow to download
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         id: playwright-cache

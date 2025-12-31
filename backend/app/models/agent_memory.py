@@ -24,6 +24,9 @@ class ModelTier(Base):
     )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    def __repr__(self) -> str:
+        return f"<ModelTier(agent='{self.agent_name}', model='{self.default_model}')>"
+
 
 class AgentEmbedding(Base):
     """Pre-computed embeddings of agent specification files."""
@@ -44,6 +47,9 @@ class AgentEmbedding(Base):
         DateTime, server_default=func.now(), onupdate=func.now()
     )
 
+    def __repr__(self) -> str:
+        return f"<AgentEmbedding(agent='{self.agent_name}', hash='{self.spec_hash[:8]}...')>"
+
 
 class TaskHistory(Base):
     """Historical record of task executions for learning optimal agent/model pairs."""
@@ -61,3 +67,6 @@ class TaskHistory(Base):
     duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     session_id: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    def __repr__(self) -> str:
+        return f"<TaskHistory(id={self.id}, agent='{self.agent_used}', model='{self.model_used}', success={self.success})>"

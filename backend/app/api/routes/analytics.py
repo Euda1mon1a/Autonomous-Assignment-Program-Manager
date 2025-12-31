@@ -158,8 +158,8 @@ async def get_current_metrics(
 
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Error getting current metrics: {e}")
+    except (ValueError, KeyError, AttributeError) as e:
+        logger.error(f"Error getting current metrics: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="An error occurred retrieving metrics"
         )
@@ -232,8 +232,8 @@ async def get_metrics_history(
                         },
                     )
                 )
-            except Exception as e:
-                logger.warning(f"Error analyzing run {run.id}: {e}")
+            except (ValueError, KeyError, AttributeError) as e:
+                logger.warning(f"Error analyzing run {run.id}: {e}", exc_info=True)
                 continue
 
         if not data_points:
@@ -275,8 +275,8 @@ async def get_metrics_history(
             )
         ]
 
-    except Exception as e:
-        logger.error(f"Error getting metrics history: {e}")
+    except (ValueError, KeyError, AttributeError) as e:
+        logger.error(f"Error getting metrics history: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="An error occurred retrieving metrics history"
         )
@@ -342,8 +342,8 @@ async def get_fairness_trend(
                 )
                 fairness_values.append(fairness_index)
 
-            except Exception as e:
-                logger.warning(f"Error analyzing run {run.id}: {e}")
+            except (ValueError, KeyError, AttributeError) as e:
+                logger.warning(f"Error analyzing run {run.id}: {e}", exc_info=True)
                 continue
 
         if not data_points:
@@ -409,8 +409,8 @@ async def get_fairness_trend(
 
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Error getting fairness trend: {e}")
+    except (ValueError, KeyError, AttributeError) as e:
+        logger.error(f"Error getting fairness trend: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="An error occurred retrieving fairness trend"
         )
@@ -549,8 +549,8 @@ async def compare_versions(
 
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Error comparing versions: {e}")
+    except (ValueError, KeyError, AttributeError) as e:
+        logger.error(f"Error comparing versions: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="An error occurred comparing versions"
         )
@@ -704,8 +704,8 @@ async def what_if_analysis(
 
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Error in what-if analysis: {e}")
+    except (ValueError, KeyError, AttributeError) as e:
+        logger.error(f"Error in what-if analysis: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="An error occurred performing what-if analysis"
         )
@@ -906,8 +906,8 @@ async def export_for_research(
 
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Error exporting research data: {e}")
+    except (ValueError, KeyError, AttributeError) as e:
+        logger.error(f"Error exporting research data: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="An error occurred exporting research data"
         )

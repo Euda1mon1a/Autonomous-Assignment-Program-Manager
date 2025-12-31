@@ -643,9 +643,10 @@ async def bulk_user_action(
                 user.updated_at = datetime.utcnow()
             success_ids.append(uid)
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError) as e:
             failed_ids.append(uid)
             errors.append(f"Failed to process user {uid}: {str(e)}")
+            logger.error(f"Bulk action error for user {uid}: {e}", exc_info=True)
 
     await db.commit()
 

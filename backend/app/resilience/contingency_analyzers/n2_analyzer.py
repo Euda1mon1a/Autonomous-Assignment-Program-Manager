@@ -11,12 +11,15 @@ N-2 failures are more severe than N-1:
 - Tests true system resilience
 """
 
+import logging
 from dataclasses import dataclass
 from datetime import date
 from itertools import combinations
 from typing import Optional
 
 import networkx as nx
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -77,6 +80,7 @@ class N2Analyzer:
         Returns:
             N2FailureScenario with impact analysis
         """
+        logger.info("Analyzing N-2 dual failure: %s and %s (correlation: %.2f)", person1_id, person2_id, correlation)
         total_affected = len(person1_slots) + len(person2_slots)
 
         # Check for overlapping assignments (increases severity)
