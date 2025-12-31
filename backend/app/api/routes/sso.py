@@ -14,6 +14,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.auth.sso.config import load_sso_config
 from app.auth.sso.oauth2_provider import OAuth2Provider
@@ -76,8 +77,8 @@ def validate_redirect_url(url: str | None) -> str:
         elif parsed.scheme:
             logger.warning(f"SECURITY: Blocked redirect with scheme: {parsed.scheme}")
             return "/dashboard"
-    except Exception as e:
-        logger.warning(f"SECURITY: Invalid redirect URL: {e}")
+    except (ValueError, TypeError, AttributeError) as e:
+        logger.warning(f"SECURITY: Invalid redirect URL: {e}", exc_info=True)
         return "/dashboard"
 
     return url
@@ -182,7 +183,8 @@ def get_or_create_user(db: Session, attributes: dict[str, str], provider: str) -
         await db.refresh(new_user)
 
         return new_user
-    except Exception as e:
+    except (SQLAlchemyError, ValueError) as e:
+        logger.error(f"Failed to create user from SAML: {e}", exc_info=True)
         await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

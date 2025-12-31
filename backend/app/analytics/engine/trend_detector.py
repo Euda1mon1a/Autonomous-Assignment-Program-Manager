@@ -197,8 +197,9 @@ class TrendDetector:
                 autocorr = series.autocorr(lag=lag)
                 if not np.isnan(autocorr):
                     autocorrs.append((lag, autocorr))
-            except:
-                pass
+            except (ValueError, TypeError, ZeroDivisionError) as e:
+                logger.debug(f"Failed to calculate autocorrelation for lag {lag}: {e}")
+                continue
 
         if not autocorrs:
             return {
