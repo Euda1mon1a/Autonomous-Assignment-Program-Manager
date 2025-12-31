@@ -1,0 +1,31 @@
+# Dockerfile for k6 Load Testing
+#
+# Build: docker build -f docker/Dockerfile.k6 -t scheduler-k6 .
+# Run: docker run -v $(pwd)/k6:/scripts scheduler-k6 run /scripts/scenarios/smoke-test.js
+
+FROM grafana/k6:latest
+
+# Install additional tools
+USER root
+RUN apk add --no-cache \
+    bash \
+    curl \
+    jq \
+    git
+
+# Create directories
+RUN mkdir -p /scripts /results
+
+# Copy k6 scripts
+COPY k6/ /scripts/
+
+# Set working directory
+WORKDIR /scripts
+
+# Default command
+CMD ["run", "/scripts/scenarios/smoke-test.js"]
+
+# Usage examples:
+# docker run scheduler-k6 run /scripts/scenarios/smoke-test.js
+# docker run scheduler-k6 run /scripts/scenarios/load-test.js --vus 50 --duration 10m
+# docker run scheduler-k6 run /scripts/scenarios/stress-test.js --out json=/results/stress-test.json

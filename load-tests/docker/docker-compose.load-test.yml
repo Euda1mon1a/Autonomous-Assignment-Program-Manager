@@ -1,0 +1,148 @@
+version: '3.8'
+
+# Docker Compose for Load Testing Infrastructure
+#
+# Usage:
+#   docker-compose -f docker/docker-compose.load-test.yml up
+#   docker-compose -f docker/docker-compose.load-test.yml run k6 run /scripts/scenarios/load-test.js
+#   docker-compose -f docker/docker-compose.load-test.yml run locust
+
+services:
+  # k6 Load Testing
+  k6:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.k6
+    volumes:
+      - ../k6:/scripts
+      - ./results:/results
+    environment:
+      - ENVIRONMENT=docker
+      - BASE_URL=http://backend:8000
+    networks:
+      - load-test
+    depends_on:
+      - backend
+    command: ["run", "/scripts/scenarios/smoke-test.js"]
+
+  # Locust Load Testing
+  locust:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.locust
+    ports:
+      - "8089:8089"
+    volumes:
+      - ../locust:/app
+      - ./results:/results
+    environment:
+      - LOCUST_HOST=http://backend:8000
+    networks:
+      - load-test
+    depends_on:
+      - backend
+
+  # InfluxDB for metrics storage (optional)
+  influxdb:
+    image: influxdb:2.7
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=loadtest123
+      - DOCKER_INFLUXDB_INIT_ORG=scheduler
+      - DOCKER_INFLUXDB_INIT_BUCKET=load-tests
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=loadtest-token-123
+    networks:
+      - load-test
+
+  # Grafana for visualization (optional)
+  grafana:
+    image: grafana/grafana:10.0.0
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=loadtest123
+      - GF_INSTALL_PLUGINS=grafana-k6-app
+    networks:
+      - load-test
+    depends_on:
+      - influxdb
+
+  # Backend service (from main docker-compose)
+  # This assumes your backend service is available
+  # Adjust as needed for your setup
+  backend:
+    image: scheduler-backend:latest
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://scheduler:scheduler@db/residency_scheduler
+      - SECRET_KEY=loadtest-secret-key-change-in-production-12345
+      - REDIS_URL=redis://redis:6379/0
+    networks:
+      - load-test
+      - default
+    depends_on:
+      - db
+      - redis
+
+  # PostgreSQL for backend
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=scheduler
+      - POSTGRES_PASSWORD=scheduler
+      - POSTGRES_DB=residency_scheduler
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - load-test
+
+  # Redis for backend
+  redis:
+    image: redis:7-alpine
+    networks:
+      - load-test
+
+networks:
+  load-test:
+    driver: bridge
+  default:
+    external: true
+    name: autonomous-assignment-program-manager_default
+
+volumes:
+  influxdb-data:
+  grafana-data:
+  postgres-data:
+
+# Quick Commands:
+#
+# Run smoke test with k6:
+#   docker-compose -f docker/docker-compose.load-test.yml run k6 run /scripts/scenarios/smoke-test.js
+#
+# Run load test:
+#   docker-compose -f docker/docker-compose.load-test.yml run k6 run /scripts/scenarios/load-test.js
+#
+# Run stress test:
+#   docker-compose -f docker/docker-compose.load-test.yml run k6 run /scripts/scenarios/stress-test.js
+#
+# Start Locust web UI:
+#   docker-compose -f docker/docker-compose.load-test.yml up locust
+#   Then open http://localhost:8089
+#
+# Run Locust headless:
+#   docker-compose -f docker/docker-compose.load-test.yml run locust \
+#     --headless -u 100 -r 10 -t 10m
+#
+# View Grafana dashboards:
+#   docker-compose -f docker/docker-compose.load-test.yml up grafana
+#   Then open http://localhost:3001 (admin/loadtest123)
+#
+# Cleanup:
+#   docker-compose -f docker/docker-compose.load-test.yml down -v
