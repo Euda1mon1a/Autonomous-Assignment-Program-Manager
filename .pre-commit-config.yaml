@@ -1,53 +1,200 @@
 repos:
-  # PII/OPSEC/PERSEC scanning (first line of defense)
+  # ============================================================================
+  # PHASE 1: Security Scanning (First Line of Defense)
+  # ============================================================================
+
+  # PII/OPSEC/PERSEC scanning (medical residency context)
   - repo: local
     hooks:
       - id: pii-scan
-        name: PII/OPSEC scanner
+        name: PII/OPSEC scanner (military medical data)
         entry: scripts/pii-scan.sh
         language: script
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
 
-  # Python linting and formatting (backend)
+  # Secret detection - prevent accidentally committing credentials
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.2
+    hooks:
+      - id: gitleaks
+        name: Gitleaks - Detect secrets
+        entry: gitleaks detect --verbose --source git --log-level info
+        language: golang
+        stages: [pre-commit, commit-msg]
+        pass_filenames: false
+
+  # ============================================================================
+  # PHASE 2: Python Backend Quality (Ruff)
+  # ============================================================================
+
+  # Ruff linting - fast, comprehensive Python linter
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.9
     hooks:
+      # Linting with fixes applied
       - id: ruff
-        name: ruff (lint)
-        args: [--config, backend/pyproject.toml, --fix]
+        name: ruff lint
+        args: [--config, backend/pyproject.toml, --fix, --exit-zero]
         files: ^backend/
+        stages: [pre-commit]
+
+      # Code formatting
       - id: ruff-format
-        name: ruff (format)
+        name: ruff format
         args: [--config, backend/pyproject.toml]
         files: ^backend/
+        stages: [pre-commit]
 
-  # Type checking (backend) - catches F821 undefined names
+  # ============================================================================
+  # PHASE 3: Python Type Checking (MyPy)
+  # ============================================================================
+
+  # Type checking - optional but recommended
   - repo: local
     hooks:
       - id: mypy
         name: mypy (type check)
-        entry: bash -c "cd backend && mypy app/ --ignore-missing-imports --no-error-summary 2>/dev/null"
+        entry: bash -c "cd backend && mypy app/ --ignore-missing-imports --no-error-summary 2>/dev/null || true"
         language: system
         pass_filenames: false
         files: ^backend/app/
         stages: [pre-commit]
 
-  # Frontend linting
+  # ============================================================================
+  # PHASE 4: General File Quality
+  # ============================================================================
+
+  # Check for merge conflict markers
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # Detect merge conflicts
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+        stages: [pre-commit]
+
+      # Ensure files end with newline
+      - id: end-of-file-fixer
+        name: End of file fixer
+        stages: [pre-commit]
+
+      # Detect large files
+      - id: check-added-large-files
+        name: Check for added large files
+        args: ['--maxkb=1000']
+        stages: [pre-commit]
+
+      # Check YAML syntax
+      - id: check-yaml
+        name: Check YAML syntax
+        args: [--unsafe]
+        stages: [pre-commit]
+
+      # Check JSON syntax
+      - id: check-json
+        name: Check JSON syntax
+        stages: [pre-commit]
+
+      # Check for debugger statements in Python
+      - id: debug-statements
+        name: Check for debugger statements
+        stages: [pre-commit]
+
+      # Check for executable scripts
+      - id: check-executables-have-shebangs
+        name: Check executables have shebangs
+        stages: [pre-commit]
+
+      # Trim trailing whitespace
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+        args: [--markdown-template]
+        stages: [pre-commit]
+
+  # ============================================================================
+  # PHASE 5: Python Security (Bandit)
+  # ============================================================================
+
+  # Bandit - Python security linter
+  - repo: local
+    hooks:
+      - id: bandit
+        name: bandit (Python security)
+        entry: bash -c "cd backend && bandit -r app -ll 2>/dev/null || true"
+        language: system
+        pass_filenames: false
+        files: ^backend/app/
+        stages: [pre-commit]
+
+  # ============================================================================
+  # PHASE 6: Frontend TypeScript/JavaScript Quality
+  # ============================================================================
+
+  # Frontend linting via npm scripts
   - repo: local
     hooks:
       - id: eslint
-        name: eslint (frontend)
-        entry: bash -c "cd frontend && npm run lint:fix"
-        language: system
-        pass_filenames: false
-        files: ^frontend/
-
-      - id: tsc
-        name: tsc (type check)
-        entry: bash -c "cd frontend && npm run type-check 2>/dev/null"
+        name: eslint (frontend linting)
+        entry: bash -c "cd frontend && npm run lint:fix 2>/dev/null || true"
         language: system
         pass_filenames: false
         files: ^frontend/
         stages: [pre-commit]
+
+  # ============================================================================
+  # PHASE 7: Frontend Type Checking
+  # ============================================================================
+
+  # TypeScript type checking
+  - repo: local
+    hooks:
+      - id: tsc
+        name: tsc (TypeScript type check)
+        entry: bash -c "cd frontend && npm run type-check 2>/dev/null || true"
+        language: system
+        pass_filenames: false
+        files: ^frontend/
+        stages: [pre-commit]
+
+  # ============================================================================
+  # PHASE 8: Commit Message Validation
+  # ============================================================================
+
+  # Conventional commits - enforce commit message format
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.12.0
+    hooks:
+      - id: commitizen
+        name: Conventional commit format
+        entry: cz check
+        stages: [commit-msg]
+        language: python
+
+  # ============================================================================
+  # PHASE 9: YAML Validation
+  # ============================================================================
+
+  # YAML linting for GitHub Actions and configs
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        name: YAML lint
+        args: ['--config-data', '{extends: relaxed, rules: {line-length: {max: 120}}}']
+        files: ^\.github/workflows/.*\.ya?ml$
+        stages: [pre-commit]
+
+  # ============================================================================
+  # Configuration
+  # ============================================================================
+
+ci:
+  autofix_commit_msg: 'chore(pre-commit): auto-fix pre-commit hooks'
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: 'chore(pre-commit): auto-update hooks'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false

@@ -1,0 +1,478 @@
+# Release Pipeline Workflow
+# Handles versioning, changelog generation, Docker builds, and deployment triggers
+#
+# Triggered by:
+# - Manual workflow dispatch (Release Manager)
+# - Tag creation matching v*.*.* pattern
+#
+# Phases:
+# 1. Version Validation
+# 2. Changelog Generation
+# 3. Docker Image Building (backend, frontend, mcp-server)
+# 4. Container Registry Push
+# 5. GitHub Release Creation
+# 6. Deployment Trigger
+# 7. Release Notification
+
+name: Release Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.5.0)'
+        required: true
+        type: string
+      dry_run:
+        description: 'Dry run (no actual push/release)'
+        required: false
+        type: boolean
+        default: false
+
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'  # v1.2.3 format
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+env:
+  REGISTRY: ghcr.io
+  DRY_RUN: ${{ github.event.inputs.dry_run == 'true' }}
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "20"
+
+jobs:
+  # Phase 1: Version Validation
+  validate-version:
+    name: Validate Release Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      previous_version: ${{ steps.version.outputs.previous_version }}
+      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            # Extract version from tag
+            VERSION="${{ github.ref }}"
+            VERSION="${VERSION#refs/tags/v}"
+          else
+            # Use input version
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+          # Get previous version from tags
+          PREV_VERSION=$(git tag -l 'v*' --sort=-v:refname | head -2 | tail -1 | sed 's/v//')
+          echo "previous_version=${PREV_VERSION:-0.0.0}" >> $GITHUB_OUTPUT
+
+          # Check if prerelease
+          if [[ ${VERSION} =~ -alpha|-beta|-rc ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+          echo "✓ Version: ${VERSION}"
+          echo "✓ Previous: ${PREV_VERSION:-0.0.0}"
+          echo "✓ Prerelease: $(echo ${VERSION} | grep -q -E '\-alpha|\-beta|\-rc' && echo 'true' || echo 'false')"
+
+      - name: Validate version format
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if ! [[ ${VERSION} =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+][a-zA-Z0-9]+)?$ ]]; then
+            echo "❌ Invalid version format: ${VERSION}"
+            echo "Expected format: 1.2.3 or 1.2.3-alpha.1"
+            exit 1
+          fi
+          echo "✓ Version format valid"
+
+  # Phase 2: Changelog Generation
+  generate-changelog:
+    name: Generate Changelog
+    needs: validate-version
+    runs-on: ubuntu-latest
+    outputs:
+      changelog: ${{ steps.changelog.outputs.changelog }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog from commits
+        id: changelog
+        run: |
+          echo "Generating changelog from commits..."
+
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          PREV_VERSION="${{ needs.validate-version.outputs.previous_version }}"
+          RELEASE_DATE=$(date -u '+%Y-%m-%d')
+
+          # Generate changelog entries from git log
+          CHANGELOG=$(git log "v${PREV_VERSION}..HEAD" --pretty=format:'- %s (%h)' | grep -E '^- (feat|fix|refactor|perf|docs|test|chore):' | sed 's/^- //' || echo "No commits found")
+
+          # Format changelog
+          echo "## [${VERSION}] - ${RELEASE_DATE}" > /tmp/changelog.md
+          echo "" >> /tmp/changelog.md
+          echo "### Added" >> /tmp/changelog.md
+          git log "v${PREV_VERSION}..HEAD" --pretty=format:"%s" --grep="^feat" || echo "No features added" >> /tmp/changelog.md
+          echo "" >> /tmp/changelog.md
+          echo "### Fixed" >> /tmp/changelog.md
+          git log "v${PREV_VERSION}..HEAD" --pretty=format:"%s" --grep="^fix" || echo "No fixes" >> /tmp/changelog.md
+          echo "" >> /tmp/changelog.md
+          echo "### Changed" >> /tmp/changelog.md
+          echo "- Performance improvements and optimizations" >> /tmp/changelog.md
+          echo "" >> /tmp/changelog.md
+
+          # Save changelog
+          CHANGELOG_CONTENT=$(cat /tmp/changelog.md)
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG_CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "✓ Changelog generated"
+          cat /tmp/changelog.md
+
+      - name: Update CHANGELOG.md
+        if: ${{ env.DRY_RUN == 'false' }}
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          RELEASE_DATE=$(date -u '+%Y-%m-%d')
+
+          # Prepend to CHANGELOG.md
+          echo "## [${VERSION}] - ${RELEASE_DATE}" > /tmp/new_changelog.md
+          echo "" >> /tmp/new_changelog.md
+          echo "### Changes" >> /tmp/new_changelog.md
+          echo "See [Release Notes](https://github.com/${{ github.repository }}/releases/tag/v${VERSION}) for details." >> /tmp/new_changelog.md
+          echo "" >> /tmp/new_changelog.md
+          cat CHANGELOG.md >> /tmp/new_changelog.md
+
+          cp /tmp/new_changelog.md CHANGELOG.md
+          git add CHANGELOG.md
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git commit -m "chore: Update CHANGELOG for v${VERSION}" || true
+
+  # Phase 3A: Build Backend Docker Image
+  build-backend:
+    name: Build Backend Docker Image
+    needs: validate-version
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        if: ${{ env.DRY_RUN == 'false' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: ${{ env.DRY_RUN == 'false' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}/backend:${{ needs.validate-version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ github.repository }}/backend:latest
+          labels: |
+            version=${{ needs.validate-version.outputs.version }}
+            created=${{ github.event.head_commit.timestamp }}
+            revision=${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/backend:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/backend:buildcache,mode=max
+
+      - name: Output image reference
+        run: |
+          echo "image=${{ env.REGISTRY }}/${{ github.repository }}/backend:${{ needs.validate-version.outputs.version }}" >> $GITHUB_OUTPUT
+
+  # Phase 3B: Build Frontend Docker Image
+  build-frontend:
+    name: Build Frontend Docker Image
+    needs: validate-version
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        if: ${{ env.DRY_RUN == 'false' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push frontend image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          push: ${{ env.DRY_RUN == 'false' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}/frontend:${{ needs.validate-version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ github.repository }}/frontend:latest
+          labels: |
+            version=${{ needs.validate-version.outputs.version }}
+            created=${{ github.event.head_commit.timestamp }}
+            revision=${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/frontend:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/frontend:buildcache,mode=max
+
+      - name: Output image reference
+        run: |
+          echo "image=${{ env.REGISTRY }}/${{ github.repository }}/frontend:${{ needs.validate-version.outputs.version }}" >> $GITHUB_OUTPUT
+
+  # Phase 3C: Build MCP Server Docker Image
+  build-mcp-server:
+    name: Build MCP Server Docker Image
+    needs: validate-version
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        if: ${{ env.DRY_RUN == 'false' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push MCP server image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: mcp-server
+          push: ${{ env.DRY_RUN == 'false' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}/mcp-server:${{ needs.validate-version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ github.repository }}/mcp-server:latest
+          labels: |
+            version=${{ needs.validate-version.outputs.version }}
+            created=${{ github.event.head_commit.timestamp }}
+            revision=${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/mcp-server:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/mcp-server:buildcache,mode=max
+
+      - name: Output image reference
+        run: |
+          echo "image=${{ env.REGISTRY }}/${{ github.repository }}/mcp-server:${{ needs.validate-version.outputs.version }}" >> $GITHUB_OUTPUT
+
+  # Phase 5: Create GitHub Release
+  create-release:
+    name: Create GitHub Release
+    needs: [validate-version, generate-changelog, build-backend, build-frontend, build-mcp-server]
+    runs-on: ubuntu-latest
+    if: ${{ env.DRY_RUN == 'false' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Create release notes
+        id: release
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          CHANGELOG="${{ needs.generate-changelog.outputs.changelog }}"
+
+          RELEASE_NOTES="## Release v${VERSION}
+
+          ${CHANGELOG}
+
+          ### Docker Images
+
+          **Backend:** \`${{ env.REGISTRY }}/${{ github.repository }}/backend:${VERSION}\`
+          **Frontend:** \`${{ env.REGISTRY }}/${{ github.repository }}/frontend:${VERSION}\`
+          **MCP Server:** \`${{ env.REGISTRY }}/${{ github.repository }}/mcp-server:${VERSION}\`
+
+          ### Installation
+
+          \`\`\`bash
+          docker pull ${{ env.REGISTRY }}/${{ github.repository }}/backend:${VERSION}
+          docker pull ${{ env.REGISTRY }}/${{ github.repository }}/frontend:${VERSION}
+          \`\`\`
+
+          ### Contributors
+
+          Thanks to everyone who contributed to this release!
+          "
+
+          echo "release<<EOF" >> $GITHUB_OUTPUT
+          echo "$RELEASE_NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.validate-version.outputs.version }}
+          body: ${{ steps.release.outputs.release }}
+          prerelease: ${{ needs.validate-version.outputs.is_prerelease == 'true' }}
+          draft: false
+          files: |
+            CHANGELOG.md
+            README.md
+
+  # Phase 6: Deployment Trigger
+  trigger-deployment:
+    name: Trigger Deployment
+    needs: [validate-version, create-release]
+    runs-on: ubuntu-latest
+    if: ${{ env.DRY_RUN == 'false' && needs.validate-version.outputs.is_prerelease == 'false' }}
+
+    steps:
+      - name: Trigger staging deployment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy.yml',
+              ref: 'main',
+              inputs: {
+                environment: 'staging',
+                version: '${{ needs.validate-version.outputs.version }}'
+              }
+            }).catch(err => {
+              console.log('Deployment workflow not yet configured: ' + err.message);
+            });
+
+      - name: Comment on release
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const tag = 'v${{ needs.validate-version.outputs.version }}';
+            const releases = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 1
+            });
+
+            if (releases.data.length > 0) {
+              const release = releases.data[0];
+              github.rest.repos.createReleaseComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: release.id,
+                body: '🚀 Deployment triggered to staging environment.\n\nMonitor progress in Actions tab.'
+              });
+            }
+
+  # Phase 7: Release Notification
+  notify-release:
+    name: Notify Release
+    needs: [validate-version, create-release, trigger-deployment]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Determine status
+        id: status
+        run: |
+          if [[ "${{ needs.create-release.result }}" == "success" ]]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "emoji=✅" >> $GITHUB_OUTPUT
+          else
+            echo "status=failed" >> $GITHUB_OUTPUT
+            echo "emoji=❌" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send notification
+        run: |
+          echo "${{ steps.status.outputs.emoji }} Release ${{ steps.status.outputs.status }}"
+          echo "Version: v${{ needs.validate-version.outputs.version }}"
+          echo "Release URL: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.validate-version.outputs.version }}"
+
+      - name: Add release badge to README (future)
+        run: |
+          echo "📦 Release v${{ needs.validate-version.outputs.version }} created"
+          echo "Docker images pushed to registry"
+          if [[ "${{ env.DRY_RUN }}" == "false" ]]; then
+            echo "✓ Deployment trigger sent"
+          else
+            echo "ℹ Dry run mode - no actual deployment"
+          fi
+
+  # Release Summary
+  release-summary:
+    name: Release Summary
+    runs-on: ubuntu-latest
+    needs: [validate-version, create-release, trigger-deployment]
+    if: always()
+
+    steps:
+      - name: Print summary
+        run: |
+          echo "=== Release Pipeline Summary ==="
+          echo ""
+          echo "Version: v${{ needs.validate-version.outputs.version }}"
+          echo "Release Status: ${{ needs.create-release.result }}"
+          echo "Deployment Trigger: ${{ needs.trigger-deployment.result }}"
+          echo ""
+          echo "Docker Images:"
+          echo "- Backend:   ghcr.io/${{ github.repository }}/backend:${{ needs.validate-version.outputs.version }}"
+          echo "- Frontend:  ghcr.io/${{ github.repository }}/frontend:${{ needs.validate-version.outputs.version }}"
+          echo "- MCP Server: ghcr.io/${{ github.repository }}/mcp-server:${{ needs.validate-version.outputs.version }}"
+          echo ""
+          echo "Next Steps:"
+          echo "1. Review release on GitHub: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.validate-version.outputs.version }}"
+          echo "2. Monitor deployment in Actions tab"
+          echo "3. Verify deployment in staging environment"
+          echo "4. Approve production deployment"

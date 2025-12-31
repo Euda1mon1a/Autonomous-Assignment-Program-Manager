@@ -1,0 +1,909 @@
+# Comprehensive Quality Gates Workflow
+# Main pipeline orchestrating all quality checks before merge
+# Enforces coverage thresholds, linting, type checking, security, and performance standards
+#
+# Phases:
+# 1. Detect changes (efficient path filtering)
+# 2. Lint checks (ruff, eslint, prettier)
+# 3. Type checking (mypy, tsc, TypeScript strict)
+# 4. Unit tests with coverage (pytest, jest)
+# 5. Integration tests
+# 6. Security scanning
+# 7. Performance validation
+# 8. Documentation checks
+# 9. Final gate enforcement
+
+name: Quality Gates
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches:
+      - main
+      - master
+      - 'claude/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  security-events: write
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "20"
+  COVERAGE_THRESHOLD_BACKEND: "80"
+  COVERAGE_THRESHOLD_FRONTEND: "70"
+
+jobs:
+  # Phase 1: Detect changes for efficient path filtering
+  detect-changes:
+    name: Detect Code Changes
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      mcp-server: ${{ steps.filter.outputs.mcp-server }}
+      docs: ${{ steps.filter.outputs.docs }}
+      ci: ${{ steps.filter.outputs.ci }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Path-based change detection
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - 'requirements*.txt'
+              - 'pyproject.toml'
+              - '.github/workflows/quality-gates.yml'
+            frontend:
+              - 'frontend/**'
+              - 'package*.json'
+            mcp-server:
+              - 'mcp-server/**'
+            docs:
+              - 'docs/**'
+              - 'README.md'
+              - 'CHANGELOG.md'
+            ci:
+              - '.github/**'
+              - '.pre-commit-config.yaml'
+
+  # Phase 2A: Backend Linting
+  backend-lint:
+    name: Backend - Ruff Linting
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.backend == 'true' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: 'backend/requirements*.txt'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Ruff lint checks (errors only)
+        working-directory: backend
+        run: |
+          echo "Checking for linting errors with Ruff..."
+          ruff check . --output-format=github --exit-code=1
+          echo "✓ No linting errors found"
+
+      - name: Run Ruff formatter check
+        working-directory: backend
+        continue-on-error: true
+        run: |
+          echo "Checking code formatting..."
+          ruff format --check . || echo "⚠ Formatting issues detected (can be auto-fixed)"
+
+      - name: Run import sorting check
+        working-directory: backend
+        run: |
+          echo "Checking import order..."
+          ruff check --select I . --exit-code=1
+          echo "✓ Import ordering correct"
+
+  # Phase 2B: Frontend Linting
+  frontend-lint:
+    name: Frontend - ESLint & Prettier
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: frontend
+        run: |
+          echo "Running ESLint..."
+          npm run lint
+          echo "✓ ESLint checks passed"
+
+      - name: Check Prettier formatting
+        working-directory: frontend
+        continue-on-error: true
+        run: |
+          echo "Checking code formatting with Prettier..."
+          npx prettier --check "src/**/*.{ts,tsx,js,jsx,json,css,md}" || echo "⚠ Formatting issues detected"
+
+  # Phase 3A: Backend Type Checking
+  backend-type-check:
+    name: Backend - Type Checking (MyPy)
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.backend == 'true' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: 'backend/requirements*.txt'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run MyPy type checker
+        working-directory: backend
+        continue-on-error: true
+        run: |
+          echo "Running MyPy type checks..."
+          mypy app --ignore-missing-imports --no-error-summary --junit-xml junit.xml 2>&1 || true
+          echo "ℹ Type check results available above (not currently enforced)"
+
+      - name: Upload type check results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-mypy-results
+          path: backend/junit.xml
+          retention-days: 7
+
+  # Phase 3B: Frontend Type Checking
+  frontend-type-check:
+    name: Frontend - Type Checking (TypeScript)
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run TypeScript type check
+        working-directory: frontend
+        run: |
+          echo "Running TypeScript type checker..."
+          npx tsc --noEmit
+          echo "✓ TypeScript type checking passed"
+
+  # Phase 4A: Backend Unit Tests & Coverage
+  backend-tests:
+    name: Backend - Tests & Coverage
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.backend == 'true' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: 'backend/requirements*.txt'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run database migrations
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+        run: |
+          echo "Running database migrations..."
+          alembic upgrade head
+          echo "✓ Migrations completed"
+
+      - name: Run unit tests with coverage
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          SECRET_KEY: test-secret-key-for-ci
+          DEBUG: "true"
+        run: |
+          echo "Running unit tests..."
+          pytest \
+            --cov=app \
+            --cov-report=xml \
+            --cov-report=html \
+            --cov-report=term-missing \
+            --junit-xml=junit.xml \
+            -v
+
+      - name: Validate coverage threshold
+        working-directory: backend
+        run: |
+          echo "Validating coverage threshold (>${{ env.COVERAGE_THRESHOLD_BACKEND }}%)..."
+          python -c "
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('coverage.xml')
+          root = tree.getroot()
+          coverage = float(root.attrib.get('line-rate', 0)) * 100
+          threshold = float('${{ env.COVERAGE_THRESHOLD_BACKEND }}')
+
+          print(f'Current coverage: {coverage:.1f}%')
+          print(f'Required threshold: {threshold}%')
+
+          if coverage < threshold:
+              print(f'❌ Coverage {coverage:.1f}% is below threshold {threshold}%')
+              exit(1)
+          else:
+              print(f'✓ Coverage meets threshold')
+          "
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: backend/coverage.xml
+          flags: backend
+          name: backend-coverage
+          fail_ci_if_error: false
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage-report
+          path: backend/htmlcov/
+          retention-days: 7
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: backend/junit.xml
+          retention-days: 7
+
+  # Phase 4B: Frontend Unit Tests & Coverage
+  frontend-unit-tests:
+    name: Frontend - Tests & Coverage
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run unit tests with coverage
+        working-directory: frontend
+        run: |
+          echo "Running unit tests..."
+          npm run test:coverage -- --ci --reporters=default --reporters=jest-junit
+        env:
+          JEST_JUNIT_OUTPUT_DIR: ./reports
+
+      - name: Validate coverage threshold
+        working-directory: frontend
+        run: |
+          echo "Validating coverage threshold (>${{ env.COVERAGE_THRESHOLD_FRONTEND }}%)..."
+          python3 << 'EOF'
+          import json
+
+          with open('coverage/coverage-summary.json') as f:
+              data = json.load(f)
+
+          coverage = data['total']['lines']['pct']
+          threshold = ${{ env.COVERAGE_THRESHOLD_FRONTEND }}
+
+          print(f'Current coverage: {coverage:.1f}%')
+          print(f'Required threshold: {threshold}%')
+
+          if coverage < threshold:
+              print(f'❌ Coverage {coverage:.1f}% is below threshold {threshold}%')
+              exit(1)
+          else:
+              print(f'✓ Coverage meets threshold')
+          EOF
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: frontend/coverage/lcov.info
+          flags: frontend
+          name: frontend-coverage
+          fail_ci_if_error: false
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-coverage-report
+          path: frontend/coverage/
+          retention-days: 7
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-test-results
+          path: frontend/reports/
+          retention-days: 7
+
+  # Phase 4C: Frontend E2E Tests
+  frontend-e2e-tests:
+    name: Frontend - E2E Tests
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Get Playwright version
+        id: playwright-version
+        working-directory: frontend
+        run: |
+          PLAYWRIGHT_VERSION=$(npm ls @playwright/test --json 2>/dev/null | grep -o '"version": "[^"]*"' | head -1 | cut -d'"' -f4)
+          echo "version=${PLAYWRIGHT_VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          echo "Building frontend..."
+          npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8000
+
+      - name: Run E2E tests
+        working-directory: frontend
+        run: |
+          echo "Running E2E tests..."
+          npm run test:e2e -- --project=chromium
+        env:
+          CI: true
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7
+
+  # Phase 5: Common code quality checks
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Check for merge conflict markers
+        run: |
+          echo "Checking for merge conflict markers..."
+          if grep -rn "<<<<<<< HEAD" --include="*.py" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" .; then
+            echo "❌ Error: Found merge conflict markers in codebase"
+            exit 1
+          fi
+          echo "✓ No merge conflict markers found"
+
+      - name: Check for debug statements (Python)
+        run: |
+          echo "Checking for Python debug statements..."
+          if grep -rn "import pdb\|breakpoint()" --include="*.py" backend/app/; then
+            echo "⚠ Warning: Found pdb imports or breakpoint() in production code"
+          else
+            echo "✓ No Python debug statements found"
+          fi
+
+      - name: Check for debug statements (JavaScript)
+        run: |
+          echo "Checking for JavaScript debug statements..."
+          if grep -rn "debugger" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" frontend/src/; then
+            echo "⚠ Warning: Found debugger statements in frontend code"
+          else
+            echo "✓ No debugger statements found"
+          fi
+
+      - name: Validate YAML files
+        run: |
+          echo "Validating YAML files..."
+          find . -name "*.yml" -o -name "*.yaml" | grep -v node_modules | head -30 | while read file; do
+            if python3 -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
+              echo "✓ Valid: $file"
+            else
+              echo "❌ Invalid YAML: $file"
+              exit 1
+            fi
+          done
+
+      - name: Validate JSON files
+        run: |
+          echo "Validating JSON files..."
+          find . -name "*.json" \
+            -not -path "*/node_modules/*" \
+            -not -path "*/.git/*" \
+            -not -path "*/.vscode/*" \
+            -not -path "*/.zed/*" | head -50 | while read file; do
+            if python3 -c "import json; json.load(open('$file'))" 2>/dev/null; then
+              echo "✓ Valid: $file"
+            else
+              echo "❌ Invalid JSON: $file"
+              exit 1
+            fi
+          done
+
+  # Phase 6A: Backend security scanning
+  backend-security:
+    name: Backend - Security Scan
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.backend == 'true' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install security tools
+        run: |
+          pip install bandit safety pip-audit
+
+      - name: Run Bandit security scan
+        working-directory: backend
+        continue-on-error: true
+        run: |
+          echo "Running Bandit security scan..."
+          bandit -r app -f json -o bandit-results.json || true
+          bandit -r app -f txt || echo "Bandit scan completed"
+
+      - name: Run Safety check
+        working-directory: backend
+        continue-on-error: true
+        run: |
+          echo "Running Safety dependency check..."
+          safety check -r requirements.txt --full-report || echo "Safety scan completed"
+
+      - name: Run pip-audit
+        working-directory: backend
+        continue-on-error: true
+        run: |
+          echo "Running pip-audit..."
+          pip-audit -r requirements.txt --format json --output pip-audit-results.json || true
+          pip-audit -r requirements.txt || echo "pip-audit scan completed"
+
+      - name: Upload security scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-security-results
+          path: |
+            backend/bandit-results.json
+            backend/pip-audit-results.json
+          retention-days: 30
+
+  # Phase 6B: Frontend security scanning
+  frontend-security:
+    name: Frontend - Security Scan
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run npm audit
+        working-directory: frontend
+        continue-on-error: true
+        run: |
+          echo "Running npm audit..."
+          npm audit --json > npm-audit-results.json || true
+          npm audit || echo "npm audit completed"
+
+      - name: Upload npm audit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-security-results
+          path: frontend/npm-audit-results.json
+          retention-days: 30
+
+  # Phase 6C: Secrets scanning
+  secrets-scan:
+    name: Secrets Detection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+        continue-on-error: true
+
+  # Phase 7: Build verification
+  build-verification:
+    name: Build Verification
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js (if frontend changed)
+        if: ${{ needs.detect-changes.outputs.frontend == 'true' }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Frontend build
+        if: ${{ needs.detect-changes.outputs.frontend == 'true' }}
+        working-directory: frontend
+        run: |
+          echo "Installing frontend dependencies..."
+          npm ci
+          echo "Building frontend..."
+          npm run build
+          echo "✓ Frontend build successful"
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8000
+
+      - name: Set up Python (if backend changed)
+        if: ${{ needs.detect-changes.outputs.backend == 'true' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Backend build validation
+        if: ${{ needs.detect-changes.outputs.backend == 'true' }}
+        working-directory: backend
+        run: |
+          echo "Checking backend import structure..."
+          python -m py_compile app/main.py
+          echo "✓ Backend imports valid"
+
+  # Phase 8: Documentation check
+  documentation:
+    name: Documentation Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Check for broken links in markdown
+        run: |
+          echo "Checking markdown files..."
+          find docs -name "*.md" | head -10 | while read file; do
+            echo "Validating: $file"
+            # Basic check: ensure file exists and is readable
+            if [ -f "$file" ] && [ -r "$file" ]; then
+              echo "✓ Readable: $file"
+            else
+              echo "❌ File issue: $file"
+              exit 1
+            fi
+          done
+
+      - name: Verify CHANGELOG update (if needed)
+        run: |
+          echo "Checking if CHANGELOG was updated..."
+          if git diff HEAD~1 CHANGELOG.md > /dev/null 2>&1; then
+            echo "✓ CHANGELOG updated"
+          else
+            echo "ℹ CHANGELOG may need updating (optional)"
+          fi
+
+  # Phase 9: Final Quality Gate Enforcement
+  quality-gate-enforcement:
+    name: Quality Gate Enforcement
+    runs-on: ubuntu-latest
+    needs:
+      - detect-changes
+      - backend-lint
+      - frontend-lint
+      - backend-type-check
+      - frontend-type-check
+      - backend-tests
+      - frontend-unit-tests
+      - code-quality
+      - build-verification
+      - documentation
+      - backend-security
+      - frontend-security
+      - secrets-scan
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Collect all check results
+        run: |
+          echo "=== Quality Gate Results ==="
+          echo ""
+          echo "Linting:"
+          echo "  Backend Lint: ${{ needs.backend-lint.result }}"
+          echo "  Frontend Lint: ${{ needs.frontend-lint.result }}"
+          echo ""
+          echo "Type Checking:"
+          echo "  Backend Types: ${{ needs.backend-type-check.result }}"
+          echo "  Frontend Types: ${{ needs.frontend-type-check.result }}"
+          echo ""
+          echo "Testing:"
+          echo "  Backend Tests: ${{ needs.backend-tests.result }}"
+          echo "  Frontend Unit Tests: ${{ needs.frontend-unit-tests.result }}"
+          echo ""
+          echo "Code Quality:"
+          echo "  Common Checks: ${{ needs.code-quality.result }}"
+          echo "  Build Verification: ${{ needs.build-verification.result }}"
+          echo "  Documentation: ${{ needs.documentation.result }}"
+          echo ""
+          echo "Security:"
+          echo "  Backend Security: ${{ needs.backend-security.result }}"
+          echo "  Frontend Security: ${{ needs.frontend-security.result }}"
+          echo "  Secrets Scan: ${{ needs.secrets-scan.result }}"
+          echo ""
+
+      - name: Enforce quality gates
+        run: |
+          FAILED=0
+
+          # Hard gates (must pass)
+          echo "=== Enforcing Hard Quality Gates ==="
+
+          if [[ "${{ needs.backend-lint.result }}" == "failure" ]]; then
+            echo "❌ BLOCKED: Backend linting failed"
+            FAILED=1
+          fi
+
+          if [[ "${{ needs.frontend-lint.result }}" == "failure" ]]; then
+            echo "❌ BLOCKED: Frontend linting failed"
+            FAILED=1
+          fi
+
+          if [[ "${{ needs.frontend-type-check.result }}" == "failure" ]]; then
+            echo "❌ BLOCKED: Frontend type checking failed"
+            FAILED=1
+          fi
+
+          if [[ "${{ needs.backend-tests.result }}" == "failure" ]]; then
+            echo "❌ BLOCKED: Backend tests failed"
+            FAILED=1
+          fi
+
+          if [[ "${{ needs.frontend-unit-tests.result }}" == "failure" ]]; then
+            echo "❌ BLOCKED: Frontend tests failed"
+            FAILED=1
+          fi
+
+          if [[ "${{ needs.code-quality.result }}" == "failure" ]]; then
+            echo "❌ BLOCKED: Code quality checks failed"
+            FAILED=1
+          fi
+
+          if [[ "${{ needs.build-verification.result }}" == "failure" ]]; then
+            echo "❌ BLOCKED: Build verification failed"
+            FAILED=1
+          fi
+
+          if [[ "${{ needs.secrets-scan.result }}" == "failure" ]]; then
+            echo "❌ BLOCKED: Secrets detected in codebase"
+            FAILED=1
+          fi
+
+          # Soft gates (pass but report)
+          echo ""
+          echo "=== Soft Quality Gates (Informational) ==="
+
+          if [[ "${{ needs.backend-type-check.result }}" == "failure" ]]; then
+            echo "⚠ Warning: Backend type checking found issues (not yet enforced)"
+          fi
+
+          if [[ "${{ needs.backend-security.result }}" == "failure" ]]; then
+            echo "⚠ Warning: Backend security scan found issues"
+          fi
+
+          if [[ "${{ needs.frontend-security.result }}" == "failure" ]]; then
+            echo "⚠ Warning: Frontend security scan found issues"
+          fi
+
+          # Final status
+          echo ""
+          if [ $FAILED -eq 0 ]; then
+            echo "✓ ALL QUALITY GATES PASSED"
+            exit 0
+          else
+            echo "❌ QUALITY GATES FAILED - Fix issues before merge"
+            exit 1
+          fi
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const context = github.context;
+            const pr = context.payload.pull_request;
+
+            if (!pr) return;
+
+            const checks = {
+              'Backend Lint': '${{ needs.backend-lint.result }}',
+              'Frontend Lint': '${{ needs.frontend-lint.result }}',
+              'Backend Type Check': '${{ needs.backend-type-check.result }}',
+              'Frontend Type Check': '${{ needs.frontend-type-check.result }}',
+              'Backend Tests': '${{ needs.backend-tests.result }}',
+              'Frontend Tests': '${{ needs.frontend-unit-tests.result }}',
+              'Code Quality': '${{ needs.code-quality.result }}',
+              'Build': '${{ needs.build-verification.result }}',
+              'Security': '${{ needs.backend-security.result }}',
+              'Secrets Scan': '${{ needs.secrets-scan.result }}'
+            };
+
+            const statusEmojis = {
+              'success': '✅',
+              'failure': '❌',
+              'skipped': '⏭️'
+            };
+
+            let comment = '## Quality Gate Summary\n\n';
+            let allPassed = true;
+
+            for (const [check, status] of Object.entries(checks)) {
+              if (status === 'failure') allPassed = false;
+              const emoji = statusEmojis[status] || '⚠️';
+              comment += `${emoji} ${check}: ${status}\n`;
+            }
+
+            comment += '\n';
+            if (allPassed) {
+              comment += '### ✓ Ready to merge\n';
+            } else {
+              comment += '### ❌ Please fix quality gate failures before merge\n';
+            }
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body: comment
+            });
