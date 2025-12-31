@@ -1,8 +1,9 @@
 # OVERNIGHT_BURN Quick-Start Retrieval Guide
 
 **Purpose:** Fast reference for agents and developers accessing OVERNIGHT_BURN reconnaissance data
-**Status:** Ready to implement immediately
-**Last Updated:** 2025-12-30
+**Status:** Fully implemented with RAG infrastructure
+**Last Updated:** 2025-12-31
+**Version:** 2.0 - Complete with MASTER_INDEX and FILE_REGISTRY
 
 ---
 
@@ -10,16 +11,18 @@
 
 ### Quick Facts
 
-- **Total:** 208 files, 4.4 MB
-- **Format:** 93% markdown + metadata
-- **Organization:** 10 domain-specific sessions
-- **Key:** Master index coming soon (templates ready)
+- **Total:** 223 files, 4.4 MB
+- **Format:** 94.6% markdown + 5.4% text
+- **Organization:** 11 domains (10 Sessions + DEVCOM Research)
+- **Key Files:** MASTER_INDEX.md + FILE_REGISTRY.json (complete RAG infrastructure)
 
 ### Right Now (Use These)
 
-1. **Orientation:** Read domain-specific `README.md` or `INDEX.md`
-2. **Quick answers:** Look for `*QUICK_REFERENCE.md` files
-3. **Deep dives:** Find `*-patterns.md` files for your domain
+1. **Master Index:** Use `MASTER_INDEX.md` for unified navigation and discovery
+2. **File Metadata:** Query `FILE_REGISTRY.json` for complete file metadata and search
+3. **Domain Navigation:** Read domain-specific `README.md` or `INDEX.md`
+4. **Quick answers:** Look for `*QUICK_REFERENCE.md` files
+5. **Deep dives:** Find `*-patterns.md` files for your domain
 
 ### Example Queries
 
@@ -377,9 +380,28 @@ Related:
 
 ## Tips & Tricks
 
-### Tip 1: Use MASTER_INDEX.md (Coming Soon)
+### Tip 1: Use MASTER_INDEX.md (Now Available!)
 
-When implemented, this single file will be your navigation hub. Bookmark it.
+This single file is your navigation hub for all 223 files. It includes:
+- Priority-based file listings
+- Domain summaries
+- Cross-domain references
+- Search strategies
+- Getting started guides
+
+**File:** `MASTER_INDEX.md`
+
+### Tip 1b: Query FILE_REGISTRY.json for Metadata
+
+This JSON file contains complete metadata for all 223 files:
+- File IDs, paths, domains, types
+- Keywords and summaries
+- Action items and findings counts
+- Code examples and cross-references
+- Search index organized by type, priority, keyword
+
+**File:** `FILE_REGISTRY.json`
+**Use:** Python scripts, agent tools, semantic search implementations
 
 ### Tip 2: File Size Matters
 
@@ -423,38 +445,48 @@ Files with many code blocks are especially useful for implementation.
 | **Test examples** | SESSION_5 pattern files | Your domain's test patterns |
 | **API details** | SESSION_6 API files | Your domain's API routes |
 
-### If files don't exist yet
+### RAG Infrastructure Now Complete
 
-Some files mentioned in this guide don't exist yet (like MASTER_INDEX.md). They're in the implementation plan. For now:
+The following RAG infrastructure files are now available:
 
-1. Use this quick-start guide as temporary index
-2. Navigate by domain folder directly
-3. Follow cross-reference suggestions in files
+1. **MASTER_INDEX.md** - Unified hierarchical index of all 223 files
+2. **FILE_REGISTRY.json** - Complete metadata with search index
+3. **RETRIEVAL_PATTERNS.md** - Query patterns and use cases
+4. **This guide** - Quick start and navigation basics
+
+All files exist and are ready to use!
 
 ---
 
 ## Next Steps
 
-### For Agent Integration
+### Phase 1: Immediate Use (Now Available)
 
-1. Add OVERNIGHT_BURN path to agent context
-2. Implement file registry JSON loader
-3. Add search utilities to agent tools
-4. Use this guide as fallback when vector DB not ready
+1. ✓ MASTER_INDEX.md created - Use for unified navigation
+2. ✓ FILE_REGISTRY.json created - Use for metadata queries
+3. ✓ RETRIEVAL_PATTERNS.md created - Use for query patterns
+4. Bookmark MASTER_INDEX.md for quick access
 
-### For Vector DB Implementation
+### Phase 2: Agent Integration (Recommended)
 
-1. Extract metadata from all files (script provided)
-2. Generate embeddings using OpenAI API
-3. Load into Chroma or Pinecone
-4. Test semantic search queries
+1. Load FILE_REGISTRY.json into agent context as reference
+2. Implement file registry JSON loader for Python agents
+3. Add search utilities to agent tools (see RETRIEVAL_PATTERNS.md)
+4. Test retrieval with sample queries before deployment
 
-### For Users
+### Phase 3: Vector DB Implementation (Optional, Future)
 
-1. Bookmark this file
-2. Use domain-specific README.md for deep dives
-3. Search by filename pattern for specific topics
-4. Follow cross-references between domains
+1. Use extraction script at `/tmp/extract_metadata.py` (already run)
+2. Generate embeddings using OpenAI API with MASTER_INDEX content
+3. Load into Chroma (local) or Pinecone (cloud)
+4. Test semantic search queries from RETRIEVAL_PATTERNS.md
+
+### For Users Now
+
+1. Bookmark MASTER_INDEX.md and QUICK_START_RETRIEVAL.md
+2. Use MASTER_INDEX for unified navigation across all files
+3. Use RETRIEVAL_PATTERNS.md to understand query strategies
+4. Query FILE_REGISTRY.json for metadata (if using agents)
 
 ---
 
@@ -474,12 +506,17 @@ Some files mentioned in this guide don't exist yet (like MASTER_INDEX.md). They'
 - `SESSION_9_SKILLS/` - Agent skills
 - `SESSION_10_AGENTS/` - Agent architecture
 
+**RAG Infrastructure files (newly created):**
+- `MASTER_INDEX.md` - Unified hierarchical index of all 223 files
+- `FILE_REGISTRY.json` - Complete metadata with search index
+- `RETRIEVAL_PATTERNS.md` - Query patterns and usage examples
+
 **Key files to bookmark:**
-- `RAG_INDEXING_PLAN.md` - Implementation strategy (just created!)
-- `QUICK_START_RETRIEVAL.md` - This file
+- `RAG_INDEXING_PLAN.md` - Implementation strategy (reference)
+- `QUICK_START_RETRIEVAL.md` - This file (quick start)
+- `MASTER_INDEX.md` - Main navigation hub
 - `SESSION_*/README.md` - Domain entry points
-- `MASTER_INDEX.md` - Coming soon!
 
 ---
 
-**Last updated:** 2025-12-30 | **Status:** Ready to use
+**Last updated:** 2025-12-31 | **Status:** RAG Infrastructure Complete

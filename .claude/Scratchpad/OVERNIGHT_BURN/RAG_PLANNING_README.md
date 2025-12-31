@@ -1,8 +1,13 @@
 # OVERNIGHT_BURN RAG Planning - Package Overview
 
-**Status:** Complete - 4 strategic documents created
+⚠️ **CONSOLIDATED:** This document has been consolidated into [RAG_MASTER_STRATEGY.md](RAG_MASTER_STRATEGY.md)
+
+**See:** [RAG_MASTER_STRATEGY.md](RAG_MASTER_STRATEGY.md) for the complete, unified strategy
+
+**Status:** Complete - Superseded by RAG_MASTER_STRATEGY.md
 **Date:** 2025-12-30
-**Purpose:** Index and guide to RAG/indexing strategy documents
+**Updated:** 2025-12-31 (Consolidated)
+**Purpose:** Index and guide to RAG/indexing strategy documents (now consolidated)
 
 ---
 

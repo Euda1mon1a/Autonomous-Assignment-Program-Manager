@@ -1,0 +1,1375 @@
+openapi: 3.0.0
+info:
+  title: Residency Scheduler API
+  description: |
+    Comprehensive API for medical residency program scheduling with ACGME compliance,
+    emergency coverage management, and advanced resilience features.
+
+    ## Authentication
+    All endpoints require JWT Bearer token authentication except `/auth/login` and `/auth/register`.
+
+    Access tokens are stored in httpOnly cookies and can also be provided via Authorization header:
+    ```
+    Authorization: Bearer <ACCESS_TOKEN>
+    ```
+
+    ## Base URL
+    ```
+    http://localhost:8000/api
+    ```
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+  license:
+    name: Apache 2.0
+
+servers:
+  - url: http://localhost:8000/api
+    description: Development server
+  - url: https://api.example.com/api
+    description: Production server
+
+paths:
+  # ============================================================================
+  # Authentication Endpoints
+  # ============================================================================
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login with OAuth2 form
+      description: Authenticate user with username and password (form-based)
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+              required:
+                - username
+                - password
+      responses:
+        '200':
+          description: Successfully authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenWithRefresh'
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: access_token=Bearer eyJhbGc...; HttpOnly; Secure; SameSite=Lax
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login/json:
+    post:
+      tags:
+        - Authentication
+      summary: Login with JSON body
+      description: Authenticate user with JSON request body
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+              required:
+                - username
+                - password
+      responses:
+        '200':
+          description: Successfully authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenWithRefresh'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successfully logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+              required:
+                - refresh_token
+      responses:
+        '200':
+          description: New tokens issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenWithRefresh'
+        '401':
+          description: Invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user info
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      description: Register a new user account. First user becomes admin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                  minLength: 12
+              required:
+                - username
+                - email
+                - password
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid user data or user exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/users:
+    get:
+      tags:
+        - Authentication
+      summary: List all users (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of all users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============================================================================
+  # People Endpoints
+  # ============================================================================
+
+  /people:
+    get:
+      tags:
+        - People
+      summary: List people
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          description: Filter by type (resident or faculty)
+          schema:
+            type: string
+            enum: [resident, faculty]
+        - name: pgy_level
+          in: query
+          description: Filter residents by PGY level
+          schema:
+            type: integer
+            enum: [1, 2, 3]
+      responses:
+        '200':
+          description: List of people
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonListResponse'
+
+    post:
+      tags:
+        - People
+      summary: Create person
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonCreate'
+      responses:
+        '201':
+          description: Person created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonResponse'
+
+  /people/{person_id}:
+    get:
+      tags:
+        - People
+      summary: Get person by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: person_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Person details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonResponse'
+        '404':
+          description: Person not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - People
+      summary: Update person
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: person_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonUpdate'
+      responses:
+        '200':
+          description: Person updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonResponse'
+
+    delete:
+      tags:
+        - People
+      summary: Delete person
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: person_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Person deleted
+
+  /people/residents:
+    get:
+      tags:
+        - People
+      summary: List residents
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: pgy_level
+          in: query
+          schema:
+            type: integer
+            enum: [1, 2, 3]
+      responses:
+        '200':
+          description: List of residents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonListResponse'
+
+  /people/faculty:
+    get:
+      tags:
+        - People
+      summary: List faculty
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: specialty
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of faculty
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonListResponse'
+
+  /people/{person_id}/credentials:
+    get:
+      tags:
+        - People
+      summary: Get person credentials
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: person_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: include_expired
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CredentialListResponse'
+
+  /people/{person_id}/credentials/summary:
+    get:
+      tags:
+        - People
+      summary: Get credential summary
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: person_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Credential summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CredentialSummary'
+
+  # ============================================================================
+  # Assignments Endpoints
+  # ============================================================================
+
+  /assignments:
+    get:
+      tags:
+        - Assignments
+      summary: List assignments
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: person_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: role
+          in: query
+          schema:
+            type: string
+        - name: activity_type
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: List of assignments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentListResponse'
+
+    post:
+      tags:
+        - Assignments
+      summary: Create assignment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignmentCreate'
+      responses:
+        '201':
+          description: Assignment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentWithWarnings'
+        '422':
+          description: ACGME violation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentWithWarnings'
+
+    delete:
+      tags:
+        - Assignments
+      summary: Delete assignments in date range
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '204':
+          description: Assignments deleted
+
+  /assignments/{assignment_id}:
+    get:
+      tags:
+        - Assignments
+      summary: Get assignment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: assignment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Assignment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentResponse'
+
+    put:
+      tags:
+        - Assignments
+      summary: Update assignment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: assignment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignmentUpdate'
+      responses:
+        '200':
+          description: Assignment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentWithWarnings'
+
+    delete:
+      tags:
+        - Assignments
+      summary: Delete assignment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: assignment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Assignment deleted
+
+  # ============================================================================
+  # Schedule Endpoints
+  # ============================================================================
+
+  /schedule/generate:
+    post:
+      tags:
+        - Schedule
+      summary: Generate schedule
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleRequest'
+      responses:
+        '200':
+          description: Schedule generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleResponse'
+        '207':
+          description: Partial success (some gaps)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleResponse'
+        '422':
+          description: Generation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /schedule/validate:
+    get:
+      tags:
+        - Schedule
+      summary: Validate schedule
+      parameters:
+        - name: start_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+
+  /schedule/emergency-coverage:
+    post:
+      tags:
+        - Schedule
+      summary: Handle emergency coverage
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmergencyRequest'
+      responses:
+        '200':
+          description: Coverage handled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmergencyResponse'
+
+  /schedule/{start_date}/{end_date}:
+    get:
+      tags:
+        - Schedule
+      summary: Get schedule
+      parameters:
+        - name: start_date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Schedule data
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # ============================================================================
+  # Swaps Endpoints
+  # ============================================================================
+
+  /swaps/execute:
+    post:
+      tags:
+        - Swaps
+      summary: Execute swap
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SwapExecuteRequest'
+      responses:
+        '200':
+          description: Swap result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwapExecuteResponse'
+
+  /swaps/validate:
+    post:
+      tags:
+        - Swaps
+      summary: Validate swap
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SwapExecuteRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwapValidationResult'
+
+  /swaps/history:
+    get:
+      tags:
+        - Swaps
+      summary: Get swap history
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: faculty_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Swap history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwapHistoryResponse'
+
+  # ============================================================================
+  # Resilience Endpoints
+  # ============================================================================
+
+  /resilience/health:
+    get:
+      tags:
+        - Resilience
+      summary: Get system health
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: include_contingency
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+
+  /resilience/crisis/activate:
+    post:
+      tags:
+        - Resilience
+      summary: Activate crisis mode
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrisisActivationRequest'
+      responses:
+        '200':
+          description: Crisis activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrisisResponse'
+
+  /resilience/crisis/deactivate:
+    post:
+      tags:
+        - Resilience
+      summary: Deactivate crisis mode
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrisisDeactivationRequest'
+      responses:
+        '200':
+          description: Crisis deactivated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrisisResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Common Schemas
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+
+    # Auth Schemas
+    TokenWithRefresh:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    # Person Schemas
+    PersonResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+        type:
+          type: string
+          enum: [resident, faculty]
+        pgy_level:
+          type: integer
+        specialty:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    PersonCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        type:
+          type: string
+          enum: [resident, faculty]
+        pgy_level:
+          type: integer
+        specialty:
+          type: string
+      required:
+        - name
+        - email
+        - type
+
+    PersonUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        specialty:
+          type: string
+        is_active:
+          type: boolean
+
+    PersonListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PersonResponse'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+
+    CredentialListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+        total:
+          type: integer
+
+    CredentialSummary:
+      type: object
+      properties:
+        person_id:
+          type: string
+          format: uuid
+        person_name:
+          type: string
+        total_credentials:
+          type: integer
+        active_credentials:
+          type: integer
+        compliance_status:
+          type: string
+
+    # Assignment Schemas
+    AssignmentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        person_id:
+          type: string
+          format: uuid
+        person_name:
+          type: string
+        block_id:
+          type: string
+          format: uuid
+        block_date:
+          type: string
+          format: date
+        session:
+          type: string
+        rotation_template_id:
+          type: string
+          format: uuid
+        rotation_name:
+          type: string
+        role:
+          type: string
+        activity_name:
+          type: string
+        status:
+          type: string
+
+    AssignmentCreate:
+      type: object
+      properties:
+        person_id:
+          type: string
+          format: uuid
+        block_id:
+          type: string
+          format: uuid
+        rotation_template_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+        override_reason:
+          type: string
+      required:
+        - person_id
+        - block_id
+        - rotation_template_id
+        - role
+
+    AssignmentUpdate:
+      type: object
+      properties:
+        person_id:
+          type: string
+          format: uuid
+        block_id:
+          type: string
+          format: uuid
+        rotation_template_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+        version:
+          type: integer
+
+    AssignmentWithWarnings:
+      type: object
+      properties:
+        assignment:
+          $ref: '#/components/schemas/AssignmentResponse'
+        warnings:
+          type: array
+          items:
+            type: object
+        violations:
+          type: array
+          items:
+            type: object
+
+    AssignmentListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssignmentResponse'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total_pages:
+          type: integer
+
+    # Schedule Schemas
+    ScheduleRequest:
+      type: object
+      properties:
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        algorithm:
+          type: string
+          enum: [greedy, cp_sat, pulp, hybrid]
+          default: cp_sat
+        pgy_levels:
+          type: array
+          items:
+            type: integer
+          default: [1, 2, 3]
+        rotation_template_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        timeout_seconds:
+          type: integer
+          default: 30
+      required:
+        - start_date
+        - end_date
+
+    ScheduleResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [success, partial, failed]
+        message:
+          type: string
+        total_blocks_assigned:
+          type: integer
+        total_blocks:
+          type: integer
+        validation:
+          $ref: '#/components/schemas/ValidationResult'
+        run_id:
+          type: string
+          format: uuid
+        solver_stats:
+          type: object
+
+    ValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        acgme_compliant:
+          type: boolean
+        violations:
+          type: array
+          items:
+            type: object
+        warnings:
+          type: array
+          items:
+            type: object
+
+    EmergencyRequest:
+      type: object
+      properties:
+        person_id:
+          type: string
+          format: uuid
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        reason:
+          type: string
+        is_deployment:
+          type: boolean
+      required:
+        - person_id
+        - start_date
+        - end_date
+        - reason
+
+    EmergencyResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        replacements_found:
+          type: integer
+        coverage_gaps:
+          type: integer
+        requires_manual_review:
+          type: boolean
+        details:
+          type: object
+
+    # Swap Schemas
+    SwapExecuteRequest:
+      type: object
+      properties:
+        source_faculty_id:
+          type: string
+          format: uuid
+        source_week:
+          type: string
+          format: date
+        target_faculty_id:
+          type: string
+          format: uuid
+        target_week:
+          type: string
+          format: date
+        swap_type:
+          type: string
+          enum: [one_to_one, absorb]
+        reason:
+          type: string
+      required:
+        - source_faculty_id
+        - source_week
+        - target_faculty_id
+        - target_week
+        - swap_type
+        - reason
+
+    SwapExecuteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        swap_id:
+          type: string
+          format: uuid
+        message:
+          type: string
+        validation:
+          $ref: '#/components/schemas/SwapValidationResult'
+
+    SwapValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: string
+        warnings:
+          type: array
+          items:
+            type: string
+        back_to_back_conflict:
+          type: boolean
+        external_conflict:
+          type: boolean
+
+    SwapHistoryResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+        pages:
+          type: integer
+
+    # Resilience Schemas
+    HealthCheckResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        overall_status:
+          type: string
+        defense_level:
+          type: string
+        utilization:
+          type: object
+        n1_pass:
+          type: boolean
+        n2_pass:
+          type: boolean
+        crisis_mode:
+          type: boolean
+        active_fallbacks:
+          type: array
+
+    CrisisActivationRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+        expected_duration_hours:
+          type: integer
+        auto_deactivate:
+          type: boolean
+      required:
+        - reason
+
+    CrisisDeactivationRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+        restore_from_fallback:
+          type: boolean
+      required:
+        - reason
+
+    CrisisResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        crisis_mode:
+          type: boolean
+        message:
+          type: string

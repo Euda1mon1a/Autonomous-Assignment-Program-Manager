@@ -1,9 +1,24 @@
 # Skills Documentation Templates & Audit - Session 9
 
+**Last Updated:** 2025-12-31
+
 **Operation:** G2_RECON SEARCH_PARTY
 **Date:** 2025-12-30
 **Scope:** Complete reconnaissance and documentation of skills system
 **Status:** Complete - Ready for Implementation
+
+---
+
+## Chunked Files (Large Documents Split for Better Navigation)
+
+The following large files (>1800 lines) have been split into smaller parts for improved readability:
+
+### **skills-testing-patterns.md** → 3 Parts
+1. [skills-testing-patterns-01-foundations.md](skills-testing-patterns-01-foundations.md) - Executive Summary & Framework Overview
+2. [skills-testing-patterns-02-patterns.md](skills-testing-patterns-02-patterns.md) - Backend, Frontend & Integration Testing
+3. [skills-testing-patterns-03-implementation.md](skills-testing-patterns-03-implementation.md) - CI/CD, Coverage & Quality Gates
+
+**Why chunked?** Original file was 2203 lines. Chunking improves navigation and makes each part independently usable.
 
 ---
 

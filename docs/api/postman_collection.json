@@ -1,0 +1,864 @@
+{
+  "info": {
+    "name": "Residency Scheduler API",
+    "description": "Complete API collection for medical residency scheduling system",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login (Form)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.environment.set('access_token', jsonData.access_token);",
+                  "  pm.environment.set('refresh_token', jsonData.refresh_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "user@example.com",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "password",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login (JSON)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.environment.set('access_token', jsonData.access_token);",
+                  "  pm.environment.set('refresh_token', jsonData.refresh_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"user@example.com\",\"password\":\"password\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login/json",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login", "json"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.environment.set('access_token', jsonData.access_token);",
+                  "  pm.environment.set('refresh_token', jsonData.refresh_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"refresh_token\":\"{{refresh_token}}\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"newuser@example.com\",\"email\":\"newuser@example.com\",\"password\":\"SecurePassword123!\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "users"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "People",
+      "item": [
+        {
+          "name": "List All People",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/people",
+              "host": ["{{base_url}}"],
+              "path": ["api", "people"]
+            }
+          }
+        },
+        {
+          "name": "List Residents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/people/residents?pgy_level=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "people", "residents"],
+              "query": [
+                {
+                  "key": "pgy_level",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Faculty",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/people/faculty",
+              "host": ["{{base_url}}"],
+              "path": ["api", "people", "faculty"]
+            }
+          }
+        },
+        {
+          "name": "Get Person",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/people/{{person_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "people", "{{person_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Person",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Dr. John Doe\",\"email\":\"john@example.com\",\"type\":\"resident\",\"pgy_level\":1,\"specialty\":\"Internal Medicine\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/people",
+              "host": ["{{base_url}}"],
+              "path": ["api", "people"]
+            }
+          }
+        },
+        {
+          "name": "Update Person",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"pgy_level\":2,\"specialty\":\"Emergency Medicine\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/people/{{person_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "people", "{{person_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Person",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/people/{{person_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "people", "{{person_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Credentials",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/people/{{person_id}}/credentials",
+              "host": ["{{base_url}}"],
+              "path": ["api", "people", "{{person_id}}", "credentials"]
+            }
+          }
+        },
+        {
+          "name": "Get Credential Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/people/{{person_id}}/credentials/summary",
+              "host": ["{{base_url}}"],
+              "path": ["api", "people", "{{person_id}}", "credentials", "summary"]
+            }
+          }
+        },
+        {
+          "name": "Get Procedures",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/people/{{person_id}}/procedures",
+              "host": ["{{base_url}}"],
+              "path": ["api", "people", "{{person_id}}", "procedures"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assignments",
+      "item": [
+        {
+          "name": "List Assignments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/assignments?start_date=2025-01-01&end_date=2025-01-31&page=1&page_size=50",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assignments"],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2025-01-01"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2025-01-31"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Assignment",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/assignments/{{assignment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assignments", "{{assignment_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Assignment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"person_id\":\"{{person_id}}\",\"block_id\":\"{{block_id}}\",\"rotation_template_id\":\"{{rotation_template_id}}\",\"role\":\"resident\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/assignments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assignments"]
+            }
+          }
+        },
+        {
+          "name": "Update Assignment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"role\":\"resident\",\"version\":1}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/assignments/{{assignment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assignments", "{{assignment_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Assignment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/assignments/{{assignment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assignments", "{{assignment_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Assignments (Bulk)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/assignments?start_date=2025-01-01&end_date=2025-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "assignments"],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2025-01-01"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2025-01-31"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Schedule",
+      "item": [
+        {
+          "name": "Generate Schedule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "schedule-jan-2025-v1"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"start_date\":\"2025-01-01\",\"end_date\":\"2025-01-31\",\"algorithm\":\"cp_sat\",\"pgy_levels\":[1,2,3],\"timeout_seconds\":30}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/schedule/generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "schedule", "generate"]
+            }
+          }
+        },
+        {
+          "name": "Validate Schedule",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/schedule/validate?start_date=2025-01-01&end_date=2025-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "schedule", "validate"],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2025-01-01"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2025-01-31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Emergency Coverage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"person_id\":\"{{person_id}}\",\"start_date\":\"2025-02-01\",\"end_date\":\"2025-02-07\",\"reason\":\"Medical emergency\",\"is_deployment\":false}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/schedule/emergency-coverage",
+              "host": ["{{base_url}}"],
+              "path": ["api", "schedule", "emergency-coverage"]
+            }
+          }
+        },
+        {
+          "name": "Get Schedule",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/schedule/2025-01-01/2025-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "schedule", "2025-01-01", "2025-01-31"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Swaps",
+      "item": [
+        {
+          "name": "Execute Swap",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"source_faculty_id\":\"{{faculty_id_1}}\",\"source_week\":\"2025-02-01\",\"target_faculty_id\":\"{{faculty_id_2}}\",\"target_week\":\"2025-03-01\",\"swap_type\":\"one_to_one\",\"reason\":\"Conference attendance\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/swaps/execute",
+              "host": ["{{base_url}}"],
+              "path": ["api", "swaps", "execute"]
+            }
+          }
+        },
+        {
+          "name": "Validate Swap",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"source_faculty_id\":\"{{faculty_id_1}}\",\"source_week\":\"2025-02-01\",\"target_faculty_id\":\"{{faculty_id_2}}\",\"target_week\":\"2025-03-01\",\"swap_type\":\"one_to_one\",\"reason\":\"Test\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/swaps/validate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "swaps", "validate"]
+            }
+          }
+        },
+        {
+          "name": "Get Swap History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/swaps/history?status=executed&page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "swaps", "history"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "executed"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Resilience",
+      "item": [
+        {
+          "name": "Get System Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/resilience/health?include_contingency=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "resilience", "health"],
+              "query": [
+                {
+                  "key": "include_contingency",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Activate Crisis Mode",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"reason\":\"Multiple faculty emergencies\",\"expected_duration_hours\":48,\"auto_deactivate\":true}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/resilience/crisis/activate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "resilience", "crisis", "activate"]
+            }
+          }
+        },
+        {
+          "name": "Deactivate Crisis Mode",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"reason\":\"Emergency resolved\",\"restore_from_fallback\":false}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/resilience/crisis/deactivate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "resilience", "crisis", "deactivate"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "person_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "assignment_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "block_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "rotation_template_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "faculty_id_1",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "faculty_id_2",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
