@@ -50,7 +50,31 @@ class DeleteAssignmentTool(BaseTool[DeleteAssignmentRequest, DeleteAssignmentRes
     async def execute(
         self, request: DeleteAssignmentRequest
     ) -> DeleteAssignmentResponse:
-        """Execute the tool."""
+        """
+        Execute assignment deletion.
+
+        Removes an assignment from the schedule database. This operation:
+        - Cannot be undone (no soft delete)
+        - May trigger re-validation of affected schedules
+        - Logs deletion event for audit trail
+        - Checks for dependent swaps or holds before deletion
+
+        Use Cases:
+        - Correcting scheduling errors
+        - Removing obsolete assignments during regeneration
+        - Cleaning up test or draft schedules
+
+        Args:
+            request: Validated request with assignment_id
+
+        Returns:
+            DeleteAssignmentResponse with success status and deleted ID
+
+        Raises:
+            APIError: Backend API request fails
+            NotFoundError: Assignment does not exist
+            ConflictError: Assignment has dependent swaps or cannot be deleted
+        """
         client = self._require_api_client()
 
         try:
@@ -63,8 +87,23 @@ class DeleteAssignmentTool(BaseTool[DeleteAssignmentRequest, DeleteAssignmentRes
                 deleted_id=request.assignment_id,
             )
 
+        except (ConnectionError, TimeoutError) as e:
+            return DeleteAssignmentResponse(
+                success=False,
+                message=f"Backend service unavailable: {type(e).__name__}",
+            )
+        except KeyError as e:
+            return DeleteAssignmentResponse(
+                success=False,
+                message=f"Assignment not found: {request.assignment_id}",
+            )
+        except ValueError as e:
+            return DeleteAssignmentResponse(
+                success=False,
+                message=f"Cannot delete assignment: {str(e)}",
+            )
         except Exception as e:
             return DeleteAssignmentResponse(
                 success=False,
-                message=f"Failed to delete assignment: {e}",
+                message=f"Failed to delete assignment: {type(e).__name__}",
             )

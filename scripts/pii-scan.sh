@@ -1,7 +1,31 @@
 #!/bin/bash
-# PII/OPSEC/PERSEC Pre-commit Scanner
-# Runs locally before commits to catch potential data leakage
-# Part of layered defense (pre-commit -> GitHub Actions -> periodic audit)
+# ============================================================
+# Script: pii-scan.sh
+# Purpose: PII/OPSEC/PERSEC pre-commit security scanner
+# Usage: ./scripts/pii-scan.sh [--staged-only]
+#
+# Description:
+#   Scans codebase for personally identifiable information (PII),
+#   operational security (OPSEC), and personnel security (PERSEC)
+#   violations before committing code.
+#
+# Security Patterns Detected:
+#   - SSN patterns (###-##-####)
+#   - Military service numbers
+#   - Full names in production code
+#   - Email addresses
+#   - Phone numbers
+#   - Home addresses
+#
+# Defense Layers:
+#   1. Pre-commit hook (this script)
+#   2. GitHub Actions workflow
+#   3. Periodic security audits
+#
+# Exit Codes:
+#   0 - No PII/security issues found
+#   1 - Potential issues found (fails commit)
+# ============================================================
 
 set -e
 

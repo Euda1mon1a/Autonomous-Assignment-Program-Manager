@@ -1,6 +1,26 @@
 #!/bin/bash
-# Pre-deployment Validation Script
-# Run this before deploying to verify system readiness
+# ============================================================
+# Script: pre-deploy-validate.sh
+# Purpose: Pre-deployment validation and safety checks
+# Usage: ./scripts/pre-deploy-validate.sh
+#
+# Description:
+#   Comprehensive validation script to verify system readiness
+#   before deploying to production. Checks configuration,
+#   code quality, security settings, and dependencies.
+#
+# Validation Checks:
+#   1. Environment configuration (.env file, required variables)
+#   2. Code quality (no debug statements, formatting)
+#   3. Security (no hardcoded secrets, CORS configured)
+#   4. Configuration files (docker-compose, requirements)
+#   5. Database migrations (Alembic setup)
+#   6. Dependencies (all required packages listed)
+#
+# Exit Codes:
+#   0 - All checks passed or warnings only
+#   1 - Critical errors found (do not deploy)
+# ============================================================
 
 set -e
 

@@ -1,6 +1,23 @@
 #!/bin/bash
-# NPM Audit Fix Script
-# Fixes npm security vulnerabilities in the frontend
+# ============================================================
+# Script: audit-fix.sh
+# Purpose: Fix npm security vulnerabilities in frontend
+# Usage: ./scripts/audit-fix.sh
+#
+# Description:
+#   Runs npm audit fix to automatically update vulnerable packages.
+#   Creates backup of package-lock.json before making changes.
+#   Attempts safe fixes first, then force fixes if needed.
+#
+# Safety Features:
+#   - Backs up package-lock.json before changes
+#   - Shows vulnerability report before and after
+#   - Logs all changes made
+#
+# Exit Codes:
+#   0 - All vulnerabilities fixed or no vulnerabilities found
+#   1 - Some vulnerabilities remain or fix failed
+# ============================================================
 
 set -e
 

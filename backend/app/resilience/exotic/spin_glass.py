@@ -17,10 +17,13 @@ Based on:
 - Simulated annealing on rugged energy landscapes
 """
 
+import logging
 from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass

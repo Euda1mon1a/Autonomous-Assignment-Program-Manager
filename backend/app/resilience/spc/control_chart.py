@@ -10,12 +10,15 @@ Chart types:
 - EWMA (Exponentially weighted moving average)
 """
 
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import Optional
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 class ControlChartType(str, Enum):

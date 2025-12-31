@@ -7,6 +7,7 @@ Key principle: Keep utilization below 80% to prevent queue explosion
 (from queuing theory - M/M/c queue becomes unstable near ρ=1).
 """
 
+import logging
 from dataclasses import dataclass
 from typing import Optional
 
@@ -14,6 +15,8 @@ import numpy as np
 from scipy.optimize import minimize_scalar
 
 from app.resilience.queuing.erlang_c import ErlangC
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass

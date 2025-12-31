@@ -21,6 +21,15 @@ from scipy.stats import gamma
 
 logger = logging.getLogger(__name__)
 
+# Rt Interpretation Thresholds
+RT_DECLINING_THRESHOLD = 0.9
+RT_GROWING_THRESHOLD = 1.1
+RT_STABLE_LOWER = 0.9
+RT_STABLE_UPPER = 1.1
+
+# Confidence Thresholds
+MIN_CASES_FOR_CONFIDENCE = 10.0
+
 
 @dataclass
 class RtEstimate:
