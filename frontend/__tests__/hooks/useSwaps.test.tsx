@@ -2,7 +2,7 @@
  * Tests for useSwaps hooks
  * Tests swap request management, approvals, rejections, and auto-matching
  */
-import { renderHook, waitFor, act } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@/test-utils'
 import {
   useSwapRequest,
   useSwapList,

@@ -1,5 +1,5 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { renderHook, act } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@/test-utils'
+import { renderHook, act } from '@/test-utils'
 import { QuickAssignMenu, useQuickAssignMenu } from '@/components/schedule/QuickAssignMenu'
 
 // Mock the contexts and hooks

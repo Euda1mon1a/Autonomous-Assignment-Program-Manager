@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen } from '@/test-utils'
 import { DayCell } from '@/components/DayCell'
 
 // Helper to create a local date (avoiding timezone issues)

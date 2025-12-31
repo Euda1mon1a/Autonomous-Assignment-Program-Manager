@@ -6,6 +6,10 @@ const config = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@/types/(.*)$': '<rootDir>/types/$1',
+    // Mock CSS imports
+    '\\.(css|scss|sass)$': '<rootDir>/__mocks__/styleMock.js',
+    // Mock static assets
+    '\\.(jpg|jpeg|png|gif|webp|svg)$': '<rootDir>/__mocks__/fileMock.js',
     // Map MSW subpath exports for Jest
     '^msw/node$': '<rootDir>/node_modules/msw/lib/node/index.js',
     '^msw$': '<rootDir>/node_modules/msw/lib/core/index.js',

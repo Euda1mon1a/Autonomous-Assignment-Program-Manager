@@ -13,7 +13,7 @@
  * should be unskipped and may need adjustments based on the final implementation.
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { ResilienceHub } from '@/features/resilience/ResilienceHub';
 import { resilienceMockResponses } from './resilience-mocks';

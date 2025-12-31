@@ -4,7 +4,7 @@
  * Tests progress display, status messages, loading states, and error handling
  */
 
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/test-utils';
 import { ImportProgressIndicator, ImportProgressSkeleton } from '@/features/import-export/ImportProgressIndicator';
 import { importExportMockFactories } from './import-export-mocks';
 import type { ImportProgress } from '@/features/import-export/types';

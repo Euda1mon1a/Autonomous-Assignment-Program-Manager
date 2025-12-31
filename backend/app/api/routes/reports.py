@@ -4,10 +4,11 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.user import User
 from app.schemas.reports import (
     AnalyticsReportRequest,
@@ -30,7 +31,7 @@ logger = logging.getLogger(__name__)
 @router.post("/schedule", response_model=ReportResponse)
 async def generate_schedule_report(
     request: ScheduleReportRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> StreamingResponse:
     """
@@ -94,7 +95,7 @@ async def generate_schedule_report(
 @router.post("/compliance", response_model=ReportResponse)
 async def generate_compliance_report(
     request: ComplianceReportRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> StreamingResponse:
     """
@@ -160,7 +161,7 @@ async def generate_compliance_report(
 @router.post("/analytics", response_model=ReportResponse)
 async def generate_analytics_report(
     request: AnalyticsReportRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> StreamingResponse:
     """
@@ -226,7 +227,7 @@ async def generate_analytics_report(
 @router.post("/faculty-summary", response_model=ReportResponse)
 async def generate_faculty_summary_report(
     request: FacultySummaryReportRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> StreamingResponse:
     """

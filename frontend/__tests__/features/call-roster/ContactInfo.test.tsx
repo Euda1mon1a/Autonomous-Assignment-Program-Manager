@@ -5,7 +5,7 @@
  * and different display modes (compact, full, badge).
  */
 
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@/test-utils';
 import { ContactInfo, ContactBadge } from '@/features/call-roster/ContactInfo';
 import type { OnCallPerson } from '@/features/call-roster/types';
 

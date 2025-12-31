@@ -2,7 +2,7 @@
  * Tests for analytics hooks
  * Tests data fetching, caching, and mutation behavior
  */
-import { renderHook, waitFor, act } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@/test-utils';
 import {
   useCurrentMetrics,
   useFairnessTrend,

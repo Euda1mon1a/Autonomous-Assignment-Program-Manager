@@ -3,7 +3,8 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.auth.oauth2_pkce import (
     create_authorization_code,
@@ -13,7 +14,7 @@ from app.auth.oauth2_pkce import (
     revoke_token,
 )
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.user import User
 from app.schemas.oauth2 import (
     AuthorizationRequest,
@@ -33,7 +34,7 @@ router = APIRouter()
 async def authorize(
     request: AuthorizationRequest,
     current_user: Annotated[User, Depends(get_current_active_user)],
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     OAuth2 authorization endpoint with PKCE.
@@ -64,7 +65,7 @@ async def authorize(
 @router.post("/token", response_model=TokenResponse)
 async def token(
     request: TokenRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     OAuth2 token endpoint - exchange authorization code for access token.
@@ -94,7 +95,7 @@ async def token(
 @router.post("/introspect", response_model=TokenIntrospectionResponse)
 async def token_introspection(
     request: TokenIntrospectionRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Token introspection endpoint (RFC 7662).
@@ -116,7 +117,7 @@ async def token_introspection(
 async def revoke(
     token: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Token revocation endpoint.
@@ -140,7 +141,7 @@ async def revoke(
 async def create_client(
     request: OAuth2ClientCreate,
     current_user: Annotated[User, Depends(get_current_active_user)],
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Register a new OAuth2 public client.

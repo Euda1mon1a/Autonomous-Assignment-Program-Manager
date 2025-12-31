@@ -8,11 +8,11 @@ from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response, StreamingResponse
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.ext.asyncio import AsyncSession, joinedload
 
 from app.api.dependencies.role_filter import require_admin
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.absence import Absence
 from app.models.assignment import Assignment
 from app.models.block import Block
@@ -53,9 +53,9 @@ def create_json_response(data: list, filename: str) -> StreamingResponse:
 
 
 @router.get("/people")
-def export_people(
+async def export_people(
     format: str = Query("csv", description="Export format: csv or json"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ):
@@ -88,11 +88,11 @@ def export_people(
 
 
 @router.get("/absences")
-def export_absences(
+async def export_absences(
     format: str = Query("csv", description="Export format: csv or json"),
     start_date: date | None = Query(None, description="Filter absences starting from"),
     end_date: date | None = Query(None, description="Filter absences ending by"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ):
@@ -142,11 +142,11 @@ def export_absences(
 
 
 @router.get("/schedule")
-def export_schedule(
+async def export_schedule(
     format: str = Query("csv", description="Export format: csv or json"),
     start_date: date = Query(..., description="Schedule start date"),
     end_date: date = Query(..., description="Schedule end date"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ):
@@ -203,7 +203,7 @@ def export_schedule(
 
 
 @router.get("/schedule/xlsx")
-def export_schedule_xlsx(
+async def export_schedule_xlsx(
     start_date: date = Query(..., description="Schedule start date"),
     end_date: date = Query(..., description="Schedule end date"),
     block_number: int | None = Query(
@@ -212,7 +212,7 @@ def export_schedule_xlsx(
     federal_holidays: str | None = Query(
         None, description="Comma-separated federal holiday dates (YYYY-MM-DD)"
     ),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ):

@@ -4,7 +4,7 @@
  * Tests rendering of template lists, loading/error states, and variants.
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { TemplateList, PredefinedTemplateCard } from '@/features/templates/components/TemplateList';
 import type { ScheduleTemplate } from '@/features/templates/types';

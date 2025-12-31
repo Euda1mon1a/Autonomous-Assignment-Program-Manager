@@ -4,7 +4,7 @@
  * Tests data fetching, mutations, and custom hooks for template management.
  */
 
-import { renderHook, waitFor, act } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@/test-utils';
 import { createWrapper } from '../../utils/test-utils';
 import {
   useTemplates,

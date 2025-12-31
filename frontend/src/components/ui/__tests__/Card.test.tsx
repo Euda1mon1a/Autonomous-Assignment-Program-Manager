@@ -1,10 +1,11 @@
+import { renderWithProviders } from '@/test-utils';
 /**
  * Tests for Card Component
  * Component: 41 - Card container
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { renderWithProviders as render, screen } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../Card';
 

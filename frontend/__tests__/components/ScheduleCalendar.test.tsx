@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, within } from '@/test-utils'
 import { ScheduleCalendar } from '@/components/ScheduleCalendar'
 
 // Helper to create a local date (avoiding timezone issues)

@@ -13,10 +13,10 @@ from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
-from sqlalchemy import and_
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import select, and_
+from sqlalchemy.ext.asyncio import AsyncSession, joinedload
 
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.conflict_alert import (
@@ -519,7 +519,7 @@ def analyze_coverage_trend(db: Session, weeks_back: int = 12) -> str:
 
 @router.get("/health", response_model=FMITHealthStatus)
 async def get_fmit_health(
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Get overall FMIT subsystem health status.
@@ -622,7 +622,7 @@ async def get_fmit_health(
 
 @router.get("/status", response_model=FMITDetailedStatus)
 async def get_fmit_detailed_status(
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Get detailed FMIT system status.
@@ -775,7 +775,7 @@ async def get_fmit_detailed_status(
 
 @router.get("/metrics", response_model=FMITMetrics)
 async def get_fmit_metrics(
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Get FMIT-specific metrics.
@@ -974,7 +974,7 @@ async def get_coverage_report(
     period: str = Query(
         "weekly", description="Grouping period: daily, weekly, or monthly"
     ),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Get coverage report for FMIT assignments over a date range.
@@ -1116,7 +1116,7 @@ async def get_coverage_gaps(
     severity_filter: str | None = Query(
         None, description="Filter by severity: critical, high, medium, low"
     ),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     List all coverage gaps with detailed analysis.
@@ -1177,7 +1177,7 @@ async def get_coverage_suggestions(
     max_suggestions: int = Query(
         20, description="Maximum number of suggestions to return"
     ),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Auto-suggest coverage solutions for gaps.
@@ -1289,7 +1289,7 @@ async def get_coverage_suggestions(
 @router.get("/coverage/forecast", response_model=CoverageForecastResponse)
 async def get_coverage_forecast(
     weeks_ahead: int = Query(12, description="Number of weeks to forecast (1-52)"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Predict future coverage gaps based on trends.
@@ -1432,7 +1432,7 @@ async def get_coverage_forecast(
 
 @router.get("/alerts/summary", response_model=AlertSummaryBySeverity)
 async def get_alert_summary(
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Get summary of conflict alerts grouped by severity.

@@ -4,7 +4,7 @@
  * Tests for the main daily manifest page component
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { DailyManifest } from '@/features/daily-manifest/DailyManifest';
 import { createWrapper } from '../../utils/test-utils';

@@ -1,10 +1,11 @@
+import { renderWithProviders } from '@/test-utils';
 /**
  * Tests for Select Component
  * Component: 33 - Custom dropdown
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { renderWithProviders as render, screen, fireEvent, waitFor } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { Select, SelectOption } from '../Select';
 

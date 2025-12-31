@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect, s
 from fastapi.exceptions import HTTPException
 
 from app.core.security import get_current_user, verify_token
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.user import User
 from app.websocket.manager import get_connection_manager
 
@@ -177,7 +177,7 @@ async def websocket_endpoint(
 
 
 @router.get("/ws/stats")
-async def get_websocket_stats(current_user: User = Depends(get_current_user)):
+async def get_websocket_stats(current_user: User = Depends(get_current_active_user)):
     """
     Get WebSocket connection statistics.
 

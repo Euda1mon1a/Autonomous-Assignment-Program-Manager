@@ -1,10 +1,11 @@
+import { renderWithProviders } from '@/test-utils';
 /**
  * Tests for Input Component
  * Component: 43 - Form inputs
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { renderWithProviders as render, screen, fireEvent } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { Input } from '../Input';
 

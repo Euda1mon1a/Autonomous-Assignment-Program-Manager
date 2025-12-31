@@ -3,7 +3,7 @@
  * Tests rendering, loading states, error states, and user interactions
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { HeatmapView, HeatmapViewSkeleton } from '@/features/heatmap/HeatmapView';
 import { heatmapMockFactories } from './heatmap-mocks';

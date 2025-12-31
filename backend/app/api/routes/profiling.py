@@ -13,14 +13,19 @@ Provides endpoints for performance profiling and analysis:
 - GET /profiling/flamegraph - Generate flame graph data
 - POST /profiling/analyze - Analyze profiling data
 - DELETE /profiling/clear - Clear profiling data
+
+SECURITY: All endpoints require admin authentication. Profiling data contains
+sensitive information including SQL queries, request patterns, and system internals.
 """
 
 import logging
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
+from app.core.security import get_admin_user
+from app.models.user import User
 from app.profiling import (
     BottleneckDetector,
     CPUProfiler,
@@ -98,9 +103,11 @@ class AnalyzeRequest(BaseModel):
     "/status",
     response_model=ProfilingStatusResponse,
     summary="Get Profiling Status",
-    description="Get current status of profiling system",
+    description="Get current status of profiling system (admin only)",
 )
-async def get_profiling_status() -> ProfilingStatusResponse:
+async def get_profiling_status(
+    current_user: User = Depends(get_admin_user),
+) -> ProfilingStatusResponse:
     """
     Get profiling system status.
 
@@ -144,10 +151,11 @@ async def get_profiling_status() -> ProfilingStatusResponse:
 @router.post(
     "/start",
     summary="Start Profiling Session",
-    description="Start a new profiling session",
+    description="Start a new profiling session (admin only)",
 )
 async def start_profiling_session(
     request: ProfilingSessionRequest,
+    current_user: User = Depends(get_admin_user),
 ) -> dict[str, Any]:
     """
     Start a profiling session.
@@ -198,9 +206,11 @@ async def start_profiling_session(
 @router.post(
     "/stop",
     summary="Stop Profiling Session",
-    description="Stop current profiling session",
+    description="Stop current profiling session (admin only)",
 )
-async def stop_profiling_session() -> dict[str, Any]:
+async def stop_profiling_session(
+    current_user: User = Depends(get_admin_user),
+) -> dict[str, Any]:
     """
     Stop profiling session.
 
@@ -234,10 +244,11 @@ async def stop_profiling_session() -> dict[str, Any]:
 @router.get(
     "/report",
     summary="Get Profiling Report",
-    description="Generate comprehensive profiling report",
+    description="Generate comprehensive profiling report (admin only)",
 )
 async def get_profiling_report(
     format: str = Query("json", description="Report format (json or html)"),
+    current_user: User = Depends(get_admin_user),
 ) -> dict[str, Any]:
     """
     Generate profiling report.
@@ -293,12 +304,13 @@ async def get_profiling_report(
 @router.get(
     "/queries",
     summary="Get SQL Query Metrics",
-    description="Get SQL query profiling metrics",
+    description="Get SQL query profiling metrics (admin only)",
 )
 async def get_query_metrics(
     limit: int = Query(100, description="Maximum number of queries to return"),
     slow_only: bool = Query(False, description="Return only slow queries"),
     threshold_ms: float = Query(100.0, description="Slow query threshold in ms"),
+    current_user: User = Depends(get_admin_user),
 ) -> dict[str, Any]:
     """
     Get SQL query metrics.
@@ -339,12 +351,13 @@ async def get_query_metrics(
 @router.get(
     "/requests",
     summary="Get Request Metrics",
-    description="Get HTTP request profiling metrics",
+    description="Get HTTP request profiling metrics (admin only)",
 )
 async def get_request_metrics(
     limit: int = Query(100, description="Maximum number of requests to return"),
     slow_only: bool = Query(False, description="Return only slow requests"),
     threshold_ms: float = Query(1000.0, description="Slow request threshold in ms"),
+    current_user: User = Depends(get_admin_user),
 ) -> dict[str, Any]:
     """
     Get HTTP request metrics.
@@ -385,13 +398,14 @@ async def get_request_metrics(
 @router.get(
     "/traces",
     summary="Get Distributed Traces",
-    description="Get distributed trace data",
+    description="Get distributed trace data (admin only)",
 )
 async def get_traces(
     limit: int = Query(100, description="Maximum number of traces to return"),
     trace_id: str | None = Query(None, description="Filter by trace ID"),
     slow_only: bool = Query(False, description="Return only slow traces"),
     threshold_ms: float = Query(1000.0, description="Slow trace threshold in ms"),
+    current_user: User = Depends(get_admin_user),
 ) -> dict[str, Any]:
     """
     Get distributed traces.
@@ -432,11 +446,12 @@ async def get_traces(
 @router.get(
     "/bottlenecks",
     summary="Detect Performance Bottlenecks",
-    description="Detect and analyze performance bottlenecks",
+    description="Detect and analyze performance bottlenecks (admin only)",
 )
 async def detect_bottlenecks(
     sql_threshold_ms: float = Query(100.0, description="SQL slow query threshold"),
     request_threshold_ms: float = Query(1000.0, description="Request slow threshold"),
+    current_user: User = Depends(get_admin_user),
 ) -> dict[str, Any]:
     """
     Detect performance bottlenecks.
@@ -484,11 +499,12 @@ async def detect_bottlenecks(
 @router.get(
     "/flamegraph",
     summary="Generate Flame Graph",
-    description="Generate flame graph data for visualization",
+    description="Generate flame graph data for visualization (admin only)",
 )
 async def generate_flamegraph(
     type: str = Query("cpu", description="Type of flame graph (cpu or traces)"),
     profile_index: int = Query(-1, description="Profile result index (-1 for latest)"),
+    current_user: User = Depends(get_admin_user),
 ) -> dict[str, Any]:
     """
     Generate flame graph data.
@@ -531,9 +547,12 @@ async def generate_flamegraph(
 @router.post(
     "/analyze",
     summary="Analyze Profiling Data",
-    description="Perform detailed analysis of profiling data",
+    description="Perform detailed analysis of profiling data (admin only)",
 )
-async def analyze_profiling_data(request: AnalyzeRequest) -> dict[str, Any]:
+async def analyze_profiling_data(
+    request: AnalyzeRequest,
+    current_user: User = Depends(get_admin_user),
+) -> dict[str, Any]:
     """
     Analyze profiling data.
 
@@ -613,9 +632,11 @@ async def analyze_profiling_data(request: AnalyzeRequest) -> dict[str, Any]:
 @router.delete(
     "/clear",
     summary="Clear Profiling Data",
-    description="Clear all collected profiling data",
+    description="Clear all collected profiling data (admin only)",
 )
-async def clear_profiling_data() -> dict[str, Any]:
+async def clear_profiling_data(
+    current_user: User = Depends(get_admin_user),
+) -> dict[str, Any]:
     """
     Clear all profiling data.
 

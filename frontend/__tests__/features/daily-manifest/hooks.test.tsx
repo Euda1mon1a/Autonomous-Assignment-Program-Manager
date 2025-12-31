@@ -4,7 +4,7 @@
  * Tests React Query hooks for daily manifest data fetching
  */
 
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor } from '@/test-utils';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import * as api from '@/lib/api';

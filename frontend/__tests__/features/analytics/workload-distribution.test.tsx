@@ -5,7 +5,7 @@
  * including shift assignments, workload variance, and PGY level equity.
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { MetricsCard } from '@/features/analytics/MetricsCard';
 import { FairnessTrend } from '@/features/analytics/FairnessTrend';

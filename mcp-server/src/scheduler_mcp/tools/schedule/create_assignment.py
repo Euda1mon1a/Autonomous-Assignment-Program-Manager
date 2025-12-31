@@ -84,20 +84,14 @@ class CreateAssignmentTool(BaseTool[CreateAssignmentRequest, CreateAssignmentRes
         client = self._require_api_client()
 
         try:
-            ***REMOVED*** Create assignment via API
-            result = await client.client.post(
-                f"{client.config.api_prefix}/assignments",
-                headers=await client._ensure_authenticated(),
-                json={
-                    "person_id": request.person_id,
-                    "block_date": request.block_date,
-                    "block_session": request.block_session,
-                    "rotation_id": request.rotation_id,
-                    "notes": request.notes,
-                },
+            ***REMOVED*** Create assignment via API client
+            data = await client.create_assignment(
+                person_id=request.person_id,
+                block_date=request.block_date,
+                block_session=request.block_session,
+                rotation_id=request.rotation_id,
+                notes=request.notes,
             )
-            result.raise_for_status()
-            data = result.json()
 
             return CreateAssignmentResponse(
                 success=True,

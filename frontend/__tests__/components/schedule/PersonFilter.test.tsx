@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@/test-utils'
 import { PersonFilter } from '@/components/schedule/PersonFilter'
 
 // Mock the hooks

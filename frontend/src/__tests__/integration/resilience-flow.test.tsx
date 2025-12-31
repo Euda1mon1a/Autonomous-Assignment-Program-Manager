@@ -5,7 +5,7 @@
  * Covers defense levels, utilization gauges, N-1/N-2 contingency analysis,
  * early warning systems, and resilience reports.
  */
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as api from '@/lib/api'

@@ -2,7 +2,7 @@
  * Tests for useAuth hooks
  * Tests authentication, authorization, permissions, and session management
  */
-import { renderHook, waitFor, act } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@/test-utils'
 import {
   useAuth,
   useLogin,

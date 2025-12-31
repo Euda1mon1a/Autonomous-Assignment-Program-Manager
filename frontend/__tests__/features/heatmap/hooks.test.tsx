@@ -3,7 +3,7 @@
  * Tests data fetching, caching, mutations, and query invalidation
  */
 
-import { renderHook, waitFor, act } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@/test-utils';
 import {
   useHeatmapData,
   useCoverageHeatmap,

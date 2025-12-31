@@ -2,7 +2,7 @@
  * Tests for useSchedule hook
  * Tests schedule fetching, date formatting, and refetch behavior
  */
-import { renderHook, waitFor, act } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@/test-utils'
 import { useSchedule, useGenerateSchedule, useValidateSchedule } from '@/lib/hooks'
 import { createWrapper, mockFactories, mockResponses } from '../utils/test-utils'
 import * as api from '@/lib/api'

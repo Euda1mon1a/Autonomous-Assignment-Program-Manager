@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor, within, fireEvent } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { AddAbsenceModal } from '@/components/AddAbsenceModal'
 import { useCreateAbsence, usePeople } from '@/lib/hooks'

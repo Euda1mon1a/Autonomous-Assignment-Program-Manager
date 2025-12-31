@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@/test-utils';
 import { SwapApprovalPanel } from '@/components/swap/SwapApprovalPanel';
 import { SwapRequest } from '@/components/swap/SwapCard';
 
@@ -170,9 +170,11 @@ describe('SwapApprovalPanel', () => {
         />
       );
       fireEvent.click(screen.getByTestId('swap-card-swap-1'));
-      const approveButtons = screen.getAllByText('Approve Swap');
-      fireEvent.click(approveButtons[0]);
-      fireEvent.click(approveButtons[1]); // Second approve button (submit)
+      fireEvent.click(screen.getAllByText('Approve Swap')[0]);
+
+      // Re-query after DOM update
+      const submitButton = screen.getAllByText('Approve Swap')[1];
+      fireEvent.click(submitButton);
 
       await waitFor(() => {
         expect(mockOnApprove).toHaveBeenCalledWith('swap-1', undefined);
@@ -188,13 +190,13 @@ describe('SwapApprovalPanel', () => {
         />
       );
       fireEvent.click(screen.getByTestId('swap-card-swap-1'));
-      const approveButtons = screen.getAllByText('Approve Swap');
-      fireEvent.click(approveButtons[0]);
+      fireEvent.click(screen.getAllByText('Approve Swap')[0]);
 
       const notesTextarea = screen.getByLabelText(/Notes \(Optional\)/i);
       fireEvent.change(notesTextarea, { target: { value: 'Approved for coverage' } });
 
-      fireEvent.click(approveButtons[1]);
+      // Re-query after DOM update
+      fireEvent.click(screen.getAllByText('Approve Swap')[1]);
 
       await waitFor(() => {
         expect(mockOnApprove).toHaveBeenCalledWith('swap-1', 'Approved for coverage');
@@ -228,9 +230,10 @@ describe('SwapApprovalPanel', () => {
         />
       );
       fireEvent.click(screen.getByTestId('swap-card-swap-1'));
-      const rejectButtons = screen.getAllByText('Reject Swap');
-      fireEvent.click(rejectButtons[0]);
-      fireEvent.click(rejectButtons[1]); // Submit button
+      fireEvent.click(screen.getAllByText('Reject Swap')[0]);
+
+      // Re-query after DOM update
+      fireEvent.click(screen.getAllByText('Reject Swap')[1]);
 
       await waitFor(() => {
         expect(screen.getByText(/Please provide a reason for rejection/i)).toBeInTheDocument();
@@ -248,13 +251,13 @@ describe('SwapApprovalPanel', () => {
         />
       );
       fireEvent.click(screen.getByTestId('swap-card-swap-1'));
-      const rejectButtons = screen.getAllByText('Reject Swap');
-      fireEvent.click(rejectButtons[0]);
+      fireEvent.click(screen.getAllByText('Reject Swap')[0]);
 
       const reasonTextarea = screen.getByLabelText(/Rejection Reason \*/i);
       fireEvent.change(reasonTextarea, { target: { value: 'Coverage conflict' } });
 
-      fireEvent.click(rejectButtons[1]);
+      // Re-query after DOM update
+      fireEvent.click(screen.getAllByText('Reject Swap')[1]);
 
       await waitFor(() => {
         expect(mockOnReject).toHaveBeenCalledWith('swap-1', 'Coverage conflict');
@@ -270,13 +273,13 @@ describe('SwapApprovalPanel', () => {
         />
       );
       fireEvent.click(screen.getByTestId('swap-card-swap-1'));
-      const rejectButtons = screen.getAllByText('Reject Swap');
-      fireEvent.click(rejectButtons[0]);
+      fireEvent.click(screen.getAllByText('Reject Swap')[0]);
 
       const reasonTextarea = screen.getByLabelText(/Rejection Reason \*/i);
       fireEvent.change(reasonTextarea, { target: { value: 'Coverage conflict' } });
 
-      fireEvent.click(rejectButtons[1]);
+      // Re-query after DOM update
+      fireEvent.click(screen.getAllByText('Reject Swap')[1]);
 
       await waitFor(() => {
         expect(screen.queryByText('Reject Swap Request')).not.toBeInTheDocument();
@@ -329,9 +332,10 @@ describe('SwapApprovalPanel', () => {
         />
       );
       fireEvent.click(screen.getByTestId('swap-card-swap-1'));
-      const approveButtons = screen.getAllByText('Approve Swap');
-      fireEvent.click(approveButtons[0]);
-      fireEvent.click(approveButtons[1]);
+      fireEvent.click(screen.getAllByText('Approve Swap')[0]);
+
+      // Re-query after DOM update
+      fireEvent.click(screen.getAllByText('Approve Swap')[1]);
 
       await waitFor(() => {
         expect(screen.getByText('Server error')).toBeInTheDocument();
@@ -349,13 +353,13 @@ describe('SwapApprovalPanel', () => {
         />
       );
       fireEvent.click(screen.getByTestId('swap-card-swap-1'));
-      const rejectButtons = screen.getAllByText('Reject Swap');
-      fireEvent.click(rejectButtons[0]);
+      fireEvent.click(screen.getAllByText('Reject Swap')[0]);
 
       const reasonTextarea = screen.getByLabelText(/Rejection Reason \*/i);
       fireEvent.change(reasonTextarea, { target: { value: 'Test' } });
 
-      fireEvent.click(rejectButtons[1]);
+      // Re-query after DOM update
+      fireEvent.click(screen.getAllByText('Reject Swap')[1]);
 
       await waitFor(() => {
         expect(screen.getByText('Network error')).toBeInTheDocument();
@@ -377,9 +381,10 @@ describe('SwapApprovalPanel', () => {
         />
       );
       fireEvent.click(screen.getByTestId('swap-card-swap-1'));
-      const approveButtons = screen.getAllByRole('button', { name: /Approve Swap/i });
-      fireEvent.click(approveButtons[0]);
-      fireEvent.click(approveButtons[1]);
+      fireEvent.click(screen.getAllByRole('button', { name: /Approve Swap/i })[0]);
+
+      // Re-query after DOM update
+      fireEvent.click(screen.getAllByRole('button', { name: /Approve Swap/i })[1]);
 
       expect(await screen.findByText('Processing...')).toBeInTheDocument();
     });
@@ -397,9 +402,10 @@ describe('SwapApprovalPanel', () => {
         />
       );
       fireEvent.click(screen.getByTestId('swap-card-swap-1'));
-      const approveButtons = screen.getAllByRole('button', { name: /Approve Swap/i });
-      fireEvent.click(approveButtons[0]);
-      fireEvent.click(approveButtons[1]);
+      fireEvent.click(screen.getAllByRole('button', { name: /Approve Swap/i })[0]);
+
+      // Re-query after DOM update
+      fireEvent.click(screen.getAllByRole('button', { name: /Approve Swap/i })[1]);
 
       const cancelButton = await screen.findByRole('button', { name: /Cancel/i });
       expect(cancelButton).toBeDisabled();

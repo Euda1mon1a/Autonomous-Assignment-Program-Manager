@@ -4,7 +4,7 @@
  * Tests holiday management, validation, and interactions
  */
 import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { HolidayEditModal, Holiday } from '@/components/HolidayEditModal'
 

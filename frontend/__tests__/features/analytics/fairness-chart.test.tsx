@@ -5,7 +5,7 @@
  * including Gini coefficient, workload variance, and equity scores.
  */
 
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { FairnessTrend } from '@/features/analytics/FairnessTrend';
 import { MetricsCard } from '@/features/analytics/MetricsCard';

@@ -4,7 +4,7 @@
  * Tests category filtering, different variants, and user interactions.
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { TemplateCategories, CategoryBadge } from '@/features/templates/components/TemplateCategories';
 import type { TemplateCategory } from '@/features/templates/types';

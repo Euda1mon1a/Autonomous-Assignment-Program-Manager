@@ -2,7 +2,7 @@
  * Tests for useRotationTemplates, useCreateTemplate, useUpdateTemplate, useDeleteTemplate hooks
  * Tests rotation template fetching and CRUD operations
  */
-import { renderHook, waitFor, act } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@/test-utils'
 import {
   useRotationTemplates,
   useRotationTemplate,

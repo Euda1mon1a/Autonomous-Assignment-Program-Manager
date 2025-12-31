@@ -8,10 +8,11 @@ Thin routing layer that connects URL paths to service layer.
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.user import User
 from app.schemas.academic_blocks import BlockListResponse, BlockMatrixResponse
 from app.services.academic_block_service import AcademicBlockService
@@ -21,12 +22,12 @@ logger = logging.getLogger(__name__)
 
 
 @router.get("/matrix/academic-blocks", response_model=BlockMatrixResponse)
-def get_academic_block_matrix(
+async def get_academic_block_matrix(
     academic_year: str = Query(..., description="Academic year (e.g., '2024-2025')"),
     pgy_level: int | None = Query(
         None, description="Filter by PGY level (1-3)", ge=1, le=3
     ),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -71,9 +72,9 @@ def get_academic_block_matrix(
 
 
 @router.get("/matrix/blocks", response_model=BlockListResponse)
-def list_academic_blocks(
+async def list_academic_blocks(
     academic_year: str = Query(..., description="Academic year (e.g., '2024-2025')"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """

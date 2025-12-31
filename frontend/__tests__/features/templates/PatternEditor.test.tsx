@@ -2,7 +2,7 @@
  * Tests for PatternEditor Component
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { PatternEditor } from '@/features/templates/components/PatternEditor';
 import type { AssignmentPattern } from '@/features/templates/types';

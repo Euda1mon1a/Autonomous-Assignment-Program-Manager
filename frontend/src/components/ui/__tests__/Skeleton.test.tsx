@@ -1,5 +1,6 @@
+import { renderWithProviders } from '@/test-utils';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { renderWithProviders as render, screen } from '@/test-utils';
 import { Skeleton, SkeletonText, SkeletonCard, SkeletonTable } from '../Skeleton';
 
 describe('Skeleton', () => {

@@ -13,7 +13,7 @@
  * and may need adjustments based on the final implementation.
  */
 
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { HubVisualization } from '@/features/resilience/HubVisualization';
 import { resilienceMockFactories, resilienceMockResponses } from './resilience-mocks';

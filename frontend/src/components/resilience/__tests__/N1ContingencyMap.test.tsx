@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { N1ContingencyMap } from '../N1ContingencyMap';
 

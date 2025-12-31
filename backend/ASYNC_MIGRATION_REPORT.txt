@@ -1,0 +1,241 @@
+BACKEND ASYNC MIGRATION DETAILED REPORT
+================================================================================
+
+
+================================================================================
+FILE: admin_users.py
+PATH: /home/user/Autonomous-Assignment-Program-Manager/backend/app/api/routes/admin_users.py
+================================================================================
+Status: NEEDS MIGRATION
+Total routes: 8
+Sync routes: 0
+Async routes: 8
+db.query() calls: 2
+db.execute() calls: 7
+Has sync Session: False
+Has AsyncSession: True
+
+
+================================================================================
+FILE: analytics.py
+PATH: /home/user/Autonomous-Assignment-Program-Manager/backend/app/api/routes/analytics.py
+================================================================================
+Status: NEEDS MIGRATION
+Total routes: 6
+Sync routes: 0
+Async routes: 6
+db.query() calls: 9
+db.execute() calls: 3
+Has sync Session: False
+Has AsyncSession: True
+
+
+================================================================================
+FILE: claude_chat.py
+PATH: /home/user/Autonomous-Assignment-Program-Manager/backend/app/api/routes/claude_chat.py
+================================================================================
+Status: NEEDS MIGRATION
+Total routes: 3
+Sync routes: 0
+Async routes: 3
+db.query() calls: 2
+db.execute() calls: 1
+Has sync Session: False
+Has AsyncSession: False
+
+
+================================================================================
+FILE: daily_manifest.py
+PATH: /home/user/Autonomous-Assignment-Program-Manager/backend/app/api/routes/daily_manifest.py
+================================================================================
+Status: NEEDS MIGRATION
+Total routes: 1
+Sync routes: 0
+Async routes: 1
+db.query() calls: 1
+db.execute() calls: 0
+Has sync Session: False
+Has AsyncSession: True
+
+
+================================================================================
+FILE: export.py
+PATH: /home/user/Autonomous-Assignment-Program-Manager/backend/app/api/routes/export.py
+================================================================================
+Status: NEEDS MIGRATION
+Total routes: 4
+Sync routes: 0
+Async routes: 4
+db.query() calls: 3
+db.execute() calls: 0
+Has sync Session: False
+Has AsyncSession: True
+
+
+================================================================================
+FILE: fmit_health.py
+PATH: /home/user/Autonomous-Assignment-Program-Manager/backend/app/api/routes/fmit_health.py
+================================================================================
+Status: NEEDS MIGRATION
+Total routes: 8
+Sync routes: 0
+Async routes: 8
+db.query() calls: 56
+db.execute() calls: 0
+Has sync Session: False
+Has AsyncSession: True
+
+
+================================================================================
+FILE: fmit_timeline.py
+PATH: /home/user/Autonomous-Assignment-Program-Manager/backend/app/api/routes/fmit_timeline.py
+================================================================================
+Status: NEEDS MIGRATION
+Total routes: 4
+Sync routes: 0
+Async routes: 4
+db.query() calls: 9
+db.execute() calls: 1
+Has sync Session: False
+Has AsyncSession: True
+
+
+================================================================================
+FILE: leave.py
+PATH: /home/user/Autonomous-Assignment-Program-Manager/backend/app/api/routes/leave.py
+================================================================================
+Status: NEEDS MIGRATION
+Total routes: 7
+Sync routes: 0
+Async routes: 7
+db.query() calls: 3
+db.execute() calls: 3
+Has sync Session: False
+Has AsyncSession: True
+
+
+================================================================================
+FILE: me_dashboard.py
+PATH: /home/user/Autonomous-Assignment-Program-Manager/backend/app/api/routes/me_dashboard.py
+================================================================================
+Status: NEEDS MIGRATION
+Total routes: 1
+Sync routes: 0
+Async routes: 1
+db.query() calls: 3
+db.execute() calls: 1
+Has sync Session: False
+Has AsyncSession: True
+
+
+================================================================================
+FILE: portal.py
+PATH: /home/user/Autonomous-Assignment-Program-Manager/backend/app/api/routes/portal.py
+================================================================================
+Status: NEEDS MIGRATION
+Total routes: 8
+Sync routes: 0
+Async routes: 8
+db.query() calls: 26
+db.execute() calls: 4
+Has sync Session: False
+Has AsyncSession: True
+
+
+================================================================================
+FILE: qubo_templates.py
+PATH: /home/user/Autonomous-Assignment-Program-Manager/backend/app/api/routes/qubo_templates.py
+================================================================================
+Status: NEEDS MIGRATION
+Total routes: 6
+Sync routes: 0
+Async routes: 6
+db.query() calls: 3
+db.execute() calls: 1
+Has sync Session: False
+Has AsyncSession: True
+
+
+================================================================================
+FILE: resilience.py
+PATH: /home/user/Autonomous-Assignment-Program-Manager/backend/app/api/routes/resilience.py
+================================================================================
+Status: NEEDS MIGRATION
+Total routes: 54
+Sync routes: 0
+Async routes: 54
+db.query() calls: 12
+db.execute() calls: 2
+Has sync Session: False
+Has AsyncSession: True
+
+
+================================================================================
+FILE: rotation_templates.py
+PATH: /home/user/Autonomous-Assignment-Program-Manager/backend/app/api/routes/rotation_templates.py
+================================================================================
+Status: NEEDS MIGRATION
+Total routes: 5
+Sync routes: 0
+Async routes: 5
+db.query() calls: 1
+db.execute() calls: 3
+Has sync Session: False
+Has AsyncSession: True
+
+
+================================================================================
+FILE: schedule.py
+PATH: /home/user/Autonomous-Assignment-Program-Manager/backend/app/api/routes/schedule.py
+================================================================================
+Status: NEEDS MIGRATION
+Total routes: 10
+Sync routes: 0
+Async routes: 10
+db.query() calls: 5
+db.execute() calls: 4
+Has sync Session: False
+Has AsyncSession: True
+
+
+================================================================================
+FILE: scheduler.py
+PATH: /home/user/Autonomous-Assignment-Program-Manager/backend/app/api/routes/scheduler.py
+================================================================================
+Status: NEEDS MIGRATION
+Total routes: 12
+Sync routes: 0
+Async routes: 12
+db.query() calls: 2
+db.execute() calls: 0
+Has sync Session: False
+Has AsyncSession: True
+
+
+================================================================================
+FILE: scheduler_ops.py
+PATH: /home/user/Autonomous-Assignment-Program-Manager/backend/app/api/routes/scheduler_ops.py
+================================================================================
+Status: NEEDS MIGRATION
+Total routes: 7
+Sync routes: 0
+Async routes: 7
+db.query() calls: 3
+db.execute() calls: 0
+Has sync Session: False
+Has AsyncSession: True
+
+
+================================================================================
+FILE: settings.py
+PATH: /home/user/Autonomous-Assignment-Program-Manager/backend/app/api/routes/settings.py
+================================================================================
+Status: NEEDS MIGRATION
+Total routes: 4
+Sync routes: 0
+Async routes: 4
+db.query() calls: 1
+db.execute() calls: 0
+Has sync Session: False
+Has AsyncSession: True
+

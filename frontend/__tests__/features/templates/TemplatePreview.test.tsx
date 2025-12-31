@@ -2,7 +2,7 @@
  * Tests for TemplatePreview Component
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { TemplatePreview } from '@/features/templates/components/TemplatePreview';
 import type { ScheduleTemplate } from '@/features/templates/types';

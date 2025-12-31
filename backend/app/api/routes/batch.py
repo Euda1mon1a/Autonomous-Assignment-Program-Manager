@@ -10,10 +10,11 @@ Provides endpoints for bulk assignment operations:
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.core.security import get_current_active_user, get_scheduler_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.user import User
 from app.schemas.batch import (
     BatchCreateRequest,
@@ -32,7 +33,7 @@ router = APIRouter()
 )
 async def batch_create_assignments(
     request: BatchCreateRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_scheduler_user),
 ):
     """
@@ -100,7 +101,7 @@ async def batch_create_assignments(
 @router.put("/update", response_model=BatchResponse)
 async def batch_update_assignments(
     request: BatchUpdateRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_scheduler_user),
 ):
     """
@@ -162,7 +163,7 @@ async def batch_update_assignments(
 @router.delete("/delete", response_model=BatchResponse)
 async def batch_delete_assignments(
     request: BatchDeleteRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_scheduler_user),
 ):
     """
@@ -221,7 +222,7 @@ async def batch_delete_assignments(
 @router.get("/status/{operation_id}", response_model=BatchStatusResponse)
 async def get_batch_status(
     operation_id: UUID,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """

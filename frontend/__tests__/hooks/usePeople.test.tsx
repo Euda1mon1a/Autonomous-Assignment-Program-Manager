@@ -2,7 +2,7 @@
  * Tests for usePeople, useCreatePerson, useUpdatePerson, useDeletePerson hooks
  * Tests people fetching, filtering, and CRUD operations
  */
-import { renderHook, waitFor, act } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@/test-utils'
 import {
   usePeople,
   usePerson,

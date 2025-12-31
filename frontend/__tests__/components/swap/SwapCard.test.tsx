@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test-utils';
 import { SwapCard, SwapRequest } from '@/components/swap/SwapCard';
 
 // Mock child components
@@ -101,14 +101,18 @@ describe('SwapCard', () => {
   describe('Block Information', () => {
     it('displays giving up block details', () => {
       render(<SwapCard swap={mockSwap} />);
-      expect(screen.getByText(/Dr. Alice.*is giving up/i)).toBeInTheDocument();
+      // Text is split across elements, so check separately
+      expect(screen.getByText('Dr. Alice')).toBeInTheDocument();
+      expect(screen.getByText(/is giving up:/i)).toBeInTheDocument();
       expect(screen.getAllByTestId('shift')[0]).toHaveTextContent('AM');
       expect(screen.getAllByTestId('rotation')[0]).toHaveTextContent('Inpatient');
     });
 
     it('displays target block for one-to-one swaps', () => {
       render(<SwapCard swap={mockSwap} />);
-      expect(screen.getByText(/Dr. Bob.*would give up/i)).toBeInTheDocument();
+      // Text is split across elements, so check separately
+      expect(screen.getByText('Dr. Bob')).toBeInTheDocument();
+      expect(screen.getByText(/would give up:/i)).toBeInTheDocument();
       expect(screen.getAllByTestId('shift')[1]).toHaveTextContent('PM');
       expect(screen.getAllByTestId('rotation')[1]).toHaveTextContent('Clinic');
     });

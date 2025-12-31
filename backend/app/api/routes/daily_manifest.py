@@ -8,10 +8,10 @@ from collections import defaultdict
 from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.ext.asyncio import AsyncSession, joinedload
 
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
@@ -28,12 +28,12 @@ router = APIRouter()
 
 
 @router.get("/daily-manifest", response_model=DailyManifestResponse)
-def get_daily_manifest(
+async def get_daily_manifest(
     date_param: date = Query(..., alias="date", description="Date for the manifest"),
     time_of_day: str | None = Query(
         None, description="AM or PM (optional, shows all if omitted)"
     ),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """

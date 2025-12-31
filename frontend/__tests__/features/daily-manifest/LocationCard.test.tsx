@@ -4,7 +4,7 @@
  * Tests for the location card showing staff assignments by location
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { LocationCard } from '@/features/daily-manifest/LocationCard';
 import { manifestMockFactories } from './mockData';

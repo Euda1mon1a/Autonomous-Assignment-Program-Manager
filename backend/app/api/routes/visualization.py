@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import StreamingResponse
 
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.user import User
 from app.schemas.visualization import (
     CoverageHeatmapResponse,
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 @router.get("/heatmap", response_model=HeatmapResponse)
-def get_unified_heatmap(
+async def get_unified_heatmap(
     start_date: date = Query(..., description="Start date for heatmap"),
     end_date: date = Query(..., description="End date for heatmap"),
     person_ids: list[UUID] | None = Query(None, description="Filter by person IDs"),
@@ -84,7 +84,7 @@ def get_unified_heatmap(
 
 
 @router.post("/heatmap/unified", response_model=HeatmapResponse)
-def get_unified_heatmap_with_time_range(
+async def get_unified_heatmap_with_time_range(
     request: UnifiedHeatmapRequest,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -144,7 +144,7 @@ def get_unified_heatmap_with_time_range(
 
 
 @router.get("/heatmap/image")
-def get_heatmap_image(
+async def get_heatmap_image(
     start_date: date = Query(..., description="Start date for heatmap"),
     end_date: date = Query(..., description="End date for heatmap"),
     person_ids: list[UUID] | None = Query(None, description="Filter by person IDs"),
@@ -238,7 +238,7 @@ def get_heatmap_image(
 
 
 @router.get("/coverage", response_model=CoverageHeatmapResponse)
-def get_coverage_heatmap(
+async def get_coverage_heatmap(
     start_date: date = Query(..., description="Start date for coverage analysis"),
     end_date: date = Query(..., description="End date for coverage analysis"),
     db=Depends(get_db),
@@ -269,7 +269,7 @@ def get_coverage_heatmap(
 
 
 @router.get("/workload", response_model=HeatmapResponse)
-def get_workload_heatmap(
+async def get_workload_heatmap(
     person_ids: list[UUID] = Query(..., description="Person IDs for workload analysis"),
     start_date: date = Query(..., description="Start date"),
     end_date: date = Query(..., description="End date"),
@@ -311,7 +311,7 @@ def get_workload_heatmap(
 
 
 @router.post("/export")
-def export_heatmap(
+async def export_heatmap(
     request: ExportRequest,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -413,7 +413,7 @@ def export_heatmap(
 
 
 @router.get("/voxel-grid")
-def get_3d_voxel_grid(
+async def get_3d_voxel_grid(
     start_date: date = Query(..., description="Start date for voxel grid"),
     end_date: date = Query(..., description="End date for voxel grid"),
     person_ids: list[UUID] | None = Query(None, description="Filter by person IDs"),
@@ -599,7 +599,7 @@ def get_3d_voxel_grid(
 
 
 @router.get("/voxel-grid/conflicts")
-def get_3d_conflicts(
+async def get_3d_conflicts(
     start_date: date = Query(..., description="Start date"),
     end_date: date = Query(..., description="End date"),
     db=Depends(get_db),
@@ -650,7 +650,7 @@ def get_3d_conflicts(
 
 
 @router.get("/voxel-grid/coverage-gaps")
-def get_3d_coverage_gaps(
+async def get_3d_coverage_gaps(
     start_date: date = Query(..., description="Start date"),
     end_date: date = Query(..., description="End date"),
     required_activity_types: list[str] = Query(

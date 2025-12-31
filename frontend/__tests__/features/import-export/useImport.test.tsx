@@ -4,7 +4,7 @@
  * Tests file parsing, preview generation, import execution, and state management
  */
 
-import { renderHook, waitFor, act } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@/test-utils';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useImport } from '@/features/import-export/useImport';
 import * as api from '@/lib/api';

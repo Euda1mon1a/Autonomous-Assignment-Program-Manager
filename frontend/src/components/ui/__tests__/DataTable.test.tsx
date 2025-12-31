@@ -1,5 +1,6 @@
+import { renderWithProviders } from '@/test-utils';
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { renderWithProviders as render, screen, fireEvent } from '@/test-utils';
 import { DataTable, Column } from '../DataTable';
 
 interface TestData {
