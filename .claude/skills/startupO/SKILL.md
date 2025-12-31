@@ -44,6 +44,53 @@ Philosophy: "The whole is greater than the sum of its parts - when properly coor
 
 ---
 
+## ⚠️ CRITICAL: IDE Crash Prevention
+
+**YOU (ORCHESTRATOR) MUST NOT spawn 8+ agents directly.** This causes IDE seizure and crashes.
+
+### The Rule
+
+| Spawning | Limit | Result |
+|----------|-------|--------|
+| ORCHESTRATOR → Agents directly | **MAX 2** | IDE stable |
+| ORCHESTRATOR → Agents directly | 8+ | **IDE CRASH** |
+
+### Correct Pattern
+
+```
+ORCHESTRATOR → spawns 1-2 Coordinators
+                    ↓
+              Coordinator manages N agents internally
+```
+
+### Available Coordinators
+
+| Task | Coordinator | Protocol |
+|------|-------------|----------|
+| Reconnaissance | G2_RECON | `/search-party` |
+| QA Validation | COORD_QUALITY | `/qa-party` |
+| Quality Review | COORD_QUALITY | Direct spawn |
+| Platform Work | COORD_PLATFORM | Direct spawn |
+| Resilience | COORD_RESILIENCE | Direct spawn |
+
+### Example
+
+```python
+# WRONG - Will crash IDE
+for domain in 12_domains:
+    Task(description=f"Explore {domain}", ...)  # 12 spawns = CRASH
+
+# CORRECT - Route through coordinator
+Task(
+    description="G2_RECON: Deploy SEARCH_PARTY",
+    prompt="You are G2_RECON. Deploy 12 G-2 teams..."
+)  # 1 spawn, coordinator handles the rest
+```
+
+**Parallel execution is the default. Just route through a coordinator.**
+
+---
+
 ## Required Actions on Invocation
 
 ### 1. Load Core Context
