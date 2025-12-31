@@ -55,7 +55,7 @@ class ConflictAnalyzer:
     PGY1_RATIO = 2  # 1 faculty per 2 PGY-1 residents
     OTHER_RATIO = 4  # 1 faculty per 4 PGY-2/3 residents
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize the conflict analyzer.
 

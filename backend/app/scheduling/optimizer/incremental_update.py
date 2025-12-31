@@ -13,8 +13,13 @@ logger = logging.getLogger(__name__)
 class IncrementalScheduleUpdater:
     """Update schedules incrementally without full regeneration."""
 
-    def __init__(self):
-        """Initialize incremental updater."""
+    def __init__(self) -> None:
+        """
+        Initialize incremental updater.
+
+        Creates a new updater instance with zero counters for tracking
+        update and conflict statistics.
+        """
         self.update_count = 0
         self.conflict_count = 0
 
@@ -346,10 +351,23 @@ class IncrementalScheduleUpdater:
         return False
 
     async def get_stats(self) -> dict:
-        """Get update statistics.
+        """
+        Get update statistics.
+
+        Returns statistics about incremental updates including total
+        update count, conflicts encountered, and conflict rate percentage.
 
         Returns:
-            Statistics dictionary
+            Statistics dictionary with keys:
+                - total_updates: Number of update operations performed
+                - conflicts: Number of conflicts encountered
+                - conflict_rate: Percentage of updates that had conflicts
+
+        Example:
+            >>> updater = IncrementalScheduleUpdater()
+            >>> # ... perform updates ...
+            >>> stats = await updater.get_stats()
+            >>> print(f"Conflict rate: {stats['conflict_rate']:.1f}%")
         """
         return {
             "total_updates": self.update_count,

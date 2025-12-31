@@ -73,7 +73,7 @@ class ACGMEComplianceEngine:
     4. Provides compliance dashboard metrics
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize compliance engine with all validators."""
         self.work_hour_validator = WorkHourValidator()
         self.supervision_validator = SupervisionValidator()

@@ -38,7 +38,7 @@ class ScheduleGenerationLock:
     end
     """
 
-    def __init__(self, redis_client: redis.Redis | None = None):
+    def __init__(self, redis_client: redis.Redis | None = None) -> None:
         """Initialize the distributed lock.
 
         Args:

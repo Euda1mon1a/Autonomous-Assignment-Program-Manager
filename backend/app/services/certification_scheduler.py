@@ -39,14 +39,24 @@ REMINDER_THRESHOLDS = [180, 90, 30, 14, 7]
 class CertificationScheduler:
     """Background scheduler for certification management tasks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.scheduler = None
         self.enabled = os.getenv("CERT_CHECK_ENABLED", "true").lower() == "true"
         self.check_hour = int(os.getenv("CERT_CHECK_HOUR", "6"))
         self.admin_email = os.getenv("CERT_ADMIN_EMAIL")
 
-    def start(self):
-        """Start the background scheduler."""
+    def start(self) -> None:
+        """
+        Start the background scheduler for certification management.
+
+        Initializes and starts the APScheduler background scheduler with a daily
+        cron job for certification checks. The job runs at the configured hour
+        (default 6 AM) to check expiring certifications and send reminders.
+
+        Raises:
+            ImportError: If APScheduler is not installed (logs warning instead of raising)
+            Exception: If scheduler initialization fails (logged, not raised)
+        """
         if not self.enabled:
             logger.info("Certification scheduler is disabled")
             return
@@ -79,13 +89,18 @@ class CertificationScheduler:
         except Exception as e:
             logger.error(f"Failed to start certification scheduler: {e}")
 
-    def stop(self):
-        """Stop the background scheduler."""
+    def stop(self) -> None:
+        """
+        Stop the background scheduler gracefully.
+
+        Shuts down the APScheduler instance without waiting for running jobs
+        to complete. Safe to call even if scheduler is not running.
+        """
         if self.scheduler:
             self.scheduler.shutdown(wait=False)
             logger.info("Certification scheduler stopped")
 
-    def run_daily_check(self):
+    def run_daily_check(self) -> None:
         """
         Run the daily certification check.
 
@@ -133,7 +148,22 @@ class CertificationScheduler:
         email_service: EmailService,
         days: int,
     ) -> int:
-        """Send reminders for a specific day threshold."""
+        """
+        Send reminder emails for certifications expiring in N days.
+
+        Queries certifications needing reminders at the specified threshold,
+        checks if reminders are enabled for each certification type, sends
+        emails, and marks reminders as sent.
+
+        Args:
+            db: Database session
+            cert_service: Certification service instance
+            email_service: Email service instance
+            days: Number of days until expiration threshold
+
+        Returns:
+            Number of reminder emails successfully sent
+        """
         certs_needing_reminder = cert_service.get_certifications_needing_reminder(days)
         sent_count = 0
 
@@ -165,8 +195,21 @@ class CertificationScheduler:
         db: Session,
         cert_service: CertificationService,
         email_service: EmailService,
-    ):
-        """Send compliance summary to administrator."""
+    ) -> None:
+        """
+        Send daily compliance summary email to administrator.
+
+        Generates a summary report of expiring and expired certifications
+        and emails it to the configured admin email address.
+
+        Args:
+            db: Database session
+            cert_service: Certification service instance
+            email_service: Email service instance
+
+        Raises:
+            Exception: Logs error if email sending fails (does not re-raise)
+        """
         try:
             expiring = cert_service.get_expiring_certifications(days=180)
             expired = cert_service.get_expired_certifications()
@@ -180,11 +223,22 @@ class CertificationScheduler:
         except Exception as e:
             logger.error(f"Failed to send admin summary: {e}")
 
-    def run_now(self, db: Session | None = None):
+    def run_now(self, db: Session | None = None) -> None:
         """
         Run the certification check immediately (for testing/manual trigger).
 
-        Can be called via API or CLI.
+        Executes the daily certification check on demand, useful for testing
+        the scheduler behavior or manually triggering checks outside the
+        scheduled time. Can be called via API endpoint or CLI command.
+
+        Args:
+            db: Optional database session. If None, creates temporary session
+                that will be closed after execution
+
+        Example:
+            >>> from app.services.certification_scheduler import get_scheduler
+            >>> scheduler = get_scheduler()
+            >>> scheduler.run_now()  # Trigger check immediately
         """
         if db is None:
             db = SessionLocal()
@@ -204,21 +258,41 @@ _scheduler: CertificationScheduler | None = None
 
 
 def get_scheduler() -> CertificationScheduler:
-    """Get or create the global scheduler instance."""
+    """
+    Get or create the global scheduler instance.
+
+    Implements singleton pattern for the certification scheduler.
+    Creates a new instance on first call, returns existing instance
+    on subsequent calls.
+
+    Returns:
+        CertificationScheduler: Global scheduler singleton instance
+    """
     global _scheduler
     if _scheduler is None:
         _scheduler = CertificationScheduler()
     return _scheduler
 
 
-def start_scheduler():
-    """Start the certification scheduler."""
+def start_scheduler() -> None:
+    """
+    Start the certification scheduler.
+
+    Convenience function to get the global scheduler instance and
+    start it. Safe to call multiple times - will not create duplicate
+    schedulers.
+    """
     scheduler = get_scheduler()
     scheduler.start()
 
 
-def stop_scheduler():
-    """Stop the certification scheduler."""
+def stop_scheduler() -> None:
+    """
+    Stop the certification scheduler and clear global instance.
+
+    Shuts down the scheduler and resets the global singleton to None.
+    Safe to call even if scheduler is not running.
+    """
     global _scheduler
     if _scheduler:
         _scheduler.stop()

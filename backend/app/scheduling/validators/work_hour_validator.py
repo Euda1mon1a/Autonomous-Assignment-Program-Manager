@@ -70,7 +70,7 @@ class WorkHourValidator:
     4. Moonlighting integration: All moonlighting hours count toward 80-hour limit
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize work hour validator."""
         self.max_weekly_hours = MAX_WEEKLY_HOURS
         self.rolling_days = ROLLING_DAYS

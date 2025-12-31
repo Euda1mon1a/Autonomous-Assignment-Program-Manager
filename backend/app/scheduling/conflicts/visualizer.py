@@ -35,8 +35,13 @@ class ConflictVisualizer:
         ConflictSeverity.LOW: 0.25,
     }
 
-    def __init__(self):
-        """Initialize the conflict visualizer."""
+    def __init__(self) -> None:
+        """
+        Initialize the conflict visualizer.
+
+        Creates a new visualizer instance with no state. All visualization
+        methods are stateless and operate on the provided conflict data.
+        """
         pass
 
     async def generate_timeline(
@@ -158,13 +163,21 @@ class ConflictVisualizer:
         """
         Generate category distribution timeline (weekly aggregation).
 
+        Creates a week-by-week breakdown of conflicts grouped by category.
+        Each week starts on Monday and includes counts for each conflict
+        category type.
+
         Args:
-            conflicts: List of conflicts
-            start_date: Start date
-            end_date: End date
+            conflicts: List of conflicts to aggregate
+            start_date: Start date for timeline
+            end_date: End date for timeline
 
         Returns:
-            List of weekly category distribution entries
+            List of weekly category distribution entries, each containing:
+                - week_start: ISO format start date (Monday)
+                - week_end: ISO format end date (Sunday)
+                - total_conflicts: Total conflicts in that week
+                - by_category: Dictionary mapping category names to counts
         """
         category_timeline = []
 
@@ -264,11 +277,20 @@ class ConflictVisualizer:
         """
         Convert severity score to discrete level.
 
+        Maps continuous severity score (0.0-1.0) to discrete levels
+        suitable for heatmap visualization. Levels correspond to
+        visual intensity in UI components.
+
         Args:
-            severity_score: Score from 0.0 to 1.0
+            severity_score: Continuous severity score from 0.0 to 1.0
 
         Returns:
-            Level from 0 to 3 (0=none, 1=low, 2=medium, 3=high, 4=critical)
+            Discrete level integer:
+                - 0: No conflicts (score = 0.0)
+                - 1: Low severity (score <= 0.25)
+                - 2: Medium severity (score <= 0.5)
+                - 3: High severity (score <= 0.75)
+                - 4: Critical severity (score > 0.75)
         """
         if severity_score == 0.0:
             return 0
@@ -332,11 +354,19 @@ class ConflictVisualizer:
         """
         Get color code for severity level.
 
+        Returns Tailwind CSS color hex codes for consistent severity
+        visualization across the application.
+
         Args:
-            severity: Conflict severity
+            severity: ConflictSeverity enum value
 
         Returns:
-            Color hex code
+            Hex color code string:
+                - CRITICAL: #DC2626 (red-600)
+                - HIGH: #EA580C (orange-600)
+                - MEDIUM: #F59E0B (amber-500)
+                - LOW: #FCD34D (amber-300)
+                - Default: #9CA3AF (gray-400)
         """
         colors = {
             ConflictSeverity.CRITICAL: "#DC2626",  # red-600
