@@ -9,6 +9,25 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 
+from app.analytics.constants import (
+    MIN_OBSERVATIONS_FOR_TREND,
+    MIN_OBSERVATIONS_FOR_CHANGE_POINT,
+    MIN_OBSERVATIONS_FOR_VOLATILITY,
+    STABLE_TREND_SLOPE_THRESHOLD,
+    HIGH_CONFIDENCE_P_VALUE,
+    HIGH_CONFIDENCE_R_SQUARED,
+    MEDIUM_CONFIDENCE_P_VALUE,
+    MEDIUM_CONFIDENCE_R_SQUARED,
+    DEFAULT_CHANGE_POINT_Z_THRESHOLD,
+    DEFAULT_MAX_CYCLE_PERIOD,
+    CYCLE_STRENGTH_THRESHOLD,
+    DEFAULT_VOLATILITY_WINDOW,
+    DEFAULT_ZSCORE_THRESHOLD,
+    DEFAULT_IQR_MULTIPLIER,
+    FIRST_QUARTILE,
+    THIRD_QUARTILE,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -26,7 +45,7 @@ class TrendDetector:
     def detect_trends(
         self,
         time_series_data: dict[str, pd.Series],
-        min_observations: int = 4,
+        min_observations: int = MIN_OBSERVATIONS_FOR_TREND,
     ) -> dict[str, dict[str, Any]]:
         """
         Detect trends in multiple time series.
@@ -111,7 +130,7 @@ class TrendDetector:
         slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
 
         # Determine trend direction
-        if abs(slope) < 0.01:
+        if abs(slope) < STABLE_TREND_SLOPE_THRESHOLD:
             direction = "stable"
         elif slope > 0:
             direction = "increasing"
@@ -119,9 +138,9 @@ class TrendDetector:
             direction = "decreasing"
 
         # Determine confidence based on p-value and R²
-        if p_value < 0.01 and r_value**2 > 0.7:
+        if p_value < HIGH_CONFIDENCE_P_VALUE and r_value**2 > HIGH_CONFIDENCE_R_SQUARED:
             confidence = "high"
-        elif p_value < 0.05 and r_value**2 > 0.5:
+        elif p_value < MEDIUM_CONFIDENCE_P_VALUE and r_value**2 > MEDIUM_CONFIDENCE_R_SQUARED:
             confidence = "medium"
         else:
             confidence = "low"
@@ -151,7 +170,7 @@ class TrendDetector:
     def detect_change_points(
         self,
         series: pd.Series,
-        threshold: float = 2.0,
+        threshold: float = DEFAULT_CHANGE_POINT_Z_THRESHOLD,
     ) -> list[dict[str, Any]]:
         """
         Detect significant change points in time series.
@@ -215,7 +234,7 @@ class TrendDetector:
     def detect_cycles(
         self,
         series: pd.Series,
-        max_period: int = 30,
+        max_period: int = DEFAULT_MAX_CYCLE_PERIOD,
     ) -> dict[str, Any]:
         """
         Detect cyclic patterns in time series.
@@ -269,7 +288,7 @@ class TrendDetector:
         # Find strongest autocorrelation
         best_lag, best_corr = max(autocorrs, key=lambda x: abs(x[1]))
 
-        has_cycle = abs(best_corr) > 0.3
+        has_cycle = abs(best_corr) > CYCLE_STRENGTH_THRESHOLD
 
         return {
             "has_cycle": has_cycle,
@@ -281,7 +300,7 @@ class TrendDetector:
     def calculate_volatility(
         self,
         series: pd.Series,
-        window: int = 7,
+        window: int = DEFAULT_VOLATILITY_WINDOW,
     ) -> dict[str, float]:
         """
         Calculate volatility metrics.
@@ -306,7 +325,7 @@ class TrendDetector:
         """
         series = series.dropna()
 
-        if len(series) < 2:
+        if len(series) < MIN_OBSERVATIONS_FOR_VOLATILITY:
             return {
                 "std": 0,
                 "coefficient_of_variation": 0,
@@ -337,7 +356,7 @@ class TrendDetector:
         self,
         series: pd.Series,
         method: str = "zscore",
-        threshold: float = 3.0,
+        threshold: float = DEFAULT_ZSCORE_THRESHOLD,
     ) -> list[dict[str, Any]]:
         """
         Detect outliers in time series.
@@ -405,8 +424,8 @@ class TrendDetector:
                     )
 
         elif method == "iqr":
-            q1 = series.quantile(0.25)
-            q3 = series.quantile(0.75)
+            q1 = series.quantile(FIRST_QUARTILE)
+            q3 = series.quantile(THIRD_QUARTILE)
             iqr = q3 - q1
 
             lower_bound = q1 - threshold * iqr
