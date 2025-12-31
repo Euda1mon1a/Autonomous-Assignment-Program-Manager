@@ -435,6 +435,12 @@ HISTORIAN then:
 
 ---
 
+***REMOVED******REMOVED*** Notes
+
+Only invoked for significant/poignant sessions. Creates human-readable narratives in .claude/Scratchpad/histories/. Protected from cleanup operations.
+
+---
+
 ***REMOVED******REMOVED*** Closing Thought
 
 HISTORIAN exists because **software is built by humans, for humans**. Code tells you what the system does. Tests tell you what it should do. Documentation tells you how to use it.

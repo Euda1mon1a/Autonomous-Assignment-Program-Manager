@@ -479,7 +479,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
    * Disconnects the WebSocket connection.
    */
   const disconnect = useCallback(() => {
-    console.log('[useWebSocket] Disconnecting...')
     manualDisconnectRef.current = true
     clearTimers()
 
@@ -500,7 +499,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
     // Don't connect if we're already connected or connecting
     if (wsRef.current?.readyState === WebSocket.OPEN ||
         wsRef.current?.readyState === WebSocket.CONNECTING) {
-      console.log('[useWebSocket] Already connected or connecting')
       return
     }
 
@@ -520,7 +518,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
     // Add token as query parameter
     const urlWithToken = authToken ? `${wsUrl}?token=${encodeURIComponent(authToken)}` : wsUrl
 
-    console.log('[useWebSocket] Connecting to:', wsUrl)
     setConnectionState('connecting')
 
     try {
@@ -530,7 +527,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       ws.onopen = () => {
         if (!mountedRef.current) return
 
-        console.log('[useWebSocket] Connected')
         setConnectionState('connected')
         setReconnectAttemptsCount(0)
         currentReconnectInterval.current = reconnectInterval
@@ -549,11 +545,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
         if (parsed) {
           setLastMessage(parsed)
           onMessageRef.current?.(parsed)
-
-          // Handle pong internally (no need to expose to user)
-          if (parsed.event_type === 'pong') {
-            console.debug('[useWebSocket] Received pong')
-          }
         }
       }
 
@@ -567,7 +558,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       ws.onclose = (event) => {
         if (!mountedRef.current) return
 
-        console.log('[useWebSocket] Closed:', event.code, event.reason)
         clearTimers()
         wsRef.current = null
 
@@ -593,18 +583,12 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
           )
           currentReconnectInterval.current = nextInterval
 
-          console.log(
-            `[useWebSocket] Reconnecting in ${Math.round(currentReconnectInterval.current + jitter)}ms ` +
-            `(attempt ${reconnectAttemptsCount + 1}/${maxReconnectAttempts})`
-          )
-
           reconnectTimeoutRef.current = setTimeout(() => {
             if (mountedRef.current && !manualDisconnectRef.current) {
               connect()
             }
           }, currentReconnectInterval.current + jitter)
         } else if (reconnectAttemptsCount >= maxReconnectAttempts) {
-          console.log('[useWebSocket] Max reconnect attempts reached')
           setConnectionState('disconnected')
         } else {
           setConnectionState('disconnected')
@@ -631,7 +615,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
    */
   const send = useCallback((message: ClientMessage) => {
     if (wsRef.current?.readyState !== WebSocket.OPEN) {
-      console.warn('[useWebSocket] Cannot send message: not connected')
       return
     }
 

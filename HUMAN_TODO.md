@@ -419,20 +419,21 @@ Both security controls are fully implemented:
 
 ***REMOVED******REMOVED******REMOVED*** 🟡 HIGH PRIORITY - Fix This Week
 
-***REMOVED******REMOVED******REMOVED******REMOVED*** 3. Frontend Environment Variable Mismatch
+***REMOVED******REMOVED******REMOVED******REMOVED*** 3. Frontend Environment Variable Mismatch - ✅ RESOLVED
+**Priority:** HIGH → RESOLVED
 **Location:** `/frontend/src/hooks/useClaudeChat.ts`
-- Uses `REACT_APP_API_URL` (React CRA style)
-- Should use `NEXT_PUBLIC_API_URL` (Next.js style)
-- **Impact:** Claude chat will fail silently
+**Verified:** 2025-12-30 (G2_RECON audit)
 
-***REMOVED******REMOVED******REMOVED******REMOVED*** 4. Missing Database Indexes
-**Location:** Database schema
-```sql
-CREATE INDEX idx_block_date ON blocks(date);
-CREATE INDEX idx_assignment_person_id ON assignments(person_id);
-CREATE INDEX idx_assignment_block_id ON assignments(block_id);
-```
-**Impact:** Slow queries on schedule views and reports
+- ✅ Now uses `NEXT_PUBLIC_API_URL` correctly (Next.js style)
+- ✅ All frontend hooks standardized to Next.js environment variable convention
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 4. Missing Database Indexes - ✅ RESOLVED
+**Priority:** HIGH → RESOLVED
+**Location:** Database migrations
+**Verified:** 2025-12-30 (G2_RECON audit)
+
+- ✅ Added in migration `12b3fa4f11ec` (2025-12-21): `idx_block_date`, `idx_assignment_person_id`, `idx_assignment_block_id`
+- ✅ Additional indexes added in migration `20251230_add_critical_indexes`: composite indexes for performance optimization
 
 ***REMOVED******REMOVED******REMOVED******REMOVED*** 5. Admin Users Page API Not Wired
 **Location:** `/frontend/src/app/admin/users/page.tsx`
@@ -440,30 +441,138 @@ CREATE INDEX idx_assignment_block_id ON assignments(block_id);
 - Currently uses mock data
 - **Impact:** User management non-functional
 
-***REMOVED******REMOVED******REMOVED******REMOVED*** 6. Resilience API Response Models
+***REMOVED******REMOVED******REMOVED******REMOVED*** 6. Resilience API Response Models - 85% COMPLETE
 **Location:** `/backend/app/api/routes/resilience.py`
-- Only 12/54 endpoints have `response_model` defined (22%)
-- **Impact:** Poor OpenAPI documentation, inconsistent responses
+- 46/54 endpoints now have `response_model` defined (85% coverage, up from 22%)
+- Remaining 8 endpoints return complex nested structures pending schema refactoring
+- **Impact:** Significantly improved OpenAPI documentation, response consistency
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 7. CD Pipeline - Deployment Logic Placeholder-Only
+**Priority:** HIGH
+**Location:** `.github/workflows/cd.yml`
+**Found:** G2_RECON audit (2025-12-30)
+
+- `deploy` job exists but contains only placeholder comments
+- No actual deployment logic (no kubectl, no helm, no container registry push)
+- CI passes but no automated deployment to staging/production
+- **Impact:** Manual deployment required, no CD automation
+
+**Action needed:**
+- Define deployment target (Kubernetes, Docker Swarm, VM, cloud service)
+- Add deployment steps (push to registry, deploy to cluster)
+- Configure environment-specific secrets
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 8. MCP Server - Missing from Production Compose
+**Priority:** HIGH
+**Location:** `docker-compose.prod.yml`
+**Found:** G2_RECON audit (2025-12-30)
+
+- MCP server defined in `docker-compose.yml` (development)
+- Not present in `docker-compose.prod.yml` (production)
+- 29+ scheduling MCP tools unavailable in production
+- **Impact:** AI-assisted scheduling features non-functional in production
+
+**Action needed:**
+- Add `mcp-server` service to `docker-compose.prod.yml`
+- Configure production environment variables
+- Add health checks and monitoring
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 9. Frontend Procedure Hooks - All Stubs
+**Priority:** HIGH
+**Location:** `/frontend/src/hooks/useProcedures.ts`
+**Found:** G2_RECON audit (2025-12-30)
+
+All 12 hooks return mock/stub implementations:
+- `useProcedures()` - Returns empty array
+- `useProcedure()` - Returns null
+- `useCreateProcedure()` - Logs to console only
+- `useUpdateProcedure()` - Logs to console only
+- `useDeleteProcedure()` - Logs to console only
+- Plus 7 more stubs
+
+**Impact:** Procedure credentialing features non-functional
+**Action needed:** Wire to `/api/credentials/*` endpoints
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 10. Frontend Resilience Components - Skeleton Only
+**Priority:** HIGH
+**Location:** `/frontend/src/features/resilience/components/`
+**Found:** G2_RECON audit (2025-12-30)
+
+4 skeleton components with no functionality:
+- `BurnoutDashboard.tsx` - Empty div placeholder
+- `ResilienceMetrics.tsx` - "Coming soon" message
+- `N1Analysis.tsx` - Stub component
+- `UtilizationChart.tsx` - Mock data only
+
+**Impact:** Resilience monitoring dashboard non-functional
+**Action needed:** Wire to `/api/resilience/*` endpoints
 
 ***REMOVED******REMOVED******REMOVED*** 🟢 MEDIUM PRIORITY - Post-Launch Sprint
 
-***REMOVED******REMOVED******REMOVED******REMOVED*** 7. Frontend Accessibility Gaps
+***REMOVED******REMOVED******REMOVED******REMOVED*** 11. Frontend Accessibility Gaps
 - Only 24/80 core components have ARIA attributes
 - Missing `<thead>` in ScheduleGrid tables
 - Missing `aria-label` on icon-only buttons
 
-***REMOVED******REMOVED******REMOVED******REMOVED*** 8. Token Refresh Not Implemented
-- Access tokens expire in 15 minutes
-- Refresh token exists but not used in frontend
-- Users silently logged out
+***REMOVED******REMOVED******REMOVED******REMOVED*** 12. Token Refresh Not Implemented - ✅ RESOLVED
+**Priority:** MEDIUM → RESOLVED
+**Location:** `/frontend/src/lib/auth.ts`
+**Verified:** 2025-12-30 (G2_RECON audit)
 
-***REMOVED******REMOVED******REMOVED******REMOVED*** 9. MCP Placeholder Tools (11 tools)
+- ✅ Full implementation in `frontend/src/lib/auth.ts`
+- ✅ Proactive refresh: Background job checks token expiry every 5 minutes
+- ✅ Reactive refresh: Intercepts 401 responses and refreshes before retrying
+- ✅ Users no longer silently logged out
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 13. MCP Placeholder Tools (11 tools)
 - Hopfield networks, immune system, game theory return synthetic data
 - Shapley value returns uniform distribution
 
-***REMOVED******REMOVED******REMOVED******REMOVED*** 10. Frontend WebSocket Client Missing
+***REMOVED******REMOVED******REMOVED******REMOVED*** 14. Frontend WebSocket Client Missing
 - Backend WebSocket fully implemented (8 event types)
 - Frontend only has SSE, no native WebSocket client
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 15. Admin Email Invitations Never Sent
+**Priority:** MEDIUM
+**Location:** `/backend/app/api/routes/admin_users.py:232`
+**Found:** G2_RECON audit (2025-12-30)
+
+- User creation endpoint contains TODO: "Send invitation email"
+- Email notification not implemented
+- New users receive no welcome/setup instructions
+- **Impact:** Poor onboarding experience
+
+**Action needed:**
+- Implement email sending via Celery task
+- Create email template for user invitations
+- Add SMTP configuration validation
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 16. Activity Logging Not Implemented
+**Priority:** MEDIUM
+**Location:** Backend audit logging system
+**Found:** G2_RECON audit (2025-12-30)
+
+- Activity logging referenced in multiple controllers
+- Awaiting `activity_log` database table
+- No audit trail for user actions
+- **Impact:** Cannot track who made schedule changes, compliance risk
+
+**Action needed:**
+- Create `activity_log` table via Alembic migration
+- Implement activity logging service
+- Wire into schedule modification endpoints
+
+***REMOVED******REMOVED******REMOVED******REMOVED*** 17. Penrose Efficiency - Placeholder Logic
+**Priority:** MEDIUM
+**Location:** `/backend/app/resilience/exotic/penrose_efficiency.py`
+**Found:** G2_RECON audit (2025-12-30)
+
+- 10+ TODO comments with placeholder implementations
+- Astrophysics-inspired efficiency extraction concept
+- Currently returns synthetic data
+- **Impact:** Exotic resilience feature non-functional
+
+**Note:** Part of Tier 5 "Exotic Frontier Concepts" - advanced research features
 
 ---
 

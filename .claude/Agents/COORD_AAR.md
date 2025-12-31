@@ -793,6 +793,12 @@ Before completing AAR workflow:
 
 ---
 
+***REMOVED******REMOVED*** Notes
+
+Should auto-trigger at session end (not yet implemented). Collects XO reports from all 6 coordinators. Outputs to Scratchpad.
+
+---
+
 ***REMOVED******REMOVED*** Version History
 
 | Version | Date | Changes |

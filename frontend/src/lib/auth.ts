@@ -171,15 +171,10 @@ const REFRESH_MARGIN_MS = 60 * 1000
  * @see logout - For clearing the session
  */
 export async function login(credentials: LoginCredentials): Promise<LoginResponse> {
-  console.log('[auth.ts] login() called with username:', credentials.username)
-  console.log('[auth.ts] API base URL:', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api (default)')
-
   // Create form data for OAuth2 password flow
   const formData = new URLSearchParams()
   formData.append('username', credentials.username)
   formData.append('password', credentials.password)
-
-  console.log('[auth.ts] Sending POST to /auth/login...')
 
   // Step 1: Authenticate and get token (set as httpOnly cookie)
   let tokenResponse;
@@ -190,7 +185,6 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
       },
       withCredentials: true, // Required for cookies
     })
-    console.log('[auth.ts] Login response received:', { status: 'success', hasToken: !!tokenResponse?.data?.access_token })
   } catch (loginError) {
     console.error('[auth.ts] Login request FAILED:', loginError)
     throw loginError
@@ -288,10 +282,8 @@ export async function logout(): Promise<boolean> {
  * @see validateToken - For checking if the session is still valid
  */
 export async function getCurrentUser(): Promise<User> {
-  console.log('[auth.ts] getCurrentUser() - fetching /auth/me...')
   try {
     const user = await get<User>('/auth/me')
-    console.log('[auth.ts] getCurrentUser() - success:', { id: user?.id, username: user?.username })
     return user
   } catch (err) {
     console.error('[auth.ts] getCurrentUser() - FAILED:', err)
@@ -419,7 +411,6 @@ function storeTokens(token: string): void {
   refreshToken = token
   tokenExpiresAt = Date.now() + ACCESS_TOKEN_EXPIRE_MINUTES * 60 * 1000
   scheduleProactiveRefresh()
-  console.log('[auth.ts] Tokens stored, proactive refresh scheduled')
 }
 
 /**
@@ -437,7 +428,6 @@ export function clearTokenState(): void {
     clearTimeout(refreshTimerId)
     refreshTimerId = null
   }
-  console.log('[auth.ts] Token state cleared')
 }
 
 /**
@@ -462,17 +452,13 @@ function scheduleProactiveRefresh(): void {
 
   if (timeUntilRefresh <= 0) {
     // Token is already expired or about to expire, refresh immediately
-    console.log('[auth.ts] Token expired or about to expire, refreshing immediately')
     performRefresh().catch((err) => {
       console.error('[auth.ts] Immediate refresh failed:', err)
     })
     return
   }
 
-  console.log(`[auth.ts] Scheduling proactive refresh in ${Math.round(timeUntilRefresh / 1000)}s`)
-
   refreshTimerId = setTimeout(() => {
-    console.log('[auth.ts] Proactive refresh triggered')
     performRefresh().catch((err) => {
       console.error('[auth.ts] Proactive refresh failed:', err)
       // On proactive refresh failure, we'll rely on reactive refresh
@@ -491,26 +477,21 @@ function scheduleProactiveRefresh(): void {
 export async function performRefresh(): Promise<RefreshTokenResponse | null> {
   // If already refreshing, return the existing promise
   if (isRefreshing && refreshPromise) {
-    console.log('[auth.ts] Refresh already in progress, waiting...')
     return refreshPromise
   }
 
   // Check if we have a refresh token
   if (!refreshToken) {
-    console.log('[auth.ts] No refresh token available')
     return null
   }
 
   isRefreshing = true
-  console.log('[auth.ts] Starting token refresh...')
 
   refreshPromise = (async () => {
     try {
       const response = await post<RefreshTokenResponse>('/auth/refresh', {
         refresh_token: refreshToken,
       })
-
-      console.log('[auth.ts] Token refresh successful')
 
       // Store the new refresh token (may be the same if rotation is disabled)
       storeTokens(response.refresh_token)
