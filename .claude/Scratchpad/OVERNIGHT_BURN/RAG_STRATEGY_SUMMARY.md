@@ -1,8 +1,13 @@
 # OVERNIGHT_BURN RAG Strategy - Executive Summary
 
+⚠️ **CONSOLIDATED:** This document has been consolidated into [RAG_MASTER_STRATEGY.md](RAG_MASTER_STRATEGY.md)
+
+**See:** [RAG_MASTER_STRATEGY.md](RAG_MASTER_STRATEGY.md) for the complete, unified strategy
+
 **Document:** Summary of RAG/Indexing Strategy Design
-**Status:** Complete - Ready for Implementation
+**Status:** Complete - Superseded by RAG_MASTER_STRATEGY.md
 **Created:** 2025-12-30
+**Updated:** 2025-12-31 (Consolidated)
 
 ---
 

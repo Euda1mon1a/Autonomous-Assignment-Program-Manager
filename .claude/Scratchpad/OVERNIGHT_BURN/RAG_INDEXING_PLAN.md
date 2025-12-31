@@ -1,7 +1,12 @@
 # OVERNIGHT_BURN RAG/Indexing Strategy
 
+⚠️ **CONSOLIDATED:** This document has been consolidated into [RAG_MASTER_STRATEGY.md](RAG_MASTER_STRATEGY.md)
+
+**See:** [RAG_MASTER_STRATEGY.md](RAG_MASTER_STRATEGY.md) for the complete, unified strategy
+
 **Document:** RAG Indexing Plan for OVERNIGHT_BURN Reconnaissance Data
 **Created:** 2025-12-30
+**Updated:** 2025-12-31 (Consolidated)
 **Scope:** 208 files, 4.4 MB across 10 domain-specific reconnaissance sessions
 **Purpose:** Design retrieval augmented generation (RAG) and semantic search infrastructure for future agent access
 

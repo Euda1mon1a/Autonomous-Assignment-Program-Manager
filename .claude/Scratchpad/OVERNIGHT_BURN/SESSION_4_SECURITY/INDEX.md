@@ -1,6 +1,8 @@
 # Security Audit Series Index - Session 4 Overnight Burn
 **SEARCH_PARTY G2_RECON Comprehensive Security Reconnaissance**
 
+**Last Updated:** 2025-12-31
+
 ---
 
 ## Audit Report Series
