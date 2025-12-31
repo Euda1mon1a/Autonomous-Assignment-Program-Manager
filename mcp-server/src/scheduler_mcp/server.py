@@ -3,15 +3,28 @@ Main MCP server for the residency scheduler.
 
 This module creates and configures the FastMCP server, registering all
 tools and resources for AI assistant interaction.
+
+Supports HTTP transport for remote access with API key authentication.
+Deploy on Render or similar platforms to enable Claude Code integration.
 """
 
 import logging
 import os
 import sys
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from fastmcp import FastMCP
+
+# Try to import Starlette for health endpoint (optional for HTTP transport)
+try:
+    from starlette.responses import JSONResponse
+    from starlette.routing import Route
+    STARLETTE_AVAILABLE = True
+except ImportError:
+    STARLETTE_AVAILABLE = False
+    JSONResponse = None  # type: ignore
+    Route = None  # type: ignore
 
 from .async_tools import (
     ActiveTasksResult,
@@ -4323,7 +4336,100 @@ async def on_shutdown() -> None:
     logger.info("Server shutdown complete")
 
 
-# Main entry point
+# =============================================================================
+# Health Check Endpoint for HTTP Transport
+# =============================================================================
+
+
+def create_health_endpoint():
+    """Create a health check endpoint handler for Render/load balancers."""
+    if not STARLETTE_AVAILABLE:
+        return None
+
+    async def health_check(request):
+        """Health check endpoint for monitoring."""
+        api_key_configured = bool(os.environ.get("MCP_API_KEY"))
+        api_credentials_configured = bool(
+            os.environ.get("API_USERNAME") and os.environ.get("API_PASSWORD")
+        )
+
+        return JSONResponse({
+            "status": "healthy",
+            "service": "residency-scheduler-mcp",
+            "version": "0.1.0",
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "checks": {
+                "mcp_server": "ok",
+                "api_key_configured": api_key_configured,
+                "api_credentials_configured": api_credentials_configured,
+            }
+        })
+
+    return health_check
+
+
+# =============================================================================
+# API Key Authentication Middleware
+# =============================================================================
+
+
+class APIKeyAuthMiddleware:
+    """
+    ASGI middleware for API key authentication on HTTP transport.
+
+    Validates the Authorization header against MCP_API_KEY environment variable.
+    Health endpoint is excluded from authentication.
+    """
+
+    def __init__(self, app, api_key: str | None = None):
+        self.app = app
+        self.api_key = api_key or os.environ.get("MCP_API_KEY")
+        self.exempt_paths = {"/health", "/health/", "/"}
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        path = scope.get("path", "")
+
+        # Allow health checks without auth
+        if path in self.exempt_paths:
+            await self.app(scope, receive, send)
+            return
+
+        # If no API key configured, allow all requests (dev mode)
+        if not self.api_key:
+            logger.warning("MCP_API_KEY not set - running without authentication")
+            await self.app(scope, receive, send)
+            return
+
+        # Check Authorization header
+        headers = dict(scope.get("headers", []))
+        auth_header = headers.get(b"authorization", b"").decode()
+
+        # Support both "Bearer <token>" and raw token
+        token = None
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+        elif auth_header:
+            token = auth_header
+
+        if token != self.api_key:
+            logger.warning(f"Unauthorized MCP request to {path}")
+            response = JSONResponse(
+                {"error": "Unauthorized", "message": "Invalid or missing API key"},
+                status_code=401,
+            )
+            await response(scope, receive, send)
+            return
+
+        await self.app(scope, receive, send)
+
+
+# =============================================================================
+# Main Entry Point
+# =============================================================================
 
 
 def main() -> None:
@@ -4332,6 +4438,11 @@ def main() -> None:
 
     This is the main entry point when running as a script or via
     the scheduler-mcp command.
+
+    For remote deployment (Render, etc.):
+    - Set MCP_TRANSPORT=http
+    - Set MCP_API_KEY for authentication
+    - Health check available at /health
     """
     import argparse
 
@@ -4346,6 +4457,7 @@ Environment Variables:
   MCP_TRANSPORT    Transport mode: stdio, http, sse (default: stdio)
   MCP_HOST         Host to bind for HTTP/SSE (default: 127.0.0.1)
   MCP_PORT         Port to bind for HTTP/SSE (default: 8080)
+  MCP_API_KEY      API key for HTTP authentication (required for production)
 
 Examples:
   # Run with STDIO transport (default, for Claude Desktop/IDE)
@@ -4353,6 +4465,9 @@ Examples:
 
   # Run with HTTP transport (for Docker containers)
   MCP_TRANSPORT=http scheduler-mcp --host 0.0.0.0 --port 8080
+
+  # Run with HTTP transport and authentication (for Render deployment)
+  MCP_TRANSPORT=http MCP_API_KEY=your-secret-key scheduler-mcp --host 0.0.0.0 --port 8080
 
   # Run with debug logging
   LOG_LEVEL=DEBUG scheduler-mcp
@@ -4394,17 +4509,62 @@ Examples:
     logger.info(f"Transport: {args.transport.upper()}")
     if args.transport != "stdio":
         logger.info(f"Starting MCP server on {args.host}:{args.port}")
+
+        # Check for API key in production
+        api_key = os.environ.get("MCP_API_KEY")
+        if api_key:
+            logger.info("API key authentication enabled")
+        else:
+            logger.warning(
+                "MCP_API_KEY not set - server running without authentication. "
+                "This is insecure for production deployments!"
+            )
+
     logger.info(f"Log level: {args.log_level}")
 
     # Run the server with appropriate transport
     if args.transport == "stdio":
         mcp.run(transport="stdio")
     else:
-        mcp.run(
-            transport=args.transport,
-            host=args.host,
-            port=args.port,
-        )
+        # For HTTP transport, use ASGI app with auth middleware
+        try:
+            import uvicorn
+            from starlette.applications import Starlette
+            from starlette.routing import Route, Mount
+
+            # Get the MCP ASGI app
+            mcp_app = mcp.http_app()
+
+            # Create health endpoint
+            health_handler = create_health_endpoint()
+            routes = []
+            if health_handler:
+                routes.append(Route("/health", health_handler, methods=["GET"]))
+
+            # Mount MCP app at /mcp and add health at root
+            routes.append(Mount("/mcp", app=mcp_app))
+
+            # Also mount at root for backwards compatibility
+            routes.append(Mount("/", app=mcp_app))
+
+            app = Starlette(routes=routes)
+
+            # Wrap with auth middleware
+            app = APIKeyAuthMiddleware(app)
+
+            logger.info(f"Health check available at http://{args.host}:{args.port}/health")
+            logger.info(f"MCP endpoint available at http://{args.host}:{args.port}/mcp")
+
+            uvicorn.run(app, host=args.host, port=args.port, log_level=args.log_level.lower())
+
+        except ImportError as e:
+            logger.warning(f"Advanced HTTP features not available: {e}")
+            logger.info("Falling back to basic FastMCP HTTP transport")
+            mcp.run(
+                transport=args.transport,
+                host=args.host,
+                port=args.port,
+            )
 
 
 if __name__ == "__main__":
