@@ -136,7 +136,7 @@ def persist_health_check(db: Session, report, metrics_snapshot: dict = None):
         timestamp=report.timestamp,
         overall_status=report.overall_status,
         utilization_rate=report.utilization.utilization_rate,
-        utilization_level=report.utilization.level.value,
+        utilization_level=report.utilization.level.value.upper(),
         buffer_remaining=report.utilization.buffer_remaining,
         defense_level=report.defense_level.name if report.defense_level else None,
         load_shedding_level=(
@@ -291,26 +291,28 @@ async def get_system_health(
         persist_health_check(db, report)
 
     # Convert to response schema
+    # Use getattr with defaults for fields that may not be present in all implementations
+    util = report.utilization
     return HealthCheckResponse(
         timestamp=report.timestamp,
         overall_status=OverallStatus(report.overall_status),
         utilization=UtilizationMetrics(
-            utilization_rate=report.utilization.utilization_rate,
-            level=UtilizationLevel(report.utilization.level.value),
-            buffer_remaining=report.utilization.buffer_remaining,
-            wait_time_multiplier=report.utilization.wait_time_multiplier,
-            safe_capacity=report.utilization.safe_capacity,
-            current_demand=report.utilization.current_demand,
-            theoretical_capacity=report.utilization.theoretical_capacity,
+            utilization_rate=util.utilization_rate,
+            level=UtilizationLevel(util.level.value.upper()),
+            buffer_remaining=util.buffer_remaining,
+            wait_time_multiplier=getattr(util, "wait_time_multiplier", 1.0),
+            safe_capacity=getattr(util, "safe_capacity", util.total_capacity),
+            current_demand=getattr(util, "current_demand", util.current_assignments),
+            theoretical_capacity=getattr(util, "theoretical_capacity", util.total_capacity),
         ),
         defense_level=DefenseLevel(report.defense_level.name),
         redundancy_status=[
             RedundancyStatus(
-                service=r.service,
+                service=getattr(r, "service", r.function_name),
                 status=r.status,
-                available=r.available,
-                minimum_required=r.minimum_required,
-                buffer=r.buffer,
+                available=getattr(r, "available", r.current_available),
+                minimum_required=getattr(r, "minimum_required", r.required_minimum),
+                buffer=getattr(r, "buffer", r.redundancy_level),
             )
             for r in report.redundancy_status
         ],
