@@ -130,11 +130,8 @@ class WorkHourValidator:
 
             # Check for violation
             if average_weekly > self.max_weekly_hours:
-                violation_pct = (
-                    (average_weekly - self.max_weekly_hours)
-                    / self.max_weekly_hours
-                    * 100
-                )
+                violation_pct = ((average_weekly - self.max_weekly_hours) /
+                                 self.max_weekly_hours * 100)
                 violations.append(
                     WorkHourViolation(
                         person_id=person_id,
@@ -195,10 +192,10 @@ class WorkHourValidator:
         if not shift_data:
             return violations, warnings
 
-        sorted_shifts = sorted(shift_data, key=lambda x: x.get("start_time", "00:00"))
+        sorted_shifts = sorted(shift_data, key=lambda x: x.get('start_time', '00:00'))
 
         for i, shift in enumerate(sorted_shifts):
-            duration = shift.get("duration_hours", 0)
+            duration = shift.get('duration_hours', 0)
 
             if duration > MAX_CONSECUTIVE_HOURS:
                 # Check if 24+4 exception applies
@@ -229,7 +226,7 @@ class WorkHourValidator:
                                 f"24+4 rule violation on {shift.get('date', 'Unknown')}: "
                                 f"{duration:.1f} hours (limit: 28h)"
                             ),
-                            date_range=(shift.get("date"), shift.get("date")),
+                            date_range=(shift.get('date'), shift.get('date')),
                             hours=duration,
                             limit=MAX_TOTAL_SHIFT_HOURS,
                         )
@@ -258,13 +255,13 @@ class WorkHourValidator:
         if len(shift_data) < 2:
             return violations, warnings
 
-        sorted_shifts = sorted(shift_data, key=lambda x: x.get("end_time", "00:00"))
+        sorted_shifts = sorted(shift_data, key=lambda x: x.get('end_time', '00:00'))
 
         for i in range(len(sorted_shifts) - 1):
             current_shift = sorted_shifts[i]
             next_shift = sorted_shifts[i + 1]
 
-            current_duration = current_shift.get("duration_hours", 0)
+            current_duration = current_shift.get('duration_hours', 0)
             if current_duration < MAX_CONSECUTIVE_HOURS:
                 continue  # No rest requirement after short shifts
 
@@ -283,8 +280,8 @@ class WorkHourValidator:
                             f"(minimum {MIN_REST_HOURS_AFTER_SHIFT}h required)"
                         ),
                         date_range=(
-                            current_shift.get("date"),
-                            next_shift.get("date"),
+                            current_shift.get('date'),
+                            next_shift.get('date'),
                         ),
                         hours=rest_hours,
                         limit=MIN_REST_HOURS_AFTER_SHIFT,
@@ -344,7 +341,9 @@ class WorkHourValidator:
 
         return violations, warnings
 
-    def calculate_violation_severity_level(self, violation_percentage: float) -> str:
+    def calculate_violation_severity_level(
+        self, violation_percentage: float
+    ) -> str:
         """
         Calculate severity level based on violation magnitude.
 
@@ -361,7 +360,9 @@ class WorkHourValidator:
         else:
             return "MEDIUM"
 
-    def create_violation_notification_level(self, hours: float) -> str | None:
+    def create_violation_notification_level(
+        self, hours: float
+    ) -> Optional[str]:
         """
         Determine notification threshold for approaching limit.
 
@@ -380,7 +381,9 @@ class WorkHourValidator:
             return "yellow"  # Warning
         return None
 
-    def check_exemption_eligibility(self, person_id: UUID, violation_type: str) -> bool:
+    def check_exemption_eligibility(
+        self, person_id: UUID, violation_type: str
+    ) -> bool:
         """
         Check if resident may be eligible for ACGME-approved exemption.
 
@@ -437,17 +440,16 @@ class BlockBasedWorkHourCalculator:
         rotation_intensity_map = rotation_intensity_map or {}
 
         for assignment in assignments:
-            block_date = assignment.get("block_date")
-            rotation_id = assignment.get("rotation_id")
+            block_date = assignment.get('block_date')
+            rotation_id = assignment.get('rotation_id')
 
             if not block_date:
                 continue
 
             # Determine hours based on rotation intensity
-            intensity = rotation_intensity_map.get(rotation_id, "standard")
+            intensity = rotation_intensity_map.get(rotation_id, 'standard')
             hours = (
-                self.intensive_hours
-                if intensity == "intensive"
+                self.intensive_hours if intensity == 'intensive'
                 else self.standard_hours
             )
 

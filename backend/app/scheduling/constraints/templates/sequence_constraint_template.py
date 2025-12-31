@@ -56,23 +56,19 @@ class SequenceConstraintTemplate(HardConstraint):
                     if i + 1 < len(sorted_assigns):
                         next_assign = sorted_assigns[i + 1]
                         if not self._is_required_after(next_assign):
-                            violations.append(
-                                {
-                                    "constraint_name": self.name,
-                                    "message": "Required rotation missing after sequence",
-                                    "person_id": person_id,
-                                    "block_id": assign.block_id,
-                                }
-                            )
+                            violations.append({
+                                'constraint_name': self.name,
+                                'message': f'Required rotation missing after sequence',
+                                'person_id': person_id,
+                                'block_id': assign.block_id,
+                            })
                     else:
-                        violations.append(
-                            {
-                                "constraint_name": self.name,
-                                "message": "Required rotation missing at end",
-                                "person_id": person_id,
-                                "block_id": assign.block_id,
-                            }
-                        )
+                        violations.append({
+                            'constraint_name': self.name,
+                            'message': f'Required rotation missing at end',
+                            'person_id': person_id,
+                            'block_id': assign.block_id,
+                        })
 
         return ConstraintResult(
             satisfied=len(violations) == 0,

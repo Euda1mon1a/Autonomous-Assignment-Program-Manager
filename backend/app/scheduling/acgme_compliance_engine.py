@@ -43,7 +43,7 @@ class ComplianceCheckResult:
     violations_by_domain: dict = field(default_factory=dict)
     warnings_by_domain: dict = field(default_factory=dict)
     remediation_suggestions: list[str] = field(default_factory=list)
-    last_updated: date | None = None
+    last_updated: Optional[date] = None
 
 
 @dataclass
@@ -107,11 +107,11 @@ class ACGMEComplianceEngine:
             f"Starting complete schedule validation: {period_start} to {period_end}"
         )
 
-        residents = schedule_data.get("residents", [])
-        assignments = schedule_data.get("assignments", [])
-        blocks = schedule_data.get("blocks", [])
-        call_assignments = schedule_data.get("call_assignments", {})
-        leave_records = schedule_data.get("leave_records", {})
+        residents = schedule_data.get('residents', [])
+        assignments = schedule_data.get('assignments', [])
+        blocks = schedule_data.get('blocks', [])
+        call_assignments = schedule_data.get('call_assignments', {})
+        leave_records = schedule_data.get('leave_records', {})
 
         # Run validation for each resident
         by_resident = {}
@@ -119,17 +119,15 @@ class ACGMEComplianceEngine:
         total_high = 0
 
         for resident in residents:
-            resident_id = resident.get("id")
-            pgy_level = resident.get("pgy_level")
+            resident_id = resident.get('id')
+            pgy_level = resident.get('pgy_level')
 
             result = self.validate_resident_compliance(
                 person_id=resident_id,
                 pgy_level=pgy_level,
                 period_start=period_start,
                 period_end=period_end,
-                assignments=[
-                    a for a in assignments if a.get("person_id") == resident_id
-                ],
+                assignments=[a for a in assignments if a.get('person_id') == resident_id],
                 blocks=blocks,
                 call_assignments=call_assignments.get(resident_id, []),
                 leave_records=leave_records.get(resident_id, []),
@@ -140,11 +138,12 @@ class ACGMEComplianceEngine:
             total_high += result.high_violations
 
         # Aggregate results
-        residents_compliant = sum(1 for r in by_resident.values() if r.is_compliant)
+        residents_compliant = sum(
+            1 for r in by_resident.values() if r.is_compliant
+        )
         compliance_percentage = (
             residents_compliant / len(residents) * 100
-            if residents and len(residents) > 0
-            else 100.0
+            if residents and len(residents) > 0 else 100.0
         )
 
         # Validate supervision across blocks
@@ -159,11 +158,8 @@ class ACGMEComplianceEngine:
 
         # Generate executive summary
         executive_summary = self._generate_executive_summary(
-            residents_compliant,
-            len(residents),
-            total_critical,
-            total_high,
-            compliance_percentage,
+            residents_compliant, len(residents), total_critical, total_high,
+            compliance_percentage
         )
 
         report = ScheduleValidationReport(
@@ -176,15 +172,13 @@ class ACGMEComplianceEngine:
             high_violations_count=total_high,
             by_resident=by_resident,
             by_domain={
-                "supervision": sup_metrics,
+                'supervision': sup_metrics,
             },
             executive_summary=executive_summary,
         )
 
-        logger.info(
-            f"Schedule validation complete: {compliance_percentage:.1f}% "
-            f"compliant ({residents_compliant}/{len(residents)} residents)"
-        )
+        logger.info(f"Schedule validation complete: {compliance_percentage:.1f}% "
+                   f"compliant ({residents_compliant}/{len(residents)} residents)")
 
         return report
 
@@ -227,8 +221,8 @@ class ACGMEComplianceEngine:
                 hours_by_date=hours_by_date,
             )
         )
-        violations_by_domain["work_hours"] = wh_violations
-        warnings_by_domain["work_hours"] = wh_warnings
+        violations_by_domain['work_hours'] = wh_violations
+        warnings_by_domain['work_hours'] = wh_warnings
 
         if wh_violations:
             remediation.append(
@@ -239,13 +233,15 @@ class ACGMEComplianceEngine:
         # Supervision is checked per-block, not per-resident
 
         # 3. Call Validation
-        call_dates = [c.get("date") for c in call_assignments if c.get("date")]
-        call_violations, call_warnings = self.call_validator.validate_call_frequency(
-            person_id=person_id,
-            call_dates=call_dates,
+        call_dates = [c.get('date') for c in call_assignments if c.get('date')]
+        call_violations, call_warnings = (
+            self.call_validator.validate_call_frequency(
+                person_id=person_id,
+                call_dates=call_dates,
+            )
         )
-        violations_by_domain["call"] = call_violations
-        warnings_by_domain["call"] = call_warnings
+        violations_by_domain['call'] = call_violations
+        warnings_by_domain['call'] = call_warnings
 
         if call_violations:
             remediation.append(
@@ -257,25 +253,28 @@ class ACGMEComplianceEngine:
         for leave in leave_records:
             violation = self.leave_validator.validate_no_assignment_during_block(
                 person_id=person_id,
-                absence_id=leave.get("id"),
-                absence_type=leave.get("type"),
-                start_date=leave.get("start_date"),
-                end_date=leave.get("end_date"),
+                absence_id=leave.get('id'),
+                absence_type=leave.get('type'),
+                start_date=leave.get('start_date'),
+                end_date=leave.get('end_date'),
                 assigned_dates=list(hours_by_date.keys()),
-                is_blocking=leave.get("is_blocking"),
+                is_blocking=leave.get('is_blocking'),
             )
             if violation:
                 leave_violations.append(violation)
 
-        violations_by_domain["leave"] = leave_violations
+        violations_by_domain['leave'] = leave_violations
         if leave_violations:
-            remediation.append("Remove assignments that conflict with approved leaves")
+            remediation.append(
+                "Remove assignments that conflict with approved leaves"
+            )
 
         # 5. Rotation Validation
         rotation_violations = []
-        clinic_blocks = len(
-            [a for a in assignments if "clinic" in a.get("rotation_name", "").lower()]
-        )
+        clinic_blocks = len([
+            a for a in assignments
+            if 'clinic' in a.get('rotation_name', '').lower()
+        ])
 
         if pgy_level == 1 and clinic_blocks < 8:
             rotation_violations.append(
@@ -287,8 +286,8 @@ class ACGMEComplianceEngine:
                 )
             )
 
-        violations_by_domain["rotation"] = [v for v in rotation_violations if v]
-        if violations_by_domain["rotation"]:
+        violations_by_domain['rotation'] = [v for v in rotation_violations if v]
+        if violations_by_domain['rotation']:
             remediation.append(
                 "Schedule additional clinic rotations to meet PGY-level requirements"
             )
@@ -299,24 +298,16 @@ class ACGMEComplianceEngine:
             for vlist in violations_by_domain.values()
         )
         critical_count = sum(
-            1
-            for domain_violations in violations_by_domain.values()
-            for v in (
-                domain_violations
-                if isinstance(domain_violations, list)
-                else [domain_violations]
-            )
-            if v and hasattr(v, "severity") and v.severity == "CRITICAL"
+            1 for domain_violations in violations_by_domain.values()
+            for v in (domain_violations if isinstance(domain_violations, list)
+                     else [domain_violations])
+            if v and hasattr(v, 'severity') and v.severity == 'CRITICAL'
         )
         high_count = sum(
-            1
-            for domain_violations in violations_by_domain.values()
-            for v in (
-                domain_violations
-                if isinstance(domain_violations, list)
-                else [domain_violations]
-            )
-            if v and hasattr(v, "severity") and v.severity == "HIGH"
+            1 for domain_violations in violations_by_domain.values()
+            for v in (domain_violations if isinstance(domain_violations, list)
+                     else [domain_violations])
+            if v and hasattr(v, 'severity') and v.severity == 'HIGH'
         )
 
         warning_count = sum(
@@ -362,19 +353,19 @@ class ACGMEComplianceEngine:
         """
         reasons = []
 
-        block_date = assignment_data.get("block_date")
-        assigned_dates = [a.get("block_date") for a in existing_assignments]
+        block_date = assignment_data.get('block_date')
+        assigned_dates = [a.get('block_date') for a in existing_assignments]
         assigned_dates.append(block_date)
 
         # Check leave conflicts
         for leave in leave_records:
             if self.leave_validator.should_block_assignment(
-                leave.get("type"),
-                leave.get("start_date"),
-                leave.get("end_date"),
-                leave.get("is_blocking"),
+                leave.get('type'),
+                leave.get('start_date'),
+                leave.get('end_date'),
+                leave.get('is_blocking'),
             ):
-                if leave.get("start_date") <= block_date <= leave.get("end_date"):
+                if leave.get('start_date') <= block_date <= leave.get('end_date'):
                     reasons.append(
                         f"Assignment conflicts with {leave.get('type')} leave "
                         f"({leave.get('start_date')} to {leave.get('end_date')})"
@@ -391,33 +382,33 @@ class ACGMEComplianceEngine:
     ) -> list[dict]:
         """Build supervision data by block."""
         block_supervision = {}
-        block_dates = {b.get("id"): b.get("date") for b in blocks}
+        block_dates = {b.get('id'): b.get('date') for b in blocks}
 
         for assignment in assignments:
-            block_id = assignment.get("block_id")
-            person_id = assignment.get("person_id")
+            block_id = assignment.get('block_id')
+            person_id = assignment.get('person_id')
 
             if block_id not in block_supervision:
                 block_supervision[block_id] = {
-                    "block_id": block_id,
-                    "block_date": block_dates.get(block_id),
-                    "pgy1_residents": [],
-                    "other_residents": [],
-                    "faculty_assigned": [],
+                    'block_id': block_id,
+                    'block_date': block_dates.get(block_id),
+                    'pgy1_residents': [],
+                    'other_residents': [],
+                    'faculty_assigned': [],
                 }
 
             # Find person
-            person = next((r for r in residents if r.get("id") == person_id), None)
+            person = next((r for r in residents if r.get('id') == person_id), None)
             if not person:
                 continue
 
-            if person.get("type") == "resident":
-                if person.get("pgy_level") == 1:
-                    block_supervision[block_id]["pgy1_residents"].append(person_id)
+            if person.get('type') == 'resident':
+                if person.get('pgy_level') == 1:
+                    block_supervision[block_id]['pgy1_residents'].append(person_id)
                 else:
-                    block_supervision[block_id]["other_residents"].append(person_id)
-            elif person.get("type") == "faculty":
-                block_supervision[block_id]["faculty_assigned"].append(person_id)
+                    block_supervision[block_id]['other_residents'].append(person_id)
+            elif person.get('type') == 'faculty':
+                block_supervision[block_id]['faculty_assigned'].append(person_id)
 
         return list(block_supervision.values())
 
@@ -427,11 +418,11 @@ class ACGMEComplianceEngine:
         blocks: list[dict],
     ) -> dict[date, float]:
         """Calculate work hours by date from assignments."""
-        block_dates = {b.get("id"): b.get("date") for b in blocks}
+        block_dates = {b.get('id'): b.get('date') for b in blocks}
         hours_by_date = {}
 
         for assignment in assignments:
-            block_id = assignment.get("block_id")
+            block_id = assignment.get('block_id')
             block_date = block_dates.get(block_id)
 
             if not block_date:
@@ -456,7 +447,7 @@ class ACGMEComplianceEngine:
     ) -> str:
         """Generate executive summary of validation results."""
         summary_lines = [
-            "ACGME Compliance Summary",
+            f"ACGME Compliance Summary",
             f"Residents Compliant: {compliant}/{total} ({percentage:.1f}%)",
         ]
 
@@ -490,23 +481,25 @@ class ACGMEComplianceEngine:
             Dashboard data dict for frontend rendering
         """
         return {
-            "summary": {
-                "total_residents": report.total_residents,
-                "compliant": report.residents_compliant,
-                "percentage": report.compliance_percentage,
-                "critical_violations": report.critical_violations_count,
-                "high_violations": report.high_violations_count,
+            'summary': {
+                'total_residents': report.total_residents,
+                'compliant': report.residents_compliant,
+                'percentage': report.compliance_percentage,
+                'critical_violations': report.critical_violations_count,
+                'high_violations': report.high_violations_count,
             },
-            "period": {
-                "start": report.period_start.isoformat(),
-                "end": report.period_end.isoformat(),
+            'period': {
+                'start': report.period_start.isoformat(),
+                'end': report.period_end.isoformat(),
             },
-            "by_domain": report.by_domain,
-            "executive_summary": report.executive_summary,
-            "recommendations": self._generate_recommendations(report),
+            'by_domain': report.by_domain,
+            'executive_summary': report.executive_summary,
+            'recommendations': self._generate_recommendations(report),
         }
 
-    def _generate_recommendations(self, report: ScheduleValidationReport) -> list[str]:
+    def _generate_recommendations(
+        self, report: ScheduleValidationReport
+    ) -> list[str]:
         """Generate recommendations based on validation results."""
         recommendations = []
 

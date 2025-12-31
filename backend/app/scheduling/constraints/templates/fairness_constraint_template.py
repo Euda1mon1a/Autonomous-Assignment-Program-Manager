@@ -49,15 +49,13 @@ class FairnessConstraintTemplate(SoftConstraint):
             deviation = abs(count - mean_count)
             if deviation > 0.5:  # Threshold
                 total_deviation += deviation
-                violations.append(
-                    {
-                        "constraint_name": self.name,
-                        "message": f"Person {person_id} has {count} vs mean {mean_count:.1f}",
-                        "person_id": person_id,
-                        "count": count,
-                        "mean": mean_count,
-                    }
-                )
+                violations.append({
+                    'constraint_name': self.name,
+                    'message': f'Person {person_id} has {count} vs mean {mean_count:.1f}',
+                    'person_id': person_id,
+                    'count': count,
+                    'mean': mean_count,
+                })
 
         penalty = self.get_penalty(int(total_deviation))
         return ConstraintResult(

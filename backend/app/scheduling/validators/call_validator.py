@@ -104,7 +104,10 @@ class CallValidator:
             window_end = start_date + timedelta(days=self.rolling_window_days - 1)
 
             # Count calls in this window
-            calls_in_window = [d for d in sorted_dates if start_date <= d <= window_end]
+            calls_in_window = [
+                d for d in sorted_dates
+                if start_date <= d <= window_end
+            ]
             call_count = len(calls_in_window)
 
             # Check for violation (>10 calls in 28 days)
@@ -192,8 +195,8 @@ class CallValidator:
                                 f"(limit: {MAX_CONSECUTIVE_NIGHTS})"
                             ),
                             call_dates=consecutive_sequence.copy(),
-                            violation_count=len(consecutive_sequence)
-                            - MAX_CONSECUTIVE_NIGHTS,
+                            violation_count=len(consecutive_sequence) -
+                            MAX_CONSECUTIVE_NIGHTS,
                         )
                     )
                 elif len(consecutive_sequence) == MAX_CONSECUTIVE_NIGHTS:
@@ -227,7 +230,8 @@ class CallValidator:
                         f"(limit: {MAX_CONSECUTIVE_NIGHTS})"
                     ),
                     call_dates=consecutive_sequence,
-                    violation_count=len(consecutive_sequence) - MAX_CONSECUTIVE_NIGHTS,
+                    violation_count=len(consecutive_sequence) -
+                    MAX_CONSECUTIVE_NIGHTS,
                 )
             )
 
@@ -314,17 +318,17 @@ class CallValidator:
         counts = list(call_counts.values())
         mean_calls = sum(counts) / len(counts)
         variance = sum((c - mean_calls) ** 2 for c in counts) / len(counts)
-        std_dev = variance**0.5
+        std_dev = variance ** 0.5
 
         imbalance_ratio = max(counts) / (min(counts) + 0.1)  # Avoid division by zero
 
         # Identify over/under-assigned
         over_assigned = [
-            fid for fid, count in call_counts.items() if count > mean_calls + std_dev
+            fid for fid, count in call_counts.items()
+            if count > mean_calls + std_dev
         ]
         under_assigned = [
-            fid
-            for fid, count in call_counts.items()
+            fid for fid, count in call_counts.items()
             if count < mean_calls - std_dev and count > 0
         ]
 
@@ -332,7 +336,7 @@ class CallValidator:
         if imbalance_ratio > 1.5:  # More than 50% difference
             warnings.append(
                 CallWarning(
-                    person_id=UUID("00000000-0000-0000-0000-000000000000"),
+                    person_id=UUID('00000000-0000-0000-0000-000000000000'),
                     warning_type="imbalance",
                     message=(
                         f"Call distribution imbalance detected: "
@@ -345,13 +349,13 @@ class CallValidator:
             )
 
         metrics = {
-            "mean_calls": mean_calls,
-            "std_dev": std_dev,
-            "imbalance_ratio": imbalance_ratio,
-            "over_assigned": over_assigned,
-            "under_assigned": under_assigned,
-            "total_calls": sum(counts),
-            "faculty_count": len(call_counts),
+            'mean_calls': mean_calls,
+            'std_dev': std_dev,
+            'imbalance_ratio': imbalance_ratio,
+            'over_assigned': over_assigned,
+            'under_assigned': under_assigned,
+            'total_calls': sum(counts),
+            'faculty_count': len(call_counts),
         }
 
         return warnings, metrics
@@ -360,8 +364,8 @@ class CallValidator:
         self,
         person_id: UUID,
         night_float_end_date: date,
-        post_call_assignment_date: date | None = None,
-    ) -> str | None:
+        post_call_assignment_date: Optional[date] = None,
+    ) -> Optional[str]:
         """
         Validate Night Float post-call (PC) day assignment.
 
@@ -418,22 +422,22 @@ class CallValidator:
 
         if not call_counts:
             return {
-                "period": {"start": period_start, "end": period_end},
-                "total_calls": 0,
-                "faculty_count": 0,
-                "mean_calls_per_faculty": 0,
-                "call_distribution": {},
+                'period': {'start': period_start, 'end': period_end},
+                'total_calls': 0,
+                'faculty_count': 0,
+                'mean_calls_per_faculty': 0,
+                'call_distribution': {},
             }
 
         counts = list(call_counts.values())
         mean = sum(counts) / len(counts) if counts else 0
 
         return {
-            "period": {"start": period_start, "end": period_end},
-            "total_calls": total_calls,
-            "faculty_count": faculty_count,
-            "mean_calls_per_faculty": mean,
-            "min_calls": min(counts),
-            "max_calls": max(counts),
-            "call_distribution": call_counts,
+            'period': {'start': period_start, 'end': period_end},
+            'total_calls': total_calls,
+            'faculty_count': faculty_count,
+            'mean_calls_per_faculty': mean,
+            'min_calls': min(counts),
+            'max_calls': max(counts),
+            'call_distribution': call_counts,
         }

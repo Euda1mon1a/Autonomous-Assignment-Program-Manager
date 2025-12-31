@@ -16,10 +16,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 # HEALTH STATUS ENUMS
 # ============================================================================
 
-
 class HealthStatus(str, Enum):
     """Health check status."""
-
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -27,7 +25,6 @@ class HealthStatus(str, Enum):
 
 class DependencyType(str, Enum):
     """Type of dependency."""
-
     DATABASE = "database"
     CACHE = "cache"
     EXTERNAL_SERVICE = "external_service"
@@ -39,7 +36,6 @@ class DependencyType(str, Enum):
 # HEALTH CHECK RESULT
 # ============================================================================
 
-
 class HealthCheckResult:
     """Result of a health check."""
 
@@ -48,8 +44,8 @@ class HealthCheckResult:
         name: str,
         status: HealthStatus,
         response_time_ms: float,
-        details: dict[str, Any] | None = None,
-        error: str | None = None,
+        details: Optional[Dict[str, Any]] = None,
+        error: Optional[str] = None
     ):
         """
         Initialize health check result.
@@ -68,22 +64,22 @@ class HealthCheckResult:
         self.error = error
         self.timestamp = datetime.utcnow()
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
-            "name": self.name,
-            "status": self.status.value,
-            "response_time_ms": round(self.response_time_ms, 2),
-            "details": self.details,
-            "error": self.error,
-            "timestamp": self.timestamp.isoformat(),
+            'name': self.name,
+            'status': self.status.value,
+            'response_time_ms': round(self.response_time_ms, 2),
+            'details': self.details,
+            'error': self.error,
+            'timestamp': self.timestamp.isoformat(),
         }
 
 
 class OverallHealthResult:
     """Overall health check result."""
 
-    def __init__(self, results: list[HealthCheckResult]):
+    def __init__(self, results: List[HealthCheckResult]):
         """
         Initialize overall result.
 
@@ -110,23 +106,17 @@ class OverallHealthResult:
         """Check if system is healthy."""
         return self.overall_status == HealthStatus.HEALTHY
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
-            "overall_status": self.overall_status.value,
-            "timestamp": self.timestamp.isoformat(),
-            "checks": [r.to_dict() for r in self.results],
-            "summary": {
-                "total": len(self.results),
-                "healthy": sum(
-                    1 for r in self.results if r.status == HealthStatus.HEALTHY
-                ),
-                "degraded": sum(
-                    1 for r in self.results if r.status == HealthStatus.DEGRADED
-                ),
-                "unhealthy": sum(
-                    1 for r in self.results if r.status == HealthStatus.UNHEALTHY
-                ),
+            'overall_status': self.overall_status.value,
+            'timestamp': self.timestamp.isoformat(),
+            'checks': [r.to_dict() for r in self.results],
+            'summary': {
+                'total': len(self.results),
+                'healthy': sum(1 for r in self.results if r.status == HealthStatus.HEALTHY),
+                'degraded': sum(1 for r in self.results if r.status == HealthStatus.DEGRADED),
+                'unhealthy': sum(1 for r in self.results if r.status == HealthStatus.UNHEALTHY),
             },
         }
 
@@ -134,7 +124,6 @@ class OverallHealthResult:
 # ============================================================================
 # DATABASE HEALTH CHECK (Task 44)
 # ============================================================================
-
 
 async def check_database_health(db: AsyncSession) -> HealthCheckResult:
     """
@@ -162,27 +151,26 @@ async def check_database_health(db: AsyncSession) -> HealthCheckResult:
             status = HealthStatus.HEALTHY
 
         return HealthCheckResult(
-            name="database",
+            name='database',
             status=status,
             response_time_ms=response_time,
-            details={"connection_ok": True},
+            details={'connection_ok': True}
         )
 
     except Exception as e:
         response_time = (time.time() - start_time) * 1000
 
         return HealthCheckResult(
-            name="database",
+            name='database',
             status=HealthStatus.UNHEALTHY,
             response_time_ms=response_time,
-            error=str(e),
+            error=str(e)
         )
 
 
 # ============================================================================
 # REDIS/CACHE HEALTH CHECK (Task 45)
 # ============================================================================
-
 
 async def check_redis_health(redis_client: redis.Redis) -> HealthCheckResult:
     """
@@ -204,23 +192,21 @@ async def check_redis_health(redis_client: redis.Redis) -> HealthCheckResult:
 
         if not pong:
             return HealthCheckResult(
-                name="redis",
+                name='redis',
                 status=HealthStatus.UNHEALTHY,
                 response_time_ms=response_time,
-                error="No response from Redis",
+                error='No response from Redis'
             )
 
         # Check memory usage
-        info = await redis_client.info("memory")
-        memory_used_mb = info.get("used_memory", 0) / (1024 * 1024)
-        memory_max_mb = (
-            info.get("maxmemory", 0) / (1024 * 1024) if info.get("maxmemory") else None
-        )
+        info = await redis_client.info('memory')
+        memory_used_mb = info.get('used_memory', 0) / (1024 * 1024)
+        memory_max_mb = info.get('maxmemory', 0) / (1024 * 1024) if info.get('maxmemory') else None
 
         details = {
-            "ping": "ok",
-            "memory_used_mb": round(memory_used_mb, 2),
-            "memory_max_mb": round(memory_max_mb, 2) if memory_max_mb else None,
+            'ping': 'ok',
+            'memory_used_mb': round(memory_used_mb, 2),
+            'memory_max_mb': round(memory_max_mb, 2) if memory_max_mb else None,
         }
 
         # Determine status
@@ -230,17 +216,20 @@ async def check_redis_health(redis_client: redis.Redis) -> HealthCheckResult:
             status = HealthStatus.HEALTHY
 
         return HealthCheckResult(
-            name="redis", status=status, response_time_ms=response_time, details=details
+            name='redis',
+            status=status,
+            response_time_ms=response_time,
+            details=details
         )
 
     except Exception as e:
         response_time = (time.time() - start_time) * 1000
 
         return HealthCheckResult(
-            name="redis",
+            name='redis',
             status=HealthStatus.UNHEALTHY,
             response_time_ms=response_time,
-            error=str(e),
+            error=str(e)
         )
 
 
@@ -248,9 +237,10 @@ async def check_redis_health(redis_client: redis.Redis) -> HealthCheckResult:
 # EXTERNAL SERVICE HEALTH CHECKS (Task 46)
 # ============================================================================
 
-
 async def check_external_service(
-    service_name: str, url: str, timeout_seconds: float = 5.0
+    service_name: str,
+    url: str,
+    timeout_seconds: float = 5.0
 ) -> HealthCheckResult:
     """
     Check external service health.
@@ -269,9 +259,7 @@ async def check_external_service(
 
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url, timeout=aiohttp.ClientTimeout(total=timeout_seconds)
-            ) as response:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=timeout_seconds)) as response:
                 response_time = (time.time() - start_time) * 1000
 
                 if response.status == 200:
@@ -282,30 +270,30 @@ async def check_external_service(
                     status = HealthStatus.UNHEALTHY
 
                 return HealthCheckResult(
-                    name=f"external_service_{service_name}",
+                    name=f'external_service_{service_name}',
                     status=status,
                     response_time_ms=response_time,
-                    details={"status_code": response.status},
+                    details={'status_code': response.status}
                 )
 
-    except TimeoutError:
+    except asyncio.TimeoutError:
         response_time = (time.time() - start_time) * 1000
 
         return HealthCheckResult(
-            name=f"external_service_{service_name}",
+            name=f'external_service_{service_name}',
             status=HealthStatus.UNHEALTHY,
             response_time_ms=response_time,
-            error="Request timeout",
+            error='Request timeout'
         )
 
     except Exception as e:
         response_time = (time.time() - start_time) * 1000
 
         return HealthCheckResult(
-            name=f"external_service_{service_name}",
+            name=f'external_service_{service_name}',
             status=HealthStatus.UNHEALTHY,
             response_time_ms=response_time,
-            error=str(e),
+            error=str(e)
         )
 
 
@@ -313,9 +301,9 @@ async def check_external_service(
 # DEPENDENCY HEALTH CHECKS (Task 47)
 # ============================================================================
 
-
 async def check_disk_space(
-    path: str = "/", min_free_gb: float = 1.0
+    path: str = '/',
+    min_free_gb: float = 1.0
 ) -> HealthCheckResult:
     """
     Check disk space availability.
@@ -348,28 +336,30 @@ async def check_disk_space(
             status = HealthStatus.HEALTHY
 
         return HealthCheckResult(
-            name="disk_space",
+            name='disk_space',
             status=status,
             response_time_ms=response_time,
             details={
-                "free_gb": round(free_gb, 2),
-                "total_gb": round(total_gb, 2),
-                "used_percent": round(used_percent, 2),
-            },
+                'free_gb': round(free_gb, 2),
+                'total_gb': round(total_gb, 2),
+                'used_percent': round(used_percent, 2),
+            }
         )
 
     except Exception as e:
         response_time = (time.time() - start_time) * 1000
 
         return HealthCheckResult(
-            name="disk_space",
+            name='disk_space',
             status=HealthStatus.UNHEALTHY,
             response_time_ms=response_time,
-            error=str(e),
+            error=str(e)
         )
 
 
-async def check_memory_usage(max_percent: float = 90.0) -> HealthCheckResult:
+async def check_memory_usage(
+    max_percent: float = 90.0
+) -> HealthCheckResult:
     """
     Check system memory usage.
 
@@ -396,28 +386,30 @@ async def check_memory_usage(max_percent: float = 90.0) -> HealthCheckResult:
             status = HealthStatus.HEALTHY
 
         return HealthCheckResult(
-            name="memory",
+            name='memory',
             status=status,
             response_time_ms=response_time,
             details={
-                "used_percent": round(used_percent, 2),
-                "available_gb": round(memory.available / (1024**3), 2),
-                "total_gb": round(memory.total / (1024**3), 2),
-            },
+                'used_percent': round(used_percent, 2),
+                'available_gb': round(memory.available / (1024**3), 2),
+                'total_gb': round(memory.total / (1024**3), 2),
+            }
         )
 
     except Exception as e:
         response_time = (time.time() - start_time) * 1000
 
         return HealthCheckResult(
-            name="memory",
+            name='memory',
             status=HealthStatus.UNHEALTHY,
             response_time_ms=response_time,
-            error=str(e),
+            error=str(e)
         )
 
 
-async def check_cpu_usage(max_percent: float = 80.0) -> HealthCheckResult:
+async def check_cpu_usage(
+    max_percent: float = 80.0
+) -> HealthCheckResult:
     """
     Check system CPU usage.
 
@@ -434,9 +426,7 @@ async def check_cpu_usage(max_percent: float = 80.0) -> HealthCheckResult:
     try:
         cpu_percent = psutil.cpu_percent(interval=1.0)
 
-        response_time = (
-            time.time() - start_time
-        ) * 1000 + 1000  # Account for 1 second interval
+        response_time = (time.time() - start_time) * 1000 + 1000  # Account for 1 second interval
 
         # Determine status
         if cpu_percent > max_percent:
@@ -445,23 +435,23 @@ async def check_cpu_usage(max_percent: float = 80.0) -> HealthCheckResult:
             status = HealthStatus.HEALTHY
 
         return HealthCheckResult(
-            name="cpu",
+            name='cpu',
             status=status,
             response_time_ms=response_time,
             details={
-                "cpu_percent": round(cpu_percent, 2),
-                "logical_cores": psutil.cpu_count(logical=True),
-            },
+                'cpu_percent': round(cpu_percent, 2),
+                'logical_cores': psutil.cpu_count(logical=True),
+            }
         )
 
     except Exception as e:
         response_time = (time.time() - start_time) * 1000
 
         return HealthCheckResult(
-            name="cpu",
+            name='cpu',
             status=HealthStatus.UNHEALTHY,
             response_time_ms=response_time,
-            error=str(e),
+            error=str(e)
         )
 
 
@@ -469,16 +459,19 @@ async def check_cpu_usage(max_percent: float = 80.0) -> HealthCheckResult:
 # HEALTH CHECK COORDINATOR
 # ============================================================================
 
-
 class HealthCheckCoordinator:
     """Coordinate health checks across system."""
 
     def __init__(self):
         """Initialize coordinator."""
-        self.checks: dict[str, Callable] = {}
-        self.logger = logging.getLogger("app.health")
+        self.checks: Dict[str, Callable] = {}
+        self.logger = logging.getLogger('app.health')
 
-    def register_check(self, name: str, check_func: Callable) -> None:
+    def register_check(
+        self,
+        name: str,
+        check_func: Callable
+    ) -> None:
         """
         Register health check.
 
@@ -511,10 +504,10 @@ class HealthCheckCoordinator:
             if isinstance(result, Exception):
                 processed_results.append(
                     HealthCheckResult(
-                        name="unknown",
+                        name='unknown',
                         status=HealthStatus.UNHEALTHY,
                         response_time_ms=0,
-                        error=str(result),
+                        error=str(result)
                     )
                 )
             else:
@@ -522,7 +515,11 @@ class HealthCheckCoordinator:
 
         return OverallHealthResult(processed_results)
 
-    async def _run_check(self, name: str, check_func: Callable) -> HealthCheckResult:
+    async def _run_check(
+        self,
+        name: str,
+        check_func: Callable
+    ) -> HealthCheckResult:
         """
         Run individual check.
 
@@ -549,10 +546,10 @@ class HealthCheckCoordinator:
                 name=name,
                 status=HealthStatus.UNHEALTHY,
                 response_time_ms=0,
-                error=str(e),
+                error=str(e)
             )
 
-    def get_status_summary(self, result: OverallHealthResult) -> dict[str, Any]:
+    def get_status_summary(self, result: OverallHealthResult) -> Dict[str, Any]:
         """
         Get health status summary for display.
 
@@ -563,12 +560,12 @@ class HealthCheckCoordinator:
             Summary dictionary
         """
         return {
-            "status": result.overall_status.value,
-            "healthy": result.overall_status == HealthStatus.HEALTHY,
-            "checks": {
+            'status': result.overall_status.value,
+            'healthy': result.overall_status == HealthStatus.HEALTHY,
+            'checks': {
                 check.name: {
-                    "status": check.status.value,
-                    "response_time_ms": check.response_time_ms,
+                    'status': check.status.value,
+                    'response_time_ms': check.response_time_ms,
                 }
                 for check in result.results
             },

@@ -74,9 +74,9 @@ class ResourceConstraintTemplate(HardConstraint):
     def _get_resource_key(self, assignment: Any, context: SchedulingContext) -> Any:
         """Extract resource identifier from assignment."""
         # Override in subclasses to return appropriate key
-        if self.resource_type == "clinic":
+        if self.resource_type == 'clinic':
             return assignment.clinic_id
-        elif self.resource_type == "faculty":
+        elif self.resource_type == 'faculty':
             return assignment.faculty_id
         else:
             return assignment.resource_id
@@ -155,38 +155,27 @@ class ResourceConstraintTemplate(HardConstraint):
             # Check maximum capacity
             if self.max_capacity and count > self.max_capacity:
                 violations.append(
-                    type(
-                        "ConstraintViolation",
-                        (),
-                        {
-                            "constraint_name": self.name,
-                            "constraint_type": self.constraint_type,
-                            "severity": "HIGH",
-                            "message": f"Resource {resource_id} over capacity: "
-                            f"{count} > {self.max_capacity}",
-                            "details": {"count": count, "capacity": self.max_capacity},
-                        },
-                    )()
+                    type('ConstraintViolation', (), {
+                        'constraint_name': self.name,
+                        'constraint_type': self.constraint_type,
+                        'severity': 'HIGH',
+                        'message': f'Resource {resource_id} over capacity: '
+                                   f'{count} > {self.max_capacity}',
+                        'details': {'count': count, 'capacity': self.max_capacity},
+                    })()
                 )
 
             # Check minimum utilization
             if self.min_utilization and count < self.min_utilization:
                 violations.append(
-                    type(
-                        "ConstraintViolation",
-                        (),
-                        {
-                            "constraint_name": self.name,
-                            "constraint_type": self.constraint_type,
-                            "severity": "MEDIUM",
-                            "message": f"Resource {resource_id} under-utilized: "
-                            f"{count} < {self.min_utilization}",
-                            "details": {
-                                "count": count,
-                                "minimum": self.min_utilization,
-                            },
-                        },
-                    )()
+                    type('ConstraintViolation', (), {
+                        'constraint_name': self.name,
+                        'constraint_type': self.constraint_type,
+                        'severity': 'MEDIUM',
+                        'message': f'Resource {resource_id} under-utilized: '
+                                   f'{count} < {self.min_utilization}',
+                        'details': {'count': count, 'minimum': self.min_utilization},
+                    })()
                 )
 
         return ConstraintResult(
@@ -196,9 +185,9 @@ class ResourceConstraintTemplate(HardConstraint):
 
     def _get_resources(self, context: SchedulingContext) -> list[Any]:
         """Get list of relevant resources."""
-        if self.resource_type == "clinic":
-            return getattr(context, "clinics", [])
-        elif self.resource_type == "faculty":
+        if self.resource_type == 'clinic':
+            return getattr(context, 'clinics', [])
+        elif self.resource_type == 'faculty':
             return context.faculty
         else:
             return []

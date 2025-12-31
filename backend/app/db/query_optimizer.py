@@ -30,11 +30,11 @@ class QueryMetrics:
 
     def __init__(self):
         """Initialize query metrics."""
-        self.start_time: float | None = None
-        self.end_time: float | None = None
+        self.start_time: Optional[float] = None
+        self.end_time: Optional[float] = None
         self.query_count = 0
         self.total_duration = 0.0
-        self.slow_queries: list[dict[str, Any]] = []
+        self.slow_queries: List[Dict[str, Any]] = []
 
     @property
     def duration(self) -> float:
@@ -45,13 +45,11 @@ class QueryMetrics:
 
     def add_slow_query(self, query: str, duration: float) -> None:
         """Add slow query to tracking."""
-        self.slow_queries.append(
-            {
-                "query": query,
-                "duration_ms": duration,
-                "timestamp": datetime.utcnow(),
-            }
-        )
+        self.slow_queries.append({
+            "query": query,
+            "duration_ms": duration,
+            "timestamp": datetime.utcnow(),
+        })
 
     def __repr__(self) -> str:
         """String representation."""
@@ -76,20 +74,15 @@ class QueryAnalyzer:
             engine: SQLAlchemy engine
             verbose: Print to console if True
         """
-
         @event.listens_for(engine, "before_cursor_execute")
-        def receive_before_cursor_execute(
-            conn, cursor, statement, parameters, context, executemany
-        ):
+        def receive_before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
             """Log before query execution."""
             conn.info.setdefault("query_start_time", []).append(time.time())
             if verbose:
                 logger.debug(f"Query: {statement}")
 
         @event.listens_for(engine, "after_cursor_execute")
-        def receive_after_cursor_execute(
-            conn, cursor, statement, parameters, context, executemany
-        ):
+        def receive_after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
             """Log after query execution."""
             total = time.time() - conn.info["query_start_time"].pop(-1)
             duration_ms = total * 1000
@@ -98,7 +91,7 @@ class QueryAnalyzer:
                 logger.warning(f"SLOW QUERY ({duration_ms:.2f}ms): {statement}")
 
     @staticmethod
-    def detect_n_plus_one(session: Session) -> list[str]:
+    def detect_n_plus_one(session: Session) -> List[str]:
         """
         Detect potential N+1 query patterns.
 
@@ -113,9 +106,7 @@ class QueryAnalyzer:
 
         # Track all queries executed in session
         @event.listens_for(session, "after_cursor_execute")
-        def receive_after_cursor_execute(
-            conn, cursor, statement, parameters, context, executemany
-        ):
+        def receive_after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
             queries.append(statement)
 
         # Analyze query patterns
@@ -126,7 +117,7 @@ class QueryAnalyzer:
         return issues
 
     @staticmethod
-    def analyze_query_plan(session: Session, query: Query) -> dict[str, Any]:
+    def analyze_query_plan(session: Session, query: Query) -> Dict[str, Any]:
         """
         Analyze query execution plan.
 
@@ -139,9 +130,7 @@ class QueryAnalyzer:
         """
         # Note: EXPLAIN only works with certain databases
         try:
-            statement = str(
-                query.statement.compile(compile_kwargs={"literal_binds": True})
-            )
+            statement = str(query.statement.compile(compile_kwargs={"literal_binds": True}))
             plan = session.execute(f"EXPLAIN {statement}").fetchall()
 
             return {
@@ -159,7 +148,7 @@ class QueryAnalyzer:
             }
 
     @staticmethod
-    def get_table_stats(session: Session, model: Any) -> dict[str, Any]:
+    def get_table_stats(session: Session, model: Any) -> Dict[str, Any]:
         """
         Get statistics for a model's table.
 
@@ -209,7 +198,6 @@ class QueryDecorator:
         Returns:
             Decorator function
         """
-
         def decorator(func: Callable) -> Callable:
             @wraps(func)
             def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -223,9 +211,7 @@ class QueryDecorator:
                         logger.warning(
                             f"SLOW OPERATION: {func.__name__} took {duration_ms:.2f}ms"
                         )
-
             return wrapper
-
         return decorator
 
     @staticmethod
@@ -239,7 +225,7 @@ class QueryDecorator:
         Returns:
             Decorator function
         """
-        cache: dict[str, tuple] = {}
+        cache: Dict[str, tuple] = {}
 
         def decorator(func: Callable) -> Callable:
             @wraps(func)
@@ -256,7 +242,6 @@ class QueryDecorator:
                 return result
 
             return wrapper
-
         return decorator
 
 
@@ -264,7 +249,7 @@ class BulkOperations:
     """Utilities for efficient bulk operations."""
 
     @staticmethod
-    def bulk_insert(session: Session, model: Any, data_list: list[dict]) -> int:
+    def bulk_insert(session: Session, model: Any, data_list: List[Dict]) -> int:
         """
         Efficiently insert multiple records.
 
@@ -289,7 +274,7 @@ class BulkOperations:
             return 0
 
     @staticmethod
-    def bulk_update(session: Session, model: Any, data_list: list[dict]) -> int:
+    def bulk_update(session: Session, model: Any, data_list: List[Dict]) -> int:
         """
         Efficiently update multiple records.
 
@@ -314,7 +299,7 @@ class BulkOperations:
             return 0
 
     @staticmethod
-    def bulk_delete(session: Session, model: Any, ids: list[Any]) -> int:
+    def bulk_delete(session: Session, model: Any, ids: List[Any]) -> int:
         """
         Efficiently delete multiple records by ID.
 
@@ -343,7 +328,7 @@ class FilterHelper:
     """Helpers for building and applying filters."""
 
     @staticmethod
-    def apply_filters(query: Query, filters: dict[str, Any]) -> Query:
+    def apply_filters(query: Query, filters: Dict[str, Any]) -> Query:
         """
         Apply filter dictionary to query.
 
@@ -367,8 +352,8 @@ class FilterHelper:
         query: Query,
         field: str,
         model: Any,
-        min_val: Any | None = None,
-        max_val: Any | None = None,
+        min_val: Optional[Any] = None,
+        max_val: Optional[Any] = None,
     ) -> Query:
         """
         Apply range filter to query.
@@ -399,7 +384,7 @@ class FilterHelper:
         query: Query,
         model: Any,
         search_text: str,
-        fields: list[str],
+        fields: List[str],
     ) -> Query:
         """
         Apply text search across multiple fields.
@@ -424,7 +409,6 @@ class FilterHelper:
 
         if conditions:
             from sqlalchemy import or_
-
             query = query.filter(or_(*conditions))
 
         return query
@@ -450,7 +434,6 @@ class SortHelper:
             field_name = sort_by[1:]
             if hasattr(model, field_name):
                 from sqlalchemy import desc
-
                 column = getattr(model, field_name)
                 query = query.order_by(desc(column))
         else:
@@ -461,7 +444,7 @@ class SortHelper:
         return query
 
     @staticmethod
-    def apply_multi_sort(query: Query, model: Any, sort_fields: list[str]) -> Query:
+    def apply_multi_sort(query: Query, model: Any, sort_fields: List[str]) -> Query:
         """
         Apply multiple sort fields to query.
 
@@ -512,7 +495,7 @@ class PaginationHelper:
         total: int,
         skip: int = 0,
         limit: int = 100,
-    ) -> dict[str, int]:
+    ) -> Dict[str, int]:
         """
         Get pagination information.
 

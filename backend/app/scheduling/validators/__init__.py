@@ -45,11 +45,11 @@ from app.scheduling.validators.supervision_validator import SupervisionValidator
 from app.scheduling.validators.work_hour_validator import WorkHourValidator
 
 __all__ = [
-    "WorkHourValidator",
-    "SupervisionValidator",
-    "CallValidator",
-    "LeaveValidator",
-    "RotationValidator",
+    'WorkHourValidator',
+    'SupervisionValidator',
+    'CallValidator',
+    'LeaveValidator',
+    'RotationValidator',
 ]
 
-__version__ = "1.0.0"
+__version__ = '1.0.0'

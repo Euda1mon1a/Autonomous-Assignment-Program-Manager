@@ -32,11 +32,11 @@ class RepositoryFactory(Generic[ModelType]):
             db: Async database session
         """
         self.db = db
-        self._registry: dict[type, AsyncBaseRepository] = {}
+        self._registry: dict[Type, AsyncBaseRepository] = {}
         self._custom_repositories: dict[str, AsyncBaseRepository] = {}
 
     def create_repository(
-        self, model: type[ModelType]
+        self, model: Type[ModelType]
     ) -> AsyncBaseRepository[ModelType]:
         """
         Create or retrieve cached repository for model.
@@ -84,7 +84,7 @@ class RepositoryFactory(Generic[ModelType]):
 
     def get_all_repositories(
         self,
-    ) -> dict[type, AsyncBaseRepository]:
+    ) -> dict[Type, AsyncBaseRepository]:
         """
         Get all cached repositories.
 
@@ -112,7 +112,9 @@ class RepositoryProvider:
         """
         self.factory = RepositoryFactory(db)
 
-    def get_repository(self, model: type[ModelType]) -> AsyncBaseRepository[ModelType]:
+    def get_repository(
+        self, model: Type[ModelType]
+    ) -> AsyncBaseRepository[ModelType]:
         """
         Get repository for model.
 
