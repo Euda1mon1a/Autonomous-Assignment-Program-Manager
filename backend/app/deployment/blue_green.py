@@ -27,6 +27,13 @@ from app.db.types import GUID, JSONType, StringArrayType
 logger = logging.getLogger(__name__)
 
 
+# Deployment Configuration Constants
+HEALTH_CHECK_TIMEOUT_SECONDS = 5  # Default health check timeout
+SESSION_DRAIN_TIMEOUT_SECONDS = 300  # 5 minutes - Session drain timeout
+MIGRATION_TIMEOUT_SECONDS = 600  # 10 minutes - Database migration timeout
+ROLLBACK_TIMEOUT_SECONDS = 120  # 2 minutes - Rollback timeout
+
+
 class DeploymentSlot(str, enum.Enum):
     """Deployment slot identifier."""
 
@@ -83,12 +90,12 @@ class DeploymentConfig:
     # Health check settings
     health_check_endpoint: str = "/health"
     health_check_interval_seconds: int = 10
-    health_check_timeout_seconds: int = 5
+    health_check_timeout_seconds: int = HEALTH_CHECK_TIMEOUT_SECONDS
     health_check_max_retries: int = 3
     health_check_required_successes: int = 3
 
     # Session draining settings
-    session_drain_timeout_seconds: int = 300  # 5 minutes
+    session_drain_timeout_seconds: int = SESSION_DRAIN_TIMEOUT_SECONDS
     session_check_interval_seconds: int = 10
     allow_force_drain: bool = True
 
@@ -100,7 +107,7 @@ class DeploymentConfig:
 
     # Database migration settings
     auto_run_migrations: bool = False
-    migration_timeout_seconds: int = 600
+    migration_timeout_seconds: int = MIGRATION_TIMEOUT_SECONDS
     migration_rollback_on_failure: bool = True
 
     # Notification settings
@@ -112,7 +119,7 @@ class DeploymentConfig:
 
     # Rollback settings
     auto_rollback_on_failure: bool = True
-    rollback_timeout_seconds: int = 120
+    rollback_timeout_seconds: int = ROLLBACK_TIMEOUT_SECONDS
 
     # Monitoring settings
     error_rate_threshold: float = 0.05  # 5% error rate triggers rollback
@@ -298,7 +305,7 @@ class TrafficSwitchEvent(Base):
 class HealthCheck:
     """Health check executor for deployment verification."""
 
-    def __init__(self, base_url: str, timeout: int = 5):
+    def __init__(self, base_url: str, timeout: int = HEALTH_CHECK_TIMEOUT_SECONDS):
         """
         Initialize health checker.
 

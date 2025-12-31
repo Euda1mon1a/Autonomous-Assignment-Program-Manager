@@ -38,6 +38,18 @@ from app.scheduling.solvers import BaseSolver, SolverResult
 logger = logging.getLogger(__name__)
 
 
+# Simulated Annealing Solver Parameters
+MIN_READS = 100  # Minimum number of annealing reads
+MAX_READS = 1000  # Maximum number of annealing reads
+BASE_READS = 10000  # Base reads for read count calculation
+MIN_SWEEPS = 1000  # Minimum number of annealing sweeps
+MAX_SWEEPS = 10000  # Maximum number of annealing sweeps
+SWEEPS_PER_VAR = 10  # Number of sweeps per variable
+
+# Quantum Hardware Limits
+MAX_QUANTUM_VARS = 5000  # Maximum variables for quantum hardware
+
+
 # Check for optional quantum libraries
 PYQUBO_AVAILABLE = False
 DWAVE_SAMPLERS_AVAILABLE = False
@@ -852,7 +864,7 @@ class QuantumInspiredSolver(BaseSolver):
                 solver_status="No variables",
             )
 
-        if self.use_quantum_hardware and n_vars <= 5000:
+        if self.use_quantum_hardware and n_vars <= MAX_QUANTUM_VARS:
             # Use D-Wave quantum annealer
             return self._solve_with_dwave(context, existing_assignments)
 
@@ -860,8 +872,8 @@ class QuantumInspiredSolver(BaseSolver):
         solver = SimulatedQuantumAnnealingSolver(
             constraint_manager=self.constraint_manager,
             timeout_seconds=self.timeout_seconds,
-            num_reads=min(1000, max(100, 10000 // n_vars)),
-            num_sweeps=min(10000, max(1000, n_vars * 10)),
+            num_reads=min(MAX_READS, max(MIN_READS, BASE_READS // n_vars)),
+            num_sweeps=min(MAX_SWEEPS, max(MIN_SWEEPS, n_vars * SWEEPS_PER_VAR)),
         )
         return solver.solve(context, existing_assignments)
 

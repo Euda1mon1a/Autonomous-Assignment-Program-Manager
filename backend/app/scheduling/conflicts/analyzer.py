@@ -50,6 +50,7 @@ class ConflictAnalyzer:
     MAX_CONSECUTIVE_DAYS = 6
     HOURS_PER_BLOCK = 6.0
     ROLLING_WEEKS = 4
+    ROLLING_WINDOW_DAYS = 27  # 28 days - 1 (inclusive end date for timedelta)
 
     # Supervision ratios
     PGY1_RATIO = 2  # 1 faculty per 2 PGY-1 residents
@@ -411,7 +412,7 @@ class ConflictAnalyzer:
 
         # Check rolling 4-week windows
         for window_start in dates:
-            window_end = window_start + timedelta(days=27)  # 4 weeks = 28 days
+            window_end = window_start + timedelta(days=self.ROLLING_WINDOW_DAYS)  # 4 weeks = 28 days
 
             total_blocks = sum(
                 count
