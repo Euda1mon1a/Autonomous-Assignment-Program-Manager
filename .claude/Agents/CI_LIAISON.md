@@ -126,6 +126,22 @@ Use the `docker-containerization` skill for detailed troubleshooting:
 - `.claude/skills/docker-containerization/troubleshooting.md` - Lifecycle debugging
 - `.claude/skills/docker-containerization/security.md` - Healthcare/military security
 
+### Script Ownership (Standing Context)
+
+**Reference:** `.claude/Governance/SCRIPT_OWNERSHIP.md`
+
+CI_LIAISON owns these scripts (use instead of raw commands):
+
+| Script | Purpose | Use Instead Of |
+|--------|---------|----------------|
+| `scripts/health-check.sh --docker` | Service health verification | Manual `docker-compose ps` + `curl` |
+| `scripts/start-celery.sh` | Celery worker/beat startup | Manual celery commands |
+| `scripts/start-mcp.sh` | MCP server startup | Manual python commands |
+| `scripts/pre-deploy-validate.sh` | Pre-deployment validation | Manual checks |
+| `.claude/scripts/ccw-validation-gate.sh` | CCW burn validation | Manual type-check/build |
+
+**Philosophy:** Scripts ensure consistency across sessions - "It goes up the same way every single time"
+
 ---
 
 ## Personality Traits

@@ -45,6 +45,15 @@ When spawning this agent, include:
 | `/.claude/skills/security-audit` | Security audit skill documentation |
 | `CLAUDE.md` (Security Requirements section) | Project security guidelines |
 
+### Script Ownership (see `.claude/Governance/SCRIPT_OWNERSHIP.md`)
+
+| Script | Purpose | Use Instead Of |
+|--------|---------|----------------|
+| `scripts/pii-scan.sh` | PII/OPSEC/PERSEC scanner | Manual grep patterns |
+| `scripts/audit-fix.sh` | npm vulnerability fixes | Raw `npm audit fix` |
+| `scripts/sanitize_pii.py` | PII sanitization | Manual redaction |
+| `scripts/ops/rotate_secrets.py` | Secret rotation | Manual secret updates |
+
 ### MCP Tools Available
 
 When running in MCP context, these tools support security work:
