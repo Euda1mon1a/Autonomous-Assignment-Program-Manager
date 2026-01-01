@@ -27,6 +27,11 @@ class EmailTemplate(Base):
 
     Templates support Jinja2-style variable substitution for dynamic content.
     Admins can customize templates for different notification types.
+
+    SQLAlchemy Relationships:
+        created_by: Many-to-one to User.
+            Back-populates User.email_templates (via backref).
+            FK ondelete=SET NULL. The user who created this template.
     """
 
     __tablename__ = "email_templates"

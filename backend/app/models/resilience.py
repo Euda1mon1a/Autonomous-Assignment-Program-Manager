@@ -64,6 +64,11 @@ class ResilienceHealthCheck(Base):
     - Historical trend analysis
     - Alerting on degradation
     - Post-incident review
+
+    SQLAlchemy Relationships:
+        events: One-to-many to ResilienceEvent (via backref).
+            Back-populates ResilienceEvent.health_check.
+            Events triggered during this health check period.
     """
 
     __tablename__ = "resilience_health_checks"
@@ -115,6 +120,19 @@ class ResilienceEvent(Base):
 
     Captures all significant state changes for accountability
     and post-incident review.
+
+    SQLAlchemy Relationships:
+        health_check: Many-to-one to ResilienceHealthCheck.
+            Back-populates ResilienceHealthCheck.events (via backref).
+            Optional FK. The health check that triggered this event.
+
+        sacrifice_decisions: One-to-many to SacrificeDecision (via backref).
+            Back-populates SacrificeDecision.event.
+            Load shedding decisions made during this event.
+
+        fallback_activations: One-to-many to FallbackActivation (via backref).
+            Back-populates FallbackActivation.event.
+            Fallback schedules activated during this event.
     """
 
     __tablename__ = "resilience_events"
@@ -155,6 +173,11 @@ class SacrificeDecision(Base):
     - Accountability
     - Pattern analysis
     - Stakeholder communication
+
+    SQLAlchemy Relationships:
+        event: Many-to-one to ResilienceEvent.
+            Back-populates ResilienceEvent.sacrifice_decisions (via backref).
+            Optional FK. The triggering resilience event.
     """
 
     __tablename__ = "sacrifice_decisions"
@@ -210,6 +233,11 @@ class FallbackActivation(Base):
 
     Records when pre-computed fallback schedules are activated,
     providing audit trail and effectiveness tracking.
+
+    SQLAlchemy Relationships:
+        event: Many-to-one to ResilienceEvent.
+            Back-populates ResilienceEvent.fallback_activations (via backref).
+            Optional FK. The triggering resilience event.
     """
 
     __tablename__ = "fallback_activations"

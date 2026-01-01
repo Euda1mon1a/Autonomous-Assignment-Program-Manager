@@ -1,4 +1,87 @@
-"""Core notification service for schedule alerts and updates."""
+"""
+Core Notification Service for Schedule Alerts and Updates.
+
+This module provides the main NotificationService class that orchestrates
+notification delivery across multiple channels while respecting user preferences.
+
+Service Architecture
+--------------------
+The NotificationService is the primary entry point for sending notifications
+in the application. It provides:
+
+1. **Immediate Delivery**: Send notifications right away via send_notification()
+2. **Bulk Delivery**: Send same notification to multiple recipients efficiently
+3. **Scheduled Delivery**: Queue notifications for future delivery
+4. **User Preferences**: Respect per-user channel and timing preferences
+5. **Persistence**: Store notifications in database for in-app display
+
+Preference System
+-----------------
+Users can configure their notification preferences:
+    - enabled_channels: Which channels to receive notifications on
+    - notification_types: Enable/disable specific notification types
+    - quiet_hours_start/end: Time window to suppress non-urgent notifications
+
+High priority notifications (e.g., ACGME_WARNING) bypass quiet hours.
+
+Database Models
+---------------
+The service uses three SQLAlchemy models for persistence:
+    - Notification: Stores delivered notifications for in-app display
+    - ScheduledNotificationRecord: Stores pending scheduled notifications
+    - NotificationPreferenceRecord: Stores user preferences
+
+Convenience Functions
+---------------------
+For common notification scenarios, use the module-level convenience functions:
+    - notify_schedule_published(): Notify users of new schedule
+    - notify_acgme_warning(): Alert coordinators of compliance issues
+
+These functions create a service instance internally and handle common patterns.
+
+Example Usage
+-------------
+::
+
+    from app.notifications.service import NotificationService, NotificationPreferences
+    from app.notifications.notification_types import NotificationType
+    from app.db.session import get_db
+
+    db = next(get_db())
+    service = NotificationService(db)
+
+    # Send immediate notification
+    results = await service.send_notification(
+        recipient_id=user_uuid,
+        notification_type=NotificationType.ASSIGNMENT_CHANGED,
+        data={
+            "rotation_name": "ICU",
+            "block_name": "Block 5",
+            "start_date": "2025-02-01",
+            "end_date": "2025-02-14",
+            "previous_rotation": "Clinic",
+            "new_rotation": "ICU",
+            "change_reason": "Coverage requirement",
+            "changed_by": "Dr. Program Director",
+            "changed_at": "2025-01-15 14:30:00 UTC",
+        },
+    )
+
+    # Update user preferences
+    prefs = NotificationPreferences(
+        user_id=user_uuid,
+        enabled_channels=["in_app"],  # Email disabled
+        quiet_hours_start=22,  # 10 PM
+        quiet_hours_end=7,     # 7 AM
+    )
+    service.update_user_preferences(user_uuid, prefs)
+
+Performance Considerations
+--------------------------
+- send_bulk() uses batch preference loading to avoid N+1 queries
+- process_scheduled_notifications() pre-loads all preferences for due notifications
+- Preferences are cached within a single service operation
+"""
 
 import uuid
 from datetime import datetime

@@ -223,6 +223,17 @@ class TournamentMatch(Base):
     Stores individual match results within a tournament.
 
     Provides detailed record of each strategy pairing.
+
+    SQLAlchemy Relationships:
+        tournament: Many-to-one to GameTheoryTournament.
+            Back-populates GameTheoryTournament.matches (via backref).
+            The tournament this match is part of.
+
+        strategy1: Many-to-one to ConfigStrategy (via strategy1_id).
+            No back-populates. First strategy in the match.
+
+        strategy2: Many-to-one to ConfigStrategy (via strategy2_id).
+            No back-populates. Second strategy in the match.
     """
 
     __tablename__ = "game_theory_matches"
@@ -277,6 +288,11 @@ class ValidationResult(Base):
 
     Tests whether a configuration can coexist with a Tit for Tat
     validator - a benchmark for production-ready behavior.
+
+    SQLAlchemy Relationships:
+        strategy: Many-to-one to ConfigStrategy.
+            Back-populates ConfigStrategy.validations (via backref).
+            The strategy being validated.
     """
 
     __tablename__ = "game_theory_validations"

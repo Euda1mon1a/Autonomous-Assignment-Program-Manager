@@ -25,6 +25,11 @@ class Notification(Base):
 
     This model tracks all notifications sent to users, their read status,
     and delivery metadata.
+
+    SQLAlchemy Relationships:
+        email_logs: One-to-many to EmailLog.
+            Back-populates EmailLog.notification.
+            Email delivery logs for this notification.
     """
 
     __tablename__ = "notifications"

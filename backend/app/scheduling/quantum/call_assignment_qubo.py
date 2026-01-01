@@ -11,23 +11,266 @@ scheduling, call assignment has unique constraints:
 4. Call equity: Fair distribution across residents
 5. Specialty requirements: Certain rotations need specific coverage
 
-Problem Size Analysis (Sweet Spot: 700-14,600 variables):
-    - 20 residents × 365 call nights × 2 call types = 14,600 variables
-    - 10 residents × 52 weeks = 520 variables (minimal)
-    - Quadratic interactions scale as O(n²) but sparse due to constraints
+===============================================================================
+QUBO FORMULATION EXPLAINED
+===============================================================================
 
-QUBO Formulation:
-    minimize: x^T Q x
+**What is QUBO?**
 
-    where x ∈ {0,1}^n is the binary assignment vector
-    and Q encodes both objectives and constraint penalties
+QUBO (Quadratic Unconstrained Binary Optimization) maps scheduling to energy
+minimization. The core equation is:
 
-    Q = Q_coverage + Q_acgme + Q_equity + Q_specialty + Q_preference
+    minimize: E(x) = x^T Q x = sum_i Q_ii*x_i + sum_{i<j} 2*Q_ij*x_i*x_j
 
-References:
-    - Nurse Scheduling QUBO: https://arxiv.org/abs/2302.09459
-    - Quantum-Inspired Optimization: https://arxiv.org/abs/2103.01708
-    - D-Wave Scheduling: https://www.dwavesys.com/applications
+Where:
+    - x is a binary vector {0,1}^n (each element is a decision variable)
+    - Q is a symmetric n x n matrix encoding objectives and constraints
+    - Q_ii (diagonal): Linear terms - cost of selecting variable i
+    - Q_ij (off-diagonal): Quadratic terms - cost of selecting both i and j
+
+**Variable Encoding for Call Assignment:**
+
+    x[r, n] = 1 if resident r is assigned to call night n
+              0 otherwise
+
+    Flattened index: idx = r * num_nights + n
+
+    Example: 10 residents, 30 nights = 300 binary variables
+
+**Constraint Encoding via Penalties:**
+
+Constraints are encoded as penalty terms added to the energy function:
+
+1. **Coverage Constraint** (Exactly one resident per night):
+
+    For night n: P * (sum_r x[r,n] - 1)^2
+
+    Expansion: P * (sum_r x[r,n]^2 - 2*sum_r x[r,n] + 1)
+             = P * (sum_r x[r,n] + 2*sum_{r<s} x[r,n]*x[s,n] - 2*sum_r x[r,n] + 1)
+             = P * (-sum_r x[r,n] + 2*sum_{r<s} x[r,n]*x[s,n] + 1)
+
+    The quadratic term penalizes assigning multiple residents to the same night.
+
+2. **Consecutive Call Constraint** (No back-to-back calls):
+
+    For resident r: P * x[r,n] * x[r,n+1] for all consecutive nights n, n+1
+
+    This adds a large positive term whenever a resident is on call two nights in a row.
+
+3. **Equity Constraint** (Fair distribution):
+
+    For resident r: P' * (sum_n x[r,n] - mean)^2
+
+    Expands to quadratic terms that penalize deviation from fair share.
+
+**Penalty Weight Hierarchy:**
+
+    HARD_CONSTRAINT_PENALTY = 50000  # Must satisfy (coverage)
+    ACGME_PENALTY = 25000            # Critical safety (no consecutive)
+    EQUITY_PENALTY = 500             # Quality (fair distribution)
+    PREFERENCE_PENALTY = 50          # Nice-to-have (individual preferences)
+
+    Key principle: HARD >> ACGME >> EQUITY >> PREFERENCE
+    This ensures hard constraints are satisfied before optimizing soft objectives.
+
+===============================================================================
+ANNEALING PARAMETERS
+===============================================================================
+
+**Core Parameters:**
+
+- num_reads (default: 100)
+    Number of independent annealing runs. Each starts from random state.
+    More reads = higher chance of finding global optimum, but more runtime.
+
+    Recommended:
+    - Quick solution: 50 reads
+    - Production: 100-200 reads
+    - High-quality: 500+ reads
+
+- num_sweeps (default: 10000)
+    Iterations per read. Each sweep updates all variables once.
+
+    Recommended:
+    - Small problems (<500 vars): 2000-5000 sweeps
+    - Medium problems (500-2000 vars): 5000-10000 sweeps
+    - Large problems (>2000 vars): 10000-20000 sweeps
+
+- beta_range (default: (0.1, 10.0))
+    Inverse temperature schedule. beta = 1/T
+
+    - beta_start (0.1): Low beta = high T = random exploration
+    - beta_end (10.0): High beta = low T = greedy optimization
+
+    The schedule linearly interpolates: beta(t) = beta_start + t*(beta_end - beta_start)
+
+- tunneling_strength (default: 0.3)
+    Weight of quantum tunneling vs classical Metropolis.
+
+    P_accept = (1 - tunneling_strength) * P_classical + tunneling_strength * P_tunnel
+
+    Higher values help escape deep local minima but may slow convergence.
+
+- barrier_coefficient (default: 1.0)
+    Controls tunneling probability decay with barrier height.
+
+    P_tunnel = exp(-barrier_coefficient * sqrt(|delta_E|))
+
+    Lower values = more tunneling through tall barriers
+
+===============================================================================
+WHEN TO USE QUANTUM VS CLASSICAL
+===============================================================================
+
+**Use QUBO/Quantum-Inspired (This Module) When:**
+
+1. Problem size 500-5000 variables (call scheduling sweet spot)
+2. Many competing soft constraints (equity, preferences)
+3. Need diverse good solutions (not just one optimum)
+4. Fair distribution is important
+5. Classical solvers are getting stuck in local optima
+
+**Use Classical Solvers (OR-Tools CP-SAT) When:**
+
+1. Small problems (<100 variables) - exact solution in milliseconds
+2. Need provable optimality with bounds
+3. Hard constraints only (no equity objectives)
+4. Integration with existing constraint programming workflow
+5. Debugging and explanation of solutions
+
+**Hybrid Approach (Recommended for Production):**
+
+1. QUBO for initial solution and diversity exploration
+2. CP-SAT for refinement and feasibility repair
+3. Local search for final polishing
+
+===============================================================================
+USAGE EXAMPLES
+===============================================================================
+
+**Example 1: Basic Call Assignment**
+
+    from datetime import date
+    from uuid import uuid4
+    from app.scheduling.quantum.call_assignment_qubo import (
+        solve_call_assignment,
+        create_call_nights_from_dates,
+        CallCandidate,
+        CallType,
+    )
+
+    # Create call nights for January
+    call_nights = create_call_nights_from_dates(
+        start_date=date(2025, 1, 1),
+        end_date=date(2025, 1, 31),
+        call_type=CallType.OVERNIGHT,
+        exclude_weekends=True,  # FMIT handles weekends
+    )
+
+    # Create residents
+    candidates = [
+        CallCandidate(
+            person_id=uuid4(),
+            name="Dr. Smith",
+            pgy_level=2,
+            max_calls_per_week=2,
+            avoid_days={6},  # Avoid Sunday
+        ),
+        CallCandidate(
+            person_id=uuid4(),
+            name="Dr. Jones",
+            pgy_level=3,
+            max_calls_per_week=2,
+            preference_bonus={0: 0.5},  # Prefers Monday
+        ),
+    ]
+
+    # Solve
+    solution = solve_call_assignment(
+        call_nights=call_nights,
+        candidates=candidates,
+        num_reads=100,
+        num_sweeps=5000,
+    )
+
+    print(f"Valid solution: {solution.is_valid}")
+    print(f"Assignments: {len(solution.assignments)}")
+    print(f"Energy: {solution.energy:.2f}")
+    print(f"Runtime: {solution.runtime_seconds:.2f}s")
+
+**Example 2: Manual QUBO Construction**
+
+    from app.scheduling.quantum.call_assignment_qubo import (
+        CallAssignmentQUBO,
+        QuantumTunnelingAnnealingSolver,
+    )
+
+    # Build QUBO
+    qubo = CallAssignmentQUBO(call_nights, candidates)
+    Q = qubo.build()
+
+    print(f"Variables: {qubo.num_variables}")
+    print(f"Non-zero terms: {len(Q)}")
+
+    # Solve with custom parameters
+    solver = QuantumTunnelingAnnealingSolver(
+        num_reads=200,
+        num_sweeps=10000,
+        beta_range=(0.05, 8.0),
+        tunneling_strength=0.4,
+        track_landscape=True,
+    )
+    solution = solver.solve(qubo)
+
+    # Analyze constraint breakdown
+    breakdown = qubo.get_constraint_breakdown(solution.sample)
+    print(f"Coverage penalty: {breakdown['coverage']:.2f}")
+    print(f"Equity penalty: {breakdown['equity']:.2f}")
+
+**Example 3: Benchmarking vs OR-Tools**
+
+    from app.scheduling.quantum.call_assignment_qubo import CallAssignmentBenchmark
+
+    benchmark = CallAssignmentBenchmark(call_nights, candidates)
+    results = benchmark.compare(
+        qubo_reads=100,
+        qubo_sweeps=5000,
+        ortools_timeout=60.0,
+    )
+
+    print("QUBO Results:")
+    print(f"  Runtime: {results['qubo']['runtime_seconds']:.2f}s")
+    print(f"  Valid: {results['qubo']['is_valid']}")
+
+    print("OR-Tools Results:")
+    print(f"  Runtime: {results['ortools']['runtime_seconds']:.2f}s")
+
+    print("Comparison:")
+    print(f"  Runtime ratio: {results['comparison']['runtime_ratio']:.2f}x")
+
+===============================================================================
+PROBLEM SIZE ANALYSIS
+===============================================================================
+
+Sweet Spot: 700-14,600 variables
+
+    | Residents | Nights | Variables | Recommended Settings          |
+    |-----------|--------|-----------|-------------------------------|
+    | 10        | 52     | 520       | reads=50, sweeps=2000         |
+    | 15        | 52     | 780       | reads=100, sweeps=3000        |
+    | 20        | 365    | 7,300     | reads=100, sweeps=10000       |
+    | 20        | 730    | 14,600    | reads=200, sweeps=15000       |
+
+Quadratic interactions scale as O(n^2) but are sparse due to constraint structure.
+
+===============================================================================
+REFERENCES
+===============================================================================
+
+- Nurse Scheduling QUBO: https://arxiv.org/abs/2302.09459
+- Quantum-Inspired Optimization: https://arxiv.org/abs/2103.01708
+- D-Wave Scheduling: https://www.dwavesys.com/applications
+- Simulated Annealing: Kirkpatrick et al., Science 220 (1983)
 
 Author: Claude Code (Autonomous Assignment Program Manager)
 Date: 2025-12-27

@@ -26,6 +26,15 @@ class EmailLog(Base):
 
     This model maintains a complete audit trail of all emails sent,
     including delivery status, retry attempts, and error tracking.
+
+    SQLAlchemy Relationships:
+        notification: Many-to-one to Notification.
+            Back-populates Notification.email_logs.
+            FK ondelete=SET NULL. The in-app notification (if any).
+
+        template: Many-to-one to EmailTemplate.
+            Back-populates EmailTemplate.email_logs (via backref).
+            FK ondelete=SET NULL. The template used for this email.
     """
 
     __tablename__ = "email_logs"

@@ -1,38 +1,222 @@
 """
 Projection Builder Service for CQRS
+====================================
 
 This module provides a comprehensive projection building service for the CQRS pattern.
-Projections are materialized views that are built from event streams, optimized for queries.
+Projections are materialized views built from event streams, optimized for queries.
 
-Features:
-- Declarative projection definitions
-- Incremental updates from events
-- Full projection rebuilds
-- Projection versioning and schema migration
-- Concurrent projection building
-- Checkpoint-based recovery
-- Error handling and retry logic
-- Health monitoring and metrics
+Overview
+--------
+Projections transform the event stream into query-optimized read models. Unlike
+simple event handlers, projections:
 
-Architecture:
-    Events → ProjectionBuilder → Read Models
-         ↓
-    Checkpoints → Recovery
+- Track their position in the event stream (checkpointing)
+- Support full rebuilds from scratch
+- Handle version migrations
+- Provide health monitoring and metrics
+- Support concurrent builds for large event stores
 
-Usage:
-    # Define a projection
+The ProjectionBuilder orchestrates the lifecycle of projections, from initial
+build through incremental updates to recovery after failures.
+
+Data Flow
+---------
+::
+
+    Event Store
+         |
+         v
+    ProjectionBuilder
+         |
+    +----+----+
+    |         |
+    v         v
+    Projection A    Projection B
+    |               |
+    v               v
+    Read Model A    Read Model B
+
+    Checkpoints (per projection)
+         |
+         v
+    Recovery on failure
+
+Key Concepts
+------------
+
+**Projection**:
+    A function that transforms events into read model updates. Projections are:
+    - Deterministic: Same events always produce same read model state
+    - Idempotent: Re-processing an event has no additional effect
+    - Versioned: Schema changes trigger automatic rebuilds
+
+**Checkpoint**:
+    A saved position in the event stream. Enables:
+    - Resuming after application restart
+    - Recovery from failures without full rebuild
+    - Tracking progress during long rebuilds
+
+**Build Modes**:
+    - INCREMENTAL: Process only new events since last checkpoint
+    - FULL: Clear read model and replay all events from beginning
+    - CATCHUP: Resume from last checkpoint (after pause/failure)
+
+**Projection Status**:
+    - INITIALIZING: Newly registered, needs initial build
+    - ACTIVE: Running normally, processing new events
+    - REBUILDING: Full rebuild in progress
+    - PAUSED: Temporarily stopped (manual pause)
+    - ERROR: Failed, needs attention
+    - DEGRADED: Running but with issues (high lag, errors)
+
+Key Components
+--------------
+
+**ProjectionBuilder**:
+    Main service for building and managing projections:
+    - Registers and tracks projections
+    - Executes builds (incremental, full, catch-up)
+    - Creates checkpoints during builds
+    - Monitors health and provides metrics
+    - Handles errors with retry logic
+
+**BaseProjection**:
+    Abstract base class for custom projections:
+    - Define projection_name, version, and settings
+    - Implement event handlers as methods (handle_{event_type})
+    - Implement reset() for full rebuilds
+    - Optionally implement checkpoint data methods
+
+**ProjectionMetadata** (Database Model):
+    Tracks projection state in the database:
+    - Current status and version
+    - Last processed event position
+    - Error history and counts
+    - Build timing and statistics
+
+**ProjectionCheckpoint** (Database Model):
+    Saves checkpoint data for resumable builds:
+    - Position in event stream
+    - Projection-specific state data
+    - Timestamp and event count
+
+**ProjectionBuildLog** (Database Model):
+    Audit trail of build operations:
+    - Build mode, timing, event counts
+    - Success/failure status
+    - Error messages for failed builds
+
+Usage Example
+-------------
+::
+
+    from app.cqrs import ProjectionBuilder, BaseProjection, BuildMode
+
+    # 1. Define a projection
     class PersonSummaryProjection(BaseProjection):
         projection_name = "person_summary"
         version = 1
+        description = "Summary of all persons with assignment counts"
+
+        # Configuration
+        checkpoint_interval = 100  # Checkpoint every 100 events
+        batch_size = 50            # Process 50 events at a time
+        parallel_enabled = False   # Safe for concurrent builds?
 
         async def handle_person_created(self, event: PersonCreatedEvent):
-            # Update read model
-            pass
+            '''Handle PersonCreated event.'''
+            summary = PersonSummary(
+                person_id=event.person_id,
+                name=event.name,
+                assignment_count=0
+            )
+            self.db.add(summary)
 
-    # Build projections
-    builder = ProjectionBuilder(db)
-    builder.register_projection(PersonSummaryProjection)
-    await builder.build_all()
+        async def handle_assignment_created(self, event: AssignmentCreatedEvent):
+            '''Update assignment count when assignment is created.'''
+            summary = await self._get_summary(event.person_id)
+            summary.assignment_count += 1
+
+        async def reset(self):
+            '''Clear all data before full rebuild.'''
+            await self.db.execute("DELETE FROM person_summaries")
+
+        async def get_checkpoint_data(self) -> dict:
+            '''Save custom state during checkpoint (optional).'''
+            return {"last_processed_date": str(self._last_date)}
+
+        async def restore_checkpoint_data(self, data: dict):
+            '''Restore custom state from checkpoint (optional).'''
+            self._last_date = data.get("last_processed_date")
+
+    # 2. Register and build
+    builder = ProjectionBuilder(db, event_store=event_store)
+    builder.register_projection(PersonSummaryProjection(db))
+
+    # Incremental build (only new events)
+    result = await builder.build_projection(
+        "person_summary",
+        mode=BuildMode.INCREMENTAL
+    )
+    print(f"Processed {result.events_processed} events")
+
+    # Full rebuild (clear and replay all)
+    result = await builder.rebuild_projection("person_summary")
+
+    # Build all projections
+    results = await builder.build_all(mode=BuildMode.INCREMENTAL)
+
+    # 3. Monitor status
+    status = await builder.get_projection_status("person_summary")
+    print(f"Status: {status['status']}")
+    print(f"Events processed: {status['events_processed']}")
+    print(f"Last error: {status['last_error']}")
+
+    # 4. Pause/resume
+    await builder.pause_projection("person_summary")
+    # ... maintenance ...
+    await builder.resume_projection("person_summary")
+
+    # 5. Health check
+    health = await builder.get_health_status()
+    print(f"Healthy: {health['healthy']}")
+    print(f"Max lag: {health['max_lag_seconds']}s")
+
+Version Migration
+-----------------
+When a projection's schema changes, increment the version::
+
+    class PersonSummaryProjection(BaseProjection):
+        projection_name = "person_summary"
+        version = 2  # Incremented from 1
+
+The ProjectionBuilder automatically detects version changes and marks
+the projection for rebuild on registration.
+
+Error Handling
+--------------
+The builder provides configurable error handling:
+
+- **retry_on_error**: Retry failed events with exponential backoff
+- **max_retries**: Maximum retry attempts before marking as failed
+- **checkpoint_interval**: How often to save progress (smaller = safer)
+
+If a projection fails:
+1. Error is logged and status set to ERROR
+2. Error count and message are saved to metadata
+3. Health check reports the failure
+4. Manual intervention may be needed
+
+For recovery:
+1. Fix the underlying issue
+2. Call rebuild_projection() to restart from last checkpoint
+3. Or use from_checkpoint=False to rebuild from scratch
+
+See Also
+--------
+- ``app.cqrs.queries``: Read model definitions
+- ``app.cqrs.read_model_sync``: Real-time sync service
+- ``app.events.event_store``: Event storage
 """
 
 import asyncio

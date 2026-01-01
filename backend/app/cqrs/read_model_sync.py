@@ -1,23 +1,242 @@
-"""Read Model Synchronization Service for CQRS.
+"""
+Read Model Synchronization Service for CQRS
+=============================================
 
 This service handles the synchronization of read models from domain events,
 ensuring eventual consistency between the write database and read models.
 
-Features:
-- Real-time event subscription and processing
-- Batch event processing for efficiency
-- Sync lag monitoring and alerting
-- Consistency verification between write and read models
-- Conflict resolution strategies
-- Sync failure recovery with retry logic
-- Multi-read-model support with independent sync tracking
-- Comprehensive metrics and monitoring
+Overview
+--------
+In a CQRS architecture, read models are updated asynchronously from domain
+events. The ReadModelSyncService coordinates this synchronization:
 
-Architecture:
-    Event Store -> Event Bus -> Sync Service -> Read Model Projectors -> Read DB
+- Subscribes to the event bus for real-time updates
+- Processes events through registered projectors
+- Monitors sync lag and reports health
+- Handles failures with retry and recovery
+- Detects and resolves consistency conflicts
 
-The sync service acts as a coordinator between the event bus and multiple
-read model projectors, ensuring events are processed reliably and in order.
+This service is critical for maintaining eventual consistency between the
+write side (source of truth) and read side (optimized for queries).
+
+Data Flow
+---------
+::
+
+    Write Database (Source of Truth)
+              |
+              v
+         Event Store
+              |
+              v
+         Event Bus
+              |
+              v
+    +--------------------+
+    | ReadModelSyncService |
+    +--------------------+
+         |         |
+         v         v
+    Projector A   Projector B
+         |         |
+         v         v
+    Read Model A  Read Model B
+         |         |
+         +----+----+
+              |
+              v
+         Read Database
+
+Key Concepts
+------------
+
+**Eventual Consistency**:
+    Read models are not immediately updated when writes occur. There is a
+    small delay (sync lag) between write and read. This is acceptable for
+    most queries but should be considered for time-critical operations.
+
+**Sync Lag**:
+    The time difference between when an event was created and when it was
+    projected to read models. Monitored thresholds:
+    - < 60s: Normal (IN_SYNC)
+    - 60-300s: Warning (LAGGING)
+    - > 300s: Critical (FAILED)
+
+**Batch Processing**:
+    For efficiency, events can be batched before processing. This reduces
+    database round-trips but increases sync lag slightly.
+
+**Conflict Resolution**:
+    When read model state conflicts with expected state (e.g., due to
+    concurrent updates), the service uses configurable strategies:
+    - LAST_WRITE_WINS: Use the latest value from write DB
+    - FIRST_WRITE_WINS: Keep the existing read model value
+    - MANUAL: Flag for human review
+    - REJECT: Raise an error
+    - MERGE: Combine values intelligently
+
+Key Components
+--------------
+
+**ReadModelSyncService**:
+    Main coordination service that:
+    - Registers and manages projectors
+    - Subscribes to event bus for real-time sync
+    - Processes events through projectors
+    - Tracks metrics and checkpoints
+    - Handles pause/resume and rebuild
+
+**SyncMetrics** (per projector):
+    Tracks synchronization health:
+    - Events processed (success/failure counts)
+    - Current sync lag
+    - Average processing time
+    - Error history
+
+**SyncCheckpoint** (per projector):
+    Enables resumable synchronization:
+    - Last processed event sequence
+    - Checkpoint timestamp
+    - Total events processed
+
+**SyncConflict**:
+    Represents detected inconsistencies:
+    - Aggregate and event details
+    - Write vs read values
+    - Resolution strategy and status
+
+**ConflictResolutionStrategy**:
+    Configurable conflict handling:
+    - LAST_WRITE_WINS (default)
+    - FIRST_WRITE_WINS
+    - MANUAL
+    - REJECT
+    - MERGE
+
+**SyncPriority**:
+    Event processing priority:
+    - HIGH: Critical events (processed first)
+    - NORMAL: Standard events
+    - LOW: Background/batch events
+
+Usage Example
+-------------
+::
+
+    from app.cqrs import (
+        ReadModelSyncService,
+        ConflictResolutionStrategy,
+        create_sync_service
+    )
+    from app.cqrs.queries import ReadModelProjector
+
+    # 1. Create projectors
+    class AssignmentProjector(ReadModelProjector):
+        async def project(self, event):
+            if event.event_type == "AssignmentCreated":
+                await self._create_summary(event)
+            elif event.event_type == "AssignmentUpdated":
+                await self._update_summary(event)
+
+        async def rebuild(self):
+            await self.db_read.execute("DELETE FROM assignment_summaries")
+            # Rebuild logic...
+
+    # 2. Initialize sync service
+    sync_service = ReadModelSyncService(
+        db_write=db_write,
+        db_read=db_read,
+        enable_batch_processing=True,
+        batch_size=100,
+        batch_timeout_seconds=5,
+        enable_conflict_detection=True,
+        conflict_resolution_strategy=ConflictResolutionStrategy.LAST_WRITE_WINS
+    )
+
+    # 3. Register projectors
+    await sync_service.register_projector(
+        name="assignment_summary",
+        projector=AssignmentProjector(db_write, db_read),
+        subscribe_to_events=True  # Auto-subscribe to event bus
+    )
+
+    # 4. Start real-time sync
+    await sync_service.start_realtime_sync()
+
+    # 5. Monitor sync status
+    metrics = sync_service.get_sync_metrics("assignment_summary")
+    print(f"Status: {metrics.status}")
+    print(f"Sync lag: {metrics.current_sync_lag_seconds}s")
+    print(f"Events processed: {metrics.total_events_processed}")
+    print(f"Failure rate: {metrics.events_processed_failed / max(1, metrics.total_events_processed):.1%}")
+
+    # 6. Health check
+    health = await sync_service.check_health()
+    if not health["healthy"]:
+        for issue in health["issues"]:
+            print(f"Issue: {issue['projector']} - {issue['issue']}")
+
+    # 7. Pause/resume/rebuild
+    await sync_service.pause_sync("assignment_summary")
+    # ... maintenance ...
+    await sync_service.resume_sync("assignment_summary")
+
+    # Full rebuild
+    events_replayed = await sync_service.rebuild_read_model("assignment_summary")
+
+    # 8. Stop real-time sync
+    await sync_service.stop_realtime_sync()
+
+Batch Processing
+----------------
+When enabled, events are accumulated and processed in batches:
+
+- Events collected for up to ``batch_timeout_seconds``
+- Or until ``batch_size`` events are collected
+- Then processed together for efficiency
+
+This reduces database round-trips but adds latency equal to the
+batch timeout. Configure based on your consistency requirements.
+
+Conflict Detection
+------------------
+When enabled, the service verifies consistency after each event:
+
+1. Event is projected to read model
+2. Read model state is compared to expected state
+3. If mismatch detected, SyncConflict is created
+4. Conflict is resolved according to configured strategy
+
+For high-throughput systems, consider disabling for performance
+and running periodic consistency checks instead.
+
+Error Handling
+--------------
+The service handles errors gracefully:
+
+1. Failed event projection triggers rollback of read DB transaction
+2. Error is logged and recorded in metrics
+3. Projector continues with next event (no blocking)
+4. Health check reports failed projectors
+
+For persistent failures:
+1. Pause the projector
+2. Fix the underlying issue
+3. Rebuild from last checkpoint or from scratch
+4. Resume processing
+
+Convenience Factory
+-------------------
+Use ``create_sync_service()`` for quick setup::
+
+    sync_service = await create_sync_service(db_write, db_read)
+
+See Also
+--------
+- ``app.cqrs.queries``: ReadModelProjector base class
+- ``app.cqrs.projection_builder``: Batch projection builds
+- ``app.events.event_bus``: Event subscription
+- ``app.events.event_store``: Event retrieval for batch processing
 """
 
 import asyncio

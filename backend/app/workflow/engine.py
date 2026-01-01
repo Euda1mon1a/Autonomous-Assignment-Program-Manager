@@ -1,13 +1,101 @@
-"""Workflow orchestration engine.
+"""Workflow orchestration engine for multi-step process execution.
 
-This module provides a comprehensive workflow execution engine with:
+This module provides a comprehensive workflow execution engine designed for
+complex, multi-step processes like schedule generation, compliance validation,
+and notification workflows in the Residency Scheduler application.
+
+Core Concepts
+-------------
+
+**Templates**: Versioned workflow definitions stored in the database. Templates
+define the steps, their execution order, retry policies, and conditional logic.
+New versions are created when definitions change, preserving history.
+
+**Instances**: Runtime executions of a workflow template. Each instance tracks
+its own state, input/output data, and step execution history independently.
+
+**Steps**: Individual units of work within a workflow. Steps can:
+- Execute sequentially or in parallel based on dependencies
+- Be conditionally skipped based on runtime expressions
+- Retry automatically with exponential backoff on failure
+- Have individual timeouts separate from the workflow timeout
+
+**Handlers**: Async Python functions that implement step logic. Handlers receive
+input data and return output data that can be consumed by dependent steps.
+
+Execution Model
+---------------
+
+The workflow engine uses a dependency-based execution model:
+
+1. Steps declare dependencies on other steps via `depends_on`
+2. The engine builds an execution plan respecting these dependencies
+3. Steps with the same set of completed dependencies run in parallel
+4. Failed steps trigger retry logic or halt the workflow
+5. All state is persisted to allow resumption after failures
+
+Features:
 - Sequential and parallel step execution
-- Conditional branching
-- Error handling with retry logic
-- State persistence
-- Step timeout handling
-- Workflow cancellation
-- Template versioning
+- Conditional branching with Python expressions
+- Error handling with configurable retry policies
+- Exponential backoff between retries
+- State persistence for resumability
+- Step and workflow-level timeouts
+- Graceful cancellation with running step cleanup
+- Template versioning for workflow evolution
+
+Example Usage
+-------------
+
+Creating and executing a workflow::
+
+    from app.workflow.engine import WorkflowEngine
+
+    engine = WorkflowEngine(db)
+
+    # Create a template
+    template = engine.create_template(
+        name="schedule_generation",
+        definition={
+            "steps": [
+                {
+                    "id": "validate",
+                    "name": "Validate Input",
+                    "handler": "app.handlers.validate_schedule_input",
+                    "timeout_seconds": 60,
+                },
+                {
+                    "id": "generate",
+                    "name": "Generate Schedule",
+                    "handler": "app.handlers.generate_schedule",
+                    "depends_on": ["validate"],
+                    "retry_policy": {"max_attempts": 3, "backoff_multiplier": 2},
+                    "timeout_seconds": 600,
+                },
+                {
+                    "id": "notify",
+                    "name": "Send Notifications",
+                    "handler": "app.handlers.send_notifications",
+                    "depends_on": ["generate"],
+                    "condition": "step_outputs['generate']['success'] == True",
+                },
+            ],
+            "default_timeout_seconds": 3600,
+        },
+    )
+
+    # Create and execute an instance
+    instance = engine.create_instance(
+        template_id=template.id,
+        input_data={"block": 10, "year": 2024},
+    )
+    result = await engine.execute_workflow(instance.id, async_execution=False)
+
+See Also
+--------
+- `app.workflow.state_machine`: Event-driven state machine for entity lifecycle
+- `app.models.workflow`: Database models for persistence
+- `backend/app/workflow/README.md`: Detailed documentation with examples
 """
 
 import asyncio

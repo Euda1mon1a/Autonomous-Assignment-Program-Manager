@@ -1,18 +1,82 @@
-"""Outbox metrics collection and monitoring.
+"""Outbox Metrics Collection and Health Monitoring.
 
-This module provides metrics and monitoring for the transactional outbox:
-- Message counts by status
-- Processing latency metrics
-- Retry statistics
-- Dead letter queue monitoring
-- Throughput tracking
+This module provides observability for the transactional outbox pattern through
+two complementary classes:
 
-Integration:
+1. **OutboxMetricsCollector**: Gathers point-in-time metrics about outbox state
+   (message counts, latencies, throughput). Used by Celery task for periodic
+   metric collection.
+
+2. **OutboxMonitor**: Higher-level health analysis that detects anomalies and
+   determines if alerts should be triggered.
+
+Key Metrics
 -----------
-These metrics can be exported to:
-- Prometheus (recommended for production)
-- Application logs
-- Custom monitoring dashboards
+**Message Counts**:
+- ``pending_count``: Messages waiting to be published (should be low)
+- ``processing_count``: Messages currently being processed (usually 0-1)
+- ``published_count``: Successfully published (moves to archive after 24h)
+- ``failed_count``: Failed messages (includes retryable and dead letters)
+
+**Latency Metrics**:
+- ``avg_pending_age_seconds``: Average time messages wait in pending state
+- ``max_pending_age_seconds``: Oldest pending message age (critical metric)
+
+**Retry Metrics**:
+- ``retryable_failed_count``: Failed messages that can still be retried
+- ``dead_letter_count``: Messages that exceeded max retries (need investigation)
+- ``avg_retry_count``: Average retries for failed messages
+
+**Throughput Metrics**:
+- ``published_last_hour``: Messages published in last hour
+- ``published_last_24h``: Messages published in last 24 hours
+
+Alert Thresholds
+----------------
+Default thresholds for health checks:
+
+==========================  ===========  ==================
+Metric                      Threshold    Severity
+==========================  ===========  ==================
+max_pending_age_seconds     > 300s       Warning
+max_pending_age_seconds     > 600s       Error
+dead_letter_count           > 0          Error
+stuck_processing_count      > 0          Warning
+pending_count               > 1000       Warning
+published_last_hour         = 0*         Error
+==========================  ===========  ==================
+
+*Only alerts if there are pending messages (indicates relay is failing)
+
+Integration Options
+-------------------
+These metrics can be exported to various monitoring systems:
+
+**Prometheus** (recommended)::
+
+    from prometheus_client import Gauge
+
+    outbox_pending = Gauge('outbox_pending_count', 'Pending messages')
+    outbox_latency = Gauge('outbox_max_pending_age_seconds', 'Max pending age')
+
+    @celery_app.task
+    def export_metrics():
+        metrics = OutboxMetricsCollector(db).collect_metrics()
+        outbox_pending.set(metrics['pending_count'])
+        outbox_latency.set(metrics['max_pending_age_seconds'])
+
+**Application Logs** (current implementation)::
+
+    @celery_app.task
+    def collect_outbox_metrics():
+        metrics = OutboxMetricsCollector(db).collect_metrics()
+        logger.info(f"Outbox metrics: {metrics}")
+
+**External Alerting** (PagerDuty, Slack)::
+
+    monitor = OutboxMonitor(db)
+    if monitor.should_alert():
+        send_alert(monitor.get_alert_message())
 """
 
 import logging
@@ -28,15 +92,46 @@ logger = logging.getLogger(__name__)
 
 
 class OutboxMetricsCollector:
-    """
-    Collects metrics about the outbox for monitoring and alerting.
+    """Collects point-in-time metrics about the outbox for monitoring.
 
-    Metrics include:
-    - Message counts by status
-    - Average age of pending messages (latency indicator)
-    - Retry statistics
-    - Failed message counts (dead letter queue)
-    - Throughput (messages published per time period)
+    This class provides low-level metric collection methods that query the
+    database for current outbox state. It's designed to be called periodically
+    by a Celery task (e.g., every 5 minutes) to populate monitoring dashboards.
+
+    Metric Categories
+    -----------------
+    **Message Counts**: How many messages are in each state
+    **Latency Metrics**: How long messages wait before publishing
+    **Retry Metrics**: Failure and retry statistics
+    **Throughput Metrics**: Publishing rate over time
+    **Archive Metrics**: Size of archived messages
+
+    Performance Considerations
+    --------------------------
+    Most queries are simple COUNT/AVG aggregations with index support.
+    The collect_metrics() method issues ~12 queries, which should complete
+    in under 100ms with proper indexes.
+
+    For high-volume systems, consider:
+    - Caching metrics for 1-5 minutes
+    - Using database-side views/materialized views
+    - Sampling instead of full counts
+
+    Thread Safety
+    -------------
+    Not thread-safe. Each thread should create its own instance with
+    its own database session.
+
+    Example:
+        ::
+
+            with session_scope() as db:
+                collector = OutboxMetricsCollector(db)
+                metrics = collector.collect_metrics()
+
+                # Export to monitoring
+                for name, value in metrics.items():
+                    statsd.gauge(f'outbox.{name}', value)
     """
 
     def __init__(self, db: Session):
@@ -423,18 +518,64 @@ class OutboxMetricsCollector:
 
 
 class OutboxMonitor:
-    """
-    Higher-level monitoring and alerting for the outbox.
+    """Higher-level monitoring and alerting for the outbox.
 
-    Provides methods for detecting anomalies and triggering alerts.
+    This class builds on OutboxMetricsCollector to provide actionable
+    health analysis. It detects anomalies, determines alert severity,
+    and generates human-readable alert messages.
+
+    Use Cases
+    ---------
+    1. **Scheduled Health Checks**: Run periodically to detect issues
+    2. **On-Demand Status**: Check health before critical operations
+    3. **Alerting Integration**: Feed into PagerDuty, Slack, etc.
+
+    Anomaly Detection
+    -----------------
+    The monitor detects these anomaly types:
+
+    - ``high_latency``: Messages waiting too long to be published
+    - ``dead_letters``: Messages that exhausted retry attempts
+    - ``stuck_processing``: Messages that never completed processing
+    - ``low_throughput``: No publishing despite pending messages
+
+    Alert Severity
+    --------------
+    - ``warning``: Single issue detected, investigate when convenient
+    - ``error``: Critical issue requiring immediate attention
+
+    Example:
+        ::
+
+            # In a health check endpoint
+            @app.get("/health/outbox")
+            def outbox_health(db: Session = Depends(get_db)):
+                monitor = OutboxMonitor(db)
+                anomalies = monitor.detect_anomalies()
+
+                if monitor.should_alert():
+                    # Trigger external alert
+                    send_pagerduty_alert(monitor.get_alert_message())
+
+                return {
+                    "healthy": len(anomalies) == 0,
+                    "anomalies": anomalies,
+                }
+
+            # In a Celery task
+            @celery_app.task
+            def check_outbox_health():
+                with session_scope() as db:
+                    monitor = OutboxMonitor(db)
+                    if monitor.should_alert():
+                        slack_notify(monitor.get_alert_message())
     """
 
     def __init__(self, db: Session):
-        """
-        Initialize outbox monitor.
+        """Initialize outbox monitor.
 
         Args:
-            db: Database session
+            db: Database session for metric queries
         """
         self.db = db
         self.collector = OutboxMetricsCollector(db)

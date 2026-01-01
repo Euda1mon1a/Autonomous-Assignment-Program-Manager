@@ -1,15 +1,204 @@
 """
 Export Module for Bio-Inspired Optimization Results.
 
-This module provides JSON export functionality for:
+This module provides JSON export functionality for sharing optimization
+results with visualization tools, dashboards, and downstream analysis.
 
-1. Pareto Fronts: Multi-objective trade-off solutions
-2. Evolution History: Generation-by-generation progress
-3. Algorithm Comparison: Multiple algorithm results side-by-side
-4. Holographic Hub Format: Specialized format for 3D visualization
+Export Types
+------------
 
-All exports are designed for consumption by the holographic hub and
-web-based visualization tools.
+**ParetoExporter**
+    Export Pareto front solutions with objective values, statistics,
+    and hypervolume calculations.
+
+**EvolutionExporter**
+    Export evolution history with fitness trajectories, diversity
+    metrics, and convergence analysis.
+
+**HolographicExporter**
+    Export complete optimization results in holographic hub format
+    for 3D visualization with animation support.
+
+Usage Examples
+--------------
+
+Export Pareto front to JSON file:
+
+.. code-block:: python
+
+    from app.scheduling.bio_inspired.export import ParetoExporter
+
+    exporter = ParetoExporter(algorithm_name="nsga2")
+
+    # Export to dictionary
+    data = exporter.export(
+        pareto_front,
+        objectives=["coverage", "fairness", "acgme_compliance"],
+        include_chromosomes=False,  # Omit large chromosome data
+    )
+
+    # Export to file
+    exporter.export_to_file(
+        pareto_front,
+        output_path="results/pareto_front.json",
+    )
+
+Export evolution history:
+
+.. code-block:: python
+
+    from app.scheduling.bio_inspired.export import EvolutionExporter
+
+    exporter = EvolutionExporter(algorithm_name="genetic_algorithm")
+
+    data = exporter.export(
+        evolution_history,
+        pareto_history=pareto_fronts_per_generation,
+        best_individual=best_solution,
+        include_full_pareto=True,  # Include detailed Pareto data
+    )
+
+    exporter.export_to_file(evolution_history, "results/evolution.json")
+
+Export for holographic hub:
+
+.. code-block:: python
+
+    from app.scheduling.bio_inspired.export import HolographicExporter
+
+    exporter = HolographicExporter(algorithm_name="hybrid_ga_qubo")
+
+    data = exporter.export_complete(
+        evolution_history=history,
+        pareto_front=pareto,
+        population_snapshots=snapshots,  # For animation
+        best_individual=best,
+    )
+
+    exporter.export_to_file("results/holographic_export.json", **data)
+
+Export Data Formats
+-------------------
+
+**Pareto Front Export**:
+
+.. code-block:: json
+
+    {
+        "type": "pareto_front",
+        "metadata": {
+            "algorithm": "nsga2",
+            "timestamp": "2024-01-15T10:30:00",
+            "version": "1.0"
+        },
+        "objectives": ["coverage", "fairness", "acgme_compliance"],
+        "size": 45,
+        "solutions": [
+            {
+                "id": 123,
+                "rank": 0,
+                "crowding_distance": 1.234,
+                "objectives": {
+                    "coverage": 0.92,
+                    "fairness": 0.85,
+                    "acgme_compliance": 0.98
+                },
+                "weighted_sum": 0.91
+            }
+        ],
+        "statistics": {
+            "objective_ranges": {...},
+            "ideal_point": {...},
+            "nadir_point": {...},
+            "hypervolume_2d": 0.823
+        }
+    }
+
+**Evolution History Export**:
+
+.. code-block:: json
+
+    {
+        "type": "evolution_history",
+        "total_generations": 200,
+        "evolution": [
+            {
+                "generation": 0,
+                "best_fitness": 0.45,
+                "mean_fitness": 0.32,
+                "diversity": 0.89
+            }
+        ],
+        "summary": {
+            "fitness": {
+                "initial_best": 0.45,
+                "final_best": 0.92,
+                "improvement_rate": 1.04
+            },
+            "convergence": {
+                "generation_90_percent": 85,
+                "converged": true
+            }
+        }
+    }
+
+**Holographic Hub Export**:
+
+.. code-block:: json
+
+    {
+        "type": "holographic_hub_export",
+        "pareto_front": {...},
+        "evolution": {...},
+        "holographic": {
+            "nodes": [
+                {
+                    "id": 123,
+                    "position": {"x": 0.8, "y": 0.7, "z": 0.9},
+                    "size": 8.5,
+                    "color": "#2aff32"
+                }
+            ],
+            "frames": [...],
+            "surface": {
+                "vertices": [...],
+                "faces": [...]
+            },
+            "camera": {
+                "initial_position": {"x": 1.5, "y": 1.5, "z": 1.5}
+            },
+            "axes": {
+                "x": {"label": "Coverage", "range": [0, 1]}
+            }
+        }
+    }
+
+Numpy Handling
+--------------
+
+The NumpyEncoder class handles numpy types in JSON serialization:
+- np.integer -> int
+- np.floating -> float
+- np.ndarray -> list
+- np.bool_ -> bool
+- Objects with to_dict() -> dict
+
+Statistics Computed
+-------------------
+
+**Pareto Statistics**:
+- Objective ranges (min, max, mean, std)
+- Ideal point (best in each objective)
+- Nadir point (worst in each objective)
+- 2D hypervolume indicator
+
+**Evolution Summary**:
+- Initial and final best fitness
+- Improvement rate
+- Generation at 90% convergence
+- Diversity trend (increasing/decreasing/stable)
+- Evaluations to reach best
+- Average improvement per generation
 """
 
 import json

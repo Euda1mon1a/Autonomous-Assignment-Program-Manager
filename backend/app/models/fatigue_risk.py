@@ -93,6 +93,15 @@ class FatigueAssessment(Base):
 
     Captures both objective metrics and subjective ratings
     for comprehensive fatigue tracking.
+
+    SQLAlchemy Relationships:
+        person: Many-to-one to Person.
+            Back-populates Person.fatigue_assessments (via backref).
+            The resident being assessed.
+
+        alerts: One-to-many to FatigueHazardAlert (via backref).
+            Back-populates FatigueHazardAlert.assessment.
+            Hazard alerts triggered from this assessment.
     """
 
     __tablename__ = "fatigue_assessments"
@@ -155,6 +164,19 @@ class FatigueHazardAlert(Base):
 
     Captures hazard level, triggers, and required mitigations
     for audit trail and intervention tracking.
+
+    SQLAlchemy Relationships:
+        person: Many-to-one to Person.
+            Back-populates Person.fatigue_alerts (via backref).
+            The resident with the hazard alert.
+
+        assessment: Many-to-one to FatigueAssessment.
+            Back-populates FatigueAssessment.alerts (via backref).
+            Optional FK. The triggering assessment.
+
+        interventions: One-to-many to FatigueIntervention (via backref).
+            Back-populates FatigueIntervention.alert.
+            Actions taken in response to this alert.
     """
 
     __tablename__ = "fatigue_hazard_alerts"
@@ -225,6 +247,15 @@ class FatigueIntervention(Base):
 
     Tracks what actions were taken and their effectiveness
     for continuous improvement.
+
+    SQLAlchemy Relationships:
+        person: Many-to-one to Person.
+            Back-populates Person.fatigue_interventions (via backref).
+            The resident receiving the intervention.
+
+        alert: Many-to-one to FatigueHazardAlert.
+            Back-populates FatigueHazardAlert.interventions (via backref).
+            Optional FK. The alert that triggered this intervention.
     """
 
     __tablename__ = "fatigue_interventions"
@@ -283,6 +314,11 @@ class SleepDebtHistory(Base):
 
     Stores end-of-day sleep debt calculations for each resident
     to identify chronic debt accumulation patterns.
+
+    SQLAlchemy Relationships:
+        person: Many-to-one to Person.
+            Back-populates Person.sleep_debt_history (via backref).
+            The resident whose sleep debt is tracked.
     """
 
     __tablename__ = "sleep_debt_history"
@@ -334,6 +370,11 @@ class CircadianProfile(Base):
 
     Stores individual variations in circadian rhythm to improve
     prediction accuracy for each resident.
+
+    SQLAlchemy Relationships:
+        person: One-to-one to Person (unique constraint on person_id).
+            Back-populates Person.circadian_profile (via backref).
+            The resident's individualized circadian profile.
     """
 
     __tablename__ = "circadian_profiles"

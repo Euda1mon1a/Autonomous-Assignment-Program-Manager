@@ -6,17 +6,136 @@ for rotation template selection - the 780 variable sweet spot for quantum
 advantage exploration.
 
 Key Features:
-1. Template selection formulation (templates × blocks × constraints)
+1. Template selection formulation (templates x blocks x constraints)
 2. Fairness objectives for equal rotation distribution
 3. Pareto front exploration for multi-objective optimization
 4. Hybrid classical-quantum pipeline
 5. Energy landscape visualization
 6. Adaptive temperature scheduling
 
-References:
+===============================================================================
+QUBO FORMULATION FOR TEMPLATE SELECTION
+===============================================================================
+
+**Variable Encoding:**
+
+    x[r, p, t] = 1 if resident r is assigned template t in rotation period p
+                 0 otherwise
+
+    where:
+    - r in {0, ..., R-1} for R residents
+    - p in {0, ..., P-1} for P rotation periods (2-week chunks)
+    - t in {0, ..., T-1} for T templates
+
+    Total variables = R x P x T (typically 780 for 15 residents x 26 periods x 2 templates)
+
+**QUBO Matrix Components:**
+
+    Q = Q_coverage + Q_fairness + Q_preference + Q_learning + Q_constraints
+
+    Where:
+    - Q_coverage: Negative diagonal to encourage assignments (maximize coverage)
+    - Q_fairness: Quadratic terms for fair distribution of desirable rotations
+    - Q_preference: Linear bonus/penalty for individual preferences
+    - Q_learning: Encourages variety in template assignments
+    - Q_constraints: Hard constraints (exactly one template per period)
+
+**Objective Weights (for weighted-sum scalarization):**
+
+    coverage_weight: 1.0     # Maximize filled slots
+    fairness_weight: 1.0     # Equal distribution of desirable rotations
+    preference_weight: 0.5   # Honor individual preferences
+    learning_goal_weight: 0.3 # Encourage rotation variety
+
+    Weights can be adjusted to explore different trade-offs on the Pareto front.
+
+===============================================================================
+ANNEALING PARAMETERS
+===============================================================================
+
+**TemplateSelectionConfig Parameters:**
+
+    | Parameter              | Default | Description                              |
+    |------------------------|---------|------------------------------------------|
+    | hard_constraint_penalty| 10000   | Weight for must-satisfy constraints      |
+    | acgme_penalty          | 5000    | Weight for ACGME compliance              |
+    | soft_constraint_penalty| 100     | Weight for optimization targets          |
+    | fairness_penalty       | 500     | Weight for fair distribution             |
+    | num_reads              | 100     | Independent annealing runs               |
+    | num_sweeps             | 1000    | Iterations per run                       |
+    | beta_start             | 0.1     | Initial inverse temperature (high T)     |
+    | beta_end               | 4.2     | Final inverse temperature (low T)        |
+    | use_adaptive_temperature| True   | Enable automatic reheating               |
+    | reheat_threshold       | 0.001   | Improvement threshold for reheat         |
+    | reheat_factor          | 0.5     | Beta multiplier on reheat                |
+    | pareto_population      | 50      | Solutions in Pareto exploration          |
+    | pareto_generations     | 100     | Iterations of Pareto refinement          |
+
+**Adaptive Temperature:**
+
+    The adaptive schedule detects plateaus (no improvement for 10% of sweeps)
+    and reheats by multiplying beta by reheat_factor. This helps escape local
+    minima more effectively than fixed schedules.
+
+===============================================================================
+WHEN TO USE THIS SOLVER
+===============================================================================
+
+**Ideal Use Cases:**
+
+1. Rotation/template assignment for medical residency programs
+2. Multi-objective optimization with fairness constraints
+3. Exploring trade-offs on the Pareto front
+4. When you need diverse high-quality solutions
+5. Problem size 500-2000 variables
+
+**Not Recommended For:**
+
+1. Single-objective optimization (use CP-SAT instead)
+2. Hard constraint satisfaction only (no soft objectives)
+3. Very large problems (>5000 variables) - decomposition needed
+
+===============================================================================
+USAGE EXAMPLE
+===============================================================================
+
+    from app.scheduling.quantum.qubo_template_selector import (
+        QUBOTemplateSolver,
+        TemplateSelectionConfig,
+    )
+
+    # Configure for fairness-focused optimization
+    config = TemplateSelectionConfig(
+        coverage_weight=1.0,
+        fairness_weight=2.0,  # Prioritize fair distribution
+        preference_weight=0.5,
+        num_reads=100,
+        num_sweeps=2000,
+        pareto_population=30,
+    )
+
+    # Create solver
+    solver = QUBOTemplateSolver(config=config)
+
+    # Get full result with Pareto front
+    result = solver.solve_with_full_result(context)
+
+    print(f"Success: {result.success}")
+    print(f"Assignments: {len(result.assignments)}")
+    print(f"Pareto frontier: {len(result.pareto_frontier)} solutions")
+    print(f"Local minima: {result.statistics['num_local_minima']}")
+
+    # Export for visualization
+    viz_data = result.to_json()
+
+===============================================================================
+REFERENCES
+===============================================================================
+
 - QUBO Formulation: https://arxiv.org/abs/2103.01708
 - Multi-objective QUBO: https://arxiv.org/abs/2111.08062
 - Pareto Optimization: https://en.wikipedia.org/wiki/Pareto_efficiency
+- Adaptive Simulated Annealing: Ingber, L. (1989)
 """
 
 import logging

@@ -1,8 +1,78 @@
 """
 Celery Tasks for Notification Delivery.
 
-Provides background tasks for sending notifications via various channels.
-Tasks use proper retry logic with exponential backoff.
+This module provides Celery background tasks for asynchronous notification
+delivery through email, webhooks, and other channels that require external
+network calls.
+
+Task Architecture
+-----------------
+All tasks use Celery's built-in retry mechanism with exponential backoff to
+handle transient failures gracefully. Tasks are bound (bind=True) to access
+the task instance for retry tracking.
+
+Retry Configuration:
+    - max_retries: Maximum number of retry attempts (typically 3)
+    - default_retry_delay: Initial delay between retries in seconds
+    - retry_backoff: Enable exponential backoff (delay doubles each retry)
+    - retry_backoff_max: Maximum delay cap in seconds
+    - autoretry_for: Exception types that trigger automatic retry
+
+Available Tasks
+---------------
+1. send_email: Deliver email via SMTP
+   - Uses EmailService for actual SMTP communication
+   - Supports both HTML and plain text bodies
+   - Retries on any exception with 60s initial delay
+
+2. send_webhook: Deliver webhook via HTTP POST
+   - Uses httpx client with 30-second timeout
+   - Retries on HTTP errors and timeouts
+   - Returns response status code on success
+
+3. detect_leave_conflicts: Background conflict detection
+   - Runs after leave/absence creation or approval
+   - Creates conflict alerts for scheduling issues
+   - Notifies affected faculty via ConflictAutoDetector
+
+Dependencies
+------------
+- Redis: Required as Celery broker (CELERY_BROKER_URL)
+- EmailService: For SMTP delivery (backend/app/services/email_service.py)
+- httpx: For HTTP webhook delivery
+
+Example Usage
+-------------
+::
+
+    from app.notifications.tasks import send_email, send_webhook
+
+    # Queue email for delivery
+    send_email.delay(
+        to="doctor@hospital.mil",
+        subject="Schedule Update",
+        body="Your schedule has been updated.",
+        html="<h1>Schedule Update</h1><p>Updated content.</p>",
+    )
+
+    # Queue webhook for delivery
+    send_webhook.delay(
+        url="https://hooks.slack.com/services/xxx",
+        payload={
+            "text": "New schedule published",
+            "channel": "#scheduling",
+        },
+    )
+
+    # Trigger conflict detection after leave approval
+    detect_leave_conflicts.delay(absence_id=str(absence.id))
+
+Monitoring
+----------
+Task status and retry history can be monitored via:
+    - Celery Flower dashboard (if configured)
+    - Application logs (logs attempt count and errors)
+    - Redis task result backend
 """
 
 from datetime import datetime
@@ -21,7 +91,25 @@ _email_service: EmailService | None = None
 
 
 def get_email_service() -> EmailService:
-    """Get or create the email service singleton."""
+    """
+    Get or create the email service singleton.
+
+    This function lazily initializes the EmailService on first use,
+    loading SMTP configuration from environment variables. The singleton
+    pattern ensures a single connection pool is reused across all email
+    tasks.
+
+    Returns:
+        EmailService: Configured email service instance.
+
+    Note:
+        The service is initialized with EmailConfig.from_env() which reads:
+            - SMTP_HOST: SMTP server hostname
+            - SMTP_PORT: SMTP server port
+            - SMTP_USER: SMTP username
+            - SMTP_PASSWORD: SMTP password
+            - EMAIL_FROM: Default sender address
+    """
     global _email_service
     if _email_service is None:
         _email_service = EmailService(EmailConfig.from_env())

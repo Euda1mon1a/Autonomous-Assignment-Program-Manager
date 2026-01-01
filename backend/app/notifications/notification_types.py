@@ -1,4 +1,69 @@
-"""Notification templates for schedule alerts and updates."""
+"""
+Notification Types and Templates.
+
+This module defines the notification type enumeration and template system for
+rendering notification content. Templates use Python's string.Template for
+safe variable substitution.
+
+Notification Types
+------------------
+The NotificationType enum defines all supported notification categories:
+
+- SCHEDULE_PUBLISHED: Sent when a new schedule is published
+- ASSIGNMENT_CHANGED: Sent when a user's rotation assignment changes
+- SHIFT_REMINDER_24H: Reminder sent 24 hours before a shift starts
+- SHIFT_REMINDER_1H: Reminder sent 1 hour before a shift starts
+- ACGME_WARNING: Alert for ACGME compliance violations
+- ABSENCE_APPROVED: Confirmation of approved leave request
+- ABSENCE_REJECTED: Notification of rejected leave request
+
+Template System
+---------------
+Each notification type has an associated NotificationTemplate that defines:
+    - subject_template: Subject line with $variable placeholders
+    - body_template: Message body with $variable placeholders
+    - channels: Default delivery channels for this type
+    - priority: Default priority level (high, normal, low)
+
+Templates use Python's string.Template.safe_substitute() which leaves
+undefined variables as-is rather than raising errors, providing graceful
+degradation when data is incomplete.
+
+Adding New Notification Types
+-----------------------------
+1. Add new enum value to NotificationType
+2. Create NotificationTemplate with subject/body templates
+3. Add to NOTIFICATION_TEMPLATES registry
+4. Define required template variables in docstring
+
+Example Usage
+-------------
+::
+
+    from app.notifications.notification_types import (
+        NotificationType,
+        render_notification,
+        get_template,
+    )
+
+    # Render a notification
+    rendered = render_notification(
+        NotificationType.SCHEDULE_PUBLISHED,
+        data={
+            "period": "January 2025",
+            "coverage_rate": "95.5",
+            "total_assignments": 120,
+            "violations_count": 0,
+            "publisher_name": "Dr. Smith",
+            "published_at": "2025-01-15 10:00:00 UTC",
+        }
+    )
+
+    # Get template metadata
+    template = get_template(NotificationType.ACGME_WARNING)
+    print(f"Priority: {template.priority}")  # "high"
+    print(f"Channels: {template.channels}")  # ["in_app", "email", "webhook"]
+"""
 
 from dataclasses import dataclass
 from enum import Enum
