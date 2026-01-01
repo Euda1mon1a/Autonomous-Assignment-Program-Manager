@@ -11,88 +11,82 @@ description: Toggle PAI governance enforcement on/off. Control chain-of-command 
 
 ---
 
-## Commands
+## Required Actions
 
-### Check Status
+When this skill is invoked, Claude MUST immediately execute the following based on arguments:
 
-```
-/governance
-/governance status
-```
+### Parse Arguments
 
-Shows current enforcement state for all settings.
-
-### Toggle All Governance
-
-```
-/governance on    # Enable all enforcement
-/governance off   # Disable all enforcement
-```
-
-### Toggle Specific Settings
-
-```
-/governance chain on      # Enable chain-of-command routing
-/governance chain off     # Disable chain-of-command routing
-
-/governance session on    # Enable session-end enforcement
-/governance session off   # Disable session-end enforcement
-
-/governance bypass on     # Allow single-file bypass
-/governance bypass off    # Require coordinator for all tasks
-```
+Check the skill invocation arguments:
+- No args or `status` → Show status (default)
+- `on` → Enable all governance
+- `off` → Disable all governance
+- `chain on/off` → Toggle chain_of_command_enforcement
+- `session on/off` → Toggle session_end_enforcement
+- `bypass on/off` → Toggle bypass_allowed_for_single_file
 
 ---
 
-## Implementation
+### Action: Status Check (default)
 
-When this skill is invoked, Claude should:
-
-### For Status Check
+**If no arguments or `status`**, read the config and display:
 
 ```bash
 cat .claude/Governance/config.json
 ```
 
-Then display:
-```
+Then output this table with actual values:
+
+```markdown
 ## Governance Status
 
 | Setting | Status |
 |---------|--------|
-| governance_enabled | ✅ ON / ❌ OFF |
-| chain_of_command_enforcement | ✅ ON / ❌ OFF |
-| session_end_enforcement | ✅ ON / ❌ OFF |
-| bypass_allowed_for_single_file | ✅ ON / ❌ OFF |
+| governance_enabled | [✅ ON or ❌ OFF] |
+| chain_of_command_enforcement | [✅ ON or ❌ OFF] |
+| session_end_enforcement | [✅ ON or ❌ OFF] |
+| bypass_allowed_for_single_file | [✅ ON or ❌ OFF] |
 ```
 
-### For Toggle Commands
+---
 
-Update `.claude/Governance/config.json` with new values:
+### Action: Toggle All (`on` or `off`)
 
-**`/governance off`** sets:
-```json
-{
-  "governance_enabled": false,
-  ...
-}
-```
+**If argument is `on`**, update config:
 
-**`/governance on`** sets:
 ```json
 {
   "governance_enabled": true,
-  ...
+  "chain_of_command_enforcement": true,
+  "session_end_enforcement": true,
+  "bypass_allowed_for_single_file": true,
+  "notes": "Set governance_enabled to false to disable all governance checks"
 }
 ```
 
-**`/governance chain off`** sets:
+**If argument is `off`**, update config:
+
 ```json
 {
+  "governance_enabled": false,
   "chain_of_command_enforcement": false,
-  ...
+  "session_end_enforcement": false,
+  "bypass_allowed_for_single_file": true,
+  "notes": "Set governance_enabled to false to disable all governance checks"
 }
 ```
+
+After updating, confirm: "Governance [enabled/disabled]. All settings updated."
+
+---
+
+### Action: Toggle Specific Setting
+
+**If argument is `chain on/off`**, update only `chain_of_command_enforcement`.
+**If argument is `session on/off`**, update only `session_end_enforcement`.
+**If argument is `bypass on/off`**, update only `bypass_allowed_for_single_file`.
+
+After updating, show the full status table.
 
 ---
 
