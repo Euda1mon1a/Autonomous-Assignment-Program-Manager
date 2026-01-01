@@ -133,7 +133,7 @@ class FindSwapMatchesTool(
                 candidates=candidates,
             )
 
-        except Exception as e:
+        except Exception:
             # Return empty result on error
             return FindSwapMatchesResponse(
                 person_id=request.person_id,

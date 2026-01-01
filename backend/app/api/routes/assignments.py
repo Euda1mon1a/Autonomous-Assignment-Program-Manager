@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.controllers.assignment_controller import AssignmentController
 from app.core.security import get_current_active_user, get_scheduler_user
-from app.db.session import get_async_db
+from app.db.session import get_async_db, get_db
 from app.models.user import User
 from app.schemas.assignment import (
     AssignmentCreate,
@@ -75,7 +75,7 @@ async def create_assignment(
     Violations do not block creation but should be acknowledged with override_reason.
     """
     controller = AssignmentController(db)
-    return await cawait ontroller.create_assignment(assignment_in, current_user)
+    return await controller.create_assignment(assignment_in, current_user)
 
 
 @router.put("/{assignment_id}", response_model=AssignmentWithWarnings)
@@ -93,7 +93,7 @@ async def update_assignment(
     Violations do not block update but should be acknowledged with override_reason.
     """
     controller = AssignmentController(db)
-    return await cawait ontroller.update_assignment(assignment_id, assignment_in)
+    return await controller.update_assignment(assignment_id, assignment_in)
 
 
 @router.delete("/{assignment_id}", status_code=204)
@@ -104,7 +104,7 @@ async def delete_assignment(
 ):
     """Delete an assignment. Requires scheduler role (admin or coordinator)."""
     controller = AssignmentController(db)
-    await cawait ontroller.delete_assignment(assignment_id)
+    await controller.delete_assignment(assignment_id)
 
 
 @router.delete("", status_code=204)

@@ -1,15 +1,15 @@
 """Tests for API client."""
 
-import pytest
 from unittest.mock import Mock, patch
 
 import httpx
+import pytest
 
 from scheduler_mcp.api_client import (
     APIConfig,
     SchedulerAPIClient,
-    get_api_client,
     close_api_client,
+    get_api_client,
 )
 
 

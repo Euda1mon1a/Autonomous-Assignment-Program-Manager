@@ -33,12 +33,6 @@ export function createTestQueryClient(): QueryClient {
         retry: false,
       },
     },
-    logger: {
-      log: console.log,
-      warn: console.warn,
-      // Don't log errors during tests to avoid noise
-      error: () => {},
-    },
   });
 }
 
@@ -244,12 +238,14 @@ export async function waitForElement(
     await waitFor(
       () => {
         element = callback();
-        expect(element).toBeInTheDocument();
+        if (!element) {
+          throw new Error('Element not yet found');
+        }
       },
       { timeout }
     );
     return element!;
-  } catch (error) {
+  } catch {
     throw new Error(errorMessage);
   }
 }
@@ -258,12 +254,14 @@ export async function waitForElement(
  * Wait for loading to finish
  */
 export async function waitForLoadingToFinish(
-  queryByText: (text: string) => HTMLElement | null = () => null
+  queryByText: (text: string | RegExp) => HTMLElement | null = () => null
 ): Promise<void> {
   await waitFor(
     () => {
       const loading = queryByText(/loading/i);
-      expect(loading).not.toBeInTheDocument();
+      if (loading) {
+        throw new Error('Still loading');
+      }
     },
     { timeout: 5000 }
   );
@@ -272,9 +270,15 @@ export async function waitForLoadingToFinish(
 /**
  * Wait for a specific number of API calls
  */
-export async function waitForApiCalls(mockFn: jest.Mock, expectedCalls: number): Promise<void> {
+export async function waitForApiCalls(
+  mockFn: { mock?: { calls: unknown[] } },
+  expectedCalls: number
+): Promise<void> {
   await waitFor(() => {
-    expect(mockFn).toHaveBeenCalledTimes(expectedCalls);
+    const callCount = mockFn.mock?.calls?.length ?? 0;
+    if (callCount !== expectedCalls) {
+      throw new Error(`Expected ${expectedCalls} calls, got ${callCount}`);
+    }
   });
 }
 

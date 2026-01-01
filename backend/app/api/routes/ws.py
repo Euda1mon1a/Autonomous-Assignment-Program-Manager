@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect, s
 from fastapi.exceptions import HTTPException
 
 from app.core.security import get_current_user, verify_token
-from app.db.session import get_async_db
+from app.db.session import get_async_db, get_db
 from app.models.user import User
 from app.websocket.manager import get_connection_manager
 

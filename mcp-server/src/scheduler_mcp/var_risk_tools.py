@@ -26,10 +26,9 @@ import logging
 import random
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
-
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)

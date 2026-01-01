@@ -4,18 +4,19 @@ Integration tests for MCP tools.
 Tests tool registration, execution, and middleware integration.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from scheduler_mcp.tools.base import BaseTool
-from scheduler_mcp.tools.executor import ToolExecutor
-from scheduler_mcp.tools.registry import ToolRegistry
+import pytest
+
 from scheduler_mcp.middleware import (
     AuthMiddleware,
     ErrorHandlerMiddleware,
     LoggingMiddleware,
     RateLimitMiddleware,
 )
+from scheduler_mcp.tools.base import BaseTool
+from scheduler_mcp.tools.executor import ToolExecutor
+from scheduler_mcp.tools.registry import ToolRegistry
 
 
 class TestToolRegistry:

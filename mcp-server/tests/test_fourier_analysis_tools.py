@@ -5,8 +5,8 @@ These tests verify the FFT-based periodicity detection, harmonic resonance
 analysis, and spectral entropy calculations.
 """
 
-import pytest
 import numpy as np
+import pytest
 
 
 # Mock test - actual tests will run once numpy is available in test environment

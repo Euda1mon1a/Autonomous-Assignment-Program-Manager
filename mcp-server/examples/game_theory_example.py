@@ -6,7 +6,6 @@ schedule stability and detect coordination failures.
 """
 
 import asyncio
-from datetime import date, timedelta
 
 
 async def example_nash_stability_analysis():
@@ -179,7 +178,7 @@ async def example_coordination_failures():
             print(f"\n  {i}. {failure.failure_type.value.upper()}:")
             print(f"     Involved Players: {', '.join(failure.involved_person_ids)}")
             print(f"     Potential Gain: {failure.potential_pareto_gain:.3f}")
-            print(f"     Per-Person Gains:")
+            print("     Per-Person Gains:")
             for pid, gain in failure.per_person_gains.items():
                 print(f"       - {pid}: +{gain:.3f}")
             print(f"     Barrier: {failure.coordination_barrier}")
@@ -200,7 +199,6 @@ async def example_coordination_failures():
 async def example_utility_calculation():
     """Demonstrate utility calculation with custom weights."""
     from scheduler_mcp.tools.game_theory_tools import (
-        UtilityComponents,
         calculate_person_utility,
     )
 

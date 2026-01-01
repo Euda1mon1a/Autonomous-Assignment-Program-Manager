@@ -21,7 +21,7 @@ from sqlalchemy import select
 from app.auth.permissions.decorators import require_role
 from app.controllers.call_assignment_controller import CallAssignmentController
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_async_db, get_db
 from app.models.user import User
 from app.schemas.call_assignment import (
     BulkCallAssignmentCreate,

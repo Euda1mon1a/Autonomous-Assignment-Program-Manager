@@ -5,7 +5,8 @@ This module provides centralized error handling and formatting.
 """
 
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from ..tools.base import APIError, AuthenticationError, ToolError, ValidationError
 

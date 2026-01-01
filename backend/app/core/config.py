@@ -468,6 +468,18 @@ class Settings(BaseSettings):
 
         return v
 
+    @property
+    def SQLALCHEMY_DATABASE_URI(self) -> str:
+        """Get async database URI for SQLAlchemy async engine.
+
+        Converts postgresql:// to postgresql+asyncpg:// for async support.
+        """
+        if self.DATABASE_URL.startswith("postgresql://"):
+            return self.DATABASE_URL.replace(
+                "postgresql://", "postgresql+asyncpg://", 1
+            )
+        return self.DATABASE_URL
+
     class Config:
         env_file = ".env"
         case_sensitive = True

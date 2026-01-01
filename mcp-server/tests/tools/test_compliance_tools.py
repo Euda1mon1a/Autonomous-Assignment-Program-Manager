@@ -2,14 +2,14 @@
 Tests for compliance tools.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from scheduler_mcp.tools.compliance import (
     CheckDayOffTool,
     CheckSupervisionTool,
     CheckWorkHoursTool,
-    GenerateComplianceReportTool,
     GetViolationsTool,
 )
 

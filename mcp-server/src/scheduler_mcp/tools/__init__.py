@@ -19,15 +19,117 @@ Exotic Research Tools (require numpy, scipy):
 """
 
 # Base infrastructure
+# Analytics tools
+from .analytics import (
+    CoverageMetricsTool,
+    TrendAnalysisTool,
+    WorkloadDistributionTool,
+)
 from .base import (
     APIError,
     AuthenticationError,
     BaseTool,
     ToolError,
+)
+from .base import (
     ValidationError as ToolValidationError,
 )
+
+# Compliance tools
+from .compliance import (
+    CheckDayOffTool,
+    CheckSupervisionTool,
+    CheckWorkHoursTool,
+    GenerateComplianceReportTool,
+    GetViolationsTool,
+)
+
+# Ecological Dynamics Tools - Lotka-Volterra supply/demand modeling
+from .ecological_dynamics_tools import (
+    # Request Models
+    CapacityCrunchRequest,
+    # Response Models
+    CapacityCrunchResponse,
+    EquilibriumRequest,
+    EquilibriumResponse,
+    HistoricalDataPoint,
+    InterventionRequest,
+    InterventionResponse,
+    # Enums
+    InterventionTypeEnum,
+    RiskLevelEnum,
+    SupplyDemandCyclesRequest,
+    SupplyDemandCyclesResponse,
+    SystemStabilityEnum,
+    # Tool Functions
+    analyze_supply_demand_cycles,
+    find_equilibrium_point,
+    predict_capacity_crunch,
+    simulate_intervention,
+)
 from .executor import ExecutionContext, ToolExecutor, get_executor
+
+# Fourier/FFT Analysis Tools - Periodicity detection
+from .fourier_analysis_tools import (
+    # Response Models
+    DominantPeriod,
+    HarmonicResonanceResponse,
+    ScheduleCyclesResponse,
+    SpectralEntropyResponse,
+    # Tool Functions
+    analyze_harmonic_resonance,
+    calculate_spectral_entropy,
+    detect_schedule_cycles,
+)
+
+# Game Theory Tools - Nash equilibrium analysis
+from .game_theory_tools import (
+    CoordinationFailure,
+    CoordinationFailuresResponse,
+    CoordinationFailureType,
+    # Supporting Models
+    DeviationIncentive,
+    DeviationIncentivesRequest,
+    DeviationType,
+    # Request Models
+    NashStabilityRequest,
+    # Response Models
+    NashStabilityResponse,
+    PersonDeviationAnalysis,
+    # Enums
+    StabilityStatus,
+    UtilityComponents,
+    # Analysis Functions
+    analyze_nash_stability,
+    # Utility Functions
+    calculate_person_utility,
+    detect_coordination_failures,
+    find_deviation_incentives,
+)
+
+# Kalman Filter Tools - Workload trend analysis
+from .kalman_filter_tools import (
+    # Response Models
+    AnomalyPoint,
+    # Request Models
+    WorkloadAnomalyRequest,
+    WorkloadAnomalyResponse,
+    WorkloadTrendRequest,
+    WorkloadTrendResponse,
+    # Tool Functions
+    analyze_workload_trend,
+    detect_workload_anomalies,
+)
 from .registry import ToolRegistry, get_registry
+
+# Resilience tools
+from .resilience import (
+    GetBurnoutRtTool,
+    GetDefenseLevelTool,
+    GetEarlyWarningsTool,
+    GetUtilizationTool,
+    RunN1AnalysisTool,
+)
 
 # Schedule tools
 from .schedule import (
@@ -41,15 +143,6 @@ from .schedule import (
     ValidateScheduleTool,
 )
 
-# Compliance tools
-from .compliance import (
-    CheckDayOffTool,
-    CheckSupervisionTool,
-    CheckWorkHoursTool,
-    GenerateComplianceReportTool,
-    GetViolationsTool,
-)
-
 # Swap tools
 from .swap import (
     CreateSwapTool,
@@ -58,104 +151,11 @@ from .swap import (
     GetSwapHistoryTool,
     RollbackSwapTool,
 )
-
-# Resilience tools
-from .resilience import (
-    GetBurnoutRtTool,
-    GetDefenseLevelTool,
-    GetEarlyWarningsTool,
-    GetUtilizationTool,
-    RunN1AnalysisTool,
-)
-
-# Analytics tools
-from .analytics import (
-    CoverageMetricsTool,
-    TrendAnalysisTool,
-    WorkloadDistributionTool,
-)
-
 from .validate_schedule import (
     ConstraintConfig,
     ScheduleValidationRequest,
     ScheduleValidationResponse,
     validate_schedule,
-)
-
-# Game Theory Tools - Nash equilibrium analysis
-from .game_theory_tools import (
-    # Analysis Functions
-    analyze_nash_stability,
-    find_deviation_incentives,
-    detect_coordination_failures,
-    # Request Models
-    NashStabilityRequest,
-    DeviationIncentivesRequest,
-    # Response Models
-    NashStabilityResponse,
-    PersonDeviationAnalysis,
-    CoordinationFailuresResponse,
-    # Supporting Models
-    DeviationIncentive,
-    CoordinationFailure,
-    UtilityComponents,
-    # Enums
-    StabilityStatus,
-    DeviationType,
-    CoordinationFailureType,
-    # Utility Functions
-    calculate_person_utility,
-)
-
-# Ecological Dynamics Tools - Lotka-Volterra supply/demand modeling
-from .ecological_dynamics_tools import (
-    # Enums
-    InterventionTypeEnum,
-    RiskLevelEnum,
-    SystemStabilityEnum,
-    # Request Models
-    CapacityCrunchRequest,
-    EquilibriumRequest,
-    InterventionRequest,
-    SupplyDemandCyclesRequest,
-    # Response Models
-    CapacityCrunchResponse,
-    EquilibriumResponse,
-    HistoricalDataPoint,
-    InterventionResponse,
-    SupplyDemandCyclesResponse,
-    # Tool Functions
-    analyze_supply_demand_cycles,
-    find_equilibrium_point,
-    predict_capacity_crunch,
-    simulate_intervention,
-)
-
-# Kalman Filter Tools - Workload trend analysis
-from .kalman_filter_tools import (
-    # Request Models
-    WorkloadAnomalyRequest,
-    WorkloadTrendRequest,
-    # Response Models
-    AnomalyPoint,
-    WorkloadAnomalyResponse,
-    WorkloadTrendResponse,
-    # Tool Functions
-    analyze_workload_trend,
-    detect_workload_anomalies,
-)
-
-# Fourier/FFT Analysis Tools - Periodicity detection
-from .fourier_analysis_tools import (
-    # Response Models
-    DominantPeriod,
-    HarmonicResonanceResponse,
-    ScheduleCyclesResponse,
-    SpectralEntropyResponse,
-    # Tool Functions
-    analyze_harmonic_resonance,
-    calculate_spectral_entropy,
-    detect_schedule_cycles,
 )
 
 __all__ = [

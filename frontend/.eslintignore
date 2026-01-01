@@ -1,0 +1,15 @@
+# Test files
+*.test.ts
+*.test.tsx
+**/__tests__/**
+src/test-utils/**
+src/__mocks__/**
+
+# Build outputs
+.next/
+out/
+node_modules/
+
+# E2E tests
+e2e/
+playwright.config.ts

@@ -14,9 +14,6 @@ from datetime import date, timedelta
 
 from scheduler_mcp.agent_server import (
     AgentMCPServer,
-    AnalyzeAndFixResult,
-    OptimizeCoverageResult,
-    ResolveConflictResult,
 )
 from scheduler_mcp.server import mcp  # The existing FastMCP instance
 
@@ -297,11 +294,11 @@ async def example_resolve_conflict():
         print(f"    Fairness Score: {resolution.fairness_score:.2f}")
         print(f"    Requires Approval: {resolution.requires_approval}")
 
-        print(f"    Trade-offs:")
+        print("    Trade-offs:")
         for stakeholder, tradeoff in resolution.trade_offs.items():
             print(f"      - {stakeholder}: {tradeoff}")
 
-        print(f"    Implementation Steps:")
+        print("    Implementation Steps:")
         for step in resolution.implementation_steps:
             print(f"      {step}")
 

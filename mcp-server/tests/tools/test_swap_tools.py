@@ -2,8 +2,9 @@
 Tests for swap tools.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from scheduler_mcp.tools.swap import (
     CreateSwapTool,

@@ -15,11 +15,8 @@ import logging
 import subprocess
 import time
 from collections import defaultdict
-from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
 from pathlib import Path
-from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -263,7 +260,7 @@ async def benchmark_solvers(
         # Run tests for this solver
         cmd = [
             "python", "-m", "pytest",
-            f"tests/test_solvers.py",
+            "tests/test_solvers.py",
             "-k", solver,
             "--tb=no",
             "-q",

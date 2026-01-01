@@ -5,8 +5,8 @@ These tests verify that the MCP empirical tools work correctly
 for benchmarking, ablation studies, and module analysis.
 """
 
+
 import pytest
-from pathlib import Path
 
 from scheduler_mcp.empirical_tools import (
     ablation_study,

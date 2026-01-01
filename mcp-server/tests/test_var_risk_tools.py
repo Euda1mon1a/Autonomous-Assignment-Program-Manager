@@ -9,10 +9,10 @@ import pytest
 # Import the core calculation functions
 # Note: We test the calculation functions directly, not the async tool wrappers
 from scheduler_mcp.var_risk_tools import (
+    RiskSeverity,
     calculate_cvar,
     calculate_var,
     classify_risk_severity,
-    RiskSeverity,
 )
 
 

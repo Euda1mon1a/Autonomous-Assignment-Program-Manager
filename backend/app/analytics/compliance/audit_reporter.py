@@ -40,7 +40,7 @@ class AuditReporter:
 
     def _generate_recommendations(
         self, violations: dict[str, Any], score: dict[str, Any]
-    ) -> List[str]:
+    ) -> list[str]:
         """Generate improvement recommendations."""
         recommendations = []
 

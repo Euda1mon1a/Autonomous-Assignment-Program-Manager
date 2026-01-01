@@ -20,9 +20,9 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -134,7 +134,7 @@ class NashStabilityRequest(BaseModel):
         le=1.0,
         description="Minimum utility gain to count as profitable deviation",
     )
-    utility_weights: Optional[dict[str, float]] = Field(
+    utility_weights: dict[str, float] | None = Field(
         default=None,
         description="Custom utility weights (workload, preference, convenience, continuity)",
     )
@@ -155,10 +155,10 @@ class DeviationIncentive(BaseModel):
         description="Utility improvement from deviation (can be negative)"
     )
     deviation_type: DeviationType = Field(description="Type of deviation")
-    target_person_id: Optional[str] = Field(
+    target_person_id: str | None = Field(
         default=None, description="Person to swap with (if applicable)"
     )
-    target_assignment_id: Optional[str] = Field(
+    target_assignment_id: str | None = Field(
         default=None, description="Alternative assignment ID"
     )
     description: str = Field(description="Human-readable deviation description")
@@ -267,13 +267,13 @@ class CoordinationFailure(BaseModel):
     per_person_gains: dict[str, float] = Field(
         description="Utility gain for each involved person"
     )
-    proposed_swap: Optional[dict[str, Any]] = Field(
+    proposed_swap: dict[str, Any] | None = Field(
         default=None, description="Proposed swap structure if applicable"
     )
     coordination_barrier: str = Field(
         description="Specific barrier preventing coordination"
     )
-    solution_path: Optional[str] = Field(
+    solution_path: str | None = Field(
         default=None, description="Suggested path to resolve coordination failure"
     )
     confidence: float = Field(
@@ -350,7 +350,7 @@ def _calculate_workload_fairness(
 
 
 def _calculate_preference_satisfaction(
-    assignments: list[dict], preference_trails: Optional[dict[str, float]] = None
+    assignments: list[dict], preference_trails: dict[str, float] | None = None
 ) -> float:
     """
     Calculate preference satisfaction based on preference trails (stigmergy).
@@ -390,7 +390,7 @@ def _calculate_preference_satisfaction(
 
 
 def _calculate_convenience(
-    assignments: list[dict], person_metadata: Optional[dict[str, Any]] = None
+    assignments: list[dict], person_metadata: dict[str, Any] | None = None
 ) -> float:
     """
     Calculate convenience score based on assignment characteristics.
@@ -460,9 +460,9 @@ def calculate_person_utility(
     person_id: str,
     assignments: list[dict],
     all_assignments: dict[str, list[dict]],
-    preference_trails: Optional[dict[str, float]] = None,
-    previous_assignments: Optional[list[dict]] = None,
-    weights: Optional[dict[str, float]] = None,
+    preference_trails: dict[str, float] | None = None,
+    previous_assignments: list[dict] | None = None,
+    weights: dict[str, float] | None = None,
 ) -> UtilityComponents:
     """
     Calculate comprehensive utility for a person's schedule.

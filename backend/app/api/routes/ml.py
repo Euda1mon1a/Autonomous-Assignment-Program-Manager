@@ -18,7 +18,7 @@ from sqlalchemy import select
 
 from app.core.config import get_settings
 from app.core.security import get_admin_user, get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_async_db, get_db
 from app.models.user import User
 from app.schemas.ml import (
     ConflictPredictionResponse,

@@ -119,7 +119,7 @@ class CheckSupervisionTool(
                 total_faculty=data.get("total_faculty", 0),
             )
 
-        except Exception as e:
+        except Exception:
             # Return empty result on error
             return SupervisionCheckResponse(
                 date=request.date,

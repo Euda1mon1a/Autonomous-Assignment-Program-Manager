@@ -116,7 +116,7 @@ async def standard_deployment_workflow():
         "estimated_duration_minutes": 15,
     }
 
-    print(f"✓ Deployment initiated!")
+    print("✓ Deployment initiated!")
     print(f"  • Deployment ID: {deployment_result['deployment_id']}")
     print(f"  • Status: {deployment_result['status']}")
     print(f"  • Estimated duration: {deployment_result['estimated_duration_minutes']} minutes")
@@ -146,7 +146,7 @@ async def standard_deployment_workflow():
     }
 
     print()
-    print(f"✓ Deployment completed successfully!")
+    print("✓ Deployment completed successfully!")
     print(f"  • Status: {deployment_status['deployment']['status']}")
     print(f"  • Health: {deployment_status['deployment']['health_status']}")
     print(f"  • API: {deployment_status['health_checks']['api']}")
@@ -218,7 +218,7 @@ async def emergency_rollback_workflow():
         "rollback_id": f"rollback-{datetime.now().timestamp()}",
     }
 
-    print(f"✓ Rollback initiated!")
+    print("✓ Rollback initiated!")
     print(f"  • From: {rollback_result['from_version']}")
     print(f"  • To: {rollback_result['to_version']}")
     print(f"  • Rollback ID: {rollback_result['rollback_id']}")

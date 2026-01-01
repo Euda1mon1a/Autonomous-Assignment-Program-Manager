@@ -145,7 +145,7 @@ class GetEarlyWarningsTool(
                 warnings=warnings,
             )
 
-        except Exception as e:
+        except Exception:
             # Return empty result
             return GetEarlyWarningsResponse(
                 start_date=request.start_date,

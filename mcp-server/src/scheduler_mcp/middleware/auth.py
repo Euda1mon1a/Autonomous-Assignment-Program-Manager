@@ -6,7 +6,8 @@ This module provides authentication checking for tool execution.
 
 import logging
 import os
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from ..tools.base import AuthenticationError
 

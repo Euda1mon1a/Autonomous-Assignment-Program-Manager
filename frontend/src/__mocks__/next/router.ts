@@ -1,6 +1,7 @@
 /**
  * Mock for next/router (Pages Router)
  */
+import { jest } from '@jest/globals';
 
 export const useRouter = jest.fn(() => ({
   route: '/',

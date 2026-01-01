@@ -10,20 +10,18 @@ from datetime import date
 from typing import Any
 
 from scheduler_mcp.error_handling import (
-    # Exceptions
-    MCPValidationError,
+    CircuitBreakerConfig,
     MCPServiceUnavailable,
     MCPTimeoutError,
-    MCPErrorCode,
-    # Decorators
-    mcp_error_handler,
+    # Exceptions
+    MCPValidationError,
     RetryConfig,
-    CircuitBreakerConfig,
     # Utilities
     get_circuit_breaker,
     get_error_metrics,
+    # Decorators
+    mcp_error_handler,
 )
-
 
 # ============================================================================
 # Example 1: Basic Error Handler
@@ -162,7 +160,7 @@ async def query_database(query: str) -> dict[str, Any]:
         # Simulate potential database issues
         await asyncio.sleep(0.1)
         return {"results": [], "count": 0}
-    except Exception as e:
+    except Exception:
         raise MCPServiceUnavailable(
             "Database connection failed",
             service_name="database",

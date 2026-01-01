@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from app.api.dependencies.role_filter import require_admin
 from app.controllers.certification_controller import CertificationController
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_async_db, get_db
 from app.models.user import User
 from app.schemas.certification import (
     CertificationTypeCreate,

@@ -9,14 +9,13 @@ Created: 2025-12-24
 """
 
 import re
-from typing import Dict, Optional, List, Any
-
+from typing import Any
 
 # =============================================================================
 # ABBREVIATIONS
 # =============================================================================
 
-ABBREVIATIONS: Dict[str, str] = {
+ABBREVIATIONS: dict[str, str] = {
     # Personnel & Training Levels
     "PGY-1": "Post-Graduate Year 1 (first-year resident/intern)",
     "PGY-2": "Post-Graduate Year 2 (second-year resident)",
@@ -67,7 +66,7 @@ ABBREVIATIONS: Dict[str, str] = {
 # CONSTRAINT EXPLANATIONS
 # =============================================================================
 
-CONSTRAINT_EXPLANATIONS: Dict[str, Dict[str, Any]] = {
+CONSTRAINT_EXPLANATIONS: dict[str, dict[str, Any]] = {
     # Hard Constraints (Must Be Satisfied)
     "AvailabilityConstraint": {
         "type": "hard",
@@ -245,7 +244,7 @@ CONSTRAINT_EXPLANATIONS: Dict[str, Dict[str, Any]] = {
 # SCHEDULING PATTERNS
 # =============================================================================
 
-SCHEDULING_PATTERNS: Dict[str, Dict[str, Any]] = {
+SCHEDULING_PATTERNS: dict[str, dict[str, Any]] = {
     "inverted_wednesday": {
         "name": "Inverted Wednesday Pattern",
         "description": "4th Wednesday of month has inverted schedule",
@@ -349,7 +348,7 @@ SCHEDULING_PATTERNS: Dict[str, Dict[str, Any]] = {
 # ROLE & PERSONNEL CONTEXT
 # =============================================================================
 
-ROLE_CONTEXT: Dict[str, Dict[str, Any]] = {
+ROLE_CONTEXT: dict[str, dict[str, Any]] = {
     "faculty_roles": {
         "PD": {
             "full_name": "Program Director",
@@ -403,7 +402,7 @@ ROLE_CONTEXT: Dict[str, Dict[str, Any]] = {
 # PII/SECURITY CONTEXT
 # =============================================================================
 
-PII_SECURITY_CONTEXT: Dict[str, List[str]] = {
+PII_SECURITY_CONTEXT: dict[str, list[str]] = {
     "never_expose": [
         "person.name",
         "person.email",
@@ -474,7 +473,7 @@ def expand_abbreviations(text: str, first_occurrence_only: bool = False) -> str:
     return expanded_text
 
 
-def explain_constraint(constraint_name: str) -> Optional[Dict[str, Any]]:
+def explain_constraint(constraint_name: str) -> dict[str, Any] | None:
     """
     Get detailed explanation of a constraint.
 
@@ -497,7 +496,7 @@ def explain_constraint(constraint_name: str) -> Optional[Dict[str, Any]]:
     return CONSTRAINT_EXPLANATIONS.get(constraint_name)
 
 
-def explain_pattern(pattern_name: str) -> Optional[Dict[str, Any]]:
+def explain_pattern(pattern_name: str) -> dict[str, Any] | None:
     """
     Get detailed explanation of a scheduling pattern.
 
@@ -518,7 +517,7 @@ def explain_pattern(pattern_name: str) -> Optional[Dict[str, Any]]:
     return SCHEDULING_PATTERNS.get(pattern_name)
 
 
-def enrich_violation_response(violation: Dict[str, Any]) -> Dict[str, Any]:
+def enrich_violation_response(violation: dict[str, Any]) -> dict[str, Any]:
     """
     Add domain context to a constraint violation response.
 
@@ -571,7 +570,7 @@ def enrich_violation_response(violation: Dict[str, Any]) -> Dict[str, Any]:
     return enriched
 
 
-def get_role_context(role: str) -> Optional[Dict[str, Any]]:
+def get_role_context(role: str) -> dict[str, Any] | None:
     """
     Get context information for a faculty or screener role.
 
@@ -601,7 +600,7 @@ def get_role_context(role: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def list_all_abbreviations() -> List[Dict[str, str]]:
+def list_all_abbreviations() -> list[dict[str, str]]:
     """
     Get a list of all known abbreviations.
 
@@ -619,7 +618,7 @@ def list_all_abbreviations() -> List[Dict[str, str]]:
     ]
 
 
-def list_all_constraints() -> List[Dict[str, str]]:
+def list_all_constraints() -> list[dict[str, str]]:
     """
     Get a list of all documented constraints.
 

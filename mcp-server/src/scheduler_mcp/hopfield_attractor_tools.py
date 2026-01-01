@@ -28,7 +28,6 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -108,7 +107,7 @@ class ScheduleEnergyResponse(BaseModel):
     """Response from schedule energy calculation."""
 
     analyzed_at: str = Field(description="ISO timestamp of analysis")
-    schedule_id: Optional[str] = Field(default=None, description="Schedule identifier if applicable")
+    schedule_id: str | None = Field(default=None, description="Schedule identifier if applicable")
     period_start: str = Field(description="Analysis period start date")
     period_end: str = Field(description="Analysis period end date")
     assignments_analyzed: int = Field(ge=0, description="Number of assignments encoded")
@@ -163,7 +162,7 @@ class NearbyAttractorsResponse(BaseModel):
     global_minimum_identified: bool = Field(
         description="Whether the global minimum was found"
     )
-    current_basin_id: Optional[str] = Field(
+    current_basin_id: str | None = Field(
         default=None, description="ID of attractor basin containing current state"
     )
     interpretation: str = Field(description="Human-readable interpretation")
@@ -212,7 +211,7 @@ class BasinDepthResponse(BaseModel):
     """Response from basin depth measurement."""
 
     analyzed_at: str = Field(description="ISO timestamp of analysis")
-    schedule_id: Optional[str] = Field(default=None, description="Schedule identifier")
+    schedule_id: str | None = Field(default=None, description="Schedule identifier")
     attractor_id: str = Field(description="ID of the attractor whose basin was measured")
     metrics: BasinDepthMetrics = Field(description="Basin depth metrics")
     stability_level: StabilityLevelEnum = Field(
@@ -276,7 +275,7 @@ class SpuriousAttractorsResponse(BaseModel):
         le=1.0,
         description="Fraction of state space covered by spurious basins",
     )
-    highest_risk_attractor: Optional[str] = Field(
+    highest_risk_attractor: str | None = Field(
         default=None, description="ID of most dangerous spurious attractor"
     )
     is_current_state_spurious: bool = Field(
@@ -293,9 +292,9 @@ class SpuriousAttractorsResponse(BaseModel):
 
 
 async def calculate_schedule_energy(
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
-    schedule_id: Optional[str] = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    schedule_id: str | None = None,
 ) -> ScheduleEnergyResponse:
     """
     Calculate Hopfield energy of the current schedule state.
@@ -487,8 +486,8 @@ async def calculate_schedule_energy(
 
 async def find_nearby_attractors(
     max_distance: int = 10,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ) -> NearbyAttractorsResponse:
     """
     Identify stable attractors near the current schedule state.
@@ -647,7 +646,7 @@ async def find_nearby_attractors(
 
 
 async def measure_basin_depth(
-    attractor_id: Optional[str] = None,
+    attractor_id: str | None = None,
     num_perturbations: int = 100,
 ) -> BasinDepthResponse:
     """
@@ -689,7 +688,6 @@ async def measure_basin_depth(
     try:
         logger.warning("Basin depth measurement using placeholder data")
 
-        import numpy as np
 
         # Simulate basin depth measurements
         # Energy barriers from perturbation experiments

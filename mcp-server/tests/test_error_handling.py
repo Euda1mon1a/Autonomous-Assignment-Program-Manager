@@ -6,36 +6,35 @@ and structured error response functionality.
 """
 
 import asyncio
-import pytest
 import time
-from typing import Any
+
+import pytest
 
 from scheduler_mcp.error_handling import (
-    # Exception classes
-    MCPToolError,
-    MCPValidationError,
-    MCPServiceUnavailable,
-    MCPRateLimitError,
-    MCPAuthenticationError,
-    MCPTimeoutError,
-    MCPCircuitOpenError,
-    MCPErrorCode,
-    # Decorators and utilities
-    mcp_error_handler,
-    retry_with_backoff,
-    RetryConfig,
     # Circuit breaker
     CircuitBreaker,
     CircuitBreakerConfig,
     CircuitState,
-    get_circuit_breaker,
+    MCPAuthenticationError,
+    MCPCircuitOpenError,
+    MCPErrorCode,
+    MCPRateLimitError,
+    MCPServiceUnavailable,
+    MCPTimeoutError,
+    # Exception classes
+    MCPToolError,
+    MCPValidationError,
+    RetryConfig,
     get_all_circuit_breakers,
+    get_circuit_breaker,
     # Metrics
     get_error_metrics,
-    reset_error_metrics,
+    # Decorators and utilities
+    mcp_error_handler,
     record_error,
+    reset_error_metrics,
+    retry_with_backoff,
 )
-
 
 # ============================================================================
 # Exception Tests

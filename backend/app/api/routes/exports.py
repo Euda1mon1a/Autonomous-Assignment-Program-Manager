@@ -16,7 +16,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_async_db, get_db
 from app.exports.jobs import execute_export_job
 from app.exports.scheduler import ExportSchedulerService
 from app.models.export_job import (

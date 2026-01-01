@@ -24,11 +24,10 @@ References:
 """
 
 import logging
-from datetime import date, datetime, timedelta
 from typing import Any
 
 import numpy as np
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 

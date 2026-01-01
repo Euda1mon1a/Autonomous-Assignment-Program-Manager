@@ -152,6 +152,24 @@ from .frms_integration import (
     scan_team_fatigue,
 )
 
+# Import Hopfield network attractor tools (energy landscape & schedule stability)
+from .hopfield_attractor_tools import (
+    # Response Models
+    BasinDepthResponse,
+    NearbyAttractorsResponse,
+    SpuriousAttractorsResponse,
+    detect_spurious_attractors,
+    find_nearby_attractors,
+    measure_basin_depth,
+)
+from .hopfield_attractor_tools import (
+    ScheduleEnergyResponse as HopfieldEnergyResponse,
+)
+from .hopfield_attractor_tools import (
+    # Tool Functions
+    calculate_schedule_energy as calculate_hopfield_energy,
+)
+
 # Import immune system tools (AIS - Artificial Immune System)
 from .immune_system_tools import (
     # Response Models
@@ -275,126 +293,10 @@ from .time_crystal_tools import (
     get_time_crystal_health,
 )
 
-# Import Hopfield network attractor tools (energy landscape & schedule stability)
-from .hopfield_attractor_tools import (
-    # Enums
-    AttractorTypeEnum,
-    StabilityLevelEnum,
-    # Response Models
-    AttractorInfo,
-    BasinDepthMetrics,
-    BasinDepthResponse,
-    NearbyAttractorsResponse,
-    ScheduleEnergyMetrics,
-    ScheduleEnergyResponse as HopfieldEnergyResponse,
-    SpuriousAttractorInfo,
-    SpuriousAttractorsResponse,
-    # Tool Functions
-    calculate_schedule_energy as calculate_hopfield_energy,
-    detect_spurious_attractors,
-    find_nearby_attractors,
-    measure_basin_depth,
-)
-
-# Import VaR (Value-at-Risk) tools for schedule vulnerability analysis
-from .var_risk_tools import (
-    # Enums
-    ConfidenceLevel,
-    DisruptionType,
-    RiskSeverity,
-    # Request Models
-    ConditionalVaRRequest,
-    CoverageVaRRequest,
-    DisruptionSimulationRequest,
-    WorkloadVaRRequest,
-    # Response Models
-    ConditionalVaRResponse,
-    CoverageVaRResponse,
-    DisruptionScenario,
-    DisruptionSimulationResponse,
-    VaRMetric,
-    WorkloadVaRResponse,
-    # Tool Functions
-    calculate_conditional_var,
-    calculate_coverage_var,
-    calculate_workload_var,
-    simulate_disruption_scenarios,
-)
-
-# Import Game Theory tools for Nash equilibrium analysis
-from .tools.game_theory_tools import (
-    # Enums
-    CoordinationFailureType,
-    DeviationType,
-    StabilityStatus,
-    # Request Models
-    DeviationIncentivesRequest,
-    NashStabilityRequest,
-    # Response Models
-    CoordinationFailure,
-    CoordinationFailuresResponse,
-    DeviationIncentive,
-    NashStabilityResponse,
-    PersonDeviationAnalysis,
-    UtilityComponents,
-    # Tool Functions
-    analyze_nash_stability,
-    calculate_person_utility,
-    detect_coordination_failures,
-    find_deviation_incentives,
-)
-
 # Import Ecological dynamics tools (Lotka-Volterra supply/demand modeling)
-from .tools.ecological_dynamics_tools import (
-    # Enums
-    InterventionTypeEnum,
-    RiskLevelEnum,
-    SystemStabilityEnum,
-    # Request Models
-    CapacityCrunchRequest,
-    EquilibriumRequest,
-    InterventionRequest,
-    SupplyDemandCyclesRequest,
-    # Response Models
-    CapacityCrunchResponse,
-    EquilibriumResponse,
-    HistoricalDataPoint,
-    InterventionResponse,
-    SupplyDemandCyclesResponse,
-    # Tool Functions
-    analyze_supply_demand_cycles,
-    find_equilibrium_point,
-    predict_capacity_crunch,
-    simulate_intervention,
-)
-
-# Import Kalman filter tools for workload trend analysis
-from .tools.kalman_filter_tools import (
-    # Request Models
-    WorkloadAnomalyRequest,
-    WorkloadTrendRequest,
-    # Response Models
-    AnomalyPoint,
-    WorkloadAnomalyResponse,
-    WorkloadTrendResponse,
-    # Tool Functions
-    analyze_workload_trend,
-    detect_workload_anomalies,
-)
-
 # Import Fourier/FFT analysis tools for periodicity detection
-from .tools.fourier_analysis_tools import (
-    # Response Models
-    DominantPeriod,
-    HarmonicResonanceResponse,
-    ScheduleCyclesResponse,
-    SpectralEntropyResponse,
-    # Tool Functions
-    analyze_harmonic_resonance,
-    calculate_spectral_entropy,
-    detect_schedule_cycles,
-)
-
+# Import Game Theory tools for Nash equilibrium analysis
+# Import Kalman filter tools for workload trend analysis
 # Import validate_schedule tool with ConstraintService integration
 from .tools.validate_schedule import (
     ConstraintConfig,
@@ -408,6 +310,8 @@ from .tools.validate_schedule import (
 from .tools.validate_schedule import (
     validate_schedule as validate_schedule_by_id,
 )
+
+# Import VaR (Value-at-Risk) tools for schedule vulnerability analysis
 
 # Configure logging - MUST use stderr for STDIO transport compatibility
 # MCP uses stdout for JSON-RPC messages; logging to stdout corrupts the protocol
@@ -4530,7 +4434,7 @@ Examples:
         try:
             import uvicorn
             from starlette.applications import Starlette
-            from starlette.routing import Route, Mount
+            from starlette.routing import Mount, Route
 
             # Get the MCP ASGI app
             mcp_app = mcp.http_app()

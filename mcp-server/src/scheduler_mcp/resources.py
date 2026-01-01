@@ -12,7 +12,7 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func
 from sqlalchemy.orm import Session, joinedload
 
 logger = logging.getLogger(__name__)
@@ -150,7 +150,6 @@ async def get_schedule_status(
     Raises:
         ValueError: If date range is invalid
     """
-    from datetime import timedelta
 
     # Set defaults
     if start_date is None:
@@ -349,7 +348,6 @@ async def get_compliance_summary(
     Raises:
         ValueError: If date range is invalid
     """
-    from datetime import timedelta
 
     # Set defaults
     if start_date is None:
@@ -451,7 +449,7 @@ async def get_compliance_summary(
                         person_id=str(resident.id),
                         person_role=resident_role,
                         date_range=(window_start, window_end),
-                        description=f"Exceeded 80-hour weekly work limit",
+                        description="Exceeded 80-hour weekly work limit",
                         details={
                             "average_weekly_hours": round(avg_weekly, 1),
                             "limit": MAX_WEEKLY_HOURS,

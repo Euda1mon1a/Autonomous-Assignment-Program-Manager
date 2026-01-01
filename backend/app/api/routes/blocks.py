@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.controllers.block_controller import BlockController
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_async_db, get_db
 from app.models.user import User
 from app.schemas.block import BlockCreate, BlockListResponse, BlockResponse
 

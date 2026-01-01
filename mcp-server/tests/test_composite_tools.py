@@ -12,14 +12,9 @@ Test Categories:
 - Smoke Tests: Tools are registered and callable
 """
 
-import asyncio
-from datetime import datetime, timedelta
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import UUID, uuid4
+from datetime import datetime
 
 import pytest
-
 
 # ============================================================================
 # Unified Critical Index Tests
@@ -967,7 +962,7 @@ class TestCompositeIntegration:
             analyzer = UnifiedCriticalIndexAnalyzer()
             analyzer.build_network(faculty, assignments, shared_shift_threshold=1)
 
-            coverage_requirements = {b: 1 for b in blocks}
+            coverage_requirements = dict.fromkeys(blocks, 1)
             analysis = analyzer.analyze_population(
                 faculty=faculty,
                 assignments=assignments,

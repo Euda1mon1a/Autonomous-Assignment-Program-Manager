@@ -5,10 +5,13 @@ Tests the structure, imports, and basic functionality of the Celery
 async task management tools.
 """
 
-import pytest
 from datetime import datetime
 
+import pytest
+
 from scheduler_mcp.async_tools import (
+    TASK_DURATION_ESTIMATES,
+    TASK_TYPE_MAP,
     ActiveTaskInfo,
     ActiveTasksResult,
     BackgroundTaskRequest,
@@ -17,8 +20,6 @@ from scheduler_mcp.async_tools import (
     TaskStatus,
     TaskStatusResult,
     TaskType,
-    TASK_TYPE_MAP,
-    TASK_DURATION_ESTIMATES,
     validate_task_params,
 )
 

@@ -11,16 +11,16 @@ from datetime import date, timedelta
 
 # Import the tool functions directly
 from src.scheduler_mcp.tools.ecological_dynamics_tools import (
-    analyze_supply_demand_cycles,
-    predict_capacity_crunch,
-    find_equilibrium_point,
-    simulate_intervention,
-    HistoricalDataPoint,
-    SupplyDemandCyclesRequest,
     CapacityCrunchRequest,
     EquilibriumRequest,
+    HistoricalDataPoint,
     InterventionRequest,
     InterventionTypeEnum,
+    SupplyDemandCyclesRequest,
+    analyze_supply_demand_cycles,
+    find_equilibrium_point,
+    predict_capacity_crunch,
+    simulate_intervention,
 )
 
 
@@ -56,7 +56,7 @@ async def test_analyze_cycles():
     result = await analyze_supply_demand_cycles(request)
 
     print(f"Data points analyzed: {result.data_points}")
-    print(f"Fitted parameters:")
+    print("Fitted parameters:")
     print(f"  α (capacity growth): {result.fitted_parameters['alpha']:.4f}")
     print(f"  β (consumption rate): {result.fitted_parameters['beta']:.4f}")
     print(f"  δ (demand amplification): {result.fitted_parameters['delta']:.4f}")
@@ -155,13 +155,13 @@ async def test_intervention(params):
     result = await simulate_intervention(request)
 
     print(f"Intervention: {result.intervention_type} @ {result.intervention_magnitude:.0%}")
-    print(f"\nBaseline (no intervention):")
+    print("\nBaseline (no intervention):")
     print(f"  Min capacity: {result.baseline_min_capacity:.1f}")
     print(f"  Oscillation amplitude: {result.baseline_oscillation_amplitude:.1f}")
-    print(f"\nWith intervention:")
+    print("\nWith intervention:")
     print(f"  Min capacity: {result.intervention_min_capacity:.1f}")
     print(f"  Oscillation amplitude: {result.intervention_oscillation_amplitude:.1f}")
-    print(f"\nImpact:")
+    print("\nImpact:")
     print(f"  Capacity improvement: +{result.capacity_improvement:.1f}")
     print(f"  Amplitude reduction: -{result.amplitude_reduction:.1f}")
     print(f"  Effectiveness score: {result.intervention_effectiveness:.2%}")

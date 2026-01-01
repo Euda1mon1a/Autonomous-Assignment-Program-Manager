@@ -25,7 +25,7 @@ from app.core.security import (
     oauth2_scheme,
     verify_refresh_token,
 )
-from app.db.session import get_async_db
+from app.db.session import get_async_db, get_db
 from app.models.user import User
 from app.schemas.auth import (
     RefreshTokenRequest,

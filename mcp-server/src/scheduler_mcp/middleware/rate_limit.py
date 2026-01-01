@@ -7,7 +7,8 @@ This module provides rate limiting to prevent abuse.
 import logging
 import time
 from collections import defaultdict
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from ..tools.base import ToolError
 

@@ -33,10 +33,10 @@ sys.path.insert(0, str(backend_path))
 # Import async tools
 from scheduler_mcp.async_tools import (
     TaskType,
-    start_background_task,
+    cancel_task,
     get_task_status,
     list_active_tasks,
-    cancel_task,
+    start_background_task,
 )
 
 
@@ -70,7 +70,7 @@ async def example_1_health_check():
 
         if status.status.value == "success":
             print("\n✓ Task completed successfully!")
-            print(f"\nResult:")
+            print("\nResult:")
             print(f"  Overall Status: {status.result.get('status', 'N/A')}")
             print(f"  Utilization: {status.result.get('utilization', 'N/A')}")
             print(f"  Defense Level: {status.result.get('defense_level', 'N/A')}")
@@ -115,7 +115,7 @@ async def example_2_contingency_analysis():
 
         if status.status.value == "success":
             print("\n✓ Contingency analysis completed!")
-            print(f"\nResults:")
+            print("\nResults:")
             print(f"  N-1 Pass: {status.result.get('n1_pass', 'N/A')}")
             print(f"  N-1 Vulnerabilities: {status.result.get('n1_vulnerabilities_count', 0)}")
             print(f"  N-2 Pass: {status.result.get('n2_pass', 'N/A')}")
@@ -168,7 +168,7 @@ async def example_3_metrics_computation():
                 schedule_analysis = status.result.get("schedule_analysis", {})
                 metrics = schedule_analysis.get("metrics", {})
 
-                print(f"\nMetrics:")
+                print("\nMetrics:")
                 if "fairness" in metrics:
                     print(f"  Fairness: {metrics['fairness'].get('value', 'N/A')}")
                 if "coverage" in metrics:
@@ -178,7 +178,7 @@ async def example_3_metrics_computation():
 
                 stability = status.result.get("stability_metrics", {})
                 if stability:
-                    print(f"\nStability:")
+                    print("\nStability:")
                     print(f"  Grade: {stability.get('stability_grade', 'N/A')}")
                     print(f"  Churn Rate: {stability.get('churn_rate', 'N/A')}")
 

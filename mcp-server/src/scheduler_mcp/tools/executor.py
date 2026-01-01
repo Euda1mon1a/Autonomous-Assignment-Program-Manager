@@ -8,7 +8,7 @@ import logging
 import time
 from typing import Any
 
-from .base import BaseTool, ToolError
+from .base import ToolError
 from .registry import get_registry
 
 logger = logging.getLogger(__name__)

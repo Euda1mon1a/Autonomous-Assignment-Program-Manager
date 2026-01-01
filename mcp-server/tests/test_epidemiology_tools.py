@@ -14,14 +14,9 @@ Test Categories:
 - Smoke Tests: Tools are registered and callable
 """
 
-import asyncio
-from datetime import datetime, timedelta
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import pytest
-
 
 # ============================================================================
 # Reproduction Number (Rt) Calculation Tests
@@ -914,7 +909,6 @@ class TestEpidemiologyIntegration:
         """Test Rt calculation with actual module."""
         try:
             import networkx as nx
-
             from backend.app.resilience.burnout_epidemiology import (
                 BurnoutEpidemiology,
                 BurnoutState,
@@ -957,7 +951,6 @@ class TestEpidemiologyIntegration:
         """Test SIR simulation with actual module."""
         try:
             import networkx as nx
-
             from backend.app.resilience.burnout_epidemiology import BurnoutEpidemiology
 
             # Build network
@@ -992,7 +985,6 @@ class TestEpidemiologyIntegration:
         """Test super-spreader identification with actual module."""
         try:
             import networkx as nx
-
             from backend.app.resilience.burnout_epidemiology import BurnoutEpidemiology
 
             # Build network with one high-degree node

@@ -152,7 +152,7 @@ class GetViolationsTool(BaseTool[GetViolationsRequest, GetViolationsResponse]):
                 violations=violations,
             )
 
-        except Exception as e:
+        except Exception:
             # Return empty result on error
             return GetViolationsResponse(
                 start_date=request.start_date,

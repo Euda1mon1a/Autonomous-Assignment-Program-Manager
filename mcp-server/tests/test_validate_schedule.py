@@ -8,20 +8,20 @@ Tests cover:
 - Different constraint configurations
 """
 
+
 import pytest
-from datetime import datetime
 from pydantic import ValidationError
 
 from tools.validate_schedule import (
+    ConstraintConfig,
     ScheduleValidationRequest,
     ScheduleValidationResponse,
     ValidationIssue,
     ValidationSeverity,
-    ConstraintConfig,
-    validate_schedule,
-    _sanitize_message,
-    _sanitize_details,
     _anonymize_entity_ref,
+    _sanitize_details,
+    _sanitize_message,
+    validate_schedule,
 )
 
 

@@ -10,33 +10,33 @@ Tests cover:
 - Request/response validation
 """
 
+from datetime import date
+
 import pytest
-from datetime import date, datetime
-from unittest.mock import AsyncMock, Mock, patch
 
 from scheduler_mcp.resilience_integration import (
-    # Enums
-    UtilizationLevelEnum,
-    DefenseLevelEnum,
-    FallbackScenarioEnum,
+    CircuitBreakerInfo,
     # Request models
     ContingencyAnalysisRequest,
+    ContingencyAnalysisResponse,
+    DefenseLevelEnum,
+    DefenseLevelResponse,
+    FallbackScenarioEnum,
+    FallbackScheduleInfo,
+    FatalPairInfo,
     MTFComplianceRequest,
+    MTFComplianceResponse,
+    # Enums
+    UtilizationLevelEnum,
     # Response models
     UtilizationResponse,
-    DefenseLevelResponse,
-    ContingencyAnalysisResponse,
     VulnerabilityInfo,
-    FatalPairInfo,
-    FallbackScheduleInfo,
-    MTFComplianceResponse,
-    CircuitBreakerInfo,
+    check_mtf_compliance,
     # Functions
     check_utilization_threshold,
     get_defense_level,
-    run_contingency_analysis_deep,
     get_static_fallbacks,
-    check_mtf_compliance,
+    run_contingency_analysis_deep,
 )
 
 

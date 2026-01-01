@@ -19,9 +19,7 @@ Cross-Disciplinary Science:
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -60,7 +58,7 @@ class SeismicAlertInfo(BaseModel):
     predicted_magnitude: float = Field(
         ge=0.0, le=10.0, description="Predicted burnout magnitude (1-10 Richter-like scale)"
     )
-    time_to_event_days: Optional[float] = Field(
+    time_to_event_days: float | None = Field(
         default=None, description="Estimated days until burnout event"
     )
     trigger_window_start: int = Field(description="Start index of trigger window in time series")
@@ -160,7 +158,7 @@ class SPCAnalysisResponse(BaseModel):
     violations_detected: int
     alerts: list[SPCAlertInfo]
     control_limits: dict[str, float]
-    process_capability: Optional[dict[str, float]]
+    process_capability: dict[str, float] | None
     weeks_analyzed: int
     mean_hours: float
     std_hours: float

@@ -130,7 +130,7 @@ class CheckWorkHoursTool(BaseTool[WorkHoursCheckRequest, WorkHoursCheckResponse]
                 people=people,
             )
 
-        except Exception as e:
+        except Exception:
             # Return empty result on error
             return WorkHoursCheckResponse(
                 start_date=request.start_date,

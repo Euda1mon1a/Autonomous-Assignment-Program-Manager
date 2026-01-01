@@ -246,7 +246,7 @@ async def execute_tool(tool_name: str, tool_input: dict, db) -> dict[str, Any]:
                 # Validate by schedule ID
                 service = ConstraintService(db)
                 try:
-                    result = await sawait ervice.validate_schedule(schedule_id)
+                    result = await service.validate_schedule(schedule_id)
                     return {
                         "status": "validated",
                         "is_valid": result.is_valid,

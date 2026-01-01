@@ -5,16 +5,16 @@ These tests verify the tool implementations return properly structured responses
 with realistic placeholder data.
 """
 
+
 import pytest
-from datetime import date
 
 from scheduler_mcp.hopfield_attractor_tools import (
+    AttractorTypeEnum,
+    StabilityLevelEnum,
     calculate_schedule_energy,
+    detect_spurious_attractors,
     find_nearby_attractors,
     measure_basin_depth,
-    detect_spurious_attractors,
-    StabilityLevelEnum,
-    AttractorTypeEnum,
 )
 
 

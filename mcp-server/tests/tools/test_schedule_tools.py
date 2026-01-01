@@ -2,17 +2,14 @@
 Tests for schedule tools.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from scheduler_mcp.tools.schedule import (
     CreateAssignmentTool,
-    DeleteAssignmentTool,
-    ExportScheduleTool,
     GenerateScheduleTool,
     GetScheduleTool,
-    OptimizeScheduleTool,
-    UpdateAssignmentTool,
     ValidateScheduleTool,
 )
 

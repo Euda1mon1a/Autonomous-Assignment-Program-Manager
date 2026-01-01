@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
-import { startOfWeek, addDays, format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns'
+import { useState, useCallback, useMemo, useEffect } from 'react'
+import { startOfWeek, addDays, format, startOfMonth, endOfMonth, eachDayOfInterval, parseISO } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { BlockNavigation } from '@/components/schedule/BlockNavigation'
@@ -13,6 +13,7 @@ import { DayView } from '@/components/schedule/DayView'
 import { ResidentAcademicYearView, FacultyInpatientWeeksView } from '@/components/schedule/drag'
 import { get } from '@/lib/api'
 import { usePeople, useRotationTemplates, ListResponse } from '@/lib/hooks'
+import { useBlockRanges } from '@/hooks/useBlocks'
 import type { Assignment, Block, RotationTemplate } from '@/types/api'
 
 /**
@@ -58,17 +59,61 @@ export default function SchedulePage() {
   // Current date for Day/Week/Month views
   const [currentDate, setCurrentDate] = useState(() => new Date())
 
-  // Initialize to current 4-week block starting from Monday (for block view)
+  // Fetch block ranges from the database to get actual block dates
+  const { data: blockRanges } = useBlockRanges()
+
+  // Track if we've initialized with real block data
+  const [isInitialized, setIsInitialized] = useState(false)
+
+  // Initial date range (temporary until block ranges load)
   const getInitialDates = () => {
     const today = new Date()
     const monday = startOfWeek(today, { weekStartsOn: 1 })
     return {
       start: monday,
-      end: addDays(monday, 27), // 28 days total (4 weeks)
+      end: addDays(monday, 27), // Fallback until API data loads
     }
   }
 
   const [dateRange, setDateRange] = useState(getInitialDates)
+
+  // Update date range when block ranges load from API
+  useEffect(() => {
+    if (!blockRanges || blockRanges.length === 0 || isInitialized) return
+
+    const todayStr = format(new Date(), 'yyyy-MM-dd')
+
+    // Find the block that contains today
+    const todaysBlock = blockRanges.find(
+      (range) => range.start_date <= todayStr && todayStr <= range.end_date
+    )
+
+    if (todaysBlock) {
+      setDateRange({
+        start: parseISO(todaysBlock.start_date),
+        end: parseISO(todaysBlock.end_date),
+      })
+      setIsInitialized(true)
+    } else {
+      // Find the closest upcoming block if today is not in any block
+      const upcomingBlock = blockRanges.find((range) => range.start_date > todayStr)
+      if (upcomingBlock) {
+        setDateRange({
+          start: parseISO(upcomingBlock.start_date),
+          end: parseISO(upcomingBlock.end_date),
+        })
+        setIsInitialized(true)
+      } else if (blockRanges.length > 0) {
+        // Fall back to the last block
+        const lastBlock = blockRanges[blockRanges.length - 1]
+        setDateRange({
+          start: parseISO(lastBlock.start_date),
+          end: parseISO(lastBlock.end_date),
+        })
+        setIsInitialized(true)
+      }
+    }
+  }, [blockRanges, isInitialized])
 
   // Calculate date range based on current view
   const viewDateRange = useMemo(() => {

@@ -55,12 +55,11 @@ import logging
 from datetime import date as date_type
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
 
 import numpy as np
 from pydantic import BaseModel, Field
 from scipy.integrate import odeint
-from scipy.optimize import curve_fit, least_squares
+from scipy.optimize import least_squares
 
 logger = logging.getLogger(__name__)
 
@@ -554,8 +553,8 @@ async def analyze_supply_demand_cycles(
         )
     elif stability == SystemStabilityEnum.UNSTABLE:
         interpretation = (
-            f"WARNING: System is unstable and diverging from equilibrium. "
-            f"Oscillations are growing, indicating structural imbalance. "
+            "WARNING: System is unstable and diverging from equilibrium. "
+            "Oscillations are growing, indicating structural imbalance. "
             "Immediate intervention required."
         )
     else:  # CHAOTIC
@@ -738,10 +737,10 @@ async def find_equilibrium_point(
 
     # Parameter sensitivity
     sensitivity = {
-        "alpha": f"Increasing α (capacity growth) raises equilibrium demand (y*=α/β)",
-        "beta": f"Increasing β (consumption) lowers equilibrium demand (y*=α/β)",
-        "delta": f"Increasing δ (demand amplification) lowers equilibrium capacity (x*=γ/δ)",
-        "gamma": f"Increasing γ (demand decay) raises equilibrium capacity (x*=γ/δ)",
+        "alpha": "Increasing α (capacity growth) raises equilibrium demand (y*=α/β)",
+        "beta": "Increasing β (consumption) lowers equilibrium demand (y*=α/β)",
+        "delta": "Increasing δ (demand amplification) lowers equilibrium capacity (x*=γ/δ)",
+        "gamma": "Increasing γ (demand decay) raises equilibrium capacity (x*=γ/δ)",
     }
 
     return EquilibriumResponse(

@@ -13,7 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_admin_user, get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_async_db, get_db
 from app.features.flags import FeatureFlagService
 from app.models.feature_flag import FeatureFlag
 from app.models.user import User

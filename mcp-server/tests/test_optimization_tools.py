@@ -12,14 +12,8 @@ Test Categories:
 - Smoke Tests: Tools are registered and callable
 """
 
-import asyncio
-from datetime import datetime
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import UUID, uuid4
 
 import pytest
-
 
 # ============================================================================
 # Erlang C Coverage Optimization Tests

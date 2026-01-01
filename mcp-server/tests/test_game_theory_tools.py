@@ -8,35 +8,34 @@ Following the pattern from test_hopfield_tools.py with pytest.mark.asyncio
 and structured response validation.
 """
 
-import pytest
-from datetime import datetime
 from unittest.mock import AsyncMock, patch
 
+import pytest
+
 from scheduler_mcp.tools.game_theory_tools import (
-    # Main async functions
-    analyze_nash_stability,
-    find_deviation_incentives,
-    detect_coordination_failures,
-    # Helper functions
-    calculate_person_utility,
-    _calculate_workload_fairness,
-    _calculate_preference_satisfaction,
-    _calculate_convenience,
-    _calculate_continuity,
+    CoordinationFailuresResponse,
+    CoordinationFailureType,
+    DeviationIncentivesRequest,
+    DeviationType,
     # Request/Response models
     NashStabilityRequest,
-    DeviationIncentivesRequest,
     NashStabilityResponse,
     PersonDeviationAnalysis,
-    CoordinationFailuresResponse,
     # Enums
     StabilityStatus,
-    DeviationType,
-    CoordinationFailureType,
     # Data classes
     UtilityComponents,
+    _calculate_continuity,
+    _calculate_convenience,
+    _calculate_preference_satisfaction,
+    _calculate_workload_fairness,
+    # Main async functions
+    analyze_nash_stability,
+    # Helper functions
+    calculate_person_utility,
+    detect_coordination_failures,
+    find_deviation_incentives,
 )
-
 
 # =============================================================================
 # Test Fixtures

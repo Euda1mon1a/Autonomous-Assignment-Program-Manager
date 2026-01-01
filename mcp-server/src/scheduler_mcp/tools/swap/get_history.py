@@ -158,7 +158,7 @@ class GetSwapHistoryTool(
                 records=records,
             )
 
-        except Exception as e:
+        except Exception:
             # Return empty result on error
             return GetSwapHistoryResponse(
                 total_records=0,

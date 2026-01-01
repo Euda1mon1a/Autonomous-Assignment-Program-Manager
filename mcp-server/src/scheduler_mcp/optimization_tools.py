@@ -14,7 +14,6 @@ Modules Exposed:
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -131,7 +130,7 @@ class ProcessCapabilityResponse(BaseModel):
     # Specification limits
     lsl: float = Field(description="Lower specification limit")
     usl: float = Field(description="Upper specification limit")
-    target: Optional[float] = Field(default=None, description="Target value (if specified)")
+    target: float | None = Field(default=None, description="Target value (if specified)")
 
     # Derived metrics
     centering_assessment: str = Field(
@@ -515,7 +514,7 @@ async def calculate_process_capability(
     data: list[float],
     lower_spec_limit: float,
     upper_spec_limit: float,
-    target: Optional[float] = None,
+    target: float | None = None,
 ) -> ProcessCapabilityResponse:
     """
     Calculate Six Sigma process capability indices for schedule quality.
@@ -692,7 +691,7 @@ async def calculate_process_capability(
 
 async def calculate_equity_metrics(
     provider_hours: dict[str, float],
-    intensity_weights: Optional[dict[str, float]] = None,
+    intensity_weights: dict[str, float] | None = None,
 ) -> EquityMetricsResponse:
     """
     Calculate workload equity metrics using Gini coefficient and fairness analysis.

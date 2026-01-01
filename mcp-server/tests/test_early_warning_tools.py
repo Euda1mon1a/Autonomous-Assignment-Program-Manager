@@ -13,14 +13,9 @@ Test Categories:
 - Smoke Tests: Tools are registered and callable
 """
 
-import asyncio
-from datetime import date, datetime, timedelta
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import UUID, uuid4
+from unittest.mock import MagicMock
 
 import pytest
-
 
 # ============================================================================
 # Seismic Detection (STA/LTA) Tests

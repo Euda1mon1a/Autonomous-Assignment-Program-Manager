@@ -17,10 +17,11 @@ import random
 import time
 import uuid
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, TypeVar, ParamSpec, cast
+from typing import Any, ParamSpec, TypeVar, cast
 
 from pydantic import BaseModel, Field
 
@@ -437,7 +438,7 @@ def retry_with_backoff(
 
                     await asyncio.sleep(delay)
 
-                except Exception as e:
+                except Exception:
                     # Non-retryable exception, fail immediately
                     logger.error(
                         f"Non-retryable error in {func.__name__}",
@@ -602,7 +603,7 @@ class CircuitBreaker:
             await self._on_success()
             return result
 
-        except self.config.monitored_exceptions as e:
+        except self.config.monitored_exceptions:
             # Record failure
             await self._on_failure()
             raise
