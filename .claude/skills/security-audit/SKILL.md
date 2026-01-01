@@ -324,6 +324,299 @@ ruff check app/ --select S
 4. Outdated dependencies (if minor version)
 5. Missing rate limiting on non-auth endpoints
 
+## Examples
+
+### Example 1: OPSEC/PERSEC Data Leak Detection
+
+**Context:** Reviewing PR that adds schedule export feature
+
+**Input:**
+```python
+# backend/app/api/routes/export.py
+@router.get("/export/schedule")
+async def export_schedule(db: AsyncSession = Depends(get_db)):
+    """Export full schedule to JSON."""
+    assignments = await db.execute(select(Assignment))
+
+    return {
+        "schedule": [
+            {
+                "resident_name": a.person.name,  # PERSEC VIOLATION
+                "rotation": a.rotation.name,
+                "date": a.date,
+                "deployment_status": a.person.deployment_status  # OPSEC VIOLATION
+            }
+            for a in assignments.scalars()
+        ]
+    }
+```
+
+**Process:**
+1. Scan for PERSEC data: `resident_name` exposes real names
+2. Scan for OPSEC data: `deployment_status` reveals military movements
+3. Check gitignore patterns: Export endpoint could log to files
+4. Assess severity: HIGH - violates military data security policy
+
+**Output:**
+```markdown
+## Security Audit Finding
+
+**Severity:** :red_circle: CRITICAL
+**Category:** OPSEC/PERSEC Violation
+**File:** `backend/app/api/routes/export.py:12`
+
+**Issue:** Sensitive Military Data Exposure
+
+This endpoint exposes PERSEC (personally identifiable) and OPSEC (operational security)
+data that must never leave the local system.
+
+**Violations Detected:**
+1. **PERSEC:** Real resident names in export (`resident_name`)
+2. **OPSEC:** Deployment status reveals military movements
+3. **Data Leak Risk:** Export could be committed to repo or logged
+
+**Security Impact:**
+- Compromises resident privacy (PERSEC)
+- Reveals duty patterns and movements (OPSEC)
+- Could violate HIPAA if PHI included
+- Non-compliance with military data handling requirements
+
+**Required Fix:**
+```python
+@router.get("/export/schedule", response_model=ScheduleExportResponse)
+async def export_schedule(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_roles(["admin"]))  # Auth required
+):
+    """Export sanitized schedule (admin only)."""
+    assignments = await db.execute(select(Assignment))
+
+    return {
+        "schedule": [
+            {
+                "resident_id": a.person.id,  # Use ID, not name
+                "rotation": a.rotation.name,
+                "date": a.date,
+                # DO NOT include deployment_status
+            }
+            for a in assignments.scalars()
+        ]
+    }
+```
+
+**Additional Recommendations:**
+1. Add audit log: Track who exported schedule and when
+2. Rate limit: Prevent bulk data exfiltration
+3. Document: Add warning comment about OPSEC/PERSEC
+4. Review: Any export feature requires security team approval
+
+**Action Required:** BLOCK MERGE until fixed
+```
+
+### Example 2: SQL Injection Vulnerability
+
+**Context:** Security scan finds raw SQL in search endpoint
+
+**Input:**
+```python
+# backend/app/api/routes/search.py
+@router.get("/search/residents")
+async def search_residents(name: str, db: AsyncSession = Depends(get_db)):
+    """Search residents by name."""
+    # VULNERABLE: Using raw SQL with user input
+    query = f"SELECT * FROM persons WHERE name LIKE '%{name}%'"
+    result = await db.execute(text(query))
+    return result.fetchall()
+```
+
+**Process:**
+1. Detect raw SQL: `text(query)` with f-string interpolation
+2. Identify user input: `name` parameter not sanitized
+3. Test exploit: `name = "'; DROP TABLE persons; --"`
+4. Assess severity: CRITICAL - SQL injection vulnerability
+
+**Output:**
+```markdown
+## Security Audit Finding
+
+**Severity:** :red_circle: CRITICAL
+**Category:** SQL Injection (OWASP A03:2021)
+**File:** `backend/app/api/routes/search.py:8`
+
+**Issue:** SQL Injection Vulnerability
+
+User input is directly interpolated into SQL query without sanitization,
+allowing arbitrary SQL execution.
+
+**Vulnerability:**
+```python
+query = f"SELECT * FROM persons WHERE name LIKE '%{name}%'"
+```
+
+**Exploit Example:**
+```
+GET /search/residents?name='; DROP TABLE persons; --
+```
+This would execute:
+```sql
+SELECT * FROM persons WHERE name LIKE '%'; DROP TABLE persons; --%'
+```
+
+**Security Impact:**
+- **Data Breach:** Attacker can read entire database
+- **Data Loss:** Attacker can delete or modify data
+- **Privilege Escalation:** Attacker can create admin accounts
+- **Compliance Violation:** Fails HIPAA security requirements
+
+**Required Fix - Use SQLAlchemy ORM:**
+```python
+from sqlalchemy import select
+from app.models.person import Person
+
+@router.get("/search/residents", response_model=list[PersonPublic])
+async def search_residents(
+    name: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # Add auth
+):
+    """Search residents by name."""
+    result = await db.execute(
+        select(Person)
+        .where(Person.name.ilike(f"%{name}%"))  # Safe - parameterized
+        .where(Person.role == "RESIDENT")
+    )
+    return result.scalars().all()
+```
+
+**Why This is Safe:**
+- SQLAlchemy uses parameterized queries
+- User input is escaped automatically
+- SQL and data are separated
+
+**Testing:**
+```python
+# Add test to verify exploit is blocked
+def test_sql_injection_blocked():
+    response = client.get("/search/residents?name='; DROP TABLE persons; --")
+    # Should return empty list, not execute DROP
+    assert response.status_code == 200
+    assert len(response.json()) == 0
+```
+
+**Action Required:** BLOCK MERGE - Fix immediately before deployment
+```
+
+### Example 3: Missing Authentication Check
+
+**Context:** Routine security audit of API endpoints
+
+**Input:**
+```python
+# backend/app/api/routes/schedules.py
+@router.get("/schedules/all")
+async def get_all_schedules(db: AsyncSession = Depends(get_db)):
+    """Get all schedules."""
+    schedules = await db.execute(select(Schedule))
+    return schedules.scalars().all()
+```
+
+**Process:**
+1. Check for authentication: Missing `Depends(get_current_user)`
+2. Check for authorization: No role check
+3. Assess data sensitivity: Schedules contain PII and scheduling patterns
+4. Scan codebase for pattern: Find 3 other endpoints with same issue
+
+**Output:**
+```markdown
+## Security Audit Finding
+
+**Severity:** :yellow_circle: HIGH
+**Category:** Broken Access Control (OWASP A01:2021)
+**File:** `backend/app/api/routes/schedules.py:15`
+
+**Issue:** Missing Authentication on Sensitive Endpoint
+
+This endpoint exposes all schedules without requiring authentication.
+
+**Security Impact:**
+- Unauthenticated access to resident schedules
+- Potential PHI exposure if schedules include medical assignments
+- OPSEC risk if schedules reveal military duty patterns
+- No audit trail of who accessed data
+
+**Current Code:**
+```python
+@router.get("/schedules/all")
+async def get_all_schedules(db: AsyncSession = Depends(get_db)):
+```
+
+**Required Fix:**
+```python
+from app.api.deps import get_current_user
+from app.models.user import User
+
+@router.get("/schedules/all", response_model=list[SchedulePublic])
+async def get_all_schedules(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # Require auth
+):
+    """Get all schedules (authenticated users only)."""
+    # Filter based on user role
+    if current_user.role not in ["admin", "coordinator"]:
+        raise HTTPException(403, "Insufficient permissions")
+
+    schedules = await db.execute(select(Schedule))
+    return schedules.scalars().all()
+```
+
+**Pattern Found in Other Endpoints:**
+- `GET /residents/all` - Missing auth
+- `GET /faculty/all` - Missing auth
+- `GET /rotations/all` - Missing auth
+
+**Recommendation:**
+Run security audit script to identify all unprotected endpoints:
+```bash
+# Find all routes missing authentication
+grep -rn "@router" backend/app/api/routes/ | \
+  grep -v "get_current_user" | \
+  grep -v "require_roles"
+```
+
+**Action Required:** Fix all unprotected endpoints before next deployment
+```
+
+## Common Failure Modes
+
+| Failure Mode | Symptom | Root Cause | Recovery Steps |
+|--------------|---------|------------|----------------|
+| **Bandit False Positive** | Security scan flags safe code | Static analysis can't understand context | 1. Manual review confirms safety<br>2. Add `# nosec` with justification<br>3. Document in security log |
+| **Hardcoded Secret Not Detected** | Secret committed to repo | Tool doesn't recognize custom secret format | 1. Manually scan for patterns: API keys, tokens<br>2. Use `detect-secrets` with custom patterns<br>3. Rotate compromised secret immediately |
+| **Authentication Bypass Not Found** | Endpoint accessible without auth | No automated test for auth enforcement | 1. Manual endpoint inventory<br>2. Test each endpoint without credentials<br>3. Add authentication test suite |
+| **OPSEC Data in Logs** | Logs contain sensitive military data | Logging statement added without review | 1. Search logs for PII/OPSEC patterns<br>2. Redact existing logs<br>3. Add log sanitization middleware |
+| **Rate Limit Not Applied** | Endpoint vulnerable to brute force | Rate limiter decorator forgotten | 1. Check all auth endpoints for `@rate_limiter.limit()`<br>2. Add rate limiting<br>3. Test with rate limit attack script |
+| **HIPAA Audit Trail Missing** | No record of data access | Audit logging not implemented | 1. Add audit middleware to all data access routes<br>2. Log user, timestamp, action, resource<br>3. Verify audit logs are tamper-proof |
+
+## Validation Checklist
+
+After completing security audit, verify:
+
+- [ ] **Authentication:** All sensitive endpoints require `Depends(get_current_user)`
+- [ ] **Authorization:** Role checks present where needed (`require_roles()`)
+- [ ] **Input Validation:** All inputs use Pydantic schemas
+- [ ] **SQL Injection:** No raw SQL with user input (use SQLAlchemy ORM)
+- [ ] **Path Traversal:** File paths validated with `validate_path()`
+- [ ] **XSS Prevention:** API returns JSON (not HTML), Pydantic auto-escapes
+- [ ] **CSRF Protection:** State-changing endpoints use POST/PUT/DELETE
+- [ ] **Rate Limiting:** Auth endpoints have rate limits
+- [ ] **Secret Management:** No hardcoded secrets, use environment variables
+- [ ] **OPSEC/PERSEC:** No real names, deployment data, or PII in code/logs
+- [ ] **HIPAA Compliance:** PHI encrypted, access logged, minimum necessary
+- [ ] **Audit Logging:** All data access logged with user/timestamp/action
+- [ ] **Error Handling:** No sensitive data in error messages
+- [ ] **TLS/HTTPS:** All connections encrypted in transit
+- [ ] **Dependency Scan:** No known vulnerabilities in `requirements.txt`
+
 ## Integration with Other Skills
 
 ### With code-review
@@ -343,6 +636,15 @@ If security incident detected:
 1. Escalate immediately
 2. Activate incident response
 3. Generate MFR documentation if required
+
+### With pr-reviewer
+**Coordination:** Security review integrated into PR workflow
+```
+1. pr-reviewer detects security-sensitive file (auth, crypto)
+2. Trigger security-audit skill for deep analysis
+3. Include security findings in PR review
+4. Block merge if critical issues found
+```
 
 ## References
 

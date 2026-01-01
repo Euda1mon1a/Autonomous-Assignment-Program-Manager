@@ -385,6 +385,249 @@ def upgrade() -> None:
     session.commit()
 ```
 
+## Examples
+
+### Example 1: Adding Nullable Column with Backfill
+
+**Context:** Adding `middle_name` field to Person model
+
+**Input:**
+```python
+# Requirement: Add optional middle name field to Person model
+# Model: backend/app/models/person.py
+class Person(Base):
+    __tablename__ = "persons"
+    id = Column(String, primary_key=True)
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    # Need to add: middle_name
+```
+
+**Process:**
+1. Modify model to add field:
+   ```python
+   middle_name = Column(String, nullable=True)
+   ```
+2. Generate migration:
+   ```bash
+   cd backend
+   alembic revision --autogenerate -m "Add middle_name to Person"
+   ```
+3. Review generated migration:
+   ```python
+   def upgrade() -> None:
+       op.add_column('persons', sa.Column('middle_name', sa.String(), nullable=True))
+
+   def downgrade() -> None:
+       op.drop_column('persons', 'middle_name')
+   ```
+4. Test migration:
+   ```bash
+   alembic upgrade head
+   alembic current  # Verify applied
+   alembic downgrade -1  # Test rollback
+   alembic upgrade head  # Re-apply
+   ```
+
+**Output:**
+```
+Migration created: backend/alembic/versions/abc123_add_middle_name_to_person.py
+Status: READY TO COMMIT
+Files to commit:
+  - backend/app/models/person.py
+  - backend/alembic/versions/abc123_add_middle_name_to_person.py
+```
+
+### Example 2: Adding Non-Nullable Column (Three-Phase Migration)
+
+**Context:** Adding required `email_verified` boolean to User model
+
+**Input:**
+```python
+# Requirement: All users must have email_verified status (non-nullable)
+# Current state: Field doesn't exist
+# Problem: Can't add non-nullable column to table with existing rows
+```
+
+**Process:**
+1. **Phase 1: Add as nullable**
+   ```python
+   # Migration 1: abc123_add_email_verified_nullable.py
+   def upgrade() -> None:
+       op.add_column('users', sa.Column('email_verified', sa.Boolean(), nullable=True))
+   ```
+
+2. **Phase 2: Backfill data**
+   ```python
+   # Migration 2: abc124_backfill_email_verified.py
+   def upgrade() -> None:
+       # Set default value for existing rows
+       op.execute("UPDATE users SET email_verified = false WHERE email_verified IS NULL")
+   ```
+
+3. **Phase 3: Make non-nullable**
+   ```python
+   # Migration 3: abc125_make_email_verified_required.py
+   def upgrade() -> None:
+       op.alter_column('users', 'email_verified', nullable=False)
+   ```
+
+**Output:**
+```
+Three-phase migration created:
+  1. abc123_add_email_verified_nullable.py - Add column
+  2. abc124_backfill_email_verified.py - Set defaults
+  3. abc125_make_email_verified_required.py - Enforce constraint
+
+Commit all three together to ensure clean upgrade path.
+```
+
+### Example 3: Foreign Key Migration with Data Integrity
+
+**Context:** Linking Assignment to Rotation via foreign key
+
+**Input:**
+```python
+# Requirement: Assignments must reference valid Rotations
+# Current: assignment.rotation_name (string, no FK constraint)
+# Target: assignment.rotation_id (FK to rotations.id)
+```
+
+**Process:**
+1. **Add new column (nullable first)**
+   ```python
+   def upgrade() -> None:
+       op.add_column('assignments', sa.Column('rotation_id', sa.String(), nullable=True))
+   ```
+
+2. **Backfill from existing data**
+   ```python
+   def upgrade() -> None:
+       # Map rotation names to IDs
+       op.execute("""
+           UPDATE assignments a
+           SET rotation_id = r.id
+           FROM rotations r
+           WHERE a.rotation_name = r.name
+       """)
+
+       # Identify orphaned records
+       op.execute("""
+           -- Log assignments with invalid rotation names
+           SELECT id, rotation_name FROM assignments WHERE rotation_id IS NULL
+       """)
+   ```
+
+3. **Add foreign key constraint**
+   ```python
+   def upgrade() -> None:
+       # Make non-null
+       op.alter_column('assignments', 'rotation_id', nullable=False)
+
+       # Add FK constraint
+       op.create_foreign_key(
+           'fk_assignment_rotation',
+           'assignments', 'rotations',
+           ['rotation_id'], ['id'],
+           ondelete='RESTRICT'  # Prevent deletion of rotations in use
+       )
+
+       # Drop old column after verification
+       op.drop_column('assignments', 'rotation_name')
+   ```
+
+**Output:**
+```
+Foreign key migration successful:
+  - Added rotation_id column
+  - Backfilled 1,247 assignments
+  - Created FK constraint
+  - Removed deprecated rotation_name column
+
+⚠️  Warning: 3 assignments had invalid rotation names and were not migrated.
+    See manual review required: assignment IDs [47, 102, 381]
+```
+
+## Common Failure Modes
+
+| Failure Mode | Symptom | Root Cause | Recovery Steps |
+|--------------|---------|------------|----------------|
+| **Autogenerate Detects Nothing** | `alembic revision --autogenerate` creates empty migration | Model not imported in `alembic/env.py` | 1. Check `env.py` imports all models<br>2. Verify model inherits from `Base`<br>3. Restart Python interpreter<br>4. Re-run autogenerate |
+| **Migration Fails Midway** | `IntegrityError` or constraint violation during upgrade | Data doesn't satisfy new constraints | 1. Check `alembic current` to see partial state<br>2. Manually fix data in DB<br>3. Re-run `alembic upgrade head`<br>4. If unfixable, downgrade and revise migration |
+| **Multiple Heads Detected** | `alembic upgrade head` fails with "multiple heads" error | Parallel development created divergent migrations | 1. Run `alembic heads` to see both<br>2. Create merge migration: `alembic merge -m "Merge heads" head1 head2`<br>3. Upgrade to merged head |
+| **Downgrade Loses Data** | Rollback succeeds but data is gone | Downgrade drops column without backup | 1. **Prevention:** Never rely on downgrade for data recovery<br>2. Restore from database backup<br>3. Document data loss risk in migration |
+| **Foreign Key Constraint Fails** | `ForeignKeyViolation` during FK creation | Orphaned rows reference non-existent parent | 1. Query for orphans: `SELECT * FROM child WHERE parent_id NOT IN (SELECT id FROM parent)`<br>2. Fix orphans (delete or assign valid parent)<br>3. Re-run migration |
+| **Type Mismatch After Migration** | Application crashes with column type error | Migration changed column type incompatibly | 1. Check migration: `op.alter_column('table', 'col', type_=new_type)`<br>2. Add type conversion if needed<br>3. Test with sample data before deploying |
+
+## Integration with Other Skills
+
+### With code-review
+**Coordination:** Review migration code before commit
+```
+1. database-migration creates migration file
+2. code-review validates:
+   - upgrade() and downgrade() are inverses
+   - No data loss in downgrade path (or documented)
+   - SQL is safe (no raw user input)
+3. If approved, commit both model and migration
+```
+
+### With automated-code-fixer
+**Coordination:** Fix migration issues automatically where safe
+```
+1. database-migration detects issue (e.g., missing import)
+2. automated-code-fixer applies fix if trivial
+3. Re-run migration generation
+4. If complex, escalate to human
+```
+
+### With test-writer
+**Coordination:** Add tests for migration
+```python
+# Example migration test
+def test_migration_adds_middle_name():
+    # Downgrade to before migration
+    alembic_downgrade()
+
+    # Verify column doesn't exist
+    with pytest.raises(OperationalError):
+        db.execute("SELECT middle_name FROM persons LIMIT 1")
+
+    # Apply migration
+    alembic_upgrade()
+
+    # Verify column exists
+    result = db.execute("SELECT middle_name FROM persons LIMIT 1")
+    assert result is not None
+```
+
+### With safe-schedule-generation
+**Coordination:** Database changes require schedule regeneration
+```
+1. database-migration changes Assignment model
+2. safe-schedule-generation must adapt to new schema
+3. Run schedule generation test to verify compatibility
+4. If breaking change, coordinate deployment
+```
+
+## Validation Checklist
+
+After creating a migration, verify:
+
+- [ ] **Model Change:** Model file updated with new field/table
+- [ ] **Migration Generated:** Alembic created migration file in `versions/`
+- [ ] **Upgrade Path:** `alembic upgrade head` succeeds
+- [ ] **Downgrade Path:** `alembic downgrade -1` succeeds
+- [ ] **Data Integrity:** No data lost during upgrade
+- [ ] **Constraints Valid:** Foreign keys and indexes applied correctly
+- [ ] **Application Works:** Run app and verify functionality
+- [ ] **Tests Pass:** All existing tests still pass
+- [ ] **Migration Tests:** Added tests for migration if complex
+- [ ] **Rollback Plan:** Documented how to recover if migration fails in production
+- [ ] **Both Files Committed:** Model and migration in same commit
+- [ ] **No Hardcoded Values:** Use parameters, not literal SQL strings
+- [ ] **Idempotent:** Running migration twice doesn't break
+
 ## Escalation Rules
 
 **ALWAYS escalate to human when:**

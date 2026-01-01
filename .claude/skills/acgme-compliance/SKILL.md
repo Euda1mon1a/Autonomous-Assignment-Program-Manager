@@ -450,6 +450,166 @@ if days_off < 1:  # Why 1? Context?
 3. Suggest alternative solutions
 4. Escalate if no valid solution exists
 
+## Examples
+
+### Example 1: 80-Hour Rule Violation Detection
+
+**Context:** Schedule validation after holiday coverage assignments
+
+**Input:**
+```
+Resident: PGY1-01
+Period: December 20-31, 2025
+Weekly hours: [78, 82, 79, 85]
+```
+
+**Process:**
+1. Calculate 4-week rolling average: (78 + 82 + 79 + 85) / 4 = 81.0 hours/week
+2. Compare to threshold: 81.0 > 80.0 → **VIOLATION**
+3. Identify problematic week: Week 4 (85 hours) exceeds limit
+4. Analyze assignments in Week 4:
+   - 3x 24-hour call shifts = 72 hours
+   - 2x clinic half-days = 8 hours
+   - 1x conference = 5 hours
+   - Total: 85 hours
+
+**Output:**
+```markdown
+## ACGME Compliance Violation
+
+**Severity:** VIOLATION
+**Rule:** 80-Hour Weekly Limit
+**Affected:** PGY1-01
+**Period:** December 20-31, 2025
+**Violation:** 81.0 hours/week average (exceeds 80.0)
+
+**Root Cause:** Week 4 (Dec 24-31) has 85 hours due to holiday call stacking
+
+**Immediate Fix:**
+1. Remove one 24-hour call shift from Week 4
+2. Assign call to PGY2-03 (currently at 72 hours average)
+3. Result: PGY1-01 drops to 76.0 hours/week average (compliant)
+
+**Long-term Fix:**
+- Implement holiday coverage rotation to distribute load
+- Add constraint: max 2 call shifts per week during holidays
+```
+
+### Example 2: Supervision Ratio Pre-Validation
+
+**Context:** Night shift schedule validation before deployment
+
+**Input:**
+```
+Rotation: Night Float Inpatient
+Date: January 15, 2026
+Residents scheduled: 6 (4 PGY-1, 2 PGY-2)
+Faculty scheduled: 1
+```
+
+**Process:**
+1. Calculate supervision ratios:
+   - PGY-1: 4 residents / 1 faculty = 4:1 ratio
+   - PGY-2: 2 residents / 1 faculty = 2:1 ratio
+2. Compare to requirements:
+   - PGY-1 required: ≤ 2:1, actual: 4:1 → **VIOLATION**
+   - PGY-2 required: ≤ 4:1, actual: 2:1 → COMPLIANT
+3. Calculate gap: Need 2 faculty total (4 PGY-1s ÷ 2 = 2), currently have 1
+4. Identify solution: Add 1 more faculty to night shift
+
+**Output:**
+```markdown
+## ACGME Supervision Violation
+
+**Severity:** VIOLATION
+**Rule:** PGY-1 Supervision Ratio (2:1 maximum)
+**Date:** January 15, 2026
+**Rotation:** Night Float Inpatient
+
+**Current State:**
+- 4 PGY-1 residents
+- 1 faculty
+- Ratio: 4:1 (exceeds 2:1 requirement)
+
+**Required Action:**
+- Add 1 additional faculty to night shift
+- Suggested: FAC-04 (available, credentialed for night float)
+
+**Verification:**
+- Post-fix ratio: 4 PGY-1 / 2 faculty = 2:1 (compliant)
+```
+
+## Common Failure Modes
+
+| Failure Mode | Symptom | Root Cause | Recovery Steps |
+|--------------|---------|------------|----------------|
+| **False Positive - "Violation" on Compliant Schedule** | Tool reports 80-hour violation when resident worked 78 hours | Calculation includes non-duty time (breaks, meals) | 1. Verify duty hour definition<br>2. Exclude breaks/meals from calculation<br>3. Re-run validation with corrected data |
+| **Missing Consecutive Day Off** | Tool misses 1-in-7 violation | Algorithm only checks calendar days, not 24-hour periods | 1. Rewrite check to use 24-hour rolling windows<br>2. Account for shift boundaries (e.g., 11 PM - 11 PM) |
+| **Supervision Ratio Miscalculation** | Faculty counted as "available" but on leave | Data source doesn't reflect real-time availability | 1. Cross-check with absence/leave calendar<br>2. Mark faculty as unavailable if on TDY/leave<br>3. Re-run supervision check |
+| **Data Staleness** | Validation uses outdated schedule data | Cache not invalidated after swap | 1. Clear schedule cache<br>2. Re-fetch from database<br>3. Re-run validation |
+| **Rule Misinterpretation** | Flagging night float as violation | Applying wrong duty period limits to night float | 1. Review ACGME night float exceptions<br>2. Update constraint to allow 6 consecutive nights<br>3. Document exception in validation logic |
+| **Fix Creates New Violation** | Resolving 80-hour issue causes 1-in-7 violation | Insufficient validation of proposed fix | 1. Run full compliance check on proposed fix<br>2. Use iterative solver to find compliant solution<br>3. If no solution exists, escalate to Program Director |
+
+## Integration with Other Skills
+
+### With safe-schedule-generation
+**Coordination:** ACGME compliance must be verified after each schedule generation
+```
+1. safe-schedule-generation creates schedule
+2. acgme-compliance validates against all rules
+3. If violations found, feedback to schedule generation
+4. Repeat until compliant schedule produced
+```
+
+### With constraint-preflight
+**Coordination:** Ensure constraints encode ACGME rules correctly
+```
+1. constraint-preflight validates constraint definitions
+2. acgme-compliance tests constraints with real schedule data
+3. Verify constraints actually prevent violations
+```
+
+### With swap-execution
+**Coordination:** Verify swaps don't violate ACGME rules
+```
+1. swap-execution proposes swap
+2. acgme-compliance pre-validates swap impact
+3. Only execute if compliant
+```
+
+### With schedule-validator (MCP Tool)
+**Tool Usage Pattern:**
+```bash
+# Get validation data
+schedule_data=$(mcp call get_schedule --schedule_id=current)
+
+# Run comprehensive ACGME check
+violations=$(mcp call validate_acgme_compliance --data="$schedule_data")
+
+# If violations found, generate remediation plan
+if [ -n "$violations" ]; then
+  # Use acgme-compliance skill to analyze and propose fixes
+  # Then call swap_execution or schedule_generation to implement
+fi
+```
+
+## Validation Checklist
+
+After running ACGME compliance validation, verify:
+
+- [ ] **80-hour rule:** All residents average ≤ 80 hours/week (4-week rolling)
+- [ ] **1-in-7 rule:** No resident has 7+ consecutive duty days
+- [ ] **Supervision ratios:** PGY-1 at 2:1 or better, PGY-2/3 at 4:1 or better
+- [ ] **Duty periods:** No shift exceeds 24 hours (28 max with strategic napping)
+- [ ] **Post-call rest:** ≥ 8 hours off after 24-hour call before next duty
+- [ ] **Night float limits:** ≤ 6 consecutive nights maximum
+- [ ] **Handoff times:** Adequate time for shift handoff documented
+- [ ] **Time off:** Residents able to use protected time
+- [ ] **No systemic issues:** Not a recurring pattern of violations
+- [ ] **Documentation:** Exceptions documented with Program Director approval
+- [ ] **Data freshness:** Validation used current schedule data (not cached)
+- [ ] **Fix validation:** Proposed fixes don't create new violations
+
 ## References
 
 - See `thresholds.md` for configurable warning levels

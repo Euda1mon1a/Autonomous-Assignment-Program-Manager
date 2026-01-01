@@ -290,333 +290,238 @@ const ScheduleView: React.FC<Props> = ({ scheduleId }) => {
 };
 ```
 
-## Concrete Usage Example
+## Examples
 
-### End-to-End: Reviewing a New Feature Implementation
+### Example 1: N+1 Query Detection
 
-**Scenario:** Review code that adds a new "Schedule Export" feature with PDF generation.
+**Context:** Reviewing PR that adds resident work hour summary endpoint
 
-**Files Changed:**
-- `backend/app/api/routes/export.py` (new)
-- `backend/app/services/export_service.py` (new)
-- `backend/tests/test_export_service.py` (new)
-
-**Step 1: Understand the Change**
-```bash
-cd /home/user/Autonomous-Assignment-Program-Manager
-
-# See what changed
-git diff origin/main --stat
-
-# Read the new files
-git diff origin/main backend/app/api/routes/export.py
-git diff origin/main backend/app/services/export_service.py
-git diff origin/main backend/tests/test_export_service.py
-```
-
-**Step 2: Check Architecture Compliance**
-
-Review `export.py`:
+**Input:**
 ```python
-# GOOD - Thin route, delegates to service
-@router.get("/export/schedule/{schedule_id}")
-async def export_schedule(
-    schedule_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-) -> FileResponse:
-    pdf_bytes = await export_service.generate_pdf(db, schedule_id)
-    return FileResponse(pdf_bytes, filename="schedule.pdf")
+# backend/app/api/routes/residents.py
+@router.get("/residents/work-hours")
+async def get_resident_work_hours(db: AsyncSession = Depends(get_db)):
+    residents = await db.execute(select(Person).where(Person.role == "RESIDENT"))
+
+    result = []
+    for resident in residents.scalars():
+        # Query for each resident - N+1 problem!
+        assignments = await db.execute(
+            select(Assignment).where(Assignment.person_id == resident.id)
+        )
+        hours = sum(a.duration for a in assignments.scalars())
+        result.append({"resident": resident.name, "hours": hours})
+
+    return result
 ```
 
-**Finding:** ✅ Good - Route is thin, delegates to service layer
+**Process:**
+1. Identify pattern: Loop over residents, then query assignments for each
+2. Count queries: 1 (residents) + N (assignments per resident) = N+1 queries
+3. Check performance impact: With 30 residents, this executes 31 queries
+4. Propose fix using `selectinload()`
 
-Review `export_service.py`:
-```python
-# POTENTIALLY BAD - Business logic in wrong place?
-async def generate_pdf(db: AsyncSession, schedule_id: str) -> bytes:
-    schedule = db.execute(select(Schedule).where(Schedule.id == schedule_id)).scalar_one()
-    # ^ Missing await! Type error!
-
-    # Direct query in service - should use repository?
-    assignments = db.query(Assignment).filter(...).all()
-    # ^ Using sync API in async function!
-
-    pdf = create_pdf(schedule, assignments)
-    return pdf.getvalue()
-```
-
-**Findings:**
-- ❌ CRITICAL: Missing `await` on database call
-- ❌ CRITICAL: Using sync `db.query()` in async function
-- ⚠️ WARNING: No input validation - what if schedule doesn't exist?
-- ⚠️ WARNING: No error handling
-
-**Step 3: Run Static Analysis**
-```bash
-cd backend
-
-# Check for type errors
-mypy app/services/export_service.py --python-version 3.11
-# Output: error: Missing await on line 42
-
-# Check linting
-ruff check app/services/export_service.py --show-source
-# Output: F401: unused import, E501: line too long
-
-# Security scan
-bandit -r app/services/export_service.py -ll
-# Output: No issues found
-```
-
-**Step 4: Check Test Coverage**
-```bash
-pytest tests/test_export_service.py --cov=app.services.export_service --cov-report=term-missing
-
-# Output:
-# Coverage: 45% (missing edge cases)
-# Missing: error handling, invalid schedule_id, empty schedules
-```
-
-**Finding:** ⚠️ Insufficient test coverage (< 70% target)
-
-**Step 5: Security Review**
-
-Check for common issues:
-```python
-# In export.py
-@router.get("/export/schedule/{schedule_id}")
-async def export_schedule(
-    schedule_id: str,  # ⚠️ No validation - UUID format?
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-) -> FileResponse:
-    # ❌ No authorization check! Any logged-in user can export any schedule
-    pdf_bytes = await export_service.generate_pdf(db, schedule_id)
-```
-
-**Findings:**
-- ❌ CRITICAL: Missing authorization - user should only export their own schedules
-- ⚠️ WARNING: No input validation on schedule_id format
-
-**Step 6: Write Review Report**
-
+**Output:**
 ```markdown
-## Code Review Summary
+## Code Review Finding
 
-**Files Reviewed:** 3
-**Overall Assessment:** NEEDS CHANGES (blocking issues found)
+**Severity:** WARNING
+**Category:** Performance
+**File:** `backend/app/api/routes/residents.py:45`
 
-### Critical Issues (Must Fix)
+**Issue:** N+1 Query Problem
 
-1. **backend/app/services/export_service.py:42** - Missing await on database call
-   - Impact: Runtime error, schedule will be a coroutine, not Schedule object
-   - Fix: Change to `schedule = await db.execute(...).scalar_one()`
+This code queries the database once per resident (N+1 queries). With 30 residents,
+this executes 31 queries instead of 1.
 
-2. **backend/app/services/export_service.py:45** - Sync database API in async function
-   - Impact: Will block event loop, poor performance
-   - Fix: Change to `result = await db.execute(select(Assignment)...)` then `result.scalars().all()`
-
-3. **backend/app/api/routes/export.py:15** - Missing authorization check
-   - Impact: Security vulnerability - users can export other users' schedules
-   - Fix: Add permission check:
-   ```python
-   if not await has_permission(current_user, schedule_id):
-       raise HTTPException(403, "Not authorized")
-   ```
-
-### Warnings (Should Fix)
-
-1. **backend/app/services/export_service.py:42** - No error handling for missing schedule
-   - Suggestion: Add try/except for `NoResultFound` and return appropriate error
-
-2. **backend/tests/test_export_service.py** - Test coverage at 45% (target: 70%)
-   - Suggestion: Add tests for:
-     - Invalid schedule_id
-     - Empty schedule (no assignments)
-     - Large schedule (performance test)
-     - Error conditions
-
-3. **backend/app/api/routes/export.py:10** - No input validation
-   - Suggestion: Validate schedule_id is valid UUID format using Pydantic
-
-### Recommendations (Nice to Have)
-
-1. Consider adding caching for frequently exported schedules
-2. Add rate limiting to prevent abuse (e.g., 10 exports per minute)
-3. Log export activity for audit trail
-
-### Summary Checklist
-- [x] All type hints present
-- [ ] Tests added for new code (present but insufficient)
-- [ ] No security issues (FAILED - authorization missing)
-- [ ] Follows layered architecture (mostly, minor issues)
-- [ ] Async operations correct (FAILED - sync calls in async)
-- [ ] Error handling appropriate (FAILED - missing)
-
-### Recommendation
-**REQUEST CHANGES** - Fix critical issues before merge. Can auto-approve after fixes.
+**Current Code:**
+```python
+residents = await db.execute(select(Person).where(Person.role == "RESIDENT"))
+for resident in residents.scalars():
+    assignments = await db.execute(  # Separate query per resident
+        select(Assignment).where(Assignment.person_id == resident.id)
+    )
 ```
 
-**Step 7: Provide Inline Fix Suggestions**
+**Suggested Fix:**
+```python
+from sqlalchemy.orm import selectinload
 
-For the developer:
-````markdown
-**File: backend/app/services/export_service.py**
+residents = await db.execute(
+    select(Person)
+    .where(Person.role == "RESIDENT")
+    .options(selectinload(Person.assignments))  # Load in single query
+)
 
-```suggestion
-async def generate_pdf(db: AsyncSession, schedule_id: str) -> bytes:
-    """Generate PDF export of schedule."""
-    try:
-        # Fixed: Added await
-        result = await db.execute(
-            select(Schedule).where(Schedule.id == schedule_id)
-        )
-        schedule = result.scalar_one()
-
-        # Fixed: Using async API
-        assignments_result = await db.execute(
-            select(Assignment).where(Assignment.schedule_id == schedule_id)
-        )
-        assignments = assignments_result.scalars().all()
-
-        pdf = create_pdf(schedule, assignments)
-        return pdf.getvalue()
-    except NoResultFound:
-        raise ValueError(f"Schedule {schedule_id} not found")
+result = []
+for resident in residents.scalars():
+    hours = sum(a.duration for a in resident.assignments)  # No additional query
+    result.append({"resident": resident.name, "hours": hours})
 ```
-````
 
-**Total Review Time:** ~15 minutes
-
-## Workflow Diagram
-
+**Impact:** Reduces queries from 31 to 2, improving response time by ~80%
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ CODE REVIEW WORKFLOW                                        │
-└─────────────────────────────────────────────────────────────┘
 
-1. CONTEXT GATHERING
-   ├─ git diff --stat
-   ├─ Read changed files
-   └─ Understand the "why"
-              ↓
-2. ARCHITECTURE REVIEW
-   ├─ Check layering (Route→Service→Repository→Model)
-   ├─ Verify async/await patterns
-   └─ Validate Pydantic schema usage
-              ↓
-3. STATIC ANALYSIS
-   ├─ Run: ruff check (linting)
-   ├─ Run: mypy (type checking)
-   └─ Run: bandit (security scan)
-              ↓
-4. PATTERN MATCHING
-   ├─ Check for N+1 queries
-   ├─ Look for hardcoded secrets
-   ├─ Find missing error handling
-   └─ Identify type hint gaps
-              ↓
-5. SECURITY DEEP DIVE
-   ├─ Input validation present?
-   ├─ Authorization checks in place?
-   ├─ No sensitive data leaks?
-   └─ SQL injection prevented?
-              ↓
-6. TEST COVERAGE
-   ├─ Run: pytest --cov
-   ├─ Check coverage % (target 70%)
-   └─ Review edge case coverage
-              ↓
-7. GENERATE REPORT
-   ├─ Critical issues (blocking)
-   ├─ Warnings (should fix)
-   ├─ Recommendations (nice to have)
-   └─ Decision: APPROVE/REQUEST CHANGES/COMMENT
+### Example 2: Missing Authentication Check
+
+**Context:** Security review of new admin endpoint
+
+**Input:**
+```python
+# backend/app/api/routes/admin.py
+@router.delete("/users/{user_id}")
+async def delete_user(
+    user_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """Delete a user account."""
+    await db.execute(delete(User).where(User.id == user_id))
+    await db.commit()
+    return {"status": "deleted"}
+```
+
+**Process:**
+1. Check for authentication: Missing `Depends(get_current_user)`
+2. Check for authorization: No role check (admin only)
+3. Assess severity: CRITICAL - unauthenticated delete is a security vulnerability
+4. Verify against project pattern: See `backend/app/api/routes/auth.py` for correct pattern
+
+**Output:**
+```markdown
+## Code Review Finding
+
+**Severity:** :red_circle: CRITICAL
+**Category:** Security
+**File:** `backend/app/api/routes/admin.py:12`
+
+**Issue:** Missing Authentication and Authorization
+
+This endpoint allows ANYONE to delete user accounts without authentication.
+
+**Security Impact:**
+- **Broken Access Control** (OWASP A01:2021)
+- Unauthenticated users can delete any account
+- No audit trail of who performed deletion
+- No role-based access control
+
+**Current Code:**
+```python
+@router.delete("/users/{user_id}")
+async def delete_user(user_id: str, db: AsyncSession = Depends(get_db)):
+```
+
+**Required Fix:**
+```python
+from app.api.deps import get_current_user, require_roles
+from app.models.user import User
+
+@router.delete("/users/{user_id}")
+async def delete_user(
+    user_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_roles(["admin"]))  # Admin only
+):
+    """Delete a user account (admin only)."""
+    # Add audit log
+    logger.info(f"Admin {current_user.id} deleting user {user_id}")
+
+    await db.execute(delete(User).where(User.id == user_id))
+    await db.commit()
+    return {"status": "deleted"}
+```
+
+**Action Required:** BLOCK MERGE until fixed
+```
+
+### Example 3: Async/Await Missing
+
+**Context:** Reviewing database operation in service layer
+
+**Input:**
+```python
+# backend/app/services/assignment_service.py
+async def create_assignment(
+    db: AsyncSession,
+    assignment_data: AssignmentCreate
+) -> Assignment:
+    """Create a new assignment."""
+    assignment = Assignment(**assignment_data.dict())
+    db.add(assignment)  # Missing await!
+    db.commit()         # Missing await!
+    return assignment
+```
+
+**Process:**
+1. Identify async context: Function is `async def`
+2. Check database operations: `db.add()` and `db.commit()` are async methods
+3. Detect missing `await`: These will fail at runtime
+4. Verify correct pattern: Check existing service implementations
+
+**Output:**
+```markdown
+## Code Review Finding
+
+**Severity:** :red_circle: CRITICAL
+**Category:** Code Quality
+**File:** `backend/app/services/assignment_service.py:23`
+
+**Issue:** Missing `await` on Async Database Operations
+
+Database operations in async context must use `await`, otherwise they won't execute.
+
+**Current Code (Will Fail):**
+```python
+db.add(assignment)  # Returns coroutine, doesn't execute
+db.commit()         # Returns coroutine, doesn't execute
+```
+
+**Required Fix:**
+```python
+async def create_assignment(
+    db: AsyncSession,
+    assignment_data: AssignmentCreate
+) -> Assignment:
+    """Create a new assignment."""
+    assignment = Assignment(**assignment_data.dict())
+    db.add(assignment)
+    await db.commit()  # Add await
+    await db.refresh(assignment)  # Refresh to get generated ID
+    return assignment
+```
+
+**Note:** SQLAlchemy 2.0's `add()` is synchronous, but `commit()` and `refresh()`
+require `await` in async sessions.
+
+**Testing:** Add test to verify assignment is actually persisted to database.
 ```
 
 ## Common Failure Modes
 
-### Failure Mode 1: Missing Async/Await
-**Symptom:** Code runs but throws runtime errors or has poor performance
+| Failure Mode | Symptom | Root Cause | Recovery Steps |
+|--------------|---------|------------|----------------|
+| **Linter Passes But Logic Broken** | Code has no syntax errors but doesn't work | Linter checks syntax, not semantics | 1. Run tests to catch logic errors<br>2. Add type checking with mypy<br>3. Review business logic manually |
+| **Tests Pass Locally, Fail in CI** | Green tests on dev machine, red in CI | Environment differences (Python version, dependencies) | 1. Check CI Python version matches local<br>2. Verify `requirements.txt` is up to date<br>3. Run tests in Docker to match CI environment |
+| **Type Hints Present But Incorrect** | `mypy` reports no errors but types are wrong | Using `Any` or overly broad types | 1. Enable stricter mypy settings<br>2. Review type hints for accuracy<br>3. Add `--disallow-any-explicit` flag |
+| **Security Issue Missed by Bandit** | Vulnerability not flagged by scanner | Custom code pattern not in Bandit rules | 1. Manual security review required<br>2. Check OWASP Top 10 manually<br>3. Defer to security-audit skill |
+| **Performance Issue Not Detected** | Code works but is slow | No performance testing in review | 1. Profile code with cProfile<br>2. Check for N+1 queries manually<br>3. Add performance tests to suite |
+| **Breaking Change Not Caught** | Tests pass but API contract changed | No contract testing | 1. Check if Pydantic schema changed<br>2. Verify API versioning if needed<br>3. Add integration tests for API contract |
 
-**Example:**
-```python
-# BAD - Missing await
-async def get_schedule(db: AsyncSession, id: str):
-    result = db.execute(select(Schedule).where(Schedule.id == id))
-    # ^ Returns coroutine, not result!
-```
+## Validation Checklist
 
-**Detection:**
-- Type checker warns about coroutine
-- Runtime: AttributeError when accessing result
+After completing code review, verify:
 
-**Fix:** Add `await` before database calls
-
-### Failure Mode 2: Business Logic in Routes
-**Symptom:** Routes become bloated, logic not reusable
-
-**Example:**
-```python
-# BAD - Business logic in route
-@router.post("/items")
-async def create_item(data: ItemCreate, db: Session):
-    if data.value > 100:  # Business rule
-        data.value = 100
-    item = Item(**data.dict())
-    db.add(item)
-```
-
-**Detection:** Route has > 10 lines of logic
-
-**Fix:** Move logic to service layer
-
-### Failure Mode 3: Missing Authorization
-**Symptom:** Security vulnerability - users access unauthorized data
-
-**Example:**
-```python
-# BAD - No authorization check
-@router.get("/schedules/{id}")
-async def get_schedule(id: str, user: User = Depends(get_current_user)):
-    return await schedule_service.get(id)  # Any user can access any schedule!
-```
-
-**Detection:** No permission check before data access
-
-**Fix:** Add authorization check:
-```python
-if not await has_permission(user, "read", id):
-    raise HTTPException(403, "Not authorized")
-```
-
-### Failure Mode 4: N+1 Query Problem
-**Symptom:** Performance degrades with data volume
-
-**Example:**
-```python
-# BAD - N+1 queries
-persons = await db.execute(select(Person))
-for person in persons.scalars():
-    assignments = await db.execute(
-        select(Assignment).where(Assignment.person_id == person.id)
-    )  # Query for each person!
-```
-
-**Detection:** Loop with database query inside
-
-**Fix:** Use eager loading with `selectinload()` or `joinedload()`
-
-### Failure Mode 5: Leaking Sensitive Data
-**Symptom:** Logs or errors expose passwords, tokens, personal data
-
-**Example:**
-```python
-# BAD - Sensitive data in error message
-raise HTTPException(400, f"Login failed for {email} with password {password}")
-```
-
-**Detection:** Search for user input in error messages
-
-**Fix:** Use generic messages, log details server-side only
+- [ ] **Tests:** All tests pass (`pytest --tb=short -q`)
+- [ ] **Linting:** No errors (`ruff check app/ tests/`)
+- [ ] **Type Checking:** No errors (`mypy app/ --python-version 3.11`)
+- [ ] **Security:** No vulnerabilities (`bandit -r app/ -ll`)
+- [ ] **Coverage:** >= 70% (`pytest --cov=app --cov-fail-under=70`)
+- [ ] **Architecture:** Follows layered pattern (Route → Controller → Service → Model)
+- [ ] **Async/Await:** All database operations use `await`
+- [ ] **Input Validation:** Pydantic schemas used for all inputs
+- [ ] **Authentication:** Protected endpoints have `Depends(get_current_user)`
+- [ ] **Authorization:** Role checks where appropriate
+- [ ] **Error Handling:** No sensitive data in error messages
+- [ ] **Documentation:** Docstrings on public functions
+- [ ] **No Hardcoded Secrets:** Check for API keys, passwords
+- [ ] **Database Migrations:** If models changed, migration exists
+- [ ] **Manual Testing:** Complex logic tested manually if needed
