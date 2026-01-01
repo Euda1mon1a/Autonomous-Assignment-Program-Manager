@@ -89,7 +89,7 @@ function groupEventsByDate(events: AuditLogEntry[]): TimelineGroup[] {
  * Get icon component for action type
  */
 function getActionIcon(action: AuditActionType): React.ReactNode {
-  const iconProps = { className: 'w-4 h-4' };
+  const iconProps = { className: 'w-4 h-4', 'aria-hidden': 'true' as const };
 
   switch (action) {
     case 'create':
@@ -162,17 +162,17 @@ function getSeverityConfig(severity: AuditSeverity): {
   switch (severity) {
     case 'critical':
       return {
-        icon: <AlertCircle className="w-3 h-3" />,
+        icon: <AlertCircle className="w-3 h-3" aria-hidden="true" />,
         color: 'text-red-600',
       };
     case 'warning':
       return {
-        icon: <AlertTriangle className="w-3 h-3" />,
+        icon: <AlertTriangle className="w-3 h-3" aria-hidden="true" />,
         color: 'text-yellow-600',
       };
     default:
       return {
-        icon: <Info className="w-3 h-3" />,
+        icon: <Info className="w-3 h-3" aria-hidden="true" />,
         color: 'text-blue-600',
       };
   }
@@ -206,6 +206,7 @@ function TimelineEventCard({
         before:bg-gray-200 last:before:hidden
       `}
       onClick={onClick}
+      role="listitem"
     >
       {/* Timeline dot */}
       <div
@@ -235,7 +236,7 @@ function TimelineEventCard({
               </span>
               {event.acgmeOverride && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-800 text-xs rounded-full">
-                  <AlertTriangle className="w-3 h-3" />
+                  <AlertTriangle className="w-3 h-3" aria-hidden="true" />
                   ACGME Override
                 </span>
               )}
@@ -248,14 +249,14 @@ function TimelineEventCard({
             </div>
           </div>
           <div className="flex items-center gap-1 text-xs text-gray-500">
-            <Clock className="w-3 h-3" />
+            <Clock className="w-3 h-3" aria-hidden="true" />
             {timeStr}
           </div>
         </div>
 
         {/* User info */}
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-          <User className="w-4 h-4 text-gray-400" />
+          <User className="w-4 h-4 text-gray-400" aria-hidden="true" />
           <span>{event.user.name}</span>
           {event.severity !== 'info' && (
             <span className={`flex items-center gap-1 ${severityConfig.color}`}>
@@ -313,8 +314,10 @@ function DateGroupHeader({
       type="button"
       onClick={onToggle}
       className="flex items-center gap-3 w-full py-3 px-4 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors mb-4"
+      aria-label={`${dateStr}, ${eventCount} event${eventCount !== 1 ? 's' : ''}`}
+      aria-expanded={isExpanded}
     >
-      <Calendar className="w-5 h-5 text-gray-500" />
+      <Calendar className="w-5 h-5 text-gray-500" aria-hidden="true" />
       <span className={`font-semibold ${isToday ? 'text-blue-600' : 'text-gray-700'}`}>
         {dateStr}
       </span>
@@ -323,9 +326,9 @@ function DateGroupHeader({
       </span>
       <div className="ml-auto">
         {isExpanded ? (
-          <ChevronUp className="w-5 h-5 text-gray-400" />
+          <ChevronUp className="w-5 h-5 text-gray-400" aria-hidden="true" />
         ) : (
-          <ChevronDown className="w-5 h-5 text-gray-400" />
+          <ChevronDown className="w-5 h-5 text-gray-400" aria-hidden="true" />
         )}
       </div>
     </button>
@@ -361,7 +364,7 @@ export function AuditTimeline({
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow p-6" role="status" aria-live="polite" aria-label="Loading timeline events">
         <div className="animate-pulse space-y-4">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="flex gap-4">
@@ -380,7 +383,7 @@ export function AuditTimeline({
   if (events.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow p-8 text-center">
-        <Clock className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+        <Clock className="w-12 h-12 text-gray-400 mx-auto mb-3" aria-hidden="true" />
         <h3 className="text-lg font-medium text-gray-900 mb-1">No events found</h3>
         <p className="text-gray-600">
           There are no audit events matching your current filters.
@@ -405,12 +408,14 @@ export function AuditTimeline({
       <div
         className="p-4 overflow-y-auto"
         style={{ maxHeight }}
+        role="list"
+        aria-label="Timeline events grouped by date"
       >
         {groupedEvents.map((group) => {
           const isCollapsed = collapsedDates.has(group.dateStr);
 
           return (
-            <div key={group.dateStr} className="mb-6 last:mb-0">
+            <div key={group.dateStr} className="mb-6 last:mb-0" role="listitem">
               <DateGroupHeader
                 date={group.date}
                 eventCount={group.events.length}
@@ -419,7 +424,7 @@ export function AuditTimeline({
               />
 
               {!isCollapsed && (
-                <div className="relative">
+                <div className="relative" role="list" aria-label={`Events for ${format(group.date, 'MMMM d, yyyy')}`}>
                   {group.events.map((event) => (
                     <TimelineEventCard
                       key={event.id}

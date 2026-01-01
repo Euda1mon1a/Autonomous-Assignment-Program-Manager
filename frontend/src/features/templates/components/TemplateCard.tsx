@@ -75,7 +75,7 @@ export function TemplateCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="font-semibold text-gray-900 truncate">{template.name}</h3>
-            <VisibilityIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <VisibilityIcon className="w-4 h-4 text-gray-400 flex-shrink-0" aria-hidden="true" />
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <span
@@ -97,8 +97,10 @@ export function TemplateCard({
               onClick={handleMenuClick}
               className="p-1 hover:bg-gray-100 rounded"
               aria-label="Template actions"
+              aria-haspopup="menu"
+              aria-expanded={showMenu}
             >
-              <MoreVertical className="w-4 h-4 text-gray-500" />
+              <MoreVertical className="w-4 h-4 text-gray-500" aria-hidden="true" />
             </button>
 
             {showMenu && (
@@ -107,7 +109,7 @@ export function TemplateCard({
                   className="fixed inset-0 z-10"
                   onClick={() => setShowMenu(false)}
                 />
-                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border z-20 py-1">
+                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border z-20 py-1" role="menu">
                   {onPreview && (
                     <button
                       onClick={(e) => {
@@ -115,8 +117,9 @@ export function TemplateCard({
                         handleAction(() => onPreview(template));
                       }}
                       className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                      role="menuitem"
                     >
-                      <Eye className="w-4 h-4" />
+                      <Eye className="w-4 h-4" aria-hidden="true" />
                       Preview
                     </button>
                   )}
@@ -127,8 +130,9 @@ export function TemplateCard({
                         handleAction(() => onEdit(template));
                       }}
                       className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                      role="menuitem"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <Edit2 className="w-4 h-4" aria-hidden="true" />
                       Edit
                     </button>
                   )}
@@ -139,8 +143,9 @@ export function TemplateCard({
                         handleAction(() => onDuplicate(template));
                       }}
                       className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                      role="menuitem"
                     >
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-4 h-4" aria-hidden="true" />
                       Duplicate
                     </button>
                   )}
@@ -151,8 +156,9 @@ export function TemplateCard({
                         handleAction(() => onShare(template));
                       }}
                       className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                      role="menuitem"
                     >
-                      <Share2 className="w-4 h-4" />
+                      <Share2 className="w-4 h-4" aria-hidden="true" />
                       Share
                     </button>
                   )}
@@ -165,8 +171,9 @@ export function TemplateCard({
                           handleAction(() => onDelete(template));
                         }}
                         className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
+                        role="menuitem"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" aria-hidden="true" />
                         Delete
                       </button>
                     </>
@@ -186,11 +193,11 @@ export function TemplateCard({
       {/* Stats */}
       <div className="grid grid-cols-2 gap-2 text-sm mb-3">
         <div className="flex items-center gap-1.5 text-gray-600">
-          <Calendar className="w-4 h-4" />
+          <Calendar className="w-4 h-4" aria-hidden="true" />
           <span>{template.durationWeeks} week{template.durationWeeks !== 1 ? 's' : ''}</span>
         </div>
         <div className="flex items-center gap-1.5 text-gray-600">
-          <Clock className="w-4 h-4" />
+          <Clock className="w-4 h-4" aria-hidden="true" />
           <span>{template.patterns.length} patterns</span>
         </div>
       </div>
@@ -240,6 +247,7 @@ export function TemplateCard({
               onApply(template);
             }}
             className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            aria-label={`Apply template ${template.name}`}
           >
             Apply
           </button>

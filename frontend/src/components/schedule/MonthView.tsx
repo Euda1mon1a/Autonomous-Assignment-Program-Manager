@@ -215,12 +215,13 @@ export function MonthView({
 
       {/* Calendar Grid */}
       <div className="overflow-x-auto">
-        <div className="min-w-[700px]">
+        <div className="min-w-[700px]" role="grid" aria-label="Monthly calendar view">
           {/* Weekday Headers */}
-          <div className="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-t-lg overflow-hidden">
+          <div className="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-t-lg overflow-hidden" role="row">
             {weekdays.map((day, idx) => (
               <div
                 key={day}
+                role="columnheader"
                 className={`p-2 text-center font-semibold text-sm ${
                   idx === 0 || idx === 6 ? 'bg-gray-100 text-gray-500' : 'bg-gray-50 text-gray-700'
                 }`}
@@ -265,7 +266,7 @@ export function MonthView({
                       {format(day, 'd')}
                     </span>
                     {stats?.hasIssues && (
-                      <AlertCircle className="w-4 h-4 text-red-500" aria-label="Has issues" />
+                      <AlertCircle className="w-4 h-4 text-red-500" aria-hidden="true" title="Has issues" />
                     )}
                   </div>
 
@@ -287,7 +288,7 @@ export function MonthView({
 
                   {/* Activity Color Indicators */}
                   {isCurrentMonth && stats && stats.activities.size > 0 && (
-                    <div className="flex flex-wrap gap-0.5 mt-1.5">
+                    <div className="flex flex-wrap gap-0.5 mt-1.5" aria-label={`${stats.activities.size} activity types`}>
                       {Array.from(stats.activities)
                         .slice(0, 5)
                         .map((activity, idx) => (
@@ -295,10 +296,11 @@ export function MonthView({
                             key={idx}
                             className={`w-2 h-2 rounded-full ${getIndicatorColor(activity)}`}
                             title={activity}
+                            aria-hidden="true"
                           />
                         ))}
                       {stats.activities.size > 5 && (
-                        <span className="text-[9px] text-gray-400 ml-0.5">
+                        <span className="text-[9px] text-gray-400 ml-0.5" aria-hidden="true">
                           +{stats.activities.size - 5}
                         </span>
                       )}
@@ -327,30 +329,30 @@ export function MonthView({
       </div>
 
       {/* Legend */}
-      <div className="mt-4 pt-4 border-t flex flex-wrap items-center gap-4 text-xs text-gray-600">
+      <div className="mt-4 pt-4 border-t flex flex-wrap items-center gap-4 text-xs text-gray-600" role="region" aria-label="Activity type legend">
         <span className="font-medium text-gray-700">Activity Types:</span>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-blue-500" />
+          <div className="w-3 h-3 rounded-full bg-blue-500" aria-hidden="true" />
           <span>Clinic</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-purple-500" />
+          <div className="w-3 h-3 rounded-full bg-purple-500" aria-hidden="true" />
           <span>Inpatient</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-orange-500" />
+          <div className="w-3 h-3 rounded-full bg-orange-500" aria-hidden="true" />
           <span>Call</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-amber-500" />
+          <div className="w-3 h-3 rounded-full bg-amber-500" aria-hidden="true" />
           <span>Leave</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-green-500" />
+          <div className="w-3 h-3 rounded-full bg-green-500" aria-hidden="true" />
           <span>Elective</span>
         </div>
         <div className="flex items-center gap-1.5 ml-4">
-          <AlertCircle className="w-3 h-3 text-red-500" />
+          <AlertCircle className="w-3 h-3 text-red-500" aria-hidden="true" />
           <span>Has Issues</span>
         </div>
       </div>

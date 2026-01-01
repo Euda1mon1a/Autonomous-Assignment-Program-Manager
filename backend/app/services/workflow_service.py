@@ -28,7 +28,7 @@ class WorkflowService:
     for common workflow operations in the Residency Scheduler application.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize workflow service.
 

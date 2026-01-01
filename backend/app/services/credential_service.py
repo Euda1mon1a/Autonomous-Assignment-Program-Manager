@@ -14,7 +14,7 @@ from app.repositories.procedure_credential import ProcedureCredentialRepository
 class CredentialService:
     """Service for procedure credential business logic."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self.credential_repo = ProcedureCredentialRepository(db)
         self.procedure_repo = ProcedureRepository(db)

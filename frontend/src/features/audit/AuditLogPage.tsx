@@ -62,13 +62,13 @@ function ViewModeToggle({
   onViewModeChange: (mode: AuditViewMode) => void;
 }) {
   const modes: Array<{ mode: AuditViewMode; icon: React.ReactNode; label: string }> = [
-    { mode: 'table', icon: <Table className="w-4 h-4" />, label: 'Table' },
-    { mode: 'timeline', icon: <Clock className="w-4 h-4" />, label: 'Timeline' },
-    { mode: 'comparison', icon: <ArrowLeftRight className="w-4 h-4" />, label: 'Compare' },
+    { mode: 'table', icon: <Table className="w-4 h-4" aria-hidden="true" />, label: 'Table' },
+    { mode: 'timeline', icon: <Clock className="w-4 h-4" aria-hidden="true" />, label: 'Timeline' },
+    { mode: 'comparison', icon: <ArrowLeftRight className="w-4 h-4" aria-hidden="true" />, label: 'Compare' },
   ];
 
   return (
-    <div className="flex items-center bg-gray-100 rounded-lg p-1">
+    <div className="flex items-center bg-gray-100 rounded-lg p-1" role="tablist" aria-label="Audit log view modes">
       {modes.map(({ mode, icon, label }) => (
         <button
           key={mode}
@@ -82,6 +82,9 @@ function ViewModeToggle({
                 : 'text-gray-600 hover:text-gray-900'
             }
           `}
+          role="tab"
+          aria-selected={viewMode === mode}
+          aria-label={`${label} view`}
         >
           {icon}
           <span className="hidden sm:inline">{label}</span>
@@ -109,19 +112,19 @@ function StatisticsCards({
     {
       label: 'Total Entries',
       value: totalEntries,
-      icon: <FileText className="w-5 h-5" />,
+      icon: <FileText className="w-5 h-5" aria-hidden="true" />,
       color: 'text-blue-600 bg-blue-100',
     },
     {
       label: 'ACGME Overrides',
       value: acgmeOverrideCount,
-      icon: <AlertTriangle className="w-5 h-5" />,
+      icon: <AlertTriangle className="w-5 h-5" aria-hidden="true" />,
       color: 'text-orange-600 bg-orange-100',
     },
     {
       label: 'Active Users',
       value: uniqueUsers,
-      icon: <Shield className="w-5 h-5" />,
+      icon: <Shield className="w-5 h-5" aria-hidden="true" />,
       color: 'text-green-600 bg-green-100',
     },
   ];
@@ -132,6 +135,8 @@ function StatisticsCards({
         <div
           key={stat.label}
           className="bg-white rounded-lg shadow p-4 flex items-center gap-4"
+          role="status"
+          aria-label={`${stat.label}: ${stat.value.toLocaleString()}`}
         >
           <div className={`p-3 rounded-lg ${stat.color}`}>{stat.icon}</div>
           <div>
@@ -164,9 +169,9 @@ function ComparisonModePanel({
 
   if (!hasSelection) {
     return (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4" role="status" aria-live="polite">
         <div className="flex items-center gap-2 text-blue-700">
-          <ArrowLeftRight className="w-5 h-5" />
+          <ArrowLeftRight className="w-5 h-5" aria-hidden="true" />
           <span className="font-medium">Comparison Mode</span>
         </div>
         <p className="text-sm text-blue-600 mt-1">
@@ -177,10 +182,10 @@ function ComparisonModePanel({
   }
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4" role="status" aria-live="polite">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-blue-700">
-          <ArrowLeftRight className="w-5 h-5" />
+          <ArrowLeftRight className="w-5 h-5" aria-hidden="true" />
           <span className="font-medium">
             {selection.before && selection.after
               ? 'Ready to compare'
@@ -191,6 +196,7 @@ function ComparisonModePanel({
           type="button"
           onClick={onClearSelection}
           className="text-sm text-blue-600 hover:text-blue-800"
+          aria-label="Clear comparison selection"
         >
           Clear selection
         </button>
@@ -336,9 +342,11 @@ export function AuditLogPage({
                 onClick={() => refetch()}
                 className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                 disabled={isLoadingLogs}
+                aria-label={isLoadingLogs ? 'Refreshing audit logs' : 'Refresh audit logs'}
               >
                 <RefreshCw
                   className={`w-4 h-4 ${isLoadingLogs ? 'animate-spin' : ''}`}
+                  aria-hidden="true"
                 />
                 Refresh
               </button>

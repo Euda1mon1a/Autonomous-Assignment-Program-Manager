@@ -69,7 +69,7 @@ interface AuditLogTableProps {
  * Get icon component for action type
  */
 function ActionIcon({ action }: { action: AuditActionType }) {
-  const iconProps = { className: 'w-4 h-4' };
+  const iconProps = { className: 'w-4 h-4', 'aria-hidden': 'true' as const };
 
   switch (action) {
     case 'create':
@@ -109,17 +109,17 @@ function SeverityBadge({ severity }: { severity: AuditSeverity }) {
     info: {
       bg: 'bg-blue-100',
       text: 'text-blue-800',
-      icon: <Info className="w-3 h-3" />,
+      icon: <Info className="w-3 h-3" aria-hidden="true" />,
     },
     warning: {
       bg: 'bg-yellow-100',
       text: 'text-yellow-800',
-      icon: <AlertTriangle className="w-3 h-3" />,
+      icon: <AlertTriangle className="w-3 h-3" aria-hidden="true" />,
     },
     critical: {
       bg: 'bg-red-100',
       text: 'text-red-800',
-      icon: <AlertCircle className="w-3 h-3" />,
+      icon: <AlertCircle className="w-3 h-3" aria-hidden="true" />,
     },
   };
 
@@ -218,8 +218,9 @@ function ExpandableRow({
           ${entry.acgmeOverride ? 'bg-orange-50' : ''}
         `}
         onClick={onSelect}
+        role="row"
       >
-        <td className="px-4 py-3">
+        <td className="px-4 py-3" role="cell">
           {hasDetails && (
             <button
               onClick={(e) => {
@@ -228,28 +229,29 @@ function ExpandableRow({
               }}
               className="p-1 hover:bg-gray-200 rounded"
               aria-label={isExpanded ? 'Collapse details' : 'Expand details'}
+              aria-expanded={isExpanded}
             >
               {isExpanded ? (
-                <ChevronDown className="w-4 h-4" />
+                <ChevronDown className="w-4 h-4" aria-hidden="true" />
               ) : (
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4" aria-hidden="true" />
               )}
             </button>
           )}
         </td>
-        <td className="px-4 py-3 text-sm text-gray-600">
+        <td className="px-4 py-3 text-sm text-gray-600" role="cell">
           {format(new Date(entry.timestamp), 'MMM d, yyyy HH:mm:ss')}
         </td>
-        <td className="px-4 py-3">
+        <td className="px-4 py-3" role="cell">
           <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-gray-400" />
+            <User className="w-4 h-4 text-gray-400" aria-hidden="true" />
             <span className="text-sm font-medium">{entry.user.name}</span>
           </div>
         </td>
-        <td className="px-4 py-3">
+        <td className="px-4 py-3" role="cell">
           <ActionBadge action={entry.action} />
         </td>
-        <td className="px-4 py-3 text-sm">
+        <td className="px-4 py-3 text-sm" role="cell">
           <span className="text-gray-600">
             {ENTITY_TYPE_LABELS[entry.entityType]}
           </span>
@@ -259,21 +261,21 @@ function ExpandableRow({
             </span>
           )}
         </td>
-        <td className="px-4 py-3">
+        <td className="px-4 py-3" role="cell">
           <SeverityBadge severity={entry.severity} />
         </td>
-        <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
+        <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate" role="cell">
           {entry.reason || '-'}
         </td>
       </tr>
       {isExpanded && hasDetails && (
-        <tr className="bg-gray-50">
-          <td colSpan={7} className="px-4 py-4">
+        <tr className="bg-gray-50" role="row">
+          <td colSpan={7} className="px-4 py-4" role="cell">
             <div className="ml-8 space-y-4">
               {entry.acgmeOverride && (
                 <div className="bg-orange-100 border border-orange-200 rounded-lg p-3">
                   <div className="flex items-center gap-2 text-orange-800 font-medium mb-1">
-                    <AlertTriangle className="w-4 h-4" />
+                    <AlertTriangle className="w-4 h-4" aria-hidden="true" />
                     ACGME Override
                   </div>
                   {entry.acgmeJustification && (
@@ -378,17 +380,25 @@ export function AuditLogTable({
     <th
       className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
       onClick={() => handleSort(field)}
+      role="columnheader"
+      aria-sort={
+        sort.field === field
+          ? sort.direction === 'desc'
+            ? 'descending'
+            : 'ascending'
+          : 'none'
+      }
     >
       <div className="flex items-center gap-1">
         {children}
         {sort.field === field ? (
           sort.direction === 'desc' ? (
-            <ChevronDown className="w-4 h-4" />
+            <ChevronDown className="w-4 h-4" aria-hidden="true" />
           ) : (
-            <ChevronUp className="w-4 h-4" />
+            <ChevronUp className="w-4 h-4" aria-hidden="true" />
           )
         ) : (
-          <ArrowUpDown className="w-4 h-4 text-gray-400" />
+          <ArrowUpDown className="w-4 h-4 text-gray-400" aria-hidden="true" />
         )}
       </div>
     </th>
@@ -428,7 +438,7 @@ export function AuditLogTable({
   if (logs.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow p-8 text-center">
-        <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+        <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" aria-hidden="true" />
         <h3 className="text-lg font-medium text-gray-900 mb-1">
           No audit logs found
         </h3>
@@ -443,21 +453,21 @@ export function AuditLogTable({
     <div className="bg-white rounded-lg shadow overflow-hidden">
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="w-10 px-4 py-3" />
+        <table className="w-full" role="table" aria-label="Audit log entries">
+          <thead className="bg-gray-50 border-b border-gray-200" role="rowgroup">
+            <tr role="row">
+              <th className="w-10 px-4 py-3" role="columnheader" aria-label="Expand row" />
               <SortableHeader field="timestamp">Timestamp</SortableHeader>
               <SortableHeader field="user">User</SortableHeader>
               <SortableHeader field="action">Action</SortableHeader>
               <SortableHeader field="entityType">Entity</SortableHeader>
               <SortableHeader field="severity">Severity</SortableHeader>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider" role="columnheader">
                 Reason
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody role="rowgroup">
             {logs.map((log) => (
               <ExpandableRow
                 key={log.id}
@@ -480,6 +490,7 @@ export function AuditLogTable({
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
             className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="Select page size"
           >
             {PAGE_SIZE_OPTIONS.map((size) => (
               <option key={size} value={size}>
@@ -499,6 +510,7 @@ export function AuditLogTable({
             onClick={() => onPageChange(1)}
             disabled={page === 1}
             className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Go to first page"
           >
             First
           </button>
@@ -506,6 +518,7 @@ export function AuditLogTable({
             onClick={() => onPageChange(page - 1)}
             disabled={page === 1}
             className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Go to previous page"
           >
             Previous
           </button>
@@ -518,6 +531,8 @@ export function AuditLogTable({
                   ? 'bg-blue-600 text-white border-blue-600'
                   : 'border-gray-300 hover:bg-gray-50'
               }`}
+              aria-label={`Go to page ${p}`}
+              aria-current={p === page ? 'page' : undefined}
             >
               {p}
             </button>
@@ -526,6 +541,7 @@ export function AuditLogTable({
             onClick={() => onPageChange(page + 1)}
             disabled={page === totalPages}
             className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Go to next page"
           >
             Next
           </button>
@@ -533,6 +549,7 @@ export function AuditLogTable({
             onClick={() => onPageChange(totalPages)}
             disabled={page === totalPages}
             className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Go to last page"
           >
             Last
           </button>

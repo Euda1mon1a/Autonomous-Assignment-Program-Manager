@@ -91,7 +91,7 @@ class ConflictAlertService:
     for conflict alerts.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def create_alert(

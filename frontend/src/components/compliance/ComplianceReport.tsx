@@ -88,22 +88,25 @@ export const ComplianceReport: React.FC<ComplianceReportProps> = ({
           <button
             onClick={handlePrint}
             className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="Print compliance report"
           >
-            🖨️ Print
+            <span aria-hidden="true">🖨️</span> Print
           </button>
           {onExport && (
             <>
               <button
                 onClick={() => onExport('pdf')}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label="Export compliance report as PDF"
               >
-                📄 Export PDF
+                <span aria-hidden="true">📄</span> Export PDF
               </button>
               <button
                 onClick={() => onExport('excel')}
                 className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                aria-label="Export compliance report as Excel"
               >
-                📊 Export Excel
+                <span aria-hidden="true">📊</span> Export Excel
               </button>
             </>
           )}
@@ -136,25 +139,34 @@ export const ComplianceReport: React.FC<ComplianceReportProps> = ({
         </div>
 
         {/* Overall Compliance Status */}
-        <div className={`rounded-lg p-6 mb-6 ${config.color}`}>
+        <div className={`rounded-lg p-6 mb-6 ${config.color}`} role="status" aria-label="Overall compliance status">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-3xl">{config.icon}</span>
+              <span className="text-3xl" aria-hidden="true">{config.icon}</span>
               <div>
                 <h3 className="text-xl font-bold">{config.label}</h3>
                 <p className="text-sm">Compliance Score: {data.overallCompliance.score}/100</p>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-4xl font-bold">{data.overallCompliance.score}%</div>
+              <div
+                className="text-4xl font-bold"
+                role="meter"
+                aria-valuenow={data.overallCompliance.score}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`Compliance score ${data.overallCompliance.score} out of 100`}
+              >
+                {data.overallCompliance.score}%
+              </div>
             </div>
           </div>
         </div>
 
         {/* Work Hours Section */}
-        <section className="mb-8">
-          <h3 className="text-xl font-bold mb-4 border-b-2 border-gray-300 pb-2">
-            📊 Work Hour Compliance
+        <section className="mb-8" aria-labelledby="work-hours-heading">
+          <h3 id="work-hours-heading" className="text-xl font-bold mb-4 border-b-2 border-gray-300 pb-2">
+            <span aria-hidden="true">📊</span> Work Hour Compliance
           </h3>
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div className="bg-gray-50 rounded p-4">
@@ -180,9 +192,9 @@ export const ComplianceReport: React.FC<ComplianceReportProps> = ({
         </section>
 
         {/* Days Off Section */}
-        <section className="mb-8">
-          <h3 className="text-xl font-bold mb-4 border-b-2 border-gray-300 pb-2">
-            📅 1-in-7 Days Off Compliance
+        <section className="mb-8" aria-labelledby="days-off-heading">
+          <h3 id="days-off-heading" className="text-xl font-bold mb-4 border-b-2 border-gray-300 pb-2">
+            <span aria-hidden="true">📅</span> 1-in-7 Days Off Compliance
           </h3>
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div className="bg-gray-50 rounded p-4">
@@ -208,9 +220,9 @@ export const ComplianceReport: React.FC<ComplianceReportProps> = ({
         </section>
 
         {/* Supervision Section */}
-        <section className="mb-8">
-          <h3 className="text-xl font-bold mb-4 border-b-2 border-gray-300 pb-2">
-            👨‍⚕️ Supervision Ratio
+        <section className="mb-8" aria-labelledby="supervision-heading">
+          <h3 id="supervision-heading" className="text-xl font-bold mb-4 border-b-2 border-gray-300 pb-2">
+            <span aria-hidden="true">👨‍⚕️</span> Supervision Ratio
           </h3>
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div className="bg-gray-50 rounded p-4">
@@ -236,9 +248,9 @@ export const ComplianceReport: React.FC<ComplianceReportProps> = ({
 
         {/* Violations Detail */}
         {data.violations.length > 0 && (
-          <section className="mb-8">
-            <h3 className="text-xl font-bold mb-4 border-b-2 border-red-300 pb-2 text-red-700">
-              🚨 Violation Details
+          <section className="mb-8" aria-labelledby="violations-heading">
+            <h3 id="violations-heading" className="text-xl font-bold mb-4 border-b-2 border-red-300 pb-2 text-red-700">
+              <span aria-hidden="true">🚨</span> Violation Details
             </h3>
             <div className="space-y-2">
               {data.violations.map((violation, idx) => (

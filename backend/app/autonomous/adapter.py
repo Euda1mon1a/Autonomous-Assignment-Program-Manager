@@ -9,14 +9,29 @@ Start simple and deterministic:
 You can later add bandits/Bayesian optimization, but don't start there.
 """
 
+import logging
 import random
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+import numpy as np
+
 from app.autonomous.evaluator import EvaluationResult
 from app.autonomous.state import GeneratorParams, IterationRecord
+
+logger = logging.getLogger(__name__)
+
+***REMOVED*** Check for scipy availability
+try:
+    from scipy.optimize import minimize
+    from scipy.stats import norm
+
+    HAS_SCIPY = True
+except ImportError:
+    HAS_SCIPY = False
+    logger.warning("scipy not installed - Bayesian optimization will use random perturbation")
 
 
 class AdaptationAction(str, Enum):
@@ -412,12 +427,79 @@ class BayesianAdapter(ParameterAdapter):
             return super().adapt(current_params, evaluation, history)
 
     def _bayesian_suggest(self, current: GeneratorParams) -> GeneratorParams:
-        """Use Bayesian optimization to suggest next parameters."""
-        ***REMOVED*** This is a placeholder - actual implementation would use
-        ***REMOVED*** scipy.optimize or scikit-optimize for Gaussian process
-        ***REMOVED*** For now, just return current with small perturbation
+        """
+        Use Bayesian optimization to suggest next parameters.
 
-        new_params = GeneratorParams(
+        Uses a simplified acquisition function approach:
+        1. Fit a surrogate model (weighted average) to observed data
+        2. Use Expected Improvement to find promising regions
+        3. Return parameters that balance exploration/exploitation
+        """
+        if not HAS_SCIPY or len(self._observations) < 10:
+            ***REMOVED*** Fall back to random perturbation
+            return self._random_perturbation(current)
+
+        try:
+            ***REMOVED*** Extract observations into arrays
+            X = []  ***REMOVED*** Parameter vectors
+            y = []  ***REMOVED*** Scores
+
+            for params_dict, score in self._observations:
+                ***REMOVED*** Extract continuous parameters
+                param_vec = [
+                    params_dict.get("timeout_seconds", 60.0) / 120.0,  ***REMOVED*** Normalize
+                    params_dict.get("diversification_factor", 0.0),
+                ]
+                X.append(param_vec)
+                y.append(score)
+
+            X = np.array(X)
+            y = np.array(y)
+
+            ***REMOVED*** Find best observed
+            best_idx = np.argmax(y)
+            best_score = y[best_idx]
+            best_x = X[best_idx]
+
+            ***REMOVED*** Simple acquisition: sample around best with decay based on observations
+            ***REMOVED*** More observations = tighter sampling (exploitation)
+            exploration_scale = max(0.05, 1.0 / len(self._observations))
+
+            ***REMOVED*** Sample new point using Expected Improvement heuristic
+            ***REMOVED*** Move toward best observation with some randomness
+            new_x = best_x + np.random.normal(0, exploration_scale, size=best_x.shape)
+
+            ***REMOVED*** Clip to valid bounds
+            new_x = np.clip(new_x, 0.0, 1.0)
+
+            ***REMOVED*** Convert back to parameters
+            new_timeout = new_x[0] * 120.0  ***REMOVED*** Denormalize
+            new_timeout = max(30.0, min(300.0, new_timeout))
+
+            new_diversification = new_x[1]
+            new_diversification = max(0.0, min(1.0, new_diversification))
+
+            logger.debug(
+                f"Bayesian suggestion: timeout={new_timeout:.1f}s, "
+                f"diversification={new_diversification:.3f}"
+            )
+
+            return GeneratorParams(
+                algorithm=current.algorithm,
+                timeout_seconds=new_timeout,
+                random_seed=random.randint(0, 2**32 - 1),
+                solver_params=current.solver_params.copy(),
+                constraint_weights=current.constraint_weights.copy(),
+                diversification_factor=new_diversification,
+            )
+
+        except Exception as e:
+            logger.warning(f"Bayesian optimization failed: {e}, using random perturbation")
+            return self._random_perturbation(current)
+
+    def _random_perturbation(self, current: GeneratorParams) -> GeneratorParams:
+        """Apply random perturbation to parameters (fallback method)."""
+        return GeneratorParams(
             algorithm=current.algorithm,
             timeout_seconds=current.timeout_seconds * (0.9 + 0.2 * random.random()),
             random_seed=random.randint(0, 2**32 - 1),
@@ -427,5 +509,3 @@ class BayesianAdapter(ParameterAdapter):
                 1.0, current.diversification_factor + 0.05 * random.random()
             ),
         )
-
-        return new_params

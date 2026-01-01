@@ -35,7 +35,7 @@ class SwapValidationResult:
 class SwapValidationService:
     """Service for validating FMIT swap requests."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """Initialize swap validation service.
 
         Args:

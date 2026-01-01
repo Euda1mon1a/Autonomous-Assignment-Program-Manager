@@ -56,7 +56,11 @@ export function FilterPanel({
   const [isExpanded, setIsExpanded] = useState(!collapsible);
 
   return (
-    <div className={`bg-white border border-gray-200 rounded-lg ${className}`}>
+    <div
+      role="search"
+      aria-label="Filter options"
+      className={`bg-white border border-gray-200 rounded-lg ${className}`}
+    >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <div className="flex items-center gap-2">
@@ -107,6 +111,7 @@ export function FilterPanel({
                 <select
                   value={filter.value || ''}
                   onChange={(e) => onFilterChange(filter.key, e.target.value)}
+                  aria-label={filter.label}
                   className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">All</option>

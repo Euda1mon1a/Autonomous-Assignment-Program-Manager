@@ -44,7 +44,7 @@ class ProviderUnavailableError(LLMProviderError):
 class LLMProvider(ABC):
     """Abstract base class for LLM providers."""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         """
         Initialize LLM provider base class.
 
@@ -225,7 +225,7 @@ class OllamaProvider(LLMProvider):
         base_url: str | None = None,
         default_model: str = "llama3.2",
         timeout: float = 60.0,
-    ):
+    ) -> None:
         """
         Initialize Ollama provider.
 
@@ -483,7 +483,7 @@ class AnthropicProvider(LLMProvider):
         self,
         api_key: str | None = None,
         default_model: str = "claude-3-5-sonnet-20241022",
-    ):
+    ) -> None:
         """
         Initialize Anthropic Claude provider.
 
@@ -691,7 +691,7 @@ class CircuitBreaker:
         failure_threshold: int = 5,
         recovery_timeout: int = 60,
         half_open_max_calls: int = 3,
-    ):
+    ) -> None:
         """
         Initialize circuit breaker.
 
@@ -817,7 +817,7 @@ class LLMRouter:
         default_provider: str = "ollama",
         enable_fallback: bool = True,
         airgap_mode: bool = False,
-    ):
+    ) -> None:
         """
         Initialize LLM Router.
 

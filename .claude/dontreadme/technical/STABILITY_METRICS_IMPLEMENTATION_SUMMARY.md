@@ -210,28 +210,298 @@ pytest tests/test_stability_metrics.py -v
 ***REMOVED******REMOVED*** Future Enhancements (TODOs in Code)
 
 ***REMOVED******REMOVED******REMOVED*** 1. Version History Integration
+
+**Status:** Not yet implemented (version history system exists but not integrated)
+
+**Implementation Plan:**
 ```python
-***REMOVED*** TODO: Implement in _get_previous_assignments()
-***REMOVED*** Query SQLAlchemy-Continuum transaction tables
-***REMOVED*** Reconstruct historical assignment states
+***REMOVED*** In backend/app/analytics/stability_metrics.py
+
+def _get_previous_assignments(
+    self,
+    db: Session,
+    person_id: str,
+    date: date,
+) -> list[Assignment]:
+    """
+    Get historical assignments from version history.
+
+    Integration with SQLAlchemy-Continuum transaction tables.
+    """
+    from sqlalchemy_continuum import version_class
+
+    ***REMOVED*** Get Assignment version model
+    AssignmentVersion = version_class(Assignment)
+
+    ***REMOVED*** Query transaction history for this person
+    previous_versions = db.query(AssignmentVersion).filter(
+        AssignmentVersion.person_id == person_id,
+        AssignmentVersion.date < date,
+    ).order_by(AssignmentVersion.transaction_id.desc()).all()
+
+    ***REMOVED*** Reconstruct historical assignment states
+    ***REMOVED*** Group by transaction to get consistent snapshots
+    ***REMOVED*** Return assignments from most recent complete snapshot
+    pass
+```
+
+**Dependencies:**
+- Requires SQLAlchemy-Continuum configured (currently in requirements.txt)
+- Needs versioning enabled on Assignment model
+
+**Testing:**
+```bash
+pytest tests/analytics/test_stability_metrics_version_history.py -v
 ```
 
 ***REMOVED******REMOVED******REMOVED*** 2. Violation Integration
+
+**Status:** Currently using mock violation counts (hardcoded to 0)
+
+**Implementation Plan:**
 ```python
-***REMOVED*** TODO: Integrate with ACGMEValidator
-***REMOVED*** Real violation counting instead of mock
+***REMOVED*** In backend/app/analytics/stability_metrics.py
+
+from app.scheduling.acgme_validator import ACGMEValidator
+
+def _count_acgme_violations(
+    self,
+    db: Session,
+    assignments: list[Assignment],
+    date_range: tuple[date, date],
+) -> int:
+    """
+    Count real ACGME violations using ACGMEValidator.
+
+    Args:
+        db: Database session
+        assignments: List of assignments to validate
+        date_range: (start_date, end_date) tuple
+
+    Returns:
+        Number of ACGME violations detected
+    """
+    validator = ACGMEValidator(db)
+
+    violations = []
+    for person_id in {a.person_id for a in assignments}:
+        ***REMOVED*** Check 80-hour rule
+        week_violations = validator.check_80_hour_rule(
+            person_id=person_id,
+            start_date=date_range[0],
+            end_date=date_range[1],
+        )
+        violations.extend(week_violations)
+
+        ***REMOVED*** Check 1-in-7 rule
+        rest_violations = validator.check_1_in_7_rule(
+            person_id=person_id,
+            date_range=date_range,
+        )
+        violations.extend(rest_violations)
+
+    return len(violations)
+```
+
+**Dependencies:**
+- `ACGMEValidator` already exists at `backend/app/scheduling/acgme_validator.py`
+- Tests exist at `backend/tests/scheduling/test_acgme_validator.py`
+
+**Testing:**
+```bash
+pytest tests/analytics/test_stability_metrics_acgme.py -v
 ```
 
 ***REMOVED******REMOVED******REMOVED*** 3. Celery Integration
+
+**Status:** Manual computation only (no automated monitoring)
+
+**Implementation Plan:**
 ```python
-***REMOVED*** TODO: Add Celery task to compute metrics on schedule changes
-***REMOVED*** Automated stability monitoring
+***REMOVED*** In backend/app/tasks/stability_monitoring.py
+
+from celery import shared_task
+from app.analytics.stability_metrics import StabilityMetricsComputer
+from app.db.session import get_db
+
+@shared_task(name="compute_stability_metrics")
+def compute_stability_metrics_task(schedule_id: str) -> dict:
+    """
+    Celery task to compute stability metrics on schedule changes.
+
+    Triggered by schedule update events.
+
+    Args:
+        schedule_id: ID of schedule that was updated
+
+    Returns:
+        dict with computed metrics
+    """
+    db = next(get_db())
+    try:
+        computer = StabilityMetricsComputer()
+        metrics = computer.compute_all_metrics(db, schedule_id)
+
+        ***REMOVED*** Store to database (see TODO ***REMOVED***4)
+        ***REMOVED*** Send alerts if thresholds exceeded
+        ***REMOVED*** Update dashboard
+
+        return {
+            "schedule_id": schedule_id,
+            "rigidity_score": metrics.rigidity_score,
+            "change_magnitude": metrics.change_magnitude,
+            "status": "computed",
+        }
+    finally:
+        db.close()
+
+***REMOVED*** In backend/app/events/handlers/schedule_events.py
+***REMOVED*** Add trigger on schedule update:
+
+from app.tasks.stability_monitoring import compute_stability_metrics_task
+
+async def on_schedule_updated(schedule_id: str):
+    ***REMOVED*** Trigger stability metrics computation
+    compute_stability_metrics_task.delay(schedule_id)
+```
+
+**Configuration:**
+```python
+***REMOVED*** In backend/app/core/celery_app.py
+app.conf.beat_schedule = {
+    ***REMOVED*** ... existing tasks ...
+    "compute-stability-metrics-hourly": {
+        "task": "compute_stability_metrics",
+        "schedule": crontab(minute=0),  ***REMOVED*** Every hour
+    },
+}
+```
+
+**Testing:**
+```bash
+pytest tests/tasks/test_stability_monitoring.py -v
 ```
 
 ***REMOVED******REMOVED******REMOVED*** 4. Database Persistence
+
+**Status:** In-memory computation only (no historical storage)
+
+**Implementation Plan:**
 ```python
-***REMOVED*** TODO: Create MetricSnapshot model (see PROJECT_STATUS_ASSESSMENT.md line 800)
-***REMOVED*** Store metrics history for trend analysis
+***REMOVED*** In backend/app/models/metric_snapshot.py
+
+from sqlalchemy import Column, String, Float, DateTime, JSON
+from app.db.base_class import Base
+
+class MetricSnapshot(Base):
+    """
+    Store historical stability metrics for trend analysis.
+
+    Tracks metric evolution over time to detect degradation patterns.
+    """
+    __tablename__ = "metric_snapshots"
+
+    id = Column(String, primary_key=True)
+    schedule_id = Column(String, ForeignKey("schedules.id"), nullable=False)
+    computed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    ***REMOVED*** Stability metrics
+    rigidity_score = Column(Float, nullable=False)
+    change_magnitude = Column(Float, nullable=False)
+    affected_persons_count = Column(Integer, nullable=False)
+    acgme_violations_count = Column(Integer, default=0)
+    dependency_graph_density = Column(Float, nullable=True)
+
+    ***REMOVED*** Time Crystal metrics (if implemented)
+    subharmonic_alignment = Column(Float, nullable=True)
+    metastability_index = Column(Float, nullable=True)
+
+    ***REMOVED*** Full metrics JSON (for detailed analysis)
+    metrics_data = Column(JSON, nullable=False)
+
+    ***REMOVED*** Indexes for efficient querying
+    __table_args__ = (
+        Index("ix_metric_snapshots_schedule_computed", "schedule_id", "computed_at"),
+    )
+
+***REMOVED*** Migration
+***REMOVED*** alembic revision --autogenerate -m "Add MetricSnapshot for stability metrics persistence"
+```
+
+**Service Layer:**
+```python
+***REMOVED*** In backend/app/services/stability_metrics_service.py
+
+class StabilityMetricsService:
+    """Service for computing and persisting stability metrics."""
+
+    async def compute_and_store(
+        self,
+        db: AsyncSession,
+        schedule_id: str,
+    ) -> MetricSnapshot:
+        """Compute metrics and persist to database."""
+        computer = StabilityMetricsComputer()
+        metrics = await computer.compute_all_metrics(db, schedule_id)
+
+        snapshot = MetricSnapshot(
+            schedule_id=schedule_id,
+            rigidity_score=metrics.rigidity_score,
+            change_magnitude=metrics.change_magnitude,
+            affected_persons_count=len(metrics.affected_person_ids),
+            metrics_data=metrics.dict(),
+        )
+
+        db.add(snapshot)
+        await db.commit()
+        return snapshot
+
+    async def get_trend(
+        self,
+        db: AsyncSession,
+        schedule_id: str,
+        lookback_days: int = 30,
+    ) -> list[MetricSnapshot]:
+        """Get historical metric trend for a schedule."""
+        cutoff = datetime.utcnow() - timedelta(days=lookback_days)
+        result = await db.execute(
+            select(MetricSnapshot)
+            .where(
+                MetricSnapshot.schedule_id == schedule_id,
+                MetricSnapshot.computed_at >= cutoff,
+            )
+            .order_by(MetricSnapshot.computed_at.desc())
+        )
+        return result.scalars().all()
+```
+
+**API Endpoint:**
+```python
+***REMOVED*** In backend/app/api/routes/analytics.py
+
+@router.get("/schedules/{schedule_id}/stability-metrics")
+async def get_stability_metrics(
+    schedule_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Person = Depends(get_current_user),
+):
+    """Get current and historical stability metrics for a schedule."""
+    service = StabilityMetricsService()
+    current = await service.compute_and_store(db, schedule_id)
+    trend = await service.get_trend(db, schedule_id, lookback_days=30)
+
+    return {
+        "current": current,
+        "trend": trend,
+        "alerts": _check_thresholds(current),
+    }
+```
+
+**Testing:**
+```bash
+pytest tests/models/test_metric_snapshot.py -v
+pytest tests/services/test_stability_metrics_service.py -v
+pytest tests/api/test_stability_metrics_endpoints.py -v
 ```
 
 ---

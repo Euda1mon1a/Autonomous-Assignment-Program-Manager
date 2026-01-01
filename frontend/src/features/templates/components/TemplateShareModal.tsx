@@ -67,19 +67,19 @@ export function TemplateShareModal({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center">
         <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-        <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4" role="dialog" aria-labelledby="duplicate-dialog-title" aria-modal="true">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b">
             <div className="flex items-center gap-2">
-              <Copy className="w-5 h-5 text-blue-600" />
-              <h2 className="text-lg font-semibold">Duplicate Template</h2>
+              <Copy className="w-5 h-5 text-blue-600" aria-hidden="true" />
+              <h2 id="duplicate-dialog-title" className="text-lg font-semibold">Duplicate Template</h2>
             </div>
             <button
               onClick={onClose}
               className="p-1 hover:bg-gray-100 rounded"
               aria-label="Close"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -131,6 +131,7 @@ export function TemplateShareModal({
             <button
               onClick={onClose}
               className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+              aria-label="Cancel"
             >
               Cancel
             </button>
@@ -138,8 +139,9 @@ export function TemplateShareModal({
               onClick={handleDuplicate}
               disabled={isLoading || !newName.trim()}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              aria-label="Create duplicate template"
             >
-              <Copy className="w-4 h-4" />
+              <Copy className="w-4 h-4" aria-hidden="true" />
               {isLoading ? 'Duplicating...' : 'Create Duplicate'}
             </button>
           </div>
@@ -152,19 +154,19 @@ export function TemplateShareModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4" role="dialog" aria-labelledby="share-dialog-title" aria-modal="true">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-2">
-            <VisibilityIcon className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg font-semibold">Share Template</h2>
+            <VisibilityIcon className="w-5 h-5 text-blue-600" aria-hidden="true" />
+            <h2 id="share-dialog-title" className="text-lg font-semibold">Share Template</h2>
           </div>
           <button
             onClick={onClose}
             className="p-1 hover:bg-gray-100 rounded"
             aria-label="Close"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -204,10 +206,11 @@ export function TemplateShareModal({
                       checked={isSelected}
                       onChange={(e) => setVisibility(e.target.value as typeof visibility)}
                       className="mt-1"
+                      aria-label={opt.label}
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <Icon className={`w-4 h-4 ${isSelected ? 'text-blue-600' : 'text-gray-500'}`} />
+                        <Icon className={`w-4 h-4 ${isSelected ? 'text-blue-600' : 'text-gray-500'}`} aria-hidden="true" />
                         <span className="font-medium">{opt.label}</span>
                       </div>
                       <p className="text-sm text-gray-500 mt-0.5">{opt.description}</p>
@@ -238,15 +241,16 @@ export function TemplateShareModal({
                       ? 'bg-green-100 text-green-700'
                       : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                   }`}
+                  aria-label={linkCopied ? 'Link copied' : 'Copy share link'}
                 >
                   {linkCopied ? (
                     <>
-                      <Check className="w-4 h-4" />
+                      <Check className="w-4 h-4" aria-hidden="true" />
                       Copied!
                     </>
                   ) : (
                     <>
-                      <Link2 className="w-4 h-4" />
+                      <Link2 className="w-4 h-4" aria-hidden="true" />
                       Copy
                     </>
                   )}
@@ -280,6 +284,7 @@ export function TemplateShareModal({
           <button
             onClick={onClose}
             className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+            aria-label="Cancel"
           >
             Cancel
           </button>
@@ -287,8 +292,9 @@ export function TemplateShareModal({
             onClick={handleShare}
             disabled={isLoading}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            aria-label="Save sharing changes"
           >
-            <VisibilityIcon className="w-4 h-4" />
+            <VisibilityIcon className="w-4 h-4" aria-hidden="true" />
             {isLoading ? 'Saving...' : 'Save Changes'}
           </button>
         </div>

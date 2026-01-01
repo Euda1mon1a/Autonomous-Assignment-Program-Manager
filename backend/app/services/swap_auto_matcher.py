@@ -34,7 +34,7 @@ class SwapAutoMatcher:
     workload balance, past swap history, and faculty availability.
     """
 
-    def __init__(self, db: Session, criteria: MatchingCriteria | None = None):
+    def __init__(self, db: Session, criteria: MatchingCriteria | None = None) -> None:
         """
         Initialize the auto-matcher.
 

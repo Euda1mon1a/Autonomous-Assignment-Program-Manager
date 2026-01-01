@@ -39,7 +39,7 @@ class EmailConfig:
         from_name: str = "Residency Scheduler",
         use_tls: bool = True,
         enabled: bool = True,
-    ):
+    ) -> None:
         """Initialize email configuration.
 
         Args:
@@ -95,7 +95,7 @@ class EmailConfig:
 class EmailService:
     """Service for sending emails."""
 
-    def __init__(self, config: EmailConfig | None = None):
+    def __init__(self, config: EmailConfig | None = None) -> None:
         """Initialize email service.
 
         Args:

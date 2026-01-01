@@ -697,7 +697,7 @@ class AuditService:
     for backward compatibility with existing code.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize AuditService with a database session.
 

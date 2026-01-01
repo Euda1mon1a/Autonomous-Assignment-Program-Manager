@@ -145,15 +145,16 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
         <button
           onClick={handleCreateNew}
           className="btn-primary flex items-center gap-2"
+          aria-label="Create new template"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4" aria-hidden="true" />
           New Template
         </button>
       </div>
 
       {/* Tabs */}
       <div className="border-b">
-        <div className="flex gap-4">
+        <div className="flex gap-4" role="tablist">
           <button
             onClick={() => setActiveTab('my-templates')}
             className={`px-4 py-2 border-b-2 font-medium transition-colors ${
@@ -161,6 +162,9 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
+            role="tab"
+            aria-selected={activeTab === 'my-templates'}
+            aria-controls="my-templates-panel"
           >
             My Templates
             {templatesData?.total !== undefined && (
@@ -176,15 +180,18 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
+            role="tab"
+            aria-selected={activeTab === 'predefined'}
+            aria-controls="predefined-panel"
           >
-            <BookOpen className="w-4 h-4" />
+            <BookOpen className="w-4 h-4" aria-hidden="true" />
             Predefined Templates
           </button>
         </div>
       </div>
 
       {activeTab === 'my-templates' ? (
-        <>
+        <div id="my-templates-panel" role="tabpanel" aria-labelledby="my-templates-tab">
           {/* Search and Filters */}
           <TemplateSearch
             filters={filters}
@@ -207,18 +214,22 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
               className={`p-2 rounded ${
                 viewMode === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'
               }`}
+              aria-label="Grid view"
+              aria-pressed={viewMode === 'grid'}
               title="Grid view"
             >
-              <LayoutGrid className="w-4 h-4" />
+              <LayoutGrid className="w-4 h-4" aria-hidden="true" />
             </button>
             <button
               onClick={() => setViewMode('list')}
               className={`p-2 rounded ${
                 viewMode === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'
               }`}
+              aria-label="List view"
+              aria-pressed={viewMode === 'list'}
               title="List view"
             >
-              <List className="w-4 h-4" />
+              <List className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
 
@@ -244,10 +255,10 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
             }}
             variant={viewMode}
           />
-        </>
+        </div>
       ) : (
         /* Predefined Templates */
-        <div className="space-y-4">
+        <div id="predefined-panel" className="space-y-4" role="tabpanel" aria-labelledby="predefined-tab">
           <p className="text-gray-600">
             Import these pre-built templates to your library and customize them to your needs.
           </p>
@@ -323,8 +334,8 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setDeleteConfirm(null)} />
-          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-            <h3 className="text-lg font-semibold mb-2">Delete Template</h3>
+          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6" role="dialog" aria-labelledby="delete-dialog-title" aria-modal="true">
+            <h3 id="delete-dialog-title" className="text-lg font-semibold mb-2">Delete Template</h3>
             <p className="text-gray-600 mb-4">
               Are you sure you want to delete "{deleteConfirm.name}"? This action cannot be undone.
             </p>
@@ -332,6 +343,7 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
               <button
                 onClick={() => setDeleteConfirm(null)}
                 className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                aria-label="Cancel deletion"
               >
                 Cancel
               </button>
@@ -339,6 +351,7 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
                 onClick={handleDelete}
                 disabled={deleteTemplateMutation.isPending}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                aria-label="Confirm delete template"
               >
                 {deleteTemplateMutation.isPending ? 'Deleting...' : 'Delete'}
               </button>

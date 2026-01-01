@@ -157,8 +157,10 @@ export function WeekView({
     if (!amAssignment && !pmAssignment) {
       return (
         <div
+          role="gridcell"
           className={`schedule-cell min-h-[52px] ${isWeekendDay ? 'bg-gray-50' : 'bg-white'}`}
           onClick={() => handleCellClick('AM')}
+          aria-label="No assignment"
         >
           <div className="text-center text-gray-300 text-xs">-</div>
         </div>
@@ -169,9 +171,11 @@ export function WeekView({
     if (isSameActivity) {
       return (
         <div
+          role="gridcell"
           className={`schedule-cell min-h-[52px] ${getActivityColor(amAssignment.activity)}`}
           title={amAssignment.activity}
           onClick={() => handleCellClick('AM', amAssignment)}
+          aria-label={`All day: ${amAssignment.activity}`}
         >
           <div className="text-center">
             <div className="font-medium text-xs">{amAssignment.abbreviation}</div>
@@ -182,13 +186,19 @@ export function WeekView({
 
     // Different AM/PM activities
     return (
-      <div className={`schedule-cell min-h-[52px] ${isWeekendDay ? 'bg-gray-50' : 'bg-white'}`}>
+      <div
+        role="gridcell"
+        className={`schedule-cell min-h-[52px] ${isWeekendDay ? 'bg-gray-50' : 'bg-white'}`}
+        aria-label={`AM: ${amAssignment?.activity || 'none'}, PM: ${pmAssignment?.activity || 'none'}`}
+      >
         <div
           className={`rounded px-0.5 py-0.5 mb-0.5 text-xs text-center ${
             amAssignment ? getActivityColor(amAssignment.activity) : ''
           }`}
           title={amAssignment?.activity}
           onClick={() => handleCellClick('AM', amAssignment)}
+          role="button"
+          tabIndex={0}
         >
           {amAssignment ? (
             <span className="font-medium text-[10px]">{amAssignment.abbreviation}</span>
@@ -202,6 +212,8 @@ export function WeekView({
           }`}
           title={pmAssignment?.activity}
           onClick={() => handleCellClick('PM', pmAssignment)}
+          role="button"
+          tabIndex={0}
         >
           {pmAssignment ? (
             <span className="font-medium text-[10px]">{pmAssignment.abbreviation}</span>
@@ -214,7 +226,7 @@ export function WeekView({
   }
 
   return (
-    <div className="card overflow-hidden">
+    <div className="card overflow-hidden" role="region" aria-label="Weekly schedule view">
       {/* Navigation Header */}
       <div className="flex items-center justify-between pb-4 border-b mb-4">
         <div className="flex items-center gap-2">
@@ -254,10 +266,10 @@ export function WeekView({
 
       {/* Grid */}
       <div className="overflow-x-auto">
-        <div className="min-w-[800px]">
+        <div className="min-w-[800px]" role="grid" aria-label="Weekly schedule grid">
           {/* Header Row */}
-          <div className="grid grid-cols-8 border-b bg-gray-50">
-            <div className="p-2 font-semibold text-gray-700 text-sm">Person</div>
+          <div className="grid grid-cols-8 border-b bg-gray-50" role="row">
+            <div className="p-2 font-semibold text-gray-700 text-sm" role="columnheader">Person</div>
             {days.map((day) => {
               const dateStr = format(day, 'yyyy-MM-dd')
               const holidayName = holidays[dateStr]
@@ -267,10 +279,12 @@ export function WeekView({
               return (
                 <div
                   key={day.toISOString()}
+                  role="columnheader"
                   className={`p-2 text-center cursor-pointer hover:bg-gray-200 transition-colors ${
                     isWeekendDay ? 'bg-gray-100' : ''
                   } ${isTodayDate ? 'ring-2 ring-inset ring-blue-400' : ''}`}
                   onClick={() => onDayClick?.(day)}
+                  aria-label={`${format(day, 'EEEE, MMMM d')}${holidayName ? `, ${holidayName}` : ''}`}
                   title={holidayName || undefined}
                 >
                   <div className={`font-semibold text-sm ${isTodayDate ? 'text-blue-600' : ''}`}>
@@ -294,9 +308,9 @@ export function WeekView({
             </div>
           ) : (
             people.map(([personId, person]) => (
-              <div key={personId} className="grid grid-cols-8 border-b hover:bg-gray-50/50">
+              <div key={personId} className="grid grid-cols-8 border-b hover:bg-gray-50/50" role="row">
                 {/* Person Info */}
-                <div className="p-2 border-r">
+                <div className="p-2 border-r" role="rowheader">
                   <div className="font-medium text-gray-900 text-sm truncate">
                     {person.name}
                   </div>

@@ -121,7 +121,7 @@ from app.services.resilience.homeostasis import (
 router = APIRouter()
 
 
-def get_resilience_service(db: Session):
+def get_resilience_service(db: Session) -> "ResilienceService":
     """Get or create ResilienceService instance."""
     from app.core.config import get_resilience_config
     from app.resilience.service import ResilienceService
@@ -130,8 +130,10 @@ def get_resilience_service(db: Session):
     return ResilienceService(db=db, config=config)
 
 
-def persist_health_check(db: Session, report, metrics_snapshot: dict = None):
+async def persist_health_check(db: AsyncSession, report: Any, metrics_snapshot: dict | None = None) -> ResilienceHealthCheck:
     """Persist health check results to database."""
+    from typing import Any
+
     health_check = ResilienceHealthCheck(
         timestamp=report.timestamp,
         overall_status=report.overall_status,
@@ -684,7 +686,7 @@ async def set_load_shedding_level(
     )
 
 
-def get_contingency_service(db: Session):
+def get_contingency_service(db: Session) -> "ContingencyService":
     """Get or create ContingencyService instance with dependency injection."""
     from app.services.resilience.contingency import ContingencyService
 

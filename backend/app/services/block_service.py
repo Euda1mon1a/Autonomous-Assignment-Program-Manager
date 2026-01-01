@@ -12,7 +12,7 @@ from app.repositories.block import BlockRepository
 class BlockService:
     """Service for block business logic."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self.block_repo = BlockRepository(db)
 

@@ -28,7 +28,7 @@ export const RollingAverageChart: React.FC<RollingAverageChartProps> = ({
 }) => {
   if (data.length === 0) {
     return (
-      <div className={`rolling-average-chart bg-white rounded-lg shadow p-6 text-center text-gray-500 ${className}`}>
+      <div className={`rolling-average-chart bg-white rounded-lg shadow p-6 text-center text-gray-500 ${className}`} role="status">
         No data available
       </div>
     );
@@ -48,7 +48,7 @@ export const RollingAverageChart: React.FC<RollingAverageChartProps> = ({
   };
 
   return (
-    <div className={`rolling-average-chart bg-white rounded-lg shadow-lg p-6 ${className}`}>
+    <div className={`rolling-average-chart bg-white rounded-lg shadow-lg p-6 ${className}`} role="region" aria-label="4-week rolling average work hours chart">
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-lg font-bold mb-1">4-Week Rolling Average</h3>
@@ -56,23 +56,23 @@ export const RollingAverageChart: React.FC<RollingAverageChartProps> = ({
       </div>
 
       {/* Legend */}
-      <div className="flex gap-4 mb-4 text-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-blue-500 rounded"></div>
+      <div className="flex gap-4 mb-4 text-sm" role="list" aria-label="Chart legend">
+        <div className="flex items-center gap-2" role="listitem">
+          <div className="w-4 h-4 bg-blue-500 rounded" aria-hidden="true"></div>
           <span>Weekly Hours</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-2 bg-purple-500 rounded-full"></div>
+        <div className="flex items-center gap-2" role="listitem">
+          <div className="w-4 h-2 bg-purple-500 rounded-full" aria-hidden="true"></div>
           <span>Rolling Avg</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-0.5 bg-red-500"></div>
+        <div className="flex items-center gap-2" role="listitem">
+          <div className="w-4 h-0.5 bg-red-500" aria-hidden="true"></div>
           <span>80h Limit</span>
         </div>
       </div>
 
       {/* Chart */}
-      <div className="relative" style={{ height: chartHeight + 60 }}>
+      <div className="relative" style={{ height: chartHeight + 60 }} role="img" aria-label={`Bar chart showing weekly work hours and 4-week rolling average from ${new Date(data[0].weekStart).toLocaleDateString()} to ${new Date(data[data.length - 1].weekEnd).toLocaleDateString()}`}>
         {/* Y-axis grid lines */}
         {[0, 20, 40, 60, 80, 100].map(value => {
           if (value > maxValue) return null;
@@ -83,6 +83,7 @@ export const RollingAverageChart: React.FC<RollingAverageChartProps> = ({
               key={value}
               className="absolute left-0 right-0 border-t border-gray-200"
               style={{ top: `${top}px` }}
+              aria-hidden="true"
             >
               <span className="absolute -left-8 -top-2 text-xs text-gray-500">
                 {value}h
@@ -96,6 +97,7 @@ export const RollingAverageChart: React.FC<RollingAverageChartProps> = ({
           <div
             className="absolute left-0 right-0 border-t-2 border-red-500 border-dashed z-10"
             style={{ top: `${chartHeight - getBarHeight(maxHours)}px` }}
+            aria-hidden="true"
           >
             <span className="absolute right-0 -top-5 text-xs text-red-600 font-semibold">
               80h Limit
@@ -120,6 +122,7 @@ export const RollingAverageChart: React.FC<RollingAverageChartProps> = ({
                   className={`w-full rounded-t transition-all ${getBarColor(week.hours)}`}
                   style={{ height: `${barHeight}px` }}
                   title={`Week ${idx + 1}: ${week.hours}h`}
+                  aria-hidden="true"
                 />
 
                 {/* Rolling Average Dot */}
@@ -127,6 +130,7 @@ export const RollingAverageChart: React.FC<RollingAverageChartProps> = ({
                   className="absolute w-3 h-3 bg-purple-500 rounded-full border-2 border-white"
                   style={{ bottom: `${avgHeight - 6}px` }}
                   title={`Rolling avg: ${week.rollingAverage.toFixed(1)}h`}
+                  aria-hidden="true"
                 />
 
                 {/* Week Label */}
@@ -142,6 +146,7 @@ export const RollingAverageChart: React.FC<RollingAverageChartProps> = ({
         <svg
           className="absolute inset-0 pointer-events-none"
           style={{ paddingLeft: '48px', paddingRight: '48px' }}
+          aria-hidden="true"
         >
           <polyline
             points={data.map((week, idx) => {

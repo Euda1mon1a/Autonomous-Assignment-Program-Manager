@@ -1,6 +1,23 @@
 ---
 name: schedule-verification
 description: Human verification checklist for generated schedules. Use when reviewing Block 10 or any generated schedule to ensure it makes operational sense. Covers FMIT, call, Night Float, clinic days, and absence handling.
+model_tier: sonnet
+parallel_hints:
+  can_parallel_with: [acgme-compliance, schedule-validator]
+  must_serialize_with: [safe-schedule-generation]
+  preferred_batch_size: 1
+context_hints:
+  max_file_context: 60
+  compression_level: 1
+  requires_git_context: false
+  requires_db_context: true
+escalation_triggers:
+  - pattern: "FAIL|violation|conflict"
+    reason: "Verification failures require human review before deployment"
+  - pattern: "red flag|stop"
+    reason: "Critical issues need immediate investigation"
+  - keyword: ["0% coverage", "back-to-back"]
+    reason: "Severe constraint violations need escalation"
 ---
 
 ***REMOVED*** Schedule Verification Skill
@@ -201,3 +218,154 @@ Date: ___
 Issues Found: ___
 Resolution: ___
 ```
+
+---
+
+***REMOVED******REMOVED*** Examples
+
+***REMOVED******REMOVED******REMOVED*** Example 1: Clean Schedule Verification
+
+**User Request:** "Verify the Block 10 schedule looks correct"
+
+**Claude Response:**
+
+```
+╔══════════════════════════════════════════════════════════════════╗
+║  SCHEDULE VERIFICATION REPORT                                    ║
+║  Block: 10  |  Date Range: 2026-03-12 to 2026-04-08              ║
+║  Generated: 2026-03-12 10:15:00                                  ║
+╠══════════════════════════════════════════════════════════════════╣
+║  CHECK                                    │ STATUS │ DETAILS     ║
+╠═══════════════════════════════════════════╪════════╪═════════════╣
+║  FMIT faculty rotation pattern            │ ✅ PASS │ No b2b     ║
+║  FMIT mandatory Fri+Sat call              │ ✅ PASS │ 4/4 weeks  ║
+║  Post-FMIT Sunday blocking                │ ✅ PASS │ 0 conflicts║
+║  Night Float headcount = 1                │ ✅ PASS │ Verified   ║
+║  FMIT headcount (3 residents)             │ ✅ PASS │ 1 per PGY  ║
+║  NICU Friday PM clinic                    │ ✅ PASS │ All weeks  ║
+║  Post-Call after Night Float              │ ✅ PASS │ Thursdays  ║
+║  PGY-1 Wednesday AM clinic                │ ✅ PASS │ 4/4 weeks  ║
+║  PGY-2 Tuesday PM clinic                  │ ✅ PASS │ 4/4 weeks  ║
+║  PGY-3 Monday PM clinic                   │ ✅ PASS │ 4/4 weeks  ║
+║  Sunday call distribution                 │ ✅ PASS │ Variance: 1║
+║  Absence conflicts                        │ ✅ PASS │ 0 conflicts║
+║  Overall coverage                         │ ✅ PASS │ 97.9%      ║
+║  ACGME violations                         │ ✅ PASS │ 0 found    ║
+╚══════════════════════════════════════════════════════════════════╝
+
+**Spot Check Results:**
+
+Faculty: FAC-CORE-01
+- Week 1: FMIT (Fri/Sat call) → Sun blocked ✅
+- Week 3: FMIT (Fri/Sat call) → Sun blocked ✅
+- No consecutive FMIT weeks ✅
+
+Resident: RES-PGY1-02
+- Night Float: Mar 17-23 → Post-Call Thu Mar 24 ✅
+- Wednesday AM clinic: 4/4 weeks ✅
+- Approved leave Mar 30-31: No assignments ✅
+
+**VERDICT: ✅ Schedule approved for deployment**
+```
+
+Saved report to: `docs/reports/schedule-verification-block10-20260312.md`
+
+***REMOVED******REMOVED******REMOVED*** Example 2: Schedule with Issues Requiring Fix
+
+**User Request:** "Check the newly generated schedule"
+
+**Claude Response:**
+
+```
+╔══════════════════════════════════════════════════════════════════╗
+║  SCHEDULE VERIFICATION REPORT                                    ║
+║  Block: 10  |  Date Range: 2026-03-12 to 2026-04-08              ║
+║  Generated: 2026-03-12 14:30:00                                  ║
+╠══════════════════════════════════════════════════════════════════╣
+║  CHECK                                    │ STATUS │ DETAILS     ║
+╠═══════════════════════════════════════════╪════════╪═════════════╣
+║  FMIT faculty rotation pattern            │ ✅ PASS │ No b2b     ║
+║  FMIT mandatory Fri+Sat call              │ ❌ FAIL │ 2/4 weeks  ║
+║  Post-FMIT Sunday blocking                │ ⚠️  WARN │ 1 conflict ║
+║  Night Float headcount = 1                │ ❌ FAIL │ Found 0 NF ║
+║  FMIT headcount (3 residents)             │ ✅ PASS │ 1 per PGY  ║
+║  PGY-1 Wednesday AM clinic                │ ❌ FAIL │ 1/4 weeks  ║
+║  Absence conflicts                        │ ❌ FAIL │ 3 conflicts║
+║  Overall coverage                         │ ⚠️  WARN │ 78.5%      ║
+║  ACGME violations                         │ ❌ FAIL │ 2 found    ║
+╚══════════════════════════════════════════════════════════════════╝
+
+**Critical Issues Found:**
+
+🚨 **Night Float Coverage Missing**
+- Mar 17-23: 0 residents assigned to Night Float
+- Mar 24-30: 0 residents assigned to Night Float
+- **Action:** Manually assign or regenerate with NF constraint
+
+🚨 **Absence Conflicts Detected**
+- RES-PGY2-01: Assigned to FMIT during approved leave (Mar 20-22)
+- FAC-CORE-03: Sunday call on Mar 27 (TDY Mar 25-28)
+- RES-PGY1-04: Clinic on Mar 31 (conference leave)
+- **Action:** Remove these assignments immediately
+
+🚨 **FMIT Call Pattern Broken**
+- Week 2 FMIT (FAC-CORE-02): Missing Fri/Sat call
+- Week 4 FMIT (FAC-CORE-01): Missing Saturday call
+- **Action:** Add missing call assignments
+
+**ACGME Violations:**
+1. RES-PGY1-03: 82.5 hours week of Mar 17 (exceeds 80hr limit)
+2. Mar 22 PM: 3 PGY-1 residents, 1 faculty (ratio violation)
+
+**VERDICT: ❌ Schedule NOT approved - requires fixes before deployment**
+
+Recommended next step: Restore from backup and regenerate with corrected constraints.
+```
+
+***REMOVED******REMOVED******REMOVED*** Example 3: Quick Spot Check
+
+**User Request:** "Just spot check a few residents to make sure the schedule makes sense"
+
+**Claude Response:**
+
+**Running quick spot check on 3 random residents...**
+
+**RES-PGY1-02 (PGY-1):**
+```
+Mar 12-16: FMIT week
+  - Wed Mar 16 AM: Clinic ✅ (correct day for PGY-1)
+Mar 17-23: Night Float
+  - Thu Mar 24: Post-Call ✅ (day after NF ends)
+Mar 25-30: Outpatient
+  - Wed Mar 30 AM: Clinic ✅
+Mar 31: Conference leave → No assignments ✅
+```
+
+**RES-PGY2-05 (PGY-2):**
+```
+Mar 12-18: NICU rotation
+  - Fri Mar 18 PM: Clinic ✅ (NICU Friday requirement)
+  - Tue Mar 15 PM: Clinic ✅ (correct day for PGY-2)
+Mar 19-25: Outpatient
+  - Tue Mar 22 PM: Clinic ✅
+Mar 26-Apr 1: FMIT week
+  - Tue Mar 29 PM: Clinic ✅
+```
+
+**RES-PGY3-01 (PGY-3):**
+```
+Mar 12-18: Procedures
+  - Mon Mar 13 PM: Clinic ✅ (correct day for PGY-3)
+Mar 19-25: Night Float
+  - Thu Mar 26: Post-Call ✅
+Mar 27-Apr 2: FMIT week
+  - Mon Mar 27 PM: Clinic ✅
+```
+
+**Spot Check Summary:**
+- Clinic days match PGY requirements: ✅
+- Post-Call days after Night Float: ✅
+- No double-booking detected: ✅
+- Absences respected: ✅
+
+> "Spot check passed. Schedule appears operationally sound for these residents."

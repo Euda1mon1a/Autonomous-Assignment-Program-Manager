@@ -35,7 +35,7 @@ class ComplianceReportTemplate:
         >>> pdf_bytes = template.generate(request)
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize compliance report template.
 
@@ -138,7 +138,7 @@ class ComplianceReportTemplate:
 
         return query.order_by(Person.pgy_level, Person.name).all()
 
-    def _create_status_section(self, validation_result: Any) -> list:
+    def _create_status_section(self, validation_result: Any) -> list[Any]:
         """Create compliance status overview section."""
         elements = []
 
@@ -176,7 +176,7 @@ class ComplianceReportTemplate:
 
         return elements
 
-    def _create_violations_summary(self, violations: list) -> list:
+    def _create_violations_summary(self, violations: list) -> list[Any]:
         """Create violations summary section."""
         elements = []
 

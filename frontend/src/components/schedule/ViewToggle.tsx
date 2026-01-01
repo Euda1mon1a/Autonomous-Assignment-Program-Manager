@@ -56,9 +56,13 @@ export function ViewToggle({ currentView, onChange }: ViewToggleProps) {
   const annualViews = viewOptions.filter(o => o.group === 'annual')
 
   return (
-    <div className="inline-flex items-center gap-1">
+    <div className="inline-flex items-center gap-1" role="toolbar" aria-label="Schedule view options">
       {/* Standard views */}
-      <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+      <div
+        className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1"
+        role="group"
+        aria-label="Standard calendar views"
+      >
         {standardViews.map((option) => (
           <button
             key={option.value}
@@ -73,19 +77,23 @@ export function ViewToggle({ currentView, onChange }: ViewToggleProps) {
               }
             `}
             aria-pressed={currentView === option.value}
-            title={`Switch to ${option.label} view`}
+            aria-label={`Switch to ${option.label} view`}
           >
-            {option.icon}
+            <span aria-hidden="true">{option.icon}</span>
             <span className="hidden sm:inline">{option.shortLabel}</span>
           </button>
         ))}
       </div>
 
       {/* Separator */}
-      <div className="w-px h-6 bg-gray-300 mx-1" />
+      <div className="w-px h-6 bg-gray-300 mx-1" aria-hidden="true" />
 
       {/* Annual drag views */}
-      <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+      <div
+        className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1"
+        role="group"
+        aria-label="Annual drag-and-drop views"
+      >
         {annualViews.map((option) => (
           <button
             key={option.value}
@@ -100,9 +108,9 @@ export function ViewToggle({ currentView, onChange }: ViewToggleProps) {
               }
             `}
             aria-pressed={currentView === option.value}
-            title={`Switch to ${option.label} view (drag-and-drop)`}
+            aria-label={`Switch to ${option.label} view with drag-and-drop`}
           >
-            {option.icon}
+            <span aria-hidden="true">{option.icon}</span>
             <span className="hidden lg:inline">{option.shortLabel}</span>
           </button>
         ))}

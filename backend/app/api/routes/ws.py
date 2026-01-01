@@ -53,7 +53,7 @@ async def websocket_endpoint(
     websocket: WebSocket,
     token: str | None = Query(None),
     db=Depends(get_db),
-):
+) -> None:
     """
     WebSocket endpoint for real-time schedule updates.
 
@@ -177,7 +177,7 @@ async def websocket_endpoint(
 
 
 @router.get("/ws/stats")
-async def get_websocket_stats(current_user: User = Depends(get_current_active_user)):
+async def get_websocket_stats(current_user: User = Depends(get_current_active_user)) -> dict[str, str | dict]:
     """
     Get WebSocket connection statistics.
 
@@ -201,7 +201,7 @@ async def get_websocket_stats(current_user: User = Depends(get_current_active_us
 
 
 @router.get("/ws/health")
-async def websocket_health():
+async def websocket_health() -> dict[str, str | bool | dict]:
     """
     WebSocket subsystem health check.
 

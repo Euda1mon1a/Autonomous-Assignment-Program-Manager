@@ -52,7 +52,7 @@ logger = logging.getLogger(__name__)
 class ShapleyValueService:
     """Service for calculating Shapley values for fair workload distribution."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize the Shapley value service.
 

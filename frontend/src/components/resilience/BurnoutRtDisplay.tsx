@@ -74,16 +74,21 @@ export const BurnoutRtDisplay: React.FC<BurnoutRtDisplayProps> = ({
   return (
     <div className={`burnout-rt-display ${className}`}>
       {/* Main Display */}
-      <div className={`border-l-4 rounded-lg p-6 mb-4 ${status.color}`}>
+      <div
+        className={`border-l-4 rounded-lg p-6 mb-4 ${status.color}`}
+        role="status"
+        aria-live="polite"
+        aria-label="Burnout reproduction number status"
+      >
         <div className="flex items-start gap-4">
-          <span className="text-4xl" role="img" aria-label={status.label}>
+          <span className="text-4xl" aria-hidden="true">
             {status.icon}
           </span>
           <div className="flex-1">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-2xl font-bold">Rt = {value.toFixed(2)}</h3>
               <div className={`flex items-center gap-2 ${trendColors[trend]}`}>
-                <span className="text-xl">{trendIcons[trend]}</span>
+                <span className="text-xl" aria-hidden="true">{trendIcons[trend]}</span>
                 <span className="text-sm font-medium capitalize">{trend}</span>
               </div>
             </div>
@@ -103,7 +108,11 @@ export const BurnoutRtDisplay: React.FC<BurnoutRtDisplayProps> = ({
       </div>
 
       {/* Gauge Visualization */}
-      <div className="bg-white rounded-lg p-4 border border-gray-200 mb-4">
+      <div
+        className="bg-white rounded-lg p-4 border border-gray-200 mb-4"
+        role="img"
+        aria-label={`Burnout Rt gauge showing ${value.toFixed(2)} on a scale from 0 to 2, with threshold at 1.0`}
+      >
         <div className="relative h-8 mb-4">
           {/* Scale */}
           <div className="flex justify-between text-xs text-gray-600 mb-1">
@@ -127,6 +136,7 @@ export const BurnoutRtDisplay: React.FC<BurnoutRtDisplayProps> = ({
                 isEpidemic ? 'bg-red-600' : isWarning ? 'bg-yellow-600' : 'bg-green-600'
               } z-20`}
               style={{ left: `${Math.min((value / 2) * 100, 100)}%` }}
+              aria-hidden="true"
             />
           </div>
         </div>
@@ -134,15 +144,15 @@ export const BurnoutRtDisplay: React.FC<BurnoutRtDisplayProps> = ({
         {/* Legend */}
         <div className="flex justify-between text-xs">
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <div className="w-3 h-3 rounded-full bg-green-500" aria-hidden="true"></div>
             <span>Declining</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-full bg-gray-600"></div>
+            <div className="w-3 h-3 rounded-full bg-gray-600" aria-hidden="true"></div>
             <span>Equilibrium</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            <div className="w-3 h-3 rounded-full bg-red-500" aria-hidden="true"></div>
             <span>Spreading</span>
           </div>
         </div>
@@ -172,6 +182,7 @@ export const BurnoutRtDisplay: React.FC<BurnoutRtDisplayProps> = ({
         <button
           onClick={onDrillDown}
           className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+          aria-label="View detailed burnout transmission network analysis"
         >
           View Burnout Transmission Network
         </button>

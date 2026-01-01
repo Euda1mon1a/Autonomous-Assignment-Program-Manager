@@ -2001,16 +2001,18 @@ class RedundancyDiversityOptimizer:
 
 Track monthly:
 
+> **Note:** Baseline measurements required before tracking begins. Run initial assessment using implementations in Phase 1-2 (see above).
+
 | Metric | Current | Target | Status |
 |--------|---------|--------|--------|
-| Power law γ | TBD | 2.0-3.0 | - |
-| Q-Modularity | TBD | 0.4-0.6 | - |
-| Shannon entropy | TBD | >0.7 | - |
-| Simpson diversity | TBD | >0.6 | - |
-| Edge balance | TBD | -0.2 to 0.2 | - |
-| SOC avalanche risk | TBD | <0.4 | - |
-| HOT paradox ratio | TBD | <5.0 | - |
-| **Composite Resilience** | TBD | **>75** | - |
+| Power law γ | Not Yet Measured | 2.0-3.0 | Awaiting baseline |
+| Q-Modularity | Not Yet Measured | 0.4-0.6 | Awaiting baseline |
+| Shannon entropy | Not Yet Measured | >0.7 | Awaiting baseline |
+| Simpson diversity | Not Yet Measured | >0.6 | Awaiting baseline |
+| Edge balance | Not Yet Measured | -0.2 to 0.2 | Awaiting baseline |
+| SOC avalanche risk | Not Yet Measured | <0.4 | Awaiting baseline |
+| HOT paradox ratio | Not Yet Measured | <5.0 | Awaiting baseline |
+| **Composite Resilience** | **Not Yet Measured** | **>75** | **Awaiting baseline** |
 
 ---
 

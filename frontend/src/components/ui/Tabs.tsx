@@ -83,11 +83,12 @@ export function Tabs({
             role="tab"
             aria-selected={activeTab === tab.id}
             aria-controls={`panel-${tab.id}`}
+            aria-disabled={tab.disabled}
             disabled={tab.disabled}
             onClick={() => handleTabChange(tab.id)}
             className={`${baseTabStyles} ${config.tab(activeTab === tab.id)} flex items-center gap-2`}
           >
-            {tab.icon && <span className="inline-flex">{tab.icon}</span>}
+            {tab.icon && <span className="inline-flex" aria-hidden="true">{tab.icon}</span>}
             {tab.label}
           </button>
         ))}

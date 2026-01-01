@@ -92,6 +92,7 @@ export function CopyToClipboard({
   return (
     <button
       onClick={handleCopy}
+      role="button"
       className={`
         inline-flex items-center gap-1.5 rounded-md transition-all
         ${sizeClasses[size]}
@@ -190,6 +191,7 @@ export function CopyInputField({
         />
         <button
           onClick={handleCopy}
+          role="button"
           className={`
             p-2 rounded-lg transition-all
             ${copied
@@ -198,6 +200,7 @@ export function CopyInputField({
             }
           `}
           title={copied ? 'Copied!' : 'Copy'}
+          aria-label={copied ? 'Copied!' : 'Copy to clipboard'}
         >
           {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
         </button>
@@ -279,6 +282,7 @@ export function ShareButton({
   return (
     <button
       onClick={handleShare}
+      role="button"
       className={`
         inline-flex items-center gap-1.5 rounded-md transition-all
         ${sizeClasses[size]}
@@ -287,6 +291,7 @@ export function ShareButton({
         ${className}
       `}
       title={shared ? 'Shared!' : label}
+      aria-label={shared ? 'Shared!' : label}
     >
       {shared ? (
         <Check className={iconSizes[size]} />

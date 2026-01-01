@@ -184,24 +184,28 @@ function MultiSelect<T extends string>({
           hover:bg-gray-50 transition-colors
           ${selected.length > 0 ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}
         `}
+        aria-label={`Filter by ${label}`}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
       >
-        {Icon && <Icon className="w-4 h-4 text-gray-500" />}
+        {Icon && <Icon className="w-4 h-4 text-gray-500" aria-hidden="true" />}
         <span className="text-gray-700">{label}</span>
         {selected.length > 0 && (
           <span className="bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded-full">
             {selected.length}
           </span>
         )}
-        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
       </button>
 
       {isOpen && (
-        <div className="absolute z-20 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg">
+        <div className="absolute z-20 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg" role="menu">
           <div className="p-2 border-b border-gray-100 flex justify-between">
             <button
               type="button"
               onClick={selectAll}
               className="text-xs text-blue-600 hover:text-blue-800"
+              aria-label={`Select all ${label} options`}
             >
               Select all
             </button>
@@ -209,6 +213,7 @@ function MultiSelect<T extends string>({
               type="button"
               onClick={clearAll}
               className="text-xs text-gray-500 hover:text-gray-700"
+              aria-label={`Clear all ${label} selections`}
             >
               Clear all
             </button>
@@ -277,10 +282,13 @@ function DateRangePicker({
           hover:bg-gray-50 transition-colors
           ${dateRange ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}
         `}
+        aria-label="Filter by date range"
+        aria-expanded={isOpen}
+        aria-haspopup="true"
       >
-        <Calendar className="w-4 h-4 text-gray-500" />
+        <Calendar className="w-4 h-4 text-gray-500" aria-hidden="true" />
         <span className="text-gray-700">{displayValue}</span>
-        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
       </button>
 
       {isOpen && (
@@ -296,6 +304,7 @@ function DateRangePicker({
                   type="button"
                   onClick={() => handleQuickSelect(range)}
                   className="px-3 py-1.5 text-sm text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+                  aria-label={`Select ${range.label} date range`}
                 >
                   {range.label}
                 </button>
@@ -346,6 +355,7 @@ function DateRangePicker({
                   setIsOpen(false);
                 }}
                 className="w-full mt-2 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
+                aria-label="Clear date range filter"
               >
                 Clear date range
               </button>
@@ -478,22 +488,24 @@ export function AuditLogFilters({
     <div className="bg-white rounded-lg shadow p-4 space-y-4">
       {/* Search bar */}
       <div className="flex items-center gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <div className="relative flex-1" role="search">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" aria-hidden="true" />
           <input
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search audit logs by entity name, reason, or user..."
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            aria-label="Search audit logs"
           />
           {searchInput && (
             <button
               type="button"
               onClick={() => setSearchInput('')}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              aria-label="Clear search"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4" aria-hidden="true" />
             </button>
           )}
         </div>
@@ -505,8 +517,10 @@ export function AuditLogFilters({
             flex items-center gap-2 px-4 py-2 border rounded-lg text-sm transition-colors
             ${showAdvanced ? 'bg-gray-100 border-gray-400' : 'border-gray-300 hover:bg-gray-50'}
           `}
+          aria-label="Toggle advanced filters"
+          aria-expanded={showAdvanced}
         >
-          <Filter className="w-4 h-4" />
+          <Filter className="w-4 h-4" aria-hidden="true" />
           Filters
           {activeFilterCount > 0 && (
             <span className="bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded-full">
@@ -520,8 +534,9 @@ export function AuditLogFilters({
             type="button"
             onClick={clearAllFilters}
             className="flex items-center gap-1 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            aria-label="Clear all filters"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-4 h-4" aria-hidden="true" />
             Clear all
           </button>
         )}
@@ -597,8 +612,8 @@ export function AuditLogFilters({
 
       {/* Loading indicator */}
       {isLoading && (
-        <div className="flex items-center justify-center py-2">
-          <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="flex items-center justify-center py-2" role="status" aria-live="polite">
+          <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
           <span className="ml-2 text-sm text-gray-600">Loading...</span>
         </div>
       )}

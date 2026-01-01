@@ -1393,7 +1393,7 @@ def _get_faculty_for_user(db: Session, user: User) -> Person:
     return faculty
 
 
-def _get_week_start(any_date):
+def _get_week_start(any_date: datetime | date) -> date:
     """
     Get the Monday of the week containing the given date.
 

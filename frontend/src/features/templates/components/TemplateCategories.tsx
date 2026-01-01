@@ -55,11 +55,14 @@ export function TemplateCategories({
                   ? `${colors.bg} ${colors.border} ${colors.text}`
                   : 'bg-white border-gray-200 hover:border-gray-300'
               }`}
+              aria-pressed={isSelected}
+              aria-label={`Filter by ${category.name} category`}
             >
               <Icon
                 className={`w-6 h-6 mb-2 ${
                   isSelected ? colors.text : 'text-gray-500'
                 }`}
+                aria-hidden="true"
               />
               <div className="font-medium text-sm">{category.name}</div>
               <div
@@ -86,6 +89,8 @@ export function TemplateCategories({
               ? 'bg-blue-50 text-blue-700'
               : 'hover:bg-gray-50 text-gray-700'
           }`}
+          aria-pressed={!selectedCategory}
+          aria-label="Show all templates"
         >
           <span className="font-medium">All Templates</span>
           <span className="text-sm text-gray-500">
@@ -110,9 +115,11 @@ export function TemplateCategories({
                   ? `${colors.bg} ${colors.text}`
                   : 'hover:bg-gray-50 text-gray-700'
               }`}
+              aria-pressed={isSelected}
+              aria-label={`Filter by ${category.name}`}
             >
               <span className="flex items-center gap-2">
-                <Icon className="w-4 h-4" />
+                <Icon className="w-4 h-4" aria-hidden="true" />
                 <span>{category.name}</span>
               </span>
               <span
@@ -139,6 +146,8 @@ export function TemplateCategories({
             ? 'bg-blue-600 text-white'
             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
         }`}
+        aria-pressed={!selectedCategory}
+        aria-label="Show all categories"
       >
         All
       </button>
@@ -159,6 +168,8 @@ export function TemplateCategories({
                 ? `${colors.bg} ${colors.text} ring-2 ring-offset-1 ${colors.border.replace('border', 'ring')}`
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
+            aria-pressed={isSelected}
+            aria-label={`Filter by ${category.name}`}
           >
             {category.name.split(' ')[0]}
             {count > 0 && (
@@ -203,7 +214,7 @@ export function CategoryBadge({ category, size = 'md' }: CategoryBadgeProps) {
     <span
       className={`inline-flex items-center gap-1 rounded-full ${colors.bg} ${colors.text} ${sizeClasses[size]}`}
     >
-      <Icon className={iconSizes[size]} />
+      <Icon className={iconSizes[size]} aria-hidden="true" />
       <span>{categoryInfo?.name || category}</span>
     </span>
   );

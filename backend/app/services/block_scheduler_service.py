@@ -77,7 +77,7 @@ class BlockSchedulerService:
     2. Remaining residents -> coverage needs first, then balanced distribution
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self.assignment_repo = BlockAssignmentRepository(db)
         self.absence_repo = AbsenceRepository(db)

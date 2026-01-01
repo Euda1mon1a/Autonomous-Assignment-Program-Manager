@@ -241,8 +241,8 @@ export function BatchResolution({
 
       {/* Warning for critical conflicts */}
       {hasCritical && (
-        <div className="px-4 py-3 bg-red-50 border-b border-red-200 flex items-start gap-3">
-          <AlertOctagon className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+        <div className="px-4 py-3 bg-red-50 border-b border-red-200 flex items-start gap-3" role="alert" aria-live="polite">
+          <AlertOctagon className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" aria-hidden="true" />
           <div className="text-sm">
             <p className="font-medium text-red-800">
               {groupedBySeverity.critical.length} critical conflict{groupedBySeverity.critical.length !== 1 ? 's' : ''} selected
@@ -260,7 +260,7 @@ export function BatchResolution({
         {/* Filters */}
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-sm text-gray-500 flex items-center gap-1">
-            <Filter className="w-4 h-4" />
+            <Filter className="w-4 h-4" aria-hidden="true" />
             Filter:
           </span>
 
@@ -277,7 +277,7 @@ export function BatchResolution({
               <option value="medium">Medium</option>
               <option value="low">Low</option>
             </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" aria-hidden="true" />
           </div>
 
           {/* Type filter */}
@@ -294,7 +294,7 @@ export function BatchResolution({
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" aria-hidden="true" />
           </div>
         </div>
 
@@ -302,12 +302,13 @@ export function BatchResolution({
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={handleSelectAll}
+            aria-label={selectedIds.size === filteredConflicts.length ? 'Deselect all conflicts' : 'Select all conflicts'}
             className="flex items-center gap-1 px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             {selectedIds.size === filteredConflicts.length ? (
-              <CheckSquare className="w-4 h-4 text-blue-500" />
+              <CheckSquare className="w-4 h-4 text-blue-500" aria-hidden="true" />
             ) : (
-              <Square className="w-4 h-4 text-gray-400" />
+              <Square className="w-4 h-4 text-gray-400" aria-hidden="true" />
             )}
             Select All
           </button>
@@ -320,6 +321,7 @@ export function BatchResolution({
               <button
                 key={severity}
                 onClick={() => handleSelectBySeverity(severity)}
+                aria-label={`Select all ${severity} severity conflicts (${count} total)`}
                 className={`
                   flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg border
                   ${styles.bg} ${styles.border} ${styles.text}
@@ -356,16 +358,17 @@ export function BatchResolution({
                       e.stopPropagation();
                       handleToggleSelect(conflict.id);
                     }}
+                    aria-label={isSelected ? `Deselect ${conflict.title}` : `Select ${conflict.title}`}
                     className="flex-shrink-0"
                   >
                     {isSelected ? (
-                      <CheckSquare className="w-5 h-5 text-blue-500" />
+                      <CheckSquare className="w-5 h-5 text-blue-500" aria-hidden="true" />
                     ) : (
-                      <Square className="w-5 h-5 text-gray-400" />
+                      <Square className="w-5 h-5 text-gray-400" aria-hidden="true" />
                     )}
                   </button>
 
-                  <div className={`flex-shrink-0 ${styles.icon}`}>
+                  <div className={`flex-shrink-0 ${styles.icon}`} aria-hidden="true">
                     {conflict.severity === 'critical' ? (
                       <AlertOctagon className="w-5 h-5" />
                     ) : conflict.severity === 'high' ? (
@@ -385,7 +388,7 @@ export function BatchResolution({
                       <span>{getTypeLabel(conflict.type)}</span>
                       <span>{format(new Date(conflict.conflict_date), 'MMM d')}</span>
                       <span className="flex items-center gap-1">
-                        <Users className="w-3 h-3" />
+                        <Users className="w-3 h-3" aria-hidden="true" />
                         {conflict.affected_person_ids.length}
                       </span>
                     </div>
@@ -465,6 +468,7 @@ export function BatchResolution({
           <div className="flex items-center gap-2">
             <button
               onClick={onCancel}
+              aria-label="Cancel batch resolution"
               className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
             >
               Cancel
@@ -472,16 +476,17 @@ export function BatchResolution({
             <button
               onClick={handleProcess}
               disabled={selectedIds.size === 0 || !isValid || isProcessing}
+              aria-label={isProcessing ? 'Processing conflicts' : `Process ${selectedIds.size} conflicts`}
               className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-lg active:scale-95"
             >
               {isProcessing ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                   Processing...
                 </>
               ) : (
                 <>
-                  <Play className="w-4 h-4" />
+                  <Play className="w-4 h-4" aria-hidden="true" />
                   Process {selectedIds.size} Conflicts
                 </>
               )}
@@ -515,7 +520,7 @@ function BatchResolutionResults({
           <div className={`
             p-2 rounded-full
             ${results.failed === 0 ? 'bg-green-100' : results.successful === 0 ? 'bg-red-100' : 'bg-amber-100'}
-          `}>
+          `} aria-hidden="true">
             {results.failed === 0 ? (
               <Check className="w-6 h-6 text-green-600" />
             ) : results.successful === 0 ? (
@@ -569,11 +574,12 @@ function BatchResolutionResults({
                   flex items-center gap-3 p-3 rounded-lg border
                   ${result.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}
                 `}
+                role="listitem"
               >
                 {result.success ? (
-                  <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <Check className="w-5 h-5 text-green-500 flex-shrink-0" aria-hidden="true" />
                 ) : (
-                  <X className="w-5 h-5 text-red-500 flex-shrink-0" />
+                  <X className="w-5 h-5 text-red-500 flex-shrink-0" aria-hidden="true" />
                 )}
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-medium ${result.success ? 'text-green-800' : 'text-red-800'}`}>
@@ -595,14 +601,16 @@ function BatchResolutionResults({
           {results.failed > 0 && onRetryFailed && (
             <button
               onClick={onRetryFailed}
+              aria-label={`Retry ${results.failed} failed conflicts`}
               className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw className="w-4 h-4" aria-hidden="true" />
               Retry Failed
             </button>
           )}
           <button
             onClick={onClose}
+            aria-label="Close batch resolution results"
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
             Done

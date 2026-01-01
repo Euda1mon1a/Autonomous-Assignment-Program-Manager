@@ -212,9 +212,9 @@ export function ConflictResolutionSuggestions({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 border-b bg-gradient-to-r from-amber-50 to-yellow-50">
+      <div className="p-4 border-b bg-gradient-to-r from-amber-50 to-yellow-50" role="region" aria-label="Resolution suggestions header">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-amber-100 rounded-lg">
+          <div className="p-2 bg-amber-100 rounded-lg" aria-hidden="true">
             <Lightbulb className="w-6 h-6 text-amber-600" />
           </div>
           <div>
@@ -227,7 +227,7 @@ export function ConflictResolutionSuggestions({
       </div>
 
       {/* Suggestions list */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4" role="region" aria-label="Available resolution suggestions" aria-live="polite">
         {sortedSuggestions.map((suggestion, index) => {
           const isSelected = selectedSuggestion === suggestion.id;
           const isExpanded = expandedSuggestion === suggestion.id;
@@ -246,6 +246,9 @@ export function ConflictResolutionSuggestions({
               `}
               style={{ animationDelay: `${index * 100}ms` }}
               onClick={() => setSelectedSuggestion(suggestion.id)}
+              role="option"
+              aria-selected={isSelected}
+              aria-label={`${suggestion.title} - ${suggestion.recommended ? 'Recommended' : ''} ${suggestion.method}`}
             >
               {/* Suggestion header */}
               <div className="p-4">
@@ -254,7 +257,7 @@ export function ConflictResolutionSuggestions({
                   <div className={`
                     flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center
                     ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}
-                  `}>
+                  `} aria-hidden="true">
                     {isSelected && <Check className="w-4 h-4 text-white" />}
                   </div>
 
@@ -386,6 +389,7 @@ export function ConflictResolutionSuggestions({
             {onClose && (
               <button
                 onClick={onClose}
+                aria-label="Cancel resolution"
                 className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 Cancel
@@ -394,16 +398,17 @@ export function ConflictResolutionSuggestions({
             <button
               onClick={handleApply}
               disabled={!selectedSuggestion || applyResolution.isPending}
+              aria-label={applyResolution.isPending ? 'Applying resolution' : 'Apply selected resolution'}
               className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-lg active:scale-95"
             >
               {applyResolution.isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                   Applying...
                 </>
               ) : (
                 <>
-                  <Check className="w-4 h-4" />
+                  <Check className="w-4 h-4" aria-hidden="true" />
                   Apply Resolution
                 </>
               )}
@@ -412,7 +417,7 @@ export function ConflictResolutionSuggestions({
         </div>
 
         {applyResolution.isError && (
-          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700" role="alert" aria-live="assertive">
             <strong>Error:</strong> {applyResolution.error?.message || 'Failed to apply resolution'}
           </div>
         )}

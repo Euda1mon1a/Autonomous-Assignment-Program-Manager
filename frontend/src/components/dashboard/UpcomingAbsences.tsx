@@ -174,17 +174,19 @@ export function UpcomingAbsences() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut', delay: 0.3 }}
       className="glass-panel p-6"
+      role="region"
+      aria-labelledby="upcoming-absences-heading"
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Upcoming Absences (7 days)</h3>
-        <CalendarOff className="w-5 h-5 text-amber-600" />
+        <h3 id="upcoming-absences-heading" className="text-lg font-semibold text-gray-900">Upcoming Absences (7 days)</h3>
+        <CalendarOff className="w-5 h-5 text-amber-600" aria-hidden="true" />
       </div>
 
       {/* Impact Summary Banner */}
       {!isLoading && stats.total > 0 && (stats.criticalCount > 0 || stats.highCount > 0) && (
-        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg" role="alert">
           <div className="flex items-center gap-2 text-sm">
-            <AlertTriangle className="w-4 h-4 text-amber-600" />
+            <AlertTriangle className="w-4 h-4 text-amber-600" aria-hidden="true" />
             <span className="font-medium text-amber-800">Coverage Alert:</span>
             <span className="text-amber-700">
               {stats.criticalCount > 0 && (
@@ -200,73 +202,78 @@ export function UpcomingAbsences() {
         </div>
       )}
 
-      {isLoading ? (
-        <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="animate-pulse flex items-center gap-3">
-              <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
-              <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : absencesWithImpact.length === 0 ? (
-        <EmptyState
-          icon={CalendarOff}
-          title="No upcoming absences"
-          description="No absences scheduled for the next 7 days"
-        />
-      ) : (
-        <div className="space-y-3">
-          {absencesWithImpact.map((absence) => (
-            <div key={absence.id} className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-gray-500" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {absence.person_name}
-                  </p>
-                  {/* Impact indicator */}
-                  {(absence.impact === 'critical' || absence.impact === 'high') && (
-                    <span
-                      className={`flex-shrink-0 px-1.5 py-0.5 rounded text-xs font-medium border ${impactColors[absence.impact]}`}
-                      title={`${absence.concurrent_count} concurrent absences`}
-                    >
-                      {absence.impact === 'critical' ? 'Critical' : 'High'}
-                    </span>
-                  )}
+      <div aria-live="polite" aria-atomic="true">
+        {isLoading ? (
+          <div className="space-y-3" role="status" aria-label="Loading absence data">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="animate-pulse flex items-center gap-3">
+                <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                 </div>
-                <p className="text-xs text-gray-500">
-                  {format(parseISO(absence.start_date), 'MMM d')} -{' '}
-                  {format(parseISO(absence.end_date), 'MMM d')}
-                  <span className="text-gray-400"> • {absence.days}d</span>
-                  {absence.concurrent_count > 1 && (
-                    <span className="text-amber-600">
-                      {' '}• <Users className="w-3 h-3 inline" /> {absence.concurrent_count} out
-                    </span>
-                  )}
-                </p>
               </div>
-              <span
-                className={`flex-shrink-0 px-2 py-0.5 rounded text-xs font-medium ${
-                  absenceTypeBadgeColors[absence.absence_type] ?? 'bg-gray-100 text-gray-800'
-                }`}
-              >
-                {absenceTypeLabels[absence.absence_type] ?? absence.absence_type}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        ) : absencesWithImpact.length === 0 ? (
+          <EmptyState
+            icon={CalendarOff}
+            title="No upcoming absences"
+            description="No absences scheduled for the next 7 days"
+          />
+        ) : (
+          <div className="space-y-3">
+            {absencesWithImpact.map((absence) => (
+              <div key={absence.id} className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center" aria-hidden="true">
+                  <User className="w-4 h-4 text-gray-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {absence.person_name}
+                    </p>
+                    {/* Impact indicator */}
+                    {(absence.impact === 'critical' || absence.impact === 'high') && (
+                      <span
+                        className={`flex-shrink-0 px-1.5 py-0.5 rounded text-xs font-medium border ${impactColors[absence.impact]}`}
+                        role="status"
+                        aria-label={`${absence.impact} impact: ${absence.concurrent_count} concurrent absences`}
+                      >
+                        {absence.impact === 'critical' ? 'Critical' : 'High'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    {format(parseISO(absence.start_date), 'MMM d')} -{' '}
+                    {format(parseISO(absence.end_date), 'MMM d')}
+                    <span className="text-gray-400"> • {absence.days}d</span>
+                    {absence.concurrent_count > 1 && (
+                      <span className="text-amber-600">
+                        {' '}• <Users className="w-3 h-3 inline" aria-hidden="true" /> {absence.concurrent_count} out
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <span
+                  className={`flex-shrink-0 px-2 py-0.5 rounded text-xs font-medium ${
+                    absenceTypeBadgeColors[absence.absence_type] ?? 'bg-gray-100 text-gray-800'
+                  }`}
+                  aria-label={`Absence type: ${absenceTypeLabels[absence.absence_type] ?? absence.absence_type}`}
+                >
+                  {absenceTypeLabels[absence.absence_type] ?? absence.absence_type}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="mt-4 pt-4 border-t border-gray-200/50">
         <Link
           href="/absences"
           className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+          aria-label="View complete absence calendar and history"
         >
           View All Absences &rarr;
         </Link>

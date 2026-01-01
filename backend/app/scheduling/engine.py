@@ -83,7 +83,7 @@ class SchedulingEngine:
         end_date: date,
         constraint_manager: ConstraintManager | None = None,
         resilience_config: ResilienceConfig | None = None,
-    ):
+    ) -> None:
         self.db = db
         self.start_date = start_date
         self.end_date = end_date
@@ -542,7 +542,7 @@ class SchedulingEngine:
         context: SchedulingContext,
         faculty: list[Person],
         blocks: list[Block],
-    ):
+    ) -> None:
         """
         Populate resilience data in the scheduling context.
 
@@ -737,7 +737,7 @@ class SchedulingEngine:
         self,
         faculty: list[Person],
         blocks: list[Block],
-    ) -> dict:
+    ) -> dict | None:
         """
         Get zone assignment data from blast radius isolation system.
 
@@ -809,7 +809,7 @@ class SchedulingEngine:
         templates: list[RotationTemplate],
         run_id: UUID,
         existing_assignments: list[Assignment] | None = None,
-    ):
+    ) -> None:
         """Convert solver results to Assignment objects.
 
         Filters out any solver-generated assignments that conflict with
@@ -931,7 +931,7 @@ class SchedulingEngine:
 
         return blocks
 
-    def _build_availability_matrix(self):
+    def _build_availability_matrix(self) -> None:
         """
         Build availability matrix from absences in the database.
 
@@ -1306,7 +1306,7 @@ class SchedulingEngine:
         blocks: list[Block],
         run_id: UUID,
         preserved_assignments: list[Assignment] | None = None,
-    ):
+    ) -> None:
         """
         Assign faculty supervision based on ACGME supervision ratios.
 
@@ -1538,7 +1538,7 @@ class SchedulingEngine:
         self.db.refresh(run)
         return run
 
-    def _delete_existing_assignments(self, preserve_ids: set[UUID] | None = None):
+    def _delete_existing_assignments(self, preserve_ids: set[UUID] | None = None) -> None:
         """
         Delete existing assignments for the date range to avoid duplicates.
 
@@ -1758,7 +1758,7 @@ class SchedulingEngine:
         total_assigned: int,
         violations: int,
         runtime: float,
-    ):
+    ) -> None:
         """Update run record with final status."""
         run.status = status
         run.total_blocks_assigned = total_assigned
@@ -1773,7 +1773,7 @@ class SchedulingEngine:
         validation,
         runtime: float,
         solver_result: SolverResult | None = None,
-    ):
+    ) -> None:
         """Update run record with generation results."""
         config = {}
         if solver_result:
@@ -1792,7 +1792,7 @@ class SchedulingEngine:
         run.config_json = config
         self.db.add(run)
 
-    def _empty_validation(self):
+    def _empty_validation(self) -> ValidationResult:
         """Return empty validation result."""
         return ValidationResult(
             valid=True,
@@ -1801,7 +1801,7 @@ class SchedulingEngine:
             coverage_rate=0.0,
         )
 
-    def _check_pre_generation_resilience(self):
+    def _check_pre_generation_resilience(self) -> Any:
         """
         Run resilience health check before schedule generation.
 
@@ -1857,7 +1857,7 @@ class SchedulingEngine:
         faculty: list[Person],
         blocks: list[Block],
         assignments: list[Assignment],
-    ):
+    ) -> Any:
         """
         Run resilience health check after schedule generation.
 

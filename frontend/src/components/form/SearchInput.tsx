@@ -43,6 +43,7 @@ export function SearchInput({
 }: SearchInputProps) {
   const [debouncedValue, setDebouncedValue] = useState(value);
   const timeoutRef = useRef<NodeJS.Timeout>();
+  const inputId = React.useId();
 
   // Debounce the search
   useEffect(() => {
@@ -71,20 +72,24 @@ export function SearchInput({
   return (
     <div className={`relative ${className}`}>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" aria-hidden="true" />
 
         <input
-          type="text"
+          id={inputId}
+          type="search"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onFocus={onFocus}
           placeholder={placeholder}
           className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          aria-label={placeholder}
+          aria-busy={loading}
+          role="searchbox"
         />
 
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
           {loading && (
-            <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+            <Loader2 className="w-4 h-4 text-gray-400 animate-spin" aria-label="Loading search results" />
           )}
 
           {showClearButton && value && !loading && (
@@ -92,8 +97,9 @@ export function SearchInput({
               onClick={handleClear}
               className="p-0.5 hover:bg-gray-100 rounded-full transition-colors"
               aria-label="Clear search"
+              type="button"
             >
-              <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+              <X className="w-4 h-4 text-gray-400 hover:text-gray-600" aria-hidden="true" />
             </button>
           )}
         </div>
@@ -120,6 +126,7 @@ export function SearchWithSuggestions({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const listboxId = React.useId();
 
   const filteredSuggestions = suggestions
     .filter((s) => s.toLowerCase().includes(searchProps.value.toLowerCase()))
@@ -166,35 +173,59 @@ export function SearchWithSuggestions({
   return (
     <div ref={dropdownRef} className="relative">
       <div onKeyDown={handleKeyDown}>
-        <SearchInput
-          {...searchProps}
-          onChange={(value) => {
-            searchProps.onChange(value);
-            setShowSuggestions(true);
-            setSelectedIndex(-1);
-          }}
-          onFocus={() => setShowSuggestions(true)}
-        />
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" aria-hidden="true" />
+          <input
+            type="search"
+            value={searchProps.value}
+            onChange={(e) => {
+              searchProps.onChange(e.target.value);
+              setShowSuggestions(true);
+              setSelectedIndex(-1);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            placeholder={searchProps.placeholder || 'Search...'}
+            className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            aria-label={searchProps.placeholder || 'Search'}
+            aria-autocomplete="list"
+            aria-controls={listboxId}
+            aria-expanded={showSuggestions && filteredSuggestions.length > 0}
+            aria-activedescendant={selectedIndex >= 0 ? `suggestion-${selectedIndex}` : undefined}
+            role="combobox"
+          />
+        </div>
       </div>
 
       {showSuggestions && filteredSuggestions.length > 0 && (
-        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+        <ul
+          id={listboxId}
+          className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+          role="listbox"
+          aria-label="Search suggestions"
+        >
           {filteredSuggestions.map((suggestion, index) => (
-            <button
+            <li
               key={index}
-              onClick={() => {
-                onSuggestionSelect(suggestion);
-                setShowSuggestions(false);
-              }}
-              onMouseEnter={() => setSelectedIndex(index)}
-              className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
-                selectedIndex === index ? 'bg-gray-100' : ''
-              }`}
+              id={`suggestion-${index}`}
+              role="option"
+              aria-selected={selectedIndex === index}
             >
-              {suggestion}
-            </button>
+              <button
+                onClick={() => {
+                  onSuggestionSelect(suggestion);
+                  setShowSuggestions(false);
+                }}
+                onMouseEnter={() => setSelectedIndex(index)}
+                className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
+                  selectedIndex === index ? 'bg-gray-100' : ''
+                }`}
+                type="button"
+              >
+                {suggestion}
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );

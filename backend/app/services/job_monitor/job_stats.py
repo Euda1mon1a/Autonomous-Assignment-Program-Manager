@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class JobStatsService:
     """Service for collecting and analyzing job statistics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the job statistics service."""
         self.celery_app: Celery = get_celery_app()
         self._state = State()

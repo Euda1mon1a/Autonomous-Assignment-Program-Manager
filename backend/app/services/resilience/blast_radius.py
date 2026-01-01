@@ -159,7 +159,7 @@ class BlastRadiusService:
         if self._enable_zone_isolation and not self._manager.zones:
             self._initialize_default_zones()
 
-    def _initialize_default_zones(self):
+    def _initialize_default_zones(self) -> None:
         """Initialize default scheduling zones."""
         self._manager.create_default_zones()
         logger.info("Initialized default scheduling zones for blast radius isolation")
@@ -569,7 +569,7 @@ class BlastRadiusService:
             "approved": request.status == "approved",
         }
 
-    def complete_borrowing(self, request_id: UUID, was_effective: bool = True):
+    def complete_borrowing(self, request_id: UUID, was_effective: bool = True) -> None:
         """Mark a borrowing request as completed."""
         self._manager.complete_borrowing(request_id, was_effective)
         logger.info(f"Borrowing request {request_id} completed")
@@ -579,7 +579,7 @@ class BlastRadiusService:
         incident_id: UUID,
         resolution_notes: str,
         containment_successful: bool = True,
-    ):
+    ) -> None:
         """Resolve an incident."""
         self._manager.resolve_incident(
             incident_id=incident_id,

@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class AssignmentService:
     """Service for assignment business logic."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self.assignment_repo = AssignmentRepository(db)
         self.block_repo = BlockRepository(db)

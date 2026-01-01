@@ -40,7 +40,7 @@ export const WorkHourGauge: React.FC<WorkHourGaugeProps> = ({
   };
 
   return (
-    <div className={`work-hour-gauge ${className}`}>
+    <div className={`work-hour-gauge ${className}`} role="region" aria-label={`${label} work hour gauge`}>
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium text-gray-700">{label}</span>
         <span className={`text-lg font-bold ${getTextColor()}`}>
@@ -79,22 +79,22 @@ export const WorkHourGauge: React.FC<WorkHourGaugeProps> = ({
       </div>
 
       {/* Status Indicator */}
-      <div className="mt-2 flex items-center gap-2">
+      <div className="mt-2 flex items-center gap-2" role="status" aria-live="polite">
         {isViolation && (
           <div className="flex items-center gap-1 text-xs text-red-700">
-            <span role="img" aria-label="Violation">🚨</span>
+            <span aria-hidden="true">🚨</span>
             <span className="font-medium">ACGME Violation</span>
           </div>
         )}
         {isWarning && !isViolation && (
           <div className="flex items-center gap-1 text-xs text-yellow-700">
-            <span role="img" aria-label="Warning">⚠️</span>
+            <span aria-hidden="true">⚠️</span>
             <span className="font-medium">Approaching Limit</span>
           </div>
         )}
         {!isWarning && !isViolation && (
           <div className="flex items-center gap-1 text-xs text-green-700">
-            <span role="img" aria-label="Compliant">✅</span>
+            <span aria-hidden="true">✅</span>
             <span className="font-medium">Within Limits</span>
           </div>
         )}

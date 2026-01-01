@@ -101,10 +101,17 @@ export function Dropdown({
     setIsOpen(false);
   };
 
+  const menuId = React.useId();
+
   return (
     <div ref={dropdownRef} className={`relative inline-block ${className}`}>
       {/* Trigger */}
-      <div onClick={() => setIsOpen(!isOpen)}>
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? menuId : undefined}
+      >
         {trigger}
       </div>
 
@@ -112,16 +119,19 @@ export function Dropdown({
       {isOpen && (
         <div
           ref={menuRef}
+          id={menuId}
           className={`absolute z-50 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 ${
             align === 'right' ? 'right-0' : 'left-0'
           }`}
           role="menu"
           aria-orientation="vertical"
+          aria-activedescendant={`${menuId}-item-${focusedIndex}`}
         >
           <div className="py-1">
             {items.map((item, index) => (
               <button
                 key={item.value}
+                id={`${menuId}-item-${index}`}
                 onClick={() => handleSelect(item.value, item.disabled)}
                 onMouseEnter={() => setFocusedIndex(index)}
                 className={`
@@ -132,8 +142,10 @@ export function Dropdown({
                 `}
                 disabled={item.disabled}
                 role="menuitem"
+                aria-disabled={item.disabled || undefined}
+                tabIndex={focusedIndex === index ? 0 : -1}
               >
-                {item.icon && <span className="inline-flex">{item.icon}</span>}
+                {item.icon && <span className="inline-flex" aria-hidden="true">{item.icon}</span>}
                 {item.label}
               </button>
             ))}
@@ -167,11 +179,14 @@ export function SelectDropdown({
   return (
     <Dropdown
       trigger={
-        <button className={`px-4 py-2 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 flex items-center justify-between gap-2 min-w-[200px] ${className}`}>
+        <button
+          className={`px-4 py-2 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 flex items-center justify-between gap-2 min-w-[200px] ${className}`}
+          aria-label={selectedOption ? `Selected: ${selectedOption.label}` : placeholder}
+        >
           <span className={selectedOption ? 'text-gray-900' : 'text-gray-500'}>
             {selectedOption?.label || placeholder}
           </span>
-          <ChevronDown className="w-4 h-4 text-gray-400" />
+          <ChevronDown className="w-4 h-4 text-gray-400" aria-hidden="true" />
         </button>
       }
       items={options.map((opt) => ({ label: opt.label, value: opt.value }))}

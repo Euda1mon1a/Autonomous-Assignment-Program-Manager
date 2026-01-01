@@ -112,10 +112,10 @@ export const CompliancePanel: React.FC<CompliancePanelProps> = ({
 
       {/* Violations Summary (if any) */}
       {hasViolations && (
-        <div className="p-4 bg-red-50 border-b border-red-200">
+        <div className="p-4 bg-red-50 border-b border-red-200" role="alert" aria-live="polite">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold text-red-900">Active Violations</h3>
-            <div className="flex gap-2">
+            <div className="flex gap-2" role="group" aria-label="Violation counts">
               {criticalViolations.length > 0 && (
                 <Badge variant="destructive">
                   {criticalViolations.length} Critical
@@ -143,6 +143,7 @@ export const CompliancePanel: React.FC<CompliancePanelProps> = ({
             <button
               onClick={onViewDetails}
               className="mt-2 text-sm text-red-700 hover:text-red-900 font-medium focus:outline-none focus:underline"
+              aria-label={`View all ${data.violations.length} violations`}
             >
               View all {data.violations.length} violations →
             </button>
@@ -201,6 +202,7 @@ export const CompliancePanel: React.FC<CompliancePanelProps> = ({
             <button
               onClick={onViewDetails}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              aria-label="View full compliance report"
             >
               View Full Report
             </button>

@@ -112,7 +112,7 @@ class LocalStorageBackend(StorageBackend):
     Stores files in a local directory with organized folder structure.
     """
 
-    def __init__(self, base_path: str | Path = "/tmp/uploads"):
+    def __init__(self, base_path: str | Path = "/tmp/uploads") -> None:
         """
         Initialize local storage backend.
 
@@ -290,7 +290,7 @@ class S3StorageBackend(StorageBackend):
         access_key: str | None = None,
         secret_key: str | None = None,
         endpoint_url: str | None = None,
-    ):
+    ) -> None:
         """
         Initialize S3 storage backend.
 

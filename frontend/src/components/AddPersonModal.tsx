@@ -131,9 +131,13 @@ export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Add Person">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" aria-label="Add new person form">
         {errors.general && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+          <div
+            className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm"
+            role="alert"
+            aria-live="assertive"
+          >
             {errors.general}
           </div>
         )}
@@ -182,17 +186,23 @@ export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
           />
         )}
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-start gap-2">
           <input
             type="checkbox"
             id="performsProcedures"
             checked={performsProcedures}
             onChange={(e) => setPerformsProcedures(e.target.checked)}
-            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            aria-describedby="performsProcedures-description"
           />
-          <label htmlFor="performsProcedures" className="text-sm text-gray-700">
-            Performs procedures
-          </label>
+          <div>
+            <label htmlFor="performsProcedures" className="text-sm font-medium text-gray-700">
+              Performs procedures
+            </label>
+            <p id="performsProcedures-description" className="text-xs text-gray-500 mt-0.5">
+              Check if this person is qualified to perform medical procedures
+            </p>
+          </div>
         </div>
 
         <Input
@@ -207,6 +217,7 @@ export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
             type="button"
             onClick={handleClose}
             className="btn-secondary"
+            aria-label="Cancel adding person"
           >
             Cancel
           </button>
@@ -214,6 +225,8 @@ export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
             type="submit"
             disabled={createPerson.isPending}
             className="btn-primary disabled:opacity-50"
+            aria-label={createPerson.isPending ? 'Creating person...' : 'Add new person'}
+            aria-busy={createPerson.isPending}
           >
             {createPerson.isPending ? 'Creating...' : 'Add Person'}
           </button>

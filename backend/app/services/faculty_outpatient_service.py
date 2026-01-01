@@ -88,7 +88,7 @@ class FacultyOutpatientAssignmentService:
         - PGY-2/3: 1 faculty : 4 residents
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """Initialize the faculty outpatient service."""
         self.db = db
 

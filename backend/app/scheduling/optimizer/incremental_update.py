@@ -290,9 +290,60 @@ class IncrementalScheduleUpdater:
         Returns:
             List of available rotation IDs
         """
-        ***REMOVED*** This would check rotation capacity, person qualifications, etc.
-        ***REMOVED*** For now, return placeholder
-        return []
+        ***REMOVED*** Get all available rotations from schedule metadata or constraints
+        rotations = schedule.get("rotations", [])
+        if not rotations:
+            ***REMOVED*** Fallback: extract rotation IDs from existing assignments
+            rotation_ids = set(
+                a.get("rotation_id")
+                for a in schedule.get("assignments", [])
+                if a.get("rotation_id")
+            )
+            rotations = [{"id": rid} for rid in rotation_ids]
+
+        available = []
+
+        for rotation in rotations:
+            rotation_id = rotation.get("id")
+            if not rotation_id:
+                continue
+
+            ***REMOVED*** Count current assignments for this rotation on target date
+            current_count = sum(
+                1
+                for a in schedule.get("assignments", [])
+                if a.get("rotation_id") == rotation_id
+                and a.get("block_date") == target_date
+            )
+
+            ***REMOVED*** Get rotation capacity (from rotation metadata or constraints)
+            max_capacity = rotation.get("max_residents")
+            if max_capacity is None:
+                ***REMOVED*** Try to get from constraints
+                rotation_capacities = constraints.get("rotation_capacities", {})
+                max_capacity = rotation_capacities.get(rotation_id)
+
+            ***REMOVED*** If no capacity limit defined, use default
+            if max_capacity is None:
+                max_capacity = constraints.get("default_rotation_capacity", 999)
+
+            ***REMOVED*** Check if rotation has available capacity
+            if current_count < max_capacity:
+                ***REMOVED*** Check person qualifications if available
+                required_quals = rotation.get("required_qualifications", [])
+                person_quals = person.get("qualifications", [])
+
+                ***REMOVED*** If person has all required qualifications (or no requirements)
+                if not required_quals or all(
+                    q in person_quals for q in required_quals
+                ):
+                    available.append(rotation_id)
+
+        logger.debug(
+            f"Found {len(available)} available rotations for {person.get('id')} "
+            f"on {target_date}"
+        )
+        return available
 
     def _assign_to_slots(
         self,

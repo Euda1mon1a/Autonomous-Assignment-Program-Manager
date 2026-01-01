@@ -56,6 +56,7 @@ export function GenerateScheduleDialog({
   const [showResults, setShowResults] = useState(false);
 
   const generateSchedule = useGenerateSchedule();
+  const algorithmDescId = 'algorithm-description';
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -121,19 +122,23 @@ export function GenerateScheduleDialog({
       {showResults && result ? (
         <div className="space-y-4">
           {/* Result Status */}
-          <div className={`p-4 rounded-lg flex items-start gap-3 ${
-            result.status === 'success'
-              ? 'bg-green-50 border border-green-200'
-              : result.status === 'partial'
-              ? 'bg-amber-50 border border-amber-200'
-              : 'bg-red-50 border border-red-200'
-          }`}>
+          <div
+            className={`p-4 rounded-lg flex items-start gap-3 ${
+              result.status === 'success'
+                ? 'bg-green-50 border border-green-200'
+                : result.status === 'partial'
+                ? 'bg-amber-50 border border-amber-200'
+                : 'bg-red-50 border border-red-200'
+            }`}
+            role="status"
+            aria-live="polite"
+          >
             {result.status === 'success' ? (
-              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
             ) : result.status === 'partial' ? (
-              <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
             ) : (
-              <XCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <XCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
             )}
             <div>
               <p className={`font-medium ${
@@ -267,8 +272,9 @@ export function GenerateScheduleDialog({
               value={algorithm}
               onChange={(e) => setAlgorithm(e.target.value as SchedulingAlgorithm)}
               options={algorithmOptions}
+              aria-describedby={algorithmDescId}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p id={algorithmDescId} className="text-xs text-gray-500 mt-1">
               {algorithmOptions.find(a => a.value === algorithm)?.description}
             </p>
           </div>
@@ -290,8 +296,13 @@ export function GenerateScheduleDialog({
 
           {/* Progress Indicator */}
           {isGenerating && (
-            <div className="flex items-center justify-center py-4 bg-blue-50 rounded-lg">
-              <Loader2 className="w-5 h-5 animate-spin text-blue-600 mr-2" />
+            <div
+              className="flex items-center justify-center py-4 bg-blue-50 rounded-lg"
+              role="status"
+              aria-live="polite"
+              aria-label="Schedule generation in progress"
+            >
+              <Loader2 className="w-5 h-5 animate-spin text-blue-600 mr-2" aria-hidden="true" />
               <span className="text-blue-700">Generating schedule...</span>
             </div>
           )}
@@ -302,6 +313,7 @@ export function GenerateScheduleDialog({
               onClick={handleClose}
               className="btn-secondary"
               disabled={isGenerating}
+              aria-label="Cancel schedule generation"
             >
               Cancel
             </button>
@@ -309,6 +321,8 @@ export function GenerateScheduleDialog({
               type="submit"
               disabled={isGenerating}
               className="btn-primary disabled:opacity-50"
+              aria-label={isGenerating ? 'Generating schedule...' : 'Generate schedule'}
+              aria-busy={isGenerating}
             >
               {isGenerating ? 'Generating...' : 'Generate Schedule'}
             </button>

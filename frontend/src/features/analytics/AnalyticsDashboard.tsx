@@ -423,7 +423,7 @@ export function AnalyticsDashboard({ className = '' }: AnalyticsDashboardProps) 
           )}
 
           {/* Metrics Grid */}
-          <div role="region" aria-label="Key metrics">
+          <div role="region" aria-label="Key metrics" aria-live="polite">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Key Metrics</h2>
             {metricsLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" aria-busy="true" aria-label="Loading metrics">
@@ -452,7 +452,7 @@ export function AnalyticsDashboard({ className = '' }: AnalyticsDashboardProps) 
           <AlertsSection />
 
           {/* Quick Trend Preview */}
-          <div role="region" aria-label="Fairness trends preview">
+          <div role="region" aria-label="Fairness trends preview" aria-live="polite">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Fairness Trends</h2>
             <FairnessTrend months={1} showPgyComparison={false} />
           </div>

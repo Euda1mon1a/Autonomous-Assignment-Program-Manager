@@ -84,7 +84,7 @@ export const SwapTimeline: React.FC<SwapTimelineProps> = ({
   if (sortedEvents.length === 0) {
     return (
       <div className={`swap-timeline bg-white rounded-lg shadow p-6 text-center ${className}`}>
-        <div className="text-4xl mb-3">📋</div>
+        <div className="text-4xl mb-3" aria-hidden="true">📋</div>
         <p className="text-gray-600">No swap history available</p>
       </div>
     );
@@ -131,6 +131,7 @@ export const SwapTimeline: React.FC<SwapTimelineProps> = ({
                     ${onEventClick ? 'hover:shadow-md cursor-pointer' : ''}
                     focus:outline-none focus:ring-2 focus:ring-blue-500
                   `}
+                  aria-label={`${config.label} swap event by ${event.actor.name} on ${new Date(event.timestamp).toLocaleDateString()}`}
                 >
                   {/* Timestamp */}
                   <div className="text-xs text-gray-600 mb-2">
@@ -147,7 +148,7 @@ export const SwapTimeline: React.FC<SwapTimelineProps> = ({
                   {/* Header */}
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-xl" role="img" aria-label={config.label}>
+                      <span className="text-xl" role="img" aria-label={config.label} aria-hidden="true">
                         {config.icon}
                       </span>
                       <h4 className="font-semibold">{config.label}</h4>

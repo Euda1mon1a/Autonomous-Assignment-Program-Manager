@@ -101,7 +101,7 @@ class QueryBuilder:
         )
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize query builder with defaults."""
         self._query_string: str = ""
         self._entity_types: list[str] = ["person"]

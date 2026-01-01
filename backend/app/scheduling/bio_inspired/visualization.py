@@ -86,7 +86,7 @@ class EvolutionTracker:
     - Pareto front evolution
     """
 
-    def __init__(self, sample_rate: int = 5):
+    def __init__(self, sample_rate: int = 5) -> None:
         """
         Initialize evolution tracker.
 
@@ -284,7 +284,7 @@ class FitnessLandscapeVisualizer:
         self,
         resolution: int = 50,
         n_samples: int = 500,
-    ):
+    ) -> None:
         """
         Initialize visualizer.
 

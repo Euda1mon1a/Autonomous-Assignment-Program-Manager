@@ -2,6 +2,7 @@
 
 import time
 from contextlib import contextmanager
+from typing import Generator
 from uuid import uuid4
 
 import redis
@@ -64,7 +65,7 @@ class ScheduleGenerationLock:
         self._release_script = self.redis.register_script(self.RELEASE_SCRIPT)
 
     @contextmanager
-    def acquire(self, year_id: str, timeout: int = DEFAULT_LOCK_ACQUISITION_TIMEOUT):
+    def acquire(self, year_id: str, timeout: int = DEFAULT_LOCK_ACQUISITION_TIMEOUT) -> Generator[None, None, None]:
         """Acquire lock for schedule generation.
 
         This context manager attempts to acquire an exclusive lock for schedule

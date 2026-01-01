@@ -55,7 +55,7 @@ class SupervisionValidator:
     - Required faculty = ceil(total_units / 4)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize supervision validator."""
         self.pgy1_ratio = PGY1_RATIO
         self.other_ratio = OTHER_RATIO

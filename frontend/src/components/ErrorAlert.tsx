@@ -21,10 +21,10 @@ export function ErrorAlert({ message, onRetry, onDismiss }: ErrorAlertProps) {
   // Convert error objects to user-friendly messages
   const displayMessage = typeof message === 'string' ? message : getErrorMessage(message);
   return (
-    <div className="bg-red-50 border border-red-200 rounded-lg p-4" role="alert">
+    <div className="bg-red-50 border border-red-200 rounded-lg p-4" role="alert" aria-live="polite">
       <div className="flex items-start gap-3">
         {/* Error icon */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0" aria-hidden="true">
           <svg
             className="w-5 h-5 text-red-600"
             fill="none"

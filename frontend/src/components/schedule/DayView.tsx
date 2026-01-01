@@ -139,6 +139,15 @@ export function DayView({
         <div
           onClick={handleClick}
           className="flex-1 p-4 bg-gray-50 rounded-lg border border-dashed border-gray-200 cursor-pointer hover:bg-gray-100 hover:border-gray-300 transition-colors min-h-[80px] flex items-center justify-center"
+          role="button"
+          tabIndex={0}
+          aria-label={`No assignment for ${timeOfDay}`}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              handleClick()
+            }
+          }}
         >
           <span className="text-gray-400 text-sm">No assignment</span>
         </div>
@@ -151,6 +160,15 @@ export function DayView({
         className={`flex-1 p-4 rounded-lg border-l-4 cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all min-h-[80px] ${getActivityColor(
           assignment.activity
         )}`}
+        role="button"
+        tabIndex={0}
+        aria-label={`${timeOfDay} assignment: ${assignment.activity}, ${assignment.role}`}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            handleClick()
+          }
+        }}
       >
         <div className="font-semibold text-lg">{assignment.activity}</div>
         <div className="text-sm opacity-80 mt-1">
@@ -231,6 +249,7 @@ export function DayView({
                 value={format(currentDate, 'yyyy-MM-dd')}
                 onChange={handleDateInput}
                 className="input-field"
+                aria-label="Select date"
                 autoFocus
               />
             </div>
@@ -241,9 +260,9 @@ export function DayView({
       {/* AM/PM Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* AM Section */}
-        <div>
+        <div role="region" aria-label="Morning assignments">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+            <div className="w-3 h-3 rounded-full bg-yellow-400" aria-hidden="true"></div>
             <h3 className="text-lg font-semibold text-gray-700">Morning (AM)</h3>
           </div>
           <div className="space-y-3">
@@ -275,9 +294,9 @@ export function DayView({
         </div>
 
         {/* PM Section */}
-        <div>
+        <div role="region" aria-label="Afternoon assignments">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-3 h-3 rounded-full bg-indigo-500"></div>
+            <div className="w-3 h-3 rounded-full bg-indigo-500" aria-hidden="true"></div>
             <h3 className="text-lg font-semibold text-gray-700">Afternoon (PM)</h3>
           </div>
           <div className="space-y-3">

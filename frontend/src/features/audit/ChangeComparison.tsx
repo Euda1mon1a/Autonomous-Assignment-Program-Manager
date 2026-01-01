@@ -193,17 +193,17 @@ function EntryHeader({
       </div>
       <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
         <span className="flex items-center gap-1">
-          <Calendar className="w-4 h-4" />
+          <Calendar className="w-4 h-4" aria-hidden="true" />
           {timestamp}
         </span>
         <span className="flex items-center gap-1">
-          <User className="w-4 h-4" />
+          <User className="w-4 h-4" aria-hidden="true" />
           {entry.user.name}
         </span>
       </div>
       {entry.acgmeOverride && (
         <div className="mt-2 flex items-center gap-1 text-sm text-orange-600">
-          <AlertTriangle className="w-4 h-4" />
+          <AlertTriangle className="w-4 h-4" aria-hidden="true" />
           ACGME Override
         </div>
       )}
@@ -219,25 +219,25 @@ function DiffLineRow({ line }: { line: DiffLine }) {
     added: {
       bg: 'bg-green-50',
       border: 'border-green-200',
-      icon: <Plus className="w-4 h-4 text-green-600" />,
+      icon: <Plus className="w-4 h-4 text-green-600" aria-hidden="true" />,
       label: 'Added',
     },
     removed: {
       bg: 'bg-red-50',
       border: 'border-red-200',
-      icon: <Minus className="w-4 h-4 text-red-600" />,
+      icon: <Minus className="w-4 h-4 text-red-600" aria-hidden="true" />,
       label: 'Removed',
     },
     modified: {
       bg: 'bg-yellow-50',
       border: 'border-yellow-200',
-      icon: <ArrowRight className="w-4 h-4 text-yellow-600" />,
+      icon: <ArrowRight className="w-4 h-4 text-yellow-600" aria-hidden="true" />,
       label: 'Changed',
     },
     unchanged: {
       bg: 'bg-gray-50',
       border: 'border-gray-200',
-      icon: <Equal className="w-4 h-4 text-gray-400" />,
+      icon: <Equal className="w-4 h-4 text-gray-400" aria-hidden="true" />,
       label: 'Unchanged',
     },
   };
@@ -324,7 +324,7 @@ function SideBySideView({
       {/* Arrow indicator */}
       <div className="flex items-center justify-center">
         <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full">
-          <ArrowLeftRight className="w-5 h-5 text-gray-500" />
+          <ArrowLeftRight className="w-5 h-5 text-gray-500" aria-hidden="true" />
           <span className="text-sm text-gray-600">Comparing changes</span>
         </div>
       </div>
@@ -339,7 +339,7 @@ function SideBySideView({
         </div>
       ) : (
         <div className="text-center py-8 text-gray-500">
-          <Info className="w-8 h-8 mx-auto mb-2" />
+          <Info className="w-8 h-8 mx-auto mb-2" aria-hidden="true" />
           <p>No differences found between these entries</p>
         </div>
       )}
@@ -370,7 +370,7 @@ function SingleEntryView({ entry }: { entry: AuditLogEntry }) {
       {entry.acgmeOverride && (
         <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
           <div className="flex items-center gap-2 text-orange-800 font-medium mb-2">
-            <AlertTriangle className="w-5 h-5" />
+            <AlertTriangle className="w-5 h-5" aria-hidden="true" />
             ACGME Compliance Override
           </div>
           {entry.acgmeJustification && (
@@ -391,7 +391,7 @@ function SingleEntryView({ entry }: { entry: AuditLogEntry }) {
         </div>
       ) : (
         <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
-          <FileText className="w-8 h-8 mx-auto mb-2" />
+          <FileText className="w-8 h-8 mx-auto mb-2" aria-hidden="true" />
           <p>No detailed changes recorded for this entry</p>
         </div>
       )}
@@ -459,12 +459,12 @@ export function ChangeComparison({
         <div className="flex items-center gap-2">
           {isComparingTwo ? (
             <>
-              <ArrowLeftRight className="w-5 h-5 text-blue-600" />
+              <ArrowLeftRight className="w-5 h-5 text-blue-600" aria-hidden="true" />
               <h3 className="font-semibold text-gray-900">Compare Entries</h3>
             </>
           ) : (
             <>
-              <FileText className="w-5 h-5 text-blue-600" />
+              <FileText className="w-5 h-5 text-blue-600" aria-hidden="true" />
               <h3 className="font-semibold text-gray-900">Entry Details</h3>
             </>
           )}
@@ -475,6 +475,7 @@ export function ChangeComparison({
               type="button"
               onClick={onClearComparison}
               className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded transition-colors"
+              aria-label="Clear comparison and reset selection"
             >
               Clear comparison
             </button>
@@ -484,9 +485,9 @@ export function ChangeComparison({
               type="button"
               onClick={onClose}
               className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
-              aria-label="Close"
+              aria-label="Close comparison panel"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5" aria-hidden="true" />
             </button>
           )}
         </div>

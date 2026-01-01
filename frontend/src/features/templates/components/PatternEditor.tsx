@@ -68,8 +68,9 @@ export function PatternEditor({
           <button
             onClick={() => setShowAddForm(true)}
             className="btn-secondary flex items-center gap-2 text-sm"
+            aria-label="Add new pattern"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4" aria-hidden="true" />
             Add Pattern
           </button>
         )}
@@ -162,12 +163,14 @@ function PatternItem({
     <div className="p-3">
       <div className="flex items-center gap-3">
         {!readOnly && (
-          <GripVertical className="w-4 h-4 text-gray-400 cursor-grab" />
+          <GripVertical className="w-4 h-4 text-gray-400 cursor-grab" aria-hidden="true" />
         )}
 
         <button
           onClick={onToggle}
           className="flex-1 flex items-center gap-3 text-left"
+          aria-expanded={isExpanded}
+          aria-label={`${isExpanded ? 'Collapse' : 'Expand'} pattern ${pattern.name}`}
         >
           <span className={`px-2 py-1 rounded text-xs font-medium ${colorClass}`}>
             {pattern.activityType}
@@ -178,9 +181,9 @@ function PatternItem({
           </span>
           <span className="text-xs text-gray-400 capitalize">({pattern.role})</span>
           {isExpanded ? (
-            <ChevronUp className="w-4 h-4 text-gray-400 ml-auto" />
+            <ChevronUp className="w-4 h-4 text-gray-400 ml-auto" aria-hidden="true" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-gray-400 ml-auto" />
+            <ChevronDown className="w-4 h-4 text-gray-400 ml-auto" aria-hidden="true" />
           )}
         </button>
 
@@ -189,16 +192,18 @@ function PatternItem({
             <button
               onClick={onDuplicate}
               className="p-1 hover:bg-gray-100 rounded text-gray-500"
+              aria-label="Duplicate pattern"
               title="Duplicate"
             >
-              <Copy className="w-4 h-4" />
+              <Copy className="w-4 h-4" aria-hidden="true" />
             </button>
             <button
               onClick={onRemove}
               className="p-1 hover:bg-red-50 rounded text-red-500"
+              aria-label="Remove pattern"
               title="Remove"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         )}
@@ -457,6 +462,7 @@ function PatternForm({ onSubmit, onCancel, initialValues }: PatternFormProps) {
           type="button"
           onClick={onCancel}
           className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+          aria-label="Cancel adding pattern"
         >
           Cancel
         </button>
@@ -464,6 +470,7 @@ function PatternForm({ onSubmit, onCancel, initialValues }: PatternFormProps) {
           type="submit"
           disabled={!name.trim()}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          aria-label="Add pattern"
         >
           Add Pattern
         </button>
@@ -511,6 +518,7 @@ function QuickAddPatterns({ onAdd, existingPatterns }: QuickAddPatternsProps) {
             key={suggestion.label}
             onClick={() => handleQuickAdd(suggestion.days, suggestion.time)}
             className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700"
+            aria-label={suggestion.label}
           >
             {suggestion.label}
           </button>

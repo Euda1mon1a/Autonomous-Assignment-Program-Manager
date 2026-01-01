@@ -34,7 +34,7 @@ class SearchIndexer:
         self,
         db: Session,
         backend: SearchBackend | None = None,
-    ):
+    ) -> None:
         """
         Initialize search indexer.
 
@@ -336,7 +336,7 @@ class SearchService:
     layered architecture pattern.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize search service.
 

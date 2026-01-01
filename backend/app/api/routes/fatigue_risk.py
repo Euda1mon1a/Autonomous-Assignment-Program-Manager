@@ -13,7 +13,7 @@ All endpoints follow aviation FRMS principles adapted for medical residency.
 """
 
 from datetime import datetime, date
-from typing import Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -66,7 +66,7 @@ router = APIRouter(prefix="/fatigue-risk", tags=["Fatigue Risk Management"])
 
 
 @router.get("/samn-perelli/levels")
-async def get_samn_perelli_levels():
+async def get_samn_perelli_levels() -> dict[str, Any]:
     """
     Get all Samn-Perelli fatigue levels with descriptions.
 
@@ -443,7 +443,7 @@ async def get_team_fatigue_heatmap(
 
 
 @router.get("/reference/circadian-phases")
-async def get_circadian_phases():
+async def get_circadian_phases() -> dict[str, Any]:
     """
     Get all circadian phases with descriptions.
 
@@ -454,7 +454,7 @@ async def get_circadian_phases():
 
 
 @router.get("/reference/hazard-levels")
-async def get_hazard_levels():
+async def get_hazard_levels() -> dict[str, Any]:
     """
     Get all hazard levels with descriptions.
 
@@ -465,7 +465,7 @@ async def get_hazard_levels():
 
 
 @router.get("/reference/mitigation-types")
-async def get_mitigation_types():
+async def get_mitigation_types() -> dict[str, Any]:
     """
     Get all mitigation types with descriptions.
 
@@ -481,7 +481,7 @@ async def get_mitigation_types():
 
 
 @router.get("/temporal-constraints", response_model=TemporalConstraintsExport)
-async def export_temporal_constraints():
+async def export_temporal_constraints() -> TemporalConstraintsExport:
     """
     Export temporal constraint data for holographic hub.
 

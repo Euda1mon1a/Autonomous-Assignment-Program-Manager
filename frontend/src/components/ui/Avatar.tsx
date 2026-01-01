@@ -85,15 +85,16 @@ export function Avatar({
             onError={() => setImageError(true)}
           />
         ) : initials ? (
-          <span>{initials}</span>
+          <span aria-label={name || 'User initials'}>{initials}</span>
         ) : (
-          <User className="w-1/2 h-1/2" />
+          <User className="w-1/2 h-1/2" aria-hidden="true" />
         )}
       </div>
 
       {status && (
         <span
           className={`absolute bottom-0 right-0 ${statusSizes[size]} ${statusColors[status]} rounded-full border-white`}
+          role="status"
           aria-label={`Status: ${status}`}
         />
       )}
@@ -131,6 +132,7 @@ export function AvatarGroup({
       {remaining > 0 && (
         <div
           className={`${sizeStyles[size]} rounded-full bg-gray-300 text-gray-700 flex items-center justify-center font-medium ring-2 ring-white`}
+          aria-label={`${remaining} more users`}
         >
           +{remaining}
         </div>

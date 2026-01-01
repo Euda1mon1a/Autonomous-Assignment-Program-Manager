@@ -10,7 +10,7 @@ from app.services.leave_providers.base import LeaveProvider, LeaveRecord
 class DatabaseLeaveProvider(LeaveProvider):
     """Leave provider that reads from the application database."""
 
-    def __init__(self, db: Session, cache_ttl_seconds: int = 300):
+    def __init__(self, db: Session, cache_ttl_seconds: int = 300) -> None:
         self.db = db
         self.cache_ttl = cache_ttl_seconds
         self._cache: list[LeaveRecord] | None = None

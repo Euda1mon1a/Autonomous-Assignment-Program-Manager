@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class ConstraintPruner:
     """Prune infeasible assignments before solver runs."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initialize constraint pruner.
 

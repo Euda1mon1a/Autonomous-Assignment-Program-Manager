@@ -84,7 +84,7 @@ if AXELROD_AVAILABLE:
             forgiveness_probability: float = 0.0,
             retaliation_memory: int = 1,
             **kwargs,
-        ):
+        ) -> None:
             super().__init__()
             self.strategy_type = strategy_type
             self.utilization_target = utilization_target
@@ -181,7 +181,7 @@ else:
 class GameTheoryService:
     """Service for running game theory simulations."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         if not AXELROD_AVAILABLE:
             logger.warning(
                 "Axelrod library not available. Game theory features disabled. "

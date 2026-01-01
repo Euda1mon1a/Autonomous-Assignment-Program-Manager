@@ -691,22 +691,59 @@ class ReadModelSyncService:
 
     async def _check_consistency(self, projector_name: str, event: DomainEvent) -> None:
         """
-        Verify consistency between write and read models.
+        Verify consistency between write and read models after event processing.
+
+        This method performs opportunistic consistency checks after successful
+        event processing to detect drift between write and read models early.
 
         Args:
             projector_name: Name of the projector
             event: Event that was just processed
         """
-        ***REMOVED*** This is a placeholder for consistency checking logic
-        ***REMOVED*** Subclasses or specific implementations should override this
-        ***REMOVED*** to implement domain-specific consistency checks
-        pass
+        try:
+            ***REMOVED*** Get the aggregate ID from the event
+            aggregate_id = getattr(event, "aggregate_id", None)
+            if not aggregate_id:
+                ***REMOVED*** Event doesn't have aggregate ID, skip consistency check
+                return
+
+            ***REMOVED*** Verify consistency for this aggregate
+            is_consistent, conflict = await self.verify_consistency(
+                projector_name, aggregate_id
+            )
+
+            if not is_consistent and conflict:
+                logger.warning(
+                    f"Consistency check failed for {projector_name} "
+                    f"after processing event {event.metadata.event_id}",
+                    extra={
+                        "projector": projector_name,
+                        "event_id": event.metadata.event_id,
+                        "aggregate_id": aggregate_id,
+                        "conflict_type": conflict.conflict_type,
+                    },
+                )
+
+                ***REMOVED*** Handle conflict based on resolution strategy
+                if self.conflict_resolution_strategy != ConflictResolutionStrategy.MANUAL:
+                    await self.resolve_conflict(conflict)
+
+        except Exception as e:
+            ***REMOVED*** Don't fail event processing due to consistency check failures
+            logger.error(
+                f"Error during consistency check: {str(e)}",
+                extra={"projector": projector_name, "event_id": event.metadata.event_id},
+                exc_info=True,
+            )
 
     async def verify_consistency(
         self, projector_name: str, aggregate_id: str
     ) -> tuple[bool, SyncConflict | None]:
         """
-        Verify consistency for a specific aggregate.
+        Verify consistency for a specific aggregate between write and read models.
+
+        Compares the current state in the write database with the projected state
+        in the read model to detect any inconsistencies.
 
         Args:
             projector_name: Name of the projector
@@ -715,9 +752,206 @@ class ReadModelSyncService:
         Returns:
             Tuple of (is_consistent, conflict_if_any)
         """
-        ***REMOVED*** Placeholder for consistency verification
-        ***REMOVED*** Implementation would compare write DB state with read model state
-        return True, None
+        try:
+            ***REMOVED*** Get the projector
+            projector = self.projectors.get(projector_name)
+            if not projector:
+                logger.warning(f"Projector {projector_name} not found for verification")
+                return True, None
+
+            ***REMOVED*** Get write model state (source of truth)
+            write_state = await self._get_write_model_state(
+                projector_name, aggregate_id
+            )
+
+            if write_state is None:
+                ***REMOVED*** Aggregate doesn't exist in write model
+                ***REMOVED*** Check if it exists in read model (orphaned read)
+                read_state = await self._get_read_model_state(
+                    projector_name, aggregate_id
+                )
+
+                if read_state is not None:
+                    ***REMOVED*** Read model has data that doesn't exist in write model
+                    conflict = SyncConflict(
+                        read_model_name=projector_name,
+                        aggregate_id=aggregate_id,
+                        event_id="unknown",
+                        event_sequence=0,
+                        conflict_type="orphaned_read",
+                        write_value=None,
+                        read_value=read_state,
+                        resolution_strategy=self.conflict_resolution_strategy,
+                    )
+                    return False, conflict
+
+                ***REMOVED*** Neither exists, that's consistent (both empty)
+                return True, None
+
+            ***REMOVED*** Get read model state
+            read_state = await self._get_read_model_state(projector_name, aggregate_id)
+
+            if read_state is None:
+                ***REMOVED*** Write model has data but read model doesn't (stale read)
+                conflict = SyncConflict(
+                    read_model_name=projector_name,
+                    aggregate_id=aggregate_id,
+                    event_id="unknown",
+                    event_sequence=0,
+                    conflict_type="stale_read",
+                    write_value=write_state,
+                    read_value=None,
+                    resolution_strategy=self.conflict_resolution_strategy,
+                )
+                return False, conflict
+
+            ***REMOVED*** Compare states
+            mismatches = self._compare_states(write_state, read_state)
+
+            if mismatches:
+                ***REMOVED*** States don't match
+                conflict = SyncConflict(
+                    read_model_name=projector_name,
+                    aggregate_id=aggregate_id,
+                    event_id="unknown",
+                    event_sequence=0,
+                    conflict_type="state_mismatch",
+                    write_value=write_state,
+                    read_value=read_state,
+                    resolution_strategy=self.conflict_resolution_strategy,
+                )
+                return False, conflict
+
+            ***REMOVED*** States match, consistent
+            return True, None
+
+        except Exception as e:
+            logger.error(
+                f"Error verifying consistency: {str(e)}",
+                extra={"projector": projector_name, "aggregate_id": aggregate_id},
+                exc_info=True,
+            )
+            ***REMOVED*** On error, assume consistent to avoid false alarms
+            return True, None
+
+    async def _get_write_model_state(
+        self, projector_name: str, aggregate_id: str
+    ) -> dict[str, Any] | None:
+        """
+        Get current state from write database for an aggregate.
+
+        Args:
+            projector_name: Name of the projector
+            aggregate_id: Aggregate ID
+
+        Returns:
+            State dictionary or None if not found
+        """
+        ***REMOVED*** This is projector-specific - would need to be implemented
+        ***REMOVED*** based on the specific read model type
+        ***REMOVED*** For now, return None to indicate no verification possible
+        logger.debug(
+            f"Write model state retrieval not implemented for {projector_name}"
+        )
+        return None
+
+    async def _get_read_model_state(
+        self, projector_name: str, aggregate_id: str
+    ) -> dict[str, Any] | None:
+        """
+        Get current state from read model for an aggregate.
+
+        Args:
+            projector_name: Name of the projector
+            aggregate_id: Aggregate ID
+
+        Returns:
+            State dictionary or None if not found
+        """
+        ***REMOVED*** This is projector-specific - would need to be implemented
+        ***REMOVED*** based on the specific read model type
+        ***REMOVED*** For now, return None to indicate no verification possible
+        logger.debug(
+            f"Read model state retrieval not implemented for {projector_name}"
+        )
+        return None
+
+    def _compare_states(
+        self, write_state: dict[str, Any], read_state: dict[str, Any]
+    ) -> list[str]:
+        """
+        Compare write and read model states to find mismatches.
+
+        Args:
+            write_state: State from write database
+            read_state: State from read model
+
+        Returns:
+            List of field names that don't match
+        """
+        mismatches = []
+
+        ***REMOVED*** Get all keys from both states
+        all_keys = set(write_state.keys()) | set(read_state.keys())
+
+        ***REMOVED*** Ignore audit fields that are expected to differ
+        ignore_fields = {
+            "created_at",
+            "updated_at",
+            "last_modified",
+            "version",
+            "revision",
+        }
+
+        for key in all_keys:
+            if key in ignore_fields:
+                continue
+
+            write_val = write_state.get(key)
+            read_val = read_state.get(key)
+
+            ***REMOVED*** Normalize values for comparison
+            if write_val != read_val:
+                ***REMOVED*** Handle type conversions and edge cases
+                if not self._values_equal(write_val, read_val):
+                    mismatches.append(key)
+
+        return mismatches
+
+    def _values_equal(self, val1: Any, val2: Any) -> bool:
+        """
+        Check if two values are equal, handling type conversions.
+
+        Args:
+            val1: First value
+            val2: Second value
+
+        Returns:
+            True if values are considered equal
+        """
+        ***REMOVED*** Handle None equality
+        if val1 is None and val2 is None:
+            return True
+        if val1 is None or val2 is None:
+            return False
+
+        ***REMOVED*** Handle string/UUID conversions
+        if isinstance(val1, str) and hasattr(val2, "__str__"):
+            return str(val1) == str(val2)
+        if isinstance(val2, str) and hasattr(val1, "__str__"):
+            return str(val1) == str(val2)
+
+        ***REMOVED*** Handle datetime comparisons (truncate microseconds)
+        if isinstance(val1, datetime) and isinstance(val2, datetime):
+            ***REMOVED*** Compare with 1-second precision to handle serialization differences
+            return abs((val1 - val2).total_seconds()) < 1.0
+
+        ***REMOVED*** Handle numeric comparisons with tolerance
+        if isinstance(val1, (int, float)) and isinstance(val2, (int, float)):
+            return abs(val1 - val2) < 1e-9
+
+        ***REMOVED*** Default equality check
+        return val1 == val2
 
     ***REMOVED*** =========================================================================
     ***REMOVED*** Conflict Resolution

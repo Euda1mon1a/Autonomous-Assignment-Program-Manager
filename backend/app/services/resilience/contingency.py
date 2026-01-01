@@ -310,7 +310,7 @@ class ContingencyService:
         )
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize contingency service.
 

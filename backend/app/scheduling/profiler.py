@@ -13,7 +13,7 @@ import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, Generator
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class PhaseMetrics:
     memory_start: float | None = None
     memory_end: float | None = None
 
-    def finalize(self):
+    def finalize(self) -> None:
         """Calculate final metrics."""
         if self.end_time and self.start_time:
             self.duration = self.end_time - self.start_time
@@ -77,7 +77,7 @@ class SchedulingProfiler:
                 logger.warning("psutil not installed, memory tracking disabled")
                 self.track_memory = False
 
-    def start_phase(self, name: str):
+    def start_phase(self, name: str) -> None:
         """
         Start timing a phase.
 
@@ -98,7 +98,7 @@ class SchedulingProfiler:
 
         logger.debug(f"Started phase: {name}")
 
-    def end_phase(self, name: str):
+    def end_phase(self, name: str) -> None:
         """
         End timing a phase.
 
@@ -121,7 +121,7 @@ class SchedulingProfiler:
         logger.debug(f"Ended phase: {name} (duration: {phase.duration:.3f}s)")
 
     @contextmanager
-    def phase(self, name: str):
+    def phase(self, name: str) -> Generator[None, None, None]:
         """
         Context manager for automatic phase timing.
 
@@ -138,7 +138,7 @@ class SchedulingProfiler:
         finally:
             self.end_phase(name)
 
-    def record_metric(self, name: str, value: Any):
+    def record_metric(self, name: str, value: Any) -> None:
         """
         Record a custom metric.
 
@@ -186,7 +186,7 @@ class SchedulingProfiler:
             "timestamp": datetime.now().isoformat(),
         }
 
-    def print_report(self):
+    def print_report(self) -> None:
         """Print formatted profiling report to console."""
         report = self.get_report()
 
@@ -221,7 +221,7 @@ class SchedulingProfiler:
 
         print("=" * 60 + "\n")
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset profiler state for new run."""
         self._phases.clear()
         self._phase_stack.clear()

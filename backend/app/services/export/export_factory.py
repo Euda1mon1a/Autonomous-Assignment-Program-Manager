@@ -43,7 +43,7 @@ class ExportFactory:
     with consistent configuration and options.
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize export factory.
 
@@ -57,7 +57,9 @@ class ExportFactory:
             ExportFormat.XML: XMLExporter(db),
         }
 
-    def get_exporter(self, format: ExportFormat | str):
+    def get_exporter(
+        self, format: ExportFormat | str
+    ) -> CSVExporter | JSONExporter | XMLExporter:
         """
         Get exporter for specified format.
 
@@ -242,7 +244,7 @@ class ScheduledExportConfig:
         schedule: str,
         compress: bool = True,
         **export_kwargs,
-    ):
+    ) -> None:
         """
         Initialize scheduled export configuration.
 

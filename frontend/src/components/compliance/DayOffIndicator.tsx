@@ -54,9 +54,10 @@ export const DayOffIndicator: React.FC<DayOffIndicatorProps> = ({
       className={`day-off-indicator border-l-4 rounded-lg p-4 ${status.color} ${className}`}
       role="status"
       aria-live="polite"
+      aria-label={`1-in-7 days off compliance: ${status.label}`}
     >
       <div className="flex items-start gap-3">
-        <span className="text-2xl" role="img" aria-label={status.label}>
+        <span className="text-2xl" aria-hidden="true">
           {status.icon}
         </span>
         <div className="flex-1">
@@ -70,7 +71,7 @@ export const DayOffIndicator: React.FC<DayOffIndicatorProps> = ({
           <p className="text-sm mb-3">{status.message}</p>
 
           {/* Visual Timeline */}
-          <div className="flex gap-1 mb-3">
+          <div className="flex gap-1 mb-3" role="meter" aria-label={`${consecutiveDaysWorked} consecutive days worked out of maximum ${maxConsecutiveDays}`} aria-valuenow={consecutiveDaysWorked} aria-valuemin={0} aria-valuemax={maxConsecutiveDays}>
             {Array.from({ length: maxConsecutiveDays + 1 }).map((_, idx) => (
               <div
                 key={idx}
@@ -84,7 +85,7 @@ export const DayOffIndicator: React.FC<DayOffIndicatorProps> = ({
                   }
                 `}
                 title={`Day ${idx + 1}`}
-                aria-label={`Day ${idx + 1}${idx < consecutiveDaysWorked ? ' worked' : ' available'}`}
+                aria-hidden="true"
               />
             ))}
           </div>

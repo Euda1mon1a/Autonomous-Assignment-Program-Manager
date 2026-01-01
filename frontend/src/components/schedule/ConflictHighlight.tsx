@@ -111,7 +111,7 @@ export const ConflictHighlight: React.FC<ConflictHighlightProps> = ({
               {/* Header */}
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-xl" role="img" aria-label={config.label}>
+                  <span className="text-xl" aria-hidden="true">
                     {config.icon}
                   </span>
                   <div>
@@ -139,7 +139,7 @@ export const ConflictHighlight: React.FC<ConflictHighlightProps> = ({
                       className="text-sm px-2 py-1 text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       aria-label="Dismiss conflict"
                     >
-                      ✕
+                      <span aria-hidden="true">✕</span>
                     </button>
                   )}
                 </div>

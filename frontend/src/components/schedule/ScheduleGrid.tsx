@@ -358,9 +358,9 @@ function PersonRow({ person, days, todayStr, getAssignment }: PersonRowProps) {
   }, [person.type, person.pgy_level])
 
   return (
-    <tr className={`group hover:bg-blue-50/30 transition-colors duration-[${ROW_HOVER_TRANSITION_MS}ms]`}>
+    <tr className={`group hover:bg-blue-50/30 transition-colors duration-[${ROW_HOVER_TRANSITION_MS}ms]`} role="row">
       {/* Sticky person name column */}
-      <th scope="row" className="sticky left-0 z-10 bg-white group-hover:bg-blue-50/50 px-4 py-2 border-r border-gray-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] transition-colors duration-150 text-left font-normal">
+      <th scope="row" className="sticky left-0 z-10 bg-white group-hover:bg-blue-50/50 px-4 py-2 border-r border-gray-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] transition-colors duration-150 text-left font-normal" role="rowheader">
         <div className="flex flex-col gap-1">
           <span className="font-medium text-gray-900 text-sm whitespace-nowrap">
             {person.name}

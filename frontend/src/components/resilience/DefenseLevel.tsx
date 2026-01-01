@@ -97,7 +97,12 @@ export const DefenseLevel: React.FC<DefenseLevelProps> = ({
   return (
     <div className={`defense-level ${className}`}>
       {/* Level Indicator Bar */}
-      <div className="mb-6">
+      <div
+        className="mb-6"
+        role="status"
+        aria-live="polite"
+        aria-label="Defense level indicator"
+      >
         <div className="flex gap-2">
           {allLevels.map((levelName, idx) => {
             const isActive = idx <= currentIndex;
@@ -115,7 +120,8 @@ export const DefenseLevel: React.FC<DefenseLevelProps> = ({
                     ${isActive ? levelCfg.bgColor : 'bg-gray-200'}
                     ${isActive ? 'ring-2 ring-offset-2 ring-gray-300' : ''}
                   `}
-                  aria-label={levelName}
+                  role="img"
+                  aria-label={`${levelName} defense level${isActive ? ' - active' : ''}`}
                 />
                 <div className="text-xs text-center mt-1 font-medium text-gray-700">
                   {levelName}
@@ -129,7 +135,7 @@ export const DefenseLevel: React.FC<DefenseLevelProps> = ({
       {/* Current Level Details */}
       <div className={`border-l-4 rounded-lg p-6 bg-gray-50 ${config.bgColor.replace('bg-', 'border-')}`}>
         <div className="flex items-start gap-4">
-          <span className="text-4xl" role="img" aria-label={config.label}>
+          <span className="text-4xl" aria-hidden="true">
             {config.icon}
           </span>
           <div className="flex-1">
@@ -144,7 +150,7 @@ export const DefenseLevel: React.FC<DefenseLevelProps> = ({
               <ul className="space-y-2">
                 {config.actions.map((action, idx) => (
                   <li key={idx} className="flex items-start gap-2 text-sm">
-                    <span className="text-blue-600 font-bold">→</span>
+                    <span className="text-blue-600 font-bold" aria-hidden="true">→</span>
                     <span>{action}</span>
                   </li>
                 ))}
@@ -160,6 +166,7 @@ export const DefenseLevel: React.FC<DefenseLevelProps> = ({
           <button
             onClick={onDrillDown}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            aria-label="View detailed defense level analysis"
           >
             View Detailed Analysis
           </button>

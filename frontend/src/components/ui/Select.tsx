@@ -100,6 +100,10 @@ export const Select: React.FC<SelectProps> = ({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         onKeyDown={handleKeyDown}
+        aria-label={label || (selectedOption?.label || placeholder)}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-disabled={disabled}
         className={`
           w-full px-4 py-2 border rounded-lg bg-white text-left transition-colors
           ${error ? 'border-red-500' : 'border-gray-300'}
@@ -111,7 +115,7 @@ export const Select: React.FC<SelectProps> = ({
           <span className={selectedOption ? 'text-gray-900' : 'text-gray-500'}>
             {selectedOption?.label || placeholder}
           </span>
-          <span className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+          <span className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true">
             ▼
           </span>
         </div>
@@ -124,7 +128,7 @@ export const Select: React.FC<SelectProps> = ({
 
       {/* Dropdown */}
       {isOpen && !disabled && (
-        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
+        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden" role="listbox">
           {/* Search Input */}
           {searchable && (
             <div className="p-2 border-b border-gray-200">
@@ -134,6 +138,7 @@ export const Select: React.FC<SelectProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search..."
+                aria-label="Search options"
                 className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 onKeyDown={handleKeyDown}
               />
@@ -143,7 +148,7 @@ export const Select: React.FC<SelectProps> = ({
           {/* Options List */}
           <div className="overflow-y-auto max-h-52">
             {filteredOptions.length === 0 ? (
-              <div className="px-4 py-3 text-sm text-gray-500 text-center">
+              <div className="px-4 py-3 text-sm text-gray-500 text-center" role="status">
                 No options found
               </div>
             ) : (
@@ -152,6 +157,9 @@ export const Select: React.FC<SelectProps> = ({
                   key={option.value}
                   onClick={() => !option.disabled && handleSelect(option.value)}
                   disabled={option.disabled}
+                  role="option"
+                  aria-selected={option.value === value}
+                  aria-disabled={option.disabled}
                   className={`
                     w-full px-4 py-2 text-left text-sm transition-colors
                     ${option.value === value ? 'bg-blue-50 text-blue-900 font-medium' : 'text-gray-900'}
@@ -161,7 +169,7 @@ export const Select: React.FC<SelectProps> = ({
                 >
                   {option.label}
                   {option.value === value && (
-                    <span className="ml-2 text-blue-600">✓</span>
+                    <span className="ml-2 text-blue-600" aria-hidden="true">✓</span>
                   )}
                 </button>
               ))

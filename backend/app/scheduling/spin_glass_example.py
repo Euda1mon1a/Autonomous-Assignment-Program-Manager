@@ -25,7 +25,7 @@ from app.scheduling.spin_glass_visualizer import (
 )
 
 
-def demonstrate_spin_glass_scheduling():
+def demonstrate_spin_glass_scheduling() -> None:
     """
     Demonstrate complete spin glass scheduling workflow.
 
@@ -200,7 +200,7 @@ def demonstrate_spin_glass_scheduling():
     print("- Monitor diversity to detect rigidity problems early")
 
 
-def find_glass_transition_example():
+def find_glass_transition_example() -> None:
     """
     Example: Find the glass transition point for a constraint system.
 
@@ -233,7 +233,7 @@ def find_glass_transition_example():
     print("will cause scheduling flexibility to vanish.")
 
 
-def compare_replicas_example():
+def compare_replicas_example() -> None:
     """
     Example: Compare multiple replica schedules to find trade-offs.
     """

@@ -215,7 +215,7 @@ export function BulkImportModal({
             className="p-1 hover:bg-gray-100 rounded"
             aria-label="Close modal"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -260,7 +260,7 @@ export function BulkImportModal({
                   className="hidden"
                 />
 
-                <Upload className={`w-12 h-12 mx-auto mb-4 ${dragActive ? 'text-blue-500' : 'text-gray-400'}`} />
+                <Upload className={`w-12 h-12 mx-auto mb-4 ${dragActive ? 'text-blue-500' : 'text-gray-400'}`} aria-hidden="true" />
 
                 <p className="text-lg font-medium text-gray-700 mb-2">
                   Drag and drop your file here
@@ -273,6 +273,7 @@ export function BulkImportModal({
                   onClick={() => fileInputRef.current?.click()}
                   className="btn-primary"
                   disabled={isLoading}
+                  aria-label="Select file to import"
                 >
                   Select File
                 </button>
@@ -284,8 +285,8 @@ export function BulkImportModal({
 
               {/* File Error */}
               {fileError && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md text-red-700">
-                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md text-red-700" role="alert">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
                   <span>{fileError}</span>
                 </div>
               )}
@@ -301,8 +302,9 @@ export function BulkImportModal({
                 <button
                   onClick={handleDownloadTemplate}
                   className="btn-secondary flex items-center gap-2"
+                  aria-label="Download CSV import template"
                 >
-                  <Download className="w-4 h-4" />
+                  <Download className="w-4 h-4" aria-hidden="true" />
                   Download Template
                 </button>
               </div>
@@ -314,7 +316,7 @@ export function BulkImportModal({
             <div className="space-y-6">
               {/* File Info */}
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <FileText className="w-6 h-6 text-gray-400" />
+                <FileText className="w-6 h-6 text-gray-400" aria-hidden="true" />
                 <div>
                   <p className="font-medium text-gray-700">{file?.name}</p>
                   <p className="text-sm text-gray-500">
@@ -325,8 +327,8 @@ export function BulkImportModal({
 
               {/* XLSX Fallback Warning */}
               {xlsxFallbackUsed && (
-                <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800">
-                  <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800" role="alert">
+                  <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
                   <div>
                     <p className="font-medium">Using Client-Side Parsing</p>
                     <p className="text-sm">
@@ -338,8 +340,8 @@ export function BulkImportModal({
 
               {/* XLSX Warnings */}
               {xlsxWarnings.length > 0 && !xlsxFallbackUsed && (
-                <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-800">
-                  <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-800" role="alert">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
                   <div>
                     <p className="font-medium">Parsing Notes</p>
                     <ul className="text-sm list-disc list-inside">
@@ -390,8 +392,8 @@ export function BulkImportModal({
 
               {/* Validation Summary */}
               {preview.errorRows > 0 && (
-                <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-800">
-                  <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-800" role="alert">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
                   <div>
                     <p className="font-medium">Validation Issues Found</p>
                     <p className="text-sm">
@@ -406,15 +408,15 @@ export function BulkImportModal({
 
           {/* Importing Step */}
           {step === 'importing' && (
-            <div className="py-8">
+            <div className="py-8" role="status" aria-live="polite">
               <ImportProgressIndicator progress={progress} />
             </div>
           )}
 
           {/* Complete Step */}
           {step === 'complete' && (
-            <div className="py-8 text-center space-y-4">
-              <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
+            <div className="py-8 text-center space-y-4" role="status" aria-live="polite">
+              <CheckCircle className="w-16 h-16 text-green-500 mx-auto" aria-hidden="true" />
               <h3 className="text-xl font-semibold text-gray-800">Import Complete!</h3>
               <p className="text-gray-600">
                 Successfully imported {progress.successCount} records.
@@ -442,13 +444,13 @@ export function BulkImportModal({
         <div className="flex items-center justify-between p-4 border-t bg-gray-50 flex-shrink-0">
           <div>
             {step === 'preview' && (
-              <button onClick={handleBack} className="btn-secondary">
+              <button onClick={handleBack} className="btn-secondary" aria-label="Go back to file upload">
                 Back
               </button>
             )}
           </div>
           <div className="flex gap-3">
-            <button onClick={handleClose} className="btn-secondary">
+            <button onClick={handleClose} className="btn-secondary" aria-label={step === 'complete' ? 'Close import modal' : 'Cancel import'}>
               {step === 'complete' ? 'Close' : 'Cancel'}
             </button>
             {step === 'preview' && preview && (
@@ -456,6 +458,7 @@ export function BulkImportModal({
                 onClick={handleStartImport}
                 disabled={preview.validRows === 0 || isLoading}
                 className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label={`Import ${preview.validRows} valid records`}
               >
                 Import {preview.validRows} Records
               </button>

@@ -1,6 +1,7 @@
 """Authentication service for business logic."""
 
 from datetime import datetime, timedelta
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -19,11 +20,11 @@ settings = get_settings()
 class AuthService:
     """Service for authentication business logic."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self.user_repo = UserRepository(db)
 
-    def authenticate(self, username: str, password: str) -> dict:
+    def authenticate(self, username: str, password: str) -> dict[str, Any]:
         """
         Authenticate a user and generate access token.
 
@@ -69,7 +70,7 @@ class AuthService:
         password: str,
         role: str = "coordinator",
         current_user: User | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """
         Register a new user.
 
