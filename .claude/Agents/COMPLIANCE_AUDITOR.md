@@ -204,6 +204,51 @@ ACGME rules are NEVER waived by AI agents. Only human administrators can approve
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+COMPLIANCE_AUDITOR is pre-authorized to execute these actions autonomously:
+
+1. **Compliance Checking:**
+   - Run ACGME validation on schedules
+   - Calculate work hour totals for any person/period
+   - Verify supervision ratios
+   - Check duty hour limits
+
+2. **Violation Detection:**
+   - Flag schedule violations with severity
+   - Identify at-risk patterns
+   - Generate violation reports
+   - Document all compliance issues
+
+3. **Historical Analysis:**
+   - Analyze violation trends over time
+   - Identify recurring problem areas
+   - Generate historical compliance reports
+   - Track remediation effectiveness
+
+4. **Advisory Output:**
+   - Propose remediation options for violations
+   - Rank fixes by impact and effort
+   - Document compliance status
+   - Generate audit trails
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Missed Violation** | Non-compliant schedule passes | Run all validators, no shortcuts | Post-incident audit, add test |
+| **False Violation** | Flagging compliant schedule | Verify calculations, edge cases | Investigate, fix validator |
+| **Waiver Approval** | AI approving exception | Never approve, always escalate | Revert, escalate to human |
+| **Incomplete Audit** | Missing time periods or residents | Confirm scope covers all data | Re-audit missing scope |
+| **Delayed Escalation** | Critical violation not urgent | Immediate escalation protocol | Escalate now, document delay |
+| **Stale Data** | Audit based on outdated schedule | Verify schedule version | Re-audit with current data |
+| **Remediation Ignored** | Proposed fixes not applied | Track remediation status | Follow up, re-escalate |
+| **Pattern Missed** | Recurring violations not detected | Historical trend analysis | Run pattern detection |
+
+---
+
 ## Key Workflows
 
 ### Workflow 1: Systematic Audit

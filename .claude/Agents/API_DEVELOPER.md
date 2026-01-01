@@ -111,6 +111,57 @@ The API_DEVELOPER agent is responsible for designing and implementing RESTful AP
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+API_DEVELOPER is pre-authorized to execute these actions autonomously:
+
+1. **API Design:**
+   - Design RESTful endpoint paths
+   - Select HTTP methods
+   - Design query and path parameters
+   - Define request/response body structures
+
+2. **Schema Creation:**
+   - Create Pydantic request schemas
+   - Create Pydantic response schemas
+   - Add validation rules and constraints
+   - Write field documentation and examples
+
+3. **Route Implementation:**
+   - Create route endpoint handlers
+   - Implement request/response serialization
+   - Set up dependency injection
+   - Extract query/path parameters
+
+4. **Documentation:**
+   - Write OpenAPI/Swagger docs
+   - Document endpoint parameters
+   - Create request/response examples
+   - Document error codes
+
+5. **Response Standardization:**
+   - Define success response formats
+   - Define error response formats
+   - Implement pagination patterns
+   - Standardize list responses
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Breaking Change** | Frontend breaks after deploy | Version API, communicate changes | Add backward compat, hotfix |
+| **Missing Validation** | Invalid data reaches service | Use Pydantic constraints | Add validators, fix data |
+| **Inconsistent Response** | Frontend can't parse | Use standard response schemas | Update schema, document |
+| **Leaked Sensitive Data** | PII in API response | Use response schemas, review | Remove field, security audit |
+| **N+1 Query** | Slow endpoint, many queries | Use eager loading in service | Optimize with joins |
+| **Missing Error Handler** | 500 on validation error | Handle all error cases | Add exception handler |
+| **Wrong HTTP Method** | REST violation | Follow REST conventions | Document and migrate |
+| **Undocumented Endpoint** | Frontend guesses format | Always add docstrings | Add documentation |
+
+---
+
 ## Constraints
 
 ### API Design Standards
