@@ -38,6 +38,23 @@ description: Mandatory session close-out with IG audit, AAR, and optional HISTOR
 - Architectural decisions
 - Notable incidents
 
+### 4. Knowledge Preservation (G-Staff Integration)
+
+**Invoke G4_CONTEXT_MANAGER (RAG/Vector Updates):**
+- Index new session artifacts for retrieval
+- Update embeddings for modified documentation
+- Ensure next session has full context access
+
+**Invoke KNOWLEDGE_CURATOR (via COORD_OPS):**
+- Extract cross-session patterns
+- Update PATTERNS.md, DECISIONS.md
+- Create session handoff documentation
+
+**Invoke G4_LIBRARIAN (optional):**
+- Archive session transcripts
+- Catalog new skills/agents created
+- Update knowledge graph relationships
+
 ## Toggle
 
 If `governance_enabled: false` in config.json:
@@ -88,6 +105,11 @@ Skips all checks. Logs bypass.
 ## HISTORIAN Entry (if significant)
 [Summary for session history]
 
+## Knowledge Preservation (G-Staff)
+- G4_CONTEXT_MANAGER: [documents indexed for RAG]
+- KNOWLEDGE_CURATOR: [patterns extracted, handoff created]
+- G4_LIBRARIAN: [artifacts cataloged] (if invoked)
+
 ## Recommendations for Next Session
 - [item]
 
@@ -135,9 +157,15 @@ Skips all checks. Logs bypass.
    - Write to `.claude/History/sessions/`
    - Include major decisions and outcomes
 
-8. **Final Handoff**
+8. **Knowledge Preservation** (G-Staff)
+   - Spawn G4_CONTEXT_MANAGER for RAG/vector updates
+   - Spawn KNOWLEDGE_CURATOR for pattern synthesis
+   - Optionally spawn G4_LIBRARIAN for archival
+
+9. **Final Handoff**
    - Summarize state for next session
    - Note any pending work
+   - Verify RAG index updated
 
 ## Integration with Other Skills
 
