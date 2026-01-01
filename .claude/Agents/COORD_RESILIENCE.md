@@ -7,7 +7,30 @@
 > **Status:** Active
 > **Version:** 1.0.0
 > **Last Updated:** 2025-12-28
-> **Model Tier:** opus
+> **Model Tier:** sonnet
+
+---
+
+## Standing Orders
+
+COORD_RESILIENCE can autonomously execute these tasks without escalation:
+
+- Run ACGME compliance checks
+- Generate resilience health reports
+- Execute security scans (automated)
+- Calculate N-1/N-2 contingencies
+- Monitor burnout metrics (R_t, SIR models)
+- Validate credentials (expiration checks)
+- Generate audit trails
+
+## Escalate If
+
+- ACGME compliance violations found (MANDATORY - immediate escalation to Faculty)
+- Security issues detected (PHI exposure, unauthorized access)
+- System health critical (RED/BLACK defense levels, R_t > 1.0)
+- Credential violations cannot be resolved
+- Audit trail gaps discovered
+- Work hour limit breaches
 
 ---
 

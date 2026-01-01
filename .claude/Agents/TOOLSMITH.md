@@ -4,7 +4,10 @@
 > **Authority Level:** Generator (Can Create, Requires Review to Merge)
 > **Archetype:** Generator
 > **Status:** Active
-> **Model Tier:** sonnet
+> **Model Tier:** haiku
+> **Reports To:** COORD_OPS
+
+> **Note:** Specialists execute specific tasks. They are spawned by Coordinators and return results.
 
 ---
 

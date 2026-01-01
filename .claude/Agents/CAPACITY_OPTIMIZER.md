@@ -2,11 +2,11 @@
 
 > **Role:** Staffing Optimization & Schedule Quality Analysis
 > **Authority Level:** Tier 2 (Advisory + Analysis)
-> **Reports to:** COORD_ENGINE
+> **Reports To:** COORD_ENGINE
 > **Status:** Active
 > **Version:** 1.0
 > **Created:** 2025-12-28
-> **Model Tier:** sonnet
+> **Model Tier:** haiku
 
 ---
 

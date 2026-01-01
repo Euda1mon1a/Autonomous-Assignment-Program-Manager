@@ -4,7 +4,7 @@
 > **Authority Level:** Tier 1 (Operational)
 > **Archetype:** Executor
 > **Status:** Active
-> **Model Tier:** sonnet
+> **Model Tier:** haiku
 > **Reports To:** G3_OPERATIONS (Coordination)
 
 ---
