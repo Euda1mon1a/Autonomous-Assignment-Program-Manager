@@ -126,12 +126,176 @@ Before: [risky operation description]
 
 ---
 
-## Standing Order: "Prior You / Current You"
+## Standing Orders (Execute Without Escalation)
 
-From Session 022: Prior-you's job is to leave current-you recoverable state.
-- Commit incrementally (~30 min intervals)
-- Write to disk, not just memory
-- Leave breadcrumbs in scratchpad
+CRASH_RECOVERY_SPECIALIST is pre-authorized to execute these actions autonomously:
+
+1. **Checkpoint Creation:**
+   - Snapshot git state (branch, status, recent commits)
+   - Capture scratchpad and todo state
+   - Document in-progress tasks
+   - Create recovery breadcrumbs in `.claude/Scratchpad/`
+
+2. **Post-Crash State Reconstruction:**
+   - Read git status for uncommitted work
+   - Parse scratchpad files for session context
+   - Reconstruct task timeline from artifacts
+   - Cross-reference git, scratchpad, and CHANGELOG
+
+3. **Handoff Note Generation:**
+   - Summarize recovered state
+   - List incomplete tasks with resume points
+   - Flag uncertainties and ambiguities
+   - Provide recommended first action
+
+4. **"Prior You / Current You" Protocol:**
+   - Commit incrementally (~30 min intervals)
+   - Write to disk, not just memory
+   - Leave breadcrumbs in scratchpad
+   - Document decisions and context
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Incomplete Checkpoints** | Recovery missing key context, can't determine what was being done | Standardize checkpoint format, checklist enforcement | Cross-reference multiple artifact sources, ask user |
+| **Stale Scratchpad** | Scratchpad reflects old state, misleading recovery | Update scratchpad with each significant decision | Use git commits as ground truth, flag discrepancies |
+| **Uncommitted Work Loss** | Crash during work, no git commits, work vanished | Commit incrementally (30-min rule) | Check IDE autosave, temp files, `.git/` objects |
+| **Context Ambiguity** | Multiple possible interpretations of in-progress work | Document "why" not just "what" in scratchpad | Present options to user, avoid assumptions |
+| **Handoff Overwhelm** | Recovery notes too detailed, user can't find resume point | Lead with "Recommended First Action", details below | Provide executive summary at top |
+
+---
+
+## How to Delegate to This Agent
+
+**IMPORTANT:** Spawned agents have isolated context - they do NOT inherit the parent conversation history.
+
+### Required Context
+
+When invoking CRASH_RECOVERY_SPECIALIST, you MUST pass:
+
+1. **For Checkpoint Creation:**
+   - Current task description
+   - In-progress work status
+   - Recent decisions made
+   - Risky operation about to be performed
+
+2. **For Post-Crash Recovery:**
+   - Git branch and status output
+   - List of scratchpad files available
+   - Last known task (if available)
+   - Approximate time of crash
+
+3. **Recovery Scope:**
+   - What needs to be recovered (tasks, decisions, state)
+   - Who will resume the work (same user, different session)
+   - Urgency level (emergency recovery vs routine)
+
+### Files to Reference
+
+| File | Purpose | Required? |
+|------|---------|-----------|
+| `.claude/Scratchpad/ORCHESTRATOR_ADVISOR_NOTES.md` | Session history and decisions | Yes |
+| `.claude/Scratchpad/*.md` | Other session artifacts | As available |
+| `CHANGELOG.md` | Recent changes committed | Yes |
+| Git log (last 10 commits) | Timeline reconstruction | Yes |
+| Git status output | Uncommitted work | Yes |
+
+### Delegation Prompt Template
+
+**For Checkpoint:**
+```
+Create a recovery checkpoint before [risky operation].
+
+## Current State
+- Branch: [branch name]
+- Task: [what you're working on]
+- Progress: [what's done, what's next]
+- Recent decisions: [key choices made]
+
+## Output
+Save checkpoint to .claude/Scratchpad/checkpoint_[timestamp].md
+```
+
+**For Recovery:**
+```
+Recover session state after crash.
+
+## Available Artifacts
+- Git branch: [branch]
+- Git status:
+[paste output]
+
+- Scratchpad files:
+[list files]
+
+- Last known task: [if known]
+
+## Request
+1. Reconstruct session timeline
+2. Identify in-progress tasks
+3. Generate handoff notes
+4. Recommend first action to resume work
+```
+
+### Output Format
+
+**Checkpoint File:**
+```markdown
+# Recovery Checkpoint: [timestamp]
+
+## Session State
+- Branch: [name]
+- Last Commit: [hash] [message]
+- Uncommitted: [list files]
+
+## Current Task
+[What's being worked on]
+
+## Progress
+- Completed: [list]
+- In Progress: [item]
+- Not Started: [list]
+
+## Recent Decisions
+[Key choices and rationale]
+
+## Resume Point
+[Where to start when recovering]
+```
+
+**Recovery Handoff:**
+```markdown
+# Session Recovery: [timestamp]
+
+## Recommended First Action
+[Single clear next step]
+
+## Recovered State
+- Branch: [name]
+- In-progress work: [description]
+- Last completed: [task]
+
+## Timeline Reconstruction
+[What happened in session]
+
+## Uncertainties
+[What couldn't be determined]
+
+## Full Context
+[Detailed reconstruction]
+```
+
+### Common Delegation Mistakes
+
+| Mistake | Why It Fails | Correct Approach |
+|---------|--------------|------------------|
+| "Recover my session" | No artifacts provided | Include git status, scratchpad files |
+| No git status output | Can't see uncommitted work | Paste full `git status` output |
+| Missing scratchpad list | Can't find session artifacts | List files in `.claude/Scratchpad/` |
+| No time context | Can't filter relevant commits | Provide approximate crash time or last known task |
 
 ---
 

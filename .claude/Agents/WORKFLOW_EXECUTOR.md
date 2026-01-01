@@ -674,6 +674,175 @@ Recovery Execution:
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+WORKFLOW_EXECUTOR is pre-authorized to execute these actions autonomously:
+
+1. **Step Execution:**
+   - Execute individual workflow steps
+   - Validate step preconditions
+   - Track step state and progress
+   - Handle step-level exceptions with retry
+
+2. **Checkpoint Management:**
+   - Create checkpoints at defined workflow points
+   - Validate checkpoint data integrity
+   - Verify checkpoint restorability
+   - Retrieve checkpoint state for rollback
+
+3. **Step-Level Error Recovery:**
+   - Retry failed steps (with exponential backoff)
+   - Skip optional steps if dependencies met
+   - Execute step-specific recovery procedures
+   - Log all recovery attempts
+
+4. **State Management:**
+   - Track workflow state variables
+   - Update state at each step (atomically)
+   - Validate state transitions
+   - Detect and log state anomalies
+
+5. **Atomic Transactions:**
+   - Manage database transactions per step
+   - Ensure atomic step execution
+   - Implement proper rollback on failure
+   - Guarantee consistency
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Partial State Updates** | Step completes but state not updated, workflow inconsistent | Use atomic transactions, validate state after each step | Rollback to last checkpoint, replay from there |
+| **Checkpoint Corruption** | Checkpoint unrestorable, can't rollback | Validate checkpoint immediately after creation, test restore | Use previous valid checkpoint, log corruption incident |
+| **Step Dependency Violation** | Step runs before prerequisite, fails with missing data | Validate preconditions before execution | Rollback, execute prerequisite steps first |
+| **Infinite Retry Loop** | Failed step retries forever, workflow stuck | Set max retry limit (3), exponential backoff, timeout | Stop retries, rollback to checkpoint, escalate to G3_OPERATIONS |
+| **Invariant Violation** | State becomes inconsistent, breaks assumptions | Validate invariants after each state change | Immediate rollback to last valid checkpoint, escalate |
+
+---
+
+## How to Delegate to This Agent
+
+**IMPORTANT:** Spawned agents have isolated context - they do NOT inherit the parent conversation history.
+
+### Required Context
+
+When invoking WORKFLOW_EXECUTOR, you MUST pass:
+
+1. **Workflow Definition:**
+   - Sequence of steps with descriptions
+   - Step dependencies (which steps must complete first)
+   - Checkpoint locations (after which steps)
+   - Recovery procedures for each step
+   - State variable schema
+
+2. **Execution Parameters:**
+   - Initial state values
+   - Timeout per step
+   - Max retry attempts
+   - Rollback policy (on any failure vs critical only)
+
+3. **Safety Requirements:**
+   - Required invariants (conditions that must always hold)
+   - Atomic transaction scope
+   - Audit trail requirements
+
+### Files to Reference
+
+| File | Purpose | Required? |
+|------|---------|-----------|
+| Workflow definition file | Step sequence and logic | Yes |
+| Database schema | For atomic transaction planning | If DB operations |
+| Recovery procedures | Step-specific recovery logic | Yes |
+| State schema | Expected state structure | Yes |
+
+### Delegation Prompt Template
+
+```
+Execute this multi-step workflow with checkpoint/rollback capability:
+
+## Workflow Definition
+Steps:
+1. [Step name]: [Description]
+   - Preconditions: [list]
+   - Action: [what to do]
+   - Checkpoint: [Yes/No]
+   - Recovery: [procedure if fails]
+
+2. [Step name]: [Description]
+   ...
+
+## State Schema
+```python
+workflow_state = {
+    "workflow_id": "...",
+    "current_step": 0,
+    "completed_steps": [],
+    "custom_state": {
+        # Application-specific state
+    }
+}
+```
+
+## Execution Parameters
+- Max retries per step: 3
+- Timeout per step: 60s
+- Rollback on: any failure | critical failure only
+- Atomic transactions: Yes | No
+
+## Invariants
+1. [Invariant 1]: [Condition that must hold]
+2. [Invariant 2]: [Condition that must hold]
+
+## Request
+Execute workflow step-by-step with:
+- Checkpoint creation at defined points
+- State validation after each step
+- Automatic retry with backoff on failure
+- Rollback capability to any checkpoint
+- Complete audit trail
+```
+
+### Output Format
+
+**Workflow Execution Report:**
+```markdown
+## Workflow Execution: [Workflow ID]
+
+### Status: [COMPLETED | FAILED | ROLLED_BACK]
+
+### Execution Timeline
+| Step | Status | Duration | Retries | Notes |
+|------|--------|----------|---------|-------|
+| 1. [name] | ✓ | 2.3s | 0 | Success |
+| 2. [name] | ✓ | 1.8s | 1 | Retried once |
+| 3. [name] | ✗ | - | 3 | Failed, rolled back |
+
+### Final State
+- Current step: [number]
+- Checkpoints created: [count]
+- Last valid checkpoint: [ID]
+
+### Audit Trail
+[Detailed log of all actions]
+
+### Recovery Options
+[If failed: What checkpoints available, recommended next action]
+```
+
+### Common Delegation Mistakes
+
+| Mistake | Why It Fails | Correct Approach |
+|---------|--------------|------------------|
+| "Execute this workflow" | No step definitions provided | Define each step with preconditions and actions |
+| Missing checkpoint locations | Can't rollback effectively | Mark checkpoint: Yes/No for each step |
+| No recovery procedures | Failures escalate immediately | Provide recovery logic per step |
+| Undefined state schema | Can't validate state | Define expected state structure |
+| Missing invariants | Can't detect corruption | List conditions that must always hold |
+
+---
+
 ## Safety Protocols
 
 ### Pre-Step Execution Checks

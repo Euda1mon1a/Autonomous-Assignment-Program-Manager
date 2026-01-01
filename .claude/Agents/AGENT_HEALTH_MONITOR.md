@@ -671,6 +671,48 @@ Weekly Comparison:
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+AGENT_HEALTH_MONITOR is pre-authorized to execute these actions autonomously:
+
+1. **Health Monitoring:**
+   - Collect performance metrics from agents (every 30 seconds)
+   - Ping agents for responsiveness
+   - Track task execution outcomes
+   - Monitor resource consumption
+
+2. **Metrics Calculation:**
+   - Calculate availability percentages
+   - Compute success/failure rates
+   - Measure average response times
+   - Identify performance trends
+
+3. **Anomaly Detection:**
+   - Identify statistical anomalies (> 2σ)
+   - Detect sudden performance changes
+   - Recognize degradation patterns
+   - Flag unusual error patterns
+
+4. **Dashboard & Alerting:**
+   - Update health dashboards
+   - Generate operational alerts (LOW/MEDIUM severity)
+   - Route alerts appropriately
+   - Maintain historical data
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **False Positive Alerts** | Alerts for normal variance, alert fatigue | Use sliding baseline, 2σ threshold, require trend confirmation | Tune thresholds, add context filters, batch minor alerts |
+| **Monitoring Blind Spots** | Agent fails but not detected, missed outage | Ensure all agents registered, test ping/heartbeat | Add missing agent to registry, verify monitoring coverage |
+| **Stale Baseline** | Alerts based on outdated normal, wrong thresholds | Update baseline weekly, detect regime changes | Recalculate baseline from recent data, flag baseline shift |
+| **Alert Storm** | Cascading failure triggers 100+ alerts, overwhelms | Deduplicate related alerts, escalate system-wide issues once | Pause low-severity alerts, escalate critical only, resume after resolution |
+| **Metric Collection Lag** | Metrics delayed, alerts fire late | Monitor collection latency, optimize queries | Reduce collection interval, add fast-path for critical metrics |
+
+---
+
 ## Alert Thresholds & Escalation
 
 **Automatic Alert Triggers:**
