@@ -3,6 +3,8 @@
 > **Archetype:** Documenter (Narrative/Reflective)
 > **Version:** 1.0.0
 > **Created:** 2025-12-28
+> **Model Tier:** sonnet
+> **Reports To:** ORCHESTRATOR (Historical Record - PAO)
 > **Purpose:** Capture human-readable session narratives for non-technical stakeholders
 
 ---

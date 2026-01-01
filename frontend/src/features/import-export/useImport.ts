@@ -256,7 +256,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
         warnings = result.warnings;
       } catch (backendError) {
         // Backend failed, try client-side fallback
-        // console.warn(
+        console.warn(
           'Backend xlsx parsing failed, using client-side fallback:',
           backendError instanceof Error ? backendError.message : backendError
         );

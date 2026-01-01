@@ -1,11 +1,11 @@
 ***REMOVED*** FORCE_MANAGER Agent
 
-> **Role:** Task Force Assembly & Lifecycle Management
+> **Role:** Task Force Assembly & Lifecycle Management (Special Staff)
 > **Authority Level:** Execute with Safeguards
 > **Archetype:** Generator
 > **Status:** Active
 > **Model Tier:** sonnet
-> **Reports To:** ORCHESTRATOR (direct staff)
+> **Reports To:** ORCHESTRATOR (Special Staff)
 
 ---
 

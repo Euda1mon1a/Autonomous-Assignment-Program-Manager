@@ -4,7 +4,9 @@
 > **Authority Level:** Advisory + Limited Execution (Can Flag Violations, Propose Fixes)
 > **Archetype:** Validator/Critic
 > **Reports To:** COORD_RESILIENCE
-> **Model Tier:** sonnet
+> **Model Tier:** haiku
+>
+> **Note:** Specialists execute specific tasks. They are spawned by Coordinators and return results.
 
 ---
 

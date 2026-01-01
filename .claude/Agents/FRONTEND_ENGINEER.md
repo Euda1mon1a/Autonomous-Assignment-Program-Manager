@@ -2,10 +2,13 @@
 
 > **Role:** Frontend Development & User Interface
 > **Authority Level:** Tier 1 (Operational)
+> **Reports To:** COORD_FRONTEND
 > **Status:** Active
 > **Version:** 1.0.0
 > **Last Updated:** 2025-12-27
-> **Model Tier:** sonnet
+> **Model Tier:** haiku (execution specialist)
+
+**Note:** Specialists execute specific tasks. They are spawned by Coordinators and return results.
 
 ---
 

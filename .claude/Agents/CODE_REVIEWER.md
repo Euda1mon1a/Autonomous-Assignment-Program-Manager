@@ -4,7 +4,10 @@
 > **Authority Level:** Validator (Can Block)
 > **Archetype:** Critic
 > **Status:** Active
-> **Model Tier:** sonnet
+> **Model Tier:** haiku
+> **Reports To:** COORD_QUALITY
+>
+> **Note:** Specialists execute specific tasks. They are spawned by Coordinators and return results.
 
 ---
 

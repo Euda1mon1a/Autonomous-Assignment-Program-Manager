@@ -141,7 +141,7 @@ class GlobalErrorHandler {
     // TODO: Integrate with error reporting service (e.g., Sentry)
     // For now, just log that we would report
     if (process.env.NODE_ENV === 'development') {
-      // console.log('[ERROR REPORTING]', 'Would report error to external service', {
+      console.debug('[ERROR REPORTING]', 'Would report error to external service', {
         error,
         context,
       })

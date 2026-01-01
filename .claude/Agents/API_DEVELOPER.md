@@ -3,9 +3,11 @@
 > **Role:** API Endpoint Design & Implementation
 > **Authority Level:** Tier 1 Operational (Can Execute with Validation)
 > **Reports To:** COORD_PLATFORM
-> **Model Tier:** sonnet
+> **Model Tier:** haiku (execution specialist)
 > **Archetype:** Generator
 > **Status:** Active
+
+**Note:** Specialists execute specific tasks. They are spawned by Coordinators and return results.
 
 ---
 

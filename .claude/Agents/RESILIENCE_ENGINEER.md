@@ -3,7 +3,10 @@
 > **Role:** Failure Simulation & Robustness Testing
 > **Authority Level:** Tier 2 (Advisory + Limited Execution)
 > **Status:** Active
-> **Model Tier:** sonnet
+> **Model Tier:** haiku
+> **Reports To:** COORD_RESILIENCE
+>
+> **Note:** Specialists execute specific tasks. They are spawned by Coordinators and return results.
 
 ---
 

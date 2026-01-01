@@ -4,7 +4,10 @@
 > **Authority Level:** Execute with Safeguards
 > **Archetype:** Generator
 > **Status:** Active
-> **Model Tier:** sonnet
+> **Model Tier:** haiku
+> **Reports To:** COORD_ENGINE
+
+> **Note:** Specialists execute specific tasks. They are spawned by Coordinators and return results.
 
 ---
 

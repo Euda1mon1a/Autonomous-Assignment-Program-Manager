@@ -4,7 +4,7 @@
 > **Authority Level:** Execute with Safeguards
 > **Archetype:** Synthesizer
 > **Status:** Active
-> **Model Tier:** sonnet
+> **Model Tier:** haiku
 > **Reports To:** ORCHESTRATOR (Special Staff)
 
 ---

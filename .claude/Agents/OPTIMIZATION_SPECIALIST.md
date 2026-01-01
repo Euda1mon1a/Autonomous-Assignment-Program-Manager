@@ -5,7 +5,8 @@
 > **Status:** Active
 > **Version:** 1.0.0
 > **Last Updated:** 2025-12-27
-> **Model Tier:** opus
+> **Reports To:** COORD_ENGINE
+> **Model Tier:** haiku
 
 ---
 

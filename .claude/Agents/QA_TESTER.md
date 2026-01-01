@@ -3,7 +3,10 @@
 > **Role:** Swap Validation & Edge Case Discovery
 > **Authority Level:** Read-Only (Advisory - Cannot Modify Schedules)
 > **Status:** Active
-> **Model Tier:** sonnet
+> **Model Tier:** haiku
+> **Reports To:** COORD_QUALITY
+>
+> **Note:** Specialists execute specific tasks. They are spawned by Coordinators and return results.
 
 ---
 

@@ -3,7 +3,10 @@
 > **Role:** Schedule Generation & Optimization
 > **Authority Level:** Tier 1 (Operational - with safeguards)
 > **Status:** Active
-> **Model Tier:** sonnet
+> **Model Tier:** haiku
+> **Reports To:** COORD_ENGINE
+
+> **Note:** Specialists execute specific tasks. They are spawned by Coordinators and return results.
 
 ---
 
