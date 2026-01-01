@@ -67,6 +67,7 @@ class ResolutionOption:
     error_message: str | None = None
 
     def __post_init__(self) -> None:
+        """Initialize created_at timestamp if not provided."""
         if self.created_at is None:
             self.created_at = datetime.utcnow()
 
@@ -92,6 +93,12 @@ class ConflictAlertService:
     """
 
     def __init__(self, db: Session):
+        """
+        Initialize conflict alert service.
+
+        Args:
+            db: Database session for queries and transactions
+        """
         self.db = db
 
     def create_alert(
@@ -158,7 +165,15 @@ class ConflictAlertService:
         return alert
 
     def get_alert(self, alert_id: UUID) -> ConflictAlert | None:
-        """Get an alert by ID."""
+        """
+        Get an alert by ID.
+
+        Args:
+            alert_id: UUID of the alert to retrieve
+
+        Returns:
+            ConflictAlert if found, None otherwise
+        """
         return self.db.query(ConflictAlert).filter(ConflictAlert.id == alert_id).first()
 
     def get_alerts_for_faculty(
@@ -195,7 +210,16 @@ class ConflictAlertService:
         fmit_week: date,
         faculty_id: UUID | None = None,
     ) -> list[ConflictAlert]:
-        """Get all alerts for a specific FMIT week."""
+        """
+        Get all alerts for a specific FMIT week.
+
+        Args:
+            fmit_week: The FMIT week start date
+            faculty_id: Optional filter by specific faculty member
+
+        Returns:
+            List of ConflictAlert objects for the specified week
+        """
         query = self.db.query(ConflictAlert).filter(
             ConflictAlert.fmit_week == fmit_week
         )
@@ -348,7 +372,15 @@ class ConflictAlertService:
         return True
 
     def count_unresolved_by_faculty(self, faculty_id: UUID) -> int:
-        """Count unresolved alerts for a faculty member."""
+        """
+        Count unresolved alerts for a faculty member.
+
+        Args:
+            faculty_id: UUID of the faculty member
+
+        Returns:
+            Number of unresolved (NEW or ACKNOWLEDGED) alerts
+        """
         return (
             self.db.query(ConflictAlert)
             .filter(
@@ -361,7 +393,12 @@ class ConflictAlertService:
         )
 
     def get_critical_alerts(self) -> list[ConflictAlert]:
-        """Get all unresolved critical alerts."""
+        """
+        Get all unresolved critical alerts.
+
+        Returns:
+            List of critical severity alerts sorted by FMIT week
+        """
         return (
             self.db.query(ConflictAlert)
             .filter(
@@ -620,7 +657,15 @@ class ConflictAlertService:
         self,
         alert: ConflictAlert,
     ) -> list[ResolutionOption]:
-        """Generate resolution options for leave/FMIT overlap conflicts."""
+        """
+        Generate resolution options for leave/FMIT overlap conflicts.
+
+        Args:
+            alert: The conflict alert to resolve
+
+        Returns:
+            List of ResolutionOption objects for leave overlap scenarios
+        """
         options = []
 
         # Option 1: Swap with another faculty for this week
@@ -682,7 +727,15 @@ class ConflictAlertService:
         self,
         alert: ConflictAlert,
     ) -> list[ResolutionOption]:
-        """Generate resolution options for back-to-back FMIT conflicts."""
+        """
+        Generate resolution options for back-to-back FMIT conflicts.
+
+        Args:
+            alert: The conflict alert to resolve
+
+        Returns:
+            List of ResolutionOption objects for back-to-back scenarios
+        """
         options = []
 
         # Option 1: Swap one of the weeks with another faculty
@@ -719,7 +772,15 @@ class ConflictAlertService:
         self,
         alert: ConflictAlert,
     ) -> list[ResolutionOption]:
-        """Generate options for workload balance conflicts."""
+        """
+        Generate options for workload balance conflicts.
+
+        Args:
+            alert: The conflict alert to resolve
+
+        Returns:
+            List of ResolutionOption objects for workload redistribution
+        """
         options = []
 
         # Option: Redistribute assignments
@@ -742,7 +803,15 @@ class ConflictAlertService:
         self,
         alert: ConflictAlert,
     ) -> list[ResolutionOption]:
-        """Generate options for external commitment conflicts."""
+        """
+        Generate options for external commitment conflicts.
+
+        Args:
+            alert: The conflict alert to resolve
+
+        Returns:
+            List of ResolutionOption objects for external commitment scenarios
+        """
         options = []
 
         # Primary option: Find coverage
@@ -766,7 +835,16 @@ class ConflictAlertService:
         alert: ConflictAlert,
         resolution: ResolutionOption,
     ) -> tuple[bool, str]:
-        """Validate a swap resolution."""
+        """
+        Validate a swap resolution.
+
+        Args:
+            alert: The conflict alert being resolved
+            resolution: The swap resolution option to validate
+
+        Returns:
+            Tuple of (is_valid: bool, validation_message: str)
+        """
         details = resolution.details
         target_faculty_id = details.get("target_faculty_id")
 
@@ -791,7 +869,16 @@ class ConflictAlertService:
         alert: ConflictAlert,
         resolution: ResolutionOption,
     ) -> tuple[bool, str]:
-        """Validate a time boundary adjustment."""
+        """
+        Validate a time boundary adjustment.
+
+        Args:
+            alert: The conflict alert being resolved
+            resolution: The time adjustment resolution option
+
+        Returns:
+            Tuple of (is_valid: bool, validation_message: str)
+        """
         # Time adjustments are generally safe but low impact
         return True, "Time adjustment is valid"
 
@@ -800,7 +887,16 @@ class ConflictAlertService:
         alert: ConflictAlert,
         resolution: ResolutionOption,
     ) -> tuple[bool, str]:
-        """Validate a backup reassignment."""
+        """
+        Validate a backup reassignment.
+
+        Args:
+            alert: The conflict alert being resolved
+            resolution: The backup reassignment resolution option
+
+        Returns:
+            Tuple of (is_valid: bool, validation_message: str)
+        """
         # Check if backup pool has capacity
         has_capacity = self._check_backup_pool_availability(alert.fmit_week)
         if not has_capacity:
@@ -813,7 +909,16 @@ class ConflictAlertService:
         alert: ConflictAlert,
         resolution: ResolutionOption,
     ) -> tuple[bool, str]:
-        """Validate a coverage request."""
+        """
+        Validate a coverage request.
+
+        Args:
+            alert: The conflict alert being resolved
+            resolution: The coverage request resolution option
+
+        Returns:
+            Tuple of (is_valid: bool, validation_message: str)
+        """
         # Coverage requests are always valid but may not be filled
         return True, "Coverage request is valid"
 
@@ -823,7 +928,17 @@ class ConflictAlertService:
         option: ResolutionOption,
         user_id: UUID | None,
     ) -> tuple[bool, str]:
-        """Apply a swap assignment resolution."""
+        """
+        Apply a swap assignment resolution.
+
+        Args:
+            alert: The conflict alert being resolved
+            option: The resolution option to apply
+            user_id: User applying the resolution (None for system)
+
+        Returns:
+            Tuple of (success: bool, message: str)
+        """
         details = option.details
         source_faculty_id = UUID(details["source_faculty_id"])
         target_faculty_id = details.get("target_faculty_id")
@@ -860,7 +975,17 @@ class ConflictAlertService:
         option: ResolutionOption,
         user_id: UUID | None,
     ) -> tuple[bool, str]:
-        """Apply a time boundary adjustment."""
+        """
+        Apply a time boundary adjustment.
+
+        Args:
+            alert: The conflict alert being resolved
+            option: The resolution option to apply
+            user_id: User applying the resolution (None for system)
+
+        Returns:
+            Tuple of (success: bool, message: str)
+        """
         # This would adjust assignment time boundaries
         # For now, just note it in the resolution
         return True, "Time boundaries adjusted (simulation)"
@@ -871,7 +996,17 @@ class ConflictAlertService:
         option: ResolutionOption,
         user_id: UUID | None,
     ) -> tuple[bool, str]:
-        """Apply a backup personnel reassignment."""
+        """
+        Apply a backup personnel reassignment.
+
+        Args:
+            alert: The conflict alert being resolved
+            option: The resolution option to apply
+            user_id: User applying the resolution (None for system)
+
+        Returns:
+            Tuple of (success: bool, message: str)
+        """
         # This would create assignments for backup personnel
         # For now, just note it
         return True, "Reassigned to backup pool (simulation)"
@@ -882,7 +1017,17 @@ class ConflictAlertService:
         option: ResolutionOption,
         user_id: UUID | None,
     ) -> tuple[bool, str]:
-        """Apply a coverage pool request."""
+        """
+        Apply a coverage pool request.
+
+        Args:
+            alert: The conflict alert being resolved
+            option: The resolution option to apply
+            user_id: User applying the resolution (None for system)
+
+        Returns:
+            Tuple of (success: bool, message: str)
+        """
         # This would create a coverage request notification
         # For now, just note it
         return True, "Coverage request sent to faculty pool"
@@ -891,7 +1036,15 @@ class ConflictAlertService:
         self,
         resolution: ResolutionOption,
     ) -> ImpactEstimate:
-        """Estimate impact of a swap resolution."""
+        """
+        Estimate impact of a swap resolution.
+
+        Args:
+            resolution: The swap resolution option to estimate
+
+        Returns:
+            ImpactEstimate with predicted outcomes
+        """
         # Swaps typically affect 2 faculty members
         return ImpactEstimate(
             affected_faculty_count=2,
@@ -906,7 +1059,15 @@ class ConflictAlertService:
         self,
         resolution: ResolutionOption,
     ) -> ImpactEstimate:
-        """Estimate impact of time boundary adjustment."""
+        """
+        Estimate impact of time boundary adjustment.
+
+        Args:
+            resolution: The time adjustment resolution option
+
+        Returns:
+            ImpactEstimate with predicted outcomes
+        """
         return ImpactEstimate(
             affected_faculty_count=1,
             affected_weeks_count=1,
@@ -920,7 +1081,15 @@ class ConflictAlertService:
         self,
         resolution: ResolutionOption,
     ) -> ImpactEstimate:
-        """Estimate impact of backup reassignment."""
+        """
+        Estimate impact of backup reassignment.
+
+        Args:
+            resolution: The backup reassignment resolution option
+
+        Returns:
+            ImpactEstimate with predicted outcomes
+        """
         return ImpactEstimate(
             affected_faculty_count=2,  # Original + backup
             affected_weeks_count=1,
@@ -934,7 +1103,15 @@ class ConflictAlertService:
         self,
         resolution: ResolutionOption,
     ) -> ImpactEstimate:
-        """Estimate impact of coverage pool request."""
+        """
+        Estimate impact of coverage pool request.
+
+        Args:
+            resolution: The coverage pool resolution option
+
+        Returns:
+            ImpactEstimate with predicted outcomes
+        """
         return ImpactEstimate(
             affected_faculty_count=1,  # Plus volunteer
             affected_weeks_count=1,

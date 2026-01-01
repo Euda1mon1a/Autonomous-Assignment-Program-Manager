@@ -52,7 +52,7 @@ async def list_call_assignments(
     call_type: str | None = Query(None, description="Filter by call type"),
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Max records to return"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> CallAssignmentListResponse:
     """List call assignments with optional filters."""
@@ -75,7 +75,7 @@ async def list_call_assignments(
 )
 async def get_call_assignment(
     call_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> CallAssignmentResponse:
     """Get a single call assignment by ID."""
@@ -93,7 +93,7 @@ async def get_call_assignment(
 )
 async def create_call_assignment(
     assignment_in: CallAssignmentCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> CallAssignmentResponse:
     """Create a new call assignment."""
@@ -111,7 +111,7 @@ async def create_call_assignment(
 async def update_call_assignment(
     call_id: UUID,
     assignment_in: CallAssignmentUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> CallAssignmentResponse:
     """Update a call assignment."""
@@ -128,7 +128,7 @@ async def update_call_assignment(
 )
 async def delete_call_assignment(
     call_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> None:
     """Delete a call assignment."""
@@ -146,7 +146,7 @@ async def delete_call_assignment(
 )
 async def bulk_create_call_assignments(
     bulk_data: BulkCallAssignmentCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> BulkCallAssignmentResponse:
     """Bulk create multiple call assignments."""
@@ -164,7 +164,7 @@ async def get_call_assignments_by_person(
     person_id: UUID,
     start_date: date | None = Query(None, description="Filter by start date"),
     end_date: date | None = Query(None, description="Filter by end date"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> CallAssignmentListResponse:
     """Get all call assignments for a specific person."""
@@ -184,7 +184,7 @@ async def get_call_assignments_by_person(
 )
 async def get_call_assignments_by_date(
     on_date: date,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> CallAssignmentListResponse:
     """Get all call assignments for a specific date."""
@@ -202,7 +202,7 @@ async def get_call_assignments_by_date(
 async def get_coverage_report(
     start_date: date = Query(..., description="Start date for report"),
     end_date: date = Query(..., description="End date for report"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> CallCoverageReport:
     """Get call coverage report for a date range."""
@@ -220,7 +220,7 @@ async def get_coverage_report(
 async def get_equity_report(
     start_date: date = Query(..., description="Start date for report"),
     end_date: date = Query(..., description="End date for report"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> CallEquityReport:
     """Get call equity/distribution report for a date range."""

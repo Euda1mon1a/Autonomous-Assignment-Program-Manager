@@ -1,7 +1,7 @@
 """Schema definitions for Claude Code chat integration."""
 
-from typing import Any, Dict, List, Optional
 from datetime import datetime
+from typing import Any
 from pydantic import BaseModel, Field
 
 

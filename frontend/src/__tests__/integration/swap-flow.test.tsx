@@ -255,7 +255,7 @@ describe('Swap Request Flow - Integration Tests', () => {
       setupApiMock({ swaps: [mockSwapRequests[0], completedSwap] })
 
       const result = await mockedApi.get('/api/swaps?status=pending')
-      const pending = result.items.filter((s: any) => s.status === 'pending')
+      const pending = result.items.filter((s: { status: string }) => s.status === 'pending')
 
       expect(pending).toHaveLength(1)
     })

@@ -41,7 +41,7 @@ class MockWebSocket {
   }
 
   // Helper to simulate receiving a message
-  simulateMessage(data: any): void {
+  simulateMessage(data: unknown): void {
     if (this.onmessage) {
       const event = new MessageEvent('message', {
         data: JSON.stringify(data),
@@ -59,8 +59,20 @@ class MockWebSocket {
 }
 
 // Mock global WebSocket
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-global.WebSocket = MockWebSocket as any;
+// Type assertion required for test mocking - WebSocket is a complex global type
+global.WebSocket = MockWebSocket as unknown as typeof WebSocket;
+
+// Type-safe helper to access mock WebSocket instances
+interface GlobalWithMockWebSocket extends NodeJS.Global {
+  WebSocket: typeof MockWebSocket & {
+    instances?: MockWebSocket[];
+  };
+}
+
+function getMockWebSocket(index: number = 0): MockWebSocket | undefined {
+  const globalWithMock = global as unknown as GlobalWithMockWebSocket;
+  return globalWithMock.WebSocket.instances?.[index];
+}
 
 // Test event data
 const mockScheduleUpdatedEvent = {
@@ -167,7 +179,7 @@ describe('useWebSocket', () => {
     // Simulate receiving a message
     act(() => {
       // Get the mock WebSocket instance
-      const ws = (global as any).WebSocket.instances?.[0];
+      const ws = getMockWebSocket(0);
       if (ws) {
         ws.simulateMessage(mockScheduleUpdatedEvent);
       }
@@ -219,7 +231,7 @@ describe('useWebSocket', () => {
 
     // Simulate an error
     act(() => {
-      const ws = (global as any).WebSocket.instances?.[0];
+      const ws = getMockWebSocket(0);
       if (ws) {
         ws.simulateError();
       }
@@ -274,7 +286,7 @@ describe('useWebSocket', () => {
 
     // Simulate disconnection
     act(() => {
-      const ws = (global as any).WebSocket.instances?.[0];
+      const ws = getMockWebSocket(0);
       if (ws) {
         ws.close();
       }
@@ -312,7 +324,7 @@ describe('useWebSocket', () => {
     // Simulate multiple disconnections to test exponential backoff
     for (let i = 0; i < 3; i++) {
       act(() => {
-        const ws = (global as any).WebSocket.instances?.[i];
+        const ws = getMockWebSocket(i);
         if (ws) {
           ws.close();
         }
@@ -346,7 +358,7 @@ describe('useWebSocket', () => {
     // Simulate multiple failed reconnections
     for (let i = 0; i <= 3; i++) {
       act(() => {
-        const ws = (global as any).WebSocket.instances?.[i];
+        const ws = getMockWebSocket(i);
         if (ws) {
           ws.close();
         }

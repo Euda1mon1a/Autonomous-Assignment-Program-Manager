@@ -12,8 +12,8 @@ from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.role_filter import require_admin
 from app.core.security import get_current_active_user
@@ -584,11 +584,11 @@ async def get_audit_statistics(
     )
 
 
-@router.get("/users")
+@router.get("/users", response_model=list[AuditUser])
 async def get_audit_users(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> list[AuditUser]:
     """
     Get list of users who have audit activity. Requires authentication.
 

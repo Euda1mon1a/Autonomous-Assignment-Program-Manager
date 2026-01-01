@@ -63,6 +63,15 @@ export function ResidentCard({
         onClick ? 'cursor-pointer' : ''
       } ${className}`}
       onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      } : undefined}
+      aria-label={onClick ? `View details for ${name}` : undefined}
     >
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
@@ -83,9 +92,12 @@ export function ResidentCard({
         </div>
 
         {complianceStatus !== 'compliant' && (
-          <AlertCircle className={`w-5 h-5 flex-shrink-0 ${
-            complianceStatus === 'warning' ? 'text-amber-500' : 'text-red-500'
-          }`} />
+          <AlertCircle
+            className={`w-5 h-5 flex-shrink-0 ${
+              complianceStatus === 'warning' ? 'text-amber-500' : 'text-red-500'
+            }`}
+            aria-label={complianceStatus === 'warning' ? 'Compliance warning' : 'Compliance violation'}
+          />
         )}
       </div>
 
@@ -103,7 +115,7 @@ export function ResidentCard({
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-600 flex items-center gap-1">
-              <Clock className="w-3 h-3" />
+              <Clock className="w-3 h-3" aria-hidden="true" />
               Hours this week
             </span>
             <span className={`font-medium ${
@@ -149,6 +161,15 @@ export function ResidentListItem({
         onClick ? 'cursor-pointer' : ''
       } ${className}`}
       onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      } : undefined}
+      aria-label={onClick ? `Select ${name}` : undefined}
     >
       <Avatar src={avatar} name={name} size="sm" />
       <div className="flex-1 min-w-0">

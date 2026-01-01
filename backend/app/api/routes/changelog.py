@@ -520,7 +520,7 @@ async def suggest_version(
     )
 
 
-@router.get("/current")
+@router.get("/current", response_model=dict[str, Any])
 async def get_current_schema(request: Request) -> dict[str, Any]:
     """
     Get current OpenAPI schema.

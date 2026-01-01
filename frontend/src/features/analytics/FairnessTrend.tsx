@@ -7,7 +7,7 @@
  * including Gini coefficient, workload variance, and PGY equity.
  */
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import {
   LineChart,
   Line,
@@ -58,7 +58,7 @@ interface CustomTooltipProps {
 /**
  * Custom tooltip for charts
  */
-function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
+const CustomTooltip = memo(function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) {
     return null;
   }
@@ -82,12 +82,12 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
       ))}
     </div>
   );
-}
+});
 
 /**
  * Period selector buttons
  */
-function PeriodSelector({
+const PeriodSelector = memo(function PeriodSelector({
   selectedPeriod,
   onPeriodChange,
 }: {
@@ -119,12 +119,12 @@ function PeriodSelector({
       ))}
     </div>
   );
-}
+});
 
 /**
  * Metric selector
  */
-function MetricSelector({
+const MetricSelector = memo(function MetricSelector({
   selectedMetric,
   onMetricChange,
 }: {
@@ -161,12 +161,12 @@ function MetricSelector({
       ))}
     </div>
   );
-}
+});
 
 /**
  * Trend indicator
  */
-function TrendIndicator({
+const TrendIndicator = memo(function TrendIndicator({
   direction,
   value,
 }: {
@@ -187,12 +187,12 @@ function TrendIndicator({
       </span>
     </div>
   );
-}
+});
 
 /**
  * Statistics summary card
  */
-function StatisticsSummary({
+const StatisticsSummary = memo(function StatisticsSummary({
   avgGini,
   avgVariance,
   avgPgyEquity,
@@ -227,12 +227,12 @@ function StatisticsSummary({
       </div>
     </div>
   );
-}
+});
 
 /**
  * PGY Equity Comparison Chart
  */
-function PgyEquityChart({ className = '' }: { className?: string }) {
+const PgyEquityChart = memo(function PgyEquityChart({ className = '' }: { className?: string }) {
   const { data: pgyData, isLoading, error } = usePgyEquity();
 
   if (isLoading) {
@@ -282,7 +282,7 @@ function PgyEquityChart({ className = '' }: { className?: string }) {
       </div>
     </div>
   );
-}
+});
 
 // ============================================================================
 // Main Component
@@ -298,6 +298,15 @@ export function FairnessTrend({
   const [chartType, setChartType] = useState<ChartType>('line');
 
   const { data, isLoading, error } = useFairnessTrend(months);
+
+  // Memoize callbacks
+  const handlePeriodChange = useCallback((period: TimePeriod) => {
+    setSelectedPeriod(period);
+  }, []);
+
+  const handleMetricChange = useCallback((metric: MetricType) => {
+    setSelectedMetric(metric);
+  }, []);
 
   if (isLoading) {
     return (
@@ -321,17 +330,20 @@ export function FairnessTrend({
     );
   }
 
-  // Format data for charts
-  const chartData = data.dataPoints.map((point) => ({
-    date: new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    'Gini Coefficient': point.giniCoefficient,
-    'Workload Variance': point.workloadVariance,
-    'PGY Equity Score': point.pgyEquityScore,
-    'Fairness Score': point.fairnessScore,
-  }));
+  // Memoize chart data formatting
+  const chartData = useMemo(() => {
+    if (!data) return [];
+    return data.dataPoints.map((point) => ({
+      date: new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      'Gini Coefficient': point.giniCoefficient,
+      'Workload Variance': point.workloadVariance,
+      'PGY Equity Score': point.pgyEquityScore,
+      'Fairness Score': point.fairnessScore,
+    }));
+  }, [data]);
 
-  // Filter lines based on selected metric
-  const getVisibleLines = () => {
+  // Memoize visible lines based on selected metric
+  const visibleLines = useMemo(() => {
     if (selectedMetric === 'all') {
       return ['Gini Coefficient', 'Workload Variance', 'PGY Equity Score', 'Fairness Score'];
     }
@@ -339,9 +351,7 @@ export function FairnessTrend({
     if (selectedMetric === 'variance') return ['Workload Variance'];
     if (selectedMetric === 'equity') return ['PGY Equity Score'];
     return [];
-  };
-
-  const visibleLines = getVisibleLines();
+  }, [selectedMetric]);
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -354,7 +364,7 @@ export function FairnessTrend({
             <p className="text-sm text-gray-600">Track fairness metrics over time</p>
           </div>
           <div className="flex items-center gap-2">
-            <MetricSelector selectedMetric={selectedMetric} onMetricChange={setSelectedMetric} />
+            <MetricSelector selectedMetric={selectedMetric} onMetricChange={handleMetricChange} />
           </div>
         </div>
 

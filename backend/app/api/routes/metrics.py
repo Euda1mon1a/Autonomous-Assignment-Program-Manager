@@ -15,6 +15,12 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import PlainTextResponse, Response
 
 from app.core.metrics import get_metrics
+from app.schemas.metrics_responses import (
+    MetricsHealthResponse,
+    MetricsInfoResponse,
+    MetricsResetResponse,
+    MetricsSummaryResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +29,11 @@ router = APIRouter(tags=["metrics"])
 
 @router.get(
     "/metrics/health",
+    response_model=MetricsHealthResponse,
     summary="Metrics Health Check",
     description="Check if metrics collection is enabled and functioning",
 )
-async def metrics_health() -> dict[str, Any]:
+async def metrics_health() -> MetricsHealthResponse:
     """
     Check metrics system health.
 
@@ -61,25 +68,26 @@ async def metrics_health() -> dict[str, Any]:
             "system_resources",
         ]
 
-    return {
-        "status": "healthy" if prometheus_available else "degraded",
-        "metrics_enabled": prometheus_available,
-        "collectors": collectors,
-        "prometheus_available": prometheus_available,
-        "message": (
+    return MetricsHealthResponse(
+        status="healthy" if prometheus_available else "degraded",
+        metrics_enabled=prometheus_available,
+        collectors=collectors,
+        prometheus_available=prometheus_available,
+        message=(
             "Metrics collection operational"
             if prometheus_available
             else "Metrics disabled - prometheus_client not available"
         ),
-    }
+    )
 
 
 @router.get(
     "/metrics/info",
+    response_model=MetricsInfoResponse,
     summary="Metrics Information",
     description="Get information about available metrics and their descriptions",
 )
-async def metrics_info() -> dict[str, Any]:
+async def metrics_info() -> MetricsInfoResponse:
     """
     Get information about available metrics.
 
@@ -255,13 +263,13 @@ async def metrics_info() -> dict[str, Any]:
         },
     }
 
-    return {
-        "metrics": metrics_documentation,
-        "total_metrics": sum(
+    return MetricsInfoResponse(
+        metrics=metrics_documentation,
+        total_metrics=sum(
             len(category) for category in metrics_documentation.values()
         ),
-        "categories": list(metrics_documentation.keys()),
-    }
+        categories=list(metrics_documentation.keys()),
+    )
 
 
 @router.get(
@@ -310,10 +318,11 @@ async def export_metrics(request: Request) -> Response:
 
 @router.get(
     "/metrics/summary",
+    response_model=MetricsSummaryResponse,
     summary="Metrics Summary",
     description="Get high-level summary of current metrics",
 )
-async def metrics_summary() -> dict[str, Any]:
+async def metrics_summary() -> MetricsSummaryResponse:
     """
     Get a summary of current metrics values.
 
@@ -338,45 +347,44 @@ async def metrics_summary() -> dict[str, Any]:
     metrics = get_metrics()
 
     if not metrics._enabled:
-        return {
-            "status": "disabled",
-            "message": "Metrics collection is disabled",
-        }
+        return MetricsSummaryResponse(
+            status="disabled",
+            message="Metrics collection is disabled",
+        )
 
     # Note: Extracting current values from Prometheus metrics is complex
     # This is a simplified version showing structure
     # In production, you might want to use prometheus_client's internal APIs
 
-    summary = {
-        "status": "enabled",
-        "timestamp": None,  # Would add current timestamp
-        "http": {
+    return MetricsSummaryResponse(
+        status="enabled",
+        timestamp=None,  # Would add current timestamp
+        http={
             "active_connections": "See /metrics endpoint",
             "requests_in_progress": "See /metrics endpoint",
         },
-        "database": {
+        database={
             "active_connections": "See /metrics endpoint",
             "pool_size": "See /metrics endpoint",
         },
-        "cache": {
+        cache={
             "hit_ratio": "See /metrics endpoint",
         },
-        "background_tasks": {
+        background_tasks={
             "tasks_in_progress": "See /metrics endpoint",
             "queue_depth": "See /metrics endpoint",
         },
-        "message": "For detailed metrics, query the /metrics endpoint directly",
-    }
-
-    return summary
+        message="For detailed metrics, query the /metrics endpoint directly",
+    )
 
 
 @router.post(
     "/metrics/reset",
+    response_model=MetricsResetResponse,
     summary="Reset Metrics (Development Only)",
     description="Reset all metric counters (only available in debug mode)",
 )
-async def reset_metrics() -> dict[str, Any]:
+async def reset_metrics() -> MetricsResetResponse:
     """
     Reset all metrics counters.
 
@@ -403,8 +411,8 @@ async def reset_metrics() -> dict[str, Any]:
     # This would require recreating the metrics registry
     # For now, return a warning
 
-    return {
-        "status": "warning",
-        "message": "Prometheus metrics cannot be reset without restarting the application",
-        "recommendation": "Restart the application to reset metrics",
-    }
+    return MetricsResetResponse(
+        status="warning",
+        message="Prometheus metrics cannot be reset without restarting the application",
+        recommendation="Restart the application to reset metrics",
+    )

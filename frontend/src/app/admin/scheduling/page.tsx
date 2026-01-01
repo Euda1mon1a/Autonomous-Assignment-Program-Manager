@@ -517,16 +517,18 @@ function ConfigurationPanel({
               warning={!configuration.dryRun}
             />
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">
+              <label htmlFor="config-timeout" className="text-sm font-medium text-slate-300">
                 Timeout (seconds)
               </label>
               <input
+                id="config-timeout"
                 type="number"
                 value={configuration.timeoutSeconds}
                 onChange={(e) => onChange({ timeoutSeconds: parseInt(e.target.value) || 300 })}
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
                 min={30}
                 max={3600}
+                aria-label="Schedule generation timeout in seconds"
               />
             </div>
           </div>
@@ -541,11 +543,13 @@ function ConfigurationPanel({
         >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">Academic Year</label>
+              <label htmlFor="config-academic-year" className="text-sm font-medium text-slate-300">Academic Year</label>
               <select
+                id="config-academic-year"
                 value={configuration.academicYear}
                 onChange={(e) => onChange({ academicYear: e.target.value })}
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
+                aria-label="Select academic year for scheduling"
               >
                 <option value="2023-2024">2023-2024</option>
                 <option value="2024-2025">2024-2025</option>
@@ -553,8 +557,9 @@ function ConfigurationPanel({
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">Start Block</label>
+              <label htmlFor="config-start-block" className="text-sm font-medium text-slate-300">Start Block</label>
               <input
+                id="config-start-block"
                 type="number"
                 value={configuration.blockRange.start}
                 onChange={(e) => onChange({
@@ -563,11 +568,13 @@ function ConfigurationPanel({
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
                 min={1}
                 max={730}
+                aria-label="Starting block number for schedule range"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">End Block</label>
+              <label htmlFor="config-end-block" className="text-sm font-medium text-slate-300">End Block</label>
               <input
+                id="config-end-block"
                 type="number"
                 value={configuration.blockRange.end}
                 onChange={(e) => onChange({
@@ -576,6 +583,7 @@ function ConfigurationPanel({
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
                 min={1}
                 max={730}
+                aria-label="Ending block number for schedule range"
               />
             </div>
           </div>

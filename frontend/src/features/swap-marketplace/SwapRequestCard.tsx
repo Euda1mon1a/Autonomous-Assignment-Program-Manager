@@ -7,7 +7,7 @@
  * Shows source/target faculty, weeks, status, and available actions.
  */
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { format, parseISO } from 'date-fns';
 import {
   Calendar,
@@ -44,7 +44,7 @@ interface SwapRequestCardProps {
 // Component
 // ============================================================================
 
-export function SwapRequestCard({
+export const SwapRequestCard = memo(function SwapRequestCard({
   swap,
   marketplaceEntry,
   onActionComplete,
@@ -58,14 +58,68 @@ export function SwapRequestCard({
   const rejectMutation = useRejectSwap(swap?.id || '');
   const cancelMutation = useCancelSwap(swap?.id || '');
 
+  // Memoize computed values
+  const marketplaceDates = useMemo(() => {
+    if (!marketplaceEntry) return null;
+    return {
+      weekDate: parseISO(marketplaceEntry.weekAvailable),
+      postedDate: parseISO(marketplaceEntry.postedAt),
+    };
+  }, [marketplaceEntry]);
+
+  const swapMetadata = useMemo(() => {
+    if (!swap) return null;
+    return {
+      statusColor: SWAP_STATUS_COLORS[swap.status],
+      sourceWeekDate: swap.sourceWeek ? parseISO(swap.sourceWeek) : null,
+      targetWeekDate: swap.targetWeek ? parseISO(swap.targetWeek) : null,
+      isAbsorb: swap.swapType === SwapType.ABSORB,
+    };
+  }, [swap]);
+
+  // Memoize callbacks
+  const handleAccept = useCallback(async () => {
+    try {
+      await acceptMutation.mutateAsync({ notes: notes || undefined });
+      setActionMode(null);
+      setNotes('');
+      onActionComplete?.();
+    } catch (error) {
+      console.error('Failed to accept swap:', error);
+    }
+  }, [acceptMutation, notes, onActionComplete]);
+
+  const handleReject = useCallback(async () => {
+    try {
+      await rejectMutation.mutateAsync({ notes: notes || undefined });
+      setActionMode(null);
+      setNotes('');
+      onActionComplete?.();
+    } catch (error) {
+      console.error('Failed to reject swap:', error);
+    }
+  }, [rejectMutation, notes, onActionComplete]);
+
+  const handleCancel = useCallback(async () => {
+    if (!confirm('Are you sure you want to cancel this swap request?')) {
+      return;
+    }
+
+    try {
+      await cancelMutation.mutateAsync();
+      onActionComplete?.();
+    } catch (error) {
+      console.error('Failed to cancel swap:', error);
+    }
+  }, [cancelMutation, onActionComplete]);
+
   if (!swap && !marketplaceEntry) {
     return null;
   }
 
   // Handle marketplace entry display
-  if (marketplaceEntry) {
-    const weekDate = parseISO(marketplaceEntry.weekAvailable);
-    const postedDate = parseISO(marketplaceEntry.postedAt);
+  if (marketplaceEntry && marketplaceDates) {
+    const { weekDate, postedDate } = marketplaceDates;
 
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-lg transition-all hover:border-blue-300">
@@ -116,49 +170,11 @@ export function SwapRequestCard({
   }
 
   // Handle swap request display
-  if (!swap) {
+  if (!swap || !swapMetadata) {
     return null;
   }
 
-  const statusColor = SWAP_STATUS_COLORS[swap.status];
-  const sourceWeekDate = swap.sourceWeek ? parseISO(swap.sourceWeek) : null;
-  const targetWeekDate = swap.targetWeek ? parseISO(swap.targetWeek) : null;
-  const isAbsorb = swap.swapType === SwapType.ABSORB;
-
-  const handleAccept = async () => {
-    try {
-      await acceptMutation.mutateAsync({ notes: notes || undefined });
-      setActionMode(null);
-      setNotes('');
-      onActionComplete?.();
-    } catch (error) {
-      console.error('Failed to accept swap:', error);
-    }
-  };
-
-  const handleReject = async () => {
-    try {
-      await rejectMutation.mutateAsync({ notes: notes || undefined });
-      setActionMode(null);
-      setNotes('');
-      onActionComplete?.();
-    } catch (error) {
-      console.error('Failed to reject swap:', error);
-    }
-  };
-
-  const handleCancel = async () => {
-    if (!confirm('Are you sure you want to cancel this swap request?')) {
-      return;
-    }
-
-    try {
-      await cancelMutation.mutateAsync();
-      onActionComplete?.();
-    } catch (error) {
-      console.error('Failed to cancel swap:', error);
-    }
-  };
+  const { statusColor, sourceWeekDate, targetWeekDate, isAbsorb } = swapMetadata;
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-lg transition-all hover:border-blue-300">
@@ -351,4 +367,4 @@ export function SwapRequestCard({
       </div>
     </div>
   );
-}
+});

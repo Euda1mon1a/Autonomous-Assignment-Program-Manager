@@ -281,10 +281,10 @@ export function useRefreshMetrics() {
 /**
  * Prefetch fairness trend for better UX
  */
-export function usePrefetchFairnessTrend() {
+export function usePrefetchFairnessTrend(): (period: TimePeriod) => void {
   const queryClient = useQueryClient();
 
-  return (period: TimePeriod) => {
+  return (period: TimePeriod): void => {
     queryClient.prefetchQuery({
       queryKey: analyticsQueryKeys.fairnessTrend(period),
       queryFn: () => get<FairnessTrendData>(`/analytics/trends/fairness?period=${period}`),
@@ -296,10 +296,10 @@ export function usePrefetchFairnessTrend() {
 /**
  * Prefetch version comparison
  */
-export function usePrefetchVersionComparison() {
+export function usePrefetchVersionComparison(): (versionA: string, versionB: string) => void {
   const queryClient = useQueryClient();
 
-  return (versionA: string, versionB: string) => {
+  return (versionA: string, versionB: string): void => {
     if (versionA && versionB) {
       queryClient.prefetchQuery({
         queryKey: analyticsQueryKeys.versionComparison(versionA, versionB),

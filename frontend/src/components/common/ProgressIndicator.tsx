@@ -324,7 +324,7 @@ export function useProgress(totalSteps?: number) {
   const [startTime, setStartTime] = useState<Date>()
   const [currentStep, setCurrentStep] = useState(0)
 
-  const start = (initialMessage: string) => {
+  const start = (initialMessage: string): void => {
     setProgress(0)
     setStatus('running')
     setMessage(initialMessage)
@@ -332,13 +332,13 @@ export function useProgress(totalSteps?: number) {
     setCurrentStep(0)
   }
 
-  const updateProgress = (value: number, newMessage?: string, newDetail?: string) => {
+  const updateProgress = (value: number, newMessage?: string, newDetail?: string): void => {
     setProgress(Math.min(100, Math.max(0, value)))
     if (newMessage) setMessage(newMessage)
     if (newDetail !== undefined) setDetail(newDetail)
   }
 
-  const nextStep = (stepMessage?: string) => {
+  const nextStep = (stepMessage?: string): void => {
     if (totalSteps) {
       const newStep = currentStep + 1
       setCurrentStep(newStep)
@@ -347,19 +347,19 @@ export function useProgress(totalSteps?: number) {
     }
   }
 
-  const complete = (finalMessage?: string) => {
+  const complete = (finalMessage?: string): void => {
     setProgress(100)
     setStatus('success')
     if (finalMessage) setMessage(finalMessage)
   }
 
-  const error = (errorMessage: string, errorDetail?: string) => {
+  const error = (errorMessage: string, errorDetail?: string): void => {
     setStatus('error')
     setMessage(errorMessage)
     if (errorDetail) setDetail(errorDetail)
   }
 
-  const reset = () => {
+  const reset = (): void => {
     setProgress(0)
     setStatus('idle')
     setMessage('')

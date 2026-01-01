@@ -13,14 +13,15 @@ All endpoints follow aviation FRMS principles adapted for medical residency.
 """
 
 from datetime import datetime, date
-from typing import Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user, get_db
+from app.api.deps import get_current_user
+from app.db.session import get_async_db
 from app.core.logging import get_logger
 from app.resilience.frms import (
     FRMSService,
@@ -65,16 +66,14 @@ router = APIRouter(prefix="/fatigue-risk", tags=["Fatigue Risk Management"])
 # =============================================================================
 
 
-@router.get("/samn-perelli/levels")
-async def get_samn_perelli_levels():
+@router.get("/samn-perelli/levels", response_model=dict[str, Any])
+async def get_samn_perelli_levels() -> dict[str, Any]:
     """
     Get all Samn-Perelli fatigue levels with descriptions.
 
     Returns the 7-level fatigue scale adapted from aviation
     for use in medical residency fatigue assessment.
     """
-    from app.resilience.frms.samn_perelli import get_all_levels
-
     return {"levels": get_all_levels()}
 
 
@@ -85,7 +84,7 @@ async def get_samn_perelli_levels():
 async def submit_fatigue_assessment(
     resident_id: UUID,
     request: SamnPerelliAssessmentRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Submit a fatigue self-assessment for a resident.
@@ -102,7 +101,8 @@ async def submit_fatigue_assessment(
         )
         return assessment.to_dict()
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.warning(f"Invalid fatigue assessment for resident {resident_id}: {e}")
+        raise HTTPException(status_code=400, detail="Invalid fatigue assessment data")
 
 
 # =============================================================================
@@ -149,7 +149,7 @@ async def calculate_fatigue_score(
 async def get_resident_fatigue_profile(
     resident_id: UUID,
     target_time: datetime | None = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Get complete fatigue profile for a resident.
@@ -171,7 +171,8 @@ async def get_resident_fatigue_profile(
         )
         return profile.to_dict()
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        logger.warning(f"Resident profile not found for {resident_id}: {e}")
+        raise HTTPException(status_code=404, detail="Resident profile not found")
 
 
 @router.get(
@@ -181,7 +182,7 @@ async def get_resident_fatigue_profile(
 async def get_alertness_prediction(
     resident_id: UUID,
     target_time: datetime | None = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Get alertness prediction for a specific time.
@@ -217,7 +218,8 @@ async def get_alertness_prediction(
             "recommendations": profile.required_mitigations,
         }
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        logger.warning(f"Alertness prediction failed for resident {resident_id}: {e}")
+        raise HTTPException(status_code=404, detail="Resident not found")
 
 
 @router.post(
@@ -227,7 +229,7 @@ async def get_alertness_prediction(
 async def assess_schedule_fatigue_risk(
     resident_id: UUID,
     request: ScheduleFatigueAssessmentRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Assess fatigue risk for a proposed schedule.
@@ -257,7 +259,7 @@ async def assess_schedule_fatigue_risk(
 )
 async def get_current_hazard(
     resident_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Get current fatigue hazard status for a resident.
@@ -288,13 +290,14 @@ async def get_current_hazard(
             "notes": None,
         }
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        logger.warning(f"Hazard assessment failed for resident {resident_id}: {e}")
+        raise HTTPException(status_code=404, detail="Resident not found")
 
 
 @router.get("/hazards/scan", response_model=HazardScanResponse)
 async def scan_all_residents_for_hazards(
     min_level: str = Query("yellow", description="Minimum hazard level to include"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Scan all residents for fatigue hazards.
@@ -342,7 +345,7 @@ async def scan_all_residents_for_hazards(
 )
 async def get_sleep_debt_state(
     resident_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Get current sleep debt state for a resident.
@@ -376,7 +379,8 @@ async def get_sleep_debt_state(
             "impairment_equivalent_bac": min(0.15, profile.sleep_debt_hours * 0.005),
         }
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        logger.warning(f"Sleep debt calculation failed for resident {resident_id}: {e}")
+        raise HTTPException(status_code=404, detail="Resident not found")
 
 
 @router.post(
@@ -386,7 +390,7 @@ async def get_sleep_debt_state(
 async def predict_sleep_debt_trajectory(
     resident_id: UUID,
     request: SleepDebtTrajectoryRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Predict sleep debt trajectory over upcoming days.
@@ -421,7 +425,7 @@ async def predict_sleep_debt_trajectory(
 @router.post("/team/heatmap", response_model=TeamHeatmapResponse)
 async def get_team_fatigue_heatmap(
     request: TeamHeatmapRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Generate team fatigue heatmap for a day.
@@ -442,8 +446,8 @@ async def get_team_fatigue_heatmap(
 # =============================================================================
 
 
-@router.get("/reference/circadian-phases")
-async def get_circadian_phases():
+@router.get("/reference/circadian-phases", response_model=dict[str, Any])
+async def get_circadian_phases() -> dict[str, Any]:
     """
     Get all circadian phases with descriptions.
 
@@ -453,8 +457,8 @@ async def get_circadian_phases():
     return {"phases": get_circadian_phases_info()}
 
 
-@router.get("/reference/hazard-levels")
-async def get_hazard_levels():
+@router.get("/reference/hazard-levels", response_model=dict[str, Any])
+async def get_hazard_levels() -> dict[str, Any]:
     """
     Get all hazard levels with descriptions.
 
@@ -464,8 +468,8 @@ async def get_hazard_levels():
     return {"levels": get_hazard_level_info()}
 
 
-@router.get("/reference/mitigation-types")
-async def get_mitigation_types():
+@router.get("/reference/mitigation-types", response_model=dict[str, Any])
+async def get_mitigation_types() -> dict[str, Any]:
     """
     Get all mitigation types with descriptions.
 
@@ -512,7 +516,7 @@ async def export_temporal_constraints():
 async def validate_acgme_with_fatigue(
     resident_id: UUID,
     request: ACGMEFatigueValidationRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Validate schedule against ACGME rules through fatigue lens.
@@ -531,7 +535,8 @@ async def validate_acgme_with_fatigue(
     try:
         profile = await service.get_resident_profile(resident_id)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        logger.warning(f"ACGME validation failed for resident {resident_id}: {e}")
+        raise HTTPException(status_code=404, detail="Resident not found")
 
     # Calculate ACGME metrics
     hours_summary = {

@@ -19,11 +19,16 @@ from app.schemas.calendar import (
 )
 from app.services.calendar_service import CalendarService
 
-router = APIRouter()
+router = APIRouter(tags=["calendar"])
 logger = logging.getLogger(__name__)
 
 
-@router.get("/export/ics")
+@router.get(
+    "/export/ics",
+    summary="Export Complete Schedule as ICS",
+    description="Download ICS file with all assignments in date range (filterable by persons, rotations, types)",
+    response_description="ICS calendar file download compatible with Google Calendar, Outlook, Apple Calendar",
+)
 async def export_all_calendars(
     start_date: date = Query(..., description="Start date for calendar export"),
     end_date: date = Query(..., description="End date for calendar export"),
@@ -79,7 +84,12 @@ async def export_all_calendars(
         )
 
 
-@router.get("/export/ics/{person_id}")
+@router.get(
+    "/export/ics/{person_id}",
+    summary="Export Individual Schedule as ICS",
+    description="Download ICS file containing all assignments for a specific person",
+    response_description="ICS calendar file for the specified person",
+)
 async def export_person_ics(
     person_id: UUID,
     start_date: date = Query(..., description="Start date for calendar export"),
@@ -132,7 +142,12 @@ async def export_person_ics(
         )
 
 
-@router.get("/export/person/{person_id}")
+@router.get(
+    "/export/person/{person_id}",
+    summary="Export Person Calendar (Alternative)",
+    description="Alternative endpoint to export individual's schedule as ICS file",
+    response_description="ICS calendar file for the specified person",
+)
 async def export_person_calendar(
     person_id: UUID,
     start_date: date = Query(..., description="Start date for calendar export"),
@@ -185,7 +200,12 @@ async def export_person_calendar(
         )
 
 
-@router.get("/export/rotation/{rotation_id}")
+@router.get(
+    "/export/rotation/{rotation_id}",
+    summary="Export Rotation Schedule as ICS",
+    description="Download ICS file showing all assignments for a specific rotation",
+    response_description="ICS calendar file showing who is assigned to the rotation",
+)
 async def export_rotation_calendar(
     rotation_id: UUID,
     start_date: date = Query(..., description="Start date for calendar export"),
@@ -246,7 +266,13 @@ def _get_base_url(request: Request) -> str:
     return f"{proto}://{host}/api/calendar"
 
 
-@router.post("/subscribe", response_model=CalendarSubscriptionResponse)
+@router.post(
+    "/subscribe",
+    response_model=CalendarSubscriptionResponse,
+    summary="Create Webcal Subscription",
+    description="Generate secure subscription URL for auto-updating calendar feed (paste into Google Calendar, Outlook, etc.)",
+    response_description="Subscription details with webcal:// URL for calendar apps",
+)
 async def create_subscription(
     request_body: CalendarSubscriptionCreate,
     request: Request,
@@ -309,7 +335,12 @@ async def create_subscription(
         )
 
 
-@router.get("/subscribe/{token}")
+@router.get(
+    "/subscribe/{token}",
+    summary="Get Calendar Subscription Feed",
+    description="Webcal endpoint for calendar apps (no auth required - token serves as authentication)",
+    response_description="ICS calendar feed updated every 15 minutes",
+)
 async def get_subscription_feed(
     token: str,
     db: AsyncSession = Depends(get_async_db),
@@ -377,7 +408,13 @@ async def get_subscription_feed(
         )
 
 
-@router.get("/subscriptions", response_model=CalendarSubscriptionListResponse)
+@router.get(
+    "/subscriptions",
+    response_model=CalendarSubscriptionListResponse,
+    summary="List Calendar Subscriptions",
+    description="Get all calendar subscriptions created by current user (with optional filters)",
+    response_description="List of active and expired subscriptions with URLs",
+)
 async def list_subscriptions(
     request: Request,
     person_id: UUID | None = Query(None, description="Filter by person"),
@@ -430,7 +467,13 @@ async def list_subscriptions(
     )
 
 
-@router.delete("/subscribe/{token}", status_code=204)
+@router.delete(
+    "/subscribe/{token}",
+    status_code=204,
+    summary="Revoke Calendar Subscription",
+    description="Permanently disable subscription token (calendar apps will stop receiving updates)",
+    response_description="No content - subscription revoked successfully",
+)
 async def revoke_subscription(
     token: str,
     db: AsyncSession = Depends(get_async_db),
@@ -466,7 +509,13 @@ async def revoke_subscription(
 
 
 # Legacy endpoint for backward compatibility
-@router.get("/feed/{token}")
+@router.get(
+    "/feed/{token}",
+    summary="Legacy Calendar Feed",
+    description="Legacy endpoint - use /subscribe/{token} instead",
+    response_description="Redirects to /subscribe/{token}",
+    deprecated=True,
+)
 async def get_subscription_feed_legacy(
     token: str,
     db: AsyncSession = Depends(get_async_db),

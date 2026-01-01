@@ -5,7 +5,7 @@
  * including date range, person/rotation filters, grouping, and export.
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import { format, startOfWeek, addDays, subDays, parseISO } from 'date-fns';
 import { Calendar, Users, RotateCw, Download, Filter, X } from 'lucide-react';
 import type { HeatmapFilters, HeatmapGroupBy, DateRange } from './types';
@@ -22,7 +22,7 @@ export interface HeatmapControlsProps {
   isLoading?: boolean;
 }
 
-export function HeatmapControls({
+export const HeatmapControls = memo(function HeatmapControls({
   filters,
   onFiltersChange,
   dateRange,
@@ -81,14 +81,14 @@ export function HeatmapControls({
     });
   }, [onDateRangeChange]);
 
-  const handleDateRangeChange = (field: 'start' | 'end', value: string) => {
+  const handleDateRangeChange = useCallback((field: 'start' | 'end', value: string) => {
     onDateRangeChange({
       ...dateRange,
       [field]: value,
     });
-  };
+  }, [dateRange, onDateRangeChange]);
 
-  const handlePersonSelect = (personId: string) => {
+  const handlePersonSelect = useCallback((personId: string) => {
     const currentPersonIds = filters.person_ids || [];
     const newPersonIds = currentPersonIds.includes(personId)
       ? currentPersonIds.filter((id) => id !== personId)
@@ -98,9 +98,9 @@ export function HeatmapControls({
       ...filters,
       person_ids: newPersonIds,
     });
-  };
+  }, [filters, onFiltersChange]);
 
-  const handleRotationSelect = (rotationId: string) => {
+  const handleRotationSelect = useCallback((rotationId: string) => {
     const currentRotationIds = filters.rotation_ids || [];
     const newRotationIds = currentRotationIds.includes(rotationId)
       ? currentRotationIds.filter((id) => id !== rotationId)
@@ -110,33 +110,44 @@ export function HeatmapControls({
       ...filters,
       rotation_ids: newRotationIds,
     });
-  };
+  }, [filters, onFiltersChange]);
 
-  const handleGroupByChange = (groupBy: HeatmapGroupBy) => {
+  const handleGroupByChange = useCallback((groupBy: HeatmapGroupBy) => {
     onFiltersChange({
       ...filters,
       group_by: groupBy,
     });
-  };
+  }, [filters, onFiltersChange]);
 
-  const handleIncludeFmitToggle = () => {
+  const handleIncludeFmitToggle = useCallback(() => {
     onFiltersChange({
       ...filters,
       include_fmit: !filters.include_fmit,
     });
-  };
+  }, [filters, onFiltersChange]);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     onFiltersChange({
       group_by: 'person',
       include_fmit: true,
     });
-  };
+  }, [onFiltersChange]);
 
-  const activeFilterCount = [
-    filters.person_ids?.length || 0,
-    filters.rotation_ids?.length || 0,
-  ].reduce((sum, count) => sum + count, 0);
+  // Memoize active filter count
+  const activeFilterCount = useMemo(() => {
+    return [
+      filters.person_ids?.length || 0,
+      filters.rotation_ids?.length || 0,
+    ].reduce((sum, count) => sum + count, 0);
+  }, [filters.person_ids?.length, filters.rotation_ids?.length]);
+
+  // Memoize date range display
+  const dateRangeDisplay = useMemo(() => {
+    if (isValidDate(startDateObj) && isValidDate(endDateObj)) {
+      return `${format(startDateObj, 'MMM d')} - ${format(endDateObj, 'MMM d, yyyy')}`;
+    }
+    return 'Select dates';
+  }, [startDateObj, endDateObj]);
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
@@ -214,9 +225,7 @@ export function HeatmapControls({
           <div className="flex items-center gap-2 text-sm">
             <span className="text-gray-600">Block:</span>
             <span className="font-medium text-gray-900 bg-gray-100 px-3 py-1 rounded">
-              {isValidDate(startDateObj) && isValidDate(endDateObj)
-                ? `${format(startDateObj, 'MMM d')} - ${format(endDateObj, 'MMM d, yyyy')}`
-                : 'Select dates'}
+              {dateRangeDisplay}
             </span>
           </div>
         </div>
@@ -226,34 +235,40 @@ export function HeatmapControls({
       <div className="p-4 flex flex-wrap gap-4 items-center">
         {/* Date range picker */}
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-gray-500" />
-          <label className="text-sm font-medium text-gray-700">From:</label>
+          <Calendar className="w-4 h-4 text-gray-500" aria-hidden="true" />
+          <label htmlFor="date-range-start" className="text-sm font-medium text-gray-700">From:</label>
           <input
+            id="date-range-start"
             type="date"
             value={dateRange.start}
             onChange={(e) => handleDateRangeChange('start', e.target.value)}
             className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={isLoading}
+            aria-label="Start date for heatmap date range"
           />
-          <label className="text-sm font-medium text-gray-700">To:</label>
+          <label htmlFor="date-range-end" className="text-sm font-medium text-gray-700">To:</label>
           <input
+            id="date-range-end"
             type="date"
             value={dateRange.end}
             onChange={(e) => handleDateRangeChange('end', e.target.value)}
             className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={isLoading}
+            aria-label="End date for heatmap date range"
           />
         </div>
 
         {/* Group by selector */}
         <div className="flex items-center gap-2">
-          <RotateCw className="w-4 h-4 text-gray-500" />
-          <label className="text-sm font-medium text-gray-700">Group by:</label>
+          <RotateCw className="w-4 h-4 text-gray-500" aria-hidden="true" />
+          <label htmlFor="heatmap-group-by" className="text-sm font-medium text-gray-700">Group by:</label>
           <select
+            id="heatmap-group-by"
             value={filters.group_by || 'person'}
             onChange={(e) => handleGroupByChange(e.target.value as HeatmapGroupBy)}
             className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={isLoading}
+            aria-label="Group heatmap data by"
           >
             {Object.entries(GROUP_BY_LABELS).map(([value, label]) => (
               <option key={value} value={value}>
@@ -318,6 +333,7 @@ export function HeatmapControls({
                   <button
                     onClick={() => onFiltersChange({ ...filters, person_ids: [] })}
                     className="text-xs text-blue-600 hover:text-blue-700"
+                    aria-label="Clear person filters"
                   >
                     Clear
                   </button>
@@ -356,6 +372,7 @@ export function HeatmapControls({
                   <button
                     onClick={() => onFiltersChange({ ...filters, rotation_ids: [] })}
                     className="text-xs text-blue-600 hover:text-blue-700"
+                    aria-label="Clear rotation filters"
                   >
                     Clear
                   </button>
@@ -400,4 +417,4 @@ export function HeatmapControls({
       )}
     </div>
   );
-}
+});

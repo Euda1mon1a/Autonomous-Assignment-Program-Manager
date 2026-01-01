@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { Plus, Trash2, Copy, GripVertical, ChevronDown, ChevronUp } from 'lucide-react';
 import type { AssignmentPattern } from '../types';
 import {
@@ -20,7 +20,7 @@ interface PatternEditorProps {
   readOnly?: boolean;
 }
 
-export function PatternEditor({
+export const PatternEditor = memo(function PatternEditor({
   patterns,
   onAdd,
   onUpdate,
@@ -32,7 +32,7 @@ export function PatternEditor({
   const [expandedPatterns, setExpandedPatterns] = useState<Set<string>>(new Set());
   const [showAddForm, setShowAddForm] = useState(false);
 
-  const toggleExpanded = (id: string) => {
+  const toggleExpanded = useCallback((id: string) => {
     setExpandedPatterns((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -42,20 +42,25 @@ export function PatternEditor({
       }
       return next;
     });
-  };
+  }, []);
 
-  const handleAddPattern = (pattern: Omit<AssignmentPattern, 'id'>) => {
+  const handleAddPattern = useCallback((pattern: Omit<AssignmentPattern, 'id'>) => {
     onAdd(pattern);
     setShowAddForm(false);
-  };
+  }, [onAdd]);
 
-  // Group patterns by day
-  const patternsByDay = patterns.reduce((acc, pattern) => {
-    const day = pattern.dayOfWeek;
-    if (!acc[day]) acc[day] = [];
-    acc[day].push(pattern);
-    return acc;
-  }, {} as Record<number, AssignmentPattern[]>);
+  const handleShowAddForm = useCallback(() => setShowAddForm(true), []);
+  const handleHideAddForm = useCallback(() => setShowAddForm(false), []);
+
+  // Memoize grouped patterns by day
+  const patternsByDay = useMemo(() => {
+    return patterns.reduce((acc, pattern) => {
+      const day = pattern.dayOfWeek;
+      if (!acc[day]) acc[day] = [];
+      acc[day].push(pattern);
+      return acc;
+    }, {} as Record<number, AssignmentPattern[]>);
+  }, [patterns]);
 
   return (
     <div className="space-y-4">
@@ -66,7 +71,7 @@ export function PatternEditor({
         </h3>
         {!readOnly && (
           <button
-            onClick={() => setShowAddForm(true)}
+            onClick={handleShowAddForm}
             className="btn-secondary flex items-center gap-2 text-sm"
           >
             <Plus className="w-4 h-4" />
@@ -79,7 +84,7 @@ export function PatternEditor({
       {showAddForm && (
         <PatternForm
           onSubmit={handleAddPattern}
-          onCancel={() => setShowAddForm(false)}
+          onCancel={handleHideAddForm}
         />
       )}
 
@@ -126,7 +131,7 @@ export function PatternEditor({
       )}
     </div>
   );
-}
+});
 
 interface PatternItemProps {
   pattern: AssignmentPattern;
@@ -138,7 +143,17 @@ interface PatternItemProps {
   readOnly?: boolean;
 }
 
-function PatternItem({
+// Activity color mapping (outside component to prevent recreation)
+const ACTIVITY_COLORS: Record<string, string> = {
+  clinic: 'bg-blue-100 text-blue-700',
+  inpatient: 'bg-purple-100 text-purple-700',
+  procedure: 'bg-red-100 text-red-700',
+  conference: 'bg-gray-100 text-gray-700',
+  elective: 'bg-green-100 text-green-700',
+  call: 'bg-orange-100 text-orange-700',
+};
+
+const PatternItem = memo(function PatternItem({
   pattern,
   isExpanded,
   onToggle,
@@ -147,16 +162,10 @@ function PatternItem({
   onDuplicate,
   readOnly,
 }: PatternItemProps) {
-  const activityColors: Record<string, string> = {
-    clinic: 'bg-blue-100 text-blue-700',
-    inpatient: 'bg-purple-100 text-purple-700',
-    procedure: 'bg-red-100 text-red-700',
-    conference: 'bg-gray-100 text-gray-700',
-    elective: 'bg-green-100 text-green-700',
-    call: 'bg-orange-100 text-orange-700',
-  };
-
-  const colorClass = activityColors[pattern.activityType] || 'bg-gray-100 text-gray-700';
+  const colorClass = useMemo(
+    () => ACTIVITY_COLORS[pattern.activityType] || 'bg-gray-100 text-gray-700',
+    [pattern.activityType]
+  );
 
   return (
     <div className="p-3">
@@ -314,7 +323,7 @@ function PatternItem({
       )}
     </div>
   );
-}
+});
 
 interface PatternFormProps {
   onSubmit: (pattern: Omit<AssignmentPattern, 'id'>) => void;
@@ -322,7 +331,7 @@ interface PatternFormProps {
   initialValues?: Partial<AssignmentPattern>;
 }
 
-function PatternForm({ onSubmit, onCancel, initialValues }: PatternFormProps) {
+const PatternForm = memo(function PatternForm({ onSubmit, onCancel, initialValues }: PatternFormProps) {
   const [name, setName] = useState(initialValues?.name || '');
   const [dayOfWeek, setDayOfWeek] = useState(initialValues?.dayOfWeek ?? 1);
   const [timeOfDay, setTimeOfDay] = useState<'AM' | 'PM' | 'ALL'>(
@@ -334,7 +343,7 @@ function PatternForm({ onSubmit, onCancel, initialValues }: PatternFormProps) {
   );
   const [notes, setNotes] = useState(initialValues?.notes || '');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
@@ -346,7 +355,7 @@ function PatternForm({ onSubmit, onCancel, initialValues }: PatternFormProps) {
       role,
       notes: notes.trim() || undefined,
     });
-  };
+  }, [name, dayOfWeek, timeOfDay, activityType, role, notes, onSubmit]);
 
   return (
     <form
@@ -470,21 +479,22 @@ function PatternForm({ onSubmit, onCancel, initialValues }: PatternFormProps) {
       </div>
     </form>
   );
-}
+});
 
 interface QuickAddPatternsProps {
   onAdd: (pattern: Omit<AssignmentPattern, 'id'>) => void;
   existingPatterns: AssignmentPattern[];
 }
 
-function QuickAddPatterns({ onAdd, existingPatterns }: QuickAddPatternsProps) {
-  const suggestions = [
-    { label: 'Add weekday mornings', days: [1, 2, 3, 4, 5], time: 'AM' as const },
-    { label: 'Add weekday afternoons', days: [1, 2, 3, 4, 5], time: 'PM' as const },
-    { label: 'Add weekend coverage', days: [0, 6], time: 'ALL' as const },
-  ];
+// Quick add suggestions (constant outside component)
+const QUICK_ADD_SUGGESTIONS = [
+  { label: 'Add weekday mornings', days: [1, 2, 3, 4, 5], time: 'AM' as const },
+  { label: 'Add weekday afternoons', days: [1, 2, 3, 4, 5], time: 'PM' as const },
+  { label: 'Add weekend coverage', days: [0, 6], time: 'ALL' as const },
+];
 
-  const handleQuickAdd = (days: number[], time: 'AM' | 'PM' | 'ALL') => {
+const QuickAddPatterns = memo(function QuickAddPatterns({ onAdd, existingPatterns }: QuickAddPatternsProps) {
+  const handleQuickAdd = useCallback((days: number[], time: 'AM' | 'PM' | 'ALL') => {
     days.forEach((day) => {
       // Check if pattern already exists
       const exists = existingPatterns.some(
@@ -500,13 +510,13 @@ function QuickAddPatterns({ onAdd, existingPatterns }: QuickAddPatternsProps) {
         });
       }
     });
-  };
+  }, [existingPatterns, onAdd]);
 
   return (
     <div className="border-t pt-4">
       <p className="text-sm text-gray-600 mb-2">Quick add patterns:</p>
       <div className="flex flex-wrap gap-2">
-        {suggestions.map((suggestion) => (
+        {QUICK_ADD_SUGGESTIONS.map((suggestion) => (
           <button
             key={suggestion.label}
             onClick={() => handleQuickAdd(suggestion.days, suggestion.time)}
@@ -518,4 +528,4 @@ function QuickAddPatterns({ onAdd, existingPatterns }: QuickAddPatternsProps) {
       </div>
     </div>
   );
-}
+});

@@ -93,7 +93,7 @@ USAGE:
     @router.post("/soc-risk", response_model=CriticalSlowingDownResponse)
     async def analyze_soc_risk(
         request: CriticalSlowingDownRequest,
-        db: AsyncSession = Depends(get_db),
+        db: AsyncSession = Depends(get_async_db),
     ):
         '''
         Analyze Self-Organized Criticality early warning signals.

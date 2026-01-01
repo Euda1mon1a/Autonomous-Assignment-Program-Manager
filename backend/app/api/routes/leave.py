@@ -12,6 +12,7 @@ import hashlib
 import hmac
 import logging
 from datetime import date, datetime
+from typing import Any
 from uuid import UUID
 
 from fastapi import (
@@ -23,8 +24,8 @@ from fastapi import (
     Request,
     status,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.role_filter import require_admin
 from app.core.config import get_settings
@@ -342,13 +343,13 @@ async def delete_leave(
     await db.commit()
 
 
-@router.post("/webhook")
+@router.post("/webhook", response_model=dict[str, Any])
 async def leave_webhook(
     payload: LeaveWebhookPayload,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_async_db),
     _: None = Depends(verify_webhook_signature),
-):
+) -> dict[str, Any]:
     """
     Webhook endpoint for external leave systems.
 

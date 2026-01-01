@@ -42,7 +42,7 @@ export function Pagination({
   const canGoPrevious = currentPage > 1;
   const canGoNext = currentPage < totalPages;
 
-  const getPageNumbers = () => {
+  const getPageNumbers = (): (number | string)[] => {
     const pages: (number | string)[] = [];
     const maxVisible = 5;
 

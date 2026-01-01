@@ -1,5 +1,6 @@
 """Pareto optimization service for multi-objective scheduling using pymoo."""
 
+import logging
 import time
 from typing import Any
 from uuid import UUID
@@ -28,6 +29,8 @@ from app.schemas.pareto import (
     ParetoSolution,
     RankedSolution,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class SchedulingProblem(Problem):
@@ -715,5 +718,6 @@ class ParetoOptimizationService:
             hv = HV(ref_point=ref_point)
             return float(hv(F))
 
-        except Exception:
+        except Exception as e:
+            logger.error(f"Error calculating hypervolume: {e}", exc_info=True)
             return None

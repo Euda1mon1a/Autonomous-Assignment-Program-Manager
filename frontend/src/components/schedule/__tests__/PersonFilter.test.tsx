@@ -40,10 +40,17 @@ describe('PersonFilter', () => {
       data: { items: mockPeople, total: 4 },
       isLoading: false,
       error: null,
-    } as any);
+      refetch: jest.fn(),
+      isFetching: false,
+    });
     mockUseAuth.mockReturnValue({
       user: { id: '1', email: 'alice@example.com' },
-    } as any);
+      isAuthenticated: true,
+      login: jest.fn(),
+      logout: jest.fn(),
+      isLoading: false,
+      error: null,
+    });
   });
 
   const defaultProps = {
@@ -200,7 +207,10 @@ describe('PersonFilter', () => {
       mockUsePeople.mockReturnValue({
         data: { items: manyPeople, total: 15 },
         isLoading: false,
-      } as any);
+        error: null,
+        refetch: jest.fn(),
+        isFetching: false,
+      });
 
       renderComponent();
       fireEvent.click(screen.getByRole('button'));
@@ -220,7 +230,10 @@ describe('PersonFilter', () => {
       mockUsePeople.mockReturnValue({
         data: { items: manyPeople, total: 15 },
         isLoading: false,
-      } as any);
+        error: null,
+        refetch: jest.fn(),
+        isFetching: false,
+      });
 
       renderComponent();
       fireEvent.click(screen.getByRole('button'));
@@ -245,7 +258,10 @@ describe('PersonFilter', () => {
       mockUsePeople.mockReturnValue({
         data: { items: manyPeople, total: 15 },
         isLoading: false,
-      } as any);
+        error: null,
+        refetch: jest.fn(),
+        isFetching: false,
+      });
 
       renderComponent();
       fireEvent.click(screen.getByRole('button'));
@@ -268,7 +284,10 @@ describe('PersonFilter', () => {
       mockUsePeople.mockReturnValue({
         data: { items: manyPeople, total: 15 },
         isLoading: false,
-      } as any);
+        error: null,
+        refetch: jest.fn(),
+        isFetching: false,
+      });
 
       renderComponent();
       fireEvent.click(screen.getByRole('button'));
@@ -340,7 +359,10 @@ describe('PersonFilter', () => {
       mockUsePeople.mockReturnValue({
         data: undefined,
         isLoading: true,
-      } as any);
+        error: null,
+        refetch: jest.fn(),
+        isFetching: false,
+      });
 
       renderComponent();
 

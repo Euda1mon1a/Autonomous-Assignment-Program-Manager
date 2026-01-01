@@ -84,7 +84,7 @@ export function ContactInfo({
               <span>{person.phone}</span>
             </a>
             <button
-              onClick={() => handleCopy(person.phone!, 'phone')}
+              onClick={() => handleCopy(person.phone || '', 'phone')}
               className="p-1 hover:bg-gray-100 rounded"
               title="Copy phone number"
             >
@@ -105,7 +105,7 @@ export function ContactInfo({
               <span className="text-xs text-gray-500">(Pager)</span>
             </div>
             <button
-              onClick={() => handleCopy(person.pager!, 'pager')}
+              onClick={() => handleCopy(person.pager || '', 'pager')}
               className="p-1 hover:bg-gray-100 rounded"
               title="Copy pager number"
             >
@@ -128,7 +128,7 @@ export function ContactInfo({
               <span className="truncate">{person.email}</span>
             </a>
             <button
-              onClick={() => handleCopy(person.email!, 'email')}
+              onClick={() => handleCopy(person.email || '', 'email')}
               className="p-1 hover:bg-gray-100 rounded"
               title="Copy email"
             >

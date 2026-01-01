@@ -280,6 +280,7 @@ function UserRow({ user, isSelected, onSelect, onEdit, onDelete, onToggleLock, o
           checked={isSelected}
           onChange={() => onSelect(user.id)}
           className="rounded border-slate-600 bg-slate-700 text-violet-500 focus:ring-violet-500"
+          aria-label={`Select user ${user.firstName} ${user.lastName}`}
         />
       </td>
       <td className="px-4 py-3">
@@ -322,6 +323,8 @@ function UserRow({ user, isSelected, onSelect, onEdit, onDelete, onToggleLock, o
           <button
             onClick={() => setShowMenu(!showMenu)}
             className="p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
+            aria-label={`Actions for ${user.firstName} ${user.lastName}`}
+            aria-expanded={showMenu}
           >
             <MoreVertical className="w-4 h-4 text-slate-400" />
           </button>
@@ -541,6 +544,8 @@ function RolesPanel() {
             <button
               onClick={() => setExpandedRole(expandedRole === roleConfig.role ? null : roleConfig.role)}
               className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-700/50 transition-colors"
+              aria-label={`${expandedRole === roleConfig.role ? 'Collapse' : 'Expand'} ${roleConfig.role} permissions`}
+              aria-expanded={expandedRole === roleConfig.role}
             >
               <div className="flex items-center gap-3">
                 <RoleBadge role={roleConfig.role} />
@@ -595,7 +600,10 @@ function ActivityPanel() {
           <h2 className="text-lg font-semibold text-white">Recent Activity</h2>
           <p className="text-sm text-slate-400">User management activity log</p>
         </div>
-        <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-300 hover:text-white border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors">
+        <button
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-300 hover:text-white border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors"
+          aria-label="Export activity log"
+        >
           <Download className="w-4 h-4" />
           Export
         </button>
@@ -845,6 +853,7 @@ export default function AdminUsersPage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    aria-label="Search users by name or email"
                   />
                 </div>
                 {/* Filter Toggle */}
@@ -855,6 +864,8 @@ export default function AdminUsersPage() {
                       ? 'bg-violet-600 border-violet-500 text-white'
                       : 'border-slate-700 text-slate-300 hover:bg-slate-800'
                   }`}
+                  aria-label={`${showFilters ? 'Hide' : 'Show'} filters`}
+                  aria-expanded={showFilters}
                 >
                   <Filter className="w-4 h-4" />
                   Filters
@@ -937,6 +948,7 @@ export default function AdminUsersPage() {
                 <button
                   onClick={() => setSelectedUsers([])}
                   className="ml-auto text-sm text-violet-300 hover:text-violet-100"
+                  aria-label="Clear user selection"
                 >
                   Clear selection
                 </button>
@@ -967,6 +979,7 @@ export default function AdminUsersPage() {
                           checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
                           onChange={handleSelectAll}
                           className="rounded border-slate-600 bg-slate-700 text-violet-500 focus:ring-violet-500"
+                          aria-label="Select all users"
                         />
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">

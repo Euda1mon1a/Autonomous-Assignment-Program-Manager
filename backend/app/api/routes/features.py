@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.logging import get_logger
 from app.core.security import get_admin_user, get_current_active_user
 from app.db.session import get_async_db
 from app.features.flags import FeatureFlagService
@@ -30,6 +31,7 @@ from app.schemas.feature_flag import (
 )
 
 router = APIRouter()
+logger = get_logger(__name__)
 
 
 @router.post(
@@ -37,7 +39,7 @@ router = APIRouter()
 )
 async def create_feature_flag(
     flag_in: FeatureFlagCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -65,7 +67,8 @@ async def create_feature_flag(
         )
         return flag
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        logger.warning(f"Failed to create feature flag: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid feature flag data")
 
 
 @router.get("/", response_model=FeatureFlagListResponse)
@@ -74,7 +77,7 @@ async def list_feature_flags(
     environment: str | None = Query(None, description="Filter by environment"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(50, ge=1, le=100, description="Items per page"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -104,7 +107,7 @@ async def list_feature_flags(
 
 @router.get("/stats", response_model=FeatureFlagStatsResponse)
 async def get_feature_flag_stats(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -133,7 +136,7 @@ async def get_feature_flag_stats(
 @router.get("/{key}", response_model=FeatureFlagResponse)
 async def get_feature_flag(
     key: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -158,7 +161,7 @@ async def update_feature_flag(
     key: str,
     flag_update: FeatureFlagUpdate,
     reason: str | None = Query(None, description="Reason for update"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -182,14 +185,15 @@ async def update_feature_flag(
         )
         return flag
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        logger.warning(f"Failed to update feature flag '{key}': {e}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Feature flag '{key}' not found")
 
 
 @router.delete("/{key}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_feature_flag(
     key: str,
     reason: str | None = Query(None, description="Reason for deletion"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -213,7 +217,7 @@ async def delete_feature_flag(
 @router.post("/evaluate", response_model=FeatureFlagEvaluationResponse)
 async def evaluate_feature_flag(
     evaluation_request: FeatureFlagEvaluationRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -247,7 +251,7 @@ async def evaluate_feature_flag(
 @router.post("/evaluate/bulk", response_model=FeatureFlagBulkEvaluationResponse)
 async def evaluate_feature_flags_bulk(
     evaluation_request: FeatureFlagBulkEvaluationRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -288,7 +292,7 @@ async def evaluate_feature_flags_bulk(
 async def enable_feature_flag(
     key: str,
     reason: str | None = Query(None, description="Reason for enabling"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -308,14 +312,15 @@ async def enable_feature_flag(
         )
         return flag
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        logger.warning(f"Failed to enable feature flag '{key}': {e}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Feature flag '{key}' not found")
 
 
 @router.post("/{key}/disable", response_model=FeatureFlagResponse)
 async def disable_feature_flag(
     key: str,
     reason: str | None = Query(None, description="Reason for disabling"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -335,7 +340,8 @@ async def disable_feature_flag(
         )
         return flag
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        logger.warning(f"Failed to disable feature flag '{key}': {e}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Feature flag '{key}' not found")
 
 
 async def _get_flags_by_environment(db: AsyncSession) -> dict[str, Any]:

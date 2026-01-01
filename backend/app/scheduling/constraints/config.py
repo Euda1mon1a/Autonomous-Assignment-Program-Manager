@@ -30,7 +30,6 @@ import logging
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -69,16 +68,16 @@ class ConstraintConfig:
     weight: float = 1.0  # For soft constraints
     category: ConstraintCategory = ConstraintCategory.COVERAGE
     description: str = ""
-    dependencies: List[str] = field(default_factory=list)
-    conflicts_with: List[str] = field(default_factory=list)
-    enable_condition: Optional[str] = None  # When to enable (documentation)
-    disable_reason: Optional[str] = None  # Why disabled by default
+    dependencies: list[str] = field(default_factory=list)
+    conflicts_with: list[str] = field(default_factory=list)
+    enable_condition: str | None = None  # When to enable (documentation)
+    disable_reason: str | None = None  # Why disabled by default
 
     def is_active(self) -> bool:
         """Check if constraint is active."""
         return self.enabled
 
-    def should_enable(self, context: Dict[str, any]) -> bool:
+    def should_enable(self, context: dict[str, any]) -> bool:
         """
         Check if constraint should be enabled based on context.
 
@@ -112,7 +111,7 @@ class ConstraintConfigManager:
 
     def __init__(self):
         """Initialize constraint configuration manager."""
-        self._configs: Dict[str, ConstraintConfig] = {}
+        self._configs: dict[str, ConstraintConfig] = {}
         self._initialize_default_configs()
 
     def _initialize_default_configs(self) -> None:
@@ -350,7 +349,7 @@ class ConstraintConfigManager:
             disable_reason="Tier 2 resilience - may be too restrictive for some use cases",
         )
 
-    def get(self, name: str) -> Optional[ConstraintConfig]:
+    def get(self, name: str) -> ConstraintConfig | None:
         """
         Get configuration for a constraint.
 

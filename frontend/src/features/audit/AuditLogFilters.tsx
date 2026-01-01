@@ -184,6 +184,9 @@ function MultiSelect<T extends string>({
           hover:bg-gray-50 transition-colors
           ${selected.length > 0 ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}
         `}
+        aria-label={`${label} filter`}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
       >
         {Icon && <Icon className="w-4 h-4 text-gray-500" />}
         <span className="text-gray-700">{label}</span>
@@ -277,6 +280,9 @@ function DateRangePicker({
           hover:bg-gray-50 transition-colors
           ${dateRange ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}
         `}
+        aria-label="Date range filter"
+        aria-expanded={isOpen}
+        aria-haspopup="true"
       >
         <Calendar className="w-4 h-4 text-gray-500" />
         <span className="text-gray-700">{displayValue}</span>
@@ -319,6 +325,7 @@ function DateRangePicker({
                       })
                     }
                     className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    aria-label="Custom range start date"
                   />
                 </div>
                 <div>
@@ -333,6 +340,7 @@ function DateRangePicker({
                       })
                     }
                     className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    aria-label="Custom range end date"
                   />
                 </div>
               </div>
@@ -486,12 +494,14 @@ export function AuditLogFilters({
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search audit logs by entity name, reason, or user..."
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            aria-label="Search audit logs"
           />
           {searchInput && (
             <button
               type="button"
               onClick={() => setSearchInput('')}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              aria-label="Clear search"
             >
               <X className="w-4 h-4" />
             </button>
@@ -505,6 +515,8 @@ export function AuditLogFilters({
             flex items-center gap-2 px-4 py-2 border rounded-lg text-sm transition-colors
             ${showAdvanced ? 'bg-gray-100 border-gray-400' : 'border-gray-300 hover:bg-gray-50'}
           `}
+          aria-label={showAdvanced ? 'Hide advanced filters' : 'Show advanced filters'}
+          aria-expanded={showAdvanced}
         >
           <Filter className="w-4 h-4" />
           Filters

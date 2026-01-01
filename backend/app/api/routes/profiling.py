@@ -99,11 +99,104 @@ class AnalyzeRequest(BaseModel):
     )
 
 
+class ProfilingSessionResponse(BaseModel):
+    """Profiling session response."""
+
+    status: str = Field(..., description="Session status")
+    session_id: str = Field(..., description="Unique session ID")
+    config: dict[str, bool] = Field(..., description="Session configuration")
+
+
+class ProfilingSessionStopResponse(BaseModel):
+    """Profiling session stop response."""
+
+    status: str = Field(..., description="Session status")
+    summary: dict[str, int] = Field(..., description="Session summary statistics")
+
+
+class ProfilingReportResponse(BaseModel):
+    """Profiling report response."""
+
+    report_id: str | None = Field(None, description="Report ID")
+    created_at: str | None = Field(None, description="Report creation timestamp")
+    summary: dict[str, Any] = Field(default_factory=dict, description="Report summary")
+    bottlenecks: list[dict[str, Any]] = Field(
+        default_factory=list, description="Detected bottlenecks"
+    )
+    insights: list[dict[str, Any]] = Field(
+        default_factory=list, description="Performance insights"
+    )
+
+
+class QueryMetricsResponse(BaseModel):
+    """SQL query metrics response."""
+
+    total_queries: int = Field(..., description="Total number of queries")
+    slow_queries: int = Field(..., description="Number of slow queries")
+    failed_queries: int = Field(..., description="Number of failed queries")
+    stats: dict[str, Any] = Field(..., description="Query statistics")
+    queries: list[dict[str, Any]] = Field(..., description="Query details")
+
+
+class RequestMetricsResponse(BaseModel):
+    """HTTP request metrics response."""
+
+    total_requests: int = Field(..., description="Total number of requests")
+    slow_requests: int = Field(..., description="Number of slow requests")
+    failed_requests: int = Field(..., description="Number of failed requests")
+    stats: dict[str, Any] = Field(..., description="Request statistics")
+    requests: list[dict[str, Any]] = Field(..., description="Request details")
+
+
+class TracesResponse(BaseModel):
+    """Distributed traces response."""
+
+    total_traces: int = Field(..., description="Total number of traces")
+    slow_traces: int = Field(..., description="Number of slow traces")
+    traces: list[dict[str, Any]] = Field(..., description="Trace details")
+
+
+class BottlenecksResponse(BaseModel):
+    """Performance bottlenecks response."""
+
+    bottlenecks: list[dict[str, Any]] = Field(..., description="Detected bottlenecks")
+    summary: dict[str, int] = Field(..., description="Bottleneck summary by severity")
+
+
+class FlamegraphResponse(BaseModel):
+    """Flame graph response."""
+
+    name: str = Field(..., description="Root function name")
+    value: float = Field(..., description="Total time/value")
+    children: list[dict[str, Any]] = Field(
+        default_factory=list, description="Child nodes"
+    )
+
+
+class AnalysisResponse(BaseModel):
+    """Profiling analysis response."""
+
+    insights: list[dict[str, Any]] = Field(..., description="Performance insights")
+    bottlenecks: list[dict[str, Any]] = Field(..., description="Detected bottlenecks")
+    query_patterns: dict[str, Any] = Field(..., description="Query pattern analysis")
+    recommendations: list[dict[str, Any]] = Field(
+        ..., description="Performance recommendations"
+    )
+
+
+class ProfilingClearResponse(BaseModel):
+    """Profiling data clear response."""
+
+    status: str = Field(..., description="Operation status")
+    message: str = Field(..., description="Confirmation message")
+
+
 @router.get(
     "/status",
     response_model=ProfilingStatusResponse,
     summary="Get Profiling Status",
     description="Get current status of profiling system (admin only)",
+    response_description="Profiling status including enabled features and current statistics",
 )
 async def get_profiling_status(
     current_user: User = Depends(get_admin_user),
@@ -150,13 +243,15 @@ async def get_profiling_status(
 
 @router.post(
     "/start",
+    response_model=ProfilingSessionResponse,
     summary="Start Profiling Session",
     description="Start a new profiling session (admin only)",
+    response_description="Session ID and configuration for the started profiling session",
 )
 async def start_profiling_session(
     request: ProfilingSessionRequest,
     current_user: User = Depends(get_admin_user),
-) -> dict[str, Any]:
+) -> ProfilingSessionResponse:
     """
     Start a profiling session.
 
@@ -190,27 +285,29 @@ async def start_profiling_session(
 
     session_id = str(uuid4())
 
-    return {
-        "status": "started",
-        "session_id": session_id,
-        "config": {
+    return ProfilingSessionResponse(
+        status="started",
+        session_id=session_id,
+        config={
             "cpu": request.cpu,
             "memory": request.memory,
             "sql": request.sql,
             "requests": request.requests,
             "traces": request.traces,
         },
-    }
+    )
 
 
 @router.post(
     "/stop",
+    response_model=ProfilingSessionStopResponse,
     summary="Stop Profiling Session",
     description="Stop current profiling session (admin only)",
+    response_description="Session summary with counts of collected profiling data",
 )
 async def stop_profiling_session(
     current_user: User = Depends(get_admin_user),
-) -> dict[str, Any]:
+) -> ProfilingSessionStopResponse:
     """
     Stop profiling session.
 
@@ -238,13 +335,14 @@ async def stop_profiling_session(
         "traces": trace_collector.get_count(),
     }
 
-    return {"status": "stopped", "summary": summary}
+    return ProfilingSessionStopResponse(status="stopped", summary=summary)
 
 
 @router.get(
     "/report",
     summary="Get Profiling Report",
     description="Generate comprehensive profiling report (admin only)",
+    response_description="Comprehensive report with summary, bottlenecks, and performance insights (JSON or HTML)",
 )
 async def get_profiling_report(
     format: str = Query("json", description="Report format (json or html)"),
@@ -303,15 +401,17 @@ async def get_profiling_report(
 
 @router.get(
     "/queries",
+    response_model=QueryMetricsResponse,
     summary="Get SQL Query Metrics",
     description="Get SQL query profiling metrics (admin only)",
+    response_description="SQL query statistics including slow queries, failed queries, and detailed metrics",
 )
 async def get_query_metrics(
     limit: int = Query(100, description="Maximum number of queries to return"),
     slow_only: bool = Query(False, description="Return only slow queries"),
     threshold_ms: float = Query(100.0, description="Slow query threshold in ms"),
     current_user: User = Depends(get_admin_user),
-) -> dict[str, Any]:
+) -> QueryMetricsResponse:
     """
     Get SQL query metrics.
 
@@ -339,26 +439,28 @@ async def get_query_metrics(
 
     queries = queries[-limit:] if limit else queries
 
-    return {
-        "total_queries": sql_collector.get_count(),
-        "slow_queries": len(sql_collector.get_slow_queries(threshold_ms)),
-        "failed_queries": len(sql_collector.get_failed_queries()),
-        "stats": sql_collector.get_query_stats(),
-        "queries": [q.to_dict() for q in queries],
-    }
+    return QueryMetricsResponse(
+        total_queries=sql_collector.get_count(),
+        slow_queries=len(sql_collector.get_slow_queries(threshold_ms)),
+        failed_queries=len(sql_collector.get_failed_queries()),
+        stats=sql_collector.get_query_stats(),
+        queries=[q.to_dict() for q in queries],
+    )
 
 
 @router.get(
     "/requests",
+    response_model=RequestMetricsResponse,
     summary="Get Request Metrics",
     description="Get HTTP request profiling metrics (admin only)",
+    response_description="HTTP request statistics including slow requests, failed requests, and detailed metrics",
 )
 async def get_request_metrics(
     limit: int = Query(100, description="Maximum number of requests to return"),
     slow_only: bool = Query(False, description="Return only slow requests"),
     threshold_ms: float = Query(1000.0, description="Slow request threshold in ms"),
     current_user: User = Depends(get_admin_user),
-) -> dict[str, Any]:
+) -> RequestMetricsResponse:
     """
     Get HTTP request metrics.
 
@@ -386,19 +488,21 @@ async def get_request_metrics(
 
     requests = requests[-limit:] if limit else requests
 
-    return {
-        "total_requests": request_collector.get_count(),
-        "slow_requests": len(request_collector.get_slow_requests(threshold_ms)),
-        "failed_requests": len(request_collector.get_failed_requests()),
-        "stats": request_collector.get_request_stats(),
-        "requests": [r.to_dict() for r in requests],
-    }
+    return RequestMetricsResponse(
+        total_requests=request_collector.get_count(),
+        slow_requests=len(request_collector.get_slow_requests(threshold_ms)),
+        failed_requests=len(request_collector.get_failed_requests()),
+        stats=request_collector.get_request_stats(),
+        requests=[r.to_dict() for r in requests],
+    )
 
 
 @router.get(
     "/traces",
+    response_model=TracesResponse,
     summary="Get Distributed Traces",
     description="Get distributed trace data (admin only)",
+    response_description="Distributed tracing data with slow trace detection and detailed span information",
 )
 async def get_traces(
     limit: int = Query(100, description="Maximum number of traces to return"),
@@ -406,7 +510,7 @@ async def get_traces(
     slow_only: bool = Query(False, description="Return only slow traces"),
     threshold_ms: float = Query(1000.0, description="Slow trace threshold in ms"),
     current_user: User = Depends(get_admin_user),
-) -> dict[str, Any]:
+) -> TracesResponse:
     """
     Get distributed traces.
 
@@ -436,23 +540,25 @@ async def get_traces(
 
     traces = traces[-limit:] if limit else traces
 
-    return {
-        "total_traces": trace_collector.get_count(),
-        "slow_traces": len(trace_collector.get_slow_traces(threshold_ms)),
-        "traces": [t.to_dict() for t in traces],
-    }
+    return TracesResponse(
+        total_traces=trace_collector.get_count(),
+        slow_traces=len(trace_collector.get_slow_traces(threshold_ms)),
+        traces=[t.to_dict() for t in traces],
+    )
 
 
 @router.get(
     "/bottlenecks",
+    response_model=BottlenecksResponse,
     summary="Detect Performance Bottlenecks",
     description="Detect and analyze performance bottlenecks (admin only)",
+    response_description="Detected bottlenecks with severity classification and summary by category",
 )
 async def detect_bottlenecks(
     sql_threshold_ms: float = Query(100.0, description="SQL slow query threshold"),
     request_threshold_ms: float = Query(1000.0, description="Request slow threshold"),
     current_user: User = Depends(get_admin_user),
-) -> dict[str, Any]:
+) -> BottlenecksResponse:
     """
     Detect performance bottlenecks.
 
@@ -490,22 +596,24 @@ async def detect_bottlenecks(
     for b in bottlenecks:
         severity_counts[b.severity] = severity_counts.get(b.severity, 0) + 1
 
-    return {
-        "bottlenecks": [b.to_dict() for b in bottlenecks],
-        "summary": {"total": len(bottlenecks), **severity_counts},
-    }
+    return BottlenecksResponse(
+        bottlenecks=[b.to_dict() for b in bottlenecks],
+        summary={"total": len(bottlenecks), **severity_counts},
+    )
 
 
 @router.get(
     "/flamegraph",
+    response_model=FlamegraphResponse,
     summary="Generate Flame Graph",
     description="Generate flame graph data for visualization (admin only)",
+    response_description="Hierarchical flame graph data structure for performance visualization",
 )
 async def generate_flamegraph(
     type: str = Query("cpu", description="Type of flame graph (cpu or traces)"),
     profile_index: int = Query(-1, description="Profile result index (-1 for latest)"),
     current_user: User = Depends(get_admin_user),
-) -> dict[str, Any]:
+) -> FlamegraphResponse:
     """
     Generate flame graph data.
 
@@ -541,18 +649,20 @@ async def generate_flamegraph(
     else:
         raise HTTPException(status_code=400, detail=f"Invalid flame graph type: {type}")
 
-    return flame_data
+    return FlamegraphResponse(**flame_data)
 
 
 @router.post(
     "/analyze",
+    response_model=AnalysisResponse,
     summary="Analyze Profiling Data",
     description="Perform detailed analysis of profiling data (admin only)",
+    response_description="Comprehensive analysis with insights, bottlenecks, query patterns, and actionable recommendations",
 )
 async def analyze_profiling_data(
     request: AnalyzeRequest,
     current_user: User = Depends(get_admin_user),
-) -> dict[str, Any]:
+) -> AnalysisResponse:
     """
     Analyze profiling data.
 
@@ -621,22 +731,24 @@ async def analyze_profiling_data(
                 }
             )
 
-    return {
-        "insights": [i.to_dict() for i in insights],
-        "bottlenecks": [b.to_dict() for b in bottlenecks],
-        "query_patterns": query_patterns,
-        "recommendations": recommendations[:20],  # Top 20
-    }
+    return AnalysisResponse(
+        insights=[i.to_dict() for i in insights],
+        bottlenecks=[b.to_dict() for b in bottlenecks],
+        query_patterns=query_patterns,
+        recommendations=recommendations[:20],  # Top 20
+    )
 
 
 @router.delete(
     "/clear",
+    response_model=ProfilingClearResponse,
     summary="Clear Profiling Data",
     description="Clear all collected profiling data (admin only)",
+    response_description="Confirmation message that all profiling data has been cleared",
 )
 async def clear_profiling_data(
     current_user: User = Depends(get_admin_user),
-) -> dict[str, Any]:
+) -> ProfilingClearResponse:
     """
     Clear all profiling data.
 
@@ -656,7 +768,7 @@ async def clear_profiling_data(
     trace_collector.clear()
     profiler_context.clear()
 
-    return {
-        "status": "cleared",
-        "message": "All profiling data cleared successfully",
-    }
+    return ProfilingClearResponse(
+        status="cleared",
+        message="All profiling data cleared successfully",
+    )

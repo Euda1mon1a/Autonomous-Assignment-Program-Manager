@@ -1,10 +1,12 @@
 """Schedule generation and validation API routes."""
 
+from typing import Any
+
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from sqlalchemy.exc import SQLAlchemyError, DBAPIError
+from sqlalchemy.exc import DBAPIError, SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.file_security import FileValidationError, validate_excel_upload
 from app.core.logging import get_logger
@@ -403,8 +405,8 @@ async def handle_emergency_coverage(
     )
 
 
-@router.get("/{start_date}/{end_date}")
-async def get_schedule(start_date: str, end_date: str, db: AsyncSession = Depends(get_async_db)):
+@router.get("/{start_date}/{end_date}", response_model=dict[str, Any])
+async def get_schedule(start_date: str, end_date: str, db: AsyncSession = Depends(get_async_db)) -> dict[str, Any]:
     """
     Get the schedule for a date range.
 
@@ -574,7 +576,7 @@ async def analyze_imported_schedules(
     )
 
 
-@router.post("/import/analyze-file")
+@router.post("/import/analyze-file", response_model=dict[str, Any])
 async def analyze_single_file(
     file: UploadFile = File(..., description="Schedule Excel file to analyze"),
     file_type: str = Form(
@@ -584,7 +586,7 @@ async def analyze_single_file(
         None, description="JSON mapping of specialty to providers"
     ),
     db: AsyncSession = Depends(get_async_db),
-):
+) -> dict[str, Any]:
     """
     Quick analysis of a single schedule file.
 
@@ -773,7 +775,8 @@ async def parse_block_schedule_endpoint(
             known_people=people_list,
         )
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        logger.error(f"Error parsing block schedule: {e}", exc_info=True)
+        raise HTTPException(status_code=422, detail="Invalid schedule file")
     finally:
         os.unlink(tmp_path)
 
@@ -1213,7 +1216,7 @@ async def find_swap_candidates_json(
 # ============================================================================
 
 
-@router.post("/faculty-outpatient/generate")
+@router.post("/faculty-outpatient/generate", response_model=dict[str, Any])
 async def generate_faculty_outpatient(
     block_number: int,
     regenerate: bool = True,
@@ -1221,7 +1224,7 @@ async def generate_faculty_outpatient(
     include_supervision: bool = True,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> dict[str, Any]:
     """
     Generate faculty PRIMARY clinic and SUPERVISION assignments for a block.
 

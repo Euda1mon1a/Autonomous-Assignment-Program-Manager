@@ -226,13 +226,15 @@ export function BulkImportModal({
             <div className="space-y-6">
               {/* Data Type Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="import-data-type" className="block text-sm font-medium text-gray-700 mb-2">
                   What are you importing?
                 </label>
                 <select
+                  id="import-data-type"
                   value={dataType}
                   onChange={(e) => setDataType(e.target.value as ImportDataType)}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  aria-label="Select type of data to import"
                 >
                   <option value="schedules">Schedule / Assignments</option>
                   <option value="people">People (Residents & Faculty)</option>
@@ -258,9 +260,10 @@ export function BulkImportModal({
                   accept=".csv,.xlsx,.xls,.json"
                   onChange={handleFileInputChange}
                   className="hidden"
+                  aria-label="Upload file for bulk import"
                 />
 
-                <Upload className={`w-12 h-12 mx-auto mb-4 ${dragActive ? 'text-blue-500' : 'text-gray-400'}`} />
+                <Upload className={`w-12 h-12 mx-auto mb-4 ${dragActive ? 'text-blue-500' : 'text-gray-400'}`} aria-hidden="true" />
 
                 <p className="text-lg font-medium text-gray-700 mb-2">
                   Drag and drop your file here
@@ -284,8 +287,8 @@ export function BulkImportModal({
 
               {/* File Error */}
               {fileError && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md text-red-700">
-                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md text-red-700" role="alert">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
                   <span>{fileError}</span>
                 </div>
               )}
@@ -325,8 +328,8 @@ export function BulkImportModal({
 
               {/* XLSX Fallback Warning */}
               {xlsxFallbackUsed && (
-                <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800">
-                  <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800" role="alert">
+                  <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
                   <div>
                     <p className="font-medium">Using Client-Side Parsing</p>
                     <p className="text-sm">
@@ -338,8 +341,8 @@ export function BulkImportModal({
 
               {/* XLSX Warnings */}
               {xlsxWarnings.length > 0 && !xlsxFallbackUsed && (
-                <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-800">
-                  <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-800" role="status">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
                   <div>
                     <p className="font-medium">Parsing Notes</p>
                     <ul className="text-sm list-disc list-inside">

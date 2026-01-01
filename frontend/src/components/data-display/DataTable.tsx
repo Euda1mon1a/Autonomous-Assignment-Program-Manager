@@ -50,7 +50,7 @@ export function DataTable<T>({
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
-  const handleSort = (columnKey: string) => {
+  const handleSort = (columnKey: string): void => {
     const column = columns.find((c) => c.key === columnKey);
     if (!column?.sortable) return;
 

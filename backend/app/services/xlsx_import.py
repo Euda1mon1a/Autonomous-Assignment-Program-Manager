@@ -16,6 +16,7 @@ Uses semantic anchors rather than hard-coded positions.
 """
 
 import io
+import logging
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
@@ -23,7 +24,6 @@ from difflib import SequenceMatcher
 from enum import Enum
 from pathlib import Path
 from typing import Optional
-import logging
 
 from openpyxl import load_workbook
 from openpyxl.cell import MergedCell
@@ -80,6 +80,7 @@ class ScheduleConflict:
     message: str = ""
 
     def __post_init__(self) -> None:
+        """Generate conflict message if not provided."""
         if not self.message:
             self.message = self._generate_message()
 
@@ -108,16 +109,35 @@ class ProviderSchedule:
     )  # key: (date, time_of_day)
 
     def add_slot(self, slot: ScheduleSlot) -> None:
-        """Add a slot to this provider's schedule."""
+        """
+        Add a slot to this provider's schedule.
+
+        Args:
+            slot: ScheduleSlot to add to the provider's schedule
+        """
         key = (slot.date, slot.time_of_day)
         self.slots[key] = slot
 
     def get_slot(self, d: date, time_of_day: str) -> ScheduleSlot | None:
-        """Get slot for a specific date/time."""
+        """
+        Get slot for a specific date/time.
+
+        Args:
+            d: Date to lookup
+            time_of_day: Time of day (AM or PM)
+
+        Returns:
+            ScheduleSlot if found, None otherwise
+        """
         return self.slots.get((d, time_of_day))
 
     def get_fmit_weeks(self) -> list[tuple[date, date]]:
-        """Get list of FMIT week ranges (Mon-Sun)."""
+        """
+        Get list of FMIT week ranges (Mon-Sun).
+
+        Returns:
+            List of (week_start, week_end) tuples for all FMIT weeks
+        """
         fmit_dates = sorted(
             [
                 slot.date
@@ -152,7 +172,12 @@ class ProviderSchedule:
         return weeks
 
     def has_alternating_pattern(self) -> bool:
-        """Check if FMIT schedule has week-on/week-off pattern (hard on families)."""
+        """
+        Check if FMIT schedule has week-on/week-off pattern (hard on families).
+
+        Returns:
+            True if provider has alternating FMIT weeks (2+ gaps of ~1 week)
+        """
         weeks = self.get_fmit_weeks()
         if len(weeks) < 3:
             return False
@@ -187,15 +212,36 @@ class ImportResult:
     date_range: tuple[date | None, date | None] = (None, None)
 
     def add_conflict(self, conflict: ScheduleConflict) -> None:
-        """Add a conflict to the result."""
+        """
+        Add a conflict to the result.
+
+        Args:
+            conflict: ScheduleConflict to add to the conflicts list
+        """
         self.conflicts.append(conflict)
 
     def get_conflicts_by_provider(self, provider_name: str) -> list[ScheduleConflict]:
-        """Get all conflicts for a specific provider."""
+        """
+        Get all conflicts for a specific provider.
+
+        Args:
+            provider_name: Name of provider to filter conflicts for
+
+        Returns:
+            List of ScheduleConflict objects for the provider
+        """
         return [c for c in self.conflicts if c.provider_name == provider_name]
 
     def get_conflicts_by_type(self, conflict_type: str) -> list[ScheduleConflict]:
-        """Get all conflicts of a specific type."""
+        """
+        Get all conflicts of a specific type.
+
+        Args:
+            conflict_type: Type of conflict to filter for (e.g., "double_book")
+
+        Returns:
+            List of ScheduleConflict objects matching the type
+        """
         return [c for c in self.conflicts if c.conflict_type == conflict_type]
 
 
@@ -301,7 +347,12 @@ class ClinicScheduleImporter:
             self._load_known_providers()
 
     def _load_known_providers(self) -> None:
-        """Load known providers from database for matching."""
+        """
+        Load known providers from database for fuzzy name matching.
+
+        Populates known_providers dict with lowercase names for matching
+        schedule data against database records.
+        """
         if not self.db:
             return
 
@@ -372,7 +423,18 @@ class ClinicScheduleImporter:
         return SlotType.UNKNOWN
 
     def parse_date_from_header(self, value) -> date | None:
-        """Parse a date from various header formats."""
+        """
+        Parse a date from various header formats.
+
+        Supports multiple date formats including ISO, US, and abbreviated formats.
+        Handles academic year inference for dates missing year component.
+
+        Args:
+            value: Cell value to parse (str, date, or datetime)
+
+        Returns:
+            Parsed date object, or None if parsing fails
+        """
         if value is None:
             return None
 
@@ -513,7 +575,16 @@ class ClinicScheduleImporter:
     def import_worksheet(
         self, ws: Worksheet, format_hint: dict | None = None
     ) -> ImportResult:
-        """Import a single worksheet."""
+        """
+        Import a single worksheet.
+
+        Args:
+            ws: openpyxl Worksheet to import
+            format_hint: Optional pre-detected format dict to skip detection
+
+        Returns:
+            ImportResult with parsed schedule data
+        """
         result = ImportResult(success=True)
 
         # Detect or use provided format
@@ -527,7 +598,17 @@ class ClinicScheduleImporter:
     def _import_providers_in_rows(
         self, ws: Worksheet, fmt: dict, result: ImportResult
     ) -> ImportResult:
-        """Import format where providers are in rows, dates in columns."""
+        """
+        Import format where providers are in rows, dates in columns.
+
+        Args:
+            ws: openpyxl Worksheet
+            fmt: Format dict from detect_format
+            result: ImportResult to populate
+
+        Returns:
+            Updated ImportResult with parsed slots
+        """
 
         provider_col = fmt["provider_col"]
         date_cols = fmt["date_cols"]
@@ -586,7 +667,17 @@ class ClinicScheduleImporter:
     def _import_providers_in_columns(
         self, ws: Worksheet, fmt: dict, result: ImportResult
     ) -> ImportResult:
-        """Import format where dates are in rows, providers in columns."""
+        """
+        Import format where dates are in rows, providers in columns.
+
+        Args:
+            ws: openpyxl Worksheet
+            fmt: Format dict from detect_format
+            result: ImportResult to populate
+
+        Returns:
+            Updated ImportResult with parsed slots
+        """
 
         date_rows = fmt.get("date_rows", [])
         header_row = fmt.get("header_row", 1)
@@ -694,7 +785,12 @@ class FacultyTarget:
 
     @property
     def flexibility(self) -> str:
-        """How flexible this faculty is for taking additional weeks."""
+        """
+        How flexible this faculty is for taking additional weeks.
+
+        Returns:
+            Flexibility level: "low", "emergency_only", "unreliable", "high", or "medium"
+        """
         if self.role == "chief":
             return "low"  # Already at minimum
         elif self.role == "pd":
@@ -819,7 +915,12 @@ class ConflictDetector:
         self.conflicts: list[ScheduleConflict] = []
 
     def detect_all_conflicts(self) -> list[ScheduleConflict]:
-        """Run all conflict detection checks."""
+        """
+        Run all conflict detection checks.
+
+        Returns:
+            List of all detected ScheduleConflict objects
+        """
         self.conflicts = []
 
         self._detect_double_bookings()
@@ -829,7 +930,12 @@ class ConflictDetector:
         return self.conflicts
 
     def _detect_double_bookings(self) -> None:
-        """Detect when provider is scheduled for both FMIT and clinic."""
+        """
+        Detect when provider is scheduled for both FMIT and clinic.
+
+        Adds "double_book" conflicts to conflicts list when providers
+        have simultaneous FMIT and clinic assignments.
+        """
         # Get all providers in both schedules
         common_providers = set(self.fmit.providers.keys()) & set(
             self.clinic.providers.keys()
@@ -861,7 +967,12 @@ class ConflictDetector:
                     )
 
     def _detect_specialty_unavailability(self) -> None:
-        """Detect when specialty provider is unavailable for their specialty clinic."""
+        """
+        Detect when specialty provider is unavailable for their specialty clinic.
+
+        Adds "specialty_unavailable" warnings when specialty providers
+        are on FMIT during their specialty clinic days.
+        """
         for specialty, providers in self.specialty_providers.items():
             for provider_name in providers:
                 if provider_name not in self.fmit.providers:
@@ -884,7 +995,12 @@ class ConflictDetector:
                         )
 
     def _detect_alternating_patterns(self) -> None:
-        """Detect week-on/week-off patterns that are hard on families."""
+        """
+        Detect week-on/week-off patterns that are hard on families.
+
+        Adds "consecutive_weeks" warnings for providers with alternating
+        FMIT week patterns that create family hardship.
+        """
         for provider_name, schedule in self.fmit.providers.items():
             if schedule.has_alternating_pattern():
                 weeks = schedule.get_fmit_weeks()
@@ -940,7 +1056,16 @@ class SwapFinder:
     def _check_external_conflict(
         self, faculty: str, week_start: date
     ) -> ExternalConflict | None:
-        """Check if faculty has external conflict during week."""
+        """
+        Check if faculty has external conflict during week.
+
+        Args:
+            faculty: Faculty name to check
+            week_start: Monday of the week to check
+
+        Returns:
+            ExternalConflict if found, None otherwise
+        """
         week_end = week_start + timedelta(days=6)
 
         for conflict in self.external_conflicts:
@@ -1472,7 +1597,12 @@ class BlockParseResult:
     errors: list[str] = field(default_factory=list)
 
     def get_residents_by_template(self) -> dict[str, list[dict]]:
-        """Group residents by rotation template."""
+        """
+        Group residents by rotation template.
+
+        Returns:
+            Dictionary mapping template names to lists of resident dicts
+        """
         by_template: dict[str, list[dict]] = {}
         for r in self.residents:
             t = r.get("template", "")
@@ -1654,7 +1784,17 @@ class BlockScheduleParser:
         return result
 
     def _find_anchors(self, ws: Worksheet) -> dict:
-        """Find column positions of key headers by content matching."""
+        """
+        Find column positions of key headers by content matching.
+
+        Scans first 10 rows for TEMPLATE, ROLE, and PROVIDER headers.
+
+        Args:
+            ws: openpyxl Worksheet to scan
+
+        Returns:
+            Dictionary with detected column/row positions for anchors
+        """
         anchors: dict = {}
 
         # Scan first 10 rows for headers
@@ -1705,7 +1845,16 @@ class BlockScheduleParser:
         return date_cols
 
     def _find_person_rows(self, ws: Worksheet, anchors: dict) -> list[dict]:
-        """Find rows containing person data based on name pattern."""
+        """
+        Find rows containing person data based on name pattern.
+
+        Args:
+            ws: openpyxl Worksheet
+            anchors: Anchor positions from _find_anchors
+
+        Returns:
+            List of dicts with row, name, template, and role info
+        """
         persons = []
 
         # Use discovered anchors or sensible defaults
@@ -1789,7 +1938,17 @@ class BlockScheduleParser:
         return raw_name, 1.0
 
     def _get_cell_value(self, ws: Worksheet, row: int, col: int) -> str | None:
-        """Get cell value, handling merged cells gracefully."""
+        """
+        Get cell value, handling merged cells gracefully.
+
+        Args:
+            ws: openpyxl Worksheet
+            row: Row index
+            col: Column index
+
+        Returns:
+            Cell value as string, or None if empty/error
+        """
         try:
             cell = ws.cell(row=row, column=col)
 
@@ -1823,7 +1982,16 @@ class BlockScheduleParser:
             return None
 
     def _extract_block_number(self, sheet_name: str, ws: Worksheet) -> int:
-        """Extract block number from sheet name or cell content."""
+        """
+        Extract block number from sheet name or cell content.
+
+        Args:
+            sheet_name: Name of the worksheet
+            ws: openpyxl Worksheet to scan if sheet name fails
+
+        Returns:
+            Block number (1-13), or 0 if unknown
+        """
         # Try sheet name first: "Block 10", "Block10", "10"
         match = re.search(r"block\s*(\d+)", sheet_name, re.I)
         if match:

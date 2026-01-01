@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import get_current_user
+from app.core.security import get_current_active_user
 from app.db.session import get_async_db
 from app.models.swap import SwapRecord
 from app.models.user import User
@@ -33,7 +33,21 @@ from app.services.swap_validation import SwapValidationService
 router = APIRouter(prefix="/swaps", tags=["swaps"])
 
 
-@router.post("/execute", response_model=SwapExecuteResponse)
+@router.post(
+    "/execute",
+    response_model=SwapExecuteResponse,
+    summary="Execute schedule swap",
+    description="Execute a Faculty Medical Intensive Training (FMIT) swap between two faculty members. "
+    "Performs comprehensive validation including back-to-back conflicts, external conflicts, "
+    "and ACGME compliance before executing. Creates an audit trail and allows rollback within 24 hours.",
+    tags=["swaps"],
+    responses={
+        200: {"description": "Swap executed successfully or validation failed (check response)"},
+        400: {"description": "Invalid swap request"},
+        401: {"description": "Authentication required"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def execute_swap(
     request: SwapExecuteRequest,
     db: AsyncSession = Depends(get_async_db),
@@ -46,7 +60,7 @@ async def execute_swap(
     """
     # Validate the swap
     validator = SwapValidationService(db)
-    validation = await vawait alidator.validate_swap(
+    validation = await validator.validate_swap(
         source_faculty_id=request.source_faculty_id,
         source_week=request.source_week,
         target_faculty_id=request.target_faculty_id,
@@ -71,7 +85,7 @@ async def execute_swap(
 
     # Execute the swap
     executor = SwapExecutor(db)
-    result = await eawait xecutor.execute_swap(
+    result = await executor.execute_swap(
         source_faculty_id=request.source_faculty_id,
         source_week=request.source_week,
         target_faculty_id=request.target_faculty_id,
@@ -89,7 +103,22 @@ async def execute_swap(
     )
 
 
-@router.post("/validate", response_model=SwapValidationResult)
+@router.post(
+    "/validate",
+    response_model=SwapValidationResult,
+    summary="Validate swap proposal",
+    description="Validate a proposed schedule swap without executing it. "
+    "Checks for back-to-back week conflicts, external rotation conflicts, "
+    "and ACGME compliance violations. Returns detailed validation results including "
+    "errors and warnings. Use before executing to preview potential issues.",
+    tags=["swaps"],
+    responses={
+        200: {"description": "Validation completed (check result for pass/fail)"},
+        400: {"description": "Invalid request parameters"},
+        401: {"description": "Authentication required"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def validate_swap(
     request: SwapExecuteRequest,
     db: AsyncSession = Depends(get_async_db),
@@ -101,7 +130,7 @@ async def validate_swap(
     Use this to check if a swap is possible before attempting execution.
     """
     validator = SwapValidationService(db)
-    validation = await vawait alidator.validate_swap(
+    validation = await validator.validate_swap(
         source_faculty_id=request.source_faculty_id,
         source_week=request.source_week,
         target_faculty_id=request.target_faculty_id,
@@ -117,7 +146,21 @@ async def validate_swap(
     )
 
 
-@router.get("/history", response_model=SwapHistoryResponse)
+@router.get(
+    "/history",
+    response_model=SwapHistoryResponse,
+    summary="Get swap history",
+    description="Retrieve paginated swap history with optional filters. "
+    "Useful for auditing, tracking faculty swap patterns, and compliance reporting. "
+    "Can filter by faculty member (as either source or target), swap status, "
+    "and date range. Returns detailed swap records with faculty names and timestamps.",
+    tags=["swaps"],
+    responses={
+        200: {"description": "Swap history retrieved successfully"},
+        401: {"description": "Authentication required"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def get_swap_history(
     faculty_id: UUID | None = None,
     status: str | None = None,
@@ -214,7 +257,22 @@ async def get_swap_history(
     )
 
 
-@router.get("/{swap_id}", response_model=SwapRecordResponse)
+@router.get(
+    "/{swap_id}",
+    response_model=SwapRecordResponse,
+    summary="Get swap by ID",
+    description="Retrieve detailed information about a specific swap record. "
+    "Includes source and target faculty names, swap dates and type, "
+    "current status, execution and rollback timestamps, and reason for the swap. "
+    "Useful for reviewing swap details and audit trails.",
+    tags=["swaps"],
+    responses={
+        200: {"description": "Swap record retrieved successfully"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Swap not found"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def get_swap(
     swap_id: UUID,
     db: AsyncSession = Depends(get_async_db),
@@ -268,7 +326,22 @@ async def get_swap(
     )
 
 
-@router.post("/{swap_id}/rollback")
+@router.post(
+    "/{swap_id}/rollback",
+    summary="Rollback swap",
+    description="Rollback an executed swap to restore the original schedule assignments. "
+    "Only swaps executed within the last 24 hours can be rolled back. "
+    "Creates an audit trail of the rollback operation including reason and executor. "
+    "Reverts both faculty members' assignments to their pre-swap state.",
+    tags=["swaps"],
+    responses={
+        200: {"description": "Swap rolled back successfully"},
+        400: {"description": "Swap cannot be rolled back (outside 24-hour window, already rolled back, or not found)"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Swap not found"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def rollback_swap(
     swap_id: UUID,
     request: SwapRollbackRequest,
@@ -282,14 +355,14 @@ async def rollback_swap(
     """
     executor = SwapExecutor(db)
 
-    can_rollback = await eawait xecutor.can_rollback(swap_id)
+    can_rollback = await executor.can_rollback(swap_id)
     if not can_rollback:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Swap cannot be rolled back (either not found, already rolled back, or outside rollback window)",
         )
 
-    result = await eawait xecutor.rollback_swap(
+    result = await executor.rollback_swap(
         swap_id=swap_id,
         reason=request.reason,
         rolled_back_by_id=current_user.id,

@@ -828,7 +828,34 @@ async def claude_chat_websocket(
 # =============================================================================
 
 
-@router.get("/sessions")
+@router.get(
+    "/sessions",
+    response_model=dict[str, Any],
+    summary="List chat sessions for current user",
+    description="Returns a list of all chat sessions belonging to the current user, including message counts "
+    "and activity timestamps. Sessions are maintained in-memory (production should use Redis).",
+    tags=["Claude Chat"],
+    responses={
+        200: {
+            "description": "List of user's chat sessions",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "sessions": [
+                            {
+                                "session_id": "123e4567-e89b-12d3-a456-426614174000",
+                                "message_count": 12,
+                                "created_at": "2024-01-15T10:30:00Z",
+                                "last_activity": "2024-01-15T11:45:00Z",
+                            }
+                        ]
+                    }
+                }
+            },
+        },
+        401: {"description": "Not authenticated"},
+    },
+)
 async def list_sessions(
     current_user: User = Depends(get_current_active_user),
 ):
@@ -846,7 +873,43 @@ async def list_sessions(
     return {"sessions": user_sessions}
 
 
-@router.get("/sessions/{session_id}/history")
+@router.get(
+    "/sessions/{session_id}/history",
+    summary="Get chat history for a session",
+    description="Retrieves the complete message history for a specific chat session. "
+    "Includes user messages, assistant responses, and tool call details. "
+    "Users can only access their own sessions.",
+    tags=["Claude Chat"],
+    responses={
+        200: {
+            "description": "Chat session history",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "session_id": "123e4567-e89b-12d3-a456-426614174000",
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": "Check schedule compliance",
+                                "timestamp": "2024-01-15T10:30:00Z",
+                                "tool_calls": None,
+                            },
+                            {
+                                "role": "assistant",
+                                "content": "I'll validate the schedule for you.",
+                                "timestamp": "2024-01-15T10:30:05Z",
+                                "tool_calls": [{"name": "validate_schedule", "input": {}, "result": {}}],
+                            },
+                        ],
+                    }
+                }
+            },
+        },
+        401: {"description": "Not authenticated"},
+        403: {"description": "Not authorized to access this session"},
+        404: {"description": "Session not found"},
+    },
+)
 async def get_session_history(
     session_id: str,
     current_user: User = Depends(get_current_active_user),
@@ -865,7 +928,20 @@ async def get_session_history(
     }
 
 
-@router.delete("/sessions/{session_id}", status_code=204)
+@router.delete(
+    "/sessions/{session_id}",
+    status_code=204,
+    summary="Delete a chat session",
+    description="Permanently deletes a chat session and all its message history. "
+    "Users can only delete their own sessions. This action cannot be undone.",
+    tags=["Claude Chat"],
+    responses={
+        204: {"description": "Session deleted successfully"},
+        401: {"description": "Not authenticated"},
+        403: {"description": "Not authorized to delete this session"},
+        404: {"description": "Session not found"},
+    },
+)
 async def delete_session(
     session_id: str,
     current_user: User = Depends(get_current_active_user),

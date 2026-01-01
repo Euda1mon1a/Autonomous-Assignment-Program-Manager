@@ -33,7 +33,12 @@ class FacultyPreferenceService:
         self._cache = None
 
     def _get_cache(self):
-        """Lazy-load cache to avoid circular imports."""
+        """
+        Lazy-load cache to avoid circular imports.
+
+        Returns:
+            FacultyPreferenceCache instance if available, None otherwise
+        """
         if self._cache is None:
             try:
                 from app.services.constraints.faculty import get_faculty_pref_cache
@@ -45,7 +50,12 @@ class FacultyPreferenceService:
         return self._cache if self._cache else None
 
     def _invalidate_cache(self, faculty_id: UUID) -> None:
-        """Invalidate cache for a faculty member after updates."""
+        """
+        Invalidate cache for a faculty member after updates.
+
+        Args:
+            faculty_id: The faculty member's ID whose cache should be invalidated
+        """
         cache = self._get_cache()
         if cache:
             cache.invalidate_faculty(faculty_id)
@@ -116,6 +126,22 @@ class FacultyPreferenceService:
         Update faculty preferences.
 
         Only updates fields that are provided (not None).
+
+        Args:
+            faculty_id: The faculty member's ID
+            preferred_weeks: List of preferred week dates (ISO format)
+            blocked_weeks: List of blocked week dates (ISO format)
+            max_weeks_per_month: Maximum weeks per month
+            max_consecutive_weeks: Maximum consecutive weeks
+            min_gap_between_weeks: Minimum gap between weeks
+            notify_swap_requests: Whether to notify for swap requests
+            notify_schedule_changes: Whether to notify for schedule changes
+            notify_conflict_alerts: Whether to notify for conflicts
+            notify_reminder_days: Days before to send reminders
+            notes: Optional notes
+
+        Returns:
+            Updated FacultyPreference record
         """
         preferences = self.get_or_create_preferences(faculty_id)
 
@@ -152,7 +178,16 @@ class FacultyPreferenceService:
     def add_preferred_week(
         self, faculty_id: UUID, week_date: date
     ) -> FacultyPreference:
-        """Add a week to the preferred list."""
+        """
+        Add a week to the preferred list.
+
+        Args:
+            faculty_id: The faculty member's ID
+            week_date: Date of the week to mark as preferred
+
+        Returns:
+            Updated FacultyPreference record
+        """
         preferences = self.get_or_create_preferences(faculty_id)
         week_str = week_date.isoformat()
 
@@ -176,7 +211,16 @@ class FacultyPreferenceService:
         return preferences
 
     def add_blocked_week(self, faculty_id: UUID, week_date: date) -> FacultyPreference:
-        """Add a week to the blocked list."""
+        """
+        Add a week to the blocked list.
+
+        Args:
+            faculty_id: The faculty member's ID
+            week_date: Date of the week to mark as blocked
+
+        Returns:
+            Updated FacultyPreference record
+        """
         preferences = self.get_or_create_preferences(faculty_id)
         week_str = week_date.isoformat()
 
@@ -202,7 +246,16 @@ class FacultyPreferenceService:
     def remove_preferred_week(
         self, faculty_id: UUID, week_date: date
     ) -> FacultyPreference:
-        """Remove a week from the preferred list."""
+        """
+        Remove a week from the preferred list.
+
+        Args:
+            faculty_id: The faculty member's ID
+            week_date: Date of the week to remove from preferred list
+
+        Returns:
+            Updated FacultyPreference record
+        """
         preferences = self.get_or_create_preferences(faculty_id)
         week_str = week_date.isoformat()
 
@@ -221,7 +274,16 @@ class FacultyPreferenceService:
     def remove_blocked_week(
         self, faculty_id: UUID, week_date: date
     ) -> FacultyPreference:
-        """Remove a week from the blocked list."""
+        """
+        Remove a week from the blocked list.
+
+        Args:
+            faculty_id: The faculty member's ID
+            week_date: Date of the week to remove from blocked list
+
+        Returns:
+            Updated FacultyPreference record
+        """
         preferences = self.get_or_create_preferences(faculty_id)
         week_str = week_date.isoformat()
 
@@ -238,7 +300,16 @@ class FacultyPreferenceService:
         return preferences
 
     def is_week_blocked(self, faculty_id: UUID, week_date: date) -> bool:
-        """Check if a week is blocked for a faculty member."""
+        """
+        Check if a week is blocked for a faculty member.
+
+        Args:
+            faculty_id: The faculty member's ID
+            week_date: Date to check
+
+        Returns:
+            True if week is blocked, False otherwise
+        """
         preferences = (
             self.db.query(FacultyPreference)
             .filter(FacultyPreference.faculty_id == faculty_id)
@@ -251,7 +322,16 @@ class FacultyPreferenceService:
         return week_date.isoformat() in preferences.blocked_weeks
 
     def is_week_preferred(self, faculty_id: UUID, week_date: date) -> bool:
-        """Check if a week is preferred by a faculty member."""
+        """
+        Check if a week is preferred by a faculty member.
+
+        Args:
+            faculty_id: The faculty member's ID
+            week_date: Date to check
+
+        Returns:
+            True if week is preferred, False otherwise
+        """
         preferences = (
             self.db.query(FacultyPreference)
             .filter(FacultyPreference.faculty_id == faculty_id)
@@ -666,7 +746,12 @@ class FacultyPreferenceService:
         """
         Score how well the two requests align with each other's preferences.
 
-        Returns a score between 0 and 1.
+        Args:
+            request_a: First swap request
+            request_b: Second swap request
+
+        Returns:
+            Score between 0.0 and 1.0, where 1.0 means perfect mutual alignment
         """
         score = 0.0
 
@@ -726,7 +811,14 @@ class FacultyPreferenceService:
         request_b: SwapRecord,
     ) -> float:
         """
-        Score based on blocking constraints. Returns 1.0 if no blocks, lower if blocked.
+        Score based on blocking constraints.
+
+        Args:
+            request_a: First swap request
+            request_b: Second swap request
+
+        Returns:
+            1.0 if no blocks, 0.0 if incompatible
         """
         # Check if either party has blocked the week they would receive
         a_blocks_b_week = self.is_week_blocked(
@@ -748,6 +840,13 @@ class FacultyPreferenceService:
     ) -> float:
         """
         Score based on historical acceptance rates of both parties.
+
+        Args:
+            request_a: First swap request
+            request_b: Second swap request
+
+        Returns:
+            Score between 0.0 and 1.0 based on average acceptance rates
         """
         a_history = self.learn_from_swap_history(request_a.source_faculty_id)
         b_history = self.learn_from_swap_history(request_b.source_faculty_id)
@@ -767,6 +866,13 @@ class FacultyPreferenceService:
         Score based on workload balance considerations.
 
         Considers if the swap would help balance workload distribution.
+
+        Args:
+            request_a: First swap request
+            request_b: Second swap request
+
+        Returns:
+            Score between 0.0 and 1.0, higher if swap improves balance
         """
         # Get preferences for both parties
         a_prefs = self.get_or_create_preferences(request_a.source_faculty_id)
@@ -805,7 +911,17 @@ class FacultyPreferenceService:
         request_b: SwapRecord,
         score: float,
     ) -> str:
-        """Generate a human-readable reason for the match."""
+        """
+        Generate a human-readable reason for the match.
+
+        Args:
+            request_a: First swap request
+            request_b: Second swap request
+            score: Compatibility score
+
+        Returns:
+            Human-readable explanation string
+        """
         reasons = []
 
         # Check mutual preference
@@ -860,8 +976,13 @@ class FacultyPreferenceService:
         """
         Calculate the benefit score for a potential swap.
 
-        Returns a score between 0 and 1 indicating how beneficial
-        the swap would be for the person.
+        Args:
+            person_id: Faculty member ID
+            current_week: Current week date
+            proposed_week: Proposed swap week date
+
+        Returns:
+            Score between 0.0 and 1.0 indicating how beneficial the swap would be
         """
         score = 0.0
 

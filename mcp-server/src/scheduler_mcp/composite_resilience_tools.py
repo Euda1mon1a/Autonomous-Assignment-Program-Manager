@@ -421,6 +421,12 @@ async def get_unified_critical_index(
     """
     Calculate unified critical index aggregating all resilience signals.
 
+    **IMPLEMENTATION STATUS:** Backend module exists but no API endpoint exposed yet.
+    This tool requires the backend API route to be created at:
+    `POST /api/v1/resilience/unified-critical-index`
+
+    Backend implementation: `app.resilience.unified_critical_index.UnifiedCriticalIndexAnalyzer`
+
     Combines signals from three domains into a single actionable risk score:
 
     1. **Contingency (N-1/N-2 Vulnerability)** - Weight: 40%
@@ -450,6 +456,9 @@ async def get_unified_critical_index(
     Returns:
         UnifiedCriticalIndexResponse with composite risk assessment
 
+    Raises:
+        NotImplementedError: API endpoint not yet exposed
+
     Example:
         # Check overall system risk
         result = await get_unified_critical_index_tool()
@@ -460,101 +469,22 @@ async def get_unified_critical_index(
     """
     logger.info(f"Calculating unified critical index (top_n={top_n})")
 
-    try:
-        # Try to import the actual backend module to verify availability
-        import importlib.util
-        if importlib.util.find_spec("app.resilience.unified_critical_index") is None:
-            raise ImportError("Module not found")
+    # TODO: Once API endpoint is created, replace with actual HTTP call:
+    # async with httpx.AsyncClient() as client:
+    #     response = await client.post(
+    #         f"{API_BASE_URL}/api/v1/resilience/unified-critical-index",
+    #         json={"include_details": include_details, "top_n": top_n},
+    #         timeout=30.0
+    #     )
+    #     response.raise_for_status()
+    #     return UnifiedCriticalIndexResponse(**response.json())
 
-        # In production, this would fetch data from the database
-        # For now, return mock data showing the structure
-        logger.warning("Unified critical index using placeholder data")
+    logger.error(
+        "Unified critical index API endpoint not implemented. "
+        "Backend module exists at app.resilience.unified_critical_index but no API route exposed."
+    )
 
-        # Mock response demonstrating the response structure
-        return UnifiedCriticalIndexResponse(
-            analyzed_at=datetime.now().isoformat(),
-            total_faculty=25,
-            overall_index=42.5,  # Moderate system risk
-            risk_level="moderate",
-            risk_concentration=0.35,  # Moderate concentration
-            critical_count=3,
-            universal_critical_count=1,
-            pattern_distribution={
-                "universal_critical": 1,
-                "structural_burnout": 1,
-                "influential_hub": 1,
-                "social_connector": 2,
-                "isolated_workhorse": 3,
-                "burnout_vector": 2,
-                "network_anchor": 3,
-                "low_risk": 12,
-            },
-            top_priority=["FAC-001", "FAC-007", "FAC-012"],
-            top_critical_faculty=[
-                FacultyUnifiedIndex(
-                    faculty_id="FAC-001",
-                    faculty_name="Faculty-001",
-                    composite_index=0.82,
-                    risk_pattern=RiskPatternEnum.UNIVERSAL_CRITICAL,
-                    confidence=0.85,
-                    domain_scores={
-                        "contingency": DomainScoreInfo(
-                            raw_score=0.75,
-                            normalized_score=0.85,
-                            percentile=92.0,
-                            is_critical=True,
-                            details={"sole_provider_blocks": 5},
-                        ),
-                        "epidemiology": DomainScoreInfo(
-                            raw_score=0.68,
-                            normalized_score=0.78,
-                            percentile=88.0,
-                            is_critical=True,
-                            details={"degree_centrality": 0.7},
-                        ),
-                        "hub_analysis": DomainScoreInfo(
-                            raw_score=0.72,
-                            normalized_score=0.82,
-                            percentile=90.0,
-                            is_critical=True,
-                            details={"betweenness": 0.65},
-                        ),
-                    },
-                    domain_agreement=0.88,
-                    leading_domain="contingency",
-                    conflict_details=["Strong domain consensus - high confidence"],
-                    recommended_interventions=[
-                        InterventionTypeEnum.IMMEDIATE_PROTECTION,
-                        InterventionTypeEnum.CROSS_TRAINING,
-                        InterventionTypeEnum.WORKLOAD_REDUCTION,
-                    ],
-                    priority_rank=1,
-                )
-            ]
-            if include_details
-            else [],
-            contributing_factors={
-                "contingency": 0.40,
-                "hub_analysis": 0.35,
-                "epidemiology": 0.25,
-            },
-            trend="stable",
-            top_concerns=[
-                "1 faculty member is critical in all domains",
-                "Risk concentration (Gini=0.35) is moderate",
-                "3 faculty are single points of failure",
-            ],
-            recommendations=[
-                "Prioritize cross-training for FAC-001",
-                "Consider workload redistribution from top-3 hubs",
-                "Monitor burnout vectors for early warning signs",
-            ],
-            severity="warning",
-        )
-
-    except ImportError as e:
-        logger.warning(f"Unified critical index module not available: {e}")
-        return UnifiedCriticalIndexResponse(
+    return UnifiedCriticalIndexResponse(
             analyzed_at=datetime.now().isoformat(),
             total_faculty=0,
             overall_index=0.0,
@@ -565,10 +495,22 @@ async def get_unified_critical_index(
             pattern_distribution={},
             top_priority=[],
             top_critical_faculty=[],
-            contributing_factors={},
+            contributing_factors={
+                "contingency": 0.40,
+                "hub_analysis": 0.35,
+                "epidemiology": 0.25,
+            },
             trend="unknown",
-            top_concerns=["Module not available"],
-            recommendations=["Install networkx: pip install networkx"],
+            top_concerns=[
+                "API endpoint not yet implemented",
+                "Backend module exists but not exposed via API",
+                "See: app.resilience.unified_critical_index.UnifiedCriticalIndexAnalyzer",
+            ],
+            recommendations=[
+                "Create API endpoint: POST /api/v1/resilience/unified-critical-index",
+                "Endpoint should accept: include_details (bool), top_n (int)",
+                "Endpoint should return: UnifiedCriticalIndexResponse schema",
+            ],
             severity="warning",
         )
 
@@ -581,6 +523,12 @@ async def calculate_recovery_distance(
 ) -> RecoveryDistanceResponse:
     """
     Calculate recovery distance metrics for schedule resilience.
+
+    **IMPLEMENTATION STATUS:** Backend module exists but no API endpoint exposed yet.
+    This tool requires the backend API route to be created at:
+    `POST /api/v1/resilience/recovery-distance`
+
+    Backend implementation: `app.resilience.recovery_distance.RecoveryDistanceCalculator`
 
     Recovery Distance (RD) measures how many minimal edits are needed to restore
     schedule feasibility after common N-1 shocks (single resource loss).
@@ -615,6 +563,9 @@ async def calculate_recovery_distance(
     Returns:
         RecoveryDistanceResponse with recovery metrics and fragility score
 
+    Raises:
+        NotImplementedError: API endpoint not yet exposed
+
     Example:
         # Assess schedule fragility
         result = await calculate_recovery_distance_tool()
@@ -630,117 +581,49 @@ async def calculate_recovery_distance(
     start = date.fromisoformat(start_date) if start_date else today
     end = date.fromisoformat(end_date) if end_date else (today + timedelta(days=30))
 
-    try:
-        # Try to import the actual backend module to verify availability
-        import importlib.util
-        if importlib.util.find_spec("app.resilience.recovery_distance") is None:
-            raise ImportError("Module not found")
+    # TODO: Once API endpoint is created, replace with actual HTTP call:
+    # async with httpx.AsyncClient() as client:
+    #     response = await client.post(
+    #         f"{API_BASE_URL}/api/v1/resilience/recovery-distance",
+    #         json={
+    #             "start_date": start.isoformat(),
+    #             "end_date": end.isoformat(),
+    #             "max_events": max_events,
+    #             "include_samples": include_samples,
+    #         },
+    #         timeout=60.0
+    #     )
+    #     response.raise_for_status()
+    #     return RecoveryDistanceResponse(**response.json())
 
-        # In production, would fetch schedule and run actual analysis
-        logger.warning("Recovery distance using placeholder data")
+    logger.error(
+        "Recovery distance API endpoint not implemented. "
+        "Backend module exists at app.resilience.recovery_distance but no API route exposed."
+    )
 
-        # Mock response showing typical structure
-        sample_results = []
-        if include_samples:
-            sample_results = [
-                RecoveryResultInfo(
-                    event=N1EventInfo(
-                        event_type="faculty_absence",
-                        resource_id="FAC-003",
-                        resource_name="Faculty-003",
-                        affected_blocks=8,
-                    ),
-                    recovery_distance=2,
-                    feasible=True,
-                    witness_edits=[
-                        EditInfo(
-                            edit_type="swap",
-                            description="Swap FAC-005 with FAC-003 on blocks 1-4",
-                            block_id="BLK-001",
-                            new_person_id="FAC-005",
-                        ),
-                        EditInfo(
-                            edit_type="reassign",
-                            description="Reassign blocks 5-8 to backup FAC-012",
-                            block_id="BLK-005",
-                            new_person_id="FAC-012",
-                        ),
-                    ],
-                    computation_time_ms=45.2,
-                ),
-                RecoveryResultInfo(
-                    event=N1EventInfo(
-                        event_type="resident_sick",
-                        resource_id="RES-007",
-                        resource_name="Resident-PGY2-07",
-                        affected_blocks=2,
-                    ),
-                    recovery_distance=1,
-                    feasible=True,
-                    witness_edits=[
-                        EditInfo(
-                            edit_type="move_to_backup",
-                            description="Activate backup resident RES-015",
-                            block_id="BLK-042",
-                            new_person_id="RES-015",
-                        ),
-                    ],
-                    computation_time_ms=12.8,
-                ),
-            ]
-
-        # Calculate fragility score (0=resilient, 1=brittle)
-        rd_mean = 1.8
-        breakglass_rate = 0.15
-        infeasible_rate = 0.05
-        fragility = min(1.0, (rd_mean / 5.0) * 0.5 + breakglass_rate * 0.3 + infeasible_rate * 0.2)
-
-        return RecoveryDistanceResponse(
-            analyzed_at=datetime.now().isoformat(),
-            schedule_id=None,
-            period_start=start.isoformat(),
-            period_end=end.isoformat(),
-            events_tested=18,
-            rd_mean=rd_mean,
-            rd_median=1.5,
-            rd_p95=3.0,
-            rd_max=4,
-            breakglass_count=3,
-            infeasible_count=1,
-            by_event_type={
-                "faculty_absence": {"mean": 2.1, "median": 2.0, "max": 4, "count": 12},
-                "resident_sick": {"mean": 1.2, "median": 1.0, "max": 2, "count": 6},
-            },
-            fragility_score=fragility,
-            sample_results=sample_results,
-            recommendations=[
-                "Schedule is moderately resilient (RD mean=1.8)",
-                "Consider cross-training for 3 breakglass scenarios",
-                "Investigate 1 infeasible event - may need backup pools",
-            ],
-            severity="moderate",
-        )
-
-    except ImportError as e:
-        logger.warning(f"Recovery distance module not available: {e}")
-        return RecoveryDistanceResponse(
-            analyzed_at=datetime.now().isoformat(),
-            schedule_id=None,
-            period_start=start.isoformat(),
-            period_end=end.isoformat(),
-            events_tested=0,
-            rd_mean=0.0,
-            rd_median=0.0,
-            rd_p95=0.0,
-            rd_max=0,
-            breakglass_count=0,
-            infeasible_count=0,
-            by_event_type={},
-            fragility_score=0.0,
-            sample_results=[],
-            recommendations=["Module not available - check backend installation"],
-            severity="warning",
-        )
+    return RecoveryDistanceResponse(
+        analyzed_at=datetime.now().isoformat(),
+        schedule_id=None,
+        period_start=start.isoformat(),
+        period_end=end.isoformat(),
+        events_tested=0,
+        rd_mean=0.0,
+        rd_median=0.0,
+        rd_p95=0.0,
+        rd_max=0,
+        breakglass_count=0,
+        infeasible_count=0,
+        by_event_type={},
+        fragility_score=0.0,
+        sample_results=[],
+        recommendations=[
+            "API endpoint not yet implemented",
+            "Backend module exists: app.resilience.recovery_distance.RecoveryDistanceCalculator",
+            "Create API endpoint: POST /api/v1/resilience/recovery-distance",
+            "Endpoint should test N-1 events and calculate minimal recovery edits",
+        ],
+        severity="moderate",
+    )
 
 
 async def assess_creep_fatigue(
@@ -749,6 +632,12 @@ async def assess_creep_fatigue(
 ) -> CreepFatigueResponse:
     """
     Assess burnout risk using materials science creep-fatigue analysis.
+
+    **IMPLEMENTATION STATUS:** Backend module exists but no API endpoint exposed yet.
+    This tool requires the backend API route to be created at:
+    `POST /api/v1/resilience/creep-fatigue`
+
+    Backend implementation: `app.resilience.creep_fatigue.CreepFatigueModel`
 
     Adapts materials science concepts to predict medical resident burnout:
 
@@ -780,6 +669,9 @@ async def assess_creep_fatigue(
     Returns:
         CreepFatigueResponse with burnout predictions and recommendations
 
+    Raises:
+        NotImplementedError: API endpoint not yet exposed
+
     Example:
         # Monitor resident burnout risk
         result = await assess_creep_fatigue_tool()
@@ -792,105 +684,40 @@ async def assess_creep_fatigue(
     """
     logger.info(f"Assessing creep-fatigue burnout risk (top_n={top_n})")
 
-    try:
-        # Try to import the actual backend module to verify availability
-        import importlib.util
-        if importlib.util.find_spec("app.resilience.creep_fatigue") is None:
-            raise ImportError("Module not found")
+    # TODO: Once API endpoint is created, replace with actual HTTP call:
+    # async with httpx.AsyncClient() as client:
+    #     response = await client.post(
+    #         f"{API_BASE_URL}/api/v1/resilience/creep-fatigue",
+    #         json={"include_assessments": include_assessments, "top_n": top_n},
+    #         timeout=30.0
+    #     )
+    #     response.raise_for_status()
+    #     return CreepFatigueResponse(**response.json())
 
-        # In production, would fetch resident workload data
-        logger.warning("Creep-fatigue using placeholder data")
+    logger.error(
+        "Creep-fatigue API endpoint not implemented. "
+        "Backend module exists at app.resilience.creep_fatigue but no API route exposed."
+    )
 
-        assessments = []
-        if include_assessments:
-            assessments = [
-                CreepFatigueAssessment(
-                    resident_id="RES-003",
-                    overall_risk="high",
-                    risk_score=2.6,
-                    risk_description="High burnout risk - immediate intervention needed",
-                    creep_analysis=CreepAnalysisInfo(
-                        resident_id="RES-003",
-                        creep_stage=CreepStageEnum.TERTIARY,
-                        larson_miller_parameter=42.5,
-                        estimated_days_to_failure=14,
-                        strain_rate=0.05,
-                        recommended_stress_reduction=25.0,
-                    ),
-                    fatigue_analysis=FatigueAnalysisInfo(
-                        current_cycles=8,
-                        cycles_to_failure=12,
-                        stress_amplitude=0.85,
-                        remaining_life_fraction=0.33,
-                        cumulative_damage=0.67,
-                    ),
-                    recommendations=[
-                        "URGENT: Reduce workload by 25%",
-                        "Schedule easier rotations to allow recovery",
-                    ],
-                ),
-                CreepFatigueAssessment(
-                    resident_id="RES-007",
-                    overall_risk="moderate",
-                    risk_score=1.9,
-                    risk_description="Moderate burnout risk - schedule adjustment recommended",
-                    creep_analysis=CreepAnalysisInfo(
-                        resident_id="RES-007",
-                        creep_stage=CreepStageEnum.SECONDARY,
-                        larson_miller_parameter=28.0,
-                        estimated_days_to_failure=90,
-                        strain_rate=0.01,
-                        recommended_stress_reduction=10.0,
-                    ),
-                    fatigue_analysis=FatigueAnalysisInfo(
-                        current_cycles=5,
-                        cycles_to_failure=20,
-                        stress_amplitude=0.65,
-                        remaining_life_fraction=0.75,
-                        cumulative_damage=0.25,
-                    ),
-                    recommendations=[
-                        "Target workload reduction: 10%",
-                        "Continue monitoring",
-                    ],
-                ),
-            ]
-
-        return CreepFatigueResponse(
-            analyzed_at=datetime.now().isoformat(),
-            residents_analyzed=15,
-            high_risk_count=1,
-            moderate_risk_count=3,
-            tertiary_creep_count=1,
-            average_lmp=24.5,
-            average_remaining_life=0.72,
-            lmp_threshold=45.0,
-            safe_lmp=31.5,
-            assessments=assessments,
-            system_recommendations=[
-                "1 resident in tertiary creep - immediate action required",
-                "Average LMP (24.5) is within safe range",
-                "Consider rebalancing workload from high-risk residents",
-            ],
-            severity="at_risk",
-        )
-
-    except ImportError as e:
-        logger.warning(f"Creep-fatigue module not available: {e}")
-        return CreepFatigueResponse(
-            analyzed_at=datetime.now().isoformat(),
-            residents_analyzed=0,
-            high_risk_count=0,
-            moderate_risk_count=0,
-            tertiary_creep_count=0,
-            average_lmp=0.0,
-            average_remaining_life=1.0,
-            lmp_threshold=45.0,
-            safe_lmp=31.5,
-            assessments=[],
-            system_recommendations=["Module not available"],
-            severity="warning",
-        )
+    return CreepFatigueResponse(
+        analyzed_at=datetime.now().isoformat(),
+        residents_analyzed=0,
+        high_risk_count=0,
+        moderate_risk_count=0,
+        tertiary_creep_count=0,
+        average_lmp=0.0,
+        average_remaining_life=1.0,
+        lmp_threshold=45.0,
+        safe_lmp=31.5,
+        assessments=[],
+        system_recommendations=[
+            "API endpoint not yet implemented",
+            "Backend module exists: app.resilience.creep_fatigue.CreepFatigueModel",
+            "Create API endpoint: POST /api/v1/resilience/creep-fatigue",
+            "Endpoint should calculate LMP and S-N fatigue analysis for residents",
+        ],
+        severity="warning",
+    )
 
 
 async def analyze_transcription_triggers(
@@ -899,6 +726,12 @@ async def analyze_transcription_triggers(
 ) -> TranscriptionTriggersResponse:
     """
     Analyze transcription factor regulatory network for constraint management.
+
+    **IMPLEMENTATION STATUS:** Backend module exists but no API endpoint exposed yet.
+    This tool requires the backend API route to be created at:
+    `GET /api/v1/resilience/transcription-factors/status`
+
+    Backend implementation: `app.resilience.transcription_factors.TranscriptionFactorScheduler`
 
     Applies gene regulatory network (GRN) concepts to scheduling constraints:
 
@@ -934,6 +767,9 @@ async def analyze_transcription_triggers(
     Returns:
         TranscriptionTriggersResponse with GRN analysis
 
+    Raises:
+        NotImplementedError: API endpoint not yet exposed
+
     Example:
         # Check regulatory state
         result = await analyze_transcription_triggers_tool()
@@ -947,123 +783,45 @@ async def analyze_transcription_triggers(
     """
     logger.info("Analyzing transcription factor regulatory network")
 
-    try:
-        # Try to import the actual backend module to verify availability
-        import importlib.util
-        if importlib.util.find_spec("app.resilience.transcription_factors") is None:
-            raise ImportError("Module not found")
+    # TODO: Once API endpoint is created, replace with actual HTTP call:
+    # async with httpx.AsyncClient() as client:
+    #     response = await client.get(
+    #         f"{API_BASE_URL}/api/v1/resilience/transcription-factors/status",
+    #         params={
+    #             "include_tf_details": include_tf_details,
+    #             "include_constraint_status": include_constraint_status,
+    #         },
+    #         timeout=10.0
+    #     )
+    #     response.raise_for_status()
+    #     return TranscriptionTriggersResponse(**response.json())
 
-        # In production, would access actual TF scheduler state
-        logger.warning("Transcription factors using placeholder data")
+    logger.error(
+        "Transcription factors API endpoint not implemented. "
+        "Backend module exists at app.resilience.transcription_factors but no API route exposed."
+    )
 
-        active_tfs = []
-        if include_tf_details:
-            active_tfs = [
-                TranscriptionFactorInfo(
-                    name="PatientSafety_MR",
-                    tf_type=TFTypeEnum.MASTER,
-                    expression_level=1.0,
-                    strength_category=SignalStrengthEnum.MAXIMAL,
-                    is_active=True,
-                    targets_count=5,
-                    description="Master regulator ensuring patient safety constraints active",
-                ),
-                TranscriptionFactorInfo(
-                    name="ACGMECompliance_MR",
-                    tf_type=TFTypeEnum.MASTER,
-                    expression_level=0.9,
-                    strength_category=SignalStrengthEnum.STRONG,
-                    is_active=True,
-                    targets_count=8,
-                    description="Master regulator for ACGME compliance requirements",
-                ),
-                TranscriptionFactorInfo(
-                    name="WorkloadProtection_TF",
-                    tf_type=TFTypeEnum.ACTIVATOR,
-                    expression_level=0.45,
-                    strength_category=SignalStrengthEnum.MODERATE,
-                    is_active=True,
-                    targets_count=3,
-                    description="Activates workload balancing constraints when imbalance detected",
-                ),
-            ]
-
-        regulated_constraints = []
-        if include_constraint_status:
-            regulated_constraints = [
-                ConstraintRegulationInfo(
-                    constraint_id="ACGME-80HR",
-                    constraint_name="ACGME 80-Hour Work Week",
-                    base_weight=1.0,
-                    effective_weight=1.8,
-                    activation_level=0.9,
-                    chromatin_state="open",
-                    regulating_tfs=["ACGMECompliance_MR"],
-                    explanation="Activation=0.90 (activators=0.90, repressors=0.00)",
-                ),
-                ConstraintRegulationInfo(
-                    constraint_id="WORKLOAD-BALANCE",
-                    constraint_name="Workload Balance",
-                    base_weight=1.0,
-                    effective_weight=1.35,
-                    activation_level=0.45,
-                    chromatin_state="open",
-                    regulating_tfs=["WorkloadProtection_TF"],
-                    explanation="Activation=0.45 (activators=0.45, repressors=0.00)",
-                ),
-            ]
-
-        loops = [
-            RegulatoryLoopInfo(
-                loop_type="negative_feedback",
-                description="Feedback: WorkloadProtection_TF <-> LowStaffing_TF",
-                tf_names=["WorkloadProtection_TF", "LowStaffing_TF"],
-                stability="stable",
-            ),
-        ]
-
-        return TranscriptionTriggersResponse(
-            analyzed_at=datetime.now().isoformat(),
-            total_tfs=8,
-            active_tfs=3,
-            master_regulators_active=2,
-            total_constraints_regulated=12,
-            constraints_with_modified_weight=5,
-            regulatory_edges=18,
-            detected_loops=1,
-            total_activation=2.35,
-            total_repression=0.0,
-            network_entropy=0.42,
-            active_tfs_list=active_tfs,
-            regulated_constraints=regulated_constraints,
-            loops=loops,
-            recent_signals=0,
-            recommendations=[
-                "2 master regulators active (PatientSafety, ACGME)",
-                "WorkloadProtection_TF moderately expressed - monitoring imbalance",
-                "No crisis/emergency TFs active",
-            ],
-            severity="normal",
-        )
-
-    except ImportError as e:
-        logger.warning(f"Transcription factors module not available: {e}")
-        return TranscriptionTriggersResponse(
-            analyzed_at=datetime.now().isoformat(),
-            total_tfs=0,
-            active_tfs=0,
-            master_regulators_active=0,
-            total_constraints_regulated=0,
-            constraints_with_modified_weight=0,
-            regulatory_edges=0,
-            detected_loops=0,
-            total_activation=0.0,
-            total_repression=0.0,
-            network_entropy=0.0,
-            active_tfs_list=[],
-            regulated_constraints=[],
-            loops=[],
-            recent_signals=0,
-            recommendations=["Module not available"],
-            severity="warning",
-        )
+    return TranscriptionTriggersResponse(
+        analyzed_at=datetime.now().isoformat(),
+        total_tfs=0,
+        active_tfs=0,
+        master_regulators_active=0,
+        total_constraints_regulated=0,
+        constraints_with_modified_weight=0,
+        regulatory_edges=0,
+        detected_loops=0,
+        total_activation=0.0,
+        total_repression=0.0,
+        network_entropy=0.0,
+        active_tfs_list=[],
+        regulated_constraints=[],
+        loops=[],
+        recent_signals=0,
+        recommendations=[
+            "API endpoint not yet implemented",
+            "Backend module exists: app.resilience.transcription_factors.TranscriptionFactorScheduler",
+            "Create API endpoint: GET /api/v1/resilience/transcription-factors/status",
+            "Endpoint should return GRN state with active TFs and regulated constraints",
+        ],
+        severity="warning",
+    )

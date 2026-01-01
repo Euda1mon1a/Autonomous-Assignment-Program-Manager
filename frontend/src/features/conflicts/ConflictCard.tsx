@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { format } from 'date-fns';
 import {
   AlertTriangle,
@@ -184,7 +184,7 @@ function getStatusLabel(status: ConflictStatus): string {
 // Component
 // ============================================================================
 
-export function ConflictCard({
+export const ConflictCard = memo(function ConflictCard({
   conflict,
   isSelected = false,
   onSelect,
@@ -198,21 +198,34 @@ export function ConflictCard({
   const [isExpanded, setIsExpanded] = useState(false);
   const [showActions, setShowActions] = useState(false);
 
-  const severityStyles = getSeverityStyles(conflict.severity);
-  const statusStyles = getStatusStyles(conflict.status);
-  const SeverityIcon = getSeverityIcon(conflict.severity);
-  const TypeIcon = getTypeIcon(conflict.type);
+  // Memoize style computations
+  const severityStyles = useMemo(() => getSeverityStyles(conflict.severity), [conflict.severity]);
+  const statusStyles = useMemo(() => getStatusStyles(conflict.status), [conflict.status]);
+  const SeverityIcon = useMemo(() => getSeverityIcon(conflict.severity), [conflict.severity]);
+  const TypeIcon = useMemo(() => getTypeIcon(conflict.type), [conflict.type]);
 
-  const handleCardClick = () => {
+  // Memoize computed values
+  const typeLabel = useMemo(() => getTypeLabel(conflict.type), [conflict.type]);
+  const statusLabel = useMemo(() => getStatusLabel(conflict.status), [conflict.status]);
+  const conflictDateFormatted = useMemo(
+    () => format(new Date(conflict.conflict_date), 'MMM d, yyyy'),
+    [conflict.conflict_date]
+  );
+  const detectedAtFormatted = useMemo(
+    () => format(new Date(conflict.detected_at), 'MMM d, h:mm a'),
+    [conflict.detected_at]
+  );
+
+  const handleCardClick = useCallback(() => {
     if (onSelect) {
       onSelect(conflict);
     }
-  };
+  }, [onSelect, conflict]);
 
-  const handleToggleExpand = (e: React.MouseEvent) => {
+  const handleToggleExpand = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsExpanded(!isExpanded);
-  };
+    setIsExpanded((prev) => !prev);
+  }, []);
 
   // Compact view for list displays
   if (compact) {
@@ -235,13 +248,13 @@ export function ConflictCard({
             {conflict.title}
           </p>
           <p className="text-xs text-gray-500 truncate">
-            {format(new Date(conflict.conflict_date), 'MMM d, yyyy')}
+            {conflictDateFormatted}
             {conflict.conflict_session && ` - ${conflict.conflict_session}`}
           </p>
         </div>
 
         <div className={`flex-shrink-0 px-2 py-1 rounded-full text-xs font-medium ${statusStyles.bg} ${statusStyles.text}`}>
-          {getStatusLabel(conflict.status)}
+          {statusLabel}
         </div>
       </div>
     );
@@ -280,14 +293,14 @@ export function ConflictCard({
               </span>
               <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusStyles.bg} ${statusStyles.text}`}>
                 <span className={`inline-block w-1.5 h-1.5 rounded-full ${statusStyles.dot} mr-1`} />
-                {getStatusLabel(conflict.status)}
+                {statusLabel}
               </span>
             </div>
 
             {/* Type badge */}
             <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-2">
               <TypeIcon className="w-4 h-4" />
-              <span>{getTypeLabel(conflict.type)}</span>
+              <span>{typeLabel}</span>
             </div>
 
             {/* Description */}
@@ -299,7 +312,7 @@ export function ConflictCard({
             <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
               <span className="flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5" />
-                {format(new Date(conflict.conflict_date), 'MMM d, yyyy')}
+                {conflictDateFormatted}
                 {conflict.conflict_session && ` (${conflict.conflict_session})`}
               </span>
               <span className="flex items-center gap-1">
@@ -308,7 +321,7 @@ export function ConflictCard({
               </span>
               <span className="flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5" />
-                Detected {format(new Date(conflict.detected_at), 'MMM d, h:mm a')}
+                Detected {detectedAtFormatted}
               </span>
             </div>
           </div>
@@ -502,7 +515,7 @@ export function ConflictCard({
       )}
     </div>
   );
-}
+});
 
 // ============================================================================
 // Exports

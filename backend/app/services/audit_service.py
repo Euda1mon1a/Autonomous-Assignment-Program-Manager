@@ -172,7 +172,20 @@ def _query_version_table(
     entity_id: str | None = None,
     user_ids: list[str] | None = None,
 ) -> list[AuditLogEntry]:
-    """Query a specific version table and convert to AuditLogEntry format."""
+    """
+    Query a specific version table and convert to AuditLogEntry format.
+
+    Args:
+        db: Database session
+        entity_type: Type of entity (assignment, absence, etc.)
+        start_date: Optional start date filter (ISO format)
+        end_date: Optional end date filter (ISO format)
+        entity_id: Optional specific entity ID filter
+        user_ids: Optional list of user IDs to filter by
+
+    Returns:
+        List of AuditLogEntry objects
+    """
     table_name = VERSION_TABLE_MAP[entity_type]
     model_class = ENTITY_MODEL_MAP[entity_type]
 
@@ -254,7 +267,22 @@ def _build_audit_entry(
     user_id: str | None,
     remote_addr: str | None,
 ) -> AuditLogEntry | None:
-    """Build an AuditLogEntry from version data."""
+    """
+    Build an AuditLogEntry from version data.
+
+    Args:
+        db: Database session
+        entity_type: Type of entity
+        entity_id: Entity ID
+        transaction_id: Transaction ID from version table
+        operation_type: Operation type (0=create, 1=update, 2=delete)
+        issued_at: Timestamp of the change
+        user_id: ID of user who made the change
+        remote_addr: IP address of the request
+
+    Returns:
+        AuditLogEntry object if successful, None if error occurs
+    """
     try:
         # Map operation type to action
         operation_map = {0: "create", 1: "update", 2: "delete"}
@@ -313,7 +341,16 @@ def _build_audit_entry(
 
 
 def _get_audit_user(db: Session, user_id: str | None) -> AuditUser:
-    """Get user information for audit entry."""
+    """
+    Get user information for audit entry.
+
+    Args:
+        db: Database session
+        user_id: User ID (UUID or username)
+
+    Returns:
+        AuditUser object with user details
+    """
     if not user_id:
         return AuditUser(
             id="system",
@@ -351,7 +388,17 @@ def _get_audit_user(db: Session, user_id: str | None) -> AuditUser:
 
 
 def _get_entity_name(db: Session, entity_type: str, entity_id: str) -> str | None:
-    """Get a human-readable name for the entity."""
+    """
+    Get a human-readable name for the entity.
+
+    Args:
+        db: Database session
+        entity_type: Type of entity
+        entity_id: Entity ID
+
+    Returns:
+        Human-readable name if found, None otherwise
+    """
     try:
         if entity_type == "assignment":
             assignment = db.query(Assignment).filter(Assignment.id == entity_id).first()
@@ -391,7 +438,18 @@ def _get_field_changes(
     entity_id: str,
     transaction_id: int,
 ) -> list[FieldChange] | None:
-    """Get field changes for this version."""
+    """
+    Get field changes for this version.
+
+    Args:
+        db: Database session
+        entity_type: Type of entity
+        entity_id: Entity ID
+        transaction_id: Transaction ID
+
+    Returns:
+        List of FieldChange objects showing what changed, or None if no changes
+    """
     try:
         model_class = ENTITY_MODEL_MAP.get(entity_type)
         if not model_class:
@@ -466,7 +524,17 @@ def _check_acgme_override(
     entity_id: str,
     transaction_id: int,
 ) -> tuple[bool, str | None]:
-    """Check if this assignment has an ACGME override."""
+    """
+    Check if this assignment has an ACGME override.
+
+    Args:
+        db: Database session
+        entity_id: Assignment ID
+        transaction_id: Transaction ID (unused but kept for consistency)
+
+    Returns:
+        Tuple of (has_override: bool, justification: str | None)
+    """
     try:
         assignment = db.query(Assignment).filter(Assignment.id == entity_id).first()
         if assignment and assignment.override_reason:
@@ -478,7 +546,17 @@ def _check_acgme_override(
 
 
 def _determine_severity(entity_type: str, action: str, operation_type: int) -> str:
-    """Determine severity level for an audit entry."""
+    """
+    Determine severity level for an audit entry.
+
+    Args:
+        entity_type: Type of entity
+        action: Action performed (create, update, delete)
+        operation_type: Numeric operation type (0=create, 1=update, 2=delete)
+
+    Returns:
+        Severity level string (critical, warning, or info)
+    """
     # Delete operations are warnings
     if operation_type == 2:
         return "warning"
@@ -497,7 +575,15 @@ def _determine_severity(entity_type: str, action: str, operation_type: int) -> s
 
 
 def _format_field_name(field_name: str) -> str:
-    """Format a field name for display."""
+    """
+    Format a field name for display.
+
+    Args:
+        field_name: Snake_case field name
+
+    Returns:
+        Title Case display name
+    """
     # Convert snake_case to Title Case
     return " ".join(word.capitalize() for word in field_name.split("_"))
 
@@ -509,7 +595,19 @@ def _apply_filters(
     search: str | None = None,
     acgme_overrides_only: bool = False,
 ) -> list[AuditLogEntry]:
-    """Apply additional filters to audit entries."""
+    """
+    Apply additional filters to audit entries.
+
+    Args:
+        entries: List of audit entries to filter
+        actions: Optional list of actions to include
+        severity: Optional list of severity levels to include
+        search: Optional search query for entity names/reasons
+        acgme_overrides_only: If True, only include ACGME overrides
+
+    Returns:
+        Filtered list of AuditLogEntry objects
+    """
     filtered = entries
 
     if actions:
@@ -535,7 +633,15 @@ def _apply_filters(
 
 
 def get_audit_users(db: Session) -> list[AuditUser]:
-    """Get list of users who have audit activity."""
+    """
+    Get list of users who have audit activity.
+
+    Args:
+        db: Database session
+
+    Returns:
+        List of AuditUser objects representing users with audit trail entries
+    """
     try:
         # Query transaction table for unique users
         query = text(

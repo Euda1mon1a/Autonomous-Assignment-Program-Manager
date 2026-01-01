@@ -322,13 +322,14 @@ export function ConfigurationPresets({
                   {/* Import/Export */}
                   <div className="p-2 border-t border-slate-700 flex gap-2">
                     <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg text-xs font-medium transition-colors cursor-pointer">
-                      <Upload className="w-3.5 h-3.5" />
+                      <Upload className="w-3.5 h-3.5" aria-hidden="true" />
                       Import
                       <input
                         type="file"
                         accept=".json"
                         className="hidden"
                         onChange={handleImportPresets}
+                        aria-label="Import presets from JSON file"
                       />
                     </label>
                     <button
@@ -380,24 +381,27 @@ export function ConfigurationPresets({
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">
+                    <label htmlFor="preset-name-input" className="block text-sm font-medium text-slate-300 mb-1">
                       Preset Name
                     </label>
                     <input
+                      id="preset-name-input"
                       type="text"
                       value={newPresetName}
                       onChange={(e) => setNewPresetName(e.target.value)}
                       placeholder="e.g., My Custom Configuration"
                       className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                       autoFocus
+                      aria-required="true"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">
+                    <label htmlFor="preset-description-input" className="block text-sm font-medium text-slate-300 mb-1">
                       Description (optional)
                     </label>
                     <textarea
+                      id="preset-description-input"
                       value={newPresetDescription}
                       onChange={(e) => setNewPresetDescription(e.target.value)}
                       placeholder="Describe when to use this configuration..."
@@ -457,7 +461,11 @@ function PresetItem({
 }) {
   return (
     <div className="group flex items-center gap-2 p-2 hover:bg-slate-700/50 transition-colors">
-      <button onClick={onLoad} className="flex-1 text-left min-w-0">
+      <button
+        onClick={onLoad}
+        className="flex-1 text-left min-w-0"
+        aria-label={`Load ${preset.name} preset`}
+      >
         <div className="flex items-center gap-2">
           {preset.isDefault && <Star className="w-3.5 h-3.5 text-amber-400" />}
           <span className="text-sm font-medium text-white truncate">

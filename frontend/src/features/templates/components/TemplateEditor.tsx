@@ -157,6 +157,7 @@ export function TemplateEditor({
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     errors.name ? 'border-red-500' : ''
                   }`}
+                  aria-label="Template name"
                 />
                 {errors.name && (
                   <p className="mt-1 text-sm text-red-500">{errors.name}</p>
@@ -173,6 +174,7 @@ export function TemplateEditor({
                   placeholder="Describe what this template is for..."
                   rows={3}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  aria-label="Template description"
                 />
               </div>
 
@@ -185,6 +187,7 @@ export function TemplateEditor({
                     value={category}
                     onChange={(e) => setCategory(e.target.value as TemplateCategory)}
                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    aria-label="Template category"
                   >
                     {TEMPLATE_CATEGORIES.map((cat) => (
                       <option key={cat.id} value={cat.id}>
@@ -202,6 +205,7 @@ export function TemplateEditor({
                     value={visibility}
                     onChange={(e) => setVisibility(e.target.value as TemplateVisibility)}
                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    aria-label="Template visibility"
                   >
                     {VISIBILITY_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>
@@ -222,6 +226,7 @@ export function TemplateEditor({
                   onChange={(e) => setTags(e.target.value)}
                   placeholder="e.g., clinic, weekday, primary-care"
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  aria-label="Template tags"
                 />
               </div>
             </div>
@@ -244,6 +249,7 @@ export function TemplateEditor({
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     errors.durationWeeks ? 'border-red-500' : ''
                   }`}
+                  aria-label="Template duration in weeks"
                 />
                 {errors.durationWeeks && (
                   <p className="mt-1 text-sm text-red-500">{errors.durationWeeks}</p>
@@ -258,6 +264,7 @@ export function TemplateEditor({
                   value={startDayOfWeek}
                   onChange={(e) => setStartDayOfWeek(parseInt(e.target.value))}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  aria-label="Template start day of week"
                 >
                   {DAY_OF_WEEK_LABELS.map((day, index) => (
                     <option key={index} value={index}>
@@ -281,6 +288,7 @@ export function TemplateEditor({
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     errors.maxResidentsPerDay ? 'border-red-500' : ''
                   }`}
+                  aria-label="Maximum residents per day"
                 />
                 {errors.maxResidentsPerDay && (
                   <p className="mt-1 text-sm text-red-500">{errors.maxResidentsPerDay}</p>

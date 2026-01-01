@@ -4,8 +4,8 @@ import logging
 from datetime import datetime
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_admin_user, get_current_active_user
 from app.db.session import get_async_db

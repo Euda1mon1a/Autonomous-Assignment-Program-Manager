@@ -7,6 +7,8 @@ Provides endpoints for:
 - Quick search
 """
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.core.security import get_current_active_user
@@ -24,6 +26,8 @@ from app.schemas.search import (
     SuggestionResponse,
 )
 from app.services.search.indexer import SearchService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -68,8 +72,10 @@ async def search(
             query=results["query"],
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception:
+        logger.warning(f"Search validation error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid search parameters")
+    except (KeyError, TypeError) as e:
+        logger.error(f"Search processing error: {e}")
         raise HTTPException(status_code=500, detail="Search failed")
 
 
@@ -102,8 +108,10 @@ async def quick_search(
             entity_type=entity_type,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception:
+        logger.warning(f"Quick search validation error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid search parameters")
+    except (KeyError, TypeError, AttributeError) as e:
+        logger.error(f"Quick search processing error: {e}")
         raise HTTPException(status_code=500, detail="Quick search failed")
 
 
@@ -143,8 +151,10 @@ async def search_people(
             query=results["query"],
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception:
+        logger.warning(f"People search validation error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid search parameters")
+    except (KeyError, TypeError) as e:
+        logger.error(f"People search processing error: {e}")
         raise HTTPException(status_code=500, detail="People search failed")
 
 
@@ -180,8 +190,10 @@ async def search_rotations(
             query=results["query"],
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception:
+        logger.warning(f"Rotation search validation error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid search parameters")
+    except (KeyError, TypeError, AttributeError) as e:
+        logger.error(f"Rotation search processing error: {e}")
         raise HTTPException(status_code=500, detail="Rotation search failed")
 
 
@@ -216,8 +228,10 @@ async def search_procedures(
             query=results["query"],
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception:
+        logger.warning(f"Procedure search validation error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid search parameters")
+    except (KeyError, TypeError, AttributeError) as e:
+        logger.error(f"Procedure search processing error: {e}")
         raise HTTPException(status_code=500, detail="Procedure search failed")
 
 
@@ -254,8 +268,10 @@ async def global_search(
             query=results["query"],
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception:
+        logger.warning(f"Global search validation error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid search parameters")
+    except (KeyError, TypeError, AttributeError) as e:
+        logger.error(f"Global search processing error: {e}")
         raise HTTPException(status_code=500, detail="Global search failed")
 
 
@@ -285,8 +301,10 @@ async def get_suggestions(
             entity_type=request.entity_type,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception:
+        logger.warning(f"Suggestion validation error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid suggestion parameters")
+    except (KeyError, TypeError, AttributeError) as e:
+        logger.error(f"Suggestion processing error: {e}")
         raise HTTPException(status_code=500, detail="Suggestion request failed")
 
 
@@ -322,6 +340,8 @@ async def get_suggestions_get(
             entity_type=entity_type,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception:
+        logger.warning(f"Suggestion validation error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid suggestion parameters")
+    except (KeyError, TypeError, AttributeError) as e:
+        logger.error(f"Suggestion processing error: {e}")
         raise HTTPException(status_code=500, detail="Suggestion request failed")

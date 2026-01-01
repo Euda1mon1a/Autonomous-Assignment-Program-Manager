@@ -8,7 +8,7 @@ Provides a fluent interface for building complex search queries with:
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass

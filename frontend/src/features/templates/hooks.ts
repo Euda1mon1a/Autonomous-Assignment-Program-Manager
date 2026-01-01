@@ -27,7 +27,7 @@ const STORAGE_KEY = 'template-library';
 
 // Generate unique ID
 function generateId(): string {
-  return `tpl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `tpl_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 }
 
 // Local storage helpers
@@ -85,7 +85,7 @@ async function fetchTemplates(filters?: TemplateFilters): Promise<TemplateListRe
     }
     if (filters.tags && filters.tags.length > 0) {
       templates = templates.filter((t) =>
-        filters.tags!.some((tag) => t.tags.includes(tag))
+        (filters.tags ?? []).some((tag) => t.tags.includes(tag))
       );
     }
     if (filters.createdBy) {
@@ -524,21 +524,27 @@ export function useImportPredefinedTemplate() {
 /**
  * Custom hook for template filtering state
  */
-export function useTemplateFilters(initialFilters?: TemplateFilters) {
+export function useTemplateFilters(initialFilters?: TemplateFilters): {
+  filters: TemplateFilters;
+  setFilters: React.Dispatch<React.SetStateAction<TemplateFilters>>;
+  updateFilter: <K extends keyof TemplateFilters>(key: K, value: TemplateFilters[K]) => void;
+  clearFilters: () => void;
+  hasActiveFilters: boolean;
+} {
   const [filters, setFilters] = useState<TemplateFilters>(initialFilters || {});
 
   const updateFilter = useCallback(<K extends keyof TemplateFilters>(
     key: K,
     value: TemplateFilters[K]
-  ) => {
+  ): void => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   }, []);
 
-  const clearFilters = useCallback(() => {
+  const clearFilters = useCallback((): void => {
     setFilters({});
   }, []);
 
-  const hasActiveFilters = useMemo(() => {
+  const hasActiveFilters = useMemo((): boolean => {
     return Object.values(filters).some(
       (value) => value !== undefined && value !== '' && !(Array.isArray(value) && value.length === 0)
     );
@@ -556,10 +562,19 @@ export function useTemplateFilters(initialFilters?: TemplateFilters) {
 /**
  * Custom hook for pattern editing
  */
-export function usePatternEditor(initialPatterns: AssignmentPattern[] = []) {
+export function usePatternEditor(initialPatterns: AssignmentPattern[] = []): {
+  patterns: AssignmentPattern[];
+  setPatterns: React.Dispatch<React.SetStateAction<AssignmentPattern[]>>;
+  addPattern: (pattern: Omit<AssignmentPattern, 'id'>) => AssignmentPattern;
+  updatePattern: (id: string, updates: Partial<AssignmentPattern>) => void;
+  removePattern: (id: string) => void;
+  duplicatePattern: (id: string) => AssignmentPattern | null;
+  reorderPatterns: (startIndex: number, endIndex: number) => void;
+  clearPatterns: () => void;
+} {
   const [patterns, setPatterns] = useState<AssignmentPattern[]>(initialPatterns);
 
-  const addPattern = useCallback((pattern: Omit<AssignmentPattern, 'id'>) => {
+  const addPattern = useCallback((pattern: Omit<AssignmentPattern, 'id'>): AssignmentPattern => {
     const newPattern: AssignmentPattern = {
       ...pattern,
       id: generateId(),
@@ -568,17 +583,17 @@ export function usePatternEditor(initialPatterns: AssignmentPattern[] = []) {
     return newPattern;
   }, []);
 
-  const updatePattern = useCallback((id: string, updates: Partial<AssignmentPattern>) => {
+  const updatePattern = useCallback((id: string, updates: Partial<AssignmentPattern>): void => {
     setPatterns((prev) =>
       prev.map((p) => (p.id === id ? { ...p, ...updates } : p))
     );
   }, []);
 
-  const removePattern = useCallback((id: string) => {
+  const removePattern = useCallback((id: string): void => {
     setPatterns((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
-  const duplicatePattern = useCallback((id: string) => {
+  const duplicatePattern = useCallback((id: string): AssignmentPattern | null => {
     const source = patterns.find((p) => p.id === id);
     if (source) {
       const duplicate: AssignmentPattern = {
@@ -592,7 +607,7 @@ export function usePatternEditor(initialPatterns: AssignmentPattern[] = []) {
     return null;
   }, [patterns]);
 
-  const reorderPatterns = useCallback((startIndex: number, endIndex: number) => {
+  const reorderPatterns = useCallback((startIndex: number, endIndex: number): void => {
     setPatterns((prev) => {
       const result = Array.from(prev);
       const [removed] = result.splice(startIndex, 1);
@@ -601,7 +616,7 @@ export function usePatternEditor(initialPatterns: AssignmentPattern[] = []) {
     });
   }, []);
 
-  const clearPatterns = useCallback(() => {
+  const clearPatterns = useCallback((): void => {
     setPatterns([]);
   }, []);
 

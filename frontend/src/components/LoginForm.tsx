@@ -45,7 +45,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     return Object.keys(formErrors).length === 0 && username.trim() !== '' && password !== '';
   }, [formErrors, username, password]);
 
-  const handleBlur = (field: string) => {
+  const handleBlur = (field: string): void => {
     setTouched(prev => ({ ...prev, [field]: true }));
   };
 

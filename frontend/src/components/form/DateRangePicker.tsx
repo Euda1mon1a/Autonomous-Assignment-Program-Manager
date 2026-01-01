@@ -37,17 +37,17 @@ export function DateRangePicker({
   maxDate,
   className = '',
 }: DateRangePickerProps) {
-  const formatDate = (date: Date | null) => {
+  const formatDate = (date: Date | null): string => {
     if (!date) return '';
     return date.toISOString().split('T')[0];
   };
 
-  const handleStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleStartChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const newDate = e.target.value ? new Date(e.target.value) : null;
     onChange({ ...value, start: newDate });
   };
 
-  const handleEndChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEndChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const newDate = e.target.value ? new Date(e.target.value) : null;
     onChange({ ...value, end: newDate });
   };

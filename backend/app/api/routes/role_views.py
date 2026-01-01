@@ -1,6 +1,7 @@
 """Role-based view API."""
 
 import logging
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -29,7 +30,8 @@ async def get_role_permissions(
     try:
         permissions = RoleViewService.get_permissions(role)
         return permissions
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error retrieving permissions for role {role}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred retrieving permissions",
@@ -52,15 +54,16 @@ async def get_role_config(
     try:
         config = RoleViewService.get_role_config(role)
         return config
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error retrieving role configuration for {role}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred retrieving role configuration",
         )
 
 
-@router.get("/views/config")
-async def get_current_user_view_config(current_user: User = Depends(get_current_active_user)):
+@router.get("/views/config", response_model=RoleViewConfig)
+async def get_current_user_view_config(current_user: User = Depends(get_current_active_user)) -> RoleViewConfig:
     """
     Get view configuration for current user.
 
@@ -70,19 +73,20 @@ async def get_current_user_view_config(current_user: User = Depends(get_current_
     try:
         config = RoleViewService.get_role_config(current_user.role)
         return config
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error retrieving role configuration for current user: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred retrieving role configuration",
         )
 
 
-@router.post("/views/check-access")
+@router.post("/views/check-access", response_model=dict[str, Any])
 async def check_endpoint_access(
     role: StaffRole,
     endpoint_category: str,
     current_user: User = Depends(get_current_active_user),
-):
+) -> dict[str, Any]:
     """
     Check if a role can access a specific endpoint category.
 
@@ -101,7 +105,8 @@ async def check_endpoint_access(
             "can_access": can_access,
             "permissions": RoleViewService.get_permissions(role),
         }
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error checking access for role {role} and endpoint {endpoint_category}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred checking access",

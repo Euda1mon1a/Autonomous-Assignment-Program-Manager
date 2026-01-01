@@ -324,22 +324,26 @@ class HubAnalyzer:
         # Calculate centrality measures
         try:
             degree_cent = nx.degree_centrality(G)
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to calculate degree centrality: {e}")
             degree_cent = {}
 
         try:
             betweenness_cent = nx.betweenness_centrality(G)
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to calculate betweenness centrality: {e}")
             betweenness_cent = {}
 
         try:
             eigenvector_cent = nx.eigenvector_centrality(G, max_iter=1000)
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to calculate eigenvector centrality: {e}")
             eigenvector_cent = {}
 
         try:
             pagerank_cent = nx.pagerank(G)
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to calculate pagerank: {e}")
             pagerank_cent = {}
 
         # Build centrality objects

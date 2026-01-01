@@ -13,10 +13,11 @@ Example usage:
 
     # Create a feature flag
     from app.features import FeatureFlagService
-    from app.db.session import get_db
+    from app.db.session import get_async_db
+    from fastapi import Depends
+    from sqlalchemy.ext.asyncio import AsyncSession
 
-    async def create_flag():
-        db = await get_db()
+    async def create_flag(db: AsyncSession = Depends(get_async_db)):
         service = FeatureFlagService(db)
 
         flag = await service.create_flag(
@@ -45,12 +46,13 @@ Example usage:
 
     # Use decorators
     from app.features import require_feature_flag
+    from sqlalchemy.ext.asyncio import AsyncSession
 
     @router.get("/beta-feature")
     @require_feature_flag("beta_feature")
     async def beta_endpoint(
         current_user: User = Depends(get_current_active_user),
-        db = Depends(get_db)
+        db: AsyncSession = Depends(get_async_db)
     ):
         return {"message": "Beta feature!"}
 """

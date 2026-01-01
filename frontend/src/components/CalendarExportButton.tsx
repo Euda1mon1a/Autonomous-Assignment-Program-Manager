@@ -41,7 +41,7 @@ export function CalendarExportButton({
   const { toast } = useToast()
 
   // Default to next 6 months if dates not provided
-  const getDefaultDates = () => {
+  const getDefaultDates = (): { start: string; end: string } => {
     const today = new Date()
     const sixMonthsLater = new Date(today)
     sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6)

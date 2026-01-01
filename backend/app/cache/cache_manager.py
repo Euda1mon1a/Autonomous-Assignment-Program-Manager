@@ -100,7 +100,7 @@ class CacheManager:
                 return default
         except Exception as e:
             self.stats["errors"] += 1
-            logger.error(f"Cache get error for key {key}: {e}")
+            logger.error("Cache get operation failed", exc_info=True)
             return default
 
     async def set(
@@ -129,7 +129,7 @@ class CacheManager:
             return True
         except Exception as e:
             self.stats["errors"] += 1
-            logger.error(f"Cache set error for key {key}: {e}")
+            logger.error("Cache set operation failed", exc_info=True)
             return False
 
     async def delete(self, *keys: str) -> int:
@@ -150,7 +150,7 @@ class CacheManager:
             return count
         except Exception as e:
             self.stats["errors"] += 1
-            logger.error(f"Cache delete error: {e}")
+            logger.error("Cache delete operation failed", exc_info=True)
             return 0
 
     async def exists(self, key: str) -> bool:
@@ -168,7 +168,7 @@ class CacheManager:
             return await self._redis.exists(key) > 0
         except Exception as e:
             self.stats["errors"] += 1
-            logger.error(f"Cache exists error for key {key}: {e}")
+            logger.error("Cache exists check failed", exc_info=True)
             return False
 
     async def get_or_set(
@@ -225,11 +225,11 @@ class CacheManager:
                     break
 
             self.stats["deletes"] += count
-            logger.info(f"Invalidated {count} keys matching {pattern}")
+            logger.info(f"Invalidated {count} keys matching pattern")
             return count
         except Exception as e:
             self.stats["errors"] += 1
-            logger.error(f"Cache invalidate error for pattern {pattern}: {e}")
+            logger.error("Cache pattern invalidation failed", exc_info=True)
             return 0
 
     async def increment(self, key: str, amount: int = 1) -> int:
@@ -250,7 +250,7 @@ class CacheManager:
             return new_value
         except Exception as e:
             self.stats["errors"] += 1
-            logger.error(f"Cache increment error for key {key}: {e}")
+            logger.error("Cache increment operation failed", exc_info=True)
             return 0
 
     async def decrement(self, key: str, amount: int = 1) -> int:
@@ -271,7 +271,7 @@ class CacheManager:
             return new_value
         except Exception as e:
             self.stats["errors"] += 1
-            logger.error(f"Cache decrement error for key {key}: {e}")
+            logger.error("Cache decrement operation failed", exc_info=True)
             return 0
 
     async def get_ttl(self, key: str) -> int:
@@ -289,7 +289,7 @@ class CacheManager:
             return await self._redis.ttl(key)
         except Exception as e:
             self.stats["errors"] += 1
-            logger.error(f"Cache TTL error for key {key}: {e}")
+            logger.error("Cache TTL check failed", exc_info=True)
             return -2
 
     async def expire(self, key: str, ttl: int) -> bool:
@@ -310,7 +310,7 @@ class CacheManager:
             return result
         except Exception as e:
             self.stats["errors"] += 1
-            logger.error(f"Cache expire error for key {key}: {e}")
+            logger.error("Cache expire operation failed", exc_info=True)
             return False
 
     async def flush_all(self) -> bool:
@@ -327,7 +327,7 @@ class CacheManager:
             return True
         except Exception as e:
             self.stats["errors"] += 1
-            logger.error(f"Cache flush error: {e}")
+            logger.error("Cache flush operation failed", exc_info=True)
             return False
 
     async def get_stats(self) -> dict:
@@ -368,10 +368,10 @@ class CacheManager:
                 "uptime_seconds": info.get("uptime_in_seconds", 0),
             }
         except Exception as e:
-            logger.error(f"Cache health check failed: {e}")
+            logger.error("Cache health check failed", exc_info=True)
             return {
                 "healthy": False,
-                "error": str(e),
+                "error": "Cache health check failed",
             }
 
 

@@ -333,7 +333,7 @@ const MCPCapabilitiesPanel: React.FC<MCPCapabilitiesPanelProps> = ({
                       {tool.examplePrompt && onSelectPrompt && (
                         <button
                           className="mcp-tool-try"
-                          onClick={() => onSelectPrompt(tool.examplePrompt!)}
+                          onClick={() => onSelectPrompt(tool.examplePrompt || '')}
                         >
                           Try: "{tool.examplePrompt}"
                         </button>

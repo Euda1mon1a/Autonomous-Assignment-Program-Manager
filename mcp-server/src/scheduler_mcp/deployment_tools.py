@@ -318,8 +318,57 @@ class GitHubActionsClient:
             self.repo = self._get_repo_from_git()
 
     def _get_repo_from_git(self) -> str:
-        """Extract repository from git remote."""
-        # This is a placeholder - would need to actually parse git config
+        """
+        Extract repository from git remote.
+
+        Attempts to parse repository owner/name from git remote URL.
+        Supports both HTTPS and SSH URLs.
+
+        Returns:
+            Repository in format "owner/repo"
+        """
+        import subprocess
+
+        try:
+            # Try to get remote URL from git
+            result = subprocess.run(
+                ["git", "config", "--get", "remote.origin.url"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+            )
+
+            if result.returncode == 0 and result.stdout.strip():
+                remote_url = result.stdout.strip()
+
+                # Parse HTTPS URL: https://github.com/owner/repo.git
+                if "https://" in remote_url or "http://" in remote_url:
+                    parts = remote_url.rstrip("/").rstrip(".git").split("/")
+                    if len(parts) >= 2:
+                        return f"{parts[-2]}/{parts[-1]}"
+
+                # Parse SSH URL: git@github.com:owner/repo.git
+                elif "git@" in remote_url:
+                    # Format: git@github.com:owner/repo.git
+                    if ":" in remote_url:
+                        repo_part = remote_url.split(":", 1)[1]
+                        repo_part = repo_part.rstrip(".git")
+                        return repo_part
+
+                logger.warning(
+                    f"Could not parse git remote URL: {remote_url}"
+                )
+
+        except subprocess.TimeoutExpired:
+            logger.warning("Git command timed out while fetching remote URL")
+        except FileNotFoundError:
+            logger.warning("Git command not found - cannot extract repository")
+        except Exception as e:
+            logger.warning(f"Error extracting repository from git: {e}")
+
+        # Fallback to default repository
+        logger.info("Using default repository path")
         return "residency-scheduler/scheduler"
 
     async def trigger_workflow(
@@ -691,6 +740,32 @@ async def validate_deployment(
     - Configuration valid
     - Environment readiness
 
+    **Implementation Requirements:**
+
+    CI/CD Integration:
+    - GitHub Actions: Query test results from workflow runs
+    - Security scanning: Integrate with Trivy, Snyk, or GitHub Advanced Security
+    - Docker registry: Verify images are built and pushed
+
+    Validation Checks:
+    1. Git reference validation (branch/tag exists)
+    2. Test suite results (pytest, Jest, E2E)
+    3. Security scan results (dependencies, SAST, secrets)
+    4. Database migration safety (Alembic)
+    5. Environment configuration (secrets, URLs, flags)
+    6. Docker image availability
+
+    API Integration:
+    - GitHub API: /repos/{owner}/{repo}/actions/runs
+    - Container Registry API: Check image tags
+    - Backend API: /api/v1/health for environment checks
+
+    Blocking Conditions:
+    - Any test failures -> BLOCK
+    - Critical/high security vulnerabilities -> BLOCK
+    - Destructive migrations without approval -> BLOCK
+    - Missing required environment variables -> BLOCK
+
     Args:
         request: Validation request with environment and git ref
 
@@ -698,8 +773,31 @@ async def validate_deployment(
         Validation result with all checks and any blockers
 
     Raises:
-        ValueError: If request parameters are invalid
+        ValueError: If request parameters are invalid or git ref not found
+
+    Example:
+        request = ValidateDeploymentRequest(
+            environment=Environment.PRODUCTION,
+            git_ref="v1.2.3",
+            dry_run=False
+        )
+        result = await validate_deployment(request)
+
+        if not result.valid:
+            print(f"Deployment blocked by {len(result.blockers)} issues:")
+            for blocker in result.blockers:
+                print(f"  - {blocker}")
     """
+    # Validate git ref format
+    if not request.git_ref or len(request.git_ref.strip()) == 0:
+        raise ValueError("git_ref cannot be empty")
+
+    # Sanitize git ref to prevent injection
+    dangerous_chars = [";", "&", "|", "$", "`", "\n", "\r"]
+    for char in dangerous_chars:
+        if char in request.git_ref:
+            raise ValueError(f"git_ref contains invalid character: {char}")
+
     start_time = datetime.utcnow()
 
     logger.info(

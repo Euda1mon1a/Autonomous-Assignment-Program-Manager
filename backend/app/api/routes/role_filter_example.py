@@ -14,6 +14,17 @@ from app.api.dependencies.role_filter import (
 )
 from app.core.security import get_current_active_user
 from app.models.user import User
+from app.schemas.role_filter import (
+    AccessCheckResponse,
+    ComplianceResponse,
+    CreateUserResponse,
+    DashboardResponse,
+    ManifestResponse,
+    MyScheduleResponse,
+    PermissionsResponse,
+    RolesResponse,
+    SchedulesResponse,
+)
 from app.services.role_filter_service import (
     ResourceType,
     RoleFilterService,
@@ -23,7 +34,7 @@ from app.services.role_filter_service import (
 router = APIRouter(prefix="/api/example", tags=["Role Filter Examples"])
 
 
-@router.get("/permissions")
+@router.get("/permissions", response_model=PermissionsResponse)
 async def get_my_permissions(
     current_user: User = Depends(get_current_active_user),
 ) -> dict[str, Any]:
@@ -43,7 +54,7 @@ async def get_my_permissions(
     }
 
 
-@router.get("/dashboard")
+@router.get("/dashboard", response_model=DashboardResponse)
 async def get_dashboard(
     current_user: User = Depends(get_current_active_user),
 ) -> dict[str, Any]:
@@ -107,7 +118,7 @@ async def get_dashboard(
     }
 
 
-@router.get("/schedules")
+@router.get("/schedules", response_model=SchedulesResponse)
 async def get_schedules(
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_resource_access(ResourceType.SCHEDULES)),
@@ -137,7 +148,7 @@ async def get_schedules(
     }
 
 
-@router.get("/my-schedule")
+@router.get("/my-schedule", response_model=MyScheduleResponse)
 async def get_my_schedule(
     current_user: User = Depends(get_current_active_user),
 ) -> dict[str, Any]:
@@ -177,7 +188,7 @@ async def get_my_schedule(
     }
 
 
-@router.get("/manifest")
+@router.get("/manifest", response_model=ManifestResponse)
 async def get_daily_manifest(
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_resource_access(ResourceType.MANIFEST)),
@@ -217,7 +228,7 @@ async def get_daily_manifest(
     }
 
 
-@router.get("/compliance")
+@router.get("/compliance", response_model=ComplianceResponse)
 async def get_compliance_report(
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_resource_access(ResourceType.COMPLIANCE)),
@@ -248,7 +259,7 @@ async def get_compliance_report(
     }
 
 
-@router.post("/users")
+@router.post("/users", response_model=CreateUserResponse)
 async def create_user(
     username: str,
     email: str,
@@ -286,7 +297,7 @@ async def create_user(
     }
 
 
-@router.get("/roles")
+@router.get("/roles", response_model=RolesResponse)
 async def list_roles() -> dict[str, Any]:
     """List all available roles with their permissions.
 
@@ -305,7 +316,7 @@ async def list_roles() -> dict[str, Any]:
     }
 
 
-@router.get("/access-check/{endpoint_category}")
+@router.get("/access-check/{endpoint_category}", response_model=AccessCheckResponse)
 async def check_access(
     endpoint_category: str, current_user: User = Depends(get_current_active_user)
 ) -> dict[str, Any]:

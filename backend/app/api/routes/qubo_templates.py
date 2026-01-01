@@ -11,10 +11,11 @@ Provides endpoints for quantum-inspired rotation template selection:
 
 import logging
 from datetime import date, timedelta
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_current_active_user
 from app.db.session import get_async_db
@@ -530,7 +531,7 @@ combined with quantum tunneling finds better adjustments faster.
     )
 
 
-@router.post("/explore-landscape")
+@router.post("/explore-landscape", response_model=dict[str, Any])
 async def explore_energy_landscape(
     start_date: date = Query(..., description="Start date"),
     end_date: date = Query(..., description="End date"),
@@ -540,7 +541,7 @@ async def explore_energy_landscape(
     seed: int | None = Query(default=None, description="Random seed"),
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> dict[str, Any]:
     """
     Explore the QUBO energy landscape for visualization.
 
@@ -588,7 +589,7 @@ async def explore_energy_landscape(
         )
 
 
-@router.post("/explore-pareto")
+@router.post("/explore-pareto", response_model=dict[str, Any])
 async def explore_pareto_frontier(
     start_date: date = Query(..., description="Start date"),
     end_date: date = Query(..., description="End date"),
@@ -601,7 +602,7 @@ async def explore_pareto_frontier(
     seed: int | None = Query(default=None),
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> dict[str, Any]:
     """
     Explore the Pareto frontier for multi-objective optimization.
 
@@ -649,13 +650,13 @@ async def explore_pareto_frontier(
         )
 
 
-@router.post("/benchmark")
+@router.post("/benchmark", response_model=dict[str, Any])
 async def run_benchmark(
     start_date: date = Query(..., description="Start date"),
     end_date: date = Query(..., description="End date"),
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> dict[str, Any]:
     """
     Run benchmark comparison of QUBO vs classical approaches.
 

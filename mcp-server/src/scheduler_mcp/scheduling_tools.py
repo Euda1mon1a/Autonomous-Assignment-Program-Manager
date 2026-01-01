@@ -285,9 +285,9 @@ async def run_contingency_analysis(
     """
     Run contingency analysis for workforce planning scenarios.
 
-    This tool simulates various absence or emergency scenarios and identifies
-    their impact on schedule coverage, compliance, and workload distribution.
-    It can also suggest resolution strategies.
+    This tool calls the FastAPI backend to simulate various absence or emergency
+    scenarios and identifies their impact on schedule coverage, compliance, and
+    workload distribution.
 
     Args:
         request: Contingency request with scenario type and affected personnel
@@ -297,6 +297,7 @@ async def run_contingency_analysis(
 
     Raises:
         ValueError: If request parameters are invalid
+        RuntimeError: If backend API call fails
     """
     if request.end_date < request.start_date:
         raise ValueError("end_date must be after start_date")
@@ -309,9 +310,66 @@ async def run_contingency_analysis(
         f"{len(request.affected_person_ids)} people"
     )
 
-    # Implementation based on N-1/N-2 contingency analysis from resilience framework
-    # In production, this would query actual assignments and analyze impact
+    try:
+        client = await get_api_client()
 
+        # Call the backend API for contingency analysis
+        result = await client.run_contingency_analysis(
+            scenario=request.scenario.value,
+            affected_person_ids=request.affected_person_ids,
+            start_date=request.start_date.isoformat(),
+            end_date=request.end_date.isoformat(),
+            auto_resolve=request.auto_resolve,
+        )
+
+        # Extract impact assessment from backend response
+        impact_data = result.get("impact", {})
+        impact = ImpactAssessment(
+            affected_rotations=impact_data.get("affected_rotations", []),
+            coverage_gaps=impact_data.get("coverage_gaps", 0),
+            compliance_violations=impact_data.get("compliance_violations", 0),
+            workload_increase_percent=impact_data.get("workload_increase_percent", 0.0),
+            feasibility_score=impact_data.get("feasibility_score", 0.5),
+            critical_gaps=impact_data.get("critical_gaps", []),
+        )
+
+        # Extract resolution options
+        resolution_options = []
+        for option_data in result.get("resolution_options", []):
+            resolution_options.append(
+                ResolutionOption(
+                    option_id=option_data.get("option_id", ""),
+                    strategy=option_data.get("strategy", ""),
+                    description=option_data.get("description", ""),
+                    affected_people=option_data.get("affected_people", []),
+                    estimated_effort=option_data.get("estimated_effort", "medium"),
+                    success_probability=option_data.get("success_probability", 0.5),
+                    details=option_data.get("details", {}),
+                )
+            )
+
+        return ContingencyAnalysisResult(
+            scenario=request.scenario,
+            impact=impact,
+            resolution_options=resolution_options,
+            recommended_option_id=result.get("recommended_option_id"),
+            analyzed_at=datetime.now(),
+        )
+
+    except Exception as e:
+        logger.error(f"Contingency analysis failed: {e}")
+        raise RuntimeError(f"Failed to run contingency analysis: {e}") from e
+
+
+async def _run_contingency_analysis_legacy(
+    request: ContingencyRequest,
+) -> ContingencyAnalysisResult:
+    """
+    Legacy local implementation of contingency analysis.
+
+    Kept for reference but should not be used in production.
+    Use run_contingency_analysis() which calls the backend API.
+    """
     # Simulate faculty absence impact assessment
     num_affected = len(request.affected_person_ids)
 
@@ -556,219 +614,6 @@ async def detect_conflicts(
         raise RuntimeError(f"Failed to detect conflicts: {e}") from e
 
 
-# Keep mock implementation as fallback for swap candidates (requires file upload in backend)
-async def _detect_conflicts_mock(
-    request: ConflictDetectionRequest,
-) -> ConflictDetectionResult:
-    """
-    Mock implementation of conflict detection (fallback).
-
-    Used when backend API is unavailable or for testing.
-    """
-    conflicts: list[ConflictInfo] = []
-
-    check_types = request.conflict_types or list(ConflictType)
-
-    # 1. Check for double-booking conflicts
-    if ConflictType.DOUBLE_BOOKING in check_types:
-        # Simulate finding a person assigned to multiple rotations at the same time
-        conflicts.append(
-            ConflictInfo(
-                conflict_id="conflict-001",
-                conflict_type=ConflictType.DOUBLE_BOOKING,
-                severity=ValidationSeverity.CRITICAL,
-                affected_people=["person-007", "person-007"],  # Same person, different assignments
-                date_range=(request.start_date, request.start_date),
-                description="Dr. Johnson assigned to Emergency Medicine and Clinic simultaneously on AM block",
-                auto_resolution_available=True,
-                resolution_options=[
-                    ResolutionOption(
-                        option_id="res-auto-001",
-                        strategy="remove_duplicate",
-                        description="Remove duplicate clinic assignment, keep Emergency Medicine",
-                        affected_people=["person-007"],
-                        estimated_effort="low",
-                        success_probability=1.0,
-                        details={"preferred_assignment": "Emergency Medicine"},
-                    )
-                ],
-            )
-        )
-
-    # 2. Check for work hour violations (80-hour rule)
-    if ConflictType.WORK_HOUR_VIOLATION in check_types:
-        # Simulate finding residents exceeding 80-hour work week
-        conflicts.append(
-            ConflictInfo(
-                conflict_id="conflict-002",
-                conflict_type=ConflictType.WORK_HOUR_VIOLATION,
-                severity=ValidationSeverity.CRITICAL,
-                affected_people=["resident-004"],
-                date_range=(request.start_date, request.start_date + timedelta(days=27)),
-                description="Dr. Anderson: 85.5 hours/week average over 4-week period (ACGME limit: 80 hours)",
-                auto_resolution_available=request.include_auto_resolution,
-                resolution_options=[
-                    ResolutionOption(
-                        option_id="res-auto-002",
-                        strategy="reduce_assignments",
-                        description="Remove 2 PM clinic blocks to bring hours to 79.5/week",
-                        affected_people=["resident-004"],
-                        estimated_effort="medium",
-                        success_probability=0.90,
-                        details={
-                            "blocks_to_remove": 2,
-                            "target_hours": 79.5,
-                            "requires_replacement": True,
-                        },
-                    ),
-                    ResolutionOption(
-                        option_id="res-auto-003",
-                        strategy="redistribute_workload",
-                        description="Redistribute 3 blocks to other residents",
-                        affected_people=["resident-004", "resident-005", "resident-006"],
-                        estimated_effort="high",
-                        success_probability=0.75,
-                        details={"redistribution_count": 3},
-                    ),
-                ] if request.include_auto_resolution else [],
-            )
-        )
-
-    # 3. Check for rest period violations (1-in-7 rule)
-    if ConflictType.REST_PERIOD_VIOLATION in check_types:
-        # Simulate finding residents without adequate rest periods
-        conflicts.append(
-            ConflictInfo(
-                conflict_id="conflict-003",
-                conflict_type=ConflictType.REST_PERIOD_VIOLATION,
-                severity=ValidationSeverity.CRITICAL,
-                affected_people=["resident-005"],
-                date_range=(request.start_date, request.start_date + timedelta(days=7)),
-                description="Dr. Lee: 8 consecutive duty days without 24-hour rest period (ACGME: max 6 consecutive)",
-                auto_resolution_available=request.include_auto_resolution,
-                resolution_options=[
-                    ResolutionOption(
-                        option_id="res-auto-004",
-                        strategy="insert_rest_day",
-                        description="Clear assignments on day 7 to create rest period",
-                        affected_people=["resident-005"],
-                        estimated_effort="medium",
-                        success_probability=0.85,
-                        details={
-                            "rest_day": str(request.start_date + timedelta(days=6)),
-                            "affected_blocks": 2,
-                        },
-                    )
-                ] if request.include_auto_resolution else [],
-            )
-        )
-
-    # 4. Check for supervision gaps
-    if ConflictType.SUPERVISION_GAP in check_types:
-        # Simulate finding blocks with inadequate faculty supervision
-        conflicts.append(
-            ConflictInfo(
-                conflict_id="conflict-004",
-                conflict_type=ConflictType.SUPERVISION_GAP,
-                severity=ValidationSeverity.CRITICAL,
-                affected_people=["block-supervisor"],
-                date_range=(request.start_date + timedelta(days=5), request.start_date + timedelta(days=5)),
-                description="Morning clinic: 6 PGY-1 residents with only 2 faculty (requires 3 faculty for 1:2 ratio)",
-                auto_resolution_available=request.include_auto_resolution,
-                resolution_options=[
-                    ResolutionOption(
-                        option_id="res-auto-005",
-                        strategy="add_supervision",
-                        description="Assign Dr. Rodriguez from backup pool to morning clinic",
-                        affected_people=["faculty-backup-001"],
-                        estimated_effort="low",
-                        success_probability=0.95,
-                        details={"backup_pool_available": True},
-                    ),
-                    ResolutionOption(
-                        option_id="res-auto-006",
-                        strategy="reduce_resident_count",
-                        description="Move 2 PGY-1 residents to afternoon clinic",
-                        affected_people=["resident-007", "resident-008"],
-                        estimated_effort="medium",
-                        success_probability=0.80,
-                        details={"target_ratio": "1:2"},
-                    ),
-                ] if request.include_auto_resolution else [],
-            )
-        )
-
-    # 5. Check for leave/absence overlaps
-    if ConflictType.LEAVE_OVERLAP in check_types:
-        # Simulate finding assignments during approved leave
-        conflicts.append(
-            ConflictInfo(
-                conflict_id="conflict-005",
-                conflict_type=ConflictType.LEAVE_OVERLAP,
-                severity=ValidationSeverity.WARNING,
-                affected_people=["faculty-002"],
-                date_range=(request.start_date + timedelta(days=10), request.start_date + timedelta(days=14)),
-                description="Dr. Thompson assigned to FMIT week during approved military TDY leave",
-                auto_resolution_available=request.include_auto_resolution,
-                resolution_options=[
-                    ResolutionOption(
-                        option_id="res-auto-007",
-                        strategy="remove_conflicting_assignment",
-                        description="Remove FMIT assignment during leave period",
-                        affected_people=["faculty-002"],
-                        estimated_effort="low",
-                        success_probability=1.0,
-                        details={
-                            "leave_type": "Military TDY",
-                            "requires_replacement": True,
-                        },
-                    )
-                ] if request.include_auto_resolution else [],
-            )
-        )
-
-    # 6. Check for credential mismatches
-    if ConflictType.CREDENTIAL_MISMATCH in check_types:
-        # Simulate finding assignments requiring credentials the person doesn't have
-        conflicts.append(
-            ConflictInfo(
-                conflict_id="conflict-006",
-                conflict_type=ConflictType.CREDENTIAL_MISMATCH,
-                severity=ValidationSeverity.WARNING,
-                affected_people=["faculty-003"],
-                date_range=(request.start_date + timedelta(days=3), request.start_date + timedelta(days=3)),
-                description="Dr. Kim assigned to pediatric procedures but lacks pediatric sedation certification",
-                auto_resolution_available=request.include_auto_resolution,
-                resolution_options=[
-                    ResolutionOption(
-                        option_id="res-auto-008",
-                        strategy="reassign_to_qualified",
-                        description="Reassign to Dr. Smith (pediatric certified)",
-                        affected_people=["faculty-003", "faculty-qualified-001"],
-                        estimated_effort="medium",
-                        success_probability=0.85,
-                        details={"required_credential": "Pediatric Sedation"},
-                    )
-                ] if request.include_auto_resolution else [],
-            )
-        )
-
-    conflicts_by_type = {
-        ctype: sum(1 for c in conflicts if c.conflict_type == ctype)
-        for ctype in ConflictType
-    }
-
-    auto_resolvable = sum(1 for c in conflicts if c.auto_resolution_available)
-
-    return ConflictDetectionResult(
-        total_conflicts=len(conflicts),
-        conflicts_by_type=conflicts_by_type,
-        conflicts=conflicts,
-        auto_resolvable_count=auto_resolvable,
-        detected_at=datetime.now(),
-    )
-
-
 async def analyze_swap_candidates(
     request: SwapCandidateRequest,
 ) -> SwapAnalysisResult:
@@ -843,132 +688,8 @@ async def analyze_swap_candidates(
         )
 
     except Exception as e:
-        logger.warning(f"Backend API call failed, using mock data: {e}")
-        # Fall back to mock implementation if backend is unavailable
-        return await _analyze_swap_candidates_mock(request)
-
-
-async def _analyze_swap_candidates_mock(
-    request: SwapCandidateRequest,
-) -> SwapAnalysisResult:
-    """
-    Mock implementation of swap candidate analysis (fallback).
-
-    Used when backend API is unavailable or for testing.
-    """
-    candidates = []
-
-    # Scoring weights (from SwapAutoMatcher)
-    DATE_PROXIMITY_WEIGHT = 0.25
-    PREFERENCE_ALIGNMENT_WEIGHT = 0.30
-    WORKLOAD_BALANCE_WEIGHT = 0.20
-    HISTORY_WEIGHT = 0.15
-    AVAILABILITY_WEIGHT = 0.10
-
-    candidate_1_date_range = request.preferred_date_range or (
-        date.today() + timedelta(days=7),
-        date.today() + timedelta(days=13),
-    )
-
-    # Candidate 1: High-quality match with mutual benefit
-    match_score_1 = (
-        1.0 * DATE_PROXIMITY_WEIGHT
-        + 0.95 * PREFERENCE_ALIGNMENT_WEIGHT
-        + 0.85 * WORKLOAD_BALANCE_WEIGHT
-        + 0.90 * HISTORY_WEIGHT
-        + 1.0 * AVAILABILITY_WEIGHT
-    )
-
-    candidates.append(
-        SwapCandidate(
-            candidate_person_id="faculty-008",
-            candidate_role="Faculty",
-            assignment_id="assign-008",
-            match_score=match_score_1,
-            rotation="Emergency Medicine",
-            date_range=candidate_1_date_range,
-            compatibility_factors={
-                "rotation_match": True,
-                "date_proximity_score": 1.0,
-                "preference_alignment": 0.95,
-            },
-            mutual_benefit=True,
-            approval_likelihood="high",
-        )
-    )
-
-    # Candidate 2: Good match
-    match_score_2 = (
-        0.85 * DATE_PROXIMITY_WEIGHT
-        + 0.70 * PREFERENCE_ALIGNMENT_WEIGHT
-        + 0.80 * WORKLOAD_BALANCE_WEIGHT
-        + 0.75 * HISTORY_WEIGHT
-        + 0.90 * AVAILABILITY_WEIGHT
-    )
-
-    candidates.append(
-        SwapCandidate(
-            candidate_person_id="faculty-009",
-            candidate_role="Faculty",
-            assignment_id="assign-009",
-            match_score=match_score_2,
-            rotation="Internal Medicine",
-            date_range=(
-                candidate_1_date_range[0] + timedelta(days=7),
-                candidate_1_date_range[1] + timedelta(days=7),
-            ),
-            compatibility_factors={
-                "rotation_match": False,
-                "date_proximity_score": 0.85,
-                "preference_alignment": 0.70,
-            },
-            mutual_benefit=False,
-            approval_likelihood="medium",
-        )
-    )
-
-    # Candidate 3: Moderate match
-    match_score_3 = (
-        0.70 * DATE_PROXIMITY_WEIGHT
-        + 0.60 * PREFERENCE_ALIGNMENT_WEIGHT
-        + 0.70 * WORKLOAD_BALANCE_WEIGHT
-        + 1.0 * HISTORY_WEIGHT
-        + 0.85 * AVAILABILITY_WEIGHT
-    )
-
-    candidates.append(
-        SwapCandidate(
-            candidate_person_id="faculty-010",
-            candidate_role="Faculty",
-            assignment_id="assign-010",
-            match_score=match_score_3,
-            rotation="Clinic",
-            date_range=(
-                candidate_1_date_range[0] + timedelta(days=14),
-                candidate_1_date_range[1] + timedelta(days=14),
-            ),
-            compatibility_factors={
-                "rotation_match": False,
-                "date_proximity_score": 0.70,
-                "preference_alignment": 0.60,
-            },
-            mutual_benefit=False,
-            approval_likelihood="medium",
-        )
-    )
-
-    # Sort by match score
-    candidates.sort(key=lambda c: c.match_score, reverse=True)
-
-    top_candidate_id = candidates[0].candidate_person_id if candidates else None
-
-    return SwapAnalysisResult(
-        requester_person_id=request.requester_person_id,
-        original_assignment_id=request.assignment_id,
-        candidates=candidates[: request.max_candidates],
-        top_candidate_id=top_candidate_id,
-        analyzed_at=datetime.now(),
-    )
+        logger.error(f"Swap candidate analysis failed: {e}")
+        raise RuntimeError(f"Failed to analyze swap candidates: {e}") from e
 
 
 # Schedule Generation Models and Function

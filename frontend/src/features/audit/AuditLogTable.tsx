@@ -301,7 +301,7 @@ function ExpandableRow({
                     <div>Previous Value</div>
                     <div>New Value</div>
                   </div>
-                  {entry.changes!.map((change, idx) => (
+                  {(entry.changes ?? []).map((change, idx) => (
                     <ChangeDetail key={idx} change={change} />
                   ))}
                 </div>

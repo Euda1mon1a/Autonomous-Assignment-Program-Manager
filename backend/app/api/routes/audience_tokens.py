@@ -30,7 +30,7 @@ from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.api.deps import get_db
+from app.api.deps import get_async_db
 from app.core.audience_auth import (
     ALGORITHM,
     VALID_AUDIENCES,
@@ -140,7 +140,7 @@ def check_audience_permission(user_role: str, audience: str) -> tuple[bool, str 
     return False, f"Audience '{audience}' requires {required_role} role"
 
 
-def get_token_owner_id(db: Session, jti: str) -> str | None:
+async def get_token_owner_id(db: AsyncSession, jti: str) -> str | None:
     """
     Look up the owner (user_id) of a token by its JTI.
 
@@ -279,9 +279,10 @@ async def request_audience_token(
 
     except ValueError as e:
         # Invalid audience or TTL
+        logger.error(f"Validation error creating audience token: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Invalid audience or TTL",
         )
     except Exception as e:
         logger.error(
@@ -386,7 +387,7 @@ async def revoke_token(
 
         # Method 2: Check if token is already in blacklist (has user_id recorded)
         if not token_owner_id:
-            token_owner_id = get_token_owner_id(db, request.jti)
+            token_owner_id = await get_token_owner_id(db, request.jti)
 
         # Verify ownership: user must own the token OR be an admin
         if token_owner_id and token_owner_id != str(current_user.id):

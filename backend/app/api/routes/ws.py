@@ -1,6 +1,7 @@
 """WebSocket API routes for real-time updates."""
 
 import logging
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect, status
@@ -52,7 +53,7 @@ async def get_websocket_user(
 async def websocket_endpoint(
     websocket: WebSocket,
     token: str | None = Query(None),
-    db=Depends(get_db),
+    db=Depends(get_async_db),
 ):
     """
     WebSocket endpoint for real-time schedule updates.
@@ -176,8 +177,8 @@ async def websocket_endpoint(
         await manager.disconnect(connection)
 
 
-@router.get("/ws/stats")
-async def get_websocket_stats(current_user: User = Depends(get_current_active_user)):
+@router.get("/ws/stats", response_model=dict[str, Any])
+async def get_websocket_stats(current_user: User = Depends(get_current_active_user)) -> dict[str, Any]:
     """
     Get WebSocket connection statistics.
 
@@ -200,8 +201,8 @@ async def get_websocket_stats(current_user: User = Depends(get_current_active_us
     }
 
 
-@router.get("/ws/health")
-async def websocket_health():
+@router.get("/ws/health", response_model=dict[str, Any])
+async def websocket_health() -> dict[str, Any]:
     """
     WebSocket subsystem health check.
 

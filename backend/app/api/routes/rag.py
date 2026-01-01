@@ -78,7 +78,8 @@ async def retrieve_documents(
         return response
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.error(f"Validation error in RAG retrieval: {e}", exc_info=True)
+        raise HTTPException(status_code=400, detail="Invalid retrieval request")
     except Exception as e:
         logger.error(f"RAG retrieval failed: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Retrieval failed")
@@ -165,7 +166,8 @@ async def ingest_document(
         return response
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.error(f"Validation error in document ingestion: {e}", exc_info=True)
+        raise HTTPException(status_code=400, detail="Invalid document data")
     except Exception as e:
         logger.error(f"Document ingestion failed: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Ingestion failed")
@@ -211,13 +213,14 @@ async def build_context(
         return response
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.error(f"Validation error in context building: {e}", exc_info=True)
+        raise HTTPException(status_code=400, detail="Invalid context request")
     except Exception as e:
         logger.error(f"Context building failed: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Context building failed")
 
 
-@router.delete("/documents/{doc_type}")
+@router.delete("/documents/{doc_type}", response_model=dict[str, Any])
 async def delete_documents_by_type(
     doc_type: str,
     db=Depends(get_async_db),
@@ -251,7 +254,7 @@ async def delete_documents_by_type(
         raise HTTPException(status_code=500, detail="Deletion failed")
 
 
-@router.get("/stats")
+@router.get("/stats", response_model=dict[str, Any])
 async def get_rag_stats(
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),

@@ -124,7 +124,8 @@ async def submit_task(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.warning(f"Task submission validation error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid task parameters")
     except Exception as e:
         logger.error(f"Error submitting task: {e}")
         raise HTTPException(status_code=500, detail="Error submitting task")
@@ -174,7 +175,8 @@ async def submit_task_chain(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.warning(f"Task chain validation error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid task chain parameters")
     except Exception as e:
         logger.error(f"Error submitting task chain: {e}")
         raise HTTPException(status_code=500, detail="Error submitting task chain")
@@ -222,7 +224,8 @@ async def submit_task_group(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.warning(f"Task group validation error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid task group parameters")
     except Exception as e:
         logger.error(f"Error submitting task group: {e}")
         raise HTTPException(status_code=500, detail="Error submitting task group")
@@ -267,7 +270,8 @@ async def submit_task_with_dependencies(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.warning(f"Task dependency validation error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid dependency parameters")
     except Exception as e:
         logger.error(f"Error submitting task with dependencies: {e}")
         raise HTTPException(
@@ -408,7 +412,8 @@ async def retry_task(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.warning(f"Task retry validation error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid retry parameters")
     except Exception as e:
         logger.error(f"Error retrying task: {e}")
         raise HTTPException(status_code=500, detail="Error retrying task")
@@ -704,7 +709,8 @@ async def schedule_task(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.warning(f"Task scheduling validation error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid scheduling parameters")
     except Exception as e:
         logger.error(f"Error scheduling task: {e}")
         raise HTTPException(status_code=500, detail="Error scheduling task")
@@ -752,7 +758,8 @@ async def add_periodic_task(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.warning(f"Periodic task validation error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid periodic task parameters")
     except Exception as e:
         logger.error(f"Error adding periodic task: {e}")
         raise HTTPException(status_code=500, detail="Error adding periodic task")
@@ -846,7 +853,8 @@ async def control_periodic_task(
         )
 
     except KeyError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        logger.warning(f"Periodic task not found: {e}")
+        raise HTTPException(status_code=404, detail="Periodic task not found")
     except HTTPException:
         raise
     except Exception as e:

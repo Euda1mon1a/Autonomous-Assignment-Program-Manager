@@ -193,7 +193,40 @@ async def delete_person(
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Delete a person. Requires authentication."""
+    """Delete a person (resident or faculty).
+
+    Args:
+        person_id: UUID of the person to delete.
+        db: Database session.
+        current_user: Authenticated user.
+
+    Returns:
+        No content (204).
+
+    Security:
+        Requires authentication.
+
+    Warning:
+        Deleting a person will cascade delete:
+        - All their schedule assignments
+        - Their credentials (for faculty)
+        - Their absence records
+        - Their swap requests
+        This operation cannot be undone.
+
+    Note:
+        Consider deactivating the person instead of deletion to preserve historical data.
+
+    Raises:
+        HTTPException:
+            - 404: Person not found
+            - 409: Cannot delete person with active assignments (if cascade disabled)
+
+    Status Codes:
+        - 204: Person deleted successfully
+        - 404: Person not found
+        - 409: Conflict (active assignments exist)
+    """
     controller = PersonController(db)
     controller.delete_person(person_id)
 
@@ -211,7 +244,32 @@ async def get_person_credentials(
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Get all credentials for a faculty member. Requires authentication."""
+    """Get all procedure credentials for a faculty member.
+
+    Args:
+        person_id: UUID of the faculty member.
+        status: Filter by credential status ('active', 'expiring_soon', 'expired').
+        include_expired: If True, include expired credentials in results.
+        db: Database session.
+        current_user: Authenticated user.
+
+    Returns:
+        CredentialListResponse with list of credentials and total count.
+
+    Security:
+        Requires authentication.
+
+    Note:
+        Credentials determine which procedures a faculty member can supervise.
+        Expired credentials prevent assignment to procedure-based rotations.
+
+    Example Query:
+        GET /api/people/{person_id}/credentials?status=expiring_soon&include_expired=false
+
+    Status Codes:
+        - 200: Credentials retrieved successfully
+        - 404: Person not found
+    """
     controller = CredentialController(db)
     return controller.list_credentials_for_person(
         person_id=person_id,
@@ -226,7 +284,32 @@ async def get_person_credential_summary(
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Get a summary of a faculty member's credentials. Requires authentication."""
+    """Get a comprehensive summary of a faculty member's credential status.
+
+    Args:
+        person_id: UUID of the faculty member.
+        db: Database session.
+        current_user: Authenticated user.
+
+    Returns:
+        FacultyCredentialSummary with:
+        - Total credential count
+        - Active credentials count
+        - Expiring soon credentials (within 30 days)
+        - Expired credentials count
+        - List of procedures they can supervise
+
+    Security:
+        Requires authentication.
+
+    Note:
+        Use this endpoint for dashboard views showing faculty readiness status.
+        Useful for identifying faculty who need credential renewals.
+
+    Status Codes:
+        - 200: Summary retrieved successfully
+        - 404: Person not found or person is not faculty
+    """
     controller = CredentialController(db)
     return controller.get_faculty_summary(person_id)
 
@@ -237,7 +320,36 @@ async def get_person_procedures(
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Get all procedures a faculty member is qualified to supervise. Requires authentication."""
+    """Get all procedures a faculty member is qualified to supervise.
+
+    Args:
+        person_id: UUID of the faculty member.
+        db: Database session.
+        current_user: Authenticated user.
+
+    Returns:
+        ProcedureListResponse with list of procedures and total count.
+
+    Security:
+        Requires authentication.
+
+    Note:
+        Only returns procedures for which the faculty member has:
+        - Active (non-expired) credentials
+        - Valid certification status
+
+        This list determines which procedure-based rotations the faculty
+        member can be assigned to supervise.
+
+    Example Use Cases:
+        - Validating faculty eligibility for procedure assignments
+        - Displaying supervision capabilities on faculty profiles
+        - Filtering available faculty for specific procedure types
+
+    Status Codes:
+        - 200: Procedures retrieved successfully
+        - 404: Person not found or person is not faculty
+    """
     service = CredentialService(db)
     result = service.list_procedures_for_faculty(person_id)
     return ProcedureListResponse(items=result["items"], total=result["total"])

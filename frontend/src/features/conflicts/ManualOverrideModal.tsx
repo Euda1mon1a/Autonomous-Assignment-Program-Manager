@@ -178,7 +178,15 @@ export function ManualOverrideModal({
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
         onClick={onClose}
-        aria-hidden="true"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClose();
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-label="Close modal"
       />
 
       {/* Modal */}
@@ -310,6 +318,7 @@ export function ManualOverrideModal({
                   min={new Date().toISOString().split('T')[0]}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required={overrideType === 'temporary'}
+                  aria-label="Override expiration date"
                 />
               </div>
             )}
@@ -326,6 +335,7 @@ export function ManualOverrideModal({
                 placeholder="Brief reason for the override..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
+                aria-label="Reason for override"
               />
             </div>
 
@@ -342,6 +352,7 @@ export function ManualOverrideModal({
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 rows={4}
                 required
+                aria-label="Detailed justification for override"
               />
               <p className="text-xs text-gray-500 mt-1">
                 This justification will be recorded in the audit trail.
@@ -365,6 +376,7 @@ export function ManualOverrideModal({
                     onChange={(e) => setAcgmeExceptionType(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required={isAcgmeRelated}
+                    aria-label="ACGME exception type"
                   >
                     <option value="">Select exception type...</option>
                     {ACGME_EXCEPTION_TYPES.map((type) => (
@@ -396,6 +408,7 @@ export function ManualOverrideModal({
                     checked={supervisorApproved}
                     onChange={(e) => setSupervisorApproved(e.target.checked)}
                     className="mt-1 w-4 h-4 text-amber-600 border-amber-300 rounded focus:ring-amber-500"
+                    aria-label="Confirm supervisor approval"
                   />
                   <span className="text-sm text-amber-800">
                     I confirm that a supervising faculty member has reviewed and approved this override.
@@ -413,6 +426,7 @@ export function ManualOverrideModal({
                       onChange={(e) => setSupervisorId(e.target.value)}
                       placeholder="Name or ID of approving supervisor..."
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      aria-label="Approving supervisor name or ID"
                     />
                   </div>
                 )}
@@ -437,6 +451,7 @@ export function ManualOverrideModal({
                     }
                   `}
                   required
+                  aria-label="Acknowledge risks and responsibility"
                 />
                 <span className={`text-sm ${isCritical ? 'text-red-800' : 'text-gray-700'}`}>
                   <strong>I understand and acknowledge</strong> that by creating this override, I am

@@ -52,13 +52,41 @@ def create_json_response(data: list, filename: str) -> StreamingResponse:
     )
 
 
-@router.get("/people")
+@router.get(
+    "/people",
+    summary="Export people data",
+    description="Export all people (residents, faculty, staff) data in CSV or JSON format. "
+    "Includes name, type, PGY level, email, specialties, and procedure qualifications. "
+    "Requires admin role.",
+    tags=["Data Export"],
+    responses={
+        200: {
+            "description": "People data export file",
+            "content": {
+                "text/csv": {"example": "Name,Type,PGY Level,Email\nDr. Smith,faculty,,smith@example.com"},
+                "application/json": {
+                    "example": [
+                        {
+                            "name": "Dr. Smith",
+                            "type": "faculty",
+                            "pgy_level": None,
+                            "email": "smith@example.com",
+                            "specialties": ["Internal Medicine"],
+                            "performs_procedures": True,
+                        }
+                    ]
+                },
+            },
+        },
+        403: {"description": "Admin role required"},
+    },
+)
 async def export_people(
     format: str = Query("csv", description="Export format: csv or json"),
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
-):
+) -> StreamingResponse:
     """
     Export all people data. Requires admin role.
 
@@ -87,7 +115,38 @@ async def export_people(
     return create_csv_response(content, "people.csv")
 
 
-@router.get("/absences")
+@router.get(
+    "/absences",
+    summary="Export absences data",
+    description="Export absence records (leave, TDY, deployments) in CSV or JSON format. "
+    "Supports optional date range filtering. Includes person name, absence type, dates, and notes. "
+    "Requires admin role.",
+    tags=["Data Export"],
+    responses={
+        200: {
+            "description": "Absences data export file",
+            "content": {
+                "text/csv": {
+                    "example": "Person,Type,Start Date,End Date,Notes\nDr. Smith,TDY,2024-01-15,2024-01-20,Conference"
+                },
+                "application/json": {
+                    "example": [
+                        {
+                            "person_name": "Dr. Smith",
+                            "absence_type": "TDY",
+                            "start_date": "2024-01-15",
+                            "end_date": "2024-01-20",
+                            "notes": "Conference",
+                            "deployment_orders": None,
+                            "tdy_location": "Washington DC",
+                        }
+                    ]
+                },
+            },
+        },
+        403: {"description": "Admin role required"},
+    },
+)
 async def export_absences(
     format: str = Query("csv", description="Export format: csv or json"),
     start_date: date | None = Query(None, description="Filter absences starting from"),
@@ -95,7 +154,7 @@ async def export_absences(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
-):
+) -> StreamingResponse:
     """
     Export absences data. Requires admin role.
 
@@ -141,7 +200,40 @@ async def export_absences(
     return create_csv_response(content, "absences.csv")
 
 
-@router.get("/schedule")
+@router.get(
+    "/schedule",
+    summary="Export schedule data",
+    description="Export schedule assignments for a specified date range in CSV or JSON format. "
+    "Includes date, time of day (AM/PM), person details, role, and activity assignments. "
+    "Date range is required. Admin role required.",
+    tags=["Data Export"],
+    responses={
+        200: {
+            "description": "Schedule data export file",
+            "content": {
+                "text/csv": {
+                    "example": "Date,Time,Person,Type,PGY Level,Role,Activity\n2024-01-15,AM,Dr. Smith,faculty,,Attending,Inpatient"
+                },
+                "application/json": {
+                    "example": [
+                        {
+                            "date": "2024-01-15",
+                            "time_of_day": "AM",
+                            "person_name": "Dr. Smith",
+                            "person_type": "faculty",
+                            "pgy_level": None,
+                            "role": "Attending",
+                            "activity": "Inpatient",
+                            "notes": None,
+                        }
+                    ]
+                },
+            },
+        },
+        403: {"description": "Admin role required"},
+        422: {"description": "Invalid date parameters"},
+    },
+)
 async def export_schedule(
     format: str = Query("csv", description="Export format: csv or json"),
     start_date: date = Query(..., description="Schedule start date"),
@@ -149,7 +241,7 @@ async def export_schedule(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
-):
+) -> StreamingResponse:
     """
     Export schedule data for a date range. Requires admin role.
 
@@ -202,7 +294,28 @@ async def export_schedule(
     return create_csv_response(content, "schedule.csv")
 
 
-@router.get("/schedule/xlsx")
+@router.get(
+    "/schedule/xlsx",
+    summary="Export schedule in legacy Excel format",
+    description="Generates a formatted Excel (.xlsx) file matching the historical schedule distribution format. "
+    "Features include AM/PM columns per day, color-coded rotation labels, PGY level grouping, and federal holiday "
+    "highlighting. Typically used for 28-day blocks (Block 1-13 of academic year). Requires admin role.",
+    tags=["Data Export"],
+    responses={
+        200: {
+            "description": "Excel file download (.xlsx)",
+            "content": {
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                    "schema": {"type": "string", "format": "binary"}
+                }
+            },
+        },
+        400: {"description": "Invalid date format in federal_holidays parameter"},
+        403: {"description": "Admin role required"},
+        422: {"description": "Invalid date parameters"},
+        500: {"description": "Excel file generation failed"},
+    },
+)
 async def export_schedule_xlsx(
     start_date: date = Query(..., description="Schedule start date"),
     end_date: date = Query(..., description="Schedule end date"),
@@ -215,7 +328,7 @@ async def export_schedule_xlsx(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
-):
+) -> Response:
     """
     Export schedule in legacy Excel format. Requires admin role.
 

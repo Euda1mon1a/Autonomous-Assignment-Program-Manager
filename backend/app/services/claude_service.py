@@ -2,8 +2,8 @@
 
 import json
 import logging
-from typing import AsyncGenerator, Any, Dict
 import os
+from typing import Any, AsyncGenerator
 
 import anthropic
 

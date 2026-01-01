@@ -168,7 +168,33 @@ async def delete_assignment(
     db=Depends(get_async_db),
     current_user: User = Depends(get_scheduler_user),
 ):
-    """Delete an assignment. Requires scheduler role (admin or coordinator)."""
+    """Delete a schedule assignment.
+
+    Args:
+        assignment_id: UUID of the assignment to delete.
+        db: Database session.
+        current_user: Authenticated user (must have scheduler role).
+
+    Returns:
+        No content (204).
+
+    Security:
+        Requires scheduler role (admin or coordinator).
+
+    Note:
+        Deleting an assignment may affect ACGME compliance for the affected person.
+        Consider running a compliance check after deletion.
+
+    Raises:
+        HTTPException:
+            - 404: Assignment not found
+            - 403: Insufficient permissions
+
+    Status Codes:
+        - 204: Assignment deleted successfully
+        - 403: Insufficient permissions
+        - 404: Assignment not found
+    """
     controller = AssignmentController(db)
     await controller.delete_assignment(assignment_id)
 
@@ -180,6 +206,39 @@ async def delete_assignments_bulk(
     db=Depends(get_async_db),
     current_user: User = Depends(get_scheduler_user),
 ):
-    """Delete all assignments in a date range. Requires scheduler role (admin or coordinator)."""
+    """Delete all assignments within a date range.
+
+    Args:
+        start_date: Delete assignments starting on or after this date (inclusive).
+        end_date: Delete assignments ending on or before this date (inclusive).
+        db: Database session.
+        current_user: Authenticated user (must have scheduler role).
+
+    Returns:
+        No content (204).
+
+    Security:
+        Requires scheduler role (admin or coordinator).
+
+    Warning:
+        This is a destructive operation that cannot be undone.
+        Use with caution, especially for date ranges covering active schedules.
+
+    Note:
+        - All assignments for all people within the date range will be deleted
+        - This may significantly impact ACGME compliance metrics
+        - Consider exporting schedule data before bulk deletion
+        - Useful for clearing generated schedules during testing or regeneration
+
+    Raises:
+        HTTPException:
+            - 403: Insufficient permissions
+            - 400: Invalid date range (start_date > end_date)
+
+    Status Codes:
+        - 204: All assignments in range deleted successfully
+        - 400: Invalid date range
+        - 403: Insufficient permissions
+    """
     controller = AssignmentController(db)
     await controller.delete_assignments_bulk(start_date, end_date)

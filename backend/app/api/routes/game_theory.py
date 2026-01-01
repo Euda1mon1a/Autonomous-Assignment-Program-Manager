@@ -9,11 +9,12 @@ Endpoints for:
 """
 
 import logging
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.role_filter import require_admin
 from app.core.security import get_current_active_user
@@ -227,12 +228,12 @@ async def update_strategy(
     )
 
 
-@router.post("/strategies/defaults")
+@router.post("/strategies/defaults", response_model=dict[str, Any])
 async def create_default_strategies(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
-):
+) -> dict[str, Any]:
     """
     Create default set of strategies for testing.
 
@@ -442,13 +443,13 @@ async def get_tournament_results(
     )
 
 
-@router.post("/tournaments/{tournament_id}/run")
+@router.post("/tournaments/{tournament_id}/run", response_model=dict[str, Any])
 async def run_tournament_sync(
     tournament_id: UUID,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
-):
+) -> dict[str, Any]:
     """
     Run a tournament synchronously (for testing).
 
@@ -667,7 +668,8 @@ async def validate_strategy(
             pass_threshold=request.pass_threshold,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.error(f"Validation error in strategy validation: {e}", exc_info=True)
+        raise HTTPException(status_code=400, detail="Invalid strategy validation request")
 
     return ValidationResponse(
         id=validation.id,
@@ -720,10 +722,10 @@ async def analyze_config(
     )
 
 
-@router.get("/summary")
+@router.get("/summary", response_model=dict[str, Any])
 async def get_game_theory_summary(
     db: AsyncSession = Depends(get_async_db),
-):
+) -> dict[str, Any]:
     """
     Get summary of game theory analysis status.
 

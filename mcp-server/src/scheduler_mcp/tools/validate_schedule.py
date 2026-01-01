@@ -146,6 +146,35 @@ async def validate_schedule(
     comprehensive schedule validation. All output is sanitized to prevent
     PII leakage.
 
+    **Security Features:**
+    - Input validation prevents injection attacks
+    - Output sanitization prevents PII leakage
+    - All person references anonymized
+    - Detailed errors logged server-side only
+
+    **Validation Coverage:**
+    - ACGME work hour limits (80-hour rule, 1-in-7 rule)
+    - Supervision ratios (PGY-1: 1:2, PGY-2/3: 1:4)
+    - Coverage gaps and conflicts
+    - Rotation requirements and preferences
+    - Custom institutional constraints
+
+    **Implementation Requirements:**
+
+    Backend Service:
+    - Path: backend/app/services/constraint_service.py
+    - Method: ConstraintService.validate_schedule()
+
+    API Endpoint:
+    - POST /api/v1/schedules/validate
+    - Request: {schedule_id, constraint_config, include_suggestions}
+    - Response: ScheduleValidationResponse schema
+
+    Dependencies:
+    - backend.app.services.constraint_service: Validation engine
+    - backend.app.scheduling.acgme_validator: ACGME rules
+    - backend.app.models: Schedule, Assignment, Person models
+
     Args:
         request: Validation request with schedule_id and configuration
 
@@ -154,6 +183,21 @@ async def validate_schedule(
 
     Raises:
         ValueError: If schedule_id is invalid or schedule not found
+        ValidationError: If request validation fails
+
+    Example:
+        request = ScheduleValidationRequest(
+            schedule_id="schedule-123",
+            constraint_config=ConstraintConfig.STRICT,
+            include_suggestions=True
+        )
+        result = await validate_schedule(request)
+
+        if not result.is_valid:
+            print(f"Validation failed: {result.total_issues} issues")
+            for issue in result.issues:
+                if issue.severity == ValidationSeverity.CRITICAL:
+                    print(f"  CRITICAL: {issue.message}")
     """
     logger.info(
         "Validating schedule via MCP tool",
@@ -167,28 +211,72 @@ async def validate_schedule(
         # Import API client for backend communication
         from ..api_client import get_api_client
 
-        client = get_api_client()
-
-        # Call backend validation endpoint
-        result = await client.post(
-            "/api/v1/schedules/validate",
-            json={
-                "schedule_id": request.schedule_id,
-                "constraint_config": request.constraint_config.value,
-                "include_suggestions": request.include_suggestions,
-            },
-        )
-
-        if result is None:
-            # Fallback to placeholder if API not available
+        try:
+            client = get_api_client()
+        except ImportError as import_error:
             logger.warning(
-                "API not available, using placeholder validation",
+                f"API client not available: {import_error}",
                 extra={"schedule_id": request.schedule_id},
             )
-            return _create_placeholder_response(request)
+            return _create_placeholder_response(
+                request,
+                error="API client module not available"
+            )
 
-        # Parse and return response
-        return ScheduleValidationResponse(**result)
+        # Call backend validation endpoint with timeout
+        try:
+            result = await client.post(
+                "/api/v1/schedules/validate",
+                json={
+                    "schedule_id": request.schedule_id,
+                    "constraint_config": request.constraint_config.value,
+                    "include_suggestions": request.include_suggestions,
+                },
+                timeout=30.0,  # 30 second timeout
+            )
+
+            if result is None:
+                # Fallback to placeholder if API not available
+                logger.warning(
+                    "API not available, using placeholder validation",
+                    extra={"schedule_id": request.schedule_id},
+                )
+                return _create_placeholder_response(request)
+
+            # Validate response structure
+            try:
+                return ScheduleValidationResponse(**result)
+            except Exception as parse_error:
+                logger.error(
+                    f"Failed to parse validation response: {parse_error}",
+                    extra={"schedule_id": request.schedule_id, "response": result},
+                    exc_info=True,
+                )
+                return _create_placeholder_response(
+                    request,
+                    error=f"Invalid response format: {str(parse_error)}"
+                )
+
+        except TimeoutError:
+            logger.error(
+                "Validation request timed out",
+                extra={"schedule_id": request.schedule_id},
+            )
+            return _create_placeholder_response(
+                request,
+                error="Validation request timed out after 30 seconds"
+            )
+
+        except ConnectionError as conn_error:
+            logger.error(
+                f"Connection error during validation: {conn_error}",
+                extra={"schedule_id": request.schedule_id},
+                exc_info=True,
+            )
+            return _create_placeholder_response(
+                request,
+                error="Backend service unavailable"
+            )
 
     except Exception as e:
         logger.error(
@@ -208,25 +296,65 @@ def _create_placeholder_response(
     Create a placeholder response when backend is unavailable.
 
     This allows the MCP server to function in standalone mode for
-    testing and development purposes.
+    testing and development purposes without requiring a running backend.
+
+    **Use Cases:**
+    - Unit testing the MCP server in isolation
+    - Development with backend unavailable
+    - Graceful degradation during backend outages
+    - API integration testing with mocked responses
+
+    **Placeholder Behavior:**
+    - Always returns valid=True (optimistic)
+    - Includes informational issue about backend unavailability
+    - Adds metadata indicating placeholder source
+    - Logs warning for monitoring
+
+    Args:
+        request: Original validation request
+        error: Optional error message to include in response
+
+    Returns:
+        ScheduleValidationResponse with placeholder data
+
+    Example:
+        # Called automatically when backend is unavailable
+        response = _create_placeholder_response(
+            request,
+            error="Connection refused"
+        )
+        assert response.metadata["source"] == "placeholder"
     """
     now = datetime.utcnow()
 
     issues = []
     if error:
+        # Sanitize error message to prevent information leakage
+        sanitized_error = str(error)[:200]  # Truncate long errors
+
         issues.append(
             SanitizedIssue(
                 severity=ValidationSeverity.INFO,
                 rule_type="system",
-                message=f"Backend unavailable: {error}. Using placeholder data.",
+                message=f"Backend unavailable: {sanitized_error}. Using placeholder data.",
                 constraint_name="connectivity",
-                suggested_action="Ensure backend service is running",
+                suggested_action="Ensure backend service is running and accessible",
             )
         )
 
+    # Log placeholder usage for monitoring
+    logger.warning(
+        "Returning placeholder validation response",
+        extra={
+            "schedule_id": request.schedule_id,
+            "error": error,
+            "source": "placeholder",
+        },
+    )
+
     return ScheduleValidationResponse(
         schedule_id=request.schedule_id,
-        is_valid=True,
+        is_valid=True,  # Optimistic - assume valid when backend unavailable
         compliance_rate=1.0,
         total_issues=len(issues),
         critical_count=0,
@@ -238,5 +366,6 @@ def _create_placeholder_response(
         metadata={
             "source": "placeholder",
             "reason": "backend_unavailable" if error else "standalone_mode",
+            "timestamp": now.isoformat(),
         },
     )

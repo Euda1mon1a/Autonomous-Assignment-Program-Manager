@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { MapPin, ChevronDown, ChevronUp, User, Clock, Activity } from 'lucide-react';
 import { StaffingSummary } from './StaffingSummary';
 import type { LocationManifest, PersonAssignment } from './types';
@@ -15,7 +15,7 @@ interface LocationCardProps {
 }
 
 // ============================================================================
-// Helper Functions
+// Helper Functions (Pure, extracted outside components for better performance)
 // ============================================================================
 
 function getRoleTypeColor(roleType?: string): string {
@@ -53,9 +53,15 @@ function getPGYBadgeColor(pgyLevel?: number): string {
 // Person Assignment Item Component
 // ============================================================================
 
-function PersonAssignmentItem({ assignment }: { assignment: PersonAssignment }) {
-  const roleTypeColor = getRoleTypeColor(assignment.person.role_type);
-  const pgyBadgeColor = getPGYBadgeColor(assignment.person.pgy_level);
+const PersonAssignmentItem = memo(function PersonAssignmentItem({ assignment }: { assignment: PersonAssignment }) {
+  const roleTypeColor = useMemo(
+    () => getRoleTypeColor(assignment.person.role_type),
+    [assignment.person.role_type]
+  );
+  const pgyBadgeColor = useMemo(
+    () => getPGYBadgeColor(assignment.person.pgy_level),
+    [assignment.person.pgy_level]
+  );
 
   return (
     <div className={`flex items-start gap-3 p-3 rounded-lg border ${roleTypeColor}`}>
@@ -91,31 +97,45 @@ function PersonAssignmentItem({ assignment }: { assignment: PersonAssignment }) 
       </div>
     </div>
   );
-}
+});
 
 // ============================================================================
 // Main Component
 // ============================================================================
 
-export function LocationCard({ location, timeOfDay }: LocationCardProps) {
+export const LocationCard = memo(function LocationCard({ location, timeOfDay }: LocationCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const assignments = timeOfDay === 'ALL'
-    ? [...(location.time_slots.AM || []), ...(location.time_slots.PM || [])]
-    : location.time_slots[timeOfDay] || [];
+  // Memoize computed values
+  const assignments = useMemo(() => {
+    return timeOfDay === 'ALL'
+      ? [...(location.time_slots.AM || []), ...(location.time_slots.PM || [])]
+      : location.time_slots[timeOfDay] || [];
+  }, [location.time_slots, timeOfDay]);
 
-  const hasCapacity = location.capacity !== undefined;
-  const isNearCapacity = hasCapacity &&
-    location.capacity!.current >= location.capacity!.maximum * 0.9;
-  const isOverCapacity = hasCapacity &&
-    location.capacity!.current > location.capacity!.maximum;
+  const capacityMetrics = useMemo(() => {
+    const hasCapacity = location.capacity !== undefined;
+    const isNearCapacity = hasCapacity && location.capacity &&
+      location.capacity.current >= location.capacity.maximum * 0.9;
+    const isOverCapacity = hasCapacity && location.capacity &&
+      location.capacity.current > location.capacity.maximum;
+
+    return { hasCapacity, isNearCapacity, isOverCapacity };
+  }, [location.capacity]);
+
+  // Memoize callbacks
+  const toggleExpanded = useCallback(() => {
+    setIsExpanded(prev => !prev);
+  }, []);
+
+  const { hasCapacity, isNearCapacity, isOverCapacity } = capacityMetrics;
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
       {/* Header */}
       <div
         className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={toggleExpanded}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -136,7 +156,7 @@ export function LocationCard({ location, timeOfDay }: LocationCardProps) {
                 compact
               />
 
-              {hasCapacity && (
+              {hasCapacity && location.capacity && (
                 <div className="mt-2">
                   <div className="flex items-center gap-2 text-xs">
                     <span className="text-gray-600">Capacity:</span>
@@ -145,7 +165,7 @@ export function LocationCard({ location, timeOfDay }: LocationCardProps) {
                       isNearCapacity ? 'text-amber-600' :
                       'text-green-600'
                     }`}>
-                      {location.capacity!.current} / {location.capacity!.maximum}
+                      {location.capacity.current} / {location.capacity.maximum}
                     </span>
                   </div>
                   <div className="w-full h-1.5 bg-gray-200 rounded-full mt-1 overflow-hidden">
@@ -156,7 +176,7 @@ export function LocationCard({ location, timeOfDay }: LocationCardProps) {
                         'bg-green-500'
                       }`}
                       style={{
-                        width: `${Math.min((location.capacity!.current / location.capacity!.maximum) * 100, 100)}%`
+                        width: `${Math.min((location.capacity.current / location.capacity.maximum) * 100, 100)}%`
                       }}
                     />
                   </div>
@@ -242,4 +262,4 @@ export function LocationCard({ location, timeOfDay }: LocationCardProps) {
       )}
     </div>
   );
-}
+});

@@ -105,10 +105,10 @@ export function AutoGrid({
   minWidth?: number;
   gap?: GridProps['gap'];
   className?: string;
-}) {
+}): JSX.Element {
   return (
     <div
-      className={`grid ${gapStyles[gap!]} ${className}`}
+      className={`grid ${gapStyles[gap]} ${className}`}
       style={{
         gridTemplateColumns: `repeat(auto-fit, minmax(${minWidth}px, 1fr))`,
       }}

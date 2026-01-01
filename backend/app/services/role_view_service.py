@@ -1,6 +1,6 @@
 """Role-based view filtering service."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.schemas.role_views import RoleViewConfig, StaffRole, ViewPermissions
 

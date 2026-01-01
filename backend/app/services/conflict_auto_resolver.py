@@ -47,6 +47,12 @@ class ConflictAutoResolver:
     """
 
     def __init__(self, db: Session):
+        """
+        Initialize conflict auto-resolver.
+
+        Args:
+            db: Database session for queries and transactions
+        """
         self.db = db
         self._resolution_cache = {}  # Cache for resolution options
 
@@ -490,7 +496,15 @@ class ConflictAutoResolver:
         return query.first()
 
     def _determine_root_cause(self, alert: ConflictAlert) -> str:
-        """Determine the root cause of a conflict."""
+        """
+        Determine the root cause of a conflict.
+
+        Args:
+            alert: The conflict alert to analyze
+
+        Returns:
+            Human-readable description of the root cause
+        """
         if alert.conflict_type == ConflictType.LEAVE_FMIT_OVERLAP:
             if alert.leave_id:
                 return "Faculty scheduled for FMIT during approved leave period"
@@ -505,7 +519,15 @@ class ConflictAutoResolver:
             return f"Conflict of type {alert.conflict_type.value}"
 
     def _calculate_complexity(self, alert: ConflictAlert) -> float:
-        """Calculate complexity score for a conflict (0-1)."""
+        """
+        Calculate complexity score for a conflict (0-1).
+
+        Args:
+            alert: The conflict alert to analyze
+
+        Returns:
+            Complexity score from 0.0 (simple) to 1.0 (very complex)
+        """
         complexity = 0.0
 
         # Higher severity increases complexity
@@ -529,14 +551,30 @@ class ConflictAutoResolver:
         return min(complexity, 1.0)
 
     def _count_affected_weeks(self, alert: ConflictAlert) -> int:
-        """Count how many weeks are affected by this conflict."""
+        """
+        Count how many weeks are affected by this conflict.
+
+        Args:
+            alert: The conflict alert to analyze
+
+        Returns:
+            Number of affected weeks
+        """
         # For simplicity, most conflicts affect 1-2 weeks
         if alert.conflict_type == ConflictType.BACK_TO_BACK:
             return 2
         return 1
 
     def _count_involved_faculty(self, alert: ConflictAlert) -> int:
-        """Count how many faculty members are involved in this conflict."""
+        """
+        Count how many faculty members are involved in this conflict.
+
+        Args:
+            alert: The conflict alert to analyze
+
+        Returns:
+            Number of faculty members involved
+        """
         # Most conflicts involve 1 faculty, but some may involve more
         involved = 1
 
@@ -547,7 +585,15 @@ class ConflictAutoResolver:
         return involved
 
     def _has_cascading_conflicts(self, alert: ConflictAlert) -> bool:
-        """Check if resolving this conflict might create cascading issues."""
+        """
+        Check if resolving this conflict might create cascading issues.
+
+        Args:
+            alert: The conflict alert to analyze
+
+        Returns:
+            True if cascading conflicts are likely, False otherwise
+        """
         # Check for related conflicts in the same time period
         related_conflicts = (
             self.db.query(ConflictAlert)
@@ -568,7 +614,15 @@ class ConflictAutoResolver:
     def _perform_all_safety_checks(
         self, alert: ConflictAlert
     ) -> list[SafetyCheckResult]:
-        """Perform all safety checks for a conflict."""
+        """
+        Perform all safety checks for a conflict.
+
+        Args:
+            alert: The conflict alert to validate
+
+        Returns:
+            List of SafetyCheckResult objects for each check performed
+        """
         checks = []
 
         # 1. ACGME compliance check
@@ -589,7 +643,15 @@ class ConflictAutoResolver:
         return checks
 
     def _check_acgme_compliance(self, alert: ConflictAlert) -> SafetyCheckResult:
-        """Check if resolution would maintain ACGME compliance."""
+        """
+        Check if resolution would maintain ACGME compliance.
+
+        Args:
+            alert: The conflict alert to validate
+
+        Returns:
+            SafetyCheckResult indicating compliance status
+        """
         # Check 80-hour week and 1-in-7 rest day requirements
         faculty = self.db.query(Person).filter(Person.id == alert.faculty_id).first()
 
@@ -636,7 +698,15 @@ class ConflictAutoResolver:
         )
 
     def _check_coverage_gaps(self, alert: ConflictAlert) -> SafetyCheckResult:
-        """Check if resolution would create coverage gaps."""
+        """
+        Check if resolution would create coverage gaps.
+
+        Args:
+            alert: The conflict alert to validate
+
+        Returns:
+            SafetyCheckResult indicating coverage adequacy
+        """
         # Check if removing this faculty creates a gap
         week_assignments = (
             self.db.query(Assignment)
@@ -666,7 +736,15 @@ class ConflictAutoResolver:
         )
 
     def _check_faculty_availability(self, alert: ConflictAlert) -> SafetyCheckResult:
-        """Check if alternate faculty are available."""
+        """
+        Check if alternate faculty are available.
+
+        Args:
+            alert: The conflict alert to validate
+
+        Returns:
+            SafetyCheckResult indicating availability of alternate faculty
+        """
         available_faculty = self._find_available_faculty(
             alert.fmit_week, alert.faculty_id
         )
@@ -800,7 +878,15 @@ class ConflictAutoResolver:
         )
 
     def _identify_constraints(self, alert: ConflictAlert) -> list[str]:
-        """Identify constraints that limit resolution options."""
+        """
+        Identify constraints that limit resolution options.
+
+        Args:
+            alert: The conflict alert to analyze
+
+        Returns:
+            List of constraint descriptions
+        """
         constraints = []
 
         # Check for leave constraints
@@ -822,7 +908,15 @@ class ConflictAutoResolver:
         return constraints
 
     def _identify_blockers(self, alert: ConflictAlert) -> list[str]:
-        """Identify blockers that prevent auto-resolution."""
+        """
+        Identify blockers that prevent auto-resolution.
+
+        Args:
+            alert: The conflict alert to analyze
+
+        Returns:
+            List of blocker descriptions
+        """
         blockers = []
 
         # Check for critical severity
@@ -895,7 +989,16 @@ class ConflictAutoResolver:
     def _estimate_resolution_time(
         self, complexity_score: float, num_strategies: int
     ) -> int:
-        """Estimate time to resolve in minutes."""
+        """
+        Estimate time to resolve in minutes.
+
+        Args:
+            complexity_score: Complexity score from 0.0 to 1.0
+            num_strategies: Number of available strategies
+
+        Returns:
+            Estimated resolution time in minutes
+        """
         base_time = 10  # Base 10 minutes
         complexity_time = int(complexity_score * 20)  # Up to 20 extra minutes
         strategy_time = (
@@ -1527,7 +1630,17 @@ class ConflictAutoResolver:
         alert: ConflictAlert,
         user_id: UUID | None,
     ) -> tuple[bool, str]:
-        """Apply a swap-based resolution."""
+        """
+        Apply a swap-based resolution.
+
+        Args:
+            option: The swap resolution option to apply
+            alert: The conflict alert being resolved
+            user_id: User applying the resolution (None for system)
+
+        Returns:
+            Tuple of (success: bool, message: str)
+        """
         changes = option.changes
 
         # Get target faculty from changes
@@ -1560,7 +1673,17 @@ class ConflictAutoResolver:
         alert: ConflictAlert,
         user_id: UUID | None,
     ) -> tuple[bool, str]:
-        """Apply a junior reassignment resolution."""
+        """
+        Apply a junior reassignment resolution.
+
+        Args:
+            option: The reassignment resolution option to apply
+            alert: The conflict alert being resolved
+            user_id: User applying the resolution (None for system)
+
+        Returns:
+            Tuple of (success: bool, message: str)
+        """
         # In a full implementation, this would reassign to a junior faculty member
         # For now, we simulate the action
         return True, "Reassignment to junior faculty initiated (simulation)"
@@ -1581,7 +1704,16 @@ class ConflictAutoResolver:
         fmit_week: date,
         exclude_faculty_id: UUID,
     ) -> list[Person]:
-        """Find faculty members available for a specific FMIT week."""
+        """
+        Find faculty members available for a specific FMIT week.
+
+        Args:
+            fmit_week: The week to check for availability
+            exclude_faculty_id: Faculty member to exclude from results
+
+        Returns:
+            List of available Person objects (faculty type)
+        """
         all_faculty = (
             self.db.query(Person)
             .filter(
@@ -1629,7 +1761,15 @@ class ConflictAutoResolver:
         return available
 
     def _find_junior_faculty_available(self, fmit_week: date) -> list[Person]:
-        """Find junior faculty (residents PGY-2/3) available for assignment."""
+        """
+        Find junior faculty (residents PGY-2/3) available for assignment.
+
+        Args:
+            fmit_week: The week to check for availability
+
+        Returns:
+            List of available junior faculty Person objects
+        """
         junior = (
             self.db.query(Person)
             .filter(
@@ -1663,7 +1803,16 @@ class ConflictAutoResolver:
     def _is_acceptable_risk(
         self, option: ResolutionOption, max_risk_level: str
     ) -> bool:
-        """Check if an option's risk level is acceptable."""
+        """
+        Check if an option's risk level is acceptable.
+
+        Args:
+            option: The resolution option to check
+            max_risk_level: Maximum acceptable risk level (low, medium, high)
+
+        Returns:
+            True if option risk is within acceptable limits
+        """
         risk_levels = {"low": 1, "medium": 2, "high": 3}
         option_risk = risk_levels.get(option.risk_level, 2)
         max_risk = risk_levels.get(max_risk_level, 2)

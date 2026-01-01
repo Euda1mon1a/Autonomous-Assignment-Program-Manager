@@ -26,7 +26,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db
+from app.db.session import get_async_db, get_db
 
 logger = logging.getLogger(__name__)
 
@@ -164,7 +164,7 @@ def clear_current_tenant() -> None:
     _bypass_tenant_filter.set(False)
 
 
-async def get_current_tenant(db: Session = Depends(get_db)):
+async def get_current_tenant(db: AsyncSession = Depends(get_async_db)):
     """
     FastAPI dependency to get the current tenant object.
 
@@ -196,7 +196,7 @@ async def get_current_tenant(db: Session = Depends(get_db)):
     return result.scalar_one_or_none()
 
 
-async def require_tenant(db: Session = Depends(get_db)):
+async def require_tenant(db: AsyncSession = Depends(get_async_db)):
     """
     FastAPI dependency that requires a tenant context.
 
@@ -216,7 +216,7 @@ async def require_tenant(db: Session = Depends(get_db)):
         @router.get("/people")
         async def list_people(
             tenant = Depends(require_tenant),
-            db: Session = Depends(get_db),
+            db: AsyncSession = Depends(get_async_db),
         ):
             # tenant is guaranteed to be set
             return await db.execute(select(Person))
@@ -230,7 +230,7 @@ async def require_tenant(db: Session = Depends(get_db)):
     return tenant
 
 
-async def require_active_tenant(db: Session = Depends(get_db)):
+async def require_active_tenant(db: AsyncSession = Depends(get_async_db)):
     """
     FastAPI dependency that requires an active tenant.
 
@@ -250,7 +250,7 @@ async def require_active_tenant(db: Session = Depends(get_db)):
         @router.post("/schedules")
         async def create_schedule(
             tenant = Depends(require_active_tenant),
-            db: Session = Depends(get_db),
+            db: AsyncSession = Depends(get_async_db),
         ):
             # Tenant is guaranteed to be active
             return await create_schedule_service(db, tenant)
@@ -288,7 +288,7 @@ async def require_admin_for_cross_tenant(
         @router.get("/admin/all-schedules")
         async def list_all_schedules(
             current_user = Depends(get_current_user),
-            db: Session = Depends(get_db),
+            db: AsyncSession = Depends(get_async_db),
         ):
             await require_admin_for_cross_tenant(str(current_user.id), db)
             # Can now query across all tenants

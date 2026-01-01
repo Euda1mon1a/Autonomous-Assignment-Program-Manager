@@ -4,7 +4,7 @@ Coordinates search operations across different backends and provides
 high-level search API for the application.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession

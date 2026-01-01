@@ -101,6 +101,7 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
             <button
               onClick={onReset}
               className="text-sm text-blue-600 hover:text-blue-800 focus:outline-none focus:underline"
+              aria-label="Clear all filters"
             >
               Clear All
             </button>
@@ -136,6 +137,7 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
                   },
                 })}
                 className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label="Start date"
               />
               <input
                 type="date"
@@ -148,6 +150,7 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
                   },
                 })}
                 className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label="End date"
               />
             </div>
           </div>
@@ -183,6 +186,12 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
                 <button
                   key={rotation}
                   onClick={() => handleRotationToggle(rotation)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleRotationToggle(rotation);
+                    }
+                  }}
                   className={`
                     px-3 py-1 rounded-full text-sm font-medium transition-colors
                     ${currentFilters.rotations?.includes(rotation)
@@ -191,6 +200,8 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
                     }
                     focus:outline-none focus:ring-2 focus:ring-blue-500
                   `}
+                  aria-label={`Filter by ${rotation} rotation`}
+                  aria-pressed={currentFilters.rotations?.includes(rotation)}
                 >
                   {rotation}
                 </button>
@@ -208,6 +219,12 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
                 <button
                   key={shift}
                   onClick={() => handleShiftToggle(shift)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleShiftToggle(shift);
+                    }
+                  }}
                   className={`
                     px-4 py-2 rounded-lg text-sm font-medium transition-colors
                     ${currentFilters.shifts?.includes(shift)
@@ -216,6 +233,8 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
                     }
                     focus:outline-none focus:ring-2 focus:ring-blue-500
                   `}
+                  aria-label={`Filter by ${shift} shift`}
+                  aria-pressed={currentFilters.shifts?.includes(shift)}
                 >
                   {shift}
                 </button>
@@ -233,6 +252,12 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
                 <button
                   key={level}
                   onClick={() => handlePGYToggle(level)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handlePGYToggle(level);
+                    }
+                  }}
                   className={`
                     px-4 py-2 rounded-lg text-sm font-medium transition-colors
                     ${currentFilters.pgyLevels?.includes(level)
@@ -241,6 +266,8 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
                     }
                     focus:outline-none focus:ring-2 focus:ring-blue-500
                   `}
+                  aria-label={`Filter by ${level} level`}
+                  aria-pressed={currentFilters.pgyLevels?.includes(level)}
                 >
                   {level}
                 </button>

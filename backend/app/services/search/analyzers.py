@@ -10,7 +10,6 @@ Analyzers transform raw text into searchable tokens, handling:
 
 import re
 from abc import ABC, abstractmethod
-from typing import List, Set
 
 
 class SearchAnalyzer(ABC):

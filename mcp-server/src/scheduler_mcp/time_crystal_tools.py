@@ -233,76 +233,8 @@ async def analyze_schedule_rigidity(
             )
 
     except Exception as api_error:
-        logger.warning(f"Backend API call failed, using local module: {api_error}")
-
-    try:
-        # Fallback: Import here to avoid circular dependencies
-        from app.scheduling.periodicity.anti_churn import (
-            ScheduleSnapshot,
-            calculate_schedule_rigidity,
-            estimate_churn_impact,
-            hamming_distance_by_person,
-        )
-    except ImportError:
-        logger.warning("Anti-churn module not available, using placeholder")
-        return RigidityAnalysisResponse(
-            rigidity_score=0.95,
-            total_changes=5,
-            affected_people_count=3,
-            max_person_churn=2,
-            mean_person_churn=1.67,
-            severity="low",
-            recommendation="Minor changes only. Consider publishing after review.",
-            churn_by_person={"person_1": 2, "person_2": 2, "person_3": 1},
-        )
-
-    # Build snapshots from provided data
-    if current_assignments and proposed_assignments:
-        current_tuples = [
-            (
-                UUID(a["person_id"]) if isinstance(a["person_id"], str) else a["person_id"],
-                UUID(a["block_id"]) if isinstance(a["block_id"], str) else a["block_id"],
-                UUID(a.get("template_id")) if a.get("template_id") and isinstance(a.get("template_id"), str) else a.get("template_id"),
-            )
-            for a in current_assignments
-        ]
-        proposed_tuples = [
-            (
-                UUID(a["person_id"]) if isinstance(a["person_id"], str) else a["person_id"],
-                UUID(a["block_id"]) if isinstance(a["block_id"], str) else a["block_id"],
-                UUID(a.get("template_id")) if a.get("template_id") and isinstance(a.get("template_id"), str) else a.get("template_id"),
-            )
-            for a in proposed_assignments
-        ]
-
-        current_snapshot = ScheduleSnapshot.from_tuples(current_tuples)
-        proposed_snapshot = ScheduleSnapshot.from_tuples(proposed_tuples)
-    else:
-        # TODO: Load from database using schedule_ids
-        logger.warning("Schedule ID loading not implemented, using empty schedules")
-        current_snapshot = ScheduleSnapshot.from_tuples([])
-        proposed_snapshot = ScheduleSnapshot.from_tuples([])
-
-    # Calculate metrics
-    impact = estimate_churn_impact(current_snapshot, proposed_snapshot)
-    churn_by_person = hamming_distance_by_person(current_snapshot, proposed_snapshot)
-
-    # Anonymize person IDs for security
-    anonymized_churn = {
-        f"person_{i}": count
-        for i, (_, count) in enumerate(churn_by_person.items(), 1)
-    }
-
-    return RigidityAnalysisResponse(
-        rigidity_score=impact["rigidity"],
-        total_changes=impact["total_changes"],
-        affected_people_count=impact["affected_people"],
-        max_person_churn=impact["max_person_churn"],
-        mean_person_churn=impact["mean_person_churn"],
-        severity=impact["severity"],
-        recommendation=impact["recommendation"],
-        churn_by_person=anonymized_churn,
-    )
+        logger.error(f"Backend API call failed: {api_error}")
+        raise RuntimeError(f"Failed to analyze schedule rigidity: {api_error}") from api_error
 
 
 async def analyze_schedule_periodicity(
@@ -361,69 +293,8 @@ async def analyze_schedule_periodicity(
             )
 
     except Exception as api_error:
-        logger.warning(f"Backend API call failed, using local module: {api_error}")
-
-    try:
-        from app.scheduling.periodicity import (
-            analyze_periodicity,
-            detect_subharmonics,
-        )
-    except ImportError:
-        logger.warning("Periodicity module not available, using placeholder")
-        return PeriodicityAnalysisResponse(
-            fundamental_period_days=7.0,
-            subharmonic_periods=[7, 14, 28],
-            periodicity_strength=0.85,
-            detected_patterns=[
-                "Weekly pattern detected (7-day cycle)",
-                "Biweekly alternation detected (14-day cycle)",
-                "ACGME 4-week window detected (28-day cycle)",
-            ],
-            recommendations=[
-                "Preserve detected 7-day cycle in regeneration",
-                "Maintain alternating weekend pattern",
-            ],
-            autocorrelation_peaks=[
-                {"lag": 7, "correlation": 0.92},
-                {"lag": 14, "correlation": 0.78},
-                {"lag": 28, "correlation": 0.65},
-            ],
-        )
-
-    # Build assignment data
-    if assignments:
-        # Convert to format expected by analyze_periodicity
-        # This would need adaptation to actual Assignment model
-        logger.info(f"Analyzing {len(assignments)} assignments for periodicity")
-
-        # For now, return placeholder
-        return PeriodicityAnalysisResponse(
-            fundamental_period_days=7.0,
-            subharmonic_periods=[7, 14, 28],
-            periodicity_strength=0.85,
-            detected_patterns=[
-                "Weekly pattern detected (7-day cycle)",
-                "Biweekly alternation detected (14-day cycle)",
-            ],
-            recommendations=[
-                "Preserve detected weekly cycle in regeneration",
-            ],
-            autocorrelation_peaks=[
-                {"lag": 7, "correlation": 0.92},
-                {"lag": 14, "correlation": 0.78},
-            ],
-        )
-    else:
-        # TODO: Load from database
-        logger.warning("No assignments provided for periodicity analysis")
-        return PeriodicityAnalysisResponse(
-            fundamental_period_days=None,
-            subharmonic_periods=[],
-            periodicity_strength=0.0,
-            detected_patterns=[],
-            recommendations=["Provide assignment data for analysis"],
-            autocorrelation_peaks=[],
-        )
+        logger.error(f"Backend API call failed: {api_error}")
+        raise RuntimeError(f"Failed to analyze schedule periodicity: {api_error}") from api_error
 
 
 async def calculate_time_crystal_objective(
@@ -450,6 +321,10 @@ async def calculate_time_crystal_objective(
 
     Returns:
         TimeCrystalObjectiveResponse with combined objective score
+
+    Raises:
+        ImportError: If required modules are not available
+        RuntimeError: If calculation fails
     """
     try:
         import numpy as np
@@ -458,17 +333,9 @@ async def calculate_time_crystal_objective(
             calculate_schedule_rigidity,
             hamming_distance_by_person,
         )
-    except ImportError:
-        logger.warning("Anti-churn module not available, using placeholder")
-        return TimeCrystalObjectiveResponse(
-            objective_score=0.85,
-            constraint_score=0.95,
-            rigidity_score=0.80,
-            fairness_score=0.75,
-            alpha=alpha,
-            beta=beta,
-            interpretation="Good schedule with moderate stability trade-off",
-        )
+    except ImportError as e:
+        logger.error(f"Required modules not available: {e}")
+        raise ImportError(f"Anti-churn module required for objective calculation: {e}") from e
 
     # Build snapshots
     current_tuples = [
@@ -589,23 +456,8 @@ async def get_checkpoint_status(
             )
 
     except Exception as api_error:
-        logger.warning(f"Backend API call failed, using fallback: {api_error}")
-
-    try:
-        from app.scheduling.periodicity import StroboscopicScheduleManager
-    except ImportError:
-        logger.warning("Stroboscopic manager not available, using placeholder")
-
-    # Placeholder response - real implementation would query manager state
-    return CheckpointStatusResponse(
-        has_authoritative_state=True,
-        has_draft_state=False,
-        last_checkpoint_time=datetime.utcnow(),
-        last_checkpoint_boundary="WEEK_START",
-        draft_assignment_count=0,
-        authoritative_assignment_count=156,
-        pending_changes=0,
-    )
+        logger.error(f"Backend API call failed: {api_error}")
+        raise RuntimeError(f"Failed to get checkpoint status: {api_error}") from api_error
 
 
 async def get_time_crystal_health() -> TimeCrystalHealthResponse:
@@ -619,47 +471,51 @@ async def get_time_crystal_health() -> TimeCrystalHealthResponse:
 
     Returns:
         TimeCrystalHealthResponse with health status and recommendations
+
+    Raises:
+        RuntimeError: If health check fails
     """
-    issues: list[str] = []
-    recommendations: list[str] = []
+    try:
+        from .api_client import SchedulerAPIClient
 
-    # These would be actual health checks in production
-    periodicity_healthy = True
-    rigidity_healthy = True
-    checkpoint_healthy = True
+        async with SchedulerAPIClient() as client:
+            response = await client.client.get(
+                f"{client.config.api_prefix}/resilience/exotic/time-crystal/health",
+                headers=await client._ensure_authenticated(),
+            )
+            response.raise_for_status()
+            data = response.json()
 
-    metrics = {
-        "avg_rigidity_7d": 0.92,
-        "periodicity_strength": 0.85,
-        "checkpoint_success_rate": 1.0,
-        "last_checkpoint_age_hours": 4.5,
-    }
+            logger.info("Time crystal health retrieved from backend")
 
-    # Determine overall health
-    if all([periodicity_healthy, rigidity_healthy, checkpoint_healthy]):
-        overall_health = "healthy"
-    elif any([not periodicity_healthy, not rigidity_healthy, not checkpoint_healthy]):
-        overall_health = "degraded"
-        if not periodicity_healthy:
-            issues.append("Periodic patterns degrading")
-            recommendations.append("Investigate schedule regeneration frequency")
-        if not rigidity_healthy:
-            issues.append("Schedule churn above threshold")
-            recommendations.append("Increase anti-churn alpha weight")
-        if not checkpoint_healthy:
-            issues.append("Checkpoint system issues")
-            recommendations.append("Check Redis/event bus connectivity")
-    else:
-        overall_health = "critical"
-        issues.append("Multiple time crystal components failing")
-        recommendations.append("Immediate investigation required")
+            # Map backend response to MCP format
+            metrics = data.get("metrics", {})
+            issues = data.get("issues", [])
+            recommendations = data.get("recommendations", [])
 
-    return TimeCrystalHealthResponse(
-        periodicity_healthy=periodicity_healthy,
-        rigidity_healthy=rigidity_healthy,
-        checkpoint_healthy=checkpoint_healthy,
-        overall_health=overall_health,
-        metrics=metrics,
-        issues=issues,
-        recommendations=recommendations,
-    )
+            # Extract component health
+            periodicity_healthy = metrics.get("periodicity_strength", 0.0) >= 0.7
+            rigidity_healthy = metrics.get("avg_rigidity_7d", 0.0) >= 0.8
+            checkpoint_healthy = metrics.get("checkpoint_success_rate", 0.0) >= 0.95
+
+            # Determine overall health
+            if all([periodicity_healthy, rigidity_healthy, checkpoint_healthy]):
+                overall_health = "healthy"
+            elif sum([periodicity_healthy, rigidity_healthy, checkpoint_healthy]) >= 2:
+                overall_health = "degraded"
+            else:
+                overall_health = "critical"
+
+            return TimeCrystalHealthResponse(
+                periodicity_healthy=periodicity_healthy,
+                rigidity_healthy=rigidity_healthy,
+                checkpoint_healthy=checkpoint_healthy,
+                overall_health=overall_health,
+                metrics=metrics,
+                issues=issues,
+                recommendations=recommendations,
+            )
+
+    except Exception as e:
+        logger.error(f"Time crystal health check failed: {e}")
+        raise RuntimeError(f"Failed to check time crystal health: {e}") from e

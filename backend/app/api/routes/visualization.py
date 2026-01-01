@@ -21,6 +21,11 @@ from app.schemas.visualization import (
     HeatmapResponse,
     UnifiedHeatmapRequest,
 )
+from app.schemas.voxel_visualization import (
+    VoxelConflictsResponse,
+    VoxelCoverageGapsResponse,
+    VoxelGridResponse,
+)
 from app.services.cached_schedule_service import CachedHeatmapService
 
 router = APIRouter()
@@ -412,7 +417,7 @@ async def export_heatmap(
 # =============================================================================
 
 
-@router.get("/voxel-grid")
+@router.get("/voxel-grid", response_model=VoxelGridResponse)
 async def get_3d_voxel_grid(
     start_date: date = Query(..., description="Start date for voxel grid"),
     end_date: date = Query(..., description="End date for voxel grid"),
@@ -423,7 +428,7 @@ async def get_3d_voxel_grid(
     include_violations: bool = Query(True, description="Include ACGME violation data"),
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> dict:
+) -> VoxelGridResponse:
     """
     Generate 3D voxel grid representation of schedule data.
 
@@ -482,12 +487,18 @@ async def get_3d_voxel_grid(
     blocks = blocks_result.scalars().all()
 
     if not blocks:
-        return {
-            "dimensions": {"x_size": 0, "y_size": 0, "z_size": 0},
-            "voxels": [],
-            "statistics": {"total_assignments": 0},
-            "error": "No blocks found in date range",
-        }
+        from app.schemas.voxel_visualization import VoxelDimensions, VoxelGridStatistics
+
+        return VoxelGridResponse(
+            dimensions=VoxelDimensions(x_size=0, y_size=0, z_size=0),
+            voxels=[],
+            statistics=VoxelGridStatistics(total_assignments=0),
+            date_range={
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+            },
+            error="No blocks found in date range",
+        )
 
     block_ids = [b.id for b in blocks]
     blocks_data = [
@@ -507,12 +518,18 @@ async def get_3d_voxel_grid(
     persons = persons_result.scalars().all()
 
     if not persons:
-        return {
-            "dimensions": {"x_size": len(blocks), "y_size": 0, "z_size": 0},
-            "voxels": [],
-            "statistics": {"total_assignments": 0},
-            "error": "No persons found",
-        }
+        from app.schemas.voxel_visualization import VoxelDimensions, VoxelGridStatistics
+
+        return VoxelGridResponse(
+            dimensions=VoxelDimensions(x_size=len(blocks), y_size=0, z_size=0),
+            voxels=[],
+            statistics=VoxelGridStatistics(total_assignments=0),
+            date_range={
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+            },
+            error="No persons found",
+        )
 
     person_ids_list = [p.id for p in persons]
     persons_data = [
@@ -595,16 +612,23 @@ async def get_3d_voxel_grid(
         blocks=blocks_data,
     )
 
-    return voxel_grid.to_dict()
+    voxel_dict = voxel_grid.to_dict()
+    # Ensure date_range is included
+    if "date_range" not in voxel_dict:
+        voxel_dict["date_range"] = {
+            "start_date": start_date.isoformat(),
+            "end_date": end_date.isoformat(),
+        }
+    return VoxelGridResponse(**voxel_dict)
 
 
-@router.get("/voxel-grid/conflicts")
+@router.get("/voxel-grid/conflicts", response_model=VoxelConflictsResponse)
 async def get_3d_conflicts(
     start_date: date = Query(..., description="Start date"),
     end_date: date = Query(..., description="End date"),
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> dict:
+) -> VoxelConflictsResponse:
     """
     Get schedule conflicts detected through 3D voxel collision analysis.
 
@@ -641,15 +665,15 @@ async def get_3d_conflicts(
                 }
             )
 
-    return {
-        "total_conflicts": len(conflict_positions),
-        "conflict_voxels": conflicts,
-        "conflict_positions": [{"x": x, "y": y} for x, y in conflict_positions],
-        "date_range": grid_response.get("date_range"),
-    }
+    return VoxelConflictsResponse(
+        total_conflicts=len(conflict_positions),
+        conflict_voxels=conflicts,
+        conflict_positions=[{"x": x, "y": y} for x, y in conflict_positions],
+        date_range=grid_response.get("date_range"),
+    )
 
 
-@router.get("/voxel-grid/coverage-gaps")
+@router.get("/voxel-grid/coverage-gaps", response_model=VoxelCoverageGapsResponse)
 async def get_3d_coverage_gaps(
     start_date: date = Query(..., description="Start date"),
     end_date: date = Query(..., description="End date"),
@@ -658,7 +682,7 @@ async def get_3d_coverage_gaps(
     ),
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> dict:
+) -> VoxelCoverageGapsResponse:
     """
     Identify coverage gaps using 3D voxel space analysis.
 
@@ -716,10 +740,10 @@ async def get_3d_coverage_gaps(
                 }
             )
 
-    return {
-        "total_gaps": len([g for g in gaps if g["severity"] == "critical"]),
-        "total_warnings": len([g for g in gaps if g["severity"] == "warning"]),
-        "gaps": gaps,
-        "dimensions": dimensions,
-        "date_range": grid_response.get("date_range"),
-    }
+    return VoxelCoverageGapsResponse(
+        total_gaps=len([g for g in gaps if g["severity"] == "critical"]),
+        total_warnings=len([g for g in gaps if g["severity"] == "warning"]),
+        gaps=gaps,
+        dimensions=dimensions,
+        date_range=grid_response.get("date_range"),
+    )

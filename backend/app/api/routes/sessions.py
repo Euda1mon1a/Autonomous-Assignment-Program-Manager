@@ -12,6 +12,7 @@ Thin routing layer following the application's layered architecture.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from pydantic import BaseModel, Field
 
 from app.auth.sessions.manager import SessionManager, get_session_manager
 from app.auth.sessions.middleware import SessionState
@@ -23,10 +24,58 @@ from app.auth.sessions.models import (
 from app.core.security import get_admin_user, get_current_active_user
 from app.models.user import User
 
-router = APIRouter()
+router = APIRouter(tags=["sessions"])
 
 
-@router.get("/me", response_model=SessionListResponse)
+# Response Models
+class SessionRefreshResponse(BaseModel):
+    """Session refresh response."""
+
+    message: str = Field(..., description="Success message")
+    session_id: str = Field(..., description="Session ID")
+    expires_at: str = Field(..., description="New expiration timestamp")
+
+
+class SessionLogoutResponse(BaseModel):
+    """Session logout response."""
+
+    message: str = Field(..., description="Success message")
+
+
+class SessionLogoutMultipleResponse(BaseModel):
+    """Multiple sessions logout response."""
+
+    message: str = Field(..., description="Success message")
+    count: int = Field(..., description="Number of sessions logged out")
+
+
+class ForceLogoutResponse(BaseModel):
+    """Force logout response."""
+
+    message: str = Field(..., description="Success message")
+    sessions_revoked: int = Field(..., description="Number of sessions revoked")
+
+
+class SessionRevokeResponse(BaseModel):
+    """Session revoke response."""
+
+    message: str = Field(..., description="Success message")
+
+
+class CleanupResponse(BaseModel):
+    """Cleanup response."""
+
+    message: str = Field(..., description="Success message")
+    count: int = Field(..., description="Number of sessions cleaned up")
+
+
+@router.get(
+    "/me",
+    response_model=SessionListResponse,
+    summary="Get My Active Sessions",
+    description="List all active sessions for current user with device info and last activity",
+    response_description="List of active sessions (useful for 'Where you're logged in' feature)",
+)
 async def get_my_sessions(
     current_user: User = Depends(get_current_active_user),
     session_manager: SessionManager = Depends(get_session_manager),
@@ -41,7 +90,13 @@ async def get_my_sessions(
     return sessions
 
 
-@router.get("/me/current", response_model=None)
+@router.get(
+    "/me/current",
+    response_model=SessionResponse | None,
+    summary="Get Current Session Info",
+    description="Get detailed information about the current active session",
+    response_description="Current session details or null if no session",
+)
 async def get_current_session(
     request: Request,
     current_user: User = Depends(get_current_active_user),
@@ -69,12 +124,18 @@ async def get_current_session(
     )
 
 
-@router.post("/me/refresh")
+@router.post(
+    "/me/refresh",
+    response_model=SessionRefreshResponse,
+    summary="Refresh Current Session",
+    description="Extend current session expiration (for 'Stay logged in' functionality)",
+    response_description="Updated session with new expiration time",
+)
 async def refresh_current_session(
     request: Request,
     current_user: User = Depends(get_current_active_user),
     session_manager: SessionManager = Depends(get_session_manager),
-):
+) -> SessionRefreshResponse:
     """
     Refresh the current session to extend its expiration.
 
@@ -96,19 +157,25 @@ async def refresh_current_session(
             detail="Failed to refresh session",
         )
 
-    return {
-        "message": "Session refreshed successfully",
-        "session_id": refreshed.session_id,
-        "expires_at": refreshed.expires_at,
-    }
+    return SessionRefreshResponse(
+        message="Session refreshed successfully",
+        session_id=refreshed.session_id,
+        expires_at=str(refreshed.expires_at),
+    )
 
 
-@router.delete("/me/{session_id}")
+@router.delete(
+    "/me/{session_id}",
+    response_model=SessionLogoutResponse,
+    summary="Logout Specific Session",
+    description="Logout from a specific device/browser (validates session ownership)",
+    response_description="Confirmation that session was logged out",
+)
 async def logout_specific_session(
     session_id: str,
     current_user: User = Depends(get_current_active_user),
     session_manager: SessionManager = Depends(get_session_manager),
-):
+) -> SessionLogoutResponse:
     """
     Logout a specific session.
 
@@ -140,15 +207,21 @@ async def logout_specific_session(
             detail="Failed to logout session",
         )
 
-    return {"message": "Session logged out successfully"}
+    return SessionLogoutResponse(message="Session logged out successfully")
 
 
-@router.delete("/me/other")
+@router.delete(
+    "/me/other",
+    response_model=SessionLogoutMultipleResponse,
+    summary="Logout Other Sessions",
+    description="Logout all sessions except current one (for 'Logout everywhere else' feature)",
+    response_description="Number of other sessions logged out",
+)
 async def logout_other_sessions(
     request: Request,
     current_user: User = Depends(get_current_active_user),
     session_manager: SessionManager = Depends(get_session_manager),
-):
+) -> SessionLogoutMultipleResponse:
     """
     Logout all other sessions except the current one.
 
@@ -164,18 +237,24 @@ async def logout_other_sessions(
         except_session_id=current_session_id,
     )
 
-    return {
-        "message": f"Logged out {count} other sessions",
-        "count": count,
-    }
+    return SessionLogoutMultipleResponse(
+        message=f"Logged out {count} other sessions",
+        count=count,
+    )
 
 
-@router.delete("/me/all")
+@router.delete(
+    "/me/all",
+    response_model=SessionLogoutMultipleResponse,
+    summary="Logout All My Sessions",
+    description="Logout from all devices (including current session, requires re-login)",
+    response_description="Total count of sessions logged out",
+)
 async def logout_all_my_sessions(
     response: Response,
     current_user: User = Depends(get_current_active_user),
     session_manager: SessionManager = Depends(get_session_manager),
-):
+) -> SessionLogoutMultipleResponse:
     """
     Logout all sessions for the current user.
 
@@ -187,13 +266,19 @@ async def logout_all_my_sessions(
     # Clear session cookie
     response.delete_cookie(key="session_id", path="/")
 
-    return {
-        "message": f"Logged out all {count} sessions",
-        "count": count,
-    }
+    return SessionLogoutMultipleResponse(
+        message=f"Logged out all {count} sessions",
+        count=count,
+    )
 
 
-@router.get("/stats", response_model=SessionStats)
+@router.get(
+    "/stats",
+    response_model=SessionStats,
+    summary="Get Session Statistics",
+    description="Get system-wide session metrics (admin only)",
+    response_description="Metrics about active sessions, concurrent users, etc.",
+)
 async def get_session_stats(
     current_user: User = Depends(get_admin_user),
     session_manager: SessionManager = Depends(get_session_manager),
@@ -207,7 +292,13 @@ async def get_session_stats(
     return stats
 
 
-@router.get("/user/{user_id}", response_model=SessionListResponse)
+@router.get(
+    "/user/{user_id}",
+    response_model=SessionListResponse,
+    summary="Get User Sessions (Admin)",
+    description="View all sessions for any user (admin only)",
+    response_description="List of sessions for the specified user",
+)
 async def get_user_sessions_admin(
     user_id: str,
     current_user: User = Depends(get_admin_user),
@@ -222,12 +313,18 @@ async def get_user_sessions_admin(
     return sessions
 
 
-@router.delete("/user/{user_id}/force-logout")
+@router.delete(
+    "/user/{user_id}/force-logout",
+    response_model=ForceLogoutResponse,
+    summary="Force Logout User (Admin)",
+    description="Immediately revoke all sessions for a user (admin only, for security incidents)",
+    response_description="Number of sessions revoked",
+)
 async def force_logout_user(
     user_id: str,
     current_user: User = Depends(get_admin_user),
     session_manager: SessionManager = Depends(get_session_manager),
-):
+) -> ForceLogoutResponse:
     """
     Force logout all sessions for a user (admin only).
 
@@ -236,18 +333,24 @@ async def force_logout_user(
     """
     count = await session_manager.force_logout_user(user_id)
 
-    return {
-        "message": f"Force logged out user {user_id}",
-        "sessions_revoked": count,
-    }
+    return ForceLogoutResponse(
+        message=f"Force logged out user {user_id}",
+        sessions_revoked=count,
+    )
 
 
-@router.delete("/session/{session_id}")
+@router.delete(
+    "/session/{session_id}",
+    response_model=SessionRevokeResponse,
+    summary="Revoke Specific Session (Admin)",
+    description="Immediately invalidate a specific session (admin only, for security purposes)",
+    response_description="Confirmation of session revocation",
+)
 async def revoke_session_admin(
     session_id: str,
     current_user: User = Depends(get_admin_user),
     session_manager: SessionManager = Depends(get_session_manager),
-):
+) -> SessionRevokeResponse:
     """
     Revoke a specific session (admin only).
 
@@ -265,14 +368,20 @@ async def revoke_session_admin(
             detail="Session not found or already revoked",
         )
 
-    return {"message": "Session revoked successfully"}
+    return SessionRevokeResponse(message="Session revoked successfully")
 
 
-@router.post("/cleanup")
+@router.post(
+    "/cleanup",
+    response_model=CleanupResponse,
+    summary="Cleanup Expired Sessions (Admin)",
+    description="Manually trigger cleanup of expired sessions (admin only, mainly for manual maintenance)",
+    response_description="Number of expired sessions cleaned up",
+)
 async def cleanup_expired_sessions(
     current_user: User = Depends(get_admin_user),
     session_manager: SessionManager = Depends(get_session_manager),
-):
+) -> CleanupResponse:
     """
     Manually trigger cleanup of expired sessions (admin only).
 
@@ -281,7 +390,7 @@ async def cleanup_expired_sessions(
     """
     count = await session_manager.cleanup_expired_sessions()
 
-    return {
-        "message": "Expired sessions cleaned up",
-        "count": count,
-    }
+    return CleanupResponse(
+        message="Expired sessions cleaned up",
+        count=count,
+    )

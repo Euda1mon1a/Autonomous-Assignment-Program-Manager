@@ -13,7 +13,7 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_current_active_user
@@ -102,7 +102,8 @@ async def create_job(
         return JobResponseSchema.model_validate(job)
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.error(f"Validation error creating job: {e}", exc_info=True)
+        raise HTTPException(status_code=400, detail="Invalid job data")
     except Exception as e:
         logger.error(f"Error creating job: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to create job")

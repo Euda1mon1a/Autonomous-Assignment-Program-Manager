@@ -89,7 +89,7 @@ export function useExport(hookOptions: UseExportOptions = {}) {
   // Update Progress
   // ============================================================================
 
-  const updateProgress = useCallback((updates: Partial<ExportProgress>) => {
+  const updateProgress = useCallback((updates: Partial<ExportProgress>): void => {
     setProgress(prev => {
       const newProgress = { ...prev, ...updates };
       hookOptions.onProgress?.(newProgress);
@@ -381,7 +381,7 @@ export function useExport(hookOptions: UseExportOptions = {}) {
   // Reset Progress
   // ============================================================================
 
-  const reset = useCallback(() => {
+  const reset = useCallback((): void => {
     setProgress({
       status: 'idle',
       currentRow: 0,

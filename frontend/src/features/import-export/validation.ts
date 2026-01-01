@@ -428,11 +428,14 @@ export function findOverlappingAbsences(
       personAbsences.set(personKey, []);
     }
 
-    personAbsences.get(personKey)!.push({
-      row: i + 2,
-      start: startDate,
-      end: endDate,
-    });
+    const absenceList = personAbsences.get(personKey);
+    if (absenceList) {
+      absenceList.push({
+        row: i + 2,
+        start: startDate,
+        end: endDate,
+      });
+    }
   }
 
   // Check for overlaps within each person's absences

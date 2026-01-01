@@ -14,7 +14,7 @@ Endpoints:
 """
 
 import logging
-from typing import Dict, List
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
@@ -39,7 +39,7 @@ class ConstraintStatusResponse(BaseModel):
     weight: float
     category: str
     description: str
-    dependencies: List[str]
+    dependencies: list[str]
     enable_condition: str | None
     disable_reason: str | None
 
@@ -47,7 +47,7 @@ class ConstraintStatusResponse(BaseModel):
 class ConstraintListResponse(BaseModel):
     """Response model for constraint list."""
 
-    constraints: List[ConstraintStatusResponse]
+    constraints: list[ConstraintStatusResponse]
     total: int
     enabled_count: int
     disabled_count: int
@@ -66,8 +66,8 @@ class PresetApplyResponse(BaseModel):
 
     success: bool
     message: str
-    enabled_constraints: List[str]
-    disabled_constraints: List[str]
+    enabled_constraints: list[str]
+    disabled_constraints: list[str]
 
 
 def _constraint_to_response(config: ConstraintConfig) -> ConstraintStatusResponse:
@@ -85,7 +85,26 @@ def _constraint_to_response(config: ConstraintConfig) -> ConstraintStatusRespons
     )
 
 
-@router.get("/status", response_model=ConstraintListResponse)
+@router.get(
+    "/status",
+    response_model=ConstraintListResponse,
+    summary="Get constraint system status",
+    description="""
+    Retrieve comprehensive status of the constraint management system.
+
+    Returns a complete overview including:
+    - **All Constraints**: Full list of registered constraints
+    - **Enabled Count**: Number of currently active constraints
+    - **Disabled Count**: Number of inactive constraints
+    - **Configuration Details**: Priority, weight, category, and dependencies for each
+
+    This endpoint is useful for system health monitoring and configuration auditing.
+    """,
+    responses={
+        200: {"description": "Constraint status retrieved successfully"},
+        500: {"description": "Failed to retrieve constraint status"},
+    },
+)
 async def get_constraint_status():
     """
     Get status of all constraints.
@@ -118,7 +137,24 @@ async def get_constraint_status():
         )
 
 
-@router.get("", response_model=ConstraintListResponse)
+@router.get(
+    "",
+    response_model=ConstraintListResponse,
+    summary="List all constraints",
+    description="""
+    List all registered scheduling constraints in the system.
+
+    This is an alias for the `/status` endpoint and returns identical data.
+    Provides a complete view of all constraints with their current configuration,
+    enabled/disabled status, priorities, and dependencies.
+
+    Useful for configuration management and debugging scheduling behavior.
+    """,
+    responses={
+        200: {"description": "Constraints listed successfully"},
+        500: {"description": "Failed to list constraints"},
+    },
+)
 async def list_constraints():
     """
     List all constraints.
@@ -129,13 +165,32 @@ async def list_constraints():
     return await get_constraint_status()
 
 
-@router.get("/enabled", response_model=List[ConstraintStatusResponse])
+@router.get(
+    "/enabled",
+    response_model=list[ConstraintStatusResponse],
+    summary="List enabled constraints",
+    description="""
+    Retrieve only the constraints that are currently enabled and active.
+
+    Enabled constraints are actively enforced during schedule generation and
+    validation. This endpoint is useful for:
+    - Understanding which rules are currently in effect
+    - Troubleshooting why certain schedules are rejected
+    - Verifying constraint configuration before schedule generation
+
+    Each constraint includes priority, weight, category, and dependency information.
+    """,
+    responses={
+        200: {"description": "Enabled constraints listed successfully"},
+        500: {"description": "Failed to list enabled constraints"},
+    },
+)
 async def list_enabled_constraints():
     """
     List enabled constraints.
 
     Returns:
-        List[ConstraintStatusResponse]: List of enabled constraints
+        list[ConstraintStatusResponse]: List of enabled constraints
     """
     try:
         config_manager = get_constraint_config()
@@ -150,13 +205,33 @@ async def list_enabled_constraints():
         )
 
 
-@router.get("/disabled", response_model=List[ConstraintStatusResponse])
+@router.get(
+    "/disabled",
+    response_model=list[ConstraintStatusResponse],
+    summary="List disabled constraints",
+    description="""
+    Retrieve only the constraints that are currently disabled and inactive.
+
+    Disabled constraints are registered in the system but not enforced during
+    schedule generation or validation. This endpoint is useful for:
+    - Identifying available but unused constraints
+    - Planning constraint configuration changes
+    - Auditing which rules have been intentionally turned off
+
+    Each constraint includes the reason for being disabled (if provided) along
+    with its configuration details.
+    """,
+    responses={
+        200: {"description": "Disabled constraints listed successfully"},
+        500: {"description": "Failed to list disabled constraints"},
+    },
+)
 async def list_disabled_constraints():
     """
     List disabled constraints.
 
     Returns:
-        List[ConstraintStatusResponse]: List of disabled constraints
+        list[ConstraintStatusResponse]: List of disabled constraints
     """
     try:
         config_manager = get_constraint_config()
@@ -171,7 +246,30 @@ async def list_disabled_constraints():
         )
 
 
-@router.get("/category/{category}", response_model=List[ConstraintStatusResponse])
+@router.get(
+    "/category/{category}",
+    response_model=list[ConstraintStatusResponse],
+    summary="List constraints by category",
+    description="""
+    Retrieve all constraints belonging to a specific category.
+
+    Valid categories include:
+    - **ACGME**: Work hour limits, supervision ratios, rest requirements
+    - **CAPACITY**: Staffing levels, concurrent assignments
+    - **COVERAGE**: Shift coverage, call requirements, geographic distribution
+    - **PREFERENCE**: Individual preferences, soft constraints
+    - **RESILIENCE**: Burnout prevention, workload balancing, N-1/N-2 contingency
+    - **FAIRNESS**: Equitable distribution of desirable/undesirable shifts
+
+    Returns all constraints in the category regardless of enabled/disabled status.
+    This is useful for understanding the full scope of rules in each area.
+    """,
+    responses={
+        200: {"description": "Constraints in category listed successfully"},
+        400: {"description": "Invalid category name provided"},
+        500: {"description": "Failed to list constraints by category"},
+    },
+)
 async def list_constraints_by_category(category: str):
     """
     List constraints by category.
@@ -180,7 +278,7 @@ async def list_constraints_by_category(category: str):
         category: Constraint category (ACGME, CAPACITY, COVERAGE, etc.)
 
     Returns:
-        List[ConstraintStatusResponse]: List of constraints in category
+        list[ConstraintStatusResponse]: List of constraints in category
     """
     try:
         # Validate category
@@ -210,7 +308,31 @@ async def list_constraints_by_category(category: str):
         )
 
 
-@router.post("/{name}/enable", response_model=ConstraintEnableResponse)
+@router.post(
+    "/{name}/enable",
+    response_model=ConstraintEnableResponse,
+    summary="Enable a constraint",
+    description="""
+    Enable a specific constraint by name, making it active for schedule generation.
+
+    When a constraint is enabled:
+    - It will be enforced during all schedule generation and validation operations
+    - Its weight and priority will affect scheduling decisions
+    - Dependencies will be checked and must also be enabled
+    - The change takes effect immediately for new scheduling operations
+
+    **Note**: If the constraint is already enabled, this operation is idempotent
+    and will return success without making changes.
+
+    **Example constraint names**: `acgme_80_hour_rule`, `n_minus_1_resilience`,
+    `fair_weekend_distribution`
+    """,
+    responses={
+        200: {"description": "Constraint enabled successfully"},
+        404: {"description": "Constraint with the specified name not found"},
+        500: {"description": "Failed to enable constraint"},
+    },
+)
 async def enable_constraint(name: str):
     """
     Enable a constraint.
@@ -269,7 +391,34 @@ async def enable_constraint(name: str):
         )
 
 
-@router.post("/{name}/disable", response_model=ConstraintEnableResponse)
+@router.post(
+    "/{name}/disable",
+    response_model=ConstraintEnableResponse,
+    summary="Disable a constraint",
+    description="""
+    Disable a specific constraint by name, removing it from active enforcement.
+
+    When a constraint is disabled:
+    - It will NOT be enforced during schedule generation or validation
+    - Its weight and priority will not affect scheduling decisions
+    - Other constraints that depend on it may be automatically disabled
+    - The change takes effect immediately for new scheduling operations
+
+    **Note**: If the constraint is already disabled, this operation is idempotent
+    and will return success without making changes.
+
+    **Warning**: Disabling critical constraints (e.g., ACGME work hour limits)
+    may result in non-compliant schedules. Use with caution.
+
+    **Example constraint names**: `acgme_80_hour_rule`, `n_minus_1_resilience`,
+    `fair_weekend_distribution`
+    """,
+    responses={
+        200: {"description": "Constraint disabled successfully"},
+        404: {"description": "Constraint with the specified name not found"},
+        500: {"description": "Failed to disable constraint"},
+    },
+)
 async def disable_constraint(name: str):
     """
     Disable a constraint.
@@ -328,7 +477,44 @@ async def disable_constraint(name: str):
         )
 
 
-@router.post("/preset/{preset}", response_model=PresetApplyResponse)
+@router.post(
+    "/preset/{preset}",
+    response_model=PresetApplyResponse,
+    summary="Apply a constraint preset",
+    description="""
+    Apply a predefined constraint configuration preset.
+
+    Presets provide quick, battle-tested configurations for common scenarios:
+
+    - **minimal**: Only essential ACGME compliance constraints. Use for maximum
+      scheduling flexibility when compliance is the only hard requirement.
+
+    - **strict**: All constraints enabled with doubled weights. Use when you need
+      maximum adherence to all rules and preferences, even if it limits schedule
+      options.
+
+    - **resilience_tier1**: Core resilience constraints (80% utilization, N-1
+      contingency, defense in depth). Use for baseline burnout prevention.
+
+    - **resilience_tier2**: All resilience constraints including advanced
+      metrics (SPC monitoring, Erlang coverage, fatigue creep). Use for
+      comprehensive wellbeing protection.
+
+    - **call_scheduling**: Optimized for inpatient call and night float
+      scheduling. Balances coverage with rest requirements.
+
+    - **sports_medicine**: Specialized for sports medicine programs with
+      unique coverage patterns and event-based scheduling.
+
+    Applying a preset will enable/disable multiple constraints simultaneously.
+    The response includes lists of what was enabled and disabled.
+    """,
+    responses={
+        200: {"description": "Preset applied successfully"},
+        400: {"description": "Invalid preset name"},
+        500: {"description": "Failed to apply preset"},
+    },
+)
 async def apply_constraint_preset(preset: str):
     """
     Apply a constraint preset.
@@ -397,7 +583,35 @@ async def apply_constraint_preset(preset: str):
         )
 
 
-@router.get("/{name}", response_model=ConstraintStatusResponse)
+@router.get(
+    "/{name}",
+    response_model=ConstraintStatusResponse,
+    summary="Get constraint details",
+    description="""
+    Retrieve detailed information about a specific constraint by name.
+
+    Returns comprehensive configuration including:
+    - **Enabled Status**: Whether the constraint is currently active
+    - **Priority**: Execution priority (higher priority constraints run first)
+    - **Weight**: Relative importance in the objective function
+    - **Category**: Classification (ACGME, CAPACITY, COVERAGE, etc.)
+    - **Description**: Human-readable explanation of the constraint's purpose
+    - **Dependencies**: Other constraints that must be enabled for this one to work
+    - **Enable Condition**: Conditions under which this constraint should be enabled
+    - **Disable Reason**: Explanation if the constraint is currently disabled
+
+    Useful for debugging scheduling behavior, understanding why certain assignments
+    are rejected, and auditing constraint configuration.
+
+    **Example constraint names**: `acgme_80_hour_rule`, `n_minus_1_resilience`,
+    `fair_weekend_distribution`
+    """,
+    responses={
+        200: {"description": "Constraint details retrieved successfully"},
+        404: {"description": "Constraint with the specified name not found"},
+        500: {"description": "Failed to get constraint details"},
+    },
+)
 async def get_constraint(name: str):
     """
     Get details of a specific constraint.

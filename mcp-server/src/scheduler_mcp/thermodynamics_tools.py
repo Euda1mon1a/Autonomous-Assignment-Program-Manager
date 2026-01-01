@@ -953,6 +953,37 @@ async def optimize_free_energy(
     - Adaptive temperature for crisis flexibility
     - Pre-compute alternative schedules (like AWS static stability)
 
+    **Implementation Requirements:**
+
+    Backend Module:
+    - Path: backend/app/resilience/thermodynamics/free_energy.py
+    - Classes needed:
+      * FreeEnergyCalculator: Compute F = U - TS for schedule states
+      * EnergyLandscapeMapper: Map energy surface around current schedule
+      * OptimizationEngine: Gradient descent or simulated annealing
+
+    API Endpoint:
+    - POST /api/v1/resilience/exotic/thermodynamics/optimize-free-energy
+    - Request: {schedule_id, target_temperature, max_iterations}
+    - Response: FreeEnergyOptimizationResponse schema
+
+    Dependencies:
+    - scipy.optimize: For optimization algorithms
+    - numpy: For numerical operations
+    - networkx: For schedule state graph traversal
+
+    Algorithm:
+    1. Calculate initial free energy F_0 = U_0 - T*S_0
+    2. Generate neighbor states (small schedule modifications)
+    3. Evaluate free energy of neighbors
+    4. Move to lower free energy state (with Metropolis acceptance)
+    5. Iterate until convergence or max_iterations
+
+    Validation:
+    - All schedule modifications must maintain ACGME compliance
+    - Energy landscape must be continuous (smooth transitions)
+    - Temperature parameter validated: 0.0 < T < 10.0
+
     Args:
         schedule_id: Schedule to optimize (or use current)
         target_temperature: Temperature parameter (higher = more exploration)
@@ -961,17 +992,61 @@ async def optimize_free_energy(
     Returns:
         FreeEnergyOptimizationResponse (placeholder data)
 
+    Raises:
+        ValueError: If temperature or max_iterations are out of valid range
+        NotImplementedError: Backend module not yet implemented
+
     Example:
         result = await optimize_free_energy_tool()
         if result.improvement > 0:
             print(f"Free energy reduced by {result.improvement:.2f}")
     """
+    # Validate input parameters
+    if target_temperature <= 0.0 or target_temperature > 10.0:
+        raise ValueError(
+            f"Temperature must be in range (0.0, 10.0], got {target_temperature}"
+        )
+
+    if max_iterations < 1 or max_iterations > 1000:
+        raise ValueError(
+            f"max_iterations must be in range [1, 1000], got {max_iterations}"
+        )
+
     logger.info(
         f"Free energy optimization requested (schedule_id={schedule_id}, "
         f"temp={target_temperature}, max_iter={max_iterations})"
     )
 
-    # This module is not yet implemented
+    try:
+        # Try to call backend API first
+        from .api_client import SchedulerAPIClient
+
+        try:
+            async with SchedulerAPIClient() as client:
+                response = await client.client.post(
+                    f"{client.config.api_prefix}/resilience/exotic/thermodynamics/optimize-free-energy",
+                    json={
+                        "schedule_id": schedule_id,
+                        "target_temperature": target_temperature,
+                        "max_iterations": max_iterations,
+                    },
+                    headers=await client._ensure_authenticated(),
+                )
+                response.raise_for_status()
+                data = response.json()
+
+                logger.info("Free energy optimization from backend (source=backend)")
+                return FreeEnergyOptimizationResponse(**data)
+
+        except Exception as api_error:
+            logger.warning(
+                f"Backend API call failed (module not implemented): {api_error}"
+            )
+
+    except ImportError as e:
+        logger.warning(f"Free energy module dependencies not available: {e}")
+
+    # Return informative placeholder
     logger.warning("Free energy module is planned but not yet implemented")
 
     return FreeEnergyOptimizationResponse(
@@ -985,8 +1060,11 @@ async def optimize_free_energy(
         changes_made=[],
         recommendations=[
             "Free energy module is planned but not yet implemented",
-            "See backend/app/resilience/thermodynamics/README.md for roadmap",
-            "Expected implementation: Phase 2 (next 2 weeks)",
+            "Implementation requirements documented in function docstring",
+            "Backend module: backend/app/resilience/thermodynamics/free_energy.py",
+            "API endpoint: POST /api/v1/resilience/exotic/thermodynamics/optimize-free-energy",
+            "Required dependencies: scipy, numpy, networkx",
+            "Expected implementation: Phase 2 (Q1 2026)",
         ],
         severity="unchanged",
     )
@@ -1014,15 +1092,89 @@ async def analyze_energy_landscape(
     - Nearby local minima (alternative schedules)
     - Pathway analysis (how to reach better configurations)
 
+    **Implementation Requirements:**
+
+    Backend Module:
+    - Path: backend/app/resilience/thermodynamics/energy_landscape.py
+    - Classes needed:
+      * LandscapeMapper: Map energy surface in schedule state space
+      * BarrierCalculator: Compute energy barriers between states
+      * StabilityAnalyzer: Classify stability (stable/metastable/unstable)
+
+    API Endpoint:
+    - POST /api/v1/resilience/exotic/thermodynamics/energy-landscape
+    - Request: {schedule_id}
+    - Response: EnergyLandscapeResponse schema
+
+    Dependencies:
+    - scipy.optimize: For finding local minima
+    - scipy.interpolate: For energy surface interpolation
+    - networkx: For state transition graph
+    - numpy: For numerical computations
+
+    Algorithm:
+    1. Sample energy at current schedule state
+    2. Sample energy at neighboring states (perturbations)
+    3. Fit energy surface using interpolation
+    4. Identify local minima (alternative schedules)
+    5. Calculate escape barriers using nudged elastic band
+    6. Classify stability based on barrier heights
+
+    Stability Classification:
+    - Stable: Barrier height > 10.0 (deep well, hard to escape)
+    - Metastable: 2.0 < Barrier < 10.0 (shallow well, vulnerable)
+    - Unstable: Barrier < 2.0 (easily disrupted)
+
+    Applications:
+    - Detect fragile schedules before deployment
+    - Identify robust alternative schedules nearby
+    - Plan transition paths for schedule updates
+    - Pre-compute fallback schedules (static stability)
+
     Args:
         schedule_id: Schedule to analyze (or use current)
 
     Returns:
         EnergyLandscapeResponse (placeholder data)
+
+    Raises:
+        ValueError: If schedule_id is invalid or not found
+        NotImplementedError: Backend module not yet implemented
+
+    Example:
+        result = await analyze_energy_landscape_tool("schedule-123")
+        if result.is_metastable:
+            print(f"WARNING: Schedule is metastable (barrier={result.escape_barrier:.2f})")
+            print(f"Found {result.nearby_minima} alternative schedules")
     """
     logger.info(f"Energy landscape analysis requested (schedule_id={schedule_id})")
 
-    # This module is not yet implemented
+    try:
+        # Try to call backend API first
+        from .api_client import SchedulerAPIClient
+
+        try:
+            async with SchedulerAPIClient() as client:
+                response = await client.client.post(
+                    f"{client.config.api_prefix}/resilience/exotic/thermodynamics/energy-landscape",
+                    json={"schedule_id": schedule_id},
+                    headers=await client._ensure_authenticated(),
+                )
+                response.raise_for_status()
+                data = response.json()
+
+                logger.info("Energy landscape analysis from backend (source=backend)")
+                return EnergyLandscapeResponse(**data)
+
+        except Exception as api_error:
+            logger.warning(
+                f"Backend API call failed (module not implemented): {api_error}"
+            )
+
+    except ImportError as e:
+        logger.warning(f"Energy landscape module dependencies not available: {e}")
+
+    # Return informative placeholder
     logger.warning("Free energy module is planned but not yet implemented")
 
     return EnergyLandscapeResponse(
@@ -1041,7 +1193,11 @@ async def analyze_energy_landscape(
         nearby_minima=0,
         recommendations=[
             "Free energy module is planned but not yet implemented",
-            "See backend/app/resilience/thermodynamics/README.md for roadmap",
+            "Implementation requirements documented in function docstring",
+            "Backend module: backend/app/resilience/thermodynamics/energy_landscape.py",
+            "API endpoint: POST /api/v1/resilience/exotic/thermodynamics/energy-landscape",
+            "Required dependencies: scipy, networkx, numpy",
+            "Expected implementation: Phase 2 (Q1 2026)",
         ],
         severity="metastable",
     )

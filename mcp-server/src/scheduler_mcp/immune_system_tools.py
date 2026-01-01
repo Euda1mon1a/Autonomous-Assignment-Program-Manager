@@ -461,10 +461,53 @@ async def assess_immune_response(
         except Exception as api_error:
             logger.warning(f"Backend API call failed, using fallback: {api_error}")
 
-        from app.resilience.immune_system import ScheduleImmuneSystem
-
         # Fallback to placeholder data
-        logger.warning("Immune system assessment using placeholder data (backend unavailable)")
+        # NOTE: In production, would import and use:
+        # from app.resilience.immune_system import ScheduleImmuneSystem
+        logger.warning(
+            "Immune system assessment using placeholder data - backend unavailable",
+            extra={
+                "note": "Mock data for demonstration only",
+                "backend_endpoint": "/api/v1/resilience/exotic/immune/assess",
+                "recommendation": "Implement ScheduleImmuneSystem in backend",
+            },
+        )
+
+        """
+        BACKEND IMPLEMENTATION REQUIREMENTS:
+        =====================================================================
+        To replace this placeholder, implement in backend:
+
+        1. **ScheduleImmuneSystem Class** (app/resilience/immune_system.py):
+           - Negative Selection Algorithm for detector training
+           - Detector generation in feature space
+           - Anomaly detection using hypersphere matching
+
+        2. **Feature Vector Extraction:**
+           - Extract schedule state into numeric feature vector:
+             * coverage_rate, workload_gini, acgme_violations_count
+             * supervision_ratio, avg_hours_per_week, schedule_changes
+             * rotation_balance, utilization_rate, etc.
+           - Normalize features to [0, 1] range
+
+        3. **Detector Training:**
+           - Train on "self" (valid schedules)
+           - Generate detectors that don't match self
+           - Each detector = (center_vector, radius)
+
+        4. **Anomaly Detection:**
+           - For new schedule, compute feature vector
+           - Check distance to all detectors
+           - If distance < radius for any detector, flag as anomaly
+           - Anomaly score = number of matching detectors
+
+        5. **API Endpoint:**
+           - POST /api/v1/resilience/exotic/immune/assess
+           - Returns: is_anomaly, anomaly_score, matching_detectors,
+                      suggested_repairs, immune_health
+
+        See: docs/architecture/EXOTIC_FRONTIER_CONCEPTS.md (Artificial Immune Systems)
+        """
 
         # Build response with mock data showing structure
         active_detectors = []
@@ -657,10 +700,73 @@ async def check_memory_cells(
     logger.info(f"Checking memory cells (include_inactive={include_inactive})")
 
     try:
-        from app.resilience.immune_system import ScheduleImmuneSystem
+        # NOTE: In production, would import and use:
+        # from app.resilience.immune_system import ScheduleImmuneSystem
 
         # In production, would access actual memory cell data
-        logger.warning("Memory cell check using placeholder data")
+        logger.warning(
+            "Memory cell check using placeholder data - backend unavailable",
+            extra={
+                "note": "Mock data for demonstration only",
+                "backend_endpoint": "/api/v1/resilience/exotic/immune/memory-cells",
+                "recommendation": "Implement memory cell persistence in backend",
+            },
+        )
+
+        """
+        BACKEND IMPLEMENTATION REQUIREMENTS:
+        =====================================================================
+        To replace this placeholder, implement in backend:
+
+        1. **Memory Cell Storage** (Database):
+           - Table: immune_memory_cells
+           - Columns:
+             * pattern_id (UUID, primary key)
+             * anomaly_type (string) - e.g., "coverage_gap", "acgme_violation"
+             * feature_signature (JSONB) - feature vector characterizing this pattern
+             * first_seen (timestamp)
+             * last_seen (timestamp)
+             * occurrences (integer)
+             * effective_antibody_id (foreign key to antibody registry)
+             * avg_response_time (float) - average repair time in seconds
+             * baseline_response_time (float) - response time without memory
+
+        2. **Memory Cell Creation:**
+           - When anomaly is detected and successfully repaired:
+             * Extract feature signature from anomaly
+             * Check if similar pattern exists (cosine similarity > 0.9)
+             * If exists, update occurrences and last_seen
+             * If new, create memory cell with current timestamp
+
+        3. **Memory-Accelerated Detection:**
+           - On new schedule state:
+             * Extract features
+             * Check similarity to all memory cells
+             * If match (similarity > 0.9):
+               - Skip full detector sweep
+               - Directly apply known effective antibody
+               - Track response time improvement
+
+        4. **Response Time Improvement Calculation:**
+           - response_time_improvement = 1 - (memory_response / baseline_response)
+           - Example: If baseline=10s, memory=4s → improvement=0.6 (60% faster)
+
+        5. **API Endpoint:**
+           - GET /api/v1/resilience/exotic/immune/memory-cells
+           - Query params: include_inactive, max_patterns
+           - Returns: List of MemoryCellInfo objects
+
+        6. **Cleanup Policy:**
+           - Archive memory cells not seen in 90 days (include_inactive=True to see)
+           - Keep high-occurrence patterns indefinitely (occurrences > 10)
+
+        Biological Analogy:
+        - Memory B/T cells in immune system remember past pathogens
+        - Enables faster, stronger response to known threats
+        - This is why vaccines work - pre-train memory cells
+
+        See: docs/architecture/EXOTIC_FRONTIER_CONCEPTS.md (Artificial Immune Systems)
+        """
 
         memory_cells = [
             MemoryCellInfo(
@@ -669,7 +775,7 @@ async def check_memory_cells(
                 first_seen=(datetime.now()).isoformat(),
                 occurrences=12,
                 effective_response="coverage_gap_repair",
-                response_time_improvement=0.45,
+                response_time_improvement=0.45,  # 45% faster with memory
             ),
             MemoryCellInfo(
                 pattern_id="MEM-002",
@@ -677,7 +783,7 @@ async def check_memory_cells(
                 first_seen=(datetime.now()).isoformat(),
                 occurrences=5,
                 effective_response="acgme_violation_repair",
-                response_time_improvement=0.35,
+                response_time_improvement=0.35,  # 35% faster
             ),
             MemoryCellInfo(
                 pattern_id="MEM-003",
@@ -685,7 +791,7 @@ async def check_memory_cells(
                 first_seen=(datetime.now()).isoformat(),
                 occurrences=8,
                 effective_response="workload_balance_repair",
-                response_time_improvement=0.40,
+                response_time_improvement=0.40,  # 40% faster
             ),
         ][:max_patterns]
 
@@ -786,10 +892,101 @@ async def analyze_antibody_response(
     logger.info(f"Analyzing antibody response (schedule_state={schedule_state is not None})")
 
     try:
-        from app.resilience.immune_system import ScheduleImmuneSystem
+        # NOTE: In production, would import and use:
+        # from app.resilience.immune_system import ScheduleImmuneSystem
 
         # In production, would access actual immune system
-        logger.warning("Antibody analysis using placeholder data")
+        logger.warning(
+            "Antibody analysis using placeholder data - backend unavailable",
+            extra={
+                "note": "Mock data for demonstration only",
+                "backend_endpoint": "/api/v1/resilience/exotic/immune/antibodies",
+                "recommendation": "Implement antibody registry and affinity matching",
+            },
+        )
+
+        """
+        BACKEND IMPLEMENTATION REQUIREMENTS:
+        =====================================================================
+        To replace this placeholder, implement in backend:
+
+        1. **Antibody Registry** (Database):
+           - Table: immune_antibodies
+           - Columns:
+             * antibody_id (UUID, primary key)
+             * name (string) - e.g., "coverage_gap_repair"
+             * description (text)
+             * repair_function (string) - reference to repair implementation
+             * affinity_pattern (JSONB) - feature weights/preferences
+             * applications_count (integer)
+             * success_count (integer)
+             * avg_execution_time (float)
+             * cooldown_seconds (integer) - prevent overuse
+             * last_applied (timestamp)
+
+        2. **Affinity Calculation:**
+           - Affinity = cosine similarity between:
+             * schedule_state feature vector
+             * antibody's affinity_pattern
+           - Range: [0, 1] where 1 = perfect match
+           - Boost by historical success_rate
+
+        3. **Clonal Selection Algorithm:**
+           - For detected anomaly:
+             1. Calculate affinity of all antibodies
+             2. Sort by affinity * success_rate
+             3. Select top antibody (highest score)
+             4. Check cooldown (time since last_applied)
+             5. If on cooldown, select next best
+             6. Apply selected antibody
+
+        4. **Repair Strategies (Antibodies):**
+           - **coverage_gap_repair:**
+             * Find unassigned faculty in same rotation type
+             * Assign to gap blocks
+             * Verify no conflicts created
+
+           - **workload_balance_repair:**
+             * Calculate current workload per person
+             * Identify overloaded and underutilized
+             * Swap assignments to balance
+             * Maintain ACGME compliance
+
+           - **acgme_violation_repair:**
+             * Identify specific violation type
+             * If 80hr: redistribute assignments
+             * If 1-in-7: insert rest blocks
+             * If supervision: adjust faculty coverage
+
+        5. **Active Countermeasures Tracking:**
+           - Track repairs currently in progress
+           - Store in Redis with TTL
+           - Allow inspection of active repairs
+           - Prevent conflicting simultaneous repairs
+
+        6. **Cooldown Management:**
+           - After applying antibody:
+             * Set last_applied = NOW()
+             * cooldown_remaining = cooldown_seconds
+           - Prevents antibody fatigue/overuse
+           - Cooldown typically 5-60 minutes
+
+        7. **API Endpoints:**
+           - GET /api/v1/resilience/exotic/immune/antibodies
+             * Returns: List of registered antibodies with stats
+             * Optional: schedule_state for affinity calculation
+
+           - POST /api/v1/resilience/exotic/immune/apply-antibody
+             * Body: {antibody_id, schedule_state}
+             * Applies repair and returns result
+
+        Mathematical Background:
+        - Clonal Selection: Antibodies with higher affinity are "cloned" (prioritized)
+        - Affinity Maturation: Success rates improve antibody selection over time
+        - Immune Memory: Past successes boost future affinity scores
+
+        See: docs/architecture/EXOTIC_FRONTIER_CONCEPTS.md (Artificial Immune Systems)
+        """
 
         # Calculate mock affinities based on schedule state
         has_coverage_issue = False
@@ -797,7 +994,9 @@ async def analyze_antibody_response(
         has_acgme_issue = False
 
         if schedule_state:
-            coverage_rate = schedule_state.get("covered_blocks", 100) / max(1, schedule_state.get("total_blocks", 100))
+            coverage_rate = schedule_state.get("covered_blocks", 100) / max(
+                1, schedule_state.get("total_blocks", 100)
+            )
             has_coverage_issue = coverage_rate < 0.9
             has_workload_issue = schedule_state.get("workload_std_dev", 0) > 0.3
             has_acgme_issue = len(schedule_state.get("acgme_violations", [])) > 0

@@ -15,8 +15,8 @@ jest.mock('next/navigation', () => ({
 
 // Mock Next.js Link
 jest.mock('next/link', () => {
-  return ({ children, href, ...props }: any) => {
-    return <a href={href} {...props}>{children}</a>;
+  return ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: unknown }) => {
+    return <a href={typeof href === 'string' ? href : '#'} {...props}>{children}</a>;
   };
 });
 

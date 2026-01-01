@@ -43,11 +43,11 @@ function SettingsPanel({ onSave }: SettingsPanelProps) {
   const [hasChanges, setHasChanges] = React.useState(false)
   const [isSaving, setIsSaving] = React.useState(false)
 
-  const handleChange = (section: string, field: string, value: any) => {
+  const handleChange = (section: string, field: string, value: unknown) => {
     setSettings((prev) => ({
       ...prev,
       [section]: {
-        ...(prev as any)[section],
+        ...(prev as Record<string, Record<string, unknown>>)[section],
         [field]: value,
       },
     }))

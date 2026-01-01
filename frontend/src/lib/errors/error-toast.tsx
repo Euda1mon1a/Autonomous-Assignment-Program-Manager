@@ -8,6 +8,18 @@ import React from 'react'
 import { getErrorMessage, getErrorTitle, getDetailedErrorMessage } from './error-messages'
 import { ErrorSeverity, getErrorSeverity, isRFC7807Error } from './error-types'
 
+// Custom event type for error toast
+interface ErrorToastEventDetail {
+  error: unknown
+}
+
+// Extend the WindowEventMap to include our custom event
+declare global {
+  interface WindowEventMap {
+    'error-toast': CustomEvent<ErrorToastEventDetail>
+  }
+}
+
 interface ErrorToastProps {
   error: unknown
   onClose: () => void
@@ -199,20 +211,20 @@ export function ErrorToastContainer({
 
   // Expose add toast function via context or custom event
   React.useEffect(() => {
-    const handleAddToast = (event: CustomEvent<{ error: unknown }>) => {
+    const handleAddToast = (event: CustomEvent<ErrorToastEventDetail>) => {
       const toast: Toast = {
         id: Date.now().toString(),
         error: event.detail.error,
       }
-      setToasts((prev) => [...prev, toast])
+      setToasts((prev: Toast[]) => [...prev, toast])
     }
 
-    window.addEventListener('error-toast' as any, handleAddToast)
-    return () => window.removeEventListener('error-toast' as any, handleAddToast)
+    window.addEventListener('error-toast', handleAddToast)
+    return () => window.removeEventListener('error-toast', handleAddToast)
   }, [])
 
   const removeToast = (id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id))
+    setToasts((prev: Toast[]) => prev.filter((toast: Toast) => toast.id !== id))
   }
 
   const positionStyles = {
@@ -227,7 +239,7 @@ export function ErrorToastContainer({
     <div
       className={`fixed ${positionStyles[position]} z-50 space-y-4 pointer-events-none`}
     >
-      {toasts.map((toast) => (
+      {toasts.map((toast: Toast) => (
         <div key={toast.id} className="pointer-events-auto">
           <ErrorToast error={toast.error} onClose={() => removeToast(toast.id)} />
         </div>

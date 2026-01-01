@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback, memo } from 'react'
 import { X, Plus, Trash2, Calendar } from 'lucide-react'
 import { format, parseISO, isValid } from 'date-fns'
 
@@ -11,20 +11,9 @@ export interface Holiday {
   isCustom?: boolean
 }
 
-// Default federal holidays (relative dates calculated for current year)
-const getDefaultHolidays = (year: number): Holiday[] => [
-  { id: 'new-years', name: "New Year's Day", date: `${year}-01-01` },
-  { id: 'mlk', name: 'Martin Luther King Jr. Day', date: getNthWeekdayOfMonth(year, 0, 1, 3) }, // 3rd Monday of January
-  { id: 'presidents', name: "Presidents' Day", date: getNthWeekdayOfMonth(year, 1, 1, 3) }, // 3rd Monday of February
-  { id: 'memorial', name: 'Memorial Day', date: getLastWeekdayOfMonth(year, 4, 1) }, // Last Monday of May
-  { id: 'juneteenth', name: 'Juneteenth', date: `${year}-06-19` },
-  { id: 'independence', name: 'Independence Day', date: `${year}-07-04` },
-  { id: 'labor', name: 'Labor Day', date: getNthWeekdayOfMonth(year, 8, 1, 1) }, // 1st Monday of September
-  { id: 'columbus', name: 'Columbus Day', date: getNthWeekdayOfMonth(year, 9, 1, 2) }, // 2nd Monday of October
-  { id: 'veterans', name: 'Veterans Day', date: `${year}-11-11` },
-  { id: 'thanksgiving', name: 'Thanksgiving Day', date: getNthWeekdayOfMonth(year, 10, 4, 4) }, // 4th Thursday of November
-  { id: 'christmas', name: 'Christmas Day', date: `${year}-12-25` },
-]
+// ============================================================================
+// Helper Functions (outside component for optimization)
+// ============================================================================
 
 // Helper to get the nth weekday of a month (0=Sunday, 1=Monday, etc.)
 function getNthWeekdayOfMonth(year: number, month: number, weekday: number, n: number): string {
@@ -44,6 +33,25 @@ function getLastWeekdayOfMonth(year: number, month: number, weekday: number): st
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`
 }
 
+// Default federal holidays (relative dates calculated for current year)
+const getDefaultHolidays = (year: number): Holiday[] => [
+  { id: 'new-years', name: "New Year's Day", date: `${year}-01-01` },
+  { id: 'mlk', name: 'Martin Luther King Jr. Day', date: getNthWeekdayOfMonth(year, 0, 1, 3) }, // 3rd Monday of January
+  { id: 'presidents', name: "Presidents' Day", date: getNthWeekdayOfMonth(year, 1, 1, 3) }, // 3rd Monday of February
+  { id: 'memorial', name: 'Memorial Day', date: getLastWeekdayOfMonth(year, 4, 1) }, // Last Monday of May
+  { id: 'juneteenth', name: 'Juneteenth', date: `${year}-06-19` },
+  { id: 'independence', name: 'Independence Day', date: `${year}-07-04` },
+  { id: 'labor', name: 'Labor Day', date: getNthWeekdayOfMonth(year, 8, 1, 1) }, // 1st Monday of September
+  { id: 'columbus', name: 'Columbus Day', date: getNthWeekdayOfMonth(year, 9, 1, 2) }, // 2nd Monday of October
+  { id: 'veterans', name: 'Veterans Day', date: `${year}-11-11` },
+  { id: 'thanksgiving', name: 'Thanksgiving Day', date: getNthWeekdayOfMonth(year, 10, 4, 4) }, // 4th Thursday of November
+  { id: 'christmas', name: 'Christmas Day', date: `${year}-12-25` },
+]
+
+// ============================================================================
+// Component
+// ============================================================================
+
 interface HolidayEditModalProps {
   isOpen: boolean
   onClose: () => void
@@ -53,7 +61,7 @@ interface HolidayEditModalProps {
   academicYearEnd?: string // e.g., "2025-06-30"
 }
 
-export function HolidayEditModal({
+export const HolidayEditModal = memo(function HolidayEditModal({
   isOpen,
   onClose,
   holidays,
@@ -66,9 +74,15 @@ export function HolidayEditModal({
   const [newHolidayDate, setNewHolidayDate] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  // Calculate years covered by academic year
-  const startYear = academicYearStart ? new Date(academicYearStart).getFullYear() : new Date().getFullYear()
-  const endYear = academicYearEnd ? new Date(academicYearEnd).getFullYear() : startYear + 1
+  // Memoize years covered by academic year
+  const startYear = useMemo(
+    () => academicYearStart ? new Date(academicYearStart).getFullYear() : new Date().getFullYear(),
+    [academicYearStart]
+  )
+  const endYear = useMemo(
+    () => academicYearEnd ? new Date(academicYearEnd).getFullYear() : startYear + 1,
+    [academicYearEnd, startYear]
+  )
 
   // Initialize with current holidays or defaults
   useEffect(() => {
@@ -111,11 +125,11 @@ export function HolidayEditModal({
     }
   }, [isOpen, onClose])
 
-  const handleRemoveHoliday = (id: string) => {
+  const handleRemoveHoliday = useCallback((id: string) => {
     setEditedHolidays((prev) => prev.filter((h) => h.id !== id))
-  }
+  }, [])
 
-  const handleAddHoliday = () => {
+  const handleAddHoliday = useCallback(() => {
     setError(null)
 
     if (!newHolidayName.trim()) {
@@ -159,14 +173,14 @@ export function HolidayEditModal({
     setEditedHolidays((prev) => [...prev, newHoliday].sort((a, b) => a.date.localeCompare(b.date)))
     setNewHolidayName('')
     setNewHolidayDate('')
-  }
+  }, [newHolidayName, newHolidayDate, academicYearStart, academicYearEnd, editedHolidays])
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     onSave(editedHolidays)
     onClose()
-  }
+  }, [editedHolidays, onSave, onClose])
 
-  const handleResetToDefaults = () => {
+  const handleResetToDefaults = useCallback(() => {
     const defaultHolidays = [
       ...getDefaultHolidays(startYear),
       ...getDefaultHolidays(endYear),
@@ -176,7 +190,7 @@ export function HolidayEditModal({
       return h.date >= academicYearStart && h.date <= academicYearEnd
     })
     setEditedHolidays(filtered)
-  }
+  }, [startYear, endYear, academicYearStart, academicYearEnd])
 
   if (!isOpen) return null
 
@@ -299,4 +313,4 @@ export function HolidayEditModal({
       </div>
     </div>
   )
-}
+})

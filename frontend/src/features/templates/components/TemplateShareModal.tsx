@@ -66,7 +66,7 @@ export function TemplateShareModal({
   if (mode === 'duplicate') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center">
-        <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+        <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
         <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b">
@@ -113,6 +113,7 @@ export function TemplateShareModal({
                   checked={includePatterns}
                   onChange={(e) => setIncludePatterns(e.target.checked)}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  aria-label={`Include assignment patterns (${template.patterns.length} patterns)`}
                 />
                 <span className="text-sm text-gray-700">
                   Include assignment patterns ({template.patterns.length} patterns)
@@ -151,7 +152,7 @@ export function TemplateShareModal({
   // Share mode
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
       <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
@@ -204,6 +205,7 @@ export function TemplateShareModal({
                       checked={isSelected}
                       onChange={(e) => setVisibility(e.target.value as typeof visibility)}
                       className="mt-1"
+                      aria-label={`Set visibility to ${opt.label}`}
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -230,6 +232,7 @@ export function TemplateShareModal({
                   readOnly
                   value={`${typeof window !== 'undefined' ? window.location.origin : ''}/templates/${template.id}`}
                   className="flex-1 px-3 py-2 border rounded-lg bg-gray-50 text-gray-600"
+                  aria-label="Template share link"
                 />
                 <button
                   onClick={handleCopyLink}
@@ -238,6 +241,7 @@ export function TemplateShareModal({
                       ? 'bg-green-100 text-green-700'
                       : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                   }`}
+                  aria-label={linkCopied ? 'Link copied to clipboard' : 'Copy share link to clipboard'}
                 >
                   {linkCopied ? (
                     <>

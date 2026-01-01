@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Plus, LayoutGrid, List, BookOpen } from 'lucide-react';
 import type {
   ScheduleTemplate,
@@ -36,7 +36,7 @@ interface TemplateLibraryProps {
   onTemplateApplied?: (result: { success: boolean; message: string }) => void;
 }
 
-export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
+export const TemplateLibrary = React.memo(function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
   // State
   const [activeTab, setActiveTab] = useState<Tab>('my-templates');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -73,17 +73,17 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
   }, [templatesData?.items]);
 
   // Handlers
-  const handleCreateNew = () => {
+  const handleCreateNew = useCallback(() => {
     setEditingTemplate(null);
     setShowEditor(true);
-  };
+  }, []);
 
-  const handleEdit = (template: ScheduleTemplate) => {
+  const handleEdit = useCallback((template: ScheduleTemplate) => {
     setEditingTemplate(template);
     setShowEditor(true);
-  };
+  }, []);
 
-  const handleSave = async (data: ScheduleTemplateCreate | ScheduleTemplateUpdate) => {
+  const handleSave = useCallback(async (data: ScheduleTemplateCreate | ScheduleTemplateUpdate) => {
     if (editingTemplate) {
       // Type assertion needed because create and update schemas have slight differences
       // in patterns field (create uses Omit<AssignmentPattern, 'id'>[], update uses AssignmentPattern[])
@@ -93,25 +93,25 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
     }
     setShowEditor(false);
     setEditingTemplate(null);
-  };
+  }, [editingTemplate, updateTemplate, createTemplate]);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (!deleteConfirm) return;
     await deleteTemplateMutation.mutateAsync(deleteConfirm.id);
     setDeleteConfirm(null);
-  };
+  }, [deleteConfirm, deleteTemplateMutation]);
 
-  const handleDuplicate = async (request: Parameters<typeof duplicateTemplateMutation.mutateAsync>[0]) => {
+  const handleDuplicate = useCallback(async (request: Parameters<typeof duplicateTemplateMutation.mutateAsync>[0]) => {
     await duplicateTemplateMutation.mutateAsync(request);
     setDuplicateTemplate(null);
-  };
+  }, [duplicateTemplateMutation]);
 
-  const handleShare = async (request: Parameters<typeof shareTemplateMutation.mutateAsync>[0]) => {
+  const handleShare = useCallback(async (request: Parameters<typeof shareTemplateMutation.mutateAsync>[0]) => {
     await shareTemplateMutation.mutateAsync(request);
     setShareTemplate(null);
-  };
+  }, [shareTemplateMutation]);
 
-  const handleApply = async (template: ScheduleTemplate, config: TemplatePreviewConfig) => {
+  const handleApply = useCallback(async (template: ScheduleTemplate, config: TemplatePreviewConfig) => {
     const result = await applyTemplateMutation.mutateAsync({
       templateId: template.id,
       config,
@@ -123,16 +123,29 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
         ? `Created ${result.assignmentsCreated} assignments`
         : `Failed: ${result.assignmentsFailed} assignments failed`,
     });
-  };
+  }, [applyTemplateMutation, onTemplateApplied]);
 
-  const handleImportPredefined = async (templateKey: string) => {
+  const handleImportPredefined = useCallback(async (templateKey: string) => {
     await importPredefinedMutation.mutateAsync(templateKey);
     setActiveTab('my-templates');
-  };
+  }, [importPredefinedMutation]);
 
-  const handleCategorySelect = (category: TemplateCategory | undefined) => {
+  const handleCategorySelect = useCallback((category: TemplateCategory | undefined) => {
     updateFilter('category', category);
-  };
+  }, [updateFilter]);
+
+  const handleViewModeGrid = useCallback(() => setViewMode('grid'), []);
+  const handleViewModeList = useCallback(() => setViewMode('list'), []);
+  const handleSetActiveTabMyTemplates = useCallback(() => setActiveTab('my-templates'), []);
+  const handleSetActiveTabPredefined = useCallback(() => setActiveTab('predefined'), []);
+  const handleCloseEditor = useCallback(() => {
+    setShowEditor(false);
+    setEditingTemplate(null);
+  }, []);
+  const handleClosePreview = useCallback(() => setPreviewTemplate(null), []);
+  const handleCloseShare = useCallback(() => setShareTemplate(null), []);
+  const handleCloseDuplicate = useCallback(() => setDuplicateTemplate(null), []);
+  const handleCloseDeleteConfirm = useCallback(() => setDeleteConfirm(null), []);
 
   return (
     <div className="space-y-6">
@@ -155,7 +168,7 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
       <div className="border-b">
         <div className="flex gap-4">
           <button
-            onClick={() => setActiveTab('my-templates')}
+            onClick={handleSetActiveTabMyTemplates}
             className={`px-4 py-2 border-b-2 font-medium transition-colors ${
               activeTab === 'my-templates'
                 ? 'border-blue-600 text-blue-600'
@@ -170,7 +183,7 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
             )}
           </button>
           <button
-            onClick={() => setActiveTab('predefined')}
+            onClick={handleSetActiveTabPredefined}
             className={`px-4 py-2 border-b-2 font-medium transition-colors flex items-center gap-2 ${
               activeTab === 'predefined'
                 ? 'border-blue-600 text-blue-600'
@@ -203,7 +216,7 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
           {/* View Toggle */}
           <div className="flex justify-end gap-2">
             <button
-              onClick={() => setViewMode('grid')}
+              onClick={handleViewModeGrid}
               className={`p-2 rounded ${
                 viewMode === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'
               }`}
@@ -212,7 +225,7 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
               <LayoutGrid className="w-4 h-4" />
             </button>
             <button
-              onClick={() => setViewMode('list')}
+              onClick={handleViewModeList}
               className={`p-2 rounded ${
                 viewMode === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'
               }`}
@@ -267,15 +280,12 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
       {/* Editor Modal */}
       {showEditor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowEditor(false)} />
+          <div className="absolute inset-0 bg-black/50" onClick={handleCloseEditor} />
           <div className="relative w-full max-w-3xl max-h-[90vh]">
             <TemplateEditor
               template={editingTemplate}
               onSave={handleSave}
-              onCancel={() => {
-                setShowEditor(false);
-                setEditingTemplate(null);
-              }}
+              onCancel={handleCloseEditor}
               isLoading={createTemplate.isPending || updateTemplate.isPending}
             />
           </div>
@@ -285,12 +295,12 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
       {/* Preview Modal */}
       {previewTemplate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setPreviewTemplate(null)} />
+          <div className="absolute inset-0 bg-black/50" onClick={handleClosePreview} />
           <div className="relative">
             <TemplatePreview
               template={previewTemplate}
               onApply={(config) => handleApply(previewTemplate, config)}
-              onClose={() => setPreviewTemplate(null)}
+              onClose={handleClosePreview}
               isLoading={applyTemplateMutation.isPending}
             />
           </div>
@@ -303,7 +313,7 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
           template={shareTemplate}
           mode="share"
           onShare={handleShare}
-          onClose={() => setShareTemplate(null)}
+          onClose={handleCloseShare}
           isLoading={shareTemplateMutation.isPending}
         />
       )}
@@ -314,7 +324,7 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
           template={duplicateTemplate}
           mode="duplicate"
           onDuplicate={handleDuplicate}
-          onClose={() => setDuplicateTemplate(null)}
+          onClose={handleCloseDuplicate}
           isLoading={duplicateTemplateMutation.isPending}
         />
       )}
@@ -322,7 +332,7 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
       {/* Delete Confirmation */}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setDeleteConfirm(null)} />
+          <div className="absolute inset-0 bg-black/50" onClick={handleCloseDeleteConfirm} />
           <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6">
             <h3 className="text-lg font-semibold mb-2">Delete Template</h3>
             <p className="text-gray-600 mb-4">
@@ -330,7 +340,7 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
             </p>
             <div className="flex justify-end gap-3">
               <button
-                onClick={() => setDeleteConfirm(null)}
+                onClick={handleCloseDeleteConfirm}
                 className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
               >
                 Cancel
@@ -348,4 +358,4 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
       )}
     </div>
   );
-}
+})

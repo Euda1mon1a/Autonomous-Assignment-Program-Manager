@@ -23,6 +23,7 @@ from app.core.config import get_settings
 from app.core.security import create_access_token, get_password_hash
 from app.db.session import get_async_db
 from app.models.user import User
+from app.schemas.sso import ProvidersResponse, SSOStatusResponse
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +99,7 @@ class SSOSessionState(BaseModel):
 _sso_sessions: dict[str, SSOSessionState] = {}
 
 
-def get_or_create_user(db: Session, attributes: dict[str, str], provider: str) -> User:
+async def get_or_create_user(db: AsyncSession, attributes: dict[str, str], provider: str) -> User:
     """
     Get existing user or create new user (JIT provisioning).
 
@@ -237,7 +238,17 @@ def create_session(response: Response, user: User) -> dict:
 # SAML Routes
 
 
-@router.get("/saml/metadata")
+@router.get(
+    "/saml/metadata",
+    summary="Get SAML Service Provider metadata",
+    description="Returns the Service Provider metadata XML for Identity Provider configuration. "
+    "This endpoint provides the SP metadata required to configure the SAML Identity Provider.",
+    tags=["SSO - SAML"],
+    responses={
+        200: {"description": "SP metadata XML"},
+        404: {"description": "SAML authentication not enabled"},
+    },
+)
 async def saml_metadata():
     """
     Get SAML Service Provider metadata.
@@ -256,7 +267,17 @@ async def saml_metadata():
     return Response(content=metadata_xml, media_type="application/xml")
 
 
-@router.get("/saml/login")
+@router.get(
+    "/saml/login",
+    summary="Initiate SAML login flow",
+    description="Starts the SAML authentication flow by redirecting the user to the Identity Provider "
+    "for authentication. After successful authentication, user is redirected back to the relay_state URL.",
+    tags=["SSO - SAML"],
+    responses={
+        302: {"description": "Redirect to IdP login page"},
+        404: {"description": "SAML authentication not enabled"},
+    },
+)
 async def saml_login(relay_state: str | None = None):
     """
     Initiate SAML login flow.
@@ -285,7 +306,21 @@ async def saml_login(relay_state: str | None = None):
     return RedirectResponse(url=redirect_url)
 
 
-@router.post("/saml/acs")
+@router.post(
+    "/saml/acs",
+    summary="SAML Assertion Consumer Service endpoint",
+    description="Receives and validates SAML responses from the Identity Provider. Creates or updates "
+    "user accounts (JIT provisioning) and establishes authenticated sessions. This is the callback URL "
+    "configured in your IdP.",
+    tags=["SSO - SAML"],
+    responses={
+        200: {"description": "Authentication successful, redirecting to application"},
+        400: {"description": "Invalid SAML response or validation failed"},
+        403: {"description": "User does not exist and auto-provisioning is disabled"},
+        404: {"description": "SAML authentication not enabled"},
+        500: {"description": "User creation failed"},
+    },
+)
 async def saml_acs(
     request: Request,
     response: Response,
@@ -330,7 +365,7 @@ async def saml_acs(
     attributes = saml_data["attributes"]
 
     # Get or create user
-    user = get_or_create_user(db, attributes, "saml")
+    user = await get_or_create_user(db, attributes, "saml")
 
     # Create session
     session_data = create_session(response, user)
@@ -356,7 +391,17 @@ async def saml_acs(
     return HTMLResponse(content=html_content)
 
 
-@router.get("/saml/logout")
+@router.get(
+    "/saml/logout",
+    summary="Initiate SAML logout flow",
+    description="Starts the SAML Single Logout (SLO) flow by redirecting the user to the Identity Provider "
+    "for logout. This terminates both the local and IdP sessions.",
+    tags=["SSO - SAML"],
+    responses={
+        302: {"description": "Redirect to IdP logout page"},
+        404: {"description": "SAML authentication not enabled"},
+    },
+)
 async def saml_logout(name_id: str, session_index: str | None = None):
     """
     Initiate SAML logout flow.
@@ -378,7 +423,17 @@ async def saml_logout(name_id: str, session_index: str | None = None):
 # OAuth2/OIDC Routes
 
 
-@router.get("/oauth2/login")
+@router.get(
+    "/oauth2/login",
+    summary="Initiate OAuth2/OIDC login flow",
+    description="Starts the OAuth2 or OpenID Connect authentication flow by redirecting the user to the "
+    "configured OAuth2 provider. Uses PKCE (Proof Key for Code Exchange) for enhanced security.",
+    tags=["SSO - OAuth2"],
+    responses={
+        302: {"description": "Redirect to OAuth2 provider authorization page"},
+        404: {"description": "OAuth2 authentication not enabled"},
+    },
+)
 async def oauth2_login(redirect_uri: str | None = None):
     """
     Initiate OAuth2/OIDC login flow.
@@ -409,7 +464,21 @@ async def oauth2_login(redirect_uri: str | None = None):
     return RedirectResponse(url=auth_data["authorization_url"])
 
 
-@router.get("/oauth2/callback")
+@router.get(
+    "/oauth2/callback",
+    summary="OAuth2/OIDC callback endpoint",
+    description="Receives the authorization code from the OAuth2 provider, exchanges it for access and ID tokens, "
+    "validates the ID token (if OIDC), retrieves user information, and creates or updates the user session. "
+    "This is the redirect URI configured in your OAuth2 application.",
+    tags=["SSO - OAuth2"],
+    responses={
+        302: {"description": "Authentication successful, redirecting to application"},
+        400: {"description": "Invalid state, authorization code, or token validation failed"},
+        403: {"description": "User does not exist and auto-provisioning is disabled"},
+        404: {"description": "OAuth2 authentication not enabled"},
+        500: {"description": "User creation failed"},
+    },
+)
 async def oauth2_callback(
     request: Request,
     response: Response,
@@ -477,7 +546,7 @@ async def oauth2_callback(
     attributes = provider.map_claims_to_user(userinfo)
 
     # Get or create user
-    user = get_or_create_user(db, attributes, "oauth2")
+    user = await get_or_create_user(db, attributes, "oauth2")
 
     # Create session
     session_data = create_session(response, user)
@@ -492,7 +561,35 @@ async def oauth2_callback(
     return RedirectResponse(url=redirect_url)
 
 
-@router.get("/providers")
+@router.get(
+    "/providers",
+    response_model=ProvidersResponse,
+    summary="List available SSO providers",
+    description="Returns information about all enabled SSO providers (SAML, OAuth2) including their login URLs "
+    "and configuration details. Use this endpoint to dynamically discover available authentication methods.",
+    tags=["SSO - Configuration"],
+    responses={
+        200: {
+            "description": "List of enabled SSO providers with configuration",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "providers": [
+                            {
+                                "type": "saml",
+                                "name": "SAML 2.0",
+                                "login_url": "/api/sso/saml/login",
+                                "metadata_url": "/api/sso/saml/metadata",
+                            }
+                        ],
+                        "sso_enabled": True,
+                        "local_auth_enabled": True,
+                    }
+                }
+            },
+        }
+    },
+)
 async def list_providers():
     """
     List available SSO providers.
@@ -527,7 +624,32 @@ async def list_providers():
     }
 
 
-@router.get("/status")
+@router.get(
+    "/status",
+    response_model=SSOStatusResponse,
+    summary="Get SSO configuration status",
+    description="Returns the current SSO configuration status including enabled providers, auto-provisioning "
+    "settings, and default role assignments. Useful for administrative monitoring and troubleshooting.",
+    tags=["SSO - Configuration"],
+    responses={
+        200: {
+            "description": "Current SSO configuration status",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "enabled": True,
+                        "active_providers": ["saml", "oauth2"],
+                        "auto_provision_users": True,
+                        "allow_local_fallback": True,
+                        "default_role": "resident",
+                        "saml_enabled": True,
+                        "oauth2_enabled": True,
+                    }
+                }
+            },
+        }
+    },
+)
 async def sso_status():
     """
     Get SSO configuration status.

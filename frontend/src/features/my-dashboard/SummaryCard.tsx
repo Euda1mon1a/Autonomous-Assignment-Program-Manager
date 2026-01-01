@@ -8,7 +8,7 @@
  * workload, and pending swap counts.
  */
 
-import { ReactNode } from 'react';
+import { ReactNode, memo } from 'react';
 import { LucideIcon } from 'lucide-react';
 
 // ============================================================================
@@ -29,7 +29,7 @@ interface SummaryCardProps {
 // Component
 // ============================================================================
 
-export function SummaryCard({
+export const SummaryCard = memo(function SummaryCard({
   title,
   value,
   icon: Icon,
@@ -72,4 +72,4 @@ export function SummaryCard({
       </div>
     </div>
   );
-}
+});

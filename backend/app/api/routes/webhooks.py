@@ -11,8 +11,8 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_current_active_user
 from app.db.session import get_async_db
@@ -80,7 +80,7 @@ async def create_webhook(
         return webhook
     except ValueError as e:
         logger.error(f"Validation error creating webhook: {e}", exc_info=True)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid webhook data")
     except (TypeError, KeyError) as e:
         logger.error(f"Data error creating webhook: {e}", exc_info=True)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid webhook data")

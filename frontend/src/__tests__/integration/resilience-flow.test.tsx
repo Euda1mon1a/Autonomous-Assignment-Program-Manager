@@ -356,7 +356,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
       setupApiMock({ warnings })
 
       const result = await mockedApi.get('/api/resilience/warnings')
-      const types = new Set(result.items.map((w: any) => w.type))
+      const types = new Set(result.items.map((w: { type: string }) => w.type))
       expect(types.size).toBe(3)
     })
 
@@ -370,7 +370,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
       setupApiMock({ warnings })
 
       const result = await mockedApi.get('/api/resilience/warnings')
-      const critical = result.items.filter((w: any) => w.severity === 'critical')
+      const critical = result.items.filter((w: { severity: string }) => w.severity === 'critical')
       expect(critical).toHaveLength(1)
     })
 
@@ -707,7 +707,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
       })
 
       const result = await mockedApi.get('/api/resilience/hub-analysis')
-      const hubs = result.hubs.filter((h: any) => h.is_hub)
+      const hubs = result.hubs.filter((h: { is_hub: boolean }) => h.is_hub)
       expect(hubs).toHaveLength(1)
     })
 

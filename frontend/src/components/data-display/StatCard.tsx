@@ -48,13 +48,13 @@ export function StatCard({
   loading = false,
   className = '',
 }: StatCardProps) {
-  const getTrendIcon = () => {
+  const getTrendIcon = (): JSX.Element => {
     if (trend === 'up') return <TrendingUp className="w-4 h-4" />;
     if (trend === 'down') return <TrendingDown className="w-4 h-4" />;
     return <Minus className="w-4 h-4" />;
   };
 
-  const getTrendColor = () => {
+  const getTrendColor = (): string => {
     if (trend === 'up') return 'text-green-600';
     if (trend === 'down') return 'text-red-600';
     return 'text-gray-600';

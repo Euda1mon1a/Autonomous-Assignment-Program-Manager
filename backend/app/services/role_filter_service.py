@@ -15,7 +15,7 @@ Role definitions (from PROJECT_STATUS_ASSESSMENT.md):
 
 from datetime import date
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 
 class UserRole(str, Enum):

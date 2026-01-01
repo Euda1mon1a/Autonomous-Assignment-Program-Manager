@@ -136,7 +136,7 @@ async def upload_file(
         logger.warning(f"Upload validation failed: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Upload validation failed",
         )
     except Exception as e:
         logger.error(f"Upload failed: {e}", exc_info=True)

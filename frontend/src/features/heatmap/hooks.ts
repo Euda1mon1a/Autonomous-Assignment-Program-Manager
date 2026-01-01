@@ -219,10 +219,10 @@ export function useDownloadHeatmap() {
 /**
  * Prefetch heatmap data for better UX
  */
-export function usePrefetchHeatmap() {
+export function usePrefetchHeatmap(): (filters: HeatmapFilters) => void {
   const queryClient = useQueryClient();
 
-  return (filters: HeatmapFilters) => {
+  return (filters: HeatmapFilters): void => {
     const queryString = buildQueryString(filters);
     queryClient.prefetchQuery({
       queryKey: heatmapQueryKeys.custom(filters),
@@ -236,10 +236,10 @@ export function usePrefetchHeatmap() {
 /**
  * Invalidate all heatmap queries (useful after schedule changes)
  */
-export function useInvalidateHeatmaps() {
+export function useInvalidateHeatmaps(): () => void {
   const queryClient = useQueryClient();
 
-  return () => {
+  return (): void => {
     queryClient.invalidateQueries({ queryKey: heatmapQueryKeys.all });
   };
 }

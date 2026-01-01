@@ -198,14 +198,14 @@ export const EarlyWarningPanel: React.FC<EarlyWarningPanelProps> = ({
                       <h4 className="text-sm font-semibold mb-2">Trend Data</h4>
                       <div className="flex items-end justify-around h-24 gap-1">
                         {warning.trend.map((point, idx) => {
-                          const maxValue = Math.max(...warning.trend!.map(p => p.value));
+                          const maxValue = Math.max(...(warning.trend?.map(p => p.value) ?? [0]));
                           const height = (point.value / maxValue) * 100;
 
                           return (
                             <div key={idx} className="flex-1 flex flex-col items-center">
                               <div
                                 className={`w-full rounded-t transition-all ${
-                                  idx === warning.trend!.length - 1
+                                  idx === (warning.trend?.length ?? 0) - 1
                                     ? 'bg-red-500'
                                     : 'bg-blue-400'
                                 }`}

@@ -10,8 +10,8 @@ Provides endpoints for bulk assignment operations:
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_current_active_user, get_scheduler_user
 from app.db.session import get_async_db

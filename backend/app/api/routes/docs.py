@@ -34,7 +34,29 @@ def _get_doc_generator(request: Request) -> DocumentationGenerator:
     return request.app.state.doc_generator
 
 
-@router.get("/openapi-enhanced.json")
+@router.get(
+    "/openapi-enhanced.json",
+    summary="Get Enhanced OpenAPI Schema",
+    description="Returns an enhanced OpenAPI 3.0 schema with comprehensive examples, detailed metadata, and extended documentation for all API endpoints. Includes code examples and error documentation.",
+    tags=["Documentation"],
+    responses={
+        200: {
+            "description": "Enhanced OpenAPI schema retrieved successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "openapi": "3.0.0",
+                        "info": {"title": "Residency Scheduler API", "version": "1.0.0"},
+                        "paths": {}
+                    }
+                }
+            }
+        },
+        500: {
+            "description": "Failed to generate enhanced OpenAPI schema"
+        }
+    }
+)
 async def get_enhanced_openapi(request: Request) -> JSONResponse:
     """
     Get enhanced OpenAPI schema with examples and metadata.
@@ -59,7 +81,25 @@ async def get_enhanced_openapi(request: Request) -> JSONResponse:
         )
 
 
-@router.get("/markdown")
+@router.get(
+    "/markdown",
+    summary="Get Markdown Documentation",
+    description="Returns complete API documentation in Markdown format. Includes all endpoints, request/response schemas, code examples, and error handling documentation. Ideal for integration into static documentation sites.",
+    tags=["Documentation"],
+    responses={
+        200: {
+            "description": "Markdown documentation generated successfully",
+            "content": {
+                "text/plain": {
+                    "example": "# Residency Scheduler API\n\n## Endpoints\n\n### GET /api/v1/people\n..."
+                }
+            }
+        },
+        500: {
+            "description": "Failed to generate Markdown documentation"
+        }
+    }
+)
 async def get_markdown_docs(request: Request) -> PlainTextResponse:
     """
     Get complete API documentation in Markdown format.
@@ -84,7 +124,30 @@ async def get_markdown_docs(request: Request) -> PlainTextResponse:
         )
 
 
-@router.get("/endpoint")
+@router.get(
+    "/endpoint",
+    summary="Get Endpoint Documentation",
+    description="Returns detailed documentation for a specific API endpoint including request/response schemas, parameters, authentication requirements, and code examples. Output can be formatted as Markdown or JSON.",
+    tags=["Documentation"],
+    responses={
+        200: {
+            "description": "Endpoint documentation retrieved successfully",
+            "content": {
+                "text/plain": {
+                    "example": "## GET /api/v1/people\n\nReturns a list of all people..."
+                },
+                "application/json": {
+                    "example": {
+                        "documentation": "## GET /api/v1/people\n\nReturns a list of all people..."
+                    }
+                }
+            }
+        },
+        500: {
+            "description": "Failed to generate endpoint documentation"
+        }
+    }
+)
 async def get_endpoint_documentation(
     request: Request,
     path: str = Query(..., description="API path (e.g., /api/v1/people)"),
@@ -129,7 +192,29 @@ async def get_endpoint_documentation(
         )
 
 
-@router.get("/examples")
+@router.get(
+    "/examples",
+    summary="Get Code Examples",
+    description="Returns ready-to-use code examples for a specific endpoint in multiple programming languages (Python, JavaScript, TypeScript, curl). Examples include authentication, error handling, and proper request formatting.",
+    tags=["Documentation"],
+    responses={
+        200: {
+            "description": "Code examples retrieved successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "python": "import requests\n\nresponse = requests.get('http://localhost:8000/api/v1/people')",
+                        "javascript": "fetch('http://localhost:8000/api/v1/people')",
+                        "curl": "curl http://localhost:8000/api/v1/people"
+                    }
+                }
+            }
+        },
+        500: {
+            "description": "Failed to generate code examples"
+        }
+    }
+)
 async def get_code_examples(
     request: Request,
     path: str = Query(..., description="API path (e.g., /api/v1/people)"),
@@ -171,7 +256,31 @@ async def get_code_examples(
         raise HTTPException(status_code=500, detail="Failed to generate code examples")
 
 
-@router.get("/errors")
+@router.get(
+    "/errors",
+    summary="Get Error Documentation",
+    description="Returns comprehensive documentation for all API error codes including HTTP status codes, error messages, common causes, and resolution strategies. Useful for debugging and error handling implementation.",
+    tags=["Documentation"],
+    responses={
+        200: {
+            "description": "Error documentation retrieved successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "400": {
+                            "description": "Bad Request",
+                            "common_causes": ["Invalid input", "Missing required field"],
+                            "example": {"detail": "Invalid request payload"}
+                        }
+                    }
+                }
+            }
+        },
+        500: {
+            "description": "Failed to generate error documentation"
+        }
+    }
+)
 async def get_error_documentation(request: Request) -> JSONResponse:
     """
     Get comprehensive error code documentation.
@@ -221,7 +330,30 @@ async def get_changelog(request: Request) -> PlainTextResponse:
         raise HTTPException(status_code=500, detail="Failed to generate changelog")
 
 
-@router.get("/version")
+@router.get(
+    "/version",
+    summary="Get API Version Information",
+    description="Returns API versioning information including current version, supported versions, deprecated versions, and sunset schedules. Critical for maintaining API compatibility and planning migrations.",
+    tags=["Documentation"],
+    responses={
+        200: {
+            "description": "Version information retrieved successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "current": "v1",
+                        "supported": ["v1"],
+                        "deprecated": [],
+                        "sunset": []
+                    }
+                }
+            }
+        },
+        500: {
+            "description": "Failed to get version information"
+        }
+    }
+)
 async def get_version_info(request: Request) -> JSONResponse:
     """
     Get API versioning information.
@@ -255,7 +387,39 @@ async def get_version_info(request: Request) -> JSONResponse:
         raise HTTPException(status_code=500, detail="Failed to get version information")
 
 
-@router.get("/stats")
+@router.get(
+    "/stats",
+    summary="Get Documentation Statistics",
+    description="Returns comprehensive statistics about the API including total endpoints, HTTP methods distribution, tags, schemas, and error codes. Useful for API inventory and coverage analysis.",
+    tags=["Documentation"],
+    responses={
+        200: {
+            "description": "Documentation statistics retrieved successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "total_endpoints": 150,
+                        "methods": {
+                            "get": 80,
+                            "post": 40,
+                            "put": 15,
+                            "patch": 10,
+                            "delete": 5
+                        },
+                        "tags": ["people", "assignments", "schedule"],
+                        "total_tags": 25,
+                        "schemas": 50,
+                        "error_codes": 8,
+                        "security_schemes": 1
+                    }
+                }
+            }
+        },
+        500: {
+            "description": "Failed to generate documentation statistics"
+        }
+    }
+)
 async def get_documentation_stats(request: Request) -> JSONResponse:
     """
     Get statistics about the API documentation.
@@ -382,7 +546,31 @@ async def export_markdown_documentation(
         )
 
 
-@router.get("/")
+@router.get(
+    "/",
+    summary="Documentation Index",
+    description="Returns an index of all available documentation endpoints including OpenAPI schema, Markdown docs, code examples, error documentation, and more. Serves as the entry point for API documentation discovery.",
+    tags=["Documentation"],
+    responses={
+        200: {
+            "description": "Documentation index retrieved successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "title": "API Documentation Endpoints",
+                        "description": "Enhanced API documentation generator",
+                        "endpoints": {
+                            "/openapi-enhanced.json": {
+                                "description": "Enhanced OpenAPI 3.0 schema",
+                                "method": "GET"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+)
 async def documentation_index(request: Request) -> JSONResponse:
     """
     Get an index of available documentation endpoints.

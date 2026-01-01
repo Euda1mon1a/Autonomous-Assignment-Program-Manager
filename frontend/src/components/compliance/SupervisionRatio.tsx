@@ -38,7 +38,12 @@ export const SupervisionRatio: React.FC<SupervisionRatioProps> = ({
   const isWarning = current > required * 0.9;
   const utilizationPercent = (current / required) * 100;
 
-  const getStatus = () => {
+  const getStatus = (): {
+    color: string;
+    progressColor: string;
+    icon: string;
+    label: string;
+  } => {
     if (isViolation) return {
       color: 'bg-red-100 border-red-500 text-red-900',
       progressColor: 'bg-red-500',

@@ -135,7 +135,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
   // Update Progress
   // ============================================================================
 
-  const updateProgress = useCallback((updates: Partial<ImportProgress>) => {
+  const updateProgress = useCallback((updates: Partial<ImportProgress>): void => {
     setState(prev => {
       const newProgress = { ...prev.progress, ...updates };
       hookOptions.onProgress?.(newProgress);
@@ -507,7 +507,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
   // Cancel Import
   // ============================================================================
 
-  const cancelImport = useCallback(() => {
+  const cancelImport = useCallback((): void => {
     abortControllerRef.current?.abort();
     updateProgress({
       status: 'idle',
@@ -519,7 +519,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
   // Reset State
   // ============================================================================
 
-  const reset = useCallback(() => {
+  const reset = useCallback((): void => {
     abortControllerRef.current?.abort();
     setState({
       file: null,
@@ -548,7 +548,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
   // Update Options
   // ============================================================================
 
-  const updateOptions = useCallback((options: Partial<ImportOptions>) => {
+  const updateOptions = useCallback((options: Partial<ImportOptions>): void => {
     setState(prev => ({
       ...prev,
       options: { ...prev.options, ...options },
@@ -559,7 +559,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
   // Set Data Type
   // ============================================================================
 
-  const setDataType = useCallback((dataType: ImportDataType) => {
+  const setDataType = useCallback((dataType: ImportDataType): void => {
     setState(prev => ({ ...prev, dataType, dataTypeSource: 'manual' }));
   }, []);
 

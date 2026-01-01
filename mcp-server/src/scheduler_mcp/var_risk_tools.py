@@ -26,10 +26,9 @@ import logging
 import random
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
-
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -370,8 +369,6 @@ async def calculate_coverage_var(request: CoverageVaRRequest) -> CoverageVaRResp
         },
     )
 
-    now = datetime.utcnow()
-
     try:
         # Import API client for backend communication
         from .api_client import get_api_client
@@ -405,21 +402,69 @@ async def calculate_coverage_var(request: CoverageVaRRequest) -> CoverageVaRResp
 
 def _calculate_coverage_var_placeholder(request: CoverageVaRRequest) -> CoverageVaRResponse:
     """
-    Placeholder implementation of coverage VaR calculation.
+    Placeholder implementation of coverage VaR calculation using synthetic data.
 
-    Generates synthetic coverage drop scenarios for demonstration.
+    **IMPORTANT: This is a fallback implementation for demonstration/testing.**
+
+    BACKEND IMPLEMENTATION REQUIREMENTS:
+    =====================================================================
+    The backend endpoint `/api/v1/analytics/coverage-var` should:
+
+    1. **Query Historical Coverage Data:**
+       - Fetch actual coverage rates for the specified date range
+       - Filter by rotation_types if provided
+       - Calculate coverage = covered_blocks / total_blocks per day
+
+    2. **Calculate Coverage Drops:**
+       - Compute daily coverage degradation from baseline
+       - baseline_coverage = mean(coverage) over historical_days
+       - coverage_drop[i] = max(0, baseline_coverage - coverage[i])
+
+    3. **Compute VaR at Confidence Levels:**
+       - For each confidence_level in request.confidence_levels:
+         * VaR = percentile(coverage_drops, confidence_level)
+         * This answers: "With X% confidence, coverage won't drop more than VaR"
+
+    4. **Identify Risk Factors:**
+       - Track which rotation types contribute most to coverage drops
+       - Identify temporal patterns (weekends, holidays, etc.)
+
+    5. **Generate Recommendations:**
+       - If VaR_95 > 20%: CRITICAL - major vulnerability
+       - If VaR_95 > 10%: HIGH - implement contingency
+       - If VaR_95 > 5%: MODERATE - monitor closely
+
+    Dependencies:
+    - Database tables: assignments, blocks, persons, rotations
+    - Functions: calculate_var(), classify_risk_severity()
+
+    Returns:
+        CoverageVaRResponse with synthetic data (clearly marked as placeholder)
+
+    Raises:
+        None - This fallback always succeeds with synthetic data
     """
+    logger.warning(
+        "Using placeholder coverage VaR calculation - backend unavailable",
+        extra={
+            "note": "Synthetic data generation for demonstration only",
+            "backend_endpoint": "/api/v1/analytics/coverage-var",
+        },
+    )
+
     # Simulate historical coverage drops
     random.seed(42)  # Reproducible for demo
     num_scenarios = request.historical_days
 
     # Generate synthetic coverage drops (as percentages)
     # Most scenarios have small drops, some have larger drops (heavy tail)
+    # This mimics real-world distribution where most days are fine but
+    # occasional stress events cause significant coverage degradation
     coverage_drops = []
     for _ in range(num_scenarios):
         # Exponential distribution with mean 5% drop
         drop = random.expovariate(1.0 / 0.05)
-        # Cap at 50% maximum drop
+        # Cap at 50% maximum drop (catastrophic but not total collapse)
         drop = min(drop, 0.50)
         coverage_drops.append(drop)
 
@@ -513,27 +558,85 @@ async def calculate_workload_var(request: WorkloadVaRRequest) -> WorkloadVaRResp
 
 
 def _calculate_workload_var_placeholder(request: WorkloadVaRRequest) -> WorkloadVaRResponse:
-    """Placeholder implementation of workload VaR calculation."""
+    """
+    Placeholder implementation of workload VaR calculation using synthetic data.
+
+    **IMPORTANT: This is a fallback implementation for demonstration/testing.**
+
+    BACKEND IMPLEMENTATION REQUIREMENTS:
+    =====================================================================
+    The backend endpoint `/api/v1/analytics/workload-var` should:
+
+    1. **Query Historical Workload Data:**
+       - Fetch assignment hours per person for date range
+       - Calculate daily/weekly workload per person
+       - Aggregate by specified metric (gini_coefficient, max_hours, variance)
+
+    2. **Calculate Workload Metrics:**
+       - **gini_coefficient**: Measure workload inequality
+         * 0 = perfect equality, 1 = maximum inequality
+         * Gini = (sum of absolute differences) / (2 * n * mean)
+       - **max_hours**: Maximum weekly hours for any person
+       - **variance**: Variance of hours across all persons
+
+    3. **Compute VaR at Confidence Levels:**
+       - For each confidence_level in request.confidence_levels:
+         * VaR = percentile(metric_values, confidence_level)
+         * This answers: "With X% confidence, metric won't exceed VaR"
+
+    4. **Identify Workload Hotspots:**
+       - Which persons consistently have high workload?
+       - Which rotation types correlate with inequality?
+       - Temporal patterns (weeks with spikes)
+
+    5. **Generate Recommendations:**
+       - Gini > 0.35: CRITICAL inequality - workload rebalancing needed
+       - Max hours > 75: CRITICAL ACGME risk
+       - High variance: Consider workload constraints in scheduler
+
+    Dependencies:
+    - Database tables: assignments, persons, blocks
+    - Functions: calculate_gini(), calculate_var(), classify_risk_severity()
+
+    Returns:
+        WorkloadVaRResponse with synthetic data (clearly marked as placeholder)
+
+    Raises:
+        None - This fallback always succeeds with synthetic data
+    """
+    logger.warning(
+        "Using placeholder workload VaR calculation - backend unavailable",
+        extra={
+            "note": "Synthetic data generation for demonstration only",
+            "backend_endpoint": "/api/v1/analytics/workload-var",
+            "metric": request.metric,
+        },
+    )
+
     random.seed(42)
     num_scenarios = 90  # 90 days of history
 
     # Generate synthetic workload metric values
-    # Gini coefficient: 0 = perfect equality, 1 = maximum inequality
+    # Distributions chosen to mimic realistic workload patterns
     if request.metric == "gini_coefficient":
+        # Beta(2, 5) gives realistic inequality distribution
+        # Gini coefficient: 0 = perfect equality, 1 = maximum inequality
         metric_values = [random.betavariate(2, 5) for _ in range(num_scenarios)]
-        baseline_value = 0.15
-        threshold_moderate = 0.25
-        threshold_high = 0.35
+        baseline_value = 0.15  # Healthy baseline
+        threshold_moderate = 0.25  # Noticeable inequality
+        threshold_high = 0.35  # Severe inequality
     elif request.metric == "max_hours":
+        # Normal distribution centered at 65 hours/week
         metric_values = [random.normalvariate(65, 10) for _ in range(num_scenarios)]
-        baseline_value = 60.0
-        threshold_moderate = 70.0
-        threshold_high = 75.0
+        baseline_value = 60.0  # Target workload
+        threshold_moderate = 70.0  # Approaching ACGME limit
+        threshold_high = 75.0  # CRITICAL - near 80hr violation
     else:  # variance
+        # Gamma distribution for variance (always positive)
         metric_values = [random.gammavariate(2, 50) for _ in range(num_scenarios)]
-        baseline_value = 80.0
-        threshold_moderate = 120.0
-        threshold_high = 150.0
+        baseline_value = 80.0  # Acceptable variance
+        threshold_moderate = 120.0  # High variance
+        threshold_high = 150.0  # Extreme variance
 
     var_metrics = []
     for confidence in request.confidence_levels:
@@ -722,17 +825,78 @@ async def calculate_conditional_var(
 def _calculate_conditional_var_placeholder(
     request: ConditionalVaRRequest,
 ) -> ConditionalVaRResponse:
-    """Placeholder implementation of CVaR calculation."""
+    """
+    Placeholder implementation of CVaR calculation using synthetic data.
+
+    **IMPORTANT: This is a fallback implementation for demonstration/testing.**
+
+    BACKEND IMPLEMENTATION REQUIREMENTS:
+    =====================================================================
+    The backend endpoint `/api/v1/analytics/conditional-var` should:
+
+    1. **Query Historical Loss Data:**
+       - Fetch historical values for specified loss_metric:
+         * **coverage_drop**: Daily coverage degradation from baseline
+         * **workload_spike**: Maximum workload increase above baseline
+         * **acgme_violations**: Count of ACGME violations per week
+
+    2. **Calculate VaR:**
+       - VaR = percentile(losses, confidence_level)
+       - This is the threshold that X% of scenarios don't exceed
+
+    3. **Calculate CVaR (Expected Shortfall):**
+       - CVaR = mean(losses WHERE loss >= VaR)
+       - This is the average loss in the worst (1-X)% of scenarios
+       - CVaR always >= VaR (measures tail risk)
+
+    4. **Tail Analysis:**
+       - Count scenarios in tail (losses >= VaR)
+       - Calculate tail statistics (mean, std, max)
+       - Identify common factors in tail scenarios
+
+    5. **Generate Recommendations:**
+       - CVaR significantly > VaR: Fat-tailed distribution, need defense in depth
+       - High tail variance: Unpredictable worst cases, need robust contingency
+       - Coverage CVaR > 30%: CRITICAL system vulnerability
+
+    Mathematical Background:
+    - VaR answers: "What's the maximum loss in 95% of cases?"
+    - CVaR answers: "What's the average loss in the worst 5% of cases?"
+    - CVaR is a coherent risk measure (VaR is not)
+
+    Dependencies:
+    - Database tables: assignments, blocks, acgme_violations
+    - Functions: calculate_var(), calculate_cvar()
+
+    Returns:
+        ConditionalVaRResponse with synthetic data (clearly marked as placeholder)
+
+    Raises:
+        None - This fallback always succeeds with synthetic data
+    """
+    logger.warning(
+        "Using placeholder CVaR calculation - backend unavailable",
+        extra={
+            "note": "Synthetic data generation for demonstration only",
+            "backend_endpoint": "/api/v1/analytics/conditional-var",
+            "loss_metric": request.loss_metric,
+        },
+    )
+
     random.seed(42)
     num_scenarios = 1000
 
     # Generate loss scenarios based on metric
+    # Distributions chosen to mimic realistic loss patterns with fat tails
     if request.loss_metric == "coverage_drop":
+        # Exponential distribution with mean 8% drop (fat tail)
         losses = [random.expovariate(1.0 / 0.08) for _ in range(num_scenarios)]
-        losses = [min(loss, 0.60) for loss in losses]  # Cap at 60%
+        losses = [min(loss, 0.60) for loss in losses]  # Cap at 60% (catastrophic but not total)
     elif request.loss_metric == "workload_spike":
+        # Gamma distribution for workload spikes (always positive, right-skewed)
         losses = [random.gammavariate(2, 0.15) for _ in range(num_scenarios)]
     else:  # acgme_violations
+        # Poisson distribution for count data (violations per week)
         losses = [float(np.random.poisson(3)) for _ in range(num_scenarios)]
 
     # Calculate VaR and CVaR

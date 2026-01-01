@@ -12,8 +12,8 @@ from typing import Any
 from uuid import UUID
 
 import networkx as nx
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.swap import SwapRecord, SwapStatus, SwapType
 from app.models.person import Person

@@ -1,5 +1,6 @@
 """Enhanced auto-matching service for FMIT swap requests."""
 
+import logging
 from datetime import date, datetime, timedelta
 from uuid import UUID, uuid4
 
@@ -23,6 +24,8 @@ from app.schemas.swap_matching import (
 )
 from app.services.faculty_preference_service import FacultyPreferenceService
 from app.services.swap_validation import SwapValidationService
+
+logger = logging.getLogger(__name__)
 
 
 class SwapAutoMatcher:
@@ -304,8 +307,12 @@ class SwapAutoMatcher:
                 else:
                     no_matches.append(request.id)
 
-            except Exception:
+            except Exception as e:
                 # Log error but continue processing
+                logger.error(
+                    f"Error processing swap request {request.id} in batch: {e}",
+                    exc_info=True,
+                )
                 no_matches.append(request.id)
                 continue
 
@@ -485,7 +492,16 @@ class SwapAutoMatcher:
     def _create_swap_match(
         self, request_a: SwapRecord, request_b: SwapRecord
     ) -> SwapMatch:
-        """Create a SwapMatch object from two requests."""
+        """
+        Create a SwapMatch object from two requests.
+
+        Args:
+            request_a: First swap request
+            request_b: Second swap request
+
+        Returns:
+            SwapMatch object representing the match between the two requests
+        """
         faculty_a = self._get_faculty(request_a.source_faculty_id)
         faculty_b = self._get_faculty(request_b.source_faculty_id)
 
@@ -530,8 +546,12 @@ class SwapAutoMatcher:
         """
         Score based on date proximity (closer dates = higher score).
 
+        Args:
+            request_a: First swap request
+            request_b: Second swap request
+
         Returns:
-            Score between 0.0 and 1.0
+            Score between 0.0 and 1.0, where 1.0 means dates are very close
         """
         days_apart = abs((request_a.source_week - request_b.source_week).days)
 
@@ -551,8 +571,12 @@ class SwapAutoMatcher:
         """
         Score based on preference alignment.
 
+        Args:
+            request_a: First swap request
+            request_b: Second swap request
+
         Returns:
-            Score between 0.0 and 1.0
+            Score between 0.0 and 1.0, where 1.0 means perfect alignment
         """
         # Use the existing preference service logic
         return self.preference_service._score_preference_alignment(request_a, request_b)
@@ -563,8 +587,12 @@ class SwapAutoMatcher:
         """
         Score based on workload balance considerations.
 
+        Args:
+            request_a: First swap request
+            request_b: Second swap request
+
         Returns:
-            Score between 0.0 and 1.0
+            Score between 0.0 and 1.0, where 1.0 means excellent balance
         """
         # Use the existing preference service logic
         return self.preference_service._score_workload_balance(request_a, request_b)
@@ -654,8 +682,12 @@ class SwapAutoMatcher:
         """
         Score based on faculty availability verification.
 
+        Args:
+            request_a: First swap request
+            request_b: Second swap request
+
         Returns:
-            Score between 0.0 and 1.0
+            Score between 0.0 and 1.0, where 1.0 means full mutual availability
         """
         score = 0.0
 
@@ -697,8 +729,12 @@ class SwapAutoMatcher:
         """
         Check for blocking constraints and return a penalty multiplier.
 
+        Args:
+            request_a: First swap request
+            request_b: Second swap request
+
         Returns:
-            Multiplier between 0.0 and 1.0 (1.0 = no penalty)
+            Multiplier between 0.0 and 1.0 (1.0 = no penalty, 0.0 = complete penalty)
         """
         # Check if either party has blocked the week they would receive
         a_blocks_b = self.preference_service.is_week_blocked(
@@ -716,7 +752,17 @@ class SwapAutoMatcher:
     def _determine_priority(
         self, score: float, request_a: SwapRecord, request_b: SwapRecord
     ) -> MatchPriority:
-        """Determine priority level for a match."""
+        """
+        Determine priority level for a match.
+
+        Args:
+            score: Compatibility score between the requests
+            request_a: First swap request
+            request_b: Second swap request
+
+        Returns:
+            MatchPriority enum value (CRITICAL, HIGH, MEDIUM, or LOW)
+        """
         # Check for urgent situations (blocked weeks)
         a_blocked = self.preference_service.is_week_blocked(
             request_a.source_faculty_id, request_a.source_week
@@ -742,7 +788,18 @@ class SwapAutoMatcher:
         scoring: ScoringBreakdown,
         is_mutual: bool,
     ) -> str:
-        """Generate human-readable explanation for the match."""
+        """
+        Generate human-readable explanation for the match.
+
+        Args:
+            request_a: First swap request
+            request_b: Second swap request
+            scoring: Detailed scoring breakdown
+            is_mutual: Whether this is a mutual match
+
+        Returns:
+            Human-readable explanation string
+        """
         reasons = []
 
         if is_mutual:
@@ -775,6 +832,11 @@ class SwapAutoMatcher:
         """
         Estimate probability both parties will accept the swap.
 
+        Args:
+            request_a: First swap request
+            request_b: Second swap request
+            compatibility_score: Calculated compatibility score
+
         Returns:
             Probability between 0.0 and 1.0
         """
@@ -803,7 +865,16 @@ class SwapAutoMatcher:
     def _determine_recommended_action(
         self, priority: MatchPriority, acceptance_prob: float
     ) -> str:
-        """Determine the recommended action for a match."""
+        """
+        Determine the recommended action for a match.
+
+        Args:
+            priority: Match priority level
+            acceptance_prob: Estimated acceptance probability
+
+        Returns:
+            Recommended action string for display
+        """
         if priority == MatchPriority.CRITICAL:
             return "Notify both parties immediately - urgent match"
         elif priority == MatchPriority.HIGH and acceptance_prob >= 0.7:
@@ -818,7 +889,16 @@ class SwapAutoMatcher:
     def _check_match_warnings(
         self, request_a: SwapRecord, request_b: SwapRecord
     ) -> list[str]:
-        """Check for any warnings about the match."""
+        """
+        Check for any warnings about the match.
+
+        Args:
+            request_a: First swap request
+            request_b: Second swap request
+
+        Returns:
+            List of warning messages
+        """
         warnings = []
 
         # Check date separation
@@ -858,7 +938,19 @@ class SwapAutoMatcher:
         is_blocked: bool = False,
         is_preferred: bool = False,
     ) -> float:
-        """Calculate benefit score for a proactive suggestion."""
+        """
+        Calculate benefit score for a proactive suggestion.
+
+        Args:
+            faculty_id: Faculty member ID
+            current_week: Current week date
+            proposed_week: Proposed swap week date
+            is_blocked: Whether current week is blocked
+            is_preferred: Whether proposed week is preferred
+
+        Returns:
+            Benefit score between 0.0 and 1.0
+        """
         score = 0.0
 
         if is_blocked:
@@ -877,7 +969,15 @@ class SwapAutoMatcher:
         return min(score, 1.0)
 
     def _get_faculty(self, faculty_id: UUID) -> Person | None:
-        """Get a faculty member by ID."""
+        """
+        Get a faculty member by ID.
+
+        Args:
+            faculty_id: UUID of the faculty member
+
+        Returns:
+            Person object if found, None otherwise
+        """
         return (
             self.db.query(Person)
             .filter(Person.id == faculty_id, Person.type == "faculty")

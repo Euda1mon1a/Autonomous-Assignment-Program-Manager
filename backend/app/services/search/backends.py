@@ -5,7 +5,7 @@ PostgreSQL full-text search as the primary backend.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import String, and_, case, cast, func, or_, text

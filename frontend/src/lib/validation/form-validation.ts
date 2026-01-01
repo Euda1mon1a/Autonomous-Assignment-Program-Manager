@@ -139,7 +139,7 @@ export function createBlurHandler<T>(
   setFieldError: (field: string, error?: string) => void,
   setFieldTouched: (field: string) => void,
   validator?: (value: T) => string | undefined
-) {
+): () => void {
   return () => {
     setFieldTouched(fieldName);
     if (validator) {
@@ -158,7 +158,7 @@ export function createChangeHandler<T>(
   setFieldError: (field: string, error?: string) => void,
   setFieldDirty: (field: string) => void,
   validator?: (value: T) => string | undefined
-) {
+): (value: T) => void {
   return (value: T) => {
     setValue(fieldName, value);
     setFieldDirty(fieldName);

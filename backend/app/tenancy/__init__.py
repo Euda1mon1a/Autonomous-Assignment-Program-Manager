@@ -47,7 +47,7 @@ Usage Example:
 
     @router.get("/people")
     async def list_people(
-        db: Session = Depends(get_db),
+        db: AsyncSession = Depends(get_async_db),
         tenant = Depends(require_tenant),
     ):
         # Query is automatically scoped to current tenant
@@ -58,7 +58,7 @@ Usage Example:
     # Admin cross-tenant query
     @router.get("/admin/all-people")
     async def list_all_people(
-        db: Session = Depends(get_db),
+        db: AsyncSession = Depends(get_async_db),
         user = Depends(require_admin),
     ):
         # Explicitly bypass tenant filtering (admin only)

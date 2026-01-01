@@ -14,6 +14,8 @@ import {
   isACGMEComplianceError,
   isScheduleConflictError,
   isRateLimitError,
+  ACGMEViolationDetail,
+  ScheduleConflictDetail,
 } from './error-types'
 import { getErrorMessage } from './error-messages'
 
@@ -218,7 +220,7 @@ class GlobalErrorHandler {
   /**
    * Extract ACGME violation details
    */
-  getACGMEViolationDetails(error: unknown) {
+  getACGMEViolationDetails(error: unknown): ACGMEViolationDetail | null {
     if (!isACGMEComplianceError(error)) {
       return null
     }
@@ -229,7 +231,7 @@ class GlobalErrorHandler {
   /**
    * Extract schedule conflict details
    */
-  getScheduleConflictDetails(error: unknown) {
+  getScheduleConflictDetails(error: unknown): ScheduleConflictDetail | null {
     if (!isScheduleConflictError(error)) {
       return null
     }
@@ -250,9 +252,9 @@ export function useErrorHandler(): {
   shouldReauthenticate: (error: unknown) => boolean;
   isRetryable: (error: unknown) => boolean;
   getRetryDelay: (error: unknown) => number | null;
-  getValidationErrors: (error: unknown) => Record<string, string> | null;
-  getACGMEViolationDetails: (error: unknown) => unknown | null;
-  getScheduleConflictDetails: (error: unknown) => unknown | null;
+  getValidationErrors: (error: unknown) => Array<{ field: string; message: string }>;
+  getACGMEViolationDetails: (error: unknown) => ACGMEViolationDetail | null;
+  getScheduleConflictDetails: (error: unknown) => ScheduleConflictDetail | null;
 } {
   const handleError = (error: unknown, context?: Record<string, unknown>): void => {
     errorHandler.handle(error, context)

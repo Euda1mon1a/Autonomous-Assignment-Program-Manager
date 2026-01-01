@@ -8,7 +8,7 @@
  * Debounce function - delays execution until after wait time has elapsed
  * since the last call.
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: never[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
@@ -28,7 +28,7 @@ export function debounce<T extends (...args: any[]) => any>(
 /**
  * Debounce with immediate execution on leading edge.
  */
-export function debounceLeading<T extends (...args: any[]) => any>(
+export function debounceLeading<T extends (...args: never[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
@@ -54,7 +54,7 @@ export function debounceLeading<T extends (...args: any[]) => any>(
 /**
  * Throttle function - limits execution to once per wait period.
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: never[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
@@ -70,12 +70,13 @@ export function throttle<T extends (...args: any[]) => any>(
         clearTimeout(timeout);
       }
 
+      const lastRanTime = lastRan ?? 0;
       timeout = setTimeout(() => {
-        if (Date.now() - lastRan! >= wait) {
+        if (Date.now() - lastRanTime >= wait) {
           func.apply(this, args);
           lastRan = Date.now();
         }
-      }, wait - (Date.now() - lastRan));
+      }, wait - (Date.now() - lastRanTime));
     }
   };
 }
@@ -83,7 +84,7 @@ export function throttle<T extends (...args: any[]) => any>(
 /**
  * Request Animation Frame throttle for smooth animations.
  */
-export function rafThrottle<T extends (...args: any[]) => any>(
+export function rafThrottle<T extends (...args: never[]) => unknown>(
   func: T
 ): (...args: Parameters<T>) => void {
   let rafId: number | null = null;
@@ -126,7 +127,7 @@ export function useDebounce<T>(value: T, delay: number): T {
  */
 import { useCallback, useRef } from 'react';
 
-export function useDebouncedCallback<T extends (...args: any[]) => any>(
+export function useDebouncedCallback<T extends (...args: never[]) => unknown>(
   callback: T,
   delay: number
 ): (...args: Parameters<T>) => void {
@@ -155,7 +156,7 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
 /**
  * React hook for throttled callback.
  */
-export function useThrottledCallback<T extends (...args: any[]) => any>(
+export function useThrottledCallback<T extends (...args: never[]) => unknown>(
   callback: T,
   delay: number
 ): (...args: Parameters<T>) => void {
@@ -192,7 +193,7 @@ export function useThrottledCallback<T extends (...args: any[]) => any>(
 /**
  * Smart debounce that adapts delay based on input frequency.
  */
-export class AdaptiveDebouncer<T extends (...args: any[]) => any> {
+export class AdaptiveDebouncer<T extends (...args: never[]) => unknown> {
   private timeout: NodeJS.Timeout | null = null;
   private lastCallTime = 0;
   private callFrequencies: number[] = [];
@@ -297,7 +298,7 @@ export class DebounceMonitor {
 /**
  * Monitored debounce function.
  */
-export function debounceWithMonitoring<T extends (...args: any[]) => any>(
+export function debounceWithMonitoring<T extends (...args: never[]) => unknown>(
   func: T,
   wait: number,
   monitor: DebounceMonitor

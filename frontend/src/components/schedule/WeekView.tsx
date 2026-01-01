@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useCallback } from 'react'
 import {
   format,
   addWeeks,
@@ -79,7 +79,7 @@ function getActivityColor(activity: string): string {
   return rotationColors.default
 }
 
-export function WeekView({
+export const WeekView = React.memo(function WeekView({
   currentDate,
   schedule,
   onDateChange,
@@ -88,10 +88,10 @@ export function WeekView({
   personFilter,
   holidays = {},
 }: WeekViewProps) {
-  // Get Monday-Sunday of current week
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 })
-  const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 })
-  const weekNumber = getWeek(currentDate, { weekStartsOn: 1 })
+  // Get Monday-Sunday of current week (memoized to avoid recalculation)
+  const weekStart = useMemo(() => startOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate])
+  const weekEnd = useMemo(() => endOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate])
+  const weekNumber = useMemo(() => getWeek(currentDate, { weekStartsOn: 1 }), [currentDate])
 
   const days = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
@@ -117,15 +117,15 @@ export function WeekView({
       }
     })
 
-    let peopleArray = Array.from(allPeople.entries())
+    let filteredPeople = Array.from(allPeople.entries())
 
     // Apply person filter if provided
     if (personFilter && personFilter.length > 0) {
-      peopleArray = peopleArray.filter(([id]) => personFilter.includes(id))
+      filteredPeople = filteredPeople.filter(([id]) => personFilter.includes(id))
     }
 
     // Sort by PGY level then name
-    return peopleArray.sort((a, b) => {
+    return filteredPeople.sort((a, b) => {
       const aLevel = a[1].pgy_level || 99
       const bLevel = b[1].pgy_level || 99
       if (aLevel !== bLevel) return aLevel - bLevel
@@ -133,11 +133,11 @@ export function WeekView({
     })
   }, [schedule, days, personFilter])
 
-  const handlePrevWeek = () => onDateChange(subWeeks(currentDate, 1))
-  const handleNextWeek = () => onDateChange(addWeeks(currentDate, 1))
-  const handleThisWeek = () => onDateChange(new Date())
+  const handlePrevWeek = useCallback(() => onDateChange(subWeeks(currentDate, 1)), [currentDate, onDateChange])
+  const handleNextWeek = useCallback(() => onDateChange(addWeeks(currentDate, 1)), [currentDate, onDateChange])
+  const handleThisWeek = useCallback(() => onDateChange(new Date()), [onDateChange])
 
-  const renderCell = (
+  const renderCell = useCallback((
     day: Date,
     personId: string,
     amAssignment?: Assignment,
@@ -157,8 +157,12 @@ export function WeekView({
     if (!amAssignment && !pmAssignment) {
       return (
         <div
+          role="button"
+          tabIndex={0}
           className={`schedule-cell min-h-[52px] ${isWeekendDay ? 'bg-gray-50' : 'bg-white'}`}
           onClick={() => handleCellClick('AM')}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleCellClick('AM')}
+          aria-label={`Empty cell for ${format(day, 'MMM d')}`}
         >
           <div className="text-center text-gray-300 text-xs">-</div>
         </div>
@@ -169,9 +173,13 @@ export function WeekView({
     if (isSameActivity) {
       return (
         <div
+          role="button"
+          tabIndex={0}
           className={`schedule-cell min-h-[52px] ${getActivityColor(amAssignment.activity)}`}
           title={amAssignment.activity}
           onClick={() => handleCellClick('AM', amAssignment)}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleCellClick('AM', amAssignment)}
+          aria-label={`${amAssignment.activity} all day on ${format(day, 'MMM d')}`}
         >
           <div className="text-center">
             <div className="font-medium text-xs">{amAssignment.abbreviation}</div>
@@ -184,11 +192,15 @@ export function WeekView({
     return (
       <div className={`schedule-cell min-h-[52px] ${isWeekendDay ? 'bg-gray-50' : 'bg-white'}`}>
         <div
+          role="button"
+          tabIndex={0}
           className={`rounded px-0.5 py-0.5 mb-0.5 text-xs text-center ${
             amAssignment ? getActivityColor(amAssignment.activity) : ''
           }`}
           title={amAssignment?.activity}
           onClick={() => handleCellClick('AM', amAssignment)}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleCellClick('AM', amAssignment)}
+          aria-label={amAssignment ? `AM: ${amAssignment.activity} on ${format(day, 'MMM d')}` : `Empty AM on ${format(day, 'MMM d')}`}
         >
           {amAssignment ? (
             <span className="font-medium text-[10px]">{amAssignment.abbreviation}</span>
@@ -197,11 +209,15 @@ export function WeekView({
           )}
         </div>
         <div
+          role="button"
+          tabIndex={0}
           className={`rounded px-0.5 py-0.5 text-xs text-center ${
             pmAssignment ? getActivityColor(pmAssignment.activity) : ''
           }`}
           title={pmAssignment?.activity}
           onClick={() => handleCellClick('PM', pmAssignment)}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleCellClick('PM', pmAssignment)}
+          aria-label={pmAssignment ? `PM: ${pmAssignment.activity} on ${format(day, 'MMM d')}` : `Empty PM on ${format(day, 'MMM d')}`}
         >
           {pmAssignment ? (
             <span className="font-medium text-[10px]">{pmAssignment.abbreviation}</span>
@@ -211,7 +227,7 @@ export function WeekView({
         </div>
       </div>
     )
-  }
+  }, [onCellClick])
 
   return (
     <div className="card overflow-hidden">
@@ -267,11 +283,15 @@ export function WeekView({
               return (
                 <div
                   key={day.toISOString()}
+                  role="button"
+                  tabIndex={0}
                   className={`p-2 text-center cursor-pointer hover:bg-gray-200 transition-colors ${
                     isWeekendDay ? 'bg-gray-100' : ''
                   } ${isTodayDate ? 'ring-2 ring-inset ring-blue-400' : ''}`}
                   onClick={() => onDayClick?.(day)}
+                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onDayClick?.(day)}
                   title={holidayName || undefined}
+                  aria-label={`${format(day, 'EEEE, MMMM d')}${holidayName ? ` - ${holidayName}` : ''}`}
                 >
                   <div className={`font-semibold text-sm ${isTodayDate ? 'text-blue-600' : ''}`}>
                     {format(day, 'EEE')}
@@ -325,4 +345,4 @@ export function WeekView({
       </div>
     </div>
   )
-}
+})

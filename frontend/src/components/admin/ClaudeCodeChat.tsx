@@ -246,7 +246,7 @@ const ClaudeCodeChat: React.FC<ClaudeCodeChatProps> = ({
             rows={3}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && e.ctrlKey) {
-                handleSendMessage(e as any);
+                handleSendMessage(e as React.FormEvent);
               }
             }}
           />

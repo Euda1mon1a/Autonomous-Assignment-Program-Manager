@@ -27,13 +27,13 @@ export const WorkHourGauge: React.FC<WorkHourGaugeProps> = ({
   const isWarning = hours >= warningThreshold && hours < maxHours;
   const isViolation = hours >= maxHours;
 
-  const getColor = () => {
+  const getColor = (): string => {
     if (isViolation) return 'bg-red-500';
     if (isWarning) return 'bg-yellow-500';
     return 'bg-green-500';
   };
 
-  const getTextColor = () => {
+  const getTextColor = (): string => {
     if (isViolation) return 'text-red-700';
     if (isWarning) return 'text-yellow-700';
     return 'text-green-700';

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useCallback } from 'react'
 import { format, addDays, subDays, isToday, isWeekend } from 'date-fns'
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 
@@ -69,7 +69,7 @@ function getActivityColor(activity: string): string {
   return rotationColors.default
 }
 
-export function DayView({
+export const DayView = React.memo(function DayView({
   currentDate,
   schedule,
   onDateChange,
@@ -79,9 +79,10 @@ export function DayView({
 }: DayViewProps) {
   const [showDatePicker, setShowDatePicker] = useState(false)
 
-  const dateStr = format(currentDate, 'yyyy-MM-dd')
-  const daySchedule = schedule[dateStr]
-  const holidayName = holidays[dateStr]
+  // Memoize computed values to avoid recalculation
+  const dateStr = useMemo(() => format(currentDate, 'yyyy-MM-dd'), [currentDate])
+  const daySchedule = useMemo(() => schedule[dateStr], [schedule, dateStr])
+  const holidayName = useMemo(() => holidays[dateStr], [holidays, dateStr])
 
   // Extract and sort people for this day
   const people = useMemo(() => {
@@ -97,15 +98,15 @@ export function DayView({
       })
     }
 
-    let peopleArray = Array.from(allPeople.entries())
+    let filteredPeople = Array.from(allPeople.entries())
 
     // Apply person filter if provided
     if (personFilter && personFilter.length > 0) {
-      peopleArray = peopleArray.filter(([id]) => personFilter.includes(id))
+      filteredPeople = filteredPeople.filter(([id]) => personFilter.includes(id))
     }
 
     // Sort by PGY level then name
-    return peopleArray.sort((a, b) => {
+    return filteredPeople.sort((a, b) => {
       const aLevel = a[1].pgy_level || 99
       const bLevel = b[1].pgy_level || 99
       if (aLevel !== bLevel) return aLevel - bLevel
@@ -113,19 +114,19 @@ export function DayView({
     })
   }, [daySchedule, personFilter])
 
-  const handlePrevDay = () => onDateChange(subDays(currentDate, 1))
-  const handleNextDay = () => onDateChange(addDays(currentDate, 1))
-  const handleToday = () => onDateChange(new Date())
+  const handlePrevDay = useCallback(() => onDateChange(subDays(currentDate, 1)), [currentDate, onDateChange])
+  const handleNextDay = useCallback(() => onDateChange(addDays(currentDate, 1)), [currentDate, onDateChange])
+  const handleToday = useCallback(() => onDateChange(new Date()), [onDateChange])
 
-  const handleDateInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDateInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = new Date(e.target.value + 'T12:00:00')
     if (!isNaN(newDate.getTime())) {
       onDateChange(newDate)
       setShowDatePicker(false)
     }
-  }
+  }, [onDateChange])
 
-  const renderAssignmentCell = (
+  const renderAssignmentCell = useCallback((
     assignment: Assignment | undefined,
     personId: string,
     timeOfDay: 'AM' | 'PM'
@@ -158,7 +159,7 @@ export function DayView({
         </div>
       </div>
     )
-  }
+  }, [onCellClick, currentDate])
 
   return (
     <div className="card">
@@ -310,4 +311,4 @@ export function DayView({
       </div>
     </div>
   )
-}
+})

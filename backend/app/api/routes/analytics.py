@@ -11,7 +11,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, and_
+from sqlalchemy import and_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, joinedload
 
@@ -85,7 +85,22 @@ def _anonymize_id(original_id: str, salt: str = "research") -> str:
 # ============================================================================
 
 
-@router.get("/analytics/metrics/current", response_model=ScheduleVersionMetrics)
+@router.get(
+    "/analytics/metrics/current",
+    response_model=ScheduleVersionMetrics,
+    summary="Get current schedule metrics",
+    description="Retrieve comprehensive metrics for the most recent active schedule. "
+    "Includes fairness index, coverage rate, ACGME compliance percentage, "
+    "workload distribution statistics, and violation counts. "
+    "Essential for monitoring schedule quality and identifying issues.",
+    tags=["analytics"],
+    responses={
+        200: {"description": "Current metrics retrieved successfully"},
+        401: {"description": "Authentication required"},
+        404: {"description": "No successful schedule runs found"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def get_current_metrics(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
@@ -171,7 +186,22 @@ async def get_current_metrics(
         )
 
 
-@router.get("/analytics/metrics/history", response_model=list[MetricTimeSeries])
+@router.get(
+    "/analytics/metrics/history",
+    response_model=list[MetricTimeSeries],
+    summary="Get metric time series",
+    description="Retrieve time series data for a specific metric over a date range. "
+    "Tracks how fairness, coverage, compliance, or violations have evolved across "
+    "multiple schedule runs. Returns data points, statistics (mean, median, std dev), "
+    "and trend direction. Useful for dashboards and identifying long-term patterns.",
+    tags=["analytics"],
+    responses={
+        200: {"description": "Metric history retrieved successfully"},
+        400: {"description": "Invalid metric name or date range"},
+        401: {"description": "Authentication required"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def get_metrics_history(
     metric_name: str = Query(
         ..., description="Metric name (fairness, coverage, compliance, violations)"
@@ -296,7 +326,22 @@ async def get_metrics_history(
         )
 
 
-@router.get("/analytics/fairness/trend", response_model=FairnessTrendReport)
+@router.get(
+    "/analytics/fairness/trend",
+    response_model=FairnessTrendReport,
+    summary="Get fairness trend analysis",
+    description="Analyze how workload fairness has evolved over a specified time period (1-24 months). "
+    "Returns fairness index and Gini coefficient trends, identifies most/least fair periods, "
+    "calculates statistics, and provides actionable recommendations. "
+    "Essential for ensuring equitable workload distribution over time.",
+    tags=["analytics"],
+    responses={
+        200: {"description": "Fairness trend retrieved successfully"},
+        401: {"description": "Authentication required"},
+        404: {"description": "No schedule runs found in specified period"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def get_fairness_trend(
     months: int = Query(6, ge=1, le=24, description="Number of months to analyze"),
     db: AsyncSession = Depends(get_async_db),
@@ -439,7 +484,20 @@ async def get_fairness_trend(
 
 
 @router.get(
-    "/analytics/compare/{version_a}/{version_b}", response_model=VersionComparison
+    "/analytics/compare/{version_a}/{version_b}",
+    response_model=VersionComparison,
+    summary="Compare schedule versions",
+    description="Perform detailed side-by-side comparison of two schedule versions. "
+    "Compares fairness, coverage, compliance, and violation metrics with difference calculations "
+    "and percentage changes. Determines overall improvement score and provides deployment recommendations. "
+    "Critical for validating schedule regenerations before going live.",
+    tags=["analytics"],
+    responses={
+        200: {"description": "Versions compared successfully"},
+        401: {"description": "Authentication required"},
+        404: {"description": "One or both schedule versions not found"},
+        500: {"description": "Internal server error"},
+    },
 )
 async def compare_versions(
     version_a: str,
@@ -583,7 +641,23 @@ async def compare_versions(
         )
 
 
-@router.post("/analytics/what-if", response_model=WhatIfResult)
+@router.post(
+    "/analytics/what-if",
+    response_model=WhatIfResult,
+    summary="What-if analysis",
+    description="Predict the impact of proposed assignment changes on schedule metrics before applying them. "
+    "Analyzes effects on fairness, coverage, compliance, and workload distribution. "
+    "Identifies potential new violations and provides safety assessment with recommendations. "
+    "Use to validate manual adjustments and avoid unintended consequences.",
+    tags=["analytics"],
+    responses={
+        200: {"description": "What-if analysis completed"},
+        400: {"description": "No changes provided or invalid changes"},
+        401: {"description": "Authentication required"},
+        404: {"description": "No baseline schedule found"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def what_if_analysis(
     proposed_changes: list[AssignmentChange],
     db: AsyncSession = Depends(get_async_db),
@@ -743,7 +817,22 @@ async def what_if_analysis(
         )
 
 
-@router.get("/analytics/export/research", response_model=ResearchDataExport)
+@router.get(
+    "/analytics/export/research",
+    response_model=ResearchDataExport,
+    summary="Export research data",
+    description="Export comprehensive, optionally anonymized schedule data for research and publication. "
+    "Includes resident workload data, rotation coverage statistics, compliance metrics, "
+    "fairness metrics, and aggregate statistics. Anonymization uses SHA-256 hashing for IDs. "
+    "Suitable for academic publication, external analysis, and benchmarking studies.",
+    tags=["analytics"],
+    responses={
+        200: {"description": "Research data exported successfully"},
+        400: {"description": "Invalid date range"},
+        401: {"description": "Authentication required"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def export_for_research(
     start_date: datetime = Query(..., description="Start date (ISO format)"),
     end_date: datetime = Query(..., description="End date (ISO format)"),

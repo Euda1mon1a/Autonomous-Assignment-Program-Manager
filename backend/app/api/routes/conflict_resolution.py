@@ -4,6 +4,7 @@ Exposes the ConflictAutoResolver service for analyzing and resolving
 schedule conflicts with safety checks and impact assessment.
 """
 
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -22,6 +23,7 @@ from app.schemas.conflict_resolution import (
 from app.services.conflict_auto_resolver import ConflictAutoResolver
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.get("/{conflict_id}/analyze", response_model=ConflictAnalysis)
@@ -50,11 +52,13 @@ async def analyze_conflict(
     try:
         return resolver.analyze_conflict(conflict_id)
     except ValueError as e:
+        logger.error(f"Conflict {conflict_id} not found: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
+            detail="Conflict not found",
         )
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error analyzing conflict {conflict_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error analyzing conflict",
