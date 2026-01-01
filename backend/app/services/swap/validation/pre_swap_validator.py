@@ -18,6 +18,7 @@ from app.models.swap import SwapRecord, SwapStatus
 from app.models.person import Person
 from app.models.assignment import Assignment
 from app.models.block import Block
+from app.models.absence import Absence
 
 
 logger = logging.getLogger(__name__)
@@ -247,9 +248,41 @@ class PreSwapValidator:
         """
         Check if faculty is available for a week.
 
-        Would integrate with absence/leave system.
-        For now, returns True (available).
+        Checks absence/leave records including deployments, TDY, and other blocking absences.
+
+        Args:
+            faculty_id: Faculty member's UUID
+            week: Week start date to check
+
+        Returns:
+            True if available, False if blocked by absence
         """
-        # TODO: Check absence/leave records
-        # TODO: Check TDY/deployment records
+        # Calculate week boundaries
+        week_end = week + timedelta(days=6)
+
+        # Query for blocking absences that overlap with the week
+        result = await self.db.execute(
+            select(Absence).where(
+                and_(
+                    Absence.person_id == faculty_id,
+                    Absence.is_blocking == True,
+                    # Absence overlaps with week if:
+                    # absence.start_date <= week_end AND absence.end_date >= week_start
+                    Absence.start_date <= week_end,
+                    Absence.end_date >= week,
+                )
+            )
+        )
+
+        blocking_absences = result.scalars().all()
+
+        if blocking_absences:
+            # Log which absences are blocking
+            absence_types = [a.absence_type for a in blocking_absences]
+            logger.info(
+                f"Faculty {faculty_id} unavailable for week {week}: "
+                f"blocked by {len(blocking_absences)} absence(s) ({', '.join(absence_types)})"
+            )
+            return False
+
         return True

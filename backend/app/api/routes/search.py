@@ -10,7 +10,7 @@ Provides endpoints for:
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.user import User
 from app.schemas.search import (
     PeopleSearchRequest,
@@ -31,7 +31,7 @@ router = APIRouter()
 @router.post("", response_model=SearchResponse)
 async def search(
     request: SearchRequest,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -78,7 +78,7 @@ async def quick_search(
     query: str = Query(..., min_length=1, max_length=200, description="Search query"),
     entity_type: str = Query(default="person", description="Entity type to search"),
     limit: int = Query(default=10, ge=1, le=50, description="Maximum results"),
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -110,7 +110,7 @@ async def quick_search(
 @router.post("/people", response_model=SearchResponse)
 async def search_people(
     request: PeopleSearchRequest,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -151,7 +151,7 @@ async def search_people(
 @router.post("/rotations", response_model=SearchResponse)
 async def search_rotations(
     request: RotationSearchRequest,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -188,7 +188,7 @@ async def search_rotations(
 @router.post("/procedures", response_model=SearchResponse)
 async def search_procedures(
     request: ProcedureSearchRequest,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -226,7 +226,7 @@ async def global_search(
     query: str = Query(..., min_length=1, max_length=500, description="Search query"),
     page: int = Query(default=1, ge=1, description="Page number"),
     page_size: int = Query(default=20, ge=1, le=100, description="Results per page"),
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -262,7 +262,7 @@ async def global_search(
 @router.post("/suggest", response_model=SuggestionResponse)
 async def get_suggestions(
     request: SuggestionRequest,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -299,7 +299,7 @@ async def get_suggestions_get(
         default="person", description="Entity type for suggestions"
     ),
     limit: int = Query(default=10, ge=1, le=50, description="Maximum suggestions"),
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """

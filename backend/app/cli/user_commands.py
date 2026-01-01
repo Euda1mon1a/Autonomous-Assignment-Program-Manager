@@ -9,21 +9,9 @@ from app.core.logging import get_logger
 from app.core.security import get_password_hash
 from app.db.session import SessionLocal
 from app.models.person import Person
-from app.models.user import User
+from app.models.user import Role, User
 
 logger = get_logger(__name__)
-
-# Valid roles as defined in the User model
-VALID_ROLES = [
-    "admin",
-    "coordinator",
-    "faculty",
-    "clinical_staff",
-    "rn",
-    "lpn",
-    "msa",
-    "resident",
-]
 
 
 @click.group()
@@ -49,8 +37,8 @@ def user() -> None:
 )
 @click.option(
     "--role",
-    type=click.Choice(VALID_ROLES),
-    default="resident",
+    type=click.Choice([r.value for r in Role]),
+    default=Role.RESIDENT.value,
     help="User role",
 )
 @click.option(
@@ -82,7 +70,7 @@ def create(
     Example:
         python -m app.cli user create \\
             --email admin@example.com \\
-            --role admin \\
+            --role ADMIN \\
             --first-name John \\
             --last-name Doe
     """
@@ -98,18 +86,14 @@ def create(
             click.echo(f"Error: User with email {email} already exists", err=True)
             raise click.Abort()
 
-        # Generate username from email
-        username = email.split("@")[0]
-
         # Create user
-        user_obj = User(
+        user = User(
             email=email,
-            username=username,
             hashed_password=get_password_hash(password),
-            role=role,
+            role=Role(role),
             is_active=active,
         )
-        db.add(user_obj)
+        db.add(user)
 
         # Create associated person if names provided
         if first_name or last_name:
@@ -122,13 +106,13 @@ def create(
             db.add(person)
 
         db.commit()
-        db.refresh(user_obj)
+        db.refresh(user)
 
-        click.echo("User created successfully")
-        click.echo(f"  ID: {user_obj.id}")
-        click.echo(f"  Email: {user_obj.email}")
-        click.echo(f"  Role: {user_obj.role}")
-        click.echo(f"  Active: {user_obj.is_active}")
+        click.echo("✓ User created successfully")
+        click.echo(f"  ID: {user.id}")
+        click.echo(f"  Email: {user.email}")
+        click.echo(f"  Role: {user.role.value}")
+        click.echo(f"  Active: {user.is_active}")
 
     except Exception as e:
         logger.error(f"User creation failed: {e}", exc_info=True)
@@ -143,7 +127,7 @@ def create(
 @user.command()
 @click.option(
     "--role",
-    type=click.Choice(VALID_ROLES),
+    type=click.Choice([r.value for r in Role]),
     help="Filter by role",
 )
 @click.option(
@@ -166,7 +150,7 @@ def list(
     List all users.
 
     Example:
-        python -m app.cli user list --role resident --active
+        python -m app.cli user list --role RESIDENT --active
         python -m app.cli user list --format json
     """
     db = SessionLocal()
@@ -175,7 +159,7 @@ def list(
         query = select(User)
 
         if role:
-            query = query.where(User.role == role)
+            query = query.where(User.role == Role(role))
 
         if active is not None:
             query = query.where(User.is_active == active)
@@ -196,8 +180,8 @@ def list(
             # Print rows
             for u in users:
                 click.echo(
-                    f"{str(u.id):<36} {u.email:<30} {u.role:<15} "
-                    f"{'Y' if u.is_active else 'N':<7} {u.created_at.strftime('%Y-%m-%d %H:%M'):<20}"
+                    f"{str(u.id):<36} {u.email:<30} {u.role.value:<15} "
+                    f"{'✓' if u.is_active else '✗':<7} {u.created_at.strftime('%Y-%m-%d %H:%M'):<20}"
                 )
 
             click.echo(f"\nTotal: {len(users)} users")
@@ -209,7 +193,7 @@ def list(
                 {
                     "id": str(u.id),
                     "email": u.email,
-                    "role": u.role,
+                    "role": u.role.value,
                     "is_active": u.is_active,
                     "created_at": u.created_at.isoformat(),
                 }
@@ -229,7 +213,7 @@ def list(
                     [
                         str(u.id),
                         u.email,
-                        u.role,
+                        u.role.value,
                         u.is_active,
                         u.created_at.isoformat(),
                     ]
@@ -269,18 +253,16 @@ def reset_password(email: str, new_password: str) -> None:
     db = SessionLocal()
 
     try:
-        user_obj = db.execute(
-            select(User).where(User.email == email)
-        ).scalar_one_or_none()
+        user = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
 
-        if not user_obj:
+        if not user:
             click.echo(f"Error: User not found: {email}", err=True)
             raise click.Abort()
 
-        user_obj.hashed_password = get_password_hash(new_password)
+        user.hashed_password = get_password_hash(new_password)
         db.commit()
 
-        click.echo(f"Password reset successfully for {email}")
+        click.echo(f"✓ Password reset successfully for {email}")
 
     except Exception as e:
         logger.error(f"Password reset failed: {e}", exc_info=True)
@@ -316,11 +298,9 @@ def delete(email: str, confirm: bool) -> None:
     db = SessionLocal()
 
     try:
-        user_obj = db.execute(
-            select(User).where(User.email == email)
-        ).scalar_one_or_none()
+        user = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
 
-        if not user_obj:
+        if not user:
             click.echo(f"Error: User not found: {email}", err=True)
             raise click.Abort()
 
@@ -329,10 +309,10 @@ def delete(email: str, confirm: bool) -> None:
                 click.echo("Aborted")
                 return
 
-        db.delete(user_obj)
+        db.delete(user)
         db.commit()
 
-        click.echo(f"User deleted: {email}")
+        click.echo(f"✓ User deleted: {email}")
 
     except Exception as e:
         logger.error(f"User deletion failed: {e}", exc_info=True)
@@ -367,19 +347,17 @@ def set_active(email: str, active: bool) -> None:
     db = SessionLocal()
 
     try:
-        user_obj = db.execute(
-            select(User).where(User.email == email)
-        ).scalar_one_or_none()
+        user = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
 
-        if not user_obj:
+        if not user:
             click.echo(f"Error: User not found: {email}", err=True)
             raise click.Abort()
 
-        user_obj.is_active = active
+        user.is_active = active
         db.commit()
 
         status = "activated" if active else "deactivated"
-        click.echo(f"User {status}: {email}")
+        click.echo(f"✓ User {status}: {email}")
 
     except Exception as e:
         logger.error(f"Status change failed: {e}", exc_info=True)

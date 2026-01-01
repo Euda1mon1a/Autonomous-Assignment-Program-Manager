@@ -2,12 +2,14 @@
 
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError, DBAPIError
 
 from app.core.file_security import FileValidationError, validate_excel_upload
 from app.core.logging import get_logger
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.user import User
 from app.scheduling.engine import SchedulingEngine
 from app.scheduling.validator import ACGMEValidator
@@ -63,9 +65,9 @@ logger = get_logger(__name__)
 
 
 @router.post("/generate", response_model=ScheduleResponse)
-def generate_schedule(
+async def generate_schedule(
     request: ScheduleRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     idempotency_key: str | None = Header(
         None,
@@ -180,8 +182,8 @@ def generate_schedule(
                 body_hash=body_hash,
                 request_params=request_params,
             )
-        except Exception as e:
-            logger.warning(f"Failed to create idempotency record: {e}")
+        except (SQLAlchemyError, ValueError) as e:
+            logger.warning(f"Failed to create idempotency record: {e}", exc_info=True)
             # Continue without idempotency tracking
 
     # Issue #1: Double-submit / Re-entrancy protection
@@ -211,7 +213,7 @@ def generate_schedule(
                 response_body={"detail": error_msg},
                 response_status_code=409,
             )
-            db.commit()
+            await db.commit()
         raise HTTPException(status_code=409, detail=error_msg)
 
     algorithm = request.algorithm.value
@@ -272,7 +274,7 @@ def generate_schedule(
                     response_body={"detail": error_msg},
                     response_status_code=422,
                 )
-                db.commit()
+                await db.commit()
             raise HTTPException(status_code=422, detail=error_msg)
         elif result["status"] == "partial":
             # Use 207 Multi-Status for partial success
@@ -288,7 +290,7 @@ def generate_schedule(
                     response_body=response_body,
                     response_status_code=207,
                 )
-                db.commit()
+                await db.commit()
             return JSONResponse(
                 status_code=207,
                 content=response_body,
@@ -307,14 +309,14 @@ def generate_schedule(
                 response_body=response_body,
                 response_status_code=200,
             )
-            db.commit()
+            await db.commit()
 
         return response
 
     except HTTPException:
         # Re-raise HTTP exceptions
         raise
-    except Exception as e:
+    except (SQLAlchemyError, ValueError, KeyError, TypeError, ImportError) as e:
         if obs_metrics:
             obs_metrics.record_schedule_failure(algorithm)
         logger.error("Error generating schedule: {}", repr(e), exc_info=True)
@@ -327,17 +329,18 @@ def generate_schedule(
                 response_status_code=500,
             )
             try:
-                db.commit()
-            except Exception:
-                db.rollback()
+                await db.commit()
+            except (SQLAlchemyError, DBAPIError) as e:
+                logger.error(f"Failed to commit error audit log: {e}", exc_info=True)
+                await db.rollback()
         raise HTTPException(status_code=500, detail=error_msg)
 
 
 @router.get("/validate", response_model=ValidationResult)
-def validate_schedule(
+async def validate_schedule(
     start_date: str,
     end_date: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Validate current schedule for ACGME compliance.
@@ -366,7 +369,7 @@ def validate_schedule(
 @router.post("/emergency-coverage", response_model=EmergencyResponse)
 async def handle_emergency_coverage(
     request: EmergencyRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -401,7 +404,7 @@ async def handle_emergency_coverage(
 
 
 @router.get("/{start_date}/{end_date}")
-def get_schedule(start_date: str, end_date: str, db: Session = Depends(get_db)):
+async def get_schedule(start_date: str, end_date: str, db: AsyncSession = Depends(get_async_db)):
     """
     Get the schedule for a date range.
 
@@ -466,7 +469,7 @@ def get_schedule(start_date: str, end_date: str, db: Session = Depends(get_db)):
 
 
 @router.post("/import/analyze", response_model=ImportAnalysisResponse)
-def analyze_imported_schedules(
+async def analyze_imported_schedules(
     fmit_file: UploadFile = File(..., description="FMIT rotation schedule Excel file"),
     clinic_file: UploadFile | None = File(
         None, description="Clinic schedule Excel file (optional)"
@@ -475,7 +478,7 @@ def analyze_imported_schedules(
         None,
         description='JSON mapping of specialty to providers, e.g., {"Sports Medicine": ["FAC-SPORTS"]}',
     ),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Import and analyze schedules for conflicts.
@@ -512,7 +515,8 @@ def analyze_imported_schedules(
     # Read file contents
     try:
         fmit_bytes = fmit_file.file.read()
-    except Exception:
+    except (IOError, OSError, ValueError) as e:
+        logger.error(f"Failed to read FMIT uploaded file: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
     # Validate FMIT file
@@ -525,7 +529,8 @@ def analyze_imported_schedules(
     if clinic_file:
         try:
             clinic_bytes = clinic_file.file.read()
-        except Exception:
+        except (IOError, OSError, ValueError) as e:
+            logger.error(f"Failed to read clinic uploaded file: {e}", exc_info=True)
             raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
         # Validate clinic file
@@ -570,7 +575,7 @@ def analyze_imported_schedules(
 
 
 @router.post("/import/analyze-file")
-def analyze_single_file(
+async def analyze_single_file(
     file: UploadFile = File(..., description="Schedule Excel file to analyze"),
     file_type: str = Form(
         "auto", description="File type: 'fmit', 'clinic', or 'auto' to detect"
@@ -578,7 +583,7 @@ def analyze_single_file(
     specialty_providers: str | None = Form(
         None, description="JSON mapping of specialty to providers"
     ),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Quick analysis of a single schedule file.
@@ -597,7 +602,8 @@ def analyze_single_file(
     # Read file
     try:
         file_bytes = file.file.read()
-    except Exception:
+    except (IOError, OSError, ValueError) as e:
+        logger.error(f"Failed to read clinic schedule file: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
     # Validate uploaded file
@@ -693,7 +699,7 @@ def analyze_single_file(
 
 
 @router.post("/import/block", response_model=BlockParseResponse)
-def parse_block_schedule_endpoint(
+async def parse_block_schedule_endpoint(
     file: UploadFile = File(..., description="Excel schedule file"),
     block_number: int = Form(
         ..., description="Block number to parse (1-13)", ge=1, le=13
@@ -702,7 +708,7 @@ def parse_block_schedule_endpoint(
         None, description="JSON array of known person names for fuzzy matching"
     ),
     include_fmit: bool = Form(True, description="Include FMIT attending schedule"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -734,7 +740,8 @@ def parse_block_schedule_endpoint(
     # Read and validate file
     try:
         file_bytes = file.file.read()
-    except Exception:
+    except (IOError, OSError, ValueError) as e:
+        logger.error(f"Failed to read block parse file: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
     try:
@@ -793,7 +800,8 @@ def parse_block_schedule_endpoint(
                 ]
             finally:
                 os.unlink(tmp_path)
-        except Exception:
+        except (KeyError, ValueError, IndexError) as e:
+            logger.debug(f"FMIT sheet not found or parse error (expected for some blocks): {e}")
             pass  # FMIT sheet not found, that's OK
 
     # Convert to response schema
@@ -829,10 +837,10 @@ def parse_block_schedule_endpoint(
 
 
 @router.post("/swaps/find", response_model=SwapFinderResponse)
-def find_swap_candidates(
+async def find_swap_candidates(
     fmit_file: UploadFile = File(..., description="FMIT rotation schedule Excel file"),
     request_json: str = Form(..., description="SwapFinderRequest as JSON string"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -869,7 +877,8 @@ def find_swap_candidates(
     # Read FMIT file
     try:
         fmit_bytes = fmit_file.file.read()
-    except Exception:
+    except (IOError, OSError, ValueError) as e:
+        logger.error(f"Failed to read FMIT file for swap finder: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
     # Validate FMIT file
@@ -906,9 +915,9 @@ def find_swap_candidates(
         try:
             absence_conflicts = load_external_conflicts_from_absences(db)
             external_conflicts.extend(absence_conflicts)
-        except Exception as e:
+        except (SQLAlchemyError, ValueError, KeyError) as e:
             # Log but don't fail - absence integration is optional
-            logger.warning(f"Failed to load absence conflicts: {e}")
+            logger.warning(f"Failed to load absence conflicts: {e}", exc_info=True)
 
     try:
         # Create SwapFinder from file
@@ -989,9 +998,9 @@ def find_swap_candidates(
 
 
 @router.post("/swaps/candidates", response_model=SwapCandidateJsonResponse)
-def find_swap_candidates_json(
+async def find_swap_candidates_json(
     request: SwapCandidateJsonRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -1023,7 +1032,7 @@ def find_swap_candidates_json(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid person_id format")
 
-    requester = db.query(Person).filter(Person.id == person_uuid).first()
+    requester = (await db.execute(select(Person).where(Person.id == person_uuid))).scalar_one_or_none()
     if not requester:
         raise HTTPException(
             status_code=404, detail=f"Person {request.person_id} not found"
@@ -1040,14 +1049,14 @@ def find_swap_candidates_json(
             raise HTTPException(status_code=400, detail="Invalid assignment_id format")
 
         target_assignment = (
-            db.query(Assignment).filter(Assignment.id == assignment_uuid).first()
+            (await db.execute(select(Assignment).where(Assignment.id == assignment_uuid))).scalar_one_or_none()
         )
         if not target_assignment:
             raise HTTPException(
                 status_code=404, detail=f"Assignment {request.assignment_id} not found"
             )
         target_block = (
-            db.query(Block).filter(Block.id == target_assignment.block_id).first()
+            (await db.execute(select(Block).where(Block.id == target_assignment.block_id))).scalar_one_or_none()
         )
 
     elif request.block_id:
@@ -1056,7 +1065,7 @@ def find_swap_candidates_json(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid block_id format")
 
-        target_block = db.query(Block).filter(Block.id == block_uuid).first()
+        target_block = (await db.execute(select(Block).where(Block.id == block_uuid))).scalar_one_or_none()
         if not target_block:
             raise HTTPException(
                 status_code=404, detail=f"Block {request.block_id} not found"
@@ -1205,12 +1214,12 @@ def find_swap_candidates_json(
 
 
 @router.post("/faculty-outpatient/generate")
-def generate_faculty_outpatient(
+async def generate_faculty_outpatient(
     block_number: int,
     regenerate: bool = True,
     include_clinic: bool = True,
     include_supervision: bool = True,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -1291,10 +1300,10 @@ def generate_faculty_outpatient(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except (SQLAlchemyError, ValueError, KeyError, TypeError) as e:
         # Use repr to avoid format string issues with loguru
         logger.error("Faculty outpatient generation error: {}", repr(e), exc_info=True)
-        db.rollback()
+        await db.rollback()
         raise HTTPException(
             status_code=500,
             detail=f"Faculty outpatient generation failed: {repr(e)}",

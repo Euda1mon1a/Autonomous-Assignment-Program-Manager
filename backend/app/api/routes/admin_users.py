@@ -14,11 +14,11 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from sqlalchemy import func, or_
-from sqlalchemy.orm import Session
+from sqlalchemy import select, func, or_
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_admin_user, get_password_hash
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.user import User
 from app.schemas.admin_user import (
     AccountLockRequest,
@@ -80,7 +80,7 @@ def _log_activity(
 
 
 @router.get("", response_model=AdminUserListResponse)
-def list_users(
+async def list_users(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(
         20, ge=1, le=100, alias="pageSize", description="Items per page"
@@ -90,7 +90,7 @@ def list_users(
     search: str | None = Query(
         None, max_length=100, description="Search by name or email"
     ),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -160,10 +160,10 @@ def list_users(
 
 
 @router.post("", response_model=AdminUserResponse, status_code=status.HTTP_201_CREATED)
-def create_user(
+async def create_user(
     user_data: AdminUserCreate,
     request: Request,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -176,7 +176,7 @@ def create_user(
         Created user data
     """
     # Check if email already exists
-    existing = db.query(User).filter(User.email == user_data.email).first()
+    existing = (await db.execute(select(User).where(User.email == user_data.email))).scalar_one_or_none()
     if existing:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -189,7 +189,7 @@ def create_user(
         username = user_data.email.split("@")[0]
 
     # Check if username already exists
-    existing_username = db.query(User).filter(User.username == username).first()
+    existing_username = (await db.execute(select(User).where(User.username == username))).scalar_one_or_none()
     if existing_username:
         # Append a random suffix
         username = f"{username}_{uuid.uuid4().hex[:6]}"
@@ -216,8 +216,8 @@ def create_user(
         new_user.invite_sent_at = datetime.utcnow()
 
     db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    await db.commit()
+    await db.refresh(new_user)
 
     # Log activity
     _log_activity(
@@ -235,11 +235,11 @@ def create_user(
 
 
 @router.put("/{user_id}", response_model=AdminUserResponse)
-def update_user(
+async def update_user(
     user_id: uuid.UUID,
     user_data: AdminUserUpdate,
     request: Request,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -253,7 +253,7 @@ def update_user(
         Updated user data
     """
     # Fetch user
-    user = db.query(User).filter(User.id == user_id).first()
+    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
 
     if not user:
         raise HTTPException(
@@ -320,8 +320,8 @@ def update_user(
 
     user.updated_at = datetime.utcnow()
 
-    db.commit()
-    db.refresh(user)
+    await db.commit()
+    await db.refresh(user)
 
     # Log activity
     if changes:
@@ -337,11 +337,11 @@ def update_user(
     return _user_to_admin_response(user)
 
 
-@router.delete("/{user_id}", status_code=status.HTTP_200_OK)
-def delete_user(
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(
     user_id: uuid.UUID,
     request: Request,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -351,10 +351,10 @@ def delete_user(
         user_id: UUID of the user to delete
 
     Returns:
-        Success message
+        No content (204 status)
     """
     # Fetch user
-    user = db.query(User).filter(User.id == user_id).first()
+    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
 
     if not user:
         raise HTTPException(
@@ -379,18 +379,16 @@ def delete_user(
         request=request,
     )
 
-    db.delete(user)
-    db.commit()
-
-    return {"message": "User deleted successfully", "user_id": str(user_id)}
+    await db.delete(user)
+    await db.commit()
 
 
 @router.post("/{user_id}/lock", response_model=AccountLockResponse)
-def lock_user_account(
+async def lock_user_account(
     user_id: uuid.UUID,
     lock_data: AccountLockRequest,
     request: Request,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -404,7 +402,7 @@ def lock_user_account(
         Updated lock status
     """
     # Fetch user
-    user = db.query(User).filter(User.id == user_id).first()
+    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
 
     if not user:
         raise HTTPException(
@@ -432,8 +430,8 @@ def lock_user_account(
             message = "Account activated"
 
         user.updated_at = datetime.utcnow()
-        db.commit()
-        db.refresh(user)
+        await db.commit()
+        await db.refresh(user)
 
         _log_activity(
             db=db,
@@ -463,8 +461,8 @@ def lock_user_account(
         user.locked_by = str(current_user.id) if lock_data.locked else None
 
     user.updated_at = datetime.utcnow()
-    db.commit()
-    db.refresh(user)
+    await db.commit()
+    await db.refresh(user)
 
     action = (
         ActivityAction.USER_LOCKED if lock_data.locked else ActivityAction.USER_UNLOCKED
@@ -491,10 +489,10 @@ def lock_user_account(
 
 
 @router.post("/{user_id}/resend-invite", response_model=ResendInviteResponse)
-def resend_invite(
+async def resend_invite(
     user_id: uuid.UUID,
     request: Request,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -507,7 +505,7 @@ def resend_invite(
         Confirmation of invite sent
     """
     # Fetch user
-    user = db.query(User).filter(User.id == user_id).first()
+    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
 
     if not user:
         raise HTTPException(
@@ -527,8 +525,8 @@ def resend_invite(
         user.invite_sent_at = datetime.utcnow()
 
     user.updated_at = datetime.utcnow()
-    db.commit()
-    db.refresh(user)
+    await db.commit()
+    await db.refresh(user)
 
     # Log activity
     _log_activity(
@@ -550,7 +548,7 @@ def resend_invite(
 
 
 @router.get("/activity-log", response_model=ActivityLogResponse)
-def get_activity_log(
+async def get_activity_log(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(
         20, ge=1, le=100, alias="pageSize", description="Items per page"
@@ -563,7 +561,7 @@ def get_activity_log(
         None, alias="dateFrom", description="Start date"
     ),
     date_to: datetime | None = Query(None, alias="dateTo", description="End date"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -595,10 +593,10 @@ def get_activity_log(
 
 
 @router.post("/bulk", response_model=BulkUserActionResponse)
-def bulk_user_action(
+async def bulk_user_action(
     bulk_data: BulkUserActionRequest,
     request: Request,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -622,7 +620,7 @@ def bulk_user_action(
             continue
 
         # Fetch user
-        user = db.query(User).filter(User.id == uid).first()
+        user = (await db.execute(select(User).where(User.id == uid))).scalar_one_or_none()
 
         if not user:
             failed_ids.append(uid)
@@ -647,7 +645,7 @@ def bulk_user_action(
             failed_ids.append(uid)
             errors.append(f"Failed to process user {uid}: {str(e)}")
 
-    db.commit()
+    await db.commit()
 
     # Determine activity action
     activity_action = {

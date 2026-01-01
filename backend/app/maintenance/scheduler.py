@@ -319,8 +319,19 @@ class BackupScheduler:
                         "timestamp": now.isoformat(),
                     }
                 )
-            except Exception as e:
-                logger.error(f"Unexpected error during daily backup: {e}")
+            except (OSError, IOError) as e:
+                logger.error(f"File I/O error during daily backup: {e}", exc_info=True)
+                results.append(
+                    {
+                        "type": "daily",
+                        "status": "failed",
+                        "error": str(e),
+                        "error_type": type(e).__name__,
+                        "timestamp": now.isoformat(),
+                    }
+                )
+            except RuntimeError as e:
+                logger.error(f"Unexpected error during daily backup: {e}", exc_info=True)
                 results.append(
                     {
                         "type": "daily",
@@ -362,8 +373,19 @@ class BackupScheduler:
                         "timestamp": now.isoformat(),
                     }
                 )
-            except Exception as e:
-                logger.error(f"Unexpected error during weekly backup: {e}")
+            except (OSError, IOError) as e:
+                logger.error(f"File I/O error during weekly backup: {e}", exc_info=True)
+                results.append(
+                    {
+                        "type": "weekly",
+                        "status": "failed",
+                        "error": str(e),
+                        "error_type": type(e).__name__,
+                        "timestamp": now.isoformat(),
+                    }
+                )
+            except RuntimeError as e:
+                logger.error(f"Unexpected error during weekly backup: {e}", exc_info=True)
                 results.append(
                     {
                         "type": "weekly",
@@ -380,8 +402,10 @@ class BackupScheduler:
             try:
                 self._apply_retention_policy()
                 self._save_config()
-            except Exception as e:
-                logger.error(f"Error applying retention policy: {e}")
+            except (OSError, IOError) as e:
+                logger.error(f"File I/O error applying retention policy: {e}", exc_info=True)
+            except RuntimeError as e:
+                logger.error(f"Error applying retention policy: {e}", exc_info=True)
                 # Don't fail the whole operation if retention policy fails
 
         if not results:

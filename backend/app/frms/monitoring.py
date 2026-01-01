@@ -33,6 +33,19 @@ from app.frms.three_process_model import (
     EffectivenessScore,
 )
 from app.frms.performance_predictor import PerformancePredictor
+from app.frms.constants import (
+    THRESHOLD_OPTIMAL,
+    THRESHOLD_ACCEPTABLE,
+    THRESHOLD_FAA_CAUTION,
+    THRESHOLD_FRA_HIGH_RISK,
+    THRESHOLD_CRITICAL,
+    TREND_WINDOW_HOURS,
+    TREND_THRESHOLD_PERCENT,
+    EFFECTIVENESS_HISTORY_HOURS,
+    EXTENDED_WAKEFULNESS_HOURS,
+    LAST_24_HOURS,
+    TOP_RISK_RESIDENTS_COUNT,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -171,16 +184,16 @@ class FatigueMonitor:
         dashboard = monitor.get_dashboard_metrics()
     """
 
-    # Alert thresholds
-    THRESHOLD_OPTIMAL = 95.0
-    THRESHOLD_ACCEPTABLE = 85.0
-    THRESHOLD_FAA_CAUTION = 77.0
-    THRESHOLD_FRA_HIGH_RISK = 70.0
-    THRESHOLD_CRITICAL = 60.0
+    # Alert thresholds (imported from constants)
+    THRESHOLD_OPTIMAL = THRESHOLD_OPTIMAL
+    THRESHOLD_ACCEPTABLE = THRESHOLD_ACCEPTABLE
+    THRESHOLD_FAA_CAUTION = THRESHOLD_FAA_CAUTION
+    THRESHOLD_FRA_HIGH_RISK = THRESHOLD_FRA_HIGH_RISK
+    THRESHOLD_CRITICAL = THRESHOLD_CRITICAL
 
-    # Trend detection
-    TREND_WINDOW_HOURS = 4.0  # Look back 4 hours for trend
-    TREND_THRESHOLD = 5.0  # 5% change is significant
+    # Trend detection (imported from constants)
+    TREND_WINDOW_HOURS = TREND_WINDOW_HOURS
+    TREND_THRESHOLD = TREND_THRESHOLD_PERCENT
 
     def __init__(
         self,
@@ -256,7 +269,7 @@ class FatigueMonitor:
                 (current_time, state.effectiveness.overall)
             )
             # Keep only last 48 hours
-            cutoff = current_time - timedelta(hours=48)
+            cutoff = current_time - timedelta(hours=EFFECTIVENESS_HISTORY_HOURS)
             self._effectiveness_history[person_id] = [
                 (t, e) for t, e in self._effectiveness_history[person_id] if t >= cutoff
             ]
@@ -386,7 +399,7 @@ class FatigueMonitor:
                 "Currently in WOCL (2-6 AM) - heightened vigilance needed"
             )
 
-        if factors.get("hours_awake", 0) > 16:
+        if factors.get("hours_awake", 0) > EXTENDED_WAKEFULNESS_HOURS:
             recommendations.append(
                 f"Extended wakefulness ({factors.get('hours_awake'):.0f} hours) - prioritize rest"
             )
@@ -489,13 +502,13 @@ class FatigueMonitor:
 
         # Sort highest risk
         highest_risk.sort(key=lambda x: x["effectiveness"])
-        highest_risk = highest_risk[:5]  # Top 5
+        highest_risk = highest_risk[:TOP_RISK_RESIDENTS_COUNT]  # Top N
 
         # Active alerts
         active_alerts = len(self.check_alerts())
 
         # 24-hour statistics
-        cutoff = now - timedelta(hours=24)
+        cutoff = now - timedelta(hours=LAST_24_HOURS)
         alerts_24h = len([a for a in self._alert_history if a.created_at >= cutoff])
 
         # Effectiveness 24h

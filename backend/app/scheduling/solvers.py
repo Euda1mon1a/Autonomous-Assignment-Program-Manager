@@ -64,6 +64,15 @@ from app.scheduling.constraints import (
 logger = logging.getLogger(__name__)
 
 
+# Objective function weights
+COVERAGE_WEIGHT = 1000  # Primary objective: maximize schedule coverage
+EQUITY_PENALTY_WEIGHT = 10  # Secondary: balance workload across residents
+TEMPLATE_BALANCE_WEIGHT = 5  # Tertiary: distribute assignments across rotation types
+
+# Redis TTL for solver progress tracking
+SOLVER_PROGRESS_TTL_SECONDS = 300  # 5 minutes
+
+
 class SolverResult:
     """Result from a solver run."""
 
@@ -421,13 +430,13 @@ class PuLPSolver(BaseSolver):
         equity_penalty = variables.get("equity_penalty")
         if equity_penalty is not None and template_balance_penalty is not None:
             prob += (
-                1000 * coverage - 10 * equity_penalty - 5 * template_balance_penalty,
+                COVERAGE_WEIGHT * coverage - EQUITY_PENALTY_WEIGHT * equity_penalty - TEMPLATE_BALANCE_WEIGHT * template_balance_penalty,
                 "objective",
             )
         elif equity_penalty is not None:
-            prob += 1000 * coverage - 10 * equity_penalty, "objective"
+            prob += COVERAGE_WEIGHT * coverage - EQUITY_PENALTY_WEIGHT * equity_penalty, "objective"
         elif template_balance_penalty is not None:
-            prob += 1000 * coverage - 5 * template_balance_penalty, "objective"
+            prob += COVERAGE_WEIGHT * coverage - TEMPLATE_BALANCE_WEIGHT * template_balance_penalty, "objective"
         else:
             prob += coverage, "objective"
 
@@ -620,7 +629,7 @@ class SolverProgressCallback:
                         # Store in Redis with 5 minute expiry
                         self.redis.setex(
                             f"solver_progress:{self.task_id}",
-                            300,  # 5 minutes TTL
+                            SOLVER_PROGRESS_TTL_SECONDS,
                             json.dumps(progress_data),
                         )
                         logger.debug(
@@ -959,12 +968,12 @@ class CPSATSolver(BaseSolver):
         equity_penalty = variables.get("equity_penalty")
         if equity_penalty is not None and template_balance_penalty is not None:
             model.Maximize(
-                coverage * 1000 - equity_penalty * 10 - template_balance_penalty * 5
+                coverage * COVERAGE_WEIGHT - equity_penalty * EQUITY_PENALTY_WEIGHT - template_balance_penalty * TEMPLATE_BALANCE_WEIGHT
             )
         elif equity_penalty is not None:
-            model.Maximize(coverage * 1000 - equity_penalty * 10)
+            model.Maximize(coverage * COVERAGE_WEIGHT - equity_penalty * EQUITY_PENALTY_WEIGHT)
         elif template_balance_penalty is not None:
-            model.Maximize(coverage * 1000 - template_balance_penalty * 5)
+            model.Maximize(coverage * COVERAGE_WEIGHT - template_balance_penalty * TEMPLATE_BALANCE_WEIGHT)
         else:
             model.Maximize(coverage)
 
@@ -1024,7 +1033,7 @@ class CPSATSolver(BaseSolver):
                 }
                 self.redis_client.setex(
                     f"solver_progress:{self.task_id}",
-                    300,  # 5 minutes TTL
+                    SOLVER_PROGRESS_TTL_SECONDS,
                     json.dumps(final_data),
                 )
             except Exception as e:
@@ -1478,7 +1487,7 @@ class GreedySolver(BaseSolver):
                     assignment_counts=assignment_counts.copy(),
                     score_breakdown={
                         "equity_score": candidate_scores[selected.id],
-                        "coverage": 1000,  # Base coverage value
+                        "coverage": COVERAGE_WEIGHT,  # Base coverage value
                     },
                 )
                 explanations[(selected.id, block.id)] = explanation.model_dump()
@@ -1621,19 +1630,35 @@ class SolverFactory:
 
         Note:
             These solvers have optional dependencies:
-            - quantum/quantum_sa: Works with pure Python fallback
+            - quantum/quantum_sa: Works with pure Python fallback (no dependencies)
             - qubo: Requires PyQUBO (pip install pyqubo)
+
+        Environment Configuration:
+            - USE_QUANTUM_SOLVER: Enable quantum solver (default: false)
+            - DWAVE_API_TOKEN: D-Wave API token
+            - QUANTUM_SOLVER_BACKEND: "classical" or "quantum" (default: classical)
+
+        The solver gracefully falls back to classical simulated annealing if:
+            - D-Wave libraries not installed
+            - API token missing or invalid
+            - D-Wave service unreachable
         """
         if cls._solvers[solver_type] is None:
-            from app.scheduling.quantum import (
-                QuantumInspiredSolver,
-                QUBOSolver,
-                SimulatedQuantumAnnealingSolver,
-            )
+            try:
+                from app.scheduling.quantum import (
+                    QuantumInspiredSolver,
+                    QUBOSolver,
+                    SimulatedQuantumAnnealingSolver,
+                )
 
-            cls._solvers["quantum"] = QuantumInspiredSolver
-            cls._solvers["qubo"] = QUBOSolver
-            cls._solvers["quantum_sa"] = SimulatedQuantumAnnealingSolver
+                cls._solvers["quantum"] = QuantumInspiredSolver
+                cls._solvers["qubo"] = QUBOSolver
+                cls._solvers["quantum_sa"] = SimulatedQuantumAnnealingSolver
+            except ImportError as e:
+                raise ValueError(
+                    f"Quantum solver '{solver_type}' requires quantum module. "
+                    f"Error: {e}"
+                )
         return cls._solvers[solver_type]
 
     @classmethod

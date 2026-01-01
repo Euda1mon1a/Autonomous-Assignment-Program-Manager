@@ -12,6 +12,11 @@ The QUBO formulation naturally maps to:
 - Objective optimization as linear/quadratic terms
 - Binary decision variables x[resident, block, template]
 
+Environment Configuration:
+    USE_QUANTUM_SOLVER: Enable quantum solver (default: false)
+    DWAVE_API_TOKEN: D-Wave API token for quantum hardware
+    QUANTUM_SOLVER_BACKEND: "classical" or "quantum" (default: classical)
+
 References:
 - PyQUBO: https://arxiv.org/abs/2103.01708
 - Nurse Scheduling via QUBO: https://arxiv.org/abs/2302.09459
@@ -20,6 +25,7 @@ References:
 
 import logging
 import math
+import os
 import random
 import time
 from typing import Any
@@ -30,6 +36,18 @@ from app.scheduling.constraints import ConstraintManager, SchedulingContext
 from app.scheduling.solvers import BaseSolver, SolverResult
 
 logger = logging.getLogger(__name__)
+
+
+# Simulated Annealing Solver Parameters
+MIN_READS = 100  # Minimum number of annealing reads
+MAX_READS = 1000  # Maximum number of annealing reads
+BASE_READS = 10000  # Base reads for read count calculation
+MIN_SWEEPS = 1000  # Minimum number of annealing sweeps
+MAX_SWEEPS = 10000  # Maximum number of annealing sweeps
+SWEEPS_PER_VAR = 10  # Number of sweeps per variable
+
+# Quantum Hardware Limits
+MAX_QUANTUM_VARS = 5000  # Maximum variables for quantum hardware
 
 
 # Check for optional quantum libraries
@@ -775,6 +793,17 @@ class QuantumInspiredSolver(BaseSolver):
     2. Medium problems (<10000 vars): Simulated annealing
     3. Large problems: Decomposition + parallel annealing
     4. If D-Wave available: Use quantum hardware for subproblems
+
+    Environment Configuration:
+        - USE_QUANTUM_SOLVER: Enable/disable quantum solver (default: false)
+        - DWAVE_API_TOKEN: D-Wave API token for quantum hardware access
+        - QUANTUM_SOLVER_BACKEND: "classical" or "quantum" (default: classical)
+
+    The solver gracefully falls back to classical simulated annealing if:
+    - D-Wave libraries are not installed
+    - D-Wave API token is missing or invalid
+    - D-Wave service is unreachable
+    - Problem size exceeds hardware constraints
     """
 
     def __init__(
@@ -794,7 +823,25 @@ class QuantumInspiredSolver(BaseSolver):
             dwave_token: D-Wave API token (if using hardware)
         """
         super().__init__(constraint_manager, timeout_seconds)
-        self.use_quantum_hardware = use_quantum_hardware and DWAVE_SYSTEM_AVAILABLE
+
+        # Validate quantum hardware availability
+        self.use_quantum_hardware = False
+        if use_quantum_hardware:
+            if not DWAVE_SYSTEM_AVAILABLE:
+                logger.warning(
+                    "D-Wave system libraries not available. "
+                    "Install with: pip install dwave-system"
+                )
+            elif not dwave_token:
+                logger.warning(
+                    "D-Wave API token not provided. "
+                    "Set DWAVE_API_TOKEN environment variable."
+                )
+            else:
+                # All requirements met - enable quantum hardware
+                self.use_quantum_hardware = True
+                logger.info("Quantum hardware mode enabled (D-Wave)")
+
         self.dwave_token = dwave_token
 
     def solve(
@@ -817,7 +864,7 @@ class QuantumInspiredSolver(BaseSolver):
                 solver_status="No variables",
             )
 
-        if self.use_quantum_hardware and n_vars <= 5000:
+        if self.use_quantum_hardware and n_vars <= MAX_QUANTUM_VARS:
             # Use D-Wave quantum annealer
             return self._solve_with_dwave(context, existing_assignments)
 
@@ -825,8 +872,8 @@ class QuantumInspiredSolver(BaseSolver):
         solver = SimulatedQuantumAnnealingSolver(
             constraint_manager=self.constraint_manager,
             timeout_seconds=self.timeout_seconds,
-            num_reads=min(1000, max(100, 10000 // n_vars)),
-            num_sweeps=min(10000, max(1000, n_vars * 10)),
+            num_reads=min(MAX_READS, max(MIN_READS, BASE_READS // n_vars)),
+            num_sweeps=min(MAX_SWEEPS, max(MIN_SWEEPS, n_vars * SWEEPS_PER_VAR)),
         )
         return solver.solve(context, existing_assignments)
 
@@ -835,21 +882,41 @@ class QuantumInspiredSolver(BaseSolver):
         context: SchedulingContext,
         existing_assignments: list[Assignment] = None,
     ) -> SolverResult:
-        """Solve using D-Wave quantum hardware."""
+        """
+        Solve using D-Wave quantum hardware with graceful fallback.
+
+        Falls back to classical simulated annealing if:
+        - D-Wave libraries not available
+        - API token missing or invalid
+        - Service unreachable
+        - Problem too large for hardware
+
+        Returns:
+            SolverResult with solver_status indicating "dwave_quantum" or fallback
+        """
         if not DWAVE_SYSTEM_AVAILABLE:
-            logger.warning("D-Wave system not available, falling back to SA")
+            logger.warning("D-Wave system not available, falling back to classical SA")
             return SimulatedQuantumAnnealingSolver(
                 timeout_seconds=self.timeout_seconds
             ).solve(context, existing_assignments)
 
-        from dwave.system import DWaveSampler, EmbeddingComposite
+        if not self.dwave_token:
+            logger.warning("D-Wave API token not set, falling back to classical SA")
+            return SimulatedQuantumAnnealingSolver(
+                timeout_seconds=self.timeout_seconds
+            ).solve(context, existing_assignments)
 
         start_time = time.time()
-
         formulation = QUBOFormulation(context)
         Q = formulation.build()
 
+        # Try D-Wave quantum hardware
         try:
+            from dwave.system import DWaveSampler, EmbeddingComposite
+
+            logger.info(
+                f"Attempting D-Wave quantum solve ({formulation.num_variables} variables)"
+            )
             sampler = EmbeddingComposite(DWaveSampler(token=self.dwave_token))
             response = sampler.sample_qubo(
                 Q,
@@ -859,11 +926,21 @@ class QuantumInspiredSolver(BaseSolver):
             best = response.first
             sample = dict(best.sample)
             energy = best.energy
+            used_quantum = True
+            solver_status = "dwave_quantum"
+            logger.info(f"D-Wave quantum solve succeeded (energy={energy:.2f})")
+
         except Exception as e:
-            logger.error(f"D-Wave error: {e}, falling back to SA")
+            # Graceful fallback to classical SA
+            logger.warning(
+                f"D-Wave quantum solve failed: {e.__class__.__name__}: {e}"
+            )
+            logger.info("Falling back to classical simulated annealing")
             sample, energy = SimulatedQuantumAnnealingSolver(
                 timeout_seconds=self.timeout_seconds
             )._solve_pure_python(Q, formulation)
+            used_quantum = False
+            solver_status = "classical_fallback"
 
         runtime = time.time() - start_time
         assignments = formulation.decode_solution(sample)
@@ -874,10 +951,11 @@ class QuantumInspiredSolver(BaseSolver):
             status="feasible",
             objective_value=-energy,
             runtime_seconds=runtime,
-            solver_status="dwave_quantum",
+            solver_status=solver_status,
             statistics={
                 "num_variables": formulation.num_variables,
-                "used_quantum": True,
+                "used_quantum": used_quantum,
+                "backend": "dwave" if used_quantum else "simulated_annealing",
             },
         )
 
@@ -895,3 +973,101 @@ def get_quantum_library_status() -> dict[str, bool]:
         "dwave_system": DWAVE_SYSTEM_AVAILABLE,
         "qubovert": QUBOVERT_AVAILABLE,
     }
+
+
+def get_quantum_solver_config() -> dict[str, Any]:
+    """
+    Load quantum solver configuration from environment variables.
+
+    Returns:
+        Dict with configuration:
+            - enabled: Whether quantum solver is enabled
+            - backend: "classical" or "quantum"
+            - dwave_token: D-Wave API token (if set)
+            - use_quantum_hardware: Whether to attempt quantum hardware use
+
+    Environment Variables:
+        USE_QUANTUM_SOLVER: "true" to enable (default: "false")
+        DWAVE_API_TOKEN: D-Wave API token
+        QUANTUM_SOLVER_BACKEND: "classical" or "quantum" (default: "classical")
+
+    Example:
+        >>> config = get_quantum_solver_config()
+        >>> if config["enabled"]:
+        ...     solver = QuantumInspiredSolver(
+        ...         use_quantum_hardware=config["use_quantum_hardware"],
+        ...         dwave_token=config["dwave_token"]
+        ...     )
+    """
+    enabled = os.getenv("USE_QUANTUM_SOLVER", "false").lower() == "true"
+    backend = os.getenv("QUANTUM_SOLVER_BACKEND", "classical").lower()
+    dwave_token = os.getenv("DWAVE_API_TOKEN")
+
+    # Only use quantum hardware if:
+    # 1. Quantum solver is enabled
+    # 2. Backend is set to "quantum"
+    # 3. D-Wave token is provided
+    # 4. D-Wave libraries are available
+    use_quantum_hardware = (
+        enabled
+        and backend == "quantum"
+        and dwave_token is not None
+        and DWAVE_SYSTEM_AVAILABLE
+    )
+
+    return {
+        "enabled": enabled,
+        "backend": backend,
+        "dwave_token": dwave_token,
+        "use_quantum_hardware": use_quantum_hardware,
+        "libraries_available": get_quantum_library_status(),
+    }
+
+
+def create_quantum_solver_from_env(
+    constraint_manager: ConstraintManager | None = None,
+    timeout_seconds: float = 60.0,
+) -> QuantumInspiredSolver | SimulatedQuantumAnnealingSolver:
+    """
+    Create quantum solver instance from environment configuration.
+
+    Automatically selects the appropriate solver based on environment variables:
+    - If USE_QUANTUM_SOLVER=false: Returns None (use classical solvers)
+    - If QUANTUM_SOLVER_BACKEND=classical: Returns SimulatedQuantumAnnealingSolver
+    - If QUANTUM_SOLVER_BACKEND=quantum: Returns QuantumInspiredSolver with D-Wave
+
+    Args:
+        constraint_manager: Optional constraint manager
+        timeout_seconds: Maximum solve time
+
+    Returns:
+        Configured quantum solver instance, or None if disabled
+
+    Example:
+        >>> solver = create_quantum_solver_from_env()
+        >>> if solver:
+        ...     result = solver.solve(context)
+        ... else:
+        ...     # Use classical solver instead
+        ...     result = CPSATSolver().solve(context)
+    """
+    config = get_quantum_solver_config()
+
+    if not config["enabled"]:
+        logger.info("Quantum solver disabled (USE_QUANTUM_SOLVER=false)")
+        return None
+
+    if config["backend"] == "quantum" and config["use_quantum_hardware"]:
+        logger.info("Creating quantum-inspired solver with D-Wave hardware support")
+        return QuantumInspiredSolver(
+            constraint_manager=constraint_manager,
+            timeout_seconds=timeout_seconds,
+            use_quantum_hardware=True,
+            dwave_token=config["dwave_token"],
+        )
+    else:
+        logger.info("Creating classical simulated annealing solver (quantum-inspired)")
+        return SimulatedQuantumAnnealingSolver(
+            constraint_manager=constraint_manager,
+            timeout_seconds=timeout_seconds,
+        )

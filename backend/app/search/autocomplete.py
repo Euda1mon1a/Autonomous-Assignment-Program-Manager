@@ -623,10 +623,13 @@ class AutocompleteService:
             return suggestions
 
         except redis.ConnectionError as e:
-            logger.warning(f"Redis error getting popular suggestions: {e}")
+            logger.warning(f"Redis error getting popular suggestions: {e}", exc_info=True)
             return []
-        except Exception as e:
-            logger.error(f"Error getting popular suggestions: {e}")
+        except (ValueError, TypeError) as e:
+            logger.error(f"Data validation error getting popular suggestions: {e}", exc_info=True)
+            return []
+        except redis.RedisError as e:
+            logger.error(f"Redis error getting popular suggestions: {e}", exc_info=True)
             return []
 
     async def _get_personalized_suggestions(
@@ -683,10 +686,13 @@ class AutocompleteService:
             return suggestions
 
         except redis.ConnectionError as e:
-            logger.warning(f"Redis error getting personalized suggestions: {e}")
+            logger.warning(f"Redis error getting personalized suggestions: {e}", exc_info=True)
             return []
-        except Exception as e:
-            logger.error(f"Error getting personalized suggestions: {e}")
+        except (ValueError, TypeError) as e:
+            logger.error(f"Data validation error getting personalized suggestions: {e}", exc_info=True)
+            return []
+        except redis.RedisError as e:
+            logger.error(f"Redis error getting personalized suggestions: {e}", exc_info=True)
             return []
 
     async def _get_typo_tolerant_suggestions(
@@ -750,10 +756,13 @@ class AutocompleteService:
             return suggestions[:limit]
 
         except redis.ConnectionError as e:
-            logger.warning(f"Redis error getting typo suggestions: {e}")
+            logger.warning(f"Redis error getting typo suggestions: {e}", exc_info=True)
             return []
-        except Exception as e:
-            logger.error(f"Error getting typo suggestions: {e}")
+        except (ValueError, TypeError) as e:
+            logger.error(f"Data validation error getting typo suggestions: {e}", exc_info=True)
+            return []
+        except redis.RedisError as e:
+            logger.error(f"Redis error getting typo suggestions: {e}", exc_info=True)
             return []
 
     def _levenshtein_distance(self, s1: str, s2: str) -> int:
@@ -848,9 +857,11 @@ class AutocompleteService:
             redis_client.expire(history_key, self.USER_HISTORY_TTL)
 
         except redis.ConnectionError as e:
-            logger.warning(f"Redis error tracking query: {e}")
-        except Exception as e:
-            logger.error(f"Error tracking query: {e}")
+            logger.warning(f"Redis error tracking query: {e}", exc_info=True)
+        except (ValueError, TypeError) as e:
+            logger.error(f"Data validation error tracking query: {e}", exc_info=True)
+        except redis.RedisError as e:
+            logger.error(f"Redis error tracking query: {e}", exc_info=True)
 
     async def _record_analytics(
         self,
@@ -902,8 +913,10 @@ class AutocompleteService:
                 f"time={response_time_ms:.2f}ms"
             )
 
-        except Exception as e:
-            logger.error(f"Error recording analytics: {e}")
+        except (redis.ConnectionError, redis.RedisError) as e:
+            logger.error(f"Redis error recording analytics: {e}", exc_info=True)
+        except (ValueError, TypeError) as e:
+            logger.error(f"Data validation error recording analytics: {e}", exc_info=True)
 
     async def get_analytics(
         self,
@@ -984,8 +997,14 @@ class AutocompleteService:
                 "end_date": end_date.isoformat(),
             }
 
-        except Exception as e:
-            logger.error(f"Error getting analytics: {e}")
+        except (redis.ConnectionError, redis.RedisError) as e:
+            logger.error(f"Redis error getting analytics: {e}", exc_info=True)
+            return {
+                "error": str(e),
+                "total_queries": 0,
+            }
+        except (ValueError, TypeError, KeyError) as e:
+            logger.error(f"Data processing error getting analytics: {e}", exc_info=True)
             return {
                 "error": str(e),
                 "total_queries": 0,

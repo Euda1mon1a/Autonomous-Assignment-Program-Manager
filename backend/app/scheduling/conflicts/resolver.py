@@ -70,7 +70,7 @@ class ConflictResolver:
     detailed implementation steps and impact assessments.
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize the conflict resolver.
 

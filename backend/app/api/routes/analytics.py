@@ -11,8 +11,9 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import and_
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import select, and_
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession, joinedload
 
 from app.analytics.engine import AnalyticsEngine
 from app.analytics.metrics import (
@@ -21,7 +22,7 @@ from app.analytics.metrics import (
     calculate_fairness_index,
 )
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
@@ -86,7 +87,7 @@ def _anonymize_id(original_id: str, salt: str = "research") -> str:
 
 @router.get("/analytics/metrics/current", response_model=ScheduleVersionMetrics)
 async def get_current_metrics(
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> ScheduleVersionMetrics:
     """
@@ -158,10 +159,15 @@ async def get_current_metrics(
 
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Error getting current metrics: {e}")
+    except SQLAlchemyError as e:
+        logger.error(f"Database error getting current metrics: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail="An error occurred retrieving metrics"
+            status_code=500, detail="Database error occurred retrieving metrics"
+        )
+    except (ValueError, TypeError) as e:
+        logger.error(f"Data validation error getting current metrics: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail="Data validation error occurred"
         )
 
 
@@ -172,7 +178,7 @@ async def get_metrics_history(
     ),
     start_date: datetime = Query(..., description="Start date (ISO format)"),
     end_date: datetime = Query(..., description="End date (ISO format)"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> list[MetricTimeSeries]:
     """
@@ -232,8 +238,11 @@ async def get_metrics_history(
                         },
                     )
                 )
-            except Exception as e:
-                logger.warning(f"Error analyzing run {run.id}: {e}")
+            except SQLAlchemyError as e:
+                logger.warning(f"Database error analyzing run {run.id}: {e}", exc_info=True)
+                continue
+            except (ValueError, TypeError, KeyError) as e:
+                logger.warning(f"Data processing error analyzing run {run.id}: {e}", exc_info=True)
                 continue
 
         if not data_points:
@@ -275,17 +284,22 @@ async def get_metrics_history(
             )
         ]
 
-    except Exception as e:
-        logger.error(f"Error getting metrics history: {e}")
+    except SQLAlchemyError as e:
+        logger.error(f"Database error getting metrics history: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail="An error occurred retrieving metrics history"
+            status_code=500, detail="Database error occurred retrieving metrics history"
+        )
+    except (ValueError, TypeError) as e:
+        logger.error(f"Data processing error getting metrics history: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail="Data processing error occurred"
         )
 
 
 @router.get("/analytics/fairness/trend", response_model=FairnessTrendReport)
 async def get_fairness_trend(
     months: int = Query(6, ge=1, le=24, description="Number of months to analyze"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> FairnessTrendReport:
     """
@@ -342,8 +356,11 @@ async def get_fairness_trend(
                 )
                 fairness_values.append(fairness_index)
 
-            except Exception as e:
-                logger.warning(f"Error analyzing run {run.id}: {e}")
+            except SQLAlchemyError as e:
+                logger.warning(f"Database error analyzing run {run.id}: {e}", exc_info=True)
+                continue
+            except (ValueError, TypeError, KeyError) as e:
+                logger.warning(f"Data processing error analyzing run {run.id}: {e}", exc_info=True)
                 continue
 
         if not data_points:
@@ -409,10 +426,15 @@ async def get_fairness_trend(
 
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Error getting fairness trend: {e}")
+    except SQLAlchemyError as e:
+        logger.error(f"Database error getting fairness trend: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail="An error occurred retrieving fairness trend"
+            status_code=500, detail="Database error occurred retrieving fairness trend"
+        )
+    except (ValueError, TypeError) as e:
+        logger.error(f"Data processing error getting fairness trend: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail="Data processing error occurred"
         )
 
 
@@ -422,7 +444,7 @@ async def get_fairness_trend(
 async def compare_versions(
     version_a: str,
     version_b: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> VersionComparison:
     """
@@ -436,8 +458,8 @@ async def compare_versions(
 
         # For now, treat version as run_id
         # In a more sophisticated system, you might have version management
-        run_a = db.query(ScheduleRun).filter(ScheduleRun.id == version_a).first()
-        run_b = db.query(ScheduleRun).filter(ScheduleRun.id == version_b).first()
+        run_a = (await db.execute(select(ScheduleRun).where(ScheduleRun.id == version_a))).scalar_one_or_none()
+        run_b = (await db.execute(select(ScheduleRun).where(ScheduleRun.id == version_b))).scalar_one_or_none()
 
         if not run_a or not run_b:
             raise HTTPException(
@@ -549,17 +571,22 @@ async def compare_versions(
 
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Error comparing versions: {e}")
+    except SQLAlchemyError as e:
+        logger.error(f"Database error comparing versions: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail="An error occurred comparing versions"
+            status_code=500, detail="Database error occurred comparing versions"
+        )
+    except (ValueError, TypeError, KeyError) as e:
+        logger.error(f"Data processing error comparing versions: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail="Data processing error occurred"
         )
 
 
 @router.post("/analytics/what-if", response_model=WhatIfResult)
 async def what_if_analysis(
     proposed_changes: list[AssignmentChange],
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> WhatIfResult:
     """
@@ -602,7 +629,7 @@ async def what_if_analysis(
 
         # Analyze each change
         for change in proposed_changes:
-            person = db.query(Person).filter(Person.id == change.person_id).first()
+            person = (await db.execute(select(Person).where(Person.id == change.person_id))).scalar_one_or_none()
             if person:
                 affected_residents.add(person.name)
 
@@ -704,10 +731,15 @@ async def what_if_analysis(
 
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Error in what-if analysis: {e}")
+    except SQLAlchemyError as e:
+        logger.error(f"Database error in what-if analysis: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail="An error occurred performing what-if analysis"
+            status_code=500, detail="Database error occurred performing what-if analysis"
+        )
+    except (ValueError, TypeError) as e:
+        logger.error(f"Data processing error in what-if analysis: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail="Data processing error occurred"
         )
 
 
@@ -716,7 +748,7 @@ async def export_for_research(
     start_date: datetime = Query(..., description="Start date (ISO format)"),
     end_date: datetime = Query(..., description="End date (ISO format)"),
     anonymize: bool = Query(True, description="Anonymize sensitive data"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> ResearchDataExport:
     """
@@ -906,8 +938,13 @@ async def export_for_research(
 
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Error exporting research data: {e}")
+    except SQLAlchemyError as e:
+        logger.error(f"Database error exporting research data: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail="An error occurred exporting research data"
+            status_code=500, detail="Database error occurred exporting research data"
+        )
+    except (ValueError, TypeError, KeyError) as e:
+        logger.error(f"Data processing error exporting research data: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail="Data processing error occurred"
         )

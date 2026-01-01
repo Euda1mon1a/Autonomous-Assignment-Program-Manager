@@ -266,7 +266,7 @@ async def gather_with_concurrency(
 
 async def run_tasks_with_progress(
     tasks: Sequence[Callable],
-    progress_callback: Optional[Callable[[int, int], None]] = None,
+    progress_callback: Callable[[int, int], None] | None = None,
     max_concurrent: int = 10,
 ) -> list[Any]:
     """Run tasks with progress tracking.

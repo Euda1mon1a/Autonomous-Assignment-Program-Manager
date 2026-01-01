@@ -600,11 +600,18 @@ class SearchIndexer:
             return index_version
 
         except redis.ConnectionError as e:
-            logger.error(f"Redis connection error creating index: {e}")
+            logger.error(f"Redis connection error creating index: {e}", exc_info=True)
             raise
-        except Exception as e:
+        except (json.JSONDecodeError, ValueError, TypeError) as e:
             logger.error(
-                f"Error creating index '{mapping.index_name}': {e}", exc_info=True
+                f"Data serialization error creating index '{mapping.index_name}': {e}",
+                exc_info=True,
+            )
+            raise
+        except OSError as e:
+            logger.error(
+                f"File I/O error creating index '{mapping.index_name}': {e}",
+                exc_info=True,
             )
             raise
 
@@ -809,14 +816,24 @@ class SearchIndexer:
                                     actual_index, doc_id, document, mapping
                                 )
                                 indexed_count += 1
-                            except Exception as e:
+                            except (redis.ConnectionError, redis.RedisError) as e:
                                 logger.warning(
-                                    f"Error indexing fields for doc '{doc_id}': {e}"
+                                    f"Redis error indexing fields for doc '{doc_id}': {e}",
+                                    exc_info=True,
+                                )
+                                error_count += 1
+                            except (ValueError, TypeError) as e:
+                                logger.warning(
+                                    f"Data validation error indexing fields for doc '{doc_id}': {e}",
+                                    exc_info=True,
                                 )
                                 error_count += 1
 
-                except Exception as e:
-                    logger.error(f"Error processing batch: {e}", exc_info=True)
+                except (redis.ConnectionError, redis.RedisError) as e:
+                    logger.error(f"Redis error processing batch: {e}", exc_info=True)
+                    error_count += len(batch)
+                except (json.JSONDecodeError, ValueError, TypeError) as e:
+                    logger.error(f"Data validation error processing batch: {e}", exc_info=True)
                     error_count += len(batch)
 
             # Update document count
@@ -866,10 +883,10 @@ class SearchIndexer:
             return result
 
         except redis.ConnectionError as e:
-            logger.error(f"Redis connection error during bulk index: {e}")
+            logger.error(f"Redis connection error during bulk index: {e}", exc_info=True)
             raise
-        except Exception as e:
-            logger.error(f"Error during bulk index: {e}", exc_info=True)
+        except (json.JSONDecodeError, ValueError, TypeError) as e:
+            logger.error(f"Data validation error during bulk index: {e}", exc_info=True)
             raise
 
     async def reindex_all(
@@ -980,8 +997,11 @@ class SearchIndexer:
 
             return result
 
-        except Exception as e:
-            logger.error(f"Error during reindex: {e}", exc_info=True)
+        except (redis.ConnectionError, redis.RedisError) as e:
+            logger.error(f"Redis error during reindex: {e}", exc_info=True)
+            raise
+        except (ValueError, TypeError) as e:
+            logger.error(f"Data validation error during reindex: {e}", exc_info=True)
             raise
 
     async def search(
@@ -1120,7 +1140,7 @@ class SearchIndexer:
             return result
 
         except redis.ConnectionError as e:
-            logger.warning(f"Redis connection error during search: {e}")
+            logger.warning(f"Redis connection error during search: {e}", exc_info=True)
             return {
                 "total": 0,
                 "hits": [],
@@ -1128,8 +1148,8 @@ class SearchIndexer:
                 "duration_ms": 0.0,
                 "error": str(e),
             }
-        except Exception as e:
-            logger.error(f"Error during search: {e}", exc_info=True)
+        except (json.JSONDecodeError, ValueError, TypeError) as e:
+            logger.error(f"Data parsing error during search: {e}", exc_info=True)
             return {
                 "total": 0,
                 "hits": [],
@@ -1190,10 +1210,10 @@ class SearchIndexer:
             return False
 
         except redis.ConnectionError as e:
-            logger.warning(f"Redis connection error deleting document: {e}")
+            logger.warning(f"Redis connection error deleting document: {e}", exc_info=True)
             return False
-        except Exception as e:
-            logger.error(f"Error deleting document: {e}", exc_info=True)
+        except redis.RedisError as e:
+            logger.error(f"Redis error deleting document: {e}", exc_info=True)
             return False
 
     async def get_index_health(self, index_name: str) -> IndexHealth | None:
@@ -1239,8 +1259,11 @@ class SearchIndexer:
 
             return health
 
-        except Exception as e:
-            logger.error(f"Error getting index health: {e}", exc_info=True)
+        except (redis.ConnectionError, redis.RedisError) as e:
+            logger.error(f"Redis error getting index health: {e}", exc_info=True)
+            return None
+        except (ValueError, KeyError) as e:
+            logger.error(f"Data parsing error getting index health: {e}", exc_info=True)
             return None
 
     async def get_all_indices(self) -> list[dict[str, Any]]:
@@ -1290,8 +1313,11 @@ class SearchIndexer:
 
             return indices
 
-        except Exception as e:
-            logger.error(f"Error getting all indices: {e}", exc_info=True)
+        except (redis.ConnectionError, redis.RedisError) as e:
+            logger.error(f"Redis error getting all indices: {e}", exc_info=True)
+            return []
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.error(f"Data parsing error getting all indices: {e}", exc_info=True)
             return []
 
     def get_metrics(self) -> dict[str, Any]:
@@ -1355,8 +1381,11 @@ class SearchIndexer:
 
             return versions
 
-        except Exception as e:
-            logger.error(f"Error getting index versions: {e}", exc_info=True)
+        except (redis.ConnectionError, redis.RedisError) as e:
+            logger.error(f"Redis error getting index versions: {e}", exc_info=True)
+            return []
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.error(f"Data parsing error getting index versions: {e}", exc_info=True)
             return []
 
     async def _update_alias(self, alias_name: str, target_index: str) -> None:
@@ -1385,8 +1414,8 @@ class SearchIndexer:
 
             logger.info(f"Updated alias '{alias_name}' to point to '{target_index}'")
 
-        except Exception as e:
-            logger.error(f"Error updating alias: {e}", exc_info=True)
+        except (redis.ConnectionError, redis.RedisError) as e:
+            logger.error(f"Redis error updating alias: {e}", exc_info=True)
             raise
 
     async def _resolve_alias(self, index_name: str) -> str:
@@ -1403,8 +1432,8 @@ class SearchIndexer:
             # No alias, assume it's a direct index name
             return index_name
 
-        except Exception as e:
-            logger.error(f"Error resolving alias: {e}", exc_info=True)
+        except (redis.ConnectionError, redis.RedisError) as e:
+            logger.error(f"Redis error resolving alias: {e}", exc_info=True)
             return index_name
 
     async def _get_mapping(self, index_name: str) -> DocumentMapping | None:
@@ -1439,8 +1468,11 @@ class SearchIndexer:
 
             return mapping
 
-        except Exception as e:
-            logger.error(f"Error getting mapping: {e}", exc_info=True)
+        except (redis.ConnectionError, redis.RedisError) as e:
+            logger.error(f"Redis error getting mapping: {e}", exc_info=True)
+            return None
+        except (json.JSONDecodeError, ValueError, KeyError) as e:
+            logger.error(f"Data parsing error getting mapping: {e}", exc_info=True)
             return None
 
     def _validate_document(
@@ -1509,8 +1541,11 @@ class SearchIndexer:
 
             await pipe.execute()
 
-        except Exception as e:
-            logger.error(f"Error indexing fields: {e}", exc_info=True)
+        except (redis.ConnectionError, redis.RedisError) as e:
+            logger.error(f"Redis error indexing fields: {e}", exc_info=True)
+            raise
+        except (ValueError, TypeError) as e:
+            logger.error(f"Data validation error indexing fields: {e}", exc_info=True)
             raise
 
     def _tokenize(
@@ -1582,8 +1617,8 @@ class SearchIndexer:
 
             logger.info(f"Cleared index '{index_name}'")
 
-        except Exception as e:
-            logger.error(f"Error clearing index: {e}", exc_info=True)
+        except (redis.ConnectionError, redis.RedisError) as e:
+            logger.error(f"Redis error clearing index: {e}", exc_info=True)
             raise
 
     async def _increment_doc_count(self, index_name: str) -> None:
@@ -1594,8 +1629,8 @@ class SearchIndexer:
             redis_client = await self._get_redis()
             metadata_key = self._get_index_metadata_key(index_name)
             await redis_client.hincrby(metadata_key, "doc_count", 1)
-        except Exception as e:
-            logger.error(f"Error incrementing doc count: {e}")
+        except (redis.ConnectionError, redis.RedisError) as e:
+            logger.error(f"Redis error incrementing doc count: {e}", exc_info=True)
 
     async def _decrement_doc_count(self, index_name: str) -> None:
         """Decrement document count for an index."""
@@ -1606,8 +1641,8 @@ class SearchIndexer:
             redis_client = await self._get_redis()
             metadata_key = self._get_index_metadata_key(index_name)
             await redis_client.hincrby(metadata_key, "doc_count", -1)
-        except Exception as e:
-            logger.error(f"Error decrementing doc count: {e}")
+        except (redis.ConnectionError, redis.RedisError) as e:
+            logger.error(f"Redis error decrementing doc count: {e}", exc_info=True)
 
     def _calculate_health_score(self, health: IndexHealth) -> float:
         """

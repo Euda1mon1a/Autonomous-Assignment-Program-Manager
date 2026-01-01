@@ -12,10 +12,11 @@ from datetime import date
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_current_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.swap import SwapRecord
 from app.models.user import User
 from app.schemas.swap import (
@@ -33,10 +34,10 @@ router = APIRouter(prefix="/swaps", tags=["swaps"])
 
 
 @router.post("/execute", response_model=SwapExecuteResponse)
-def execute_swap(
+async def execute_swap(
     request: SwapExecuteRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Execute an FMIT swap between two faculty members.
@@ -45,7 +46,7 @@ def execute_swap(
     """
     # Validate the swap
     validator = SwapValidationService(db)
-    validation = validator.validate_swap(
+    validation = await validator.validate_swap(
         source_faculty_id=request.source_faculty_id,
         source_week=request.source_week,
         target_faculty_id=request.target_faculty_id,
@@ -70,7 +71,7 @@ def execute_swap(
 
     # Execute the swap
     executor = SwapExecutor(db)
-    result = executor.execute_swap(
+    result = await executor.execute_swap(
         source_faculty_id=request.source_faculty_id,
         source_week=request.source_week,
         target_faculty_id=request.target_faculty_id,
@@ -89,10 +90,10 @@ def execute_swap(
 
 
 @router.post("/validate", response_model=SwapValidationResult)
-def validate_swap(
+async def validate_swap(
     request: SwapExecuteRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Validate a proposed swap without executing it.
@@ -100,7 +101,7 @@ def validate_swap(
     Use this to check if a swap is possible before attempting execution.
     """
     validator = SwapValidationService(db)
-    validation = validator.validate_swap(
+    validation = await validator.validate_swap(
         source_faculty_id=request.source_faculty_id,
         source_week=request.source_week,
         target_faculty_id=request.target_faculty_id,
@@ -117,15 +118,15 @@ def validate_swap(
 
 
 @router.get("/history", response_model=SwapHistoryResponse)
-def get_swap_history(
+async def get_swap_history(
     faculty_id: UUID | None = None,
     status: str | None = None,
     start_date: date | None = None,
     end_date: date | None = None,
     page: int = 1,
     page_size: int = 20,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get swap history with optional filters.
@@ -136,33 +137,46 @@ def get_swap_history(
     - start_date: Filter swaps with source_week >= start_date
     - end_date: Filter swaps with source_week <= end_date
     """
-    query = db.query(SwapRecord)
+    from sqlalchemy import func, or_
+    from sqlalchemy.orm import selectinload
+
+    # Build query
+    query = select(SwapRecord).options(
+        selectinload(SwapRecord.source_faculty),
+        selectinload(SwapRecord.target_faculty),
+    )
 
     # Filter by faculty (source or target)
     if faculty_id:
-        query = query.filter(
-            (SwapRecord.source_faculty_id == faculty_id)
-            | (SwapRecord.target_faculty_id == faculty_id)
+        query = query.where(
+            or_(
+                SwapRecord.source_faculty_id == faculty_id,
+                SwapRecord.target_faculty_id == faculty_id,
+            )
         )
 
     # Filter by status
     if status:
-        query = query.filter(SwapRecord.status == status)
+        query = query.where(SwapRecord.status == status)
 
     # Filter by date range (using source_week)
     if start_date:
-        query = query.filter(SwapRecord.source_week >= start_date)
+        query = query.where(SwapRecord.source_week >= start_date)
     if end_date:
-        query = query.filter(SwapRecord.source_week <= end_date)
+        query = query.where(SwapRecord.source_week <= end_date)
 
     # Order by most recent first
     query = query.order_by(SwapRecord.requested_at.desc())
 
     # Get total count for pagination
-    total = query.count()
+    count_query = select(func.count()).select_from(query.subquery())
+    total_result = await db.execute(count_query)
+    total = total_result.scalar_one()
 
     # Apply pagination
-    swaps = query.offset((page - 1) * page_size).limit(page_size).all()
+    query = query.offset((page - 1) * page_size).limit(page_size)
+    result = await db.execute(query)
+    swaps = result.scalars().all()
 
     # Build response items
     items = []
@@ -201,10 +215,10 @@ def get_swap_history(
 
 
 @router.get("/{swap_id}", response_model=SwapRecordResponse)
-def get_swap(
+async def get_swap(
     swap_id: UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get a specific swap record by ID.
@@ -215,7 +229,18 @@ def get_swap(
     - Status and execution times
     - Reason for the swap
     """
-    swap = db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()
+    from sqlalchemy.orm import selectinload
+
+    query = (
+        select(SwapRecord)
+        .where(SwapRecord.id == swap_id)
+        .options(
+            selectinload(SwapRecord.source_faculty),
+            selectinload(SwapRecord.target_faculty),
+        )
+    )
+    result = await db.execute(query)
+    swap = result.scalar_one_or_none()
 
     if not swap:
         raise HTTPException(
@@ -244,11 +269,11 @@ def get_swap(
 
 
 @router.post("/{swap_id}/rollback")
-def rollback_swap(
+async def rollback_swap(
     swap_id: UUID,
     request: SwapRollbackRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Rollback an executed swap within the allowed window.
@@ -257,13 +282,14 @@ def rollback_swap(
     """
     executor = SwapExecutor(db)
 
-    if not executor.can_rollback(swap_id):
+    can_rollback = await executor.can_rollback(swap_id)
+    if not can_rollback:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Swap cannot be rolled back (either not found, already rolled back, or outside rollback window)",
         )
 
-    result = executor.rollback_swap(
+    result = await executor.rollback_swap(
         swap_id=swap_id,
         reason=request.reason,
         rolled_back_by_id=current_user.id,

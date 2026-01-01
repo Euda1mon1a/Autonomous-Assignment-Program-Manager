@@ -6,10 +6,10 @@ This endpoint provides a unified view of a user's schedule, swaps, and absences.
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.ext.asyncio import AsyncSession, joinedload
 
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.absence import Absence
 from app.models.assignment import Assignment
 from app.models.block import Block
@@ -51,7 +51,7 @@ def _get_person_for_user(db: Session, current_user: User) -> Person | None:
         Person object if found, None otherwise
     """
     # Try to find person by matching email
-    person = db.query(Person).filter(Person.email == current_user.email).first()
+    person = (await db.execute(select(Person).where(Person.email == current_user.email))).scalar_one_or_none()
     return person
 
 
@@ -61,7 +61,7 @@ async def get_my_dashboard(
     days_ahead: int = Query(
         30, ge=1, le=365, description="Number of days to look ahead"
     ),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> MeDashboardResponse:
     """

@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.controllers.block_scheduler_controller import BlockSchedulerController
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.user import User
 from app.schemas.block_assignment import (
     BlockAssignmentCreate,
@@ -43,7 +43,7 @@ router = APIRouter()
 def get_dashboard(
     block_number: int = Query(..., ge=0, le=13, description="Academic block (0-13)"),
     academic_year: int = Query(..., ge=2020, le=2100, description="Academic year"),
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Get dashboard for block scheduler."""
@@ -72,7 +72,7 @@ def get_dashboard(
 )
 def schedule_block(
     request: BlockScheduleRequest,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Schedule residents for a block."""
@@ -85,9 +85,9 @@ def schedule_block(
     response_model=BlockAssignmentResponse,
     summary="Get block assignment",
 )
-def get_assignment(
+async def get_assignment(
     assignment_id: UUID,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Get a single block assignment by ID."""
@@ -107,9 +107,9 @@ def get_assignment(
     manually assigning residents to specific rotations.
     """,
 )
-def create_assignment(
+async def create_assignment(
     assignment_in: BlockAssignmentCreate,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Create a manual block assignment."""
@@ -118,7 +118,7 @@ def create_assignment(
         assignment_in.created_by = current_user.email
 
     controller = BlockSchedulerController(db)
-    return controller.create_assignment(assignment_in)
+    return await controller.create_assignment(assignment_in)
 
 
 @router.put(
@@ -126,15 +126,15 @@ def create_assignment(
     response_model=BlockAssignmentResponse,
     summary="Update block assignment",
 )
-def update_assignment(
+async def update_assignment(
     assignment_id: UUID,
     assignment_in: BlockAssignmentUpdate,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Update a block assignment."""
     controller = BlockSchedulerController(db)
-    return controller.update_assignment(assignment_id, assignment_in)
+    return await controller.update_assignment(assignment_id, assignment_in)
 
 
 @router.delete(
@@ -142,11 +142,11 @@ def update_assignment(
     status_code=204,
     summary="Delete block assignment",
 )
-def delete_assignment(
+async def delete_assignment(
     assignment_id: UUID,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Delete a block assignment."""
     controller = BlockSchedulerController(db)
-    controller.delete_assignment(assignment_id)
+    await controller.delete_assignment(assignment_id)

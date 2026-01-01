@@ -11,7 +11,9 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 
+from app.db.transaction import transactional, transactional_with_retry
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.conflict_alert import (
@@ -399,7 +401,8 @@ class ConflictAutoResolver:
                     pending_approvals.append(best_option)
                     report.resolutions_deferred += 1
 
-            except Exception as e:
+            except (SQLAlchemyError, ValueError, KeyError, TypeError) as e:
+                logger.error(f"Error processing conflict {conflict_id}: {e}", exc_info=True)
                 failed_conflicts.append(conflict_id)
                 report.resolutions_failed += 1
                 results.append(
@@ -468,11 +471,23 @@ class ConflictAutoResolver:
 
     # ==================== PRIVATE HELPER METHODS ====================
 
-    def _get_alert(self, conflict_id: UUID) -> ConflictAlert | None:
-        """Get conflict alert by ID."""
-        return (
-            self.db.query(ConflictAlert).filter(ConflictAlert.id == conflict_id).first()
-        )
+    def _get_alert(
+        self, conflict_id: UUID, lock: bool = False
+    ) -> ConflictAlert | None:
+        """
+        Get conflict alert by ID.
+
+        Args:
+            conflict_id: ID of the conflict
+            lock: If True, acquire row-level lock (for updates)
+
+        Returns:
+            ConflictAlert or None
+        """
+        query = self.db.query(ConflictAlert).filter(ConflictAlert.id == conflict_id)
+        if lock:
+            query = query.with_for_update()
+        return query.first()
 
     def _determine_root_cause(self, alert: ConflictAlert) -> str:
         """Determine the root cause of a conflict."""
@@ -1360,71 +1375,118 @@ class ConflictAutoResolver:
         alert: ConflictAlert,
         user_id: UUID | None,
     ) -> ResolutionResult:
-        """Apply a resolution option to a conflict."""
+        """
+        Apply a resolution option to a conflict.
+
+        Uses transactional context with retry to ensure:
+        - Atomic application of changes
+        - Automatic rollback on failure
+        - Deadlock retry
+        - Row-level locking to prevent concurrent modifications
+        """
         changes_applied = []
         entities_modified = defaultdict(list)
         warnings = []
         new_conflicts = []
 
         try:
-            # Apply based on strategy
-            if option.strategy == ResolutionStrategyEnum.SWAP_ASSIGNMENTS:
-                success, msg = self._apply_swap_resolution(option, alert, user_id)
-                if success:
-                    changes_applied.append(msg)
-                    entities_modified["assignments"].append(str(alert.faculty_id))
-                else:
+            # Execute resolution in transaction with retry on deadlock
+            with transactional_with_retry(
+                self.db, max_retries=3, timeout_seconds=30.0
+            ):
+                # Re-fetch alert with lock to prevent concurrent modifications
+                locked_alert = self._get_alert(alert.id, lock=True)
+                if not locked_alert:
                     return ResolutionResult(
                         resolution_option_id=option.id,
                         conflict_id=alert.id,
                         strategy=option.strategy,
                         success=False,
                         status=ResolutionStatusEnum.FAILED,
-                        message=msg,
-                        error_code="SWAP_FAILED",
+                        message="Conflict not found when applying resolution",
+                        error_code="CONFLICT_NOT_FOUND",
                     )
 
-            elif option.strategy == ResolutionStrategyEnum.REASSIGN_JUNIOR:
-                success, msg = self._apply_reassign_junior(option, alert, user_id)
-                if success:
-                    changes_applied.append(msg)
+                # Check if alert was already resolved by another process
+                if locked_alert.status not in [
+                    ConflictAlertStatus.NEW,
+                    ConflictAlertStatus.ACKNOWLEDGED,
+                ]:
+                    return ResolutionResult(
+                        resolution_option_id=option.id,
+                        conflict_id=alert.id,
+                        strategy=option.strategy,
+                        success=False,
+                        status=ResolutionStatusEnum.REJECTED,
+                        message=f"Conflict already resolved with status: {locked_alert.status.value}",
+                        error_code="ALREADY_RESOLVED",
+                    )
+
+                # Apply based on strategy
+                if option.strategy == ResolutionStrategyEnum.SWAP_ASSIGNMENTS:
+                    success, msg = self._apply_swap_resolution(
+                        option, locked_alert, user_id
+                    )
+                    if success:
+                        changes_applied.append(msg)
+                        entities_modified["assignments"].append(str(locked_alert.faculty_id))
+                    else:
+                        return ResolutionResult(
+                            resolution_option_id=option.id,
+                            conflict_id=alert.id,
+                            strategy=option.strategy,
+                            success=False,
+                            status=ResolutionStatusEnum.FAILED,
+                            message=msg,
+                            error_code="SWAP_FAILED",
+                        )
+
+                elif option.strategy == ResolutionStrategyEnum.REASSIGN_JUNIOR:
+                    success, msg = self._apply_reassign_junior(
+                        option, locked_alert, user_id
+                    )
+                    if success:
+                        changes_applied.append(msg)
+                    else:
+                        return ResolutionResult(
+                            resolution_option_id=option.id,
+                            conflict_id=alert.id,
+                            strategy=option.strategy,
+                            success=False,
+                            status=ResolutionStatusEnum.FAILED,
+                            message=msg,
+                            error_code="REASSIGN_FAILED",
+                        )
+
+                elif option.strategy == ResolutionStrategyEnum.ESCALATE_TO_BACKUP:
+                    success, msg = self._apply_backup_escalation(
+                        option, locked_alert, user_id
+                    )
+                    if success:
+                        changes_applied.append(msg)
+                    else:
+                        warnings.append(msg)
+
                 else:
                     return ResolutionResult(
                         resolution_option_id=option.id,
                         conflict_id=alert.id,
                         strategy=option.strategy,
                         success=False,
-                        status=ResolutionStatusEnum.FAILED,
-                        message=msg,
-                        error_code="REASSIGN_FAILED",
+                        status=ResolutionStatusEnum.REJECTED,
+                        message=f"Strategy {option.strategy.value} not implemented for auto-apply",
+                        error_code="STRATEGY_NOT_IMPLEMENTED",
                     )
 
-            elif option.strategy == ResolutionStrategyEnum.ESCALATE_TO_BACKUP:
-                success, msg = self._apply_backup_escalation(option, alert, user_id)
-                if success:
-                    changes_applied.append(msg)
-                else:
-                    warnings.append(msg)
-
-            else:
-                return ResolutionResult(
-                    resolution_option_id=option.id,
-                    conflict_id=alert.id,
-                    strategy=option.strategy,
-                    success=False,
-                    status=ResolutionStatusEnum.REJECTED,
-                    message=f"Strategy {option.strategy.value} not implemented for auto-apply",
-                    error_code="STRATEGY_NOT_IMPLEMENTED",
+                # Mark conflict as resolved
+                locked_alert.status = ConflictAlertStatus.RESOLVED
+                locked_alert.resolved_at = datetime.utcnow()
+                locked_alert.resolved_by_id = user_id
+                locked_alert.resolution_notes = (
+                    f"Auto-resolved via {option.strategy.value}: {option.title}"
                 )
 
-            # Mark conflict as resolved
-            alert.status = ConflictAlertStatus.RESOLVED
-            alert.resolved_at = datetime.utcnow()
-            alert.resolved_by_id = user_id
-            alert.resolution_notes = (
-                f"Auto-resolved via {option.strategy.value}: {option.title}"
-            )
-            self.db.commit()
+                # Transaction auto-commits on success
 
             changes_applied.append("Conflict marked as resolved")
 
@@ -1446,8 +1508,8 @@ class ConflictAutoResolver:
                 rollback_instructions="Contact scheduling coordinator to reverse changes",
             )
 
-        except Exception as e:
-            self.db.rollback()
+        except (SQLAlchemyError, ValueError, KeyError, TypeError) as e:
+            logger.error(f"Error applying resolution for conflict {alert.id}: {e}", exc_info=True)
             return ResolutionResult(
                 resolution_option_id=option.id,
                 conflict_id=alert.id,

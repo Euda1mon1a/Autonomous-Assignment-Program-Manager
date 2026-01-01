@@ -57,7 +57,7 @@ class ACGMEValidator:
     HOURS_PER_HALF_DAY = 6  # AM or PM block = 6 hours (realistic clinical duty)
     ROLLING_WINDOW_WEEKS = 4
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize ACGME validator.
 

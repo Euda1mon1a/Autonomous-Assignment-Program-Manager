@@ -128,7 +128,7 @@ class SchedulingContext:
     blocks_by_date: dict = field(default_factory=dict)
     availability: dict = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Build lookup dictionaries for fast constraint evaluation."""
         if self.residents and not self.resident_idx:
             self.resident_idx = {r.id: i for i, r in enumerate(self.residents)}
@@ -207,7 +207,7 @@ class AvailabilityConstraint(HardConstraint):
     are forbidden.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize availability constraint."""
         super().__init__(
             name="Availability",
@@ -344,7 +344,7 @@ class EightyHourRuleConstraint(HardConstraint):
     ROLLING_WEEKS = 4
     ROLLING_DAYS = 28  # 4 weeks * 7 days = 28 days (STRICT)
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initialize the 80-hour rule constraint.
 
@@ -562,7 +562,7 @@ class OneInSevenRuleConstraint(HardConstraint):
 
     MAX_CONSECUTIVE_DAYS = 6
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize 1-in-7 rule constraint."""
         super().__init__(
             name="1in7Rule",
@@ -754,7 +754,7 @@ class SupervisionRatioConstraint(HardConstraint):
     PGY1_RATIO = 2  # 1 faculty per 2 PGY-1
     OTHER_RATIO = 4  # 1 faculty per 4 PGY-2/3
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize supervision ratio constraint."""
         super().__init__(
             name="SupervisionRatio",
@@ -882,7 +882,7 @@ class ACGMEConstraintValidator:
         ...         print(f"VIOLATION: {v.message}")
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize with all ACGME constraints."""
         self.constraints = [
             AvailabilityConstraint(),

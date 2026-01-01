@@ -52,78 +52,94 @@ class ConflictStatusEnum(str, Enum):
 class ConflictBase(BaseModel):
     """Base conflict information schema."""
 
-    faculty_id: UUID
-    faculty_name: str
-    conflict_type: ConflictTypeEnum
-    severity: ConflictSeverityEnum
-    description: str
+    faculty_id: UUID = Field(..., description="Faculty member UUID")
+    faculty_name: str = Field(
+        ..., min_length=1, max_length=200, description="Faculty member name"
+    )
+    conflict_type: ConflictTypeEnum = Field(..., description="Type of conflict")
+    severity: ConflictSeverityEnum = Field(..., description="Severity level")
+    description: str = Field(
+        ..., min_length=1, max_length=1000, description="Conflict description"
+    )
 
     # Related entities
-    fmit_week: date | None = None
-    leave_id: UUID | None = None
-    assignment_id: UUID | None = None
-    residency_block_id: UUID | None = None
+    fmit_week: date | None = Field(None, description="FMIT week date")
+    leave_id: UUID | None = Field(None, description="Related leave ID")
+    assignment_id: UUID | None = Field(None, description="Related assignment ID")
+    residency_block_id: UUID | None = Field(None, description="Related block ID")
 
 
 class ConflictInfo(ConflictBase):
     """Detailed conflict information for detection results."""
 
     # Additional metadata for grouping and analysis
-    start_date: date | None = None
-    end_date: date | None = None
-    affected_blocks: list[UUID] = Field(default_factory=list)
-    related_people: list[UUID] = Field(default_factory=list)
+    start_date: date | None = Field(None, description="Conflict start date")
+    end_date: date | None = Field(None, description="Conflict end date")
+    affected_blocks: list[UUID] = Field(
+        default_factory=list, max_length=100, description="List of affected block UUIDs"
+    )
+    related_people: list[UUID] = Field(
+        default_factory=list, max_length=50, description="List of related person UUIDs"
+    )
 
     # ACGME-specific data
-    hours_worked: float | None = None
-    consecutive_days: int | None = None
-    supervision_ratio: float | None = None
+    hours_worked: float | None = Field(None, ge=0, description="Hours worked")
+    consecutive_days: int | None = Field(None, ge=0, description="Consecutive work days")
+    supervision_ratio: float | None = Field(
+        None, ge=0, description="Supervision ratio"
+    )
 
     # Recommendations
-    suggested_resolution: str | None = None
+    suggested_resolution: str | None = Field(
+        None, max_length=500, description="Suggested resolution for conflict"
+    )
 
 
 class ConflictAlertCreate(BaseModel):
     """Schema for creating a conflict alert."""
 
-    faculty_id: UUID
-    conflict_type: ConflictTypeEnum
-    severity: ConflictSeverityEnum
-    fmit_week: date
-    description: str
-    leave_id: UUID | None = None
-    swap_id: UUID | None = None
+    faculty_id: UUID = Field(..., description="Faculty member UUID")
+    conflict_type: ConflictTypeEnum = Field(..., description="Type of conflict")
+    severity: ConflictSeverityEnum = Field(..., description="Severity level")
+    fmit_week: date = Field(..., description="FMIT week date")
+    description: str = Field(
+        ..., min_length=1, max_length=1000, description="Conflict description"
+    )
+    leave_id: UUID | None = Field(None, description="Related leave ID")
+    swap_id: UUID | None = Field(None, description="Related swap ID")
 
 
 class ConflictAlertUpdate(BaseModel):
     """Schema for updating a conflict alert."""
 
-    status: ConflictStatusEnum | None = None
-    resolution_notes: str | None = None
+    status: ConflictStatusEnum | None = Field(None, description="Conflict status")
+    resolution_notes: str | None = Field(
+        None, max_length=1000, description="Resolution notes"
+    )
 
 
 class ConflictAlertResponse(BaseModel):
     """Schema for conflict alert response."""
 
-    id: UUID
-    faculty_id: UUID
-    conflict_type: ConflictTypeEnum
-    severity: ConflictSeverityEnum
-    fmit_week: date
-    description: str
-    status: ConflictStatusEnum
+    id: UUID = Field(..., description="Conflict alert UUID")
+    faculty_id: UUID = Field(..., description="Faculty member UUID")
+    conflict_type: ConflictTypeEnum = Field(..., description="Type of conflict")
+    severity: ConflictSeverityEnum = Field(..., description="Severity level")
+    fmit_week: date = Field(..., description="FMIT week date")
+    description: str = Field(..., description="Conflict description")
+    status: ConflictStatusEnum = Field(..., description="Current status")
 
     # Related entities
-    leave_id: UUID | None = None
-    swap_id: UUID | None = None
+    leave_id: UUID | None = Field(None, description="Related leave ID")
+    swap_id: UUID | None = Field(None, description="Related swap ID")
 
     # Status tracking
-    created_at: datetime
-    acknowledged_at: datetime | None = None
-    acknowledged_by_id: UUID | None = None
-    resolved_at: datetime | None = None
-    resolved_by_id: UUID | None = None
-    resolution_notes: str | None = None
+    created_at: datetime = Field(..., description="Creation timestamp")
+    acknowledged_at: datetime | None = Field(None, description="Acknowledgment timestamp")
+    acknowledged_by_id: UUID | None = Field(None, description="ID of acknowledger")
+    resolved_at: datetime | None = Field(None, description="Resolution timestamp")
+    resolved_by_id: UUID | None = Field(None, description="ID of resolver")
+    resolution_notes: str | None = Field(None, description="Resolution notes")
 
     class Config:
         from_attributes = True
@@ -169,46 +185,66 @@ class ConflictDetectionResponse(BaseModel):
 class ACGMEComplianceCheck(BaseModel):
     """Schema for ACGME compliance checking results."""
 
-    person_id: UUID
-    person_name: str
-    check_period_start: date
-    check_period_end: date
+    person_id: UUID = Field(..., description="Person UUID")
+    person_name: str = Field(
+        ..., min_length=1, max_length=200, description="Person name"
+    )
+    check_period_start: date = Field(..., description="Check period start date")
+    check_period_end: date = Field(..., description="Check period end date")
 
     # 80-hour work week compliance
-    weekly_hours: dict[str, float] = Field(default_factory=dict)  # week_start -> hours
-    hours_violations: list[str] = Field(default_factory=list)
+    weekly_hours: dict[str, float] = Field(
+        default_factory=dict, description="Weekly hours (week_start -> hours)"
+    )
+    hours_violations: list[str] = Field(
+        default_factory=list, max_length=100, description="List of hour violations"
+    )
 
     # 1-in-7 day off compliance
     consecutive_work_days: list[dict] = Field(
-        default_factory=list
-    )  # [{start, end, days}]
-    rest_day_violations: list[str] = Field(default_factory=list)
+        default_factory=list,
+        max_length=100,
+        description="Consecutive work periods [{start, end, days}]",
+    )
+    rest_day_violations: list[str] = Field(
+        default_factory=list, max_length=100, description="Rest day violations"
+    )
 
     # Overall compliance
-    is_compliant: bool = True
-    violation_count: int = 0
+    is_compliant: bool = Field(True, description="Overall compliance status")
+    violation_count: int = Field(0, ge=0, description="Total violation count")
 
 
 class SupervisionRatioCheck(BaseModel):
     """Schema for supervision ratio checking results."""
 
-    block_id: UUID
-    block_date: date
-    block_time: str
-    rotation_name: str
+    block_id: UUID = Field(..., description="Block UUID")
+    block_date: date = Field(..., description="Block date")
+    block_time: str = Field(..., max_length=20, description="Block time (AM/PM)")
+    rotation_name: str = Field(
+        ..., min_length=1, max_length=200, description="Rotation name"
+    )
 
     # Counts
-    resident_count: int
-    pgy1_count: int
-    pgy2_3_count: int
-    faculty_count: int
+    resident_count: int = Field(..., ge=0, description="Total resident count")
+    pgy1_count: int = Field(..., ge=0, description="PGY-1 resident count")
+    pgy2_3_count: int = Field(..., ge=0, description="PGY-2/3 resident count")
+    faculty_count: int = Field(..., ge=0, description="Faculty count")
 
     # Ratios (actual vs required)
-    pgy1_ratio_actual: float | None = None
-    pgy1_ratio_required: float = 2.0  # 1:2 for PGY-1
-    pgy2_3_ratio_actual: float | None = None
-    pgy2_3_ratio_required: float = 4.0  # 1:4 for PGY-2/3
+    pgy1_ratio_actual: float | None = Field(None, ge=0, description="Actual PGY-1 ratio")
+    pgy1_ratio_required: float = Field(
+        2.0, ge=0, description="Required PGY-1 ratio (1:2)"
+    )
+    pgy2_3_ratio_actual: float | None = Field(
+        None, ge=0, description="Actual PGY-2/3 ratio"
+    )
+    pgy2_3_ratio_required: float = Field(
+        4.0, ge=0, description="Required PGY-2/3 ratio (1:4)"
+    )
 
     # Compliance
-    is_compliant: bool = True
-    violations: list[str] = Field(default_factory=list)
+    is_compliant: bool = Field(True, description="Compliance status")
+    violations: list[str] = Field(
+        default_factory=list, max_length=50, description="List of violations"
+    )

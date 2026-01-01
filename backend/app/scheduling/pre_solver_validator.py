@@ -85,8 +85,13 @@ class PreSolverValidator:
     MIN_PERSONNEL_RATIO = 1.2  # Need at least 20% more personnel than coverage slots
     WORKLOAD_MAX_RATIO = 0.9  # Personnel shouldn't be assigned >90% of blocks
 
-    def __init__(self):
-        """Initialize the pre-solver validator."""
+    def __init__(self) -> None:
+        """
+        Initialize the pre-solver validator.
+
+        Creates a new validator instance with no state. All validation
+        is performed through the validate_saturation method.
+        """
         pass
 
     def validate_saturation(
@@ -155,7 +160,12 @@ class PreSolverValidator:
         Check if total minimum hours required exceeds available slot hours.
 
         This catches basic infeasibility where the residents simply don't have
-        enough time slots to satisfy minimum rotation requirements.
+        enough time slots to satisfy minimum rotation requirements. Also checks
+        for individual residents with insufficient availability.
+
+        Args:
+            context: Scheduling context with residents, blocks, templates
+            result: Validation result to update with issues and warnings
         """
         workday_blocks = [b for b in context.blocks if not b.is_weekend]
         total_available_slots = len(workday_blocks) * len(context.residents)
@@ -205,7 +215,12 @@ class PreSolverValidator:
 
         Validates that we have enough residents to cover all blocks at the
         minimum coverage level (typically 1 resident per block, but could be higher
-        for certain rotations).
+        for certain rotations). Also checks for over-assignment risks.
+
+        Args:
+            context: Scheduling context with residents, blocks, templates
+            min_coverage_per_block: Minimum number of residents required per block
+            result: Validation result to update with issues and warnings
         """
         workday_blocks = [b for b in context.blocks if not b.is_weekend]
 
@@ -270,6 +285,10 @@ class PreSolverValidator:
         1. Residents who are completely unavailable (100% absent)
         2. Blocks where no residents are available
         3. Patterns suggesting infeasibility
+
+        Args:
+            context: Scheduling context with residents, blocks, availability data
+            result: Validation result to update with issues and warnings
         """
         workday_blocks = [b for b in context.blocks if not b.is_weekend]
 
@@ -322,7 +341,12 @@ class PreSolverValidator:
         Check if existing assignments create conflicts or over-constrain the problem.
 
         This validates that pre-existing assignments (FMIT, inpatient, absences)
-        don't create impossible situations.
+        don't create impossible situations. Checks for residents with too many
+        pre-assignments and overall capacity reduction.
+
+        Args:
+            context: Scheduling context with existing assignments
+            result: Validation result to update with issues and warnings
         """
         if not context.existing_assignments:
             return
@@ -369,12 +393,23 @@ class PreSolverValidator:
         """
         Estimate solver complexity from problem dimensions.
 
+        Uses a simple heuristic where complexity is proportional to the
+        product of variables and constraints. Real complexity depends on
+        constraint structure, but this provides a rough order-of-magnitude
+        estimate useful for timeout prediction.
+
         Args:
-            num_vars: Number of decision variables
-            num_constraints: Number of constraints
+            num_vars: Number of decision variables in the problem
+            num_constraints: Number of constraints in the problem
 
         Returns:
-            Complexity estimate (higher = slower solver)
+            Complexity estimate (higher = slower solver, exponentially)
+
+        Example:
+            >>> validator = PreSolverValidator()
+            >>> complexity = validator.estimate_complexity(1000, 500)
+            >>> complexity
+            500000
         """
         # Simple heuristic: complexity ≈ variables × constraints
         # Real complexity depends on constraint structure, but this gives a rough estimate
@@ -392,6 +427,10 @@ class PreSolverValidator:
         - Number of decision variables (residents × blocks × templates)
         - Number of constraints (grows with problem dimensions)
         - Estimated solver runtime
+
+        Args:
+            context: Scheduling context with problem dimensions
+            result: Validation result to update with complexity statistics and warnings
         """
         workday_blocks = [b for b in context.blocks if not b.is_weekend]
 
@@ -456,8 +495,14 @@ class PreSolverValidator:
         """
         Gather detailed statistics about the scheduling problem.
 
+        Collects metrics including resident/faculty counts, block counts,
+        template counts, date range, and availability rate.
+
+        Args:
+            context: Scheduling context with all problem data
+
         Returns:
-            Dictionary of problem statistics
+            Dictionary of problem statistics including counts and rates
         """
         workday_blocks = [b for b in context.blocks if not b.is_weekend]
 
@@ -518,13 +563,21 @@ class PreSolverValidator:
         """
         Detect specific constraint conflicts in the problem.
 
-        This is a convenience method that returns just the conflict descriptions.
+        This is a convenience method that returns just the conflict descriptions
+        (both issues and warnings) without the full validation result structure.
+        Useful for quick conflict checking without needing full statistics.
 
         Args:
-            context: Scheduling context
+            context: Scheduling context with all problem data
 
         Returns:
-            List of conflict descriptions
+            List of conflict descriptions (issues + warnings combined)
+
+        Example:
+            >>> validator = PreSolverValidator()
+            >>> conflicts = validator.detect_conflicts(context)
+            >>> if conflicts:
+            ...     print(f"Found {len(conflicts)} conflicts: {conflicts}")
         """
         result = self.validate_saturation(context)
         return result.issues + result.warnings

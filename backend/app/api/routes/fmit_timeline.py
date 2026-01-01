@@ -14,11 +14,11 @@ from datetime import date, datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import and_
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import select, and_
+from sqlalchemy.ext.asyncio import AsyncSession, joinedload
 
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
@@ -315,7 +315,7 @@ def calculate_aggregate_metrics(
 
 @router.get("/academic-year", response_model=TimelineResponse)
 async def get_academic_year_timeline(
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -355,7 +355,7 @@ async def get_faculty_timeline(
     end_date: date | None = Query(
         None, description="End date (default: academic year end)"
     ),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -374,7 +374,7 @@ async def get_faculty_timeline(
     Requires authentication.
     """
     # Verify faculty exists
-    faculty = db.query(Person).filter(Person.id == faculty_id).first()
+    faculty = (await db.execute(select(Person).where(Person.id == faculty_id))).scalar_one_or_none()
     if not faculty:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -424,7 +424,7 @@ async def get_faculty_timeline(
 @router.get("/week/{week_start}", response_model=WeeklyViewResponse)
 async def get_weekly_view(
     week_start: date,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -560,7 +560,7 @@ async def get_gantt_data(
     faculty_ids: list[UUID] | None = Query(
         None, description="Filter by specific faculty IDs"
     ),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """

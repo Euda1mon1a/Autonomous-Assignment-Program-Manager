@@ -56,7 +56,7 @@ class TensegritySolver:
         >>> print(solution)  # {'shift_start': 8.0, 'task_a': 8.5, ...}
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize an empty tensegrity solver."""
         self.nodes: dict[str, dict] = {}
         self.edges: list[tuple[str, str, float, str]] = []

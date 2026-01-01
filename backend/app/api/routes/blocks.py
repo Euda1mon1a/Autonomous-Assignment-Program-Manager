@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.controllers.block_controller import BlockController
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.user import User
 from app.schemas.block import BlockCreate, BlockListResponse, BlockResponse
 
@@ -19,13 +19,13 @@ router = APIRouter()
 
 
 @router.get("", response_model=BlockListResponse)
-def list_blocks(
+async def list_blocks(
     start_date: date | None = Query(None, description="Filter blocks from this date"),
     end_date: date | None = Query(None, description="Filter blocks until this date"),
     block_number: int | None = Query(
         None, description="Filter by academic block number"
     ),
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """List blocks, optionally filtered by date range or block number. Requires authentication."""
@@ -38,9 +38,9 @@ def list_blocks(
 
 
 @router.get("/{block_id}", response_model=BlockResponse)
-def get_block(
+async def get_block(
     block_id: UUID,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Get a block by ID. Requires authentication."""
@@ -49,9 +49,9 @@ def get_block(
 
 
 @router.post("", response_model=BlockResponse, status_code=201)
-def create_block(
+async def create_block(
     block_in: BlockCreate,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Create a new block. Requires authentication."""
@@ -60,11 +60,11 @@ def create_block(
 
 
 @router.post("/generate", response_model=BlockListResponse)
-def generate_blocks(
+async def generate_blocks(
     start_date: date,
     end_date: date,
     base_block_number: int = Query(1, description="Starting block number"),
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -81,9 +81,9 @@ def generate_blocks(
 
 
 @router.delete("/{block_id}", status_code=204)
-def delete_block(
+async def delete_block(
     block_id: UUID,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Delete a block. Requires authentication."""

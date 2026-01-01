@@ -23,7 +23,7 @@ from app.scheduling.periodicity import (
 # ================================
 
 
-def example_basic_rigidity_check():
+def example_basic_rigidity_check() -> float:
     """
     Check if proposed schedule changes too much from current.
 
@@ -67,7 +67,7 @@ def example_basic_rigidity_check():
 # ===================================
 
 
-def example_detailed_impact_analysis():
+def example_detailed_impact_analysis() -> dict:
     """
     Get detailed breakdown of schedule changes.
 
@@ -103,7 +103,7 @@ def example_detailed_impact_analysis():
 # ==========================================
 
 
-def example_time_crystal_objective():
+def example_time_crystal_objective() -> tuple[float, float]:
     """
     Use time crystal objective to score proposed schedules.
 
@@ -154,7 +154,7 @@ def example_time_crystal_objective():
 # ====================================
 
 
-def example_per_person_churn():
+def example_per_person_churn() -> dict[UUID, int]:
     """
     Identify which residents are most affected by schedule changes.
 
@@ -215,7 +215,7 @@ def example_per_person_churn():
 # =================================
 
 
-def example_tuning_alpha():
+def example_tuning_alpha() -> None:
     """
     Demonstrate how alpha parameter affects objective function.
 
@@ -265,7 +265,7 @@ def example_tuning_alpha():
 # ==================================
 
 
-def example_solver_integration(solver_result, current_assignments):
+def example_solver_integration(solver_result, current_assignments) -> dict:
     """
     Example of integrating anti-churn into solver workflow.
 
@@ -331,7 +331,7 @@ def example_solver_integration(solver_result, current_assignments):
 # ==================================
 
 
-def example_monitoring_setup():
+def example_monitoring_setup() -> None:
     """
     Set up monitoring for schedule rigidity over time.
 

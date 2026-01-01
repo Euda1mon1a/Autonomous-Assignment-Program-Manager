@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class JobHistoryService:
     """Service for tracking and querying job execution history."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the job history service."""
         self.celery_app: Celery = get_celery_app()
 

@@ -48,8 +48,9 @@ from fastapi import (
 )
 from pydantic import BaseModel
 
-from app.api.deps import get_current_active_user, get_db
+from app.api.deps import get_current_active_user
 from app.core.config import settings
+from app.db.session import get_async_db
 from app.models.user import User
 
 logger = logging.getLogger(__name__)
@@ -339,7 +340,7 @@ async def execute_tool(tool_name: str, tool_input: dict, db) -> dict[str, Any]:
                 end_date = start_date + timedelta(days=30)
 
             # Get faculty and assignments for the period
-            faculty = db.query(Person).filter(Person.type == "faculty").all()
+            faculty = (await db.execute(select(Person).where(Person.type == "faculty"))).scalars().all()
             blocks = (
                 db.query(Block)
                 .filter(Block.date >= start_date, Block.date <= end_date)
@@ -864,7 +865,7 @@ async def get_session_history(
     }
 
 
-@router.delete("/sessions/{session_id}")
+@router.delete("/sessions/{session_id}", status_code=204)
 async def delete_session(
     session_id: str,
     current_user: User = Depends(get_current_active_user),
@@ -878,4 +879,3 @@ async def delete_session(
         raise HTTPException(status_code=403, detail="Not your session")
 
     del _sessions[session_id]
-    return {"message": "Session deleted"}

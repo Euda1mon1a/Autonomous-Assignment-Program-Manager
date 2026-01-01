@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class FacultyRoleSchema(str, Enum):
@@ -19,30 +19,47 @@ class FacultyRoleSchema(str, Enum):
     ADJUNCT = "adjunct"
 
 
+class PersonType(str, Enum):
+    """Person type enumeration."""
+
+    RESIDENT = "resident"
+    FACULTY = "faculty"
+
+
 class PersonBase(BaseModel):
     """Base person schema."""
 
-    name: str
-    type: str  # 'resident' or 'faculty'
-    email: EmailStr | None = None
-    pgy_level: int | None = None
-    performs_procedures: bool = False
-    specialties: list[str] | None = None
-    primary_duty: str | None = None
-    faculty_role: FacultyRoleSchema | None = None
+    name: str = Field(
+        ..., min_length=1, max_length=100, description="Person's full name"
+    )
+    type: PersonType = Field(..., description="Person type (resident or faculty)")
+    email: EmailStr | None = Field(None, description="Email address")
+    pgy_level: int | None = Field(
+        None, ge=1, le=3, description="PGY level (1-3) for residents"
+    )
+    performs_procedures: bool = Field(
+        False, description="Whether person performs procedures"
+    )
+    specialties: list[str] | None = Field(
+        None, max_length=10, description="List of specialties (max 10)"
+    )
+    primary_duty: str | None = Field(
+        None, max_length=100, description="Primary duty or role"
+    )
+    faculty_role: FacultyRoleSchema | None = Field(
+        None, description="Faculty role type"
+    )
 
-    @field_validator("type")
+    @field_validator("specialties")
     @classmethod
-    def validate_type(cls, v: str) -> str:
-        if v not in ("resident", "faculty"):
-            raise ValueError("type must be 'resident' or 'faculty'")
-        return v
-
-    @field_validator("pgy_level")
-    @classmethod
-    def validate_pgy_level(cls, v: int | None) -> int | None:
-        if v is not None and (v < 1 or v > 3):
-            raise ValueError("pgy_level must be between 1 and 3")
+    def validate_specialties(cls, v: list[str] | None) -> list[str] | None:
+        """Validate specialty items are not empty and have max length."""
+        if v is not None:
+            for specialty in v:
+                if not specialty or len(specialty) > 50:
+                    raise ValueError(
+                        "Each specialty must be between 1 and 50 characters"
+                    )
         return v
 
 
@@ -55,13 +72,25 @@ class PersonCreate(PersonBase):
 class PersonUpdate(BaseModel):
     """Schema for updating a person."""
 
-    name: str | None = None
-    email: EmailStr | None = None
-    pgy_level: int | None = None
-    performs_procedures: bool | None = None
-    specialties: list[str] | None = None
-    primary_duty: str | None = None
-    faculty_role: FacultyRoleSchema | None = None
+    name: str | None = Field(
+        None, min_length=1, max_length=100, description="Person's full name"
+    )
+    email: EmailStr | None = Field(None, description="Email address")
+    pgy_level: int | None = Field(
+        None, ge=1, le=3, description="PGY level (1-3) for residents"
+    )
+    performs_procedures: bool | None = Field(
+        None, description="Whether person performs procedures"
+    )
+    specialties: list[str] | None = Field(
+        None, max_length=10, description="List of specialties (max 10)"
+    )
+    primary_duty: str | None = Field(
+        None, max_length=100, description="Primary duty or role"
+    )
+    faculty_role: FacultyRoleSchema | None = Field(
+        None, description="Faculty role type"
+    )
 
 
 class PersonResponse(PersonBase):

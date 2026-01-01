@@ -6,7 +6,7 @@ filters, statistics, and export configurations.
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
 # ============================================================================
 # Core Audit Schemas
@@ -16,19 +16,21 @@ from pydantic import BaseModel, Field
 class AuditUser(BaseModel):
     """User who performed an action."""
 
-    id: str
-    name: str
-    email: str | None = None
-    role: str | None = None
+    id: str = Field(..., max_length=100, description="User ID")
+    name: str = Field(..., min_length=1, max_length=200, description="User name")
+    email: EmailStr | None = Field(None, description="User email address")
+    role: str | None = Field(None, max_length=50, description="User role")
 
 
 class FieldChange(BaseModel):
     """Single field change tracking."""
 
-    field: str
-    old_value: Any = Field(alias="oldValue")
-    new_value: Any = Field(alias="newValue")
-    display_name: str | None = Field(None, alias="displayName")
+    field: str = Field(..., min_length=1, max_length=100, description="Field name")
+    old_value: Any = Field(alias="oldValue", description="Previous value")
+    new_value: Any = Field(alias="newValue", description="New value")
+    display_name: str | None = Field(
+        None, max_length=200, alias="displayName", description="Human-readable field name"
+    )
 
     class Config:
         populate_by_name = True
@@ -37,22 +39,41 @@ class FieldChange(BaseModel):
 class AuditLogEntry(BaseModel):
     """Core audit log entry."""
 
-    id: str
-    timestamp: str
-    entity_type: str = Field(alias="entityType")
-    entity_id: str = Field(alias="entityId")
-    entity_name: str | None = Field(None, alias="entityName")
-    action: str
-    severity: str
-    user: AuditUser
-    changes: list[FieldChange] | None = None
-    metadata: dict[str, Any] | None = None
-    ip_address: str | None = Field(None, alias="ipAddress")
-    user_agent: str | None = Field(None, alias="userAgent")
-    session_id: str | None = Field(None, alias="sessionId")
-    reason: str | None = None
-    acgme_override: bool | None = Field(None, alias="acgmeOverride")
-    acgme_justification: str | None = Field(None, alias="acgmeJustification")
+    id: str = Field(..., max_length=100, description="Audit log entry ID")
+    timestamp: str = Field(..., description="Timestamp of the event")
+    entity_type: str = Field(
+        ..., max_length=100, alias="entityType", description="Type of entity affected"
+    )
+    entity_id: str = Field(
+        ..., max_length=100, alias="entityId", description="ID of entity affected"
+    )
+    entity_name: str | None = Field(
+        None, max_length=200, alias="entityName", description="Name of entity"
+    )
+    action: str = Field(..., max_length=100, description="Action performed")
+    severity: str = Field(..., max_length=20, description="Severity level")
+    user: AuditUser = Field(..., description="User who performed the action")
+    changes: list[FieldChange] | None = Field(None, description="List of field changes")
+    metadata: dict[str, Any] | None = Field(None, description="Additional metadata")
+    ip_address: str | None = Field(
+        None, max_length=50, alias="ipAddress", description="IP address of user"
+    )
+    user_agent: str | None = Field(
+        None, max_length=500, alias="userAgent", description="Browser user agent"
+    )
+    session_id: str | None = Field(
+        None, max_length=100, alias="sessionId", description="Session ID"
+    )
+    reason: str | None = Field(None, max_length=500, description="Reason for action")
+    acgme_override: bool | None = Field(
+        None, alias="acgmeOverride", description="Whether this is an ACGME override"
+    )
+    acgme_justification: str | None = Field(
+        None,
+        max_length=1000,
+        alias="acgmeJustification",
+        description="Justification for ACGME override",
+    )
 
     class Config:
         populate_by_name = True
@@ -86,14 +107,28 @@ class DateRange(BaseModel):
 class AuditLogFilters(BaseModel):
     """Audit log filters for querying."""
 
-    date_range: DateRange | None = Field(None, alias="dateRange")
-    entity_types: list[str] | None = Field(None, alias="entityTypes")
-    actions: list[str] | None = None
-    user_ids: list[str] | None = Field(None, alias="userIds")
-    severity: list[str] | None = None
-    search_query: str | None = Field(None, alias="searchQuery")
-    entity_id: str | None = Field(None, alias="entityId")
-    acgme_overrides_only: bool | None = Field(None, alias="acgmeOverridesOnly")
+    date_range: DateRange | None = Field(None, alias="dateRange", description="Date range filter")
+    entity_types: list[str] | None = Field(
+        None, max_length=20, alias="entityTypes", description="Entity types to filter (max 20)"
+    )
+    actions: list[str] | None = Field(
+        None, max_length=20, description="Actions to filter (max 20)"
+    )
+    user_ids: list[str] | None = Field(
+        None, max_length=50, alias="userIds", description="User IDs to filter (max 50)"
+    )
+    severity: list[str] | None = Field(
+        None, max_length=10, description="Severity levels to filter (max 10)"
+    )
+    search_query: str | None = Field(
+        None, max_length=200, alias="searchQuery", description="Search query string"
+    )
+    entity_id: str | None = Field(
+        None, max_length=100, alias="entityId", description="Specific entity ID"
+    )
+    acgme_overrides_only: bool | None = Field(
+        None, alias="acgmeOverridesOnly", description="Show only ACGME overrides"
+    )
 
     class Config:
         populate_by_name = True
@@ -145,9 +180,13 @@ class AuditExportConfig(BaseModel):
 class MarkReviewedRequest(BaseModel):
     """Request to mark audit entries as reviewed."""
 
-    ids: list[str]
-    reviewed_by: str = Field(alias="reviewedBy")
-    notes: str | None = None
+    ids: list[str] = Field(
+        ..., min_length=1, max_length=100, description="List of entry IDs to mark (max 100)"
+    )
+    reviewed_by: str = Field(
+        ..., max_length=100, alias="reviewedBy", description="ID of reviewer"
+    )
+    notes: str | None = Field(None, max_length=1000, description="Review notes")
 
     class Config:
         populate_by_name = True

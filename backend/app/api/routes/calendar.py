@@ -6,10 +6,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.models.user import User
 from app.schemas.calendar import (
     CalendarSubscriptionCreate,
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 @router.get("/export/ics")
-def export_all_calendars(
+async def export_all_calendars(
     start_date: date = Query(..., description="Start date for calendar export"),
     end_date: date = Query(..., description="End date for calendar export"),
     person_ids: list[UUID] | None = Query(None, description="Person UUIDs to filter"),
@@ -33,7 +34,7 @@ def export_all_calendars(
     include_types: list[str] | None = Query(
         None, description="Activity types to include"
     ),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> Response:
     """
     Export complete schedule as ICS file.
@@ -79,14 +80,14 @@ def export_all_calendars(
 
 
 @router.get("/export/ics/{person_id}")
-def export_person_ics(
+async def export_person_ics(
     person_id: UUID,
     start_date: date = Query(..., description="Start date for calendar export"),
     end_date: date = Query(..., description="End date for calendar export"),
     include_types: list[str] | None = Query(
         None, description="Activity types to include"
     ),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> Response:
     """
     Export individual's schedule as ICS file.
@@ -132,14 +133,14 @@ def export_person_ics(
 
 
 @router.get("/export/person/{person_id}")
-def export_person_calendar(
+async def export_person_calendar(
     person_id: UUID,
     start_date: date = Query(..., description="Start date for calendar export"),
     end_date: date = Query(..., description="End date for calendar export"),
     include_types: list[str] | None = Query(
         None, description="Activity types to include"
     ),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> Response:
     """
     Export calendar for a person as ICS file.
@@ -185,11 +186,11 @@ def export_person_calendar(
 
 
 @router.get("/export/rotation/{rotation_id}")
-def export_rotation_calendar(
+async def export_rotation_calendar(
     rotation_id: UUID,
     start_date: date = Query(..., description="Start date for calendar export"),
     end_date: date = Query(..., description="End date for calendar export"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> Response:
     """
     Export calendar for a rotation as ICS file.
@@ -246,10 +247,10 @@ def _get_base_url(request: Request) -> str:
 
 
 @router.post("/subscribe", response_model=CalendarSubscriptionResponse)
-def create_subscription(
+async def create_subscription(
     request_body: CalendarSubscriptionCreate,
     request: Request,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> CalendarSubscriptionResponse:
     """
@@ -309,9 +310,9 @@ def create_subscription(
 
 
 @router.get("/subscribe/{token}")
-def get_subscription_feed(
+async def get_subscription_feed(
     token: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> Response:
     """
     Get calendar feed for a subscription (webcal endpoint).
@@ -377,11 +378,11 @@ def get_subscription_feed(
 
 
 @router.get("/subscriptions", response_model=CalendarSubscriptionListResponse)
-def list_subscriptions(
+async def list_subscriptions(
     request: Request,
     person_id: UUID | None = Query(None, description="Filter by person"),
     active_only: bool = Query(True, description="Only show active subscriptions"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> CalendarSubscriptionListResponse:
     """
@@ -429,12 +430,12 @@ def list_subscriptions(
     )
 
 
-@router.delete("/subscribe/{token}")
-def revoke_subscription(
+@router.delete("/subscribe/{token}", status_code=204)
+async def revoke_subscription(
     token: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> dict:
+):
     """
     Revoke a calendar subscription.
 
@@ -447,7 +448,7 @@ def revoke_subscription(
         current_user: Authenticated user
 
     Returns:
-        Success message
+        No content (204 status)
     """
     # Verify the subscription exists and belongs to the user
     subscription = CalendarService.get_subscription(db, token)
@@ -463,14 +464,12 @@ def revoke_subscription(
     if not success:
         raise HTTPException(status_code=500, detail="Failed to revoke subscription")
 
-    return {"success": True, "message": "Subscription revoked successfully"}
-
 
 # Legacy endpoint for backward compatibility
 @router.get("/feed/{token}")
-def get_subscription_feed_legacy(
+async def get_subscription_feed_legacy(
     token: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> Response:
     """Legacy endpoint - redirects to /subscribe/{token}."""
     return get_subscription_feed(token, db)
