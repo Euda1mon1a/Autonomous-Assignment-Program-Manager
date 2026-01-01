@@ -1,4 +1,16 @@
-"""Notification templates for schedule alerts and updates."""
+"""
+Notification Templates (Alias Module).
+
+This module is an alias for notification_types.py and contains identical content.
+It exists for backward compatibility and import convenience.
+
+See notification_types.py for the canonical implementation and full documentation.
+
+Note:
+    Both modules define the same NotificationType enum and template registry.
+    Import from either module will work, but notification_types.py is preferred
+    for new code.
+"""
 
 from dataclasses import dataclass
 from enum import Enum

@@ -28,7 +28,16 @@ class SwapType(str, Enum):
 
 
 class SwapRecord(Base):
-    """Record of an FMIT swap between faculty members."""
+    """
+    Record of an FMIT swap between faculty members.
+
+    SQLAlchemy Relationships:
+        source_faculty: Many-to-one to Person (via source_faculty_id).
+            No back-populates. Faculty requesting the swap.
+
+        target_faculty: Many-to-one to Person (via target_faculty_id).
+            No back-populates. Faculty receiving the swap request.
+    """
 
     __tablename__ = "swap_records"
 
@@ -75,6 +84,14 @@ class SwapApproval(Base):
     Tracks individual approvals required for swap execution.
     Different swap types require different approval workflows
     (e.g., source, target, coordinator approvals).
+
+    SQLAlchemy Relationships:
+        swap: Many-to-one to SwapRecord.
+            Back-populates SwapRecord.approvals (via backref).
+            The swap request this approval belongs to.
+
+        faculty: Many-to-one to Person.
+            No back-populates. The faculty member providing approval.
     """
 
     __tablename__ = "swap_approvals"

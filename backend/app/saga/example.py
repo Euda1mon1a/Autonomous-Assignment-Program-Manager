@@ -2,6 +2,31 @@
 
 This module demonstrates how to use the saga orchestrator for complex
 multi-step transactions with automatic compensation on failure.
+
+When to Use Sagas:
+    - Operations spanning multiple services or data stores
+    - Long-running transactions that can't hold locks
+    - Workflows requiring atomic "all or nothing" semantics
+    - Operations where partial completion is worse than full rollback
+
+When NOT to Use Sagas:
+    - Simple single-database transactions (use DB transactions)
+    - Read-only operations (no rollback needed)
+    - Operations where partial completion is acceptable
+    - Very short operations (saga overhead not worth it)
+
+Compensation Design Guidelines:
+    1. Compensations should be idempotent (safe to retry)
+    2. Compensations may not restore exact previous state
+    3. Compensations should succeed even if original action failed
+    4. Consider using "reserved" states that expire automatically
+
+Example Compensation Patterns:
+    - CreateRecord -> DeleteRecord (or mark as cancelled)
+    - ReserveInventory -> ReleaseReservation (or let reservation expire)
+    - SendNotification -> SendCancellationNotification
+    - ChargePayment -> RefundPayment (may have different fees)
+    - AssignSlot -> UnassignSlot (check for dependencies first)
 """
 
 import asyncio

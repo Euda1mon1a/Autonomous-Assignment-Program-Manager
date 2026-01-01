@@ -32,6 +32,17 @@ class FeatureFlag(Base):
     - Environment-based flags (dev/staging/production)
     - A/B testing variants
     - Flag dependencies
+
+    SQLAlchemy Relationships:
+        evaluations: One-to-many to FeatureFlagEvaluation.
+            Back-populates FeatureFlagEvaluation.flag.
+            Cascade: all, delete-orphan.
+            History of flag evaluations for analytics.
+
+        audit_logs: One-to-many to FeatureFlagAudit.
+            Back-populates FeatureFlagAudit.flag.
+            Cascade: all, delete-orphan.
+            Audit trail of flag changes.
     """
 
     __tablename__ = "feature_flags"
@@ -110,6 +121,11 @@ class FeatureFlagEvaluation(Base):
     Feature flag evaluation history for analytics and debugging.
 
     Tracks every time a feature flag is evaluated for a user.
+
+    SQLAlchemy Relationships:
+        flag: Many-to-one to FeatureFlag.
+            Back-populates FeatureFlag.evaluations.
+            FK ondelete=CASCADE. The flag that was evaluated.
     """
 
     __tablename__ = "feature_flag_evaluations"
@@ -159,6 +175,11 @@ class FeatureFlagAudit(Base):
     Audit log for feature flag changes.
 
     Tracks all modifications to feature flags for compliance and debugging.
+
+    SQLAlchemy Relationships:
+        flag: Many-to-one to FeatureFlag.
+            Back-populates FeatureFlag.audit_logs.
+            FK ondelete=CASCADE. The flag whose change is logged.
     """
 
     __tablename__ = "feature_flag_audit"

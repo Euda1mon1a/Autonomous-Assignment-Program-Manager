@@ -7,6 +7,12 @@ export * from './api';
 // Re-export admin scheduling types
 export * from './admin-scheduling';
 
+// Re-export state management types
+export * from './state';
+
+// Re-export chat types
+export * from './chat';
+
 // Import specific types for use in view-specific interfaces
 import {
   UUID,

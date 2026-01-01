@@ -25,6 +25,15 @@ class APIKey(Base):
 
     Supports key rotation, rate limiting, and usage tracking.
     Keys are hashed before storage for security.
+
+    SQLAlchemy Relationships:
+        owner: Many-to-one to User.
+            Back-populates User.api_keys (via backref).
+            FK ondelete=CASCADE. User who owns this API key.
+
+        request_signatures: One-to-many to RequestSignature (via backref).
+            Back-populates RequestSignature.api_key.
+            HMAC signature verification records for this key.
     """
 
     __tablename__ = "api_keys"
@@ -150,6 +159,11 @@ class OAuth2Client(Base):
     OAuth2 client credentials for client_credentials flow.
 
     Used for machine-to-machine authentication.
+
+    SQLAlchemy Relationships:
+        owner: Many-to-one to User.
+            Back-populates User.oauth2_clients (via backref).
+            FK ondelete=CASCADE. User who owns this OAuth2 client.
     """
 
     __tablename__ = "oauth2_clients"
@@ -236,6 +250,11 @@ class IPWhitelist(Base):
     IP whitelist for gateway-level access control.
 
     Allows specific IP addresses or CIDR ranges to bypass certain restrictions.
+
+    SQLAlchemy Relationships:
+        owner: Many-to-one to User.
+            Back-populates User.ip_whitelists (via backref).
+            FK ondelete=CASCADE. User who created this whitelist entry.
     """
 
     __tablename__ = "ip_whitelists"
@@ -299,6 +318,11 @@ class IPBlacklist(Base):
     IP blacklist for blocking malicious or abusive IP addresses.
 
     Takes precedence over whitelist.
+
+    SQLAlchemy Relationships:
+        added_by: Many-to-one to User.
+            Back-populates User.ip_blacklists_added (via backref).
+            FK ondelete=SET NULL. User who added this blacklist entry.
     """
 
     __tablename__ = "ip_blacklists"
@@ -371,6 +395,11 @@ class RequestSignature(Base):
     Request signature verification log for HMAC-signed requests.
 
     Tracks signature verification attempts for audit and replay attack prevention.
+
+    SQLAlchemy Relationships:
+        api_key: Many-to-one to APIKey.
+            Back-populates APIKey.request_signatures (via backref).
+            FK ondelete=CASCADE. The API key used for this request.
     """
 
     __tablename__ = "request_signatures"

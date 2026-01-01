@@ -41,6 +41,17 @@ class WeeklyPattern(Base):
         time_of_day: "AM" or "PM"
         activity_type: The activity assigned (fm_clinic, specialty, etc.)
         is_protected: True for slots that cannot be changed (e.g., Wed AM conference)
+
+    SQLAlchemy Relationships:
+        rotation_template: Many-to-one to RotationTemplate
+            (via rotation_template_id FK).
+            Back-populates RotationTemplate.weekly_patterns.
+            FK ondelete=CASCADE. The template this slot belongs to.
+
+        linked_template: Many-to-one to RotationTemplate
+            (via linked_template_id FK).
+            No back-populates. FK ondelete=SET NULL.
+            Optional reference to another template for complex patterns.
     """
 
     __tablename__ = "weekly_patterns"

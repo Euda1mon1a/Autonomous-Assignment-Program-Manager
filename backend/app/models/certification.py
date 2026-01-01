@@ -30,6 +30,12 @@ class CertificationType(Base):
     - PALS (Pediatric Advanced Life Support) - 2 year renewal
     - ALSO (Advanced Life Support in Obstetrics) - variable
     - NRP (Neonatal Resuscitation Program) - 2 year renewal
+
+    SQLAlchemy Relationships:
+        person_certifications: One-to-many to PersonCertification.
+            Back-populates PersonCertification.certification_type.
+            Cascade: all, delete-orphan.
+            All personnel certifications of this type.
     """
 
     __tablename__ = "certification_types"
@@ -95,6 +101,15 @@ class PersonCertification(Base):
 
     Records when someone obtained a certification, when it expires,
     and tracks reminder notifications sent.
+
+    SQLAlchemy Relationships:
+        person: Many-to-one to Person.
+            Back-populates Person.certifications.
+            FK ondelete=CASCADE. The person holding this certification.
+
+        certification_type: Many-to-one to CertificationType.
+            Back-populates CertificationType.person_certifications.
+            FK ondelete=CASCADE. The type of certification.
     """
 
     __tablename__ = "person_certifications"
