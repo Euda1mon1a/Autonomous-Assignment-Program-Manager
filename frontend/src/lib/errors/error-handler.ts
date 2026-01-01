@@ -101,13 +101,13 @@ class GlobalErrorHandler {
 
     switch (severity) {
       case ErrorSeverity.CRITICAL:
-        console.error('[CRITICAL]', logData, error)
+        // console.error('[CRITICAL]', logData, error)
         break
       case ErrorSeverity.ERROR:
-        console.error('[ERROR]', logData, error)
+        // console.error('[ERROR]', logData, error)
         break
       case ErrorSeverity.WARNING:
-        console.warn('[WARNING]', logData, error)
+        // console.warn('[WARNING]', logData, error)
         break
       case ErrorSeverity.INFO:
         console.info('[INFO]', logData, error)
@@ -141,7 +141,7 @@ class GlobalErrorHandler {
     // TODO: Integrate with error reporting service (e.g., Sentry)
     // For now, just log that we would report
     if (process.env.NODE_ENV === 'development') {
-      console.log('[ERROR REPORTING]', 'Would report error to external service', {
+      // console.log('[ERROR REPORTING]', 'Would report error to external service', {
         error,
         context,
       })

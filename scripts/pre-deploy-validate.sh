@@ -1,8 +1,28 @@
 ***REMOVED***!/bin/bash
-***REMOVED*** Pre-deployment Validation Script
-***REMOVED*** Run this before deploying to verify system readiness
+***REMOVED*** ============================================================
+***REMOVED*** Script: pre-deploy-validate.sh
+***REMOVED*** Purpose: Pre-deployment validation and safety checks
+***REMOVED*** Usage: ./scripts/pre-deploy-validate.sh
+***REMOVED***
+***REMOVED*** Description:
+***REMOVED***   Comprehensive validation script to verify system readiness
+***REMOVED***   before deploying to production. Checks configuration,
+***REMOVED***   code quality, security settings, and dependencies.
+***REMOVED***
+***REMOVED*** Validation Checks:
+***REMOVED***   1. Environment configuration (.env file, required variables)
+***REMOVED***   2. Code quality (no debug statements, formatting)
+***REMOVED***   3. Security (no hardcoded secrets, CORS configured)
+***REMOVED***   4. Configuration files (docker-compose, requirements)
+***REMOVED***   5. Database migrations (Alembic setup)
+***REMOVED***   6. Dependencies (all required packages listed)
+***REMOVED***
+***REMOVED*** Exit Codes:
+***REMOVED***   0 - All checks passed or warnings only
+***REMOVED***   1 - Critical errors found (do not deploy)
+***REMOVED*** ============================================================
 
-set -e
+set -euo pipefail
 
 echo "=============================================="
 echo "Pre-Deployment Validation Script"
@@ -17,6 +37,12 @@ NC='\033[0m' ***REMOVED*** No Color
 
 ERRORS=0
 WARNINGS=0
+
+***REMOVED*** Verify we're in project root
+if [ ! -f "docker-compose.yml" ] || [ ! -d "backend" ] || [ ! -d "frontend" ]; then
+    echo -e "${RED}ERROR: Must be run from project root directory${NC}" >&2
+    exit 1
+fi
 
 check_pass() {
     echo -e "${GREEN}[PASS]${NC} $1"
@@ -36,22 +62,28 @@ echo "1. Checking environment configuration..."
 echo "-------------------------------------------"
 
 ***REMOVED*** Check for required environment variables
+***REMOVED*** .env file must exist and contain critical configuration
 if [ -f ".env" ]; then
     check_pass "Environment file (.env) exists"
 
-    ***REMOVED*** Check critical variables
+    ***REMOVED*** Check SECRET_KEY - must be at least 32 characters for security
+    ***REMOVED*** Used for JWT token signing and session encryption
     if grep -q "SECRET_KEY=" .env && [ "$(grep SECRET_KEY= .env | cut -d= -f2 | wc -c)" -gt 32 ]; then
         check_pass "SECRET_KEY is set and has minimum length"
     else
         check_fail "SECRET_KEY is missing or too short (min 32 chars)"
     fi
 
+    ***REMOVED*** Check DATABASE_URL - required for all database operations
+    ***REMOVED*** Format: postgresql://user:password@host:port/database
     if grep -q "DATABASE_URL=" .env; then
         check_pass "DATABASE_URL is configured"
     else
         check_fail "DATABASE_URL is not configured"
     fi
 
+    ***REMOVED*** Check REDIS_URL - required for Celery task queue
+    ***REMOVED*** Missing Redis will prevent background task processing
     if grep -q "REDIS_URL=" .env; then
         check_pass "REDIS_URL is configured"
     else
@@ -65,13 +97,17 @@ echo ""
 echo "2. Checking code quality..."
 echo "-------------------------------------------"
 
-***REMOVED*** Check for debug statements
+***REMOVED*** Check for debug statements that should not be in production
+***REMOVED*** These can leak sensitive information or cause performance issues
 if grep -rn --include="*.py" "breakpoint()\|pdb\|debugger" backend/app/ 2>/dev/null | grep -v "^Binary"; then
     check_fail "Debug statements found in backend code"
 else
     check_pass "No debug statements in backend code"
 fi
 
+***REMOVED*** Check for console.log and debugger in frontend code
+***REMOVED*** console.log is less critical but should be reviewed
+***REMOVED*** debugger statements will halt execution in browser dev tools
 if grep -rn --include="*.ts" --include="*.tsx" "debugger\|console.log" frontend/src/ 2>/dev/null | head -5; then
     check_warn "Console.log statements found in frontend (review before deploy)"
 else

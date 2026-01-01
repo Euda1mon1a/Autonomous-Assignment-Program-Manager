@@ -54,7 +54,7 @@ logger = logging.getLogger(__name__)
 @router.post("", response_model=ExportJobResponse, status_code=201)
 async def create_export_job(
     job_data: ExportJobCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -70,7 +70,7 @@ async def create_export_job(
             created_by=current_user.username,
         )
         return job
-    except (SQLAlchemyError, ValueError, TypeError) as e:
+    except (SQLAlchemyError, ValueError, TypeError, KeyError, AttributeError) as e:
         logger.error(f"Failed to create export job: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to create export job")
 
@@ -80,7 +80,7 @@ async def list_export_jobs(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     enabled_only: bool = Query(False, description="Only return enabled jobs"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -104,7 +104,7 @@ async def list_export_jobs(
             page_size=page_size,
             total_pages=total_pages,
         )
-    except (SQLAlchemyError, ValueError) as e:
+    except (SQLAlchemyError, ValueError, KeyError, AttributeError) as e:
         logger.error(f"Failed to list export jobs: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to list export jobs")
 
@@ -112,7 +112,7 @@ async def list_export_jobs(
 @router.get("/{job_id}", response_model=ExportJobResponse)
 async def get_export_job(
     job_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -133,7 +133,7 @@ async def get_export_job(
 async def update_export_job(
     job_id: str,
     update_data: ExportJobUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -162,7 +162,7 @@ async def update_export_job(
 @router.delete("/{job_id}", status_code=204)
 async def delete_export_job(
     job_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -188,7 +188,7 @@ async def delete_export_job(
 async def run_export_job(
     job_id: str,
     request: ExportJobRunRequest | None = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -237,7 +237,7 @@ async def list_job_executions(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     status: ExportJobStatus | None = Query(None, description="Filter by status"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -292,7 +292,7 @@ async def list_job_executions(
 @router.get("/executions/{execution_id}", response_model=ExportJobExecutionResponse)
 async def get_execution(
     execution_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -427,7 +427,7 @@ async def list_export_templates(
 
 @router.get("/stats/overview", response_model=ExportJobStatsResponse)
 async def get_export_stats(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """

@@ -164,7 +164,6 @@ function createApiClient(): AxiosInstance {
       return config
     },
     (error) => {
-      console.error('[api.ts] Request interceptor error:', error)
       return Promise.reject(error)
     }
   )
@@ -208,7 +207,7 @@ function createApiClient(): AxiosInstance {
               }
             }
           } catch (refreshError) {
-            console.error('[api.ts] Token refresh failed:', refreshError)
+            // Refresh failed - will redirect to login
           }
 
           // Refresh failed or not available - redirect to login

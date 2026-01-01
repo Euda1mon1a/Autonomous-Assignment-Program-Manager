@@ -86,7 +86,25 @@ class CreateSwapTool(BaseTool[CreateSwapRequest, CreateSwapResponse]):
         )
 
     async def execute(self, request: CreateSwapRequest) -> CreateSwapResponse:
-        """Execute the tool."""
+        """
+        Execute swap request creation.
+
+        Creates a new schedule swap request (one-to-one or absorb type).
+        Swap requests start in "pending" status and require approval before
+        execution. Faculty can swap shifts with each other (one-to-one) or
+        give away a shift without replacement (absorb).
+
+        Args:
+            request: Validated swap request with person, assignment, and type
+
+        Returns:
+            CreateSwapResponse with swap_id and initial status
+
+        Raises:
+            APIError: Backend API request fails
+            AuthenticationError: Invalid or expired credentials
+            ValidationError: Swap violates ACGME compliance or business rules
+        """
         client = self._require_api_client()
 
         try:
@@ -112,8 +130,23 @@ class CreateSwapTool(BaseTool[CreateSwapRequest, CreateSwapResponse]):
                 status=data.get("status"),
             )
 
+        except (ConnectionError, TimeoutError) as e:
+            return CreateSwapResponse(
+                success=False,
+                message=f"Backend service unavailable: {type(e).__name__}",
+            )
+        except PermissionError as e:
+            return CreateSwapResponse(
+                success=False,
+                message=f"Insufficient permissions to create swap: {str(e)}",
+            )
+        except ValueError as e:
+            return CreateSwapResponse(
+                success=False,
+                message=f"Invalid swap request: {str(e)}",
+            )
         except Exception as e:
             return CreateSwapResponse(
                 success=False,
-                message=f"Failed to create swap: {e}",
+                message=f"Failed to create swap: {type(e).__name__}",
             )

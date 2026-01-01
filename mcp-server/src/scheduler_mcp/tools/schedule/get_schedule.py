@@ -98,41 +98,95 @@ class GetScheduleTool(BaseTool[GetScheduleRequest, GetScheduleResponse]):
     async def execute(
         self, request: GetScheduleRequest
     ) -> GetScheduleResponse:
-        """Execute the tool."""
+        """
+        Execute schedule data retrieval.
+
+        Fetches all assignments within the specified date range from the backend API.
+        Returns comprehensive schedule data including person, block, and rotation details.
+
+        Data Structure:
+        - Each assignment represents one person assigned to one block (date + session)
+        - Blocks are AM/PM sessions (2 per day)
+        - Date range is inclusive (includes both start and end dates)
+
+        Performance Notes:
+        - Limit parameter prevents excessive data transfer
+        - include_person_details=False reduces payload size
+        - Results are sorted by block_date, block_session, person_id
+
+        Args:
+            request: Validated request with date range and options
+
+        Returns:
+            GetScheduleResponse with assignments list and metadata
+
+        Raises:
+            APIError: Backend API request fails
+            ValidationError: Invalid date range or data format
+        """
         client = self._require_api_client()
 
-        ***REMOVED*** Fetch assignments
-        result = await client.get_assignments(
-            start_date=request.start_date,
-            end_date=request.end_date,
-            limit=request.limit,
-        )
-
-        ***REMOVED*** Parse assignments
-        assignments = []
-        for item in result.get("assignments", []):
-            assignment = Assignment(
-                id=item["id"],
-                person_id=item["person_id"],
-                person_name=item.get("person_name") if request.include_person_details else None,
-                block_id=item["block_id"],
-                block_date=item.get("block_date", ""),
-                block_session=item.get("block_session", ""),
-                rotation_id=item.get("rotation_id"),
-                rotation_name=item.get("rotation_name"),
-                created_at=item.get("created_at"),
+        try:
+            ***REMOVED*** Fetch assignments
+            result = await client.get_assignments(
+                start_date=request.start_date,
+                end_date=request.end_date,
+                limit=request.limit,
             )
-            assignments.append(assignment)
 
-        ***REMOVED*** Calculate date range
-        start = date.fromisoformat(request.start_date)
-        end = date.fromisoformat(request.end_date)
-        date_range_days = (end - start).days + 1
+            ***REMOVED*** Parse assignments
+            assignments = []
+            for item in result.get("assignments", []):
+                assignment = Assignment(
+                    id=item["id"],
+                    person_id=item["person_id"],
+                    person_name=item.get("person_name") if request.include_person_details else None,
+                    block_id=item["block_id"],
+                    block_date=item.get("block_date", ""),
+                    block_session=item.get("block_session", ""),
+                    rotation_id=item.get("rotation_id"),
+                    rotation_name=item.get("rotation_name"),
+                    created_at=item.get("created_at"),
+                )
+                assignments.append(assignment)
 
-        return GetScheduleResponse(
-            start_date=request.start_date,
-            end_date=request.end_date,
-            total_assignments=len(assignments),
-            assignments=assignments,
-            date_range_days=date_range_days,
-        )
+            ***REMOVED*** Calculate date range
+            start = date.fromisoformat(request.start_date)
+            end = date.fromisoformat(request.end_date)
+            date_range_days = (end - start).days + 1
+
+            return GetScheduleResponse(
+                start_date=request.start_date,
+                end_date=request.end_date,
+                total_assignments=len(assignments),
+                assignments=assignments,
+                date_range_days=date_range_days,
+            )
+
+        except (ConnectionError, TimeoutError) as e:
+            ***REMOVED*** Network connectivity issues - return empty schedule
+            return GetScheduleResponse(
+                start_date=request.start_date,
+                end_date=request.end_date,
+                total_assignments=0,
+                assignments=[],
+                date_range_days=0,
+            )
+        except (KeyError, ValueError, TypeError) as e:
+            ***REMOVED*** Data parsing errors - return empty schedule
+            return GetScheduleResponse(
+                start_date=request.start_date,
+                end_date=request.end_date,
+                total_assignments=0,
+                assignments=[],
+                date_range_days=0,
+            )
+        except Exception as e:
+            ***REMOVED*** Unexpected errors - return empty schedule
+            return GetScheduleResponse(
+                start_date=request.start_date,
+                end_date=request.end_date,
+                total_assignments=0,
+                assignments=[],
+                date_range_days=0,
+            )

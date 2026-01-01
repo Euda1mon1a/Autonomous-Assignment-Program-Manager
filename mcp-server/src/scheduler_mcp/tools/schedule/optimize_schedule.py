@@ -116,7 +116,33 @@ class OptimizeScheduleTool(
     async def execute(
         self, request: OptimizeScheduleRequest
     ) -> OptimizeScheduleResponse:
-        """Execute the tool."""
+        """
+        Execute schedule optimization.
+
+        Improves an existing schedule using multi-objective optimization while
+        maintaining ACGME compliance. Uses iterative local search to:
+        - Balance workload across residents and faculty
+        - Maximize preference satisfaction
+        - Improve coverage quality
+        - Minimize unnecessary changes (if preserve_assignments=True)
+
+        Optimization Objectives:
+        - workload_balance: Minimize variance in hours worked
+        - preferences: Maximize match to requested rotations/blocks
+        - coverage: Optimize coverage quality (supervision ratios, expertise)
+        - minimize_changes: Preserve existing assignments when possible
+
+        Args:
+            request: Validated request with objectives, date range, and constraints
+
+        Returns:
+            OptimizeScheduleResponse with improvement metrics and changes count
+
+        Raises:
+            APIError: Backend API request fails
+            TimeoutError: Optimization exceeds timeout_seconds limit
+            ValidationError: Invalid objectives or constraints
+        """
         client = self._require_api_client()
 
         try:
@@ -148,10 +174,37 @@ class OptimizeScheduleTool(
                 optimization_time_ms=data.get("optimization_time_ms"),
             )
 
+        except TimeoutError as e:
+            return OptimizeScheduleResponse(
+                success=False,
+                message=f"Optimization timed out after {request.timeout_seconds}s",
+                start_date=request.start_date,
+                end_date=request.end_date,
+                assignments_changed=0,
+                iterations_run=0,
+            )
+        except (ConnectionError, OSError) as e:
+            return OptimizeScheduleResponse(
+                success=False,
+                message=f"Backend service unavailable: {type(e).__name__}",
+                start_date=request.start_date,
+                end_date=request.end_date,
+                assignments_changed=0,
+                iterations_run=0,
+            )
+        except ValueError as e:
+            return OptimizeScheduleResponse(
+                success=False,
+                message=f"Invalid optimization parameters: {str(e)}",
+                start_date=request.start_date,
+                end_date=request.end_date,
+                assignments_changed=0,
+                iterations_run=0,
+            )
         except Exception as e:
             return OptimizeScheduleResponse(
                 success=False,
-                message=f"Failed to optimize schedule: {e}",
+                message=f"Failed to optimize schedule: {type(e).__name__}",
                 start_date=request.start_date,
                 end_date=request.end_date,
                 assignments_changed=0,

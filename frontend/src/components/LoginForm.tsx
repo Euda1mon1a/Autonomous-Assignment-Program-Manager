@@ -81,7 +81,6 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           errorMessage = `API endpoint not found. Check NEXT_PUBLIC_API_URL: ${process.env.NEXT_PUBLIC_API_URL || '(default)'}`
         }
       }
-      console.error('[LoginForm] Login failed:', err)
       setError(errorMessage)
     } finally {
       setIsSubmitting(false)

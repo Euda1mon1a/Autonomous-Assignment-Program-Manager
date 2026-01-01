@@ -80,7 +80,29 @@ class CreateAssignmentTool(BaseTool[CreateAssignmentRequest, CreateAssignmentRes
     async def execute(
         self, request: CreateAssignmentRequest
     ) -> CreateAssignmentResponse:
-        """Execute the tool."""
+        """
+        Execute assignment creation.
+
+        Creates a new schedule assignment for a person on a specific block (date + session).
+        Validates that:
+        - Person exists and is active
+        - Block date is within academic year
+        - No conflicting assignment exists for same block
+        - Assignment doesn't violate ACGME work hour rules
+        - Rotation (if specified) is valid and person is qualified
+
+        Args:
+            request: Validated request with person, date, session, and optional rotation
+
+        Returns:
+            CreateAssignmentResponse with assignment_id and created details
+
+        Raises:
+            APIError: Backend API request fails
+            ValidationError: Invalid person, date, or rotation
+            ConflictError: Person already assigned to this block
+            ACGMEViolationError: Assignment would violate work hour limits
+        """
         client = self._require_api_client()
 
         try:
@@ -100,9 +122,27 @@ class CreateAssignmentTool(BaseTool[CreateAssignmentRequest, CreateAssignmentRes
                 details=data,
             )
 
+        except (ConnectionError, TimeoutError) as e:
+            return CreateAssignmentResponse(
+                success=False,
+                message=f"Backend service unavailable: {type(e).__name__}",
+                details={"error": "connection_error"},
+            )
+        except KeyError as e:
+            return CreateAssignmentResponse(
+                success=False,
+                message=f"Person or rotation not found: {str(e)}",
+                details={"error": "not_found"},
+            )
+        except ValueError as e:
+            return CreateAssignmentResponse(
+                success=False,
+                message=f"Invalid assignment data: {str(e)}",
+                details={"error": "validation_error"},
+            )
         except Exception as e:
             return CreateAssignmentResponse(
                 success=False,
-                message=f"Failed to create assignment: {e}",
+                message=f"Failed to create assignment: {type(e).__name__}",
                 details={"error": str(e)},
             )

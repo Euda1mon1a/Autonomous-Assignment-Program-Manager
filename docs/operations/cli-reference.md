@@ -732,8 +732,231 @@ fi
 
 ---
 
+***REMOVED******REMOVED*** Troubleshooting Common CLI Issues
+
+***REMOVED******REMOVED******REMOVED*** Command Not Found
+
+**Problem:** `python: No module named app.cli`
+
+**Solution:**
+```bash
+***REMOVED*** Ensure you're in the backend directory
+cd backend
+
+***REMOVED*** Activate virtual environment
+source venv/bin/activate  ***REMOVED*** Linux/macOS
+***REMOVED*** OR
+venv\Scripts\activate  ***REMOVED*** Windows
+
+***REMOVED*** Verify Python path
+python -c "import sys; print(sys.path)"
+```
+
+***REMOVED******REMOVED******REMOVED*** Database Connection Errors
+
+**Problem:** `sqlalchemy.exc.OperationalError: could not connect to server`
+
+**Solution:**
+```bash
+***REMOVED*** 1. Check if PostgreSQL is running
+docker-compose ps db
+
+***REMOVED*** 2. Check database credentials in .env
+cat .env | grep DATABASE
+
+***REMOVED*** 3. Test connection manually
+psql postgresql://scheduler:password@localhost:5432/residency_scheduler
+
+***REMOVED*** 4. Restart database if needed
+docker-compose restart db
+```
+
+***REMOVED******REMOVED******REMOVED*** Permission Denied Errors
+
+**Problem:** `PermissionError: [Errno 13] Permission denied`
+
+**Solution:**
+```bash
+***REMOVED*** Check file ownership
+ls -la output_file.xlsx
+
+***REMOVED*** Fix permissions
+chmod 644 output_file.xlsx
+
+***REMOVED*** Run with sudo if needed (not recommended for production)
+sudo python -m app.cli maintenance backup
+```
+
+***REMOVED******REMOVED******REMOVED*** Import Errors
+
+**Problem:** `ModuleNotFoundError: No module named 'package_name'`
+
+**Solution:**
+```bash
+***REMOVED*** Reinstall dependencies
+pip install -r requirements.txt
+
+***REMOVED*** Check for version conflicts
+pip list | grep package_name
+
+***REMOVED*** Update specific package
+pip install --upgrade package_name
+```
+
+***REMOVED******REMOVED******REMOVED*** Schedule Generation Hangs
+
+**Problem:** CLI hangs during schedule generation
+
+**Solution:**
+```bash
+***REMOVED*** 1. Use shorter timeout
+python -m app.cli schedule generate \
+  --start 2025-07-01 --end 2025-07-31 \
+  --timeout 60
+
+***REMOVED*** 2. Use simpler algorithm
+python -m app.cli schedule generate \
+  --start 2025-07-01 --end 2025-07-31 \
+  --algorithm greedy
+
+***REMOVED*** 3. Check logs in another terminal
+tail -f backend/app.log
+```
+
+---
+
+***REMOVED******REMOVED*** Advanced Usage Tips
+
+***REMOVED******REMOVED******REMOVED*** 1. Chaining Commands
+
+```bash
+***REMOVED*** Generate, validate, and export in one line
+python -m app.cli schedule generate --start 2025-07-01 --end 2025-09-30 && \
+python -m app.cli compliance check && \
+python -m app.cli schedule export --format excel --output schedule.xlsx
+```
+
+***REMOVED******REMOVED******REMOVED*** 2. Using with Cron Jobs
+
+```bash
+***REMOVED*** Edit crontab
+crontab -e
+
+***REMOVED*** Add daily backup at 2 AM
+0 2 * * * cd /path/to/backend && source venv/bin/activate && python -m app.cli maintenance backup --compress >> /var/log/scheduler_backup.log 2>&1
+
+***REMOVED*** Weekly compliance check on Mondays at 9 AM
+0 9 * * 1 cd /path/to/backend && source venv/bin/activate && python -m app.cli compliance check --email admin@example.com
+```
+
+***REMOVED******REMOVED******REMOVED*** 3. JSON Output for Scripting
+
+```bash
+***REMOVED*** Get compliance data as JSON
+python -m app.cli compliance check --format json > compliance.json
+
+***REMOVED*** Process with jq
+python -m app.cli compliance check --format json | jq '.violations[] | select(.severity == "CRITICAL")'
+
+***REMOVED*** Use in shell scripts
+VIOLATIONS=$(python -m app.cli compliance check --format json | jq '.violations | length')
+if [ $VIOLATIONS -gt 0 ]; then
+    echo "⚠️  Found $VIOLATIONS violations!"
+    ***REMOVED*** Send alert
+fi
+```
+
+***REMOVED******REMOVED******REMOVED*** 4. Environment-Specific Configurations
+
+```bash
+***REMOVED*** Development
+export ENV=development
+python -m app.cli schedule generate --start 2025-07-01 --end 2025-07-31
+
+***REMOVED*** Staging
+export ENV=staging
+python -m app.cli schedule generate --start 2025-07-01 --end 2025-07-31
+
+***REMOVED*** Production
+export ENV=production
+python -m app.cli schedule generate --start 2025-07-01 --end 2025-07-31
+```
+
+***REMOVED******REMOVED******REMOVED*** 5. Dry Run Mode
+
+```bash
+***REMOVED*** Preview changes without applying
+python -m app.cli maintenance cleanup --dry-run
+python -m app.cli schedule generate --start 2025-07-01 --end 2025-07-31 --dry-run
+python -m app.cli data seed --type residents --dry-run
+```
+
+***REMOVED******REMOVED******REMOVED*** 6. Logging and Debugging
+
+```bash
+***REMOVED*** Enable debug logging
+python -m app.cli --debug schedule generate --start 2025-07-01 --end 2025-07-31
+
+***REMOVED*** Save logs to file
+python -m app.cli schedule generate --start 2025-07-01 --end 2025-07-31 2>&1 | tee generation.log
+
+***REMOVED*** Verbose output
+python -m app.cli compliance check --verbose
+```
+
+***REMOVED******REMOVED******REMOVED*** 7. Batch Operations
+
+```bash
+***REMOVED*** Process multiple users from file
+while read email; do
+    python -m app.cli user reset-password --email "$email"
+done < users_to_reset.txt
+
+***REMOVED*** Generate schedules for multiple blocks
+for block in {1..13}; do
+    python -m app.cli schedule generate \
+        --block $block \
+        --algorithm greedy
+done
+```
+
+---
+
+***REMOVED******REMOVED*** Performance Optimization
+
+***REMOVED******REMOVED******REMOVED*** Large Data Sets
+
+When working with large data sets:
+
+```bash
+***REMOVED*** Use pagination
+python -m app.cli data export --limit 1000 --offset 0
+python -m app.cli data export --limit 1000 --offset 1000
+
+***REMOVED*** Enable compression
+python -m app.cli maintenance backup --compress --format tar.gz
+
+***REMOVED*** Parallel processing (if supported)
+python -m app.cli schedule generate --workers 4
+```
+
+***REMOVED******REMOVED******REMOVED*** Memory Management
+
+```bash
+***REMOVED*** Monitor memory usage
+/usr/bin/time -v python -m app.cli schedule generate --start 2025-07-01 --end 2025-09-30
+
+***REMOVED*** Limit memory (Linux)
+ulimit -v 2000000  ***REMOVED*** 2GB
+python -m app.cli schedule generate --start 2025-07-01 --end 2025-09-30
+```
+
+---
+
 ***REMOVED******REMOVED*** See Also
 
 - [Scripts Guide](scripts-guide.md) - Standalone operational scripts
 - [API Documentation](../api/README.md) - REST API reference
 - [Database Guide](../architecture/database.md) - Database schema
+- [Schedule Generation Runbook](../guides/SCHEDULE_GENERATION_RUNBOOK.md) - Detailed generation workflow
+- [Troubleshooting Guide](../development/CI_CD_TROUBLESHOOTING.md) - Common issues and solutions

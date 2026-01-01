@@ -292,7 +292,6 @@ export function useAuth(
    */
   const refreshToken = useCallback(async (): Promise<boolean> => {
     if (isRefreshingRef.current) {
-      console.log('[useAuth] Refresh already in progress')
       return false
     }
 
@@ -500,7 +499,7 @@ export function useLogout() {
       queryClient.clear()
 
       // Log if server logout failed (local state was still cleared)
-      if (!serverLogoutSuccess) {
+      if (!serverLogoutSuccess && process.env.NODE_ENV === 'development') {
         console.warn('Server logout failed, but local session was cleared')
       }
     },

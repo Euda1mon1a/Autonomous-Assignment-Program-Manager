@@ -43,6 +43,14 @@ from app.scheduling.constraints import (
 
 logger = logging.getLogger(__name__)
 
+***REMOVED*** Localization thresholds and constants
+LOCALIZATION_THRESHOLD = 0.05  ***REMOVED*** Propagation strength threshold (5%)
+ESCAPE_PROBABILITY_THRESHOLD = 0.3  ***REMOVED*** Escape probability for localized regions
+MAX_PROPAGATION_DEPTH_DAYS = 30  ***REMOVED*** Maximum BFS depth in days
+DEFAULT_LOCALIZATION_LENGTH = 1.0  ***REMOVED*** Default localization length (days)
+BARRIER_STRENGTH_WEIGHT_TEMPORAL = 0.8  ***REMOVED*** Temporal constraint coupling strength
+BARRIER_STRENGTH_WEIGHT_SUPERVISION = 0.6  ***REMOVED*** Supervision constraint coupling strength
+
 
 class DisruptionType(Enum):
     """Types of schedule disruptions requiring localized updates."""
@@ -98,7 +106,10 @@ class LocalizationRegion:
     @property
     def is_localized(self) -> bool:
         """Check if region is truly localized (not global cascade)."""
-        return self.region_type == "localized" and self.escape_probability < 0.3
+        return (
+            self.region_type == "localized"
+            and self.escape_probability < ESCAPE_PROBABILITY_THRESHOLD
+        )
 
     def __repr__(self) -> str:
         return (
@@ -158,7 +169,12 @@ class PropagationAnalyzer:
             for next_block in self.context.blocks.values():
                 if next_block.date == next_date:
                     ***REMOVED*** Weight based on duty hours coupling
-                    G.add_edge(block.id, next_block.id, weight=0.8, type="temporal")
+                    G.add_edge(
+                        block.id,
+                        next_block.id,
+                        weight=BARRIER_STRENGTH_WEIGHT_TEMPORAL,
+                        type="temporal",
+                    )
 
         ***REMOVED*** Add edges for supervision constraints
         ***REMOVED*** (blocks on same day requiring same faculty)
@@ -170,7 +186,12 @@ class PropagationAnalyzer:
             ***REMOVED*** Connect all blocks on same day
             for i, b1 in enumerate(block_ids):
                 for b2 in block_ids[i + 1 :]:
-                    G.add_edge(b1, b2, weight=0.6, type="supervision")
+                    G.add_edge(
+                        b1,
+                        b2,
+                        weight=BARRIER_STRENGTH_WEIGHT_SUPERVISION,
+                        type="supervision",
+                    )
 
         return G
 
@@ -323,11 +344,11 @@ class AndersonLocalizer:
         ***REMOVED*** Measure propagation from epicenter
         epicenter_blocks = disruption.epicenter_blocks
         propagation_steps = analyzer.measure_propagation(
-            epicenter_blocks=epicenter_blocks, max_depth=30
+            epicenter_blocks=epicenter_blocks, max_depth=MAX_PROPAGATION_DEPTH_DAYS
         )
 
         ***REMOVED*** Find localization boundary (where strength < threshold)
-        threshold = 0.05  ***REMOVED*** 5% of initial strength
+        threshold = LOCALIZATION_THRESHOLD
         affected_assignments = set()
         boundary_blocks = set()
         total_depth = 0
@@ -376,9 +397,12 @@ class AndersonLocalizer:
 
         Fits exponential decay: strength(d) = exp(-d / L)
         where L = localization length.
+
+        Returns:
+            Localization length in days
         """
         if len(propagation_steps) < 2:
-            return 1.0
+            return DEFAULT_LOCALIZATION_LENGTH
 
         ***REMOVED*** Fit exponential decay
         ***REMOVED*** ln(strength) = -depth / L
@@ -395,7 +419,7 @@ class AndersonLocalizer:
                 total_weight += weight
 
         if total_weight == 0:
-            return 1.0
+            return DEFAULT_LOCALIZATION_LENGTH
 
         return total_weighted_length / total_weight
 

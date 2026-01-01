@@ -110,7 +110,7 @@ export class RouteLazyLoader {
       await route.component();
       this.loadedRoutes.add(path);
     } catch (error) {
-      console.error(`Failed to preload route ${path}:`, error);
+      // console.error(`Failed to preload route ${path}:`, error);
     }
   }
 

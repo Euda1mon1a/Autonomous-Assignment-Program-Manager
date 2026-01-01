@@ -7,6 +7,7 @@ Key principle: Keep utilization below 80% to prevent queue explosion
 (from queuing theory - M/M/c queue becomes unstable near ρ=1).
 """
 
+import logging
 from dataclasses import dataclass
 from typing import Optional
 
@@ -14,6 +15,13 @@ import numpy as np
 from scipy.optimize import minimize_scalar
 
 from app.resilience.queuing.erlang_c import ErlangC
+
+logger = logging.getLogger(__name__)
+
+***REMOVED*** Default Optimization Targets
+DEFAULT_TARGET_UTILIZATION = 0.75  ***REMOVED*** Conservative target
+DEFAULT_MAX_WAIT_TIME = 0.5  ***REMOVED*** Hours
+DEFAULT_MIN_SERVICE_LEVEL = 0.80  ***REMOVED*** 80% immediate service
 
 
 @dataclass
@@ -49,9 +57,9 @@ class UtilizationOptimizer:
         arrival_rate: float,
         service_rate: float,
         current_servers: int,
-        target_utilization: float = 0.75,  ***REMOVED*** Conservative target
-        max_wait_time: float = 0.5,  ***REMOVED*** Maximum acceptable wait (hours)
-        min_service_level: float = 0.80,  ***REMOVED*** Minimum 80% immediate service
+        target_utilization: float = DEFAULT_TARGET_UTILIZATION,  ***REMOVED*** Conservative target
+        max_wait_time: float = DEFAULT_MAX_WAIT_TIME,  ***REMOVED*** Maximum acceptable wait (hours)
+        min_service_level: float = DEFAULT_MIN_SERVICE_LEVEL,  ***REMOVED*** Minimum 80% immediate service
     ) -> OptimizationResult:
         """
         Find optimal server count balancing utilization and service.
@@ -67,9 +75,12 @@ class UtilizationOptimizer:
         Returns:
             OptimizationResult with recommendations
         """
+        logger.info("Optimizing utilization: arrival_rate=%.2f, service_rate=%.2f, current=%d",
+                   arrival_rate, service_rate, current_servers)
         ***REMOVED*** Calculate minimum servers for stability (ρ < 1)
         min_servers = int(np.ceil(arrival_rate / service_rate)) + 1
 
+        logger.debug("Minimum servers for stability: %d, target utilization: %.2f", min_servers, target_utilization)
         ***REMOVED*** Calculate servers needed for target utilization
         servers_for_util = int(
             np.ceil(arrival_rate / (service_rate * target_utilization))

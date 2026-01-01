@@ -114,3 +114,6 @@ class ConflictAlert(Base):
         self.resolved_at = datetime.utcnow()
         self.resolved_by_id = user_id
         self.resolution_notes = f"Ignored: {reason}"
+
+    def __repr__(self) -> str:
+        return f"<ConflictAlert(id={self.id}, type='{self.conflict_type.value}', severity='{self.severity.value}', status='{self.status.value}')>"

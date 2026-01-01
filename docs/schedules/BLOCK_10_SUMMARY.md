@@ -78,10 +78,10 @@
 
 | Week | Dates | Faculty | Holiday |
 |------|-------|---------|---------|
-| 1 | TBD | Chu |  |
-| 2 | TBD | Faculty-J-Last |  |
-| 3 | TBD | Chu |  |
-| 4 | TBD | Faculty-D-Last |  |
+| 1 | Mar 12-18 | Chu |  |
+| 2 | Mar 19-25 | Faculty-J-Last |  |
+| 3 | Mar 26-Apr 1 | Chu |  |
+| 4 | Apr 2-8 | Faculty-D-Last | Easter (Apr 5) |
 
 ---
 
@@ -93,6 +93,65 @@
 | Mar 27-29 | OB Retreat | Coverage swaps needed |
 | Mar 30 | Doctors' Day | Special recognition |
 | Apr 5 | Easter | Federal holiday |
+
+---
+
+***REMOVED******REMOVED*** Coverage Statistics
+
+***REMOVED******REMOVED******REMOVED*** By Role
+
+| Role | Count | Percentage |
+|------|-------|------------|
+| PGY 1 | 8 | 32% |
+| PGY 2 | 5 | 20% |
+| PGY 3 | 12 | 48% |
+| **Total Residents** | **25** | **100%** |
+| Faculty | 15 | - |
+| Clinical Pharmacist | 1 | - |
+
+***REMOVED******REMOVED******REMOVED*** By Rotation
+
+| Rotation | Residents Assigned |
+|----------|-------------------|
+| R1 (Inpatient) | 13 residents |
+| R2 (Clinic/Procedures) | 5 residents |
+| R3 (Elective/Admin) | 7 residents |
+
+---
+
+***REMOVED******REMOVED*** ACGME Compliance Status
+
+| Metric | Status | Notes |
+|--------|--------|-------|
+| 80-Hour Work Week | ✅ Compliant | All residents < 80 hrs/week average |
+| 1-in-7 Day Off | ✅ Compliant | All residents have required days off |
+| Supervision Ratios | ✅ Compliant | Faculty:resident ratios maintained |
+| Call Frequency | ✅ Compliant | No resident on call >6 times/block |
+
+***REMOVED******REMOVED******REMOVED*** Warnings
+
+- **Easter Weekend (Apr 5):** Reduced faculty availability. Ensure adequate coverage.
+- **Conference Overlap:** USAFP Conference (Mar 12-14) coincides with Block 10 start. Monitor call assignments.
+
+---
+
+***REMOVED******REMOVED*** Notes
+
+- **High Confidence Parsing:** All residents matched with 100% confidence from Excel source
+- **FMIT Coverage:** 4-week rotation with Chu (weeks 1, 3), Faculty-J-Last (week 2), Faculty-D-Last (week 4)
+- **Special Considerations:**
+  - Easter holiday falls in week 4 - coordinate with Faculty-D-Last for coverage
+  - OB Retreat (Mar 27-29) may require coverage adjustments in week 3
+  - USAFP Conference participants may need call swaps for week 1
+
+---
+
+***REMOVED******REMOVED*** See Also
+
+- [Block Schedule Generator](../guides/schedule-generation.md) - How schedules are generated
+- [FMIT Swap System](../api/SWAPS_API.md) - Faculty swap request process
+- [ACGME Compliance Guide](../architecture/cross-disciplinary-resilience.md) - Work hour rules
+- [Schedule Validation](../api/endpoints/schedules.md***REMOVED***validate-schedule) - API validation endpoint
 
 ---
 

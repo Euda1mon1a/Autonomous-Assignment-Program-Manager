@@ -1,8 +1,34 @@
 ***REMOVED***!/bin/bash
-***REMOVED*** Health Check Script for Residency Scheduler Monitoring Stack
-***REMOVED*** Run this script to verify all monitoring services are healthy
+***REMOVED*** ============================================================
+***REMOVED*** Script: health-check.sh (monitoring)
+***REMOVED*** Purpose: Verify monitoring stack health
+***REMOVED*** Usage: ./monitoring/scripts/health-check.sh
+***REMOVED***
+***REMOVED*** Description:
+***REMOVED***   Checks health status of all monitoring services:
+***REMOVED***   Prometheus, Grafana, Alertmanager, Loki, and backend metrics.
+***REMOVED***   Validates HTTP endpoints and service responsiveness.
+***REMOVED***
+***REMOVED*** Services Checked:
+***REMOVED***   - Prometheus (metrics collection)
+***REMOVED***   - Grafana (visualization)
+***REMOVED***   - Alertmanager (alert routing)
+***REMOVED***   - Loki (log aggregation)
+***REMOVED***   - Backend metrics endpoint
+***REMOVED***
+***REMOVED*** Exit Codes:
+***REMOVED***   0 - All services healthy
+***REMOVED***   1 - One or more services degraded
+***REMOVED***   2 - Critical service failure
+***REMOVED***
+***REMOVED*** Environment Variables:
+***REMOVED***   PROMETHEUS_URL    - Prometheus endpoint (default: http://localhost:9090)
+***REMOVED***   GRAFANA_URL       - Grafana endpoint (default: http://localhost:3001)
+***REMOVED***   ALERTMANAGER_URL  - Alertmanager endpoint (default: http://localhost:9093)
+***REMOVED***   LOKI_URL          - Loki endpoint (default: http://localhost:3100)
+***REMOVED*** ============================================================
 
-set -e
+set -euo pipefail
 
 ***REMOVED*** Colors for output
 RED='\033[0;31m'
@@ -19,6 +45,12 @@ BACKEND_URL="${BACKEND_URL:-http://localhost:8000}"
 
 ***REMOVED*** Timeout for HTTP requests
 TIMEOUT=5
+
+***REMOVED*** Verify curl or wget is available for health checks
+if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then
+    echo -e "${RED}ERROR: curl or wget required for health checks${NC}" >&2
+    exit 1
+fi
 
 echo "============================================"
 echo "  Residency Scheduler Health Check"

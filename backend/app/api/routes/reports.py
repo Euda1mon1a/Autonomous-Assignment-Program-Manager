@@ -84,7 +84,7 @@ async def generate_schedule_report(
             },
         )
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError) as e:
         logger.error(f"Error generating schedule report: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
@@ -150,7 +150,7 @@ async def generate_compliance_report(
             },
         )
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError) as e:
         logger.error(f"Error generating compliance report: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
@@ -216,7 +216,7 @@ async def generate_analytics_report(
             },
         )
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError) as e:
         logger.error(f"Error generating analytics report: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
@@ -286,7 +286,7 @@ async def generate_faculty_summary_report(
             },
         )
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError) as e:
         logger.error(
             f"Error generating faculty summary report: {str(e)}", exc_info=True
         )

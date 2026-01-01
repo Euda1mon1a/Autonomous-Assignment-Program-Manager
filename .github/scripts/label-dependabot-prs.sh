@@ -1,11 +1,50 @@
 ***REMOVED***!/bin/bash
-***REMOVED*** Script to label Dependabot PRs and add auto-merge commands
-***REMOVED*** Run this with: bash .github/scripts/label-dependabot-prs.sh
-***REMOVED*** Requires: gh CLI authenticated with repo access
+***REMOVED*** ============================================================
+***REMOVED*** Script: label-dependabot-prs.sh
+***REMOVED*** Purpose: Label and manage Dependabot PRs automatically
+***REMOVED*** Usage: bash .github/scripts/label-dependabot-prs.sh
+***REMOVED***
+***REMOVED*** Description:
+***REMOVED***   Automatically labels Dependabot pull requests and triggers
+***REMOVED***   auto-merge for safe dependency updates. Creates labels if
+***REMOVED***   they don't exist and applies appropriate merge strategy.
+***REMOVED***
+***REMOVED*** Labels Created/Applied:
+***REMOVED***   - safe-to-merge       - Can auto-merge after CI passes
+***REMOVED***   - needs-investigation - Requires manual review
+***REMOVED***   - breaking-change     - Do not auto-merge
+***REMOVED***   - blocked             - External dependency blocking
+***REMOVED***   - dependencies        - Dependency update PR
+***REMOVED***   - javascript/frontend - Technology-specific labels
+***REMOVED***
+***REMOVED*** Requirements:
+***REMOVED***   - gh CLI installed and authenticated
+***REMOVED***   - Repository write access
+***REMOVED***   - GITHUB_TOKEN with repo scope
+***REMOVED***
+***REMOVED*** Safety Features:
+***REMOVED***   - Labels breaking changes as needs-investigation
+***REMOVED***   - Skips auto-merge for major version bumps
+***REMOVED***   - Adds review notes for complex updates
+***REMOVED*** ============================================================
 
-set -e
+set -euo pipefail
 
 REPO="Euda1mon1a/Autonomous-Assignment-Program-Manager"
+
+***REMOVED*** Verify gh CLI is installed and authenticated
+if ! command -v gh >/dev/null 2>&1; then
+    echo "ERROR: GitHub CLI (gh) not found" >&2
+    echo "Install from: https://cli.github.com/" >&2
+    exit 1
+fi
+
+***REMOVED*** Verify gh is authenticated
+if ! gh auth status >/dev/null 2>&1; then
+    echo "ERROR: GitHub CLI not authenticated" >&2
+    echo "Run: gh auth login" >&2
+    exit 1
+fi
 
 echo "🏷️  Creating labels if they don't exist..."
 

@@ -27,7 +27,7 @@ export interface TimeSlotProps {
  *   period="AM"
  *   rotation="Clinic"
  *   person="Dr. Smith"
- *   onClick={() => console.log('clicked')}
+ *   onClick={() => // console.log('clicked')}
  * />
  * ```
  */

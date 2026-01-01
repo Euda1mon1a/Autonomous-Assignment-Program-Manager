@@ -44,7 +44,7 @@ settings = get_settings()
 
 @router.get("/health", response_model=ModelHealthResponse)
 async def get_model_health(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -104,7 +104,7 @@ async def get_model_health(
 @router.post("/train", response_model=TrainModelsResponse)
 async def train_models(
     request: TrainModelsRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -239,7 +239,7 @@ async def train_models(
 @router.post("/train/async")
 async def train_models_async(
     request: TrainModelsRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -274,7 +274,7 @@ async def train_models_async(
 @router.post("/score", response_model=ScheduleScoreResponse)
 async def score_schedule(
     request: ScoreScheduleRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -394,7 +394,7 @@ async def score_schedule(
 @router.post("/predict/conflict", response_model=ConflictPredictionResponse)
 async def predict_conflict(
     request: PredictConflictRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -471,7 +471,7 @@ async def predict_conflict(
 @router.post("/predict/preference", response_model=PreferencePredictionResponse)
 async def predict_preference(
     request: PredictPreferenceRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -534,7 +534,7 @@ async def predict_preference(
 @router.post("/analyze/workload", response_model=WorkloadAnalysisResponse)
 async def analyze_workload(
     request: WorkloadAnalysisRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """

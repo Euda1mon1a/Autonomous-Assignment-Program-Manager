@@ -3,7 +3,7 @@
 from datetime import date
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.validators.date_validators import validate_academic_year_date
 
@@ -35,6 +35,14 @@ class BlockBase(BaseModel):
             raise ValueError("time_of_day must be 'AM' or 'PM'")
         return v
 
+    @field_validator("block_number")
+    @classmethod
+    def validate_block_number(cls, v: int) -> int:
+        """Validate block_number is within valid range."""
+        if v < 0 or v > 13:
+            raise ValueError("block_number must be between 0 and 13")
+        return v
+
 
 class BlockCreate(BlockBase):
     """Schema for creating a block."""
@@ -47,8 +55,7 @@ class BlockResponse(BlockBase):
 
     id: UUID
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BlockListResponse(BaseModel):

@@ -68,22 +68,33 @@ jobs:
         with:
           python-version: '3.11'
 
+      ***REMOVED*** Install security scanning tools for Python dependencies
+      ***REMOVED*** Safety and pip-audit check for known CVEs in packages
       - name: Install Safety
         run: pip install safety pip-audit
 
+      ***REMOVED*** Scan Python dependencies for known vulnerabilities
+      ***REMOVED*** Allows informational findings without failing CI
+      ***REMOVED*** Remove continue-on-error once all critical issues are resolved
       - name: Run Safety check
         working-directory: backend
-        continue-on-error: true
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
         run: |
-          safety check -r requirements.txt --full-report || echo "Safety scan completed with findings"
+          safety check -r requirements.txt --full-report
 
+      ***REMOVED*** Run pip-audit for additional vulnerability scanning
+      ***REMOVED*** Provides JSON output for artifact storage
+      ***REMOVED*** Additional audit with pip-audit for comprehensive coverage
+      ***REMOVED*** Allows informational findings on PRs without blocking
       - name: Run pip-audit
         working-directory: backend
-        continue-on-error: true
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
         run: |
           pip-audit -r requirements.txt --format json --output pip-audit-results.json || true
-          pip-audit -r requirements.txt || echo "pip-audit scan completed with findings"
+          pip-audit -r requirements.txt
 
+      ***REMOVED*** Store audit results as artifacts for review
+      ***REMOVED*** Retained for 30 days for compliance tracking
       - name: Upload pip-audit results
         uses: actions/upload-artifact@v4
         if: always()
@@ -109,13 +120,16 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      ***REMOVED*** Scan npm dependencies for security vulnerabilities
+      ***REMOVED*** Allows informational findings on PRs, fails on push to main
       - name: Run npm audit
         working-directory: frontend
-        continue-on-error: true
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
         run: |
           npm audit --json > npm-audit-results.json || true
-          npm audit || echo "npm audit completed with findings"
+          npm audit
 
+      ***REMOVED*** Store npm audit results for security review
       - name: Upload npm audit results
         uses: actions/upload-artifact@v4
         if: always()
@@ -137,16 +151,22 @@ jobs:
         with:
           python-version: '3.11'
 
+      ***REMOVED*** Install Bandit Python security linter
+      ***REMOVED*** Detects common security issues in Python code
       - name: Install Bandit
         run: pip install bandit[toml]
 
+      ***REMOVED*** Run static security analysis with Bandit
+      ***REMOVED*** Scans for SQL injection, hardcoded passwords, etc.
+      ***REMOVED*** Allows warnings on PRs without blocking
       - name: Run Bandit
         working-directory: backend
-        continue-on-error: true
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
         run: |
           bandit -r app -f json -o bandit-results.json || true
-          bandit -r app -f txt || echo "Bandit scan completed"
+          bandit -r app -f txt
 
+      ***REMOVED*** Upload Bandit security scan results
       - name: Upload Bandit results
         uses: actions/upload-artifact@v4
         if: always()
@@ -166,6 +186,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      ***REMOVED*** Scan filesystem for vulnerabilities and misconfigurations
+      ***REMOVED*** Checks dependencies, IaC files, and Dockerfiles
+      ***REMOVED*** Reports CRITICAL, HIGH, and MEDIUM severity issues
       - name: Run Trivy filesystem scan
         uses: aquasecurity/trivy-action@master
         with:
@@ -175,6 +198,8 @@ jobs:
           output: 'trivy-fs-results.sarif'
           severity: 'CRITICAL,HIGH,MEDIUM'
 
+      ***REMOVED*** Upload security findings to GitHub Security tab
+      ***REMOVED*** Integrates with GitHub Advanced Security
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v4
         if: always()

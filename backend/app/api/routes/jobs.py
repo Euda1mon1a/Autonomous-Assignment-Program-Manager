@@ -119,8 +119,8 @@ async def get_jobs_dashboard_overview(
             timestamp=datetime.utcnow().isoformat(),
         )
 
-    except Exception as e:
-        logger.error(f"Error getting jobs dashboard overview: {e}")
+    except (ValueError, KeyError, AttributeError) as e:
+        logger.error(f"Error getting jobs dashboard overview: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error fetching dashboard overview")
 
 

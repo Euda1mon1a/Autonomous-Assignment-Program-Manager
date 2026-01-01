@@ -94,7 +94,7 @@ export default function SettingsPage() {
       setTimeout(() => setShowSuccess(false), 3000)
     } catch (error) {
       // Error is handled by mutation state
-      console.error('Failed to save settings:', error)
+      // Failed to save settings
     }
   }
 

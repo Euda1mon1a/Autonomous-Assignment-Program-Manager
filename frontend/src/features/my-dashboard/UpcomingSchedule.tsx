@@ -64,7 +64,7 @@ function AssignmentCard({ assignment, onSwapRequested }: AssignmentCardProps) {
       setReason('');
       onSwapRequested?.();
     } catch (error) {
-      console.error('Failed to request swap:', error);
+      // console.error('Failed to request swap:', error);
     }
   };
 

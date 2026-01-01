@@ -31,11 +31,11 @@ export interface ValidationResult {
  * ```ts
  * const error = validateEmail('user@example.com');
  * if (error) {
- *   console.error(error); // null - valid email
+ *   // console.error(error); // null - valid email
  * }
  *
  * const invalidError = validateEmail('invalid-email');
- * console.log(invalidError); // "Please enter a valid email address"
+ * // console.log(invalidError); // "Please enter a valid email address"
  * ```
  */
 export function validateEmail(email: string): string | null {
@@ -64,13 +64,13 @@ export function validateEmail(email: string): string | null {
  * @example
  * ```ts
  * const nameError = validateRequired('John Doe', 'Name');
- * console.log(nameError); // null - valid
+ * // console.log(nameError); // null - valid
  *
  * const emptyError = validateRequired('', 'Email');
- * console.log(emptyError); // "Email is required"
+ * // console.log(emptyError); // "Email is required"
  *
  * const whitespaceError = validateRequired('   ', 'Username');
- * console.log(whitespaceError); // "Username is required"
+ * // console.log(whitespaceError); // "Username is required"
  * ```
  */
 export function validateRequired(value: string, fieldName: string): string | null {
@@ -93,13 +93,13 @@ export function validateRequired(value: string, fieldName: string): string | nul
  * @example
  * ```ts
  * const error = validateDateRange('2024-01-01', '2024-12-31');
- * console.log(error); // null - valid range
+ * // console.log(error); // null - valid range
  *
  * const invalidError = validateDateRange('2024-12-31', '2024-01-01');
- * console.log(invalidError); // "End date must be on or after start date"
+ * // console.log(invalidError); // "End date must be on or after start date"
  *
  * const badFormatError = validateDateRange('invalid', '2024-01-01');
- * console.log(badFormatError); // "Invalid start date"
+ * // console.log(badFormatError); // "Invalid start date"
  * ```
  */
 export function validateDateRange(start: string, end: string): string | null {
@@ -153,16 +153,16 @@ const COMMON_PASSWORDS = [
  * @example
  * ```ts
  * const error = validatePassword('MyS3cure!Pass');
- * console.log(error); // null - meets all requirements
+ * // console.log(error); // null - meets all requirements
  *
  * const shortError = validatePassword('short');
- * console.log(shortError); // "Password must be at least 12 characters"
+ * // console.log(shortError); // "Password must be at least 12 characters"
  *
  * const weakError = validatePassword('password123');
- * console.log(weakError); // "Password is too common. Please choose a stronger password"
+ * // console.log(weakError); // "Password is too common. Please choose a stronger password"
  *
  * const complexError = validatePassword('alllowercase12chars');
- * console.log(complexError); // "Password must contain at least 3 of: lowercase, uppercase, numbers, special characters"
+ * // console.log(complexError); // "Password must contain at least 3 of: lowercase, uppercase, numbers, special characters"
  * ```
  */
 export function validatePassword(password: string): string | null {
@@ -211,13 +211,13 @@ export function validatePassword(password: string): string | null {
  * @example
  * ```ts
  * const error = validateMinLength('John Smith', 3, 'Name');
- * console.log(error); // null - valid
+ * // console.log(error); // null - valid
  *
  * const shortError = validateMinLength('Jo', 3, 'Name');
- * console.log(shortError); // "Name must be at least 3 characters"
+ * // console.log(shortError); // "Name must be at least 3 characters"
  *
  * const emptyError = validateMinLength('', 3, 'Name');
- * console.log(emptyError); // null - use validateRequired for this case
+ * // console.log(emptyError); // null - use validateRequired for this case
  * ```
  */
 export function validateMinLength(value: string, minLength: number, fieldName: string): string | null {
@@ -250,16 +250,16 @@ export function validateMinLength(value: string, minLength: number, fieldName: s
  * @example
  * ```ts
  * const error = validatePgyLevel(3);
- * console.log(error); // null - valid PGY level
+ * // console.log(error); // null - valid PGY level
  *
  * const stringError = validatePgyLevel('2');
- * console.log(stringError); // null - valid as string
+ * // console.log(stringError); // null - valid as string
  *
  * const outOfRangeError = validatePgyLevel(10);
- * console.log(outOfRangeError); // "PGY level must be between 1 and 8"
+ * // console.log(outOfRangeError); // "PGY level must be between 1 and 8"
  *
  * const invalidError = validatePgyLevel('abc');
- * console.log(invalidError); // "PGY level must be a number"
+ * // console.log(invalidError); // "PGY level must be a number"
  * ```
  */
 export function validatePgyLevel(pgyLevel: string | number): string | null {

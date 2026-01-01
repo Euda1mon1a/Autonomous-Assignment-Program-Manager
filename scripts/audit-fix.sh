@@ -1,8 +1,25 @@
 ***REMOVED***!/bin/bash
-***REMOVED*** NPM Audit Fix Script
-***REMOVED*** Fixes npm security vulnerabilities in the frontend
+***REMOVED*** ============================================================
+***REMOVED*** Script: audit-fix.sh
+***REMOVED*** Purpose: Fix npm security vulnerabilities in frontend
+***REMOVED*** Usage: ./scripts/audit-fix.sh
+***REMOVED***
+***REMOVED*** Description:
+***REMOVED***   Runs npm audit fix to automatically update vulnerable packages.
+***REMOVED***   Creates backup of package-lock.json before making changes.
+***REMOVED***   Attempts safe fixes first, then force fixes if needed.
+***REMOVED***
+***REMOVED*** Safety Features:
+***REMOVED***   - Backs up package-lock.json before changes
+***REMOVED***   - Shows vulnerability report before and after
+***REMOVED***   - Logs all changes made
+***REMOVED***
+***REMOVED*** Exit Codes:
+***REMOVED***   0 - All vulnerabilities fixed or no vulnerabilities found
+***REMOVED***   1 - Some vulnerabilities remain or fix failed
+***REMOVED*** ============================================================
 
-set -e
+set -euo pipefail
 
 echo "=============================================="
 echo "NPM Security Audit Fix Script"
@@ -10,18 +27,44 @@ echo "=============================================="
 echo ""
 
 FRONTEND_DIR="$(dirname "$0")/../frontend"
-cd "$FRONTEND_DIR"
+
+***REMOVED*** Validate frontend directory exists
+if [ ! -d "$FRONTEND_DIR" ]; then
+    echo "ERROR: Frontend directory not found: $FRONTEND_DIR" >&2
+    exit 1
+fi
+
+cd "$FRONTEND_DIR" || {
+    echo "ERROR: Failed to change to frontend directory" >&2
+    exit 1
+}
+
+***REMOVED*** Verify package.json exists
+if [ ! -f "package.json" ]; then
+    echo "ERROR: package.json not found in frontend directory" >&2
+    exit 1
+fi
+
+***REMOVED*** Verify npm is available
+if ! command -v npm >/dev/null 2>&1; then
+    echo "ERROR: npm command not found" >&2
+    exit 1
+fi
 
 echo "Current directory: $(pwd)"
 echo ""
 
 ***REMOVED*** First, run audit to see current status
+***REMOVED*** npm audit checks all dependencies for known security vulnerabilities
+***REMOVED*** Output shows severity levels: low, moderate, high, critical
 echo "1. Running npm audit to assess vulnerabilities..."
 echo "-------------------------------------------"
 npm audit || true
 echo ""
 
 ***REMOVED*** Create backup of package-lock.json
+***REMOVED*** This allows rollback if audit fix breaks the build
+***REMOVED*** Backup file should be committed if fix is successful
 echo "2. Creating backup of package-lock.json..."
 cp package-lock.json package-lock.json.backup
 echo "   Backup created: package-lock.json.backup"

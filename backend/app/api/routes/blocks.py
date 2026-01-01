@@ -88,4 +88,4 @@ async def delete_block(
 ):
     """Delete a block. Requires authentication."""
     controller = BlockController(db)
-    controller.delete_block(block_id)
+    await controller.delete_block(block_id)

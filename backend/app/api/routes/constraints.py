@@ -110,8 +110,8 @@ async def get_constraint_status():
             enabled_count=enabled_count,
             disabled_count=disabled_count,
         )
-    except Exception as e:
-        logger.error(f"Error getting constraint status: {e}")
+    except (ValueError, KeyError, AttributeError) as e:
+        logger.error(f"Error getting constraint status: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get constraint status",
@@ -142,8 +142,8 @@ async def list_enabled_constraints():
         enabled = config_manager.get_all_enabled()
 
         return [_constraint_to_response(c) for c in enabled]
-    except Exception as e:
-        logger.error(f"Error listing enabled constraints: {e}")
+    except (ValueError, KeyError, AttributeError) as e:
+        logger.error(f"Error listing enabled constraints: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to list enabled constraints",

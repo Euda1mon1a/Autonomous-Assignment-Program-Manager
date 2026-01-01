@@ -4,7 +4,7 @@ from datetime import date, datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.validators.date_validators import validate_academic_year_date
 
@@ -52,14 +52,38 @@ class SwapExecuteRequest(BaseModel):
             raise ValueError("target_week required for one-to-one swaps")
         return v
 
+    @field_validator("reason")
+    @classmethod
+    def validate_reason_length(cls, v: str | None) -> str | None:
+        """Ensure reason is not too long."""
+        if v is not None and len(v) > 500:
+            raise ValueError("reason must be 500 characters or less")
+        return v
+
 
 class SwapApprovalRequest(BaseModel):
     approved: bool
     notes: str | None = Field(None, max_length=500)
 
+    @field_validator("notes")
+    @classmethod
+    def validate_notes(cls, v: str | None) -> str | None:
+        """Validate notes are not empty if provided."""
+        if v is not None and not v.strip():
+            raise ValueError("notes cannot be empty string")
+        return v.strip() if v else v
+
 
 class SwapRollbackRequest(BaseModel):
     reason: str = Field(..., min_length=10, max_length=500)
+
+    @field_validator("reason")
+    @classmethod
+    def validate_reason(cls, v: str) -> str:
+        """Ensure reason is meaningful."""
+        if not v.strip():
+            raise ValueError("reason cannot be empty or whitespace")
+        return v.strip()
 
 
 class SwapHistoryFilter(BaseModel):
@@ -76,6 +100,14 @@ class SwapHistoryFilter(BaseModel):
         """Validate dates are within academic year bounds."""
         if v is not None:
             return validate_academic_year_date(v, field_name="date")
+        return v
+
+    @field_validator("page")
+    @classmethod
+    def validate_page(cls, v: int) -> int:
+        """Validate page number is reasonable."""
+        if v > 1000:
+            raise ValueError("page number too large (max 1000)")
         return v
 
 
@@ -107,8 +139,7 @@ class SwapRecordResponse(BaseModel):
     requested_at: datetime
     executed_at: datetime | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SwapExecuteResponse(BaseModel):

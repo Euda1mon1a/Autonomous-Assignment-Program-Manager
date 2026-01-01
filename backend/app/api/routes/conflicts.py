@@ -31,7 +31,7 @@ async def analyze_conflicts(
     person_id: UUID | None = Query(
         None, description="Optional: analyze for specific person"
     ),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -82,7 +82,8 @@ async def analyze_conflicts(
             },
         }
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError) as e:
+        logger.error(f"Error analyzing conflicts: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error analyzing conflicts: {str(e)}",
@@ -96,7 +97,7 @@ async def get_conflict_summary(
     person_id: UUID | None = Query(
         None, description="Optional: analyze for specific person"
     ),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> ConflictSummary:
     """
@@ -145,7 +146,7 @@ async def get_conflict_timeline(
     person_id: UUID | None = Query(
         None, description="Optional: timeline for specific person"
     ),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -200,7 +201,7 @@ async def get_conflict_heatmap(
     person_id: UUID | None = Query(
         None, description="Optional: analyze for specific person"
     ),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -244,7 +245,7 @@ async def get_conflict_gantt(
     person_id: UUID | None = Query(
         None, description="Optional: analyze for specific person"
     ),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -287,7 +288,7 @@ async def get_conflict_distribution(
     person_id: UUID | None = Query(
         None, description="Optional: analyze for specific person"
     ),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -328,7 +329,7 @@ async def get_conflict_distribution(
 async def get_person_impact(
     start_date: date = Query(..., description="Start date for analysis"),
     end_date: date = Query(..., description="End date for analysis"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -369,7 +370,7 @@ async def get_resolution_suggestions(
     max_suggestions: int = Query(
         5, ge=1, le=10, description="Maximum suggestions to return"
     ),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -403,7 +404,7 @@ async def batch_analyze_conflicts(
     person_ids: list[UUID] = Query(..., description="List of person IDs to analyze"),
     start_date: date = Query(..., description="Start date for analysis"),
     end_date: date = Query(..., description="End date for analysis"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
