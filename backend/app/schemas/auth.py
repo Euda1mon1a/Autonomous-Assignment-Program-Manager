@@ -88,7 +88,9 @@ class UserCreate(BaseModel):
         ..., min_length=3, max_length=50, description="Unique username"
     )
     email: EmailStr = Field(..., description="Valid email address")
-    password: str = Field(..., description="Password (min 12 chars, complexity required)")
+    password: str = Field(
+        ..., description="Password (min 12 chars, complexity required)"
+    )
     role: str = Field(
         "coordinator",
         description="User role (admin, coordinator, faculty, resident, etc.)",

@@ -422,7 +422,8 @@ class FatigueMonitor:
         """
         cutoff = current_time - timedelta(hours=1)
         expired_keys = [
-            key for key, timestamp in self._recent_alert_keys.items()
+            key
+            for key, timestamp in self._recent_alert_keys.items()
             if timestamp < cutoff
         ]
         for key in expired_keys:

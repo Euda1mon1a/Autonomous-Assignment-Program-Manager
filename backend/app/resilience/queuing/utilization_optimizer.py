@@ -75,12 +75,20 @@ class UtilizationOptimizer:
         Returns:
             OptimizationResult with recommendations
         """
-        logger.info("Optimizing utilization: arrival_rate=%.2f, service_rate=%.2f, current=%d",
-                   arrival_rate, service_rate, current_servers)
+        logger.info(
+            "Optimizing utilization: arrival_rate=%.2f, service_rate=%.2f, current=%d",
+            arrival_rate,
+            service_rate,
+            current_servers,
+        )
         ***REMOVED*** Calculate minimum servers for stability (ρ < 1)
         min_servers = int(np.ceil(arrival_rate / service_rate)) + 1
 
-        logger.debug("Minimum servers for stability: %d, target utilization: %.2f", min_servers, target_utilization)
+        logger.debug(
+            "Minimum servers for stability: %d, target utilization: %.2f",
+            min_servers,
+            target_utilization,
+        )
         ***REMOVED*** Calculate servers needed for target utilization
         servers_for_util = int(
             np.ceil(arrival_rate / (service_rate * target_utilization))

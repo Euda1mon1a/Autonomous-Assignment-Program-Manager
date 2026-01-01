@@ -623,10 +623,14 @@ class AutocompleteService:
             return suggestions
 
         except redis.ConnectionError as e:
-            logger.warning(f"Redis error getting popular suggestions: {e}", exc_info=True)
+            logger.warning(
+                f"Redis error getting popular suggestions: {e}", exc_info=True
+            )
             return []
         except (ValueError, TypeError) as e:
-            logger.error(f"Data validation error getting popular suggestions: {e}", exc_info=True)
+            logger.error(
+                f"Data validation error getting popular suggestions: {e}", exc_info=True
+            )
             return []
         except redis.RedisError as e:
             logger.error(f"Redis error getting popular suggestions: {e}", exc_info=True)
@@ -686,13 +690,20 @@ class AutocompleteService:
             return suggestions
 
         except redis.ConnectionError as e:
-            logger.warning(f"Redis error getting personalized suggestions: {e}", exc_info=True)
+            logger.warning(
+                f"Redis error getting personalized suggestions: {e}", exc_info=True
+            )
             return []
         except (ValueError, TypeError) as e:
-            logger.error(f"Data validation error getting personalized suggestions: {e}", exc_info=True)
+            logger.error(
+                f"Data validation error getting personalized suggestions: {e}",
+                exc_info=True,
+            )
             return []
         except redis.RedisError as e:
-            logger.error(f"Redis error getting personalized suggestions: {e}", exc_info=True)
+            logger.error(
+                f"Redis error getting personalized suggestions: {e}", exc_info=True
+            )
             return []
 
     async def _get_typo_tolerant_suggestions(
@@ -759,7 +770,9 @@ class AutocompleteService:
             logger.warning(f"Redis error getting typo suggestions: {e}", exc_info=True)
             return []
         except (ValueError, TypeError) as e:
-            logger.error(f"Data validation error getting typo suggestions: {e}", exc_info=True)
+            logger.error(
+                f"Data validation error getting typo suggestions: {e}", exc_info=True
+            )
             return []
         except redis.RedisError as e:
             logger.error(f"Redis error getting typo suggestions: {e}", exc_info=True)
@@ -916,7 +929,9 @@ class AutocompleteService:
         except (redis.ConnectionError, redis.RedisError) as e:
             logger.error(f"Redis error recording analytics: {e}", exc_info=True)
         except (ValueError, TypeError) as e:
-            logger.error(f"Data validation error recording analytics: {e}", exc_info=True)
+            logger.error(
+                f"Data validation error recording analytics: {e}", exc_info=True
+            )
 
     async def get_analytics(
         self,

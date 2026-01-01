@@ -15,7 +15,9 @@ from app.validators.date_validators import validate_date_range
 class CertificationTypeBase(BaseModel):
     """Base certification type schema."""
 
-    name: str = Field(..., min_length=1, max_length=100, description="Certification name")
+    name: str = Field(
+        ..., min_length=1, max_length=100, description="Certification name"
+    )
     full_name: str | None = Field(
         None, min_length=1, max_length=200, description="Full certification name"
     )
@@ -110,9 +112,14 @@ class PersonCertificationBase(BaseModel):
         description="Certification status",
     )
     verified_by: str | None = Field(
-        None, min_length=1, max_length=200, description="Person who verified certification"
+        None,
+        min_length=1,
+        max_length=200,
+        description="Person who verified certification",
     )
-    verified_date: date | None = Field(None, description="Date certification was verified")
+    verified_date: date | None = Field(
+        None, description="Date certification was verified"
+    )
     document_url: str | None = Field(
         None, min_length=1, max_length=500, description="URL to certification document"
     )

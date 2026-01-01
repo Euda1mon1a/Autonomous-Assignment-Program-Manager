@@ -198,7 +198,7 @@ class TestBlockController:
         ***REMOVED*** Generate blocks including a weekend
         ***REMOVED*** June 7, 2025 is a Saturday
         start = date(2025, 6, 6)  ***REMOVED*** Friday
-        end = date(2025, 6, 8)    ***REMOVED*** Sunday
+        end = date(2025, 6, 8)  ***REMOVED*** Sunday
 
         result = controller.generate_blocks(
             start_date=start,

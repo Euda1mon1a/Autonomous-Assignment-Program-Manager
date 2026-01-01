@@ -129,7 +129,7 @@ class TestXMLExporter:
             "address": {
                 "street": "123 Main St",
                 "city": "Springfield",
-            }
+            },
         }
         elem = exporter._dict_to_xml(data, "record")
 
@@ -140,10 +140,7 @@ class TestXMLExporter:
         """Test converting dict with list to XML."""
         exporter = XMLExporter(db=None)
 
-        data = {
-            "name": "John",
-            "hobbies": ["reading", "hiking", "coding"]
-        }
+        data = {"name": "John", "hobbies": ["reading", "hiking", "coding"]}
         elem = exporter._dict_to_xml(data, "person")
 
         hobbies_elem = elem.find("hobbies")

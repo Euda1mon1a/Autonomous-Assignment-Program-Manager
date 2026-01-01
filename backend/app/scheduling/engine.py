@@ -1538,7 +1538,9 @@ class SchedulingEngine:
         self.db.refresh(run)
         return run
 
-    def _delete_existing_assignments(self, preserve_ids: set[UUID] | None = None) -> None:
+    def _delete_existing_assignments(
+        self, preserve_ids: set[UUID] | None = None
+    ) -> None:
         """
         Delete existing assignments for the date range to avoid duplicates.
 

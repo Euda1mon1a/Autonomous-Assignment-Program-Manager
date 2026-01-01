@@ -5,7 +5,7 @@ import functools
 import time
 from typing import Any, Callable, Coroutine, TypeVar
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 async def run_with_timeout(coro: Coroutine[Any, Any, T], timeout: float) -> T:
@@ -45,7 +45,7 @@ async def retry_async(
     coro_func: Callable[[], Coroutine[Any, Any, T]],
     max_retries: int = 3,
     delay: float = 1.0,
-    backoff: float = 2.0
+    backoff: float = 2.0,
 ) -> T:
     """
     Retry an async function with exponential backoff.
@@ -87,7 +87,10 @@ def async_cache(ttl: int):
     Returns:
         Decorator function
     """
-    def decorator(func: Callable[..., Coroutine[Any, Any, T]]) -> Callable[..., Coroutine[Any, Any, T]]:
+
+    def decorator(
+        func: Callable[..., Coroutine[Any, Any, T]],
+    ) -> Callable[..., Coroutine[Any, Any, T]]:
         cache: dict[str, tuple[T, float]] = {}
 
         @functools.wraps(func)

@@ -29,7 +29,10 @@ class FieldChange(BaseModel):
     old_value: Any = Field(alias="oldValue", description="Previous value")
     new_value: Any = Field(alias="newValue", description="New value")
     display_name: str | None = Field(
-        None, max_length=200, alias="displayName", description="Human-readable field name"
+        None,
+        max_length=200,
+        alias="displayName",
+        description="Human-readable field name",
     )
 
     class Config:
@@ -107,9 +110,14 @@ class DateRange(BaseModel):
 class AuditLogFilters(BaseModel):
     """Audit log filters for querying."""
 
-    date_range: DateRange | None = Field(None, alias="dateRange", description="Date range filter")
+    date_range: DateRange | None = Field(
+        None, alias="dateRange", description="Date range filter"
+    )
     entity_types: list[str] | None = Field(
-        None, max_length=20, alias="entityTypes", description="Entity types to filter (max 20)"
+        None,
+        max_length=20,
+        alias="entityTypes",
+        description="Entity types to filter (max 20)",
     )
     actions: list[str] | None = Field(
         None, max_length=20, description="Actions to filter (max 20)"
@@ -181,7 +189,10 @@ class MarkReviewedRequest(BaseModel):
     """Request to mark audit entries as reviewed."""
 
     ids: list[str] = Field(
-        ..., min_length=1, max_length=100, description="List of entry IDs to mark (max 100)"
+        ...,
+        min_length=1,
+        max_length=100,
+        description="List of entry IDs to mark (max 100)",
     )
     reviewed_by: str = Field(
         ..., max_length=100, alias="reviewedBy", description="ID of reviewer"

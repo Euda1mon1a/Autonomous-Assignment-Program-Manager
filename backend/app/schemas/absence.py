@@ -49,7 +49,9 @@ class AbsenceBase(BaseModel):
     start_date: date = Field(..., description="Absence start date")
     end_date: date = Field(..., description="Absence end date")
     absence_type: str = Field(..., description="Type of absence")
-    deployment_orders: bool = Field(False, description="Whether deployment orders exist")
+    deployment_orders: bool = Field(
+        False, description="Whether deployment orders exist"
+    )
     tdy_location: str | None = Field(
         None, max_length=200, description="TDY location (if applicable)"
     )

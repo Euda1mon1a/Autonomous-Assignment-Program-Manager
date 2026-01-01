@@ -141,8 +141,13 @@ class DefenseLevelCalculator:
         Returns:
             DefenseLevelResult with level, metrics, and recommendations
         """
-        logger.info("Calculating defense level: utilization=%.2f, n1=%d, n2=%d, cascade=%.2f",
-                   utilization, n1_failures, n2_failures, cascade_risk)
+        logger.info(
+            "Calculating defense level: utilization=%.2f, n1=%d, n2=%d, cascade=%.2f",
+            utilization,
+            n1_failures,
+            n2_failures,
+            cascade_risk,
+        )
         metrics = DefenseMetrics(
             utilization=utilization,
             n1_failures=n1_failures,
@@ -185,7 +190,9 @@ class DefenseLevelCalculator:
 
         logger.debug("Defense level determined: %s (score=%.2f)", level, combined_score)
         if level in (DefenseLevel.RED, DefenseLevel.BLACK):
-            logger.error("CRITICAL: Defense level %s - immediate action required", level)
+            logger.error(
+                "CRITICAL: Defense level %s - immediate action required", level
+            )
         elif level == DefenseLevel.ORANGE:
             logger.warning("Defense level ORANGE - degraded state detected")
 

@@ -12,14 +12,19 @@ class BlockBase(BaseModel):
     """Base block schema."""
 
     date: date = Field(..., description="Date of the block")
-    time_of_day: str = Field(..., description="Time of day: AM or PM", pattern="^(AM|PM)$")
+    time_of_day: str = Field(
+        ..., description="Time of day: AM or PM", pattern="^(AM|PM)$"
+    )
     block_number: int = Field(
         ..., ge=1, le=730, description="Block number in academic year (1-730)"
     )
     is_weekend: bool = Field(False, description="Whether this block falls on a weekend")
     is_holiday: bool = Field(False, description="Whether this block is a holiday")
     holiday_name: str | None = Field(
-        None, min_length=1, max_length=100, description="Name of the holiday if applicable"
+        None,
+        min_length=1,
+        max_length=100,
+        description="Name of the holiday if applicable",
     )
 
     @field_validator("date")

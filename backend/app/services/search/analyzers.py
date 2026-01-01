@@ -99,7 +99,9 @@ class StandardAnalyzer(SearchAnalyzer):
         "with",
     }
 
-    def __init__(self, min_token_length: int = 2, remove_stopwords: bool = True) -> None:
+    def __init__(
+        self, min_token_length: int = 2, remove_stopwords: bool = True
+    ) -> None:
         """
         Initialize standard analyzer.
 

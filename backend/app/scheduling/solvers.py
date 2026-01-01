@@ -449,13 +449,22 @@ class PuLPSolver(BaseSolver):
         equity_penalty = variables.get("equity_penalty")
         if equity_penalty is not None and template_balance_penalty is not None:
             prob += (
-                COVERAGE_WEIGHT * coverage - EQUITY_PENALTY_WEIGHT * equity_penalty - TEMPLATE_BALANCE_WEIGHT * template_balance_penalty,
+                COVERAGE_WEIGHT * coverage
+                - EQUITY_PENALTY_WEIGHT * equity_penalty
+                - TEMPLATE_BALANCE_WEIGHT * template_balance_penalty,
                 "objective",
             )
         elif equity_penalty is not None:
-            prob += COVERAGE_WEIGHT * coverage - EQUITY_PENALTY_WEIGHT * equity_penalty, "objective"
+            prob += (
+                COVERAGE_WEIGHT * coverage - EQUITY_PENALTY_WEIGHT * equity_penalty,
+                "objective",
+            )
         elif template_balance_penalty is not None:
-            prob += COVERAGE_WEIGHT * coverage - TEMPLATE_BALANCE_WEIGHT * template_balance_penalty, "objective"
+            prob += (
+                COVERAGE_WEIGHT * coverage
+                - TEMPLATE_BALANCE_WEIGHT * template_balance_penalty,
+                "objective",
+            )
         else:
             prob += coverage, "objective"
 
@@ -987,12 +996,19 @@ class CPSATSolver(BaseSolver):
         equity_penalty = variables.get("equity_penalty")
         if equity_penalty is not None and template_balance_penalty is not None:
             model.Maximize(
-                coverage * COVERAGE_WEIGHT - equity_penalty * EQUITY_PENALTY_WEIGHT - template_balance_penalty * TEMPLATE_BALANCE_WEIGHT
+                coverage * COVERAGE_WEIGHT
+                - equity_penalty * EQUITY_PENALTY_WEIGHT
+                - template_balance_penalty * TEMPLATE_BALANCE_WEIGHT
             )
         elif equity_penalty is not None:
-            model.Maximize(coverage * COVERAGE_WEIGHT - equity_penalty * EQUITY_PENALTY_WEIGHT)
+            model.Maximize(
+                coverage * COVERAGE_WEIGHT - equity_penalty * EQUITY_PENALTY_WEIGHT
+            )
         elif template_balance_penalty is not None:
-            model.Maximize(coverage * COVERAGE_WEIGHT - template_balance_penalty * TEMPLATE_BALANCE_WEIGHT)
+            model.Maximize(
+                coverage * COVERAGE_WEIGHT
+                - template_balance_penalty * TEMPLATE_BALANCE_WEIGHT
+            )
         else:
             model.Maximize(coverage)
 

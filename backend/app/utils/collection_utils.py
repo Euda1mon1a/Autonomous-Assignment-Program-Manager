@@ -2,8 +2,8 @@
 
 from typing import Any, Callable, TypeVar
 
-T = TypeVar('T')
-K = TypeVar('K')
+T = TypeVar("T")
+K = TypeVar("K")
 
 
 def chunk_list(lst: list[T], size: int) -> list[list[T]]:
@@ -22,7 +22,7 @@ def chunk_list(lst: list[T], size: int) -> list[list[T]]:
 
     chunks = []
     for i in range(0, len(lst), size):
-        chunks.append(lst[i:i + size])
+        chunks.append(lst[i : i + size])
     return chunks
 
 

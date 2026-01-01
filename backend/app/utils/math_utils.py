@@ -88,7 +88,7 @@ def moving_average(values: list[Number], window: int) -> list[float]:
 
     averages = []
     for i in range(len(values) - window + 1):
-        window_values = values[i:i + window]
+        window_values = values[i : i + window]
         avg = sum(window_values) / window
         averages.append(avg)
 

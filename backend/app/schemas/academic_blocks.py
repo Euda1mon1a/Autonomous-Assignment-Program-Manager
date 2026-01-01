@@ -21,7 +21,10 @@ class AcademicBlock(BaseModel):
     start_date: date = Field(..., description="First date of the block")
     end_date: date = Field(..., description="Last date of the block")
     name: str | None = Field(
-        None, min_length=1, max_length=50, description="Block name (e.g., 'Block 1', 'Block 2')"
+        None,
+        min_length=1,
+        max_length=50,
+        description="Block name (e.g., 'Block 1', 'Block 2')",
     )
 
     @field_validator("start_date", "end_date")
@@ -104,11 +107,15 @@ class BlockMatrixResponse(BaseModel):
 class BlockSummary(BaseModel):
     """Summary statistics for an academic block."""
 
-    block_number: int = Field(..., ge=1, le=13, description="Academic block number (1-13)")
+    block_number: int = Field(
+        ..., ge=1, le=13, description="Academic block number (1-13)"
+    )
     name: str = Field(..., min_length=1, max_length=50, description="Block name")
     start_date: date = Field(..., description="First date of the block")
     end_date: date = Field(..., description="Last date of the block")
-    total_assignments: int = Field(..., ge=0, description="Total assignments in this block")
+    total_assignments: int = Field(
+        ..., ge=0, description="Total assignments in this block"
+    )
     total_residents: int = Field(..., ge=0, description="Number of residents assigned")
     compliance_rate: float = Field(
         ..., ge=0, le=100, description="Percentage of compliant assignments (0-100)"

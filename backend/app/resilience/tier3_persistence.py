@@ -320,7 +320,9 @@ def load_preference_trails(
     return query.all()
 
 
-def delete_weak_trails(db: Session, min_strength: float = MIN_TRAIL_STRENGTH_THRESHOLD) -> int:
+def delete_weak_trails(
+    db: Session, min_strength: float = MIN_TRAIL_STRENGTH_THRESHOLD
+) -> int:
     """
     Delete trails that have evaporated below minimum strength.
 

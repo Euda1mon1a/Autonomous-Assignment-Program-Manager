@@ -91,9 +91,16 @@ class ControlChart:
         Returns:
             ControlLimits object
         """
-        logger.info("Calculating %s control limits from %d baseline points", self.chart_type, len(baseline_data))
+        logger.info(
+            "Calculating %s control limits from %d baseline points",
+            self.chart_type,
+            len(baseline_data),
+        )
         if len(baseline_data) < 5:
-            logger.error("Insufficient baseline data: need >= 5 points, got %d", len(baseline_data))
+            logger.error(
+                "Insufficient baseline data: need >= 5 points, got %d",
+                len(baseline_data),
+            )
             raise ValueError("Need at least 5 baseline points")
 
         data = np.array(baseline_data)
