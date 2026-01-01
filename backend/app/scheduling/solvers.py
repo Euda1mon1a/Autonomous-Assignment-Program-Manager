@@ -92,7 +92,7 @@ class SolverResult:
         call_assignments: list[
             tuple[UUID, UUID, str]
         ] = None,  # (person_id, block_id, call_type)
-    ):
+    ) -> None:
         self.success = success
         self.assignments = assignments
         self.status = status
@@ -124,7 +124,7 @@ class BaseSolver(ABC):
         self,
         constraint_manager: ConstraintManager | None = None,
         timeout_seconds: float = 60.0,
-    ):
+    ) -> None:
         self.constraint_manager = (
             constraint_manager or ConstraintManager.create_default()
         )
@@ -183,7 +183,7 @@ class PuLPSolver(BaseSolver):
         constraint_manager: ConstraintManager | None = None,
         timeout_seconds: float = 60.0,
         solver_backend: str = "PULP_CBC_CMD",
-    ):
+    ) -> None:
         super().__init__(constraint_manager, timeout_seconds)
         self.solver_backend = solver_backend
 
@@ -575,7 +575,7 @@ class SolverProgressCallback:
     allowing us to track progress and provide real-time feedback to users.
     """
 
-    def __init__(self, task_id: str, redis_client):
+    def __init__(self, task_id: str, redis_client) -> None:
         """
         Initialize the progress callback.
 
@@ -588,14 +588,14 @@ class SolverProgressCallback:
 
             # Create a dynamic class that inherits from CpSolverSolutionCallback
             class _ProgressCallback(cp_model.CpSolverSolutionCallback):
-                def __init__(self, task_id: str, redis_client):
+                def __init__(self, task_id: str, redis_client) -> None:
                     super().__init__()
                     self.task_id = task_id
                     self.redis = redis_client
                     self.solution_count = 0
                     self.start_time = time.time()
 
-                def on_solution_callback(self):
+                def on_solution_callback(self) -> None:
                     """Called by OR-Tools when a new solution is found."""
                     self.solution_count += 1
                     elapsed = time.time() - self.start_time
@@ -675,7 +675,7 @@ class CPSATSolver(BaseSolver):
         num_workers: int = 4,
         task_id: str | None = None,
         redis_client=None,
-    ):
+    ) -> None:
         super().__init__(constraint_manager, timeout_seconds)
         self.num_workers = num_workers
         self.task_id = task_id
@@ -1207,7 +1207,7 @@ class HybridSolver(BaseSolver):
         timeout_seconds: float = 120.0,
         pulp_timeout: float = 30.0,
         cpsat_timeout: float = 60.0,
-    ):
+    ) -> None:
         super().__init__(constraint_manager, timeout_seconds)
         self.pulp_timeout = pulp_timeout
         self.cpsat_timeout = cpsat_timeout
@@ -1279,7 +1279,7 @@ class GreedySolver(BaseSolver):
         constraint_manager: ConstraintManager | None = None,
         timeout_seconds: float = 60.0,
         generate_explanations: bool = True,
-    ):
+    ) -> None:
         super().__init__(constraint_manager, timeout_seconds)
         self.generate_explanations = generate_explanations
 
@@ -1400,7 +1400,7 @@ class GreedySolver(BaseSolver):
                     template_block_counts[a.rotation_template_id][a.block_id] += 1
 
         # Calculate difficulty (eligible resident count) for each block
-        def count_eligible(block):
+        def count_eligible(block) -> int:
             count = 0
             for r in context.residents:
                 if self._is_available(r.id, block.id, context):
@@ -1604,7 +1604,7 @@ class SolverFactory:
     }
 
     @classmethod
-    def _get_pyomo_solver(cls):
+    def _get_pyomo_solver(cls) -> type:
         """Lazy-load PyomoSolver to avoid import errors if not installed."""
         if cls._solvers["pyomo"] is None:
             try:
@@ -1618,7 +1618,7 @@ class SolverFactory:
         return cls._solvers["pyomo"]
 
     @classmethod
-    def _get_quantum_solver(cls, solver_type: str):
+    def _get_quantum_solver(cls, solver_type: str) -> type:
         """
         Lazy-load quantum solvers to avoid import errors if not installed.
 
@@ -1724,6 +1724,6 @@ class SolverFactory:
         return list(cls._solvers.keys())
 
     @classmethod
-    def register(cls, name: str, solver_class: type):
+    def register(cls, name: str, solver_class: type) -> None:
         """Register a custom solver."""
         cls._solvers[name] = solver_class

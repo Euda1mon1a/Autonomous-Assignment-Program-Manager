@@ -105,7 +105,7 @@ class QUBOFormulation:
     ACGME_PENALTY = 5000.0  # ACGME compliance
     SOFT_CONSTRAINT_PENALTY = 100.0  # Optimization targets
 
-    def __init__(self, context: SchedulingContext):
+    def __init__(self, context: SchedulingContext) -> None:
         """
         Initialize QUBO formulation.
 
@@ -349,7 +349,7 @@ class SimulatedQuantumAnnealingSolver(BaseSolver):
         num_sweeps: int = 1000,
         beta_range: tuple[float, float] = (0.1, 4.2),
         seed: int | None = None,
-    ):
+    ) -> None:
         """
         Initialize quantum-inspired simulated annealing solver.
 
@@ -567,7 +567,7 @@ class QUBOSolver(BaseSolver):
         timeout_seconds: float = 60.0,
         num_reads: int = 100,
         use_tabu: bool = False,
-    ):
+    ) -> None:
         """
         Initialize PyQUBO-based solver.
 
@@ -812,7 +812,7 @@ class QuantumInspiredSolver(BaseSolver):
         timeout_seconds: float = 60.0,
         use_quantum_hardware: bool = False,
         dwave_token: str | None = None,
-    ):
+    ) -> None:
         """
         Initialize hybrid quantum-inspired solver.
 

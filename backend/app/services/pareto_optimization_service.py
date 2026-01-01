@@ -46,7 +46,7 @@ class SchedulingProblem(Problem):
         constraints: list[ParetoConstraint],
         person_data: list[dict],
         block_data: list[dict],
-    ):
+    ) -> None:
         """
         Initialize the scheduling problem.
 
@@ -248,7 +248,7 @@ class SchedulingProblem(Problem):
 
         return 0.0
 
-    def _evaluate(self, x: np.ndarray, out: dict, *args, **kwargs):
+    def _evaluate(self, x: np.ndarray, out: dict, *args, **kwargs) -> None:
         """
         Evaluate objectives and constraints for the given solution.
 
@@ -330,7 +330,7 @@ class SchedulingProblem(Problem):
 class ParetoOptimizationService:
     """Service for multi-objective Pareto optimization of schedules."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize the Pareto optimization service.
 

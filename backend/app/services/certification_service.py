@@ -16,7 +16,7 @@ from app.repositories.person import PersonRepository
 class CertificationService:
     """Service for certification business logic."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self.cert_type_repo = CertificationTypeRepository(db)
         self.person_cert_repo = PersonCertificationRepository(db)

@@ -99,7 +99,7 @@ class StandardAnalyzer(SearchAnalyzer):
         "with",
     }
 
-    def __init__(self, min_token_length: int = 2, remove_stopwords: bool = True):
+    def __init__(self, min_token_length: int = 2, remove_stopwords: bool = True) -> None:
         """
         Initialize standard analyzer.
 
@@ -162,7 +162,7 @@ class PersonNameAnalyzer(SearchAnalyzer):
         "lt cdr",
     }
 
-    def __init__(self, generate_ngrams: bool = True):
+    def __init__(self, generate_ngrams: bool = True) -> None:
         """
         Initialize person name analyzer.
 
@@ -276,7 +276,7 @@ class MedicalTermAnalyzer(SearchAnalyzer):
         "acgme": "accreditation council graduate medical education",
     }
 
-    def __init__(self, expand_acronyms: bool = True):
+    def __init__(self, expand_acronyms: bool = True) -> None:
         """
         Initialize medical term analyzer.
 

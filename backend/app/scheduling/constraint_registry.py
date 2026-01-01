@@ -107,7 +107,7 @@ class ConstraintRegistry:
     _constraints: dict[tuple[str, str], ConstraintMetadata] = {}
     _latest_versions: dict[str, str] = {}
 
-    def __new__(cls):
+    def __new__(cls) -> "ConstraintRegistry":
         """Implement singleton pattern."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -496,7 +496,7 @@ class ConstraintRegistry:
 
 
 # Initialize with built-in constraints
-def _register_builtin_constraints():
+def _register_builtin_constraints() -> None:
     """Register all built-in constraints."""
     from app.scheduling.constraints.acgme import (
         AvailabilityConstraint,

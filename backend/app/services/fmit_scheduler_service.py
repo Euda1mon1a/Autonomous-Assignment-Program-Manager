@@ -106,7 +106,7 @@ class FMITSchedulerService:
     BLOCKS_PER_WEEK = 14  # 7 days × 2 blocks (AM/PM)
     FMIT_ROTATION_NAME = "FMIT"
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize the FMIT scheduler service.
 

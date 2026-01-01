@@ -215,7 +215,7 @@ class QUBOTemplateFormulation:
         context: SchedulingContext,
         config: TemplateSelectionConfig | None = None,
         desirability_map: dict[str, TemplateDesirability] | None = None,
-    ):
+    ) -> None:
         """
         Initialize QUBO template formulation.
 
@@ -287,7 +287,7 @@ class QUBOTemplateFormulation:
 
         return periods
 
-    def _build_variable_index(self):
+    def _build_variable_index(self) -> None:
         """
         Build mapping from (resident, period, template) to flat index.
 
@@ -375,7 +375,7 @@ class QUBOTemplateFormulation:
 
         return self.Q
 
-    def _add_coverage_objective(self):
+    def _add_coverage_objective(self) -> None:
         """
         Objective: Maximize assignment coverage.
 
@@ -394,7 +394,7 @@ class QUBOTemplateFormulation:
             key = (idx, idx)
             matrix[key] = matrix.get(key, 0.0) - 1.0
 
-    def _add_fairness_objective(self):
+    def _add_fairness_objective(self) -> None:
         """
         Objective: Fair distribution of desirable/undesirable rotations.
 
@@ -459,7 +459,7 @@ class QUBOTemplateFormulation:
                         key = (min(idx1, idx2), max(idx1, idx2))
                         matrix[key] = matrix.get(key, 0.0) + penalty * 0.1
 
-    def _add_preference_objective(self):
+    def _add_preference_objective(self) -> None:
         """
         Objective: Satisfy resident preferences.
 
@@ -523,7 +523,7 @@ class QUBOTemplateFormulation:
                         key = (idx, idx)
                         matrix[key] = matrix.get(key, 0.0) + 0.2
 
-    def _add_learning_goal_objective(self):
+    def _add_learning_goal_objective(self) -> None:
         """
         Objective: Support learning goals through rotation variety.
 
@@ -560,7 +560,7 @@ class QUBOTemplateFormulation:
                     key = (period_vars[i], period_vars[i + 1])
                     matrix[key] = matrix.get(key, 0.0) + 0.05
 
-    def _add_one_template_per_period_constraint(self):
+    def _add_one_template_per_period_constraint(self) -> None:
         """
         Constraint: Exactly one template per resident per period.
 
@@ -613,7 +613,7 @@ class QUBOTemplateFormulation:
                         key = (min(idx1, idx2), max(idx1, idx2))
                         matrix[key] = matrix.get(key, 0.0) + 2 * penalty
 
-    def _add_template_capacity_constraints(self):
+    def _add_template_capacity_constraints(self) -> None:
         """
         Constraint: Respect template capacity limits.
 
@@ -659,7 +659,7 @@ class QUBOTemplateFormulation:
                         key = (min(idx1, idx2), max(idx1, idx2))
                         matrix[key] = matrix.get(key, 0.0) + penalty / max_capacity
 
-    def _add_availability_constraints(self):
+    def _add_availability_constraints(self) -> None:
         """
         Constraint: Cannot assign during unavailable periods.
 
@@ -702,7 +702,7 @@ class QUBOTemplateFormulation:
                                 + self.config.hard_constraint_penalty
                             )
 
-    def _add_to_Q(self, i: int, j: int, value: float):
+    def _add_to_Q(self, i: int, j: int, value: float) -> None:
         """
         Add value to Q matrix (symmetric).
 
@@ -832,7 +832,7 @@ class AdaptiveTemperatureSchedule:
         num_sweeps: int = 1000,
         reheat_threshold: float = 0.001,
         reheat_factor: float = 0.5,
-    ):
+    ) -> None:
         self.beta_start = beta_start
         self.beta_end = beta_end
         self.num_sweeps = num_sweeps
@@ -966,7 +966,7 @@ class EnergyLandscapeExplorer:
         formulation: QUBOTemplateFormulation,
         sample_count: int = 200,
         seed: int | None = None,
-    ):
+    ) -> None:
         self.formulation = formulation
         self.sample_count = sample_count
         self.rng = random.Random(seed)
@@ -1052,7 +1052,7 @@ class EnergyLandscapeExplorer:
                 energy += coef * state.get(i, 0) * state.get(j, 0)
         return energy
 
-    def _identify_local_minima(self, Q: dict):
+    def _identify_local_minima(self, Q: dict) -> None:
         """Mark points that are local minima."""
         n = self.formulation.num_variables
 
@@ -1110,7 +1110,7 @@ class EnergyLandscapeExplorer:
 
         return energy_change
 
-    def _compute_tunneling_probabilities(self):
+    def _compute_tunneling_probabilities(self) -> None:
         """Compute tunneling probability from each point to best known."""
         minima = [p for p in self.points if p.is_local_minimum]
         if not minima:
@@ -1125,7 +1125,7 @@ class EnergyLandscapeExplorer:
                 barrier = point.energy - best_minimum.energy
                 point.tunneling_probability = math.exp(-math.sqrt(max(0, barrier)))
 
-    def _estimate_basin_sizes(self, Q: dict):
+    def _estimate_basin_sizes(self, Q: dict) -> None:
         """Estimate basin of attraction size for each local minimum."""
         minima = [p for p in self.points if p.is_local_minimum]
 
@@ -1195,7 +1195,7 @@ class ParetoFrontExplorer:
         population_size: int = 50,
         generations: int = 100,
         seed: int | None = None,
-    ):
+    ) -> None:
         self.formulation = formulation
         self.objectives = objectives or ["coverage", "fairness", "preference"]
         self.population_size = population_size
@@ -1352,7 +1352,7 @@ class ParetoFrontExplorer:
 
         return change
 
-    def _compute_pareto_ranks(self):
+    def _compute_pareto_ranks(self) -> None:
         """Compute Pareto rank for each solution."""
         for sol in self.solutions:
             sol.rank = 0
@@ -1382,7 +1382,7 @@ class ParetoFrontExplorer:
             if rank > 100:  # Safety limit
                 break
 
-    def _compute_crowding_distances(self):
+    def _compute_crowding_distances(self) -> None:
         """Compute crowding distance for diversity."""
         frontier = [s for s in self.solutions if s.rank == 0]
 
@@ -1517,7 +1517,7 @@ class HybridTemplatePipeline:
         self,
         context: SchedulingContext,
         config: TemplateSelectionConfig | None = None,
-    ):
+    ) -> None:
         self.context = context
         self.config = config or TemplateSelectionConfig()
         self.formulation: QUBOTemplateFormulation | None = None
@@ -1849,7 +1849,7 @@ class QUBOTemplateSolver(BaseSolver):
         constraint_manager: ConstraintManager | None = None,
         timeout_seconds: float = 120.0,
         config: TemplateSelectionConfig | None = None,
-    ):
+    ) -> None:
         super().__init__(constraint_manager, timeout_seconds)
         self.config = config or TemplateSelectionConfig()
 
@@ -1925,7 +1925,7 @@ class QUBOTemplateSolver(BaseSolver):
 class TemplateBenchmark:
     """Benchmark QUBO template selection vs classical approaches."""
 
-    def __init__(self, context: SchedulingContext):
+    def __init__(self, context: SchedulingContext) -> None:
         self.context = context
         self.results: dict[str, dict] = {}
 

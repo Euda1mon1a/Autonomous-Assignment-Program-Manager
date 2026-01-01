@@ -38,7 +38,7 @@ class SwapNotification:
     week: date | None = None
     created_at: datetime = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.created_at is None:
             self.created_at = datetime.utcnow()
 
@@ -51,7 +51,7 @@ class SwapNotificationService:
     and respects faculty notification preferences.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self._pending_notifications: list[SwapNotification] = []
         self.email_service = EmailService()

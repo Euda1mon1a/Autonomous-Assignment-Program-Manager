@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class CallAssignmentService:
     """Service for call assignment business logic using async SQLAlchemy 2.0 patterns."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize the call assignment service.
 

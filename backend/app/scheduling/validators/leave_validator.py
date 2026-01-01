@@ -80,7 +80,7 @@ class LeaveValidator:
     5. Tentative return date follow-up
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize leave validator."""
         self.blocking_types = BLOCKING_LEAVE_TYPES
         self.conditional_types = CONDITIONAL_BLOCKING_LEAVE_TYPES

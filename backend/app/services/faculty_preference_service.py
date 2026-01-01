@@ -28,7 +28,7 @@ class FacultyPreferenceService:
         Cache is automatically invalidated on preference updates.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self._cache = None
 

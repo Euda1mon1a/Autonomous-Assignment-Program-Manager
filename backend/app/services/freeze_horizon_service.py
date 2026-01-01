@@ -66,7 +66,7 @@ class FreezeCheckResult:
         requires_override: bool,
         can_use_emergency_bypass: bool,
         message: str,
-    ):
+    ) -> None:
         self.is_frozen = is_frozen
         self.assignment_date = assignment_date
         self.days_until_assignment = days_until_assignment
@@ -128,7 +128,7 @@ class FreezeOverrideAuditRecord:
 class FreezeHorizonViolation(Exception):
     """Raised when an assignment modification violates freeze horizon."""
 
-    def __init__(self, check_result: FreezeCheckResult):
+    def __init__(self, check_result: FreezeCheckResult) -> None:
         self.check_result = check_result
         super().__init__(check_result.message)
 
@@ -159,7 +159,7 @@ class FreezeHorizonService:
         OverrideReasonCode.CRISIS_MODE,
     }
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self._settings_cache: ApplicationSettings | None = None
         self._override_records: list[FreezeOverrideAuditRecord] = []

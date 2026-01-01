@@ -48,7 +48,7 @@ class ConflictAutoDetector:
     FMIT assignments or create scheduling problems.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def detect_conflicts_for_absence(

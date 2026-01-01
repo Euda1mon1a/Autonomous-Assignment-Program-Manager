@@ -138,7 +138,7 @@ class SchedulingProfiler:
         finally:
             self.end_phase(name)
 
-    def record_metric(self, name: str, value: Any):
+    def record_metric(self, name: str, value: Any) -> None:
         """
         Record a custom metric.
 
@@ -186,7 +186,7 @@ class SchedulingProfiler:
             "timestamp": datetime.now().isoformat(),
         }
 
-    def print_report(self):
+    def print_report(self) -> None:
         """Print formatted profiling report to console."""
         report = self.get_report()
 
@@ -221,7 +221,7 @@ class SchedulingProfiler:
 
         print("=" * 60 + "\n")
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset profiler state for new run."""
         self._phases.clear()
         self._phase_stack.clear()

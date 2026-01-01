@@ -113,7 +113,7 @@ def format_date_header(d: date) -> str:
 class LegacyXlsxExporter:
     """Generates Excel files in the legacy schedule format."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self.wb = Workbook()
         # Remove default sheet

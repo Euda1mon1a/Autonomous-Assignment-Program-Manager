@@ -158,7 +158,7 @@ class SwapExecutor:
 
     ROLLBACK_WINDOW_HOURS = 24
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize the SwapExecutor with a database session.
 
