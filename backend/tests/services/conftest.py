@@ -1,18 +1,66 @@
 """Shared fixtures and utilities for service tests."""
 
 import pytest
+import pytest_asyncio
 from datetime import date, timedelta
 from uuid import uuid4
 
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 from app.core.security import get_password_hash
+from app.db.base import Base
 from app.models.assignment import Assignment
 from app.models.absence import Absence
 from app.models.block import Block
+from app.models.call_assignment import CallAssignment
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.user import User
+
+
+# ============================================================================
+# Async Database Fixtures (for async service tests)
+# ============================================================================
+
+# Use in-memory SQLite with async support
+ASYNC_TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+
+# Create async engine for tests
+async_test_engine = create_async_engine(
+    ASYNC_TEST_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+    echo=False,
+)
+
+# Create async session factory
+AsyncTestingSessionLocal = async_sessionmaker(
+    async_test_engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
+
+
+@pytest_asyncio.fixture
+async def async_db() -> AsyncSession:
+    """
+    Create a fresh async database for each test.
+
+    Creates all tables, yields an async session, then drops all tables.
+    """
+    # Create all tables
+    async with async_test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    # Create session
+    async with AsyncTestingSessionLocal() as session:
+        yield session
+
+    # Drop all tables
+    async with async_test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
 
 
 # ============================================================================
@@ -267,6 +315,37 @@ class AssignmentFactory:
         return assignments
 
 
+class CallAssignmentFactory:
+    """Factory for creating CallAssignment instances for testing (async)."""
+
+    @staticmethod
+    async def create_call_assignment(
+        db: AsyncSession,
+        person: Person,
+        call_date: date = None,
+        call_type: str = "overnight",
+        is_weekend: bool = False,
+        is_holiday: bool = False,
+    ) -> CallAssignment:
+        """Create a call assignment."""
+        if call_date is None:
+            call_date = date.today()
+
+        call_assignment = CallAssignment(
+            id=uuid4(),
+            date=call_date,
+            person_id=person.id,
+            call_type=call_type,
+            is_weekend=is_weekend,
+            is_holiday=is_holiday,
+        )
+        db.add(call_assignment)
+        await db.flush()
+        await db.commit()
+        await db.refresh(call_assignment)
+        return call_assignment
+
+
 class AbsenceFactory:
     """Factory for creating Absence instances for testing."""
 
@@ -367,6 +446,12 @@ def assignment_factory():
 def absence_factory():
     """Provide AbsenceFactory."""
     return AbsenceFactory()
+
+
+@pytest.fixture
+def call_assignment_factory():
+    """Provide CallAssignmentFactory."""
+    return CallAssignmentFactory()
 
 
 @pytest.fixture
