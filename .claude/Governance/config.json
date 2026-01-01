@@ -1,0 +1,7 @@
+{
+  "governance_enabled": true,
+  "chain_of_command_enforcement": true,
+  "session_end_enforcement": true,
+  "bypass_allowed_for_single_file": true,
+  "notes": "Set governance_enabled to false to disable all governance checks"
+}
