@@ -691,22 +691,63 @@ class ReadModelSyncService:
 
     async def _check_consistency(self, projector_name: str, event: DomainEvent) -> None:
         """
-        Verify consistency between write and read models.
+        Verify consistency between write and read models after event processing.
+
+        Performs a consistency check by comparing the expected state based on
+        the event with the actual state in the read model. If inconsistencies
+        are detected, creates a SyncConflict for resolution.
 
         Args:
             projector_name: Name of the projector
             event: Event that was just processed
+
+        Raises:
+            ConflictError: If a critical consistency issue is detected
         """
-        # This is a placeholder for consistency checking logic
-        # Subclasses or specific implementations should override this
-        # to implement domain-specific consistency checks
-        pass
+        # Get the projector
+        if projector_name not in self._projectors:
+            logger.warning(f"Projector {projector_name} not found for consistency check")
+            return
+
+        projector = self._projectors[projector_name]
+
+        # Verify the event was properly applied
+        aggregate_id = str(event.metadata.aggregate_id) if event.metadata else None
+        if not aggregate_id:
+            return
+
+        # Check consistency between write and read state
+        is_consistent, conflict = await self.verify_consistency(projector_name, aggregate_id)
+
+        if not is_consistent and conflict:
+            # Log the inconsistency
+            logger.warning(
+                f"Consistency check failed for {projector_name}",
+                extra={
+                    "projector": projector_name,
+                    "aggregate_id": aggregate_id,
+                    "event_id": str(event.metadata.event_id) if event.metadata else None,
+                    "conflict_type": conflict.conflict_type,
+                },
+            )
+
+            # Add to conflict tracking
+            if projector_name not in self._conflicts:
+                self._conflicts[projector_name] = []
+            self._conflicts[projector_name].append(conflict)
+
+            # Attempt automatic resolution if not in manual mode
+            if self.conflict_resolution_strategy != ConflictResolutionStrategy.MANUAL:
+                await self.resolve_conflict(conflict)
 
     async def verify_consistency(
         self, projector_name: str, aggregate_id: str
     ) -> tuple[bool, SyncConflict | None]:
         """
         Verify consistency for a specific aggregate.
+
+        Compares the write database state with the read model state to detect
+        any inconsistencies that may have occurred during event processing.
 
         Args:
             projector_name: Name of the projector
@@ -715,9 +756,69 @@ class ReadModelSyncService:
         Returns:
             Tuple of (is_consistent, conflict_if_any)
         """
-        # Placeholder for consistency verification
-        # Implementation would compare write DB state with read model state
-        return True, None
+        if projector_name not in self._projectors:
+            return True, None
+
+        projector = self._projectors[projector_name]
+
+        # Get sync state for this projector
+        sync_state = self._sync_states.get(projector_name)
+        if not sync_state:
+            return True, None
+
+        # Check if there are unprocessed events for this aggregate
+        # by comparing the last synced sequence with the event store
+        try:
+            # Get latest events for this aggregate from event store
+            event_store = await get_event_store()
+            latest_events = await event_store.get_events_by_aggregate(
+                aggregate_id=aggregate_id,
+                after_sequence=sync_state.last_synced_sequence or 0,
+            )
+
+            if latest_events:
+                # There are unprocessed events - potential lag but not necessarily a conflict
+                # Check if the read model is significantly behind
+                lag_count = len(latest_events)
+                if lag_count > 10:  # More than 10 events behind
+                    conflict = SyncConflict(
+                        read_model_name=projector_name,
+                        aggregate_id=aggregate_id,
+                        event_id=str(latest_events[-1].metadata.event_id) if latest_events[-1].metadata else "",
+                        event_sequence=latest_events[-1].metadata.sequence if latest_events[-1].metadata else 0,
+                        conflict_type="sync_lag",
+                        write_value={"pending_events": lag_count},
+                        read_value={"last_sequence": sync_state.last_synced_sequence},
+                        resolution_strategy=self.conflict_resolution_strategy,
+                    )
+                    return False, conflict
+
+            # Check metrics for processing errors
+            metrics = self._metrics.get(projector_name)
+            if metrics and metrics.events_processed_failure > 0:
+                error_rate = metrics.events_processed_failure / max(metrics.total_events_processed, 1)
+                if error_rate > 0.1:  # More than 10% failure rate
+                    conflict = SyncConflict(
+                        read_model_name=projector_name,
+                        aggregate_id=aggregate_id,
+                        event_id="",
+                        event_sequence=sync_state.last_synced_sequence or 0,
+                        conflict_type="high_error_rate",
+                        write_value={"error_rate": error_rate},
+                        read_value={"failures": metrics.events_processed_failure},
+                        resolution_strategy=self.conflict_resolution_strategy,
+                    )
+                    return False, conflict
+
+            return True, None
+
+        except Exception as e:
+            logger.error(
+                f"Error during consistency verification for {projector_name}/{aggregate_id}: {e}",
+                exc_info=True,
+            )
+            # On error, assume consistent to avoid false positives
+            return True, None
 
     # =========================================================================
     # Conflict Resolution

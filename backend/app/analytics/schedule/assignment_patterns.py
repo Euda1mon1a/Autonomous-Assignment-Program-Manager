@@ -62,7 +62,96 @@ class AssignmentPatterns:
 
     async def _find_consecutive_patterns(
         self, start_date: date, end_date: date
-    ) -> dict[str, int]:
-        """Find consecutive assignment patterns."""
-        # Simplified: count streaks
-        return {"consecutive_days_worked": 0}  # Placeholder
+    ) -> dict[str, Any]:
+        """
+        Find consecutive assignment patterns.
+
+        Analyzes streaks of consecutive working days for all persons
+        in the specified date range.
+
+        Args:
+            start_date: Start of analysis period
+            end_date: End of analysis period
+
+        Returns:
+            Dictionary with pattern statistics including:
+            - max_consecutive_days: Longest streak found
+            - avg_consecutive_days: Average streak length
+            - persons_with_long_streaks: Count of persons with 5+ day streaks
+            - streak_distribution: Distribution of streak lengths
+        """
+        # Get all assignment dates per person
+        query = (
+            select(Assignment.person_id, Block.date)
+            .join(Block, Assignment.block_id == Block.id)
+            .where(and_(Block.date >= start_date, Block.date <= end_date))
+            .order_by(Assignment.person_id, Block.date)
+            .distinct()
+        )
+
+        result = await self.db.execute(query)
+        rows = result.all()
+
+        if not rows:
+            return {
+                "max_consecutive_days": 0,
+                "avg_consecutive_days": 0.0,
+                "persons_with_long_streaks": 0,
+                "streak_distribution": {},
+            }
+
+        # Group dates by person
+        person_dates: dict[str, list[date]] = {}
+        for person_id, work_date in rows:
+            person_key = str(person_id)
+            if person_key not in person_dates:
+                person_dates[person_key] = []
+            person_dates[person_key].append(work_date)
+
+        # Analyze streaks for each person
+        all_streaks: list[int] = []
+        max_consecutive = 0
+        persons_with_long_streaks = 0
+        streak_distribution: dict[int, int] = {}
+
+        for person_id, dates in person_dates.items():
+            sorted_dates = sorted(dates)
+            current_streak = 1
+            person_max_streak = 1
+
+            for i in range(1, len(sorted_dates)):
+                if (sorted_dates[i] - sorted_dates[i - 1]).days == 1:
+                    current_streak += 1
+                else:
+                    # Record this streak
+                    if current_streak > 1:
+                        all_streaks.append(current_streak)
+                        streak_distribution[current_streak] = (
+                            streak_distribution.get(current_streak, 0) + 1
+                        )
+                    person_max_streak = max(person_max_streak, current_streak)
+                    current_streak = 1
+
+            # Don't forget the last streak
+            if current_streak > 1:
+                all_streaks.append(current_streak)
+                streak_distribution[current_streak] = (
+                    streak_distribution.get(current_streak, 0) + 1
+                )
+            person_max_streak = max(person_max_streak, current_streak)
+
+            max_consecutive = max(max_consecutive, person_max_streak)
+
+            # Count persons with 5+ day streaks
+            if person_max_streak >= 5:
+                persons_with_long_streaks += 1
+
+        avg_consecutive = sum(all_streaks) / len(all_streaks) if all_streaks else 0.0
+
+        return {
+            "max_consecutive_days": max_consecutive,
+            "avg_consecutive_days": round(avg_consecutive, 2),
+            "persons_with_long_streaks": persons_with_long_streaks,
+            "streak_distribution": streak_distribution,
+            "total_streaks_analyzed": len(all_streaks),
+        }

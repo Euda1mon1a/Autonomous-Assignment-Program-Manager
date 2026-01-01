@@ -1046,9 +1046,8 @@ class BlueGreenDeploymentManager:
         self._slot_states[slot] = DeploymentState.DRAINING
         started_at = datetime.utcnow()
 
-        # In production, this would query actual session store
-        # For now, simulate session draining
-        initial_sessions = 100  # Placeholder
+        # Query actual session count from Redis or database
+        initial_sessions = await self._get_active_session_count(slot)
         drained_sessions = 0
 
         import asyncio
@@ -1086,6 +1085,63 @@ class BlueGreenDeploymentManager:
         )
 
         return status
+
+    async def _get_active_session_count(self, slot: DeploymentSlot) -> int:
+        """
+        Get the count of active sessions for a deployment slot.
+
+        Queries Redis or database for active session count. Falls back to
+        a reasonable default if session store is unavailable.
+
+        Args:
+            slot: Deployment slot to check
+
+        Returns:
+            Number of active sessions
+        """
+        try:
+            # Try to get session count from Redis
+            import redis.asyncio as redis
+            from app.core.config import settings
+
+            redis_url = getattr(settings, "REDIS_URL", None)
+            if redis_url:
+                client = redis.from_url(redis_url)
+                try:
+                    # Look for session keys matching the slot pattern
+                    session_pattern = f"session:{slot.value}:*"
+                    keys = await client.keys(session_pattern)
+                    count = len(keys)
+                    await client.close()
+                    return count
+                except Exception as e:
+                    logger.warning(f"Could not get session count from Redis: {e}")
+                    await client.close()
+
+            # Fall back to database query for active sessions
+            if self.db:
+                from sqlalchemy import func, select
+                from app.models.user import User
+
+                # Count recently active users (active in last 15 minutes)
+                from datetime import timedelta
+                cutoff = datetime.utcnow() - timedelta(minutes=15)
+
+                result = self.db.execute(
+                    select(func.count(User.id)).where(
+                        User.last_active >= cutoff if hasattr(User, "last_active") else True
+                    )
+                )
+                count = result.scalar() or 0
+                return count
+
+        except ImportError:
+            logger.debug("Redis not available, using default session count")
+        except Exception as e:
+            logger.warning(f"Error getting session count: {e}")
+
+        # Default fallback - assume moderate activity
+        return 50
 
     async def rollback_deployment(
         self,
@@ -1238,15 +1294,39 @@ class BlueGreenDeploymentManager:
         logger.info(f"Running database migrations for {slot.value} slot")
 
         try:
-            # In production, this would:
-            # 1. Run alembic upgrade head
-            # 2. Verify migration success
-            # 3. Track migration version
-
-            # Placeholder implementation
+            import subprocess
             import asyncio
 
-            await asyncio.sleep(2)  # Simulate migration time
+            # Run alembic upgrade head
+            logger.info("Running alembic upgrade head...")
+
+            # Run migration in a separate process to avoid blocking
+            process = await asyncio.create_subprocess_exec(
+                "alembic", "upgrade", "head",
+                cwd=".",  # Use project root
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+
+            stdout, stderr = await asyncio.wait_for(
+                process.communicate(),
+                timeout=self.config.migration_timeout_seconds
+            )
+
+            if process.returncode != 0:
+                error_msg = stderr.decode() if stderr else "Unknown error"
+                logger.error(f"Migration failed: {error_msg}")
+                raise RuntimeError(f"Migration failed: {error_msg}")
+
+            # Get current migration version
+            version_result = await asyncio.create_subprocess_exec(
+                "alembic", "current",
+                cwd=".",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            version_stdout, _ = await version_result.communicate()
+            current_version = version_stdout.decode().strip() if version_stdout else "unknown"
 
             # Update deployment record
             if self.db and deployment_id:
@@ -1255,10 +1335,10 @@ class BlueGreenDeploymentManager:
                 )
                 if deployment:
                     deployment.migration_completed = True
-                    deployment.migration_version = "latest"
+                    deployment.migration_version = current_version
                 self.db.commit()
 
-            logger.info("Database migrations completed successfully")
+            logger.info(f"Database migrations completed successfully. Version: {current_version}")
             return True
 
         except RuntimeError as e:
@@ -1368,16 +1448,52 @@ class BlueGreenDeploymentManager:
         """
         logger.info(f"Deployment notification [{level}]: {subject} - {message}")
 
-        # In production, this would:
-        # 1. Send emails to notification_recipients
-        # 2. Post to Slack webhook if configured
-        # 3. Create in-app notifications
-
-        # Placeholder implementation
+        # Send Slack notification if webhook configured
         if self.config.slack_webhook_url:
-            # Would send to Slack
-            pass
+            try:
+                color_map = {
+                    "info": "#2196F3",
+                    "warning": "#FF9800",
+                    "error": "#F44336",
+                    "success": "#4CAF50",
+                }
+                slack_payload = {
+                    "attachments": [
+                        {
+                            "color": color_map.get(level, "#808080"),
+                            "title": subject,
+                            "text": message,
+                            "footer": "Residency Scheduler Deployment",
+                            "ts": int(datetime.utcnow().timestamp()),
+                        }
+                    ]
+                }
 
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    response = await client.post(
+                        self.config.slack_webhook_url,
+                        json=slack_payload,
+                    )
+                    if response.status_code != 200:
+                        logger.warning(
+                            f"Slack notification failed: {response.status_code}"
+                        )
+                    else:
+                        logger.debug("Slack notification sent successfully")
+            except httpx.HTTPError as e:
+                logger.warning(f"Failed to send Slack notification: {e}")
+            except Exception as e:
+                logger.warning(f"Unexpected error sending Slack notification: {e}")
+
+        # Log recipients for email notifications (actual email sending would use email service)
         if self.config.notification_recipients:
-            # Would send emails
-            pass
+            recipients = self.config.notification_recipients
+            logger.info(
+                f"Email notification would be sent to: {recipients}",
+                extra={
+                    "subject": subject,
+                    "message": message,
+                    "level": level,
+                    "recipients": recipients,
+                },
+            )

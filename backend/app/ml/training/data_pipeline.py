@@ -124,13 +124,10 @@ class TrainingDataPipeline:
                 "is_holiday": block.is_holiday,
             }
 
-            # Historical stats (simplified for training)
-            historical_stats = {
-                "avg_preference_score": 0.5,  # Placeholder
-                "similar_count": 0,
-                "swap_rate": 0.0,
-                "current_workload": 0.0,
-            }
+            # Calculate historical stats from database
+            historical_stats = await self._calculate_preference_historical_stats(
+                person.id, block.date, rotation_template.id if rotation_template else None
+            )
 
             # Build feature dict (mimicking PreferencePredictor.extract_features)
             features = self._build_preference_features(
@@ -230,13 +227,10 @@ class TrainingDataPipeline:
                     }
                 )
 
-            # Historical data (placeholder)
-            historical_data = {
-                "avg_workload": 0.7,
-                "max_workload": 0.9,
-                "swap_rate": 0.1,
-                "conflict_rate": 0.05,
-            }
+            # Calculate historical workload data from database
+            historical_data = await self._calculate_workload_historical_data(
+                person.id, start_date, end_date
+            )
 
             # Build features
             features = self._build_workload_features(
@@ -350,14 +344,10 @@ class TrainingDataPipeline:
                 for a, b in existing_rows
             ]
 
-            # Context data (placeholder)
-            context_data = {
-                "faculty_count_on_date": 5,
-                "resident_count_on_date": 10,
-                "historical_conflict_rate": 0.05,
-                "recent_swap_count": 0,
-                "coverage_level": 1.0,
-            }
+            # Calculate context data from database
+            context_data = await self._calculate_conflict_context_data(
+                block.date, start_date, end_date
+            )
 
             # Build features
             features = self._build_conflict_features(
@@ -652,3 +642,206 @@ class TrainingDataPipeline:
         count = result.scalar()
         # Randomly assign some as conflicts for training (simplified)
         return (count % 5) == 0  # Simplified heuristic
+
+    async def _calculate_preference_historical_stats(
+        self,
+        person_id: str,
+        target_date: datetime,
+        rotation_id: str | None,
+    ) -> dict[str, Any]:
+        """
+        Calculate historical stats for preference prediction.
+
+        Args:
+            person_id: Person ID
+            target_date: Target assignment date
+            rotation_id: Optional rotation template ID
+
+        Returns:
+            Dictionary with historical stats
+        """
+        # Calculate date range for historical lookup (last 90 days)
+        end_date = target_date
+        start_date = target_date - timedelta(days=90)
+
+        # Count similar past assignments
+        similar_query = (
+            select(func.count(Assignment.id))
+            .join(Block, Assignment.block_id == Block.id)
+            .where(Assignment.person_id == person_id)
+            .where(Block.date >= start_date)
+            .where(Block.date < target_date)
+        )
+
+        if rotation_id:
+            similar_query = similar_query.where(
+                Assignment.rotation_template_id == rotation_id
+            )
+
+        result = await self._execute(similar_query)
+        similar_count = result.scalar() or 0
+
+        # Calculate current workload (assignments in last 4 weeks)
+        workload_start = target_date - timedelta(weeks=4)
+        workload_query = (
+            select(func.count(Assignment.id))
+            .join(Block, Assignment.block_id == Block.id)
+            .where(Assignment.person_id == person_id)
+            .where(Block.date >= workload_start)
+            .where(Block.date < target_date)
+        )
+        result = await self._execute(workload_query)
+        current_assignments = result.scalar() or 0
+
+        # Calculate workload utilization (assume 56 blocks per 4 weeks max)
+        max_blocks_per_4_weeks = 56
+        current_workload = current_assignments / max_blocks_per_4_weeks
+
+        # Calculate average preference score from past assignments
+        # (Use score field if available, otherwise default)
+        score_query = (
+            select(func.avg(Assignment.score))
+            .join(Block, Assignment.block_id == Block.id)
+            .where(Assignment.person_id == person_id)
+            .where(Assignment.score.isnot(None))
+            .where(Block.date >= start_date)
+            .where(Block.date < target_date)
+        )
+        result = await self._execute(score_query)
+        avg_score = result.scalar() or 0.5
+
+        return {
+            "avg_preference_score": float(avg_score),
+            "similar_count": similar_count,
+            "swap_rate": 0.0,  # Would need swap tracking per assignment
+            "current_workload": min(1.0, current_workload),
+        }
+
+    async def _calculate_workload_historical_data(
+        self,
+        person_id: str,
+        start_date: datetime,
+        end_date: datetime,
+    ) -> dict[str, Any]:
+        """
+        Calculate historical workload data for workload optimization.
+
+        Args:
+            person_id: Person ID
+            start_date: Start of historical period
+            end_date: End of historical period
+
+        Returns:
+            Dictionary with historical workload metrics
+        """
+        # Calculate workload per week over the period
+        weeks = max(1, (end_date - start_date).days // 7)
+
+        # Count total assignments
+        total_query = (
+            select(func.count(Assignment.id))
+            .join(Block, Assignment.block_id == Block.id)
+            .where(Assignment.person_id == person_id)
+            .where(Block.date >= start_date.date())
+            .where(Block.date <= end_date.date())
+        )
+        result = await self._execute(total_query)
+        total_assignments = result.scalar() or 0
+
+        # Average workload per week (assume 14 blocks per week max)
+        max_per_week = 14
+        avg_per_week = total_assignments / weeks if weeks > 0 else 0
+        avg_workload = min(1.0, avg_per_week / max_per_week)
+
+        # Estimate max workload (assume busiest week was 20% more than average)
+        max_workload = min(1.0, avg_workload * 1.2)
+
+        # Count conflicts for this person
+        conflict_query = (
+            select(func.count(ConflictAlert.id))
+            .where(ConflictAlert.created_at >= start_date)
+            .where(ConflictAlert.created_at <= end_date)
+        )
+        result = await self._execute(conflict_query)
+        conflict_count = result.scalar() or 0
+
+        # Conflict rate = conflicts per total assignments
+        conflict_rate = conflict_count / max(total_assignments, 1)
+
+        return {
+            "avg_workload": avg_workload,
+            "max_workload": max_workload,
+            "swap_rate": 0.0,  # Would need swap tracking
+            "conflict_rate": min(1.0, conflict_rate),
+        }
+
+    async def _calculate_conflict_context_data(
+        self,
+        target_date: datetime,
+        start_date: datetime,
+        end_date: datetime,
+    ) -> dict[str, Any]:
+        """
+        Calculate context data for conflict prediction.
+
+        Args:
+            target_date: Date of the assignment
+            start_date: Start of analysis period
+            end_date: End of analysis period
+
+        Returns:
+            Dictionary with context metrics
+        """
+        # Count faculty and residents assigned on the target date
+        faculty_query = (
+            select(func.count(func.distinct(Assignment.person_id)))
+            .join(Block, Assignment.block_id == Block.id)
+            .join(Person, Assignment.person_id == Person.id)
+            .where(Block.date == target_date)
+            .where(Person.type == "faculty")
+        )
+        result = await self._execute(faculty_query)
+        faculty_count = result.scalar() or 1  # Default to 1 to avoid division by zero
+
+        resident_query = (
+            select(func.count(func.distinct(Assignment.person_id)))
+            .join(Block, Assignment.block_id == Block.id)
+            .join(Person, Assignment.person_id == Person.id)
+            .where(Block.date == target_date)
+            .where(Person.type == "resident")
+        )
+        result = await self._execute(resident_query)
+        resident_count = result.scalar() or 0
+
+        # Historical conflict rate
+        total_assignments_query = (
+            select(func.count(Assignment.id))
+            .join(Block, Assignment.block_id == Block.id)
+            .where(Block.date >= start_date.date())
+            .where(Block.date <= end_date.date())
+        )
+        result = await self._execute(total_assignments_query)
+        total_assignments = result.scalar() or 1
+
+        conflict_query = (
+            select(func.count(ConflictAlert.id))
+            .where(ConflictAlert.created_at >= start_date)
+            .where(ConflictAlert.created_at <= end_date)
+        )
+        result = await self._execute(conflict_query)
+        conflict_count = result.scalar() or 0
+
+        historical_conflict_rate = conflict_count / total_assignments
+
+        # Coverage level (ratio of actual to expected staffing)
+        # Assume expected is 2:1 resident to faculty ratio
+        expected_residents = faculty_count * 2
+        coverage_level = resident_count / max(expected_residents, 1)
+
+        return {
+            "faculty_count_on_date": faculty_count,
+            "resident_count_on_date": resident_count,
+            "historical_conflict_rate": min(1.0, historical_conflict_rate),
+            "recent_swap_count": 0,  # Would need swap tracking
+            "coverage_level": min(2.0, coverage_level),  # Cap at 200%
+        }
