@@ -458,6 +458,20 @@ refresh_intervals:
 
 ---
 
+## Validation Checklist
+
+Before completing resilience dashboard generation, verify:
+
+- [ ] **All Core Tools Responded:** Unified critical index, burnout Rt, utilization, and defense level all returned data
+- [ ] **Status Determination:** Overall status (GREEN/YELLOW/ORANGE/RED/BLACK) accurately reflects worst metric severity
+- [ ] **Top Priority Faculty Identified:** Critical index includes top N faculty with specific risk patterns
+- [ ] **Actionable Recommendations:** Immediate/short-term/long-term actions are specific (not generic)
+- [ ] **Escalation Rules Applied:** RED/BLACK status triggers appropriate human escalation warnings
+- [ ] **Partial Failure Handling:** If MCP tools failed, dashboard clearly indicates missing data and limitations
+- [ ] **Trend Context Included:** If historical data available, trends are shown (improving/worsening)
+- [ ] **Next Refresh Interval:** Recommended refresh time matches status severity (GREEN=7d, RED=4h)
+- [ ] **Quality Gate:** Dashboard provides enough context for a program coordinator to make decisions
+
 ## Version
 
 - **Created:** 2025-12-28

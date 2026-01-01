@@ -147,6 +147,122 @@ If database needs complete reimport, source files are at:
 
 **CRITICAL:** These files contain real names. Never commit to repository.
 
+---
+
+## Examples
+
+### Example 1: Generating Block 10 Schedule
+
+**User Request:** "Generate the schedule for Block 10 (March 12 - April 8, 2026)"
+
+**Claude Response:**
+
+**Step 1: Pre-flight checks**
+```
+Running pre-flight checklist...
+✅ Most recent backup: backups/postgres/residency_scheduler_20260312_083000.sql.gz (created 45 minutes ago)
+✅ Backend health: {"status":"healthy","database":"connected"}
+✅ Data verification: 25 people found, 8 rotation templates available
+```
+
+**Step 2: User confirmation**
+> "Backup verified at 2026-03-12 08:30:00. Proceed with schedule generation for Block 10 (2026-03-12 to 2026-04-08)?"
+
+**User:** "Yes, proceed"
+
+**Step 3: Execute generation**
+```bash
+Calling generate_schedule API...
+{
+  "start_date": "2026-03-12",
+  "end_date": "2026-04-08",
+  "algorithm": "cp_sat",
+  "timeout_seconds": 120
+}
+```
+
+**Step 4: Report results**
+```
+✅ Schedule generated successfully
+- Total blocks assigned: 1425 / 1456 (97.9% coverage)
+- ACGME violations: 2 (minor)
+- N-1 compliant: True
+- Generation time: 47 seconds
+```
+
+### Example 2: Failed Generation Requiring Rollback
+
+**User Request:** "Try generating the schedule again with stricter constraints"
+
+**Claude Response:**
+
+**Step 1: Create new backup before retry**
+```bash
+Creating pre-operation backup...
+✅ Backup created: residency_scheduler_pre-retry_20260312_094500.sql.gz
+```
+
+**Step 2: Attempt generation**
+```
+Generating schedule with updated constraints...
+❌ Generation failed: Solver timeout after 120s with no feasible solution
+```
+
+**Step 3: Check for partial data**
+```sql
+SELECT COUNT(*) FROM assignments WHERE date >= '2026-03-12';
+-- Result: 234 assignments (partial data written)
+```
+
+**Step 4: Automatic rollback**
+```bash
+⚠️  Partial data detected. Rolling back to last backup...
+
+Restoring from: residency_scheduler_pre-retry_20260312_094500.sql.gz
+✅ Database restored successfully
+✅ Verification: 0 assignments for target date range (clean state)
+```
+
+**Step 5: Recommendation**
+> "Generation failed due to infeasible constraints. Recommend reviewing constraint weights before retry. Database rolled back to clean state."
+
+### Example 3: Read-Only Validation (No Backup Required)
+
+**User Request:** "Check if the current schedule has any ACGME violations"
+
+**Claude Response:**
+
+```
+This is a read-only operation, no backup required.
+
+Calling validate_schedule API...
+```
+
+**Results:**
+```json
+{
+  "acgme_compliant": false,
+  "violations": [
+    {
+      "type": "80_hour_rule",
+      "resident_id": "RES-PGY1-03",
+      "week": "2026-03-17",
+      "hours": 82.5
+    },
+    {
+      "type": "supervision_ratio",
+      "date": "2026-03-22",
+      "pgy1_residents": 3,
+      "faculty": 1
+    }
+  ]
+}
+```
+
+> "Found 2 ACGME violations. Recommend addressing these before deployment."
+
+---
+
 ## Schedule Generation Workflow
 
 ### Via Direct API

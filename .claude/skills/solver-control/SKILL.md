@@ -262,7 +262,151 @@ metrics.record_solver_abort("operator_request")  # or "timeout", "memory_limit",
 metrics.update_solver_best_score("run-123", "cp_sat", 0.85)
 ```
 
-## Common Scenarios
+## Examples
+
+### Example 1: Monitoring Long-Running Solver
+
+**User Request:** "The schedule generation has been running for 10 minutes. Can you check if it's making progress?"
+
+**Claude Response:**
+
+**Step 1: Check active solver runs**
+```bash
+Checking active solvers...
+
+Active run found:
+- run_id: schedule-20260312-143022
+- algorithm: cp_sat
+- started: 2026-03-12 14:30:22 (10 minutes ago)
+- status: running
+```
+
+**Step 2: Get progress details**
+```json
+{
+  "run_id": "schedule-20260312-143022",
+  "iteration": 1847,
+  "best_score": 0.82,
+  "assignments_count": 1203,
+  "violations_count": 5,
+  "status": "running",
+  "updated_at": "2026-03-12 14:39:45"
+}
+```
+
+**Analysis:**
+```
+✅ Solver is making progress (last update 15 seconds ago)
+✅ Found feasible solution (score: 0.82, 5 violations)
+⚠️  Still optimizing - considering letting it run another 5 minutes
+
+Current quality: 82% optimal with 5 ACGME violations remaining
+```
+
+**Recommendation:**
+> "Solver is actively improving the schedule. Suggest waiting 5 more minutes for better optimization. I can abort now if you need the current solution (82% quality)."
+
+### Example 2: Aborting Stuck Solver
+
+**User Request:** "The solver has been stuck at the same score for 30 minutes. Please stop it."
+
+**Claude Response:**
+
+**Step 1: Verify stuck status**
+```
+Current progress:
+- Iteration: 2453 (same as 30 min ago)
+- Best score: 0.76 (no improvement)
+- Last update: 28 minutes ago
+
+⚠️  Confirmed: Solver appears stuck
+```
+
+**Step 2: Request abort**
+```bash
+Sending abort signal to run schedule-20260312-140000...
+
+POST /scheduler/runs/schedule-20260312-140000/abort
+{
+  "reason": "No improvement for 30 minutes, score stuck at 0.76",
+  "requested_by": "claude-agent"
+}
+```
+
+**Step 3: Wait for graceful shutdown**
+```
+Abort signal sent. Waiting for solver to save partial results...
+⏳ Checking status every 5 seconds...
+
+✅ Solver stopped gracefully after 12 seconds
+```
+
+**Step 4: Report results**
+```json
+{
+  "status": "aborted",
+  "final_score": 0.76,
+  "assignments_saved": 1156,
+  "violations": 8,
+  "reason": "No improvement for 30 minutes, score stuck at 0.76"
+}
+```
+
+> "Solver stopped successfully. Saved partial solution with 1156 assignments (76% optimal, 8 violations). You can use this solution or try regenerating with adjusted constraints."
+
+### Example 3: Emergency Stop During Deployment
+
+**User Request:** "EMERGENCY: Stop all schedule generation immediately - we just got a deployment notification"
+
+**Claude Response:**
+
+**🚨 Emergency abort initiated**
+
+**Step 1: Identify all active solvers**
+```bash
+Querying active solver runs...
+
+Found 2 active runs:
+1. schedule-20260312-140000 (cp_sat, 45 min runtime)
+2. schedule-20260312-143500 (greedy_fallback, 2 min runtime)
+```
+
+**Step 2: Abort all in parallel**
+```bash
+Sending emergency abort to all active solvers...
+
+Run 1: ✅ Abort signal sent
+Run 2: ✅ Abort signal sent
+
+Waiting for graceful shutdown (max 30 seconds)...
+```
+
+**Step 3: Monitor shutdown**
+```
+Run schedule-20260312-143500: ✅ Stopped (8 seconds)
+Run schedule-20260312-140000: ✅ Stopped (15 seconds)
+
+All solvers stopped successfully.
+```
+
+**Step 4: Verify clean state**
+```sql
+SELECT COUNT(*) FROM assignments WHERE created_at > '2026-03-12 14:00:00';
+-- Result: 0 (no partial writes detected)
+```
+
+**Summary:**
+```
+✅ All solvers stopped
+✅ No partial data in database
+✅ Safe to proceed with deployment-driven schedule changes
+```
+
+> "Emergency stop complete. All schedule generation halted. Database is in clean state. Ready for manual deployment adjustments."
+
+---
+
+## Common CLI Scenarios
 
 ### Scenario 1: Solver Taking Too Long
 
@@ -339,6 +483,19 @@ scheduler_solver_best_score{run_id="abc123"}
 3. **Check solver is calling update_progress:**
    - Add logging to verify `update_progress` is being called
    - Errors in progress updates are logged at DEBUG level (won't fail solver)
+
+## Validation Checklist
+
+Before completing solver control operations, verify:
+
+- [ ] **Abort Signal Set:** Abort flag is properly written to Redis for the run_id
+- [ ] **Progress Updates:** Progress metrics are being updated periodically in solver loop
+- [ ] **Solver Response:** Solver checks `should_abort()` at reasonable intervals (not too infrequent)
+- [ ] **Partial Results Saved:** Best solution is saved before aborting (prevents lost work)
+- [ ] **Cleanup Complete:** Abort flags are cleared after handling to prevent stale signals
+- [ ] **Metrics Recorded:** Prometheus metrics are updated for abort/iteration events
+- [ ] **No Data Corruption:** Database state is consistent (no partial writes from interrupted solver)
+- [ ] **Quality Gate:** Verify Redis connectivity before critical operations
 
 ## Related Documentation
 

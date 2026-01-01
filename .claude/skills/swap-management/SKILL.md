@@ -203,7 +203,220 @@ Extra scrutiny for swaps affecting:
 - Faculty approaching burnout indicators
 - Personnel with documented accommodations
 
-## Common Scenarios
+## Examples
+
+### Example 1: Conference Swap Request
+
+**User Request:** "Dr. Smith needs to swap her Thursday March 24 PM shift because she has a required conference. Can you help find a match?"
+
+**Claude Response:**
+
+**Step 1: Verify shift eligibility**
+```
+Checking shift details...
+- Person: Dr. Sarah Smith (FAC-CORE-02)
+- Date: March 24, 2026 (Thursday PM)
+- Current assignment: Outpatient Clinic
+- Shift status: Active (not frozen) ✅
+```
+
+**Step 2: Run auto-matcher**
+```bash
+Calling analyze_swap_compatibility...
+
+Top 5 compatible matches:
+1. Dr. Johnson (FAC-CORE-05) - Score: 0.92
+   - Available: Tuesday PM (clinic)
+   - Current hours: 45/80 (safe buffer)
+   - Historical preference: Prefers PM shifts ✅
+
+2. Dr. Williams (FAC-CORE-01) - Score: 0.85
+   - Available: Wednesday AM (clinic)
+   - Current hours: 52/80
+   - Note: Approaching preferred workload limit
+
+3. Dr. Davis (FAC-CORE-07) - Score: 0.78
+   - Available: Friday AM (procedures)
+   - Current hours: 38/80
+   - Note: Different rotation type (may need cross-training)
+```
+
+**Step 3: Validate top match**
+```json
+Validating swap: Smith ↔ Johnson...
+
+{
+  "valid": true,
+  "compliance_check": {
+    "smith_hours_post_swap": 47,
+    "johnson_hours_post_swap": 47,
+    "acgme_violations": 0,
+    "supervision_ratios": "maintained"
+  },
+  "warnings": []
+}
+```
+
+**Recommendation:**
+> "✅ Dr. Johnson is the best match (92% compatibility). Both will remain well under work hour limits. Swap maintains all compliance requirements. Shall I notify Dr. Johnson and request consent?"
+
+**User:** "Yes, please proceed"
+
+**Step 4: Execute swap**
+```
+Sending swap request to Dr. Johnson...
+- Notification sent via email + app
+- Awaiting response (48-hour window)
+- Swap ID: SWAP-20260312-001
+
+I'll notify you when Dr. Johnson responds.
+```
+
+### Example 2: Emergency Sick Coverage
+
+**User Request:** "URGENT: Dr. Martinez just called in sick for her Sunday call shift. We need immediate coverage."
+
+**Claude Response:**
+
+**🚨 Emergency coverage protocol activated**
+
+**Step 1: Check backup pool**
+```sql
+Querying available backup faculty...
+
+Backup pool found: 3 available
+1. Dr. Chen (FAC-CORE-08) - No assignments Sunday
+   - Current hours: 42/80 ✅
+   - Qualified for call ✅
+   - Marked as backup_available ✅
+
+2. Dr. Patel (FAC-CORE-11) - Has AM shift only
+   - Could extend to cover PM call
+   - Current hours: 38/80 ✅
+
+3. Dr. Kim (FAC-CORE-03) - Weekend off
+   - In backup pool but hours: 68/80 ⚠️
+```
+
+**Step 2: Validate emergency absorb**
+```
+Checking Dr. Chen for emergency coverage...
+
+Compliance check:
+- Post-absorb hours: 42 + 12 = 54/80 ✅
+- 1-in-7 day off: Preserved ✅
+- No double-booking: ✅
+- Recent call: Last call 9 days ago ✅
+
+✅ Dr. Chen is safe to absorb the shift
+```
+
+**Step 3: Execute without consent (emergency)**
+```bash
+Executing emergency absorb...
+
+POST /api/swap/emergency-absorb
+{
+  "original_person_id": "FAC-MARTINEZ",
+  "replacement_person_id": "FAC-CHEN",
+  "shift": "2026-03-27 PM (Sunday Call)",
+  "reason": "sick_call",
+  "emergency": true,
+  "skip_consent": true
+}
+
+✅ Assignment updated
+✅ Dr. Chen notified (SMS + email + app)
+✅ Calendar invite sent
+✅ Program Director notified of emergency swap
+```
+
+**Step 4: Workload balancing note**
+```
+Emergency swap logged for fairness tracking:
+- Dr. Chen: +1 emergency absorb (total this quarter: 2)
+- Dr. Martinez: Sick day recorded
+
+Recommendation: Offer Dr. Chen compensatory time off or first pick
+on next swap request to maintain equity.
+```
+
+**Summary:**
+> "✅ Emergency coverage secured. Dr. Chen will cover Sunday call. All compliance requirements maintained. Dr. Martinez can focus on recovery."
+
+### Example 3: Standing Preference Swap
+
+**User Request:** "Two residents want to permanently swap their clinic days - PGY-2 resident wants Mondays instead of Tuesdays. Is this possible?"
+
+**Claude Response:**
+
+**Step 1: Identify swap scope**
+```
+Request: Standing swap arrangement
+- Resident A (PGY-2): Currently Tuesday PM clinic
+- Resident B (PGY-2): Currently Monday PM clinic
+- Duration: Remainder of academic year (6 months)
+```
+
+**Step 2: Check long-term compliance**
+```bash
+Validating standing swap arrangement...
+
+Checking 24-week projection:
+✅ Week 1-4: Both residents maintain <80hr limit
+✅ Week 5-8: Both residents maintain <80hr limit
+...
+✅ Week 21-24: Both residents maintain <80hr limit
+
+⚠️  Warning: Resident A has scheduled conference March 30 (Monday)
+    - Will need one-time exception that week
+
+Long-term ACGME compliance: ✅ PASS
+```
+
+**Step 3: Create recurring swap template**
+```json
+Creating standing swap template...
+
+{
+  "template_id": "SWAP-TEMPLATE-001",
+  "type": "recurring_weekly",
+  "participant_a": "RES-PGY2-03",
+  "participant_b": "RES-PGY2-07",
+  "swap_pattern": {
+    "a_gives": "Tuesday PM Clinic",
+    "a_receives": "Monday PM Clinic",
+    "b_gives": "Monday PM Clinic",
+    "b_receives": "Tuesday PM Clinic"
+  },
+  "duration": "2026-03-12 to 2026-09-30",
+  "exceptions": ["2026-03-30 (Resident A conference)"],
+  "review_frequency": "quarterly"
+}
+
+✅ Template created
+✅ Next 24 swaps auto-scheduled
+```
+
+**Step 4: Fairness review schedule**
+```
+Standing swap approved with quarterly review:
+- First review: June 15, 2026
+- Review criteria:
+  * Both residents satisfied with arrangement
+  * No negative impact on team dynamics
+  * Work hour compliance maintained
+  * Fair distribution of weekend coverage
+
+I'll remind you 1 week before each quarterly review.
+```
+
+**Recommendation:**
+> "✅ Standing swap approved for 6 months. Both residents will swap clinic days weekly (with 1 exception for conference). Quarterly fairness reviews scheduled. Both residents notified of approval."
+
+---
+
+## Common CLI Scenarios
 
 ### Scenario: Conference Conflict
 **Request:** Need Thursday off for required conference
