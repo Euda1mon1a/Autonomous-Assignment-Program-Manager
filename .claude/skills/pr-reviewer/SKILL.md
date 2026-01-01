@@ -352,6 +352,199 @@ async def get_schedule(
 ```
 ````
 
+## Examples
+
+### Example 1: Standard PR Review (Feature Addition)
+
+**Context:** PR #523 adds resident work hour summary endpoint
+
+**Input:**
+```bash
+gh pr view 523 --json title,files,commits
+```
+
+**Process:**
+1. **Gather context:**
+   - Title: "feat: Add work hour summary endpoint"
+   - Files changed: 3 (route, service, tests)
+   - Commits: 2 commits
+2. **Check CI status:**
+   ```bash
+   gh pr checks 523
+   # ✓ Tests: passing
+   # ✓ Lint: passing
+   # ✗ Coverage: 65% (below 70% threshold)
+   ```
+3. **Review code:**
+   - Route follows layered architecture ✓
+   - Service has business logic ✓
+   - Tests added but incomplete (missing edge cases)
+4. **Run quality gates locally:**
+   ```bash
+   git fetch origin pull/523/head:pr-523
+   git checkout pr-523
+   pytest --cov=app.services.work_hour_service --cov-fail-under=70
+   # FAIL: 65% coverage
+   ```
+
+**Output:**
+```markdown
+## PR Review: #523 - Add work hour summary endpoint
+
+**Decision:** REQUEST CHANGES
+
+### Quality Gate Results
+| Gate | Status | Notes |
+|------|--------|-------|
+| Tests | ✓ | 12 tests pass |
+| Linting | ✓ | No errors |
+| Types | ✓ | No errors |
+| Coverage | ✗ | 65% (target 70%) |
+
+### Required Changes (Blocking)
+1. **Insufficient test coverage** (app/services/work_hour_service.py:45-78)
+   - Missing tests for edge cases:
+     - Empty assignment list
+     - Assignments spanning multiple weeks
+     - Null duration handling
+   - Add tests to bring coverage to 70%+
+
+### Suggestions (Non-blocking)
+1. Consider caching work hour calculations (line 56)
+   - Reduces database load for frequently accessed residents
+   - Use Redis with 15-minute TTL
+
+### Approval Checklist
+- [x] Architecture follows patterns
+- [x] Tests exist
+- [ ] Coverage >= 70% (BLOCKING)
+- [x] Linting passes
+- [x] Types valid
+
+**Next Steps:** Add missing tests, push update, request re-review.
+```
+
+### Example 2: Security-Critical PR Review
+
+**Context:** PR #478 modifies authentication middleware
+
+**Input:**
+```python
+# Changed file: backend/app/api/deps.py
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    # CHANGE: Removed JWT expiration check
+    payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+    return payload.get("sub")
+```
+
+**Process:**
+1. **Identify security-sensitive area:** Authentication code
+2. **Compare with previous version:**
+   ```diff
+   - if payload.get("exp") < time.time():
+   -     raise HTTPException(401, "Token expired")
+   + # Expiration check removed
+   ```
+3. **Assess impact:** CRITICAL - allows expired tokens
+4. **Trigger security-audit skill** for full analysis
+
+**Output:**
+```markdown
+## PR Review: #478 - Update auth middleware
+
+**Decision:** :red_circle: BLOCK MERGE - CRITICAL SECURITY ISSUE
+
+### Security Finding
+
+**Severity:** CRITICAL
+**Issue:** JWT Expiration Check Removed
+
+This change allows expired tokens to authenticate, violating authentication security.
+
+**Security Impact:**
+- Tokens never expire (OWASP A07:2021 - Authentication Failures)
+- Compromised tokens remain valid indefinitely
+- No mechanism to revoke access
+- Violates standard JWT security practices
+
+**Required Fix:**
+1. Revert expiration check removal
+2. Add explicit test for expired token rejection
+3. Security review required before merge
+
+**Escalation:** Triggered security-audit skill for full assessment.
+
+### Action Required
+- [ ] Revert to include expiration check
+- [ ] Add test: `test_expired_token_rejected()`
+- [ ] Human security review before re-submit
+```
+
+### Example 3: Database Migration PR Review
+
+**Context:** PR #501 adds `email_verified` field to User model
+
+**Input:**
+```bash
+gh pr diff 501 --name-only
+# backend/app/models/user.py
+# backend/alembic/versions/abc123_add_email_verified.py
+```
+
+**Process:**
+1. **Check model and migration together:** ✓ Both files present
+2. **Review migration:**
+   ```python
+   def upgrade() -> None:
+       op.add_column('users', sa.Column('email_verified', sa.Boolean(), nullable=False))
+   ```
+3. **Identify issue:** Adding non-nullable column to table with existing rows will fail
+4. **Verify locally:**
+   ```bash
+   alembic upgrade head
+   # ERROR: column "email_verified" contains null values
+   ```
+
+**Output:**
+```markdown
+## PR Review: #501 - Add email_verified field
+
+**Decision:** REQUEST CHANGES
+
+### Database Migration Issue
+
+**Problem:** Non-nullable column added to table with existing rows
+
+This migration will fail in production because:
+1. Existing users don't have `email_verified` value
+2. Column is `nullable=False` (requires value)
+3. No default provided
+
+**Current Migration:**
+```python
+op.add_column('users', sa.Column('email_verified', sa.Boolean(), nullable=False))
+```
+
+**Required Fix - Three-Phase Migration:**
+```python
+# Migration 1: Add as nullable
+op.add_column('users', sa.Column('email_verified', sa.Boolean(), nullable=True))
+
+# Migration 2: Backfill
+op.execute("UPDATE users SET email_verified = false WHERE email_verified IS NULL")
+
+# Migration 3: Make non-nullable
+op.alter_column('users', 'email_verified', nullable=False)
+```
+
+**Testing:**
+- [ ] Test migration on database with existing data
+- [ ] Verify downgrade path works
+- [ ] Document rollback procedure
+
+**Escalation:** Deferred to database-migration skill for implementation.
+```
+
 ## Lesson Learned: PR #442 (2025-12-26)
 
 **What happened:** A fix changed a filter from one value to another, but the new value
@@ -364,6 +557,38 @@ was also incorrect because comments/docs said "outpatient" while code used "clin
 - [ ] Confirm the filter will actually find matching records
 
 **Key insight:** Always ask "will this filter find what we expect?" and verify empirically.
+
+## Common Failure Modes
+
+| Failure Mode | Symptom | Root Cause | Recovery Steps |
+|--------------|---------|------------|----------------|
+| **CI Passes But Code Broken** | All checks green, but feature doesn't work | Insufficient test coverage or wrong tests | 1. Manual testing reveals issue<br>2. Add missing test cases<br>3. Re-run CI with new tests |
+| **Merge Conflict During Review** | PR becomes outdated while under review | Long review cycle, active main branch | 1. Request author to rebase<br>2. Re-run quality gates after rebase<br>3. Re-review changed sections only |
+| **False Positive Security Alert** | Bandit flags safe code as vulnerable | Static analysis limitation | 1. Manual review confirms false positive<br>2. Add `# nosec` comment with justification<br>3. Document in review |
+| **Coverage Drops After Merge** | PR shows 80% coverage, but repo drops to 65% | Coverage calculated only for changed files | 1. Check overall repo coverage before approve<br>2. Require tests for affected areas, not just new code<br>3. Use `--cov=app` not `--cov=app.services.new_module` |
+| **Database Migration Not Tested** | Migration file present but untested | CI doesn't run migrations in test environment | 1. Manually test migration locally<br>2. Request author to test `upgrade` and `downgrade`<br>3. Add migration testing to CI |
+| **Breaking API Change Undetected** | Pydantic schema changed without version bump | No API contract testing | 1. Check schema diff against previous version<br>2. Determine if breaking (required field added, field removed)<br>3. Require API version bump or revert change |
+
+## Validation Checklist
+
+After reviewing a PR, verify:
+
+- [ ] **PR Description:** Clear summary of what/why
+- [ ] **Linked Issues:** References issue number or motivation
+- [ ] **CI Checks:** All automated checks pass
+- [ ] **Tests Added:** New code has corresponding tests
+- [ ] **Coverage:** >= 70% for changed files
+- [ ] **Linting:** No lint errors
+- [ ] **Type Checking:** No type errors
+- [ ] **Security:** No vulnerabilities detected
+- [ ] **Architecture:** Follows layered pattern
+- [ ] **Database Migrations:** If model changed, migration present and tested
+- [ ] **Breaking Changes:** Documented or avoided
+- [ ] **Documentation:** Updated if needed (README, API docs)
+- [ ] **No Secrets:** No hardcoded credentials or sensitive data
+- [ ] **Dependency Changes:** If `requirements.txt` changed, justified
+- [ ] **Manual Testing:** For complex features, manually verified
+- [ ] **Conflicts Resolved:** No merge conflicts present
 
 ## Escalation Rules
 
