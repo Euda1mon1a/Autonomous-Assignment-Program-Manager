@@ -1,6 +1,23 @@
 ---
 name: code-quality-monitor
 description: Proactive code health monitoring and quality gate enforcement. Use when validating code changes, reviewing PRs, or ensuring code meets quality standards before merging.
+model_tier: sonnet
+parallel_hints:
+  can_parallel_with: [lint-monorepo, test-writer, coverage-reporter]
+  must_serialize_with: []
+  preferred_batch_size: 5
+context_hints:
+  max_file_context: 50
+  compression_level: 1
+  requires_git_context: true
+  requires_db_context: false
+escalation_triggers:
+  - pattern: "coverage.*below.*60"
+    reason: "Critical coverage drop requires human decision"
+  - pattern: "security.*critical"
+    reason: "Critical security issues require immediate escalation"
+  - keyword: ["architectural", "breaking"]
+    reason: "Architectural concerns need human review"
 ---
 
 # Code Quality Monitor

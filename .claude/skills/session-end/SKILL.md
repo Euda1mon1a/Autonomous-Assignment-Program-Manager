@@ -1,6 +1,21 @@
 ---
 name: session-end
 description: Mandatory session close-out with IG audit, AAR, and optional HISTORIAN. Enforces clean session handoff.
+model_tier: sonnet
+parallel_hints:
+  can_parallel_with: []
+  must_serialize_with: [startup, startupO]
+  preferred_batch_size: 1
+context_hints:
+  max_file_context: 60
+  compression_level: 1
+  requires_git_context: true
+  requires_db_context: false
+escalation_triggers:
+  - pattern: "uncommitted.*changes"
+    reason: "Uncommitted work needs human decision on how to handle"
+  - pattern: "failing.*tests"
+    reason: "Test failures need human review before session close"
 ---
 
 # Session End Skill

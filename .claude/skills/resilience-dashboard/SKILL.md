@@ -1,6 +1,23 @@
 ---
 name: resilience-dashboard
 description: Generate a comprehensive resilience status report using all available MCP tools. Aggregates unified critical index, burnout Rt, early warnings, utilization, and defense levels into a single actionable dashboard.
+model_tier: sonnet
+parallel_hints:
+  can_parallel_with: [schedule-validator, acgme-compliance]
+  must_serialize_with: [safe-schedule-generation]
+  preferred_batch_size: 8
+context_hints:
+  max_file_context: 50
+  compression_level: 1
+  requires_git_context: false
+  requires_db_context: true
+escalation_triggers:
+  - pattern: "RED|BLACK"
+    reason: "Critical status requires immediate human attention"
+  - pattern: "sacrifice.*hierarchy"
+    reason: "Sacrifice hierarchy activation requires human approval"
+  - keyword: ["emergency", "crisis", "N-2 failure"]
+    reason: "Emergency situations require human decision-making"
 ---
 
 # Resilience Dashboard

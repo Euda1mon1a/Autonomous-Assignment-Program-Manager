@@ -1,6 +1,23 @@
 ---
 name: constraint-preflight
 description: Pre-flight verification for scheduling constraint development. Use when adding, modifying, or testing constraints to ensure they are properly implemented, exported, registered, and tested before commit.
+model_tier: sonnet
+parallel_hints:
+  can_parallel_with: [test-writer, code-review]
+  must_serialize_with: [SCHEDULING, schedule-optimization]
+  preferred_batch_size: 1
+context_hints:
+  max_file_context: 50
+  compression_level: 1
+  requires_git_context: true
+  requires_db_context: false
+escalation_triggers:
+  - pattern: "ACGME.*constraint"
+    reason: "ACGME constraint changes require domain expert review"
+  - pattern: "weight.*hierarchy"
+    reason: "Weight hierarchy changes require clinical input"
+  - keyword: ["compliance", "regulation"]
+    reason: "Regulatory constraints require human verification"
 ---
 
 # Constraint Pre-Flight Verification

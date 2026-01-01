@@ -1,6 +1,23 @@
 ---
 name: safe-schedule-generation
 description: Safe schedule generation with mandatory backup. REQUIRES database backup before any write operations to schedule tables. Use when generating schedules, bulk assigning, or executing swaps.
+model_tier: opus
+parallel_hints:
+  can_parallel_with: []
+  must_serialize_with: [schedule-optimization, SCHEDULING, solver-control, swap-management]
+  preferred_batch_size: 1
+context_hints:
+  max_file_context: 40
+  compression_level: 1
+  requires_git_context: false
+  requires_db_context: true
+escalation_triggers:
+  - pattern: "backup.*fail|no.*backup"
+    reason: "Backup failures block all schedule modifications"
+  - pattern: "rollback|restore"
+    reason: "Rollback operations require human oversight"
+  - keyword: ["production", "live", "destroy", "clear"]
+    reason: "Destructive operations require explicit human approval"
 ---
 
 # Safe Schedule Generation Skill

@@ -3,13 +3,21 @@ name: fastapi-production
 description: Production-grade FastAPI patterns for async APIs, SQLAlchemy 2.0, Pydantic v2, and robust error handling. Use when building API endpoints, handling database operations, implementing middleware, or optimizing performance.
 model_tier: opus
 parallel_hints:
-  can_parallel_with:
-    - test-writer
-    - security-audit
-    - code-review
-  must_serialize_with:
-    - database-migration
+  can_parallel_with: [test-writer, security-audit, code-review]
+  must_serialize_with: [database-migration]
   preferred_batch_size: 5
+context_hints:
+  max_file_context: 80
+  compression_level: 1
+  requires_git_context: true
+  requires_db_context: true
+escalation_triggers:
+  - pattern: "auth|security|password|token"
+    reason: "Authentication/authorization changes require security-audit"
+  - pattern: "migration|schema"
+    reason: "Database changes require database-migration skill"
+  - keyword: ["rate limit", "ACGME", "external API"]
+    reason: "Critical system changes need human approval"
 ---
 
 # FastAPI Production Patterns Skill

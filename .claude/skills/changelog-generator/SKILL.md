@@ -1,6 +1,21 @@
 ---
 name: changelog-generator
 description: Automatically generate user-friendly changelogs from git commit history. Use when preparing release notes, documenting changes for stakeholders, or creating app store descriptions.
+model_tier: haiku
+parallel_hints:
+  can_parallel_with: [pr-reviewer, code-review]
+  must_serialize_with: []
+  preferred_batch_size: 1
+context_hints:
+  max_file_context: 20
+  compression_level: 2
+  requires_git_context: true
+  requires_db_context: false
+escalation_triggers:
+  - pattern: "breaking.*change"
+    reason: "Breaking changes need careful documentation and human review"
+  - pattern: "security"
+    reason: "Security changes need careful disclosure review"
 ---
 
 # Changelog Generator Skill

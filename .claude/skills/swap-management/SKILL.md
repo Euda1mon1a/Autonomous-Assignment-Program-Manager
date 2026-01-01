@@ -1,6 +1,23 @@
 ---
 name: swap-management
 description: Schedule swap workflow expertise for faculty and resident shift exchanges. Use when processing swap requests, finding compatible matches, or resolving scheduling conflicts. Integrates with swap auto-matcher and MCP tools.
+model_tier: sonnet
+parallel_hints:
+  can_parallel_with: [swap-analyzer, schedule-validator]
+  must_serialize_with: [SWAP_EXECUTION, safe-schedule-generation]
+  preferred_batch_size: 3
+context_hints:
+  max_file_context: 40
+  compression_level: 1
+  requires_git_context: false
+  requires_db_context: true
+escalation_triggers:
+  - pattern: "ACGME.*violation"
+    reason: "Swaps causing compliance violations require human approval"
+  - pattern: "emergency.*coverage"
+    reason: "Emergency coverage requires human oversight"
+  - keyword: ["rollback", "reverse", "undo"]
+    reason: "Swap reversals may have cascade effects"
 ---
 
 # Swap Management Skill

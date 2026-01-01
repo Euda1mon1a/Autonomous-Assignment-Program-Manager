@@ -1,6 +1,23 @@
 ---
 name: schedule-verification
 description: Human verification checklist for generated schedules. Use when reviewing Block 10 or any generated schedule to ensure it makes operational sense. Covers FMIT, call, Night Float, clinic days, and absence handling.
+model_tier: sonnet
+parallel_hints:
+  can_parallel_with: [acgme-compliance, schedule-validator]
+  must_serialize_with: [safe-schedule-generation]
+  preferred_batch_size: 1
+context_hints:
+  max_file_context: 60
+  compression_level: 1
+  requires_git_context: false
+  requires_db_context: true
+escalation_triggers:
+  - pattern: "FAIL|violation|conflict"
+    reason: "Verification failures require human review before deployment"
+  - pattern: "red flag|stop"
+    reason: "Critical issues need immediate investigation"
+  - keyword: ["0% coverage", "back-to-back"]
+    reason: "Severe constraint violations need escalation"
 ---
 
 # Schedule Verification Skill

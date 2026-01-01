@@ -1,6 +1,23 @@
 ---
 name: schedule-optimization
 description: Multi-objective schedule optimization expertise using constraint programming and Pareto optimization. Use when generating schedules, improving coverage, balancing workloads, or resolving conflicts. Integrates with OR-Tools solver and resilience framework.
+model_tier: opus
+parallel_hints:
+  can_parallel_with: [constraint-preflight, acgme-compliance]
+  must_serialize_with: [safe-schedule-generation, SCHEDULING, solver-control]
+  preferred_batch_size: 1
+context_hints:
+  max_file_context: 100
+  compression_level: 0
+  requires_git_context: true
+  requires_db_context: true
+escalation_triggers:
+  - pattern: "infeasible|no solution"
+    reason: "Infeasible constraints require human review of requirements"
+  - pattern: "timeout|stuck"
+    reason: "Solver performance issues may need decomposition strategy"
+  - keyword: ["block-assigned", "FMIT", "Night Float"]
+    reason: "Block-assigned rotations have special handling requirements"
 ---
 
 # Schedule Optimization Skill

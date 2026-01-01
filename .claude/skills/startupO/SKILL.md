@@ -1,6 +1,21 @@
 ---
 name: startupO
 description: Initialize session as ORCHESTRATOR agent with multi-agent coordination capability. Use for complex tasks requiring parallel agent spawning and result synthesis.
+model_tier: opus
+parallel_hints:
+  can_parallel_with: [check-codex]
+  must_serialize_with: []
+  preferred_batch_size: 1
+context_hints:
+  max_file_context: 100
+  compression_level: 0
+  requires_git_context: true
+  requires_db_context: true
+escalation_triggers:
+  - pattern: "IDE.*crash|seizure"
+    reason: "IDE stability issues require immediate attention"
+  - pattern: "8\\+.*agents|direct.*spawn"
+    reason: "Direct spawning of 8+ agents will crash IDE"
 ---
 
 # Session Startup - ORCHESTRATOR Mode

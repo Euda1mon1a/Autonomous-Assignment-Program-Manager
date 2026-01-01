@@ -1,6 +1,23 @@
 ---
 name: solver-control
 description: Solver kill-switch and progress monitoring for schedule generation. Use when aborting runaway solvers, monitoring long-running schedule generation, or integrating abort checks into solver loops.
+model_tier: sonnet
+parallel_hints:
+  can_parallel_with: [resilience-dashboard, schedule-validator]
+  must_serialize_with: [safe-schedule-generation, SCHEDULING]
+  preferred_batch_size: 1
+context_hints:
+  max_file_context: 20
+  compression_level: 1
+  requires_git_context: false
+  requires_db_context: true
+escalation_triggers:
+  - pattern: "force.*kill"
+    reason: "Force killing may cause data corruption - requires human approval"
+  - pattern: "emergency.*stop"
+    reason: "Emergency operations require human oversight"
+  - keyword: ["production", "live"]
+    reason: "Production system operations require human approval"
 ---
 
 # Solver Control (Kill-Switch & Progress Monitoring)

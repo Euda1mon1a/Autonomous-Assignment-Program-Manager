@@ -1,6 +1,21 @@
 ---
 name: check-codex
 description: Check for pending Codex (GitHub AI) feedback on current branch's PR. Use to review and address AI suggestions before merge. This is the rate-limiting step before merge.
+model_tier: haiku
+parallel_hints:
+  can_parallel_with: [startup, pr-reviewer]
+  must_serialize_with: []
+  preferred_batch_size: 1
+context_hints:
+  max_file_context: 20
+  compression_level: 2
+  requires_git_context: true
+  requires_db_context: false
+escalation_triggers:
+  - pattern: "P1.*critical"
+    reason: "P1 critical issues are merge blockers requiring human review"
+  - pattern: "security|credential"
+    reason: "Security-related feedback requires human verification"
 ---
 
 # Check Codex Feedback Skill

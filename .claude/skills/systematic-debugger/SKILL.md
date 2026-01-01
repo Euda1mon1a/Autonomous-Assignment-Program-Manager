@@ -1,6 +1,23 @@
 ---
 name: systematic-debugger
 description: Systematic debugging skill for complex issues. Use when encountering bugs, test failures, or unexpected behavior. Enforces explore-plan-debug-fix workflow to prevent premature fixes.
+model_tier: opus
+parallel_hints:
+  can_parallel_with: [search-party, code-review]
+  must_serialize_with: [automated-code-fixer]
+  preferred_batch_size: 1
+context_hints:
+  max_file_context: 100
+  compression_level: 0
+  requires_git_context: true
+  requires_db_context: false
+escalation_triggers:
+  - pattern: "security.*vulnerability"
+    reason: "Security issues require security-audit skill involvement"
+  - pattern: "database.*corruption"
+    reason: "Data corruption requires human intervention"
+  - keyword: ["ACGME", "compliance", "violation"]
+    reason: "Compliance issues require domain expert review"
 ---
 
 # Systematic Debugger

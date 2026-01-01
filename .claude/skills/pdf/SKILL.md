@@ -1,6 +1,23 @@
 ---
 name: pdf
 description: PDF generation and manipulation for compliance reports, schedule printouts, and document extraction. Use when creating printable documents or extracting data from PDFs.
+model_tier: sonnet
+parallel_hints:
+  can_parallel_with: [xlsx, code-review, test-writer]
+  must_serialize_with: [database-migration]
+  preferred_batch_size: 3
+context_hints:
+  max_file_context: 30
+  compression_level: 1
+  requires_git_context: false
+  requires_db_context: true
+escalation_triggers:
+  - pattern: "password.*protected"
+    reason: "Encrypted PDFs require human verification of access rights"
+  - keyword: ["PHI", "HIPAA", "confidential"]
+    reason: "Protected health information requires human review"
+  - pattern: "extract.*signature"
+    reason: "Signature extraction has legal implications"
 ---
 
 # PDF Processing Skill

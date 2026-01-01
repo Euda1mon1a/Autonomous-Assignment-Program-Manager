@@ -1,6 +1,19 @@
 ---
 name: governance
 description: Toggle PAI governance enforcement on/off. Control chain-of-command routing and session-end requirements.
+model_tier: haiku
+parallel_hints:
+  can_parallel_with: []
+  must_serialize_with: [startup, startupO, session-end]
+  preferred_batch_size: 1
+context_hints:
+  max_file_context: 20
+  compression_level: 2
+  requires_git_context: false
+  requires_db_context: false
+escalation_triggers:
+  - pattern: "production|compliance"
+    reason: "Governance changes for production/compliance require human approval"
 ---
 
 # Governance Control Skill

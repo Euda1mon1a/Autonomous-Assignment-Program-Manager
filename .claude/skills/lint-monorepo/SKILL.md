@@ -6,6 +6,18 @@ parallel_hints:
   can_parallel_with: [code-review, test-writer, security-audit]
   must_serialize_with: []
   preferred_batch_size: 10
+context_hints:
+  max_file_context: 30
+  compression_level: 2
+  requires_git_context: true
+  requires_db_context: false
+escalation_triggers:
+  - pattern: "breaking.*change"
+    reason: "Auto-fix may create breaking changes"
+  - pattern: "project-wide.*noqa"
+    reason: "Project-wide rule disabling needs human approval"
+  - keyword: ["unsafe", "public API"]
+    reason: "Unsafe fixes affecting public API need review"
 ---
 
 # Lint Monorepo Skill

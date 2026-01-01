@@ -1,6 +1,21 @@
 ---
 name: startup
 description: Review essential documentation and context at session start. Use when beginning a new session to load AI rules, git state, and pending tasks.
+model_tier: haiku
+parallel_hints:
+  can_parallel_with: [check-codex]
+  must_serialize_with: []
+  preferred_batch_size: 1
+context_hints:
+  max_file_context: 40
+  compression_level: 2
+  requires_git_context: true
+  requires_db_context: false
+escalation_triggers:
+  - pattern: "divergent.*history"
+    reason: "Git history issues require human intervention"
+  - pattern: "behind.*main"
+    reason: "Branch sync decisions need human input"
 ---
 
 # Session Startup Skill

@@ -1,6 +1,23 @@
 ---
 name: python-testing-patterns
 description: Advanced pytest patterns for Python backend testing. Use when dealing with async tests, complex fixtures, mocking strategies, database testing, or debugging flaky tests. Complements test-writer with deeper patterns.
+model_tier: sonnet
+parallel_hints:
+  can_parallel_with: [test-writer, coverage-reporter, code-review]
+  must_serialize_with: []
+  preferred_batch_size: 5
+context_hints:
+  max_file_context: 80
+  compression_level: 1
+  requires_git_context: true
+  requires_db_context: false
+escalation_triggers:
+  - pattern: "production.*database"
+    reason: "Production database access in tests requires human approval"
+  - pattern: "flaky.*persist"
+    reason: "Persistent flaky tests may need infrastructure changes"
+  - keyword: ["external service", "infrastructure"]
+    reason: "Test infrastructure changes need human review"
 ---
 
 # Python Testing Patterns Skill
