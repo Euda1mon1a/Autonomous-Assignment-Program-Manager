@@ -39,7 +39,7 @@ class ConstraintStatusResponse(BaseModel):
     weight: float
     category: str
     description: str
-    dependencies: List[str]
+    dependencies: list[str]
     enable_condition: str | None
     disable_reason: str | None
 
@@ -47,7 +47,7 @@ class ConstraintStatusResponse(BaseModel):
 class ConstraintListResponse(BaseModel):
     """Response model for constraint list."""
 
-    constraints: List[ConstraintStatusResponse]
+    constraints: list[ConstraintStatusResponse]
     total: int
     enabled_count: int
     disabled_count: int
@@ -66,8 +66,8 @@ class PresetApplyResponse(BaseModel):
 
     success: bool
     message: str
-    enabled_constraints: List[str]
-    disabled_constraints: List[str]
+    enabled_constraints: list[str]
+    disabled_constraints: list[str]
 
 
 def _constraint_to_response(config: ConstraintConfig) -> ConstraintStatusResponse:
@@ -129,7 +129,7 @@ async def list_constraints():
     return await get_constraint_status()
 
 
-@router.get("/enabled", response_model=List[ConstraintStatusResponse])
+@router.get("/enabled", response_model=list[ConstraintStatusResponse])
 async def list_enabled_constraints():
     """
     List enabled constraints.
@@ -150,7 +150,7 @@ async def list_enabled_constraints():
         )
 
 
-@router.get("/disabled", response_model=List[ConstraintStatusResponse])
+@router.get("/disabled", response_model=list[ConstraintStatusResponse])
 async def list_disabled_constraints():
     """
     List disabled constraints.
@@ -171,7 +171,7 @@ async def list_disabled_constraints():
         )
 
 
-@router.get("/category/{category}", response_model=List[ConstraintStatusResponse])
+@router.get("/category/{category}", response_model=list[ConstraintStatusResponse])
 async def list_constraints_by_category(category: str):
     """
     List constraints by category.

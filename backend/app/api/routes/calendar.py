@@ -125,7 +125,7 @@ async def export_person_ics(
     except ValueError as e:
         logger.error(f"Invalid request for calendar export: {e}", exc_info=True)
         raise HTTPException(status_code=404, detail="Resource not found")
-    except (ValueError, KeyError, AttributeError) as e:
+    except (KeyError, AttributeError) as e:
         logger.error(f"Error generating calendar export: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="An error occurred generating the calendar"
@@ -178,7 +178,7 @@ async def export_person_calendar(
     except ValueError as e:
         logger.error(f"Invalid request for calendar export: {e}", exc_info=True)
         raise HTTPException(status_code=404, detail="Resource not found")
-    except (ValueError, KeyError, AttributeError) as e:
+    except (KeyError, AttributeError) as e:
         logger.error(f"Error generating calendar export: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="An error occurred generating the calendar"
@@ -226,7 +226,7 @@ async def export_rotation_calendar(
     except ValueError as e:
         logger.error(f"Invalid request for calendar export: {e}", exc_info=True)
         raise HTTPException(status_code=404, detail="Resource not found")
-    except (ValueError, KeyError, AttributeError) as e:
+    except (KeyError, AttributeError) as e:
         logger.error(f"Error generating calendar export: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="An error occurred generating the calendar"

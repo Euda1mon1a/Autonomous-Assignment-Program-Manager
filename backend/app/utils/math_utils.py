@@ -1,8 +1,6 @@
 """Mathematical utility functions for calculations."""
 
-from typing import Union
-
-Number = Union[int, float]
+Number = int | float
 
 
 def clamp(value: Number, min_val: Number, max_val: Number) -> Number:

@@ -1273,7 +1273,7 @@ class BlueGreenDeploymentManager:
                 )
 
             return False
-        except (OSError, IOError) as e:
+        except OSError as e:
             logger.error(f"File I/O error during migration: {e}", exc_info=True)
 
             if self.config.migration_rollback_on_failure and deployment_id:

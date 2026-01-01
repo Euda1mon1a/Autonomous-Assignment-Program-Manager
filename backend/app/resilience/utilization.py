@@ -346,8 +346,9 @@ class UtilizationMonitor:
 
         return forecasts
 
+    @staticmethod
     @functools.lru_cache(maxsize=256)
-    def calculate_wait_time_multiplier(self, utilization: float) -> float:
+    def calculate_wait_time_multiplier(utilization: float) -> float:
         """
         Calculate expected wait time multiplier based on queuing theory.
 
