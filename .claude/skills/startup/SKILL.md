@@ -187,6 +187,20 @@ cd frontend && npm run lint:fix && npm test
 
 ---
 
+## Related Protocols
+
+| Protocol | When to Use |
+|----------|-------------|
+| [CCW Burn Protocol](../../protocols/CCW_BURN_PROTOCOL.md) | Before running parallel CCW task burns (20+ tasks) |
+| [PLAN_PARTY Protocol](../../protocols/PLAN_PARTY.md) | Complex task planning (after reconnaissance or standalone) |
+
+**CCW Burn Key Points:**
+- Validate every 20 tasks (build + type-check gate)
+- Watch for token concatenation bugs (`await sawait ervice`)
+- Pre-burn: `npm run build && npm run type-check` must pass
+
+---
+
 ## Example Invocation
 
 **User:** `/startup`
