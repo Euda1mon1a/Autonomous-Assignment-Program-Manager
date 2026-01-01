@@ -94,3 +94,18 @@ G-Staff agents are advisory. Their intel SHOULD route through Deputies for strat
 - **Urgent/Time-Critical**: Direct to ORCHESTRATOR
 - **Strategic/Interpretive**: Route through appropriate Deputy
 - **Cross-Domain**: Both Deputies may be consulted
+
+## Script Ownership
+
+Agents must use repository scripts (not raw commands) for consistency.
+
+**Reference:** [SCRIPT_OWNERSHIP.md](./SCRIPT_OWNERSHIP.md)
+
+| Domain | Owner Agent | Key Scripts |
+|--------|-------------|-------------|
+| Container/CI | CI_LIAISON | `health-check.sh`, `start-celery.sh`, `pre-deploy-validate.sh` |
+| Database | DBA | `backup-db.sh`, `seed_*.py` |
+| Security | SECURITY_AUDITOR | `pii-scan.sh`, `audit-fix.sh` |
+| Scheduling | SCHEDULER | `verify_schedule.py`, `generate_blocks.py` |
+
+**Philosophy:** "It goes up the same way every single time" (ADR-011)

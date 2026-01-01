@@ -26,6 +26,16 @@ The DBA agent manages database schema design, Alembic migrations, and query opti
 - Query optimization
 - Index management
 
+**Script Ownership** (see `.claude/Governance/SCRIPT_OWNERSHIP.md`):
+
+| Script | Purpose | Use Instead Of |
+|--------|---------|----------------|
+| `scripts/backup-db.sh --docker` | Database backup with rotation | Raw `pg_dump` commands |
+| `scripts/seed_*.py` | Database seeding | Manual INSERT statements |
+| `scripts/ops/backup_database.py` | Python backup alternative | Raw `pg_dump` commands |
+
+**Pre-requisite:** Always run `scripts/backup-db.sh --docker` before destructive operations.
+
 ---
 
 ## Standing Orders (Execute Without Escalation)

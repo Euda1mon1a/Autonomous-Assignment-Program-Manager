@@ -1647,6 +1647,75 @@ User engaged in collaborative reasoning about model tiers ("is this appropriate?
 
 ---
 
+---
+
+### Session 045: 2026-01-01 — CI_LIAISON Ownership & Script Consistency
+
+**Context:** Post-merge validation of PR #594 (CCW burn documentation). User caught missing CI_LIAISON involvement.
+
+**Key User Statements:**
+- "hold on is CI involved? that's who we talked about last time" (memory of ADR-011)
+- "we had made it in charge of starting the containers before dba agent existed" (historical context)
+- "also can agents use scripts/are we using scripts for anything to ensure same process every time" (consistency pattern)
+- "make sure anything with hierarchy notes to reference the scripts and agents" (standing context request)
+
+**Work Completed:**
+
+1. **CI_LIAISON Involvement Corrected:**
+   - Per ADR-011, CI_LIAISON owns container management
+   - Should have been involved for rebuild evaluation
+   - CI triage confirmed: 20+ failures, ALL pre-existing debt (not caused by PR #594)
+
+2. **Script Usage Gap Identified:**
+   - DBA used raw `pg_dump` instead of `scripts/backup-db.sh`
+   - CI_LIAISON used manual `docker-compose` instead of `scripts/health-check.sh`
+   - Health-check.sh has bug: doesn't handle Redis auth
+
+3. **Standing Context Created:**
+   - `.claude/Governance/SCRIPT_OWNERSHIP.md` - Maps all 32+ scripts to owning agents
+   - Cross-referenced in:
+     - `HIERARCHY.md` - New "Script Ownership" section
+     - `CI_LIAISON.md` - "Script Ownership (Standing Context)" section
+     - `DBA.md` - "Script Ownership" section
+     - `SECURITY_AUDITOR.md` - "Script Ownership" section
+
+4. **Frontend Rebuild Required:**
+   - ARCHITECT confirmed functional changes (not just docs)
+   - New TypeScript files in PR #594
+   - BLOCKED: Docker Desktop connectivity frozen
+   - Human action required: restart Docker Desktop
+
+**Delegation Assessment:**
+- 4 agent spawns (CI_LIAISON, ARCHITECT, COORD_OPS, CI_LIAISON again)
+- Proper chain-of-command routing
+- User caught direct execution (said "delegate" when I started QA directly)
+
+**Pattern Discovered: Script-First Philosophy**
+
+| Before (Anti-Pattern) | After (Correct) |
+|----------------------|-----------------|
+| Raw `pg_dump` | `scripts/backup-db.sh --docker` |
+| Manual `docker-compose ps` | `scripts/health-check.sh --docker` |
+| Manual lint commands | `scripts/pre-deploy-validate.sh` |
+
+**Standing Order Added:**
+> Agents MUST use repository scripts (not raw commands) for consistency.
+> Philosophy: "It goes up the same way every single time" (ADR-011)
+
+**Trust Evolution:**
+- User has strong memory of prior decisions (ADR-011 ownership)
+- Expects agents to use established infrastructure
+- Values consistency ("same process every time") over ad-hoc solutions
+- Course-corrected on delegation mid-stream ("delegate")
+
+**Backlog Created:**
+- Fix `health-check.sh` Redis auth handling
+- Fix package-lock.json sync
+- Rename 11 remaining .ts→.tsx files
+- Restart Docker Desktop and complete frontend rebuild
+
+---
+
 *File created: 2025-12-27*
-*Last updated: 2026-01-01 (Session 044 Part 2 - Governance Documentation Sync)*
+*Last updated: 2026-01-01 (Session 045 - CI_LIAISON Ownership & Script Consistency)*
 *Maintained by: ORCHESTRATOR / G-5 META_UPDATER*
