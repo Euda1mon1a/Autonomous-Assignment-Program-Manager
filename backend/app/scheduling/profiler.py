@@ -13,7 +13,7 @@ import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, Generator
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class PhaseMetrics:
     memory_start: float | None = None
     memory_end: float | None = None
 
-    def finalize(self):
+    def finalize(self) -> None:
         """Calculate final metrics."""
         if self.end_time and self.start_time:
             self.duration = self.end_time - self.start_time
@@ -77,7 +77,7 @@ class SchedulingProfiler:
                 logger.warning("psutil not installed, memory tracking disabled")
                 self.track_memory = False
 
-    def start_phase(self, name: str):
+    def start_phase(self, name: str) -> None:
         """
         Start timing a phase.
 
@@ -98,7 +98,7 @@ class SchedulingProfiler:
 
         logger.debug(f"Started phase: {name}")
 
-    def end_phase(self, name: str):
+    def end_phase(self, name: str) -> None:
         """
         End timing a phase.
 
@@ -121,7 +121,7 @@ class SchedulingProfiler:
         logger.debug(f"Ended phase: {name} (duration: {phase.duration:.3f}s)")
 
     @contextmanager
-    def phase(self, name: str):
+    def phase(self, name: str) -> Generator[None, None, None]:
         """
         Context manager for automatic phase timing.
 

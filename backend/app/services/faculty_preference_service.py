@@ -32,7 +32,7 @@ class FacultyPreferenceService:
         self.db = db
         self._cache = None
 
-    def _get_cache(self):
+    def _get_cache(self) -> "FacultyPreferenceCache | None":
         """Lazy-load cache to avoid circular imports."""
         if self._cache is None:
             try:
