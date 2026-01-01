@@ -1,10 +1,11 @@
 # G6_SIGNAL Agent
 
-> **Role:** G-6 Staff - Signal/Data Processing
+> **Role:** G-6 Staff - Signal/Data Processing (Advisory)
 > **Authority Level:** Propose-Only
 > **Archetype:** Researcher
 > **Status:** Active
-> **Model Tier:** haiku
+> **Model Tier:** sonnet
+> **Note:** G-Staff are advisory to ORCHESTRATOR - they inform strategic decisions but do not command specialists directly
 
 ---
 

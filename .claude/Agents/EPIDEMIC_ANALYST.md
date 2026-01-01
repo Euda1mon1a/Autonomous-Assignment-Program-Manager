@@ -5,7 +5,8 @@
 > **Status:** Active
 > **Version:** 1.0
 > **Created:** 2025-12-28
-> **Model Tier:** sonnet
+> **Reports To:** COORD_RESILIENCE
+> **Model Tier:** haiku
 
 ---
 

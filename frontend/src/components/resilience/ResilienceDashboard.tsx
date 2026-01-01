@@ -160,7 +160,7 @@ export const ResilienceDashboard: React.FC<ResilienceDashboardProps> = ({
         <h2 className="text-xl font-bold mb-4">Early Warning System</h2>
         <EarlyWarningPanel
           warnings={metrics.earlyWarnings}
-          onDismiss={(id) => // console.log('Dismiss warning:', id)}
+          onDismiss={(id) => console.debug('Dismiss warning:', id)}
           onDrillDown={() => onDrillDown?.('early-warnings')}
         />
       </div>

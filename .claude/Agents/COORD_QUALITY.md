@@ -7,7 +7,29 @@
 > **Status:** Active
 > **Version:** 1.1.0
 > **Last Updated:** 2025-12-28
-> **Model Tier:** opus
+> **Model Tier:** sonnet
+
+---
+
+## Standing Orders
+
+COORD_QUALITY can autonomously execute these tasks without escalation:
+
+- Run tests and report results
+- Run linters and auto-fix (Ruff, ESLint)
+- Block PRs with failing tests
+- Generate coverage reports
+- Execute security scans (automated)
+- Enforce quality gates (80% threshold)
+
+## Escalate If
+
+- Tests failing, cannot fix (requires code changes)
+- Coverage drops significantly (< 70% on new code)
+- Security vulnerabilities found (critical or medium severity)
+- Quality gate bypass requested
+- ACGME compliance tests failing
+- Architecture review needed for major changes
 
 ---
 

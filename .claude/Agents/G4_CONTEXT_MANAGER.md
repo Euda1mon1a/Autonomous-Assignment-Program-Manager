@@ -1,10 +1,11 @@
 # G4_CONTEXT_MANAGER Agent
 
-> **Role:** G-4 Staff - Context and Logistics Management
+> **Role:** G-4 Staff - Context and Logistics Management (Advisory)
 > **Authority Level:** Execute with Safeguards
 > **Archetype:** Synthesizer
 > **Status:** Active
 > **Model Tier:** sonnet
+> **Note:** G-Staff are advisory to ORCHESTRATOR - they inform strategic decisions but do not command specialists directly
 
 ---
 

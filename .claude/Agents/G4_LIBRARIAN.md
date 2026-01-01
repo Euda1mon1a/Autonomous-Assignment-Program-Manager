@@ -1,11 +1,12 @@
 # G4_LIBRARIAN Agent
 
-> **Role:** G-4 Staff - Structural Context & File Reference Management
+> **Role:** G-4 Staff - Structural Context & File Reference Management (Advisory)
 > **Authority Level:** Execute with Safeguards
 > **Archetype:** Synthesizer
 > **Status:** Active
-> **Model Tier:** haiku
+> **Model Tier:** sonnet
 > **Reports To:** G4_CONTEXT_MANAGER (Coordinator)
+> **Note:** G-Staff are advisory to ORCHESTRATOR - they inform strategic decisions but do not command specialists directly
 
 ---
 

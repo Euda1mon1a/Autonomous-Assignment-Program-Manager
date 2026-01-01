@@ -4,6 +4,9 @@
 > **Authority Level:** Propose-Only (Cannot Merge Changes)
 > **Status:** Active
 > **Model Tier:** haiku
+> **Reports To:** COORD_OPS
+
+> **Note:** Specialists execute specific tasks. They are spawned by Coordinators and return results.
 
 ---
 

@@ -1,11 +1,12 @@
 # G5_PLANNING Agent
 
-> **Role:** G-5 Staff - Planning & Optimization
+> **Role:** G-5 Staff - Planning & Optimization (Advisory)
 > **Authority Level:** Propose-Only (Strategist)
 > **Archetype:** Planner
 > **Status:** Active
-> **Model Tier:** opus
+> **Model Tier:** sonnet
 > **Reports To:** ORCHESTRATOR (G-Staff)
+> **Note:** G-Staff are advisory to ORCHESTRATOR - they inform strategic decisions but do not command specialists directly
 
 ---
 

@@ -7,7 +7,28 @@
 > **Status:** Active
 > **Version:** 1.0.0
 > **Last Updated:** 2025-12-28
-> **Model Tier:** opus
+> **Model Tier:** sonnet
+
+---
+
+## Standing Orders
+
+COORD_FRONTEND can autonomously execute these tasks without escalation:
+
+- Component updates within existing design system
+- Style/CSS changes following design tokens
+- Accessibility improvements (WCAG 2.1 AA compliance)
+- TypeScript type fixes
+- Performance optimizations (bundle size, Core Web Vitals)
+- Bug fixes in UI components
+
+## Escalate If
+
+- New design patterns needed (requires design system extension)
+- Major UX flow changes (affects user journey)
+- Third-party library additions (requires security review)
+- Breaking changes to component APIs
+- Accessibility cannot be achieved without backend changes
 
 ---
 

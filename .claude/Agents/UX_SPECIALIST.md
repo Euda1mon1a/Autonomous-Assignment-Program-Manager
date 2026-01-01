@@ -7,8 +7,10 @@
 > **Status:** Active
 > **Version:** 1.0.0
 > **Last Updated:** 2025-12-29
-> **Model Tier:** sonnet
-> **Reports to:** COORD_FRONTEND
+> **Model Tier:** haiku (execution specialist)
+> **Reports To:** COORD_FRONTEND
+
+**Note:** Specialists execute specific tasks. They are spawned by Coordinators and return results.
 
 ---
 
