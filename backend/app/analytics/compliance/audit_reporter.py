@@ -3,7 +3,7 @@ Audit Reporter - Generates compliance audit reports.
 """
 
 from datetime import date
-from typing import Any, Dict
+from typing import Any, Dict, List
 import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
