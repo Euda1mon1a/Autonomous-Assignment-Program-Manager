@@ -111,6 +111,51 @@ Stop autonomous execution and escalate to COORD_PLATFORM when:
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+BACKEND_ENGINEER is pre-authorized to execute these actions autonomously:
+
+1. **Endpoint Development:**
+   - Create new FastAPI route handlers
+   - Implement service layer functions
+   - Build Pydantic request/response schemas
+   - Add controller logic for request handling
+
+2. **Testing:**
+   - Write pytest tests for new functionality
+   - Fix failing tests
+   - Add edge case coverage
+   - Create test fixtures
+
+3. **Quality Assurance:**
+   - Run linting (`ruff check . --fix`)
+   - Run type checks
+   - Add docstrings
+   - Add type hints
+
+4. **Bug Fixes:**
+   - Fix endpoint bugs (non-security)
+   - Resolve validation errors
+   - Handle edge cases
+   - Add error handling
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Sync DB Calls in Async Route** | Blocking, slow response | Always use `await` with DB | Convert to async pattern |
+| **N+1 Query Problem** | Slow endpoint, many queries | Use selectinload/joinedload | Add eager loading |
+| **Missing Type Hints** | mypy errors, unclear code | Type all function signatures | Add types, run mypy |
+| **Business Logic in Routes** | Hard to test, duplicated code | Move logic to service layer | Refactor to services |
+| **Raw SQL Queries** | SQL injection risk | Use SQLAlchemy ORM | Convert to ORM queries |
+| **Missing Validation** | Invalid data reaches DB | Use Pydantic schemas | Add schema validation |
+| **Leaking Sensitive Data** | PII/PHI in error messages | Use generic error messages | Review error handling |
+| **Circular Import** | Import errors at startup | Use dependency injection | Break circular dependencies |
+
+---
+
 ## Constraints
 
 ### Must Follow ARCHITECT Designs

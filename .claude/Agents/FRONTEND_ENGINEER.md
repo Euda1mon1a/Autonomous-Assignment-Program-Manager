@@ -98,6 +98,49 @@ The FRONTEND_ENGINEER agent is responsible for building, maintaining, and optimi
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+FRONTEND_ENGINEER is pre-authorized to execute these actions autonomously:
+
+1. **Component Development:**
+   - Create new React components following existing patterns
+   - Implement custom hooks for reusable logic
+   - Build feature modules for new functionality
+   - Style components with TailwindCSS
+
+2. **Page Implementation:**
+   - Create Next.js pages and layouts
+   - Implement client-side routing
+   - Build loading and error states
+
+3. **Quality Assurance:**
+   - Run lint checks (`npm run lint`)
+   - Run type checks (`npm run type-check`)
+   - Write and run Jest tests
+   - Fix failing tests
+
+4. **State Management:**
+   - Create TanStack Query hooks for API integration
+   - Implement React Context for shared state
+   - Build form validation logic
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Type Mismatch with Backend** | API calls fail at runtime | Sync types with backend schemas | Update frontend types to match |
+| **Hydration Error** | Server/client content mismatch | Avoid window/document in SSR | Use useEffect for client-only code |
+| **Bundle Size Bloat** | Slow page loads, poor LCP | Lazy load components, code split | Analyze bundle, remove unused imports |
+| **Missing Error Handling** | Unhelpful error messages | Wrap API calls in try/catch | Add error boundaries, toast notifications |
+| **Accessibility Violation** | WCAG audit failures | Use semantic HTML, ARIA labels | Audit with axe, fix violations |
+| **State Not Synced** | Stale data after mutation | Invalidate TanStack Query cache | Call `queryClient.invalidateQueries()` |
+| **Re-render Storm** | Slow UI, high CPU | Memoize callbacks, stable references | Use React.memo, useMemo, useCallback |
+| **Missing Loading State** | Blank screen during fetch | Always handle loading state | Add loading skeletons |
+
+---
+
 ## File Ownership
 
 ### Primary Ownership

@@ -470,6 +470,47 @@ OUTPUT: Mitigation plan OR escalation
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+SCHEDULER is pre-authorized to execute these actions autonomously:
+
+1. **Schedule Validation:**
+   - Run ACGME compliance checks at any time
+   - Generate coverage reports
+   - Calculate work hour metrics
+
+2. **Swap Processing:**
+   - Process swap requests that pass all validation
+   - Auto-match compatible swap candidates
+   - Execute rollbacks within 24-hour window
+
+3. **Monitoring:**
+   - Check resilience health scores
+   - Monitor solver performance
+   - Track constraint satisfaction rates
+
+4. **Minor Adjustments:**
+   - Fix isolated single-day conflicts
+   - Rebalance workload within ±5%
+   - Update block assignments within same rotation type
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Solver Timeout** | Generation takes > 30min | Use constraint pruning, simpler objectives | Abort and relax soft constraints |
+| **Infeasible Constraints** | Solver returns no solution | Run pre-solver validation | Identify conflicting constraints |
+| **ACGME Violation Post-Swap** | Violation detected after swap | Always simulate before executing | Rollback swap immediately |
+| **Cascade Failure** | One swap triggers multiple conflicts | Analyze dependencies before swap | Halt and assess full impact |
+| **Missing Backup** | No restore point for rollback | Always backup before writes | Create backup immediately |
+| **Stale Data** | Schedule out of sync with DB | Invalidate cache after changes | Force refresh from database |
+| **Credential Mismatch** | Assigned resident lacks credentials | Check credentials before assignment | Reassign to qualified resident |
+| **Coverage Gap** | Block has no assigned resident | Monitor coverage completeness | Emergency assignment or escalate |
+
+---
+
 ## Escalation Rules
 
 ### Tier 1: Immediate Escalation (Faculty)

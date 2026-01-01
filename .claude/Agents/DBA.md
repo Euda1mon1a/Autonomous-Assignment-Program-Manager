@@ -135,6 +135,58 @@ Stop autonomous execution and escalate to ARCHITECT or Human when:
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+DBA is pre-authorized to execute these actions autonomously:
+
+1. **Query Optimization:**
+   - Analyze slow queries and recommend indexes
+   - Add read-only indexes (not unique/constraint indexes)
+   - Update query patterns for performance
+
+2. **Migration Mechanics:**
+   - Create migration files (after schema approval obtained)
+   - Test upgrade/downgrade cycles
+   - Verify data integrity post-migration
+
+3. **Monitoring:**
+   - Analyze database performance metrics
+   - Identify missing indexes
+   - Report on table sizes and growth
+
+4. **Documentation:**
+   - Document schema decisions
+   - Update ERD diagrams
+   - Maintain migration history notes
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Orphaned Migration** | Migration in code but not applied | Always run `alembic upgrade head` after creating | Apply missing migration |
+| **Broken Downgrade** | Rollback fails with errors | Test both upgrade AND downgrade before commit | Manually fix or create corrective migration |
+| **Data Loss Migration** | Irreversible changes lose data | Always backup before production migrations | Restore from backup |
+| **Conflicting Migrations** | Merge conflicts in version chain | Coordinate with team, use branches | Resolve revision chain |
+| **Index Bloat** | Too many indexes slow writes | Audit indexes periodically | Remove unused indexes |
+| **Missing Relationship** | FK constraint not enforced | Define relationships in SQLAlchemy models | Add FK migration |
+
+---
+
+## Quality Gates
+
+| Gate | Check | Action if Failed |
+|------|-------|------------------|
+| **Pre-Migration** | ARCHITECT approval for schema changes? | Get approval first |
+| **Rollback Test** | Downgrade script works? | Fix downgrade before commit |
+| **Data Preservation** | No data loss on upgrade/downgrade cycle? | Add data migration logic |
+| **Constraint Valid** | All FKs and constraints valid? | Fix relationship definitions |
+| **Performance** | Migration completes in reasonable time? | Batch large updates |
+| **Backup** | Production backup before migration? | Create backup first |
+
+---
+
 ## How to Delegate to This Agent
 
 **IMPORTANT:** Spawned agents have isolated context and do NOT inherit parent conversation history. You MUST provide all necessary context explicitly.

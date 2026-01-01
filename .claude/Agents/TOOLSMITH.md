@@ -326,6 +326,102 @@ When this skill is invoked, Claude MUST:
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+TOOLSMITH is pre-authorized to execute these actions autonomously:
+
+1. **Skill Creation:**
+   - Create new skills in `.claude/skills/` following templates
+   - Validate YAML frontmatter is correct
+   - Test slash command registration
+   - Update skill inventory
+
+2. **Template Maintenance:**
+   - Create/update reusable templates
+   - Document template usage
+   - Maintain template library consistency
+
+3. **Documentation Updates:**
+   - Add/update skill documentation
+   - Create examples for new skills
+   - Cross-reference related skills
+
+4. **Validation:**
+   - Verify all new components meet standards
+   - Run pre-commit checks on skill files
+   - Test that skills register correctly
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **YAML Frontmatter Invalid** | Skill doesn't register as slash command | Validate YAML before commit, use template | Fix YAML syntax, restart Claude Code |
+| **Duplicate Skill Name** | Conflict with existing skill | Check existing skills before creating | Rename with unique identifier |
+| **Missing Dependencies** | Skill references nonexistent tools | Document prerequisites in skill | Add missing dependencies, update docs |
+| **Overly Complex Skill** | Hard to maintain, users confused | Start simple, add features iteratively | Refactor into smaller skills |
+| **Inconsistent Style** | Doesn't match project patterns | Read existing skills first | Update to match established patterns |
+| **Agent Spec Incomplete** | Agent doesn't know how to behave | Use AGENT_FACTORY templates | Add missing sections per template |
+
+---
+
+## How to Delegate to This Agent
+
+**IMPORTANT:** Spawned agents have isolated context - they do NOT inherit parent conversation history. When delegating to TOOLSMITH, provide complete context.
+
+### Required Context
+
+| Context Item | Required | Description |
+|--------------|----------|-------------|
+| `component_type` | YES | What to create: skill, agent, or MCP tool |
+| `component_name` | YES | Name for the new component (kebab-case for skills, UPPER_SNAKE for agents) |
+| `purpose` | YES | Clear description of what this component does |
+| `trigger_conditions` | For skills | When this skill should activate |
+| `archetype` | For agents | Researcher, Validator, Generator, Critic, or Synthesizer |
+| `tools_needed` | If applicable | What MCP tools or skills this component needs |
+| `existing_patterns` | Recommended | References to similar existing components |
+
+### Files to Reference
+
+| File | Purpose |
+|------|---------|
+| `/home/user/Autonomous-Assignment-Program-Manager/.claude/Agents/AGENT_FACTORY.md` | Agent archetype patterns |
+| `/home/user/Autonomous-Assignment-Program-Manager/.claude/skills/skill-factory/SKILL.md` | Skill creation workflow |
+| `/home/user/Autonomous-Assignment-Program-Manager/.claude/CONSTITUTION.md` | Foundational rules |
+| `/home/user/Autonomous-Assignment-Program-Manager/.claude/skills/*/SKILL.md` | Existing skill examples |
+
+### Example Delegation Prompt
+
+```markdown
+## Agent: TOOLSMITH
+
+## Task
+Create a new skill for validating schedule exports.
+
+## Context
+- Component type: skill
+- Name: validate-schedule-export
+- Purpose: Validate that schedule export files meet format requirements
+- Trigger: When user runs `/validate-schedule-export [file]`
+
+## Requirements
+- Check JSON schema compliance
+- Verify all required fields present
+- Validate date ranges
+- Return structured validation report
+
+## Similar Components
+Reference: `.claude/skills/schedule-verification/SKILL.md`
+
+## Output
+- Create skill directory and SKILL.md
+- Verify slash command registers
+- Report completion
+```
+
+---
+
 ## Quality Checklist
 
 Before completing any creation task:

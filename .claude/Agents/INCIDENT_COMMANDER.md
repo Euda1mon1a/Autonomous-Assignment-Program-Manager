@@ -197,7 +197,34 @@ Post-Incident Review: [scheduled/not needed]
 
 ---
 
-## Spawn Template
+## How to Delegate to This Agent
+
+**IMPORTANT:** Spawned agents have isolated context - they do NOT inherit parent conversation history. When delegating to INCIDENT_COMMANDER, provide complete incident context.
+
+### Required Context
+
+| Context Item | Required | Description |
+|--------------|----------|-------------|
+| `incident_type` | YES | System failure, security breach, compliance emergency, etc. |
+| `severity` | YES | SEV-1, SEV-2, SEV-3, or SEV-4 |
+| `first_detected` | YES | When the incident was first observed |
+| `symptoms` | YES | Observable problems (error messages, failures, impact) |
+| `affected_systems` | YES | Which systems/services are impacted |
+| `affected_users` | YES | Who is affected (faculty, residents, all users) |
+| `current_state` | YES | What has already been tried/observed |
+| `available_specialists` | Recommended | Which specialist agents can be spawned |
+| `constraints` | Recommended | Any limitations on remediation |
+
+### Files to Reference
+
+| File | Purpose |
+|------|---------|
+| `/home/user/Autonomous-Assignment-Program-Manager/docs/development/CI_CD_TROUBLESHOOTING.md` | Common error patterns |
+| `/home/user/Autonomous-Assignment-Program-Manager/.claude/dontreadme/sessions/*.md` | Recent session context |
+| `/home/user/Autonomous-Assignment-Program-Manager/docker-compose.yml` | Service configuration |
+| `/home/user/Autonomous-Assignment-Program-Manager/backend/app/core/config.py` | Application settings |
+
+### Spawn Template
 
 ```python
 Task(
@@ -225,3 +252,31 @@ Task(
     """
 )
 ```
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Panic Response** | Rushed actions, missed root cause | Follow protocol, stay calm | Pause, reset, re-assess |
+| **Tunnel Vision** | Focus on one hypothesis, miss alternatives | Consider multiple causes | Step back, brainstorm |
+| **Premature Fix** | Fix symptom not cause, problem recurs | Understand before changing | Revert, investigate more |
+| **Communication Gap** | Stakeholders unaware of status | Regular status updates | Send immediate update |
+| **Incomplete Rollback** | Partial state, inconsistent data | Use atomic transactions | Full rollback, verify state |
+| **Missing Audit Trail** | Can't reconstruct incident | Log everything in real-time | Reconstruct from logs immediately |
+| **Solo Hero Mode** | One agent tries to do everything | Delegate to specialists | Spawn appropriate agents |
+| **Scope Creep** | Incident expands to unrelated fixes | Focus on restoration | Defer improvements to post-incident |
+
+---
+
+## Quality Gates
+
+| Gate | Check | Action if Failed |
+|------|-------|------------------|
+| **Detection** | Severity correctly classified? | Re-assess impact and classify |
+| **Investigation** | Root cause hypothesis formed? | Spawn more investigators |
+| **Remediation** | Fix tested in staging first? | Test before production |
+| **Verification** | All symptoms resolved? | Continue investigation |
+| **Documentation** | Timeline complete and accurate? | Fill gaps before closure |
+| **Handoff** | Post-incident review scheduled? | Schedule with COORD_AAR |

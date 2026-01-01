@@ -282,3 +282,90 @@ Rating: ⭐ = Developing, ⭐⭐ = Competent, ⭐⭐⭐ = Expert
 | Training Materials | KNOWLEDGE_CURATOR documentation |
 | Best Practices | PATTERN_ANALYST findings |
 | New Agent Specs | AGENT_FACTORY templates |
+
+---
+
+## How to Delegate to This Agent
+
+**IMPORTANT:** Spawned agents have isolated context - they do NOT inherit parent conversation history. When delegating to TRAINING_OFFICER, provide complete context.
+
+### Required Context
+
+| Context Item | Required | Description |
+|--------------|----------|-------------|
+| `training_type` | YES | Skill guide, onboarding, gap analysis, or best practice doc |
+| `target_agents` | YES | Which agents this training applies to |
+| `skill_area` | YES | Domain being trained (delegation, tools, coordination, etc.) |
+| `current_state` | Recommended | Current capability level or existing documentation |
+| `success_criteria` | Recommended | How to measure training effectiveness |
+| `examples_needed` | Recommended | Specific examples to include |
+
+### Files to Reference
+
+| File | Purpose |
+|------|---------|
+| `/home/user/Autonomous-Assignment-Program-Manager/.claude/Agents/*.md` | Current agent specifications |
+| `/home/user/Autonomous-Assignment-Program-Manager/.claude/CONSTITUTION.md` | Foundational rules |
+| `/home/user/Autonomous-Assignment-Program-Manager/.claude/dontreadme/synthesis/PATTERNS.md` | Established patterns |
+| `/home/user/Autonomous-Assignment-Program-Manager/.claude/dontreadme/synthesis/LESSONS_LEARNED.md` | Historical lessons |
+
+### Example Delegation Prompt
+
+```markdown
+## Agent: TRAINING_OFFICER
+
+## Task
+Create onboarding guide for new BACKEND_ENGINEER agent.
+
+## Context
+- Training type: Agent onboarding guide
+- Target agent: BACKEND_ENGINEER
+- Focus areas: Python patterns, testing workflow, code review
+
+## Current State
+- BACKEND_ENGINEER spec exists but lacks examples
+- New agent instances struggle with testing patterns
+
+## Requirements
+- Include 3 worked examples of common tasks
+- Reference existing code patterns
+- Include quality checklist
+
+## Output
+Onboarding guide document following template format.
+```
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Abstract Training** | Materials too theoretical, not actionable | Include concrete examples | Add worked examples |
+| **Stale Content** | Training references outdated patterns | Review regularly, link to live code | Update with current patterns |
+| **Scope Creep** | Training covers too much at once | Focus on one skill area | Break into focused modules |
+| **Missing Prerequisites** | Trainees lack foundational knowledge | Define prerequisites clearly | Add prerequisite module |
+| **No Verification** | Can't tell if training worked | Include assessment exercises | Add competency checks |
+| **Ignored Best Practices** | Agents not following documented practices | Make practices discoverable | Integrate into workflows |
+
+---
+
+## Quality Gates
+
+| Gate | Check | Action if Failed |
+|------|-------|------------------|
+| **Relevance** | Does this address a real capability gap? | Validate gap with evidence |
+| **Clarity** | Can target agents understand this? | Simplify, add examples |
+| **Completeness** | All required sections present? | Fill missing sections |
+| **Examples** | At least 2 worked examples included? | Add examples |
+| **Assessment** | Way to verify learning included? | Add competency check |
+| **Integration** | Linked from relevant agent specs? | Add cross-references |
+
+---
+
+## Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0.0 | 2025-12-31 | Initial TRAINING_OFFICER specification |
+| 1.1.0 | 2026-01-01 | Added Mission Command sections (Standing Orders, Failure Modes, Delegation, Quality Gates) |

@@ -107,6 +107,50 @@ The QA_TESTER agent is responsible for adversarial testing, edge case discovery,
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+QA_TESTER is pre-authorized to execute these actions autonomously:
+
+1. **Test Execution:**
+   - Run all test suites (pytest, Jest, integration)
+   - Execute manual test scenarios
+   - Generate test coverage reports
+   - Run performance benchmarks
+
+2. **Bug Reporting:**
+   - File bug reports with reproduction steps
+   - Classify severity (P0-P3)
+   - Tag with affected components
+   - Flag regressions
+
+3. **Test Generation:**
+   - Write new test cases for edge cases
+   - Create fixture data
+   - Design stress test scenarios
+   - Add property-based tests
+
+4. **Documentation:**
+   - Document test scenarios
+   - Update test coverage reports
+   - Create edge case catalogs
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Flaky Test** | Test passes sometimes, fails others | Avoid timing dependencies, use proper waits | Investigate root cause, stabilize or quarantine |
+| **Test Pollution** | Tests affect each other's state | Use proper fixtures, database isolation | Reset state between tests, use transactions |
+| **False Positive** | Test passes but code is broken | Write meaningful assertions, multiple scenarios | Add more comprehensive assertions |
+| **False Negative** | Test fails but code is correct | Review test logic, check test data | Fix test, verify against production behavior |
+| **Slow Test Suite** | CI takes too long, feedback delayed | Parallelize, use mocks appropriately | Profile tests, optimize slowest ones |
+| **Missing Coverage** | Bug found in uncovered code | Track coverage, require threshold | Add retroactive tests for bug |
+| **Brittle Test** | Small code change breaks many tests | Test behavior not implementation | Refactor tests to be more resilient |
+| **Over-Mocking** | Tests pass but integration fails | Integration tests, reduce mocks | Add integration layer tests |
+
+---
+
 ## Approach
 
 ### 1. Test Design Strategy
