@@ -1,6 +1,6 @@
 """Block schemas."""
 
-from datetime import date
+from datetime import date as date_type
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -11,7 +11,7 @@ from app.validators.date_validators import validate_academic_year_date
 class BlockBase(BaseModel):
     """Base block schema."""
 
-    date: date = Field(..., description="Date of the block")
+    date: date_type = Field(..., description="Date of the block")
     time_of_day: str = Field(
         ..., description="Time of day: AM or PM", pattern="^(AM|PM)$"
     )
@@ -29,7 +29,7 @@ class BlockBase(BaseModel):
 
     @field_validator("date")
     @classmethod
-    def validate_date(cls, v: date) -> date:
+    def validate_date(cls, v: date_type) -> date_type:
         """Validate date is within academic year bounds."""
         return validate_academic_year_date(v, field_name="date")
 
