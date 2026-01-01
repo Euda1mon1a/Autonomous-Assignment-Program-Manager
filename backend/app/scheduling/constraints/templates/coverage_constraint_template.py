@@ -65,7 +65,107 @@ class CoverageConstraintTemplate(SoftConstraint):
         )
 
     def add_to_cpsat(self, model, variables, context):
-        pass
+        """
+        Add coverage constraint to CP-SAT model.
+
+        Ensures that required slots have at least min_coverage assignments.
+        Uses slack variables for soft constraint handling (penalize undercoverage).
+
+        Args:
+            model: OR-Tools CP-SAT model
+            variables: Dict containing 'assignments' decision variables
+            context: SchedulingContext with block data
+        """
+        x = variables.get("assignments", {})
+        if not x or not self.required_slots:
+            return
+
+        # Build block index mapping
+        block_to_idx = {b.id: context.block_idx[b.id] for b in context.blocks}
+
+        # For each required slot, ensure coverage
+        undercoverage_vars = []
+        for slot in self.required_slots:
+            block_id, rotation_id = slot
+            if block_id not in block_to_idx:
+                continue
+
+            b_i = block_to_idx[block_id]
+
+            # Collect all assignment variables for this block
+            # (summing across all persons assigned to this block)
+            slot_vars = [x[key] for key in x if key[1] == b_i]
+
+            if slot_vars:
+                slot_sum = sum(slot_vars)
+
+                # Create undercoverage slack variable
+                slack = model.NewIntVar(0, self.min_coverage, f"coverage_slack_{block_id}")
+                undercoverage_vars.append(slack)
+
+                # coverage + slack >= min_coverage
+                model.Add(slot_sum + slack >= self.min_coverage)
+
+        # Add weighted undercoverage to soft objectives
+        if undercoverage_vars:
+            if "soft_objectives" not in variables:
+                variables["soft_objectives"] = []
+            variables["soft_objectives"].append(
+                (int(self.weight * 10), sum(undercoverage_vars))  # Higher weight for coverage
+            )
 
     def add_to_pulp(self, model, variables, context):
-        pass
+        """
+        Add coverage constraint to PuLP model.
+
+        Ensures that required slots have at least min_coverage assignments.
+
+        Args:
+            model: PuLP model
+            variables: Dict containing 'assignments' decision variables
+            context: SchedulingContext with block data
+        """
+        import pulp
+
+        x = variables.get("assignments", {})
+        if not x or not self.required_slots:
+            return
+
+        # Build block index mapping
+        block_to_idx = {b.id: context.block_idx[b.id] for b in context.blocks}
+
+        # For each required slot, ensure coverage
+        undercoverage_vars = []
+        for slot in self.required_slots:
+            block_id, rotation_id = slot
+            if block_id not in block_to_idx:
+                continue
+
+            b_i = block_to_idx[block_id]
+
+            # Collect all assignment variables for this block
+            slot_vars = [x[key] for key in x if key[1] == b_i]
+
+            if slot_vars:
+                # Create undercoverage slack variable
+                slack = pulp.LpVariable(
+                    f"coverage_slack_{block_id}",
+                    lowBound=0,
+                    upBound=self.min_coverage,
+                    cat="Integer"
+                )
+                undercoverage_vars.append(slack)
+
+                # coverage + slack >= min_coverage
+                model += (
+                    pulp.lpSum(slot_vars) + slack >= self.min_coverage,
+                    f"coverage_{block_id}"
+                )
+
+        # Add weighted undercoverage to soft objectives
+        if undercoverage_vars:
+            if "soft_objectives" not in variables:
+                variables["soft_objectives"] = []
+            variables["soft_objectives"].append(
+                (self.weight * 10, pulp.lpSum(undercoverage_vars))
+            )

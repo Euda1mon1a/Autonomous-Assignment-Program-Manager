@@ -75,7 +75,139 @@ class FairnessConstraintTemplate(SoftConstraint):
         return counts
 
     def add_to_cpsat(self, model, variables, context):
-        pass
+        """
+        Add fairness constraint to CP-SAT model as soft constraint.
+
+        Minimizes deviation from mean assignment count using auxiliary variables.
+        For each person, creates a deviation variable capturing |count - mean|.
+
+        Args:
+            model: OR-Tools CP-SAT model
+            variables: Dict containing 'assignments' decision variables
+            context: SchedulingContext with residents/faculty data
+        """
+        x = variables.get("assignments", {})
+        if not x:
+            return
+
+        persons = context.residents + context.faculty
+        if not persons:
+            return
+
+        # Get person indices and count assignments per person
+        person_vars = {}
+        for person in persons:
+            if person in context.residents:
+                p_i = context.resident_idx[person.id]
+            else:
+                p_i = context.faculty_idx[person.id]
+
+            # Collect all assignment variables for this person
+            person_assignment_vars = [
+                x[key] for key in x if key[0] == p_i
+            ]
+            if person_assignment_vars:
+                person_vars[person.id] = person_assignment_vars
+
+        if not person_vars:
+            return
+
+        # Calculate expected mean (total slots / persons)
+        total_blocks = len(context.blocks)
+        mean_assignments = total_blocks // len(person_vars) if person_vars else 0
+
+        # Create deviation variables and add to objective
+        deviations = []
+        for person_id, assignment_vars in person_vars.items():
+            # Sum of assignments for this person
+            person_sum = sum(assignment_vars)
+
+            # Create auxiliary variable for deviation from mean
+            dev_var = model.NewIntVar(0, total_blocks, f"fairness_dev_{person_id}")
+            deviations.append(dev_var)
+
+            # |person_sum - mean| <= dev_var (absolute value constraint)
+            model.Add(person_sum - mean_assignments <= dev_var)
+            model.Add(mean_assignments - person_sum <= dev_var)
+
+        # Add weighted sum of deviations to minimize (soft constraint)
+        if deviations:
+            # Store for later objective composition
+            if "soft_objectives" not in variables:
+                variables["soft_objectives"] = []
+            variables["soft_objectives"].append(
+                (int(self.weight), sum(deviations))
+            )
 
     def add_to_pulp(self, model, variables, context):
-        pass
+        """
+        Add fairness constraint to PuLP model as soft constraint.
+
+        Minimizes deviation from mean assignment count.
+
+        Args:
+            model: PuLP model
+            variables: Dict containing 'assignments' decision variables
+            context: SchedulingContext with residents/faculty data
+        """
+        import pulp
+
+        x = variables.get("assignments", {})
+        if not x:
+            return
+
+        persons = context.residents + context.faculty
+        if not persons:
+            return
+
+        # Get person indices and count assignments per person
+        person_vars = {}
+        for person in persons:
+            if person in context.residents:
+                p_i = context.resident_idx[person.id]
+            else:
+                p_i = context.faculty_idx[person.id]
+
+            # Collect all assignment variables for this person
+            person_assignment_vars = [
+                x[key] for key in x if key[0] == p_i
+            ]
+            if person_assignment_vars:
+                person_vars[person.id] = person_assignment_vars
+
+        if not person_vars:
+            return
+
+        # Calculate expected mean
+        total_blocks = len(context.blocks)
+        mean_assignments = total_blocks // len(person_vars) if person_vars else 0
+
+        # Create deviation variables
+        deviations = []
+        for person_id, assignment_vars in person_vars.items():
+            # Create deviation variable
+            dev_var = pulp.LpVariable(
+                f"fairness_dev_{person_id}",
+                lowBound=0,
+                cat="Integer"
+            )
+            deviations.append(dev_var)
+
+            # Add absolute value constraints
+            person_sum = pulp.lpSum(assignment_vars)
+            model += (
+                person_sum - mean_assignments <= dev_var,
+                f"fairness_upper_{person_id}"
+            )
+            model += (
+                mean_assignments - person_sum <= dev_var,
+                f"fairness_lower_{person_id}"
+            )
+
+        # Store weighted deviations for objective composition
+        if deviations:
+            if "soft_objectives" not in variables:
+                variables["soft_objectives"] = []
+            variables["soft_objectives"].append(
+                (self.weight, pulp.lpSum(deviations))
+            )

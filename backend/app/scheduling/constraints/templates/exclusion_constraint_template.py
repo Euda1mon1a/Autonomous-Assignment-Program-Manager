@@ -98,7 +98,128 @@ class ExclusionConstraintTemplate(HardConstraint):
         return None
 
     def add_to_cpsat(self, model, variables, context):
-        pass
+        """
+        Add exclusion constraint to CP-SAT model.
+
+        For each excluded person-rotation combination, sets the assignment
+        variable to 0 (forbidden).
+
+        Args:
+            model: OR-Tools CP-SAT model
+            variables: Dict containing 'assignments' decision variables
+            context: SchedulingContext with persons and rotations
+        """
+        x = variables.get("assignments", {})
+        if not x:
+            return
+
+        # Identify excluded persons
+        excluded_person_ids = set()
+        for person in context.residents + context.faculty:
+            if self._matches_person_type(person):
+                excluded_person_ids.add(person.id)
+
+            # Also check specific combinations
+            for excluded_type, _ in self.excluded_combinations:
+                if self._matches_person_type(person, excluded_type):
+                    excluded_person_ids.add(person.id)
+
+        if not excluded_person_ids:
+            return
+
+        # Build person to index mapping
+        person_to_idx = {}
+        for person in context.residents:
+            person_to_idx[person.id] = context.resident_idx[person.id]
+        for person in context.faculty:
+            person_to_idx[person.id] = context.faculty_idx[person.id]
+
+        # For each excluded person, forbid assignments to excluded rotations
+        for person_id in excluded_person_ids:
+            if person_id not in person_to_idx:
+                continue
+
+            p_i = person_to_idx[person_id]
+            person = self._get_person(person_id, context)
+
+            # Forbid assignments for this person
+            for key in x:
+                if key[0] != p_i:
+                    continue
+
+                # Check if this rotation is excluded for this person
+                # key[1] is the block index
+                for block in context.blocks:
+                    if context.block_idx[block.id] == key[1]:
+                        # Check each template/rotation
+                        for template in context.templates:
+                            rotation = template
+                            if self._should_be_excluded(person, rotation):
+                                model.Add(x[key] == 0)
+                                break
+                        break
 
     def add_to_pulp(self, model, variables, context):
-        pass
+        """
+        Add exclusion constraint to PuLP model.
+
+        For each excluded person-rotation combination, sets the assignment
+        variable to 0 (forbidden).
+
+        Args:
+            model: PuLP model
+            variables: Dict containing 'assignments' decision variables
+            context: SchedulingContext with persons and rotations
+        """
+        x = variables.get("assignments", {})
+        if not x:
+            return
+
+        # Identify excluded persons
+        excluded_person_ids = set()
+        for person in context.residents + context.faculty:
+            if self._matches_person_type(person):
+                excluded_person_ids.add(person.id)
+
+            # Also check specific combinations
+            for excluded_type, _ in self.excluded_combinations:
+                if self._matches_person_type(person, excluded_type):
+                    excluded_person_ids.add(person.id)
+
+        if not excluded_person_ids:
+            return
+
+        # Build person to index mapping
+        person_to_idx = {}
+        for person in context.residents:
+            person_to_idx[person.id] = context.resident_idx[person.id]
+        for person in context.faculty:
+            person_to_idx[person.id] = context.faculty_idx[person.id]
+
+        constraint_count = 0
+        # For each excluded person, forbid assignments to excluded rotations
+        for person_id in excluded_person_ids:
+            if person_id not in person_to_idx:
+                continue
+
+            p_i = person_to_idx[person_id]
+            person = self._get_person(person_id, context)
+
+            # Forbid assignments for this person
+            for key in x:
+                if key[0] != p_i:
+                    continue
+
+                # Check if this rotation is excluded for this person
+                for block in context.blocks:
+                    if context.block_idx[block.id] == key[1]:
+                        for template in context.templates:
+                            rotation = template
+                            if self._should_be_excluded(person, rotation):
+                                model += (
+                                    x[key] == 0,
+                                    f"exclusion_{person_id}_{constraint_count}"
+                                )
+                                constraint_count += 1
+                                break
+                        break
