@@ -29,6 +29,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
 from app.core.audience_auth import (

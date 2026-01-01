@@ -26,7 +26,7 @@ from app.core.rate_limit_tiers import (
     get_tier_for_role,
     set_custom_limit,
 )
-from app.core.security import get_admin_user, get_current_user
+from app.core.security import get_admin_user, get_current_active_user, get_current_user
 from app.models.user import User
 from app.schemas.rate_limit import (
     AllTiersResponse,

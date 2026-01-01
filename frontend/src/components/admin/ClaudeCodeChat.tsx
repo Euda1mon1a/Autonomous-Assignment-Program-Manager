@@ -26,7 +26,7 @@ const ClaudeCodeChat: React.FC<ClaudeCodeChatProps> = ({
   } = useClaudeChatContext();
 
   const [input, setInput] = useState('');
-  const [context, setContext] = useState<Partial<ClaudeCodeExecutionContext> | null>(null);
+  const [context, setContext] = useState<Partial<ClaudeCodeExecutionContext> | undefined>(undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [selectedArtifact, setSelectedArtifact] = useState<ChatArtifact | null>(null);
 
@@ -51,8 +51,18 @@ const ClaudeCodeChat: React.FC<ClaudeCodeChatProps> = ({
 
     const handleStreamUpdate = (update: StreamUpdate) => {
       // Handle real-time stream updates
-      if (update.type === 'artifact') {
-        onTaskComplete?.(update.metadata);
+      if (update.type === 'artifact' && update.metadata) {
+        // Transform stream metadata to ChatArtifact if it has required fields
+        const meta = update.metadata as Record<string, unknown>;
+        if (meta.id && meta.type && meta.title && meta.data) {
+          onTaskComplete?.({
+            id: String(meta.id),
+            type: meta.type as ChatArtifact['type'],
+            title: String(meta.title),
+            data: meta.data as ChatArtifact['data'],
+            createdAt: meta.createdAt ? new Date(String(meta.createdAt)) : new Date(),
+          });
+        }
       }
     };
 

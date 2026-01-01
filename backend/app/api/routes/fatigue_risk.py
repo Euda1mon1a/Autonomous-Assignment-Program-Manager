@@ -20,7 +20,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.api.deps import get_current_user, get_db
+from app.api.deps import get_current_user
+from app.db.session import get_async_db
 from app.core.logging import get_logger
 from app.resilience.frms import (
     FRMSService,
@@ -85,7 +86,7 @@ async def get_samn_perelli_levels() -> dict[str, Any]:
 async def submit_fatigue_assessment(
     resident_id: UUID,
     request: SamnPerelliAssessmentRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Submit a fatigue self-assessment for a resident.
@@ -149,7 +150,7 @@ async def calculate_fatigue_score(
 async def get_resident_fatigue_profile(
     resident_id: UUID,
     target_time: datetime | None = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Get complete fatigue profile for a resident.
@@ -181,7 +182,7 @@ async def get_resident_fatigue_profile(
 async def get_alertness_prediction(
     resident_id: UUID,
     target_time: datetime | None = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Get alertness prediction for a specific time.
@@ -227,7 +228,7 @@ async def get_alertness_prediction(
 async def assess_schedule_fatigue_risk(
     resident_id: UUID,
     request: ScheduleFatigueAssessmentRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Assess fatigue risk for a proposed schedule.
@@ -257,7 +258,7 @@ async def assess_schedule_fatigue_risk(
 )
 async def get_current_hazard(
     resident_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Get current fatigue hazard status for a resident.
@@ -294,7 +295,7 @@ async def get_current_hazard(
 @router.get("/hazards/scan", response_model=HazardScanResponse)
 async def scan_all_residents_for_hazards(
     min_level: str = Query("yellow", description="Minimum hazard level to include"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Scan all residents for fatigue hazards.
@@ -342,7 +343,7 @@ async def scan_all_residents_for_hazards(
 )
 async def get_sleep_debt_state(
     resident_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Get current sleep debt state for a resident.
@@ -386,7 +387,7 @@ async def get_sleep_debt_state(
 async def predict_sleep_debt_trajectory(
     resident_id: UUID,
     request: SleepDebtTrajectoryRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Predict sleep debt trajectory over upcoming days.
@@ -421,7 +422,7 @@ async def predict_sleep_debt_trajectory(
 @router.post("/team/heatmap", response_model=TeamHeatmapResponse)
 async def get_team_fatigue_heatmap(
     request: TeamHeatmapRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Generate team fatigue heatmap for a day.
@@ -512,7 +513,7 @@ async def export_temporal_constraints() -> TemporalConstraintsExport:
 async def validate_acgme_with_fatigue(
     resident_id: UUID,
     request: ACGMEFatigueValidationRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Validate schedule against ACGME rules through fatigue lens.

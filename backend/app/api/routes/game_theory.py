@@ -14,6 +14,7 @@ from uuid import UUID
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.api.dependencies.role_filter import require_admin
 from app.core.security import get_current_active_user

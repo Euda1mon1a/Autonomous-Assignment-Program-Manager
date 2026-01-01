@@ -20,6 +20,7 @@ Tier 2 (Strategic) endpoints:
 import logging
 import time
 from datetime import date, datetime, timedelta
+from typing import Any
 
 logger = logging.getLogger(__name__)
 from uuid import UUID
@@ -28,7 +29,8 @@ logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, desc
-from sqlalchemy.ext.asyncio import AsyncSession, joinedload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload, Session
 
 from app.api.dependencies.role_filter import require_admin
 from app.core.security import get_current_active_user
@@ -185,8 +187,8 @@ def persist_event(
         related_health_check_id=health_check_id,
     )
     db.add(event)
-    await db.commit()
-    await db.refresh(event)
+    db.commit()
+    db.refresh(event)
     return event
 
 

@@ -32,16 +32,17 @@ Related Schemas:
 
 import logging
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession, joinedload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload, Session
 
 from app.core.config import get_settings
-from app.core.security import get_current_user
+from app.core.security import get_current_user, get_current_active_user
 from app.db.session import get_async_db
 from app.models.assignment import Assignment
 from app.models.block import Block

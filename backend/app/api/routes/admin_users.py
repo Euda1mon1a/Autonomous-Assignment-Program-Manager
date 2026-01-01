@@ -62,7 +62,7 @@ def _user_to_admin_response(user: User) -> AdminUserResponse:
 
 
 def _log_activity(
-    db: Session,
+    db: AsyncSession,
     action: ActivityAction,
     admin_user: User,
     target_user: User | None = None,

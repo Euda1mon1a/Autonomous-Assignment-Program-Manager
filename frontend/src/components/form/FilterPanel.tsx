@@ -109,7 +109,7 @@ export function FilterPanel({
 
               {filter.type === 'select' && filter.options && (
                 <select
-                  value={filter.value || ''}
+                  value={typeof filter.value === 'string' ? filter.value : ''}
                   onChange={(e) => onFilterChange(filter.key, e.target.value)}
                   aria-label={filter.label}
                   className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"

@@ -132,7 +132,7 @@ def _pathway_result_to_response(result: PathwayResult) -> PathwayResultResponse:
 @router.post("/barriers/detect", response_model=BarrierAnalysisResponse)
 async def detect_barriers(
     request: BarrierDetectionRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -178,7 +178,7 @@ async def detect_barriers(
 @router.post("/pathways/optimize", response_model=PathwayResultResponse)
 async def optimize_pathway(
     request: PathwayOptimizationRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -212,7 +212,7 @@ async def optimize_pathway(
 @router.post("/swaps/analyze", response_model=SwapBarrierAnalysisResponse)
 async def analyze_swap_barriers(
     request: SwapBarrierAnalysisRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -280,7 +280,7 @@ async def analyze_swap_barriers(
 
 @router.get("/capacity", response_model=CatalystCapacityResponse)
 async def get_catalyst_capacity(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -338,7 +338,7 @@ async def get_catalyst_capacity(
 @router.post("/batch/optimize", response_model=BatchOptimizationResponse)
 async def optimize_batch(
     request: BatchOptimizationRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """

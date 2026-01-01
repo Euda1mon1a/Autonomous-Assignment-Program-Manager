@@ -160,7 +160,7 @@ export default function AdminSchedulingPage() {
   // Performance: Memoize filtered and sorted data arrays
   const processedRuns = useMemo(() =>
     (runs?.runs || []).slice().sort((a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     ),
     [runs?.runs]
   );

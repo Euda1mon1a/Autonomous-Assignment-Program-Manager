@@ -14,7 +14,8 @@ from datetime import date, datetime, timedelta
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy import select, and_
-from sqlalchemy.ext.asyncio import AsyncSession, joinedload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload, Session
 
 from app.db.session import get_async_db
 from app.models.assignment import Assignment

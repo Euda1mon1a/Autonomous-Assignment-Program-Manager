@@ -51,7 +51,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import get_current_user
+from app.core.security import get_current_active_user, get_current_user
 from app.db.session import get_async_db
 from app.models.swap import SwapRecord
 from app.models.user import User

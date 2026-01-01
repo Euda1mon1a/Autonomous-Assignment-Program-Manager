@@ -86,6 +86,20 @@ class Settings(BaseSettings):
     CACHE_ROTATION_TTL: int = 86400  # Rotation template cache TTL (24 hours)
 
     @property
+    def SQLALCHEMY_DATABASE_URI(self) -> str:
+        """
+        Get async-compatible database URI for SQLAlchemy.
+
+        Converts standard postgresql:// to postgresql+asyncpg:// for async support.
+
+        Returns:
+            str: Database URI with asyncpg driver.
+        """
+        return self.DATABASE_URL.replace(
+            "postgresql://", "postgresql+asyncpg://"
+        )
+
+    @property
     def redis_url_with_password(self) -> str:
         """
         Get Redis URL with password authentication if REDIS_PASSWORD is set.

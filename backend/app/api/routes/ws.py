@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect, status
 from fastapi.exceptions import HTTPException
 
-from app.core.security import get_current_user, verify_token
+from app.core.security import get_current_active_user, get_current_user, verify_token
 from app.db.session import get_async_db
 from app.models.user import User
 from app.websocket.manager import get_connection_manager
@@ -52,7 +52,7 @@ async def get_websocket_user(
 async def websocket_endpoint(
     websocket: WebSocket,
     token: str | None = Query(None),
-    db=Depends(get_db),
+    db=Depends(get_async_db),
 ) -> None:
     """
     WebSocket endpoint for real-time schedule updates.

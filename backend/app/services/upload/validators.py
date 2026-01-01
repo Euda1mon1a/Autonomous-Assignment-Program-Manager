@@ -15,7 +15,13 @@ import re
 from pathlib import Path
 from typing import Any
 
-import magic
+# Optional dependency - libmagic
+try:
+    import magic
+    MAGIC_AVAILABLE = True
+except ImportError:
+    magic = None  # type: ignore
+    MAGIC_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -210,14 +216,21 @@ class FileValidator:
         Returns:
             str: Detected MIME type
         """
-        try:
-            mime = magic.Magic(mime=True)
-            detected = mime.from_buffer(file_content)
-            return detected
-        except Exception as e:
-            logger.warning(f"Failed to detect MIME type with magic: {e}")
-            # Fallback to basic detection
-            return "application/octet-stream"
+        if MAGIC_AVAILABLE and magic is not None:
+            try:
+                mime_detector = magic.Magic(mime=True)
+                detected = mime_detector.from_buffer(file_content)
+                return detected
+            except Exception as e:
+                logger.warning(f"Failed to detect MIME type with magic: {e}")
+
+        # Fallback: detect based on magic bytes signatures
+        for mime_type, signatures in self.MAGIC_SIGNATURES.items():
+            if any(file_content.startswith(sig) for sig in signatures):
+                return mime_type
+
+        # Default fallback
+        return "application/octet-stream"
 
     def _verify_magic_bytes(self, file_content: bytes, mime_type: str) -> bool:
         """

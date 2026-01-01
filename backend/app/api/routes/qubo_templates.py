@@ -15,6 +15,7 @@ from datetime import date, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.core.security import get_current_active_user
 from app.db.session import get_async_db
@@ -95,11 +96,8 @@ def build_scheduling_context(
     residents = residents_query.all()
 
     # Query faculty
-    faculty = (
-        (await db.execute(select(Person).where(Person.role == "FACULTY")))
-        .scalars()
-        .all()
-    )
+    faculty_query = db.query(Person).filter(Person.role == "FACULTY")
+    faculty = faculty_query.all()
 
     # Query templates
     templates_query = db.query(RotationTemplate)

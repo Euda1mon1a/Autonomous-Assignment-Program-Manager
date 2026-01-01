@@ -4,7 +4,7 @@ from datetime import date, datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.validators.date_validators import validate_academic_year_date
 
