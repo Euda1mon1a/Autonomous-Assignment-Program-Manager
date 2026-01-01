@@ -32,6 +32,19 @@ COORD_FRONTEND can autonomously execute these tasks without escalation:
 
 ---
 
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **TypeScript Errors Persist** | Type errors remain after FRONTEND_ENGINEER pass; strict mode fails | Use explicit types from start; reference existing patterns; validate incrementally | Fix type errors manually; add missing type definitions; update tsconfig if needed |
+| **Accessibility Violations** | WCAG 2.1 AA audit fails; missing ARIA labels, keyboard nav broken | Use UX_SPECIALIST for accessibility review; test with screen reader | Add ARIA labels; fix keyboard navigation; ensure focus management; re-audit |
+| **Bundle Size Bloat** | Feature adds >50kb; Core Web Vitals degrade | Code-split heavy components; lazy-load routes; tree-shake imports | Remove unused dependencies; dynamic import large libraries; compress assets |
+| **Component API Breaking Changes** | Component props change; breaks downstream consumers | Version components; deprecate before removing; document migration path | Communicate breaking change; provide codemod; support old API temporarily |
+| **Mobile Layout Breaks** | Responsive design fails on small viewports; overflow/truncation issues | Test on 375px+ viewports; use mobile-first design; validate on real devices | Add responsive breakpoints; adjust spacing/typography; test on device matrix |
+| **TanStack Query Cache Stale** | UI shows outdated data; cache not invalidating correctly | Use proper query keys; invalidate on mutations; set appropriate staleTime | Force refetch; clear cache; fix invalidation logic; add optimistic updates |
+
+---
+
 ## Charter
 
 The COORD_FRONTEND coordinator is responsible for all frontend and user experience operations within the multi-agent system. It sits between the ORCHESTRATOR and frontend domain agents (FRONTEND_ENGINEER, UX_SPECIALIST), receiving broadcast signals, spawning and coordinating its managed agents, and reporting synthesized UI/UX results back upstream.

@@ -4,8 +4,20 @@ description: Automated IT helper for detecting and fixing code issues. Use when 
 model_tier: opus
 parallel_hints:
   can_parallel_with: [lint-monorepo, test-writer]
-  must_serialize_with: [database-migration]
+  must_serialize_with: [database-migration, systematic-debugger]
   preferred_batch_size: 3
+context_hints:
+  max_file_context: 80
+  compression_level: 1
+  requires_git_context: true
+  requires_db_context: false
+escalation_triggers:
+  - pattern: "ACGME|compliance"
+    reason: "ACGME compliance code changes require domain expert review"
+  - pattern: "auth|security|password"
+    reason: "Security-related code requires security-audit review"
+  - pattern: "migration|schema"
+    reason: "Database changes require database-migration skill"
 ---
 
 # Automated Code Fixer

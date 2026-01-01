@@ -68,7 +68,7 @@ export function Alert({
       role="alert"
     >
       <div className="flex gap-3">
-        <Icon className={`w-5 h-5 flex-shrink-0 ${config.iconColor}`} />
+        <Icon className={`w-5 h-5 flex-shrink-0 ${config.iconColor}`} aria-hidden="true" />
 
         <div className="flex-1 min-w-0">
           {title && (
@@ -81,9 +81,9 @@ export function Alert({
           <button
             onClick={onDismiss}
             className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
-            aria-label="Dismiss"
+            aria-label="Dismiss alert"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         )}
       </div>

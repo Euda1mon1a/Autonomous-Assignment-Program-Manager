@@ -1,6 +1,23 @@
 ---
 name: react-typescript
 description: TypeScript expertise for React/Next.js development. Use when writing React components with strict typing, fixing TypeScript errors, handling generic components, or working with TanStack Query types. Focuses on common pitfalls and advanced patterns.
+model_tier: sonnet
+parallel_hints:
+  can_parallel_with: [frontend-development, test-writer, code-review]
+  must_serialize_with: []
+  preferred_batch_size: 5
+context_hints:
+  max_file_context: 60
+  compression_level: 1
+  requires_git_context: true
+  requires_db_context: false
+escalation_triggers:
+  - pattern: "module.*augmentation"
+    reason: "Module augmentation has global impact"
+  - pattern: "third-party.*conflict"
+    reason: "Third-party library type conflicts need investigation"
+  - keyword: ["complex generic", "performance"]
+    reason: "Complex type patterns may need expert review"
 ---
 
 # React TypeScript Skill

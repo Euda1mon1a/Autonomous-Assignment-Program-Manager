@@ -506,7 +506,9 @@ Schedule quarterly reviews of API responses and logs.
 
 ## 8. Immediate Actions Checklist
 
-- [ ] **CRITICAL:** Document current PHI exposure in HUMAN_TODO.md
+> **Status Update (2026-01-01):** PHI exposure documented in HUMAN_TODO.md. See "Security & Compliance" section.
+
+- [x] **CRITICAL:** Document current PHI exposure in HUMAN_TODO.md
 - [ ] **CRITICAL:** Add "X-Contains-PHI" warning headers to affected endpoints
 - [ ] **CRITICAL:** Implement PHI access audit logging
 - [ ] **HIGH:** Sanitize logging to remove email addresses and names

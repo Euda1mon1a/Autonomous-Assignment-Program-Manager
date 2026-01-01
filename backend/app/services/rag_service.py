@@ -47,7 +47,7 @@ class RAGService:
     DEFAULT_MIN_SIMILARITY = 0.5
     APPROX_CHARS_PER_TOKEN = 4  # Rough approximation for English text
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """Initialize RAG service.
 
         Args:

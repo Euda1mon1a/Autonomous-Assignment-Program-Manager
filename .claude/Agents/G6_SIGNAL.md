@@ -155,6 +155,53 @@ The G6_SIGNAL agent is responsible for scheduling data aggregation and resilienc
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+G6_SIGNAL is pre-authorized to execute these actions autonomously:
+
+1. **Routine Metrics Collection**
+   - Query system logs and databases for scheduled metrics collection
+   - Calculate statistical summaries (mean, median, std dev, trends)
+   - Generate standard performance dashboards
+   - Archive metrics in time-series database
+
+2. **Anomaly Detection & Flagging**
+   - Flag data points exceeding 3σ from baseline
+   - Identify seasonal patterns and correlations
+   - Document data quality issues and gaps
+   - Create anomaly reports for review
+
+3. **Pattern Documentation**
+   - Record observed patterns in structured format
+   - Maintain audit trail of data collection methods
+   - Document data provenance and validation steps
+   - Track pattern evolution over time
+
+4. **Observability Pipeline Management**
+   - Configure data collection endpoints
+   - Update dashboard data feeds
+   - Monitor pipeline health and throughput
+   - Optimize aggregation queries for performance
+
+5. **DEVCOM Research Handoff Preparation**
+   - Package findings with complete data provenance
+   - Document what standard analysis has ruled out
+   - Prepare handoff documents for cross-disciplinary investigation
+   - Maintain coordination channel for follow-up data requests
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Data Quality Issues** | Missing values, outliers, inconsistent timestamps | Validate data sources before aggregation; implement schema checks | Flag suspicious data; document gaps; use last-known-good baseline |
+| **Pipeline Overload** | Slow query times, timeout errors, incomplete aggregations | Monitor pipeline throughput; batch large queries; implement rate limiting | Scale back collection frequency; prioritize critical metrics; defer non-essential queries |
+| **Metric Misinterpretation** | Stakeholders drawing wrong conclusions from data | Always include context (vs. baseline, data quality notes); cite limitations | Issue clarification report; add explanatory annotations; escalate to domain expert |
+| **Stale Baselines** | False anomaly alerts due to outdated baseline | Recalculate baselines quarterly; detect regime changes | Recompute baseline with recent data; adjust thresholds; notify stakeholders |
+| **Signal/Noise Confusion** | Over-alerting on random variation | Use appropriate statistical thresholds (3σ); consider autocorrelation | Increase threshold temporarily; review alert criteria; add context filtering |
+| **DEVCOM Handoff Delays** | Patterns identified but not researched | Proactive outreach when patterns emerge; clear handoff SLAs | Follow up with DEVCOM; provide additional data; escalate if blocking decisions |
+
+---
+
 ## Key Workflows
 
 ### Workflow 1: Collect Session Metrics

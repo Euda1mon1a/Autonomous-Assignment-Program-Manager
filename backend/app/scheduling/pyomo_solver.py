@@ -115,7 +115,7 @@ class PyomoSolver(BaseSolver):
         solver_name: str = "cbc",  # Free solver, or "glpk", "gurobi", "cplex"
         capture_duals: bool = True,
         capture_slacks: bool = True,
-    ):
+    ) -> None:
         """
         Initialize Pyomo solver.
 
@@ -215,7 +215,7 @@ class PyomoSolver(BaseSolver):
         # ==================================================
         # OBJECTIVE: Maximize coverage
         # ==================================================
-        def objective_rule(m):
+        def objective_rule(m) -> float:
             return sum(m.x[r, b, t] for r in R for b in B for t in T)
 
         model.objective = Objective(rule=objective_rule, sense=maximize)
@@ -223,7 +223,7 @@ class PyomoSolver(BaseSolver):
         # ==================================================
         # CONSTRAINT: At most one rotation per resident per block
         # ==================================================
-        def one_rotation_rule(m, r, b):
+        def one_rotation_rule(m, r, b) -> bool:
             return sum(m.x[r, b, t] for t in T) <= 1
 
         model.one_rotation = Constraint(R, B, rule=one_rotation_rule)
@@ -231,7 +231,7 @@ class PyomoSolver(BaseSolver):
         # ==================================================
         # CONSTRAINT: Template capacity per block
         # ==================================================
-        def template_capacity_rule(m, b, t):
+        def template_capacity_rule(m, b, t) -> bool:
             template = templates[t]
             max_residents = template.max_residents or len(residents)
             return sum(m.x[r, b, t] for r in R) <= max_residents
@@ -246,7 +246,7 @@ class PyomoSolver(BaseSolver):
             resident_idx = {r.id: i for i, r in enumerate(residents)}
             block_idx = {b.id: i for i, b in enumerate(blocks)}
 
-            def preserve_rule(m, idx):
+            def preserve_rule(m, idx) -> bool:
                 a = existing_assignments[idx]
                 if (
                     a.person_id in resident_idx

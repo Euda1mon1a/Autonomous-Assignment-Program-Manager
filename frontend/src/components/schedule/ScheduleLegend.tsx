@@ -43,10 +43,10 @@ export function ScheduleLegend({
   const displayItems = isExpanded ? rotationLegendItems : rotationLegendItems.slice(0, 4)
 
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 p-3 ${className}`}>
+    <div className={`bg-white rounded-lg border border-gray-200 p-3 ${className}`} role="region" aria-label="Activity color legend">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <Info className="w-4 h-4 text-gray-400" />
+          <Info className="w-4 h-4 text-gray-400" aria-hidden="true" />
           <span>Activity Legend</span>
         </div>
         {compact && (
@@ -54,11 +54,12 @@ export function ScheduleLegend({
             onClick={() => setIsExpanded(!isExpanded)}
             className="p-1 hover:bg-gray-100 rounded transition-colors"
             aria-label={isExpanded ? 'Collapse legend' : 'Expand legend'}
+            aria-expanded={isExpanded}
           >
             {isExpanded ? (
-              <ChevronUp className="w-4 h-4 text-gray-500" />
+              <ChevronUp className="w-4 h-4 text-gray-500" aria-hidden="true" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-gray-500" />
+              <ChevronDown className="w-4 h-4 text-gray-500" aria-hidden="true" />
             )}
           </button>
         )}
@@ -74,12 +75,14 @@ export function ScheduleLegend({
           <div
             key={item.type}
             className="flex items-center gap-1.5"
+            role="listitem"
           >
             <span
               className={`
                 inline-block px-2 py-0.5 rounded text-xs font-medium border
                 ${item.color}
               `}
+              aria-hidden="true"
             >
               {item.type.substring(0, 3).toUpperCase()}
             </span>
@@ -105,11 +108,12 @@ export function ScheduleLegend({
  */
 export function ScheduleLegendInline({ className = '' }: { className?: string }) {
   return (
-    <div className={`flex flex-wrap gap-3 ${className}`}>
+    <div className={`flex flex-wrap gap-3 ${className}`} role="list" aria-label="Activity type legend">
       {rotationLegendItems.slice(0, 6).map((item) => (
-        <div key={item.type} className="flex items-center gap-1">
+        <div key={item.type} className="flex items-center gap-1" role="listitem">
           <span
             className={`w-3 h-3 rounded border ${item.color.split(' ')[0]} ${item.color.split(' ')[2]}`}
+            aria-hidden="true"
           />
           <span className="text-xs text-gray-500">{item.label}</span>
         </div>

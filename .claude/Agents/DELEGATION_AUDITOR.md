@@ -359,6 +359,48 @@ Projected Metrics:
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+DELEGATION_AUDITOR is pre-authorized to execute these actions autonomously:
+
+1. **Session Analysis:**
+   - Read session transcripts and advisor notes
+   - Count tool invocations by category
+   - Calculate delegation ratios and metrics
+   - Identify hierarchy bypasses
+
+2. **Report Generation:**
+   - Create delegation efficiency reports
+   - Generate trend analysis across sessions
+   - Produce anti-pattern alerts
+   - Archive reports in `.claude/Scratchpad/delegation-audits/`
+
+3. **Pattern Detection:**
+   - Flag sessions with < 50% delegation ratio
+   - Identify repeated hierarchy bypasses
+   - Track improvement or regression trends
+   - Note context explaining patterns
+
+4. **Pre-Delegation Advisory:**
+   - Review proposed delegation plans
+   - Check for anti-patterns (one-agent-per-type, etc.)
+   - Recommend adjustments (PROCEED/ADJUST/WARN)
+   - Log warnings for end-of-session audit
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **False Positive Anti-Patterns** | Flags justified direct actions as problems, user ignores alerts | Always include context section, recognize emergency/user directives | Review with ORCHESTRATOR, adjust thresholds if pattern |
+| **Stale Baseline Data** | Comparisons use outdated averages, trends misleading | Update running metrics after each audit | Recalculate baseline from recent sessions |
+| **Misclassification** | Categorizes neutral actions as delegation or direct | Reference action classification rules in spec | Review examples, update classification logic |
+| **Incomplete Audit** | Missing tool invocations, undercounting | Ensure full session transcript or structured summary provided | Request complete data, flag gaps in report |
+| **Trend Misinterpretation** | Correlation mistaken for causation, wrong recommendations | Require sufficient data points (5+ sessions), caveat low-confidence insights | Note limitations, suggest experiments to validate |
+
+---
+
 ## Escalation Rules
 
 ### Report to User (via ORCHESTRATOR)

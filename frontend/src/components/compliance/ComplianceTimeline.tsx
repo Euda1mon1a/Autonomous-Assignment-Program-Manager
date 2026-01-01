@@ -63,7 +63,7 @@ export const ComplianceTimeline: React.FC<ComplianceTimelineProps> = ({
   };
 
   return (
-    <div className={`compliance-timeline bg-white rounded-lg shadow-lg p-6 ${className}`}>
+    <div className={`compliance-timeline bg-white rounded-lg shadow-lg p-6 ${className}`} role="region" aria-label="Compliance history timeline">
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-xl font-bold mb-2">Compliance History</h3>
@@ -74,7 +74,7 @@ export const ComplianceTimeline: React.FC<ComplianceTimelineProps> = ({
         )}
 
         {/* Summary Stats */}
-        <div className="flex gap-4 mt-4">
+        <div className="flex gap-4 mt-4" role="status" aria-label="Compliance event summary">
           <div className="flex items-center gap-2">
             <Badge variant="destructive">{stats.violations} Violations</Badge>
           </div>
@@ -120,6 +120,7 @@ export const ComplianceTimeline: React.FC<ComplianceTimelineProps> = ({
                     ${onEventClick ? 'hover:shadow-md cursor-pointer' : ''}
                     focus:outline-none focus:ring-2 focus:ring-blue-500
                   `}
+                  aria-label={`${event.type} event: ${event.category} on ${new Date(event.date).toLocaleDateString()}`}
                 >
                   {/* Date */}
                   <div className="text-xs text-gray-600 mb-1">
@@ -134,7 +135,7 @@ export const ComplianceTimeline: React.FC<ComplianceTimelineProps> = ({
                   {/* Header */}
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-lg" role="img" aria-label={event.type}>
+                      <span className="text-lg" aria-hidden="true">
                         {config.icon}
                       </span>
                       <h4 className="font-semibold">{event.category}</h4>
@@ -166,8 +167,8 @@ export const ComplianceTimeline: React.FC<ComplianceTimelineProps> = ({
 
         {/* Empty State */}
         {sortedEvents.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            <div className="text-4xl mb-2">📋</div>
+          <div className="text-center py-12 text-gray-500" role="status">
+            <div className="text-4xl mb-2" aria-hidden="true">📋</div>
             <p>No compliance events recorded</p>
           </div>
         )}

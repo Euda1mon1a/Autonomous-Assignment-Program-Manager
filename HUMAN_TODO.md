@@ -626,6 +626,56 @@ See also:
 
 ---
 
+## Security & Compliance
+
+### PHI Exposure in API Responses
+**Priority:** HIGH
+**Found:** PHI Exposure Audit (2025-12-30)
+**Location:** `docs/security/PHI_EXPOSURE_AUDIT.md`
+**Status:** Awaiting remediation
+
+**Issue:** Protected Health Information (PHI) is exposed in API responses without masking or field-level access control.
+
+**Exposed PHI Elements:**
+- Person names and email addresses (clear PHI)
+- Absence types (medical, deployment, TDY locations)
+- Schedule patterns and duty assignments
+- Free-text notes fields (potential PHI in unstructured data)
+
+**Risk Assessment:**
+| Category | Risk Level |
+|----------|-----------|
+| API Responses | HIGH |
+| Export Endpoints | HIGH |
+| Error Messages | LOW |
+| Logging | MEDIUM |
+
+**Required Actions:**
+- [ ] Add "X-Contains-PHI" warning headers to affected endpoints
+- [ ] Implement PHI access audit logging
+- [ ] Sanitize logging to remove email addresses and names
+- [ ] Add field-level access control to PersonResponse schema
+- [ ] Encrypt bulk export downloads
+- [ ] Create BREACH_RESPONSE_PLAN.md
+- [ ] Create PHI_HANDLING_GUIDE.md for developers
+- [ ] Add automated tests for PHI exposure
+- [ ] Review frontend PHI handling
+- [ ] Conduct penetration test focused on PHI exfiltration
+
+**Affected Endpoints:**
+- `GET /api/people` - All people with names/emails
+- `GET /api/people/residents` - Resident names/emails
+- `GET /api/people/faculty` - Faculty names/emails
+- `GET /api/people/{person_id}` - Individual person details
+- `GET /api/absences` - Absences with deployment/TDY data
+- `GET /api/assignments` - Schedule patterns
+
+**Note:** System has strong authentication and RBAC controls. Issue is with data exposure within authorized sessions, not unauthorized access.
+
+**See:** `docs/security/PHI_EXPOSURE_AUDIT.md` for full analysis and remediation recommendations.
+
+---
+
 ## Documentation Improvements (Completed 2025-12-31)
 
 The following documentation improvements were completed in Stream 9:

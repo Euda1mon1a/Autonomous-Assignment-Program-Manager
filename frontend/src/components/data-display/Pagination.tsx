@@ -77,9 +77,9 @@ export function Pagination({
   const pageNumbers = getPageNumbers();
 
   return (
-    <div className={`flex items-center justify-between ${className}`}>
+    <div className={`flex items-center justify-between ${className}`} role="navigation" aria-label="Pagination">
       {/* Info */}
-      <div className="text-sm text-gray-700">
+      <div className="text-sm text-gray-700" role="status" aria-live="polite">
         {totalItems && (
           <span>
             Showing{' '}
@@ -107,6 +107,7 @@ export function Pagination({
               value={pageSize}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}
               className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-label="Items per page"
             >
               <option value={10}>10</option>
               <option value={25}>25</option>
@@ -117,20 +118,21 @@ export function Pagination({
         )}
 
         {/* Page Navigation */}
-        <nav className="flex items-center gap-1">
+        <nav className="flex items-center gap-1" aria-label="Page navigation">
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={!canGoPrevious}
             className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            aria-label="Previous page"
+            aria-label="Go to previous page"
+            aria-disabled={!canGoPrevious}
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-5 h-5" aria-hidden="true" />
           </button>
 
           {pageNumbers.map((page, index) => (
             <React.Fragment key={index}>
               {page === '...' ? (
-                <span className="px-3 py-2 text-gray-500">...</span>
+                <span className="px-3 py-2 text-gray-500" aria-hidden="true">...</span>
               ) : (
                 <button
                   onClick={() => onPageChange(page as number)}
@@ -139,6 +141,8 @@ export function Pagination({
                       ? 'bg-blue-600 text-white'
                       : 'hover:bg-gray-100 text-gray-700'
                   }`}
+                  aria-label={`Go to page ${page}`}
+                  aria-current={currentPage === page ? 'page' : undefined}
                 >
                   {page}
                 </button>
@@ -150,9 +154,10 @@ export function Pagination({
             onClick={() => onPageChange(currentPage + 1)}
             disabled={!canGoNext}
             className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            aria-label="Next page"
+            aria-label="Go to next page"
+            aria-disabled={!canGoNext}
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-5 h-5" aria-hidden="true" />
           </button>
         </nav>
       </div>
@@ -173,16 +178,22 @@ export function SimplePagination({
   const canGoNext = currentPage < totalPages;
 
   return (
-    <div className={`flex items-center justify-between ${className}`}>
+    <nav
+      className={`flex items-center justify-between ${className}`}
+      role="navigation"
+      aria-label="Simple pagination"
+    >
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={!canGoPrevious}
         className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label={`Go to previous page (currently on page ${currentPage} of ${totalPages})`}
+        aria-disabled={!canGoPrevious}
       >
         Previous
       </button>
 
-      <span className="text-sm text-gray-700">
+      <span className="text-sm text-gray-700" role="status" aria-live="polite" aria-atomic="true">
         Page {currentPage} of {totalPages}
       </span>
 
@@ -190,9 +201,11 @@ export function SimplePagination({
         onClick={() => onPageChange(currentPage + 1)}
         disabled={!canGoNext}
         className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label={`Go to next page (currently on page ${currentPage} of ${totalPages})`}
+        aria-disabled={!canGoNext}
       >
         Next
       </button>
-    </div>
+    </nav>
   );
 }

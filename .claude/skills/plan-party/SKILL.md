@@ -1,6 +1,23 @@
 ---
 name: plan-party
 description: Parallel strategy generation using G-5 Planning. Deploy 10 planning probes for multi-perspective implementation planning. Use for complex task planning after reconnaissance.
+model_tier: opus
+parallel_hints:
+  can_parallel_with: [search-party]
+  must_serialize_with: [SCHEDULING, safe-schedule-generation]
+  preferred_batch_size: 10
+context_hints:
+  max_file_context: 100
+  compression_level: 1
+  requires_git_context: true
+  requires_db_context: false
+escalation_triggers:
+  - pattern: "production|deployment"
+    reason: "Production changes require human approval"
+  - pattern: "breaking.*change"
+    reason: "Breaking changes need careful planning"
+  - keyword: ["high-stakes", "compliance", "ACGME"]
+    reason: "High-stakes changes require human oversight"
 ---
 
 # PLAN_PARTY Skill

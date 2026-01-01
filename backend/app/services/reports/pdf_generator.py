@@ -69,7 +69,7 @@ class PDFReportGenerator:
     LIGHT_GRAY = colors.HexColor("#f5f5f5")
     MEDIUM_GRAY = colors.HexColor("#cccccc")
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize PDF report generator.
 

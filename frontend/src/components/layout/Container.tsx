@@ -7,6 +7,8 @@ export interface ContainerProps {
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
   padding?: boolean;
   center?: boolean;
+  /** Add role="main" to container for main page content */
+  asMain?: boolean;
   className?: string;
 }
 
@@ -24,7 +26,7 @@ const maxWidthStyles = {
  *
  * @example
  * ```tsx
- * <Container maxWidth="lg" padding center>
+ * <Container maxWidth="lg" padding center asMain>
  *   <h1>Page Content</h1>
  * </Container>
  * ```
@@ -34,10 +36,12 @@ export function Container({
   maxWidth = 'xl',
   padding = true,
   center = true,
+  asMain = false,
   className = '',
 }: ContainerProps) {
   return (
     <div
+      role={asMain ? 'main' : undefined}
       className={`w-full ${maxWidthStyles[maxWidth]} ${
         center ? 'mx-auto' : ''
       } ${padding ? 'px-4 sm:px-6 lg:px-8' : ''} ${className}`}

@@ -6,6 +6,18 @@ parallel_hints:
   can_parallel_with: [security-audit, code-review]
   must_serialize_with: [database-migration]
   preferred_batch_size: 2
+context_hints:
+  max_file_context: 40
+  compression_level: 1
+  requires_git_context: true
+  requires_db_context: false
+escalation_triggers:
+  - pattern: "production|prod"
+    reason: "Production container changes require human approval"
+  - pattern: "secrets|credentials"
+    reason: "Secret management requires security review"
+  - keyword: ["registry", "push", "deploy"]
+    reason: "Container deployment requires human oversight"
 ---
 
 # Docker Containerization Skill

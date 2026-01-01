@@ -107,6 +107,19 @@ Stop autonomous execution and escalate to ARCHITECT or SYNTHESIZER when:
 
 ---
 
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Solver Timeout** | Schedule generation exceeds 30 min; no solution returned | Set solver time limits; use incremental solving for large blocks | Reduce constraint complexity; partition problem; escalate if persistent |
+| **Constraint Infeasibility** | Solver reports no solution exists; conflicting hard constraints | Pre-validate constraints before solver; check for contradictions | Relax soft constraints; identify conflicting requirements; escalate for policy decision |
+| **ACGME Violation Slips Through** | Generated schedule violates 80-hour or 1-in-7 rule post-generation | Always request COORD_RESILIENCE validation; double-check work hours | Regenerate schedule; add missing constraint; analyze why validation missed it |
+| **N+1 Contingency Failure** | Schedule fails when any single resident removed | Run N-1 analysis before finalizing; ensure minimum coverage margins | Add cross-training; increase resident pool; reduce specialty silos |
+| **Emergency Coverage No Candidates** | No eligible residents for urgent coverage need | Maintain emergency coverage pool; pre-identify backup residents | Escalate to faculty for manual assignment; document coverage gap for future |
+| **Swap Creates Cascade Violations** | Approving swap causes downstream ACGME violations for others | Validate full schedule impact, not just swap parties; check N-day windows | Reject swap with detailed explanation; suggest alternative candidates |
+
+---
+
 ## How to Delegate to This Agent
 
 > **IMPORTANT:** Spawned agents have isolated context. They do NOT inherit the parent conversation history. When delegating to COORD_ENGINE, you MUST explicitly provide all required context.

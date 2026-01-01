@@ -13,8 +13,11 @@ from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.person import Person
+from app.models.user import User
 from app.scheduling_catalyst.models import (
     BarrierType,
     CatalystMechanism,
@@ -408,62 +411,128 @@ class CatalystAnalyzer:
 
     async def _find_coordinators(self) -> list[CatalystPerson]:
         """Find coordinator users who can authorize changes."""
-        # Would query users with coordinator/admin roles
-        # Placeholder implementation
-        return [
-            CatalystPerson(
-                person_id=UUID("00000000-0000-0000-0000-000000000001"),
-                name="Schedule Coordinator",
-                catalyst_type=CatalystType.ENZYMATIC,
-                catalyst_score=0.9,
-                barriers_addressed=[BarrierType.ELECTRONIC, BarrierType.KINETIC],
-                reduction_factors={
-                    BarrierType.ELECTRONIC: 0.9,
-                    BarrierType.KINETIC: 0.7,
-                },
-                is_available=True,
-                capacity_remaining=0.8,
+        catalysts: list[CatalystPerson] = []
+
+        # Query users with coordinator or admin roles
+        query = select(User).where(
+            User.role.in_(["admin", "coordinator"]),
+            User.is_active == True,  # noqa: E712
+        )
+        result = await self.db.execute(query)
+        users = result.scalars().all()
+
+        for user in users:
+            # Score based on role (admins get higher scores)
+            catalyst_score = 0.95 if user.role == "admin" else 0.85
+
+            catalysts.append(
+                CatalystPerson(
+                    person_id=user.id,
+                    name=user.username,
+                    catalyst_type=CatalystType.ENZYMATIC,
+                    catalyst_score=catalyst_score,
+                    barriers_addressed=[BarrierType.ELECTRONIC, BarrierType.KINETIC],
+                    reduction_factors={
+                        BarrierType.ELECTRONIC: 0.9 if user.role == "admin" else 0.8,
+                        BarrierType.KINETIC: 0.8 if user.role == "admin" else 0.6,
+                    },
+                    is_available=True,
+                    capacity_remaining=0.8,
+                )
             )
-        ]
+
+        return catalysts
 
     async def _find_hub_faculty(self) -> list[CatalystPerson]:
         """Find hub faculty with high network centrality."""
-        # Would integrate with hub_analysis.py
-        # Placeholder implementation
-        return [
-            CatalystPerson(
-                person_id=UUID("00000000-0000-0000-0000-000000000002"),
-                name="Hub Faculty Member",
-                catalyst_type=CatalystType.HOMOGENEOUS,
-                catalyst_score=0.75,
-                barriers_addressed=[BarrierType.THERMODYNAMIC, BarrierType.STERIC],
-                reduction_factors={
-                    BarrierType.THERMODYNAMIC: 0.6,
-                    BarrierType.STERIC: 0.5,
-                },
-                is_available=True,
-                capacity_remaining=0.6,
+        catalysts: list[CatalystPerson] = []
+
+        # Query faculty members with leadership roles (high centrality indicators)
+        # These are faculty who can influence schedule decisions
+        query = select(Person).where(
+            Person.type == "faculty",
+            Person.faculty_role.in_(["pd", "apd", "oic", "dept_chief", "core"]),
+        )
+        result = await self.db.execute(query)
+        faculty = result.scalars().all()
+
+        for person in faculty:
+            # Score based on faculty role (leadership = higher centrality)
+            role_scores = {
+                "pd": 0.95,  # Program Director - highest centrality
+                "apd": 0.90,  # Associate PD
+                "dept_chief": 0.85,  # Department Chief
+                "oic": 0.80,  # Officer in Charge
+                "core": 0.70,  # Core faculty
+            }
+            catalyst_score = role_scores.get(person.faculty_role, 0.6)
+
+            # Reduction factors based on role influence
+            thermo_factor = 0.7 if person.faculty_role in ["pd", "apd"] else 0.5
+            steric_factor = 0.6 if person.faculty_role in ["pd", "apd", "dept_chief"] else 0.4
+
+            catalysts.append(
+                CatalystPerson(
+                    person_id=person.id,
+                    name=person.name,
+                    catalyst_type=CatalystType.HOMOGENEOUS,
+                    catalyst_score=catalyst_score,
+                    barriers_addressed=[BarrierType.THERMODYNAMIC, BarrierType.STERIC],
+                    reduction_factors={
+                        BarrierType.THERMODYNAMIC: thermo_factor,
+                        BarrierType.STERIC: steric_factor,
+                    },
+                    is_available=True,
+                    capacity_remaining=0.6,
+                )
             )
-        ]
+
+        return catalysts
 
     async def _find_backup_personnel(self) -> list[CatalystPerson]:
         """Find personnel in backup pools."""
-        # Would query backup pool members
-        # Placeholder implementation
-        return [
-            CatalystPerson(
-                person_id=UUID("00000000-0000-0000-0000-000000000003"),
-                name="Backup Pool Member",
-                catalyst_type=CatalystType.HOMOGENEOUS,
-                catalyst_score=0.6,
-                barriers_addressed=[BarrierType.STERIC],
-                reduction_factors={
-                    BarrierType.STERIC: 0.8,
-                },
-                is_available=True,
-                capacity_remaining=1.0,
-            )
-        ]
+        catalysts: list[CatalystPerson] = []
+
+        # Query faculty and residents who could serve as backup coverage
+        # Look for those with lower current workload (higher capacity)
+        query = select(Person).where(
+            Person.type.in_(["faculty", "resident"]),
+        )
+        result = await self.db.execute(query)
+        persons = result.scalars().all()
+
+        for person in persons:
+            # Calculate capacity based on current assignment counts
+            # Lower counts = higher remaining capacity
+            if person.type == "resident":
+                # Residents can provide backup coverage
+                catalyst_score = 0.6
+                capacity = 1.0 - (person.weekday_call_count or 0) / 20.0
+            else:
+                # Faculty based on role
+                catalyst_score = 0.7 if person.faculty_role == "core" else 0.5
+                capacity = 1.0 - (person.fmit_weeks_count or 0) / 10.0
+
+            # Only include those with meaningful capacity
+            if capacity > 0.3:
+                catalysts.append(
+                    CatalystPerson(
+                        person_id=person.id,
+                        name=person.name,
+                        catalyst_type=CatalystType.HOMOGENEOUS,
+                        catalyst_score=catalyst_score,
+                        barriers_addressed=[BarrierType.STERIC],
+                        reduction_factors={
+                            BarrierType.STERIC: 0.7 * capacity,
+                        },
+                        is_available=True,
+                        capacity_remaining=max(0.0, min(1.0, capacity)),
+                    )
+                )
+
+        # Sort by capacity (highest first) and limit to top 20
+        catalysts.sort(key=lambda c: c.capacity_remaining, reverse=True)
+        return catalysts[:20]
 
     async def get_catalyst_statistics(self) -> dict[str, Any]:
         """

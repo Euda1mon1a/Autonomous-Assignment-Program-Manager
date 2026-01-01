@@ -1,6 +1,23 @@
 ---
 name: frontend-development
 description: Modern frontend development with Next.js 14, React 18, TailwindCSS, and TanStack Query. Use when building UI components, implementing pages, optimizing performance, or following Next.js App Router patterns.
+model_tier: sonnet
+parallel_hints:
+  can_parallel_with: [react-typescript, test-writer, code-review]
+  must_serialize_with: []
+  preferred_batch_size: 5
+context_hints:
+  max_file_context: 60
+  compression_level: 1
+  requires_git_context: true
+  requires_db_context: false
+escalation_triggers:
+  - pattern: "authentication|auth|session"
+    reason: "Authentication UI requires security-audit review"
+  - pattern: "third-party|external"
+    reason: "Third-party integrations need human evaluation"
+  - keyword: ["SEO", "metadata", "design system"]
+    reason: "Architectural decisions require human input"
 ---
 
 # Frontend Development Skill

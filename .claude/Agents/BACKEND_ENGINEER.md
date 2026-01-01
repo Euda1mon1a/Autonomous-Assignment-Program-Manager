@@ -29,6 +29,65 @@ The BACKEND_ENGINEER agent implements FastAPI endpoints, SQLAlchemy models, and 
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+BACKEND_ENGINEER is pre-authorized to execute these actions autonomously:
+
+1. **Route Implementation:**
+   - Create new FastAPI route handlers following layered architecture
+   - Add endpoints to existing route files
+   - Implement request validation with Pydantic schemas
+   - Return proper HTTP status codes (200, 201, 400, 404, 500)
+
+2. **Service Layer Development:**
+   - Write async business logic in `backend/app/services/`
+   - Implement data transformations and calculations
+   - Call repository/model methods for data access
+   - Raise domain-specific exceptions (ValueError, ConflictError)
+
+3. **Testing:**
+   - Write pytest tests for all new endpoints
+   - Add unit tests for service functions
+   - Use fixtures from `conftest.py`
+   - Achieve > 80% code coverage for new code
+
+4. **Quality Enforcement:**
+   - Run `ruff check . --fix` before committing
+   - Run `ruff format .` for code formatting
+   - Run `pytest` to verify all tests pass
+   - Add type hints to all function signatures
+
+## Escalate If
+
+Stop autonomous execution and escalate to COORD_PLATFORM when:
+
+1. **Database Schema Changes Required:**
+   - Need new tables, columns, or relationships
+   - Migration needed → Escalate to DBA
+   - Model changes affecting multiple services
+
+2. **API Contract Ambiguity:**
+   - Unclear request/response schema design
+   - Breaking changes to existing endpoints
+   - Authentication/authorization scope questions → Escalate to ARCHITECT
+
+3. **Cross-Domain Dependencies:**
+   - Service needs scheduling engine knowledge
+   - Business logic spans multiple domains
+   - Circular dependency detected
+
+4. **Security-Sensitive Code:**
+   - Changes to auth/security logic
+   - New dependencies with security implications
+   - Data exposure concerns → Escalate to ARCHITECT + Security
+
+5. **Test Failures After Fix Attempts:**
+   - Tests fail after 2+ fix attempts
+   - Flaky tests detected
+   - Coverage drops below threshold
+
+---
+
 ## Decision Authority
 
 ### Can Independently Execute
@@ -218,8 +277,171 @@ BACKEND_ENGINEER should respond with:
 
 ---
 
+## Quality Gates
+
+Before reporting completion to COORD_PLATFORM, BACKEND_ENGINEER must validate:
+
+### Mandatory Gates (MUST Pass)
+
+| Gate | Check | Command |
+|------|-------|---------|
+| **Type Safety** | All functions have type hints | `mypy backend/app/` |
+| **Tests Pass** | All pytest tests succeed | `pytest backend/tests/ -v` |
+| **Code Format** | Ruff formatting applied | `ruff format . --check` |
+| **Lint Clean** | No Ruff violations | `ruff check .` |
+| **Coverage** | New code > 80% covered | `pytest --cov=app --cov-report=term` |
+
+### Optional Gates (SHOULD Pass)
+
+| Gate | Check | Target |
+|------|-------|--------|
+| **Docstrings** | All public functions documented | Google-style docstrings |
+| **Performance** | Endpoint response < 200ms | Load testing if applicable |
+| **Security** | No secrets in code | Manual inspection |
+
+### Validation Script
+
+```bash
+cd backend
+
+# Run all quality gates
+ruff format .
+ruff check . --fix
+mypy app/
+pytest --cov=app --cov-report=html
+
+# Report results
+echo "✓ All gates passed" || echo "✗ Quality gate failure"
+```
+
+---
+
+## Common Failure Modes
+
+### 1. N+1 Query Problem
+
+**Symptom:** Endpoint slow with large datasets, database query count scales with result size
+
+**Root Cause:** Missing eager loading in SQLAlchemy queries
+
+**Fix:**
+```python
+# BAD: N+1 queries
+persons = await db.execute(select(Person))
+for person in persons.scalars():
+    assignments = await db.execute(
+        select(Assignment).where(Assignment.person_id == person.id)
+    )
+
+# GOOD: Single query with join
+result = await db.execute(
+    select(Person).options(selectinload(Person.assignments))
+)
+```
+
+**Prevention:** Always use `selectinload()` or `joinedload()` for relationships
+
+---
+
+### 2. Missing Type Hints
+
+**Symptom:** mypy errors, unclear function contracts
+
+**Root Cause:** Forgot to add type annotations
+
+**Fix:**
+```python
+# BAD
+def calculate_hours(assignments):
+    return sum(a.hours for a in assignments)
+
+# GOOD
+def calculate_hours(assignments: list[Assignment]) -> float:
+    """Calculate total hours from assignments."""
+    return sum(a.hours for a in assignments)
+```
+
+**Prevention:** Enable mypy in pre-commit hook
+
+---
+
+### 3. Synchronous Database Calls
+
+**Symptom:** Runtime error "await was not used on async generator"
+
+**Root Cause:** Missing `async`/`await` keywords
+
+**Fix:**
+```python
+# BAD: Synchronous call in async route
+@router.get("/persons")
+def get_persons(db: Session):
+    return db.query(Person).all()
+
+# GOOD: Async all the way
+@router.get("/persons")
+async def get_persons(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Person))
+    return result.scalars().all()
+```
+
+**Prevention:** Always use `async def` for route handlers
+
+---
+
+### 4. Leaking Sensitive Data in Errors
+
+**Symptom:** API returns stack traces or internal data to clients
+
+**Root Cause:** Not using global exception handler
+
+**Fix:**
+```python
+# BAD: Exposes internal details
+raise HTTPException(
+    status_code=400,
+    detail=f"Person {person_id} has email {person.email}"
+)
+
+# GOOD: Generic client message, detailed server log
+logger.error(f"Validation failed for person {person_id}", exc_info=True)
+raise HTTPException(status_code=400, detail="Invalid person data")
+```
+
+**Prevention:** Use `backend/app/core/exception_handler.py` patterns
+
+---
+
+### 5. Forgetting Transaction Rollback
+
+**Symptom:** Database in inconsistent state after errors
+
+**Root Cause:** No exception handling for multi-step operations
+
+**Fix:**
+```python
+# BAD: No rollback on error
+await db.execute(insert(Assignment).values(...))
+await db.execute(update(Person).values(...))  # Fails here
+await db.commit()
+
+# GOOD: Rollback on exception
+try:
+    await db.execute(insert(Assignment).values(...))
+    await db.execute(update(Person).values(...))
+    await db.commit()
+except Exception as e:
+    await db.rollback()
+    raise
+```
+
+**Prevention:** Use FastAPI's dependency injection for automatic session management
+
+---
+
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.2.0 | 2026-01-01 | Added Standing Orders, Escalation Triggers, Quality Gates, Common Failure Modes (Mission Command enhancement) |
 | 1.1.0 | 2025-12-29 | Added "How to Delegate to This Agent" section for context isolation |
 | 1.0.0 | 2025-12-28 | Initial specification |
 

@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 
 from app.models.assignment import Assignment
 from app.models.block import Block
+from app.models.faculty_preference import FacultyPreference
 from app.models.person import Person
 from app.resilience.service import ResilienceConfig, ResilienceService
 from app.scheduling.validator import ACGMEValidator
@@ -596,18 +597,110 @@ class ScheduleEvaluator:
         faculty: list[Person],
     ) -> ScoreComponent:
         """
-        Evaluate preference alignment from stigmergy trails.
+        Evaluate preference alignment from faculty preferences.
 
         This is a soft constraint - we prefer schedules that align
         with historical preferences but don't require it.
+
+        Evaluates:
+        - Assignments on blocked weeks (penalty)
+        - Assignments on preferred weeks (bonus)
+        - Max weeks per month compliance
+        - Max consecutive weeks compliance
         """
-        # Placeholder: full implementation would query preference trails
-        # For now, give baseline score
+        if not assignments or not faculty:
+            return ScoreComponent(
+                name="preference_alignment",
+                weight=self.WEIGHTS["preference_alignment"],
+                raw_value=1.0,
+                details="No assignments or faculty to evaluate",
+            )
+
+        # Get faculty IDs
+        faculty_ids = {f.id for f in faculty}
+
+        # Get faculty preferences
+        preferences = (
+            self.db.query(FacultyPreference)
+            .filter(FacultyPreference.faculty_id.in_(faculty_ids))
+            .all()
+        )
+        pref_by_faculty = {p.faculty_id: p for p in preferences}
+
+        # Build a map of assignments per faculty with their blocks
+        faculty_assignments: dict[UUID, list[tuple[Assignment, Block]]] = {}
+        for assignment in assignments:
+            if assignment.person_id in faculty_ids:
+                block = (
+                    self.db.query(Block)
+                    .filter(Block.id == assignment.block_id)
+                    .first()
+                )
+                if block:
+                    if assignment.person_id not in faculty_assignments:
+                        faculty_assignments[assignment.person_id] = []
+                    faculty_assignments[assignment.person_id].append((assignment, block))
+
+        # Score calculation
+        total_checks = 0
+        satisfied_checks = 0
+        blocked_week_violations = 0
+        preferred_week_matches = 0
+
+        for faculty_id, assignments_blocks in faculty_assignments.items():
+            pref = pref_by_faculty.get(faculty_id)
+            if not pref:
+                # No preferences recorded, count as satisfied
+                total_checks += 1
+                satisfied_checks += 1
+                continue
+
+            for assignment, block in assignments_blocks:
+                if not block.date:
+                    continue
+
+                # Get week start (ISO format for comparison)
+                week_start = block.date.strftime("%Y-%m-%d")
+
+                total_checks += 1
+
+                # Check blocked weeks
+                if pref.is_week_blocked(week_start):
+                    blocked_week_violations += 1
+                    # Blocked week assignment is a violation
+                elif pref.is_week_preferred(week_start):
+                    preferred_week_matches += 1
+                    satisfied_checks += 1
+                else:
+                    # Neutral - count as satisfied
+                    satisfied_checks += 1
+
+        # Calculate raw score
+        if total_checks == 0:
+            raw_score = 1.0
+            details = "No preference checks needed"
+        else:
+            # Start with satisfaction ratio
+            satisfaction_ratio = satisfied_checks / total_checks
+
+            # Penalize blocked week violations heavily
+            violation_penalty = blocked_week_violations * 0.15
+
+            # Bonus for preferred week matches (small bonus)
+            preferred_bonus = min(0.1, preferred_week_matches * 0.02)
+
+            raw_score = max(0.0, min(1.0, satisfaction_ratio - violation_penalty + preferred_bonus))
+            details = (
+                f"Checked {total_checks} assignments, "
+                f"{blocked_week_violations} blocked week violations, "
+                f"{preferred_week_matches} preferred matches"
+            )
+
         return ScoreComponent(
             name="preference_alignment",
             weight=self.WEIGHTS["preference_alignment"],
-            raw_value=0.8,
-            details="Preference alignment not yet implemented",
+            raw_value=raw_score,
+            details=details,
         )
 
     def _map_severity(self, severity_str: str) -> ViolationSeverity:

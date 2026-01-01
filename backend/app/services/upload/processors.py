@@ -41,7 +41,7 @@ class ImageProcessor:
         "xlarge": (2048, 2048),
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize image processor with PIL/Pillow."""
         try:
             from PIL import Image, ImageOps

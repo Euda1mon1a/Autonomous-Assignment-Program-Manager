@@ -642,7 +642,7 @@ export function WhatIfAnalysis({ baseVersionId, className = '' }: WhatIfAnalysis
 
       {/* Results */}
       {result && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6" role="region" aria-label="Analysis results" aria-live="polite">
+        <div className="bg-white border border-gray-200 rounded-lg p-6" role="region" aria-label="Analysis results" aria-live="assertive">
           <h3 className="text-xl font-bold text-gray-900 mb-6">Analysis Results</h3>
           <ResultsPanel result={result} />
         </div>

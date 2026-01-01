@@ -261,7 +261,7 @@ function PgyEquityChart({ className = '' }: { className?: string }) {
         <BarChart3 className="w-5 h-5 text-gray-400" aria-hidden="true" />
       </div>
 
-      <div role="img" aria-label="Bar chart comparing shift distributions across PGY levels, showing average shifts, night shifts, weekend shifts, and holiday shifts">
+      <div role="img" aria-label="Bar chart comparing shift distributions across PGY levels, showing average shifts, night shifts, weekend shifts, and holiday shifts" aria-live="polite">
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={pgyData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -368,7 +368,7 @@ export function FairnessTrend({
         />
 
         {/* Chart */}
-        <div className="mt-6" role="img" aria-label={`Line chart showing fairness metrics trends over time. Displaying ${visibleLines.join(', ')}`}>
+        <div className="mt-6" role="img" aria-label={`Line chart showing fairness metrics trends over time. Displaying ${visibleLines.join(', ')}`} aria-live="polite">
           <ResponsiveContainer width="100%" height={400}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />

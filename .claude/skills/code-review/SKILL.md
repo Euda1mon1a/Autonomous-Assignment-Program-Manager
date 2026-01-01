@@ -289,3 +289,239 @@ const ScheduleView: React.FC<Props> = ({ scheduleId }) => {
   return <Schedule data={data} />;
 };
 ```
+
+## Examples
+
+### Example 1: N+1 Query Detection
+
+**Context:** Reviewing PR that adds resident work hour summary endpoint
+
+**Input:**
+```python
+# backend/app/api/routes/residents.py
+@router.get("/residents/work-hours")
+async def get_resident_work_hours(db: AsyncSession = Depends(get_db)):
+    residents = await db.execute(select(Person).where(Person.role == "RESIDENT"))
+
+    result = []
+    for resident in residents.scalars():
+        # Query for each resident - N+1 problem!
+        assignments = await db.execute(
+            select(Assignment).where(Assignment.person_id == resident.id)
+        )
+        hours = sum(a.duration for a in assignments.scalars())
+        result.append({"resident": resident.name, "hours": hours})
+
+    return result
+```
+
+**Process:**
+1. Identify pattern: Loop over residents, then query assignments for each
+2. Count queries: 1 (residents) + N (assignments per resident) = N+1 queries
+3. Check performance impact: With 30 residents, this executes 31 queries
+4. Propose fix using `selectinload()`
+
+**Output:**
+```markdown
+## Code Review Finding
+
+**Severity:** WARNING
+**Category:** Performance
+**File:** `backend/app/api/routes/residents.py:45`
+
+**Issue:** N+1 Query Problem
+
+This code queries the database once per resident (N+1 queries). With 30 residents,
+this executes 31 queries instead of 1.
+
+**Current Code:**
+```python
+residents = await db.execute(select(Person).where(Person.role == "RESIDENT"))
+for resident in residents.scalars():
+    assignments = await db.execute(  # Separate query per resident
+        select(Assignment).where(Assignment.person_id == resident.id)
+    )
+```
+
+**Suggested Fix:**
+```python
+from sqlalchemy.orm import selectinload
+
+residents = await db.execute(
+    select(Person)
+    .where(Person.role == "RESIDENT")
+    .options(selectinload(Person.assignments))  # Load in single query
+)
+
+result = []
+for resident in residents.scalars():
+    hours = sum(a.duration for a in resident.assignments)  # No additional query
+    result.append({"resident": resident.name, "hours": hours})
+```
+
+**Impact:** Reduces queries from 31 to 2, improving response time by ~80%
+```
+
+### Example 2: Missing Authentication Check
+
+**Context:** Security review of new admin endpoint
+
+**Input:**
+```python
+# backend/app/api/routes/admin.py
+@router.delete("/users/{user_id}")
+async def delete_user(
+    user_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """Delete a user account."""
+    await db.execute(delete(User).where(User.id == user_id))
+    await db.commit()
+    return {"status": "deleted"}
+```
+
+**Process:**
+1. Check for authentication: Missing `Depends(get_current_user)`
+2. Check for authorization: No role check (admin only)
+3. Assess severity: CRITICAL - unauthenticated delete is a security vulnerability
+4. Verify against project pattern: See `backend/app/api/routes/auth.py` for correct pattern
+
+**Output:**
+```markdown
+## Code Review Finding
+
+**Severity:** :red_circle: CRITICAL
+**Category:** Security
+**File:** `backend/app/api/routes/admin.py:12`
+
+**Issue:** Missing Authentication and Authorization
+
+This endpoint allows ANYONE to delete user accounts without authentication.
+
+**Security Impact:**
+- **Broken Access Control** (OWASP A01:2021)
+- Unauthenticated users can delete any account
+- No audit trail of who performed deletion
+- No role-based access control
+
+**Current Code:**
+```python
+@router.delete("/users/{user_id}")
+async def delete_user(user_id: str, db: AsyncSession = Depends(get_db)):
+```
+
+**Required Fix:**
+```python
+from app.api.deps import get_current_user, require_roles
+from app.models.user import User
+
+@router.delete("/users/{user_id}")
+async def delete_user(
+    user_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_roles(["admin"]))  # Admin only
+):
+    """Delete a user account (admin only)."""
+    # Add audit log
+    logger.info(f"Admin {current_user.id} deleting user {user_id}")
+
+    await db.execute(delete(User).where(User.id == user_id))
+    await db.commit()
+    return {"status": "deleted"}
+```
+
+**Action Required:** BLOCK MERGE until fixed
+```
+
+### Example 3: Async/Await Missing
+
+**Context:** Reviewing database operation in service layer
+
+**Input:**
+```python
+# backend/app/services/assignment_service.py
+async def create_assignment(
+    db: AsyncSession,
+    assignment_data: AssignmentCreate
+) -> Assignment:
+    """Create a new assignment."""
+    assignment = Assignment(**assignment_data.dict())
+    db.add(assignment)  # Missing await!
+    db.commit()         # Missing await!
+    return assignment
+```
+
+**Process:**
+1. Identify async context: Function is `async def`
+2. Check database operations: `db.add()` and `db.commit()` are async methods
+3. Detect missing `await`: These will fail at runtime
+4. Verify correct pattern: Check existing service implementations
+
+**Output:**
+```markdown
+## Code Review Finding
+
+**Severity:** :red_circle: CRITICAL
+**Category:** Code Quality
+**File:** `backend/app/services/assignment_service.py:23`
+
+**Issue:** Missing `await` on Async Database Operations
+
+Database operations in async context must use `await`, otherwise they won't execute.
+
+**Current Code (Will Fail):**
+```python
+db.add(assignment)  # Returns coroutine, doesn't execute
+db.commit()         # Returns coroutine, doesn't execute
+```
+
+**Required Fix:**
+```python
+async def create_assignment(
+    db: AsyncSession,
+    assignment_data: AssignmentCreate
+) -> Assignment:
+    """Create a new assignment."""
+    assignment = Assignment(**assignment_data.dict())
+    db.add(assignment)
+    await db.commit()  # Add await
+    await db.refresh(assignment)  # Refresh to get generated ID
+    return assignment
+```
+
+**Note:** SQLAlchemy 2.0's `add()` is synchronous, but `commit()` and `refresh()`
+require `await` in async sessions.
+
+**Testing:** Add test to verify assignment is actually persisted to database.
+```
+
+## Common Failure Modes
+
+| Failure Mode | Symptom | Root Cause | Recovery Steps |
+|--------------|---------|------------|----------------|
+| **Linter Passes But Logic Broken** | Code has no syntax errors but doesn't work | Linter checks syntax, not semantics | 1. Run tests to catch logic errors<br>2. Add type checking with mypy<br>3. Review business logic manually |
+| **Tests Pass Locally, Fail in CI** | Green tests on dev machine, red in CI | Environment differences (Python version, dependencies) | 1. Check CI Python version matches local<br>2. Verify `requirements.txt` is up to date<br>3. Run tests in Docker to match CI environment |
+| **Type Hints Present But Incorrect** | `mypy` reports no errors but types are wrong | Using `Any` or overly broad types | 1. Enable stricter mypy settings<br>2. Review type hints for accuracy<br>3. Add `--disallow-any-explicit` flag |
+| **Security Issue Missed by Bandit** | Vulnerability not flagged by scanner | Custom code pattern not in Bandit rules | 1. Manual security review required<br>2. Check OWASP Top 10 manually<br>3. Defer to security-audit skill |
+| **Performance Issue Not Detected** | Code works but is slow | No performance testing in review | 1. Profile code with cProfile<br>2. Check for N+1 queries manually<br>3. Add performance tests to suite |
+| **Breaking Change Not Caught** | Tests pass but API contract changed | No contract testing | 1. Check if Pydantic schema changed<br>2. Verify API versioning if needed<br>3. Add integration tests for API contract |
+
+## Validation Checklist
+
+After completing code review, verify:
+
+- [ ] **Tests:** All tests pass (`pytest --tb=short -q`)
+- [ ] **Linting:** No errors (`ruff check app/ tests/`)
+- [ ] **Type Checking:** No errors (`mypy app/ --python-version 3.11`)
+- [ ] **Security:** No vulnerabilities (`bandit -r app/ -ll`)
+- [ ] **Coverage:** >= 70% (`pytest --cov=app --cov-fail-under=70`)
+- [ ] **Architecture:** Follows layered pattern (Route → Controller → Service → Model)
+- [ ] **Async/Await:** All database operations use `await`
+- [ ] **Input Validation:** Pydantic schemas used for all inputs
+- [ ] **Authentication:** Protected endpoints have `Depends(get_current_user)`
+- [ ] **Authorization:** Role checks where appropriate
+- [ ] **Error Handling:** No sensitive data in error messages
+- [ ] **Documentation:** Docstrings on public functions
+- [ ] **No Hardcoded Secrets:** Check for API keys, passwords
+- [ ] **Database Migrations:** If models changed, migration exists
+- [ ] **Manual Testing:** Complex logic tested manually if needed

@@ -15,7 +15,7 @@ ALLOWED_CSV_DIR = Path("data/csv_files")
 class CSVLeaveProvider(LeaveProvider):
     """Leave provider that reads from CSV files."""
 
-    def __init__(self, file_path: Path, allowed_base_dir: Path | None = None):
+    def __init__(self, file_path: Path, allowed_base_dir: Path | None = None) -> None:
         """
         Initialize CSV leave provider with path validation.
 

@@ -80,21 +80,21 @@ export const CoverageMatrix: React.FC<CoverageMatrixProps> = ({
   const stats = getCoverageStats();
 
   return (
-    <div className={`coverage-matrix bg-white rounded-lg shadow-lg p-4 ${className}`}>
+    <div className={`coverage-matrix bg-white rounded-lg shadow-lg p-4 ${className}`} role="region" aria-label="Schedule coverage matrix">
       {/* Header */}
       <div className="mb-4">
         <h3 className="text-lg font-semibold mb-2">Coverage Matrix</h3>
-        <div className="flex gap-4 text-sm">
+        <div className="flex gap-4 text-sm" role="status" aria-live="polite">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-red-500"></div>
+            <div className="w-4 h-4 rounded bg-red-500" aria-hidden="true"></div>
             <span>Empty: {stats.empty}</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-orange-400"></div>
+            <div className="w-4 h-4 rounded bg-orange-400" aria-hidden="true"></div>
             <span>Understaffed: {stats.understaffed}</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-green-500"></div>
+            <div className="w-4 h-4 rounded bg-green-500" aria-hidden="true"></div>
             <span>Adequate: {stats.adequate}</span>
           </div>
         </div>
@@ -102,15 +102,16 @@ export const CoverageMatrix: React.FC<CoverageMatrixProps> = ({
 
       {/* Matrix Table */}
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
+        <table className="w-full border-collapse" role="grid" aria-label="Coverage data by rotation and date">
           <thead>
             <tr>
-              <th className="sticky left-0 bg-white border border-gray-300 p-2 text-xs font-semibold">
+              <th scope="col" className="sticky left-0 bg-white border border-gray-300 p-2 text-xs font-semibold">
                 Rotation / Date
               </th>
               {dates.map(date => (
                 <th
                   key={date}
+                  scope="col"
                   className="border border-gray-300 p-2 text-xs font-semibold min-w-[80px]"
                 >
                   <div className="flex flex-col items-center">
@@ -126,9 +127,9 @@ export const CoverageMatrix: React.FC<CoverageMatrixProps> = ({
               <React.Fragment key={rotation}>
                 {shifts.map(shift => (
                   <tr key={`${rotation}-${shift}`}>
-                    <td className="sticky left-0 bg-white border border-gray-300 p-2 text-xs font-medium">
+                    <th scope="row" className="sticky left-0 bg-white border border-gray-300 p-2 text-xs font-medium text-left">
                       {rotation} - {shift}
-                    </td>
+                    </th>
                     {dates.map(date => {
                       const slotData = getSlotData(date, shift, rotation);
                       if (!slotData) {
@@ -166,7 +167,7 @@ export const CoverageMatrix: React.FC<CoverageMatrixProps> = ({
                                 {slotData.assignedCount}/{slotData.requiredCount}
                               </span>
                               {slotData.isCritical && (
-                                <span className="text-xs">⚠️</span>
+                                <span className="text-xs" aria-hidden="true">⚠️</span>
                               )}
                             </div>
                           </button>

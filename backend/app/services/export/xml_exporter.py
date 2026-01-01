@@ -32,7 +32,7 @@ from app.services.export.formatters import (
 class XMLExporter:
     """XML export service with streaming and compression support."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize XML exporter.
 

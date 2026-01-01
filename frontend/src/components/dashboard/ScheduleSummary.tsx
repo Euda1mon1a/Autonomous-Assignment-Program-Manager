@@ -46,72 +46,82 @@ export function ScheduleSummary() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="glass-panel p-6">
+      className="glass-panel p-6"
+      role="region"
+      aria-labelledby="weekly-schedule-heading"
+    >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">This Week&apos;s Schedule</h3>
-        <Calendar className="w-5 h-5 text-blue-600" />
+        <h3 id="weekly-schedule-heading" className="text-lg font-semibold text-gray-900">This Week&apos;s Schedule</h3>
+        <Calendar className="w-5 h-5 text-blue-600" aria-hidden="true" />
       </div>
 
-      {isLoading ? (
-        <div className="space-y-3">
-          <div className="animate-pulse h-4 bg-gray-200 rounded w-3/4"></div>
-          <div className="animate-pulse h-4 bg-gray-200 rounded w-1/2"></div>
-          <div className="animate-pulse h-4 bg-gray-200 rounded w-2/3"></div>
-        </div>
-      ) : !hasSchedule ? (
-        <EmptyState
-          icon={Calendar}
-          title="No schedule generated"
-          description={`${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d, yyyy')}`}
-          action={{
-            label: 'Generate Schedule',
-            onClick: () => setIsGenerateOpen(true),
-          }}
-        />
-      ) : (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 text-sm">
-            <Users className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-600">
-              <span className="font-medium text-gray-900">{scheduledResidents.size}</span> residents scheduled
-            </span>
+      <div aria-live="polite" aria-atomic="true">
+        {isLoading ? (
+          <div className="space-y-3" role="status" aria-label="Loading schedule data">
+            <div className="animate-pulse h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="animate-pulse h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="animate-pulse h-4 bg-gray-200 rounded w-2/3"></div>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Users className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-600">
-              <span className="font-medium text-gray-900">{scheduledAttendings.size}</span> attendings
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Calendar className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-600">
-              <span className="font-medium text-gray-900">{schedule?.total ?? 0}</span> total assignments
-            </span>
-          </div>
+        ) : !hasSchedule ? (
+          <EmptyState
+            icon={Calendar}
+            title="No schedule generated"
+            description={`${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d, yyyy')}`}
+            action={{
+              label: 'Generate Schedule',
+              onClick: () => setIsGenerateOpen(true),
+            }}
+          />
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm">
+              <Users className="w-4 h-4 text-gray-400" aria-hidden="true" />
+              <span className="text-gray-600">
+                <span className="font-medium text-gray-900">{scheduledResidents.size}</span> residents scheduled
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Users className="w-4 h-4 text-gray-400" aria-hidden="true" />
+              <span className="text-gray-600">
+                <span className="font-medium text-gray-900">{scheduledAttendings.size}</span> attendings
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Calendar className="w-4 h-4 text-gray-400" aria-hidden="true" />
+              <span className="text-gray-600">
+                <span className="font-medium text-gray-900">{schedule?.total ?? 0}</span> total assignments
+              </span>
+            </div>
 
-          {/* Coverage Status */}
-          <div className={`flex items-center gap-2 px-3 py-2 rounded-md ${
-            isFullyStaffed ? 'bg-green-50' : 'bg-amber-50'
-          }`}>
-            {isFullyStaffed ? (
-              <>
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <span className="text-sm text-green-700">Fully Staffed</span>
-              </>
-            ) : (
-              <>
-                <AlertCircle className="w-4 h-4 text-amber-600" />
-                <span className="text-sm text-amber-700">Coverage Gaps</span>
-              </>
-            )}
+            {/* Coverage Status */}
+            <div
+              className={`flex items-center gap-2 px-3 py-2 rounded-md ${
+                isFullyStaffed ? 'bg-green-50' : 'bg-amber-50'
+              }`}
+              role="status"
+              aria-label={isFullyStaffed ? 'Schedule is fully staffed' : 'Schedule has coverage gaps'}
+            >
+              {isFullyStaffed ? (
+                <>
+                  <CheckCircle className="w-4 h-4 text-green-600" aria-hidden="true" />
+                  <span className="text-sm text-green-700">Fully Staffed</span>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="w-4 h-4 text-amber-600" aria-hidden="true" />
+                  <span className="text-sm text-amber-700">Coverage Gaps</span>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className="mt-4 pt-4 border-t">
         <Link
           href="/schedule"
           className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+          aria-label="View complete schedule for all staff"
         >
           View Full Schedule &rarr;
         </Link>

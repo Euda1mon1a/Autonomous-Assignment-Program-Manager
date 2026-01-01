@@ -105,7 +105,7 @@ class QUBOFormulation:
     ACGME_PENALTY = 5000.0  # ACGME compliance
     SOFT_CONSTRAINT_PENALTY = 100.0  # Optimization targets
 
-    def __init__(self, context: SchedulingContext):
+    def __init__(self, context: SchedulingContext) -> None:
         """
         Initialize QUBO formulation.
 
@@ -123,7 +123,7 @@ class QUBOFormulation:
         # QUBO matrix (sparse representation)
         self.Q: dict[tuple[int, int], float] = {}
 
-    def _build_variable_index(self):
+    def _build_variable_index(self) -> None:
         """Build mapping from (resident, block, template) to flat index."""
         idx = 0
         for resident in self.context.residents:
@@ -172,13 +172,13 @@ class QUBOFormulation:
 
         return self.Q
 
-    def _add_coverage_objective(self):
+    def _add_coverage_objective(self) -> None:
         """Add objective to maximize coverage (assign as many blocks as possible)."""
         for idx in range(self.num_variables):
             # Negative weight encourages x[i] = 1
             self._add_linear(idx, -1.0)
 
-    def _add_one_per_block_constraint(self):
+    def _add_one_per_block_constraint(self) -> None:
         """
         Constraint: At most one resident assigned per block.
 
@@ -201,7 +201,7 @@ class QUBOFormulation:
                 for idx2 in indices[i + 1 :]:
                     self._add_quadratic(idx1, idx2, self.HARD_CONSTRAINT_PENALTY)
 
-    def _add_availability_constraints(self):
+    def _add_availability_constraints(self) -> None:
         """
         Constraint: Cannot assign during unavailable periods.
 
@@ -220,7 +220,7 @@ class QUBOFormulation:
                             idx = self.var_index[(r_i, b_i, t_i)]
                             self._add_linear(idx, self.HARD_CONSTRAINT_PENALTY)
 
-    def _add_80_hour_constraint(self):
+    def _add_80_hour_constraint(self) -> None:
         """
         Constraint: Max 80 hours per week (simplified as max blocks).
 
@@ -260,7 +260,7 @@ class QUBOFormulation:
                         for idx2 in week_vars[i + 1 :]:
                             self._add_quadratic(idx1, idx2, penalty_factor)
 
-    def _add_equity_objective(self):
+    def _add_equity_objective(self) -> None:
         """
         Soft objective: Minimize variance in workload distribution.
 
@@ -285,12 +285,12 @@ class QUBOFormulation:
                 for idx2 in indices[i + 1 :]:
                     self._add_quadratic(idx1, idx2, penalty * 0.01)
 
-    def _add_linear(self, i: int, value: float):
+    def _add_linear(self, i: int, value: float) -> None:
         """Add linear term Q[i,i] += value."""
         key = (i, i)
         self.Q[key] = self.Q.get(key, 0.0) + value
 
-    def _add_quadratic(self, i: int, j: int, value: float):
+    def _add_quadratic(self, i: int, j: int, value: float) -> None:
         """Add quadratic term Q[i,j] += value (symmetric)."""
         if i > j:
             i, j = j, i
@@ -349,7 +349,7 @@ class SimulatedQuantumAnnealingSolver(BaseSolver):
         num_sweeps: int = 1000,
         beta_range: tuple[float, float] = (0.1, 4.2),
         seed: int | None = None,
-    ):
+    ) -> None:
         """
         Initialize quantum-inspired simulated annealing solver.
 
@@ -567,7 +567,7 @@ class QUBOSolver(BaseSolver):
         timeout_seconds: float = 60.0,
         num_reads: int = 100,
         use_tabu: bool = False,
-    ):
+    ) -> None:
         """
         Initialize PyQUBO-based solver.
 
@@ -812,7 +812,7 @@ class QuantumInspiredSolver(BaseSolver):
         timeout_seconds: float = 60.0,
         use_quantum_hardware: bool = False,
         dwave_token: str | None = None,
-    ):
+    ) -> None:
         """
         Initialize hybrid quantum-inspired solver.
 

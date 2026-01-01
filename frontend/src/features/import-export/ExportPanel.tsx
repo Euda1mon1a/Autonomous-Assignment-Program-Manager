@@ -169,13 +169,14 @@ export function ExportPanel({
         onClick={handleQuickExport}
         disabled={isDisabled || isExporting}
         className={`btn-secondary flex items-center gap-2 ${className}`}
+        aria-label={`Export as ${FormatLabels[selectedFormat]}`}
       >
         {isExporting ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
+          <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
         ) : isComplete ? (
-          <Check className="w-4 h-4 text-green-500" />
+          <Check className="w-4 h-4 text-green-500" aria-hidden="true" />
         ) : (
-          <Download className="w-4 h-4" />
+          <Download className="w-4 h-4" aria-hidden="true" />
         )}
         Export
       </button>
@@ -192,16 +193,17 @@ export function ExportPanel({
           className="btn-secondary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           aria-haspopup="true"
           aria-expanded={isOpen}
+          aria-label="Export data in various formats"
         >
           {isExporting ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
           ) : isComplete ? (
-            <Check className="w-4 h-4 text-green-500" />
+            <Check className="w-4 h-4 text-green-500" aria-hidden="true" />
           ) : (
-            <Download className="w-4 h-4" />
+            <Download className="w-4 h-4" aria-hidden="true" />
           )}
           Export
-          <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
         </button>
 
         {isOpen && (
@@ -218,8 +220,9 @@ export function ExportPanel({
                   disabled={isExporting}
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none flex items-center gap-3 disabled:opacity-50"
                   role="menuitem"
+                  aria-label={`Export as ${FormatLabels[format]}`}
                 >
-                  <Icon className="w-4 h-4 text-gray-400" />
+                  <Icon className="w-4 h-4 text-gray-400" aria-hidden="true" />
                   <span>Export as {FormatLabels[format]}</span>
                 </button>
               );
@@ -262,9 +265,12 @@ export function ExportPanel({
                     : 'border-gray-200 hover:border-gray-300 bg-white'}
                   ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
+                role="radio"
+                aria-checked={isSelected}
+                aria-label={`Export as ${FormatLabels[format]}: ${FormatDescriptions[format]}`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className={`w-6 h-6 ${isSelected ? 'text-blue-500' : 'text-gray-400'}`} />
+                  <Icon className={`w-6 h-6 ${isSelected ? 'text-blue-500' : 'text-gray-400'}`} aria-hidden="true" />
                   <div>
                     <p className={`font-medium ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}>
                       {FormatLabels[format]}
@@ -283,10 +289,12 @@ export function ExportPanel({
         <button
           onClick={() => setShowOptions(!showOptions)}
           className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800"
+          aria-expanded={showOptions}
+          aria-label="Toggle export options"
         >
-          <Settings2 className="w-4 h-4" />
+          <Settings2 className="w-4 h-4" aria-hidden="true" />
           <span>Export Options</span>
-          <ChevronDown className={`w-4 h-4 transition-transform ${showOptions ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-4 h-4 transition-transform ${showOptions ? 'rotate-180' : ''}`} aria-hidden="true" />
         </button>
 
         {/* Options Panel */}
@@ -321,16 +329,16 @@ export function ExportPanel({
 
         {/* Progress */}
         {isExporting && (
-          <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
-            <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+          <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg" role="status" aria-live="polite">
+            <Loader2 className="w-4 h-4 text-blue-500 animate-spin" aria-hidden="true" />
             <span className="text-sm text-blue-700">{progress.message}</span>
           </div>
         )}
 
         {/* Success */}
         {isComplete && (
-          <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
-            <Check className="w-4 h-4 text-green-500" />
+          <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg" role="status" aria-live="polite">
+            <Check className="w-4 h-4 text-green-500" aria-hidden="true" />
             <span className="text-sm text-green-700">Export complete!</span>
           </div>
         )}
@@ -342,15 +350,16 @@ export function ExportPanel({
           onClick={() => handleExport(selectedFormat)}
           disabled={isDisabled || isExporting}
           className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label={`Export as ${FormatLabels[selectedFormat]}`}
         >
           {isExporting ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
               Exporting...
             </>
           ) : (
             <>
-              <Download className="w-4 h-4" />
+              <Download className="w-4 h-4" aria-hidden="true" />
               Export as {FormatLabels[selectedFormat]}
             </>
           )}
@@ -417,13 +426,14 @@ export function QuickExportButton({
       onClick={handleClick}
       disabled={isDisabled || isExporting}
       className={`btn-secondary flex items-center gap-2 ${className}`}
+      aria-label={`Export ${FormatLabels[format]}`}
     >
       {isExporting ? (
-        <Loader2 className="w-4 h-4 animate-spin" />
+        <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
       ) : isComplete ? (
-        <Check className="w-4 h-4 text-green-500" />
+        <Check className="w-4 h-4 text-green-500" aria-hidden="true" />
       ) : (
-        <Icon className="w-4 h-4" />
+        <Icon className="w-4 h-4" aria-hidden="true" />
       )}
       {children || `Export ${FormatLabels[format]}`}
     </button>
@@ -477,9 +487,9 @@ export function ExportModal({
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-1 hover:bg-gray-100 rounded"
-          aria-label="Close"
+          aria-label="Close export modal"
         >
-          <X className="w-5 h-5" />
+          <X className="w-5 h-5" aria-hidden="true" />
         </button>
 
         {/* Export Panel */}

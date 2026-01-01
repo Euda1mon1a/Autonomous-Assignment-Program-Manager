@@ -61,7 +61,7 @@ _fix_it_executions: dict[str, dict] = {}
 # ============================================================================
 
 
-def _get_resilience_service(db: Session):
+def _get_resilience_service(db: Session) -> "ResilienceService":
     """Get or create ResilienceService instance."""
     from app.core.config import get_resilience_config
     from app.resilience.service import ResilienceService

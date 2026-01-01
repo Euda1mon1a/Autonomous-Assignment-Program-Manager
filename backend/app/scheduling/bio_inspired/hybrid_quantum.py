@@ -214,7 +214,7 @@ class HybridGAQUBOSolver(BioInspiredSolver):
         timeout_seconds: float = 600.0,
         config: HybridConfig | None = None,
         seed: int | None = None,
-    ):
+    ) -> None:
         """
         Initialize hybrid GA-QUBO solver.
 
@@ -383,7 +383,7 @@ class HybridGAQUBOSolver(BioInspiredSolver):
         generation: int,
         n_residents: int,
         n_blocks: int,
-    ) -> list[Individual]:
+    ) -> None:
         """Evolve a single island population."""
         # Sort by fitness
         sorted_island = sorted(
@@ -613,7 +613,7 @@ class HybridGAQUBOSolver(BioInspiredSolver):
         # Simple SA implementation
         sample = {i: random.randint(0, 1) for i in range(n_vars)}
 
-        def compute_energy(s):
+        def compute_energy(s: dict[int, int]) -> float:
             e = 0.0
             for (i, j), coef in Q.items():
                 if i == j:
@@ -739,7 +739,7 @@ class HybridGAQUBOSolver(BioInspiredSolver):
         ):
             self.best_individual = current_best.copy()
 
-    def _track_generation(self, generation: int):
+    def _track_generation(self, generation: int) -> None:
         """Track statistics for this generation."""
         all_individuals = [ind for island in self.islands for ind in island]
         fitness_values = [

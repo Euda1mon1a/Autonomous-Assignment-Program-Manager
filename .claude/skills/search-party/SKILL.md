@@ -1,6 +1,21 @@
 ---
 name: search-party
 description: Parallel 120-probe reconnaissance using G-2 RECON agents. Deploy 12 G-2s commanding 10 D&D-inspired probes each. Use for comprehensive codebase exploration.
+model_tier: sonnet
+parallel_hints:
+  can_parallel_with: [systematic-debugger, code-review]
+  must_serialize_with: []
+  preferred_batch_size: 12
+context_hints:
+  max_file_context: 200
+  compression_level: 2
+  requires_git_context: true
+  requires_db_context: false
+escalation_triggers:
+  - pattern: "security.*breach"
+    reason: "Security findings require immediate escalation"
+  - pattern: "credentials|secrets"
+    reason: "Credential findings require security review"
 ---
 
 # SEARCH_PARTY Skill

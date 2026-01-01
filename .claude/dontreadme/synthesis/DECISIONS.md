@@ -8,6 +8,20 @@
 
 ---
 
+## Formal ADR Files
+
+For detailed architectural decision records with implementation examples and code references, see:
+
+**`docs/architecture/decisions/`** - Formal ADR files with complete documentation:
+- [ADR-001: FastAPI + SQLAlchemy 2.0](../../../docs/architecture/decisions/ADR-001-fastapi-sqlalchemy-async.md)
+- [ADR-002: Constraint Programming (OR-Tools)](../../../docs/architecture/decisions/ADR-002-constraint-programming-ortools.md)
+- [ADR-003: MCP Server for AI Integration](../../../docs/architecture/decisions/ADR-003-mcp-server-ai-integration.md)
+- [ADR-004: Cross-Disciplinary Resilience Framework](../../../docs/architecture/decisions/ADR-004-resilience-framework.md)
+- [ADR-009: Time Crystal Scheduling (Anti-Churn)](../../../docs/architecture/decisions/ADR-009-time-crystal-scheduling.md)
+- [ADR-011: CI_LIAISON Owns Local Container Management](../../../docs/architecture/decisions/ADR-011-ci-liaison-container-management.md)
+
+---
+
 ## Active Decisions
 
 ### ADR-001: FastAPI + SQLAlchemy 2.0 (Async)
@@ -32,6 +46,8 @@
 - ⚠️ Learning curve for async SQLAlchemy
 
 **Status:** ✅ Adopted
+
+**Formal ADR:** [docs/architecture/decisions/ADR-001-fastapi-sqlalchemy-async.md](../../../docs/architecture/decisions/ADR-001-fastapi-sqlalchemy-async.md)
 
 ---
 
@@ -59,6 +75,8 @@
 
 **See Also:** `docs/architecture/SOLVER_ALGORITHM.md`
 
+**Formal ADR:** [docs/architecture/decisions/ADR-002-constraint-programming-ortools.md](../../../docs/architecture/decisions/ADR-002-constraint-programming-ortools.md)
+
 ---
 
 ### ADR-003: MCP Server for AI Integration
@@ -85,6 +103,8 @@
 **Status:** ✅ Adopted
 
 **Implementation:** `mcp-server/`
+
+**Formal ADR:** [docs/architecture/decisions/ADR-003-mcp-server-ai-integration.md](../../../docs/architecture/decisions/ADR-003-mcp-server-ai-integration.md)
 
 ---
 
@@ -117,6 +137,8 @@
 **Status:** ✅ Adopted
 
 **Reference:** `docs/architecture/cross-disciplinary-resilience.md`, `docs/architecture/EXOTIC_FRONTIER_CONCEPTS.md`
+
+**Formal ADR:** [docs/architecture/decisions/ADR-004-resilience-framework.md](../../../docs/architecture/decisions/ADR-004-resilience-framework.md)
 
 ---
 
@@ -251,6 +273,8 @@
 
 **Reference:** `docs/architecture/TIME_CRYSTAL_ANTI_CHURN.md`
 
+**Formal ADR:** [docs/architecture/decisions/ADR-009-time-crystal-scheduling.md](../../../docs/architecture/decisions/ADR-009-time-crystal-scheduling.md)
+
 ---
 
 ### ADR-010: Pytest + Jest Testing Strategy
@@ -321,6 +345,8 @@
 **Status:** ✅ Adopted
 
 **Implementation:** Updated `CI_LIAISON.md` with Local Container Management section
+
+**Formal ADR:** [docs/architecture/decisions/ADR-011-ci-liaison-container-management.md](../../../docs/architecture/decisions/ADR-011-ci-liaison-container-management.md)
 
 ---
 

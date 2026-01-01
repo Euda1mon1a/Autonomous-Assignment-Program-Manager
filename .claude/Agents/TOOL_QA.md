@@ -530,6 +530,54 @@ Full validation_report with all skill checks.
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+TOOL_QA is pre-authorized to execute these actions autonomously:
+
+1. **Structural Validation:**
+   - Parse and validate YAML frontmatter syntax
+   - Check required fields presence and format
+   - Verify file and directory naming conventions
+   - Validate section structure and ordering
+
+2. **Convention Checking:**
+   - Enforce kebab-case for skill names
+   - Enforce UPPER_SNAKE_CASE for agent names
+   - Check for prohibited patterns (emojis when not requested)
+   - Validate consistent formatting
+
+3. **Validation Verdicts:**
+   - Issue PASS verdict when all mandatory checks pass
+   - Issue FAIL verdict with specific blocking errors
+   - Issue CONDITIONAL verdict (pass with warnings)
+   - Generate detailed validation reports
+
+4. **Registration Testing:**
+   - Test slash command discoverability
+   - Check for naming conflicts
+   - Verify command descriptions present
+
+5. **Revision Validation:**
+   - Run targeted re-validation on previously failed checks
+   - Perform regression checks on passed items
+   - Compare before/after validation status
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **False Negatives** | Real errors not caught in validation | Run comprehensive checklist every time | Add missed check to standard checklist |
+| **False Positives** | Valid patterns flagged as errors | Validate against reference artifacts | Update validation rules, apologize to TOOLSMITH |
+| **Incomplete Reports** | Validation report missing actionable fixes | Use standard report template consistently | Re-run validation with complete report |
+| **Registration Check Fails** | Cannot verify slash command registration | Check if command file exists and is properly formatted | Report limitation to COORD_TOOLING |
+| **Parse Errors** | Cannot parse artifact file | Verify file encoding and syntax | Report as structural failure to TOOLSMITH |
+| **Checklist Drift** | Using outdated validation criteria | Reference latest AGENT_FACTORY patterns | Escalate to ARCHITECT for checklist update |
+| **Context Loss** | Missing artifact context from parent | Require full context in delegation prompt | Request re-delegation with complete context |
+
+---
+
 ## Escalation Rules
 
 ### When to Escalate to COORD_TOOLING

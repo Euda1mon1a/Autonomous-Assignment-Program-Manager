@@ -251,7 +251,7 @@ class GenerativeModel:
         # Track prediction errors for meta-learning
         self.error_history: list[float] = []
 
-    def update(self, outcome: ScheduleOutcome, template_order: list[UUID]):
+    def update(self, outcome: ScheduleOutcome, template_order: list[UUID]) -> None:
         """
         Update model based on observed outcome (Bayesian learning).
 
@@ -342,7 +342,7 @@ class GenerativeModel:
         kl = np.sum(learned_safe * np.log(learned_safe / prior_safe))
         return float(kl)
 
-    def reset_to_prior(self):
+    def reset_to_prior(self) -> None:
         """Reset learned weights to prior (forget learning)."""
         self.learned_weights = self.prior_weights.copy()
         self.outcomes_seen = 0
@@ -628,7 +628,7 @@ class FreeEnergyScheduler(BioInspiredSolver):
 
         return updated_schedule, updated_forecast
 
-    def update_generative_model(self, historical_outcomes: list[ScheduleOutcome]):
+    def update_generative_model(self, historical_outcomes: list[ScheduleOutcome]) -> None:
         """
         Update generative model from historical outcomes.
 

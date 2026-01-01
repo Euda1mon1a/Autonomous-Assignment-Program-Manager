@@ -225,8 +225,10 @@ export function ConflictCard({
           hover:shadow-md
         `}
         onClick={handleCardClick}
+        role="button"
+        aria-label={`${conflict.title} - ${conflict.severity} severity conflict`}
       >
-        <div className={`flex-shrink-0 ${severityStyles.icon}`}>
+        <div className={`flex-shrink-0 ${severityStyles.icon}`} aria-hidden="true">
           <SeverityIcon className="w-5 h-5" />
         </div>
 
@@ -261,10 +263,12 @@ export function ConflictCard({
       <div
         className="p-4 cursor-pointer"
         onClick={handleCardClick}
+        role="article"
+        aria-label={`Conflict: ${conflict.title}`}
       >
         <div className="flex items-start gap-3">
           {/* Severity Icon */}
-          <div className={`flex-shrink-0 mt-0.5 ${severityStyles.icon}`}>
+          <div className={`flex-shrink-0 mt-0.5 ${severityStyles.icon}`} aria-hidden="true">
             <SeverityIcon className="w-6 h-6" />
           </div>
 
@@ -286,7 +290,7 @@ export function ConflictCard({
 
             {/* Type badge */}
             <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-2">
-              <TypeIcon className="w-4 h-4" />
+              <TypeIcon className="w-4 h-4" aria-hidden="true" />
               <span>{getTypeLabel(conflict.type)}</span>
             </div>
 
@@ -298,16 +302,16 @@ export function ConflictCard({
             {/* Meta info */}
             <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
               <span className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" />
+                <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
                 {format(new Date(conflict.conflict_date), 'MMM d, yyyy')}
                 {conflict.conflict_session && ` (${conflict.conflict_session})`}
               </span>
               <span className="flex items-center gap-1">
-                <User className="w-3.5 h-3.5" />
+                <User className="w-3.5 h-3.5" aria-hidden="true" />
                 {conflict.affected_person_ids.length} affected
               </span>
               <span className="flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" />
+                <Clock className="w-3.5 h-3.5" aria-hidden="true" />
                 Detected {format(new Date(conflict.detected_at), 'MMM d, h:mm a')}
               </span>
             </div>
@@ -318,12 +322,13 @@ export function ConflictCard({
             <button
               onClick={handleToggleExpand}
               className="p-1.5 rounded-md hover:bg-white/50 transition-colors"
-              aria-label={isExpanded ? 'Collapse' : 'Expand'}
+              aria-label={isExpanded ? 'Collapse conflict details' : 'Expand conflict details'}
+              aria-expanded={isExpanded}
             >
               {isExpanded ? (
-                <ChevronUp className="w-5 h-5 text-gray-500" />
+                <ChevronUp className="w-5 h-5 text-gray-500" aria-hidden="true" />
               ) : (
-                <ChevronDown className="w-5 h-5 text-gray-500" />
+                <ChevronDown className="w-5 h-5 text-gray-500" aria-hidden="true" />
               )}
             </button>
 
@@ -334,14 +339,18 @@ export function ConflictCard({
                   setShowActions(!showActions);
                 }}
                 className="p-1.5 rounded-md hover:bg-white/50 transition-colors"
-                aria-label="More actions"
+                aria-label="More actions for this conflict"
+                aria-expanded={showActions}
+                aria-haspopup="menu"
               >
-                <MoreHorizontal className="w-5 h-5 text-gray-500" />
+                <MoreHorizontal className="w-5 h-5 text-gray-500" aria-hidden="true" />
               </button>
 
               {showActions && (
                 <div
                   className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border z-10"
+                  role="menu"
+                  aria-label="Conflict actions menu"
                   onMouseLeave={() => setShowActions(false)}
                 >
                   {conflict.status === 'unresolved' && onViewSuggestions && (
@@ -351,9 +360,11 @@ export function ConflictCard({
                         onViewSuggestions(conflict);
                         setShowActions(false);
                       }}
+                      role="menuitem"
+                      aria-label="View resolution suggestions for this conflict"
                       className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
                     >
-                      <Lightbulb className="w-4 h-4 text-amber-500" />
+                      <Lightbulb className="w-4 h-4 text-amber-500" aria-hidden="true" />
                       View Suggestions
                     </button>
                   )}
@@ -470,16 +481,17 @@ export function ConflictCard({
 
             {/* Quick actions for unresolved */}
             {conflict.status === 'unresolved' && (
-              <div className="flex gap-2 mt-4">
+              <div className="flex gap-2 mt-4" role="group" aria-label="Conflict resolution actions">
                 {onViewSuggestions && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onViewSuggestions(conflict);
                     }}
+                    aria-label="View resolution suggestions"
                     className="flex-1 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all duration-200 hover:shadow-lg active:scale-95 text-sm font-medium flex items-center justify-center gap-2"
                   >
-                    <Lightbulb className="w-4 h-4" />
+                    <Lightbulb className="w-4 h-4" aria-hidden="true" />
                     View Suggestions
                   </button>
                 )}
@@ -489,9 +501,10 @@ export function ConflictCard({
                       e.stopPropagation();
                       onResolve(conflict);
                     }}
+                    aria-label="Resolve this conflict"
                     className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-200 hover:shadow-lg active:scale-95 text-sm font-medium flex items-center justify-center gap-2"
                   >
-                    <Check className="w-4 h-4" />
+                    <Check className="w-4 h-4" aria-hidden="true" />
                     Resolve
                   </button>
                 )}

@@ -402,6 +402,57 @@ Before completing any knowledge curation task:
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+KNOWLEDGE_CURATOR is pre-authorized to execute these actions autonomously:
+
+1. **Session Handoff Documentation:**
+   - Create SESSION_*.md files with session summary
+   - Document decisions made during session
+   - List agents spawned and their contributions
+   - Capture outcomes, escalations, and artifacts
+   - Format with consistent structure and cross-references
+
+2. **Pattern Identification:**
+   - Detect recurring patterns across sessions
+   - Document new patterns in PATTERNS.md
+   - Provide evidence with session cross-references
+   - Identify pattern triggers and consequences
+
+3. **Lessons Learned Extraction:**
+   - Identify what worked well and should be repeated
+   - Capture what didn't work and why
+   - Document surprising discoveries
+   - Update LESSONS_LEARNED.md with categorized lessons
+
+4. **Knowledge Base Organization:**
+   - Improve structure and navigation of `.claude/dontreadme/`
+   - Create new index entries in INDEX.md
+   - Update cross-references between documents
+   - Validate all internal links and references
+
+5. **Cross-Reference Validation:**
+   - Check all linked sessions exist
+   - Verify ADR numbers are accurate
+   - Ensure agent names match official specs
+   - Validate document paths are correct
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Incomplete Handoffs** | Missing agent contributions or decisions | Use session handoff checklist | Request missing details from parent coordinator |
+| **Broken Cross-References** | Links to nonexistent sessions/ADRs | Validate all references before finalizing | Fix references, update cross-reference index |
+| **Pattern Overgeneralization** | Pattern based on insufficient evidence | Require 3+ session examples minimum | Mark pattern as "emerging" until validated |
+| **Missing Context** | Documenting decisions without rationale | Always ask "why was this decided?" | Interview decision-maker for context |
+| **Duplicate ADR Numbers** | Reusing ADR identifiers | Check DECISIONS.md for highest number | Renumber and update all cross-references |
+| **Stale Documentation** | Knowledge base not reflecting current state | Review INDEX.md quarterly | Archive outdated content, update index |
+| **Lost Tribal Knowledge** | Insights not captured from verbal discussions | Proactively ask for lessons learned | Conduct retrospective with session participants |
+
+---
+
 ## Escalation Rules
 
 | Situation | Escalate To | Reason |

@@ -46,7 +46,7 @@ class ConflictAutoResolver:
     impact analysis, and batch processing capabilities.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self._resolution_cache = {}  # Cache for resolution options
 

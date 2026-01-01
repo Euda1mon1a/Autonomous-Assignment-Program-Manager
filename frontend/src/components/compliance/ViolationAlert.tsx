@@ -67,10 +67,11 @@ export const ViolationAlert: React.FC<ViolationAlertProps> = ({
       <div
         className={`violation-alert-compact border-l-4 rounded p-2 ${config.color} ${className}`}
         role="alert"
+        aria-label={`${config.label}: ${violation.message}`}
       >
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <span role="img" aria-label={config.label}>{config.icon}</span>
+            <span aria-hidden="true">{config.icon}</span>
             <span className="text-sm font-medium truncate">{violation.message}</span>
           </div>
           <Badge variant={config.badgeVariant} className="text-xs">
@@ -86,11 +87,12 @@ export const ViolationAlert: React.FC<ViolationAlertProps> = ({
       className={`violation-alert border-l-4 rounded-lg p-4 shadow-sm ${config.color} ${className}`}
       role="alert"
       aria-live="assertive"
+      aria-label={`${config.label}: ${typeLabel}`}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <span className="text-2xl" role="img" aria-label={config.label}>
+          <span className="text-2xl" aria-hidden="true">
             {config.icon}
           </span>
           <div>
@@ -102,11 +104,12 @@ export const ViolationAlert: React.FC<ViolationAlertProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className="flex gap-2" role="group" aria-label="Violation actions">
           {onResolve && (
             <button
               onClick={() => onResolve(violation.id)}
               className="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-label={`Resolve ${typeLabel}`}
             >
               Resolve
             </button>
@@ -115,9 +118,9 @@ export const ViolationAlert: React.FC<ViolationAlertProps> = ({
             <button
               onClick={() => onDismiss(violation.id)}
               className="p-1 hover:bg-white hover:bg-opacity-50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              aria-label="Dismiss alert"
+              aria-label={`Dismiss ${typeLabel} alert`}
             >
-              ✕
+              <span aria-hidden="true">✕</span>
             </button>
           )}
         </div>
@@ -158,9 +161,9 @@ export const ViolationAlert: React.FC<ViolationAlertProps> = ({
 
       {/* Suggestions */}
       {violation.suggestions && violation.suggestions.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded p-3">
+        <div className="bg-blue-50 border border-blue-200 rounded p-3" role="region" aria-label="Suggested actions">
           <h5 className="text-sm font-semibold text-blue-900 mb-2">
-            💡 Suggested Actions:
+            <span aria-hidden="true">💡</span> Suggested Actions:
           </h5>
           <ul className="list-disc list-inside text-sm text-blue-800 space-y-1">
             {violation.suggestions.map((suggestion, idx) => (

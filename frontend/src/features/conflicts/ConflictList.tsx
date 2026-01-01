@@ -258,12 +258,13 @@ export function ConflictList({
         <div className="flex items-center gap-3 mb-3">
           {/* Search */}
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" aria-hidden="true" />
             <input
               type="text"
               placeholder="Search conflicts..."
               value={searchQuery}
               onChange={handleSearchChange}
+              aria-label="Search conflicts by title or description"
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -271,6 +272,8 @@ export function ConflictList({
           {/* Filter toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
+            aria-label={showFilters ? 'Hide filters' : 'Show filters'}
+            aria-expanded={showFilters}
             className={`
               flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors
               ${showFilters || activeFilterCount > 0
@@ -279,7 +282,7 @@ export function ConflictList({
               }
             `}
           >
-            <Filter className="w-4 h-4" />
+            <Filter className="w-4 h-4" aria-hidden="true" />
             <span>Filters</span>
             {activeFilterCount > 0 && (
               <span className="px-1.5 py-0.5 bg-blue-500 text-white text-xs rounded-full">
@@ -293,25 +296,26 @@ export function ConflictList({
             onClick={handleRefresh}
             disabled={isLoading}
             className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
-            aria-label="Refresh"
+            aria-label={isLoading ? 'Refreshing conflicts' : 'Refresh conflict list'}
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
           </button>
 
           {/* Detect new conflicts */}
           <button
             onClick={handleDetectNew}
             disabled={detectConflicts.isPending}
+            aria-label={detectConflicts.isPending ? 'Detecting conflicts' : 'Detect new conflicts'}
             className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 transition-all duration-200 hover:shadow-lg active:scale-95"
           >
-            <AlertTriangle className={`w-4 h-4 ${detectConflicts.isPending ? 'animate-spin' : ''}`} />
+            <AlertTriangle className={`w-4 h-4 ${detectConflicts.isPending ? 'animate-spin' : ''}`} aria-hidden="true" />
             <span>{detectConflicts.isPending ? 'Detecting...' : 'Detect'}</span>
           </button>
         </div>
 
         {/* Filter panel */}
         {showFilters && (
-          <div className="p-4 bg-gray-50 rounded-lg space-y-4">
+          <div className="p-4 bg-gray-50 rounded-lg space-y-4" role="region" aria-label="Conflict filters">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Severity filter */}
               <div>

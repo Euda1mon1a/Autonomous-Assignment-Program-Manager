@@ -87,13 +87,15 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
   const activeCount = getActiveFilterCount();
 
   return (
-    <div className={`schedule-filters bg-white rounded-lg shadow-sm border border-gray-200 ${className}`}>
+    <div className={`schedule-filters bg-white rounded-lg shadow-sm border border-gray-200 ${className}`} role="region" aria-label="Schedule filters">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-semibold">Filters</h3>
           {activeCount > 0 && (
-            <Badge variant="default">{activeCount} active</Badge>
+            <Badge variant="default">
+              <span aria-live="polite">{activeCount} active</span>
+            </Badge>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -120,8 +122,8 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
       {isExpanded && (
         <div className="p-4 space-y-4">
           {/* Date Range */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div role="group" aria-labelledby="date-range-label">
+            <label id="date-range-label" className="block text-sm font-medium text-gray-700 mb-2">
               Date Range
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -135,6 +137,7 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
                     end: currentFilters.dateRange?.end || '',
                   },
                 })}
+                aria-label="Start date"
                 className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <input
@@ -147,15 +150,16 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
                     end: e.target.value,
                   },
                 })}
+                aria-label="End date"
                 className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
 
           {/* Persons */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Persons ({currentFilters.persons?.length || 0} selected)
+          <div role="group" aria-labelledby="persons-filter-label">
+            <label id="persons-filter-label" className="block text-sm font-medium text-gray-700 mb-2">
+              Persons (<span aria-live="polite">{currentFilters.persons?.length || 0} selected</span>)
             </label>
             <div className="max-h-48 overflow-y-auto border border-gray-300 rounded p-2">
               {availablePersons.map(person => (
@@ -164,6 +168,7 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
                     type="checkbox"
                     checked={currentFilters.persons?.includes(person.id) || false}
                     onChange={() => handlePersonToggle(person.id)}
+                    aria-label={`Filter by ${person.name}`}
                     className="rounded focus:ring-blue-500"
                   />
                   <span className="text-sm">{person.name}</span>
@@ -174,8 +179,8 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
           </div>
 
           {/* Rotations */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div role="group" aria-labelledby="rotations-filter-label">
+            <label id="rotations-filter-label" className="block text-sm font-medium text-gray-700 mb-2">
               Rotations
             </label>
             <div className="flex flex-wrap gap-2">
@@ -183,6 +188,8 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
                 <button
                   key={rotation}
                   onClick={() => handleRotationToggle(rotation)}
+                  aria-pressed={currentFilters.rotations?.includes(rotation)}
+                  aria-label={`Filter by ${rotation}`}
                   className={`
                     px-3 py-1 rounded-full text-sm font-medium transition-colors
                     ${currentFilters.rotations?.includes(rotation)
@@ -199,8 +206,8 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
           </div>
 
           {/* Shifts */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div role="group" aria-labelledby="shifts-filter-label">
+            <label id="shifts-filter-label" className="block text-sm font-medium text-gray-700 mb-2">
               Shifts
             </label>
             <div className="flex gap-2">
@@ -208,6 +215,8 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
                 <button
                   key={shift}
                   onClick={() => handleShiftToggle(shift)}
+                  aria-pressed={currentFilters.shifts?.includes(shift)}
+                  aria-label={`Filter by ${shift} shift`}
                   className={`
                     px-4 py-2 rounded-lg text-sm font-medium transition-colors
                     ${currentFilters.shifts?.includes(shift)
@@ -224,8 +233,8 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
           </div>
 
           {/* PGY Levels */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div role="group" aria-labelledby="pgy-filter-label">
+            <label id="pgy-filter-label" className="block text-sm font-medium text-gray-700 mb-2">
               PGY Levels
             </label>
             <div className="flex gap-2">
@@ -233,6 +242,8 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
                 <button
                   key={level}
                   onClick={() => handlePGYToggle(level)}
+                  aria-pressed={currentFilters.pgyLevels?.includes(level)}
+                  aria-label={`Filter by ${level}`}
                   className={`
                     px-4 py-2 rounded-lg text-sm font-medium transition-colors
                     ${currentFilters.pgyLevels?.includes(level)
@@ -249,8 +260,8 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
           </div>
 
           {/* Special Filters */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div role="group" aria-labelledby="special-filters-label">
+            <label id="special-filters-label" className="block text-sm font-medium text-gray-700 mb-2">
               Special Filters
             </label>
             <div className="space-y-2">
@@ -262,6 +273,7 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
                     ...currentFilters,
                     showConflicts: e.target.checked,
                   })}
+                  aria-label="Show only conflicts"
                   className="rounded focus:ring-blue-500"
                 />
                 <span className="text-sm">Show only conflicts</span>
@@ -274,6 +286,7 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
                     ...currentFilters,
                     showACGMEViolations: e.target.checked,
                   })}
+                  aria-label="Show only ACGME violations"
                   className="rounded focus:ring-blue-500"
                 />
                 <span className="text-sm">Show only ACGME violations</span>

@@ -75,7 +75,90 @@ class FairnessConstraintTemplate(SoftConstraint):
         return counts
 
     def add_to_cpsat(self, model, variables, context):
-        pass
+        """
+        Add fairness constraint to CP-SAT model.
+
+        Minimizes the maximum assignment count across people to promote
+        even distribution using a min-max objective.
+        """
+        x = variables.get("assignments", {})
+        if not x:
+            return
+
+        # Count assignments per person
+        person_counts = {}
+        for person in context.residents + context.faculty:
+            p_i = context.resident_idx.get(person.id)
+            if p_i is None:
+                continue
+
+            person_vars = []
+            for block in context.blocks:
+                b_i = context.block_idx[block.id]
+                if (p_i, b_i) in x:
+                    person_vars.append(x[p_i, b_i])
+
+            if person_vars:
+                person_counts[p_i] = person_vars
+
+        if not person_counts:
+            return
+
+        # Create max count variable to minimize inequality
+        max_count = model.NewIntVar(0, len(context.blocks), "max_fairness_count")
+        for p_i, vars_list in person_counts.items():
+            model.Add(sum(vars_list) <= max_count)
+
+        # Add to objective (minimize max to promote fairness)
+        objective_vars = variables.get("objective_terms", [])
+        objective_vars.append((max_count, int(self.weight)))
+        variables["objective_terms"] = objective_vars
 
     def add_to_pulp(self, model, variables, context):
-        pass
+        """
+        Add fairness constraint to PuLP model.
+
+        Minimizes the maximum assignment count across people using
+        auxiliary variables and linear programming.
+        """
+        import pulp
+
+        x = variables.get("assignments", {})
+        if not x:
+            return
+
+        # Count assignments per person
+        person_counts = {}
+        for person in context.residents + context.faculty:
+            p_i = context.resident_idx.get(person.id)
+            if p_i is None:
+                continue
+
+            person_vars = []
+            for block in context.blocks:
+                b_i = context.block_idx[block.id]
+                if (p_i, b_i) in x:
+                    person_vars.append(x[p_i, b_i])
+
+            if person_vars:
+                person_counts[p_i] = person_vars
+
+        if not person_counts:
+            return
+
+        # Create max count variable
+        max_count = pulp.LpVariable(
+            "max_fairness_count", 0, len(context.blocks), cat="Integer"
+        )
+
+        # Constrain max count to be >= each person's count
+        for p_i, vars_list in person_counts.items():
+            model += (
+                pulp.lpSum(vars_list) <= max_count,
+                f"fairness_max_{p_i}",
+            )
+
+        # Add max count to objective (minimize)
+        obj_terms = variables.get("objective_terms", [])
+        obj_terms.append(self.weight * max_count)
+        variables["objective_terms"] = obj_terms

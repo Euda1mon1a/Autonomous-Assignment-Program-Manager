@@ -9,6 +9,186 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Stream 10 - Documentation & Synthesis (2026-01-01)
+
+**Architectural Decision Records (ADRs):**
+- Created formal ADR directory structure at `docs/architecture/decisions/`
+- **ADR-001**: FastAPI + SQLAlchemy 2.0 (Async) - Justification for async stack choice
+- **ADR-002**: Constraint Programming (OR-Tools) - Why constraint-based scheduling over heuristics
+- **ADR-003**: MCP Server for AI Integration - AI tool integration architecture
+- **ADR-004**: Cross-Disciplinary Resilience Framework - Multi-domain resilience approach
+- **ADR-009**: Time Crystal Scheduling (Anti-Churn) - Rigidity-based schedule optimization
+- **ADR-011**: CI_LIAISON Owns Container Management - Agent ownership for Docker operations
+
+**API Documentation Expansion:**
+- `docs/api/HEALTH_API.md`: Complete health check endpoint reference (365 lines)
+  - `/health`, `/health/detailed`, `/health/services/*` endpoints
+  - Circuit breaker integration, component health checks
+  - Prometheus metrics integration
+- `docs/api/FMIT_HEALTH_API.md`: FMIT coverage and swap monitoring docs (423 lines)
+  - `/fmit-health/coverage`, `/fmit-health/swaps` endpoints
+  - Faculty stress monitoring, workload analysis
+  - Swap success/failure tracking
+- Updated `docs/api/index.md` with new API categories
+
+**Synthesis Documentation Updates:**
+- `.claude/dontreadme/synthesis/PATTERNS.md`: Added infrastructure and documentation patterns
+  - Container management patterns (backup before changes)
+  - ADR creation patterns (context-decision-consequences)
+  - API documentation standards
+- `.claude/dontreadme/synthesis/LESSONS_LEARNED.md`: Sessions 39-41 insights
+  - Mission Command delegation model lessons
+  - Governance framework implementation findings
+  - Knowledge preservation strategies (RAG backup/restore)
+- `.claude/dontreadme/INDEX.md`: Referenced formal ADR directory
+
+**Total Deliverables:** 13 files changed, 1,713 lines added
+
+#### Session 041 - Knowledge Preservation & CI_LIAISON (2025-12-31)
+
+**CI_LIAISON Agent Enhancement:**
+- **Local Container Management Section**: Added comprehensive Docker operation protocols
+  - Pre-flight checklist with backup validation (database, RAG vector store)
+  - "Same way every time" container restart philosophy
+  - RAG database lesson documented (never `docker-compose down` without backup)
+  - Escalation paths: ARCHITECT → ORCHESTRATOR for critical operations
+- **ADR-011**: Formalized CI_LIAISON ownership of container management
+  - Advisory input documented: G1 (Personnel), G2 (Intelligence), G6 (Communications), G5 (Plans), MEDCOM (Medical)
+  - Clear ownership and escalation paths established
+
+**Knowledge Infrastructure Testing:**
+- RAG vector database restored: 185 chunks (62 from Dec 29 backup + 123 new embeddings)
+- G4_CONTEXT_MANAGER agent tested successfully for knowledge retrieval
+- KNOWLEDGE_CURATOR agent tested for knowledge synthesis
+
+**Session Documentation:**
+- `.claude/Scratchpad/SESSION_041_FINDINGS.md`: Test results and validation
+- `.claude/Scratchpad/SESSION_041_HANDOFF.md`: Session handoff with next steps
+- `.claude/dontreadme/synthesis/DECISIONS.md`: ADR-011 added
+
+**Files Changed:** 4 files, 524 lines added
+
+#### Session 040 - Governance Framework & Quality Pipeline (2025-12-31)
+
+**COORD_TOOLING Agent & Quality Pipeline:**
+- Created dedicated tooling coordinator under ARCHITECT (Sonnet-tier)
+- **3-Agent Quality Pipeline** for meta-infrastructure artifacts:
+  1. **TOOLSMITH**: Creates skills, slash commands, MCP tools
+  2. **TOOL_QA**: Validates structure and format (Haiku)
+  3. **TOOL_REVIEWER**: Reviews patterns and quality (Haiku)
+- Moved TOOLSMITH from COORD_OPS to COORD_TOOLING for focused domain ownership
+- Updated `.claude/Governance/HIERARCHY.md` with new structure
+
+**KNOWLEDGE_CURATOR & CI_LIAISON Expansion:**
+- Expanded KNOWLEDGE_CURATOR from stub to full spec (669 lines → 1,288 lines)
+  - Knowledge synthesis workflows
+  - Session documentation generation
+  - Cross-session pattern identification
+- Expanded CI_LIAISON from stub to full spec (similar expansion)
+  - CI/CD pipeline management
+  - Docker operations ownership
+  - Test infrastructure coordination
+- Refactored COORD_OPS.md to focus on KNOWLEDGE_CURATOR and CI_LIAISON
+- Updated `session-end` skill with RAG/vector preservation steps
+
+**Governance Slash Command:**
+- Created `/governance` slash command for governance mode enforcement
+- Rewrote `governance/SKILL.md` with imperative "Claude MUST" language
+- Session handoffs documented: SESSION_038_HANDOFF.md, SESSION_039_HANDOFF.md
+- Archived pre-Mission Command agent schema for rollback reference
+
+**Files Changed:** 13 files, 4,858 lines added
+
+#### Session 039 - Mission Command Hierarchy (2025-12-31)
+
+**PAI Restructure - Mission Command Model:**
+Restructured agent hierarchy from flat coordination to Mission Command enabling "Plan, See, Do" workflow with delegated autonomy.
+
+**Strategic Tier (Opus):**
+- **ORCHESTRATOR v6.0.0**: Supreme Commander with Mission Command model
+  - Delegated autonomy to deputies (ARCHITECT, SYNTHESIZER)
+  - Commander's intent and operational boundaries
+  - Mission-type orders instead of micromanagement
+- **ARCHITECT**: Deputy for Systems (sub-orchestrator)
+  - Owns infrastructure, tooling, and technical architecture
+  - Commands COORD_TOOLING, COORD_INFRA coordinators
+- **SYNTHESIZER**: Elevated haiku → opus, Deputy for Operations
+  - Owns knowledge synthesis and documentation
+  - Commands COORD_DOCS coordinator
+
+**Tactical Tier (Sonnet):**
+- All Coordinators: Added standing orders for autonomous execution
+- Clear chain of command with escalation paths
+- Domain ownership with accountability
+
+**Delegation Philosophy:**
+- Commanders define "what" and "why", subordinates determine "how"
+- Two levels of freedom: within commander's intent, after approval
+- Escalation triggers defined (resource constraints, strategic conflicts)
+
+**Documentation:**
+- `.claude/Governance/HIERARCHY.md`: Complete org chart
+- `.claude/Agents/*.md`: Updated agent specs with Mission Command language
+- Session handoff documents for continuity
+
+**Impact:** Enables parallel multi-agent execution with clear accountability
+
+#### Party Protocols - Parallel Orchestration (2025-12-31)
+
+**SEARCH_PARTY Protocol (942aee1, 8222326):**
+- **10 D&D-Inspired Reconnaissance Probes** for comprehensive codebase exploration
+- Probe archetypes: Ranger, Wizard, Rogue, Cleric, Paladin, Bard, Druid, Monk, Warlock, Barbarian
+- Each probe has specialized search patterns and focus areas
+- Parallel deployment: 12 G2 agents × 10 probes each = 120 concurrent searches
+- Output: Reconnaissance reports with findings aggregation
+
+**PLAN_PARTY Protocol (0487a42, 58ff8df):**
+- **G-5 Planning Coordinator** for parallel strategy generation
+- Deploy 10 planning probes for multi-perspective implementation planning
+- Use after reconnaissance phase for complex task decomposition
+- Probe outputs synthesized into unified execution plan
+
+**QA_PARTY Protocol (3d0a575):**
+- **Parallel Validation Deployment** for comprehensive testing
+- 8+ QA agents running tests, builds, lints, health checks simultaneously
+- Zero marginal wall-clock cost (parallel execution)
+- Rapid quality gate validation
+
+**Protocol Integration:**
+- Added to skill catalog: `search-party`, `plan-party`, `qa-party`
+- Documentation in `.claude/skills/*/SKILL.md`
+- 611 lint fixes across codebase as part of protocol testing
+
+**Use Cases:**
+- Search Party: "Understand this unfamiliar codebase area"
+- Plan Party: "Create implementation plan for complex feature"
+- QA Party: "Validate PR across all quality dimensions"
+
+#### CCW Burn Protocol Testing (2025-12-31)
+
+**1000-Task Burn Execution (e9983f8):**
+- Large-scale parallel development test with Claude Code Web (CCW)
+- TypeScript improvements, RBAC enhancements, test coverage expansion
+- Documentation synchronization across multiple streams
+- Token management and corruption handling protocols
+
+**Burn Validation Protocol (45ca46f):**
+- Token corruption detection and recovery procedures
+- Stream coordination to prevent interference
+- Checkpoint-based rollback mechanisms
+- Session handoff protocols for burn continuity
+
+**Infrastructure Fixes (47f2e50):**
+- Local burn blockers resolved (test infrastructure, schema, resilience API)
+- Test reliability improvements for parallel execution
+- Database schema consistency checks
+
+**Lessons Learned:**
+- Parallel stream coordination requires explicit boundaries
+- Token corruption can occur with high concurrency
+- Checkpoint commits essential for large burns
+- Session handoffs critical for multi-day burns
+
 #### Backend Test Coverage Analysis (Session 025 - 2025-12-30)
 - **Test Coverage Analysis**: Comprehensive baseline assessment and improvement roadmap
   - Current baseline: 21% coverage (target: 80%)

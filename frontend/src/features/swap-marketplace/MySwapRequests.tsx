@@ -36,8 +36,8 @@ export function MySwapRequests() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+      <div className="flex items-center justify-center py-12" role="status" aria-live="polite">
+        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" aria-hidden="true" />
         <span className="ml-3 text-gray-600">Loading your swap requests...</span>
       </div>
     );
@@ -45,9 +45,9 @@ export function MySwapRequests() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6" role="alert">
         <div className="flex items-start gap-3">
-          <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
           <div>
             <h3 className="text-lg font-semibold text-red-900 mb-1">
               Error Loading Swap Requests
@@ -56,6 +56,7 @@ export function MySwapRequests() {
             <button
               onClick={() => refetch()}
               className="mt-3 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              aria-label="Retry loading swap requests"
             >
               Retry
             </button>
@@ -85,7 +86,7 @@ export function MySwapRequests() {
       if (incomingCount === 0) {
         return (
           <div className="text-center py-12">
-            <Inbox className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <Inbox className="w-16 h-16 text-gray-400 mx-auto mb-4" aria-hidden="true" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               No Incoming Requests
             </h3>
@@ -123,7 +124,7 @@ export function MySwapRequests() {
       if (outgoingCount === 0) {
         return (
           <div className="text-center py-12">
-            <Send className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <Send className="w-16 h-16 text-gray-400 mx-auto mb-4" aria-hidden="true" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               No Outgoing Requests
             </h3>
@@ -161,7 +162,7 @@ export function MySwapRequests() {
     if (recentCount === 0) {
       return (
         <div className="text-center py-12">
-          <History className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <History className="w-16 h-16 text-gray-400 mx-auto mb-4" aria-hidden="true" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             No Recent Swaps
           </h3>
@@ -216,8 +217,11 @@ export function MySwapRequests() {
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }
                 `}
+                role="tab"
+                aria-selected={isActive}
+                aria-label={`${tab.label} (${tab.count} requests)`}
               >
-                <Icon className="w-5 h-5 flex-shrink-0" />
+                <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
                 <span>{tab.label}</span>
                 {tab.count > 0 && (
                   <span
@@ -229,6 +233,7 @@ export function MySwapRequests() {
                           : 'bg-gray-100 text-gray-700'
                       }
                     `}
+                    aria-label={`${tab.count} requests`}
                   >
                     {tab.count}
                   </span>
@@ -244,19 +249,19 @@ export function MySwapRequests() {
 
       {/* Summary Stats */}
       {(incomingCount > 0 || outgoingCount > 0) && (
-        <div className="mt-6 p-3 sm:p-4 bg-blue-50 rounded-lg">
+        <div className="mt-6 p-3 sm:p-4 bg-blue-50 rounded-lg" role="region" aria-label="Swap requests summary">
           <h4 className="text-xs sm:text-sm font-medium text-blue-900 mb-2">Summary</h4>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 text-sm">
             <div>
-              <div className="text-base sm:text-lg text-blue-600 font-medium">{incomingCount}</div>
+              <div className="text-base sm:text-lg text-blue-600 font-medium" aria-label={`${incomingCount} incoming requests`}>{incomingCount}</div>
               <div className="text-xs sm:text-sm text-blue-800">Incoming requests</div>
             </div>
             <div>
-              <div className="text-base sm:text-lg text-blue-600 font-medium">{outgoingCount}</div>
+              <div className="text-base sm:text-lg text-blue-600 font-medium" aria-label={`${outgoingCount} outgoing requests`}>{outgoingCount}</div>
               <div className="text-xs sm:text-sm text-blue-800">Outgoing requests</div>
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <div className="text-base sm:text-lg text-blue-600 font-medium">{recentCount}</div>
+              <div className="text-base sm:text-lg text-blue-600 font-medium" aria-label={`${recentCount} recent swaps`}>{recentCount}</div>
               <div className="text-xs sm:text-sm text-blue-800">Recent swaps</div>
             </div>
           </div>

@@ -33,7 +33,7 @@ from app.services.export.formatters import (
 class CSVExporter:
     """CSV export service with streaming and compression support."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize CSV exporter.
 

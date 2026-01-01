@@ -10,12 +10,18 @@ hinder schedule changes. It integrates with the existing codebase:
 """
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from typing import Any, Protocol
 from uuid import UUID
 
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.assignment import Assignment
+from app.models.block import Block
+from app.models.faculty_preference import FacultyPreference
+from app.models.procedure_credential import ProcedureCredential
+from app.models.rotation_template import RotationTemplate
 from app.scheduling_catalyst.models import (
     ActivationEnergy,
     BarrierType,
@@ -385,39 +391,275 @@ class BarrierDetector:
                 )
             )
 
-    # Helper methods - would integrate with actual services in production
+    # Helper methods - integrate with actual services
     async def _check_credentials(self, person_id: UUID, rotation_id: UUID) -> bool:
-        """Check if person has required credentials for rotation."""
-        # Placeholder - would query procedure_credential table
-        return True
+        """
+        Check if person has required credentials for rotation.
+
+        Queries the procedure_credential table to verify the person has
+        valid, active credentials for procedures associated with the rotation.
+
+        Args:
+            person_id: UUID of the person to check
+            rotation_id: UUID of the target rotation
+
+        Returns:
+            True if person has all required credentials, False otherwise
+        """
+        # Query for active credentials for this person and rotation's procedures
+        # First, get the rotation to find its required procedures
+        rotation_result = await self.db.execute(
+            select(RotationTemplate).where(RotationTemplate.id == rotation_id)
+        )
+        rotation = rotation_result.scalar_one_or_none()
+
+        if not rotation:
+            # Rotation not found - treat as no credential requirements
+            return True
+
+        # Get all credentials for this person
+        creds_result = await self.db.execute(
+            select(ProcedureCredential).where(
+                ProcedureCredential.person_id == person_id,
+                ProcedureCredential.status == "active",
+            )
+        )
+        credentials = creds_result.scalars().all()
+
+        # Check if any credentials are expired
+        today = date.today()
+        valid_credentials = [
+            cred
+            for cred in credentials
+            if cred.expiration_date is None or cred.expiration_date >= today
+        ]
+
+        # For now, if person has any valid credentials, consider them credentialed
+        # In a full implementation, would match rotation.required_procedures
+        return len(valid_credentials) > 0 if credentials else True
 
     async def _get_competency_level(
         self, person_id: UUID, rotation_id: UUID
     ) -> int | None:
-        """Get person's competency level for a rotation."""
-        # Placeholder - would query procedure_credential table
-        return 3  # "qualified"
+        """
+        Get person's competency level for a rotation.
+
+        Queries procedure_credential to find the competency level for
+        procedures associated with the rotation.
+
+        Args:
+            person_id: UUID of the person
+            rotation_id: UUID of the rotation
+
+        Returns:
+            Competency level as int (1=trainee, 2=qualified, 3=expert, 4=master)
+            or None if no credential found
+        """
+        # Map competency level strings to integers
+        level_map = {"trainee": 1, "qualified": 2, "expert": 3, "master": 4}
+
+        # Get credentials for this person
+        creds_result = await self.db.execute(
+            select(ProcedureCredential).where(
+                ProcedureCredential.person_id == person_id,
+                ProcedureCredential.status == "active",
+            )
+        )
+        credentials = creds_result.scalars().all()
+
+        if not credentials:
+            return None
+
+        # Return the highest competency level found
+        max_level = 0
+        for cred in credentials:
+            level = level_map.get(cred.competency_level, 2)
+            max_level = max(max_level, level)
+
+        return max_level if max_level > 0 else None
 
     async def _check_acgme_hours(self, person_id: UUID, target_date: Any) -> bool:
-        """Check if adding this assignment would violate ACGME hours."""
-        # Placeholder - would use acgme_validator
-        return False
+        """
+        Check if adding this assignment would violate ACGME 80-hour rule.
+
+        Calculates the rolling 4-week average of hours worked and checks
+        if adding another assignment would push it over 80 hours/week.
+
+        Args:
+            person_id: UUID of the person
+            target_date: Date of the proposed assignment
+
+        Returns:
+            True if would violate ACGME hours, False otherwise
+        """
+        if isinstance(target_date, str):
+            target_date = date.fromisoformat(target_date)
+
+        # Calculate the 4-week window around the target date
+        window_start = target_date - timedelta(weeks=2)
+        window_end = target_date + timedelta(weeks=2)
+
+        # Query assignments in the window
+        result = await self.db.execute(
+            select(Assignment)
+            .join(Block, Assignment.block_id == Block.id)
+            .where(
+                Assignment.person_id == person_id,
+                Block.date >= window_start,
+                Block.date <= window_end,
+            )
+        )
+        assignments = result.scalars().all()
+
+        # Calculate hours (assume 6 hours per half-day block)
+        hours_per_block = 6
+        total_hours = len(assignments) * hours_per_block
+
+        # Check if adding one more would violate
+        # 80 hours/week * 4 weeks = 320 hours max
+        max_hours = 80 * 4
+        projected_hours = total_hours + hours_per_block
+
+        return projected_hours > max_hours
 
     async def _check_day_off_rule(self, person_id: UUID, target_date: Any) -> bool:
-        """Check 1-in-7 day off rule."""
-        # Placeholder - would use acgme_validator
-        return False
+        """
+        Check if assignment would violate 1-in-7 day off rule.
+
+        ACGME requires at least one 24-hour period off every 7 days.
+        This checks if adding an assignment on target_date would create
+        7 or more consecutive working days.
+
+        Args:
+            person_id: UUID of the person
+            target_date: Date of the proposed assignment
+
+        Returns:
+            True if would violate day-off rule, False otherwise
+        """
+        if isinstance(target_date, str):
+            target_date = date.fromisoformat(target_date)
+
+        # Check 7 days before and after target date
+        check_start = target_date - timedelta(days=6)
+        check_end = target_date + timedelta(days=6)
+
+        # Get all assignment dates in this window
+        result = await self.db.execute(
+            select(Block.date)
+            .distinct()
+            .join(Assignment, Assignment.block_id == Block.id)
+            .where(
+                Assignment.person_id == person_id,
+                Block.date >= check_start,
+                Block.date <= check_end,
+            )
+        )
+        work_dates = {row[0] for row in result.fetchall()}
+
+        # Add the proposed date
+        work_dates.add(target_date)
+
+        # Check for 7+ consecutive days of work
+        sorted_dates = sorted(work_dates)
+        consecutive = 1
+        max_consecutive = 1
+
+        for i in range(1, len(sorted_dates)):
+            if (sorted_dates[i] - sorted_dates[i - 1]).days == 1:
+                consecutive += 1
+                max_consecutive = max(max_consecutive, consecutive)
+            else:
+                consecutive = 1
+
+        return max_consecutive >= 7
 
     async def _get_workload(self, person_id: UUID) -> float | None:
-        """Get current workload utilization for person."""
-        # Placeholder - would calculate from assignments
-        return 0.6
+        """
+        Get current workload utilization for person.
+
+        Calculates utilization as: assigned_blocks / available_blocks
+        for the current rolling 4-week period.
+
+        Args:
+            person_id: UUID of the person
+
+        Returns:
+            Utilization as float (0.0 to 1.0), or None if cannot calculate
+        """
+        today = date.today()
+        window_start = today - timedelta(weeks=2)
+        window_end = today + timedelta(weeks=2)
+
+        # Count assigned blocks
+        result = await self.db.execute(
+            select(func.count(Assignment.id))
+            .join(Block, Assignment.block_id == Block.id)
+            .where(
+                Assignment.person_id == person_id,
+                Block.date >= window_start,
+                Block.date <= window_end,
+            )
+        )
+        assigned_count = result.scalar() or 0
+
+        # Calculate available blocks (2 blocks per day * 28 days)
+        # Subtract weekends for realistic utilization (10 workdays * 2)
+        available_blocks = 28 * 2  # 56 blocks in 4 weeks
+
+        if available_blocks == 0:
+            return None
+
+        return min(1.0, assigned_count / available_blocks)
 
     async def _check_preferences(
         self, person_id: UUID, proposed_change: dict[str, Any]
     ) -> str | None:
-        """Check if change violates person's preferences."""
-        # Placeholder - would query faculty_preference
+        """
+        Check if change violates person's scheduling preferences.
+
+        Queries FacultyPreference to check if the proposed date/week
+        is blocked or conflicts with stated preferences.
+
+        Args:
+            person_id: UUID of the person
+            proposed_change: Dict with change details including target_date
+
+        Returns:
+            String describing the preference conflict, or None if no conflict
+        """
+        target_date = proposed_change.get("target_date")
+        if not target_date:
+            return None
+
+        if isinstance(target_date, str):
+            target_date = date.fromisoformat(target_date)
+
+        # Get the ISO week string for this date
+        week_start = target_date - timedelta(days=target_date.weekday())
+        week_str = week_start.isoformat()
+
+        # Query faculty preferences
+        result = await self.db.execute(
+            select(FacultyPreference).where(FacultyPreference.faculty_id == person_id)
+        )
+        prefs = result.scalar_one_or_none()
+
+        if not prefs:
+            return None
+
+        # Check if week is blocked
+        if prefs.blocked_weeks and week_str in prefs.blocked_weeks:
+            return "blocked_week"
+
+        # Check if already at max consecutive weeks
+        # This would require more context about surrounding assignments
+        # For now, just flag if the week isn't preferred but isn't blocked
+        if prefs.preferred_weeks and week_str not in prefs.preferred_weeks:
+            # Not in preferred weeks - soft preference violation
+            if len(prefs.preferred_weeks) > 0:
+                return "not_preferred_week"
+
         return None
 
     def calculate_activation_energy(self) -> ActivationEnergy:

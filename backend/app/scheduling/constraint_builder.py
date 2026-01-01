@@ -253,7 +253,20 @@ class ConstraintBuilder:
         return constraint
 
     def reset(self) -> "ConstraintBuilder":
-        """Reset builder to initial state."""
+        """
+        Reset builder to initial state.
+
+        Clears all configuration and returns the builder to its default settings.
+        Useful for reusing a builder instance to create multiple constraints.
+
+        Returns:
+            Self for chaining
+
+        Example:
+            >>> builder = ConstraintBuilder()
+            >>> constraint1 = builder.hard().name("First").type(ConstraintType.CAPACITY).build()
+            >>> constraint2 = builder.reset().soft().name("Second").type(ConstraintType.PREFERENCE).build()
+        """
         self._is_hard = True
         self._name = None
         self._constraint_type = None
@@ -265,7 +278,21 @@ class ConstraintBuilder:
         return self
 
     def clone(self) -> "ConstraintBuilder":
-        """Create a deep copy of builder configuration."""
+        """
+        Create a deep copy of builder configuration.
+
+        Produces an independent copy of the builder with all settings duplicated.
+        Parameters are deep-copied to prevent shared state.
+
+        Returns:
+            ConstraintBuilder: New builder instance with identical configuration
+
+        Example:
+            >>> builder = ConstraintBuilder().hard().name("Template")
+            >>> builder1 = builder.clone().with_parameter("max", 10).build()
+            >>> builder2 = builder.clone().with_parameter("max", 20).build()
+            >>> # builder1 and builder2 have different parameters
+        """
         new_builder = ConstraintBuilder()
         new_builder._is_hard = self._is_hard
         new_builder._name = self._name

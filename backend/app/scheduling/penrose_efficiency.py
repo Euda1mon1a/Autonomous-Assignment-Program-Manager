@@ -84,7 +84,7 @@ class ErgospherePeriod:
     boundary_type: str  # "week_end", "block_transition", "rotation_handoff"
     affected_assignments: list[UUID] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate ergosphere parameters."""
         if not 0 <= self.extraction_potential <= PENROSE_EFFICIENCY_LIMIT:
             logger.warning(
@@ -133,7 +133,7 @@ class PhaseComponent:
     conflict_score: int
     flexibility_score: float  # 0-1, higher = more swap options
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate phase component."""
         valid_phases = {"pre_transition", "transition", "post_transition"}
         if self.phase_type not in valid_phases:
@@ -183,7 +183,7 @@ class PenroseSwap:
     confidence: float = 0.8
     executed: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate Penrose swap."""
         if not 0 <= self.confidence <= 1:
             raise ValueError("confidence must be between 0 and 1")
@@ -221,7 +221,7 @@ class RotationEnergyTracker:
         extraction_history: History of extractions
     """
 
-    def __init__(self, initial_rotation_energy: float):
+    def __init__(self, initial_rotation_energy: float) -> None:
         """
         Initialize rotation energy tracker.
 
@@ -321,7 +321,7 @@ class PenroseEfficiencyExtractor:
         ...     optimized = await extractor.execute_penrose_cascade(schedule_data)
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize Penrose efficiency extractor.
 

@@ -95,12 +95,18 @@ System design, components, and technical decisions.
 
 | Document | Description |
 |----------|-------------|
+| [**Architecture Index**](architecture/README.md) | **Complete architecture documentation index** |
 | [Index](architecture/index.md) | Architecture overview |
 | [Overview](architecture/overview.md) | High-level system design |
+| [**Architectural Decisions (ADRs)**](architecture/decisions/README.md) | **Formal decision records** |
 | [Backend](architecture/backend.md) | Backend architecture |
 | [Frontend](architecture/frontend.md) | Frontend architecture |
 | [Database](architecture/database.md) | Database schema and design |
 | [Resilience](architecture/resilience.md) | Resilience framework overview |
+| [Cross-Disciplinary Resilience](architecture/cross-disciplinary-resilience.md) | Advanced resilience concepts |
+| [Solver Algorithm](architecture/SOLVER_ALGORITHM.md) | Schedule generation algorithm |
+| [Exotic Frontier Concepts](architecture/EXOTIC_FRONTIER_CONCEPTS.md) | Experimental optimization techniques |
+| [Time Crystal Scheduling](architecture/TIME_CRYSTAL_ANTI_CHURN.md) | Anti-churn scheduling approach |
 | [Clinic Constraints](architecture/clinic-constraints.md) | Clinic scheduling constraints |
 | [Expert Consultation Protocol](architecture/expert-consultation-protocol.md) | LLM consultation system |
 | [Multi-Model Comparison](architecture/multi-model-comparison-proposal.md) | Multi-model evaluation approach |
@@ -112,12 +118,21 @@ Complete REST API documentation.
 
 | Document | Description |
 |----------|-------------|
+| [**API Index**](api/README.md) | **Complete API documentation index** |
 | [Index](api/index.md) | API overview |
-| [Authentication](api/authentication.md) | Authentication endpoints |
-| [People](api/people.md) | People management API |
-| [Schedule](api/schedule.md) | Schedule management API |
+| [Authentication](api/AUTH_API.md) | Authentication and authorization API |
+| [People](api/PEOPLE_API.md) | People management API |
+| [Assignments](api/ASSIGNMENTS_API.md) | Assignment CRUD and validation API |
+| [Schedule](api/SCHEDULE_API.md) | Schedule generation and management API |
+| [Swaps](api/SWAPS_API.md) | Swap system API |
+| [Resilience](api/RESILIENCE_API.md) | System health and crisis management API |
+| [Health Monitoring](api/HEALTH_API.md) | Health check and monitoring endpoints |
+| [FMIT Health](api/FMIT_HEALTH_API.md) | FMIT-specific health endpoints |
+| [Call Assignments](api/CALL_ASSIGNMENTS_API.md) | Call scheduling API |
+| [Exotic Frontier](api/EXOTIC_API.md) | Experimental optimization API |
+| [MCP Tools Reference](api/MCP_TOOLS_REFERENCE.md) | AI integration tools |
+| [Error Codes](api/error-codes-reference.md) | Complete error code reference |
 | [Absences](api/absences.md) | Absence management API |
-| [Swaps](api/swaps.md) | Swap system API |
 | [Analytics](api/analytics.md) | Analytics and reporting API |
 
 ### :material-code-braces: Development

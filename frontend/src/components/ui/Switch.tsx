@@ -66,6 +66,8 @@ export const Switch: React.FC<SwitchProps> = ({
           type="button"
           role="switch"
           aria-checked={checked}
+          aria-label={label || (checked ? 'Switch on' : 'Switch off')}
+          aria-disabled={disabled}
           onClick={handleClick}
           onKeyDown={handleKeyDown}
           disabled={disabled}
@@ -83,6 +85,7 @@ export const Switch: React.FC<SwitchProps> = ({
               ${config.thumb}
               ${checked ? config.translate : 'translate-x-0.5'}
             `}
+            aria-hidden="true"
           />
         </button>
 

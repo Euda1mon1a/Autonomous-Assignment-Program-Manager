@@ -71,7 +71,7 @@ export function SwapRequestCard({
       <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-lg transition-all hover:border-blue-300">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <User className="w-5 h-5 text-gray-500 flex-shrink-0" />
+            <User className="w-5 h-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
             <h3 className="font-semibold text-gray-900 truncate">
               {marketplaceEntry.requestingFacultyName}
             </h3>
@@ -85,18 +85,18 @@ export function SwapRequestCard({
 
         <div className="space-y-2 mb-3">
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Calendar className="w-4 h-4 flex-shrink-0" />
+            <Calendar className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
             <span className="truncate">Week: {format(weekDate, 'MMM d, yyyy')}</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Clock className="w-4 h-4 flex-shrink-0" />
+            <Clock className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
             <span className="truncate">Posted {format(postedDate, 'MMM d, yyyy')}</span>
           </div>
         </div>
 
         {marketplaceEntry.reason && (
           <div className="mb-3 p-2 bg-gray-50 rounded text-sm text-gray-700 line-clamp-3">
-            <MessageSquare className="inline w-4 h-4 mr-1 flex-shrink-0" />
+            <MessageSquare className="inline w-4 h-4 mr-1 flex-shrink-0" aria-hidden="true" />
             {marketplaceEntry.reason}
           </div>
         )}
@@ -184,12 +184,12 @@ export function SwapRequestCard({
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <User className="w-4 h-4 text-gray-500" />
+              <User className="w-4 h-4 text-gray-500" aria-hidden="true" />
               <span className="text-sm font-medium">{swap.sourceFacultyName}</span>
             </div>
             {sourceWeekDate && (
               <div className="flex items-center gap-2 text-sm text-gray-600 ml-6">
-                <Calendar className="w-3 h-3" />
+                <Calendar className="w-3 h-3" aria-hidden="true" />
                 {format(sourceWeekDate, 'MMM d, yyyy')}
               </div>
             )}
@@ -197,15 +197,15 @@ export function SwapRequestCard({
 
           {!isAbsorb && swap.targetFacultyName && (
             <>
-              <ArrowRight className="w-5 h-5 text-gray-400" />
+              <ArrowRight className="w-5 h-5 text-gray-400" aria-hidden="true" />
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <User className="w-4 h-4 text-gray-500" />
+                  <User className="w-4 h-4 text-gray-500" aria-hidden="true" />
                   <span className="text-sm font-medium">{swap.targetFacultyName}</span>
                 </div>
                 {targetWeekDate && (
                   <div className="flex items-center gap-2 text-sm text-gray-600 ml-6">
-                    <Calendar className="w-3 h-3" />
+                    <Calendar className="w-3 h-3" aria-hidden="true" />
                     {format(targetWeekDate, 'MMM d, yyyy')}
                   </div>
                 )}
@@ -218,15 +218,15 @@ export function SwapRequestCard({
       {/* Reason */}
       {swap.reason && (
         <div className="mb-4 p-2 bg-gray-50 rounded text-sm text-gray-700">
-          <MessageSquare className="inline w-4 h-4 mr-1" />
+          <MessageSquare className="inline w-4 h-4 mr-1" aria-hidden="true" />
           {swap.reason}
         </div>
       )}
 
       {/* Mutation Errors */}
       {(acceptMutation.isError || rejectMutation.isError || cancelMutation.isError) && (
-        <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700 flex items-start gap-2">
-          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+        <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700 flex items-start gap-2" role="alert">
+          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" aria-hidden="true" />
           <span>
             {acceptMutation.error?.message ||
              rejectMutation.error?.message ||
@@ -311,6 +311,7 @@ export function SwapRequestCard({
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             rows={3}
             disabled={acceptMutation.isPending || rejectMutation.isPending}
+            aria-label={`Optional notes for ${actionMode === 'accept' ? 'accepting' : 'rejecting'} swap request`}
           />
           <div className="flex gap-2">
             <button

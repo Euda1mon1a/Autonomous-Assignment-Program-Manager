@@ -1,6 +1,23 @@
 ---
 name: agent-factory
 description: Create new PAI agents using AGENT_FACTORY.md patterns. Guides through archetype selection (Researcher, Validator, Generator, Critic, Synthesizer), validates against CONSTITUTION.md, and generates agent specifications following established templates.
+model_tier: opus
+parallel_hints:
+  can_parallel_with: [skill-factory]
+  must_serialize_with: []
+  preferred_batch_size: 1
+context_hints:
+  max_file_context: 60
+  compression_level: 1
+  requires_git_context: true
+  requires_db_context: false
+escalation_triggers:
+  - pattern: "Full Execute"
+    reason: "Full Execute authority requires ARCHITECT approval"
+  - pattern: "CONSTITUTION.*violation"
+    reason: "Constitution violations require governance review"
+  - keyword: ["overlap", "conflict", "bypass"]
+    reason: "Agent conflicts need human resolution"
 ---
 
 # Agent Factory Skill

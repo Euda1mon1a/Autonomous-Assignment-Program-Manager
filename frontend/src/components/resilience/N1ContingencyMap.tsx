@@ -53,9 +53,14 @@ export const N1ContingencyMap: React.FC<N1ContingencyMapProps> = ({
   return (
     <div className={`n1-contingency-map ${className}`}>
       {/* Status Summary */}
-      <div className={`border-l-4 rounded-lg p-6 mb-6 ${config.color}`}>
+      <div
+        className={`border-l-4 rounded-lg p-6 mb-6 ${config.color}`}
+        role="status"
+        aria-live="polite"
+        aria-label="N-1 contingency vulnerability status"
+      >
         <div className="flex items-start gap-4">
-          <span className="text-4xl" role="img" aria-label={config.label}>
+          <span className="text-4xl" aria-hidden="true">
             {config.icon}
           </span>
           <div className="flex-1">
@@ -90,7 +95,7 @@ export const N1ContingencyMap: React.FC<N1ContingencyMapProps> = ({
       {criticalResources.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
           <h4 className="font-semibold mb-3 flex items-center gap-2">
-            <span>🎯</span>
+            <span aria-hidden="true">🎯</span>
             <span>Critical Resources (Single Points of Failure)</span>
           </h4>
           <div className="space-y-2">
@@ -99,13 +104,15 @@ export const N1ContingencyMap: React.FC<N1ContingencyMapProps> = ({
                 key={idx}
                 onClick={() => setSelectedResource(selectedResource === resource ? null : resource)}
                 className="w-full text-left p-3 bg-red-50 border border-red-200 rounded hover:bg-red-100 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
+                aria-label={`${resource} - Single point of failure. Click to ${selectedResource === resource ? 'hide' : 'view'} impact details`}
+                aria-expanded={selectedResource === resource}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Badge variant="destructive">SPOF</Badge>
                     <span className="font-medium">{resource}</span>
                   </div>
-                  <span className="text-red-600">⚠️</span>
+                  <span className="text-red-600" aria-hidden="true">⚠️</span>
                 </div>
                 {selectedResource === resource && (
                   <div className="mt-2 pt-2 border-t border-red-300 text-sm text-gray-700">
@@ -123,7 +130,7 @@ export const N1ContingencyMap: React.FC<N1ContingencyMapProps> = ({
       {vulnerableRotations.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
           <h4 className="font-semibold mb-3 flex items-center gap-2">
-            <span>📋</span>
+            <span aria-hidden="true">📋</span>
             <span>Vulnerable Rotations</span>
           </h4>
           <div className="grid grid-cols-2 gap-2">
@@ -133,7 +140,7 @@ export const N1ContingencyMap: React.FC<N1ContingencyMapProps> = ({
                 className="p-2 bg-orange-50 border border-orange-200 rounded text-sm"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-orange-600">⚡</span>
+                  <span className="text-orange-600" aria-hidden="true">⚡</span>
                   <span className="font-medium">{rotation}</span>
                 </div>
               </div>
@@ -168,22 +175,25 @@ export const N1ContingencyMap: React.FC<N1ContingencyMapProps> = ({
       {/* Recommendations */}
       {hasCriticalVulnerabilities && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-          <h4 className="font-semibold text-sm mb-3 text-blue-900">💡 Recommended Mitigations</h4>
+          <h4 className="font-semibold text-sm mb-3 text-blue-900">
+            <span aria-hidden="true">💡 </span>
+            Recommended Mitigations
+          </h4>
           <ul className="space-y-2 text-sm text-blue-800">
             <li className="flex items-start gap-2">
-              <span>→</span>
+              <span aria-hidden="true">→</span>
               <span>Cross-train personnel to provide backup coverage</span>
             </li>
             <li className="flex items-start gap-2">
-              <span>→</span>
+              <span aria-hidden="true">→</span>
               <span>Develop contingency schedules for critical resource absences</span>
             </li>
             <li className="flex items-start gap-2">
-              <span>→</span>
+              <span aria-hidden="true">→</span>
               <span>Consider hiring additional staff for vulnerable rotations</span>
             </li>
             <li className="flex items-start gap-2">
-              <span>→</span>
+              <span aria-hidden="true">→</span>
               <span>Implement rotation sharing agreements with partner programs</span>
             </li>
           </ul>
@@ -195,6 +205,7 @@ export const N1ContingencyMap: React.FC<N1ContingencyMapProps> = ({
         <button
           onClick={onDrillDown}
           className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+          aria-label="View full N-1 contingency analysis with detailed vulnerability assessment"
         >
           View Full Contingency Analysis
         </button>

@@ -98,7 +98,126 @@ class ExclusionConstraintTemplate(HardConstraint):
         return None
 
     def add_to_cpsat(self, model, variables, context):
-        pass
+        """
+        Add exclusion constraint to CP-SAT model.
+
+        Prevents certain person types from being assigned to excluded rotation types
+        by setting the corresponding variables to 0.
+        """
+        x = variables.get("assignments", {})
+        template_vars = variables.get("template_assignments", {})
+
+        if not x and not template_vars:
+            return
+
+        # For each person, check if they match excluded type
+        for person in context.residents + context.faculty:
+            if not self._matches_person_type(person):
+                continue
+
+            p_i = context.resident_idx.get(person.id)
+            if p_i is None:
+                continue
+
+            # Exclude from specific rotation types
+            for block in context.blocks:
+                b_i = context.block_idx[block.id]
+
+                # Check template-specific exclusions
+                if template_vars:
+                    for template in context.templates:
+                        if template.type in self.excluded_rotation_types:
+                            # Prevent assignment to this template
+                            if (p_i, b_i, template.id) in template_vars:
+                                model.Add(template_vars[p_i, b_i, template.id] == 0)
+
+                # Check general exclusions
+                if (p_i, b_i) in x:
+                    # Check if block has excluded rotation type
+                    if (
+                        hasattr(block, "rotation_type")
+                        and block.rotation_type in self.excluded_rotation_types
+                    ):
+                        model.Add(x[p_i, b_i] == 0)
+
+            # Check specific exclusion combinations
+            for excluded_type, excluded_rotation in self.excluded_combinations:
+                if self._matches_person_type(person, excluded_type):
+                    for block in context.blocks:
+                        b_i = context.block_idx[block.id]
+
+                        if template_vars:
+                            for template in context.templates:
+                                if (
+                                    template.type == excluded_rotation
+                                    and (p_i, b_i, template.id) in template_vars
+                                ):
+                                    model.Add(template_vars[p_i, b_i, template.id] == 0)
 
     def add_to_pulp(self, model, variables, context):
-        pass
+        """
+        Add exclusion constraint to PuLP model.
+
+        Prevents certain person types from being assigned to excluded rotation types
+        by constraining the corresponding variables to 0.
+        """
+        import pulp
+
+        x = variables.get("assignments", {})
+        template_vars = variables.get("template_assignments", {})
+
+        if not x and not template_vars:
+            return
+
+        # For each person, check if they match excluded type
+        for person in context.residents + context.faculty:
+            if not self._matches_person_type(person):
+                continue
+
+            p_i = context.resident_idx.get(person.id)
+            if p_i is None:
+                continue
+
+            # Exclude from specific rotation types
+            for block in context.blocks:
+                b_i = context.block_idx[block.id]
+
+                # Check template-specific exclusions
+                if template_vars:
+                    for template in context.templates:
+                        if template.type in self.excluded_rotation_types:
+                            # Prevent assignment to this template
+                            if (p_i, b_i, template.id) in template_vars:
+                                model += (
+                                    template_vars[p_i, b_i, template.id] == 0,
+                                    f"exclude_{p_i}_{b_i}_{template.id}",
+                                )
+
+                # Check general exclusions
+                if (p_i, b_i) in x:
+                    # Check if block has excluded rotation type
+                    if (
+                        hasattr(block, "rotation_type")
+                        and block.rotation_type in self.excluded_rotation_types
+                    ):
+                        model += (
+                            x[p_i, b_i] == 0,
+                            f"exclude_{p_i}_{b_i}",
+                        )
+
+            # Check specific exclusion combinations
+            for excluded_type, excluded_rotation in self.excluded_combinations:
+                if self._matches_person_type(person, excluded_type):
+                    for block in context.blocks:
+                        b_i = context.block_idx[block.id]
+
+                        if template_vars:
+                            for template in context.templates:
+                                if (
+                                    template.type == excluded_rotation
+                                    and (p_i, b_i, template.id) in template_vars
+                                ):
+                                    model += (
+                                        template_vars[p_i, b_i, template.id] == 0,
+                                        f"exclude_combo_{p_i}_{b_i}_{template.id}",
+                                    )

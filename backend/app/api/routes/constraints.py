@@ -86,7 +86,7 @@ def _constraint_to_response(config: ConstraintConfig) -> ConstraintStatusRespons
 
 
 @router.get("/status", response_model=ConstraintListResponse)
-async def get_constraint_status():
+async def get_constraint_status() -> ConstraintListResponse:
     """
     Get status of all constraints.
 
@@ -119,7 +119,7 @@ async def get_constraint_status():
 
 
 @router.get("", response_model=ConstraintListResponse)
-async def list_constraints():
+async def list_constraints() -> ConstraintListResponse:
     """
     List all constraints.
 
@@ -130,7 +130,7 @@ async def list_constraints():
 
 
 @router.get("/enabled", response_model=list[ConstraintStatusResponse])
-async def list_enabled_constraints():
+async def list_enabled_constraints() -> list[ConstraintStatusResponse]:
     """
     List enabled constraints.
 
@@ -151,7 +151,7 @@ async def list_enabled_constraints():
 
 
 @router.get("/disabled", response_model=list[ConstraintStatusResponse])
-async def list_disabled_constraints():
+async def list_disabled_constraints() -> list[ConstraintStatusResponse]:
     """
     List disabled constraints.
 
@@ -172,7 +172,7 @@ async def list_disabled_constraints():
 
 
 @router.get("/category/{category}", response_model=list[ConstraintStatusResponse])
-async def list_constraints_by_category(category: str):
+async def list_constraints_by_category(category: str) -> list[ConstraintStatusResponse]:
     """
     List constraints by category.
 
@@ -211,7 +211,7 @@ async def list_constraints_by_category(category: str):
 
 
 @router.post("/{name}/enable", response_model=ConstraintEnableResponse)
-async def enable_constraint(name: str):
+async def enable_constraint(name: str) -> ConstraintEnableResponse:
     """
     Enable a constraint.
 
@@ -270,7 +270,7 @@ async def enable_constraint(name: str):
 
 
 @router.post("/{name}/disable", response_model=ConstraintEnableResponse)
-async def disable_constraint(name: str):
+async def disable_constraint(name: str) -> ConstraintEnableResponse:
     """
     Disable a constraint.
 
@@ -329,7 +329,7 @@ async def disable_constraint(name: str):
 
 
 @router.post("/preset/{preset}", response_model=PresetApplyResponse)
-async def apply_constraint_preset(preset: str):
+async def apply_constraint_preset(preset: str) -> PresetApplyResponse:
     """
     Apply a constraint preset.
 
@@ -398,7 +398,7 @@ async def apply_constraint_preset(preset: str):
 
 
 @router.get("/{name}", response_model=ConstraintStatusResponse)
-async def get_constraint(name: str):
+async def get_constraint(name: str) -> ConstraintStatusResponse:
     """
     Get details of a specific constraint.
 

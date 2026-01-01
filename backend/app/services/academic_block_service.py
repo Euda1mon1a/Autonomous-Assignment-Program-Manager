@@ -40,7 +40,7 @@ class AcademicBlockService:
     MAX_WEEKLY_HOURS_ACGME = 80  # ACGME limit
     EXPECTED_BLOCKS_PER_YEAR = 13  # 52 weeks / 4 weeks per block
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """Initialize service with database session."""
         self.db = db
         self.assignment_repo = AssignmentRepository(db)

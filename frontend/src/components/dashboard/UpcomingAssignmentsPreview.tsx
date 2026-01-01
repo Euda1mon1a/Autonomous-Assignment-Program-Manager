@@ -158,93 +158,99 @@ export function UpcomingAssignmentsPreview({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut', delay: 0.2 }}
       className={`glass-panel p-6 ${className}`}
+      role="region"
+      aria-labelledby="upcoming-assignments-heading"
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Coming Up</h3>
-        <Calendar className="w-5 h-5 text-blue-600" />
+        <h3 id="upcoming-assignments-heading" className="text-lg font-semibold text-gray-900">Coming Up</h3>
+        <Calendar className="w-5 h-5 text-blue-600" aria-hidden="true" />
       </div>
 
-      {isLoading ? (
-        <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="animate-pulse flex items-center gap-3">
-              <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
-              <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+      <div aria-live="polite" aria-atomic="true">
+        {isLoading ? (
+          <div className="space-y-3" role="status" aria-label="Loading upcoming assignments">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="animate-pulse flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      ) : !currentPerson ? (
-        <EmptyState
-          icon={Calendar}
-          title="Profile not linked"
-          description="Your account isn't linked to a person profile"
-        />
-      ) : upcomingAssignments.length === 0 ? (
-        <EmptyState
-          icon={Calendar}
-          title="No upcoming assignments"
-          description={`Nothing scheduled for the next ${daysAhead} days`}
-        />
-      ) : (
-        <div className="space-y-2">
-          {upcomingAssignments.map((assignment, idx) => {
-            const dateLabel = getDateLabel(assignment.date)
-            const showDateHeader =
-              idx === 0 ||
-              upcomingAssignments[idx - 1].date !== assignment.date
+            ))}
+          </div>
+        ) : !currentPerson ? (
+          <EmptyState
+            icon={Calendar}
+            title="Profile not linked"
+            description="Your account isn't linked to a person profile"
+          />
+        ) : upcomingAssignments.length === 0 ? (
+          <EmptyState
+            icon={Calendar}
+            title="No upcoming assignments"
+            description={`Nothing scheduled for the next ${daysAhead} days`}
+          />
+        ) : (
+          <div className="space-y-2">
+            {upcomingAssignments.map((assignment, idx) => {
+              const dateLabel = getDateLabel(assignment.date)
+              const showDateHeader =
+                idx === 0 ||
+                upcomingAssignments[idx - 1].date !== assignment.date
 
-            return (
-              <div key={assignment.id}>
-                {showDateHeader && (
-                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mt-3 mb-1 first:mt-0">
-                    {dateLabel}
-                  </div>
-                )}
-                <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div
-                    className={`
-                      w-10 h-10 rounded-lg border flex items-center justify-center
-                      ${getActivityColor(assignment.activity)}
-                    `}
-                  >
-                    <span className="text-xs font-bold">{assignment.abbreviation}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 capitalize truncate">
-                      {assignment.activity}
-                    </p>
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                      {assignment.timeOfDay === 'AM' ? (
-                        <Sun className="w-3 h-3" />
-                      ) : (
-                        <Moon className="w-3 h-3" />
-                      )}
-                      <span>{assignment.timeOfDay}</span>
-                      {assignment.notes && (
-                        <>
-                          <span className="text-gray-300">•</span>
-                          <span className="truncate">{assignment.notes}</span>
-                        </>
-                      )}
+              return (
+                <div key={assignment.id}>
+                  {showDateHeader && (
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mt-3 mb-1 first:mt-0" role="heading" aria-level={4}>
+                      {dateLabel}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div
+                      className={`
+                        w-10 h-10 rounded-lg border flex items-center justify-center
+                        ${getActivityColor(assignment.activity)}
+                      `}
+                      aria-hidden="true"
+                    >
+                      <span className="text-xs font-bold">{assignment.abbreviation}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 capitalize truncate">
+                        {assignment.activity}
+                      </p>
+                      <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                        {assignment.timeOfDay === 'AM' ? (
+                          <Sun className="w-3 h-3" aria-hidden="true" />
+                        ) : (
+                          <Moon className="w-3 h-3" aria-hidden="true" />
+                        )}
+                        <span>{assignment.timeOfDay}</span>
+                        {assignment.notes && (
+                          <>
+                            <span className="text-gray-300" aria-hidden="true">•</span>
+                            <span className="truncate">{assignment.notes}</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       <div className="mt-4 pt-4 border-t border-gray-200/50">
         <Link
           href="/my-schedule"
           className="flex items-center justify-between text-sm text-blue-600 hover:text-blue-800 font-medium"
+          aria-label="View your complete personal schedule"
         >
           <span>View Full Schedule</span>
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-4 h-4" aria-hidden="true" />
         </Link>
       </div>
     </motion.div>

@@ -1,6 +1,23 @@
 ---
 name: skill-factory
 description: Create new skills with proper structure and YAML frontmatter. Use when building new slash command skills, ensuring consistent formatting, directory structure, and validation. Guides through the complete skill creation workflow.
+model_tier: sonnet
+parallel_hints:
+  can_parallel_with: [agent-factory]
+  must_serialize_with: []
+  preferred_batch_size: 1
+context_hints:
+  max_file_context: 40
+  compression_level: 1
+  requires_git_context: true
+  requires_db_context: false
+escalation_triggers:
+  - pattern: "security|auth|credential"
+    reason: "Security-affecting skills require human approval"
+  - pattern: "duplicate|conflict"
+    reason: "Functionality conflicts need human resolution"
+  - keyword: ["critical system", "agent permissions"]
+    reason: "System-level changes require review"
 ---
 
 # Skill Factory

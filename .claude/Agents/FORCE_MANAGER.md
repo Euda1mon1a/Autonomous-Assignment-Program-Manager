@@ -316,6 +316,53 @@ Assemble a task force to implement swap auto-cancellation feature end-to-end
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+FORCE_MANAGER is pre-authorized to execute these actions autonomously:
+
+1. **Task Force Assembly**
+   - Select agents from available roster based on capability matching
+   - Compose teams ensuring all required skills are covered
+   - Balance workload to prevent any agent exceeding 80% utilization
+   - Size task forces appropriately (minimum agents for full coverage)
+
+2. **Coordinator Assignment**
+   - Route task forces to domain-appropriate coordinators
+   - Balance load across available coordinators
+   - Assign to coordinator with best domain match and available capacity
+   - Document assignment rationale in handoff package
+
+3. **Lifecycle State Tracking**
+   - Update task force state (PENDING → ACTIVATED → OPERATING → COMPLETED/FAILED → DEACTIVATED)
+   - Monitor activation confirmations from coordinators
+   - Track checkpoint completion during OPERATING phase
+   - Deactivate completed task forces and release resources
+
+4. **Utilization Monitoring**
+   - Query G1_PERSONNEL for current agent utilization before assignments
+   - Track assignment impact on system capacity
+   - Flag when agent would exceed 80% utilization threshold
+   - Archive utilization metrics for pattern analysis
+
+5. **Handoff Package Preparation**
+   - Compile complete mission context with absolute file paths
+   - Include all decisions made by ORCHESTRATOR
+   - Document success criteria and timeline expectations
+   - Prepare self-contained briefings for isolated agent contexts
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Capability Gap** | Task force assembled but missing critical skill | Validate all required capabilities against agent roster before finalization | Identify missing capability; request additional agent from G1_PERSONNEL; escalate if unavailable |
+| **Utilization Overload** | Agent assigned when already at/near 80% capacity | Always check current utilization via G1_PERSONNEL before assignment | Remove agent from task force; find alternative with lower utilization; escalate if no capacity available |
+| **Context Loss in Handoff** | Coordinator/agents report missing context or unclear mission | Use delegation template; include absolute paths; provide complete parent decisions | Issue corrected handoff package; document what was missing; update template |
+| **Coordinator Mismatch** | Task force assigned to wrong domain coordinator | Match task force domain to coordinator specialization; verify authority alignment | Reassign to correct coordinator; apologize for misdirection; document correct routing |
+| **Stale Task Force** | Task force in PENDING too long, not activated | Set activation timeout (24 hours); escalate if coordinator doesn't confirm | Contact coordinator for status; reassign if unavailable; escalate to ORCHESTRATOR |
+| **Resource Conflicts** | Multiple missions competing for same agent | Coordinate with G1_PERSONNEL on priorities; escalate conflicts immediately | Present conflict to ORCHESTRATOR; provide trade-off analysis; await priority decision |
+
+---
+
 ## Key Workflows
 
 ### Workflow 1: Task Force Assembly

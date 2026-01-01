@@ -177,6 +177,9 @@ export function KeyboardShortcutHelp() {
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="keyboard-shortcuts-title"
             className="fixed top-[10%] left-1/2 -translate-x-1/2 z-50 w-full max-w-2xl mx-4"
             onClick={e => e.stopPropagation()}
           >
@@ -188,7 +191,7 @@ export function KeyboardShortcutHelp() {
                     <Keyboard className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-900">Keyboard Shortcuts</h2>
+                    <h2 id="keyboard-shortcuts-title" className="text-lg font-semibold text-gray-900">Keyboard Shortcuts</h2>
                     <p className="text-sm text-gray-500">Navigate faster with keyboard commands</p>
                   </div>
                 </div>

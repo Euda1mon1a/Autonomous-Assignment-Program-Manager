@@ -242,7 +242,29 @@ class SwapExecutor:
         return time_since_execution <= rollback_window
 
     def can_rollback(self, swap_id: UUID) -> bool:
-        """Check if a swap can still be rolled back."""
+        """
+        Check if a swap can still be rolled back.
+
+        Validates whether a swap is eligible for rollback based on its current
+        status and time since execution. Swaps can only be rolled back within
+        a configured time window (default 24 hours).
+
+        Args:
+            swap_id: UUID of the swap to check
+
+        Returns:
+            bool: True if the swap can be rolled back, False otherwise.
+                Returns False if:
+                - Swap record not found
+                - Swap status is not EXECUTED
+                - No execution timestamp recorded
+                - Rollback window has expired
+
+        Example:
+            >>> executor = SwapExecutor(db)
+            >>> if executor.can_rollback(swap_id):
+            ...     executor.rollback_swap(swap_id, "Changed my mind")
+        """
         swap_record = self.db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()
 
         if not swap_record:

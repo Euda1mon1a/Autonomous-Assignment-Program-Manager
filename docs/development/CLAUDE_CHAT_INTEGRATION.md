@@ -311,12 +311,130 @@ The chat bridge has access to these scheduler tools:
 - Tool execution respects existing RBAC
 
 ### Rate Limiting
-- TODO: Add rate limiting to prevent API abuse
-- Consider: 10 messages/minute, 100 messages/hour
+
+**Implementation:** Use existing `RateLimiter` infrastructure from `backend/app/core/rate_limit.py`
+
+```python
+from app.core.rate_limit import create_rate_limit_dependency
+
+# Add to claude_chat.py route
+rate_limit_chat = create_rate_limit_dependency(
+    max_requests=10,    # 10 messages per minute
+    window_seconds=60,
+    key_prefix="claude_chat"
+)
+
+rate_limit_chat_hourly = create_rate_limit_dependency(
+    max_requests=100,   # 100 messages per hour
+    window_seconds=3600,
+    key_prefix="claude_chat_hourly"
+)
+
+@router.websocket("/api/claude-chat/ws")
+async def websocket_endpoint(
+    websocket: WebSocket,
+    token: str,
+    _rate_limit: None = Depends(rate_limit_chat),
+    _rate_limit_hourly: None = Depends(rate_limit_chat_hourly),
+):
+    # Connection established - rate limits verified
+    ...
+```
+
+**Configuration:**
+- Uses Redis sliding window algorithm (existing infrastructure)
+- Per-user rate limiting (keyed by user_id, not IP)
+- Returns 429 with Retry-After header when exceeded
+- Limits: 10 msg/min, 100 msg/hour (prevents runaway costs)
+
+**Testing:**
+```bash
+pytest tests/api/test_claude_chat_rate_limit.py -v
+```
 
 ### Audit Trail
-- TODO: Log all chat interactions to notification system
-- Store: timestamp, user, message, tool calls, responses
+
+**Implementation:** Use existing `NotificationService` for structured logging
+
+```python
+from app.notifications.service import NotificationService
+from app.models.notification import Notification, NotificationType
+from datetime import datetime
+
+async def log_chat_interaction(
+    db: Session,
+    user_id: str,
+    message: str,
+    response: str,
+    tool_calls: list[dict],
+    session_id: str,
+):
+    """
+    Log chat interaction to notification system for audit trail.
+
+    Args:
+        db: Database session
+        user_id: ID of user who sent the message
+        message: User's input message
+        response: Claude's response
+        tool_calls: List of tools executed during response
+        session_id: WebSocket session identifier
+    """
+    notification_service = NotificationService(db)
+
+    # Create audit record as notification
+    await notification_service.send_notification(
+        recipient_id=user_id,
+        notification_type=NotificationType.SYSTEM_AUDIT,  # New type
+        data={
+            "event_type": "claude_chat_interaction",
+            "session_id": session_id,
+            "timestamp": datetime.utcnow().isoformat(),
+            "user_message": message,
+            "assistant_response": response[:500],  # Truncate for storage
+            "tool_calls": [
+                {
+                    "name": call["name"],
+                    "input_summary": str(call["input"])[:200],
+                    "execution_time_ms": call.get("execution_time_ms", 0),
+                }
+                for call in tool_calls
+            ],
+            "token_usage": {
+                "input_tokens": response.get("usage", {}).get("input_tokens", 0),
+                "output_tokens": response.get("usage", {}).get("output_tokens", 0),
+            },
+        },
+        channel="audit_log",  # New channel - write-only to database
+    )
+```
+
+**Database Schema Addition:**
+
+Add new notification type to `backend/app/notifications/notification_types.py`:
+
+```python
+class NotificationType(str, Enum):
+    # ... existing types ...
+    SYSTEM_AUDIT = "system_audit"  # For audit trail events
+```
+
+**Storage Details:**
+- Persists to `notifications` table (existing infrastructure)
+- Includes: timestamp, user_id, message, tool calls, token usage
+- Retention: Configurable (default 90 days for audit compliance)
+- Queryable via admin dashboard: `/admin/audit-trail`
+
+**Testing:**
+```bash
+pytest tests/api/test_claude_chat_audit.py -v
+```
+
+**Compliance Notes:**
+- Logs stored in database (not just application logs)
+- Tamper-evident (notification records are immutable)
+- Supports HIPAA audit trail requirements
+- Can export for compliance reporting
 
 ### API Key Protection
 - ANTHROPIC_API_KEY stored in .env
@@ -336,17 +454,122 @@ ANTHROPIC_API_KEY=sk-ant-api03-...  # Get from console.anthropic.com
 
 ### Backend Changes
 
-1. [ ] Add `anthropic` to requirements.txt
-2. [ ] Register router in main.py
-3. [ ] Add ANTHROPIC_API_KEY to config.py
-4. [ ] Run tests
+1. [ ] **Add `anthropic` to requirements.txt**
+   ```bash
+   cd backend
+   # Add to requirements.txt:
+   anthropic>=0.18.0  # For Claude API integration
+   ```
+
+2. [ ] **Register router in main.py**
+   ```python
+   # In backend/app/main.py
+   from app.api.routes import claude_chat
+
+   # Add after other router registrations (around line 80):
+   app.include_router(
+       claude_chat.router,
+       prefix="/api",
+       tags=["claude-chat"]
+   )
+   ```
+
+3. [ ] **Add ANTHROPIC_API_KEY to config.py**
+   ```python
+   # In backend/app/core/config.py, add to Settings class:
+
+   # Claude Chat Integration
+   ANTHROPIC_API_KEY: str = Field(
+       default="",
+       description="Anthropic API key for Claude chat (get from console.anthropic.com)"
+   )
+
+   @validator("ANTHROPIC_API_KEY")
+   def validate_anthropic_key(cls, v: str) -> str:
+       """Validate ANTHROPIC_API_KEY if chat feature is enabled."""
+       if v and len(v) < 32:
+           raise ValueError("ANTHROPIC_API_KEY must be at least 32 characters")
+       return v
+   ```
+
+   Update `.env.example`:
+   ```bash
+   # Claude Chat Integration (Optional - for admin chat interface)
+   ANTHROPIC_API_KEY=sk-ant-api03-...  # Get from console.anthropic.com
+   ```
+
+4. [ ] **Run tests**
+   ```bash
+   cd backend
+   pytest tests/api/test_claude_chat.py -v
+   pytest tests/api/test_claude_chat_rate_limit.py -v
+   pytest tests/api/test_claude_chat_audit.py -v
+
+   # Verify WebSocket connection
+   python -m pytest tests/websocket/test_claude_chat_ws.py -v
+   ```
 
 ### Frontend Changes
 
-1. [ ] Create ClaudeChat component
-2. [ ] Create admin/claude-chat page
-3. [ ] Add navigation link to admin sidebar
-4. [ ] Test WebSocket connection
+1. [ ] **Create ClaudeChat component**
+   ```bash
+   cd frontend/src/components/admin
+   # Create ClaudeChat.tsx (see Phase 3 example above)
+   # Create MessageBubble.tsx for message rendering
+   # Create ToolCallIndicator.tsx for showing tool executions
+   ```
+
+   **Files to create:**
+   - `frontend/src/components/admin/ClaudeChat.tsx` (main component)
+   - `frontend/src/components/admin/MessageBubble.tsx` (message display)
+   - `frontend/src/components/admin/ToolCallIndicator.tsx` (tool visualization)
+   - `frontend/src/hooks/useClaudeChat.ts` (WebSocket logic)
+
+2. [ ] **Create admin/claude-chat page**
+   ```bash
+   cd frontend/src/app/admin
+   mkdir claude-chat
+   # Create page.tsx (see Phase 4 example above)
+   ```
+
+   **File:** `frontend/src/app/admin/claude-chat/page.tsx`
+   ```tsx
+   import { ClaudeChat } from '@/components/admin/ClaudeChat';
+   export default function ClaudeChatPage() { /* ... */ }
+   ```
+
+3. [ ] **Add navigation link to admin sidebar**
+   ```tsx
+   // In frontend/src/components/admin/Sidebar.tsx or AdminLayout.tsx
+
+   const adminNavItems = [
+     // ... existing items ...
+     {
+       name: 'Claude Chat',
+       href: '/admin/claude-chat',
+       icon: ChatBubbleIcon,  // or MessageSquare from lucide-react
+       description: 'AI Scheduling Assistant',
+     },
+   ];
+   ```
+
+4. [ ] **Test WebSocket connection**
+   ```bash
+   # Start backend
+   cd backend && uvicorn app.main:app --reload
+
+   # Start frontend
+   cd frontend && npm run dev
+
+   # Manual test with wscat (optional)
+   npm install -g wscat
+   wscat -c "ws://localhost:8000/api/claude-chat/ws?token=YOUR_JWT_TOKEN"
+
+   # Send test message:
+   {"type": "user_message", "content": "Hello Claude"}
+
+   # Should receive streaming responses
+   ```
 
 ### Testing
 

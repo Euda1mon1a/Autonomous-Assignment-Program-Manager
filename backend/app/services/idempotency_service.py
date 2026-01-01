@@ -28,7 +28,7 @@ DEFAULT_EXPIRATION_HOURS = 24
 class IdempotencyService:
     """Service for managing idempotency keys and request deduplication."""
 
-    def __init__(self, db: Session, expiration_hours: int = DEFAULT_EXPIRATION_HOURS):
+    def __init__(self, db: Session, expiration_hours: int = DEFAULT_EXPIRATION_HOURS) -> None:
         self.db = db
         self.expiration_hours = expiration_hours
 

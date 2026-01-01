@@ -1193,6 +1193,16 @@ When making changes, update relevant documentation:
 
 ### Technical Deep Dives (Human-Readable)
 
+**Architecture Decision Records (ADRs):**
+- **[ADR Directory](docs/architecture/decisions/)**: Formal architectural decision documentation
+  - [ADR-001: FastAPI + SQLAlchemy 2.0](docs/architecture/decisions/ADR-001-fastapi-sqlalchemy-async.md)
+  - [ADR-002: Constraint Programming (OR-Tools)](docs/architecture/decisions/ADR-002-constraint-programming-ortools.md)
+  - [ADR-003: MCP Server for AI Integration](docs/architecture/decisions/ADR-003-mcp-server-ai-integration.md)
+  - [ADR-004: Cross-Disciplinary Resilience Framework](docs/architecture/decisions/ADR-004-resilience-framework.md)
+  - [ADR-009: Time Crystal Scheduling](docs/architecture/decisions/ADR-009-time-crystal-scheduling.md)
+  - [ADR-011: CI_LIAISON Container Management](docs/architecture/decisions/ADR-011-ci-liaison-container-management.md)
+
+**Technical Documentation:**
 - **[Solver Algorithm](docs/architecture/SOLVER_ALGORITHM.md)**: Scheduling engine overview
 - **[Cross-Disciplinary Resilience](docs/architecture/cross-disciplinary-resilience.md)**: Resilience framework concepts
 - **[Security Pattern Audit](docs/security/SECURITY_PATTERN_AUDIT.md)**: Security architecture review

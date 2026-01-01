@@ -1,6 +1,23 @@
 ---
 name: qa-party
 description: Parallel validation deployment. Spawn 8+ QA agents to run tests, builds, lints, and health checks simultaneously. Zero marginal wall-clock cost.
+model_tier: sonnet
+parallel_hints:
+  can_parallel_with: []
+  must_serialize_with: [plan-party]
+  preferred_batch_size: 12
+context_hints:
+  max_file_context: 50
+  compression_level: 2
+  requires_git_context: true
+  requires_db_context: false
+escalation_triggers:
+  - pattern: "critical.*fail"
+    reason: "Critical test failures need investigation"
+  - pattern: "docker.*down"
+    reason: "Infrastructure issues need human intervention"
+  - keyword: ["security", "blocking"]
+    reason: "Security or blocking issues require escalation"
 ---
 
 # QA_PARTY Skill

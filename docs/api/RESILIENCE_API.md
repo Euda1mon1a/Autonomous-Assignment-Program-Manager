@@ -587,6 +587,28 @@ curl -X POST http://localhost:8000/api/resilience/load-shedding/activate \
 
 ## Related Documentation
 
-- [Resilience Framework Guide](../architecture/cross-disciplinary-resilience.md)
-- [Crisis Response Procedures](../admin-manual/crisis-response.md)
-- [Fallback Schedule Planning](../planning/fallback-schedules.md)
+**Related API Documentation:**
+- [FMIT Health API](FMIT_HEALTH_API.md) - FMIT coverage and swap monitoring
+- [Schedule API](SCHEDULE_API.md) - Schedule generation for fallback schedules
+- [Health API](HEALTH_API.md) - Overall system health
+- [Swaps API](SWAPS_API.md) - Swap management during crisis mode
+
+**Architecture Decision Records:**
+- [ADR-004: Cross-Disciplinary Resilience Framework](../architecture/decisions/ADR-004-resilience-framework.md) - Resilience framework design and rationale
+- [ADR-002: Constraint Programming](../architecture/decisions/ADR-002-constraint-programming-ortools.md) - Solver used for fallback schedules
+
+**Architecture Documentation:**
+- [Cross-Disciplinary Resilience](../architecture/cross-disciplinary-resilience.md) - Full resilience framework documentation
+- [Exotic Frontier Concepts](../architecture/EXOTIC_FRONTIER_CONCEPTS.md) - Tier 5 advanced resilience concepts
+- [Resilience Defense Level Runbook](../architecture/RESILIENCE_DEFENSE_LEVEL_RUNBOOK.md) - Response procedures by defense level
+- [Resilience Contingency Procedures](../architecture/RESILIENCE_CONTINGENCY_PROCEDURES.md) - Emergency protocols
+
+**Implementation Code:**
+- `backend/app/api/routes/resilience.py` - Resilience API routes
+- `backend/app/resilience/hub.py` - Resilience hub orchestrator
+- `backend/app/resilience/crisis.py` - Crisis mode management
+- `backend/app/resilience/load_shedding.py` - Load shedding implementation
+
+**Admin Guides:**
+- [Crisis Response Procedures](../admin-manual/crisis-response.md) - Administrative procedures
+- [Fallback Schedule Planning](../planning/fallback-schedules.md) - Planning guide

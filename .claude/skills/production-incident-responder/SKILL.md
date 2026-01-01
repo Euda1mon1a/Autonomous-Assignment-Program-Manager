@@ -1,6 +1,25 @@
 ---
 name: production-incident-responder
 description: Crisis response skill for production system failures. Integrates with MCP resilience tools to detect, diagnose, and respond to critical system failures. Use when production system shows signs of failure or during emergency situations.
+model_tier: opus
+parallel_hints:
+  can_parallel_with: []
+  must_serialize_with: [safe-schedule-generation, SCHEDULING]
+  preferred_batch_size: 1
+context_hints:
+  max_file_context: 100
+  compression_level: 0
+  requires_git_context: false
+  requires_db_context: true
+escalation_triggers:
+  - pattern: "RED|BLACK"
+    reason: "Critical/catastrophic defense levels require immediate human intervention"
+  - pattern: "circuit.*breaker|trip"
+    reason: "Circuit breaker events require human review"
+  - pattern: "N-2|multiple.*absence"
+    reason: "Multiple simultaneous failures need human decision-making"
+  - keyword: ["ACGME violation", "regulatory", "external staffing"]
+    reason: "Compliance and staffing changes require human approval"
 ---
 
 # Production Incident Responder
