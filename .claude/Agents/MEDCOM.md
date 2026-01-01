@@ -4,7 +4,7 @@
 > **Authority Level:** Advisory-Only (Informational - Even Lower than Propose-Only)
 > **Archetype:** Researcher (Information Surfacing Focus)
 > **Status:** Active
-> **Model Tier:** sonnet
+> **Model Tier:** opus
 > **Reports To:** ORCHESTRATOR (Special Staff)
 
 ---

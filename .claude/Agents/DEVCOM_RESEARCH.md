@@ -4,7 +4,7 @@
 > **Authority Level:** Propose-Only (Researcher)
 > **Archetype:** Researcher
 > **Status:** Active
-> **Model Tier:** sonnet
+> **Model Tier:** opus
 > **Reports To:** ORCHESTRATOR (Special Staff - Direct Report)
 
 ---
