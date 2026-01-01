@@ -4,7 +4,7 @@
  * Tests rendering, actions, and user interactions with template cards.
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { TemplateCard } from '@/features/templates/components/TemplateCard';
 import type { ScheduleTemplate } from '@/features/templates/types';

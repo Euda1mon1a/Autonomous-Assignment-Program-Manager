@@ -4,7 +4,7 @@
  * Tests for the staffing summary display component showing staff counts
  */
 
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/test-utils';
 import { StaffingSummary } from '@/features/daily-manifest/StaffingSummary';
 
 describe('StaffingSummary', () => {

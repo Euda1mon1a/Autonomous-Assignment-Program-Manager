@@ -158,9 +158,9 @@ import { useRef } from 'react';
 
 export function useDeepMemo<T>(
   factory: () => T,
-  deps: any[]
+  deps: React.DependencyList
 ): T {
-  const ref = useRef<{ deps: any[]; value: T }>();
+  const ref = useRef<{ deps: React.DependencyList; value: T }>();
 
   if (
     !ref.current ||
@@ -178,7 +178,7 @@ export function useDeepMemo<T>(
 /**
  * Shallow equality check for arrays.
  */
-function shallowEqual(arr1: any[], arr2: any[]): boolean {
+function shallowEqual(arr1: React.DependencyList, arr2: React.DependencyList): boolean {
   if (arr1.length !== arr2.length) return false;
 
   for (let i = 0; i < arr1.length; i++) {

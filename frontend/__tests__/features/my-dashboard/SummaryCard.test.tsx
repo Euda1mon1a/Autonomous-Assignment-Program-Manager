@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/test-utils';
 import { SummaryCard } from '@/features/my-dashboard/SummaryCard';
 import { Calendar, Briefcase, ArrowRightLeft } from 'lucide-react';
 

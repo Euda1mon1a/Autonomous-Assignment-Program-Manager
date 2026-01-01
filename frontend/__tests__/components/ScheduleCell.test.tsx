@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen } from '@/test-utils'
 import { ScheduleCell, ScheduleSeparatorRow } from '@/components/schedule/ScheduleCell'
 
 describe('ScheduleCell', () => {

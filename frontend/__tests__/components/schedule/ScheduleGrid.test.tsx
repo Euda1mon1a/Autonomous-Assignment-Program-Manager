@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderWithProviders, screen, waitFor, mockData } from '@/test-utils';
 import { ScheduleGrid } from '@/components/schedule/ScheduleGrid';
 import * as api from '@/lib/api';
 import * as hooks from '@/lib/hooks';
@@ -13,103 +12,72 @@ const mockUsePeople = hooks.usePeople as jest.MockedFunction<typeof hooks.usePeo
 const mockUseRotationTemplates = hooks.useRotationTemplates as jest.MockedFunction<typeof hooks.useRotationTemplates>;
 
 describe('ScheduleGrid', () => {
-  let queryClient: QueryClient;
+  const mockPeople = mockData.paginatedResponse([
+    mockData.person({
+      id: 'person-1',
+      name: 'Dr. Alice Smith',
+      type: 'resident',
+      pgy_level: 1,
+      email: 'alice@test.com',
+      role: 'RESIDENT',
+    }),
+    mockData.person({
+      id: 'person-2',
+      name: 'Dr. Bob Jones',
+      type: 'resident',
+      pgy_level: 2,
+      email: 'bob@test.com',
+      role: 'RESIDENT',
+    }),
+    mockData.person({
+      id: 'person-3',
+      name: 'Dr. Carol Faculty',
+      type: 'faculty',
+      email: 'carol@test.com',
+      role: 'FACULTY',
+    }),
+  ]);
 
-  const mockPeople = {
-    items: [
-      {
-        id: 'person-1',
-        name: 'Dr. Alice Smith',
-        type: 'resident' as const,
-        pgy_level: 1,
-        email: 'alice@test.com',
-        role: 'RESIDENT' as const,
-      },
-      {
-        id: 'person-2',
-        name: 'Dr. Bob Jones',
-        type: 'resident' as const,
-        pgy_level: 2,
-        email: 'bob@test.com',
-        role: 'RESIDENT' as const,
-      },
-      {
-        id: 'person-3',
-        name: 'Dr. Carol Faculty',
-        type: 'faculty' as const,
-        email: 'carol@test.com',
-        role: 'FACULTY' as const,
-      },
-    ],
-    total: 3,
-    page: 1,
-    per_page: 100,
-  };
+  const mockTemplates = mockData.paginatedResponse([
+    mockData.rotationTemplate({
+      id: 'template-1',
+      name: 'Inpatient Medicine',
+      abbreviation: 'IM',
+      activity_type: 'inpatient',
+    }),
+    mockData.rotationTemplate({
+      id: 'template-2',
+      name: 'Clinic',
+      abbreviation: 'CL',
+      activity_type: 'clinic',
+    }),
+  ]);
 
-  const mockTemplates = {
-    items: [
-      {
-        id: 'template-1',
-        name: 'Inpatient Medicine',
-        abbreviation: 'IM',
-        activity_type: 'inpatient',
-        background_color: '#e0e7ff',
-        font_color: '#4338ca',
-      },
-      {
-        id: 'template-2',
-        name: 'Clinic',
-        abbreviation: 'CL',
-        activity_type: 'clinic',
-        background_color: '#dbeafe',
-        font_color: '#1e40af',
-      },
-    ],
-    total: 2,
-    page: 1,
-    per_page: 100,
-  };
+  const mockBlocks = mockData.paginatedResponse([
+    mockData.block({ id: 'block-1', date: '2025-01-01', time_of_day: 'AM' }),
+    mockData.block({ id: 'block-2', date: '2025-01-01', time_of_day: 'PM' }),
+    mockData.block({ id: 'block-3', date: '2025-01-02', time_of_day: 'AM' }),
+    mockData.block({ id: 'block-4', date: '2025-01-02', time_of_day: 'PM' }),
+  ]);
 
-  const mockBlocks = {
-    items: [
-      { id: 'block-1', date: '2025-01-01', time_of_day: 'AM' },
-      { id: 'block-2', date: '2025-01-01', time_of_day: 'PM' },
-      { id: 'block-3', date: '2025-01-02', time_of_day: 'AM' },
-      { id: 'block-4', date: '2025-01-02', time_of_day: 'PM' },
-    ],
-    total: 4,
-    page: 1,
-    per_page: 100,
-  };
-
-  const mockAssignments = {
-    items: [
-      {
-        id: 'assignment-1',
-        person_id: 'person-1',
-        block_id: 'block-1',
-        rotation_template_id: 'template-1',
-        role: 'primary',
-      },
-      {
-        id: 'assignment-2',
-        person_id: 'person-2',
-        block_id: 'block-2',
-        rotation_template_id: 'template-2',
-        role: 'primary',
-      },
-    ],
-    total: 2,
-    page: 1,
-    per_page: 100,
-  };
+  const mockAssignments = mockData.paginatedResponse([
+    mockData.assignment({
+      id: 'assignment-1',
+      person_id: 'person-1',
+      block_id: 'block-1',
+      rotation_template_id: 'template-1',
+      role: 'primary',
+    }),
+    mockData.assignment({
+      id: 'assignment-2',
+      person_id: 'person-2',
+      block_id: 'block-2',
+      rotation_template_id: 'template-2',
+      role: 'primary',
+    }),
+  ]);
 
   beforeEach(() => {
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: { retry: false },
-      },
-    });
 
     // Setup default mocks
     mockUsePeople.mockReturnValue({
@@ -137,19 +105,14 @@ describe('ScheduleGrid', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
-    queryClient.clear();
   });
-
-  const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
 
   describe('Basic Rendering', () => {
     it('renders without crashing', async () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-02');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
         expect(screen.queryByRole('status')).not.toBeInTheDocument();
@@ -162,7 +125,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-02');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
         expect(screen.getByText('PGY-1')).toBeInTheDocument();
@@ -176,7 +139,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-02');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
         expect(screen.getByText('Dr. Alice Smith')).toBeInTheDocument();
@@ -190,7 +153,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-02');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
         const grid = screen.getByRole('grid');
@@ -210,7 +173,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-02');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       expect(screen.getByRole('status')).toBeInTheDocument();
       expect(screen.getByText('Loading schedule...')).toBeInTheDocument();
@@ -226,7 +189,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-02');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       const status = screen.getByRole('status');
       expect(status).toHaveAttribute('aria-live', 'polite');
@@ -243,7 +206,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-02');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       expect(screen.getByText('Loading schedule...')).toBeInTheDocument();
     });
@@ -261,7 +224,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-02');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
         expect(screen.getByText('Failed to fetch people')).toBeInTheDocument();
@@ -274,7 +237,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-02');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
         expect(screen.getByText(/Failed to load schedule data/i)).toBeInTheDocument();
@@ -291,7 +254,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-02');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
         expect(screen.getByText('Failed to load schedule data')).toBeInTheDocument();
@@ -310,7 +273,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-02');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
         expect(screen.getByText('No People Found')).toBeInTheDocument();
@@ -329,7 +292,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-02');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
         expect(screen.getByText('Add People')).toBeInTheDocument();
@@ -342,7 +305,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-05'); // 5 days
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
         expect(screen.queryByRole('status')).not.toBeInTheDocument();
@@ -357,7 +320,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-01');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
         expect(screen.queryByRole('status')).not.toBeInTheDocument();
@@ -372,7 +335,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-02');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
         expect(screen.getByText('PGY-1')).toBeInTheDocument();
@@ -390,7 +353,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-02');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
         expect(screen.getByText('Faculty')).toBeInTheDocument();
@@ -433,7 +396,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-02');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
         const names = screen.getAllByText(/Dr\./);
@@ -453,7 +416,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-02');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
         // Check that assignment abbreviations are rendered
@@ -476,7 +439,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-02');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
         expect(screen.queryByRole('status')).not.toBeInTheDocument();
@@ -492,7 +455,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-02');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
         const grid = screen.getByRole('grid');
@@ -504,7 +467,7 @@ describe('ScheduleGrid', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-02');
 
-      render(<ScheduleGrid startDate={startDate} endDate={endDate} />, { wrapper });
+      renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
         const headers = screen.getAllByRole('rowheader');

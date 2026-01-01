@@ -4,7 +4,7 @@
  * Tests for the ScheduleGrid component including data fetching,
  * rendering of people groups, assignments, and loading/error states.
  */
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@/test-utils'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ScheduleGrid } from '@/components/schedule/ScheduleGrid'
 import * as api from '@/lib/api'

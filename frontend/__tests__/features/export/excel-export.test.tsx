@@ -6,7 +6,7 @@
  * and date range selection functionality
  */
 import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { ExcelExportButton, ExcelExportDropdown } from '@/components/ExcelExportButton'
 import * as exportModule from '@/lib/export'

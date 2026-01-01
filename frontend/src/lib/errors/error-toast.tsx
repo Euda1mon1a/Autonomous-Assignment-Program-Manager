@@ -239,7 +239,7 @@ export function ErrorToastContainer({
 /**
  * Function to show error toast
  */
-export function showErrorToast(error: unknown) {
+export function showErrorToast(error: unknown): void {
   const event = new CustomEvent('error-toast', {
     detail: { error },
   })

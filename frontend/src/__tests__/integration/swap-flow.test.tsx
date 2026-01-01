@@ -5,7 +5,7 @@
  * schedule swap requests. Covers swap marketplace, auto-matching, approval workflows,
  * and rollback functionality.
  */
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as api from '@/lib/api'

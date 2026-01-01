@@ -1,6 +1,12 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useClaudeChat, SavedSession } from '../hooks/useClaudeChat';
-import { ChatMessage, ChatSession } from '../types/chat';
+import { ChatMessage, ChatSession, ClaudeCodeExecutionContext, StreamUpdate } from '../types/chat';
+
+interface SessionExport {
+  session: ChatSession;
+  exportedAt: Date;
+  version: string;
+}
 
 interface ClaudeChatContextType {
   session: ChatSession | null;
@@ -8,10 +14,10 @@ interface ClaudeChatContextType {
   isLoading: boolean;
   error: string | null;
   initializeSession: (programId: string, adminId: string, title?: string) => ChatSession;
-  sendMessage: (userInput: string, context?: any, onStreamUpdate?: any) => Promise<void>;
+  sendMessage: (userInput: string, context?: Partial<ClaudeCodeExecutionContext>, onStreamUpdate?: (update: StreamUpdate) => void) => Promise<void>;
   cancelRequest: () => void;
   clearMessages: () => void;
-  exportSession: () => any;
+  exportSession: () => SessionExport;
   getSavedSessions: () => SavedSession[];
   loadSession: (sessionId: string) => boolean;
 }

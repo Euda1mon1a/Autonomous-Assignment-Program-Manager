@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test-utils';
 import { ResidentCard, ResidentListItem, ResidentCardProps } from '@/components/scheduling/ResidentCard';
 
 describe('ResidentCard', () => {

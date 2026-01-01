@@ -24,7 +24,7 @@ import { StrategyCard } from '@/components/game-theory/StrategyCard';
 import { TournamentCard } from '@/components/game-theory/TournamentCard';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { STRATEGY_COLORS, STRATEGY_LABELS, STATUS_COLORS } from '@/types/game-theory';
-import type { ConfigStrategy, TournamentCreate, EvolutionCreate } from '@/types/game-theory';
+import type { ConfigStrategy, TournamentCreate, EvolutionCreate, GameTheorySummary, Tournament, Evolution, ConfigAnalysisRequest, ConfigAnalysisResult } from '@/types/game-theory';
 
 export default function GameTheoryPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'strategies' | 'tournaments' | 'evolution' | 'analysis'>('overview');
@@ -43,11 +43,11 @@ export default function GameTheoryPage() {
   const validateStrategy = useValidateStrategy();
   const analyzeConfig = useAnalyzeConfig();
 
-  const handleCreateDefaults = () => {
+  const handleCreateDefaults = (): void => {
     createDefaults.mutate();
   };
 
-  const handleCreateTournament = () => {
+  const handleCreateTournament = (): void => {
     if (selectedStrategies.length < 2) {
       alert('Select at least 2 strategies');
       return;
@@ -61,14 +61,14 @@ export default function GameTheoryPage() {
     };
 
     createTournament.mutate(tournamentData, {
-      onSuccess: () => {
+      onSuccess: (): void => {
         setSelectedStrategies([]);
         setShowTournamentModal(false);
       },
     });
   };
 
-  const handleCreateEvolution = () => {
+  const handleCreateEvolution = (): void => {
     if (selectedStrategies.length < 2) {
       alert('Select at least 2 strategies');
       return;
@@ -76,8 +76,8 @@ export default function GameTheoryPage() {
 
     // Create initial composition with equal distribution
     const composition: Record<string, number> = {};
-    const countPerStrategy = Math.floor(100 / selectedStrategies.length);
-    selectedStrategies.forEach((id) => {
+    const countPerStrategy: number = Math.floor(100 / selectedStrategies.length);
+    selectedStrategies.forEach((id: string): void => {
       composition[id] = countPerStrategy;
     });
 
@@ -89,16 +89,16 @@ export default function GameTheoryPage() {
     };
 
     createEvolution.mutate(evolutionData, {
-      onSuccess: () => {
+      onSuccess: (): void => {
         setSelectedStrategies([]);
         setShowEvolutionModal(false);
       },
     });
   };
 
-  const toggleStrategySelection = (id: string) => {
-    setSelectedStrategies((prev) =>
-      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+  const toggleStrategySelection = (id: string): void => {
+    setSelectedStrategies((prev: string[]): string[] =>
+      prev.includes(id) ? prev.filter((s: string): boolean => s !== id) : [...prev, id]
     );
   };
 
@@ -206,7 +206,7 @@ export default function GameTheoryPage() {
 // Tab Components
 // ============================================================================
 
-function OverviewTab({ summary }: { summary: any }) {
+function OverviewTab({ summary }: { summary: GameTheorySummary | undefined }) {
   if (!summary) return null;
 
   return (
@@ -243,12 +243,12 @@ function OverviewTab({ summary }: { summary: any }) {
           </h3>
           {summary.recent_tournaments?.length > 0 ? (
             <ul className="space-y-3">
-              {summary.recent_tournaments.map((t: any) => (
+              {summary.recent_tournaments.map((t) => (
                 <li key={t.id} className="flex items-center justify-between">
                   <span className="text-sm text-gray-700 dark:text-gray-300">{t.name}</span>
                   <span
                     className="px-2 py-1 text-xs rounded-full"
-                    style={{ backgroundColor: STATUS_COLORS[t.status as keyof typeof STATUS_COLORS] + '20', color: STATUS_COLORS[t.status as keyof typeof STATUS_COLORS] }}
+                    style={{ backgroundColor: STATUS_COLORS[t.status] + '20', color: STATUS_COLORS[t.status] }}
                   >
                     {t.status}
                   </span>
@@ -266,12 +266,12 @@ function OverviewTab({ summary }: { summary: any }) {
           </h3>
           {summary.recent_evolutions?.length > 0 ? (
             <ul className="space-y-3">
-              {summary.recent_evolutions.map((e: any) => (
+              {summary.recent_evolutions.map((e) => (
                 <li key={e.id} className="flex items-center justify-between">
                   <span className="text-sm text-gray-700 dark:text-gray-300">{e.name}</span>
                   <span
                     className="px-2 py-1 text-xs rounded-full"
-                    style={{ backgroundColor: STATUS_COLORS[e.status as keyof typeof STATUS_COLORS] + '20', color: STATUS_COLORS[e.status as keyof typeof STATUS_COLORS] }}
+                    style={{ backgroundColor: STATUS_COLORS[e.status] + '20', color: STATUS_COLORS[e.status] }}
                   >
                     {e.winner || e.status}
                   </span>
@@ -353,7 +353,7 @@ function TournamentsTab({
   onCreateTournament,
   isCreating,
 }: {
-  tournaments: any[];
+  tournaments: Tournament[];
   isLoading: boolean;
   strategies: ConfigStrategy[];
   selectedStrategies: string[];
@@ -422,7 +422,7 @@ function EvolutionTab({
   onCreateEvolution,
   isCreating,
 }: {
-  evolutions: any[];
+  evolutions: Evolution[];
   isLoading: boolean;
   strategies: ConfigStrategy[];
   selectedStrategies: string[];
@@ -510,9 +510,9 @@ function AnalysisTab({
   isAnalyzing,
   result,
 }: {
-  onAnalyze: (config: any) => void;
+  onAnalyze: (config: ConfigAnalysisRequest) => void;
   isAnalyzing: boolean;
-  result?: any;
+  result?: ConfigAnalysisResult;
 }) {
   const [config, setConfig] = useState<{
     utilization_target: number;
@@ -681,7 +681,7 @@ function AnalysisTab({
 // Utility Components
 // ============================================================================
 
-function StatCard({ title, value, subtitle }: { title: string; value: string | number; subtitle?: string }) {
+function StatCard({ title, value, subtitle }: { title: string; value: string | number; subtitle?: string }): React.ReactElement {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
       <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>

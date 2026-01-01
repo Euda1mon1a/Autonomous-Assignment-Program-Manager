@@ -1,10 +1,11 @@
+import { renderWithProviders } from '@/test-utils';
 /**
  * Tests for Badge Component
  * Component: 42 - Status badges
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { renderWithProviders as render, screen } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { Badge, NumericBadge } from '../Badge';
 

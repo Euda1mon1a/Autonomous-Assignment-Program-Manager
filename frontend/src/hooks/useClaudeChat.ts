@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { ChatMessage, ChatSession, ClaudeCodeRequest, ClaudeCodeResponse, StreamUpdate } from '../types/chat';
+import { ChatMessage, ChatSession, ClaudeCodeRequest, ClaudeCodeResponse, StreamUpdate, CodeBlock, ChatArtifact } from '../types/chat';
 import { v4 as uuidv4 } from 'uuid';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -12,7 +12,7 @@ const STORAGE_KEY_MESSAGES = 'claude_chat_messages';
 const STORAGE_KEY_SESSIONS_LIST = 'claude_chat_sessions_list';
 
 // Helper to safely parse dates from JSON
-const reviveDates = (key: string, value: any): any => {
+const reviveDates = (key: string, value: unknown): unknown => {
   if (typeof value === 'string') {
     // Check for ISO date format
     const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
@@ -37,7 +37,7 @@ const loadFromStorage = <T>(key: string): T | null => {
 };
 
 // Helper to save to localStorage
-const saveToStorage = (key: string, value: any): void => {
+const saveToStorage = (key: string, value: unknown): void => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (e) {
@@ -85,7 +85,7 @@ export const useClaudeChat = () => {
   }, [messages]);
 
   // Update sessions list for session history
-  const updateSessionsList = (currentSession: ChatSession, messageCount: number) => {
+  const updateSessionsList = (currentSession: ChatSession, messageCount: number): void => {
     const sessionsList = loadFromStorage<SavedSession[]>(STORAGE_KEY_SESSIONS_LIST) || [];
     const existingIndex = sessionsList.findIndex(s => s.id === currentSession.id);
 
@@ -151,7 +151,7 @@ export const useClaudeChat = () => {
   const sendMessage = useCallback(
     async (
       userInput: string,
-      context?: any,
+      context?: Record<string, unknown>,
       onStreamUpdate?: (update: StreamUpdate) => void
     ) => {
       if (!session) {
@@ -221,8 +221,8 @@ export const useClaudeChat = () => {
 
         const decoder = new TextDecoder();
         let fullContent = '';
-        const codeBlocks: any[] = [];
-        const artifacts: any[] = [];
+        const codeBlocks: CodeBlock[] = [];
+        const artifacts: ChatArtifact[] = [];
 
         while (true) {
           const { done, value } = await reader.read();
@@ -303,7 +303,7 @@ export const useClaudeChat = () => {
   );
 
   // Cancel ongoing request
-  const cancelRequest = useCallback(() => {
+  const cancelRequest = useCallback((): void => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       setIsLoading(false);
@@ -311,13 +311,13 @@ export const useClaudeChat = () => {
   }, []);
 
   // Clear messages
-  const clearMessages = useCallback(() => {
+  const clearMessages = useCallback((): void => {
     setMessages([]);
     setError(null);
   }, []);
 
   // Export session
-  const exportSession = useCallback(() => {
+  const exportSession = useCallback((): (ChatSession & { messages: ChatMessage[] }) | null => {
     if (!session) return null;
     return {
       ...session,

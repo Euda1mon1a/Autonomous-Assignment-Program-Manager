@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo, useCallback } from 'react';
 import { RefreshCw, FileText, Download } from 'lucide-react';
 import type { ScheduleTemplate } from '../types';
 import { TemplateCard } from './TemplateCard';
@@ -40,10 +41,13 @@ export function TemplateList({
   emptyAction,
   variant = 'grid',
 }: TemplateListProps) {
+  // Memoize skeleton array generation
+  const skeletons = useMemo(() => Array.from({ length: 6 }, (_, i) => i), []);
+
   if (isLoading) {
     return (
       <div className={variant === 'grid' ? 'grid gap-4 md:grid-cols-2 lg:grid-cols-3' : 'space-y-3'}>
-        {Array.from({ length: 6 }).map((_, i) => (
+        {skeletons.map((i) => (
           <TemplateCardSkeleton key={i} variant={variant} />
         ))}
       </div>

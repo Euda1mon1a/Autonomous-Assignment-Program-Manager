@@ -4,7 +4,7 @@
  * Tests form rendering, validation, pre-population, and submission behavior
  */
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { EditTemplateModal } from '@/components/EditTemplateModal'

@@ -69,30 +69,25 @@ class UpdateAssignmentTool(BaseTool[UpdateAssignmentRequest, UpdateAssignmentRes
         client = self._require_api_client()
 
         try:
-            # Build update payload
-            payload = {}
-            if request.person_id is not None:
-                payload["person_id"] = request.person_id
-            if request.rotation_id is not None:
-                payload["rotation_id"] = request.rotation_id
-            if request.notes is not None:
-                payload["notes"] = request.notes
-
-            if not payload:
+            # Check if any fields to update
+            if (
+                request.person_id is None
+                and request.rotation_id is None
+                and request.notes is None
+            ):
                 return UpdateAssignmentResponse(
                     success=False,
                     message="No fields to update",
                     details={},
                 )
 
-            # Update assignment via API
-            result = await client.client.patch(
-                f"{client.config.api_prefix}/assignments/{request.assignment_id}",
-                headers=await client._ensure_authenticated(),
-                json=payload,
+            # Update assignment via API client
+            data = await client.update_assignment(
+                assignment_id=request.assignment_id,
+                person_id=request.person_id,
+                rotation_id=request.rotation_id,
+                notes=request.notes,
             )
-            result.raise_for_status()
-            data = result.json()
 
             return UpdateAssignmentResponse(
                 success=True,

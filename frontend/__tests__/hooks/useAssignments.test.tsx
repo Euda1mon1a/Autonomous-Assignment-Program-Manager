@@ -2,7 +2,7 @@
  * Tests for useAssignments, useCreateAssignment, useUpdateAssignment, useDeleteAssignment hooks
  * Tests assignment fetching, filtering, and CRUD operations
  */
-import { renderHook, waitFor, act } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@/test-utils'
 import {
   useAssignments,
   useCreateAssignment,

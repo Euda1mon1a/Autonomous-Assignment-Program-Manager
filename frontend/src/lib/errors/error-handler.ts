@@ -244,9 +244,18 @@ export const errorHandler = new GlobalErrorHandler()
 /**
  * Hook-style error handler for React components
  */
-export function useErrorHandler() {
-  const handleError = (error: unknown, context?: Record<string, unknown>) => {
-    return errorHandler.handle(error, context)
+export function useErrorHandler(): {
+  handleError: (error: unknown, context?: Record<string, unknown>) => void;
+  getUserMessage: (error: unknown) => string;
+  shouldReauthenticate: (error: unknown) => boolean;
+  isRetryable: (error: unknown) => boolean;
+  getRetryDelay: (error: unknown) => number | null;
+  getValidationErrors: (error: unknown) => Record<string, string> | null;
+  getACGMEViolationDetails: (error: unknown) => unknown | null;
+  getScheduleConflictDetails: (error: unknown) => unknown | null;
+} {
+  const handleError = (error: unknown, context?: Record<string, unknown>): void => {
+    errorHandler.handle(error, context)
   }
 
   return {

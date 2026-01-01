@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { renderWithProviders, screen, fireEvent } from '@/test-utils';
 import { BlockCard } from '../BlockCard';
 
 describe('BlockCard', () => {
@@ -12,7 +12,7 @@ describe('BlockCard', () => {
   };
 
   it('renders block information correctly', () => {
-    render(<BlockCard {...defaultProps} />);
+    renderWithProviders(<BlockCard {...defaultProps} />);
 
     expect(screen.getByText('Dr. Smith')).toBeInTheDocument();
     expect(screen.getByText('Clinic')).toBeInTheDocument();
@@ -20,14 +20,14 @@ describe('BlockCard', () => {
   });
 
   it('applies conflict styling when isConflict is true', () => {
-    render(<BlockCard {...defaultProps} isConflict />);
+    renderWithProviders(<BlockCard {...defaultProps} isConflict />);
 
     const card = screen.getByRole('button');
     expect(card).toHaveClass('ring-red-500');
   });
 
   it('applies warning styling when isWarning is true', () => {
-    render(<BlockCard {...defaultProps} isWarning />);
+    renderWithProviders(<BlockCard {...defaultProps} isWarning />);
 
     const card = screen.getByRole('button');
     expect(card).toHaveClass('ring-yellow-500');
@@ -35,7 +35,7 @@ describe('BlockCard', () => {
 
   it('calls onClick when clicked', () => {
     const handleClick = jest.fn();
-    render(<BlockCard {...defaultProps} onClick={handleClick} />);
+    renderWithProviders(<BlockCard {...defaultProps} onClick={handleClick} />);
 
     fireEvent.click(screen.getByRole('button'));
     expect(handleClick).toHaveBeenCalledTimes(1);
@@ -43,7 +43,7 @@ describe('BlockCard', () => {
 
   it('handles keyboard navigation', () => {
     const handleClick = jest.fn();
-    render(<BlockCard {...defaultProps} onClick={handleClick} />);
+    renderWithProviders(<BlockCard {...defaultProps} onClick={handleClick} />);
 
     const card = screen.getByRole('button');
     fireEvent.keyDown(card, { key: 'Enter' });
@@ -54,14 +54,14 @@ describe('BlockCard', () => {
   });
 
   it('displays duration when provided', () => {
-    render(<BlockCard {...defaultProps} duration={8} />);
+    renderWithProviders(<BlockCard {...defaultProps} duration={8} />);
 
     expect(screen.getByText('8h')).toBeInTheDocument();
   });
 
   it('handles drag start event', () => {
     const handleDragStart = jest.fn();
-    render(<BlockCard {...defaultProps} onDragStart={handleDragStart} />);
+    renderWithProviders(<BlockCard {...defaultProps} onDragStart={handleDragStart} />);
 
     const card = screen.getByRole('button');
     fireEvent.dragStart(card);
@@ -71,7 +71,7 @@ describe('BlockCard', () => {
 
   it('prevents drag when isDraggable is false', () => {
     const handleDragStart = jest.fn();
-    render(<BlockCard {...defaultProps} isDraggable={false} onDragStart={handleDragStart} />);
+    renderWithProviders(<BlockCard {...defaultProps} isDraggable={false} onDragStart={handleDragStart} />);
 
     const card = screen.getByRole('button');
     const event = new DragEvent('dragstart', { bubbles: true });

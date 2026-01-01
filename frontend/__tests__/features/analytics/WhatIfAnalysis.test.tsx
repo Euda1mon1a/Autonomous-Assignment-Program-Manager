@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { WhatIfAnalysis } from '@/features/analytics/WhatIfAnalysis';
 import { analyticsMockFactories, analyticsMockResponses } from './analytics-mocks';

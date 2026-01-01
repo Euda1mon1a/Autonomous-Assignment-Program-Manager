@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent } from '@/test-utils'
 import { DayView } from '@/components/schedule/DayView'
 import { format } from 'date-fns'
 

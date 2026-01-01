@@ -1,10 +1,11 @@
+import { renderWithProviders } from '@/test-utils';
 /**
  * Tests for Tooltip Component
  * Component: 39 - Hover tooltips
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { renderWithProviders as render, screen, fireEvent, waitFor, act } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { Tooltip } from '../Tooltip';
 

@@ -1,10 +1,11 @@
+import { renderWithProviders } from '@/test-utils';
 /**
  * Tests for ProgressBar Component
  * Component: 35 - Progress indicator
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { renderWithProviders as render, screen } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { ProgressBar } from '../ProgressBar';
 

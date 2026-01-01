@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/test-utils';
 import { CoverageMatrix, CoverageSummary, CoverageSlot } from '@/components/scheduling/CoverageMatrix';
 
 describe('CoverageMatrix', () => {

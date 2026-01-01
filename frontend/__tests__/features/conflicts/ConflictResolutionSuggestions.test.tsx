@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { ConflictResolutionSuggestions } from '@/features/conflicts/ConflictResolutionSuggestions';
 import { conflictsMockFactories, conflictsMockResponses } from './conflicts-mocks';

@@ -86,21 +86,13 @@ class CheckDayOffTool(BaseTool[DayOffCheckRequest, DayOffCheckResponse]):
         client = self._require_api_client()
 
         try:
-            # Check day-off via API
-            params: dict[str, Any] = {
-                "start_date": request.start_date,
-                "end_date": request.end_date,
-            }
-            if request.person_id:
-                params["person_id"] = request.person_id
-
-            result = await client.client.get(
-                f"{client.config.api_prefix}/compliance/day-off",
-                headers=await client._ensure_authenticated(),
-                params=params,
+            # Check day-off via API client
+            data = await client.check_day_off(
+                start_date=request.start_date,
+                end_date=request.end_date,
+                person_id=request.person_id,
+                include_details=True,
             )
-            result.raise_for_status()
-            data = result.json()
 
             # Parse people data
             people = []

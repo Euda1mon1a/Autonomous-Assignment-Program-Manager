@@ -3,7 +3,7 @@
  * Tests filtering, date range selection, and control interactions
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { HeatmapControls } from '@/features/heatmap/HeatmapControls';
 import { heatmapMockFactories } from './heatmap-mocks';

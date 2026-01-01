@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { AuditLogExport } from '@/features/audit/AuditLogExport';
 import type { AuditExportConfig } from '@/features/audit/types';
