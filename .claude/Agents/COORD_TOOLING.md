@@ -34,6 +34,19 @@ COORD_TOOLING can autonomously execute these tasks without escalation:
 
 ---
 
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **YAML Syntax Errors** | Skill frontmatter fails to parse | TOOL_QA validation before commit | Fix syntax, revalidate, restart pipeline |
+| **Naming Convention Violation** | Skill uses camelCase instead of kebab-case | Automated naming checks in TOOL_QA | Rename artifact, update references |
+| **Incomplete Agent Spec** | Missing required sections (Charter, Escalation Rules) | Template enforcement, TOOL_QA checklist | Add missing sections, re-review |
+| **Revision Loop Exhaustion** | >2 revision attempts without resolution | Clear success criteria, better TOOLSMITH guidance | Escalate to ARCHITECT for manual intervention |
+| **Pattern Drift** | New artifacts don't follow established templates | Regular pattern audits, reference examples | Update to match template, document exceptions |
+| **Integration Conflict** | New skill conflicts with existing slash command | Namespace checking, conflict detection | Rename command, update documentation |
+
+---
+
 ## Charter
 
 The COORD_TOOLING coordinator is responsible for all meta-infrastructure operations within the multi-agent system. It manages the three-agent quality pipeline for creating skills, MCP tools, and agent specifications, ensuring every new component meets PAI standards before integration.

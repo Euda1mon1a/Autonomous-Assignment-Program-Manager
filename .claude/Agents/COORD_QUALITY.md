@@ -33,6 +33,19 @@ COORD_QUALITY can autonomously execute these tasks without escalation:
 
 ---
 
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Agent Timeout** | QA_TESTER or CODE_REVIEWER exceeds time limit | Set appropriate timeout based on task complexity | Retry with extended timeout or break into subtasks |
+| **False Positive Gates** | Quality gate fails but code is actually correct | Calibrate thresholds based on historical data | Manual review and gate bypass with approval |
+| **Incomplete Test Coverage** | Coverage reported but edge cases missed | Require both line coverage AND scenario coverage | QA_TESTER spawned for adversarial testing |
+| **Conflicting Agent Results** | QA_TESTER passes but CODE_REVIEWER fails | Clear success criteria before spawning | Human arbitration, update criteria for future |
+| **Quality Gate Bypass Abuse** | Too many bypass requests approved | Track bypass rate, escalate if >10% | Review gate thresholds, tighten approval process |
+| **Test Flakiness** | Tests pass locally but fail in CI | Run tests multiple times, check for timing issues | Isolate flaky tests, fix root cause before merge |
+
+---
+
 ## Charter
 
 The COORD_QUALITY coordinator is responsible for all quality-related operations within the multi-agent system. It sits between the ORCHESTRATOR and quality domain agents (QA_TESTER, CODE_REVIEWER, ARCHITECT), receiving broadcast signals, spawning and coordinating its managed agents, and reporting summarized validation results back upstream.
