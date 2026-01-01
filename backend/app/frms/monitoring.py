@@ -220,8 +220,8 @@ class FatigueMonitor:
         self.alert_callback = alert_callback
         self.enable_notifications = enable_notifications
 
-        # Deduplication
-        self._recent_alert_keys: set[str] = set()
+        # Deduplication with timestamps
+        self._recent_alert_keys: dict[str, datetime] = {}
 
         logger.info("FatigueMonitor initialized")
 
@@ -314,8 +314,12 @@ class FatigueMonitor:
 
         # Check for deduplication (don't repeat same alert within 1 hour)
         alert_key = f"{person_id}_{severity.value}"
+        now = datetime.utcnow()
+
         if alert_key in self._recent_alert_keys:
-            return None
+            last_alert_time = self._recent_alert_keys[alert_key]
+            if now - last_alert_time < timedelta(hours=1):
+                return None
 
         # Generate alert
         alert = FatigueAlert(
@@ -334,10 +338,10 @@ class FatigueMonitor:
         # Store alert
         self._active_alerts[alert.alert_id] = alert
         self._alert_history.append(alert)
-        self._recent_alert_keys.add(alert_key)
+        self._recent_alert_keys[alert_key] = now
 
-        # Clean up old deduplication keys (after 1 hour)
-        # TODO: Implement cleanup
+        # Clean up old deduplication keys (older than 1 hour)
+        self._cleanup_old_alert_keys(now)
 
         # Trigger callback
         if self.alert_callback and self.enable_notifications:
@@ -405,6 +409,24 @@ class FatigueMonitor:
             )
 
         return recommendations
+
+    def _cleanup_old_alert_keys(self, current_time: datetime) -> None:
+        """
+        Remove deduplication keys older than 1 hour.
+
+        This prevents memory growth from accumulating alert keys
+        while still maintaining the 1-hour deduplication window.
+
+        Args:
+            current_time: Current timestamp for age calculation
+        """
+        cutoff = current_time - timedelta(hours=1)
+        expired_keys = [
+            key for key, timestamp in self._recent_alert_keys.items()
+            if timestamp < cutoff
+        ]
+        for key in expired_keys:
+            del self._recent_alert_keys[key]
 
     def check_alerts(self) -> list[FatigueAlert]:
         """
