@@ -150,6 +150,58 @@ The RELEASE_MANAGER agent is responsible for managing the git workflow, creating
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+RELEASE_MANAGER is pre-authorized to execute these actions autonomously:
+
+1. **Git Operations:**
+   - Create feature branches
+   - Stage and commit changes with proper format
+   - Push to feature branches
+   - Create tags on feature branches
+   - Rebase feature branches on main
+
+2. **Commit Message Formatting:**
+   - Apply conventional commit format
+   - Add AI attribution footer
+   - Include Co-Authored-By header
+   - Reference issue numbers
+
+3. **PR Creation:**
+   - Generate PR descriptions from commits
+   - Add test plan checklists
+   - Set appropriate labels and reviewers
+   - Include sources footer
+
+4. **CHANGELOG Updates:**
+   - Add entries under [Unreleased]
+   - Categorize changes correctly
+   - Transform technical language to user-friendly
+   - Maintain chronological order
+
+5. **Pre-PR Validation:**
+   - Run pre-pr-checklist skill
+   - Verify tests pass
+   - Check linting compliance
+   - Validate documentation requirements
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Direct Push to Main** | Bypassed PR review | Branch protection, never push main | Cannot recover, escalate |
+| **Merge Conflict** | Git rejects merge | Fetch and rebase before push | Abort, report to ARCHITECT |
+| **Missing AI Attribution** | Commit lacks attribution | Use HEREDOC template | Amend if not pushed |
+| **Wrong Commit Type** | Mislabeled change | Review changes before typing | Amend if not pushed |
+| **Incomplete CHANGELOG** | Missing user-facing changes | Review git log thoroughly | Update and commit |
+| **PR Without Tests** | CI fails | Run tests before PR | Update PR with fixes |
+| **Force Push** | History destroyed | Never use --force | Cannot recover, escalate |
+| **Wrong Branch** | Committed to wrong branch | Check branch before commit | Cherry-pick to correct branch |
+
+---
+
 ## Key Workflows
 
 ### Workflow 1: Commit Changes with Proper Format

@@ -43,8 +43,12 @@ class TestBlastRadiusCalculation:
     def test_blast_radius_isolated_to_zone(self, sample_schedule_data):
         """Test blast radius is isolated to specific zone."""
         # Arrange
-        zone_a_residents = [r for r in sample_schedule_data["residents"] if r["zone"] == "A"]
-        zone_b_residents = [r for r in sample_schedule_data["residents"] if r["zone"] == "B"]
+        zone_a_residents = [
+            r for r in sample_schedule_data["residents"] if r["zone"] == "A"
+        ]
+        zone_b_residents = [
+            r for r in sample_schedule_data["residents"] if r["zone"] == "B"
+        ]
 
         # Act - Simulate zone isolation
         affected_zones = ["A"]  # Only zone A affected
@@ -93,7 +97,9 @@ class TestZoneIsolation:
     def test_zone_capacity_limits(self, sample_schedule_data):
         """Test zones have capacity limits."""
         # Arrange
-        zone_a_count = len([r for r in sample_schedule_data["residents"] if r["zone"] == "A"])
+        zone_a_count = len(
+            [r for r in sample_schedule_data["residents"] if r["zone"] == "A"]
+        )
 
         # Act
         max_zone_capacity = 10  # Example capacity
@@ -147,7 +153,9 @@ class TestImpactAssessment:
         critical_rotations_affected = 2
 
         # Act
-        impact_score = (affected_residents / total_residents) * (1 + critical_rotations_affected * 0.1)
+        impact_score = (affected_residents / total_residents) * (
+            1 + critical_rotations_affected * 0.1
+        )
 
         # Assert
         assert 0 <= impact_score <= 1.5
@@ -191,7 +199,9 @@ class TestBlastRadiusMetrics:
         avg_reassignment_time_minutes = 15
 
         # Act
-        estimated_recovery_minutes = affected_assignments * avg_reassignment_time_minutes
+        estimated_recovery_minutes = (
+            affected_assignments * avg_reassignment_time_minutes
+        )
 
         # Assert
         assert estimated_recovery_minutes == 150

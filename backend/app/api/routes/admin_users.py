@@ -176,7 +176,9 @@ async def create_user(
         Created user data
     """
     # Check if email already exists
-    existing = (await db.execute(select(User).where(User.email == user_data.email))).scalar_one_or_none()
+    existing = (
+        await db.execute(select(User).where(User.email == user_data.email))
+    ).scalar_one_or_none()
     if existing:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -189,7 +191,9 @@ async def create_user(
         username = user_data.email.split("@")[0]
 
     # Check if username already exists
-    existing_username = (await db.execute(select(User).where(User.username == username))).scalar_one_or_none()
+    existing_username = (
+        await db.execute(select(User).where(User.username == username))
+    ).scalar_one_or_none()
     if existing_username:
         # Append a random suffix
         username = f"{username}_{uuid.uuid4().hex[:6]}"
@@ -253,7 +257,9 @@ async def update_user(
         Updated user data
     """
     # Fetch user
-    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+    user = (
+        await db.execute(select(User).where(User.id == user_id))
+    ).scalar_one_or_none()
 
     if not user:
         raise HTTPException(
@@ -354,7 +360,9 @@ async def delete_user(
         No content (204 status)
     """
     # Fetch user
-    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+    user = (
+        await db.execute(select(User).where(User.id == user_id))
+    ).scalar_one_or_none()
 
     if not user:
         raise HTTPException(
@@ -402,7 +410,9 @@ async def lock_user_account(
         Updated lock status
     """
     # Fetch user
-    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+    user = (
+        await db.execute(select(User).where(User.id == user_id))
+    ).scalar_one_or_none()
 
     if not user:
         raise HTTPException(
@@ -505,7 +515,9 @@ async def resend_invite(
         Confirmation of invite sent
     """
     # Fetch user
-    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+    user = (
+        await db.execute(select(User).where(User.id == user_id))
+    ).scalar_one_or_none()
 
     if not user:
         raise HTTPException(
@@ -620,7 +632,9 @@ async def bulk_user_action(
             continue
 
         # Fetch user
-        user = (await db.execute(select(User).where(User.id == uid))).scalar_one_or_none()
+        user = (
+            await db.execute(select(User).where(User.id == uid))
+        ).scalar_one_or_none()
 
         if not user:
             failed_ids.append(uid)

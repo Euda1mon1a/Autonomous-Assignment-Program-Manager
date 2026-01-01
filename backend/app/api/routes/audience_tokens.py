@@ -159,7 +159,9 @@ def get_token_owner_id(db: Session, jti: str) -> str | None:
         determine ownership from the database. In that case, we must
         decode the token to get the user_id from the 'sub' claim.
     """
-    record = (await db.execute(select(TokenBlacklist).where(TokenBlacklist.jti == jti))).scalar_one_or_none()
+    record = (
+        await db.execute(select(TokenBlacklist).where(TokenBlacklist.jti == jti))
+    ).scalar_one_or_none()
     if record and record.user_id:
         return str(record.user_id)
     return None

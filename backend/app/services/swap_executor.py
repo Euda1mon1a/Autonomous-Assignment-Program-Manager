@@ -1,4 +1,47 @@
-"""Swap execution service."""
+"""
+Swap Execution Service.
+
+This module provides the core functionality for executing and rolling back
+FMIT (Faculty Managing Inpatient Teaching) schedule swaps between faculty
+members.
+
+Key Features:
+    - Atomic swap execution with automatic rollback on failure
+    - 24-hour rollback window for executed swaps
+    - Row-level locking to prevent race conditions
+    - Call cascade updates (Friday/Saturday call assignments)
+    - Comprehensive audit trail via SwapRecord
+
+Transaction Safety:
+    Uses the transactional_with_retry context manager to ensure:
+    - Automatic commit on success
+    - Automatic rollback on failure
+    - Deadlock detection and retry (up to 3 attempts)
+    - Row-level locking for concurrent modification prevention
+
+Usage:
+    from app.services.swap_executor import SwapExecutor
+
+    executor = SwapExecutor(db)
+    result = executor.execute_swap(
+        source_faculty_id=source_id,
+        source_week=week_start,
+        target_faculty_id=target_id,
+        target_week=None,  # Absorb swap (one-way)
+        swap_type="absorb",
+        reason="Faculty on TDY",
+    )
+
+    if result.success:
+        print(f"Swap {result.swap_id} executed successfully")
+    else:
+        print(f"Swap failed: {result.error_code}")
+
+See Also:
+    - app.models.swap: SwapRecord, SwapStatus, SwapType models
+    - app.db.transaction: Transactional context managers
+    - app.services.swap_validator: Pre-execution validation
+"""
 
 import logging
 from dataclasses import dataclass
@@ -19,7 +62,24 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ExecutionResult:
-    """Result of a swap execution operation."""
+    """
+    Result of a swap execution operation.
+
+    Attributes:
+        success: Whether the swap was executed successfully.
+        swap_id: UUID of the created SwapRecord if successful, None otherwise.
+        message: Human-readable description of the result.
+        error_code: Machine-readable error code if failed. Common codes:
+            - EXECUTION_FAILED: General execution failure
+            - VALIDATION_FAILED: Pre-execution validation failed
+
+    Example:
+        >>> result = executor.execute_swap(...)
+        >>> if result.success:
+        ...     print(f"Created swap {result.swap_id}")
+        ... else:
+        ...     log.error(f"Failed: {result.error_code} - {result.message}")
+    """
 
     success: bool
     swap_id: UUID | None = None
@@ -29,7 +89,24 @@ class ExecutionResult:
 
 @dataclass
 class RollbackResult:
-    """Result of a swap rollback operation."""
+    """
+    Result of a swap rollback operation.
+
+    Attributes:
+        success: Whether the rollback was completed successfully.
+        message: Human-readable description of the result.
+        error_code: Machine-readable error code if failed. Common codes:
+            - SWAP_NOT_FOUND: No SwapRecord with the given ID
+            - INVALID_STATUS: Swap is not in EXECUTED status
+            - ROLLBACK_WINDOW_EXPIRED: 24-hour window has passed
+            - ROLLBACK_FAILED: General rollback failure
+
+    Example:
+        >>> result = executor.rollback_swap(swap_id, reason="User requested")
+        >>> if not result.success:
+        ...     if result.error_code == "ROLLBACK_WINDOW_EXPIRED":
+        ...         print("Rollback window has closed")
+    """
 
     success: bool
     message: str = ""
@@ -37,11 +114,58 @@ class RollbackResult:
 
 
 class SwapExecutor:
-    """Service for executing FMIT swaps."""
+    """
+    Service for executing FMIT (Faculty Managing Inpatient Teaching) swaps.
+
+    This service handles the atomic execution of schedule swaps between faculty
+    members, including the updates to:
+    - Block assignments (transferring FMIT weeks)
+    - Call assignments (Friday/Saturday call cascade)
+    - SwapRecord audit trail
+
+    Thread Safety:
+        Uses row-level locking (SELECT ... FOR UPDATE) to prevent concurrent
+        modifications. Safe for use in multi-threaded environments.
+
+    Rollback Policy:
+        Executed swaps can be rolled back within ROLLBACK_WINDOW_HOURS (24 hours).
+        After this window, swaps become permanent and require manual intervention
+        to reverse.
+
+    Attributes:
+        ROLLBACK_WINDOW_HOURS: Number of hours a swap can be rolled back (24).
+        db: SQLAlchemy database session.
+
+    Example:
+        >>> executor = SwapExecutor(db)
+        >>> # Execute an absorb swap (one-way transfer)
+        >>> result = executor.execute_swap(
+        ...     source_faculty_id=faculty_a.id,
+        ...     source_week=date(2025, 1, 6),
+        ...     target_faculty_id=faculty_b.id,
+        ...     target_week=None,  # Absorb (no reciprocal)
+        ...     swap_type="absorb",
+        ... )
+        >>> # Execute a one-to-one swap (bidirectional)
+        >>> result = executor.execute_swap(
+        ...     source_faculty_id=faculty_a.id,
+        ...     source_week=date(2025, 1, 6),
+        ...     target_faculty_id=faculty_b.id,
+        ...     target_week=date(2025, 2, 3),  # Reciprocal week
+        ...     swap_type="one_to_one",
+        ... )
+    """
 
     ROLLBACK_WINDOW_HOURS = 24
 
     def __init__(self, db: Session):
+        """
+        Initialize the SwapExecutor with a database session.
+
+        Args:
+            db: SQLAlchemy Session for database operations. The session should
+                be managed by the caller (typically via FastAPI's Depends).
+        """
         self.db = db
 
     def execute_swap(
@@ -57,11 +181,45 @@ class SwapExecutor:
         """
         Execute a swap after validation.
 
+        Atomically transfers FMIT week assignments from source to target faculty,
+        optionally performing a reciprocal transfer for one-to-one swaps. Also
+        updates the call cascade (Friday/Saturday call assignments).
+
         Uses transactional context manager with retry logic to handle:
         - Automatic commit on success
         - Automatic rollback on failure
-        - Deadlock detection and retry
+        - Deadlock detection and retry (up to 3 attempts)
         - Row-level locking to prevent race conditions
+
+        Args:
+            source_faculty_id: UUID of the faculty giving up their week.
+            source_week: Start date (Monday) of the week being transferred.
+            target_faculty_id: UUID of the faculty receiving the week.
+            target_week: For one-to-one swaps, the start date of the reciprocal
+                week. None for absorb swaps.
+            swap_type: Type of swap - "one_to_one" or "absorb".
+            reason: Optional human-readable reason for the swap.
+            executed_by_id: UUID of the user executing the swap (for audit).
+
+        Returns:
+            ExecutionResult: Contains success status, swap_id if successful,
+                and error details if failed.
+
+        Raises:
+            No exceptions are raised - errors are captured in ExecutionResult.
+
+        Example:
+            >>> result = executor.execute_swap(
+            ...     source_faculty_id=dr_smith.id,
+            ...     source_week=date(2025, 1, 6),
+            ...     target_faculty_id=dr_jones.id,
+            ...     target_week=None,
+            ...     swap_type="absorb",
+            ...     reason="Dr. Smith on TDY to Walter Reed",
+            ...     executed_by_id=scheduler.id,
+            ... )
+            >>> if result.success:
+            ...     notify_faculty(result.swap_id)
         """
         try:
             swap_id = uuid4()
@@ -73,9 +231,7 @@ class SwapExecutor:
                 swap_type_enum = swap_type
 
             # Execute in transactional context with retry on deadlock
-            with transactional_with_retry(
-                self.db, max_retries=3, timeout_seconds=30.0
-            ):
+            with transactional_with_retry(self.db, max_retries=3, timeout_seconds=30.0):
                 # Persist SwapRecord to database
                 swap_record = SwapRecord(
                     id=swap_id,
@@ -132,14 +288,46 @@ class SwapExecutor:
         """
         Rollback an executed swap within the allowed window.
 
-        Uses row-level locking to prevent concurrent modifications.
+        Reverses all changes made by execute_swap, including:
+        - Block assignments (restore original faculty)
+        - Call cascade (restore original call assignments)
+        - SwapRecord status update (EXECUTED -> ROLLED_BACK)
+
+        Rollback is only allowed within ROLLBACK_WINDOW_HOURS (24 hours) of
+        execution. After this window, manual intervention is required.
+
+        Uses row-level locking (SELECT ... FOR UPDATE) to prevent concurrent
+        rollback attempts on the same swap.
+
+        Args:
+            swap_id: UUID of the SwapRecord to rollback.
+            reason: Required explanation for the rollback (for audit trail).
+            rolled_back_by_id: UUID of the user performing the rollback.
+
+        Returns:
+            RollbackResult: Contains success status and error details if failed.
+                Possible error codes:
+                - SWAP_NOT_FOUND: No swap with the given ID exists
+                - INVALID_STATUS: Swap is not in EXECUTED status
+                - ROLLBACK_WINDOW_EXPIRED: More than 24 hours since execution
+                - ROLLBACK_FAILED: General failure during rollback
+
+        Example:
+            >>> # Rollback a swap that was just executed
+            >>> result = executor.rollback_swap(
+            ...     swap_id=swap_id,
+            ...     reason="Faculty requested reversal due to schedule conflict",
+            ...     rolled_back_by_id=scheduler.id,
+            ... )
+            >>> if result.success:
+            ...     print("Swap successfully reversed")
+            ... elif result.error_code == "ROLLBACK_WINDOW_EXPIRED":
+            ...     print("Cannot rollback - 24 hour window has passed")
         """
         logger.info("Rollback requested for swap %s, reason: %s", swap_id, reason)
 
         try:
-            with transactional_with_retry(
-                self.db, max_retries=3, timeout_seconds=30.0
-            ):
+            with transactional_with_retry(self.db, max_retries=3, timeout_seconds=30.0):
                 # Retrieve swap record with row-level lock to prevent concurrent rollbacks
                 swap_record = (
                     self.db.query(SwapRecord)
@@ -233,7 +421,18 @@ class SwapExecutor:
             )
 
     def _check_rollback_window(self, swap_record: SwapRecord) -> bool:
-        """Check if swap is within rollback window (extracted for reuse)."""
+        """
+        Check if swap is within the rollback window.
+
+        Internal helper extracted for reuse in rollback_swap and can_rollback.
+
+        Args:
+            swap_record: The SwapRecord to check.
+
+        Returns:
+            bool: True if within ROLLBACK_WINDOW_HOURS of execution,
+                False if window has expired or executed_at is None.
+        """
         if not swap_record.executed_at:
             return False
 
@@ -245,25 +444,25 @@ class SwapExecutor:
         """
         Check if a swap can still be rolled back.
 
-        Validates whether a swap is eligible for rollback based on its current
-        status and time since execution. Swaps can only be rolled back within
-        a configured time window (default 24 hours).
+        Validates that the swap:
+        1. Exists in the database
+        2. Has status EXECUTED (not already rolled back or pending)
+        3. Has an executed_at timestamp
+        4. Is within the 24-hour rollback window
+
+        This is a read-only check - use rollback_swap() to perform the rollback.
 
         Args:
-            swap_id: UUID of the swap to check
+            swap_id: UUID of the SwapRecord to check.
 
         Returns:
-            bool: True if the swap can be rolled back, False otherwise.
-                Returns False if:
-                - Swap record not found
-                - Swap status is not EXECUTED
-                - No execution timestamp recorded
-                - Rollback window has expired
+            bool: True if rollback is allowed, False otherwise.
 
         Example:
-            >>> executor = SwapExecutor(db)
             >>> if executor.can_rollback(swap_id):
-            ...     executor.rollback_swap(swap_id, "Changed my mind")
+            ...     show_rollback_button()
+            ... else:
+            ...     show_rollback_expired_message()
         """
         swap_record = self.db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()
 
@@ -305,10 +504,28 @@ class SwapExecutor:
         """
         Update schedule assignments for the swap.
 
-        Uses row-level locking to prevent race conditions when updating assignments.
-        N+1 Optimization: Uses selectinload to eagerly fetch assignments for all
-        blocks in the week range, preventing N+1 queries when iterating over blocks
-        to find and update assignments.
+        Transfers all block assignments within the specified week(s) from one
+        faculty member to another. For one-to-one swaps, performs a bidirectional
+        transfer; for absorb swaps, performs a one-way transfer.
+
+        Implementation Details:
+            - Uses row-level locking (SELECT ... FOR UPDATE) to prevent race
+              conditions during concurrent swap operations.
+            - Uses selectinload to eagerly fetch assignments for all blocks in
+              the week range, preventing N+1 queries.
+            - Assumes weeks start on Monday and span 7 days.
+
+        Args:
+            source_faculty_id: UUID of faculty whose assignments are being
+                transferred away.
+            source_week: Start date (Monday) of the source week.
+            target_faculty_id: UUID of faculty receiving the assignments.
+            target_week: For one-to-one swaps, the start date of the reciprocal
+                week where target's assignments go to source. None for absorb.
+
+        Note:
+            This method modifies Assignment objects in place. The caller is
+            responsible for committing the transaction.
         """
         # Calculate week end date (assuming week starts on Monday)
         source_week_end = source_week + timedelta(days=6)
@@ -369,11 +586,30 @@ class SwapExecutor:
 
     def _update_call_cascade(self, week: date, new_faculty_id: UUID) -> None:
         """
-        Update Fri/Sat call assignments.
+        Update Friday and Saturday call assignments for a week.
 
-        N+1 Optimization: Uses selectinload to eagerly fetch person relationships
-        for call assignments, though in this case we're only updating person_id.
-        Included for consistency and potential future use.
+        When FMIT weeks are swapped, the associated weekend call responsibilities
+        must also transfer. This method updates all CallAssignment records for
+        Friday and Saturday within the specified week.
+
+        Call Cascade Logic:
+            FMIT faculty are responsible for Friday and Saturday call during
+            their FMIT week. When weeks are swapped, call responsibilities
+            follow automatically.
+
+        Implementation Details:
+            - Uses selectinload to eagerly fetch person relationships
+            - Iterates through the week to find Friday (weekday 4) and
+              Saturday (weekday 5)
+            - Updates all CallAssignment.person_id for those dates
+
+        Args:
+            week: Start date (Monday) of the week being processed.
+            new_faculty_id: UUID of the faculty now responsible for call.
+
+        Note:
+            This method modifies CallAssignment objects in place. The caller
+            is responsible for committing the transaction.
         """
         # Calculate week end date
         week_end = week + timedelta(days=6)

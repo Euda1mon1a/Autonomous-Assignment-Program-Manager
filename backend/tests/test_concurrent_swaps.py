@@ -120,7 +120,9 @@ class TestTransactionManagement:
 
         # Verify outer committed, inner rolled back
         db.expire_all()
-        assert db.query(SwapRecord).filter(SwapRecord.id == outer_id).first() is not None
+        assert (
+            db.query(SwapRecord).filter(SwapRecord.id == outer_id).first() is not None
+        )
         assert db.query(SwapRecord).filter(SwapRecord.id == inner_id).first() is None
 
     def test_transactional_with_retry_on_deadlock(self, db: Session):
@@ -462,7 +464,9 @@ class TestRowLevelLocking:
                 # Simulate work while holding lock
                 time.sleep(0.1)
 
-                locked_swap.rollback_reason = f"Modified by thread {threading.current_thread().name}"
+                locked_swap.rollback_reason = (
+                    f"Modified by thread {threading.current_thread().name}"
+                )
                 modification_count[0] += 1
 
                 # Record how long we waited for lock
@@ -484,7 +488,9 @@ class TestRowLevelLocking:
 
         # Later threads should have waited (lock_wait > 0.1s)
         # Due to row locking, they execute serially
-        assert any(wait > 0.1 for wait in lock_waits[1:]), "Later threads should wait for lock"
+        assert any(wait > 0.1 for wait in lock_waits[1:]), (
+            "Later threads should wait for lock"
+        )
 
 
 # Fixtures for tests

@@ -298,9 +298,7 @@ class TestCrisisResponse:
         assert resilience_service._crisis_mode is True
 
         # Then deactivate
-        result = resilience_service.deactivate_crisis_response(
-            reason="Crisis resolved"
-        )
+        result = resilience_service.deactivate_crisis_response(reason="Crisis resolved")
 
         assert result["crisis_mode"] is False
         assert resilience_service._crisis_mode is False
@@ -310,9 +308,7 @@ class TestCrisisResponse:
         """Test crisis mode flag is set correctly."""
         assert resilience_service._crisis_mode is False
 
-        resilience_service.activate_crisis_response(
-            severity="moderate", reason="Test"
-        )
+        resilience_service.activate_crisis_response(severity="moderate", reason="Test")
         assert resilience_service._crisis_mode is True
 
         resilience_service.deactivate_crisis_response(reason="Done")
@@ -539,7 +535,10 @@ class TestTier2BlastRadius:
             ContainmentLevel.MODERATE, "Testing containment"
         )
 
-        assert resilience_service.blast_radius.global_containment == ContainmentLevel.MODERATE
+        assert (
+            resilience_service.blast_radius.global_containment
+            == ContainmentLevel.MODERATE
+        )
 
 
 # ============================================================================

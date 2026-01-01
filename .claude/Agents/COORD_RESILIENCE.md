@@ -34,6 +34,19 @@ COORD_RESILIENCE can autonomously execute these tasks without escalation:
 
 ---
 
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **False ACGME Violations** | Validator flags compliant schedules as violations | Validate validator logic against known-good schedules | Manual review, update validation rules |
+| **Resilience Score Miscalculation** | Health score doesn't reflect actual schedule stress | Calibrate scoring weights, validate against historical data | Recalculate with corrected algorithm |
+| **N-1 Analysis Timeout** | Contingency analysis exceeds time limit on large schedules | Optimize algorithm, use sampling for initial scan | Run overnight, use cached results where valid |
+| **Credential Expiration Miss** | Expiring credentials not detected in time | Run checks 90/60/30 days before expiration | Emergency credentialing, temporary coverage adjustment |
+| **Burnout R_t False Alarm** | SIR model flags epidemic when not occurring | Tune model parameters, validate against ground truth | Manual assessment, adjust sensitivity |
+| **Audit Trail Corruption** | Missing or inconsistent audit records | Implement write-ahead logging, periodic validation | Reconstruct from backups, investigate cause |
+
+---
+
 ## Charter
 
 The COORD_RESILIENCE coordinator is responsible for all safety, compliance, and resilience operations within the multi-agent system. It sits between the ORCHESTRATOR and compliance domain agents (RESILIENCE_ENGINEER, COMPLIANCE_AUDITOR, SECURITY_AUDITOR), receiving broadcast signals, spawning and coordinating its managed agents, and ensuring the system maintains regulatory compliance and operational safety.

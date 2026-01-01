@@ -101,7 +101,9 @@ class TestScheduleCache:
         assignments = [
             MagicMock(person_id=person_id, rotation_template_id=uuid4()),
             MagicMock(person_id=person_id, rotation_template_id=uuid4()),
-            MagicMock(person_id=uuid4(), rotation_template_id=uuid4()),  # Different person
+            MagicMock(
+                person_id=uuid4(), rotation_template_id=uuid4()
+            ),  # Different person
         ]
 
         mock_redis.get.return_value = None
@@ -298,8 +300,7 @@ class TestCacheIntegration:
         person_ids = [uuid4() for _ in range(5)]
         block_ids = [uuid4() for _ in range(10)]
         availability = {
-            p: {b: {"available": True} for b in block_ids}
-            for p in person_ids
+            p: {b: {"available": True} for b in block_ids} for p in person_ids
         }
 
         # First call: cache miss

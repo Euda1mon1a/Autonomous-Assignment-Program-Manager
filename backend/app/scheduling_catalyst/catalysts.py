@@ -469,7 +469,9 @@ class CatalystAnalyzer:
 
             # Reduction factors based on role influence
             thermo_factor = 0.7 if person.faculty_role in ["pd", "apd"] else 0.5
-            steric_factor = 0.6 if person.faculty_role in ["pd", "apd", "dept_chief"] else 0.4
+            steric_factor = (
+                0.6 if person.faculty_role in ["pd", "apd", "dept_chief"] else 0.4
+            )
 
             catalysts.append(
                 CatalystPerson(

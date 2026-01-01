@@ -98,7 +98,9 @@ class SSOSessionState(BaseModel):
 _sso_sessions: dict[str, SSOSessionState] = {}
 
 
-async def get_or_create_user(db: AsyncSession, attributes: dict[str, str], provider: str) -> User:
+async def get_or_create_user(
+    db: AsyncSession, attributes: dict[str, str], provider: str
+) -> User:
     """
     Get existing user or create new user (JIT provisioning).
 
@@ -127,7 +129,9 @@ async def get_or_create_user(db: AsyncSession, attributes: dict[str, str], provi
         username = email.split("@")[0]
 
     # Check if user exists by email
-    user = (await db.execute(select(User).where(User.email == email))).scalar_one_or_none()
+    user = (
+        await db.execute(select(User).where(User.email == email))
+    ).scalar_one_or_none()
 
     if user:
         # Update last login
@@ -145,7 +149,9 @@ async def get_or_create_user(db: AsyncSession, attributes: dict[str, str], provi
         )
 
     # Check if username is already taken
-    existing_username = (await db.execute(select(User).where(User.username == username))).scalar_one_or_none()
+    existing_username = (
+        await db.execute(select(User).where(User.username == username))
+    ).scalar_one_or_none()
     if existing_username:
         # Append random suffix to username
         import uuid
@@ -357,7 +363,9 @@ async def saml_acs(
 
 
 @router.get("/saml/logout")
-async def saml_logout(name_id: str, session_index: str | None = None) -> RedirectResponse:
+async def saml_logout(
+    name_id: str, session_index: str | None = None
+) -> RedirectResponse:
     """
     Initiate SAML logout flow.
 

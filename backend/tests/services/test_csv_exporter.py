@@ -76,7 +76,9 @@ class TestCSVExporter:
     # ========================================================================
 
     @pytest.mark.asyncio
-    async def test_export_people_all(self, db, sample_residents, sample_faculty_members):
+    async def test_export_people_all(
+        self, db, sample_residents, sample_faculty_members
+    ):
         """Test exporting all people to CSV."""
         pass  # Placeholder
 

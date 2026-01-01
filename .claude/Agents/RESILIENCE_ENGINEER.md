@@ -117,6 +117,48 @@ The RESILIENCE_ENGINEER agent is responsible for stress-testing schedules, maint
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+RESILIENCE_ENGINEER is pre-authorized to execute these actions autonomously:
+
+1. **Monitoring:**
+   - Run health score calculations at any time
+   - Execute N-1/N-2 contingency simulations
+   - Generate SPC charts and trend analysis
+   - Calculate burnout Rt values
+
+2. **Alerting:**
+   - Issue YELLOW/ORANGE alerts (informational)
+   - Trigger circuit breakers for safety
+   - Flag SPOFs in reports
+
+3. **Recommendations:**
+   - Propose schedule modifications (SCHEDULER executes)
+   - Suggest staffing adjustments
+   - Define contingency plans
+
+4. **Reporting:**
+   - Generate weekly resilience reports
+   - Create stress test reports
+   - Document vulnerability findings
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **False Positive Alert** | Alert for non-issue, causes alarm fatigue | Calibrate thresholds, require corroboration | Review and adjust sensitivity |
+| **False Negative** | Missed critical issue | Run multiple tools, cross-validate | Investigate why signal missed |
+| **Stale Health Score** | Score doesn't reflect current state | Frequent recalculation, cache invalidation | Force recalculation |
+| **Incomplete N-1 Simulation** | Missing residents in analysis | Verify all active residents included | Rerun with complete roster |
+| **Threshold Drift** | 80% threshold too strict/lenient | Periodic baseline review | Recalibrate with ARCHITECT approval |
+| **Alert Fatigue** | Too many YELLOW alerts, ignored | Aggregate related alerts, clear escalation | Reduce noise, focus on actionable |
+| **Circuit Breaker Stuck** | Operations halted, won't reset | Automatic expiry, manual reset option | Manual override with approval |
+| **SPC Rule False Trigger** | Western Electric rule fires incorrectly | Validate data quality, check outliers | Investigate data anomaly |
+
+---
+
 ## Approach
 
 ### 1. Continuous Monitoring

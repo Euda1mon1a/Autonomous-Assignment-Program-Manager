@@ -38,7 +38,9 @@ def regular_user_token(db):
     db.commit()
     db.refresh(user)
 
-    token, _, _ = create_access_token(data={"sub": str(user.id), "username": user.username})
+    token, _, _ = create_access_token(
+        data={"sub": str(user.id), "username": user.username}
+    )
     return token
 
 
@@ -58,7 +60,9 @@ def admin_user_token(db):
     db.commit()
     db.refresh(user)
 
-    token, _, _ = create_access_token(data={"sub": str(user.id), "username": user.username})
+    token, _, _ = create_access_token(
+        data={"sub": str(user.id), "username": user.username}
+    )
     return token
 
 
@@ -188,7 +192,9 @@ class TestProfilingEndpointSecurity:
 class TestProfilingRateLimiting:
     """Test rate limiting on profiling endpoints (if implemented)."""
 
-    @pytest.mark.skip(reason="Rate limiting for profiling endpoints not yet implemented")
+    @pytest.mark.skip(
+        reason="Rate limiting for profiling endpoints not yet implemented"
+    )
     def test_profiling_endpoints_have_rate_limits(self, client, admin_user_token):
         """
         RECOMMENDED: Profiling endpoints should have rate limiting.

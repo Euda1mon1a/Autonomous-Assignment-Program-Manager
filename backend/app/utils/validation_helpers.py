@@ -42,7 +42,7 @@ def validate_email_format(value: str) -> bool:
     # Requires @ symbol
     # Allows: letters, numbers, dots, hyphens after @
     # Requires at least one dot after @
-    pattern = r'^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    pattern = r"^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     return bool(re.match(pattern, value))
 
 
@@ -123,6 +123,10 @@ def normalize_name(value: str) -> str:
         if normalized.startswith(prefix):
             # Capitalize letter after prefix
             if len(normalized) > len(prefix):
-                normalized = prefix + normalized[len(prefix)].upper() + normalized[len(prefix) + 1:]
+                normalized = (
+                    prefix
+                    + normalized[len(prefix)].upper()
+                    + normalized[len(prefix) + 1 :]
+                )
 
     return normalized

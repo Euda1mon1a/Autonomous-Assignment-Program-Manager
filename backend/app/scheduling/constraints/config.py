@@ -543,9 +543,7 @@ class ConstraintConfigManager:
         # By category
         lines.append("\nConstraints by Category:")
         for category in ConstraintCategory:
-            constraints = [
-                c for c in self._configs.values() if c.category == category
-            ]
+            constraints = [c for c in self._configs.values() if c.category == category]
             if constraints:
                 enabled = len([c for c in constraints if c.enabled])
                 total = len(constraints)

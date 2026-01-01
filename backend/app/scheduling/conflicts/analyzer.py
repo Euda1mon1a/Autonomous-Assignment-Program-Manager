@@ -412,7 +412,9 @@ class ConflictAnalyzer:
 
         # Check rolling 4-week windows
         for window_start in dates:
-            window_end = window_start + timedelta(days=self.ROLLING_WINDOW_DAYS)  # 4 weeks = 28 days
+            window_end = window_start + timedelta(
+                days=self.ROLLING_WINDOW_DAYS
+            )  # 4 weeks = 28 days
 
             total_blocks = sum(
                 count

@@ -95,7 +95,11 @@ def build_scheduling_context(
     residents = residents_query.all()
 
     # Query faculty
-    faculty = (await db.execute(select(Person).where(Person.role == "FACULTY"))).scalars().all()
+    faculty = (
+        (await db.execute(select(Person).where(Person.role == "FACULTY")))
+        .scalars()
+        .all()
+    )
 
     # Query templates
     templates_query = db.query(RotationTemplate)

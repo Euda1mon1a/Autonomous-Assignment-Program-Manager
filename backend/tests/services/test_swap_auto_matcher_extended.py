@@ -132,7 +132,11 @@ class TestSwapAutoMatcherExtended:
         assert len(matches) == 0
 
     def test_suggest_optimal_matches_respects_top_k(
-        self, db: Session, pending_swap_1: SwapRecord, faculty_2: Person, faculty_3: Person
+        self,
+        db: Session,
+        pending_swap_1: SwapRecord,
+        faculty_2: Person,
+        faculty_3: Person,
     ):
         """Test suggest_optimal_matches respects top_k parameter."""
         # Create multiple candidate swaps
@@ -155,7 +159,11 @@ class TestSwapAutoMatcherExtended:
         assert len(matches) <= 2
 
     def test_suggest_optimal_matches_sorted_by_score(
-        self, db: Session, pending_swap_1: SwapRecord, pending_swap_2: SwapRecord, faculty_3: Person
+        self,
+        db: Session,
+        pending_swap_1: SwapRecord,
+        pending_swap_2: SwapRecord,
+        faculty_3: Person,
     ):
         """Test suggest_optimal_matches returns matches sorted by compatibility score."""
         # Create one more swap
@@ -176,7 +184,9 @@ class TestSwapAutoMatcherExtended:
         # Verify matches are sorted descending by score
         if len(matches) > 1:
             for i in range(len(matches) - 1):
-                assert matches[i].compatibility_score >= matches[i + 1].compatibility_score
+                assert (
+                    matches[i].compatibility_score >= matches[i + 1].compatibility_score
+                )
 
     # ===== TESTS FOR auto_match_pending_requests() =====
 
@@ -253,7 +263,9 @@ class TestSwapAutoMatcherExtended:
         # Even if empty, should return a list
         assert len(suggestions) <= 5
 
-    def test_suggest_proactive_swaps_respects_limit(self, db: Session, faculty_1: Person):
+    def test_suggest_proactive_swaps_respects_limit(
+        self, db: Session, faculty_1: Person
+    ):
         """Test suggest_proactive_swaps respects limit parameter."""
         matcher = SwapAutoMatcher(db)
 
@@ -405,7 +417,9 @@ class TestSwapAutoMatcherExtended:
             assert isinstance(result.total_requests_processed, int)
         except Exception as e:
             # If it raises, should be a database-related error
-            assert "database" in str(e).lower() or "connection" in str(e).lower() or True
+            assert (
+                "database" in str(e).lower() or "connection" in str(e).lower() or True
+            )
 
     def test_score_compatibility_returns_normalized_value(
         self, db: Session, pending_swap_1: SwapRecord, pending_swap_2: SwapRecord

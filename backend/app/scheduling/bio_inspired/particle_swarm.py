@@ -147,8 +147,12 @@ class PSOConfig:
 
     # PSO parameters
     inertia_weight: float = PSO_DEFAULT_INERTIA_WEIGHT  # w: momentum
-    cognitive_coeff: float = PSO_DEFAULT_COGNITIVE_COEFF  # c1: attraction to personal best
-    social_coeff: float = PSO_DEFAULT_SOCIAL_COEFF  # c2: attraction to global/local best
+    cognitive_coeff: float = (
+        PSO_DEFAULT_COGNITIVE_COEFF  # c1: attraction to personal best
+    )
+    social_coeff: float = (
+        PSO_DEFAULT_SOCIAL_COEFF  # c2: attraction to global/local best
+    )
     velocity_clamp: float = PSO_DEFAULT_VELOCITY_CLAMP  # Max velocity magnitude
 
     # Adaptive parameters
@@ -321,7 +325,9 @@ class ParticleSwarmSolver(BioInspiredSolver):
             )
 
             # Random initial velocity
-            velocity_range = (self.config.position_max - self.config.position_min) * PSO_VELOCITY_RANGE_MULTIPLIER
+            velocity_range = (
+                self.config.position_max - self.config.position_min
+            ) * PSO_VELOCITY_RANGE_MULTIPLIER
             velocity = np.random.uniform(
                 -velocity_range, velocity_range, self.config.dimension
             )
@@ -557,7 +563,9 @@ class ParticleSwarmSolver(BioInspiredSolver):
         # Higher weight on fairness = balance workload
         # Higher weight on ACGME = respect limits
 
-        target_density = PSO_DENSITY_BASE + PSO_DENSITY_RANGE * weights[0]  # Coverage weight affects density
+        target_density = (
+            PSO_DENSITY_BASE + PSO_DENSITY_RANGE * weights[0]
+        )  # Coverage weight affects density
         target_per_resident = int(n_blocks * target_density / n_residents)
 
         # Track assignments per resident for fairness
@@ -565,7 +573,9 @@ class ParticleSwarmSolver(BioInspiredSolver):
 
         for b_idx in range(n_blocks):
             # Decide how many residents to assign this block
-            n_to_assign = max(1, int(n_residents * PSO_ASSIGNMENT_MULTIPLIER * weights[0]))
+            n_to_assign = max(
+                1, int(n_residents * PSO_ASSIGNMENT_MULTIPLIER * weights[0])
+            )
 
             # Score each resident for this block
             scores = []
@@ -579,7 +589,10 @@ class ParticleSwarmSolver(BioInspiredSolver):
 
                 # ACGME: respect weekly limits
                 weekly_count = sum(
-                    chromosome.genes[r_idx, max(0, b_idx - PSO_WEEKLY_LOOKBACK_BLOCKS) : b_idx] > 0
+                    chromosome.genes[
+                        r_idx, max(0, b_idx - PSO_WEEKLY_LOOKBACK_BLOCKS) : b_idx
+                    ]
+                    > 0
                 )
                 if weekly_count >= ACGME_WEEKLY_LIMIT_BLOCKS:  # ~80 hours
                     score -= weights[4] * 2.0  # Heavy penalty

@@ -51,7 +51,9 @@ async def _get_person_for_user(db: AsyncSession, current_user: User) -> Person |
         Person object if found, None otherwise
     """
     # Try to find person by matching email
-    person = (await db.execute(select(Person).where(Person.email == current_user.email))).scalar_one_or_none()
+    person = (
+        await db.execute(select(Person).where(Person.email == current_user.email))
+    ).scalar_one_or_none()
     return person
 
 

@@ -7,7 +7,12 @@ from uuid import uuid4
 from sqlalchemy.orm import Session
 
 from app.models.person import Person
-from app.models.conflict_alert import ConflictAlert, ConflictAlertStatus, ConflictSeverity, ConflictType
+from app.models.conflict_alert import (
+    ConflictAlert,
+    ConflictAlertStatus,
+    ConflictSeverity,
+    ConflictType,
+)
 from app.services.conflict_auto_resolver import ConflictAutoResolver
 
 
@@ -183,7 +188,9 @@ class TestConflictAutoResolverComprehensive:
         if len(options) > 1:
             for i in range(len(options) - 1):
                 score1 = options[i].impact.overall_score if options[i].impact else 0
-                score2 = options[i + 1].impact.overall_score if options[i + 1].impact else 0
+                score2 = (
+                    options[i + 1].impact.overall_score if options[i + 1].impact else 0
+                )
                 assert score1 >= score2
 
     def test_generate_resolution_options_caching(
@@ -191,10 +198,14 @@ class TestConflictAutoResolverComprehensive:
     ):
         """Test generate_resolution_options uses caching."""
         # First call
-        options1 = resolver.generate_resolution_options(conflict_alert.id, max_options=5)
+        options1 = resolver.generate_resolution_options(
+            conflict_alert.id, max_options=5
+        )
 
         # Second call within 5 minutes should use cache
-        options2 = resolver.generate_resolution_options(conflict_alert.id, max_options=5)
+        options2 = resolver.generate_resolution_options(
+            conflict_alert.id, max_options=5
+        )
 
         # Should return same number of options
         assert len(options1) == len(options2)
@@ -280,7 +291,11 @@ class TestConflictAutoResolverComprehensive:
 
         # May fail safety checks or require manual review
         if not result.success:
-            assert result.error_code in ["SAFETY_CHECK_FAILED", "APPROVAL_REQUIRED", "NO_OPTIONS"]
+            assert result.error_code in [
+                "SAFETY_CHECK_FAILED",
+                "APPROVAL_REQUIRED",
+                "NO_OPTIONS",
+            ]
 
     def test_auto_resolve_if_safe_returns_result(
         self, resolver: ConflictAutoResolver, conflict_alert: ConflictAlert
@@ -510,7 +525,11 @@ class TestConflictAutoResolverComprehensive:
         self, resolver: ConflictAutoResolver, db: Session, faculty: Person
     ):
         """Test batch_auto_resolve with mixed severity levels."""
-        severities = [ConflictSeverity.INFO, ConflictSeverity.WARNING, ConflictSeverity.CRITICAL]
+        severities = [
+            ConflictSeverity.INFO,
+            ConflictSeverity.WARNING,
+            ConflictSeverity.CRITICAL,
+        ]
         conflict_ids = []
 
         for severity in severities:

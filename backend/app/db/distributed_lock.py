@@ -151,7 +151,9 @@ class DistributedLock:
             LockNotHeld: If lock is not held or is held by another instance
         """
         if not self._acquired:
-            logger.warning(f"Attempting to release lock that was never acquired: {self.lock_key}")
+            logger.warning(
+                f"Attempting to release lock that was never acquired: {self.lock_key}"
+            )
             return
 
         # Use Lua script to atomically check ownership and delete
@@ -169,7 +171,9 @@ class DistributedLock:
 
         if result == 1:
             self._acquired = False
-            logger.debug(f"Released distributed lock: {self.lock_key} (id: {self.lock_id})")
+            logger.debug(
+                f"Released distributed lock: {self.lock_key} (id: {self.lock_id})"
+            )
         else:
             logger.warning(
                 f"Failed to release lock {self.lock_key} - "
@@ -262,7 +266,9 @@ def distributed_lock(
         LockAcquisitionFailed: If lock cannot be acquired within timeout
     """
     lock = DistributedLock(redis_client, lock_key, ttl_seconds)
-    acquired = lock.acquire(blocking=True, timeout=timeout, retry_interval=retry_interval)
+    acquired = lock.acquire(
+        blocking=True, timeout=timeout, retry_interval=retry_interval
+    )
 
     if not acquired:
         raise LockAcquisitionFailed(f"Could not acquire lock {lock_key}")
@@ -288,7 +294,9 @@ def get_redis_client() -> redis.Redis:
         host=settings.REDIS_HOST,
         port=settings.REDIS_PORT,
         db=settings.REDIS_DB,
-        password=settings.REDIS_PASSWORD if hasattr(settings, "REDIS_PASSWORD") else None,
+        password=settings.REDIS_PASSWORD
+        if hasattr(settings, "REDIS_PASSWORD")
+        else None,
         decode_responses=True,
         socket_connect_timeout=5,
         socket_timeout=5,

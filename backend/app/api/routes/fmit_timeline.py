@@ -374,7 +374,9 @@ async def get_faculty_timeline(
     Requires authentication.
     """
     # Verify faculty exists
-    faculty = (await db.execute(select(Person).where(Person.id == faculty_id))).scalar_one_or_none()
+    faculty = (
+        await db.execute(select(Person).where(Person.id == faculty_id))
+    ).scalar_one_or_none()
     if not faculty:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

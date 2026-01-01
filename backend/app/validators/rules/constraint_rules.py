@@ -412,9 +412,7 @@ async def _check_minimum_supervision(
         return True, None
 
     # Get assignments for this block
-    result = await db.execute(
-        select(Assignment).where(Assignment.block_id == block_id)
-    )
+    result = await db.execute(select(Assignment).where(Assignment.block_id == block_id))
     assignments = result.scalars().all()
 
     # Count residents and faculty by role/PGY level
@@ -444,7 +442,10 @@ async def _check_minimum_supervision(
     actual_ratio = faculty_count / resident_count if resident_count > 0 else 1.0
 
     if actual_ratio < required_ratio:
-        return False, f"Supervision ratio {actual_ratio:.2f} below required {required_ratio:.2f}"
+        return (
+            False,
+            f"Supervision ratio {actual_ratio:.2f} below required {required_ratio:.2f}",
+        )
 
     return True, None
 

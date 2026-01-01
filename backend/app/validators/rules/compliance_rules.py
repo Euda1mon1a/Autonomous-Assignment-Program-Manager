@@ -59,7 +59,9 @@ async def validate_acgme_compliance(
     violations.extend(day_off_violations)
 
     # Check for approaching limits (warnings)
-    hours_warnings = await _check_approaching_hour_limit(db, person_id, start_date, end_date)
+    hours_warnings = await _check_approaching_hour_limit(
+        db, person_id, start_date, end_date
+    )
     warnings.extend(hours_warnings)
 
     return {
@@ -118,17 +120,11 @@ async def validate_institutional_policy(
 
     # Validate based on policy type
     if policy_name == "max_consecutive_days":
-        violations = await _check_max_consecutive_days(
-            db, context, policy["limit"]
-        )
+        violations = await _check_max_consecutive_days(db, context, policy["limit"])
     elif policy_name == "min_shift_gap":
-        violations = await _check_min_shift_gap(
-            db, context, policy["hours"]
-        )
+        violations = await _check_min_shift_gap(db, context, policy["hours"])
     elif policy_name == "annual_training":
-        violations = await _check_annual_training(
-            db, context, policy["required"]
-        )
+        violations = await _check_annual_training(db, context, policy["required"])
 
     return {
         "is_compliant": len(violations) == 0,
@@ -176,17 +172,21 @@ async def validate_professional_standards(
     # Check for valid credentials
     for cred in credentials:
         if cred.expiration_date is None or cred.expiration_date >= today:
-            requirements_met.append({
-                "type": "credential",
-                "name": f"Procedure credential (ID: {cred.procedure_id})",
-                "status": "valid",
-            })
+            requirements_met.append(
+                {
+                    "type": "credential",
+                    "name": f"Procedure credential (ID: {cred.procedure_id})",
+                    "status": "valid",
+                }
+            )
         else:
-            requirements_missing.append({
-                "type": "credential",
-                "name": f"Procedure credential (ID: {cred.procedure_id})",
-                "reason": f"Expired on {cred.expiration_date}",
-            })
+            requirements_missing.append(
+                {
+                    "type": "credential",
+                    "name": f"Procedure credential (ID: {cred.procedure_id})",
+                    "reason": f"Expired on {cred.expiration_date}",
+                }
+            )
 
     # Check certifications from Certification model
     cert_result = await db.execute(
@@ -197,23 +197,29 @@ async def validate_professional_standards(
     for cert in certifications:
         if hasattr(cert, "expiration_date") and cert.expiration_date:
             if cert.expiration_date >= today:
-                requirements_met.append({
-                    "type": "certification",
-                    "name": getattr(cert, "name", "Unknown"),
-                    "status": "valid",
-                })
+                requirements_met.append(
+                    {
+                        "type": "certification",
+                        "name": getattr(cert, "name", "Unknown"),
+                        "status": "valid",
+                    }
+                )
             else:
-                requirements_missing.append({
+                requirements_missing.append(
+                    {
+                        "type": "certification",
+                        "name": getattr(cert, "name", "Unknown"),
+                        "reason": f"Expired on {cert.expiration_date}",
+                    }
+                )
+        else:
+            requirements_met.append(
+                {
                     "type": "certification",
                     "name": getattr(cert, "name", "Unknown"),
-                    "reason": f"Expired on {cert.expiration_date}",
-                })
-        else:
-            requirements_met.append({
-                "type": "certification",
-                "name": getattr(cert, "name", "Unknown"),
-                "status": "valid (no expiration)",
-            })
+                    "status": "valid (no expiration)",
+                }
+            )
 
     return {
         "is_compliant": len(requirements_missing) == 0,
@@ -329,15 +335,17 @@ async def _check_80_hour_rule(
         max_hours = max_weekly_hours * rolling_weeks
 
         if total_hours > max_hours:
-            violations.append({
-                "rule": "80_hour_weekly_limit",
-                "severity": "critical",
-                "window_start": current_start.isoformat(),
-                "window_end": window_end.isoformat(),
-                "actual_hours": total_hours,
-                "limit_hours": max_hours,
-                "message": f"Exceeded {max_weekly_hours}-hour weekly limit: {total_hours}/{max_hours} hours",
-            })
+            violations.append(
+                {
+                    "rule": "80_hour_weekly_limit",
+                    "severity": "critical",
+                    "window_start": current_start.isoformat(),
+                    "window_end": window_end.isoformat(),
+                    "actual_hours": total_hours,
+                    "limit_hours": max_hours,
+                    "message": f"Exceeded {max_weekly_hours}-hour weekly limit: {total_hours}/{max_hours} hours",
+                }
+            )
 
         current_start += timedelta(weeks=1)
 
@@ -389,14 +397,16 @@ async def _check_day_off_rule(
         if (work_dates[i] - work_dates[i - 1]).days == 1:
             consecutive_count += 1
             if consecutive_count >= 7:
-                violations.append({
-                    "rule": "1_in_7_day_off",
-                    "severity": "critical",
-                    "period_start": consecutive_start.isoformat(),
-                    "period_end": work_dates[i].isoformat(),
-                    "consecutive_days": consecutive_count,
-                    "message": f"Worked {consecutive_count} consecutive days without day off",
-                })
+                violations.append(
+                    {
+                        "rule": "1_in_7_day_off",
+                        "severity": "critical",
+                        "period_start": consecutive_start.isoformat(),
+                        "period_end": work_dates[i].isoformat(),
+                        "consecutive_days": consecutive_count,
+                        "message": f"Worked {consecutive_count} consecutive days without day off",
+                    }
+                )
         else:
             consecutive_count = 1
             consecutive_start = work_dates[i]
@@ -447,14 +457,16 @@ async def _check_approaching_hour_limit(
     utilization = total_hours / max_hours if max_hours > 0 else 0
 
     if utilization >= warning_threshold and total_hours <= max_hours:
-        warnings.append({
-            "rule": "80_hour_approaching",
-            "severity": "warning",
-            "current_hours": total_hours,
-            "limit_hours": max_hours,
-            "utilization": round(utilization * 100, 1),
-            "message": f"Approaching duty hour limit: {utilization*100:.1f}% utilized",
-        })
+        warnings.append(
+            {
+                "rule": "80_hour_approaching",
+                "severity": "warning",
+                "current_hours": total_hours,
+                "limit_hours": max_hours,
+                "utilization": round(utilization * 100, 1),
+                "message": f"Approaching duty hour limit: {utilization * 100:.1f}% utilized",
+            }
+        )
 
     return warnings
 
@@ -513,14 +525,16 @@ async def _check_max_consecutive_days(
         if (work_dates[i] - work_dates[i - 1]).days == 1:
             consecutive_count += 1
             if consecutive_count > limit:
-                violations.append({
-                    "policy": "max_consecutive_days",
-                    "start_date": consecutive_start.isoformat(),
-                    "end_date": work_dates[i].isoformat(),
-                    "consecutive_days": consecutive_count,
-                    "limit": limit,
-                    "message": f"Exceeded {limit} consecutive day limit ({consecutive_count} days)",
-                })
+                violations.append(
+                    {
+                        "policy": "max_consecutive_days",
+                        "start_date": consecutive_start.isoformat(),
+                        "end_date": work_dates[i].isoformat(),
+                        "consecutive_days": consecutive_count,
+                        "limit": limit,
+                        "message": f"Exceeded {limit} consecutive day limit ({consecutive_count} days)",
+                    }
+                )
         else:
             consecutive_count = 1
             consecutive_start = work_dates[i]
@@ -569,12 +583,14 @@ async def _check_min_shift_gap(
 
     # If multiple assignments on adjacent days, flag potential gap issue
     if adjacent_count >= 4:  # Both AM+PM on two consecutive days
-        violations.append({
-            "policy": "min_shift_gap",
-            "date": target_date.isoformat(),
-            "required_gap_hours": hours,
-            "message": f"Potential shift gap violation around {target_date}",
-        })
+        violations.append(
+            {
+                "policy": "min_shift_gap",
+                "date": target_date.isoformat(),
+                "required_gap_hours": hours,
+                "message": f"Potential shift gap violation around {target_date}",
+            }
+        )
 
     return violations
 
@@ -620,12 +636,14 @@ async def _check_annual_training(
     for training in required_trainings:
         cert = cert_map.get(training)
         if not cert:
-            violations.append({
-                "policy": "annual_training",
-                "training": training,
-                "status": "missing",
-                "message": f"Required training not found: {training}",
-            })
+            violations.append(
+                {
+                    "policy": "annual_training",
+                    "training": training,
+                    "status": "missing",
+                    "message": f"Required training not found: {training}",
+                }
+            )
         else:
             # Check if completed within last year
             completed_date = getattr(cert, "issued_date", None) or getattr(
@@ -635,12 +653,14 @@ async def _check_annual_training(
                 if hasattr(completed_date, "date"):
                     completed_date = completed_date.date()
                 if completed_date < one_year_ago:
-                    violations.append({
-                        "policy": "annual_training",
-                        "training": training,
-                        "status": "expired",
-                        "completed_date": completed_date.isoformat(),
-                        "message": f"Training expired: {training} (completed {completed_date})",
-                    })
+                    violations.append(
+                        {
+                            "policy": "annual_training",
+                            "training": training,
+                            "status": "expired",
+                            "completed_date": completed_date.isoformat(),
+                            "message": f"Training expired: {training} (completed {completed_date})",
+                        }
+                    )
 
     return violations

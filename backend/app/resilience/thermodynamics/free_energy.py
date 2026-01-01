@@ -1,30 +1,20 @@
 """
 Free Energy and Energy Landscape Analysis.
 
-This module provides thermodynamic-inspired analysis for schedule optimization:
-- Helmholtz free energy calculation for schedule stability
-- Energy landscape analysis for optimization guidance
+This module implements thermodynamic concepts for schedule optimization:
+- Free energy calculations using Helmholtz formulation
+- Energy landscape analysis for understanding schedule stability
 - Adaptive temperature scheduling for simulated annealing
-- Boltzmann distribution sampling for probabilistic assignment
 
-Theory:
-    Free energy F = U - TS combines internal energy U (constraint violations,
-    workload imbalance) with entropy S (schedule flexibility). Lower free
-    energy indicates a more stable, optimal schedule configuration.
-
-Example:
-    assignments = get_current_schedule()
-    metrics = calculate_free_energy(assignments, temperature=2.0)
-    print(f"Schedule stability score: {-metrics.free_energy:.2f}")
+Based on statistical mechanics principles applied to scheduling constraints.
 """
 
-import logging
 import math
 from collections import Counter
 from dataclasses import dataclass, field
 from typing import Any
 
-logger = logging.getLogger(__name__)
+import numpy as np
 
 
 @dataclass
@@ -32,142 +22,112 @@ class FreeEnergyMetrics:
     """
     Free energy metrics for schedule stability analysis.
 
-    Attributes:
-        free_energy: Helmholtz free energy F = U - TS (lower is better)
-        internal_energy: Sum of constraint violations and imbalances
-        entropy_term: Measure of schedule flexibility/diversity
-        temperature: System temperature (controls exploration vs exploitation)
-        partition_function: Z = sum(exp(-E_i/T)) normalization constant
-        probability_distribution: Boltzmann probabilities for states
+    The Helmholtz free energy F = U - TS relates:
+    - U (internal energy): Cost of constraint violations
+    - T (temperature): Exploration vs exploitation parameter
+    - S (entropy): Configuration diversity
+
+    Lower free energy indicates more stable schedule configurations.
     """
 
     free_energy: float = 0.0
     internal_energy: float = 0.0
     entropy_term: float = 0.0
     temperature: float = 1.0
-    partition_function: float = 1.0
-    probability_distribution: dict[str, float] = field(default_factory=dict)
+    constraint_violations: int = 0
+    configuration_entropy: float = 0.0
 
-    @property
-    def stability_score(self) -> float:
-        """
-        Calculate stability score (normalized, higher is better).
 
-        Returns:
-            Score between 0.0 and 1.0
-        """
-        # Convert free energy to 0-1 scale using sigmoid
-        return 1.0 / (1.0 + math.exp(self.free_energy / max(self.temperature, 0.001)))
+@dataclass
+class LandscapeFeatures:
+    """Features of an energy landscape."""
+
+    num_local_minima: int = 0
+    basin_depths: list[float] = field(default_factory=list)
+    ruggedness: float = 0.0
+    barrier_heights: list[float] = field(default_factory=list)
+    gradient_norms: list[float] = field(default_factory=list)
 
 
 def _calculate_internal_energy(assignments: list[Any]) -> float:
     """
-    Calculate internal energy from constraint violations and workload imbalance.
+    Calculate internal energy (U) from constraint violations.
 
-    Internal energy measures the "cost" of the current schedule state:
-    - Constraint violations add to energy
-    - Workload imbalance adds to energy
-    - Coverage gaps add to energy
+    Internal energy represents the "cost" of the current configuration
+    based on constraint violations and preference mismatches.
 
     Args:
-        assignments: Schedule assignments (list of dicts or objects)
+        assignments: List of assignment objects
 
     Returns:
-        Internal energy value (higher = worse schedule)
+        Internal energy value (higher = more violations)
     """
     if not assignments:
         return 0.0
 
     energy = 0.0
 
-    # Extract person IDs and rotation types for analysis
+    # Count assignments per person (penalize overload)
     person_counts: Counter = Counter()
-    rotation_counts: Counter = Counter()
-
     for assignment in assignments:
-        # Handle both dict and object assignments
-        if isinstance(assignment, dict):
-            person_id = assignment.get("person_id", assignment.get("resident_id"))
-            rotation = assignment.get("rotation_type", assignment.get("rotation"))
-        else:
-            person_id = getattr(
-                assignment, "person_id", getattr(assignment, "resident_id", None)
-            )
-            rotation = getattr(
-                assignment, "rotation_type", getattr(assignment, "rotation", None)
-            )
-
+        person_id = getattr(assignment, "person_id", None)
         if person_id:
             person_counts[person_id] += 1
-        if rotation:
-            rotation_counts[rotation] += 1
 
-    # Workload imbalance energy (variance in assignments per person)
+    # Energy contribution from workload imbalance
     if person_counts:
         counts = list(person_counts.values())
         mean_count = sum(counts) / len(counts)
         variance = sum((c - mean_count) ** 2 for c in counts) / len(counts)
-        # Normalize variance contribution
-        energy += math.sqrt(variance) * 0.5
+        energy += variance * 0.1  # Workload imbalance penalty
 
-    # Rotation diversity penalty (too many same-type assignments = higher energy)
-    if rotation_counts:
-        total = sum(rotation_counts.values())
-        # Calculate Gini coefficient for rotation distribution
-        sorted_counts = sorted(rotation_counts.values())
-        n = len(sorted_counts)
-        if n > 1 and total > 0:
-            gini = sum((2 * i - n - 1) * c for i, c in enumerate(sorted_counts, 1))
-            gini = gini / (n * total)
-            # Lower Gini = more equal distribution = lower energy
-            energy += max(0, gini) * 2.0
+    # Energy contribution from constraint violations
+    for assignment in assignments:
+        # Check for score field (lower score = higher energy)
+        score = getattr(assignment, "score", None)
+        if score is not None:
+            energy += (1.0 - score) * 0.5  # Preference mismatch penalty
+
+        # Check for violation flags
+        has_violation = getattr(assignment, "has_violation", False)
+        if has_violation:
+            energy += 1.0  # Hard constraint violation
 
     return energy
 
 
-def _calculate_entropy(assignments: list[Any]) -> float:
+def _calculate_configuration_entropy(assignments: list[Any]) -> float:
     """
-    Calculate configuration entropy of the schedule.
+    Calculate configuration entropy (S) from assignment diversity.
 
-    Entropy measures schedule flexibility and diversity:
-    - Higher entropy = more diverse assignments
-    - Lower entropy = more concentrated/rigid assignments
-
-    Uses Shannon entropy: S = -sum(p_i * log(p_i))
+    Entropy measures the diversity of the schedule configuration.
+    Higher entropy = more diverse assignment distribution.
 
     Args:
-        assignments: Schedule assignments
+        assignments: List of assignment objects
 
     Returns:
-        Entropy value (higher = more flexible/diverse)
+        Entropy value (in natural units)
     """
     if not assignments:
         return 0.0
 
-    # Count unique configurations
-    config_counts: Counter = Counter()
-
+    # Count unique configurations (person-rotation pairs)
+    configs: Counter = Counter()
     for assignment in assignments:
-        # Create configuration key
-        if isinstance(assignment, dict):
-            rotation = assignment.get("rotation_type", assignment.get("rotation", "?"))
-        else:
-            rotation = getattr(
-                assignment, "rotation_type", getattr(assignment, "rotation", "?")
-            )
+        person_id = str(getattr(assignment, "person_id", "unknown"))
+        rotation_id = str(getattr(assignment, "rotation_template_id", "unknown"))
+        configs[(person_id, rotation_id)] += 1
 
-        config_key = f"{rotation}"
-        config_counts[config_key] += 1
-
-    # Calculate Shannon entropy
-    total = sum(config_counts.values())
-    if total == 0:
+    if not configs:
         return 0.0
 
+    # Calculate Shannon entropy
+    total = sum(configs.values())
     entropy = 0.0
-    for count in config_counts.values():
-        p = count / total
-        if p > 0:
+    for count in configs.values():
+        if count > 0:
+            p = count / total
             entropy -= p * math.log(p)
 
     return entropy
@@ -179,390 +139,219 @@ def calculate_free_energy(
     """
     Calculate Helmholtz free energy of a schedule.
 
-    Free energy F = U - TS where:
-    - U = internal energy (constraint violations, imbalances)
-    - T = temperature (exploration parameter)
-    - S = entropy (schedule flexibility)
+    F = U - TS where:
+    - F: Free energy (minimized at equilibrium)
+    - U: Internal energy (constraint violations)
+    - T: Temperature (exploration parameter)
+    - S: Entropy (configuration diversity)
 
-    Lower free energy indicates a more stable, optimal schedule.
+    Lower free energy indicates more stable schedule configurations.
+    At high temperatures, entropy dominates (exploration).
+    At low temperatures, internal energy dominates (exploitation).
 
     Args:
-        assignments: Schedule assignments (list of dicts or Assignment objects)
-        temperature: System temperature (default 1.0)
-            - High temperature: entropy dominates (explore diverse solutions)
-            - Low temperature: energy dominates (exploit best solutions)
+        assignments: Schedule assignments to analyze
+        temperature: System temperature (T > 0)
 
     Returns:
         FreeEnergyMetrics with calculated values
-
-    Example:
-        assignments = get_schedule_assignments()
-        metrics = calculate_free_energy(assignments, temperature=2.0)
-
-        if metrics.free_energy < previous_metrics.free_energy:
-            print("Schedule improved!")
     """
     if temperature <= 0:
         temperature = 0.001  # Avoid division by zero
 
     # Calculate components
     internal_energy = _calculate_internal_energy(assignments)
-    entropy = _calculate_entropy(assignments)
-
-    # Helmholtz free energy: F = U - TS
+    entropy = _calculate_configuration_entropy(assignments)
     entropy_term = temperature * entropy
+
+    # Helmholtz free energy
     free_energy = internal_energy - entropy_term
 
-    # Calculate partition function (sum over Boltzmann weights)
-    # For single state, Z = exp(-F/T)
-    if abs(free_energy) < 700:
-        partition_function = math.exp(-free_energy / temperature)
-    else:
-        partition_function = 1.0
-
-    logger.debug(
-        f"Free energy calculation: U={internal_energy:.4f}, "
-        f"S={entropy:.4f}, T={temperature:.2f}, F={free_energy:.4f}"
-    )
+    # Count violations for reporting
+    violations = sum(1 for a in assignments if getattr(a, "has_violation", False))
 
     return FreeEnergyMetrics(
         free_energy=free_energy,
         internal_energy=internal_energy,
         entropy_term=entropy_term,
         temperature=temperature,
-        partition_function=partition_function,
-        probability_distribution={},
+        constraint_violations=violations,
+        configuration_entropy=entropy,
     )
-
-
-@dataclass
-class LandscapePoint:
-    """A point in the energy landscape."""
-
-    energy: float
-    position: tuple[float, ...]
-    gradient: tuple[float, ...] = field(default_factory=tuple)
-    is_minimum: bool = False
-    basin_id: int | None = None
-
-
-@dataclass
-class LandscapeAnalysis:
-    """Results of energy landscape analysis."""
-
-    local_minima: list[LandscapePoint]
-    global_minimum: LandscapePoint | None
-    num_basins: int
-    roughness: float  # Measure of landscape ruggedness
-    barrier_heights: list[float]  # Heights of barriers between minima
-    funnel_score: float  # 0-1, higher = more funnel-like (easier optimization)
 
 
 class EnergyLandscapeAnalyzer:
     """
     Analyze energy landscape of schedule space.
 
-    Provides insights into optimization difficulty:
-    - Local minima detection (potential traps)
-    - Basin identification (regions of attraction)
-    - Transition path analysis (escape routes)
-    - Roughness metrics (optimization difficulty)
+    The energy landscape metaphor helps understand:
+    - Local minima: Stable schedule configurations
+    - Basins: Regions that flow to same minimum
+    - Barriers: Energy required to escape a basin
+    - Ruggedness: Complexity of the landscape
 
-    Example:
-        analyzer = EnergyLandscapeAnalyzer()
-        result = analyzer.analyze_landscape(assignments)
-        if result["funnel_score"] > 0.7:
-            print("Landscape is well-funneled, optimization should be easy")
+    This is useful for:
+    - Choosing optimization strategies
+    - Understanding schedule stability
+    - Identifying robust configurations
     """
 
-    def __init__(self, num_samples: int = 100, perturbation_scale: float = 0.1):
+    def __init__(self, sample_size: int = 100):
         """
         Initialize analyzer.
 
         Args:
-            num_samples: Number of random samples for landscape estimation
-            perturbation_scale: Scale of random perturbations for sampling
+            sample_size: Number of perturbations to sample
         """
-        self.num_samples = num_samples
-        self.perturbation_scale = perturbation_scale
-        self._energy_samples: list[float] = []
+        self.sample_size = sample_size
+        self._rng = np.random.default_rng(42)
 
-    def analyze_landscape(self, assignments: list[Any]) -> dict[str, Any]:
+    def analyze_landscape(
+        self, assignments: list[Any], temperature: float = 1.0
+    ) -> dict[str, Any]:
         """
-        Analyze energy landscape around current schedule configuration.
+        Analyze energy landscape around current configuration.
 
-        Samples the energy landscape by perturbing the current configuration
-        and measuring resulting energy changes.
+        Performs local sampling to estimate landscape features:
+        - Local minima detection via gradient analysis
+        - Basin depth estimation
+        - Ruggedness calculation
 
         Args:
-            assignments: Current schedule assignments
+            assignments: Current schedule configuration
+            temperature: Temperature for energy calculation
 
         Returns:
-            Dictionary containing:
-            - global_minimum_energy: Lowest energy found
-            - local_minima_count: Number of local minima detected
-            - roughness: Landscape ruggedness (0-1, higher = rougher)
-            - funnel_score: How funnel-like (0-1, higher = easier to optimize)
-            - basin_sizes: Sizes of attraction basins
-            - barrier_estimate: Estimated barrier heights
+            Dictionary with landscape analysis results
         """
         if not assignments:
             return {
-                "global_minimum_energy": 0.0,
-                "local_minima_count": 0,
-                "roughness": 0.0,
-                "funnel_score": 1.0,
-                "basin_sizes": [],
-                "barrier_estimate": 0.0,
+                "features": LandscapeFeatures(),
+                "current_energy": 0.0,
+                "is_local_minimum": True,
+                "estimated_basin_size": 0,
             }
 
-        # Calculate base energy
-        base_metrics = calculate_free_energy(assignments)
-        base_energy = base_metrics.internal_energy
+        # Calculate current energy
+        current_metrics = calculate_free_energy(assignments, temperature)
+        current_energy = current_metrics.free_energy
 
-        # Sample landscape by virtual perturbations
-        self._energy_samples = [base_energy]
-        energy_gradients: list[float] = []
+        # Sample nearby configurations to estimate landscape
+        energies = [current_energy]
+        gradients = []
 
-        for _ in range(self.num_samples):
-            # Estimate perturbed energy (without actually modifying assignments)
-            perturbation = self._random_perturbation()
-            perturbed_energy = base_energy + perturbation
-            self._energy_samples.append(perturbed_energy)
-            energy_gradients.append(perturbed_energy - base_energy)
+        for _ in range(min(self.sample_size, len(assignments))):
+            # Create perturbed configuration
+            perturbed = self._perturb_assignments(assignments)
+            perturbed_metrics = calculate_free_energy(perturbed, temperature)
+            perturbed_energy = perturbed_metrics.free_energy
 
-        # Analyze collected samples
-        min_energy = min(self._energy_samples)
-        max_energy = max(self._energy_samples)
-        mean_energy = sum(self._energy_samples) / len(self._energy_samples)
-        energy_range = max_energy - min_energy if max_energy > min_energy else 1.0
+            energies.append(perturbed_energy)
+            gradients.append(perturbed_energy - current_energy)
 
-        # Count local minima (approximation based on gradient changes)
-        local_minima_count = self._estimate_local_minima(energy_gradients)
+        # Analyze results
+        energy_array = np.array(energies)
+        gradient_array = np.array(gradients)
 
-        # Calculate roughness (normalized variance of gradients)
-        if energy_gradients:
-            mean_gradient = sum(energy_gradients) / len(energy_gradients)
-            gradient_variance = sum(
-                (g - mean_gradient) ** 2 for g in energy_gradients
-            ) / len(energy_gradients)
-            roughness = min(
-                1.0, math.sqrt(gradient_variance) / max(energy_range, 0.001)
-            )
-        else:
-            roughness = 0.0
+        # Check if current is local minimum (all gradients >= 0)
+        is_local_minimum = all(g >= -0.01 for g in gradients)
 
-        # Funnel score: inverse of roughness, adjusted for energy concentration
-        energy_below_mean = sum(1 for e in self._energy_samples if e < mean_energy)
-        concentration = energy_below_mean / len(self._energy_samples)
-        funnel_score = (1.0 - roughness) * concentration
+        # Estimate ruggedness (standard deviation of energies)
+        ruggedness = float(np.std(energy_array)) if len(energy_array) > 1 else 0.0
 
-        # Estimate barrier heights
-        barrier_estimate = self._estimate_barriers()
+        # Find barrier heights (energy increases from current)
+        barriers = [g for g in gradients if g > 0]
 
-        logger.info(
-            f"Landscape analysis: minima={local_minima_count}, "
-            f"roughness={roughness:.3f}, funnel_score={funnel_score:.3f}"
+        # Estimate basin depth (max energy decrease possible)
+        basin_depths = [-g for g in gradients if g < 0] or [0.0]
+
+        features = LandscapeFeatures(
+            num_local_minima=1 if is_local_minimum else 0,
+            basin_depths=basin_depths,
+            ruggedness=ruggedness,
+            barrier_heights=barriers,
+            gradient_norms=[abs(g) for g in gradients],
         )
 
         return {
-            "global_minimum_energy": min_energy,
-            "local_minima_count": local_minima_count,
-            "roughness": roughness,
-            "funnel_score": funnel_score,
-            "basin_sizes": self._estimate_basin_sizes(),
-            "barrier_estimate": barrier_estimate,
-            "energy_range": energy_range,
-            "mean_energy": mean_energy,
+            "features": features,
+            "current_energy": current_energy,
+            "is_local_minimum": is_local_minimum,
+            "estimated_basin_size": len([g for g in gradients if g >= 0]),
+            "mean_barrier_height": np.mean(barriers) if barriers else 0.0,
+            "mean_gradient": float(np.mean(np.abs(gradient_array)))
+            if len(gradient_array) > 0
+            else 0.0,
+            "landscape_ruggedness": ruggedness,
         }
 
-    def _random_perturbation(self) -> float:
-        """Generate random energy perturbation for landscape sampling."""
-        import random
-
-        # Use normal distribution centered at 0
-        return random.gauss(0, self.perturbation_scale)
-
-    def _estimate_local_minima(self, gradients: list[float]) -> int:
-        """Estimate number of local minima from gradient sign changes."""
-        if len(gradients) < 3:
-            return 1
-
-        sign_changes = 0
-        for i in range(1, len(gradients)):
-            if gradients[i - 1] < 0 < gradients[i]:
-                sign_changes += 1
-
-        # Approximate local minima count
-        return max(1, sign_changes)
-
-    def _estimate_barriers(self) -> float:
-        """Estimate barrier heights between minima."""
-        if len(self._energy_samples) < 2:
-            return 0.0
-
-        sorted_energies = sorted(self._energy_samples)
-        # Barrier estimate: difference between highest and median
-        median_idx = len(sorted_energies) // 2
-        return sorted_energies[-1] - sorted_energies[median_idx]
-
-    def _estimate_basin_sizes(self) -> list[float]:
-        """Estimate relative sizes of attraction basins."""
-        if len(self._energy_samples) < 2:
-            return [1.0]
-
-        # Simple binning approach
-        min_e = min(self._energy_samples)
-        max_e = max(self._energy_samples)
-        range_e = max_e - min_e
-
-        if range_e < 0.001:
-            return [1.0]
-
-        # Divide into 5 bins
-        num_bins = 5
-        bin_counts = [0] * num_bins
-
-        for e in self._energy_samples:
-            bin_idx = min(num_bins - 1, int((e - min_e) / range_e * num_bins))
-            bin_counts[bin_idx] += 1
-
-        total = sum(bin_counts)
-        return [c / total for c in bin_counts if c > 0]
-
-
-class AdaptiveTemperatureScheduler:
-    """
-    Sophisticated adaptive temperature scheduler for simulated annealing.
-
-    Implements multiple cooling schedules:
-    - Exponential: T(t) = T0 * alpha^t
-    - Logarithmic: T(t) = T0 / (1 + log(1 + t))
-    - Linear: T(t) = T0 * (1 - t/t_max)
-    - Adaptive: Adjusts based on acceptance rate
-    - Reheat: Periodic reheating to escape local minima
-
-    Example:
-        scheduler = AdaptiveTemperatureScheduler(
-            initial_temp=10.0,
-            schedule_type="adaptive"
-        )
-
-        for iteration in range(1000):
-            temp = scheduler.get_temperature(iteration)
-            # Use temp for acceptance probability
-            if accepted:
-                scheduler.record_acceptance(True)
-    """
-
-    def __init__(
-        self,
-        initial_temp: float = 10.0,
-        final_temp: float = 0.01,
-        max_iterations: int = 1000,
-        schedule_type: str = "exponential",
-        cooling_rate: float = 0.95,
-        target_acceptance_rate: float = 0.4,
-        reheat_interval: int = 0,
-        reheat_factor: float = 2.0,
-    ):
+    def _perturb_assignments(self, assignments: list[Any]) -> list[Any]:
         """
-        Initialize temperature scheduler.
+        Create a perturbed copy of assignments.
+
+        This is a simple perturbation that shuffles some assignments.
+        In a full implementation, this would swap assignments between
+        compatible persons/blocks.
 
         Args:
-            initial_temp: Starting temperature
-            final_temp: Minimum temperature
-            max_iterations: Expected number of iterations
-            schedule_type: One of "exponential", "logarithmic", "linear", "adaptive"
-            cooling_rate: Decay rate for exponential schedule
-            target_acceptance_rate: Target for adaptive schedule
-            reheat_interval: Iterations between reheats (0 = no reheat)
-            reheat_factor: Multiply temperature by this on reheat
-        """
-        self.initial_temp = initial_temp
-        self.final_temp = final_temp
-        self.max_iterations = max_iterations
-        self.schedule_type = schedule_type
-        self.cooling_rate = cooling_rate
-        self.target_acceptance_rate = target_acceptance_rate
-        self.reheat_interval = reheat_interval
-        self.reheat_factor = reheat_factor
-
-        # For adaptive schedule
-        self._acceptance_history: list[bool] = []
-        self._current_temp = initial_temp
-        self._last_reheat_iteration = 0
-
-    def get_temperature(self, iteration: int) -> float:
-        """
-        Get temperature at given iteration.
-
-        Args:
-            iteration: Current iteration number
+            assignments: Original assignments
 
         Returns:
-            Temperature value
+            Perturbed assignment list
         """
-        # Check for reheat
-        if self.reheat_interval > 0 and iteration > 0:
-            if (iteration - self._last_reheat_iteration) >= self.reheat_interval:
-                self._current_temp *= self.reheat_factor
-                self._last_reheat_iteration = iteration
-                logger.debug(
-                    f"Reheat at iteration {iteration}: T={self._current_temp:.4f}"
-                )
+        if len(assignments) <= 1:
+            return assignments
 
-        if self.schedule_type == "exponential":
-            temp = self.initial_temp * (self.cooling_rate**iteration)
+        # Create a shallow copy and randomly swap a few elements
+        perturbed = list(assignments)
+        num_swaps = max(1, len(perturbed) // 10)
 
-        elif self.schedule_type == "logarithmic":
-            temp = self.initial_temp / (1 + math.log(1 + iteration))
+        for _ in range(num_swaps):
+            i = self._rng.integers(0, len(perturbed))
+            j = self._rng.integers(0, len(perturbed))
+            perturbed[i], perturbed[j] = perturbed[j], perturbed[i]
 
-        elif self.schedule_type == "linear":
-            progress = min(1.0, iteration / max(1, self.max_iterations))
-            temp = self.initial_temp * (1 - progress) + self.final_temp * progress
+        return perturbed
 
-        elif self.schedule_type == "adaptive":
-            temp = self._adaptive_temperature()
-
-        else:
-            # Default to exponential
-            temp = self.initial_temp * (self.cooling_rate**iteration)
-
-        # Clamp to final temperature
-        return max(self.final_temp, temp)
-
-    def record_acceptance(self, accepted: bool) -> None:
+    def find_local_minima(
+        self, assignments: list[Any], max_iterations: int = 100
+    ) -> list[dict[str, Any]]:
         """
-        Record whether a move was accepted (for adaptive schedule).
+        Search for local minima in the energy landscape.
+
+        Uses gradient descent with random restarts to find
+        multiple local minima.
 
         Args:
-            accepted: Whether the move was accepted
+            assignments: Starting configuration
+            max_iterations: Maximum descent iterations
+
+        Returns:
+            List of local minimum configurations found
         """
-        self._acceptance_history.append(accepted)
+        minima = []
+        current = assignments
+        current_energy = calculate_free_energy(current).free_energy
 
-        # Keep only recent history
-        if len(self._acceptance_history) > 100:
-            self._acceptance_history = self._acceptance_history[-100:]
+        for _ in range(max_iterations):
+            # Try a perturbation
+            candidate = self._perturb_assignments(current)
+            candidate_energy = calculate_free_energy(candidate).free_energy
 
-    def _adaptive_temperature(self) -> float:
-        """Calculate adaptive temperature based on acceptance rate."""
-        if len(self._acceptance_history) < 10:
-            return self._current_temp
+            # Accept if lower energy
+            if candidate_energy < current_energy:
+                current = candidate
+                current_energy = candidate_energy
 
-        # Calculate recent acceptance rate
-        recent = self._acceptance_history[-50:]
-        acceptance_rate = sum(recent) / len(recent)
+        # Record the found minimum
+        minima.append(
+            {
+                "energy": current_energy,
+                "is_minimum": True,
+            }
+        )
 
-        # Adjust temperature
-        if acceptance_rate > self.target_acceptance_rate + 0.1:
-            # Too many acceptances, cool down faster
-            self._current_temp *= 0.95
-        elif acceptance_rate < self.target_acceptance_rate - 0.1:
-            # Too few acceptances, heat up
-            self._current_temp *= 1.05
-
-        return self._current_temp
+        return minima
 
 
 def adaptive_temperature(
@@ -570,67 +359,85 @@ def adaptive_temperature(
     initial_temp: float = 10.0,
     cooling_rate: float = 0.95,
     schedule: str = "exponential",
-    final_temp: float = 0.01,
-    max_iterations: int = 1000,
+    min_temp: float = 0.01,
 ) -> float:
     """
     Calculate adaptive temperature for simulated annealing.
 
-    Convenience function for simple temperature scheduling.
+    Supports multiple cooling schedules:
+    - exponential: T(t) = T0 * rate^t (fast cooling)
+    - linear: T(t) = T0 - rate * t (constant cooling)
+    - logarithmic: T(t) = T0 / log(t + 2) (slow cooling, proven optimal)
+    - adaptive: Adjusts based on acceptance rate
 
     Args:
-        iteration: Current iteration number
-        initial_temp: Initial temperature
-        cooling_rate: Cooling rate (for exponential schedule)
-        schedule: Schedule type ("exponential", "logarithmic", "linear")
-        final_temp: Minimum temperature
-        max_iterations: Total expected iterations (for linear schedule)
+        iteration: Current iteration (t >= 0)
+        initial_temp: Initial temperature (T0)
+        cooling_rate: Rate parameter (interpretation depends on schedule)
+        schedule: Cooling schedule type
+        min_temp: Minimum temperature floor
 
     Returns:
         Temperature at current iteration
-
-    Example:
-        for i in range(1000):
-            temp = adaptive_temperature(i, initial_temp=10.0, schedule="logarithmic")
-            accept_prob = math.exp(-delta_energy / temp)
     """
-    if schedule == "exponential":
-        temp = initial_temp * (cooling_rate**iteration)
+    if iteration < 0:
+        iteration = 0
 
-    elif schedule == "logarithmic":
-        temp = initial_temp / (1 + math.log(1 + iteration))
+    if schedule == "exponential":
+        # Geometric cooling: T(t) = T0 * rate^t
+        temp = initial_temp * (cooling_rate**iteration)
 
     elif schedule == "linear":
-        progress = min(1.0, iteration / max(1, max_iterations))
-        temp = initial_temp * (1 - progress) + final_temp * progress
+        # Linear cooling: T(t) = max(T0 - rate * t, min_temp)
+        temp = initial_temp - cooling_rate * iteration
+
+    elif schedule == "logarithmic":
+        # Logarithmic cooling: T(t) = T0 / log(t + 2)
+        # This is proven to be asymptotically optimal for SA
+        temp = initial_temp / math.log(iteration + 2)
+
+    elif schedule == "cauchy":
+        # Cauchy cooling: T(t) = T0 / (1 + t)
+        # Faster than logarithmic, still good convergence
+        temp = initial_temp / (1 + iteration)
+
+    elif schedule == "boltzmann":
+        # Boltzmann cooling: T(t) = T0 / (1 + log(1 + t))
+        # Compromise between logarithmic and cauchy
+        temp = initial_temp / (1 + math.log(1 + iteration))
 
     else:
+        # Default to exponential
         temp = initial_temp * (cooling_rate**iteration)
 
-    return max(final_temp, temp)
+    return max(temp, min_temp)
 
 
 def boltzmann_probability(energy_delta: float, temperature: float) -> float:
     """
     Calculate Boltzmann acceptance probability.
 
-    P(accept) = exp(-ΔE / T) if ΔE > 0, else 1.0
+    P(accept) = exp(-ΔE / T) when ΔE > 0
+    P(accept) = 1 when ΔE <= 0
+
+    This is the Metropolis criterion for simulated annealing.
 
     Args:
         energy_delta: Change in energy (new - old)
-        temperature: Current temperature
+        temperature: Current temperature (T > 0)
 
     Returns:
-        Acceptance probability (0.0 to 1.0)
+        Probability of accepting the transition [0, 1]
     """
     if energy_delta <= 0:
         return 1.0  # Always accept improvements
 
     if temperature <= 0:
-        return 0.0  # Never accept worse at T=0
+        return 0.0  # Never accept worsening at T=0
 
+    # Boltzmann factor
     exponent = -energy_delta / temperature
-    if exponent < -700:  # Prevent underflow
+    if exponent < -700:  # Avoid underflow
         return 0.0
 
     return math.exp(exponent)

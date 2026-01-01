@@ -130,7 +130,9 @@ def get_resilience_service(db: Session) -> "ResilienceService":
     return ResilienceService(db=db, config=config)
 
 
-async def persist_health_check(db: AsyncSession, report: Any, metrics_snapshot: dict | None = None) -> ResilienceHealthCheck:
+async def persist_health_check(
+    db: AsyncSession, report: Any, metrics_snapshot: dict | None = None
+) -> ResilienceHealthCheck:
     """Persist health check results to database."""
     from typing import Any
 
@@ -1051,9 +1053,19 @@ async def get_mtf_compliance(
     end_date = start_date + timedelta(days=30)
 
     # Load data for analysis
-    faculty = (await db.execute(select(Person).where(Person.type == "faculty"))).scalars().all()
+    faculty = (
+        (await db.execute(select(Person).where(Person.type == "faculty")))
+        .scalars()
+        .all()
+    )
     blocks = (
-        (await db.execute(select(Block).where(Block.date >= start_date, Block.date <= end_date))).scalars().all()
+        (
+            await db.execute(
+                select(Block).where(Block.date >= start_date, Block.date <= end_date)
+            )
+        )
+        .scalars()
+        .all()
     )
     assignments = (
         db.query(Assignment)

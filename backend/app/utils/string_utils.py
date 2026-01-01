@@ -20,23 +20,23 @@ def slugify(text: str) -> str:
         URL-friendly slug string
     """
     # Normalize unicode characters and remove accents
-    text = unicodedata.normalize('NFKD', text)
-    text = text.encode('ascii', 'ignore').decode('ascii')
+    text = unicodedata.normalize("NFKD", text)
+    text = text.encode("ascii", "ignore").decode("ascii")
 
     # Convert to lowercase
     text = text.lower()
 
     # Replace spaces and underscores with hyphens
-    text = re.sub(r'[\s_]+', '-', text)
+    text = re.sub(r"[\s_]+", "-", text)
 
     # Remove non-alphanumeric characters (except hyphens)
-    text = re.sub(r'[^a-z0-9-]', '', text)
+    text = re.sub(r"[^a-z0-9-]", "", text)
 
     # Remove multiple consecutive hyphens
-    text = re.sub(r'-+', '-', text)
+    text = re.sub(r"-+", "-", text)
 
     # Strip leading/trailing hyphens
-    text = text.strip('-')
+    text = text.strip("-")
 
     return text
 
@@ -75,15 +75,15 @@ def remove_html_tags(text: str) -> str:
         Text with HTML tags removed
     """
     # Remove HTML tags
-    clean_text = re.sub(r'<[^>]+>', '', text)
+    clean_text = re.sub(r"<[^>]+>", "", text)
 
     # Decode common HTML entities
-    clean_text = clean_text.replace('&nbsp;', ' ')
-    clean_text = clean_text.replace('&lt;', '<')
-    clean_text = clean_text.replace('&gt;', '>')
-    clean_text = clean_text.replace('&amp;', '&')
-    clean_text = clean_text.replace('&quot;', '"')
-    clean_text = clean_text.replace('&#39;', "'")
+    clean_text = clean_text.replace("&nbsp;", " ")
+    clean_text = clean_text.replace("&lt;", "<")
+    clean_text = clean_text.replace("&gt;", ">")
+    clean_text = clean_text.replace("&amp;", "&")
+    clean_text = clean_text.replace("&quot;", '"')
+    clean_text = clean_text.replace("&#39;", "'")
 
     return clean_text
 
@@ -126,7 +126,7 @@ def normalize_whitespace(text: str) -> str:
         Text with normalized whitespace
     """
     # Replace all whitespace characters with single space
-    normalized = re.sub(r'\s+', ' ', text)
+    normalized = re.sub(r"\s+", " ", text)
 
     # Strip leading/trailing whitespace
     normalized = normalized.strip()

@@ -158,6 +158,21 @@ As **Deputy for Systems**, ARCHITECT operates under these standing orders from O
 
 ---
 
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Over-Engineering** | Complex solution for simple problem | Start simple, add complexity only when needed | Refactor to simplest viable solution |
+| **Analysis Paralysis** | Decision delayed indefinitely | Set decision deadline, accept "good enough" | Make decision with available info, iterate |
+| **Ivory Tower Design** | Impractical architecture | Validate with implementers early | Revise based on implementation feedback |
+| **Undocumented Decisions** | Tribal knowledge, inconsistent patterns | ADR for all significant decisions | Retroactively document decisions |
+| **Premature Optimization** | Performance fixes before profiling | Profile first, optimize where measured | Remove premature optimizations |
+| **Breaking Change Surprise** | API consumers break unexpectedly | Version APIs, communicate changes | Add backward compatibility shim |
+| **Security Afterthought** | Vulnerabilities discovered late | Security review in design phase | Remediate vulnerabilities, update process |
+| **Scope Creep** | Design expands beyond requirements | Clear scope definition, reject additions | Descope to original requirements |
+
+---
+
 ## Approach
 
 ### 1. Analysis Phase

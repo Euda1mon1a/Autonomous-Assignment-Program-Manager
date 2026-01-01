@@ -108,7 +108,10 @@ class WesternElectricRules:
         if v8:
             violations.extend(v8)
 
-        logger.debug("Western Electric check complete: %d total violations found", len(violations))
+        logger.debug(
+            "Western Electric check complete: %d total violations found",
+            len(violations),
+        )
         return violations
 
     def _rule_1_beyond_3sigma(self, data: list[float]) -> list[RuleViolation]:

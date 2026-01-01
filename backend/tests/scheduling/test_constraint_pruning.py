@@ -112,7 +112,9 @@ class TestConstraintPruner:
         assert pruner.pruned_count == 0
         assert pruner.total_evaluated == 0
 
-    def test_prune_assignments_basic(self, sample_persons, sample_rotations, sample_blocks):
+    def test_prune_assignments_basic(
+        self, sample_persons, sample_rotations, sample_blocks
+    ):
         """Test basic pruning of infeasible assignments."""
         # Arrange
         pruner = ConstraintPruner()
@@ -133,7 +135,9 @@ class TestConstraintPruner:
         assert isinstance(result["feasible_assignments"], list)
         assert result["total_evaluated"] > 0
 
-    def test_prune_by_person_type(self, sample_persons, sample_rotations, sample_blocks):
+    def test_prune_by_person_type(
+        self, sample_persons, sample_rotations, sample_blocks
+    ):
         """Test pruning based on person type restrictions."""
         # Arrange
         pruner = ConstraintPruner()
@@ -153,7 +157,9 @@ class TestConstraintPruner:
         # Assert
         # Only faculty should be assigned to cardiology clinic
         for assignment in result["feasible_assignments"]:
-            person = next(p for p in sample_persons if p["id"] == assignment["person_id"])
+            person = next(
+                p for p in sample_persons if p["id"] == assignment["person_id"]
+            )
             assert person["type"] == "faculty"
 
     def test_prune_by_pgy_level(self, sample_persons, sample_rotations, sample_blocks):
@@ -174,7 +180,9 @@ class TestConstraintPruner:
         # Assert
         # Only PGY2+ residents should be assigned
         for assignment in result["feasible_assignments"]:
-            person = next(p for p in sample_persons if p["id"] == assignment["person_id"])
+            person = next(
+                p for p in sample_persons if p["id"] == assignment["person_id"]
+            )
             assert person.get("pgy_level", 999) >= 2
 
     def test_prune_by_specialty(self, sample_persons, sample_rotations, sample_blocks):
@@ -197,10 +205,14 @@ class TestConstraintPruner:
         # Assert
         # Only people with cardiology specialty should be assigned
         for assignment in result["feasible_assignments"]:
-            person = next(p for p in sample_persons if p["id"] == assignment["person_id"])
+            person = next(
+                p for p in sample_persons if p["id"] == assignment["person_id"]
+            )
             assert "cardiology" in person.get("specialties", [])
 
-    def test_prune_by_time_of_day(self, sample_persons, sample_rotations, sample_blocks):
+    def test_prune_by_time_of_day(
+        self, sample_persons, sample_rotations, sample_blocks
+    ):
         """Test pruning based on time of day restrictions."""
         # Arrange
         pruner = ConstraintPruner()
@@ -221,7 +233,9 @@ class TestConstraintPruner:
             block = next(b for b in sample_blocks if b["id"] == assignment["block_id"])
             assert block["is_am"] is True
 
-    def test_prune_by_unavailability(self, sample_persons, sample_rotations, sample_blocks):
+    def test_prune_by_unavailability(
+        self, sample_persons, sample_rotations, sample_blocks
+    ):
         """Test pruning based on person unavailability."""
         # Arrange
         pruner = ConstraintPruner()
@@ -245,7 +259,9 @@ class TestConstraintPruner:
             if assignment["person_id"] == person_id:
                 assert assignment["block_id"] not in jan_1_blocks
 
-    def test_prune_with_existing_assignments(self, sample_persons, sample_rotations, sample_blocks):
+    def test_prune_with_existing_assignments(
+        self, sample_persons, sample_rotations, sample_blocks
+    ):
         """Test pruning skips existing assignments."""
         # Arrange
         pruner = ConstraintPruner()
@@ -274,7 +290,9 @@ class TestConstraintPruner:
             for a in result["feasible_assignments"]
         )
 
-    def test_pruning_reasons_tracked(self, sample_persons, sample_rotations, sample_blocks):
+    def test_pruning_reasons_tracked(
+        self, sample_persons, sample_rotations, sample_blocks
+    ):
         """Test pruning reasons are tracked correctly."""
         # Arrange
         pruner = ConstraintPruner()
@@ -293,7 +311,9 @@ class TestConstraintPruner:
         if result["pruned_count"] > 0:
             assert len(result["pruning_reasons"]) > 0
 
-    def test_reduction_ratio_calculated(self, sample_persons, sample_rotations, sample_blocks):
+    def test_reduction_ratio_calculated(
+        self, sample_persons, sample_rotations, sample_blocks
+    ):
         """Test reduction ratio is calculated correctly."""
         # Arrange
         pruner = ConstraintPruner()
@@ -314,7 +334,9 @@ class TestConstraintPruner:
         assert result["reduction_ratio"] == pytest.approx(expected_ratio)
         assert 0 <= result["reduction_ratio"] <= 1
 
-    def test_estimate_search_space_reduction(self, sample_persons, sample_rotations, sample_blocks):
+    def test_estimate_search_space_reduction(
+        self, sample_persons, sample_rotations, sample_blocks
+    ):
         """Test estimating search space reduction from pruning."""
         # Arrange
         pruner = ConstraintPruner()
@@ -347,7 +369,9 @@ class TestConstraintPruner:
 class TestPruneInfeasibleAssignmentsUtility:
     """Test suite for utility function."""
 
-    def test_utility_function_works(self, sample_persons, sample_rotations, sample_blocks):
+    def test_utility_function_works(
+        self, sample_persons, sample_rotations, sample_blocks
+    ):
         """Test utility function creates pruner and returns result."""
         # Act
         result = prune_infeasible_assignments(

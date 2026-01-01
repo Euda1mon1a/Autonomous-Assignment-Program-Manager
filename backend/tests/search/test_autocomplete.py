@@ -163,13 +163,22 @@ class TestAutocompleteSuggestionComparison:
         """Test suggestions can be sorted by relevance score."""
         # Arrange
         s1 = AutocompleteSuggestion(
-            text="A", context=AutocompleteContext.PERSON, source=SuggestionSource.DATABASE, score=0.5
+            text="A",
+            context=AutocompleteContext.PERSON,
+            source=SuggestionSource.DATABASE,
+            score=0.5,
         )
         s2 = AutocompleteSuggestion(
-            text="B", context=AutocompleteContext.PERSON, source=SuggestionSource.DATABASE, score=0.9
+            text="B",
+            context=AutocompleteContext.PERSON,
+            source=SuggestionSource.DATABASE,
+            score=0.9,
         )
         s3 = AutocompleteSuggestion(
-            text="C", context=AutocompleteContext.PERSON, source=SuggestionSource.DATABASE, score=0.7
+            text="C",
+            context=AutocompleteContext.PERSON,
+            source=SuggestionSource.DATABASE,
+            score=0.7,
         )
 
         # Act

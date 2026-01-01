@@ -12,17 +12,21 @@ from functools import wraps
 
 def traced_function(func):
     """Mock traced decorator for testing."""
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         return func(*args, **kwargs)
+
     return wrapper
 
 
 def traced_async(func):
     """Mock async traced decorator for testing."""
+
     @wraps(func)
     async def wrapper(*args, **kwargs):
         return await func(*args, **kwargs)
+
     return wrapper
 
 
@@ -31,6 +35,7 @@ class TestTracingDecorator:
 
     def test_decorator_preserves_function_name(self):
         """Test decorator preserves original function name."""
+
         # Arrange & Act
         @traced_function
         def test_function():
@@ -41,6 +46,7 @@ class TestTracingDecorator:
 
     def test_decorator_preserves_docstring(self):
         """Test decorator preserves original docstring."""
+
         # Arrange & Act
         @traced_function
         def test_function():
@@ -52,6 +58,7 @@ class TestTracingDecorator:
 
     def test_decorator_passes_through_return_value(self):
         """Test decorator passes through function return value."""
+
         # Arrange
         @traced_function
         def add_numbers(a, b):
@@ -65,6 +72,7 @@ class TestTracingDecorator:
 
     def test_decorator_passes_through_exceptions(self):
         """Test decorator lets exceptions propagate."""
+
         # Arrange
         @traced_function
         def failing_function():
@@ -76,6 +84,7 @@ class TestTracingDecorator:
 
     def test_decorator_works_with_args_and_kwargs(self):
         """Test decorator works with positional and keyword arguments."""
+
         # Arrange
         @traced_function
         def function_with_args(a, b, c=10, d=20):
@@ -94,6 +103,7 @@ class TestAsyncTracingDecorator:
     @pytest.mark.asyncio
     async def test_async_decorator_works(self):
         """Test async decorator works with async functions."""
+
         # Arrange
         @traced_async
         async def async_function():
@@ -108,6 +118,7 @@ class TestAsyncTracingDecorator:
     @pytest.mark.asyncio
     async def test_async_decorator_preserves_function_name(self):
         """Test async decorator preserves function name."""
+
         # Arrange & Act
         @traced_async
         async def test_async_function():
@@ -119,6 +130,7 @@ class TestAsyncTracingDecorator:
     @pytest.mark.asyncio
     async def test_async_decorator_propagates_exceptions(self):
         """Test async decorator lets exceptions propagate."""
+
         # Arrange
         @traced_async
         async def failing_async_function():
@@ -134,6 +146,7 @@ class TestDecoratorWithParameters:
 
     def test_parameterized_decorator_with_span_name(self):
         """Test decorator accepts custom span name parameter."""
+
         # Arrange
         def traced_with_name(span_name):
             def decorator(func):
@@ -141,7 +154,9 @@ class TestDecoratorWithParameters:
                 def wrapper(*args, **kwargs):
                     # Simulated: Create span with custom name
                     return func(*args, **kwargs)
+
                 return wrapper
+
             return decorator
 
         @traced_with_name("custom_span_name")
@@ -156,6 +171,7 @@ class TestDecoratorWithParameters:
 
     def test_parameterized_decorator_with_attributes(self):
         """Test decorator accepts custom attributes parameter."""
+
         # Arrange
         def traced_with_attrs(attributes):
             def decorator(func):
@@ -163,7 +179,9 @@ class TestDecoratorWithParameters:
                 def wrapper(*args, **kwargs):
                     # Simulated: Add custom attributes to span
                     return func(*args, **kwargs)
+
                 return wrapper
+
             return decorator
 
         @traced_with_attrs({"user.id": "user-123", "operation": "fetch"})
@@ -194,6 +212,7 @@ class TestDecoratorErrorHandling:
                 except Exception as e:
                     exception_recorded = True
                     raise
+
             return wrapper
 
         @traced_with_recording
@@ -220,6 +239,7 @@ class TestDecoratorMetrics:
             def wrapper(*args, **kwargs):
                 invocations.append(1)
                 return func(*args, **kwargs)
+
             return wrapper
 
         @counted_trace
@@ -249,6 +269,7 @@ class TestDecoratorMetrics:
                 duration = time.time() - start
                 durations.append(duration)
                 return result
+
             return wrapper
 
         @timed_trace

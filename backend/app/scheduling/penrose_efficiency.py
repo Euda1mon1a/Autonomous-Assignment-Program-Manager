@@ -41,7 +41,9 @@ logger = logging.getLogger(__name__)
 
 
 # Penrose Process Constants
-PENROSE_EFFICIENCY_LIMIT = 0.29  # Theoretical maximum extraction from rotating black holes (29%)
+PENROSE_EFFICIENCY_LIMIT = (
+    0.29  # Theoretical maximum extraction from rotating black holes (29%)
+)
 PM_HOUR_OFFSET = 12  # Hour offset for PM blocks (noon)
 AM_HOUR_OFFSET = 8  # Hour offset for AM blocks (8 AM)
 HALF_DAY_BLOCK_HOURS = 4  # Duration of a half-day block
@@ -97,7 +99,9 @@ class ErgospherePeriod:
     @property
     def duration_hours(self) -> float:
         """Calculate duration of ergosphere in hours."""
-        return (self.end_time - self.start_time).total_seconds() / (60 * 60)  # Convert seconds to hours
+        return (self.end_time - self.start_time).total_seconds() / (
+            60 * 60
+        )  # Convert seconds to hours
 
     @property
     def is_high_potential(self) -> bool:
@@ -231,7 +235,9 @@ class RotationEnergyTracker:
         """
         self.initial_rotation_energy = initial_rotation_energy
         self.extracted_energy = 0.0
-        self.max_extraction_fraction = PENROSE_EFFICIENCY_LIMIT  # Penrose theoretical limit
+        self.max_extraction_fraction = (
+            PENROSE_EFFICIENCY_LIMIT  # Penrose theoretical limit
+        )
         self.extraction_history: list[dict[str, Any]] = []
 
     @property
@@ -386,7 +392,8 @@ class PenroseEfficiencyExtractor:
 
                 # Estimate extraction potential based on transition complexity
                 extraction_potential = min(
-                    PENROSE_EFFICIENCY_LIMIT, rotation_velocity * ROTATION_VELOCITY_MULTIPLIER
+                    PENROSE_EFFICIENCY_LIMIT,
+                    rotation_velocity * ROTATION_VELOCITY_MULTIPLIER,
                 )  # Cap at Penrose limit
 
                 ergosphere = ErgospherePeriod(
@@ -524,15 +531,26 @@ class PenroseEfficiencyExtractor:
                     )
 
                     # Block transitions have higher extraction potential
-                    extraction_potential = min(PENROSE_EFFICIENCY_LIMIT, rotation_velocity * BLOCK_TRANSITION_VELOCITY_MULTIPLIER)
+                    extraction_potential = min(
+                        PENROSE_EFFICIENCY_LIMIT,
+                        rotation_velocity * BLOCK_TRANSITION_VELOCITY_MULTIPLIER,
+                    )
 
                     ergosphere = ErgospherePeriod(
                         start_time=datetime.combine(
                             last_block.date, datetime.min.time()
                         )
-                        + timedelta(hours=PM_HOUR_OFFSET if last_block.time_of_day == "PM" else 0),
+                        + timedelta(
+                            hours=PM_HOUR_OFFSET
+                            if last_block.time_of_day == "PM"
+                            else 0
+                        ),
                         end_time=datetime.combine(first_block.date, datetime.min.time())
-                        + timedelta(hours=AM_HOUR_OFFSET if first_block.time_of_day == "AM" else PM_HOUR_OFFSET),
+                        + timedelta(
+                            hours=AM_HOUR_OFFSET
+                            if first_block.time_of_day == "AM"
+                            else PM_HOUR_OFFSET
+                        ),
                         rotation_velocity=rotation_velocity,
                         extraction_potential=extraction_potential,
                         boundary_type="block_transition",
@@ -581,7 +599,9 @@ class PenroseEfficiencyExtractor:
                 continue
 
             # Convert other assignment to datetime
-            other_dt = datetime.combine(other.block.date, datetime.min.time()) + timedelta(
+            other_dt = datetime.combine(
+                other.block.date, datetime.min.time()
+            ) + timedelta(
                 hours=PM_HOUR_OFFSET if other.block.time_of_day == "PM" else 0
             )
 
@@ -593,9 +613,13 @@ class PenroseEfficiencyExtractor:
             if assignment.block:
                 assignment_dt = datetime.combine(
                     assignment.block.date, datetime.min.time()
-                ) + timedelta(hours=PM_HOUR_OFFSET if assignment.block.time_of_day == "PM" else 0)
+                ) + timedelta(
+                    hours=PM_HOUR_OFFSET if assignment.block.time_of_day == "PM" else 0
+                )
 
-                time_between = abs((other_dt - assignment_dt).total_seconds() / (60 * 60))  # Convert to hours
+                time_between = abs(
+                    (other_dt - assignment_dt).total_seconds() / (60 * 60)
+                )  # Convert to hours
                 if 0 < time_between < MIN_REST_HOURS:
                     conflict_count += 1
 
@@ -648,7 +672,10 @@ class PenroseEfficiencyExtractor:
         return min(1.0, flexibility)  # Cap at 1.0
 
     def _calculate_confidence_score(
-        self, assignment_a: Assignment, assignment_b: Assignment, historical_data_size: int
+        self,
+        assignment_a: Assignment,
+        assignment_b: Assignment,
+        historical_data_size: int,
     ) -> float:
         """
         Calculate confidence in swap benefit estimation.
@@ -736,14 +763,18 @@ class PenroseEfficiencyExtractor:
 
         # Transition phase (current block)
         trans_start = assignment_dt
-        trans_end = assignment_dt + timedelta(hours=HALF_DAY_BLOCK_HOURS)  # Half-day block
+        trans_end = assignment_dt + timedelta(
+            hours=HALF_DAY_BLOCK_HOURS
+        )  # Half-day block
 
         # Post-transition phase
         post_start = trans_end
         post_end = trans_end + timedelta(hours=POST_TRANSITION_HOURS)
 
         # Calculate conflict scores for each phase
-        pre_conflicts = await self._count_conflicts_in_period(assignment, pre_start, pre_end)
+        pre_conflicts = await self._count_conflicts_in_period(
+            assignment, pre_start, pre_end
+        )
         trans_conflicts = await self._count_conflicts_in_period(
             assignment, trans_start, trans_end
         )
@@ -789,7 +820,8 @@ class PenroseEfficiencyExtractor:
                     phase_start=trans_start,
                     phase_end=trans_end,
                     conflict_score=trans_conflicts,
-                    flexibility_score=flexibility * 0.7,  # Slightly lower during transition
+                    flexibility_score=flexibility
+                    * 0.7,  # Slightly lower during transition
                 ),
                 PhaseComponent(
                     assignment_id=assignment.id,
@@ -930,8 +962,12 @@ class PenroseEfficiencyExtractor:
 
         # 1. Workload balance improvement
         # Count assignments per person before and after swap
-        person_a_count = sum(1 for a in all_assignments if a.person_id == assign_a.person_id)
-        person_b_count = sum(1 for a in all_assignments if a.person_id == assign_b.person_id)
+        person_a_count = sum(
+            1 for a in all_assignments if a.person_id == assign_a.person_id
+        )
+        person_b_count = sum(
+            1 for a in all_assignments if a.person_id == assign_b.person_id
+        )
 
         # Calculate workload variance before swap
         workload_before_variance = abs(person_a_count - person_b_count)
@@ -1005,7 +1041,9 @@ class PenroseEfficiencyExtractor:
         # Normalize by initial rotation energy if tracker is initialized
         if self.energy_tracker:
             efficiency = total_extraction / self.energy_tracker.initial_rotation_energy
-            efficiency = min(efficiency, PENROSE_EFFICIENCY_LIMIT)  # Cap at Penrose limit
+            efficiency = min(
+                efficiency, PENROSE_EFFICIENCY_LIMIT
+            )  # Cap at Penrose limit
         else:
             # Without tracker, estimate based on number of swaps
             efficiency = min(len(swaps_executed) * 0.05, PENROSE_EFFICIENCY_LIMIT)
@@ -1049,7 +1087,13 @@ class PenroseEfficiencyExtractor:
         # 2. Variety of rotations (diverse = more flexibility)
         # 3. Person distribution (balanced = easier to swap)
         num_assignments = len(all_assignments)
-        unique_rotations = len(set(a.rotation_template_id for a in all_assignments if a.rotation_template_id))
+        unique_rotations = len(
+            set(
+                a.rotation_template_id
+                for a in all_assignments
+                if a.rotation_template_id
+            )
+        )
         unique_persons = len(set(a.person_id for a in all_assignments))
 
         # Energy formula: base energy scales with assignment count and diversity
@@ -1143,7 +1187,9 @@ class PenroseEfficiencyExtractor:
                 # Count conflicts for this assignment
                 assignment_dt = datetime.combine(
                     assignment.block.date, datetime.min.time()
-                ) + timedelta(hours=PM_HOUR_OFFSET if assignment.block.time_of_day == "PM" else 0)
+                ) + timedelta(
+                    hours=PM_HOUR_OFFSET if assignment.block.time_of_day == "PM" else 0
+                )
 
                 period_start = assignment_dt - timedelta(hours=HOURS_PER_DAY)
                 period_end = assignment_dt + timedelta(hours=HOURS_PER_DAY)

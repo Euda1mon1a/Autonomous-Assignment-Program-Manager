@@ -116,7 +116,9 @@ class TestBurnoutAlerts:
     def test_info_alert_with_low_prevalence_high_rt(self, alert_generator):
         """Test INFO alert with low prevalence but Rt > 1."""
         alert = alert_generator.generate_burnout_alert(
-            infected_count=1, total_population=20, rt=1.1  # 5% prevalence
+            infected_count=1,
+            total_population=20,
+            rt=1.1,  # 5% prevalence
         )
 
         assert alert is not None
@@ -125,7 +127,9 @@ class TestBurnoutAlerts:
     def test_warning_alert_with_moderate_prevalence(self, alert_generator):
         """Test WARNING alert with 6-10% prevalence."""
         alert = alert_generator.generate_burnout_alert(
-            infected_count=2, total_population=20, rt=1.2  # 10% prevalence
+            infected_count=2,
+            total_population=20,
+            rt=1.2,  # 10% prevalence
         )
 
         assert alert.severity == AlertSeverity.WARNING
@@ -134,7 +138,9 @@ class TestBurnoutAlerts:
     def test_critical_alert_with_high_prevalence(self, alert_generator):
         """Test CRITICAL alert with >10% prevalence."""
         alert = alert_generator.generate_burnout_alert(
-            infected_count=3, total_population=20, rt=1.6  # 15% prevalence
+            infected_count=3,
+            total_population=20,
+            rt=1.6,  # 15% prevalence
         )
 
         assert alert.severity == AlertSeverity.CRITICAL
@@ -150,7 +156,9 @@ class TestBurnoutAlerts:
     def test_emergency_alert_with_epidemic(self, alert_generator):
         """Test EMERGENCY alert with epidemic conditions."""
         alert = alert_generator.generate_burnout_alert(
-            infected_count=4, total_population=20, rt=2.5  # 20% prevalence, Rt > 2
+            infected_count=4,
+            total_population=20,
+            rt=2.5,  # 20% prevalence, Rt > 2
         )
 
         assert alert.severity == AlertSeverity.EMERGENCY
@@ -187,16 +195,18 @@ class TestBurnoutAlerts:
 
         assert alert.requires_ack is True
 
-    def test_burnout_alert_includes_intervention_recommendations(
-        self, alert_generator
-    ):
+    def test_burnout_alert_includes_intervention_recommendations(self, alert_generator):
         """Test burnout alert includes intervention recommendations."""
         alert = alert_generator.generate_burnout_alert(
             infected_count=3, total_population=20, rt=1.5
         )
 
         recs_text = " ".join(alert.recommendations).lower()
-        assert "workload" in recs_text or "wellness" in recs_text or "time off" in recs_text
+        assert (
+            "workload" in recs_text
+            or "wellness" in recs_text
+            or "time off" in recs_text
+        )
 
 
 # ============================================================================
@@ -282,7 +292,9 @@ class TestAlertDeduplication:
         alert1 = alert_generator.generate_utilization_alert(utilization=0.92)  # WARNING
         alert_generator.active_alerts.append(alert1)
 
-        alert2 = alert_generator.generate_utilization_alert(utilization=0.98)  # EMERGENCY
+        alert2 = alert_generator.generate_utilization_alert(
+            utilization=0.98
+        )  # EMERGENCY
 
         is_duplicate = alert_generator.deduplicate_alerts(alert2)
         # Different severities, should not be considered duplicate

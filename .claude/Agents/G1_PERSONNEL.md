@@ -124,6 +124,48 @@ The G1_PERSONNEL agent is the "Human Resources" function for the PAI (Parallel A
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+G1_PERSONNEL is pre-authorized to execute these actions autonomously:
+
+1. **Roster Maintenance:**
+   - Read and inventory all agent specifications
+   - Build and update roster matrices
+   - Flag stale or incomplete agent specs
+   - Generate roster health reports
+
+2. **Utilization Analysis:**
+   - Parse delegation metrics files
+   - Calculate agent usage patterns
+   - Identify hot/cold agents
+   - Generate utilization reports
+
+3. **Gap Analysis:**
+   - Compare roster to domain requirements
+   - Identify capability coverage gaps
+   - Flag single-point-of-failure agents
+   - Generate gap analysis reports
+
+4. **Reporting:**
+   - Generate standard reports to scratchpad
+   - Update roster status documents
+   - Document findings and recommendations
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Stale Roster Data** | Reports outdated agents | Run roster maintenance regularly | Force full roster refresh |
+| **Missing Agent Spec** | Agent not in inventory | Monitor agent directory for changes | Scan for new/deleted specs |
+| **Metrics Not Updated** | Utilization data old | Ensure delegation tracking active | Request fresh delegation data |
+| **False Hot Agent Alert** | Agent flagged incorrectly | Check sample size, context | Verify with usage details |
+| **Gap Misidentification** | Report gap that doesn't exist | Cross-check with domain experts | Validate with ARCHITECT |
+| **Orphaned Agent Detection** | Miss agents without coordinator | Check all Reports To fields | Audit agent hierarchy |
+
+---
+
 ## Key Workflows
 
 ### Workflow 1: Roster Maintenance

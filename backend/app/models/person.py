@@ -64,12 +64,20 @@ class Person(Base):
     __tablename__ = "people"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    name = Column(String(255), nullable=False, index=True)  # Performance: Indexed for name-based searches
-    type = Column(String(50), nullable=False, index=True)  # Performance: Indexed for filtering by type
-    email = Column(String(255), unique=True)  # Unique constraint creates index automatically
+    name = Column(
+        String(255), nullable=False, index=True
+    )  # Performance: Indexed for name-based searches
+    type = Column(
+        String(50), nullable=False, index=True
+    )  # Performance: Indexed for filtering by type
+    email = Column(
+        String(255), unique=True
+    )  # Unique constraint creates index automatically
 
     # Resident-specific fields
-    pgy_level = Column(Integer, index=True)  # Performance: Indexed for PGY-level filtering
+    pgy_level = Column(
+        Integer, index=True
+    )  # Performance: Indexed for PGY-level filtering
 
     # Capacity/workload fields
     target_clinical_blocks = Column(

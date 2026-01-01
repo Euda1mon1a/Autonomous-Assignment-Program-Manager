@@ -33,7 +33,9 @@ class TestSolverControl:
         reason = "timeout exceeded"
         requested_by = "admin"
 
-        with patch("app.scheduling.solver_control._get_redis_client", return_value=mock_redis):
+        with patch(
+            "app.scheduling.solver_control._get_redis_client", return_value=mock_redis
+        ):
             # Act
             result = SolverControl.request_abort(run_id, reason, requested_by)
 
@@ -53,7 +55,9 @@ class TestSolverControl:
         reason = "user cancellation"
         requested_by = "user-123"
 
-        with patch("app.scheduling.solver_control._get_redis_client", return_value=mock_redis):
+        with patch(
+            "app.scheduling.solver_control._get_redis_client", return_value=mock_redis
+        ):
             # Act
             SolverControl.request_abort(run_id, reason, requested_by)
 
@@ -71,7 +75,9 @@ class TestSolverControl:
         # Arrange
         run_id = "run-789"
 
-        with patch("app.scheduling.solver_control._get_redis_client", return_value=mock_redis):
+        with patch(
+            "app.scheduling.solver_control._get_redis_client", return_value=mock_redis
+        ):
             # Act
             SolverControl.request_abort(run_id)
 
@@ -88,7 +94,9 @@ class TestSolverControl:
         # Arrange
         run_id = "run-999"
 
-        with patch("app.scheduling.solver_control._get_redis_client", return_value=mock_redis):
+        with patch(
+            "app.scheduling.solver_control._get_redis_client", return_value=mock_redis
+        ):
             # Act
             SolverControl.request_abort(run_id)
 
@@ -103,7 +111,9 @@ class TestSolverControl:
         run_id = "run-101"
         mock_redis.get.return_value = None
 
-        with patch("app.scheduling.solver_control._get_redis_client", return_value=mock_redis):
+        with patch(
+            "app.scheduling.solver_control._get_redis_client", return_value=mock_redis
+        ):
             # Act
             result = SolverControl.should_abort(run_id)
 
@@ -122,7 +132,9 @@ class TestSolverControl:
         }
         mock_redis.get.return_value = json.dumps(abort_data)
 
-        with patch("app.scheduling.solver_control._get_redis_client", return_value=mock_redis):
+        with patch(
+            "app.scheduling.solver_control._get_redis_client", return_value=mock_redis
+        ):
             # Act
             result = SolverControl.should_abort(run_id)
 
@@ -136,7 +148,9 @@ class TestSolverControl:
         iteration = 100
         score = 0.85
 
-        with patch("app.scheduling.solver_control._get_redis_client", return_value=mock_redis):
+        with patch(
+            "app.scheduling.solver_control._get_redis_client", return_value=mock_redis
+        ):
             # Act
             SolverControl.update_progress(run_id, iteration, score)
 
@@ -160,7 +174,9 @@ class TestSolverControl:
         run_id = "run-404"
         mock_redis.get.return_value = None
 
-        with patch("app.scheduling.solver_control._get_redis_client", return_value=mock_redis):
+        with patch(
+            "app.scheduling.solver_control._get_redis_client", return_value=mock_redis
+        ):
             # Act
             result = SolverControl.get_progress(run_id)
 
@@ -178,7 +194,9 @@ class TestSolverControl:
         }
         mock_redis.get.return_value = json.dumps(progress_data)
 
-        with patch("app.scheduling.solver_control._get_redis_client", return_value=mock_redis):
+        with patch(
+            "app.scheduling.solver_control._get_redis_client", return_value=mock_redis
+        ):
             # Act
             result = SolverControl.get_progress(run_id)
 
@@ -192,7 +210,9 @@ class TestSolverControl:
         # Arrange
         run_id = "run-606"
 
-        with patch("app.scheduling.solver_control._get_redis_client", return_value=mock_redis):
+        with patch(
+            "app.scheduling.solver_control._get_redis_client", return_value=mock_redis
+        ):
             # Act
             SolverControl.clear_abort(run_id)
 

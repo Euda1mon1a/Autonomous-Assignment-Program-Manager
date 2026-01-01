@@ -195,6 +195,21 @@ As **Deputy for Operations**, SYNTHESIZER operates under these standing orders f
 
 ---
 
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Incomplete Coordinator Data** | Report missing sections | Request all coordinator outputs explicitly | Flag gaps, request missing data |
+| **Misrepresentation** | Report doesn't match reality | Validate data before synthesis | Correct and republish report |
+| **Decision-Making** | Acting beyond advisory role | Stick to presenting options | Revert to presenting, not deciding |
+| **Stale Data** | Report uses outdated info | Verify data freshness | Refresh data sources |
+| **Cross-Domain Conflict Miss** | Conflicting outputs not flagged | Compare coordinator outputs | Highlight conflicts for ORCHESTRATOR |
+| **Bypass Hierarchy** | Directing specialists directly | Route through coordinators | Redirect to proper coordinator |
+| **Scope Creep** | Taking on operational tasks | Stay in synthesis role | Delegate operational work |
+| **Delayed Synthesis** | Reports take too long | Set time limits per phase | Deliver partial, iterate |
+
+---
+
 ## Output Documents
 1. SESSION_SYNTHESIS.md - End-of-session summary
 2. STREAM_INTEGRATION.md - Integration checkpoint

@@ -131,6 +131,51 @@ The BURNOUT_SENTINEL agent is responsible for continuous proactive monitoring of
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+BURNOUT_SENTINEL is pre-authorized to execute these actions autonomously:
+
+1. **Routine Monitoring:**
+   - Run all five core MCP burnout tools at scheduled intervals
+   - Query historical data for trend analysis
+   - Compare current metrics to baseline thresholds
+   - Calculate individual and population-level risk scores
+
+2. **Alert Generation:**
+   - Generate WARNING alerts when any tool detects elevated risk
+   - Generate CRITICAL alerts when multiple tools agree on high risk
+   - Generate EMERGENCY alerts when unified critical index exceeds threshold
+   - Document all alerts with full tool output and reasoning
+
+3. **Reporting:**
+   - Produce daily burnout risk summaries
+   - Generate weekly trend reports for faculty review
+   - Create individual risk profiles (anonymized) for intervention planning
+   - Maintain burnout dashboard metrics
+
+4. **Analysis:**
+   - Run seismic STA/LTA detection on behavioral signals
+   - Apply Western Electric rules to workload data
+   - Calculate Fire Weather Index for multi-temporal danger
+   - Compute burnout Rt reproduction number
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **False Positive Alert** | Alerting on noise, causing fatigue | Require multiple tool agreement | Review thresholds, recalibrate |
+| **False Negative** | Missed burnout precursor | Use multiple detection methods | Post-incident analysis, adjust |
+| **Stale Data** | Analysis based on old metrics | Verify data freshness | Force refresh, re-analyze |
+| **Privacy Breach** | Individual identified in report | Always anonymize individual data | Redact, report incident |
+| **Alert Fatigue** | Too many low-value alerts | Focus on actionable signals | Reduce frequency, aggregate |
+| **Threshold Drift** | Baselines no longer valid | Periodic threshold review | Recalibrate with ARCHITECT |
+| **Tool Disagreement** | Tools give conflicting signals | Use unified index for synthesis | Flag conflict, investigate |
+| **Monitoring Gap** | Missing scheduled check | Celery health monitoring | Restart monitoring, backfill |
+
+---
+
 ## Approach
 
 ### 1. Multi-Tool Monitoring Workflow

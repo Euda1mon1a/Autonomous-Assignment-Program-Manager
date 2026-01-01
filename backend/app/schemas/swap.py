@@ -24,7 +24,9 @@ class SwapTypeSchema(str, Enum):
 
 
 class SwapExecuteRequest(BaseModel):
-    source_faculty_id: UUID = Field(..., description="ID of faculty member requesting swap")
+    source_faculty_id: UUID = Field(
+        ..., description="ID of faculty member requesting swap"
+    )
     source_week: date = Field(..., description="Week date for source faculty")
     target_faculty_id: UUID = Field(
         ..., description="ID of faculty member to swap with"
@@ -32,7 +34,9 @@ class SwapExecuteRequest(BaseModel):
     target_week: date | None = Field(
         None, description="Week date for target faculty (required for one-to-one swaps)"
     )
-    swap_type: SwapTypeSchema = Field(..., description="Type of swap (one-to-one or absorb)")
+    swap_type: SwapTypeSchema = Field(
+        ..., description="Type of swap (one-to-one or absorb)"
+    )
     reason: str | None = Field(
         None, min_length=1, max_length=500, description="Reason for swap request"
     )
@@ -113,7 +117,9 @@ class SwapHistoryFilter(BaseModel):
 
 class SwapValidationResult(BaseModel):
     valid: bool = Field(..., description="Whether swap is valid")
-    errors: list[str] = Field(default_factory=list, description="List of validation errors")
+    errors: list[str] = Field(
+        default_factory=list, description="List of validation errors"
+    )
     warnings: list[str] = Field(
         default_factory=list, description="List of validation warnings"
     )

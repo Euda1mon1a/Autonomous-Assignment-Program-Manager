@@ -132,14 +132,14 @@ class ChartGenerator:
         svg_lines = [
             f'<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">',
             f'<rect width="{width}" height="{height}" fill="white"/>',
-            f'<text x="{width/2}" y="25" text-anchor="middle" font-size="16" font-weight="bold">{title}</text>',
+            f'<text x="{width / 2}" y="25" text-anchor="middle" font-size="16" font-weight="bold">{title}</text>',
         ]
 
         # Draw axes
         svg_lines.extend(
             [
-                f'<line x1="{margin}" y1="{margin}" x2="{margin}" y2="{height-margin}" stroke="black" stroke-width="2"/>',
-                f'<line x1="{margin}" y1="{height-margin}" x2="{width-margin}" y2="{height-margin}" stroke="black" stroke-width="2"/>',
+                f'<line x1="{margin}" y1="{margin}" x2="{margin}" y2="{height - margin}" stroke="black" stroke-width="2"/>',
+                f'<line x1="{margin}" y1="{height - margin}" x2="{width - margin}" y2="{height - margin}" stroke="black" stroke-width="2"/>',
             ]
         )
 
@@ -152,7 +152,10 @@ class ChartGenerator:
             points = []
 
             for i, val in enumerate(values):
-                x = margin + (i / (len(values) - 1 if len(values) > 1 else 1)) * plot_width
+                x = (
+                    margin
+                    + (i / (len(values) - 1 if len(values) > 1 else 1)) * plot_width
+                )
                 y = height - margin - ((val - min_val) / val_range) * plot_height
                 points.append(f"{x:.1f},{y:.1f}")
 
@@ -164,8 +167,8 @@ class ChartGenerator:
             # Legend
             svg_lines.extend(
                 [
-                    f'<rect x="{width-margin+10}" y="{legend_y-10}" width="15" height="15" fill="{color}"/>',
-                    f'<text x="{width-margin+30}" y="{legend_y}" font-size="12">{label}</text>',
+                    f'<rect x="{width - margin + 10}" y="{legend_y - 10}" width="15" height="15" fill="{color}"/>',
+                    f'<text x="{width - margin + 30}" y="{legend_y}" font-size="12">{label}</text>',
                 ]
             )
             legend_y += 25
@@ -212,14 +215,14 @@ class ChartGenerator:
         svg_lines = [
             f'<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">',
             f'<rect width="{width}" height="{height}" fill="white"/>',
-            f'<text x="{width/2}" y="25" text-anchor="middle" font-size="16" font-weight="bold">{title}</text>',
+            f'<text x="{width / 2}" y="25" text-anchor="middle" font-size="16" font-weight="bold">{title}</text>',
         ]
 
         # Draw axes
         svg_lines.extend(
             [
-                f'<line x1="{margin}" y1="{margin}" x2="{margin}" y2="{height-margin}" stroke="black" stroke-width="2"/>',
-                f'<line x1="{margin}" y1="{height-margin}" x2="{width-margin}" y2="{height-margin}" stroke="black" stroke-width="2"/>',
+                f'<line x1="{margin}" y1="{margin}" x2="{margin}" y2="{height - margin}" stroke="black" stroke-width="2"/>',
+                f'<line x1="{margin}" y1="{height - margin}" x2="{width - margin}" y2="{height - margin}" stroke="black" stroke-width="2"/>',
             ]
         )
 
@@ -232,7 +235,7 @@ class ChartGenerator:
             svg_lines.extend(
                 [
                     f'<rect x="{x:.1f}" y="{y:.1f}" width="{bar_width:.1f}" height="{bar_height:.1f}" fill="#1f77b4"/>',
-                    f'<text x="{x+bar_width/2:.1f}" y="{height-margin+20}" text-anchor="middle" font-size="10" transform="rotate(45 {x+bar_width/2:.1f} {height-margin+20})">{cat}</text>',
+                    f'<text x="{x + bar_width / 2:.1f}" y="{height - margin + 20}" text-anchor="middle" font-size="10" transform="rotate(45 {x + bar_width / 2:.1f} {height - margin + 20})">{cat}</text>',
                 ]
             )
 
@@ -278,7 +281,7 @@ class ChartGenerator:
         svg_lines = [
             f'<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">',
             f'<rect width="{width}" height="{height}" fill="white"/>',
-            f'<text x="{width/2}" y="25" text-anchor="middle" font-size="16" font-weight="bold">{title}</text>',
+            f'<text x="{width / 2}" y="25" text-anchor="middle" font-size="16" font-weight="bold">{title}</text>',
         ]
 
         # Draw pie slices
@@ -301,16 +304,18 @@ class ChartGenerator:
 
             large_arc = 1 if slice_angle > 180 else 0
 
-            path = f'M {cx},{cy} L {x1:.1f},{y1:.1f} A {radius},{radius} 0 {large_arc},1 {x2:.1f},{y2:.1f} Z'
-            svg_lines.append(f'<path d="{path}" fill="{color}" stroke="white" stroke-width="2"/>')
+            path = f"M {cx},{cy} L {x1:.1f},{y1:.1f} A {radius},{radius} 0 {large_arc},1 {x2:.1f},{y2:.1f} Z"
+            svg_lines.append(
+                f'<path d="{path}" fill="{color}" stroke="white" stroke-width="2"/>'
+            )
 
             # Legend
             legend_x = 20
             legend_y = 100 + idx * 30
             svg_lines.extend(
                 [
-                    f'<rect x="{legend_x}" y="{legend_y-10}" width="15" height="15" fill="{color}"/>',
-                    f'<text x="{legend_x+20}" y="{legend_y}" font-size="12">{label}: {pct:.1f}%</text>',
+                    f'<rect x="{legend_x}" y="{legend_y - 10}" width="15" height="15" fill="{color}"/>',
+                    f'<text x="{legend_x + 20}" y="{legend_y}" font-size="12">{label}: {pct:.1f}%</text>',
                 ]
             )
 

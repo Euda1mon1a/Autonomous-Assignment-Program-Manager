@@ -183,7 +183,10 @@ class AssignmentService:
             invalidate_schedule_cache()
             logger.debug(f"Cache invalidated after creating assignment {assignment.id}")
         except (RuntimeError, ConnectionError, ValueError) as e:
-            logger.warning(f"Failed to invalidate cache after assignment creation: {e}", exc_info=True)
+            logger.warning(
+                f"Failed to invalidate cache after assignment creation: {e}",
+                exc_info=True,
+            )
 
         return {
             "assignment": assignment,
@@ -285,7 +288,10 @@ class AssignmentService:
             invalidate_schedule_cache()
             logger.debug(f"Cache invalidated after updating assignment {assignment.id}")
         except (RuntimeError, ConnectionError, ValueError) as e:
-            logger.warning(f"Failed to invalidate cache after assignment update: {e}", exc_info=True)
+            logger.warning(
+                f"Failed to invalidate cache after assignment update: {e}",
+                exc_info=True,
+            )
 
         return {
             "assignment": assignment,
@@ -350,7 +356,10 @@ class AssignmentService:
             invalidate_schedule_cache()
             logger.debug(f"Cache invalidated after deleting assignment {assignment_id}")
         except (RuntimeError, ConnectionError, ValueError) as e:
-            logger.warning(f"Failed to invalidate cache after assignment deletion: {e}", exc_info=True)
+            logger.warning(
+                f"Failed to invalidate cache after assignment deletion: {e}",
+                exc_info=True,
+            )
 
         return {
             "success": True,
@@ -420,7 +429,10 @@ class AssignmentService:
                     f"Cache invalidated after bulk deleting {deleted_count} assignments"
                 )
             except (RuntimeError, ConnectionError, ValueError) as e:
-                logger.warning(f"Failed to invalidate cache after bulk deletion: {e}", exc_info=True)
+                logger.warning(
+                    f"Failed to invalidate cache after bulk deletion: {e}",
+                    exc_info=True,
+                )
 
         return {"deleted": deleted_count, "error": None, "freeze_status": None}
 

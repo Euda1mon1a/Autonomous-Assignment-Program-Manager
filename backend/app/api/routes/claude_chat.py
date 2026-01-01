@@ -340,7 +340,11 @@ async def execute_tool(tool_name: str, tool_input: dict, db) -> dict[str, Any]:
                 end_date = start_date + timedelta(days=30)
 
             # Get faculty and assignments for the period
-            faculty = (await db.execute(select(Person).where(Person.type == "faculty"))).scalars().all()
+            faculty = (
+                (await db.execute(select(Person).where(Person.type == "faculty")))
+                .scalars()
+                .all()
+            )
             blocks = (
                 db.query(Block)
                 .filter(Block.date >= start_date, Block.date <= end_date)

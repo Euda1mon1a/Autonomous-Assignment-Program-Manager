@@ -3,10 +3,12 @@
 Audit script to identify synchronous routes and database calls.
 Part of Session 44: Backend Async Migration
 """
+
 import os
 import re
 from pathlib import Path
 from typing import Dict, List, Tuple
+
 
 def analyze_route_file(file_path: Path) -> dict[str, any]:
     """Analyze a single route file for sync/async patterns."""
@@ -14,20 +16,22 @@ def analyze_route_file(file_path: Path) -> dict[str, any]:
         content = f.read()
 
     # Find all route handlers
-    route_pattern = r'@router\.(get|post|put|delete|patch)\([^)]+\)\s*\n\s*(async\s+)?def\s+(\w+)'
+    route_pattern = (
+        r"@router\.(get|post|put|delete|patch)\([^)]+\)\s*\n\s*(async\s+)?def\s+(\w+)"
+    )
     routes = re.findall(route_pattern, content)
 
     # Find db.query() calls (sync SQLAlchemy)
-    db_query_calls = re.findall(r'db\.query\(', content)
+    db_query_calls = re.findall(r"db\.query\(", content)
 
     # Find await db.execute() calls (async SQLAlchemy)
-    db_execute_calls = re.findall(r'await\s+db\.execute\(', content)
+    db_execute_calls = re.findall(r"await\s+db\.execute\(", content)
 
     # Find Session imports (sync)
-    sync_session_import = 'from sqlalchemy.orm import Session' in content
+    sync_session_import = "from sqlalchemy.orm import Session" in content
 
     # Find AsyncSession imports
-    async_session_import = 'AsyncSession' in content
+    async_session_import = "AsyncSession" in content
 
     # Categorize routes
     sync_routes = []
@@ -40,20 +44,23 @@ def analyze_route_file(file_path: Path) -> dict[str, any]:
             sync_routes.append(f"{method.upper()} {func_name}")
 
     return {
-        'file': file_path.name,
-        'path': str(file_path),
-        'sync_routes': sync_routes,
-        'async_routes': async_routes,
-        'db_query_count': len(db_query_calls),
-        'db_execute_count': len(db_execute_calls),
-        'has_sync_session': sync_session_import,
-        'has_async_session': async_session_import,
-        'total_routes': len(routes),
-        'needs_migration': len(sync_routes) > 0 or len(db_query_calls) > 0
+        "file": file_path.name,
+        "path": str(file_path),
+        "sync_routes": sync_routes,
+        "async_routes": async_routes,
+        "db_query_count": len(db_query_calls),
+        "db_execute_count": len(db_execute_calls),
+        "has_sync_session": sync_session_import,
+        "has_async_session": async_session_import,
+        "total_routes": len(routes),
+        "needs_migration": len(sync_routes) > 0 or len(db_query_calls) > 0,
     }
 
+
 def main():
-    routes_dir = Path('/home/user/Autonomous-Assignment-Program-Manager/backend/app/api/routes')
+    routes_dir = Path(
+        "/home/user/Autonomous-Assignment-Program-Manager/backend/app/api/routes"
+    )
 
     print("=" * 80)
     print("BACKEND ASYNC MIGRATION AUDIT - SESSION 44")
@@ -67,19 +74,19 @@ def main():
     total_db_execute = 0
     files_needing_migration = []
 
-    for route_file in sorted(routes_dir.glob('*.py')):
-        if route_file.name == '__init__.py':
+    for route_file in sorted(routes_dir.glob("*.py")):
+        if route_file.name == "__init__.py":
             continue
 
         result = analyze_route_file(route_file)
         all_files.append(result)
 
-        total_sync_routes += len(result['sync_routes'])
-        total_async_routes += len(result['async_routes'])
-        total_db_query += result['db_query_count']
-        total_db_execute += result['db_execute_count']
+        total_sync_routes += len(result["sync_routes"])
+        total_async_routes += len(result["async_routes"])
+        total_db_query += result["db_query_count"]
+        total_db_execute += result["db_execute_count"]
 
-        if result['needs_migration']:
+        if result["needs_migration"]:
             files_needing_migration.append(result)
 
     # Print summary
@@ -99,33 +106,44 @@ def main():
 
     priority_files = sorted(
         files_needing_migration,
-        key=lambda x: len(x['sync_routes']) + x['db_query_count'],
-        reverse=True
+        key=lambda x: len(x["sync_routes"]) + x["db_query_count"],
+        reverse=True,
     )[:20]
 
     for i, result in enumerate(priority_files, 1):
         print(f"\n{i}. {result['file']}")
         print(f"   Sync routes: {len(result['sync_routes'])}")
         print(f"   db.query() calls: {result['db_query_count']}")
-        if result['sync_routes']:
+        if result["sync_routes"]:
             print(f"   Routes to migrate: {', '.join(result['sync_routes'][:5])}")
-            if len(result['sync_routes']) > 5:
-                print(f"                      ... and {len(result['sync_routes']) - 5} more")
+            if len(result["sync_routes"]) > 5:
+                print(
+                    f"                      ... and {len(result['sync_routes']) - 5} more"
+                )
 
     print()
     print("=" * 80)
     print("📋 CRITICAL FILES (ACGME Compliance Risk)")
     print("=" * 80)
 
-    critical_files = ['auth.py', 'swap.py', 'schedule.py', 'assignments.py',
-                      'compliance.py', 'resilience.py', 'people.py']
+    critical_files = [
+        "auth.py",
+        "swap.py",
+        "schedule.py",
+        "assignments.py",
+        "compliance.py",
+        "resilience.py",
+        "people.py",
+    ]
 
     for filename in critical_files:
-        matching = [f for f in all_files if f['file'] == filename]
+        matching = [f for f in all_files if f["file"] == filename]
         if matching:
             result = matching[0]
             print(f"\n{result['file']}:")
-            print(f"   Status: {'⚠️  NEEDS MIGRATION' if result['needs_migration'] else '✅ Already async'}")
+            print(
+                f"   Status: {'⚠️  NEEDS MIGRATION' if result['needs_migration'] else '✅ Already async'}"
+            )
             print(f"   Sync routes: {len(result['sync_routes'])}")
             print(f"   Async routes: {len(result['async_routes'])}")
             print(f"   db.query() calls: {result['db_query_count']}")
@@ -137,12 +155,15 @@ def main():
     print("=" * 80)
 
     # Write detailed report
-    with open('/home/user/Autonomous-Assignment-Program-Manager/backend/ASYNC_MIGRATION_REPORT.txt', 'w') as f:
+    with open(
+        "/home/user/Autonomous-Assignment-Program-Manager/backend/ASYNC_MIGRATION_REPORT.txt",
+        "w",
+    ) as f:
         f.write("BACKEND ASYNC MIGRATION DETAILED REPORT\n")
         f.write("=" * 80 + "\n\n")
 
-        for result in sorted(all_files, key=lambda x: x['file']):
-            if result['needs_migration']:
+        for result in sorted(all_files, key=lambda x: x["file"]):
+            if result["needs_migration"]:
                 f.write(f"\n{'=' * 80}\n")
                 f.write(f"FILE: {result['file']}\n")
                 f.write(f"PATH: {result['path']}\n")
@@ -156,9 +177,9 @@ def main():
                 f.write(f"Has sync Session: {result['has_sync_session']}\n")
                 f.write(f"Has AsyncSession: {result['has_async_session']}\n")
 
-                if result['sync_routes']:
+                if result["sync_routes"]:
                     f.write("\nSync routes to migrate:\n")
-                    for route in result['sync_routes']:
+                    for route in result["sync_routes"]:
                         f.write(f"  - {route}\n")
 
                 f.write("\n")
@@ -166,5 +187,6 @@ def main():
     print("\n✅ Detailed report written to: backend/ASYNC_MIGRATION_REPORT.txt")
     print()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

@@ -233,7 +233,9 @@ class Chromosome:
         """Get template index for a resident-block pair (0 = unassigned)."""
         return int(self.genes[resident_idx, block_idx])
 
-    def set_assignment(self, resident_idx: int, block_idx: int, template_idx: int) -> None:
+    def set_assignment(
+        self, resident_idx: int, block_idx: int, template_idx: int
+    ) -> None:
         """Set template index for a resident-block pair."""
         self.genes[resident_idx, block_idx] = template_idx
 
@@ -686,7 +688,9 @@ class BioInspiredSolver(BaseSolver, ABC):
         population = []
         for i in range(self.population_size):
             # Vary density for diversity
-            ind_density = density * (DENSITY_VARIATION_MIN + DENSITY_VARIATION_RANGE * random.random())
+            ind_density = density * (
+                DENSITY_VARIATION_MIN + DENSITY_VARIATION_RANGE * random.random()
+            )
 
             chromosome = Chromosome.create_random(
                 n_residents=n_residents,

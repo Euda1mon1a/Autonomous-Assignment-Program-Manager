@@ -495,11 +495,17 @@ class QUBOTemplateFormulation:
         ]
 
         # Check if context has explicit preference data
-        has_preferences = hasattr(self.context, "preferences") and self.context.preferences
+        has_preferences = (
+            hasattr(self.context, "preferences") and self.context.preferences
+        )
 
         for (r_i, p_i, t_i), idx in self.var_index.items():
             template = valid_templates[t_i] if t_i < len(valid_templates) else None
-            resident = self.context.residents[r_i] if r_i < len(self.context.residents) else None
+            resident = (
+                self.context.residents[r_i]
+                if r_i < len(self.context.residents)
+                else None
+            )
 
             if template and resident:
                 # Use explicit preferences if available

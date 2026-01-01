@@ -404,7 +404,9 @@ async def handle_emergency_coverage(
 
 
 @router.get("/{start_date}/{end_date}")
-async def get_schedule(start_date: str, end_date: str, db: AsyncSession = Depends(get_async_db)):
+async def get_schedule(
+    start_date: str, end_date: str, db: AsyncSession = Depends(get_async_db)
+):
     """
     Get the schedule for a date range.
 
@@ -801,7 +803,9 @@ async def parse_block_schedule_endpoint(
             finally:
                 os.unlink(tmp_path)
         except (KeyError, ValueError, IndexError) as e:
-            logger.debug(f"FMIT sheet not found or parse error (expected for some blocks): {e}")
+            logger.debug(
+                f"FMIT sheet not found or parse error (expected for some blocks): {e}"
+            )
             pass  # FMIT sheet not found, that's OK
 
     # Convert to response schema
@@ -1032,7 +1036,9 @@ async def find_swap_candidates_json(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid person_id format")
 
-    requester = (await db.execute(select(Person).where(Person.id == person_uuid))).scalar_one_or_none()
+    requester = (
+        await db.execute(select(Person).where(Person.id == person_uuid))
+    ).scalar_one_or_none()
     if not requester:
         raise HTTPException(
             status_code=404, detail=f"Person {request.person_id} not found"
@@ -1049,15 +1055,17 @@ async def find_swap_candidates_json(
             raise HTTPException(status_code=400, detail="Invalid assignment_id format")
 
         target_assignment = (
-            (await db.execute(select(Assignment).where(Assignment.id == assignment_uuid))).scalar_one_or_none()
-        )
+            await db.execute(select(Assignment).where(Assignment.id == assignment_uuid))
+        ).scalar_one_or_none()
         if not target_assignment:
             raise HTTPException(
                 status_code=404, detail=f"Assignment {request.assignment_id} not found"
             )
         target_block = (
-            (await db.execute(select(Block).where(Block.id == target_assignment.block_id))).scalar_one_or_none()
-        )
+            await db.execute(
+                select(Block).where(Block.id == target_assignment.block_id)
+            )
+        ).scalar_one_or_none()
 
     elif request.block_id:
         try:
@@ -1065,7 +1073,9 @@ async def find_swap_candidates_json(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid block_id format")
 
-        target_block = (await db.execute(select(Block).where(Block.id == block_uuid))).scalar_one_or_none()
+        target_block = (
+            await db.execute(select(Block).where(Block.id == block_uuid))
+        ).scalar_one_or_none()
         if not target_block:
             raise HTTPException(
                 status_code=404, detail=f"Block {request.block_id} not found"

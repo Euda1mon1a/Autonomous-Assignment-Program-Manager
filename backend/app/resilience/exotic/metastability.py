@@ -79,7 +79,11 @@ class MetastabilityDetector:
         Returns:
             MetastableState characterization
         """
-        logger.info("Analyzing metastability: current_energy=%.2f, landscape_size=%d", current_energy, len(energy_landscape))
+        logger.info(
+            "Analyzing metastability: current_energy=%.2f, landscape_size=%d",
+            current_energy,
+            len(energy_landscape),
+        )
         if not energy_landscape or not barrier_samples:
             # Insufficient data
             logger.warning("Insufficient data for metastability analysis")

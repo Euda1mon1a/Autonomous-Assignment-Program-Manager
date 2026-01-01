@@ -31,7 +31,9 @@ try:
     HAS_SCIPY = True
 except ImportError:
     HAS_SCIPY = False
-    logger.warning("scipy not installed - Bayesian optimization will use random perturbation")
+    logger.warning(
+        "scipy not installed - Bayesian optimization will use random perturbation"
+    )
 
 
 class AdaptationAction(str, Enum):
@@ -494,7 +496,9 @@ class BayesianAdapter(ParameterAdapter):
             )
 
         except Exception as e:
-            logger.warning(f"Bayesian optimization failed: {e}, using random perturbation")
+            logger.warning(
+                f"Bayesian optimization failed: {e}, using random perturbation"
+            )
             return self._random_perturbation(current)
 
     def _random_perturbation(self, current: GeneratorParams) -> GeneratorParams:

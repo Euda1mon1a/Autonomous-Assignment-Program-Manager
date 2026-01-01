@@ -833,7 +833,9 @@ class SearchIndexer:
                     logger.error(f"Redis error processing batch: {e}", exc_info=True)
                     error_count += len(batch)
                 except (json.JSONDecodeError, ValueError, TypeError) as e:
-                    logger.error(f"Data validation error processing batch: {e}", exc_info=True)
+                    logger.error(
+                        f"Data validation error processing batch: {e}", exc_info=True
+                    )
                     error_count += len(batch)
 
             # Update document count
@@ -883,7 +885,9 @@ class SearchIndexer:
             return result
 
         except redis.ConnectionError as e:
-            logger.error(f"Redis connection error during bulk index: {e}", exc_info=True)
+            logger.error(
+                f"Redis connection error during bulk index: {e}", exc_info=True
+            )
             raise
         except (json.JSONDecodeError, ValueError, TypeError) as e:
             logger.error(f"Data validation error during bulk index: {e}", exc_info=True)
@@ -1210,7 +1214,9 @@ class SearchIndexer:
             return False
 
         except redis.ConnectionError as e:
-            logger.warning(f"Redis connection error deleting document: {e}", exc_info=True)
+            logger.warning(
+                f"Redis connection error deleting document: {e}", exc_info=True
+            )
             return False
         except redis.RedisError as e:
             logger.error(f"Redis error deleting document: {e}", exc_info=True)
@@ -1385,7 +1391,9 @@ class SearchIndexer:
             logger.error(f"Redis error getting index versions: {e}", exc_info=True)
             return []
         except (json.JSONDecodeError, ValueError) as e:
-            logger.error(f"Data parsing error getting index versions: {e}", exc_info=True)
+            logger.error(
+                f"Data parsing error getting index versions: {e}", exc_info=True
+            )
             return []
 
     async def _update_alias(self, alias_name: str, target_index: str) -> None:
