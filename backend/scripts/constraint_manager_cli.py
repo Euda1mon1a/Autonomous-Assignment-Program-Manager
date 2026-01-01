@@ -169,7 +169,7 @@ def cmd_preset(args):
 
     if preset not in valid_presets:
         print(f"Error: Invalid preset '{preset}'")
-        print(f"\nValid presets:")
+        print("\nValid presets:")
         for p in valid_presets:
             print(f"  - {p}")
         return 1
@@ -201,7 +201,7 @@ def cmd_test_all(args):
         # Try to enable
         success = config.enable(constraint.name)
         if not success:
-            print(f"  ✗ Failed to enable")
+            print("  ✗ Failed to enable")
             failed.append(constraint.name)
             continue
 
@@ -215,7 +215,7 @@ def cmd_test_all(args):
         if missing_deps:
             print(f"  ⚠ Missing dependencies: {', '.join(missing_deps)}")
         else:
-            print(f"  ✓ Can be enabled")
+            print("  ✓ Can be enabled")
 
         # Disable again
         config.disable(constraint.name)

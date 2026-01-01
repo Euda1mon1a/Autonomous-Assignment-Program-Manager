@@ -319,7 +319,7 @@ class BackupScheduler:
                         "timestamp": now.isoformat(),
                     }
                 )
-            except (OSError, IOError) as e:
+            except OSError as e:
                 logger.error(f"File I/O error during daily backup: {e}", exc_info=True)
                 results.append(
                     {
@@ -373,7 +373,7 @@ class BackupScheduler:
                         "timestamp": now.isoformat(),
                     }
                 )
-            except (OSError, IOError) as e:
+            except OSError as e:
                 logger.error(f"File I/O error during weekly backup: {e}", exc_info=True)
                 results.append(
                     {
@@ -402,7 +402,7 @@ class BackupScheduler:
             try:
                 self._apply_retention_policy()
                 self._save_config()
-            except (OSError, IOError) as e:
+            except OSError as e:
                 logger.error(f"File I/O error applying retention policy: {e}", exc_info=True)
             except RuntimeError as e:
                 logger.error(f"Error applying retention policy: {e}", exc_info=True)

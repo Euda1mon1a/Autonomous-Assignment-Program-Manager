@@ -398,8 +398,9 @@ class DefenseInDepth:
 
         return results
 
+    @staticmethod
     @functools.lru_cache(maxsize=128)
-    def get_recommended_level(self, coverage_rate: float) -> DefenseLevel:
+    def get_recommended_level(coverage_rate: float) -> DefenseLevel:
         """
         Get the recommended active defense level based on coverage.
 

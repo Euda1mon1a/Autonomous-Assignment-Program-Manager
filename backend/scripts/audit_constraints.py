@@ -25,7 +25,7 @@ def analyze_constraint_manager():
     print("=" * 70)
 
     manager_file = backend_dir / "app" / "scheduling" / "constraints" / "manager.py"
-    with open(manager_file, 'r') as f:
+    with open(manager_file) as f:
         content = f.read()
 
     # Find all disable() calls
@@ -93,7 +93,7 @@ def check_enable_disable_logic():
 
     # Check ConstraintRegistry
     registry_file = backend_dir / "app" / "scheduling" / "constraint_registry.py"
-    with open(registry_file, 'r') as f:
+    with open(registry_file) as f:
         registry_content = f.read()
 
     has_enable = "def enable(" in registry_content
@@ -107,7 +107,7 @@ def check_enable_disable_logic():
 
     # Check ConstraintManager
     manager_file = backend_dir / "app" / "scheduling" / "constraints" / "manager.py"
-    with open(manager_file, 'r') as f:
+    with open(manager_file) as f:
         manager_content = f.read()
 
     has_manager_enable = "def enable(" in manager_content

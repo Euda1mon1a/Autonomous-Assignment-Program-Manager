@@ -135,7 +135,7 @@ def migrate_db_commit_rollback(content: str) -> str:
     return content
 
 
-def migrate_file(file_path: Path) -> Tuple[bool, str]:
+def migrate_file(file_path: Path) -> tuple[bool, str]:
     """
     Migrate a single route file from sync to async.
 
@@ -143,7 +143,7 @@ def migrate_file(file_path: Path) -> Tuple[bool, str]:
         (success: bool, message: str)
     """
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path) as f:
             content = f.read()
 
         original_content = content

@@ -376,7 +376,7 @@ async def check_disk_space(
             },
         )
 
-    except (OSError, IOError) as e:
+    except OSError as e:
         response_time = (time.time() - start_time) * 1000
 
         return HealthCheckResult(
