@@ -5,7 +5,7 @@
 > **Archetype:** Generator
 > **Status:** Active
 > **Model Tier:** haiku
-> **Reports To:** COORD_OPS
+> **Reports To:** COORD_TOOLING
 
 > **Note:** Specialists execute specific tasks. They are spawned by Coordinators and return results.
 
