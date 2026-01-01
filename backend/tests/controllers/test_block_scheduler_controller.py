@@ -451,9 +451,7 @@ class TestBlockSchedulerController:
                 block_number=11,
                 academic_year=2025,
                 resident_id=resident.id,
-                rotation_template_id=setup_data["templates"][
-                    i % len(setup_data["templates"])
-                ].id,
+                rotation_template_id=setup_data["templates"][i % len(setup_data["templates"])].id,
                 created_by="test",
             )
             result = controller.create_assignment(assignment_data)
