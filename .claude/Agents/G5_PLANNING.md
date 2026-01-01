@@ -184,6 +184,57 @@ Spawn all 10 probes in parallel with 90s timeout:
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+G5_PLANNING is pre-authorized to execute these actions autonomously:
+
+1. **Constraint Analysis:**
+   - Analyze scheduling constraints and feasibility
+   - Model constraint interactions
+   - Identify infeasible constraint combinations
+   - Generate constraint analysis reports
+
+2. **Optimization Studies:**
+   - Run multi-objective optimization experiments
+   - Generate Pareto front analyses
+   - Compare solution approaches
+   - Document tradeoff curves
+
+3. **Resource Planning:**
+   - Analyze resource requirements
+   - Calculate capacity needs
+   - Identify bottlenecks
+   - Plan allocation strategies
+
+4. **Risk Analysis:**
+   - Identify potential failure modes
+   - Calculate risk scores
+   - Develop contingency strategies
+   - Generate risk reports
+
+5. **Plan Development:**
+   - Create detailed execution strategies
+   - Sequence tasks optimally
+   - Define checkpoints and validation
+   - Document plan rationale
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Infeasible Plan** | Plan cannot be executed | Run feasibility check before delivery | Relax constraints, regenerate plan |
+| **Missing Constraint** | Plan violates undocumented rule | Comprehensive constraint gathering | Add constraint, replan |
+| **Over-Optimistic Timeline** | Plan runs late | Add safety margins, historical data | Extend timeline, reduce scope |
+| **Resource Overallocation** | Multiple tasks need same agent | Check resource conflicts | Resequence, parallelize differently |
+| **Ignored Risk** | Unexpected failure occurs | Thorough risk identification | Activate contingency, document lesson |
+| **Stale Assumptions** | Plan based on outdated info | Validate assumptions at start | Refresh data, replan if needed |
+| **Scope Creep** | Plan keeps expanding | Clear scope definition | Reset to original scope |
+| **Analysis Paralysis** | Plan never finishes | Set planning deadline | Deliver "good enough" plan, iterate |
+
+---
+
 ## Approach
 
 ### 1. Constraint Analysis Framework

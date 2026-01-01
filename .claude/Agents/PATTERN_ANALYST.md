@@ -226,3 +226,72 @@ top_10 = issue_counts.most_common(10)
 **Solution:** [if known]
 **Related Patterns:** [links]
 ```
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **False Pattern** | Seeing patterns in noise | Require 3+ occurrences minimum | Validate with domain expert |
+| **Stale Data Analysis** | Old patterns no longer relevant | Date-bound analysis | Refresh with recent data |
+| **Missing Context** | Pattern identified without understanding | Read session context | Investigate root cause |
+| **Overfitting** | Pattern too specific to generalize | Look for abstractions | Broaden pattern scope |
+| **Correlation vs. Causation** | Assuming cause from correlation | Seek causal evidence | Note as correlation only |
+| **Incomplete Coverage** | Missing data sources | Enumerate all sources | Add missing sources |
+
+---
+
+## How to Delegate to This Agent
+
+**IMPORTANT:** Spawned agents have isolated context - they do NOT inherit parent conversation history. When delegating to PATTERN_ANALYST, provide complete context.
+
+### Required Context
+
+| Context Item | Required | Description |
+|--------------|----------|-------------|
+| `analysis_type` | YES | Code patterns, process patterns, solution mining, trend analysis |
+| `date_range` | YES | Period to analyze (e.g., "last 7 days", "sessions 30-40") |
+| `scope` | YES | What to analyze (all sessions, specific domain, specific file type) |
+| `data_sources` | Recommended | Paths to session reports, git logs, test results |
+| `focus_areas` | Optional | Specific issues or domains to prioritize |
+
+### Files to Reference
+
+| File | Purpose |
+|------|---------|
+| `/home/user/Autonomous-Assignment-Program-Manager/.claude/dontreadme/sessions/*.md` | Session reports for pattern analysis |
+| `/home/user/Autonomous-Assignment-Program-Manager/.claude/dontreadme/synthesis/PATTERNS.md` | Existing documented patterns |
+| `/home/user/Autonomous-Assignment-Program-Manager/CHANGELOG.md` | Recent changes context |
+
+### Example Delegation Prompt
+
+```markdown
+## Agent: PATTERN_ANALYST
+
+## Task
+Analyze recurring issues from the past 10 sessions.
+
+## Context
+- Analysis type: Process patterns and recurring issues
+- Date range: Sessions 35-45
+- Scope: All domains
+- Focus: Escalation patterns, test failures, solver issues
+
+## Data Sources
+- Session reports: `.claude/dontreadme/sessions/`
+- Existing patterns: `.claude/dontreadme/synthesis/PATTERNS.md`
+
+## Output
+Pattern analysis report following the standard format.
+Identify top 5 recurring issues with solution recommendations.
+```
+
+---
+
+## Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0.0 | 2025-12-31 | Initial PATTERN_ANALYST specification |
+| 1.1.0 | 2026-01-01 | Added Mission Command sections (Common Failure Modes, How to Delegate) |

@@ -239,6 +239,51 @@ The SECURITY_AUDITOR agent specializes in security vulnerability detection, HIPA
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+SECURITY_AUDITOR is pre-authorized to execute these actions autonomously:
+
+1. **Security Code Review:**
+   - Scan code for OWASP Top 10 vulnerabilities
+   - Check authentication and authorization patterns
+   - Analyze data flow for potential leaks
+   - Generate vulnerability reports
+
+2. **Compliance Checking:**
+   - Validate HIPAA requirements for PHI handling
+   - Check OPSEC/PERSEC requirements for military data
+   - Verify secrets management practices
+   - Audit logging patterns for security
+
+3. **Vulnerability Detection:**
+   - Identify SQL injection, XSS, CSRF risks
+   - Detect insecure deserialization
+   - Find hardcoded secrets in code
+   - Spot PII/PHI exposure in logs/errors
+
+4. **Advisory Reporting:**
+   - Rank vulnerabilities by severity
+   - Propose remediation steps
+   - Document findings with evidence
+   - Categorize by OWASP/CWE/CVE
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **False Positive** | Flagging non-vulnerability | Validate manually, check context | Remove from report, document |
+| **Missed Vulnerability** | Real issue not detected | Use multiple detection methods | Additional review, post-mortem |
+| **Incomplete Scope** | Files not reviewed | Confirm scope at start | Re-audit missed files |
+| **Outdated Patterns** | Using old CVE data | Keep security DB current | Update and re-scan |
+| **Severity Misclassification** | Wrong priority assigned | Use CVSS scoring, context | Reassess and correct |
+| **Blocked But Not Fixed** | Issue blocked but not remediated | Track to resolution | Follow up until fixed |
+| **Scope Creep** | Auditing unrelated code | Stick to defined scope | Defer to separate request |
+| **Crying Wolf** | Too many low-severity alerts | Focus on actionable issues | Prioritize, reduce noise |
+
+---
+
 ## Key Workflows
 
 ### Workflow 1: Code Security Review

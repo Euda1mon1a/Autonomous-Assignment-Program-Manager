@@ -149,6 +149,51 @@ The G3_OPERATIONS agent is the "Operations Officer" function for the PAI (Parall
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+G3_OPERATIONS is pre-authorized to execute these actions autonomously:
+
+1. **Approved Workflow Execution:**
+   - Execute G5-approved operational workflows
+   - Manage task sequencing and dependencies
+   - Validate preconditions before each phase
+   - Apply standard recovery procedures
+
+2. **Real-Time Monitoring:**
+   - Monitor active workflows in progress
+   - Update status dashboards
+   - Generate progress reports
+   - Track resource utilization
+
+3. **Task Coordination:**
+   - Delegate to subordinate agents with complete context
+   - Collect and validate task results
+   - Resolve minor scheduling conflicts
+   - Optimize task ordering within workflow
+
+4. **Minor Recovery Actions:**
+   - Retry transient failures with backoff
+   - Free resources for bottleneck tasks
+   - Resequence non-critical tasks
+   - Cache and reuse results
+
+---
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Skipped Precondition Check** | Workflow fails mid-execution | Always validate preconditions | Halt and rollback to checkpoint |
+| **Context Isolation Error** | Subagent doesn't understand task | Provide complete context explicitly | Respawn agent with full context |
+| **Cascade Failure** | One failure triggers many others | Implement circuit breakers | Halt workflow, assess impact |
+| **Deadlock** | Tasks waiting for each other | Detect cycles in dependencies | Break deadlock, escalate |
+| **Resource Exhaustion** | Tasks queued indefinitely | Monitor resource utilization | Scale resources or deprioritize |
+| **Stale Status** | Dashboard shows outdated info | Frequent status updates | Force refresh, fix update mechanism |
+| **Recovery Loop** | Same failure keeps recurring | Limit retry attempts | Escalate after N retries |
+| **Orphaned Task** | Task running with no monitoring | Track all spawned tasks | Kill orphaned tasks, restart |
+
+---
+
 ## Approach
 
 ### 1. Workflow Execution Framework
