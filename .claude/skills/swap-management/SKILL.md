@@ -257,3 +257,469 @@ Extra scrutiny for swaps affecting:
 | `execute_swap` | Perform the swap |
 | `rollback_swap` | Reverse within 24h window |
 | `get_swap_history` | Audit trail query |
+
+## Concrete Usage Example
+
+### End-to-End: Processing a Conference Swap Request
+
+**Scenario:** Dr. Smith needs Thursday PM off for a required conference. Find a compatible swap partner and execute the swap safely.
+
+**Step 1: Receive Swap Request**
+```python
+# Via API or admin interface
+from app.models import SwapRequest
+from datetime import date
+
+swap_request = SwapRequest(
+    requestor_id="person-001",  # Dr. Smith
+    target_date=date(2025, 2, 13),  # Thursday
+    target_session="PM",
+    swap_type="one_to_one",
+    reason="ACFP Conference (required)",
+    preferred_partners=[]  # Will auto-match
+)
+```
+
+**Step 2: Find Compatible Partners**
+```python
+from app.services.swap_matcher import SwapMatcher
+
+matcher = SwapMatcher(db)
+matches = await matcher.find_compatible_partners(
+    requestor_id="person-001",
+    target_shift={
+        "date": date(2025, 2, 13),
+        "session": "PM",
+        "rotation": "FM Clinic"
+    },
+    max_matches=5
+)
+
+print(f"Found {len(matches)} compatible partners:")
+for match in matches:
+    print(f"  {match.person_id}: {match.compatibility_score:.2f}")
+    print(f"    - Current hours: {match.current_weekly_hours}/80")
+    print(f"    - Qualified: {match.is_qualified}")
+    print(f"    - Suggested return shift: {match.suggested_return_shift}")
+```
+
+**Expected Output:**
+```
+Found 3 compatible partners:
+  person-002: 0.92
+    - Current hours: 68/80
+    - Qualified: True
+    - Suggested return shift: 2025-02-18 AM (Tuesday)
+
+  person-005: 0.87
+    - Current hours: 65/80
+    - Qualified: True
+    - Suggested return shift: 2025-02-19 PM (Wednesday)
+
+  person-003: 0.75
+    - Current hours: 72/80
+    - Qualified: True
+    - Suggested return shift: 2025-02-20 AM (Thursday)
+```
+
+**Step 3: Present Options to Requestor**
+```python
+# Dr. Smith reviews matches and selects person-002
+swap_request.partner_id = "person-002"
+swap_request.return_shift = {
+    "date": date(2025, 2, 18),
+    "session": "AM"
+}
+```
+
+**Step 4: Validate Swap**
+```python
+from app.services.swap_validator import SwapValidator
+
+validator = SwapValidator(db)
+validation_result = await validator.validate_swap(swap_request)
+
+if validation_result.is_valid:
+    print("✅ Swap validation: PASS")
+else:
+    print("❌ Swap validation: FAIL")
+    for issue in validation_result.issues:
+        print(f"   - {issue.severity}: {issue.description}")
+
+# Check warnings even if valid
+if validation_result.warnings:
+    print("⚠️ Warnings:")
+    for warning in validation_result.warnings:
+        print(f"   - {warning}")
+```
+
+**Expected Output:**
+```
+✅ Swap validation: PASS
+
+⚠️ Warnings:
+   - person-002 will have 3 swaps this month (approaching limit of 4)
+```
+
+**Step 5: Get Partner Consent**
+```python
+# Send notification to partner
+from app.notifications import send_swap_request_notification
+
+await send_swap_request_notification(
+    to_person_id="person-002",
+    swap_request=swap_request,
+    expiration_hours=48
+)
+
+print("Notification sent. Waiting for response...")
+
+# Partner responds (via API or UI)
+# Assume they accept
+swap_request.partner_status = "accepted"
+swap_request.partner_accepted_at = datetime.now()
+```
+
+**Step 6: Execute Swap**
+```python
+from app.services.swap_executor import SwapExecutor
+
+executor = SwapExecutor(db)
+result = await executor.execute_swap(swap_request)
+
+if result.success:
+    print(f"✅ Swap executed successfully!")
+    print(f"   Swap ID: {result.swap_id}")
+    print(f"   Audit trail: {result.audit_trail_id}")
+
+    # What changed:
+    for change in result.changes:
+        print(f"   - {change.person_id}: {change.from_assignment} → {change.to_assignment}")
+else:
+    print(f"❌ Swap failed: {result.error}")
+```
+
+**Expected Output:**
+```
+✅ Swap executed successfully!
+   Swap ID: swap-12345
+   Audit trail: audit-67890
+
+   Changes:
+   - person-001: 2025-02-13 PM FM Clinic → [unassigned]
+   - person-002: 2025-02-13 PM [unassigned] → 2025-02-13 PM FM Clinic
+   - person-001: 2025-02-18 AM [unassigned] → 2025-02-18 AM FM Clinic
+   - person-002: 2025-02-18 AM FM Clinic → [unassigned]
+```
+
+**Step 7: Post-Execution Verification**
+```python
+# Re-validate ACGME compliance for both parties
+from app.scheduling.acgme_validator import ACGMEValidator
+
+acgme_validator = ACGMEValidator()
+
+for person_id in ["person-001", "person-002"]:
+    assignments = await db.get_assignments_for_person(
+        person_id,
+        start_date=date(2025, 2, 1),
+        end_date=date(2025, 2, 28)
+    )
+
+    compliance_result = acgme_validator.validate_person_schedule(
+        person_id=person_id,
+        assignments=assignments
+    )
+
+    if compliance_result.is_compliant:
+        print(f"✅ {person_id}: ACGME compliant")
+    else:
+        print(f"❌ {person_id}: VIOLATIONS DETECTED - ROLLBACK NEEDED!")
+        await executor.rollback_swap(result.swap_id)
+        break
+```
+
+**Expected Output:**
+```
+✅ person-001: ACGME compliant
+✅ person-002: ACGME compliant
+```
+
+**Step 8: Send Confirmations**
+```python
+# Notify both parties
+await send_swap_confirmation_notification(
+    swap_id=result.swap_id,
+    participants=["person-001", "person-002"],
+    calendar_updates=True  # Send updated calendar invites
+)
+
+print("Swap complete! Confirmations sent.")
+```
+
+**Total Time:** ~5-10 minutes (most is waiting for partner response)
+
+## Workflow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ SWAP REQUEST WORKFLOW                                       │
+└─────────────────────────────────────────────────────────────┘
+
+1. REQUEST SUBMISSION
+   ├─ Requestor specifies shift to give away
+   ├─ Optional: Suggest preferred partners
+   └─ Provide reason/justification
+              ↓
+2. AUTO-MATCHING (if no partner specified)
+   ├─ Find qualified personnel
+   ├─ Check hour limits
+   ├─ Score compatibility
+   └─ Return top 5 matches
+              ↓
+3. PARTNER SELECTION
+   ├─ Requestor reviews matches
+   ├─ Selects preferred partner
+   └─ Proposes return shift
+              ↓
+4. VALIDATION
+   ├─ Check qualifications
+   ├─ Verify ACGME compliance impact
+   ├─ Confirm no double-booking
+   └─ Generate warnings if any
+              ↓
+5. PARTNER CONSENT
+   ├─ Send notification to partner
+   ├─ 48-hour response window
+   ├─ Partner accepts/declines/counters
+   └─ If declined, return to step 2
+              ↓
+6. EXECUTION
+   ├─ Begin database transaction
+   ├─ Update assignments for both parties
+   ├─ Create audit trail
+   └─ Commit or rollback on error
+              ↓
+7. POST-EXECUTION VERIFICATION
+   ├─ Re-validate ACGME compliance
+   ├─ Check coverage maintained
+   ├─ Update metrics
+   └─ If issues, rollback immediately
+              ↓
+8. NOTIFICATIONS
+   ├─ Send confirmations to both parties
+   ├─ Update calendar invites
+   ├─ Log in swap history
+   └─ 24-hour rollback window begins
+```
+
+## Common Failure Modes
+
+### Failure Mode 1: No Compatible Matches Found
+**Symptom:** Auto-matcher returns empty list or very low compatibility scores
+
+**Cause:** Shift is highly specialized, everyone at hour limits, or unusual constraints
+
+**Example:**
+```python
+matches = await matcher.find_compatible_partners(...)
+# Returns: []
+```
+
+**Resolution:**
+1. **Relax constraints temporarily:**
+   ```python
+   matches = await matcher.find_compatible_partners(
+       ...,
+       allow_near_limit=True,  # Include people at 75+ hours
+       extend_search_window=True  # Look 2 weeks out instead of 1
+   )
+   ```
+
+2. **Emergency protocol:**
+   ```python
+   # Broadcast to all qualified faculty
+   await broadcast_emergency_coverage_request(
+       shift=target_shift,
+       reason="No matches found via auto-matcher"
+   )
+   ```
+
+3. **Escalate to coordinator:**
+   ```python
+   await create_coordinator_intervention_ticket(
+       swap_request_id=swap_request.id,
+       reason="No compatible partners available"
+   )
+   ```
+
+### Failure Mode 2: Partner Declines After Validation
+**Symptom:** Swap validated successfully but partner says no
+
+**Cause:** Personal reasons, schedule preference, or found better alternative
+
+**Example:**
+```python
+swap_request.partner_status = "declined"
+swap_request.partner_decline_reason = "Prefer not to work that day"
+```
+
+**Resolution:**
+1. **Return to matching:**
+   ```python
+   # Exclude declined partner
+   matches = await matcher.find_compatible_partners(
+       ...,
+       exclude_person_ids=["person-002"]  # They already declined
+   )
+   ```
+
+2. **Counter-proposal:**
+   ```python
+   # Partner might propose different return shift
+   if swap_request.partner_counter_proposal:
+       print(f"Partner proposes: {swap_request.partner_counter_proposal}")
+       # Requestor can accept or decline
+   ```
+
+### Failure Mode 3: ACGME Violation After Execution
+**Symptom:** Swap executes but post-validation finds compliance issue
+
+**Cause:** Validation logic bug, edge case, or cascading effect on other assignments
+
+**Example:**
+```python
+# Swap executes
+result = await executor.execute_swap(swap_request)
+
+# But post-validation fails
+compliance_result = acgme_validator.validate_person_schedule(person_id)
+# Returns: violations found - 81 hours in week of 2025-02-17
+```
+
+**Resolution:**
+```python
+# Immediate rollback
+await executor.rollback_swap(result.swap_id, reason="ACGME violation detected")
+
+# Investigate why validation passed initially
+await log_validation_discrepancy(
+    swap_id=result.swap_id,
+    pre_validation=validation_result,
+    post_validation=compliance_result
+)
+
+# Fix validation logic before allowing future swaps
+```
+
+### Failure Mode 4: Double-Booking Created
+**Symptom:** After swap, person assigned to two shifts at same time
+
+**Cause:** Race condition, concurrent swap execution, or validation bug
+
+**Example:**
+```python
+# Person-002 now has:
+# 2025-02-13 PM: FM Clinic (from swap)
+# 2025-02-13 PM: Procedures (existing assignment not caught)
+```
+
+**Detection:**
+```python
+# Check for overlaps
+overlaps = await db.check_person_overlaps(person_id="person-002")
+if overlaps:
+    print(f"❌ CRITICAL: Double-booking detected!")
+    for overlap in overlaps:
+        print(f"   {overlap.date} {overlap.session}: {overlap.assignments}")
+```
+
+**Resolution:**
+```python
+# Rollback immediately
+await executor.rollback_swap(result.swap_id, reason="Double-booking detected")
+
+# Implement locking to prevent concurrent swaps
+# Add database-level unique constraint on (person_id, date, session)
+```
+
+### Failure Mode 5: Swap Imbalance Tracking
+**Symptom:** Person requests many swaps, always giving away shifts, never taking them
+
+**Cause:** Gaming the system, burnout avoidance, or workload inequity
+
+**Example:**
+```python
+swap_history = await db.get_swap_history(person_id="person-001")
+
+# Output:
+# Swaps requested: 12
+# Swaps given: 12 (always giving away shifts)
+# Swaps taken: 0 (never absorbing others' shifts)
+```
+
+**Detection:**
+```python
+# Calculate swap balance
+balance = swap_history.swaps_taken - swap_history.swaps_given
+if abs(balance) > 4:
+    print(f"⚠️ Swap imbalance: {balance}")
+```
+
+**Resolution:**
+```python
+# Enforce balance requirement
+if balance < -3:
+    raise ValidationError(
+        "You must accept incoming swaps before requesting more. "
+        "Current balance: -3 (you've given 3 more than taken)"
+    )
+
+# Or implement points system
+# Each swap given = -1 point
+# Each swap taken = +1 point
+# Require points >= -2 to request new swap
+```
+
+## Integration with Other Skills
+
+### With `schedule-optimization`
+**When:** Swaps have degraded schedule fairness
+**Workflow:**
+1. Execute swaps via swap-management
+2. Check fairness metrics (Gini coefficient)
+3. If fairness degraded significantly, invoke schedule-optimization
+4. Generate minimal-change rebalancing adjustments
+5. Execute as coordinated swaps
+
+### With `acgme-compliance`
+**When:** Every swap execution
+**Workflow:**
+1. Before swap: Invoke acgme-compliance to validate
+2. After swap: Invoke acgme-compliance to verify
+3. If violations detected, rollback immediately
+4. Document in audit trail
+
+### With `resilience-dashboard`
+**When:** Checking if swaps maintain backup capacity
+**Workflow:**
+1. Before executing swap, check current resilience status
+2. Model impact of swap on N-1 contingency
+3. If swap would degrade resilience below threshold, warn or block
+4. Document resilience impact in swap audit trail
+
+### With `swap-analyzer`
+**When:** Analyzing patterns for fairness or abuse detection
+**Workflow:**
+1. Monthly: Invoke swap-analyzer to review all swaps
+2. Identify imbalances, clustering, or suspicious patterns
+3. Generate reports for program coordinator
+4. Recommend policy adjustments if needed
+
+### With `security-audit`
+**When:** Suspicious swap patterns detected
+**Workflow:**
+1. swap-management detects unusual pattern (e.g., circular swaps)
+2. Invoke security-audit to investigate
+3. Check for collusion, manipulation, or system abuse
+4. Escalate to human if fraud suspected

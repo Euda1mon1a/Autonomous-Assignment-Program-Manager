@@ -737,7 +737,30 @@ curl -X GET 'http://localhost:8000/api/schedule/validate?start_date=2025-01-01&e
 
 ## Related Documentation
 
-- [Scheduling Algorithm Details](../architecture/SOLVER_ALGORITHM.md)
-- [ACGME Compliance Rules](../architecture/ACGME_COMPLIANCE.md)
-- [Import Guide - FMIT Schedules](../user-guide/fmit-import.md)
-- [Excel Format Requirements](../user-guide/excel-format.md)
+**Related API Documentation:**
+- [Swaps API](SWAPS_API.md) - Schedule swap management
+- [FMIT Health API](FMIT_HEALTH_API.md) - Coverage monitoring
+- [Resilience API](RESILIENCE_API.md) - Fallback schedule generation
+- [Assignments API](ASSIGNMENTS_API.md) - Individual assignment management
+- [Call Assignments API](CALL_ASSIGNMENTS_API.md) - Call schedule management
+
+**Architecture Decision Records:**
+- [ADR-002: Constraint Programming (OR-Tools)](../architecture/decisions/ADR-002-constraint-programming-ortools.md) - Scheduling algorithm choice
+- [ADR-009: Time Crystal Scheduling](../architecture/decisions/ADR-009-time-crystal-scheduling.md) - Anti-churn implementation
+- [ADR-001: FastAPI + SQLAlchemy](../architecture/decisions/ADR-001-fastapi-sqlalchemy-async.md) - Async API patterns
+
+**Architecture Documentation:**
+- [Solver Algorithm Details](../architecture/SOLVER_ALGORITHM.md) - In-depth algorithm documentation
+- [Constraint Interaction Matrix](../architecture/CONSTRAINT_INTERACTION_MATRIX.md) - How constraints interact
+- [Time Crystal Anti-Churn](../architecture/TIME_CRYSTAL_ANTI_CHURN.md) - Schedule stability concepts
+- [Multi-Objective Optimization](../architecture/multi-objective-optimization.md) - Balancing objectives
+
+**Implementation Code:**
+- `backend/app/api/routes/schedule.py` - Schedule API routes
+- `backend/app/scheduling/engine.py` - Schedule generation engine
+- `backend/app/scheduling/constraints/` - Constraint implementations
+- `backend/app/scheduling/solvers/` - Multi-solver architecture
+
+**User Guides:**
+- [Import Guide - FMIT Schedules](../user-guide/fmit-import.md) - Excel import workflow
+- [Excel Format Requirements](../user-guide/excel-format.md) - File format specifications

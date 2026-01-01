@@ -407,6 +407,301 @@ For simple fixes:
 3. Re-run quality gates
 4. Update PR status
 
+## Concrete Usage Example
+
+### End-to-End: Reviewing PR #442 (Real Example)
+
+**Scenario:** PR fixes template filtering in schedule solver. Change is small but critical.
+
+**Step 1: Fetch and Understand**
+```bash
+cd /home/user/Autonomous-Assignment-Program-Manager
+
+# Get PR details
+gh pr view 442 --json title,body,files
+
+# Output:
+# Title: "Fix template filtering to use 'outpatient' activity type"
+# Files: backend/app/scheduling/solvers.py (1 line changed)
+
+# View the diff
+gh pr diff 442
+
+# Output shows:
+# - activity_type="clinic"
+# + activity_type="outpatient"
+```
+
+**Step 2: Check Context**
+```bash
+# Read the surrounding code
+grep -B10 -A10 "activity_type" backend/app/scheduling/solvers.py
+
+# Check seed data to verify which value is correct
+grep "activity_type" scripts/seed_templates.py
+```
+
+**Finding:** Need to verify which activity_type value is correct for elective/selective templates.
+
+**Step 3: Verify Against Canonical Data**
+```bash
+# Check BLOCK_10_ROADMAP or seed data
+grep -i "neurology\|palliative\|peds" scripts/seed_templates.py
+
+# Output shows:
+# Template("Neurology", activity_type="outpatient", ...)
+# Template("Palliative Care", activity_type="outpatient", ...)
+```
+
+**Finding:** ✅ "outpatient" is correct! These electives use outpatient activity type.
+
+**Step 4: Check Code Comments vs Implementation**
+```bash
+# Look for comments describing this filter
+grep -B5 "activity_type" backend/app/scheduling/solvers.py
+```
+
+**Finding:** ⚠️ Comment says "filter to elective templates" but doesn't specify activity_type value. Could be clearer.
+
+**Step 5: Run Quality Gates**
+```bash
+# Checkout the PR
+git fetch origin pull/442/head:pr-442
+git checkout pr-442
+
+# Run tests
+cd backend
+pytest tests/test_scheduling_engine.py -v
+# Result: All pass
+
+# Check if change breaks anything else
+pytest -k "template" -v
+# Result: All pass
+```
+
+**Finding:** ✅ Tests pass, no regressions.
+
+**Step 6: Check for Similar Issues**
+```bash
+# Search for other hardcoded activity_type filters
+grep -n 'activity_type.*=.*"' backend/app/scheduling/*.py
+
+# Output:
+# solvers.py:145: activity_type="outpatient"  # Our fix
+# engine.py:203: activity_type="clinic"      # Different context - FM Clinic capacity
+```
+
+**Finding:** ⚠️ Need to verify engine.py:203 is intentional (it is - different constraint).
+
+**Step 7: Lessons Learned Check**
+
+**Was this issue caused by a known pattern?**
+
+Review pr-reviewer/SKILL.md "Lesson Learned: PR #442" section:
+- This is the ORIGINAL PR #442 that caught the issue!
+- The lesson: Always verify filter values against seed data
+- This is a GOOD CATCH example, not a failure
+
+**Step 8: Write Review**
+
+```markdown
+## PR Review: #442
+
+**Decision:** APPROVE ✅
+
+### What This PR Does
+Fixes template filtering to use correct activity_type value for elective/selective rotations.
+
+### Quality Gate Results
+| Gate | Status | Notes |
+|------|--------|-------|
+| Tests | ✅ | All passing |
+| Linting | ✅ | 0 errors |
+| Correctness | ✅ | Verified against seed data |
+
+### Verification Performed
+1. ✅ Checked seed_templates.py - "outpatient" is correct for electives
+2. ✅ Ran relevant tests - all pass
+3. ✅ Verified comment/code consistency
+4. ✅ Checked for similar issues elsewhere - found none
+
+### What I Liked
+- Small, focused change
+- Caught before merge (good process!)
+- Properly documented in commit message
+
+### Suggestions (Non-blocking)
+1. Consider adding a comment above the filter explaining why "outpatient":
+   ```python
+   # Filter to elective/selective templates (activity_type="outpatient")
+   # FM Clinic uses "clinic" type and has separate capacity constraints
+   templates = self._get_rotation_templates(activity_type="outpatient")
+   ```
+
+2. Add test case that verifies correct templates are loaded:
+   ```python
+   def test_get_rotation_templates_filters_to_outpatient():
+       """Ensure elective templates use outpatient activity type."""
+       templates = engine._get_rotation_templates(activity_type="outpatient")
+       assert all(t.activity_type == "outpatient" for t in templates)
+       assert "Neurology" in [t.name for t in templates]
+       assert "Family Medicine Clinic" not in [t.name for t in templates]
+   ```
+
+### Merge Checklist
+- [x] All conversations resolved
+- [x] CI checks passing
+- [x] Verified against canonical data
+- [x] No similar issues found
+
+**Recommendation:** Merge when ready. Suggestions are optional improvements.
+```
+
+**Step 9: Submit Review**
+```bash
+gh pr review 442 --approve --body "$(cat review.md)"
+```
+
+**Total Time:** ~10 minutes (small, focused PR)
+
+## Workflow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ PULL REQUEST REVIEW WORKFLOW                                │
+└─────────────────────────────────────────────────────────────┘
+
+1. FETCH PR CONTEXT
+   ├─ gh pr view <number> --json title,body,files
+   ├─ gh pr diff <number>
+   └─ Understand the "why"
+              ↓
+2. VERIFY CORRECTNESS
+   ├─ Check against canonical data sources
+   ├─ Verify filter values will find expected records
+   └─ Review comments match implementation
+              ↓
+3. CHECKOUT & TEST
+   ├─ git fetch origin pull/<n>/head:pr-<n>
+   ├─ git checkout pr-<n>
+   ├─ Run: pytest (relevant tests)
+   └─ Run: ruff check, mypy
+              ↓
+4. QUALITY GATES
+   ├─ Tests: All must pass
+   ├─ Linting: 0 errors
+   ├─ Security: No vulnerabilities
+   └─ Coverage: >= 70%
+              ↓
+5. CONTEXTUAL REVIEW
+   ├─ Check for similar issues elsewhere
+   ├─ Verify against lessons learned
+   └─ Consider broader impact
+              ↓
+6. DECISION MATRIX
+   ├─ Any gate failed? → REQUEST CHANGES
+   ├─ Security/auth changes? → ESCALATE TO HUMAN
+   ├─ Minor suggestions only? → APPROVE with comments
+   └─ All perfect? → APPROVE
+              ↓
+7. SUBMIT REVIEW
+   ├─ gh pr review <number> --approve/--request-changes
+   └─ Include detailed feedback
+```
+
+## Common Failure Modes
+
+### Failure Mode 1: Approving Without Testing
+**Symptom:** PR looks good in diff but breaks when deployed
+
+**Example:** PR changes database query but tests aren't run locally
+```bash
+# BAD - Just reading the diff
+gh pr diff 123
+# Looks good!
+gh pr review 123 --approve
+
+# GOOD - Actually test it
+git fetch origin pull/123/head:pr-123
+git checkout pr-123
+pytest
+# Oh, tests fail! Good thing we checked.
+```
+
+**Prevention:** Always checkout and run tests for non-trivial changes
+
+### Failure Mode 2: Missing Broader Impact
+**Symptom:** Change breaks something in unexpected area
+
+**Example:** PR changes constraint weight, but doesn't check solver performance
+```python
+# PR changes:
+- CallSpacingConstraint(weight=8.0)
++ CallSpacingConstraint(weight=15.0)  # Make it stronger
+
+# Reviewer approves without checking impact
+# Result: Solver now takes 10x longer because this constraint conflicts with others
+```
+
+**Detection:**
+- Search for other usages: `grep -r "CallSpacing" backend/`
+- Check if weight is referenced in docs
+- Look for related tests
+
+**Prevention:** For infrastructure changes, run performance tests
+
+### Failure Mode 3: Trusting Comments Over Code
+**Symptom:** Comments say one thing, code does another
+
+**Example from PR #442:**
+```python
+# Comment says: "Filter to clinic templates"
+# Code says: activity_type="outpatient"
+# Actual data: Clinic uses "clinic", outpatient uses "outpatient"
+
+# Which is right? Must verify against seed data!
+```
+
+**Detection:** Always verify claims against actual data/behavior
+
+**Prevention:** Add to checklist: "Do comments match implementation?"
+
+### Failure Mode 4: Not Checking Seed Data Alignment
+**Symptom:** Filter values don't match canonical data sources
+
+**Example:**
+```python
+# PR filters for:
+templates = filter(lambda t: t.category == "elective", all_templates)
+
+# But seed data uses:
+Template("Neurology", type="selective", ...)  # Not "elective"!
+
+# Filter will miss records!
+```
+
+**Detection:**
+```bash
+# Always check seed data
+grep -i "neurology" scripts/seed_templates.py
+grep -i "category\|type" scripts/seed_templates.py
+```
+
+**Prevention:** Add to review checklist: "Verify filter values against seed data"
+
+### Failure Mode 5: Skipping Lessons Learned
+**Symptom:** Same mistakes repeated across PRs
+
+**Example:** PR #400 had auth issue. PR #450 has same auth issue because reviewer didn't check lessons learned.
+
+**Detection:** Before each review:
+```bash
+# Check for relevant lessons
+grep -i "lesson\|failure mode" .claude/skills/pr-reviewer/SKILL.md
+```
+
+**Prevention:** Maintain "Lesson Learned" section in this skill file
+
 ## References
 
 - `/review-pr` slash command

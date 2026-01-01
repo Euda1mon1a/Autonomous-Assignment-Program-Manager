@@ -501,6 +501,20 @@ curl -X GET 'http://localhost:8000/api/swaps/history?faculty_id=550e8400-e29b-41
 
 ## Related Documentation
 
-- [Schedule API - Swap Finder](SCHEDULE_API.md#excel-based-swap-finder)
-- [Swap Management Guide](../user-guide/swaps.md)
-- [FMIT Rotation Import Guide](../user-guide/fmit-import.md)
+**Related API Documentation:**
+- [Schedule API - Swap Finder](SCHEDULE_API.md#excel-based-swap-finder) - Excel-based swap candidate finding
+- [FMIT Health API](FMIT_HEALTH_API.md) - FMIT coverage monitoring and metrics
+- [Resilience API](RESILIENCE_API.md) - System health and crisis management
+- [People API](PEOPLE_API.md) - Faculty and resident management
+
+**Architecture Decision Records:**
+- [ADR-006: Swap System with Auto-Matching](../.claude/dontreadme/synthesis/DECISIONS.md#adr-006-swap-system-with-auto-matching) - Swap system design rationale
+
+**Implementation Code:**
+- `backend/app/api/routes/swaps.py` - Swap API routes
+- `backend/app/services/swap_executor.py` - Swap execution logic
+- `backend/app/services/swap_matcher.py` - Auto-matching algorithm
+
+**User Guides:**
+- [Swap Management Guide](../user-guide/swaps.md) - User-facing swap documentation
+- [FMIT Rotation Import Guide](../user-guide/fmit-import.md) - Excel import workflow

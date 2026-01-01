@@ -2,6 +2,147 @@
 
 Complete API reference for the Residency Scheduler application. All endpoints require JWT Bearer token authentication unless otherwise noted.
 
+---
+
+## Interactive API Documentation
+
+When the application is running, access the interactive API documentation:
+
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+- **OpenAPI Spec**: http://localhost:8000/openapi.json
+
+---
+
+## Quick Reference: All Endpoints
+
+### Authentication & Users
+| Method | Endpoint | Description | Guide |
+|--------|----------|-------------|-------|
+| POST | `/api/auth/login` | Login (form data) | [AUTH_API.md](AUTH_API.md) |
+| POST | `/api/auth/login/json` | Login (JSON) | [AUTH_API.md](AUTH_API.md) |
+| POST | `/api/auth/logout` | Logout | [AUTH_API.md](AUTH_API.md) |
+| POST | `/api/auth/refresh` | Refresh token | [AUTH_API.md](AUTH_API.md) |
+| GET | `/api/auth/me` | Get current user | [AUTH_API.md](AUTH_API.md) |
+| POST | `/api/auth/register` | Register user | [AUTH_API.md](AUTH_API.md) |
+
+### People Management
+| Method | Endpoint | Description | Guide |
+|--------|----------|-------------|-------|
+| GET | `/api/people` | List people | [PEOPLE_API.md](PEOPLE_API.md) |
+| GET | `/api/people/residents` | List residents | [PEOPLE_API.md](PEOPLE_API.md) |
+| GET | `/api/people/faculty` | List faculty | [PEOPLE_API.md](PEOPLE_API.md) |
+| GET | `/api/people/{id}` | Get person details | [PEOPLE_API.md](PEOPLE_API.md) |
+| POST | `/api/people` | Create person | [PEOPLE_API.md](PEOPLE_API.md) |
+| PUT | `/api/people/{id}` | Update person | [PEOPLE_API.md](PEOPLE_API.md) |
+| DELETE | `/api/people/{id}` | Delete person | [PEOPLE_API.md](PEOPLE_API.md) |
+
+### Assignments
+| Method | Endpoint | Description | Guide |
+|--------|----------|-------------|-------|
+| GET | `/api/assignments` | List assignments | [ASSIGNMENTS_API.md](ASSIGNMENTS_API.md) |
+| GET | `/api/assignments/{id}` | Get assignment | [ASSIGNMENTS_API.md](ASSIGNMENTS_API.md) |
+| POST | `/api/assignments` | Create assignment | [ASSIGNMENTS_API.md](ASSIGNMENTS_API.md) |
+| PUT | `/api/assignments/{id}` | Update assignment | [ASSIGNMENTS_API.md](ASSIGNMENTS_API.md) |
+| DELETE | `/api/assignments/{id}` | Delete assignment | [ASSIGNMENTS_API.md](ASSIGNMENTS_API.md) |
+| DELETE | `/api/assignments?start_date=X` | Bulk delete | [ASSIGNMENTS_API.md](ASSIGNMENTS_API.md) |
+
+### Schedule Generation & Management
+| Method | Endpoint | Description | Guide |
+|--------|----------|-------------|-------|
+| POST | `/api/schedule/generate` | Generate schedule | [SCHEDULE_API.md](SCHEDULE_API.md) |
+| GET | `/api/schedule/validate` | Validate ACGME compliance | [SCHEDULE_API.md](SCHEDULE_API.md) |
+| GET | `/api/schedule/{start}/{end}` | Get schedule for date range | [SCHEDULE_API.md](SCHEDULE_API.md) |
+| POST | `/api/schedule/emergency-coverage` | Handle emergency absence | [SCHEDULE_API.md](SCHEDULE_API.md) |
+| POST | `/api/schedule/import/analyze` | Analyze Excel schedules | [SCHEDULE_API.md](SCHEDULE_API.md) |
+| POST | `/api/schedule/import/block` | Parse specific block | [SCHEDULE_API.md](SCHEDULE_API.md) |
+
+### Swaps & Coverage
+| Method | Endpoint | Description | Guide |
+|--------|----------|-------------|-------|
+| POST | `/api/swaps/execute` | Execute swap | [SWAPS_API.md](SWAPS_API.md) |
+| POST | `/api/swaps/validate` | Validate swap | [SWAPS_API.md](SWAPS_API.md) |
+| GET | `/api/swaps/history` | Get swap history | [SWAPS_API.md](SWAPS_API.md) |
+| POST | `/api/schedule/swaps/find` | Find swap candidates (FMIT) | [SCHEDULE_API.md](SCHEDULE_API.md) |
+| POST | `/api/schedule/swaps/candidates` | Find swap candidates (JSON) | [SCHEDULE_API.md](SCHEDULE_API.md) |
+
+### Resilience & Health
+| Method | Endpoint | Description | Guide |
+|--------|----------|-------------|-------|
+| GET | `/api/resilience/health` | Get system health | [RESILIENCE_API.md](RESILIENCE_API.md) |
+| GET | `/api/resilience/health/history` | Get health history | [RESILIENCE_API.md](RESILIENCE_API.md) |
+| POST | `/api/resilience/crisis/activate` | Activate crisis mode | [RESILIENCE_API.md](RESILIENCE_API.md) |
+| POST | `/api/resilience/crisis/deactivate` | Deactivate crisis mode | [RESILIENCE_API.md](RESILIENCE_API.md) |
+| GET | `/api/resilience/vulnerabilities` | Identify vulnerabilities | [RESILIENCE_API.md](RESILIENCE_API.md) |
+| GET | `/health` | Basic health check | [HEALTH_API.md](HEALTH_API.md) |
+| GET | `/health/ready` | Readiness probe | [HEALTH_API.md](HEALTH_API.md) |
+| GET | `/health/live` | Liveness probe | [HEALTH_API.md](HEALTH_API.md) |
+
+### Call Assignments
+| Method | Endpoint | Description | Guide |
+|--------|----------|-------------|-------|
+| POST | `/api/call/generate` | Generate call schedule | [CALL_ASSIGNMENTS_API.md](CALL_ASSIGNMENTS_API.md) |
+| GET | `/api/call/{start}/{end}` | Get call assignments | [CALL_ASSIGNMENTS_API.md](CALL_ASSIGNMENTS_API.md) |
+
+---
+
+## API Documentation Guides
+
+### Core API Guides
+
+| Guide | Description | Endpoints Covered |
+|-------|-------------|------------------|
+| [**AUTH_API.md**](AUTH_API.md) | Authentication & authorization | Login, logout, refresh, registration |
+| [**PEOPLE_API.md**](PEOPLE_API.md) | People management | Residents, faculty, credentials |
+| [**ASSIGNMENTS_API.md**](ASSIGNMENTS_API.md) | Assignment CRUD & validation | Create, update, delete, bulk operations |
+| [**SCHEDULE_API.md**](SCHEDULE_API.md) | Schedule generation & management | Generate, validate, import, emergency coverage |
+| [**SWAPS_API.md**](SWAPS_API.md) | Swap system & matching | Execute, validate, find candidates |
+| [**RESILIENCE_API.md**](RESILIENCE_API.md) | System health & crisis management | Health monitoring, crisis mode, load shedding |
+
+### Specialized API Guides
+
+| Guide | Description |
+|-------|-------------|
+| [HEALTH_API.md](HEALTH_API.md) | Health check and monitoring endpoints |
+| [FMIT_HEALTH_API.md](FMIT_HEALTH_API.md) | FMIT-specific health endpoints |
+| [CALL_ASSIGNMENTS_API.md](CALL_ASSIGNMENTS_API.md) | Call scheduling API |
+| [EXOTIC_API.md](EXOTIC_API.md) | Experimental optimization endpoints |
+
+### Supporting Documentation
+
+| Document | Description |
+|----------|-------------|
+| [error-codes-reference.md](error-codes-reference.md) | Complete error code reference |
+| [error-codes.md](error-codes.md) | HTTP status codes and meanings |
+| [error-handling-guide.md](error-handling-guide.md) | Error handling best practices |
+| [pagination.md](pagination.md) | Pagination patterns |
+| [MCP_TOOLS_REFERENCE.md](MCP_TOOLS_REFERENCE.md) | Model Context Protocol tools for AI |
+| [MCP_TOOL_GUIDE.md](MCP_TOOL_GUIDE.md) | MCP tool usage guide |
+| [ENDPOINT_CATALOG.md](ENDPOINT_CATALOG.md) | Complete endpoint catalog |
+
+### Legacy/Alternate Docs
+
+| Document | Description |
+|----------|-------------|
+| [authentication.md](authentication.md) | Authentication docs (older format) |
+| [people.md](people.md) | People API (older format) |
+| [schedule.md](schedule.md) | Schedule API (older format) |
+| [swaps.md](swaps.md) | Swaps API (older format) |
+| [absences.md](absences.md) | Absences API |
+| [analytics.md](analytics.md) | Analytics and reporting |
+| [index.md](index.md) | API overview |
+
+### Validation & Sync Reports
+
+| Document | Description |
+|----------|-------------|
+| [API_VALIDATION_AUDIT.md](API_VALIDATION_AUDIT.md) | API validation audit results |
+| [API_SYNC_REPORT.md](API_SYNC_REPORT.md) | API documentation sync status |
+| [SESSION_39_VALIDATION_SUMMARY.md](SESSION_39_VALIDATION_SUMMARY.md) | Session 39 validation summary |
+| [API_COLLECTION_CLEANUP_MANIFEST.md](API_COLLECTION_CLEANUP_MANIFEST.md) | Collection cleanup manifest |
+
+---
+
 ## Quick Start
 
 ### 1. Authentication

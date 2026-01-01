@@ -289,3 +289,334 @@ const ScheduleView: React.FC<Props> = ({ scheduleId }) => {
   return <Schedule data={data} />;
 };
 ```
+
+## Concrete Usage Example
+
+### End-to-End: Reviewing a New Feature Implementation
+
+**Scenario:** Review code that adds a new "Schedule Export" feature with PDF generation.
+
+**Files Changed:**
+- `backend/app/api/routes/export.py` (new)
+- `backend/app/services/export_service.py` (new)
+- `backend/tests/test_export_service.py` (new)
+
+**Step 1: Understand the Change**
+```bash
+cd /home/user/Autonomous-Assignment-Program-Manager
+
+# See what changed
+git diff origin/main --stat
+
+# Read the new files
+git diff origin/main backend/app/api/routes/export.py
+git diff origin/main backend/app/services/export_service.py
+git diff origin/main backend/tests/test_export_service.py
+```
+
+**Step 2: Check Architecture Compliance**
+
+Review `export.py`:
+```python
+# GOOD - Thin route, delegates to service
+@router.get("/export/schedule/{schedule_id}")
+async def export_schedule(
+    schedule_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> FileResponse:
+    pdf_bytes = await export_service.generate_pdf(db, schedule_id)
+    return FileResponse(pdf_bytes, filename="schedule.pdf")
+```
+
+**Finding:** ✅ Good - Route is thin, delegates to service layer
+
+Review `export_service.py`:
+```python
+# POTENTIALLY BAD - Business logic in wrong place?
+async def generate_pdf(db: AsyncSession, schedule_id: str) -> bytes:
+    schedule = db.execute(select(Schedule).where(Schedule.id == schedule_id)).scalar_one()
+    # ^ Missing await! Type error!
+
+    # Direct query in service - should use repository?
+    assignments = db.query(Assignment).filter(...).all()
+    # ^ Using sync API in async function!
+
+    pdf = create_pdf(schedule, assignments)
+    return pdf.getvalue()
+```
+
+**Findings:**
+- ❌ CRITICAL: Missing `await` on database call
+- ❌ CRITICAL: Using sync `db.query()` in async function
+- ⚠️ WARNING: No input validation - what if schedule doesn't exist?
+- ⚠️ WARNING: No error handling
+
+**Step 3: Run Static Analysis**
+```bash
+cd backend
+
+# Check for type errors
+mypy app/services/export_service.py --python-version 3.11
+# Output: error: Missing await on line 42
+
+# Check linting
+ruff check app/services/export_service.py --show-source
+# Output: F401: unused import, E501: line too long
+
+# Security scan
+bandit -r app/services/export_service.py -ll
+# Output: No issues found
+```
+
+**Step 4: Check Test Coverage**
+```bash
+pytest tests/test_export_service.py --cov=app.services.export_service --cov-report=term-missing
+
+# Output:
+# Coverage: 45% (missing edge cases)
+# Missing: error handling, invalid schedule_id, empty schedules
+```
+
+**Finding:** ⚠️ Insufficient test coverage (< 70% target)
+
+**Step 5: Security Review**
+
+Check for common issues:
+```python
+# In export.py
+@router.get("/export/schedule/{schedule_id}")
+async def export_schedule(
+    schedule_id: str,  # ⚠️ No validation - UUID format?
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> FileResponse:
+    # ❌ No authorization check! Any logged-in user can export any schedule
+    pdf_bytes = await export_service.generate_pdf(db, schedule_id)
+```
+
+**Findings:**
+- ❌ CRITICAL: Missing authorization - user should only export their own schedules
+- ⚠️ WARNING: No input validation on schedule_id format
+
+**Step 6: Write Review Report**
+
+```markdown
+## Code Review Summary
+
+**Files Reviewed:** 3
+**Overall Assessment:** NEEDS CHANGES (blocking issues found)
+
+### Critical Issues (Must Fix)
+
+1. **backend/app/services/export_service.py:42** - Missing await on database call
+   - Impact: Runtime error, schedule will be a coroutine, not Schedule object
+   - Fix: Change to `schedule = await db.execute(...).scalar_one()`
+
+2. **backend/app/services/export_service.py:45** - Sync database API in async function
+   - Impact: Will block event loop, poor performance
+   - Fix: Change to `result = await db.execute(select(Assignment)...)` then `result.scalars().all()`
+
+3. **backend/app/api/routes/export.py:15** - Missing authorization check
+   - Impact: Security vulnerability - users can export other users' schedules
+   - Fix: Add permission check:
+   ```python
+   if not await has_permission(current_user, schedule_id):
+       raise HTTPException(403, "Not authorized")
+   ```
+
+### Warnings (Should Fix)
+
+1. **backend/app/services/export_service.py:42** - No error handling for missing schedule
+   - Suggestion: Add try/except for `NoResultFound` and return appropriate error
+
+2. **backend/tests/test_export_service.py** - Test coverage at 45% (target: 70%)
+   - Suggestion: Add tests for:
+     - Invalid schedule_id
+     - Empty schedule (no assignments)
+     - Large schedule (performance test)
+     - Error conditions
+
+3. **backend/app/api/routes/export.py:10** - No input validation
+   - Suggestion: Validate schedule_id is valid UUID format using Pydantic
+
+### Recommendations (Nice to Have)
+
+1. Consider adding caching for frequently exported schedules
+2. Add rate limiting to prevent abuse (e.g., 10 exports per minute)
+3. Log export activity for audit trail
+
+### Summary Checklist
+- [x] All type hints present
+- [ ] Tests added for new code (present but insufficient)
+- [ ] No security issues (FAILED - authorization missing)
+- [ ] Follows layered architecture (mostly, minor issues)
+- [ ] Async operations correct (FAILED - sync calls in async)
+- [ ] Error handling appropriate (FAILED - missing)
+
+### Recommendation
+**REQUEST CHANGES** - Fix critical issues before merge. Can auto-approve after fixes.
+```
+
+**Step 7: Provide Inline Fix Suggestions**
+
+For the developer:
+````markdown
+**File: backend/app/services/export_service.py**
+
+```suggestion
+async def generate_pdf(db: AsyncSession, schedule_id: str) -> bytes:
+    """Generate PDF export of schedule."""
+    try:
+        # Fixed: Added await
+        result = await db.execute(
+            select(Schedule).where(Schedule.id == schedule_id)
+        )
+        schedule = result.scalar_one()
+
+        # Fixed: Using async API
+        assignments_result = await db.execute(
+            select(Assignment).where(Assignment.schedule_id == schedule_id)
+        )
+        assignments = assignments_result.scalars().all()
+
+        pdf = create_pdf(schedule, assignments)
+        return pdf.getvalue()
+    except NoResultFound:
+        raise ValueError(f"Schedule {schedule_id} not found")
+```
+````
+
+**Total Review Time:** ~15 minutes
+
+## Workflow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ CODE REVIEW WORKFLOW                                        │
+└─────────────────────────────────────────────────────────────┘
+
+1. CONTEXT GATHERING
+   ├─ git diff --stat
+   ├─ Read changed files
+   └─ Understand the "why"
+              ↓
+2. ARCHITECTURE REVIEW
+   ├─ Check layering (Route→Service→Repository→Model)
+   ├─ Verify async/await patterns
+   └─ Validate Pydantic schema usage
+              ↓
+3. STATIC ANALYSIS
+   ├─ Run: ruff check (linting)
+   ├─ Run: mypy (type checking)
+   └─ Run: bandit (security scan)
+              ↓
+4. PATTERN MATCHING
+   ├─ Check for N+1 queries
+   ├─ Look for hardcoded secrets
+   ├─ Find missing error handling
+   └─ Identify type hint gaps
+              ↓
+5. SECURITY DEEP DIVE
+   ├─ Input validation present?
+   ├─ Authorization checks in place?
+   ├─ No sensitive data leaks?
+   └─ SQL injection prevented?
+              ↓
+6. TEST COVERAGE
+   ├─ Run: pytest --cov
+   ├─ Check coverage % (target 70%)
+   └─ Review edge case coverage
+              ↓
+7. GENERATE REPORT
+   ├─ Critical issues (blocking)
+   ├─ Warnings (should fix)
+   ├─ Recommendations (nice to have)
+   └─ Decision: APPROVE/REQUEST CHANGES/COMMENT
+```
+
+## Common Failure Modes
+
+### Failure Mode 1: Missing Async/Await
+**Symptom:** Code runs but throws runtime errors or has poor performance
+
+**Example:**
+```python
+# BAD - Missing await
+async def get_schedule(db: AsyncSession, id: str):
+    result = db.execute(select(Schedule).where(Schedule.id == id))
+    # ^ Returns coroutine, not result!
+```
+
+**Detection:**
+- Type checker warns about coroutine
+- Runtime: AttributeError when accessing result
+
+**Fix:** Add `await` before database calls
+
+### Failure Mode 2: Business Logic in Routes
+**Symptom:** Routes become bloated, logic not reusable
+
+**Example:**
+```python
+# BAD - Business logic in route
+@router.post("/items")
+async def create_item(data: ItemCreate, db: Session):
+    if data.value > 100:  # Business rule
+        data.value = 100
+    item = Item(**data.dict())
+    db.add(item)
+```
+
+**Detection:** Route has > 10 lines of logic
+
+**Fix:** Move logic to service layer
+
+### Failure Mode 3: Missing Authorization
+**Symptom:** Security vulnerability - users access unauthorized data
+
+**Example:**
+```python
+# BAD - No authorization check
+@router.get("/schedules/{id}")
+async def get_schedule(id: str, user: User = Depends(get_current_user)):
+    return await schedule_service.get(id)  # Any user can access any schedule!
+```
+
+**Detection:** No permission check before data access
+
+**Fix:** Add authorization check:
+```python
+if not await has_permission(user, "read", id):
+    raise HTTPException(403, "Not authorized")
+```
+
+### Failure Mode 4: N+1 Query Problem
+**Symptom:** Performance degrades with data volume
+
+**Example:**
+```python
+# BAD - N+1 queries
+persons = await db.execute(select(Person))
+for person in persons.scalars():
+    assignments = await db.execute(
+        select(Assignment).where(Assignment.person_id == person.id)
+    )  # Query for each person!
+```
+
+**Detection:** Loop with database query inside
+
+**Fix:** Use eager loading with `selectinload()` or `joinedload()`
+
+### Failure Mode 5: Leaking Sensitive Data
+**Symptom:** Logs or errors expose passwords, tokens, personal data
+
+**Example:**
+```python
+# BAD - Sensitive data in error message
+raise HTTPException(400, f"Login failed for {email} with password {password}")
+```
+
+**Detection:** Search for user input in error messages
+
+**Fix:** Use generic messages, log details server-side only
