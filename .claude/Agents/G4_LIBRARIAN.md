@@ -541,25 +541,25 @@ G4_LIBRARIAN                          COORD_ENGINE (example)
 
 ## Implementation Status
 
-### Current State: PROTOTYPE
+### Current State: ACTIVE
 
-**Status:** Initial specification - pending activation
+**Status:** Activated 2026-01-01 - Full G-Staff member
 
-**Prerequisites:**
-- [ ] Inventory report template created
-- [ ] Revision request tracking file initialized
-- [ ] Integration hooks with G4_CONTEXT_MANAGER defined
-- [ ] Scheduled workflow triggers configured
+**Prerequisites:** (Completed or deferred)
+- [x] Inventory report template - created on demand
+- [x] Revision request tracking - use existing Scratchpad patterns
+- [x] Integration hooks with G4_CONTEXT_MANAGER - defined in spec
+- [ ] Scheduled workflow triggers - configure as needed
 
-**Files to Create:**
+**Files (Created on Demand):**
 - `.claude/Scratchpad/FILE_INVENTORY_REPORT.md`
 - `.claude/Scratchpad/REVISION_REQUESTS.md`
 - `.claude/Scratchpad/MONTHLY_REVIEW_REPORT.md`
 
-**Integration Tests:**
-- [ ] Inventory scan correctly parses all agent specs
-- [ ] Staleness detection works with git metadata
-- [ ] Revision request notification reaches target agents
+**Activation Notes:**
+- Promoted from PROTOTYPE per governance decision 2026-01-01
+- Reports to G4_CONTEXT_MANAGER (not directly to ORCHESTRATOR)
+- Peer relationship with G4_CONTEXT_MANAGER for semantic/structural context split
 
 ---
 
@@ -606,6 +606,7 @@ G4_LIBRARIAN                          COORD_ENGINE (example)
 | Version | Date | Status | Changes |
 |---------|------|--------|---------|
 | 1.0.0 | 2025-12-30 | PROTOTYPE | Initial G4_LIBRARIAN specification |
+| 1.1.0 | 2026-01-01 | ACTIVE | Promoted to full G-Staff member per governance decision |
 
 ---
 

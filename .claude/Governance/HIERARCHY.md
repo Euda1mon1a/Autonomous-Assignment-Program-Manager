@@ -30,7 +30,7 @@ ORCHESTRATOR (opus) ─── Supreme Commander
         └── COORD_INTEL (sonnet) → (intel specialists)
 
     G-Staff (Advisory, sonnet) ─── Advisors to ORCHESTRATOR
-        G-1 PERSONNEL, G-2 RECON, G-4 CONTEXT, G-5 PLANNING, G-6 SIGNAL
+        G-1 PERSONNEL, G-2 RECON, G-3 OPERATIONS, G-4 CONTEXT, G-5 PLANNING, G-6 SIGNAL
 
     Special Staff (Advisory, sonnet) ─── Domain Experts
         FORCE_MANAGER, DEVCOM_RESEARCH, MEDCOM
@@ -44,8 +44,9 @@ ORCHESTRATOR (opus) ─── Supreme Commander
 | Tier | Role | Agents |
 |------|------|--------|
 | **Opus** | Strategic decision-makers | ORCHESTRATOR, ARCHITECT, SYNTHESIZER |
-| **Sonnet** | Tactical coordinators + advisors | All COORDs, G-Staff, IG, PAO, Special Staff |
-| **Haiku** | Execution specialists | All specialists under coordinators |
+| **Opus** | High-stakes Special Staff | DEVCOM_RESEARCH, MEDCOM, INCIDENT_COMMANDER |
+| **Sonnet** | Tactical coordinators + advisors | All COORDs, G-Staff, IG, PAO, FORCE_MANAGER |
+| **Haiku** | Execution specialists | All specialists under coordinators, CRASH_RECOVERY_SPECIALIST |
 
 ## Coordinator Standing Orders
 
@@ -60,3 +61,36 @@ See individual Coordinator specs for pre-authorized actions.
 | Architecture decision needed | Any → ARCHITECT |
 | Cross-domain conflict | SYNTHESIZER → ORCHESTRATOR |
 | Plan is fundamentally wrong | Any → ORCHESTRATOR |
+
+## G-Staff Notes
+
+### G-4 Split Architecture
+G-4 (Logistics/Context) operates as two complementary agents:
+- **G4_CONTEXT_MANAGER**: Semantic memory via pgvector embeddings, RAG
+- **G4_LIBRARIAN**: Structural memory via file references
+
+G4_LIBRARIAN reports to G4_CONTEXT_MANAGER, not directly to ORCHESTRATOR.
+
+### Key Distinction: G-3 vs SYNTHESIZER
+- **G3_OPERATIONS** = Advisory on operational status (sonnet, G-Staff)
+- **SYNTHESIZER** = Deputy commanding operational coordinators (opus, Command)
+
+These are separate roles. G-3 advises; SYNTHESIZER commands.
+
+## G-Staff Intel Routing
+
+G-Staff agents are advisory. Their intel SHOULD route through Deputies for strategic interpretation, but CAN go direct to ORCHESTRATOR for urgent matters.
+
+| G-Staff | Primary Route | Strategic Interpretation |
+|---------|---------------|-------------------------|
+| G-1 PERSONNEL | → ORCHESTRATOR | Via FORCE_MANAGER (team assembly) |
+| G-2 RECON | → ORCHESTRATOR | Via ARCHITECT (systems) or SYNTHESIZER (ops) |
+| G-3 OPERATIONS | → ORCHESTRATOR | Via SYNTHESIZER (operational conflicts) |
+| G-4 CONTEXT | → ORCHESTRATOR | Direct (context management) |
+| G-5 PLANNING | → ORCHESTRATOR | Via ARCHITECT (strategic planning) |
+| G-6 SIGNAL | → ORCHESTRATOR | Via SYNTHESIZER (data/metrics) |
+
+**Routing Guidance:**
+- **Urgent/Time-Critical**: Direct to ORCHESTRATOR
+- **Strategic/Interpretive**: Route through appropriate Deputy
+- **Cross-Domain**: Both Deputies may be consulted

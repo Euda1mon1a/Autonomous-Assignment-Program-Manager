@@ -1462,6 +1462,191 @@ User trusts ORCHESTRATOR to act decisively on "salvage" requests. No need for el
 
 ---
 
+### Session 043: 2026-01-01 — Post-Burn Cleanup (New Year)
+
+**Context:** Branch consolidation after CCW parallel burn sessions. User requested cleanup of "fireworks" aftermath.
+
+**Key User Statements:**
+- "happy new year, we need to clean up after all of the fire works"
+- "I merged" (quick approval of PR #590)
+- "we still have stuff on sacred timeline" (reminded about remaining branches)
+- "add todo make sure local branches pruned were not protected" (governance awareness)
+
+**Work Completed:**
+- Cherry-picked 5 commits from CCW-4, CCW-5, CCW-6
+- Created and merged PR #590 (23 total commits consolidated)
+- Pruned 17 remote CCW branches
+- Pruned 9 local CCW branches
+- Verified protected branches preserved (docs/session-014, docs/session-017)
+- Restored Session 042 stashed work (55 files)
+
+**Delegation Assessment:**
+- 0 agent spawns (appropriate for git operations session)
+- Direct execution justified: cherry-picking requires sequential conflict resolution
+- No chain-of-command violations
+
+**Observations:**
+- User comfortable with rapid PR merge (minimal review for consolidation PRs)
+- User remembers protected branches exist, expects ORCHESTRATOR to check
+- User requested session-end protocol explicitly ("I think only you can, please do")
+- Cleanup sessions don't require HISTORIAN - operational, not historical
+
+**Pattern Identified:**
+Git consolidation work is a valid "direct execution" case. Delegation adds overhead without benefit when:
+1. Operations are sequential (cherry-pick chain)
+2. Conflicts require real-time resolution
+3. No parallel workstreams possible
+
+**Deferred Work:**
+8 stream branches with unique content left for future session evaluation.
+
+---
+
+### Session 044: 2026-01-01 — Sacred Timeline Consolidation via SEARCH_PARTY
+
+**Context:** Continued branch consolidation. User requested SEARCH_PARTY panopticon for remaining 8 stream branches, with CCW doing cherry-pick work.
+
+**Key User Statements:**
+- "send search parties in parallel, as many as you need" (explicit panopticon request)
+- "add todo do not cherry pick yourself, we will have CCW do the work" (delegation clarity)
+- "add todo no need to make cherry pick branch, CCW can only operate within its own branch" (CCW constraint awareness)
+- "2," (chose ORCHESTRATOR fix over CCW delegation for stream-9 gap)
+
+**Work Completed:**
+- Deployed SEARCH_PARTY with 3 G-2 agents (8 branches analyzed)
+- Created CCW delegation instructions (`.claude/Scratchpad/CCW_CHERRY_PICK_INSTRUCTIONS.md`)
+- CCW created PR #591 with 11 commits from 4 streams
+- ORCHESTRATOR added stream-9 controller tests (CCW missed it)
+- Merged PR #591 (14 total commits)
+- Pruned 5 stream branches
+- Preserved 3 deferred branches for future evaluation
+- Restored Session 042 stashed work (58 files)
+
+**Delegation Assessment:**
+- 3 agent spawns (appropriate for panopticon reconnaissance)
+- SEARCH_PARTY correctly routed through G2_RECON Commander
+- CCW delegation worked but required ORCHESTRATOR intervention to complete
+- Chain-of-command: proper G-2 Intelligence → ORCHESTRATOR flow
+
+**Observations:**
+- User explicitly requested panopticon ("we need the panopticon") - knows the terminology
+- User understands CCW constraints (operates in own branch only)
+- User comfortable delegating bulk work to CCW, accepting ORCHESTRATOR augmentation
+- Quick decision-making: "2," to choose fix approach
+
+**Pattern Identified:**
+CCW + ORCHESTRATOR hybrid workflow:
+1. CCW handles bulk autonomous work in its own branch
+2. ORCHESTRATOR reviews, augments, and completes gaps
+3. User merges once satisfied
+4. ORCHESTRATOR handles cleanup (pruning, stash restore)
+
+**Trust Evolution:**
+User increasingly treats ORCHESTRATOR as the "executive officer" who:
+- Coordinates with CCW (peer AI agent)
+- Fills gaps CCW leaves
+- Handles the messy git operations CCW can't do
+
+**Remaining Work:**
+- 3 deferred branches (analyze-*, review-*) with ~30 commits
+- 58 uncommitted Session 042 files
+- Pre-existing TypeScript errors in frontend
+
+---
+
+### Session 044 Part 2: 2026-01-01 — Governance Documentation Sync
+
+**Context:** User identified documentation drift in governance files during burn sessions.
+
+**Key User Statements:**
+- "should they not report to architect?" (questioning G-Staff routing)
+- "hold on, look for your two sub-orchestrators" (Deputy awareness)
+- "I think we have gaps in documentation, not in how we set things up" (root cause identification)
+- "is this appropriate? Asking genuinely" (model tier reasoning request)
+- "yes, update them" (approval for Special Staff tier upgrade)
+
+**Work Completed:**
+
+1. **startupO G-Staff Fixes:**
+   - G-3 mapping: SYNTHESIZER → G3_OPERATIONS
+   - G-5 mapping: META_UPDATER → G5_PLANNING
+   - Fixed in 2 locations (tables in startup checklist)
+
+2. **HIERARCHY.md Updates:**
+   - Added missing G-3 OPERATIONS to G-Staff list
+   - Added G4 Split Architecture documentation
+   - Added Key Distinction: G-3 vs SYNTHESIZER
+   - Added G-Staff Intel Routing matrix
+   - Updated Model Tier Assignments table
+
+3. **Special Staff Model Tier Upgrades:**
+   - DEVCOM_RESEARCH: sonnet → opus
+   - MEDCOM: sonnet → opus
+   - INCIDENT_COMMANDER: sonnet → opus
+   - Rationale: Rare invocation + high stakes = justify Opus quality
+
+4. **G4_LIBRARIAN Promotion:**
+   - Status: PROTOTYPE → ACTIVE
+   - Full G-Staff member per governance decision
+
+**PR Created:** #593 - Governance Documentation Sync
+
+**Delegation Assessment:**
+- 3 Explore agent spawns (parallel hierarchy mapping)
+- Direct execution for documentation edits (appropriate - quick doc fixes)
+- No chain-of-command violations
+
+**Key Decision: Special Staff → Opus**
+User's reasoning was sound:
+- Special Staff are rarely invoked (don't interfere with day-to-day Opus rationing)
+- High-stakes when invoked (crisis response, R&D, medical advisory)
+- Quality matters more than frequency for these roles
+
+**Pattern Discovered:**
+**Model Tier Decision Framework:**
+| Factor | Weight | Example |
+|--------|--------|---------|
+| Invocation frequency | Low | Daily = Sonnet/Haiku; Rare = can be Opus |
+| Stakes when invoked | High | Crisis/R&D/Medical = Opus |
+| Complexity of reasoning | High | Multi-domain synthesis = Opus |
+| Cost impact on budget | Consider | Rare Opus invocations don't impact day-to-day |
+
+**Trust Evolution:**
+User engaged in collaborative reasoning about model tiers ("is this appropriate? Asking genuinely"). This is a new pattern - inviting ORCHESTRATOR into strategic resource allocation decisions, not just execution.
+
+---
+
+## Pending Items (Session 044 Handoff)
+
+### Immediate (Next Session)
+1. **Merge PR #593** - Governance docs ready (6 files, 60 insertions)
+2. **Decide Session 042 files** - 50 modified + 9 untracked files need disposition:
+   - Option A: Commit as technical debt PR (bulk commit)
+   - Option B: Review and selectively commit
+   - Option C: Discard (git checkout -- .)
+
+### Deferred
+3. **Evaluate sacred timeline branches:**
+   - `analyze-improve-repo-16YVp` (23 commits) - likely duplicates
+   - `analyze-improve-repo-streams-DUeMr` (1 mega-commit) - review content
+   - `review-search-party-protocol-wU0i1` (6 commits) - protocol refinements
+
+### Session 042 File Categories (50 modified)
+| Category | Files | Notes |
+|----------|-------|-------|
+| CQRS | 4 | commands, projection_builder, queries, read_model_sync |
+| Models | 12 | certification, email_*, fatigue_risk, feature_flag, etc. |
+| Notifications | 6 | channels, notification_types, service, tasks, templates |
+| Outbox | 3 | metrics, outbox, tasks |
+| Scheduling | 13 | bio_inspired/*, constraints/*, optimizer/*, quantum/* |
+| Services | 3 | assignment_service, person_service, swap_executor |
+| Workflow | 2 | engine, state_machine |
+| Frontend | 1 | types/index.ts |
+
+**Recommendation:** These appear to be CCW burn session outputs. Review a sample file to assess quality before bulk commit.
+
+---
+
 *File created: 2025-12-27*
-*Last updated: 2025-12-30 (Session 023 - Salvage & Handoff)*
+*Last updated: 2026-01-01 (Session 044 Part 2 - Governance Documentation Sync)*
 *Maintained by: ORCHESTRATOR / G-5 META_UPDATER*
