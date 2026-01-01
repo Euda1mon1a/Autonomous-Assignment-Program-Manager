@@ -595,6 +595,7 @@ Ready to orchestrate. What's the task?
 |----------|-------|---------|------------|
 | **SEARCH_PARTY** | G-2 (Intel) | 120-probe reconnaissance | `/search-party` |
 | **QA_PARTY** | IG (Inspector General) | 120-agent QA validation | `/qa-party` |
+| **PLAN_PARTY** | G-5 (Strategic) | 10-probe strategy generation | `/plan-party` |
 
 ### IDE Crash Prevention (CRITICAL)
 
@@ -630,9 +631,27 @@ ORCHESTRATOR → spawns 8+ agents directly → IDE CRASH
 - `.claude/skills/search-party/SKILL.md` - **SEARCH_PARTY reconnaissance (G-2, 120 probes)**
 - `.claude/skills/qa-party/SKILL.md` - **QA_PARTY validation (IG, 120 agents)**
 - `.claude/protocols/SEARCH_PARTY.md` - Full SEARCH_PARTY protocol documentation
+- `.claude/protocols/CCW_BURN_PROTOCOL.md` - **CCW parallel task burn safety gates**
 - `.claude/skills/check-codex/SKILL.md` - Codex feedback checking (rate-limiting step before merge)
 - `.claude/skills/context-aware-delegation/SKILL.md` - Agent context isolation and prompt templates
 - `.claude/skills/CORE/delegation-patterns.md` - Execution patterns (parallel, sequential, hybrid)
+
+---
+
+## CCW Burn Protocol Reference
+
+When running parallel CCW task burns (20+ tasks), apply validation gates:
+
+```
+PRE-BURN:   npm run build && npm run type-check  (must pass)
+DURING:     Validate every 20 tasks
+POST-BURN:  Full validation suite
+FAILURE:    Count unique errors, fix root cause, verify
+```
+
+**Watch for token concatenation bugs:** `await sawait ervice` → `await service`
+
+See: `.claude/protocols/CCW_BURN_PROTOCOL.md`
 
 ---
 

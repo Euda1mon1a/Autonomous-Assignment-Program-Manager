@@ -1,9 +1,10 @@
 # PLAN_PARTY Protocol
 
 > **Purpose:** Coordinated parallel planning with multiple strategy "framings"
-> **Status:** Draft
+> **Status:** Active
 > **Priority:** P1
-> **Owner:** COORD_PLAN (proposed) or ORCHESTRATOR
+> **Owner:** G5_PLANNING
+> **Skill:** `/plan-party`
 > **Upstream:** SEARCH_PARTY (reconnaissance feeds planning)
 > **Downstream:** ORCHESTRATOR (execution decisions)
 
@@ -12,6 +13,27 @@
 ## Overview
 
 PLAN_PARTY enables parallel generation of implementation strategies from multiple perspectives - like a military planning cell where G-3 Operations synthesizes input from J1-J8 staff sections, each bringing domain-specific planning expertise.
+
+---
+
+## IDE Crash Prevention (CRITICAL)
+
+**DO NOT** have ORCHESTRATOR spawn 10 planning probes directly. This causes IDE seizure and crashes.
+
+**CORRECT Pattern:**
+```
+ORCHESTRATOR → spawns 1 G5_PLANNING (G-5 Commander)
+                    ↓
+              G5_PLANNING deploys 10 planning probes internally
+              (manages parallelism, synthesizes strategies)
+```
+
+**WRONG Pattern:**
+```
+ORCHESTRATOR → spawns 10 planning probes directly → IDE CRASH
+```
+
+The G-5 Commander (G5_PLANNING) absorbs the parallelism complexity. ORCHESTRATOR only ever spawns 1 coordinator.
 
 **Key Insight:** Same goal, different strategies. Synthesizing diverse plans yields better decisions than a single planning thread.
 
