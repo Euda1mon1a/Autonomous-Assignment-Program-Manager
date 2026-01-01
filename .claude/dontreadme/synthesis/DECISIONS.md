@@ -4,7 +4,7 @@
 
 **Format:** Lightweight ADR - Context, Decision, Consequences
 
-**Last Updated:** 2025-12-31 (Session 37)
+**Last Updated:** 2025-12-31 (Session 41)
 
 ---
 
@@ -275,6 +275,52 @@
 - ⚠️ Slow CI (tests take 5+ minutes)
 
 **Status:** ✅ Adopted
+
+---
+
+### ADR-011: CI_LIAISON Owns Local Container Management
+
+**Date:** 2025-12-31 (Session 41)
+
+**Context:**
+- RAG database found empty due to Docker volume mount not configured
+- No agent owned local container operations (gap in PAI hierarchy)
+- CI_LIAISON owned CI/CD Docker, COORD_PLATFORM owned architecture, but local container ops unassigned
+- Silent infrastructure failures went undetected
+
+**Advisory Input:**
+- G1_PERSONNEL: Expand CI_LIAISON (minimal overhead)
+- G2_RECON: `docker-containerization` skill already exists
+- G6_SIGNAL: Containers are signal infrastructure (natural fit for CI)
+- G5_PLANNING (PLAN_PARTY): Hybrid recommendation but convergence on CI_LIAISON
+- MEDCOM: Clear ownership with monitoring needed
+
+**Decision:**
+- CI_LIAISON owns local container orchestration
+- Philosophy: "It goes up the same way every single time"
+- Pre-flight validation checklist before any task
+- Escalation to COORD_PLATFORM for docker-compose.yml changes or Dockerfile modifications
+
+**Responsibilities:**
+| Area | CI_LIAISON | Escalate To |
+|------|------------|-------------|
+| `docker-compose up/down/restart` | ✅ Owns | - |
+| Volume mount validation | ✅ Owns | - |
+| Container health checks | ✅ Owns | - |
+| docker-compose.yml changes | Propose | COORD_PLATFORM |
+| Dockerfile changes | Diagnose | COORD_PLATFORM |
+
+**Consequences:**
+- ✅ Clear ownership (no more gaps)
+- ✅ CI philosophy applied to local dev (consistency)
+- ✅ Pre-flight checks catch issues early
+- ✅ Leverages existing `docker-containerization` skill
+- ⚠️ CI_LIAISON scope expands (monitor for overload)
+- ⚠️ Must coordinate with COORD_PLATFORM on config changes
+
+**Status:** ✅ Adopted
+
+**Implementation:** Updated `CI_LIAISON.md` with Local Container Management section
 
 ---
 
