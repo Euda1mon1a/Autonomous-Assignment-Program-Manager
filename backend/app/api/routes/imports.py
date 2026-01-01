@@ -98,7 +98,7 @@ async def parse_xlsx_file(
     # Read file content
     try:
         content = await file.read()
-    except (IOError, OSError) as e:
+    except OSError as e:
         logger.error(f"Failed to read uploaded file: {e}", exc_info=True)
         raise HTTPException(
             status_code=400,
@@ -147,7 +147,7 @@ async def parse_xlsx_file(
     # Parse the Excel file
     try:
         wb = load_workbook(io.BytesIO(content), data_only=True, read_only=True)
-    except (IOError, OSError) as e:
+    except OSError as e:
         logger.error(f"File I/O error parsing Excel file: {e}", exc_info=True)
         raise HTTPException(
             status_code=400,
@@ -383,7 +383,7 @@ async def list_xlsx_sheets(
             "count": len(sheets),
             "default": sheets[0] if sheets else None,
         }
-    except (IOError, OSError) as e:
+    except OSError as e:
         logger.error(f"File I/O error listing sheets: {e}", exc_info=True)
         raise HTTPException(
             status_code=400,

@@ -118,7 +118,7 @@ class TestAsyncRouteMigration:
             if route_file.name == "__init__.py":
                 continue
 
-            with open(route_file, 'r') as f:
+            with open(route_file) as f:
                 content = f.read()
 
             # Check for db.query() calls
@@ -155,7 +155,7 @@ class TestAsyncRouteMigration:
             if route_file.name == "__init__.py":
                 continue
 
-            with open(route_file, 'r') as f:
+            with open(route_file) as f:
                 content = f.read()
 
             # Check for sync Session usage

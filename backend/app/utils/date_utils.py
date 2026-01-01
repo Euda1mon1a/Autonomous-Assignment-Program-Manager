@@ -4,7 +4,7 @@ from datetime import date, timedelta
 from typing import Tuple
 
 
-def get_week_bounds(target_date: date) -> Tuple[date, date]:
+def get_week_bounds(target_date: date) -> tuple[date, date]:
     """
     Get the start (Monday) and end (Sunday) dates of the week containing the target date.
 

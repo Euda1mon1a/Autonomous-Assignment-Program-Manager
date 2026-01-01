@@ -515,7 +515,7 @@ async def analyze_imported_schedules(
     # Read file contents
     try:
         fmit_bytes = fmit_file.file.read()
-    except (IOError, OSError, ValueError) as e:
+    except (OSError, ValueError) as e:
         logger.error(f"Failed to read FMIT uploaded file: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
@@ -529,7 +529,7 @@ async def analyze_imported_schedules(
     if clinic_file:
         try:
             clinic_bytes = clinic_file.file.read()
-        except (IOError, OSError, ValueError) as e:
+        except (OSError, ValueError) as e:
             logger.error(f"Failed to read clinic uploaded file: {e}", exc_info=True)
             raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
@@ -602,7 +602,7 @@ async def analyze_single_file(
     # Read file
     try:
         file_bytes = file.file.read()
-    except (IOError, OSError, ValueError) as e:
+    except (OSError, ValueError) as e:
         logger.error(f"Failed to read clinic schedule file: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
@@ -740,7 +740,7 @@ async def parse_block_schedule_endpoint(
     # Read and validate file
     try:
         file_bytes = file.file.read()
-    except (IOError, OSError, ValueError) as e:
+    except (OSError, ValueError) as e:
         logger.error(f"Failed to read block parse file: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
@@ -877,7 +877,7 @@ async def find_swap_candidates(
     # Read FMIT file
     try:
         fmit_bytes = fmit_file.file.read()
-    except (IOError, OSError, ValueError) as e:
+    except (OSError, ValueError) as e:
         logger.error(f"Failed to read FMIT file for swap finder: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 

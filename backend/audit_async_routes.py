@@ -8,9 +8,9 @@ import re
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-def analyze_route_file(file_path: Path) -> Dict[str, any]:
+def analyze_route_file(file_path: Path) -> dict[str, any]:
     """Analyze a single route file for sync/async patterns."""
-    with open(file_path, 'r') as f:
+    with open(file_path) as f:
         content = f.read()
 
     # Find all route handlers
@@ -83,7 +83,7 @@ def main():
             files_needing_migration.append(result)
 
     # Print summary
-    print(f"📊 SUMMARY:")
+    print("📊 SUMMARY:")
     print(f"   Total route files: {len(all_files)}")
     print(f"   Files needing migration: {len(files_needing_migration)}")
     print(f"   Total sync routes: {total_sync_routes}")
@@ -147,7 +147,7 @@ def main():
                 f.write(f"FILE: {result['file']}\n")
                 f.write(f"PATH: {result['path']}\n")
                 f.write(f"{'=' * 80}\n")
-                f.write(f"Status: NEEDS MIGRATION\n")
+                f.write("Status: NEEDS MIGRATION\n")
                 f.write(f"Total routes: {result['total_routes']}\n")
                 f.write(f"Sync routes: {len(result['sync_routes'])}\n")
                 f.write(f"Async routes: {len(result['async_routes'])}\n")
@@ -157,13 +157,13 @@ def main():
                 f.write(f"Has AsyncSession: {result['has_async_session']}\n")
 
                 if result['sync_routes']:
-                    f.write(f"\nSync routes to migrate:\n")
+                    f.write("\nSync routes to migrate:\n")
                     for route in result['sync_routes']:
                         f.write(f"  - {route}\n")
 
                 f.write("\n")
 
-    print(f"\n✅ Detailed report written to: backend/ASYNC_MIGRATION_REPORT.txt")
+    print("\n✅ Detailed report written to: backend/ASYNC_MIGRATION_REPORT.txt")
     print()
 
 if __name__ == '__main__':
