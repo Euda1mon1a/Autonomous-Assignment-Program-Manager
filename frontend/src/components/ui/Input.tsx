@@ -67,7 +67,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
         <div className="relative">
           {leftIcon && (
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400" aria-hidden="true">
               {leftIcon}
             </div>
           )}
@@ -84,9 +84,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           />
 
           {(rightIcon || hasError) && (
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none" aria-hidden="true">
               {hasError ? (
-                <AlertCircle className="w-5 h-5 text-red-500" />
+                <AlertCircle className="w-5 h-5 text-red-500" aria-label="Error" />
               ) : (
                 <span className="text-gray-400">{rightIcon}</span>
               )}

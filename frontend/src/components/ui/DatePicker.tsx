@@ -121,6 +121,14 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
+        aria-label={value ? `Selected date: ${new Date(value).toLocaleDateString('en-US', {
+          weekday: 'short',
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        })}` : placeholder}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
         className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-left focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
       >
         <div className="flex items-center justify-between">
@@ -134,7 +142,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                 })
               : placeholder}
           </span>
-          <span className="text-gray-400">📅</span>
+          <span className="text-gray-400" aria-hidden="true">📅</span>
         </div>
       </button>
 
@@ -148,18 +156,19 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           />
 
           {/* Calendar */}
-          <div className="absolute z-20 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 min-w-[320px]">
+          <div className="absolute z-20 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 min-w-[320px]" role="dialog" aria-label="Choose date">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <button
+                type="button"
                 onClick={handlePrevMonth}
                 className="p-1 hover:bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 aria-label="Previous month"
               >
-                ←
+                <span aria-hidden="true">←</span>
               </button>
 
-              <div className="font-semibold text-gray-900">
+              <div className="font-semibold text-gray-900" aria-live="polite">
                 {viewDate.toLocaleDateString('en-US', {
                   month: 'long',
                   year: 'numeric',
@@ -167,11 +176,12 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               </div>
 
               <button
+                type="button"
                 onClick={handleNextMonth}
                 className="p-1 hover:bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 aria-label="Next month"
               >
-                →
+                <span aria-hidden="true">→</span>
               </button>
             </div>
 
@@ -188,7 +198,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             </div>
 
             {/* Days Grid */}
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid grid-cols-7 gap-1" role="grid" aria-label="Calendar days">
               {daysInMonth.map((day, idx) => {
                 const disabled = isDateDisabled(day.date);
                 const selected = isDateSelected(day.date);
@@ -197,8 +207,12 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                 return (
                   <button
                     key={idx}
+                    type="button"
                     onClick={() => !disabled && handleDateClick(day.date)}
                     disabled={disabled}
+                    aria-label={`${day.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}${today ? ' (today)' : ''}${selected ? ' (selected)' : ''}`}
+                    aria-selected={selected}
+                    aria-disabled={disabled}
                     className={`
                       aspect-square p-1 text-sm rounded transition-colors
                       ${!day.isCurrentMonth ? 'text-gray-400' : 'text-gray-900'}
@@ -218,14 +232,18 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             {/* Footer */}
             <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between">
               <button
+                type="button"
                 onClick={handleToday}
                 className="text-sm text-blue-600 hover:text-blue-800 focus:outline-none focus:underline"
+                aria-label="Select today's date"
               >
                 Today
               </button>
               <button
+                type="button"
                 onClick={() => setIsOpen(false)}
                 className="text-sm text-gray-600 hover:text-gray-800 focus:outline-none focus:underline"
+                aria-label="Close calendar"
               >
                 Close
               </button>
