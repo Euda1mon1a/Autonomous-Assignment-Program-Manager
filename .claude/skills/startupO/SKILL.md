@@ -186,9 +186,9 @@ Output this confirmation:
 |----------|-------|------|
 | G-1 | G1_PERSONNEL | Personnel & roster tracking |
 | G-2 | G2_RECON | Intelligence/Reconnaissance |
-| G-3 | SYNTHESIZER | Operations integration |
-| G-4 | G4_CONTEXT_MANAGER | RAG/vector context |
-| G-5 | META_UPDATER | Plans & documentation |
+| G-3 | G3_OPERATIONS | Operations & workflow coordination |
+| G-4 | G4_CONTEXT_MANAGER | RAG/vector context (+ G4_LIBRARIAN) |
+| G-5 | G5_PLANNING | Strategic planning & documentation |
 | G-6 | G6_SIGNAL | Signal/Data Processing |
 | IG | DELEGATION_AUDITOR | Inspector General (invoke at session end) |
 | PAO | HISTORIAN | Public Affairs - significant sessions |
@@ -565,9 +565,9 @@ ESCALATE WHEN:
 |----------|-------|------|
 | G-1 | G1_PERSONNEL | Personnel tracking |
 | G-2 | G2_RECON | Intelligence/Recon |
-| G-3 | SYNTHESIZER | Operations |
-| G-4 | G4_CONTEXT_MANAGER | RAG/vector context |
-| G-5 | META_UPDATER | Plans & docs |
+| G-3 | G3_OPERATIONS | Operations & workflow |
+| G-4 | G4_CONTEXT_MANAGER | RAG/vector context (+ LIBRARIAN) |
+| G-5 | G5_PLANNING | Strategic planning |
 | G-6 | G6_SIGNAL | Signal/Data Processing |
 | IG | DELEGATION_AUDITOR | Inspector General |
 | PAO | HISTORIAN | Public Affairs |

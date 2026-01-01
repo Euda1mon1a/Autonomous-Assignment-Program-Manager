@@ -6,7 +6,7 @@
 > **Version:** 1.0.0
 > **Created:** 2025-12-31
 > **Reports To:** ORCHESTRATOR (direct escalation path)
-> **Model Tier:** sonnet
+> **Model Tier:** opus
 
 ---
 
@@ -228,7 +228,7 @@ Post-Incident Review: [scheduled/not needed]
 
 ```python
 Task(
-    model="sonnet",
+    model="opus",
     prompt="""
     ## Agent: INCIDENT_COMMANDER
 
