@@ -1,11 +1,47 @@
 """
-API routes for FMIT swap management.
+API Routes for FMIT Swap Management.
 
-Provides endpoints for:
-- Executing swaps
-- Getting swap history
-- Rolling back swaps
-- Validating proposed swaps
+This module provides RESTful endpoints for managing schedule swaps between
+faculty members in the FMIT (Faculty Managing Inpatient Teaching) rotation.
+
+Endpoints:
+    POST /swaps/execute
+        Execute a validated swap between two faculty members.
+        Supports both one-to-one swaps and absorb swaps.
+
+    POST /swaps/validate
+        Pre-validate a proposed swap without executing it.
+        Returns validation errors, warnings, and conflict indicators.
+
+    GET /swaps/history
+        Retrieve paginated swap history with optional filters.
+        Supports filtering by faculty, status, and date range.
+
+    GET /swaps/{swap_id}
+        Get detailed information about a specific swap record.
+
+    POST /swaps/{swap_id}/rollback
+        Rollback an executed swap within the 24-hour window.
+        Requires a reason for audit purposes.
+
+Authentication:
+    All endpoints require authentication via JWT token.
+    Access is controlled by user roles - coordinators and admins have full access,
+    faculty members can only view swaps involving themselves.
+
+Swap Types:
+    - one_to_one: Bidirectional swap where both faculty exchange weeks
+    - absorb: One-way transfer where target faculty takes over source's week
+
+Error Handling:
+    - 400: Validation failures or business rule violations
+    - 404: Swap record not found
+    - 401/403: Authentication/authorization failures
+
+See Also:
+    - app.services.swap_executor: Core swap execution logic
+    - app.services.swap_validation: Pre-execution validation
+    - app.schemas.swap: Request/response schema definitions
 """
 
 from datetime import date
@@ -42,7 +78,31 @@ async def execute_swap(
     """
     Execute an FMIT swap between two faculty members.
 
-    Validates the swap first, then executes if valid.
+    This endpoint validates the proposed swap and, if valid, executes it atomically.
+    The swap will update block assignments and call cascade assignments for the
+    affected weeks.
+
+    Args:
+        request: SwapExecuteRequest containing:
+            - source_faculty_id: UUID of faculty giving up their week
+            - source_week: Start date of the source week (Monday)
+            - target_faculty_id: UUID of faculty receiving the week
+            - target_week: For one-to-one swaps, the reciprocal week (optional)
+            - swap_type: "one_to_one" or "absorb"
+            - reason: Optional explanation for the swap
+        db: Database session (injected)
+        current_user: Authenticated user (injected)
+
+    Returns:
+        SwapExecuteResponse with:
+            - success: Whether the swap was executed
+            - swap_id: UUID of the created SwapRecord (if successful)
+            - message: Human-readable result description
+            - validation: Detailed validation results
+
+    Raises:
+        HTTPException 401: If not authenticated
+        HTTPException 403: If not authorized for this operation
     """
     # Validate the swap
     validator = SwapValidationService(db)
