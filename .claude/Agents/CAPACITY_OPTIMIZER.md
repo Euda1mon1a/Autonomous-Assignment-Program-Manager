@@ -246,6 +246,53 @@ Recommendation: [Actions if needed]
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+CAPACITY_OPTIMIZER is pre-authorized to execute these actions autonomously:
+
+1. **Routine Capacity Analysis**
+   - Calculate Erlang-C metrics for all specialties on weekly schedule
+   - Generate staffing tables showing utilization at different server counts
+   - Monitor utilization against 80% threshold across all services
+   - Archive capacity metrics for trend analysis
+
+2. **Process Capability Monitoring**
+   - Calculate Cp/Cpk/Cpm for weekly work hours, coverage rates, and utilization
+   - Track sigma levels and defect rates over time
+   - Generate quality dashboards showing capability trends
+   - Flag when Cpk drops below 1.33 (MARGINAL threshold)
+
+3. **Equity Assessments**
+   - Calculate Gini coefficient for workload distribution weekly
+   - Generate Lorenz curves for visualization
+   - Identify most overloaded and underloaded providers
+   - Report equity status (EQUITABLE/WARNING/INEQUITABLE/CRITICAL)
+
+4. **Threshold Alerts**
+   - Alert when utilization crosses 70% (WARNING), 80% (CRITICAL), or 85% (EMERGENCY)
+   - Calculate wait time multipliers at current utilization levels
+   - Assess N-1 impact (single absence) on utilization
+   - Generate utilization health reports
+
+5. **Scenario Simulations**
+   - Run what-if analyses for proposed staffing changes
+   - Model demand variation impacts (seasonal, peak loads)
+   - Benchmark proposed changes against current state
+   - Document trade-offs (cost vs. service level vs. equity)
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Unstable Queue Alert** | Offered load >= servers, infinite wait times predicted | Validate inputs before Erlang calculation; check arrival rate sanity | Return error with explanation; request corrected inputs; never recommend infeasible staffing |
+| **Over-Optimization** | Recommendations push utilization above 80% for efficiency | Always enforce 80% hard ceiling; validate N-1 contingency | Revise recommendation to stay below threshold; add safety buffer; escalate if targets conflict |
+| **Equity-Efficiency Conflict** | Optimal utilization creates workload inequity | Track Gini alongside utilization; flag when both cannot be satisfied | Present Pareto trade-off; recommend balanced solution; escalate for decision |
+| **Data Quality Issues** | Outliers, missing data, or stale demand estimates | Validate data distributions; flag suspiciously high/low values | Use median instead of mean; trim outliers; request data refresh |
+| **Mismatched Service Times** | Service time estimates don't match reality | Cross-reference with actual observed times; validate against benchmarks | Recalculate with corrected times; document discrepancy; update assumptions |
+| **Threshold Fatigue** | Constant WARNING alerts desensitize stakeholders | Use hysteresis (different thresholds for rise/fall); limit alert frequency | Adjust thresholds based on feedback; consolidate alerts; escalate persistent issues |
+
+---
+
 ## Approach
 
 ### 1. Erlang-C Coverage Optimization

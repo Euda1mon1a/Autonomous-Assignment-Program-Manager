@@ -164,6 +164,53 @@ backend/app/multi_objective/
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+OPTIMIZATION_SPECIALIST is pre-authorized to execute these actions autonomously:
+
+1. **Algorithm Execution**
+   - Run bio-inspired solvers (GA, NSGA-II, PSO, ACO) on delegated problems
+   - Execute QUBO formulations with simulated annealing
+   - Generate Pareto fronts for multi-objective problems
+   - Respect kill-switch signals and timeout limits
+
+2. **Solution Validation**
+   - Verify all returned solutions satisfy hard constraints
+   - Calculate hypervolume, spread, and generational distance indicators
+   - Validate Pareto optimality (no dominated solutions in archive)
+   - Document random seeds and parameters for reproducibility
+
+3. **Performance Benchmarking**
+   - Compare algorithm performance against OR-Tools baseline
+   - Profile runtime and memory consumption
+   - Track convergence rates and solution quality trends
+   - Archive performance metrics for tuning
+
+4. **Hyperparameter Tuning**
+   - Adjust population size, mutation rate, crossover probability based on problem size
+   - Configure annealing schedules for QUBO solvers
+   - Set decomposition weights for MOEA/D
+   - Document parameter choices and rationale
+
+5. **Quality Reporting**
+   - Generate structured output with solution archives
+   - Provide trade-off analysis for multi-objective results
+   - Identify knee points on Pareto fronts
+   - Recommend preferred solutions with justification
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Premature Convergence** | Algorithm stops improving early, poor final quality | Use diversity mechanisms (crowding distance, epsilon-dominance); increase population size | Restart with higher diversity settings; use hybrid approaches; increase iteration budget |
+| **Solver Timeout** | Algorithm exceeds time limit, returns incomplete results | Monitor progress; implement anytime algorithms; set conservative timeout buffers | Return best-so-far solution; flag as incomplete; recommend longer runtime or simpler formulation |
+| **Constraint Violations** | Solutions in archive violate hard constraints | Validate every solution before archive insertion; use penalty methods; implement repair operators | Remove infeasible solutions; strengthen constraint handling; escalate if persistent |
+| **Unbounded Memory Growth** | Population size grows uncontrolled, OOM errors | Enforce maximum archive size; use bounded archives; implement elitism carefully | Trigger archive truncation; use epsilon-dominance pruning; restart with smaller populations |
+| **QUBO Formulation Error** | Penalty weights misbalanced, optimal violates constraints | Validate QUBO formulation on small test cases; tune penalty coefficients; verify constraint encoding | Adjust penalty weights; simplify formulation; fall back to constraint programming |
+| **Non-Dominated Archive Empty** | All solutions dominated or infeasible | Relax constraint penalties initially; seed with feasible solutions; check objective definitions | Restart with feasible seed population; review problem formulation; escalate if fundamental issue |
+
+---
+
 ## Skills Access
 
 ### Full Access (Read + Write)

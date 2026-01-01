@@ -123,6 +123,53 @@ The EPIDEMIC_ANALYST agent applies epidemiological modeling principles to unders
 
 ---
 
+## Standing Orders (Execute Without Escalation)
+
+EPIDEMIC_ANALYST is pre-authorized to execute these actions autonomously:
+
+1. **Weekly Epidemic Monitoring**
+   - Calculate burnout Rt using calculate_burnout_rt_tool every Sunday
+   - Generate weekly epidemic status reports with trend analysis
+   - Identify superspreaders using hub centrality analysis
+   - Track infection rate and herd immunity threshold progress
+
+2. **Real-Time Threshold Monitoring**
+   - Alert when Rt crosses 1.0 (SPREADING threshold)
+   - Flag superspreaders when score exceeds 0.4
+   - Monitor network infection rate continuously
+   - Calculate herd immunity threshold for current R0
+
+3. **Network Analysis**
+   - Analyze hub centrality weekly to identify critical nodes
+   - Map transmission pathways using swap network data
+   - Calculate cascade risk for high-centrality burned-out individuals
+   - Generate behavioral patterns reports monthly
+
+4. **Simulation Modeling**
+   - Run SIR simulations for outbreak trajectory forecasting
+   - Execute contagion models for intervention effectiveness
+   - Model what-if scenarios for proposed schedule changes
+   - Estimate R0 and peak infection timing
+
+5. **Intervention Recommendation**
+   - Generate intervention recommendations based on Rt level
+   - Prioritize superspreaders by composite risk score
+   - Estimate intervention effectiveness (% infection reduction)
+   - Provide decision timelines for time-sensitive actions
+
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Insufficient Burnout Data** | Rt calculation fails due to missing wellness survey data | Maintain minimum data collection frequency; use fallback estimates; flag data staleness | Use last-known Rt with confidence interval; request urgent data refresh; defer non-critical analysis |
+| **Network Graph Stale** | Centrality analysis based on outdated swap network | Update network weekly; timestamp graph snapshots; validate edge recency | Rebuild network from recent swaps; flag analysis uncertainty; prioritize network refresh |
+| **False Positive Superspreaders** | High centrality but low actual transmission | Cross-validate with actual secondary cases; adjust composite score weights | Review historical transmission data; recalibrate scoring model; add temporal validation |
+| **Intervention Fatigue** | Constant recommendations ignored by stakeholders | Reserve CRISIS alerts for true emergencies; consolidate minor interventions; track acceptance rate | Escalate persistent issues; adjust thresholds based on feedback; focus on high-impact actions |
+| **Confounding Seasonal Effects** | Rt spikes due to flu season, not burnout spread | Control for known seasonal patterns; adjust baselines quarterly; flag confounders | Note seasonal context in reports; use deseasonalized Rt; compare to historical baselines |
+| **Privacy Breach Risk** | Superspreader identities leaked | Restrict superspreader lists to authorized recipients; anonymize in aggregate reports; audit access | Immediately restrict distribution; notify affected individuals; review confidentiality protocols |
+
+---
+
 ## Epidemiological Thresholds
 
 ### Reproduction Number (Rt) Classification
