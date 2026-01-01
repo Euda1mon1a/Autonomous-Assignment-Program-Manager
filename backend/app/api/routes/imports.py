@@ -98,14 +98,24 @@ async def parse_xlsx_file(
     # Read file content
     try:
         content = await file.read()
-    except Exception as e:
-        logger.error(f"Failed to read uploaded file: {e}")
+    except (IOError, OSError) as e:
+        logger.error(f"Failed to read uploaded file: {e}", exc_info=True)
         raise HTTPException(
             status_code=400,
             detail={
                 "success": False,
                 "error": "Failed to read uploaded file",
                 "error_code": "READ_ERROR",
+            },
+        )
+    except ValueError as e:
+        logger.error(f"Invalid file content: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "success": False,
+                "error": "Invalid file content",
+                "error_code": "INVALID_CONTENT",
             },
         )
 
@@ -137,14 +147,24 @@ async def parse_xlsx_file(
     # Parse the Excel file
     try:
         wb = load_workbook(io.BytesIO(content), data_only=True, read_only=True)
-    except Exception as e:
-        logger.error(f"Failed to parse Excel file: {e}")
+    except (IOError, OSError) as e:
+        logger.error(f"File I/O error parsing Excel file: {e}", exc_info=True)
         raise HTTPException(
             status_code=400,
             detail={
                 "success": False,
                 "error": f"Failed to parse Excel file: {str(e)}",
                 "error_code": "PARSE_ERROR",
+            },
+        )
+    except (ValueError, TypeError) as e:
+        logger.error(f"Invalid Excel file format: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "success": False,
+                "error": f"Invalid Excel file format: {str(e)}",
+                "error_code": "INVALID_FORMAT",
             },
         )
 
@@ -169,8 +189,8 @@ async def parse_xlsx_file(
                 ws = wb[wb.sheetnames[0]]
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Failed to access worksheet: {e}")
+    except (ValueError, KeyError, AttributeError) as e:
+        logger.error(f"Failed to access worksheet: {e}", exc_info=True)
         raise HTTPException(
             status_code=400,
             detail={
@@ -198,8 +218,8 @@ async def parse_xlsx_file(
                     headers.append(str(value).strip())
                 else:
                     headers.append(f"Column_{len(headers) + 1}")
-    except Exception as e:
-        logger.error(f"Failed to read header row: {e}")
+    except (ValueError, TypeError, AttributeError) as e:
+        logger.error(f"Failed to read header row: {e}", exc_info=True)
         raise HTTPException(
             status_code=400,
             detail={
@@ -295,8 +315,8 @@ async def parse_xlsx_file(
 
             rows.append(row_data)
 
-    except Exception as e:
-        logger.error(f"Failed to parse data rows: {e}")
+    except (ValueError, TypeError, AttributeError) as e:
+        logger.error(f"Failed to parse data rows: {e}", exc_info=True)
         raise HTTPException(
             status_code=400,
             detail={
@@ -363,13 +383,23 @@ async def list_xlsx_sheets(
             "count": len(sheets),
             "default": sheets[0] if sheets else None,
         }
-    except Exception as e:
-        logger.error(f"Failed to list sheets: {e}")
+    except (IOError, OSError) as e:
+        logger.error(f"File I/O error listing sheets: {e}", exc_info=True)
         raise HTTPException(
             status_code=400,
             detail={
                 "success": False,
                 "error": f"Failed to read Excel file: {str(e)}",
                 "error_code": "READ_ERROR",
+            },
+        )
+    except (ValueError, TypeError) as e:
+        logger.error(f"Invalid Excel file format listing sheets: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "success": False,
+                "error": f"Invalid Excel file format: {str(e)}",
+                "error_code": "INVALID_FORMAT",
             },
         )

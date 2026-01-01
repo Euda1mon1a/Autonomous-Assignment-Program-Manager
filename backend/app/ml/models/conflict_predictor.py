@@ -165,7 +165,8 @@ class ConflictPredictor:
             try:
                 date_obj = pd.to_datetime(proposed_date).date()
                 features["proposed_day_of_week"] = date_obj.weekday()
-            except:
+            except (ValueError, TypeError, AttributeError) as e:
+                logger.warning(f"Failed to parse proposed date '{proposed_date}': {e}")
                 features["proposed_day_of_week"] = 0
         else:
             features["proposed_day_of_week"] = 0

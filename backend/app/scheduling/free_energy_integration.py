@@ -45,7 +45,7 @@ class ForecastGenerator:
     Queries historical assignments and generates forecasts for future scheduling.
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize forecast generator.
 

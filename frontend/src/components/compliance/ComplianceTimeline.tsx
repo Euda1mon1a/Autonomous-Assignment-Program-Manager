@@ -7,13 +7,15 @@
 import React from 'react';
 import { Badge } from '../ui/Badge';
 
+export type ComplianceDetails = Record<string, string | number | boolean | null | undefined>;
+
 export interface ComplianceEvent {
   id: string;
   date: string;
   type: 'compliant' | 'warning' | 'violation';
   category: string;
   message: string;
-  details?: Record<string, any>;
+  details?: ComplianceDetails;
 }
 
 export interface ComplianceTimelineProps {

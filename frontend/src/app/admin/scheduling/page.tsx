@@ -6,7 +6,7 @@
  * Private admin GUI for empirical analysis of scheduling modules.
  * Provides configuration, experimentation, metrics, history, and override controls.
  */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   Settings,
   Beaker,
@@ -151,7 +151,25 @@ export default function AdminSchedulingPage() {
     generateRun.mutate(configuration);
   }, [configuration, validateConfig, generateRun]);
 
-  const isRunning = generateRun.isPending || (queue?.currentlyRunning ?? 0) > 0;
+  // Performance: Memoize computed isRunning state to avoid recalculation on every render
+  const isRunning = useMemo(() =>
+    generateRun.isPending || (queue?.currentlyRunning ?? 0) > 0,
+    [generateRun.isPending, queue?.currentlyRunning]
+  );
+
+  // Performance: Memoize filtered and sorted data arrays
+  const processedRuns = useMemo(() =>
+    (runs?.runs || []).slice().sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    ),
+    [runs?.runs]
+  );
+
+  // Performance: Memoize active constraints count
+  const activeConstraintsCount = useMemo(() =>
+    configuration.constraints.filter(c => c.enabled).length,
+    [configuration.constraints]
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -244,13 +262,13 @@ export default function AdminSchedulingPage() {
           <MetricsPanel
             metrics={metrics}
             isLoading={metricsLoading}
-            runs={runs?.runs || []}
+            runs={processedRuns}
           />
         )}
 
         {activeTab === 'history' && (
           <HistoryPanel
-            runs={runs?.runs || []}
+            runs={processedRuns}
             isLoading={runsLoading}
             selectedRuns={selectedRuns}
             comparisonMode={comparisonMode}
@@ -326,8 +344,9 @@ function StatusBadge({
   label?: string;
   count?: number;
 }) {
-  const getStatusColor = (s: string) => {
-    switch (s) {
+  // Performance: Memoize status color calculation to avoid recalculation on every render
+  const statusColor = useMemo(() => {
+    switch (status) {
       case 'running':
         return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
       case 'synced':
@@ -339,12 +358,12 @@ function StatusBadge({
       default:
         return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
     }
-  };
+  }, [status]);
 
   return (
     <div className={`
       flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium
-      ${getStatusColor(status)}
+      ${statusColor}
     `}>
       {status === 'running' && <Loader2 className="w-3 h-3 animate-spin" />}
       {status === 'synced' && <CheckCircle2 className="w-3 h-3" />}

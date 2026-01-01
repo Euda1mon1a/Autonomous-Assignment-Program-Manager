@@ -38,6 +38,11 @@ from app.resilience.hub_analysis import (
 from app.resilience.stigmergy import (
     PreferenceTrail,
 )
+from app.resilience.constants import (
+    DEFAULT_SESSION_HISTORY_LIMIT,
+    DEFAULT_CENTRALITY_SCORES_LIMIT,
+    MIN_TRAIL_STRENGTH_THRESHOLD,
+)
 
 # =============================================================================
 # Cognitive Load Persistence
@@ -184,7 +189,7 @@ def update_decision_resolution(
 def get_session_history(
     db: Session,
     user_id: UUID = None,
-    limit: int = 50,
+    limit: int = DEFAULT_SESSION_HISTORY_LIMIT,
 ) -> list[CognitiveSessionRecord]:
     """
     Get cognitive session history.
@@ -315,7 +320,7 @@ def load_preference_trails(
     return query.all()
 
 
-def delete_weak_trails(db: Session, min_strength: float = 0.01) -> int:
+def delete_weak_trails(db: Session, min_strength: float = MIN_TRAIL_STRENGTH_THRESHOLD) -> int:
     """
     Delete trails that have evaporated below minimum strength.
 
@@ -528,7 +533,7 @@ def get_active_protection_plans(db: Session) -> list[HubProtectionPlanRecord]:
 
 
 def get_latest_centrality_scores(
-    db: Session, limit: int = 50
+    db: Session, limit: int = DEFAULT_CENTRALITY_SCORES_LIMIT
 ) -> list[FacultyCentralityRecord]:
     """
     Get the most recent centrality scores.

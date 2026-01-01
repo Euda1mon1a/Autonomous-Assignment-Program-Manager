@@ -173,7 +173,7 @@ function DefaultErrorFallback({ error, reset }: DefaultErrorFallbackProps) {
 /**
  * Hook to use error boundary programmatically
  */
-export function useErrorBoundary() {
+export function useErrorBoundary(): { throwError: (error: Error) => void; resetError: () => void } {
   const [error, setError] = React.useState<Error | null>(null)
 
   React.useEffect(() => {
@@ -182,11 +182,11 @@ export function useErrorBoundary() {
     }
   }, [error])
 
-  const resetError = React.useCallback(() => {
+  const resetError = React.useCallback((): void => {
     setError(null)
   }, [])
 
-  const throwError = React.useCallback((error: Error) => {
+  const throwError = React.useCallback((error: Error): void => {
     setError(error)
   }, [])
 

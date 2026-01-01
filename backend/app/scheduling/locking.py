@@ -9,6 +9,13 @@ import redis
 from app.core.config import get_settings
 
 
+# Distributed Lock Configuration
+LOCK_TIMEOUT_SECONDS = 600  # 10 minutes - Maximum lock duration
+DEFAULT_LOCK_ACQUISITION_TIMEOUT = 30  # 30 seconds - Default timeout for acquiring lock
+INITIAL_RETRY_DELAY_SECONDS = 0.1  # 100ms - Initial retry delay
+MAX_RETRY_DELAY_SECONDS = 2.0  # 2 seconds - Maximum retry delay
+
+
 class LockAcquisitionError(Exception):
     """Raised when a lock cannot be acquired."""
 
@@ -38,7 +45,7 @@ class ScheduleGenerationLock:
     end
     """
 
-    def __init__(self, redis_client: redis.Redis | None = None):
+    def __init__(self, redis_client: redis.Redis | None = None) -> None:
         """Initialize the distributed lock.
 
         Args:
@@ -53,11 +60,11 @@ class ScheduleGenerationLock:
         else:
             self.redis = redis_client
 
-        self.lock_timeout = 600  # 10 minutes in seconds
+        self.lock_timeout = LOCK_TIMEOUT_SECONDS  # Maximum lock duration
         self._release_script = self.redis.register_script(self.RELEASE_SCRIPT)
 
     @contextmanager
-    def acquire(self, year_id: str, timeout: int = 30):
+    def acquire(self, year_id: str, timeout: int = DEFAULT_LOCK_ACQUISITION_TIMEOUT):
         """Acquire lock for schedule generation.
 
         This context manager attempts to acquire an exclusive lock for schedule
@@ -114,8 +121,8 @@ class ScheduleGenerationLock:
             bool: True if lock acquired, False if timeout expired
         """
         start_time = time.time()
-        retry_delay = 0.1  # Start with 100ms delay
-        max_retry_delay = 2.0  # Cap at 2 seconds
+        retry_delay = INITIAL_RETRY_DELAY_SECONDS
+        max_retry_delay = MAX_RETRY_DELAY_SECONDS
 
         while True:
             # Try to set the key with expiry (atomic operation)

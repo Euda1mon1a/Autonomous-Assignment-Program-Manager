@@ -4,7 +4,15 @@
 
 import React from 'react';
 
-const NextImage = ({ src, alt, ...props }: any) => {
+interface NextImageProps {
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  [key: string]: unknown;
+}
+
+const NextImage: React.FC<NextImageProps> = ({ src, alt, ...props }) => {
   // eslint-disable-next-line @next/next/no-img-element
   return <img src={src} alt={alt} {...props} />;
 };

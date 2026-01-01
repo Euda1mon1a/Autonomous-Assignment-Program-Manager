@@ -12,6 +12,7 @@ This validator ensures fair call distribution while maintaining
 resident wellness and ACGME compliance.
 """
 
+import functools
 import logging
 from dataclasses import dataclass
 from datetime import date, timedelta
@@ -65,7 +66,7 @@ class CallValidator:
     5. Post-call: Mandatory rest periods after call
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize call validator."""
         self.max_call_frequency_days = MAX_CALL_FREQUENCY_DAYS
         self.rolling_window_days = ROLLING_WINDOW_DAYS

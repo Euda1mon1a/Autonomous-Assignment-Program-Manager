@@ -38,6 +38,27 @@ from app.scheduling.bio_inspired.base import (
     Individual,
     PopulationStats,
 )
+from app.scheduling.bio_inspired.constants import (
+    ACO_DEFAULT_COLONY_SIZE,
+    ACO_DEFAULT_MAX_ITERATIONS,
+    ACO_DEFAULT_ALPHA,
+    ACO_DEFAULT_BETA,
+    ACO_DEFAULT_EVAPORATION_RATE,
+    ACO_DEFAULT_INITIAL_PHEROMONE,
+    ACO_DEFAULT_ELITE_COUNT,
+    ACO_DEFAULT_ELITE_FACTOR,
+    ACO_MIN_PHEROMONE,
+    ACO_MAX_PHEROMONE,
+    ACO_LOCAL_SEARCH_ITERATIONS,
+    ACO_TOP_K_FOR_LOCAL_SEARCH,
+    ACO_EARLY_STOP_ITERATIONS,
+    ACO_CONVERGENCE_THRESHOLD,
+    ACO_LOG_INTERVAL,
+    ACO_UNAVAILABLE_SLOT_HEURISTIC,
+    ACO_UNASSIGNED_BOOST,
+    ACO_HOTSPOT_PERCENTILE,
+    ACO_STRONG_TRANSITION_THRESHOLD,
+)
 from app.scheduling.constraints import ConstraintManager, SchedulingContext
 
 logger = logging.getLogger(__name__)
@@ -57,7 +78,13 @@ class AntPath:
     pheromone_contribution: float = 0.0
 
     def to_chromosome_row(self) -> np.ndarray:
-        """Convert path to chromosome row."""
+        """
+        Convert path to chromosome row.
+
+        Returns:
+            np.ndarray: Integer array representing the sequence of template
+                assignments for each block in the path.
+        """
         return np.array(self.path, dtype=np.int32)
 
     @classmethod
@@ -66,7 +93,16 @@ class AntPath:
         resident_idx: int,
         row: np.ndarray,
     ) -> "AntPath":
-        """Create path from chromosome row."""
+        """
+        Create path from chromosome row.
+
+        Args:
+            resident_idx: Index of the resident this path belongs to
+            row: Chromosome row containing template assignments
+
+        Returns:
+            AntPath: New AntPath instance created from the chromosome row
+        """
         return cls(
             resident_idx=resident_idx,
             path=row.tolist(),
@@ -87,10 +123,10 @@ class PheromoneMatrix:
         n_residents: int,
         n_blocks: int,
         n_templates: int,
-        initial_value: float = 1.0,
-        evaporation_rate: float = 0.1,
-        min_pheromone: float = 0.01,
-        max_pheromone: float = 10.0,
+        initial_value: float = ACO_DEFAULT_INITIAL_PHEROMONE,
+        evaporation_rate: float = ACO_DEFAULT_EVAPORATION_RATE,
+        min_pheromone: float = ACO_MIN_PHEROMONE,
+        max_pheromone: float = ACO_MAX_PHEROMONE,
     ):
         """
         Initialize pheromone matrix.
@@ -121,7 +157,7 @@ class PheromoneMatrix:
             (self.n_templates, self.n_templates), initial_value, dtype=np.float64
         )
 
-    def evaporate(self):
+    def evaporate(self) -> None:
         """Apply pheromone evaporation."""
         self.assignment *= 1 - self.evaporation_rate
         self.transition *= 1 - self.evaporation_rate
@@ -134,7 +170,7 @@ class PheromoneMatrix:
         self,
         paths: list[AntPath],
         elite_factor: float = 1.0,
-    ):
+    ) -> None:
         """
         Deposit pheromone on paths.
 
@@ -221,7 +257,22 @@ class PheromoneMatrix:
             return np.ones(self.n_templates) / self.n_templates
 
     def to_dict(self) -> dict:
-        """Convert to dictionary for serialization."""
+        """
+        Convert to dictionary for serialization.
+
+        Creates a summary of the pheromone matrix state for logging and
+        analysis purposes.
+
+        Returns:
+            dict: Dictionary containing:
+                - n_residents: Number of residents
+                - n_blocks: Number of blocks
+                - n_templates: Number of templates
+                - evaporation_rate: Pheromone evaporation rate
+                - assignment_mean: Mean assignment pheromone level
+                - assignment_std: Std dev of assignment pheromones
+                - transition_mean: Mean transition pheromone level
+        """
         return {
             "n_residents": self.n_residents,
             "n_blocks": self.n_blocks,
@@ -237,30 +288,30 @@ class PheromoneMatrix:
 class ACOConfig:
     """Configuration for Ant Colony Optimization."""
 
-    colony_size: int = 50  # Number of ants
-    max_iterations: int = 200
+    colony_size: int = ACO_DEFAULT_COLONY_SIZE  # Number of ants
+    max_iterations: int = ACO_DEFAULT_MAX_ITERATIONS
 
     # ACO parameters
-    alpha: float = 1.0  # Pheromone importance
-    beta: float = 2.0  # Heuristic importance
-    evaporation_rate: float = 0.1
-    initial_pheromone: float = 1.0
+    alpha: float = ACO_DEFAULT_ALPHA  # Pheromone importance
+    beta: float = ACO_DEFAULT_BETA  # Heuristic importance
+    evaporation_rate: float = ACO_DEFAULT_EVAPORATION_RATE
+    initial_pheromone: float = ACO_DEFAULT_INITIAL_PHEROMONE
 
     # Elite ant strategies
     use_elite: bool = True
-    elite_count: int = 5
-    elite_factor: float = 2.0
+    elite_count: int = ACO_DEFAULT_ELITE_COUNT
+    elite_factor: float = ACO_DEFAULT_ELITE_FACTOR
 
     # Pheromone bounds
-    min_pheromone: float = 0.01
-    max_pheromone: float = 10.0
+    min_pheromone: float = ACO_MIN_PHEROMONE
+    max_pheromone: float = ACO_MAX_PHEROMONE
 
     # Local search
     local_search: bool = True
-    local_search_iterations: int = 5
+    local_search_iterations: int = ACO_LOCAL_SEARCH_ITERATIONS
 
     # Convergence
-    early_stop_iterations: int = 30
+    early_stop_iterations: int = ACO_EARLY_STOP_ITERATIONS
 
 
 class AntColonySolver(BioInspiredSolver):
@@ -374,7 +425,7 @@ class AntColonySolver(BioInspiredSolver):
 
             # Apply local search to best solutions
             if self.config.local_search:
-                top_k = sorted(ant_solutions, key=lambda x: x[2], reverse=True)[:5]
+                top_k = sorted(ant_solutions, key=lambda x: x[2], reverse=True)[:ACO_TOP_K_FOR_LOCAL_SEARCH]
                 for chrom, fit, weighted in top_k:
                     improved = self._local_search(chrom, context)
                     new_fit = self.evaluate_fitness(improved, context)
@@ -406,7 +457,7 @@ class AntColonySolver(BioInspiredSolver):
                 break
 
             # Log progress
-            if iteration % 20 == 0:
+            if iteration % ACO_LOG_INTERVAL == 0:
                 logger.info(
                     f"ACO iter {iteration}: best={best_fitness:.4f}, "
                     f"pheromone_mean={np.mean(self.pheromone.assignment):.4f}"
@@ -437,7 +488,7 @@ class AntColonySolver(BioInspiredSolver):
         context: SchedulingContext,
         n_residents: int,
         n_blocks: int,
-    ):
+    ) -> None:
         """
         Build heuristic matrix for ant decisions.
 
@@ -460,10 +511,10 @@ class AntColonySolver(BioInspiredSolver):
             for b_idx in unavail:
                 if 0 <= b_idx < n_blocks:
                     # Set all templates to low probability
-                    self.heuristic_matrix[r_idx, b_idx, :] = 0.1
+                    self.heuristic_matrix[r_idx, b_idx, :] = ACO_UNAVAILABLE_SLOT_HEURISTIC
 
         # Boost unassigned to prevent over-scheduling
-        self.heuristic_matrix[:, :, 0] *= 1.5
+        self.heuristic_matrix[:, :, 0] *= ACO_UNASSIGNED_BOOST
 
     def _construct_solution(
         self,
@@ -569,7 +620,19 @@ class AntColonySolver(BioInspiredSolver):
         return best
 
     def _chromosome_to_paths(self, chromosome: Chromosome) -> list[AntPath]:
-        """Convert chromosome to list of ant paths."""
+        """
+        Convert chromosome to list of ant paths.
+
+        Extracts each resident's rotation sequence from the chromosome and
+        creates an AntPath object for pheromone deposition.
+
+        Args:
+            chromosome: Schedule chromosome to convert
+
+        Returns:
+            list[AntPath]: One AntPath per resident, containing their
+                complete rotation sequence.
+        """
         paths = []
         for r_idx in range(chromosome.genes.shape[0]):
             path = AntPath(
@@ -582,7 +645,7 @@ class AntColonySolver(BioInspiredSolver):
     def _deposit_pheromone(
         self,
         solutions: list[tuple[Chromosome, FitnessVector, float]],
-    ):
+    ) -> None:
         """
         Deposit pheromone based on solution quality.
 
@@ -611,7 +674,7 @@ class AntColonySolver(BioInspiredSolver):
         iteration: int,
         solutions: list[tuple[Chromosome, FitnessVector, float]],
         best_fitness: float,
-    ):
+    ) -> None:
         """Track statistics for this iteration."""
         fitness_values = [s[2] for s in solutions]
 
@@ -630,34 +693,57 @@ class AntColonySolver(BioInspiredSolver):
         self.evolution_history.append(stats)
 
     def _check_convergence(self) -> bool:
-        """Check if ACO has converged."""
+        """
+        Check if ACO has converged.
+
+        Examines recent best fitness history to determine if the algorithm
+        has stagnated (no significant improvement).
+
+        Returns:
+            bool: True if improvement over last early_stop_iterations is less
+                than 0.001, False otherwise or if insufficient history.
+
+        Note:
+            Requires at least config.early_stop_iterations of history to
+            assess convergence.
+        """
         if len(self._best_fitness_history) < self.config.early_stop_iterations:
             return False
 
         recent = self._best_fitness_history[-self.config.early_stop_iterations :]
         improvement = max(recent) - min(recent)
 
-        return improvement < 0.001
+        return improvement < ACO_CONVERGENCE_THRESHOLD
 
     def get_pheromone_analysis(self) -> dict:
         """
         Analyze pheromone distribution for insights.
 
+        Identifies high-pheromone regions (hotspots) and common transition
+        patterns that emerged during optimization.
+
         Returns:
-            Dictionary with pheromone analysis
+            dict: Analysis containing:
+                - pheromone_matrix: Summary statistics
+                - n_hotspots: Count of high-pheromone assignments
+                - hotspot_examples: Sample hotspot coordinates
+                - top_transitions: Most common template transitions
+
+        Note:
+            Returns empty dict if pheromone matrix hasn't been initialized.
         """
         if self.pheromone is None:
             return {}
 
         # Find hotspots (high pheromone)
-        threshold = np.percentile(self.pheromone.assignment, 90)
+        threshold = np.percentile(self.pheromone.assignment, ACO_HOTSPOT_PERCENTILE)
         hotspots = np.argwhere(self.pheromone.assignment > threshold)
 
         # Find preferred transitions
         top_transitions = []
         for from_t in range(self.pheromone.n_templates):
             for to_t in range(self.pheromone.n_templates):
-                if self.pheromone.transition[from_t, to_t] > 2.0:
+                if self.pheromone.transition[from_t, to_t] > ACO_STRONG_TRANSITION_THRESHOLD:
                     top_transitions.append(
                         {
                             "from": from_t,
@@ -676,7 +762,19 @@ class AntColonySolver(BioInspiredSolver):
         }
 
     def get_evolution_data(self) -> dict:
-        """Get evolution data including ACO-specific information."""
+        """
+        Get evolution data including ACO-specific information.
+
+        Returns:
+            dict: Evolution data containing:
+                - Base evolution data from parent class
+                - aco_config: ACO-specific parameters
+                - pheromone_analysis: Pheromone distribution insights
+
+        Note:
+            Extends the base class get_evolution_data with ACO-specific
+            metrics and pheromone analysis.
+        """
         base_data = super().get_evolution_data()
 
         base_data["aco_config"] = {

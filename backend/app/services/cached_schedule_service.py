@@ -49,7 +49,7 @@ class CachedHeatmapService:
         )
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize cached service with underlying HeatmapService."""
         self._service = HeatmapService()
         self._cache = get_service_cache()
@@ -333,7 +333,7 @@ class CachedCalendarService:
         )
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize cached service."""
         self._cache = get_service_cache()
         self._settings = get_settings()

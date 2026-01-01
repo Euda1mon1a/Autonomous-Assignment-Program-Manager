@@ -17,14 +17,20 @@ from pydantic import BaseModel, Field
 class MetricValue(BaseModel):
     """Single metric value with metadata."""
 
-    name: str
-    value: float
-    unit: str | None = None
-    status: str  # "good", "warning", "critical"
-    trend: str | None = None  # "up", "down", "stable"
-    benchmark: float | None = None
-    description: str | None = None
-    details: dict[str, Any] | None = None
+    name: str = Field(..., min_length=1, max_length=100, description="Metric name")
+    value: float = Field(..., description="Metric value")
+    unit: str | None = Field(None, max_length=50, description="Unit of measurement")
+    status: str = Field(
+        ..., max_length=20, description="Status: good, warning, or critical"
+    )
+    trend: str | None = Field(
+        None, max_length=20, description="Trend: up, down, or stable"
+    )
+    benchmark: float | None = Field(None, description="Benchmark value for comparison")
+    description: str | None = Field(
+        None, max_length=500, description="Metric description"
+    )
+    details: dict[str, Any] | None = Field(None, description="Additional details")
 
 
 class ScheduleVersionMetrics(BaseModel):
@@ -161,8 +167,10 @@ class VersionComparison(BaseModel):
     residents_affected: int = Field(alias="residentsAffected")
 
     # Recommendations
-    summary: str
-    recommendations: list[str]
+    summary: str = Field(..., max_length=1000, description="Summary of comparison")
+    recommendations: list[str] = Field(
+        ..., max_length=20, description="List of recommendations (max 20)"
+    )
 
     class Config:
         populate_by_name = True
@@ -320,12 +328,18 @@ class ResearchDataExport(BaseModel):
     coverage_metrics: dict[str, float] = Field(alias="coverageMetrics")
 
     # Metadata
-    institution_type: str | None = Field(None, alias="institutionType")
-    program_size: str | None = Field(None, alias="programSize")
-    speciality: str | None = Field(None, alias="speciality")
+    institution_type: str | None = Field(
+        None, max_length=100, alias="institutionType", description="Type of institution"
+    )
+    program_size: str | None = Field(
+        None, max_length=50, alias="programSize", description="Size of program"
+    )
+    speciality: str | None = Field(
+        None, max_length=100, alias="speciality", description="Medical speciality"
+    )
 
     # Export notes
-    notes: str | None = None
+    notes: str | None = Field(None, max_length=2000, description="Export notes")
 
     class Config:
         populate_by_name = True

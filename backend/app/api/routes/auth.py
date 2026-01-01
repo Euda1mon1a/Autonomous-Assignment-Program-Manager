@@ -56,7 +56,7 @@ rate_limit_register = create_rate_limit_dependency(
 async def login(
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     _rate_limit: None = Depends(rate_limit_login),
 ):
     """
@@ -105,7 +105,7 @@ async def login(
 async def login_json(
     response: Response,
     credentials: UserLogin,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     _rate_limit: None = Depends(rate_limit_login),
 ):
     """
@@ -155,7 +155,7 @@ async def logout(
     response: Response,
     current_user: User = Depends(get_current_active_user),
     token: str = Depends(oauth2_scheme),
-    db=Depends(get_db),
+    db=Depends(get_async_db),
 ):
     """
     Logout current user by blacklisting their token.
@@ -196,7 +196,7 @@ async def logout(
 async def refresh_token(
     response: Response,
     request: RefreshTokenRequest,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
 ):
     """
     Exchange a refresh token for a new access token.
@@ -277,23 +277,50 @@ async def refresh_token(
 async def get_current_user_info(
     current_user: User = Depends(get_current_active_user),
 ):
-    """Get current authenticated user information."""
+    """Get current authenticated user information.
+
+    Args:
+        current_user: Authenticated user from JWT token.
+
+    Returns:
+        UserResponse with user details (id, username, email, role, etc.).
+
+    Security:
+        Requires valid JWT token in Authorization header or httpOnly cookie.
+    """
     return current_user
 
 
 @router.post("/register", response_model=UserResponse, status_code=201)
 async def register_user(
     user_in: UserCreate,
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User | None = Depends(get_current_user),
     _rate_limit: None = Depends(rate_limit_register),
 ):
-    """
-    Register a new user.
+    """Register a new user account.
 
-    - If no users exist, first user becomes admin
-    - Otherwise, requires admin to create new users
-    Rate limited to prevent automated account creation attacks.
+    Args:
+        user_in: User creation payload (username, email, password, role).
+        db: Database session.
+        current_user: Current user (if authenticated). Admin required unless first user.
+        _rate_limit: Rate limit enforcement dependency.
+
+    Returns:
+        UserResponse with created user details.
+
+    Raises:
+        HTTPException: If admin access required or username/email already exists.
+
+    Security:
+        - First user automatically becomes admin
+        - Subsequent registrations require admin privileges
+        - Rate limited to prevent automated account creation attacks
+
+    Status Codes:
+        - 201: User created successfully
+        - 403: Admin access required
+        - 409: Username or email already exists
     """
     controller = AuthController(db)
     return controller.register_user(user_in, current_user)
@@ -301,9 +328,23 @@ async def register_user(
 
 @router.get("/users", response_model=list[UserResponse])
 async def list_users(
-    db=Depends(get_db),
+    db=Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
-    """List all users (admin only)."""
+    """List all users in the system.
+
+    Args:
+        db: Database session.
+        current_user: Current user (must be admin).
+
+    Returns:
+        List of UserResponse objects with all user details.
+
+    Security:
+        Requires admin role.
+
+    Raises:
+        HTTPException: If user is not an admin (403 Forbidden).
+    """
     controller = AuthController(db)
     return controller.list_users()

@@ -81,7 +81,7 @@ class RotationValidator:
     5. Milestones: Competency assessment per rotation type
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize rotation validator."""
         self.min_rotation_days = MIN_ROTATION_DAYS
         self.pgy1_min_clinic = PGY1_MIN_CLINIC_BLOCKS

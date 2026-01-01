@@ -29,7 +29,7 @@ class SchedulingOptimizer:
     - Lazy loading patterns for large datasets
     """
 
-    def __init__(self, enable_caching: bool = True):
+    def __init__(self, enable_caching: bool = True) -> None:
         """
         Initialize optimizer.
 

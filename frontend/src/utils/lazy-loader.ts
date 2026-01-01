@@ -20,14 +20,14 @@ export interface LazyLoadOptions {
 /**
  * Lazy load a component with retry logic.
  */
-export function lazyLoadWithRetry<T extends React.ComponentType<any>>(
-  importFn: () => Promise<{ default: T }>,
+export function lazyLoadWithRetry<P = Record<string, unknown>>(
+  importFn: () => Promise<{ default: React.ComponentType<P> }>,
   options: LazyLoadOptions = {}
-): React.LazyExoticComponent<T> {
+): React.LazyExoticComponent<React.ComponentType<P>> {
   const { delay = 0 } = options;
 
   return React.lazy(() => {
-    return new Promise<{ default: T }>((resolve, reject) => {
+    return new Promise<{ default: React.ComponentType<P> }>((resolve, reject) => {
       const loadComponent = async (retryCount = 3) => {
         try {
           if (delay > 0) {
@@ -55,8 +55,8 @@ export function lazyLoadWithRetry<T extends React.ComponentType<any>>(
 /**
  * Preload a lazy component.
  */
-export function preloadComponent<T extends React.ComponentType<any>>(
-  lazyComponent: React.LazyExoticComponent<T>
+export function preloadComponent<P = Record<string, unknown>>(
+  lazyComponent: React.LazyExoticComponent<React.ComponentType<P>>
 ): void {
   // Trigger the lazy loading
   const temp = React.createElement(lazyComponent);
@@ -67,7 +67,7 @@ export function preloadComponent<T extends React.ComponentType<any>>(
  * Lazy load multiple components in parallel.
  */
 export async function preloadMultiple(
-  components: React.LazyExoticComponent<any>[]
+  components: React.LazyExoticComponent<React.ComponentType<unknown>>[]
 ): Promise<void> {
   await Promise.all(components.map((comp) => preloadComponent(comp)));
 }
@@ -77,7 +77,7 @@ export async function preloadMultiple(
  */
 export interface RouteConfig {
   path: string;
-  component: () => Promise<{ default: React.ComponentType<any> }>;
+  component: () => Promise<{ default: React.ComponentType<unknown> }>;
   preload?: boolean;
 }
 
@@ -90,7 +90,7 @@ export class RouteLazyLoader {
   /**
    * Get lazy component for route.
    */
-  getComponent(path: string): React.LazyExoticComponent<any> | null {
+  getComponent(path: string): React.LazyExoticComponent<React.ComponentType<unknown>> | null {
     const route = this.routes.find((r) => r.path === path);
     if (!route) return null;
 

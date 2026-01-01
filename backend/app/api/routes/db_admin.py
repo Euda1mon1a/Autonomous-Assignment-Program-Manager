@@ -146,6 +146,13 @@ class DatabaseHealthResponse(BaseModel):
     recommendations: list[str]
 
 
+class VacuumResponse(BaseModel):
+    """Vacuum operation response."""
+
+    message: str
+    table: str
+
+
 # ============================================================================
 # Routes
 # ============================================================================
@@ -531,6 +538,7 @@ async def get_query_statistics(
 
 @router.post(
     "/db-admin/vacuum/{table_name}",
+    response_model=VacuumResponse,
     dependencies=[Depends(require_role("ADMIN"))],
 )
 async def vacuum_table(
@@ -538,7 +546,7 @@ async def vacuum_table(
     analyze: bool = Query(True, description="Also run ANALYZE"),
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> dict[str, str]:
+) -> VacuumResponse:
     """
     Run VACUUM on a specific table.
 
@@ -598,10 +606,10 @@ async def vacuum_table(
             f"VACUUM{'ANALYZE' if analyze else ''} completed for table {table_name}"
         )
 
-        return {
-            "message": f"VACUUM {'ANALYZE ' if analyze else ''}completed successfully for {table_name}",
-            "table": table_name,
-        }
+        return VacuumResponse(
+            message=f"VACUUM {'ANALYZE ' if analyze else ''}completed successfully for {table_name}",
+            table=table_name,
+        )
 
     except HTTPException:
         raise

@@ -404,7 +404,7 @@ class MutationOperator:
         row: int,
         col: int,
         n_templates: int,
-    ):
+    ) -> None:
         """Apply mutation at a specific position."""
         if self.method == MutationMethod.FLIP:
             # Change to different template or unassign
@@ -452,7 +452,7 @@ class MutationOperator:
         improved: bool,
         diversity: float,
         generation: int,
-    ):
+    ) -> None:
         """
         Adapt mutation rate based on search progress.
 

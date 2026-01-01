@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Uploa
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError, DBAPIError
 
 from app.core.file_security import FileValidationError, validate_excel_upload
 from app.core.logging import get_logger
@@ -181,8 +182,8 @@ async def generate_schedule(
                 body_hash=body_hash,
                 request_params=request_params,
             )
-        except Exception as e:
-            logger.warning(f"Failed to create idempotency record: {e}")
+        except (SQLAlchemyError, ValueError) as e:
+            logger.warning(f"Failed to create idempotency record: {e}", exc_info=True)
             # Continue without idempotency tracking
 
     # Issue #1: Double-submit / Re-entrancy protection
@@ -315,7 +316,7 @@ async def generate_schedule(
     except HTTPException:
         # Re-raise HTTP exceptions
         raise
-    except Exception as e:
+    except (SQLAlchemyError, ValueError, KeyError, TypeError, ImportError) as e:
         if obs_metrics:
             obs_metrics.record_schedule_failure(algorithm)
         logger.error("Error generating schedule: {}", repr(e), exc_info=True)
@@ -329,7 +330,8 @@ async def generate_schedule(
             )
             try:
                 await db.commit()
-            except Exception:
+            except (SQLAlchemyError, DBAPIError) as e:
+                logger.error(f"Failed to commit error audit log: {e}", exc_info=True)
                 await db.rollback()
         raise HTTPException(status_code=500, detail=error_msg)
 
@@ -513,7 +515,8 @@ async def analyze_imported_schedules(
     # Read file contents
     try:
         fmit_bytes = fmit_file.file.read()
-    except Exception:
+    except (IOError, OSError, ValueError) as e:
+        logger.error(f"Failed to read FMIT uploaded file: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
     # Validate FMIT file
@@ -526,7 +529,8 @@ async def analyze_imported_schedules(
     if clinic_file:
         try:
             clinic_bytes = clinic_file.file.read()
-        except Exception:
+        except (IOError, OSError, ValueError) as e:
+            logger.error(f"Failed to read clinic uploaded file: {e}", exc_info=True)
             raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
         # Validate clinic file
@@ -598,7 +602,8 @@ async def analyze_single_file(
     # Read file
     try:
         file_bytes = file.file.read()
-    except Exception:
+    except (IOError, OSError, ValueError) as e:
+        logger.error(f"Failed to read clinic schedule file: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
     # Validate uploaded file
@@ -735,7 +740,8 @@ async def parse_block_schedule_endpoint(
     # Read and validate file
     try:
         file_bytes = file.file.read()
-    except Exception:
+    except (IOError, OSError, ValueError) as e:
+        logger.error(f"Failed to read block parse file: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
     try:
@@ -794,7 +800,8 @@ async def parse_block_schedule_endpoint(
                 ]
             finally:
                 os.unlink(tmp_path)
-        except Exception:
+        except (KeyError, ValueError, IndexError) as e:
+            logger.debug(f"FMIT sheet not found or parse error (expected for some blocks): {e}")
             pass  # FMIT sheet not found, that's OK
 
     # Convert to response schema
@@ -870,7 +877,8 @@ async def find_swap_candidates(
     # Read FMIT file
     try:
         fmit_bytes = fmit_file.file.read()
-    except Exception:
+    except (IOError, OSError, ValueError) as e:
+        logger.error(f"Failed to read FMIT file for swap finder: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
     # Validate FMIT file
@@ -907,9 +915,9 @@ async def find_swap_candidates(
         try:
             absence_conflicts = load_external_conflicts_from_absences(db)
             external_conflicts.extend(absence_conflicts)
-        except Exception as e:
+        except (SQLAlchemyError, ValueError, KeyError) as e:
             # Log but don't fail - absence integration is optional
-            logger.warning(f"Failed to load absence conflicts: {e}")
+            logger.warning(f"Failed to load absence conflicts: {e}", exc_info=True)
 
     try:
         # Create SwapFinder from file
@@ -1292,7 +1300,7 @@ async def generate_faculty_outpatient(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except (SQLAlchemyError, ValueError, KeyError, TypeError) as e:
         # Use repr to avoid format string issues with loguru
         logger.error("Faculty outpatient generation error: {}", repr(e), exc_info=True)
         await db.rollback()

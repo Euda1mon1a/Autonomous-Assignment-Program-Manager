@@ -144,7 +144,25 @@ class TemplateSelectionResult:
     recommended_solution_id: int | None = None
 
     def to_json(self) -> dict:
-        """Export result to JSON-compatible format."""
+        """
+        Export result to JSON-compatible format.
+
+        Converts the template selection result into a JSON-serializable
+        dictionary suitable for API responses and logging.
+
+        Returns:
+            dict: JSON-compatible dictionary containing:
+                - success: Boolean indicating optimization success
+                - num_assignments: Total number of assignments generated
+                - pareto_frontier: List of Pareto-optimal solutions
+                - energy_landscape: Sample of energy landscape points
+                - statistics: Optimization statistics and metrics
+                - runtime_seconds: Total execution time
+                - recommended_solution_id: ID of recommended solution
+
+        Note:
+            Energy landscape is limited to 100 points for export efficiency.
+        """
         return {
             "success": self.success,
             "num_assignments": len(self.assignments),
@@ -232,7 +250,21 @@ class QUBOTemplateFormulation:
         )
 
     def _build_rotation_periods(self) -> list[list[Any]]:
-        """Aggregate blocks into rotation periods (2-week chunks)."""
+        """
+        Aggregate blocks into rotation periods (2-week chunks).
+
+        Groups workday blocks into 2-week (10-workday) periods to reduce
+        problem dimensionality while maintaining educational rotation structure.
+
+        Returns:
+            list[list[Any]]: List of rotation periods, where each period
+                contains approximately 10 workday blocks. Final period may
+                have fewer blocks.
+
+        Note:
+            Weekend blocks are excluded. Blocks are sorted by date before
+            grouping to maintain temporal order.
+        """
         workday_blocks = sorted(
             [b for b in self.context.blocks if not b.is_weekend], key=lambda b: b.date
         )
@@ -256,7 +288,17 @@ class QUBOTemplateFormulation:
         return periods
 
     def _build_variable_index(self):
-        """Build mapping from (resident, period, template) to flat index."""
+        """
+        Build mapping from (resident, period, template) to flat index.
+
+        Creates bidirectional mappings between 3D coordinates (resident, period,
+        template) and flat variable indices used in the QUBO matrix.
+
+        Note:
+            Populates self.var_index and self.index_to_var dictionaries.
+            Only includes templates that don't require procedure credentials.
+            Total variables = n_residents × n_periods × n_valid_templates.
+        """
         idx = 0
         valid_templates = [
             t for t in self.context.templates if not t.requires_procedure_credential
@@ -273,7 +315,13 @@ class QUBOTemplateFormulation:
 
     @property
     def num_variables(self) -> int:
-        """Number of binary variables in the QUBO."""
+        """
+        Number of binary variables in the QUBO.
+
+        Returns:
+            int: Total number of binary decision variables in the formulation,
+                equal to n_residents × n_periods × n_valid_templates.
+        """
         return len(self.var_index)
 
     def build(
@@ -331,8 +379,14 @@ class QUBOTemplateFormulation:
         """
         Objective: Maximize assignment coverage.
 
-        Each resident should be assigned a template for each period.
-        Encoded as: minimize -sum(x[r,p,t]) for all variables
+        Encourages assigning every resident to a template for every period.
+        Uses negative linear terms to reward variable selection.
+
+        Formulation:
+            minimize -sum(x[r,p,t]) for all variables
+
+        Note:
+            Adds -1.0 coefficient to diagonal terms of the coverage objective matrix.
         """
         matrix = self.objective_matrices["coverage"]
 
@@ -344,8 +398,17 @@ class QUBOTemplateFormulation:
         """
         Objective: Fair distribution of desirable/undesirable rotations.
 
-        Encode as quadratic penalty for deviation from equal distribution.
-        For each desirability category, penalize variance across residents.
+        Ensures equitable distribution of highly-desirable (e.g., Sports Medicine)
+        and undesirable (e.g., Night Float) templates across residents.
+
+        Formulation:
+            Penalizes pairs of same-category assignments to the same resident
+            to encourage spreading desirable templates across the team.
+
+        Note:
+            Templates are grouped into three categories: HIGHLY_DESIRABLE,
+            NEUTRAL, and UNDESIRABLE. Penalty is inversely weighted by
+            expected frequency to balance impact.
         """
         matrix = self.objective_matrices["fairness"]
         valid_templates = [
@@ -402,6 +465,29 @@ class QUBOTemplateFormulation:
 
         Add linear bonus for assignments matching stated preferences.
         Integrates with context.preferences when available.
+
+        **Preference Integration Guide:**
+
+        To integrate actual resident preferences, add a `preferences` field to SchedulingContext:
+
+        ```python
+        # In SchedulingContext:
+        preferences: dict[UUID, dict[UUID, float]]  # {resident_id: {template_id: score}}
+
+        # Example preference data:
+        preferences = {
+            resident_1_id: {
+                sports_med_template_id: 1.0,   # Highly preferred
+                clinic_template_id: 0.5,        # Neutral
+                night_float_template_id: -0.5, # Avoid if possible
+            },
+            # ... more residents
+        }
+        ```
+
+        **Current Implementation:**
+        Uses template desirability categories as a proxy until actual preference data is available.
+        When context.preferences is available, it will be used directly.
         """
         matrix = self.objective_matrices["preference"]
         valid_templates = [
@@ -441,7 +527,17 @@ class QUBOTemplateFormulation:
         """
         Objective: Support learning goals through rotation variety.
 
-        Encourage each resident to experience different template types.
+        Promotes educational breadth by encouraging residents to rotate
+        through different template types rather than repeating the same
+        rotation.
+
+        Formulation:
+            Adds small penalty for consecutive assignments to the same
+            template type, promoting variety in educational experiences.
+
+        Note:
+            Penalty is intentionally small (0.05) to allow variety without
+            overpowering other objectives.
         """
         matrix = self.objective_matrices["learning"]
         valid_templates = [
@@ -468,7 +564,18 @@ class QUBOTemplateFormulation:
         """
         Constraint: Exactly one template per resident per period.
 
-        Encoded as: penalty * (sum_t x[r,p,t] - 1)^2
+        Hard constraint ensuring each resident is assigned exactly one
+        template per rotation period.
+
+        Formulation:
+            penalty × (sum_t x[r,p,t] - 1)²
+
+        Expansion:
+            = -penalty × sum_i x_i + 2×penalty × sum_{i<j} x_i×x_j
+
+        Note:
+            Uses large penalty (config.hard_constraint_penalty) to ensure
+            constraint is not violated in optimal solutions.
         """
         matrix = self.objective_matrices["constraints"]
         n_periods = len(self.rotation_periods)
@@ -510,7 +617,16 @@ class QUBOTemplateFormulation:
         """
         Constraint: Respect template capacity limits.
 
-        For templates with max_residents, penalize over-assignment.
+        Soft constraint preventing templates from being over-subscribed
+        when max_residents limits are specified.
+
+        Formulation:
+            Adds quadratic penalty for pairs of assignments when the number
+            of residents assigned to a template in a period exceeds capacity.
+
+        Note:
+            Uses soft penalty scaled by capacity to allow occasional violations
+            if needed for overall schedule quality.
         """
         matrix = self.objective_matrices["constraints"]
         valid_templates = [
@@ -547,7 +663,16 @@ class QUBOTemplateFormulation:
         """
         Constraint: Cannot assign during unavailable periods.
 
-        High penalty for assignments violating availability.
+        Hard constraint preventing assignments when residents are unavailable
+        (vacation, deployment, TDY, etc.).
+
+        Formulation:
+            Adds large linear penalty to all template variables for periods
+            overlapping with unavailability.
+
+        Note:
+            Uses hard_constraint_penalty to make violations highly undesirable.
+            Checks block-level availability from context.availability.
         """
         matrix = self.objective_matrices["constraints"]
         valid_templates = [
@@ -578,7 +703,21 @@ class QUBOTemplateFormulation:
                             )
 
     def _add_to_Q(self, i: int, j: int, value: float):
-        """Add value to Q matrix (symmetric)."""
+        """
+        Add value to Q matrix (symmetric).
+
+        Accumulates coefficient value for the (i,j) term in the QUBO matrix.
+        Maintains upper-triangular form by swapping indices if needed.
+
+        Args:
+            i: First variable index
+            j: Second variable index
+            value: Coefficient value to add
+
+        Note:
+            QUBO matrices are symmetric, so we store only upper-triangular
+            entries with i <= j.
+        """
         if i > j:
             i, j = j, i
         key = (i, j)
@@ -590,11 +729,21 @@ class QUBOTemplateFormulation:
         """
         Decode QUBO solution to assignment list.
 
+        Converts binary variable assignments back into explicit schedule
+        assignments, expanding rotation periods into individual blocks.
+
         Args:
-            sample: Dict mapping variable index to 0/1 value
+            sample: Dict mapping variable index to 0/1 binary value
+                (1 = variable is active, 0 = inactive)
 
         Returns:
-            List of (person_id, block_id, template_id) tuples
+            list[tuple[UUID, UUID, UUID | None]]: List of assignments where
+                each tuple is (person_id, block_id, template_id). One assignment
+                per block in each selected rotation period.
+
+        Note:
+            Each active variable x[r,p,t]=1 generates multiple assignments
+            (one per block in period p).
         """
         assignments = []
         valid_templates = [
@@ -628,11 +777,24 @@ class QUBOTemplateFormulation:
         """
         Compute individual objective values for a solution.
 
+        Evaluates each objective separately for Pareto analysis and
+        multi-objective optimization.
+
         Args:
-            sample: Dict mapping variable index to 0/1 value
+            sample: Dict mapping variable index to 0/1 binary value
 
         Returns:
-            Dict of objective name -> value
+            dict[str, float]: Dictionary mapping objective names to their
+                values:
+                - "coverage": Total assignments made
+                - "fairness": Fairness penalty (lower is better)
+                - "preference": Preference satisfaction
+                - "learning": Learning variety score
+                - "constraints": Total constraint violations
+
+        Note:
+            Values are computed from the objective_matrices dictionary,
+            evaluating the QUBO formulation for each component separately.
         """
         objectives = {}
 
@@ -689,12 +851,21 @@ class AdaptiveTemperatureSchedule:
         """
         Get inverse temperature for current sweep.
 
+        Implements adaptive temperature schedule with automatic reheating
+        when optimization plateaus.
+
         Args:
-            sweep: Current sweep number
-            current_energy: Current solution energy
+            sweep: Current sweep number (0-indexed)
+            current_energy: Current solution energy for plateau detection
 
         Returns:
-            Beta (inverse temperature) value
+            float: Beta (inverse temperature) value. Higher values mean
+                lower temperature and less accepting of worse solutions.
+
+        Note:
+            Normal schedule: Geometric cooling from beta_start to beta_end.
+            Plateau detection: If no improvement for 10% of sweeps, reheat
+            by multiplying beta by reheat_factor.
         """
         self.current_sweep = sweep
         self.energy_history.append(current_energy)
@@ -726,14 +897,25 @@ class AdaptiveTemperatureSchedule:
         """
         Compute quantum tunneling probability through energy barrier.
 
-        Based on WKB approximation: P ∝ exp(-2 * barrier_width * sqrt(barrier))
+        Uses WKB (Wentzel-Kramers-Brillouin) approximation from quantum
+        mechanics to estimate probability of tunneling through classical
+        energy barriers.
+
+        Formula:
+            P ≈ exp(-barrier_width × sqrt(barrier_height))
 
         Args:
-            energy_barrier: Height of the energy barrier
-            barrier_width: Effective width of the barrier
+            energy_barrier: Height of the energy barrier (positive value)
+            barrier_width: Effective width of the barrier (default: 1.0)
 
         Returns:
-            Tunneling probability (0 to 1)
+            float: Tunneling probability between 0 and 1. Returns 1.0 if
+                barrier is non-positive (no barrier to tunnel through).
+
+        Note:
+            This quantum-inspired heuristic allows occasional acceptance
+            of uphill moves beyond what classical annealing would permit,
+            potentially escaping local minima more effectively.
         """
         if energy_barrier <= 0:
             return 1.0
@@ -743,7 +925,20 @@ class AdaptiveTemperatureSchedule:
         return min(1.0, math.exp(exponent))
 
     def get_statistics(self) -> dict:
-        """Get schedule statistics."""
+        """
+        Get schedule statistics.
+
+        Returns:
+            dict: Statistics containing:
+                - num_sweeps: Total number of sweeps executed
+                - final_beta: Final inverse temperature value
+                - best_energy: Best energy value found
+                - reheat_count: Number of times temperature was reheated
+                - last_improvement_sweep: Sweep number of last improvement
+
+        Note:
+            Useful for analyzing convergence behavior and tuning parameters.
+        """
         return {
             "num_sweeps": self.num_sweeps,
             "final_beta": self.current_beta,
@@ -781,8 +976,22 @@ class EnergyLandscapeExplorer:
         """
         Sample the energy landscape to find local structure.
 
+        Randomly samples the search space to identify local minima,
+        energy barriers, and tunneling paths for visualization.
+
         Returns:
-            List of sampled points with energy and objective values
+            list[EnergyLandscapePoint]: List of sampled points, each containing:
+                - state: Binary variable assignment
+                - energy: QUBO energy value
+                - objectives: Individual objective values
+                - is_local_minimum: Whether point is a local minimum
+                - tunneling_probability: Probability to tunnel to global best
+                - basin_size: Estimated size of attraction basin
+
+        Note:
+            Samples sample_count random states, then performs local search
+            analysis to identify landscape features. Useful for understanding
+            optimization difficulty and solution quality.
         """
         Q = self.formulation.Q
         n = self.formulation.num_variables
@@ -817,7 +1026,24 @@ class EnergyLandscapeExplorer:
     def _compute_energy(
         self, state: dict[int, int], Q: dict[tuple[int, int], float]
     ) -> float:
-        """Compute QUBO energy for a state."""
+        """
+        Compute QUBO energy for a state.
+
+        Evaluates the quadratic function E = x^T Q x where x is the binary
+        state vector.
+
+        Args:
+            state: Dictionary mapping variable indices to 0/1 values
+            Q: QUBO matrix as dictionary of (i,j) -> coefficient
+
+        Returns:
+            float: Total energy of the state. Lower energy indicates better
+                solutions (minimization problem).
+
+        Note:
+            Diagonal terms (i==j) are linear, off-diagonal terms are quadratic.
+            Missing state values default to 0.
+        """
         energy = 0.0
         for (i, j), coef in Q.items():
             if i == j:
@@ -846,7 +1072,25 @@ class EnergyLandscapeExplorer:
     def _compute_delta_energy(
         self, state: dict[int, int], Q: dict, flip_idx: int
     ) -> float:
-        """Compute energy change from flipping one variable."""
+        """
+        Compute energy change from flipping one variable.
+
+        Efficiently calculates ΔE for flipping x[flip_idx] without
+        recomputing the full energy.
+
+        Args:
+            state: Current binary state
+            Q: QUBO matrix dictionary
+            flip_idx: Index of variable to flip
+
+        Returns:
+            float: Change in energy (new_energy - old_energy). Negative
+                values indicate improvement.
+
+        Note:
+            Only considers terms involving flip_idx, making this O(n)
+            instead of O(n²) for full recomputation.
+        """
         current_val = state.get(flip_idx, 0)
         new_val = 1 - current_val
         delta = new_val - current_val
@@ -964,8 +1208,18 @@ class ParetoFrontExplorer:
         """
         Explore Pareto front using multi-objective optimization.
 
+        Uses weighted-sum scalarization with diverse weight vectors to
+        discover the Pareto frontier of trade-off solutions.
+
         Returns:
-            List of non-dominated Pareto solutions
+            list[ParetoSolution]: Non-dominated solutions on the Pareto front,
+                each representing a different trade-off between objectives.
+                Solutions include crowding distance for diversity assessment.
+
+        Note:
+            Generates population_size weight vectors and runs generations
+            rounds of optimization. Periodically prunes dominated solutions
+            to maintain efficiency.
         """
         n_objectives = len(self.objectives)
 
@@ -1158,7 +1412,24 @@ class ParetoFrontExplorer:
                     frontier[i].crowding_distance += diff / obj_range
 
     def export_for_visualization(self) -> dict:
-        """Export Pareto front for holographic hub visualization."""
+        """
+        Export Pareto front for holographic hub visualization.
+
+        Creates a visualization-ready summary of the Pareto front including
+        diversity metrics.
+
+        Returns:
+            dict: Visualization data containing:
+                - num_frontier_solutions: Count of non-dominated solutions
+                - total_evaluations: Total solutions evaluated
+                - objectives: List of objective names
+                - frontier: List of frontier solutions with crowding distances
+                - hypervolume_estimate: Hypervolume indicator (2D approximation)
+
+        Note:
+            Solutions are sorted by crowding distance (descending) to
+            highlight most diverse solutions.
+        """
         return {
             "num_frontier_solutions": len(self.frontier),
             "total_evaluations": len(self.solutions),
@@ -1178,7 +1449,22 @@ class ParetoFrontExplorer:
         }
 
     def _estimate_hypervolume(self) -> float:
-        """Estimate hypervolume indicator of Pareto front."""
+        """
+        Estimate hypervolume indicator of Pareto front.
+
+        Computes the 2D hypervolume for the first two objectives as a
+        quality metric for the Pareto front.
+
+        Returns:
+            float: Hypervolume value (higher is better, indicates better
+                coverage of objective space). Returns 0.0 if fewer than
+                2 objectives or empty frontier.
+
+        Note:
+            Full hypervolume computation is NP-hard for >2 objectives.
+            This implementation uses a simple 2D calculation as an
+            approximation.
+        """
         if not self.frontier or not self.objectives:
             return 0.0
 
@@ -1245,8 +1531,23 @@ class HybridTemplatePipeline:
         """
         Run the full hybrid pipeline.
 
+        Executes three-stage optimization:
+        1. QUBO coarse optimization (quantum-inspired annealing)
+        2. Classical refinement (gradient descent)
+        3. Constraint repair (local search)
+
         Returns:
-            TemplateSelectionResult with optimized schedule
+            TemplateSelectionResult: Complete optimization result including:
+                - Final assignments
+                - Pareto frontier of trade-off solutions
+                - Energy landscape visualization data
+                - Statistics and metrics
+                - Runtime information
+
+        Note:
+            Returns success=False if formulation has no variables.
+            Automatically selects recommended solution from Pareto front
+            based on coverage objective.
         """
         start_time = time.time()
 
@@ -1401,7 +1702,25 @@ class HybridTemplatePipeline:
         energy: float,
         Q: dict,
     ) -> tuple[dict[int, int], float]:
-        """Classical gradient-like descent for refinement."""
+        """
+        Classical gradient-like descent for refinement.
+
+        Performs greedy local search to improve the QUBO solution by
+        iteratively flipping variables that reduce energy.
+
+        Args:
+            sample: Initial binary solution from QUBO annealing
+            energy: Energy of initial solution
+            Q: QUBO matrix dictionary
+
+        Returns:
+            tuple[dict[int, int], float]: Refined solution and its energy.
+                First element is improved binary state, second is energy value.
+
+        Note:
+            Continues until no improving flips found or max_iterations (1000)
+            reached. Only accepts strictly improving moves (delta < -1e-6).
+        """
         n = self.formulation.num_variables
         current = sample.copy()
         current_energy = energy
@@ -1430,7 +1749,26 @@ class HybridTemplatePipeline:
         sample: dict[int, int],
         Q: dict,
     ) -> dict[int, int]:
-        """Repair constraint violations."""
+        """
+        Repair constraint violations.
+
+        Ensures hard constraints are satisfied by fixing violations in the
+        one-template-per-period constraint.
+
+        Args:
+            sample: Solution that may have constraint violations
+            Q: QUBO matrix (unused but kept for API consistency)
+
+        Returns:
+            dict[int, int]: Repaired binary solution where each resident
+                has exactly one template assigned per period.
+
+        Note:
+            Repair strategy:
+            - If no template assigned: Assign first available template
+            - If multiple templates assigned: Keep first, remove rest
+            This ensures feasibility but may not be optimal.
+        """
         repaired = sample.copy()
         n_periods = len(self.formulation.rotation_periods)
         valid_templates = [

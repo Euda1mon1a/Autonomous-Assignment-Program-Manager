@@ -45,14 +45,18 @@ VALID_ABSENCE_TYPES = tuple(t.value for t in AbsenceType)
 class AbsenceBase(BaseModel):
     """Base absence schema."""
 
-    person_id: UUID
-    start_date: date
-    end_date: date
-    absence_type: str
-    deployment_orders: bool = False
-    tdy_location: str | None = None
-    replacement_activity: str | None = None
-    notes: str | None = None
+    person_id: UUID = Field(..., description="Person UUID")
+    start_date: date = Field(..., description="Absence start date")
+    end_date: date = Field(..., description="Absence end date")
+    absence_type: str = Field(..., description="Type of absence")
+    deployment_orders: bool = Field(False, description="Whether deployment orders exist")
+    tdy_location: str | None = Field(
+        None, max_length=200, description="TDY location (if applicable)"
+    )
+    replacement_activity: str | None = Field(
+        None, max_length=200, description="Replacement activity (if applicable)"
+    )
+    notes: str | None = Field(None, max_length=1000, description="Absence notes")
 
     @field_validator("start_date", "end_date")
     @classmethod
@@ -100,15 +104,23 @@ class AbsenceCreate(AbsenceBase):
 class AbsenceUpdate(BaseModel):
     """Schema for updating an absence."""
 
-    start_date: date | None = None
-    end_date: date | None = None
-    absence_type: str | None = None
-    is_blocking: bool | None = None
-    return_date_tentative: bool | None = None
-    deployment_orders: bool | None = None
-    tdy_location: str | None = None
-    replacement_activity: str | None = None
-    notes: str | None = None
+    start_date: date | None = Field(None, description="Absence start date")
+    end_date: date | None = Field(None, description="Absence end date")
+    absence_type: str | None = Field(None, description="Type of absence")
+    is_blocking: bool | None = Field(None, description="Whether absence is blocking")
+    return_date_tentative: bool | None = Field(
+        None, description="Whether return date is tentative"
+    )
+    deployment_orders: bool | None = Field(
+        None, description="Whether deployment orders exist"
+    )
+    tdy_location: str | None = Field(
+        None, max_length=200, description="TDY location (if applicable)"
+    )
+    replacement_activity: str | None = Field(
+        None, max_length=200, description="Replacement activity (if applicable)"
+    )
+    notes: str | None = Field(None, max_length=1000, description="Absence notes")
 
     @field_validator("start_date", "end_date")
     @classmethod

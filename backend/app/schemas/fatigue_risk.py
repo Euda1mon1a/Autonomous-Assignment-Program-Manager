@@ -24,7 +24,9 @@ class SamnPerelliAssessmentRequest(BaseModel):
     """Request to submit a Samn-Perelli fatigue assessment."""
 
     level: int = Field(..., ge=1, le=7, description="Samn-Perelli level (1-7)")
-    notes: str | None = Field(None, max_length=1000)
+    notes: str | None = Field(
+        None, min_length=1, max_length=1000, description="Additional assessment notes"
+    )
 
 
 class SamnPerelliAssessmentResponse(BaseModel):
@@ -50,11 +52,21 @@ class SamnPerelliAssessmentResponse(BaseModel):
 class FatigueScoreRequest(BaseModel):
     """Request for real-time fatigue score calculation."""
 
-    hours_awake: float = Field(..., ge=0, description="Hours since last sleep")
-    hours_worked_24h: float = Field(..., ge=0, description="Hours worked in last 24h")
-    consecutive_night_shifts: int = Field(0, ge=0)
-    time_of_day_hour: int = Field(12, ge=0, le=23)
-    prior_sleep_hours: float = Field(7.0, ge=0)
+    hours_awake: float = Field(
+        ..., ge=0, le=72, description="Hours since last sleep (0-72)"
+    )
+    hours_worked_24h: float = Field(
+        ..., ge=0, le=24, description="Hours worked in last 24 hours (0-24)"
+    )
+    consecutive_night_shifts: int = Field(
+        0, ge=0, le=30, description="Number of consecutive night shifts"
+    )
+    time_of_day_hour: int = Field(
+        12, ge=0, le=23, description="Current hour of day (0-23)"
+    )
+    prior_sleep_hours: float = Field(
+        7.0, ge=0, le=24, description="Hours of sleep in prior rest period (0-24)"
+    )
 
 
 class FatigueScoreResponse(BaseModel):

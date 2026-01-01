@@ -36,6 +36,11 @@ class SwapValidationService:
     """Service for validating FMIT swap requests."""
 
     def __init__(self, db: Session):
+        """Initialize swap validation service.
+
+        Args:
+            db: Database session for querying faculty and schedule data.
+        """
         self.db = db
 
     def validate_swap(
@@ -45,7 +50,24 @@ class SwapValidationService:
         target_faculty_id: UUID,
         target_week: date | None = None,
     ) -> SwapValidationResult:
-        """Validate a proposed swap."""
+        """Validate a proposed FMIT swap for compliance and conflicts.
+
+        Checks for:
+        - Faculty existence
+        - Back-to-back FMIT weeks (creates burnout risk)
+        - External conflicts (leave, TDY, deployment)
+        - Past date violations
+        - Imminent swaps (< 2 weeks warning)
+
+        Args:
+            source_faculty_id: Faculty offloading their FMIT week.
+            source_week: Start date of the week being swapped (Monday).
+            target_faculty_id: Faculty taking over the FMIT week.
+            target_week: Start date of week target gives back (for one-to-one swaps).
+
+        Returns:
+            SwapValidationResult with validation status, errors, and warnings.
+        """
         errors: list[ValidationError] = []
         warnings: list[ValidationError] = []
         back_to_back = False
@@ -114,6 +136,14 @@ class SwapValidationService:
         )
 
     def _get_faculty(self, faculty_id: UUID) -> Optional["Person"]:
+        """Get faculty member by ID.
+
+        Args:
+            faculty_id: UUID of the faculty member.
+
+        Returns:
+            Person object if found and type is faculty, None otherwise.
+        """
         from app.models.person import Person
 
         return (
@@ -123,14 +153,44 @@ class SwapValidationService:
         )
 
     def _get_faculty_fmit_weeks(self, faculty_id: UUID) -> list[date]:
+        """Get list of FMIT weeks currently assigned to faculty.
+
+        Args:
+            faculty_id: UUID of the faculty member.
+
+        Returns:
+            List of week start dates (Mondays) when faculty is on FMIT.
+
+        Note:
+            Currently a placeholder. Needs integration with schedule data source.
+        """
         return []  # Placeholder - needs schedule data source
 
     def _creates_back_to_back(self, existing_weeks: list[date], new_week: date) -> bool:
+        """Check if adding a week would create back-to-back FMIT assignments.
+
+        Args:
+            existing_weeks: List of week start dates already assigned to faculty.
+            new_week: Week start date being considered for assignment.
+
+        Returns:
+            True if new_week creates consecutive FMIT weeks, False otherwise.
+        """
         from app.services.xlsx_import import has_back_to_back_conflict
 
         return has_back_to_back_conflict(sorted(existing_weeks + [new_week]))
 
     def _check_external_conflicts(self, faculty_id: UUID, week: date) -> str | None:
+        """Check if faculty has blocking absences during the specified week.
+
+        Args:
+            faculty_id: UUID of the faculty member.
+            week: Week start date (Monday) to check for conflicts.
+
+        Returns:
+            Absence type (e.g., 'TDY', 'Leave', 'Deployment') if blocking absence exists,
+            None if faculty is available.
+        """
         from app.models.absence import Absence
 
         week_end = week + timedelta(days=6)

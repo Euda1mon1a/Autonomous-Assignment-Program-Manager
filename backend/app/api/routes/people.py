@@ -38,7 +38,20 @@ async def list_people(
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """List all people, optionally filtered by type or PGY level. Requires authentication."""
+    """List all people (residents and faculty) with optional filters.
+
+    Args:
+        type: Filter by person type ('resident' or 'faculty').
+        pgy_level: Filter residents by PGY level (1, 2, or 3).
+        db: Database session.
+        current_user: Authenticated user.
+
+    Returns:
+        PersonListResponse with list of people and total count.
+
+    Security:
+        Requires authentication.
+    """
     controller = PersonController(db)
     return controller.list_people(type=type, pgy_level=pgy_level)
 
@@ -49,7 +62,19 @@ async def list_residents(
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """List all residents, optionally filtered by PGY level. Requires authentication."""
+    """List all residents with optional PGY level filter.
+
+    Args:
+        pgy_level: Filter by PGY level (1, 2, or 3).
+        db: Database session.
+        current_user: Authenticated user.
+
+    Returns:
+        PersonListResponse with list of residents and total count.
+
+    Security:
+        Requires authentication.
+    """
     controller = PersonController(db)
     return controller.list_residents(pgy_level=pgy_level)
 
@@ -60,7 +85,19 @@ async def list_faculty(
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """List all faculty, optionally filtered by specialty. Requires authentication."""
+    """List all faculty with optional specialty filter.
+
+    Args:
+        specialty: Filter by medical specialty (e.g., 'Family Medicine', 'Pediatrics').
+        db: Database session.
+        current_user: Authenticated user.
+
+    Returns:
+        PersonListResponse with list of faculty and total count.
+
+    Security:
+        Requires authentication.
+    """
     controller = PersonController(db)
     return controller.list_faculty(specialty=specialty)
 
@@ -71,7 +108,22 @@ async def get_person(
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Get a person by ID. Requires authentication."""
+    """Get a person (resident or faculty) by ID.
+
+    Args:
+        person_id: UUID of the person to retrieve.
+        db: Database session.
+        current_user: Authenticated user.
+
+    Returns:
+        PersonResponse with full person details.
+
+    Security:
+        Requires authentication.
+
+    Raises:
+        HTTPException: 404 if person not found.
+    """
     controller = PersonController(db)
     return controller.get_person(person_id)
 
@@ -82,7 +134,27 @@ async def create_person(
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Create a new person (resident or faculty). Requires authentication."""
+    """Create a new person (resident or faculty).
+
+    Args:
+        person_in: Person creation payload (name, type, email, pgy_level, etc.).
+        db: Database session.
+        current_user: Authenticated user.
+
+    Returns:
+        PersonResponse with created person details.
+
+    Security:
+        Requires authentication.
+
+    Note:
+        - Residents require pgy_level field
+        - Faculty can specify specialties and procedure credentials
+
+    Status Codes:
+        - 201: Person created successfully
+        - 400: Validation error (e.g., resident without PGY level)
+    """
     controller = PersonController(db)
     return controller.create_person(person_in)
 
@@ -94,7 +166,23 @@ async def update_person(
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Update an existing person. Requires authentication."""
+    """Update an existing person's information.
+
+    Args:
+        person_id: UUID of the person to update.
+        person_in: Person update payload with fields to modify.
+        db: Database session.
+        current_user: Authenticated user.
+
+    Returns:
+        PersonResponse with updated person details.
+
+    Security:
+        Requires authentication.
+
+    Raises:
+        HTTPException: 404 if person not found.
+    """
     controller = PersonController(db)
     return controller.update_person(person_id, person_in)
 

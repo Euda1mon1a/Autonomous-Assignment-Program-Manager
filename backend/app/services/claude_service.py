@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class ClaudeService:
     """Handles Claude API interactions with streaming support."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.api_key = os.getenv("ANTHROPIC_API_KEY")
         if not self.api_key:
             raise ValueError("ANTHROPIC_API_KEY environment variable not set")

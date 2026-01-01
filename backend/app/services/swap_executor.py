@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.transaction import transactional, transactional_with_retry
 from app.models.block import Block
@@ -114,7 +115,7 @@ class SwapExecutor:
                 message=f"Swap executed. Week {source_week} transferred.",
             )
 
-        except Exception as e:
+        except (SQLAlchemyError, ValueError, KeyError) as e:
             logger.exception(f"Swap execution failed: {e}")
             return ExecutionResult(
                 success=False,
@@ -223,7 +224,7 @@ class SwapExecutor:
                 message="Swap successfully rolled back",
             )
 
-        except Exception as e:
+        except (SQLAlchemyError, ValueError, KeyError) as e:
             logger.exception("Rollback failed for swap %s: %s", swap_id, e)
             return RollbackResult(
                 success=False,

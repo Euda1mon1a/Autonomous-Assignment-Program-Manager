@@ -13,6 +13,7 @@ Each level operates independently, assuming all previous levels have failed.
 The N+2 redundancy rule ensures critical functions survive 2 simultaneous failures.
 """
 
+import functools
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -397,6 +398,7 @@ class DefenseInDepth:
 
         return results
 
+    @functools.lru_cache(maxsize=128)
     def get_recommended_level(self, coverage_rate: float) -> DefenseLevel:
         """
         Get the recommended active defense level based on coverage.

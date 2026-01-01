@@ -337,7 +337,7 @@ async def update_user(
     return _user_to_admin_response(user)
 
 
-@router.delete("/{user_id}", status_code=status.HTTP_200_OK)
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
     user_id: uuid.UUID,
     request: Request,
@@ -351,7 +351,7 @@ async def delete_user(
         user_id: UUID of the user to delete
 
     Returns:
-        Success message
+        No content (204 status)
     """
     # Fetch user
     user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
@@ -379,10 +379,8 @@ async def delete_user(
         request=request,
     )
 
-    db.delete(user)
+    await db.delete(user)
     await db.commit()
-
-    return {"message": "User deleted successfully", "user_id": str(user_id)}
 
 
 @router.post("/{user_id}/lock", response_model=AccountLockResponse)

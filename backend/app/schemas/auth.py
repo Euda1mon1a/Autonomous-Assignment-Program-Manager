@@ -3,7 +3,7 @@
 import re
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 COMMON_PASSWORDS = {
     "password",
@@ -48,8 +48,10 @@ class TokenData(BaseModel):
 class UserLogin(BaseModel):
     """User login request."""
 
-    username: str
-    password: str
+    username: str = Field(
+        ..., min_length=3, max_length=50, description="Username for authentication"
+    )
+    password: str = Field(..., min_length=1, description="Password for authentication")
 
     @field_validator("username")
     @classmethod
@@ -82,10 +84,15 @@ class UserCreate(BaseModel):
     - resident: View own schedule, manage swaps, view conflicts
     """
 
-    username: str
-    email: EmailStr
-    password: str
-    role: str = "coordinator"
+    username: str = Field(
+        ..., min_length=3, max_length=50, description="Unique username"
+    )
+    email: EmailStr = Field(..., description="Valid email address")
+    password: str = Field(..., description="Password (min 12 chars, complexity required)")
+    role: str = Field(
+        "coordinator",
+        description="User role (admin, coordinator, faculty, resident, etc.)",
+    )
 
     @field_validator("password")
     @classmethod

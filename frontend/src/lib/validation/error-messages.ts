@@ -92,25 +92,45 @@ export const validationErrors = {
 export function getFieldError(
   fieldName: string,
   errorType: keyof typeof validationErrors,
-  ...args: any[]
+  ...args: unknown[]
 ): string {
   const errorFunc = validationErrors[errorType];
   if (typeof errorFunc === "function") {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (errorFunc as any)(fieldName, ...args) as string;
+    return (errorFunc as (fieldName: string, ...args: unknown[]) => string)(fieldName, ...args);
   }
   return errorFunc as string;
+}
+
+interface ZodErrorIssue {
+  path: (string | number)[];
+  message: string;
+}
+
+interface ZodErrorLike {
+  errors?: ZodErrorIssue[];
+}
+
+/**
+ * Type guard for Zod error structure.
+ */
+function isZodErrorLike(error: unknown): error is ZodErrorLike {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'errors' in error &&
+    Array.isArray((error as ZodErrorLike).errors)
+  );
 }
 
 /**
  * Format Zod error messages for display.
  */
-export function formatZodError(error: any): Record<string, string> {
+export function formatZodError(error: unknown): Record<string, string> {
   const fieldErrors: Record<string, string> = {};
 
-  if (error.errors) {
-    error.errors.forEach((err: any) => {
-      const path = err.path.join(".");
+  if (isZodErrorLike(error) && error.errors) {
+    error.errors.forEach((err: ZodErrorIssue): void => {
+      const path: string = err.path.join(".");
       fieldErrors[path] = err.message;
     });
   }
@@ -118,10 +138,31 @@ export function formatZodError(error: any): Record<string, string> {
   return fieldErrors;
 }
 
+interface ApiErrorResponse {
+  response?: {
+    data?: {
+      error?: string;
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
+/**
+ * Type guard for API error structure.
+ */
+function isApiError(error: unknown): error is ApiErrorResponse {
+  return typeof error === 'object' && error !== null;
+}
+
 /**
  * Get user-friendly error message from API error.
  */
-export function getApiErrorMessage(error: any): string {
+export function getApiErrorMessage(error: unknown): string {
+  if (!isApiError(error)) {
+    return validationErrors.somethingWentWrong;
+  }
+
   if (error.response?.data?.error) {
     return error.response.data.error;
   }

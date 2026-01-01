@@ -3,7 +3,7 @@
 from datetime import date
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.validators.date_validators import validate_academic_year_date
 
@@ -11,12 +11,16 @@ from app.validators.date_validators import validate_academic_year_date
 class BlockBase(BaseModel):
     """Base block schema."""
 
-    date: date
-    time_of_day: str  # 'AM' or 'PM'
-    block_number: int
-    is_weekend: bool = False
-    is_holiday: bool = False
-    holiday_name: str | None = None
+    date: date = Field(..., description="Date of the block")
+    time_of_day: str = Field(..., description="Time of day: AM or PM", pattern="^(AM|PM)$")
+    block_number: int = Field(
+        ..., ge=1, le=730, description="Block number in academic year (1-730)"
+    )
+    is_weekend: bool = Field(False, description="Whether this block falls on a weekend")
+    is_holiday: bool = Field(False, description="Whether this block is a holiday")
+    holiday_name: str | None = Field(
+        None, min_length=1, max_length=100, description="Name of the holiday if applicable"
+    )
 
     @field_validator("date")
     @classmethod
@@ -57,5 +61,5 @@ class BlockResponse(BlockBase):
 class BlockListResponse(BaseModel):
     """Schema for list of blocks."""
 
-    items: list[BlockResponse]
-    total: int
+    items: list[BlockResponse] = Field(..., description="List of block responses")
+    total: int = Field(..., ge=0, description="Total number of blocks")

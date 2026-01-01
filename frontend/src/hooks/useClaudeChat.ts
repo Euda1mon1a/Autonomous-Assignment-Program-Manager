@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { ChatMessage, ChatSession, ClaudeCodeRequest, ClaudeCodeResponse, StreamUpdate } from '../types/chat';
+import { ChatMessage, ChatSession, ClaudeCodeRequest, ClaudeCodeResponse, StreamUpdate, CodeBlock, ChatArtifact } from '../types/chat';
 import { v4 as uuidv4 } from 'uuid';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -196,7 +196,7 @@ export const useClaudeChat = () => {
   }, [messages]);
 
   // Update sessions list for session history
-  const updateSessionsList = (currentSession: ChatSession, messageCount: number) => {
+  const updateSessionsList = (currentSession: ChatSession, messageCount: number): void => {
     const sessionsList = loadFromStorage<SavedSession[]>(STORAGE_KEY_SESSIONS_LIST) || [];
     const existingIndex = sessionsList.findIndex(s => s.id === currentSession.id);
 
@@ -436,7 +436,7 @@ export const useClaudeChat = () => {
   );
 
   // Cancel ongoing request
-  const cancelRequest = useCallback(() => {
+  const cancelRequest = useCallback((): void => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       setIsLoading(false);
@@ -444,13 +444,13 @@ export const useClaudeChat = () => {
   }, []);
 
   // Clear messages
-  const clearMessages = useCallback(() => {
+  const clearMessages = useCallback((): void => {
     setMessages([]);
     setError(null);
   }, []);
 
   // Export session
-  const exportSession = useCallback(() => {
+  const exportSession = useCallback((): (ChatSession & { messages: ChatMessage[] }) | null => {
     if (!session) return null;
     return {
       ...session,

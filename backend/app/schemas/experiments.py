@@ -47,9 +47,18 @@ class ExperimentCreateRequest(BaseModel):
 class ExperimentUpdateRequest(BaseModel):
     """Request schema for updating an experiment."""
 
-    name: str | None = Field(default=None, description="Human-readable experiment name")
-    description: str | None = Field(default=None, description="Experiment description")
-    hypothesis: str | None = Field(default=None, description="Hypothesis being tested")
+    name: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=255,
+        description="Human-readable experiment name",
+    )
+    description: str | None = Field(
+        default=None, max_length=2000, description="Experiment description"
+    )
+    hypothesis: str | None = Field(
+        default=None, max_length=1000, description="Hypothesis being tested"
+    )
     targeting: ExperimentTargeting | None = Field(
         default=None, description="Targeting rules"
     )
@@ -62,12 +71,16 @@ class ExperimentUpdateRequest(BaseModel):
 class UserAssignmentRequest(BaseModel):
     """Request schema for assigning a user to an experiment variant."""
 
-    user_id: str = Field(..., description="User identifier")
+    user_id: str = Field(
+        ..., min_length=1, max_length=100, description="User identifier"
+    )
     user_attributes: dict[str, Any] = Field(
         default_factory=dict, description="User attributes for targeting evaluation"
     )
     force_variant: str | None = Field(
-        default=None, description="Force assignment to specific variant (override)"
+        default=None,
+        max_length=100,
+        description="Force assignment to specific variant (override)",
     )
 
 
@@ -91,8 +104,10 @@ class MetricTrackRequest(BaseModel):
 class ConcludeExperimentRequest(BaseModel):
     """Request schema for concluding an experiment."""
 
-    winning_variant: str = Field(..., description="The winning variant key")
-    notes: str = Field(default="", description="Conclusion notes")
+    winning_variant: str = Field(
+        ..., min_length=1, max_length=100, description="The winning variant key"
+    )
+    notes: str = Field(default="", max_length=2000, description="Conclusion notes")
 
 
 # =============================================================================

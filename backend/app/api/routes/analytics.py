@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, and_
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, joinedload
 
 from app.analytics.engine import AnalyticsEngine
@@ -158,10 +159,15 @@ async def get_current_metrics(
 
     except HTTPException:
         raise
-    except (ValueError, KeyError, AttributeError) as e:
-        logger.error(f"Error getting current metrics: {e}", exc_info=True)
+    except SQLAlchemyError as e:
+        logger.error(f"Database error getting current metrics: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail="An error occurred retrieving metrics"
+            status_code=500, detail="Database error occurred retrieving metrics"
+        )
+    except (ValueError, TypeError, KeyError, AttributeError) as e:
+        logger.error(f"Data validation error getting current metrics: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail="Data validation error occurred"
         )
 
 
@@ -232,8 +238,11 @@ async def get_metrics_history(
                         },
                     )
                 )
-            except (ValueError, KeyError, AttributeError) as e:
-                logger.warning(f"Error analyzing run {run.id}: {e}", exc_info=True)
+            except SQLAlchemyError as e:
+                logger.warning(f"Database error analyzing run {run.id}: {e}", exc_info=True)
+                continue
+            except (ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.warning(f"Data processing error analyzing run {run.id}: {e}", exc_info=True)
                 continue
 
         if not data_points:
@@ -275,10 +284,15 @@ async def get_metrics_history(
             )
         ]
 
-    except (ValueError, KeyError, AttributeError) as e:
-        logger.error(f"Error getting metrics history: {e}", exc_info=True)
+    except SQLAlchemyError as e:
+        logger.error(f"Database error getting metrics history: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail="An error occurred retrieving metrics history"
+            status_code=500, detail="Database error occurred retrieving metrics history"
+        )
+    except (ValueError, TypeError, KeyError, AttributeError) as e:
+        logger.error(f"Data processing error getting metrics history: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail="Data processing error occurred"
         )
 
 
@@ -342,8 +356,11 @@ async def get_fairness_trend(
                 )
                 fairness_values.append(fairness_index)
 
-            except (ValueError, KeyError, AttributeError) as e:
-                logger.warning(f"Error analyzing run {run.id}: {e}", exc_info=True)
+            except SQLAlchemyError as e:
+                logger.warning(f"Database error analyzing run {run.id}: {e}", exc_info=True)
+                continue
+            except (ValueError, TypeError, KeyError, AttributeError) as e:
+                logger.warning(f"Data processing error analyzing run {run.id}: {e}", exc_info=True)
                 continue
 
         if not data_points:
@@ -409,10 +426,15 @@ async def get_fairness_trend(
 
     except HTTPException:
         raise
-    except (ValueError, KeyError, AttributeError) as e:
-        logger.error(f"Error getting fairness trend: {e}", exc_info=True)
+    except SQLAlchemyError as e:
+        logger.error(f"Database error getting fairness trend: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail="An error occurred retrieving fairness trend"
+            status_code=500, detail="Database error occurred retrieving fairness trend"
+        )
+    except (ValueError, TypeError, KeyError, AttributeError) as e:
+        logger.error(f"Data processing error getting fairness trend: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail="Data processing error occurred"
         )
 
 
@@ -549,10 +571,15 @@ async def compare_versions(
 
     except HTTPException:
         raise
-    except (ValueError, KeyError, AttributeError) as e:
-        logger.error(f"Error comparing versions: {e}", exc_info=True)
+    except SQLAlchemyError as e:
+        logger.error(f"Database error comparing versions: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail="An error occurred comparing versions"
+            status_code=500, detail="Database error occurred comparing versions"
+        )
+    except (ValueError, TypeError, KeyError, AttributeError) as e:
+        logger.error(f"Data processing error comparing versions: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail="Data processing error occurred"
         )
 
 
@@ -704,10 +731,15 @@ async def what_if_analysis(
 
     except HTTPException:
         raise
-    except (ValueError, KeyError, AttributeError) as e:
-        logger.error(f"Error in what-if analysis: {e}", exc_info=True)
+    except SQLAlchemyError as e:
+        logger.error(f"Database error in what-if analysis: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail="An error occurred performing what-if analysis"
+            status_code=500, detail="Database error occurred performing what-if analysis"
+        )
+    except (ValueError, TypeError, KeyError, AttributeError) as e:
+        logger.error(f"Data processing error in what-if analysis: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail="Data processing error occurred"
         )
 
 
@@ -906,8 +938,13 @@ async def export_for_research(
 
     except HTTPException:
         raise
-    except (ValueError, KeyError, AttributeError) as e:
-        logger.error(f"Error exporting research data: {e}", exc_info=True)
+    except SQLAlchemyError as e:
+        logger.error(f"Database error exporting research data: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail="An error occurred exporting research data"
+            status_code=500, detail="Database error occurred exporting research data"
+        )
+    except (ValueError, TypeError, KeyError, AttributeError) as e:
+        logger.error(f"Data processing error exporting research data: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail="Data processing error occurred"
         )

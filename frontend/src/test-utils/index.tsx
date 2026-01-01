@@ -15,6 +15,22 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 
 // ============================================================================
+// Test Configuration Constants
+// ============================================================================
+
+// Query Client Configuration
+const GC_TIME_MS = 0; // Garbage collection time (disabled for tests)
+const STALE_TIME_MS = 0; // Stale time (immediate for tests)
+
+// Timeout Configuration
+const DEFAULT_TIMEOUT_MS = 3000; // 3 seconds - Default timeout for element queries
+const LOADING_TIMEOUT_MS = 5000; // 5 seconds - Timeout for loading states
+const DEFAULT_DELAY_MS = 100; // 100ms - Default delay for API mocks
+
+// Pagination Configuration
+const DEFAULT_PER_PAGE = 100; // Default items per page in tests
+
+// ============================================================================
 // Test Query Client
 // ============================================================================
 
@@ -26,8 +42,8 @@ export function createTestQueryClient(): QueryClient {
     defaultOptions: {
       queries: {
         retry: false,
-        gcTime: 0,
-        staleTime: 0,
+        gcTime: GC_TIME_MS,
+        staleTime: STALE_TIME_MS,
       },
       mutations: {
         retry: false,
@@ -95,11 +111,83 @@ export function renderWithProviders(
 // Mock Data Factories
 // ============================================================================
 
+// Mock data types
+export interface MockPerson {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  type: string;
+  pgy_level?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MockRotationTemplate {
+  id: string;
+  name: string;
+  abbreviation: string;
+  activity_type: string;
+  background_color: string;
+  font_color: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MockBlock {
+  id: string;
+  date: string;
+  time_of_day: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MockAssignment {
+  id: string;
+  person_id: string;
+  block_id: string;
+  rotation_template_id: string;
+  role: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MockSwapRequest {
+  id: string;
+  requester_id: string;
+  target_id: string;
+  requester_block_id: string;
+  target_block_id: string;
+  status: string;
+  swap_type: string;
+  reason: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MockAbsence {
+  id: string;
+  person_id: string;
+  start_date: string;
+  end_date: string;
+  reason: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MockPaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  per_page: number;
+}
+
 export const mockData = {
   /**
    * Create a mock person (resident or faculty)
    */
-  person: (overrides?: Partial<any>) => ({
+  person: (overrides?: Partial<MockPerson>): MockPerson => ({
     id: 'person-1',
     name: 'Dr. Test Person',
     email: 'test@example.com',
@@ -114,7 +202,7 @@ export const mockData = {
   /**
    * Create a mock rotation template
    */
-  rotationTemplate: (overrides?: Partial<any>) => ({
+  rotationTemplate: (overrides?: Partial<MockRotationTemplate>): MockRotationTemplate => ({
     id: 'template-1',
     name: 'Inpatient Medicine',
     abbreviation: 'IM',
@@ -129,7 +217,7 @@ export const mockData = {
   /**
    * Create a mock block
    */
-  block: (overrides?: Partial<any>) => ({
+  block: (overrides?: Partial<MockBlock>): MockBlock => ({
     id: 'block-1',
     date: '2024-01-01',
     time_of_day: 'AM',
@@ -141,7 +229,7 @@ export const mockData = {
   /**
    * Create a mock assignment
    */
-  assignment: (overrides?: Partial<any>) => ({
+  assignment: (overrides?: Partial<MockAssignment>): MockAssignment => ({
     id: 'assignment-1',
     person_id: 'person-1',
     block_id: 'block-1',
@@ -155,7 +243,7 @@ export const mockData = {
   /**
    * Create a mock swap request
    */
-  swapRequest: (overrides?: Partial<any>) => ({
+  swapRequest: (overrides?: Partial<MockSwapRequest>): MockSwapRequest => ({
     id: 'swap-1',
     requester_id: 'person-1',
     target_id: 'person-2',
@@ -172,7 +260,7 @@ export const mockData = {
   /**
    * Create a mock absence
    */
-  absence: (overrides?: Partial<any>) => ({
+  absence: (overrides?: Partial<MockAbsence>): MockAbsence => ({
     id: 'absence-1',
     person_id: 'person-1',
     start_date: '2024-01-01',
@@ -187,11 +275,11 @@ export const mockData = {
   /**
    * Create a paginated response
    */
-  paginatedResponse: <T,>(items: T[], overrides?: Partial<any>) => ({
+  paginatedResponse: <T,>(items: T[], overrides?: Partial<MockPaginatedResponse<T>>): MockPaginatedResponse<T> => ({
     items,
     total: items.length,
     page: 1,
-    per_page: 100,
+    per_page: DEFAULT_PER_PAGE,
     ...overrides,
   }),
 };
@@ -211,7 +299,7 @@ export function mockApiSuccess<T>(data: T): Promise<T> {
  * Create a mock failed API response
  */
 export function mockApiError(message: string, status = 500): Promise<never> {
-  const error: any = new Error(message);
+  const error = new Error(message) as Error & { response?: { status: number } };
   error.response = { status };
   return Promise.reject(error);
 }
@@ -219,7 +307,7 @@ export function mockApiError(message: string, status = 500): Promise<never> {
 /**
  * Create a mock delayed API response (for testing loading states)
  */
-export function mockApiDelayed<T>(data: T, delayMs = 100): Promise<T> {
+export function mockApiDelayed<T>(data: T, delayMs = DEFAULT_DELAY_MS): Promise<T> {
   return new Promise((resolve) => {
     setTimeout(() => resolve(data), delayMs);
   });
@@ -236,7 +324,7 @@ export async function waitForElement(
   callback: () => HTMLElement | null,
   options?: { timeout?: number; errorMessage?: string }
 ): Promise<HTMLElement> {
-  const timeout = options?.timeout || 3000;
+  const timeout = options?.timeout || DEFAULT_TIMEOUT_MS;
   const errorMessage = options?.errorMessage || 'Element not found';
 
   try {
@@ -265,7 +353,7 @@ export async function waitForLoadingToFinish(
       const loading = queryByText(/loading/i);
       expect(loading).not.toBeInTheDocument();
     },
-    { timeout: 5000 }
+    { timeout: LOADING_TIMEOUT_MS }
   );
 }
 
@@ -285,14 +373,14 @@ export async function waitForApiCalls(mockFn: jest.Mock, expectedCalls: number):
 /**
  * Setup user event with default options
  */
-export function setupUser() {
+export function setupUser(): ReturnType<typeof userEvent.setup> {
   return userEvent.setup();
 }
 
 /**
  * Type into an input field
  */
-export async function typeIntoField(user: ReturnType<typeof userEvent.setup>, input: HTMLElement, text: string) {
+export async function typeIntoField(user: ReturnType<typeof userEvent.setup>, input: HTMLElement, text: string): Promise<void> {
   await user.clear(input);
   await user.type(input, text);
 }
@@ -304,7 +392,7 @@ export async function selectOption(
   user: ReturnType<typeof userEvent.setup>,
   select: HTMLElement,
   optionText: string
-) {
+): Promise<void> {
   await user.click(select);
   await user.click(await waitForElement(() => document.querySelector(`[role="option"]`)));
 }
