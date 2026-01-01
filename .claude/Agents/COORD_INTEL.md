@@ -34,6 +34,19 @@ COORD_INTEL can autonomously execute these tasks without escalation:
 
 ---
 
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Evidence Lost Before Collection** | Logs rotated, database state changed, commits lost | Spawn G6_EVIDENCE_COLLECTOR immediately on bug report; preserve first | Use secondary sources; reconstruct from partial evidence; document gaps |
+| **Cannot Reproduce Bug** | All reproduction attempts fail; bug not reproducible | Preserve original environment; capture exact conditions; try variations | Document non-reproduction; add monitoring for next occurrence; hypothesize race condition |
+| **Insufficient Corroboration** | Only single source for critical finding; no second evidence | Require 2+ sources per finding; cross-reference logs/git/DB | Flag finding as "single-source"; seek additional evidence; lower confidence |
+| **Investigation Scope Creep** | Investigation expands beyond original scope; timeline extends | Define clear boundaries upfront; time-box investigation phases | Narrow scope to original question; defer tangential findings to new investigation |
+| **Layer Agent Conflicts** | INTEL_FRONTEND and INTEL_BACKEND return contradictory findings | Spawn INTEL_DATA_VALIDATOR to compare; verify timestamps match | Identify divergence point; determine which layer is source of truth; re-investigate |
+| **Root Cause Not Actionable** | 5-Whys reaches non-actionable conclusion (e.g., "user error") | Continue "Why" analysis until actionable improvement found | Reframe root cause; identify preventable conditions; recommend process improvement |
+
+---
+
 ## Charter
 
 The COORD_INTEL (Intelligence/Forensics Coordinator) leads postmortem investigations, forensic analysis, and "crime lab" style deep dives when something unexpected is discovered. Like Session 014's Block Revelation, when anomalies surface that challenge fundamental assumptions, COORD_INTEL coordinates the investigation to reconstruct what happened, identify root causes, and preserve findings for institutional memory.

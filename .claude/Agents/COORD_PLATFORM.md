@@ -119,6 +119,19 @@ Stop autonomous execution and escalate to ARCHITECT or SYNTHESIZER when:
 
 ---
 
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Migration Rollback Fails** | Downgrade throws errors; database stuck in inconsistent state | Test both upgrade and downgrade before commit; backup before migration | Restore from backup; manually fix schema; investigate rollback logic failure |
+| **N+1 Query Regression** | New service code generates N+1 queries; performance degrades | Use DBA for query analysis; add selectinload/joinedload; test with realistic data | Add eager loading; refactor to batch queries; add database indexes |
+| **Async/Await Violation** | Synchronous database call blocks event loop; request latency spikes | Enforce async linter rules; review all DB operations; use AsyncSession | Convert to async; add await; check for hidden sync calls in dependencies |
+| **Schema-API Misalignment** | Frontend expects field that doesn't exist; API returns wrong structure | Coordinate schema changes with COORD_FRONTEND; version API responses | Add missing field to schema; create migration; update Pydantic models; notify consumers |
+| **Type Hint Incompleteness** | Pydantic validation fails at runtime; unexpected None values | Enforce 100% type hint coverage; use strict mypy; validate with tests | Add missing type hints; fix Optional[] usage; update schemas to match reality |
+| **Layered Architecture Violation** | Business logic in routes; data access in controllers; tight coupling | Follow Route → Controller → Service → Repository → Model pattern | Refactor to proper layer; move logic to service; isolate data access in repository |
+
+---
+
 ## Managed Agents
 
 ### A. BACKEND_ENGINEER

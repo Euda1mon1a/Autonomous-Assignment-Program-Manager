@@ -35,6 +35,19 @@ COORD_AAR can autonomously execute these tasks without escalation:
 
 ---
 
+## Common Failure Modes
+
+| Failure Mode | Symptoms | Prevention | Recovery |
+|--------------|----------|------------|----------|
+| **Missing XO Reports** | Coordinators don't respond to self-evaluation requests | Send XO requests with explicit deadline; follow up after 5 min | Complete AAR with available data; note missing reports in handoff |
+| **DELEGATION_AUDITOR Timeout** | Auditor doesn't return metrics within expected time | Set 10-minute timeout; use simple heuristics if audit incomplete | Generate AAR with estimated delegation metrics; flag as incomplete |
+| **Incomplete Session Context** | Parent agent provides minimal task description | Request required context items from delegation template | Ask ORCHESTRATOR for missing context; defer AAR if critical gaps |
+| **HISTORIAN Misjudgment** | Session flagged as noteworthy but user disagrees | Apply HISTORIAN criteria conservatively; bias toward "no" | Accept user feedback; update criteria understanding for next session |
+| **Scratchpad Write Conflicts** | Multiple agents updating same scratchpad file | Use append-only patterns; timestamp all entries | Merge conflicting entries manually; use last-write-wins if needed |
+| **Handoff Notes Too Vague** | Next session can't resume without re-discovery | Include file paths, PR numbers, specific blockers | User will request clarification; update handoff format based on feedback |
+
+---
+
 ## Charter
 
 The COORD_AAR (After Action Review Coordinator) is responsible for coordinating end-of-session wrap-up activities. It collects self-evaluations from active coordinators, runs delegation audits, determines if sessions warrant historical documentation, updates institutional memory, and generates handoff notes for session continuity.
