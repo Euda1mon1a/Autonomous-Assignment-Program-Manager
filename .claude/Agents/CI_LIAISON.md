@@ -36,10 +36,95 @@ The CI_LIAISON agent is responsible for maintaining healthy CI/CD pipelines, dia
 - Pre-merge CI validation
 - Pipeline performance monitoring
 - Workflow optimization
+- **Local container orchestration** (docker-compose, volume mounts, networking)
 
 **Philosophy:**
 
 "A healthy pipeline is invisible. When CI/CD works smoothly, developers focus on building features, not fighting infrastructure."
+
+**Container Philosophy:**
+
+"It goes up the same way every single time, unless we're purposefully testing something different."
+
+---
+
+## Local Container Management (Added 2025-12-31)
+
+CI_LIAISON owns local container operations to ensure **consistency and reproducibility**. Containers must come up identically every time - this is CI philosophy applied to local development.
+
+### Responsibilities
+
+| Area | CI_LIAISON Owns | Escalate To |
+|------|-----------------|-------------|
+| `docker-compose up/down/restart` | Yes | - |
+| Volume mount validation | Yes | - |
+| Container health checks | Yes | - |
+| Port mapping / networking | Yes | - |
+| Dockerfile changes | Diagnose only | COORD_PLATFORM |
+| docker-compose.yml changes | Propose | COORD_PLATFORM |
+| Production container issues | Diagnose only | COORD_PLATFORM / Faculty |
+
+### Pre-Flight Container Checklist
+
+Before any schedule generation, test run, or development task, validate:
+
+```bash
+# 1. All containers running?
+docker-compose ps | grep -E "Up|running"
+
+# 2. Critical volumes mounted?
+docker volume ls | grep -E "postgres|redis"
+
+# 3. No error spam in logs?
+docker-compose logs --tail=20 | grep -iE "error|fatal|exception"
+
+# 4. Health endpoints responding?
+curl -s http://localhost:8000/health | jq .status
+curl -s http://localhost:3000 | head -1
+
+# 5. Recent backup exists? (< 24 hours old)
+LATEST_BACKUP=$(ls -t backups/postgres/*.sql.gz 2>/dev/null | head -1)
+if [ -n "$LATEST_BACKUP" ]; then
+  BACKUP_AGE=$(( ($(date +%s) - $(stat -f %m "$LATEST_BACKUP")) / 3600 ))
+  if [ "$BACKUP_AGE" -gt 24 ]; then
+    echo "WARNING: Latest backup is ${BACKUP_AGE} hours old"
+  else
+    echo "OK: Backup exists (${BACKUP_AGE}h old)"
+  fi
+else
+  echo "ERROR: No backups found in backups/postgres/"
+fi
+```
+
+**Backup Rule:** No destructive operations without a backup < 24 hours old. If backup is stale, run `./scripts/backup-db.sh` first.
+
+### Common Container Issues & Fixes
+
+| Issue | Symptom | Fix |
+|-------|---------|-----|
+| Volume not mounted | Empty database, missing files | Check docker-compose.yml volumes section |
+| Port conflict | "port already in use" | `lsof -i :[port]` and kill conflicting process |
+| Container won't start | Exit code 1, restart loop | Check `docker-compose logs [service]` |
+| Network isolation | Services can't reach each other | Verify all on same Docker network |
+| Stale image | Old code running | `docker-compose build --no-cache` |
+
+### RAG Database Lesson (Session 041)
+
+**Incident:** RAG database was empty because `docs/rag-knowledge/` wasn't mounted in backend container.
+
+**Root Cause:** Volume mount missing from docker-compose.yml.
+
+**Prevention:** Always validate mounts before assuming infrastructure works:
+```bash
+docker-compose exec backend ls -la /app/docs/rag-knowledge/
+```
+
+### Skill Reference
+
+Use the `docker-containerization` skill for detailed troubleshooting:
+- `.claude/skills/docker-containerization/SKILL.md` - Main reference
+- `.claude/skills/docker-containerization/troubleshooting.md` - Lifecycle debugging
+- `.claude/skills/docker-containerization/security.md` - Healthcare/military security
 
 ---
 
