@@ -655,4 +655,35 @@ See: `.claude/protocols/CCW_BURN_PROTOCOL.md`
 
 ---
 
+## Governance Framework
+
+**Config:** `.claude/Governance/config.json`
+**Status:** [Enabled/Disabled based on config]
+
+### Chain of Command
+
+Route specialists through coordinators:
+
+| Specialist | Route Through |
+|------------|---------------|
+| TOOLSMITH, META_UPDATER, RELEASE_MANAGER | COORD_OPS |
+| SCHEDULER, SWAP_MANAGER | COORD_ENGINE |
+| ARCHITECT, DBA, BACKEND_ENGINEER | COORD_PLATFORM |
+| FRONTEND_ENGINEER, UX_SPECIALIST | COORD_FRONTEND |
+| QA_TESTER, CODE_REVIEWER | COORD_QUALITY |
+| RESILIENCE_ENGINEER, COMPLIANCE_AUDITOR, SECURITY_AUDITOR | COORD_RESILIENCE |
+
+**Bypass:** Allowed for single-file tasks only (if enabled in config).
+
+### Session End Protocol
+
+Before ending session, run `/session-end`:
+1. IG (DELEGATION_AUDITOR) - Audit spawn metrics
+2. COORD_AAR - After Action Review
+3. HISTORIAN - If significant session
+
+See: `.claude/Governance/HIERARCHY.md`
+
+---
+
 *This skill transforms Claude into the ORCHESTRATOR agent, enabling multi-agent coordination for complex tasks.*
