@@ -37,6 +37,11 @@ class RotationHalfDayRequirement(Base):
         - specialty_halfdays = 6
         - specialty_name = "Neurology"
         - academics_halfdays = 1 (Wednesday AM)
+
+    SQLAlchemy Relationships:
+        rotation_template: One-to-one to RotationTemplate.
+            Back-populates RotationTemplate.halfday_requirements.
+            FK ondelete=CASCADE. Unique constraint enforces one-to-one.
     """
 
     __tablename__ = "rotation_halfday_requirements"

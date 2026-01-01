@@ -71,6 +71,12 @@ class WorkflowTemplate(Base):
     Templates define the structure of workflows including steps, execution order,
     retry policies, and conditional logic. Templates are versioned to allow
     evolution while maintaining backward compatibility.
+
+    SQLAlchemy Relationships:
+        instances: One-to-many to WorkflowInstance.
+            Back-populates WorkflowInstance.template.
+            Cascade: all, delete-orphan.
+            All workflow instances created from this template.
     """
 
     __tablename__ = "workflow_templates"
@@ -139,6 +145,20 @@ class WorkflowInstance(Base):
 
     Represents a specific execution of a workflow template with its own
     state, inputs, and execution history.
+
+    SQLAlchemy Relationships:
+        template: Many-to-one to WorkflowTemplate.
+            Back-populates WorkflowTemplate.instances.
+            The template this instance was created from.
+
+        step_executions: One-to-many to WorkflowStepExecution.
+            Back-populates WorkflowStepExecution.workflow_instance.
+            Cascade: all, delete-orphan. Ordered by started_at.
+            Execution records for each step in this workflow run.
+
+        child_workflows: One-to-many self-referential to WorkflowInstance.
+            For sub-workflow support. No back-populates.
+            Sub-workflows spawned by this workflow.
     """
 
     __tablename__ = "workflow_instances"
@@ -253,6 +273,11 @@ class WorkflowStepExecution(Base):
 
     Tracks the execution history, retries, and results for each step
     in a workflow instance.
+
+    SQLAlchemy Relationships:
+        workflow_instance: Many-to-one to WorkflowInstance.
+            Back-populates WorkflowInstance.step_executions.
+            The workflow run this step execution belongs to.
     """
 
     __tablename__ = "workflow_step_executions"

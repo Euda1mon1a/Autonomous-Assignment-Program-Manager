@@ -1,8 +1,121 @@
 """
 Constants for Bio-Inspired Optimization Algorithms.
 
-This module centralizes magic numbers used across genetic algorithms, particle swarm
-optimization, ant colony optimization, and NSGA-II implementations.
+This module centralizes default parameter values used across genetic algorithms,
+particle swarm optimization, ant colony optimization, and NSGA-II implementations.
+These values are tuned for typical residency scheduling problems.
+
+Constant Categories
+-------------------
+
+**Fitness Evaluation Constants**
+    Default weights for multi-objective scalarization and ACGME thresholds.
+    ACGME compliance is weighted highest (0.30) as regulatory requirement.
+
+**Population Initialization Constants**
+    Chromosome density and diversity sampling parameters.
+
+**PSO Constants**
+    Swarm size, inertia, cognitive/social coefficients for weight optimization.
+    Default configuration balances exploration and exploitation.
+
+**ACO Constants**
+    Colony size, alpha/beta (pheromone/heuristic importance), evaporation.
+    Tuned for rotation sequence optimization.
+
+**NSGA-II Constants**
+    Population size, genetic operator rates for multi-objective optimization.
+    Larger default population (100) for Pareto front diversity.
+
+Parameter Tuning Guidelines
+---------------------------
+
+**For smaller problems** (< 20 residents):
+
+.. code-block:: python
+
+    # Reduce population sizes
+    population_size = int(NSGA2_DEFAULT_POPULATION_SIZE * 0.6)
+    swarm_size = int(PSO_DEFAULT_SWARM_SIZE * 0.6)
+    colony_size = int(ACO_DEFAULT_COLONY_SIZE * 0.6)
+
+**For larger problems** (> 50 residents):
+
+.. code-block:: python
+
+    # Increase population sizes and iterations
+    population_size = int(NSGA2_DEFAULT_POPULATION_SIZE * 1.5)
+    max_generations = int(NSGA2_DEFAULT_MAX_GENERATIONS * 1.5)
+
+**For faster runtime** (interactive/real-time):
+
+.. code-block:: python
+
+    # Aggressive early stopping, smaller populations
+    population_size = 30
+    max_generations = 50
+    early_stop_generations = 15
+
+**For better solution quality** (overnight runs):
+
+.. code-block:: python
+
+    # Larger populations, more iterations
+    population_size = 200
+    max_generations = 500
+    early_stop_generations = 100
+
+Objective Weight Rationale
+--------------------------
+
+The default weights sum to 1.0 and prioritize:
+
+1. **ACGME Compliance (0.30)**: Regulatory requirement, non-negotiable
+2. **Coverage (0.25)**: Need assignments for operational schedule
+3. **Fairness (0.15)**: Workload distribution matters for morale
+4. **Preferences (0.10)**: Resident satisfaction is important but flexible
+5. **Learning Goals (0.10)**: Educational variety can be adjusted
+6. **Continuity (0.10)**: Rotation stability is nice-to-have
+
+Customize for your program's priorities:
+
+.. code-block:: python
+
+    # Fairness-focused (resident wellbeing priority)
+    weights = {
+        "coverage": 0.20,
+        "fairness": 0.35,
+        "acgme_compliance": 0.25,
+        "preferences": 0.10,
+        "learning_goals": 0.05,
+        "continuity": 0.05,
+    }
+
+    # Education-focused (academic priority)
+    weights = {
+        "coverage": 0.20,
+        "fairness": 0.10,
+        "acgme_compliance": 0.25,
+        "preferences": 0.05,
+        "learning_goals": 0.30,
+        "continuity": 0.10,
+    }
+
+Usage
+-----
+
+Import constants for algorithm configuration:
+
+.. code-block:: python
+
+    from app.scheduling.bio_inspired.constants import (
+        DEFAULT_COVERAGE_WEIGHT,
+        PSO_DEFAULT_SWARM_SIZE,
+        ACO_DEFAULT_ALPHA,
+        NSGA2_DEFAULT_POPULATION_SIZE,
+    )
+
+All constants are module-level for easy access and modification.
 """
 
 # ==============================================================================

@@ -564,13 +564,34 @@ class SagaOrchestrator:
     ) -> int:
         """Compensate (rollback) completed steps in reverse order.
 
+        This implements the backward recovery phase of the saga pattern.
+        When a saga fails, all successfully completed steps must be undone
+        by executing their compensation functions in reverse order.
+
+        Compensation is "semantic undo" - it may not restore the exact
+        previous state but moves the system to an acceptable final state.
+        For example, a payment refund may have different fees than the
+        original charge.
+
+        Compensation Execution:
+            1. Find all steps with status=COMPLETED
+            2. Sort them in reverse execution order
+            3. For each step, call its compensation function
+            4. Mark step as COMPENSATED on success
+            5. Record compensation_error on failure (but continue)
+
+        Error Handling:
+            Compensation continues even if individual compensations fail.
+            Failed compensations are logged and recorded in compensation_error.
+            The total count of successful compensations is returned.
+
         Args:
-            definition: Saga definition
-            context: Saga execution context
-            saga_exec: Persisted saga execution
+            definition: Saga definition with compensation functions
+            context: Saga execution context with accumulated step outputs
+            saga_exec: Persisted saga execution record
 
         Returns:
-            Number of steps compensated
+            Number of steps successfully compensated
         """
         logger.info(f"Starting compensation for saga {context.saga_id}")
 
@@ -834,11 +855,29 @@ class SagaOrchestrator:
     async def recover_pending_sagas(self) -> list[UUID]:
         """Recover sagas that were interrupted (e.g., service restart).
 
-        This method finds sagas in RUNNING or COMPENSATING state and
-        attempts to continue their execution.
+        This method implements crash recovery for the saga pattern. After a
+        service restart, sagas may be in an incomplete state:
+            - RUNNING: Was executing steps when service died
+            - COMPENSATING: Was rolling back when service died
+
+        Recovery Strategies (choose based on your requirements):
+            1. Mark as FAILED (current default): Safe, requires manual review
+            2. Resume execution: Continue from last completed step
+            3. Force compensation: Roll back all completed steps
+            4. Retry saga: Start over with original input (if idempotent)
+
+        The default implementation marks sagas as FAILED for manual review.
+        Override this method or modify the logic for different strategies.
+
+        Call this method on service startup:
+            ```python
+            orchestrator = SagaOrchestrator(db)
+            orchestrator.register_saga(MY_SAGA_DEF)  # Must register first
+            await orchestrator.recover_pending_sagas()
+            ```
 
         Returns:
-            List of saga IDs that were recovered
+            List of saga IDs that were recovered/marked as failed
         """
         logger.info("Scanning for pending sagas to recover...")
 

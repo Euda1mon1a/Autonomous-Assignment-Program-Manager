@@ -43,6 +43,11 @@ class RotationPreference(Base):
 
     The solver multiplies the base penalty by the weight factor when
     optimizing schedules.
+
+    SQLAlchemy Relationships:
+        rotation_template: Many-to-one to RotationTemplate.
+            Back-populates RotationTemplate.preferences.
+            FK ondelete=CASCADE. The template this preference applies to.
     """
 
     __tablename__ = "rotation_preferences"

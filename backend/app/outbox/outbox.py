@@ -1,38 +1,100 @@
-"""Transactional Outbox Implementation.
+"""Transactional Outbox Core Implementation.
 
-This module provides the core implementation of the transactional outbox pattern:
-1. OutboxWriter: Writes messages to outbox within database transactions
-2. OutboxRelay: Publishes messages from outbox to message broker
-3. OutboxCleaner: Archives and cleans up old messages
+This module provides the three core services for the transactional outbox pattern:
 
-Usage:
-------
-# Writing messages within a transaction:
-from app.outbox.outbox import OutboxWriter
+1. **OutboxWriter**: Writes messages to the outbox table within database
+   transactions, ensuring atomicity with business data changes.
 
-def create_assignment(db: Session, assignment_data: dict):
-    # Business logic
-    assignment = Assignment(**assignment_data)
-    db.add(assignment)
+2. **OutboxRelay**: Background service that polls for pending messages and
+   publishes them to the message broker (Celery/Redis). Handles retries
+   with exponential backoff.
 
-    # Write outbox message in SAME transaction
-    writer = OutboxWriter(db)
-    writer.write_message(
-        aggregate_type="assignment",
-        aggregate_id=assignment.id,
-        event_type="assignment.created",
-        payload={"assignment_id": str(assignment.id), "date": str(assignment.date)}
-    )
+3. **OutboxCleaner**: Maintenance service that archives published messages
+   and cleans up old data to prevent unbounded table growth.
 
-    db.commit()  # Both assignment and outbox message committed atomically
+Architecture Overview
+---------------------
+The transactional outbox pattern separates the write and publish phases:
 
+**Write Phase** (synchronous, in request handler):
+    - Business logic modifies domain entities
+    - OutboxWriter creates message in same DB transaction
+    - Single atomic commit ensures consistency
 
-# Publishing messages (typically in background task):
-from app.outbox.outbox import OutboxRelay
+**Relay Phase** (asynchronous, background Celery task):
+    - OutboxRelay polls for pending messages (every minute)
+    - Publishes to message broker with retry logic
+    - Marks messages as published on success
 
-def relay_outbox_messages():
-    relay = OutboxRelay()
-    published_count = relay.publish_pending_messages(batch_size=100)
+**Cleanup Phase** (asynchronous, background Celery task):
+    - OutboxCleaner archives old published messages (daily)
+    - Purges archive based on retention policy (30 days)
+
+Key Design Decisions
+--------------------
+1. **Polling vs CDC**: We use polling (relay queries for pending messages)
+   rather than Change Data Capture. Simpler to implement, good enough for
+   moderate message volumes (<1000/minute).
+
+2. **Celery as Message Broker**: Messages are published as Celery tasks
+   to Redis. This leverages existing infrastructure rather than adding
+   a separate message broker (Kafka, RabbitMQ).
+
+3. **At-Least-Once Delivery**: The relay may publish duplicates if it
+   crashes between publishing and marking published. Consumers must be
+   idempotent.
+
+4. **Per-Aggregate Ordering**: Messages within an aggregate are ordered
+   by sequence number, but cross-aggregate order is not guaranteed.
+
+Usage Examples
+--------------
+Writing messages within a transaction::
+
+    from app.outbox.outbox import OutboxWriter
+
+    def create_assignment(db: Session, assignment_data: dict):
+        # Business logic - create domain entity
+        assignment = Assignment(**assignment_data)
+        db.add(assignment)
+
+        # Write outbox message in SAME transaction
+        writer = OutboxWriter(db)
+        writer.write_message(
+            aggregate_type="assignment",
+            aggregate_id=assignment.id,
+            event_type="assignment.created",
+            payload={
+                "assignment_id": str(assignment.id),
+                "date": str(assignment.date),
+            }
+        )
+
+        # Atomic commit - both succeed or both fail
+        db.commit()
+
+Publishing messages (typically in background Celery task)::
+
+    from app.outbox.outbox import OutboxRelay
+
+    @celery_app.task
+    def relay_outbox_messages():
+        with session_scope() as db:
+            relay = OutboxRelay(db)
+            published_count = relay.publish_pending_messages(batch_size=100)
+            return {"published": published_count}
+
+Archiving old messages (typically in daily Celery task)::
+
+    from app.outbox.outbox import OutboxCleaner
+
+    @celery_app.task
+    def cleanup_outbox():
+        with session_scope() as db:
+            cleaner = OutboxCleaner(db)
+            archived = cleaner.archive_published_messages()
+            deleted = cleaner.delete_old_archive()
+            return {"archived": archived, "deleted": deleted}
 """
 
 import json
@@ -51,11 +113,57 @@ logger = logging.getLogger(__name__)
 
 
 class OutboxWriter:
-    """
-    Writes messages to the outbox table within database transactions.
+    """Writes messages to the outbox table within database transactions.
 
-    This ensures that outbox messages are written atomically with business
+    This is the write-side component of the transactional outbox pattern.
+    It ensures that outbox messages are written atomically with business
     data changes, preventing the dual-write problem.
+
+    Thread Safety
+    -------------
+    OutboxWriter is NOT thread-safe. Each thread/request should create its
+    own instance with its own database session.
+
+    Transaction Handling
+    --------------------
+    The writer does NOT commit or flush the session. It only adds the
+    OutboxMessage to the session. The caller is responsible for committing
+    the transaction, which ensures atomicity with business data changes.
+
+    Sequence Numbers
+    ----------------
+    Each message gets a sequence number within its aggregate (aggregate_type
+    + aggregate_id). This ensures messages for the same entity can be
+    processed in order by consumers. Sequence numbers start at 0 and
+    increment by 1 for each new message.
+
+    Example:
+        ::
+
+            # Correct usage - same transaction
+            def transfer_money(db, from_account, to_account, amount):
+                from_account.balance -= amount
+                to_account.balance += amount
+
+                writer = OutboxWriter(db)
+                writer.write_message(
+                    aggregate_type="transfer",
+                    aggregate_id=transfer.id,
+                    event_type="transfer.completed",
+                    payload={"from": str(from_account.id), "to": str(to_account.id)}
+                )
+
+                db.commit()  # Single atomic commit
+
+    Warning:
+        Do NOT commit between business logic and write_message():
+
+        ::
+
+            # WRONG - defeats the purpose of transactional outbox
+            db.add(assignment)
+            db.commit()  # DON'T DO THIS
+            writer.write_message(...)  # Message not atomic with assignment
     """
 
     def __init__(self, db: Session):
@@ -162,15 +270,71 @@ class OutboxWriter:
 
 
 class OutboxRelay:
-    """
-    Publishes messages from the outbox to the message broker.
+    """Publishes messages from the outbox table to the message broker.
 
-    This service reads pending messages from the outbox table and publishes
-    them to Redis/Celery. It handles:
-    - Message ordering (processes messages in sequence order per aggregate)
-    - Retry logic (exponential backoff for failed publishes)
-    - Error handling (marks messages as failed after max retries)
-    - Exactly-once delivery (prevents duplicate processing)
+    This is the relay component of the transactional outbox pattern. It runs
+    as a background Celery task (typically every minute) and:
+
+    1. Queries for pending messages (FIFO order by created_at)
+    2. Marks each message as PROCESSING
+    3. Publishes to Celery task queue
+    4. Marks as PUBLISHED on success, or FAILED with retry on failure
+
+    Message Processing Flow
+    -----------------------
+    ::
+
+        PENDING ──[relay picks up]──> PROCESSING ──[publish succeeds]──> PUBLISHED
+                                           │
+                                           └──[publish fails]──> FAILED
+                                                                   │
+                                                                   └──[retry]──> PENDING
+
+    Retry Strategy
+    --------------
+    Failed messages are retried with exponential backoff:
+
+    - Retry 1: 10 seconds delay
+    - Retry 2: 20 seconds delay
+    - Retry 3: 40 seconds delay
+    - (capped at 5 minutes maximum)
+
+    After max_retries (default: 3), messages become "dead letters" and
+    remain in FAILED state for investigation.
+
+    Stuck Message Recovery
+    ----------------------
+    If the relay crashes while processing a message, the message stays in
+    PROCESSING state. The next relay run will timeout stuck messages
+    (default: 5 minutes) and reset them to PENDING for reprocessing.
+
+    Idempotency
+    -----------
+    The message.id is used as the Celery task_id. If the same message is
+    published twice (due to crash recovery), Celery will deduplicate based
+    on task_id (if configured with task_reject_on_worker_lost=True).
+
+    Consumers should still be idempotent as a defense-in-depth measure.
+
+    Concurrency
+    -----------
+    Only one relay task should run at a time to prevent duplicate processing.
+    Use Celery's solo pool or add distributed locking if running multiple
+    workers.
+
+    Example:
+        ::
+
+            # In a Celery beat task
+            @celery_app.task
+            def relay_outbox_messages():
+                with session_scope() as db:
+                    relay = OutboxRelay(db)
+                    count = relay.publish_pending_messages(
+                        batch_size=100,
+                        timeout_stuck_processing=True,
+                    )
+                    return {"published": count}
     """
 
     def __init__(
@@ -468,12 +632,74 @@ class OutboxRelay:
 
 
 class OutboxCleaner:
-    """
-    Archives and cleans up old outbox messages.
+    """Archives and cleans up old outbox messages.
 
-    This service:
-    - Moves successfully published messages to archive
-    - Deletes old archived messages based on retention policy
+    This maintenance service ensures the outbox table stays small and performant
+    by moving published messages to an archive table and eventually deleting them.
+
+    Data Lifecycle
+    --------------
+    ::
+
+        outbox_messages (PUBLISHED) ──[24h]──> outbox_archive ──[30d]──> DELETED
+
+    The lifecycle is:
+    1. Published messages stay in outbox_messages for 24 hours (configurable)
+    2. Archive task moves them to outbox_archive
+    3. Archived messages are retained for 30 days (configurable)
+    4. Cleanup task permanently deletes old archived messages
+
+    Why Archive?
+    ------------
+    - **Performance**: Keeps outbox table small for fast relay queries
+    - **Audit Trail**: Archive provides history of published events
+    - **Debugging**: Can investigate past events during incident response
+    - **Compliance**: Some regulations require event retention
+
+    Dead Letter Handling
+    --------------------
+    Failed messages that exceeded max_retries are "dead letters". They:
+    - Remain in outbox_messages with status=FAILED
+    - Are NOT archived (they never successfully published)
+    - Are deleted after 7 days by cleanup_failed_messages()
+    - Should trigger alerts for investigation
+
+    Table Sizing Guidelines
+    -----------------------
+    - outbox_messages: Should stay under 10,000 rows
+    - outbox_archive: Will grow based on message volume and retention
+    - Monitor table sizes in metrics
+
+    Example:
+        ::
+
+            # In a daily Celery beat task
+            @celery_app.task
+            def daily_outbox_maintenance():
+                with session_scope() as db:
+                    cleaner = OutboxCleaner(
+                        db,
+                        archive_after_hours=24,
+                        retention_days=30,
+                    )
+
+                    # Move published messages to archive
+                    archived = cleaner.archive_published_messages(batch_size=1000)
+
+                    # Delete old archived messages
+                    deleted_archive = cleaner.delete_old_archive(batch_size=1000)
+
+                    # Clean up old dead letters
+                    deleted_failed = cleaner.cleanup_failed_messages(
+                        max_age_days=7,
+                        batch_size=1000,
+                    )
+
+                    return {
+                        "archived": archived,
+                        "deleted_archive": deleted_archive,
+                        "deleted_failed": deleted_failed,
+                    }
     """
 
     def __init__(

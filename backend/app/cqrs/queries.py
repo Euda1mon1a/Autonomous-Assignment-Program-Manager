@@ -1,52 +1,230 @@
-"""Query pattern implementation for CQRS read operations.
+"""
+Query Pattern Implementation for CQRS Read Operations
+======================================================
 
 This module provides the query side of CQRS, handling all read operations
 in the Residency Scheduler application.
 
-Queries represent requests for data (e.g., GetAssignmentsByPerson,
-GetScheduleForWeek). They return denormalized, optimized read models
-rather than domain entities.
+Overview
+--------
+Queries represent **requests for data**. Unlike commands, they:
 
-Architecture:
-    Query -> QueryBus -> QueryHandler -> Read Database -> ReadModel
+- **Never modify state**: Queries are pure reads with no side effects
+- **Are immutable**: Query objects cannot be changed after creation
+- **Named as questions**: GetAssignmentsByPerson, FindAvailableFaculty
+- **Return read models**: Optimized, denormalized views (not domain entities)
 
-Read Models:
-    Read models are denormalized, optimized projections of the write
-    database, designed specifically for query performance. They are
-    updated asynchronously via event-driven projectors.
+The query side is optimized for read performance, potentially using separate
+read replicas, caching, and denormalized data structures.
 
-Example:
-    # Define a query
+Data Flow
+---------
+::
+
+    Query -> QueryBus -> QueryHandler -> Read Database (Read Models)
+                |                              |
+                v                              v
+           (Cache Check)              (Denormalized Data)
+                                              |
+                                              v
+                                         QueryResult
+
+Read Models vs Domain Entities
+------------------------------
+
+**Domain Entities** (Write Side):
+    - Normalized data structures
+    - Enforce business invariants
+    - May require joins across tables
+    - Optimized for write consistency
+
+**Read Models** (Query Side):
+    - Denormalized for query performance
+    - Pre-computed aggregations
+    - No join complexity
+    - Eventually consistent with writes
+    - Optimized for specific query patterns
+
+Example: An AssignmentReadModel might include person_name and rotation_name
+directly (denormalized), avoiding joins with Person and Rotation tables.
+
+Key Components
+--------------
+
+**Query**:
+    Base class for all queries. Includes metadata (query_id, timestamp, user_id)
+    and is frozen (immutable). Queries should be named as questions.
+
+**QueryBus**:
+    Routes queries to registered handlers. Manages:
+    - Handler registration
+    - Optional result caching (with TTL)
+    - Query execution timing
+    - Error handling and logging
+
+**QueryHandler**:
+    Abstract base class for query processors. Each query type should have
+    exactly one handler. Handlers:
+    - Query read models (not write database!)
+    - Apply any filtering/sorting
+    - Return QueryResult with data
+
+**QueryResult**:
+    Encapsulates the query outcome:
+    - success: Boolean indicating success/failure
+    - data: Result data (single model or list)
+    - total_count: For paginated queries
+    - metadata: Timing, cache hit, etc.
+
+**ReadModel**:
+    Base class for denormalized read model entities. Read models:
+    - Are flat and denormalized
+    - Include computed/aggregated fields
+    - Are optimized for specific use cases
+    - May combine data from multiple aggregates
+
+**ReadModelProjector**:
+    Updates read models in response to domain events. Maintains eventual
+    consistency between write and read databases.
+
+**ReadDatabaseConnectionManager**:
+    Manages separate read database connections. Supports:
+    - Read replicas for scalability
+    - Read-only connection mode
+    - Separate connection pool settings
+
+Usage Example
+-------------
+::
+
+    from app.cqrs.queries import Query, QueryBus, QueryHandler, QueryResult, ReadModel
+    from dataclasses import dataclass
+
+    # 1. Define a read model (denormalized for fast queries)
+    @dataclass
+    class AssignmentSummary(ReadModel):
+        assignment_id: UUID
+        person_name: str        # Denormalized from Person table
+        block_date: date        # Denormalized from Block table
+        rotation_name: str      # Denormalized from Rotation table
+        location: str
+        total_hours: float      # Pre-computed aggregate
+
+    # 2. Define a query (immutable, question-based naming)
     @dataclass(frozen=True)
-    class GetAssignmentsByPersonQuery(Query):
+    class GetPersonAssignmentsQuery(Query):
         person_id: UUID
         start_date: date | None = None
         end_date: date | None = None
+        include_completed: bool = True
 
-    # Define a read model
-    @dataclass
-    class AssignmentReadModel(ReadModel):
-        assignment_id: UUID
-        person_name: str
-        block_date: date
-        rotation_name: str
-        location: str
-        # Denormalized for fast querying
-
-    # Define a handler
-    class GetAssignmentsByPersonHandler(QueryHandler[GetAssignmentsByPersonQuery]):
-        async def handle(self, query: GetAssignmentsByPersonQuery) -> QueryResult:
-            # Query optimized read model
-            assignments = await self._query_assignments(query.person_id)
-            return QueryResult(
-                success=True,
-                data=assignments
+    # 3. Define a handler
+    class GetPersonAssignmentsHandler(QueryHandler[GetPersonAssignmentsQuery]):
+        async def handle(self, query: GetPersonAssignmentsQuery) -> QueryResult:
+            # Query the read model table (not the normalized write tables!)
+            assignments = await self._query_assignment_summaries(
+                person_id=query.person_id,
+                start_date=query.start_date,
+                end_date=query.end_date
             )
 
-    # Execute query
-    bus = QueryBus(db_read)
-    bus.register_handler(GetAssignmentsByPersonQuery, handler)
-    result = await bus.execute(GetAssignmentsByPersonQuery(person_id=person_id))
+            if not query.include_completed:
+                assignments = [a for a in assignments if not a.is_completed]
+
+            return QueryResult.ok(
+                data=assignments,
+                total_count=len(assignments)
+            )
+
+    # 4. Execute with caching enabled
+    query_bus = QueryBus(db_read, enable_cache=True)
+    query_bus.register_handler(GetPersonAssignmentsQuery, handler)
+
+    result = await query_bus.execute(
+        GetPersonAssignmentsQuery(person_id=person_id)
+    )
+
+    if result.success:
+        for assignment in result.data:
+            print(f"{assignment.person_name}: {assignment.rotation_name}")
+        print(f"Cache hit: {result.metadata.get('cache_hit')}")
+        print(f"Query time: {result.metadata.get('query_time_seconds')}s")
+
+Projector Example
+-----------------
+::
+
+    class AssignmentSummaryProjector(ReadModelProjector):
+        '''Updates AssignmentSummary read model from domain events.'''
+
+        def __init__(self, db_write: Session, db_read: Session):
+            super().__init__(db_write, db_read)
+
+        async def project(self, event: DomainEvent) -> None:
+            if isinstance(event, AssignmentCreatedEvent):
+                await self._on_assignment_created(event)
+            elif isinstance(event, AssignmentUpdatedEvent):
+                await self._on_assignment_updated(event)
+            elif isinstance(event, PersonUpdatedEvent):
+                await self._on_person_updated(event)  # Update denormalized name
+
+        async def _on_assignment_created(self, event):
+            # Fetch related data from write DB to build denormalized read model
+            assignment = await self.db_write.get(Assignment, event.aggregate_id)
+            person = await self.db_write.get(Person, assignment.person_id)
+            rotation = await self.db_write.get(Rotation, assignment.rotation_id)
+
+            # Create denormalized read model
+            summary = AssignmentSummary(
+                assignment_id=assignment.id,
+                person_name=person.name,  # Denormalized!
+                block_date=assignment.block.date,
+                rotation_name=rotation.name,  # Denormalized!
+                location=rotation.location,
+                total_hours=self._calculate_hours(assignment)
+            )
+
+            self.db_read.add(summary)
+            await self.db_read.commit()
+
+        async def rebuild(self) -> None:
+            '''Rebuild all read models from scratch.'''
+            # Clear existing read models
+            await self.db_read.execute("DELETE FROM assignment_summaries")
+
+            # Rebuild from all assignments
+            assignments = await self.db_write.query(Assignment).all()
+            for assignment in assignments:
+                await self._build_summary(assignment)
+
+Best Practices
+--------------
+
+1. **Query read models, not write tables**: Read handlers should never query
+   the normalized write database directly
+2. **Keep queries focused**: One query type for one specific use case
+3. **Use caching wisely**: Enable for frequently-accessed, stable data
+4. **Handle eventual consistency**: Read models may lag behind writes
+5. **Denormalize aggressively**: Optimize for query patterns, not normalization
+6. **Include pagination**: Use limit/offset or cursor-based for large results
+
+Eventual Consistency
+--------------------
+
+Read models are updated asynchronously via event projectors. This means:
+
+- Queries may return stale data immediately after writes
+- Sync lag is typically < 1 second in normal operation
+- For strong consistency, query the write model or use the event store
+
+The ``ReadModelSyncService`` (see read_model_sync.py) monitors sync lag
+and can alert when projections fall behind.
+
+See Also
+--------
+- ``app.cqrs.commands``: Command side implementation
+- ``app.cqrs.projection_builder``: Building and rebuilding projections
+- ``app.cqrs.read_model_sync``: Real-time sync monitoring
 """
 
 import logging

@@ -1,29 +1,91 @@
-"""Celery tasks for transactional outbox pattern.
+"""Celery Background Tasks for Transactional Outbox.
 
-This module defines background tasks for:
-1. Relaying outbox messages to the message broker
-2. Handling outbox events (generic event handler)
-3. Archiving published messages
-4. Cleaning up old messages
-5. Monitoring and metrics collection
+This module defines the Celery tasks that power the transactional outbox pattern:
 
-Periodic Schedule:
------------------
-- relay_outbox_messages: Every 1 minute (ensures fast message delivery)
-- archive_published_messages: Every 6 hours
-- cleanup_old_archive: Daily at 3 AM
-- cleanup_failed_messages: Daily at 4 AM
-- collect_outbox_metrics: Every 5 minutes
+Tasks Overview
+--------------
+1. **relay_outbox_messages** (every 1 minute)
+   Core task that reads pending messages from the outbox table and publishes
+   them to Celery. This is the "pump" that moves messages from database to broker.
 
-Configuration:
+2. **handle_outbox_event** (on-demand)
+   Generic event handler that receives all outbox events. Routes to specific
+   handlers based on event_type (assignment.*, swap.*, conflict.*).
+
+3. **archive_published_messages** (every 6 hours)
+   Moves successfully published messages to the archive table to keep the
+   main outbox table small for performance.
+
+4. **cleanup_old_archive** (daily at 3 AM)
+   Deletes archived messages older than retention period (default: 30 days).
+
+5. **cleanup_failed_messages** (daily at 4 AM)
+   Deletes dead letter messages (exceeded max retries) after investigation
+   period (default: 7 days).
+
+6. **collect_outbox_metrics** (every 5 minutes)
+   Gathers statistics for monitoring: pending count, latency, failures.
+
+Task Scheduling
+---------------
+These tasks are designed to run via Celery Beat. Add to celery_app.py::
+
+    from celery.schedules import crontab
+
+    beat_schedule = {
+        "outbox-relay": {
+            "task": "app.outbox.tasks.relay_outbox_messages",
+            "schedule": crontab(minute="*/1"),  # Every minute
+            "options": {"queue": "outbox"},
+        },
+        "outbox-archive": {
+            "task": "app.outbox.tasks.archive_published_messages",
+            "schedule": crontab(hour="*/6"),  # Every 6 hours
+            "options": {"queue": "outbox"},
+        },
+        "outbox-cleanup-archive": {
+            "task": "app.outbox.tasks.cleanup_old_archive",
+            "schedule": crontab(hour=3, minute=0),  # Daily at 3 AM
+            "options": {"queue": "outbox"},
+        },
+        "outbox-cleanup-failed": {
+            "task": "app.outbox.tasks.cleanup_failed_messages",
+            "schedule": crontab(hour=4, minute=0),  # Daily at 4 AM
+            "options": {"queue": "outbox"},
+        },
+        "outbox-metrics": {
+            "task": "app.outbox.tasks.collect_outbox_metrics",
+            "schedule": crontab(minute="*/5"),  # Every 5 minutes
+            "options": {"queue": "outbox"},
+        },
+    }
+
+Queue Configuration
+-------------------
+All outbox tasks use the "outbox" queue. This allows:
+- Dedicated workers for outbox processing
+- Priority isolation from other Celery tasks
+- Independent scaling of outbox processing
+
+To start an outbox-only worker::
+
+    celery -A app.core.celery_app worker -Q outbox --concurrency=2
+
+Error Handling
+--------------
+All tasks inherit from OutboxTask base class which provides:
+- Structured logging on failure/retry
+- Automatic retry with exponential backoff (relay task)
+- Exception context for debugging
+
+Event Routing
 -------------
-Add to celery_app.py beat_schedule:
+The handle_outbox_event task routes events by prefix:
+- assignment.* -> _handle_assignment_event
+- swap.* -> _handle_swap_event
+- conflict.* -> _handle_conflict_event
 
-    "outbox-relay": {
-        "task": "app.outbox.tasks.relay_outbox_messages",
-        "schedule": crontab(minute="*/1"),  # Every minute
-        "options": {"queue": "outbox"},
-    },
+Add new handlers as your domain events grow.
 """
 
 import logging
@@ -40,14 +102,39 @@ logger = logging.getLogger(__name__)
 
 
 class OutboxTask(Task):
-    """
-    Base task class for outbox tasks.
+    """Base Celery task class for all outbox-related tasks.
 
-    Provides common error handling and logging for outbox-related tasks.
+    This class provides common error handling, logging, and monitoring
+    for outbox tasks. All outbox tasks should use this as their base class.
+
+    Features:
+        - Structured logging with task context on failure
+        - Warning logs on retry with retry count
+        - Consistent error message format for alerting
+
+    Usage:
+        ::
+
+            @celery_app.task(base=OutboxTask)
+            def my_outbox_task():
+                # Task implementation
+                pass
+
+    Note:
+        Override on_failure and on_retry in subclasses if you need
+        custom error handling (e.g., sending to external monitoring).
     """
 
     def on_failure(self, exc, task_id, args, kwargs, einfo):
-        """Handle task failure."""
+        """Log structured error when task fails after all retries exhausted.
+
+        Args:
+            exc: The exception that caused the failure
+            task_id: Celery task ID
+            args: Positional arguments passed to task
+            kwargs: Keyword arguments passed to task
+            einfo: Exception info object with traceback
+        """
         logger.error(
             f"Outbox task {self.name} failed: {exc}",
             extra={
@@ -60,7 +147,15 @@ class OutboxTask(Task):
         )
 
     def on_retry(self, exc, task_id, args, kwargs, einfo):
-        """Handle task retry."""
+        """Log warning when task is being retried.
+
+        Args:
+            exc: The exception that triggered the retry
+            task_id: Celery task ID
+            args: Positional arguments passed to task
+            kwargs: Keyword arguments passed to task
+            einfo: Exception info object with traceback
+        """
         logger.warning(
             f"Outbox task {self.name} retrying: {exc}",
             extra={
@@ -138,24 +233,50 @@ def handle_outbox_event(
     message_id: str,
     sequence: int,
 ) -> dict[str, Any]:
-    """
-    Generic handler for outbox events.
+    """Generic handler for all outbox events.
 
-    This is the default task that receives all outbox events.
-    It can route to specific handlers based on event_type or
-    perform common processing for all events.
+    This is the default consumer task that receives events published by the
+    OutboxRelay. It routes events to domain-specific handlers based on the
+    event_type prefix.
+
+    Event Routing
+    -------------
+    Events are routed by prefix:
+    - ``assignment.*`` -> _handle_assignment_event
+    - ``swap.*`` -> _handle_swap_event
+    - ``conflict.*`` -> _handle_conflict_event
+    - Other events -> logged as unhandled
+
+    Idempotency
+    -----------
+    Use the ``message_id`` parameter to implement idempotent processing.
+    Store processed message IDs and skip duplicates::
+
+        if is_already_processed(message_id):
+            return {"status": "duplicate", "message_id": message_id}
+        process_event(...)
+        mark_as_processed(message_id)
+
+    Ordering
+    --------
+    The ``sequence`` parameter indicates ordering within an aggregate.
+    If strict ordering is required, verify sequence is monotonically
+    increasing for each aggregate.
 
     Args:
-        event_type: Type of event (e.g., "assignment.created")
-        aggregate_type: Type of aggregate (e.g., "assignment")
-        aggregate_id: ID of the aggregate
-        payload: Event payload data
-        headers: Message headers
-        message_id: Unique message ID (for idempotency)
-        sequence: Sequence number for ordering
+        event_type: Domain event type (e.g., "assignment.created", "swap.executed")
+        aggregate_type: Type of business entity (e.g., "assignment", "swap")
+        aggregate_id: UUID of the specific entity instance (as string)
+        payload: Event data as dict (structure depends on event_type)
+        headers: Optional message headers (correlation_id, trace_id, etc.)
+        message_id: Unique message UUID for idempotency checking
+        sequence: Sequence number for ordering within aggregate (0, 1, 2, ...)
 
     Returns:
-        dict: Processing result
+        dict: Processing result with at least {"status": "success"|"unhandled"}
+
+    Raises:
+        Exception: Re-raised after logging to trigger Celery retry
     """
     logger.info(
         f"Handling outbox event: {event_type} for {aggregate_type}:{aggregate_id}",

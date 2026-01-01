@@ -4,11 +4,149 @@ Base Classes for Bio-Inspired Optimization.
 This module provides foundational abstractions for evolutionary and swarm-based
 optimization algorithms. All bio-inspired solvers inherit from BioInspiredSolver.
 
-Key Concepts:
-- Chromosome: Encoding of a complete schedule as a genetic representation
-- Individual: Chromosome + fitness values
-- Population: Collection of individuals evolving over generations
-- FitnessVector: Multi-objective fitness (fairness, preferences, learning goals)
+Core Abstractions
+-----------------
+
+**Chromosome**
+    Genetic encoding of a complete schedule as a 2D numpy array.
+    Shape: (n_residents, n_blocks). Values are template indices (0 = unassigned).
+
+    .. code-block:: python
+
+        # Create random chromosome
+        chrom = Chromosome.create_random(n_residents=20, n_blocks=200, n_templates=5)
+
+        # Get/set assignments
+        template_idx = chrom.get_assignment(resident_idx=3, block_idx=15)
+        chrom.set_assignment(resident_idx=3, block_idx=15, template_idx=2)
+
+        # Convert to assignment list
+        assignments = chrom.to_assignment_list(context)  # [(person_id, block_id, template_id), ...]
+
+**FitnessVector**
+    Multi-objective fitness representation with 6 objectives:
+    - coverage: Proportion of blocks assigned (0-1)
+    - fairness: Workload distribution equality (0-1, higher = more fair)
+    - preferences: Resident preference satisfaction (0-1)
+    - learning_goals: Educational objective alignment (0-1)
+    - acgme_compliance: ACGME rule compliance (0-1)
+    - continuity: Rotation sequence continuity (0-1)
+
+    .. code-block:: python
+
+        fitness = FitnessVector(coverage=0.85, fairness=0.72, acgme_compliance=0.95)
+
+        # Check Pareto dominance
+        if fitness.dominates(other_fitness):
+            print("This solution is strictly better")
+
+        # Compute weighted sum for single-objective optimization
+        score = fitness.weighted_sum()  # Uses default weights
+        score = fitness.weighted_sum({"coverage": 0.4, "fairness": 0.6})  # Custom
+
+**Individual**
+    A complete solution in the population, combining:
+    - chromosome: The schedule encoding
+    - fitness: Evaluated FitnessVector
+    - rank: Pareto rank (0 = non-dominated, for NSGA-II)
+    - crowding_distance: Diversity measure (for NSGA-II)
+    - generation: When this individual was created
+    - parent_ids: Genealogy tracking
+
+**PopulationStats**
+    Statistics for a population at a given generation:
+    - best/worst/mean/std fitness
+    - diversity (average pairwise distance)
+    - pareto_front_size
+    - hypervolume (dominated objective space volume)
+    - selection_pressure
+    - mutation/crossover rates
+
+**BioInspiredSolver**
+    Abstract base class for all bio-inspired solvers. Provides:
+    - Population initialization
+    - Fitness evaluation
+    - Pareto front maintenance
+    - Evolution tracking
+    - Standard solve() interface
+
+Fitness Evaluation
+------------------
+
+The evaluate_fitness() method computes all objectives:
+
+.. code-block:: python
+
+    solver = GeneticAlgorithmSolver()
+    fitness = solver.evaluate_fitness(chromosome, context)
+
+    print(f"Coverage: {fitness.coverage:.2f}")
+    print(f"Fairness: {fitness.fairness:.2f}")
+    print(f"ACGME: {fitness.acgme_compliance:.2f}")
+
+Objectives are computed as:
+
+- **Coverage**: (assigned blocks) / (total blocks * residents)
+- **Fairness**: 1 / (1 + coefficient_of_variation_of_workloads)
+- **ACGME**: 1 - (violations / max_possible_violations)
+- **Continuity**: (same-template transitions) / (total transitions)
+- **Preferences/Learning**: Placeholder (would need additional data)
+
+Extending the Framework
+-----------------------
+
+To create a new bio-inspired solver:
+
+.. code-block:: python
+
+    class MyCustomSolver(BioInspiredSolver):
+        def __init__(self, my_param: float = 1.0, **kwargs):
+            super().__init__(**kwargs)
+            self.my_param = my_param
+
+        def _evolve(self, context: SchedulingContext) -> Individual:
+            # Initialize population
+            self.population = self.initialize_population(context)
+
+            # Your custom evolution logic
+            for gen in range(self.max_generations):
+                # ... evolve population ...
+
+                # Track statistics
+                stats = self.compute_population_stats(self.population, gen)
+                self.evolution_history.append(stats)
+
+                # Update Pareto front
+                self.update_pareto_front(self.population)
+
+            return self.best_individual
+
+Default Objective Weights
+-------------------------
+
+The default weights for weighted_sum() prioritize compliance and coverage:
+
+- acgme_compliance: 0.30 (highest - regulatory requirement)
+- coverage: 0.25 (second - need assignments)
+- fairness: 0.15 (moderate)
+- preferences: 0.10 (lower)
+- learning_goals: 0.10 (lower)
+- continuity: 0.10 (lower)
+
+Customize weights for your use case:
+
+.. code-block:: python
+
+    # Fairness-focused weights
+    weights = {
+        "coverage": 0.20,
+        "fairness": 0.35,
+        "acgme_compliance": 0.25,
+        "preferences": 0.10,
+        "learning_goals": 0.05,
+        "continuity": 0.05,
+    }
+    score = fitness.weighted_sum(weights)
 """
 
 import logging

@@ -21,6 +21,12 @@ class PersonService:
 
         For performance-critical cases where assignments are needed,
         use get_person_with_assignments() instead.
+
+        Args:
+            person_id: The UUID of the person to retrieve.
+
+        Returns:
+            The Person object if found, None otherwise.
         """
         return self.person_repo.get_by_id(person_id)
 
@@ -31,6 +37,12 @@ class PersonService:
         N+1 Optimization: Uses selectinload to eagerly fetch all assignments
         and their related entities (block, rotation_template) in a batch query,
         preventing N+1 queries when accessing person.assignments.
+
+        Args:
+            person_id: The UUID of the person to retrieve.
+
+        Returns:
+            The Person object with assignments loaded if found, None otherwise.
         """
         return (
             self.db.query(Person)
@@ -51,13 +63,16 @@ class PersonService:
         """
         List people with optional filters.
 
-        Args:
-            type: Filter by person type (resident/faculty)
-            pgy_level: Filter by PGY level
-            include_assignments: If True, eager load assignments (N+1 optimization)
-
         N+1 Optimization: When include_assignments=True, uses selectinload to
         eagerly fetch assignments and their relationships in batch queries.
+
+        Args:
+            type: Filter by person type ('resident' or 'faculty').
+            pgy_level: Filter by PGY level (1-4 for residents).
+            include_assignments: If True, eager load assignments to prevent N+1.
+
+        Returns:
+            A dict with 'items' (list of Person objects) and 'total' (count).
         """
         if include_assignments:
             query = self.db.query(Person).options(
@@ -85,7 +100,14 @@ class PersonService:
         List all residents with optional PGY filter.
 
         N+1 Optimization: When include_assignments=True, uses selectinload to
-        eagerly fetch assignments, preventing N+1 queries when accessing resident.assignments.
+        eagerly fetch assignments, preventing N+1 queries.
+
+        Args:
+            pgy_level: Filter by PGY level (1-4).
+            include_assignments: If True, eager load assignments to prevent N+1.
+
+        Returns:
+            A dict with 'items' (list of resident Person objects) and 'total' (count).
         """
         if include_assignments:
             query = (
@@ -115,7 +137,14 @@ class PersonService:
         List all faculty with optional specialty filter.
 
         N+1 Optimization: When include_assignments=True, uses selectinload to
-        eagerly fetch assignments, preventing N+1 queries when accessing faculty.assignments.
+        eagerly fetch assignments, preventing N+1 queries.
+
+        Args:
+            specialty: Filter by faculty specialty (e.g., 'cardiology').
+            include_assignments: If True, eager load assignments to prevent N+1.
+
+        Returns:
+            A dict with 'items' (list of faculty Person objects) and 'total' (count).
         """
         if include_assignments:
             query = (
@@ -149,9 +178,19 @@ class PersonService:
         """
         Create a new person (resident or faculty).
 
-        Returns dict with:
-        - person: The created person
-        - error: Error message if creation failed
+        Validates that residents have a PGY level specified.
+
+        Args:
+            name: The person's full name.
+            type: Person type, either 'resident' or 'faculty'.
+            email: Optional email address.
+            pgy_level: PGY level (1-4), required for residents.
+            target_clinical_blocks: Optional target number of clinical blocks.
+            specialties: Optional list of specialty strings (for faculty).
+            performs_procedures: Whether the person performs procedures.
+
+        Returns:
+            A dict with 'person' (Person object or None) and 'error' (string or None).
         """
         # Validate resident requirements
         if type == "resident" and pgy_level is None:
@@ -185,9 +224,12 @@ class PersonService:
         """
         Update a person's information.
 
-        Returns dict with:
-        - person: The updated person
-        - error: Error message if update failed
+        Args:
+            person_id: The UUID of the person to update.
+            update_data: Dict of fields to update on the person.
+
+        Returns:
+            A dict with 'person' (updated Person or None) and 'error' (string or None).
         """
         person = self.person_repo.get_by_id(person_id)
         if not person:
@@ -200,7 +242,15 @@ class PersonService:
         return {"person": person, "error": None}
 
     def delete_person(self, person_id: UUID) -> dict:
-        """Delete a person."""
+        """
+        Delete a person from the system.
+
+        Args:
+            person_id: The UUID of the person to delete.
+
+        Returns:
+            A dict with 'success' (boolean) and 'error' (string or None).
+        """
         person = self.person_repo.get_by_id(person_id)
         if not person:
             return {"success": False, "error": "Person not found"}

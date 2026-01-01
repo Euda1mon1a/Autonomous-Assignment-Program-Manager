@@ -1,16 +1,87 @@
-"""Command pattern implementation for CQRS write operations.
+"""
+Command Pattern Implementation for CQRS Write Operations
+=========================================================
 
 This module provides the command side of CQRS, handling all state-changing
 operations in the Residency Scheduler application.
 
-Commands represent intentions to change state (e.g., CreateAssignment,
-UpdateSchedule, ApproveSwap). They are immutable and validated before execution.
+Overview
+--------
+Commands represent **intentions** to change state. They are:
 
-Architecture:
-    Command -> CommandBus -> CommandHandler -> Write Database -> Events
+- **Immutable**: Once created, commands cannot be modified
+- **Intent-based**: Named in imperative form (CreateAssignment, ApproveSwap)
+- **Validated**: Checked before execution via middleware
+- **Traceable**: Include command ID, timestamp, and user context
 
-Example:
-    # Define a command
+The command pattern provides a clean separation between the request to change
+state and the actual execution of that change.
+
+Data Flow
+---------
+::
+
+    Command -> Validation Middleware -> CommandBus -> CommandHandler
+                                                           |
+                                                           v
+                                                      Write Database
+                                                           |
+                                                           v
+                                                      Domain Events
+                                                           |
+                                                           v
+                                                      Event Handlers
+                                                      (projectors, notifications, etc.)
+
+Key Components
+--------------
+
+**Command**:
+    Base class for all commands. Includes metadata (command_id, timestamp,
+    user_id) and is frozen (immutable) after creation.
+
+**CommandBus**:
+    Routes commands to registered handlers. Manages:
+    - Handler registration
+    - Validation middleware pipeline
+    - Event publishing after successful execution
+    - Error handling and logging
+
+**CommandHandler**:
+    Abstract base class for command processors. Each command type should have
+    exactly one handler. Handlers:
+    - Validate command data (business rules)
+    - Execute state changes
+    - Emit domain events
+    - Return CommandResult
+
+**CommandResult**:
+    Encapsulates the outcome of command execution:
+    - success: Boolean indicating success/failure
+    - data: Result data (e.g., created entity IDs)
+    - error: Error message if failed
+    - events: Domain events emitted during execution
+
+**DomainEvent**:
+    Represents a fact that occurred. Named in past tense (AssignmentCreated,
+    SwapApproved). Events are used to:
+    - Update read models (projections)
+    - Trigger side effects (notifications)
+    - Maintain audit logs
+    - Enable event sourcing replay
+
+**CommandValidationMiddleware**:
+    Validates commands using Pydantic schemas before they reach handlers.
+    Provides type-safe validation with detailed error messages.
+
+Usage Example
+-------------
+::
+
+    from app.cqrs.commands import Command, CommandBus, CommandHandler, CommandResult
+    from dataclasses import dataclass
+
+    # 1. Define a command (immutable, intent-based)
     @dataclass(frozen=True)
     class CreateAssignmentCommand(Command):
         person_id: UUID
@@ -18,17 +89,17 @@ Example:
         rotation_id: UUID
         created_by: str
 
-    # Define a handler
+    # 2. Define a handler
     class CreateAssignmentHandler(CommandHandler[CreateAssignmentCommand]):
         async def handle(self, command: CreateAssignmentCommand) -> CommandResult:
-            # Validation
+            # Validate business rules
             if not await self._is_valid_assignment(command):
-                return CommandResult(
-                    success=False,
-                    error="Invalid assignment"
+                return CommandResult.fail(
+                    error="Invalid assignment",
+                    error_code="VALIDATION_ERROR"
                 )
 
-            # Business logic
+            # Execute business logic
             assignment = Assignment(
                 person_id=command.person_id,
                 block_id=command.block_id,
@@ -37,19 +108,49 @@ Example:
             self.db.add(assignment)
             await self.db.commit()
 
-            # Emit events
-            events = [AssignmentCreatedEvent(assignment_id=assignment.id)]
-
-            return CommandResult(
-                success=True,
-                data={"assignment_id": assignment.id},
-                events=events
+            # Emit domain events
+            event = AssignmentCreatedEvent(
+                aggregate_id=assignment.id,
+                person_id=command.person_id,
+                block_id=command.block_id
             )
 
-    # Execute command
+            return CommandResult.ok(
+                data={"assignment_id": assignment.id},
+                events=[event]
+            )
+
+    # 3. Register and execute
     bus = CommandBus(db)
     bus.register_handler(CreateAssignmentCommand, CreateAssignmentHandler(db))
-    result = await bus.execute(CreateAssignmentCommand(...))
+
+    result = await bus.execute(CreateAssignmentCommand(
+        person_id=person_id,
+        block_id=block_id,
+        rotation_id=rotation_id,
+        created_by="user-123"
+    ))
+
+    if result.success:
+        print(f"Created assignment: {result.data['assignment_id']}")
+    else:
+        print(f"Failed: {result.error}")
+
+Best Practices
+--------------
+
+1. **One handler per command**: Each command type should have exactly one handler
+2. **Keep handlers focused**: A handler should do one thing well
+3. **Emit events for side effects**: Don't put notifications in handlers; emit events
+4. **Validate in layers**: Pydantic for structure, handler for business rules
+5. **Use CommandResult.ok/fail**: Factory methods for consistent result creation
+6. **Include user context**: Set user_id in commands for audit trails
+
+See Also
+--------
+- ``app.cqrs.queries``: Query side implementation
+- ``app.events.event_types``: Domain event definitions
+- ``app.events.event_store``: Event persistence
 """
 
 import logging

@@ -39,6 +39,12 @@ class AssignmentService:
         N+1 Optimization: Uses selectinload to eagerly fetch related Person, Block,
         and RotationTemplate entities in a single query batch, preventing N+1 queries
         when accessing assignment.person, assignment.block, or assignment.rotation_template.
+
+        Args:
+            assignment_id: The UUID of the assignment to retrieve.
+
+        Returns:
+            The Assignment object if found, None otherwise.
         """
         return self.assignment_repo.get_by_id_with_relations(assignment_id)
 
@@ -61,6 +67,18 @@ class AssignmentService:
 
         Performance: Pagination is applied at the database level, not in Python,
         avoiding loading all records into memory.
+
+        Args:
+            start_date: Filter assignments on or after this date.
+            end_date: Filter assignments on or before this date.
+            person_id: Filter by the assigned person's UUID.
+            role: Filter by assignment role (e.g., 'resident', 'faculty').
+            activity_type: Filter by activity type (e.g., 'clinic', 'inpatient').
+            offset: Number of records to skip for pagination.
+            limit: Maximum number of records to return.
+
+        Returns:
+            A dict with 'items' (list of Assignment objects) and 'total' (count).
         """
         assignments, total = self.assignment_repo.list_with_filters(
             start_date=start_date,
@@ -91,12 +109,28 @@ class AssignmentService:
         """
         Create a new assignment with ACGME validation and freeze horizon check.
 
-        Returns dict with:
-        - assignment: The created assignment
-        - acgme_warnings: List of ACGME compliance warnings
-        - is_compliant: Whether the assignment is ACGME compliant
-        - freeze_status: Freeze horizon check result
-        - error: Error message if creation failed
+        Validates against ACGME compliance rules and checks if the block falls
+        within the freeze horizon. If frozen, an override must be provided.
+
+        Args:
+            block_id: The UUID of the block to assign.
+            person_id: The UUID of the person being assigned.
+            role: The role for this assignment (e.g., 'resident', 'faculty').
+            created_by: Identifier of the user creating the assignment.
+            override_reason: Optional reason for overriding ACGME warnings.
+            rotation_template_id: Optional UUID of the rotation template.
+            activity_type: Optional activity type for the assignment.
+            notes: Optional notes to attach to the assignment.
+            freeze_override_reason_code: Override reason code if block is frozen.
+            freeze_override_reason_text: Override explanation if block is frozen.
+            initiating_module: The module initiating this action (default: 'manual').
+
+        Returns:
+            A dict with 'assignment', 'acgme_warnings', 'is_compliant',
+            'freeze_status', and 'error' keys.
+
+        Raises:
+            FreezeHorizonViolation: If frozen and no valid override (caught internally).
         """
         # Get block to check freeze horizon
         block = self.block_repo.get_by_id(block_id)
@@ -211,12 +245,25 @@ class AssignmentService:
         """
         Update an assignment with optimistic locking and freeze horizon check.
 
-        Returns dict with:
-        - assignment: The updated assignment
-        - acgme_warnings: List of ACGME compliance warnings
-        - is_compliant: Whether the assignment is ACGME compliant
-        - freeze_status: Freeze horizon check result
-        - error: Error message if update failed
+        Uses optimistic locking via expected_updated_at to prevent concurrent
+        modification conflicts. Validates against freeze horizon and ACGME rules.
+
+        Args:
+            assignment_id: The UUID of the assignment to update.
+            update_data: Dict of fields to update on the assignment.
+            expected_updated_at: Expected timestamp for optimistic locking.
+            override_reason: Optional reason for overriding ACGME warnings.
+            freeze_override_reason_code: Override reason code if block is frozen.
+            freeze_override_reason_text: Override explanation if block is frozen.
+            updated_by: Identifier of the user performing the update.
+            initiating_module: The module initiating this action (default: 'manual').
+
+        Returns:
+            A dict with 'assignment', 'acgme_warnings', 'is_compliant',
+            'freeze_status', and 'error' keys.
+
+        Raises:
+            FreezeHorizonViolation: If frozen and no valid override (caught internally).
         """
         assignment = self.assignment_repo.get_by_id(assignment_id)
         if not assignment:
@@ -310,7 +357,25 @@ class AssignmentService:
         deleted_by: str = "unknown",
         initiating_module: str = "manual",
     ) -> dict:
-        """Delete an assignment with freeze horizon check."""
+        """
+        Delete an assignment with freeze horizon check.
+
+        Verifies the assignment exists and checks if the associated block falls
+        within the freeze horizon before deletion.
+
+        Args:
+            assignment_id: The UUID of the assignment to delete.
+            freeze_override_reason_code: Override reason code if block is frozen.
+            freeze_override_reason_text: Override explanation if block is frozen.
+            deleted_by: Identifier of the user performing the deletion.
+            initiating_module: The module initiating this action (default: 'manual').
+
+        Returns:
+            A dict with 'success', 'error', and 'freeze_status' keys.
+
+        Raises:
+            FreezeHorizonViolation: If frozen and no valid override (caught internally).
+        """
         assignment = self.assignment_repo.get_by_id(assignment_id)
         if not assignment:
             return {
@@ -380,8 +445,22 @@ class AssignmentService:
         """
         Delete all assignments in a date range with freeze horizon check.
 
-        For bulk operations, we check if ANY assignments fall within the freeze horizon.
-        If so, ALL deletions require override (or we reject the entire operation).
+        For bulk operations, checks if ANY assignments fall within the freeze horizon.
+        If so, ALL deletions require override or the entire operation is rejected.
+
+        Args:
+            start_date: The start of the date range (inclusive).
+            end_date: The end of the date range (inclusive).
+            freeze_override_reason_code: Override reason code if any block is frozen.
+            freeze_override_reason_text: Override explanation if any block is frozen.
+            deleted_by: Identifier of the user performing the deletion.
+            initiating_module: The module initiating this action (default: 'planning').
+
+        Returns:
+            A dict with 'deleted' (count), 'error', and 'freeze_status' keys.
+
+        Raises:
+            FreezeHorizonViolation: If frozen and no valid override (caught internally).
         """
         block_ids = self.block_repo.get_ids_in_date_range(start_date, end_date)
 

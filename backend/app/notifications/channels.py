@@ -1,4 +1,53 @@
-"""Notification delivery channels."""
+"""
+Notification Delivery Channels.
+
+This module defines the channel abstraction and concrete implementations for
+delivering notifications through various mechanisms:
+
+- InAppChannel: Stores notifications in the database for display in the application UI
+- EmailChannel: Prepares email payloads for SMTP delivery (actual sending via Celery)
+- WebhookChannel: Sends JSON payloads to external HTTP endpoints
+
+Channel Architecture
+--------------------
+All channels inherit from the abstract NotificationChannel base class and must
+implement the ``deliver()`` method. Channels receive a NotificationPayload containing
+the rendered notification content and return a DeliveryResult indicating success/failure.
+
+The channel registry (AVAILABLE_CHANNELS) maps channel names to their implementations,
+allowing dynamic channel selection at runtime.
+
+Thread Safety
+-------------
+Channel instances are stateless and can be safely shared across threads. The
+EmailChannel and WebhookChannel store configuration but delegate actual delivery
+to Celery tasks for async processing.
+
+Example Usage
+-------------
+::
+
+    from app.notifications.channels import get_channel, NotificationPayload
+
+    # Get a channel by name
+    email_channel = get_channel("email", from_address="scheduler@hospital.mil")
+
+    # Create payload
+    payload = NotificationPayload(
+        recipient_id=user_uuid,
+        notification_type="schedule_published",
+        subject="New Schedule Available",
+        body="Your schedule for January has been published.",
+        priority="high",
+    )
+
+    # Deliver notification
+    result = await email_channel.deliver(payload)
+    if result.success:
+        print(f"Email queued: {result.metadata}")
+    else:
+        print(f"Failed: {result.message}")
+"""
 
 import uuid
 from abc import ABC, abstractmethod

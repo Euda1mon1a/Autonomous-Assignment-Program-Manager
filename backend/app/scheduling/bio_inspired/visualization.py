@@ -1,15 +1,186 @@
 """
 Fitness Landscape Visualization for Bio-Inspired Optimization.
 
-This module provides visualization tools for understanding evolutionary dynamics:
+This module provides visualization tools for understanding how evolutionary
+algorithms search the solution space. All outputs are JSON, designed for
+rendering by the holographic hub 3D visualization system.
 
-1. Fitness Landscape: Surface showing fitness across solution space
-2. Evolution Trajectory: Path through fitness landscape over generations
-3. Pareto Front: Multi-objective trade-off visualization
-4. Population Diversity: Genetic diversity over time
-5. Convergence Analysis: How quickly algorithm converges
+Visualization Types
+-------------------
 
-All visualizations are exported as JSON for rendering by holographic hub.
+**Fitness Landscape**
+    A 3D surface showing how fitness varies across the solution space.
+    Uses PCA to project high-dimensional chromosomes to 2D coordinates,
+    then interpolates fitness values to create a continuous surface.
+
+    Reveals:
+    - Local optima (peaks)
+    - Global optima (highest peak)
+    - Basins of attraction
+    - Landscape ruggedness (difficulty)
+
+**Evolution Trajectory**
+    Animated path showing how populations move through the landscape
+    over generations. Each frame captures:
+    - Individual positions (2D projected)
+    - Best fitness
+    - Population diversity
+    - Pareto front (if multi-objective)
+
+**Pareto Front Visualization**
+    2D/3D scatter plot of Pareto-optimal solutions showing trade-offs
+    between objectives. Includes:
+    - Objective values for each solution
+    - Hypervolume indicator
+    - Extreme solutions
+
+**Convergence Analysis**
+    Time-series plots showing:
+    - Best fitness over generations
+    - Mean fitness over generations
+    - Population diversity decay
+    - Pareto front size evolution
+
+Usage Examples
+--------------
+
+Track evolution during optimization:
+
+.. code-block:: python
+
+    from app.scheduling.bio_inspired.visualization import EvolutionTracker
+
+    # Create tracker (sample every 5 generations)
+    tracker = EvolutionTracker(sample_rate=5)
+
+    # During evolution loop
+    for gen in range(max_generations):
+        # ... evolution code ...
+        tracker.record_generation(gen, population, pareto_front)
+
+    # Get animation data for holographic hub
+    animation_data = tracker.get_animation_data()
+
+    # Get fitness trajectory
+    trajectory = tracker.get_fitness_trajectory()
+
+Generate fitness landscape after optimization:
+
+.. code-block:: python
+
+    from app.scheduling.bio_inspired.visualization import FitnessLandscapeVisualizer
+
+    visualizer = FitnessLandscapeVisualizer(
+        resolution=50,      # Grid resolution
+        n_samples=500,      # Population samples to include
+    )
+
+    # Generate from population history
+    landscape = visualizer.generate_landscape(
+        population_history,
+        n_residents=20,
+        n_blocks=200,
+    )
+
+    # Landscape includes:
+    # - surface: x, y, z grid data
+    # - points: individual locations with fitness
+    # - peaks: local maxima
+    # - statistics: ruggedness, modality
+
+Visualize Pareto front:
+
+.. code-block:: python
+
+    pareto_viz = visualizer.generate_pareto_visualization(
+        pareto_front,
+        objectives=["coverage", "fairness", "acgme_compliance"],
+    )
+
+    # Includes hypervolume and extreme solutions
+
+Generate convergence plot:
+
+.. code-block:: python
+
+    convergence = visualizer.generate_convergence_plot(evolution_history)
+
+    # Returns series for:
+    # - best_fitness
+    # - mean_fitness
+    # - diversity
+    # - pareto_size
+
+Data Formats
+------------
+
+All visualizations output JSON-serializable dictionaries:
+
+**Fitness Landscape**:
+
+.. code-block:: json
+
+    {
+        "type": "fitness_landscape",
+        "surface": {
+            "x": [0.0, 0.1, ...],
+            "y": [0.0, 0.1, ...],
+            "z": [[0.5, 0.6, ...], ...]
+        },
+        "points": [
+            {"x": 0.2, "y": 0.3, "fitness": 0.85, "generation": 50}
+        ],
+        "peaks": [
+            {"x": 0.5, "y": 0.5, "fitness": 0.95}
+        ],
+        "statistics": {
+            "ruggedness": 0.15,
+            "modality": 3
+        }
+    }
+
+**Animation Frame**:
+
+.. code-block:: json
+
+    {
+        "generation": 50,
+        "points": [
+            {"x": 0.2, "y": 0.3, "fitness": 0.85, "id": 42}
+        ],
+        "best_fitness": 0.92,
+        "mean_fitness": 0.75,
+        "diversity": 0.35,
+        "pareto_front": [...]
+    }
+
+PCA Projection
+--------------
+
+High-dimensional chromosomes are projected to 2D using PCA:
+
+1. Flatten each chromosome to a 1D vector
+2. Collect samples from the population
+3. Compute principal components via SVD
+4. Project to first 2 components
+
+This preserves as much variance as possible in 2D, making similar
+chromosomes appear near each other.
+
+The PCA basis is updated periodically as new samples are collected,
+adapting to the regions the algorithm explores.
+
+Performance Notes
+-----------------
+
+- PCA update: O(n_samples * n_features) - runs occasionally
+- Landscape interpolation: O(resolution^2 * n_points) - can be slow
+- Animation export: O(n_generations * population_size)
+
+For large populations or many generations, consider:
+- Increasing sample_rate (sample fewer generations)
+- Reducing resolution (coarser landscape grid)
+- Limiting n_samples (fewer points in landscape)
 """
 
 import logging

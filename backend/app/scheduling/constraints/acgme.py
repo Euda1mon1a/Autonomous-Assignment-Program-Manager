@@ -72,7 +72,22 @@ class AvailabilityConstraint(HardConstraint):
         Add availability constraint to OR-Tools CP-SAT model.
 
         For each (resident, block) pair where resident is unavailable,
-        adds constraint: x[r_i, b_i] == 0
+        adds constraint: x[r_i, b_i] == 0, preventing assignment during
+        absences (vacation, deployment, TDY, medical leave, etc.).
+
+        Args:
+            model: OR-Tools CP-SAT model instance (cp_model.CpModel)
+            variables: Dictionary containing decision variables with key:
+                - "assignments": Dict[(person_idx, block_idx), BoolVar]
+            context: SchedulingContext with availability matrix mapping
+                {person_id: {block_id: {"available": bool, "replacement": str}}}
+
+        Returns:
+            None. Modifies model in-place by adding constraints.
+
+        Note:
+            This is a HARD constraint (ACGME compliance). Assignments during
+            blocking absences are absolutely forbidden and cannot be overridden.
         """
         x = variables.get("assignments", {})
 
@@ -88,7 +103,21 @@ class AvailabilityConstraint(HardConstraint):
                                 model.Add(x[r_i, b_i] == 0)
 
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
-        """Add availability constraint to PuLP model."""
+        """
+        Add availability constraint to PuLP model.
+
+        For each (resident, block) pair where resident is unavailable,
+        adds constraint: x[r_i, b_i] == 0.
+
+        Args:
+            model: PuLP LpProblem instance
+            variables: Dictionary containing decision variables with key:
+                - "assignments": Dict[(person_idx, block_idx), LpVariable]
+            context: SchedulingContext with availability matrix
+
+        Returns:
+            None. Modifies model in-place.
+        """
         x = variables.get("assignments", {})
 
         for resident in context.residents:
@@ -105,7 +134,22 @@ class AvailabilityConstraint(HardConstraint):
     def validate(
         self, assignments: list, context: SchedulingContext
     ) -> ConstraintResult:
-        """Validate that no assignments occur during absences."""
+        """
+        Validate that no assignments occur during absences.
+
+        Checks each assignment against the availability matrix to ensure
+        no resident or faculty is assigned to work during a blocking absence.
+
+        Args:
+            assignments: List of assignment objects with person_id and block_id
+            context: SchedulingContext with availability matrix and person lookups
+
+        Returns:
+            ConstraintResult with:
+                - satisfied: True if no assignments during absences
+                - violations: List of ConstraintViolation for each conflict
+                - penalty: 0.0 (hard constraint, violations are binary)
+        """
         violations = []
 
         for assignment in assignments:
@@ -224,6 +268,23 @@ class EightyHourRuleConstraint(HardConstraint):
 
         For each possible 28-day window and each resident, adds constraint
         that the sum of assigned blocks <= max_blocks_per_window (53).
+
+        Args:
+            model: OR-Tools CP-SAT model instance (cp_model.CpModel)
+            variables: Dictionary containing decision variables with key:
+                - "assignments": Dict[(person_idx, block_idx), BoolVar]
+            context: SchedulingContext with blocks, residents, and date mappings
+
+        Returns:
+            None. Modifies model in-place by adding constraints.
+
+        ACGME Rule:
+            Section VI.F.1: "Duty hours are limited to 80 hours per week,
+            averaged over a four-week period."
+
+        Note:
+            Uses block counting (max 53 blocks per 28-day window) as proxy for
+            hours since each half-day block equals 6 duty hours.
         """
         x = variables.get("assignments", {})
         dates = sorted(context.blocks_by_date.keys())
@@ -255,7 +316,25 @@ class EightyHourRuleConstraint(HardConstraint):
                     model.Add(sum(window_vars) <= self.max_blocks_per_window)
 
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
-        """Enforce 80-hour rule via block count limits in PuLP model."""
+        """
+        Enforce 80-hour rule via block count limits in PuLP model.
+
+        For each possible 28-day window and each resident, adds constraint
+        that the sum of assigned blocks <= max_blocks_per_window (53).
+
+        Args:
+            model: PuLP LpProblem instance
+            variables: Dictionary containing decision variables with key:
+                - "assignments": Dict[(person_idx, block_idx), LpVariable]
+            context: SchedulingContext with blocks, residents, and date mappings
+
+        Returns:
+            None. Modifies model in-place by adding constraints.
+
+        ACGME Rule:
+            Section VI.F.1: "Duty hours are limited to 80 hours per week,
+            averaged over a four-week period."
+        """
         import pulp
 
         x = variables.get("assignments", {})
@@ -297,6 +376,21 @@ class EightyHourRuleConstraint(HardConstraint):
 
         Validates that no resident exceeds 80 hours/week when averaged
         over any 28-day consecutive period.
+
+        Args:
+            assignments: List of assignment objects with person_id and block_id
+            context: SchedulingContext with blocks, residents, and date mappings
+
+        Returns:
+            ConstraintResult with:
+                - satisfied: True if all residents comply with 80-hour rule
+                - violations: List of ConstraintViolation for each violation,
+                  with details including window dates and calculated hours
+                - penalty: 0.0 (hard constraint)
+
+        ACGME Rule:
+            Section VI.F.1: "Duty hours are limited to 80 hours per week,
+            averaged over a four-week period."
         """
         violations = []
 
@@ -381,7 +475,29 @@ class OneInSevenRuleConstraint(HardConstraint):
         )
 
     def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
-        """Enforce max consecutive days in CP-SAT model."""
+        """
+        Enforce max consecutive days in CP-SAT model.
+
+        For each possible 7-day window and each resident, ensures at least
+        one day off by limiting worked days to 6 maximum.
+
+        Args:
+            model: OR-Tools CP-SAT model instance (cp_model.CpModel)
+            variables: Dictionary containing decision variables with key:
+                - "assignments": Dict[(person_idx, block_idx), BoolVar]
+            context: SchedulingContext with blocks, residents, and date mappings
+
+        Returns:
+            None. Modifies model in-place by adding constraints.
+
+        ACGME Rule:
+            Section VI.F.3: "Residents must have one day in seven free from
+            all educational and clinical responsibilities."
+
+        Note:
+            Creates indicator variables for each day (day_worked) using
+            AddMaxEquality to detect if any block on that day is assigned.
+        """
         x = variables.get("assignments", {})
         dates = sorted(context.blocks_by_date.keys())
 
@@ -425,7 +541,29 @@ class OneInSevenRuleConstraint(HardConstraint):
                     model.Add(sum(day_worked_vars) <= self.MAX_CONSECUTIVE_DAYS)
 
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
-        """Enforce max consecutive days in PuLP model (linear approximation)."""
+        """
+        Enforce max consecutive days in PuLP model (linear approximation).
+
+        Uses a linear approximation: sum of all blocks in 7 days <= 12
+        (6 days * 2 blocks per day), which ensures at least one day off.
+
+        Args:
+            model: PuLP LpProblem instance
+            variables: Dictionary containing decision variables with key:
+                - "assignments": Dict[(person_idx, block_idx), LpVariable]
+            context: SchedulingContext with blocks, residents, and date mappings
+
+        Returns:
+            None. Modifies model in-place by adding constraints.
+
+        ACGME Rule:
+            Section VI.F.3: "Residents must have one day in seven free from
+            all educational and clinical responsibilities."
+
+        Note:
+            PuLP lacks CP-SAT's AddMaxEquality, so uses block count as proxy.
+            This is a relaxation but catches most violations.
+        """
         import pulp
 
         x = variables.get("assignments", {})
@@ -467,7 +605,27 @@ class OneInSevenRuleConstraint(HardConstraint):
     def validate(
         self, assignments: list, context: SchedulingContext
     ) -> ConstraintResult:
-        """Check for consecutive days violations."""
+        """
+        Check for consecutive days violations.
+
+        Identifies residents who have worked more than 6 consecutive days
+        without a day off.
+
+        Args:
+            assignments: List of assignment objects with person_id and block_id
+            context: SchedulingContext with blocks and residents
+
+        Returns:
+            ConstraintResult with:
+                - satisfied: True if all residents have at least 1 day off per 7
+                - violations: List of ConstraintViolation for each violation,
+                  with details including consecutive day count
+                - penalty: 0.0 (hard constraint)
+
+        ACGME Rule:
+            Section VI.F.3: "Residents must have one day in seven free from
+            all educational and clinical responsibilities."
+        """
         violations = []
 
         # Group by resident
@@ -567,17 +725,68 @@ class SupervisionRatioConstraint(HardConstraint):
         return (supervision_units + 3) // 4 if supervision_units > 0 else 0
 
     def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
-        """Supervision ratio is typically handled post-hoc for residents."""
+        """
+        Add supervision ratio constraints to CP-SAT model.
+
+        Supervision ratio enforcement is typically handled post-hoc for
+        residents since faculty assignments are made separately.
+
+        Args:
+            model: OR-Tools CP-SAT model instance (cp_model.CpModel)
+            variables: Dictionary containing decision variables
+            context: SchedulingContext with residents and faculty
+
+        Returns:
+            None. No constraints added (validation-only constraint).
+
+        ACGME Rule:
+            Section VI.B: "The program must demonstrate that the appropriate
+            level of supervision is in place for all residents."
+        """
         pass
 
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
-        """Supervision ratio is typically handled post-hoc for residents."""
+        """
+        Add supervision ratio constraints to PuLP model.
+
+        Supervision ratio enforcement is typically handled post-hoc for
+        residents since faculty assignments are made separately.
+
+        Args:
+            model: PuLP LpProblem instance
+            variables: Dictionary containing decision variables
+            context: SchedulingContext with residents and faculty
+
+        Returns:
+            None. No constraints added (validation-only constraint).
+        """
         pass
 
     def validate(
         self, assignments: list, context: SchedulingContext
     ) -> ConstraintResult:
-        """Check supervision ratios per block."""
+        """
+        Check supervision ratios per block.
+
+        Validates that each block has adequate faculty coverage based on
+        resident PGY levels and ACGME supervision requirements.
+
+        Args:
+            assignments: List of assignment objects with person_id and block_id
+            context: SchedulingContext with residents, faculty, and PGY levels
+
+        Returns:
+            ConstraintResult with:
+                - satisfied: True if all blocks have adequate supervision
+                - violations: List of ConstraintViolation for under-staffed blocks
+                - penalty: 0.0 (hard constraint)
+
+        ACGME Rule:
+            Section VI.B: "The program must demonstrate that the appropriate
+            level of supervision is in place for all residents."
+            - PGY-1: 1 faculty per 2 residents
+            - PGY-2/3: 1 faculty per 4 residents
+        """
         violations = []
 
         # Create person type lookup

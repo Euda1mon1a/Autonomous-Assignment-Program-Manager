@@ -74,7 +74,24 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
         Add SM alignment constraints to CP-SAT model.
 
         For each SM clinic block where a resident is assigned,
-        ensures SM faculty is also assigned.
+        ensures SM faculty is also assigned using implication constraints.
+
+        Args:
+            model: OR-Tools CP-SAT model instance (cp_model.CpModel)
+            variables: Dictionary containing decision variables with key:
+                - "template_assignments": Dict[(person_idx, block_idx, template_idx), BoolVar]
+            context: SchedulingContext with residents, faculty, templates, and blocks
+
+        Returns:
+            None. Modifies model in-place by adding constraints.
+
+        Implementation:
+            Uses indicator variables and AddImplication to enforce:
+            any_resident_assigned => any_faculty_assigned
+
+        Note:
+            If no SM faculty or templates found, constraint is skipped silently.
+            When SM faculty is on FMIT, SM clinic is cancelled (not a violation).
         """
         template_vars = variables.get("template_assignments", {})
         if not template_vars:
@@ -148,7 +165,29 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
         variables: dict[str, Any],
         context: SchedulingContext,
     ) -> None:
-        """Add SM alignment constraints to PuLP model."""
+        """
+        Add SM alignment constraints to PuLP model.
+
+        Uses linear approximation to ensure faculty presence when residents
+        are assigned to SM clinic blocks.
+
+        Args:
+            model: PuLP LpProblem instance
+            variables: Dictionary containing decision variables with key:
+                - "template_assignments": Dict[(person_idx, block_idx, template_idx), LpVariable]
+            context: SchedulingContext with residents, faculty, templates, and blocks
+
+        Returns:
+            None. Modifies model in-place by adding constraints.
+
+        Implementation:
+            Uses linear inequality: sum(faculty) >= (1/N) * sum(residents)
+            where N is maximum possible residents. This ensures at least one
+            faculty is assigned if any resident is assigned.
+
+        Note:
+            PuLP lacks CP-SAT's implication constraints, so uses linear approximation.
+        """
         import pulp
 
         template_vars = variables.get("template_assignments", {})
@@ -218,6 +257,21 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
 
         Checks that whenever an SM resident is assigned to SM clinic,
         SM faculty is also assigned to the same block.
+
+        Args:
+            assignments: List of assignment objects with person_id, block_id,
+                and rotation_template_id attributes
+            context: SchedulingContext with residents, faculty, templates, and blocks
+
+        Returns:
+            ConstraintResult with:
+                - satisfied: True if all SM resident assignments have faculty coverage
+                - violations: List of ConstraintViolation for each uncovered assignment
+                - penalty: 0.0 (hard constraint)
+
+        Note:
+            When SM faculty is on FMIT, SM clinic should be cancelled entirely,
+            so no violations should occur in that case.
         """
         violations: list[ConstraintViolation] = []
 
@@ -284,7 +338,18 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
         )
 
     def _get_sm_template_ids(self, context: SchedulingContext) -> set[Any]:
-        """Get IDs of Sports Medicine clinic templates."""
+        """
+        Get IDs of Sports Medicine clinic templates.
+
+        Identifies SM templates by checking requires_specialty field or
+        template name containing "Sports Medicine" or "SM".
+
+        Args:
+            context: SchedulingContext with templates list
+
+        Returns:
+            set: Template IDs that are Sports Medicine clinics
+        """
         sm_templates: set[Any] = set()
         for t in context.templates:
             # Check requires_specialty field
@@ -301,7 +366,18 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
         return sm_templates
 
     def _get_sm_faculty(self, context: SchedulingContext) -> list[Any]:
-        """Get Sports Medicine faculty members."""
+        """
+        Get Sports Medicine faculty members.
+
+        Identifies SM faculty by checking is_sports_medicine flag,
+        faculty_role == "sports_med", or "Sports Medicine" in specialties.
+
+        Args:
+            context: SchedulingContext with faculty list
+
+        Returns:
+            list: Faculty members who are Sports Medicine specialists
+        """
         sm_faculty: list[Any] = []
         for f in context.faculty:
             if (
