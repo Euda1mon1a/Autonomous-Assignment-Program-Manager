@@ -136,7 +136,8 @@ COORD_OPS needs access to these files to coordinate effectively:
 **Agent Specifications (for spawning):**
 - `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Agents/RELEASE_MANAGER.md` - Understand git/PR capabilities
 - `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Agents/META_UPDATER.md` - Understand documentation capabilities
-- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Agents/TOOLSMITH.md` - Understand creation capabilities
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Agents/KNOWLEDGE_CURATOR.md` - Understand knowledge synthesis capabilities
+- `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Agents/CI_LIAISON.md` - Understand CI/CD operations capabilities
 
 **Project Context:**
 - `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/CLAUDE.md` - Project guidelines and conventions
@@ -208,7 +209,8 @@ COORD_OPS returns results in this structure:
 ### Agent Contributions
 - RELEASE_MANAGER: [tasks] ([duration])
 - META_UPDATER: [tasks] ([duration])
-- TOOLSMITH: [tasks] ([duration])
+- KNOWLEDGE_CURATOR: [tasks] ([duration])
+- CI_LIAISON: [tasks] ([duration])
 
 ### Issues (if any)
 - [Issue description and resolution/escalation status]
@@ -582,13 +584,13 @@ async def coordinate_commit_pr_pipeline(context):
 ```
 ORCHESTRATOR -> OPS:AUDIT -> COORD_OPS
                               |
-                   +----------+----------+
-                   |          |          |
-                   v          v          v
-            RELEASE_MANAGER  META_UPDATER  TOOLSMITH
-            (git health)     (docs audit)  (skill audit)
-                   |          |          |
-                   +----------+----------+
+              +-------+-------+-------+
+              |       |       |       |
+              v       v       v       v
+     RELEASE_MGR  META_UPD  KNOW_CUR  CI_LIAISON
+     (git health) (docs)   (patterns) (pipelines)
+              |       |       |       |
+              +-------+-------+-------+
                               |
                               v
                      COORD_OPS:SYNTHESIZE
@@ -600,13 +602,14 @@ ORCHESTRATOR -> OPS:AUDIT -> COORD_OPS
 **Implementation:**
 ```python
 async def coordinate_full_audit(context):
-    """Parallel: All three agents audit independently"""
+    """Parallel: All four agents audit independently"""
 
     # Fan-out to all agents
     tasks = [
         spawn_agent("RELEASE_MANAGER", task="audit_git_health"),
         spawn_agent("META_UPDATER", task="audit_documentation"),
-        spawn_agent("TOOLSMITH", task="audit_skills"),
+        spawn_agent("KNOWLEDGE_CURATOR", task="audit_patterns"),
+        spawn_agent("CI_LIAISON", task="audit_pipelines"),
     ]
 
     # Wait for all (with timeout)
@@ -767,10 +770,15 @@ TIMEOUTS = {
         "doc_update": 120,
         "full_audit": 600, # 10 minutes
     },
-    "TOOLSMITH": {
-        "skill": 120,
-        "agent": 180,
-        "tool": 300,
+    "KNOWLEDGE_CURATOR": {
+        "handoff": 120,    # 2 minutes
+        "patterns": 180,   # 3 minutes
+        "synthesis": 300,  # 5 minutes
+    },
+    "CI_LIAISON": {
+        "diagnose": 120,   # 2 minutes
+        "validate": 180,   # 3 minutes
+        "deploy": 600,     # 10 minutes (with approval)
     },
 }
 
@@ -934,30 +942,33 @@ OUTPUT: Release tag and artifacts ready
 8. Emit COORD_OPS:COMPLETE with release details
 ```
 
-### Workflow 3: New Skill Creation
+### Workflow 3: Session Handoff Documentation
 
 ```
-INPUT: Skill request with requirements
-OUTPUT: Skill ready for use
+INPUT: Session ending with significant decisions/patterns
+OUTPUT: Complete handoff documentation
 
-1. Receive OPS:SKILL signal with skill name and purpose
-2. Spawn TOOLSMITH:
-   - Check for existing similar skills
-   - Create skill directory structure
-   - Write SKILL.md with YAML frontmatter
-   - Validate slash command registration
+1. Receive OPS:HANDOFF signal with session context
+2. Spawn KNOWLEDGE_CURATOR:
+   - Extract patterns from session
+   - Document decisions made
+   - Update PATTERNS.md and DECISIONS.md
+   - Create session handoff file
 3. Spawn META_UPDATER:
-   - Add skill to CLAUDE.md inventory (if significant)
-   - Document usage patterns
+   - Update cross-references in CLAUDE.md
+   - Verify documentation links
 4. Spawn RELEASE_MANAGER:
-   - Commit new skill
-   - Create PR for review
+   - Commit handoff documentation
+   - Create PR if significant changes
 5. Synthesize:
-   - Skill path
-   - Slash command name
-   - PR URL
+   - Patterns discovered
+   - Decisions documented
+   - Session handoff path
 6. Emit COORD_OPS:COMPLETE
 ```
+
+**Note:** For skill creation requests, route to COORD_TOOLING:
+`ORCHESTRATOR -> TOOL:SKILL -> COORD_TOOLING -> TOOLSMITH -> TOOL_QA -> TOOL_REVIEWER`
 
 ### Workflow 4: Full Operations Audit
 
@@ -966,7 +977,7 @@ INPUT: Audit request
 OUTPUT: Comprehensive operations health report
 
 1. Receive OPS:AUDIT signal
-2. Spawn all three agents in PARALLEL:
+2. Spawn all four agents in PARALLEL:
    RELEASE_MANAGER:
      - Git history health (stale branches, orphaned PRs)
      - Commit message compliance
@@ -975,10 +986,14 @@ OUTPUT: Comprehensive operations health report
      - Documentation freshness
      - Link validity
      - Consistency check
-   TOOLSMITH:
-     - Skill inventory validation
-     - Template freshness
-     - Agent spec completeness
+   KNOWLEDGE_CURATOR:
+     - Pattern documentation completeness
+     - Cross-session synthesis gaps
+     - ADR currency and coverage
+   CI_LIAISON:
+     - Pipeline health metrics
+     - Build success rates
+     - Workflow configuration validation
 3. Wait for all (with timeouts)
 4. Check quality gate (80% success)
 5. Synthesize results:
@@ -1088,13 +1103,14 @@ Awaiting human PR approval.
 **Agent Specifications:**
 - `.claude/Agents/RELEASE_MANAGER.md`
 - `.claude/Agents/META_UPDATER.md`
-- `.claude/Agents/TOOLSMITH.md`
+- `.claude/Agents/KNOWLEDGE_CURATOR.md`
+- `.claude/Agents/CI_LIAISON.md`
 
 **Skills (for delegation context):**
 - `changelog-generator`
 - `pre-pr-checklist`
-- `skill-factory`
-- `agent-factory`
+- `session-end`
+- `code-quality-monitor`
 
 ### Coordination Tools
 
@@ -1115,7 +1131,7 @@ As the Operations domain XO, COORD_OPS is responsible for self-evaluation and re
 |------|-----------|---------|
 | Self-evaluation | COORD_AAR | Operations domain performance, bottlenecks, cycle times |
 | Delegation metrics | COORD_AAR | Tasks delegated to agents, completion rates, failures |
-| Agent effectiveness | G1_PERSONNEL | Underperforming/overperforming agents (RELEASE_MANAGER, META_UPDATER, TOOLSMITH) |
+| Agent effectiveness | G1_PERSONNEL | Underperforming/overperforming agents (RELEASE_MANAGER, META_UPDATER, KNOWLEDGE_CURATOR, CI_LIAISON) |
 | Resource gaps | G1_PERSONNEL | Missing capabilities (CI/CD, Docker, deployment knowledge) |
 
 ### Self-Evaluation Questions
@@ -1132,10 +1148,10 @@ At session end, assess operations domain performance:
    - Were documentation updates comprehensive or superficial?
    - Any outdated references or broken links discovered?
 
-3. **Tooling & Infrastructure**
-   - Did TOOLSMITH successfully create skills or agents when needed?
-   - Were YAML validations catching issues early?
-   - Any tool/skill creation bottlenecks?
+3. **Knowledge & CI/CD**
+   - Did KNOWLEDGE_CURATOR capture patterns and decisions effectively?
+   - Did CI_LIAISON maintain pipeline health and diagnose failures quickly?
+   - Were session handoffs comprehensive for next session context?
 
 4. **Coordination Efficiency**
    - Did agents work in parallel effectively or serialize unnecessarily?
@@ -1167,7 +1183,8 @@ At session end, assess operations domain performance:
 |-------|-------|----------|---------|--------|
 | RELEASE_MANAGER | [N] | [Xm] | ★★★☆☆ | [Brief note] |
 | META_UPDATER | [N] | [Xm] | ★★★★☆ | [Brief note] |
-| TOOLSMITH | [N] | [Xm] | ★★★☆☆ | [Brief note] |
+| KNOWLEDGE_CURATOR | [N] | [Xm] | ★★★☆☆ | [Brief note] |
+| CI_LIAISON | [N] | [Xm] | ★★★☆☆ | [Brief note] |
 
 ### Operations Health
 
