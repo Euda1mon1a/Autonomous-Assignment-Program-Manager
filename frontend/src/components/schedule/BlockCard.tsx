@@ -107,7 +107,8 @@ export const BlockCard: React.FC<BlockCardProps> = ({
       {(isConflict || isWarning) && (
         <div className="absolute -top-2 -right-2">
           <Badge variant={isConflict ? 'destructive' : 'warning'}>
-            {isConflict ? '⚠️' : '⚡'}
+            <span aria-hidden="true">{isConflict ? '⚠️' : '⚡'}</span>
+            <span className="sr-only">{isConflict ? 'Conflict detected' : 'Warning'}</span>
           </Badge>
         </div>
       )}

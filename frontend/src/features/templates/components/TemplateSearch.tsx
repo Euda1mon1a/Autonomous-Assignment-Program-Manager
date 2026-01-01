@@ -77,20 +77,22 @@ export function TemplateSearch({
       {/* Search bar */}
       <div className="flex gap-2">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" aria-hidden="true" />
           <input
             type="text"
             value={localQuery}
             onChange={(e) => setLocalQuery(e.target.value)}
             placeholder="Search templates..."
             className="w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            aria-label="Search templates"
           />
           {localQuery && (
             <button
               onClick={handleClearSearch}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded"
+              aria-label="Clear search"
             >
-              <X className="w-4 h-4 text-gray-400" />
+              <X className="w-4 h-4 text-gray-400" aria-hidden="true" />
             </button>
           )}
         </div>
@@ -103,8 +105,10 @@ export function TemplateSearch({
                 ? 'bg-blue-50 border-blue-200 text-blue-700'
                 : 'hover:bg-gray-50'
             }`}
+            aria-label="Toggle filters"
+            aria-expanded={showFilters}
           >
-            <SlidersHorizontal className="w-4 h-4" />
+            <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
             <span className="hidden sm:inline">Filters</span>
             {hasActiveFilters && (
               <span className="bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -125,6 +129,7 @@ export function TemplateSearch({
             <button
               onClick={handleClearFilters}
               className="ml-2 text-blue-600 hover:underline"
+              aria-label="Clear all filters"
             >
               Clear filters
             </button>
@@ -210,6 +215,7 @@ export function TemplateSearch({
                 <button
                   onClick={handleSortOrderChange}
                   className="px-3 py-2 border border-l-0 rounded-r-lg hover:bg-gray-100"
+                  aria-label={filters.sortOrder === 'asc' ? 'Sort ascending' : 'Sort descending'}
                   title={filters.sortOrder === 'asc' ? 'Ascending' : 'Descending'}
                 >
                   {filters.sortOrder === 'asc' ? '↑' : '↓'}
@@ -257,8 +263,8 @@ function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }
   return (
     <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
       {label}
-      <button onClick={onRemove} className="p-0.5 hover:bg-blue-200 rounded-full">
-        <X className="w-3 h-3" />
+      <button onClick={onRemove} className="p-0.5 hover:bg-blue-200 rounded-full" aria-label={`Remove ${label} filter`}>
+        <X className="w-3 h-3" aria-hidden="true" />
       </button>
     </span>
   );

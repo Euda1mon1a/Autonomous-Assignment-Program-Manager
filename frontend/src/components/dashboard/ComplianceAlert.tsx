@@ -25,81 +25,86 @@ export function ComplianceAlert() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut', delay: 0.2 }}
       className="glass-panel p-6"
+      role="region"
+      aria-labelledby="compliance-status-heading"
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Compliance Status</h3>
+        <h3 id="compliance-status-heading" className="text-lg font-semibold text-gray-900">Compliance Status</h3>
         {isClean ? (
-          <ShieldCheck className="w-5 h-5 text-green-600" />
+          <ShieldCheck className="w-5 h-5 text-green-600" aria-hidden="true" />
         ) : (
-          <ShieldAlert className="w-5 h-5 text-red-600" />
+          <ShieldAlert className="w-5 h-5 text-red-600" aria-hidden="true" />
         )}
       </div>
 
-      {isLoading ? (
-        <div className="space-y-3">
-          <div className="animate-pulse h-12 bg-gray-200 rounded"></div>
-          <div className="animate-pulse h-4 bg-gray-200 rounded w-1/2"></div>
-        </div>
-      ) : isError ? (
-        <div className="text-center py-4">
-          <AlertTriangle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">Unable to load compliance data</p>
-        </div>
-      ) : hasNoData ? (
-        <EmptyState
-          icon={ShieldOff}
-          title="No compliance data"
-          description="Generate a schedule to view compliance status"
-        />
-      ) : isClean ? (
-        <div className="text-center py-4">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mb-3">
-            <ShieldCheck className="w-6 h-6 text-green-600" />
+      <div aria-live="polite" aria-atomic="true">
+        {isLoading ? (
+          <div className="space-y-3" role="status" aria-label="Loading compliance data">
+            <div className="animate-pulse h-12 bg-gray-200 rounded"></div>
+            <div className="animate-pulse h-4 bg-gray-200 rounded w-1/2"></div>
           </div>
-          <p className="text-green-700 font-medium">All Clear</p>
-          <p className="text-sm text-gray-500 mt-1">
-            No ACGME violations for {format(today, 'MMMM yyyy')}
-          </p>
-        </div>
-      ) : (
-        <div>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-            <div className="flex items-center gap-3">
-              <div className="flex-shrink-0">
-                <ShieldAlert className="w-8 h-8 text-red-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-red-700">{violationCount}</p>
-                <p className="text-sm text-red-600">
-                  Violation{violationCount !== 1 ? 's' : ''} Found
-                </p>
-              </div>
+        ) : isError ? (
+          <div className="text-center py-4" role="alert">
+            <AlertTriangle className="w-8 h-8 text-gray-400 mx-auto mb-2" aria-hidden="true" />
+            <p className="text-sm text-gray-500">Unable to load compliance data</p>
+          </div>
+        ) : hasNoData ? (
+          <EmptyState
+            icon={ShieldOff}
+            title="No compliance data"
+            description="Generate a schedule to view compliance status"
+          />
+        ) : isClean ? (
+          <div className="text-center py-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mb-3">
+              <ShieldCheck className="w-6 h-6 text-green-600" aria-hidden="true" />
             </div>
+            <p className="text-green-700 font-medium">All Clear</p>
+            <p className="text-sm text-gray-500 mt-1">
+              No ACGME violations for {format(today, 'MMMM yyyy')}
+            </p>
           </div>
-
-          {/* Show top violations */}
-          {validation?.violations && validation.violations.length > 0 && (
-            <div className="space-y-2">
-              {validation.violations.slice(0, 2).map((violation, idx) => (
-                <div key={idx} className="flex items-start gap-2 text-sm">
-                  <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-600 line-clamp-1">{violation.message}</span>
+        ) : (
+          <div role="alert">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0">
+                  <ShieldAlert className="w-8 h-8 text-red-600" aria-hidden="true" />
                 </div>
-              ))}
-              {validation.violations.length > 2 && (
-                <p className="text-xs text-gray-500 pl-6">
-                  +{validation.violations.length - 2} more
-                </p>
-              )}
+                <div>
+                  <p className="text-2xl font-bold text-red-700">{violationCount}</p>
+                  <p className="text-sm text-red-600">
+                    Violation{violationCount !== 1 ? 's' : ''} Found
+                  </p>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Show top violations */}
+            {validation?.violations && validation.violations.length > 0 && (
+              <div className="space-y-2">
+                {validation.violations.slice(0, 2).map((violation, idx) => (
+                  <div key={idx} className="flex items-start gap-2 text-sm">
+                    <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                    <span className="text-gray-600 line-clamp-1">{violation.message}</span>
+                  </div>
+                ))}
+                {validation.violations.length > 2 && (
+                  <p className="text-xs text-gray-500 pl-6">
+                    +{validation.violations.length - 2} more
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="mt-4 pt-4 border-t border-gray-200/50">
         <Link
           href="/compliance"
           className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+          aria-label="View detailed compliance report"
         >
           View Compliance Details &rarr;
         </Link>

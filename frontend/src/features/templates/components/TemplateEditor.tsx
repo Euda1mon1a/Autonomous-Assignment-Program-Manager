@@ -123,10 +123,10 @@ export function TemplateEditor({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="bg-white rounded-lg shadow-lg max-h-[90vh] overflow-hidden flex flex-col" role="dialog" aria-labelledby="template-editor-title" aria-modal="true">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
-        <h2 className="text-lg font-semibold">
+        <h2 id="template-editor-title" className="text-lg font-semibold">
           {isEditing ? 'Edit Template' : 'Create Template'}
         </h2>
         <button
@@ -134,7 +134,7 @@ export function TemplateEditor({
           className="p-1 hover:bg-gray-100 rounded"
           aria-label="Close"
         >
-          <X className="w-5 h-5" />
+          <X className="w-5 h-5" aria-hidden="true" />
         </button>
       </div>
 
@@ -343,8 +343,9 @@ export function TemplateEditor({
                 type="button"
                 onClick={handlePreview}
                 className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                aria-label="Preview template"
               >
-                <Eye className="w-4 h-4" />
+                <Eye className="w-4 h-4" aria-hidden="true" />
                 Preview
               </button>
             )}
@@ -354,6 +355,7 @@ export function TemplateEditor({
               type="button"
               onClick={onCancel}
               className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+              aria-label="Cancel"
             >
               Cancel
             </button>
@@ -361,8 +363,9 @@ export function TemplateEditor({
               type="submit"
               disabled={isLoading}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              aria-label={isEditing ? 'Save template changes' : 'Create new template'}
             >
-              <Save className="w-4 h-4" />
+              <Save className="w-4 h-4" aria-hidden="true" />
               {isLoading ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Template'}
             </button>
           </div>

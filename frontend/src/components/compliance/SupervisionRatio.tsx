@@ -67,9 +67,10 @@ export const SupervisionRatio: React.FC<SupervisionRatioProps> = ({
       className={`supervision-ratio border-l-4 rounded-lg p-4 ${status.color} ${className}`}
       role="status"
       aria-live="polite"
+      aria-label={`Supervision ratio compliance: ${status.label}`}
     >
       <div className="flex items-start gap-3">
-        <span className="text-2xl" role="img" aria-label={status.label}>
+        <span className="text-2xl" aria-hidden="true">
           {status.icon}
         </span>
         <div className="flex-1">

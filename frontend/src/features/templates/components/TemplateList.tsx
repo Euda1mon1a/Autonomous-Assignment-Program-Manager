@@ -64,8 +64,9 @@ export function TemplateList({
           <button
             onClick={onRetry}
             className="btn-primary flex items-center gap-2"
+            aria-label="Retry loading templates"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-4 h-4" aria-hidden="true" />
             Retry
           </button>
         )}
@@ -76,7 +77,7 @@ export function TemplateList({
   if (templates.length === 0) {
     return (
       <div className="card flex flex-col items-center justify-center h-64 text-center">
-        <FileText className="w-12 h-12 text-gray-300 mb-4" />
+        <FileText className="w-12 h-12 text-gray-300 mb-4" aria-hidden="true" />
         <h3 className="text-lg font-medium text-gray-900 mb-1">{emptyMessage}</h3>
         <p className="text-gray-500 mb-4">Get started by creating your first template</p>
         {emptyAction && (
@@ -184,6 +185,7 @@ function TemplateListItem({
               onApply(template);
             }}
             className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+            aria-label={`Apply template ${template.name}`}
           >
             Apply
           </button>
@@ -195,6 +197,7 @@ function TemplateListItem({
               onEdit(template);
             }}
             className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
+            aria-label={`Edit template ${template.name}`}
           >
             Edit
           </button>
@@ -206,6 +209,7 @@ function TemplateListItem({
               onDuplicate(template);
             }}
             className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded"
+            aria-label={`Duplicate template ${template.name}`}
           >
             Duplicate
           </button>
@@ -217,6 +221,7 @@ function TemplateListItem({
               onDelete(template);
             }}
             className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded"
+            aria-label={`Delete template ${template.name}`}
           >
             Delete
           </button>
@@ -335,8 +340,9 @@ export function PredefinedTemplateCard({
         onClick={() => onImport(template.templateKey)}
         disabled={isImporting}
         className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded ${colors.text} bg-white hover:bg-gray-50 border disabled:opacity-50`}
+        aria-label={`Import ${template.name} to library`}
       >
-        <Download className="w-4 h-4" />
+        <Download className="w-4 h-4" aria-hidden="true" />
         {isImporting ? 'Importing...' : 'Import to Library'}
       </button>
     </div>

@@ -85,13 +85,13 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   };
 
   return (
-    <div className={`timeline-view bg-white rounded-lg shadow p-4 ${className}`}>
+    <div className={`timeline-view bg-white rounded-lg shadow p-4 ${className}`} role="region" aria-label="Timeline view of assignments">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-lg font-semibold">
           Timeline View ({groupBy === 'person' ? 'By Person' : 'By Rotation'})
         </h3>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-600" aria-live="polite">
           {start.toLocaleDateString()} - {end.toLocaleDateString()}
         </div>
       </div>
@@ -99,12 +99,13 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
       {/* Timeline Grid */}
       <div className="timeline-grid">
         {/* Week markers */}
-        <div className="relative h-8 border-b border-gray-300 mb-4">
+        <div className="relative h-8 border-b border-gray-300 mb-4" role="presentation" aria-label="Timeline date markers">
           {getWeekMarkers().map((marker, idx) => (
             <div
               key={idx}
               className="absolute top-0 h-full border-l border-gray-200"
               style={{ left: `${marker.position}%` }}
+              aria-hidden="true"
             >
               <span className="absolute -top-1 -left-8 text-xs text-gray-500">
                 {marker.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -120,16 +121,16 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
             : groupAssignments[0]?.rotationType;
 
           return (
-            <div key={groupKey} className="timeline-row mb-3">
+            <div key={groupKey} className="timeline-row mb-3" role="row">
               {/* Row label */}
               <div className="flex items-center mb-2">
-                <div className="w-32 font-medium text-sm truncate" title={groupLabel}>
+                <div className="w-32 font-medium text-sm truncate" title={groupLabel} role="rowheader">
                   {groupLabel}
                 </div>
               </div>
 
               {/* Assignment bars */}
-              <div className="relative h-12 bg-gray-50 rounded">
+              <div className="relative h-12 bg-gray-50 rounded" role="presentation">
                 {groupAssignments.map((assignment) => {
                   const position = calculatePosition(assignment.startDate, assignment.endDate);
                   const isHovered = hoveredAssignment === assignment.id;
@@ -147,6 +148,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                       onMouseEnter={() => setHoveredAssignment(assignment.id)}
                       onMouseLeave={() => setHoveredAssignment(null)}
                       aria-label={`${assignment.personName} - ${assignment.rotationType} from ${assignment.startDate} to ${assignment.endDate}`}
+                      aria-describedby={isHovered ? `tooltip-${assignment.id}` : undefined}
                     >
                       <div className="flex items-center justify-center h-full">
                         <RotationBadge
@@ -158,7 +160,11 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
 
                       {/* Tooltip */}
                       {isHovered && (
-                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-20">
+                        <div
+                          id={`tooltip-${assignment.id}`}
+                          role="tooltip"
+                          className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-20"
+                        >
                           {assignment.personName} - {assignment.rotationType}
                           <br />
                           {new Date(assignment.startDate).toLocaleDateString()} -{' '}

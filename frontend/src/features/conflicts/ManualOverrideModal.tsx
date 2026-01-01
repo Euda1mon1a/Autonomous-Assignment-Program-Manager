@@ -350,9 +350,9 @@ export function ManualOverrideModal({
 
             {/* ACGME-specific fields */}
             {isAcgmeRelated && (
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-4">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-4" role="region" aria-label="ACGME compliance requirements">
                 <div className="flex items-center gap-2 text-blue-800">
-                  <Info className="w-5 h-5" />
+                  <Info className="w-5 h-5" aria-hidden="true" />
                   <span className="font-medium">ACGME Compliance Information</span>
                 </div>
 
@@ -384,9 +384,9 @@ export function ManualOverrideModal({
 
             {/* Supervisor approval */}
             {supervisorRequired && (
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg space-y-4">
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg space-y-4" role="alert" aria-live="polite">
                 <div className="flex items-center gap-2 text-amber-800">
-                  <AlertTriangle className="w-5 h-5" />
+                  <AlertTriangle className="w-5 h-5" aria-hidden="true" />
                   <span className="font-medium">Supervisor Approval Required</span>
                 </div>
 
@@ -492,7 +492,7 @@ export function ManualOverrideModal({
             </div>
 
             {createOverride.isError && (
-              <div className="mt-3 p-3 bg-red-100 border border-red-200 rounded-lg text-sm text-red-700">
+              <div className="mt-3 p-3 bg-red-100 border border-red-200 rounded-lg text-sm text-red-700" role="alert" aria-live="assertive">
                 <strong>Error:</strong> {createOverride.error?.message || 'Failed to create override'}
               </div>
             )}

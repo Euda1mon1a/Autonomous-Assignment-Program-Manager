@@ -127,15 +127,16 @@ export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
             </div>
             <button
               onClick={() => refetchConflicts()}
+              aria-label="Refresh conflict list"
               className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200 hover:shadow-md active:scale-95"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-4 h-4" aria-hidden="true" />
               Refresh
             </button>
           </div>
 
           {/* Statistics cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4" role="region" aria-label="Conflict statistics summary" aria-live="polite">
             {/* Unresolved conflicts */}
             <StatCard
               label="Unresolved Conflicts"
@@ -176,7 +177,7 @@ export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
 
         {/* Secondary nav */}
         <div className="px-6 border-t">
-          <nav className="flex gap-4 -mb-px">
+          <nav className="flex gap-4 -mb-px" role="navigation" aria-label="Conflict views">
             <NavTab
               label="All Conflicts"
               icon={Layers}
@@ -352,10 +353,10 @@ function StatCard({ label, value, icon: Icon, color, loading }: StatCardProps) {
   const styles = colorStyles[color];
 
   return (
-    <div className={`p-4 rounded-lg ${styles.bg} transition-all duration-300 hover:shadow-md hover:scale-105 animate-fadeInUp`}>
+    <div className={`p-4 rounded-lg ${styles.bg} transition-all duration-300 hover:shadow-md hover:scale-105 animate-fadeInUp`} role="group" aria-label={`${label}: ${value}`}>
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm text-gray-600 font-medium">{label}</span>
-        <Icon className={`w-5 h-5 ${styles.icon} transition-transform duration-300 hover:scale-110`} />
+        <Icon className={`w-5 h-5 ${styles.icon} transition-transform duration-300 hover:scale-110`} aria-hidden="true" />
       </div>
       {loading ? (
         <div className="space-y-2 animate-pulse">
@@ -384,6 +385,9 @@ function NavTab({ label, icon: Icon, isActive, onClick, badge }: NavTabProps) {
   return (
     <button
       onClick={onClick}
+      role="tab"
+      aria-selected={isActive}
+      aria-label={label}
       className={`
         flex items-center gap-2 py-3 px-1 border-b-2 text-sm font-medium transition-all duration-200
         ${isActive
@@ -392,7 +396,7 @@ function NavTab({ label, icon: Icon, isActive, onClick, badge }: NavTabProps) {
         }
       `}
     >
-      <Icon className={`w-4 h-4 transition-transform duration-200 ${isActive ? 'scale-110' : ''}`} />
+      <Icon className={`w-4 h-4 transition-transform duration-200 ${isActive ? 'scale-110' : ''}`} aria-hidden="true" />
       {label}
       {badge !== undefined && badge > 0 && (
         <span className="px-1.5 py-0.5 text-xs bg-red-100 text-red-700 rounded-full animate-pulse">

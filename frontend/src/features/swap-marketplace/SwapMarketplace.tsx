@@ -126,16 +126,16 @@ export function SwapMarketplace() {
 
           {/* Marketplace Entries */}
           {isLoading && (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+            <div className="flex items-center justify-center py-12" role="status" aria-live="polite">
+              <Loader2 className="w-8 h-8 text-blue-600 animate-spin" aria-hidden="true" />
               <span className="ml-3 text-gray-600">Loading marketplace...</span>
             </div>
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6" role="alert">
               <div className="flex items-start gap-3">
-                <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
                 <div>
                   <h3 className="text-lg font-semibold text-red-900 mb-1">
                     Error Loading Marketplace
@@ -144,6 +144,7 @@ export function SwapMarketplace() {
                   <button
                     onClick={() => refetch()}
                     className="mt-3 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                    aria-label="Retry loading marketplace"
                   >
                     Retry
                   </button>
@@ -155,21 +156,21 @@ export function SwapMarketplace() {
           {!isLoading && !error && marketplaceData && (
             <>
               {/* Stats */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4" role="region" aria-label="Marketplace statistics">
                 <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
-                  <div className="text-xl sm:text-2xl font-bold text-blue-600">
+                  <div className="text-xl sm:text-2xl font-bold text-blue-600" aria-label={`${marketplaceData.total} available swaps`}>
                     {marketplaceData.total}
                   </div>
                   <div className="text-xs sm:text-sm text-blue-800">Available Swaps</div>
                 </div>
                 <div className="bg-green-50 rounded-lg p-3 sm:p-4">
-                  <div className="text-xl sm:text-2xl font-bold text-green-600">
+                  <div className="text-xl sm:text-2xl font-bold text-green-600" aria-label={`${marketplaceData.entries.filter((e) => e.isCompatible).length} compatible swaps`}>
                     {marketplaceData.entries.filter((e) => e.isCompatible).length}
                   </div>
                   <div className="text-xs sm:text-sm text-green-800">Compatible with You</div>
                 </div>
                 <div className="bg-purple-50 rounded-lg p-3 sm:p-4">
-                  <div className="text-xl sm:text-2xl font-bold text-purple-600">
+                  <div className="text-xl sm:text-2xl font-bold text-purple-600" aria-label={`${marketplaceData.myPostings} your postings`}>
                     {marketplaceData.myPostings}
                   </div>
                   <div className="text-xs sm:text-sm text-purple-800">Your Postings</div>
@@ -179,7 +180,7 @@ export function SwapMarketplace() {
               {/* Entries Grid */}
               {marketplaceData.entries.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-lg">
-                  <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" aria-hidden="true" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     No Swaps Available
                   </h3>
@@ -189,6 +190,7 @@ export function SwapMarketplace() {
                   <button
                     onClick={() => setActiveTab('create')}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    aria-label="Create a new swap request"
                   >
                     Create a Request
                   </button>
@@ -282,9 +284,12 @@ export function SwapMarketplace() {
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }
                   `}
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-label={tab.description}
                   title={tab.description}
                 >
-                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
                   <span className="hidden sm:inline">{tab.label}</span>
                   <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
                 </button>

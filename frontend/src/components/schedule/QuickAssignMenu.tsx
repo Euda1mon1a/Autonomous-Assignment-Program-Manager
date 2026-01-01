@@ -53,8 +53,10 @@ interface MenuItemProps {
 function MenuItem({ icon, label, onClick, disabled, danger, loading }: MenuItemProps) {
   return (
     <button
+      role="menuitem"
       onClick={onClick}
       disabled={disabled || loading}
+      aria-label={label}
       className={`
         w-full flex items-center gap-3 px-3 py-2 text-sm text-left
         transition-colors duration-150
@@ -121,14 +123,16 @@ function RotationSubmenu({
         <>
           <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide bg-gray-50">
             <div className="flex items-center gap-1.5">
-              <History className="w-3 h-3" />
+              <History className="w-3 h-3" aria-hidden="true" />
               Recent
             </div>
           </div>
           {recentRotations.map((rotation) => (
             <button
+              role="menuitem"
               key={rotation.id}
               onClick={() => onSelect(rotation.id)}
+              aria-label={`Assign ${rotation.abbreviation || rotation.name}`}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"
             >
               <span
@@ -158,8 +162,10 @@ function RotationSubmenu({
           </div>
           {otherRotations.map((rotation) => (
             <button
+              role="menuitem"
               key={rotation.id}
               onClick={() => onSelect(rotation.id)}
+              aria-label={`Assign ${rotation.abbreviation || rotation.name}`}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"
             >
               <span
@@ -331,6 +337,8 @@ export function QuickAssignMenu({
   return (
     <div
       ref={menuRef}
+      role="menu"
+      aria-label="Quick assignment menu"
       className="fixed z-50 bg-white rounded-lg shadow-lg border border-gray-200 min-w-[200px] overflow-hidden"
       style={{
         left: adjustedPosition.x,
@@ -352,7 +360,7 @@ export function QuickAssignMenu({
           </button>
         </div>
         <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
-          <Calendar className="w-3 h-3" />
+          <Calendar className="w-3 h-3" aria-hidden="true" />
           <span>
             {new Date(date).toLocaleDateString('en-US', {
               weekday: 'short',
@@ -360,8 +368,8 @@ export function QuickAssignMenu({
               day: 'numeric',
             })}
           </span>
-          <span>&bull;</span>
-          <Clock className="w-3 h-3" />
+          <span aria-hidden="true">&bull;</span>
+          <Clock className="w-3 h-3" aria-hidden="true" />
           <span>{session}</span>
         </div>
       </div>
@@ -370,23 +378,27 @@ export function QuickAssignMenu({
       <div className="py-1">
         {/* Quick Assign Submenu Toggle */}
         <button
+          role="menuitem"
           onClick={() => setShowRotationSubmenu(!showRotationSubmenu)}
+          aria-expanded={showRotationSubmenu}
+          aria-haspopup="true"
           className="w-full flex items-center justify-between gap-3 px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"
         >
           <div className="flex items-center gap-3">
-            <Calendar className="w-4 h-4" />
+            <Calendar className="w-4 h-4" aria-hidden="true" />
             <span>Quick Assign</span>
           </div>
           <ChevronRight
             className={`w-4 h-4 transition-transform ${
               showRotationSubmenu ? 'rotate-90' : ''
             }`}
+            aria-hidden="true"
           />
         </button>
 
         {/* Rotation Submenu */}
         {showRotationSubmenu && (
-          <div className="border-t border-b border-gray-100 bg-gray-50">
+          <div className="border-t border-b border-gray-100 bg-gray-50" role="menu" aria-label="Rotation templates">
             <RotationSubmenu
               rotations={rotations}
               recentRotationIds={recentRotations}

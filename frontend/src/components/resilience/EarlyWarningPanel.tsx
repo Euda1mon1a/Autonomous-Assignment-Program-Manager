@@ -81,8 +81,12 @@ export const EarlyWarningPanel: React.FC<EarlyWarningPanelProps> = ({
 
   if (warnings.length === 0) {
     return (
-      <div className={`early-warning-panel bg-green-50 rounded-lg p-6 text-center ${className}`}>
-        <div className="text-4xl mb-3">✅</div>
+      <div
+        className={`early-warning-panel bg-green-50 rounded-lg p-6 text-center ${className}`}
+        role="status"
+        aria-live="polite"
+      >
+        <div className="text-4xl mb-3" aria-hidden="true">✅</div>
         <h3 className="text-lg font-semibold text-green-900 mb-2">All Clear</h3>
         <p className="text-sm text-green-700">
           No early warning indicators detected. System operating normally.
@@ -94,7 +98,12 @@ export const EarlyWarningPanel: React.FC<EarlyWarningPanelProps> = ({
   return (
     <div className={`early-warning-panel ${className}`}>
       {/* Summary */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
+      <div
+        className="bg-white rounded-lg border border-gray-200 p-4 mb-4"
+        role="status"
+        aria-live="polite"
+        aria-label="Early warning summary"
+      >
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold">Active Warnings</h3>
           <div className="flex gap-2">
@@ -111,7 +120,7 @@ export const EarlyWarningPanel: React.FC<EarlyWarningPanelProps> = ({
         <div className="grid grid-cols-4 gap-2">
           {Object.entries(groupedWarnings).map(([type, typeWarnings]) => (
             <div key={type} className="bg-gray-50 rounded p-2 text-center">
-              <div className="text-xl mb-1">{typeIcons[type as keyof typeof typeIcons]}</div>
+              <div className="text-xl mb-1" aria-hidden="true">{typeIcons[type as keyof typeof typeIcons]}</div>
               <div className="text-xs font-medium text-gray-700">
                 {typeLabels[type as keyof typeof typeLabels]}
               </div>
@@ -144,14 +153,15 @@ export const EarlyWarningPanel: React.FC<EarlyWarningPanelProps> = ({
                   {/* Header */}
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-3 flex-1">
-                      <span className="text-2xl" role="img" aria-label={config.label}>
+                      <span className="text-2xl" aria-hidden="true">
                         {config.icon}
                       </span>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <Badge variant={config.badgeVariant}>{config.label}</Badge>
                           <span className="text-xs text-gray-600">
-                            {typeIcons[warning.type]} {typeLabels[warning.type]}
+                            <span aria-hidden="true">{typeIcons[warning.type]} </span>
+                            {typeLabels[warning.type]}
                           </span>
                         </div>
                         <p className="text-sm font-medium">{warning.message}</p>
@@ -164,6 +174,8 @@ export const EarlyWarningPanel: React.FC<EarlyWarningPanelProps> = ({
                         <button
                           onClick={() => setExpandedWarningId(isExpanded ? null : warning.id)}
                           className="text-sm text-blue-600 hover:text-blue-800 focus:outline-none focus:underline"
+                          aria-label={`${isExpanded ? 'Hide' : 'View'} trend chart for ${warning.message}`}
+                          aria-expanded={isExpanded}
                         >
                           {isExpanded ? 'Hide' : 'View'} Trend
                         </button>
@@ -172,9 +184,9 @@ export const EarlyWarningPanel: React.FC<EarlyWarningPanelProps> = ({
                         <button
                           onClick={() => onDismiss(warning.id)}
                           className="text-sm text-gray-500 hover:text-gray-700 focus:outline-none"
-                          aria-label="Dismiss warning"
+                          aria-label={`Dismiss warning: ${warning.message}`}
                         >
-                          ✕
+                          <span aria-hidden="true">✕</span>
                         </button>
                       )}
                     </div>
@@ -194,7 +206,11 @@ export const EarlyWarningPanel: React.FC<EarlyWarningPanelProps> = ({
 
                   {/* Trend Chart (if expanded) */}
                   {isExpanded && warning.trend && (
-                    <div className="mt-4 p-3 bg-gray-50 rounded border border-gray-200">
+                    <div
+                      className="mt-4 p-3 bg-gray-50 rounded border border-gray-200"
+                      role="img"
+                      aria-label={`Trend chart showing ${warning.trend.length} data points`}
+                    >
                       <h4 className="text-sm font-semibold mb-2">Trend Data</h4>
                       <div className="flex items-end justify-around h-24 gap-1">
                         {warning.trend.map((point, idx) => {
@@ -211,6 +227,7 @@ export const EarlyWarningPanel: React.FC<EarlyWarningPanelProps> = ({
                                 }`}
                                 style={{ height: `${height}%` }}
                                 title={`${point.date}: ${point.value}`}
+                                aria-hidden="true"
                               />
                               <div className="text-xs text-gray-500 mt-1">
                                 {new Date(point.date).toLocaleDateString('en-US', {
@@ -235,6 +252,7 @@ export const EarlyWarningPanel: React.FC<EarlyWarningPanelProps> = ({
         <button
           onClick={onDrillDown}
           className="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+          aria-label="View full early warning analysis with detailed metrics"
         >
           View Full Early Warning Analysis
         </button>

@@ -60,6 +60,8 @@ export function Sidebar({
 
       {/* Sidebar */}
       <aside
+        role="navigation"
+        aria-label="Sidebar navigation"
         className={`fixed ${positionStyles} top-0 h-full bg-white border-r border-gray-200 transition-all duration-300 z-50 ${
           isCollapsed ? 'w-16' : widthStyles[width]
         } ${className}`}

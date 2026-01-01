@@ -65,6 +65,7 @@ export function BlockNavigation({
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -87,6 +88,7 @@ export function BlockNavigation({
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -117,7 +119,7 @@ export function BlockNavigation({
       </div>
 
       {/* Date range display (read-only - use navigation buttons to change) */}
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex items-center gap-2 text-sm" role="status" aria-live="polite">
         <span className="text-gray-600">Block:</span>
         <span className="font-medium text-gray-900 bg-gray-100 px-3 py-1 rounded">
           {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')}

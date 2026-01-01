@@ -289,7 +289,7 @@ function ExportModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="export-modal-title">
       <div
         className="absolute inset-0 bg-black/50"
         onClick={onClose}
@@ -297,13 +297,13 @@ function ExportModal({
       />
       <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Export Audit Logs</h2>
+          <h2 id="export-modal-title" className="text-lg font-semibold">Export Audit Logs</h2>
           <button
             onClick={onClose}
             className="p-1 hover:bg-gray-100 rounded"
-            aria-label="Close"
+            aria-label="Close export dialog"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -327,11 +327,14 @@ function ExportModal({
                         : 'border-gray-300 hover:bg-gray-50'
                     }
                   `}
+                  aria-label={`Select ${label} format`}
+                  aria-pressed={selectedFormat === format}
                 >
                   <Icon
                     className={`w-6 h-6 mb-1 ${
                       selectedFormat === format ? 'text-blue-600' : 'text-gray-500'
                     }`}
+                    aria-hidden="true"
                   />
                   <span className="text-sm font-medium">{label}</span>
                   <span className="text-xs text-gray-500 text-center mt-1">
@@ -345,7 +348,7 @@ function ExportModal({
           {/* Options */}
           <div className="border-t pt-4">
             <div className="flex items-center gap-2 mb-2">
-              <Settings className="w-4 h-4 text-gray-500" />
+              <Settings className="w-4 h-4 text-gray-500" aria-hidden="true" />
               <span className="text-sm font-medium text-gray-700">Options</span>
             </div>
             <div className="space-y-2">
@@ -374,15 +377,15 @@ function ExportModal({
 
           {/* Status messages */}
           {exportStatus === 'success' && (
-            <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-lg">
-              <CheckCircle className="w-5 h-5" />
+            <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-lg" role="status" aria-live="polite">
+              <CheckCircle className="w-5 h-5" aria-hidden="true" />
               <span className="text-sm">Export completed successfully!</span>
             </div>
           )}
 
           {exportStatus === 'error' && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-lg">
-              <AlertCircle className="w-5 h-5" />
+            <div className="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-lg" role="alert" aria-live="assertive">
+              <AlertCircle className="w-5 h-5" aria-hidden="true" />
               <span className="text-sm">{errorMessage || 'Export failed. Please try again.'}</span>
             </div>
           )}
@@ -393,6 +396,7 @@ function ExportModal({
             type="button"
             onClick={onClose}
             className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Cancel export"
           >
             Cancel
           </button>
@@ -401,15 +405,16 @@ function ExportModal({
             onClick={handleExport}
             disabled={isExporting}
             className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label={isExporting ? 'Exporting audit logs' : 'Start export'}
           >
             {isExporting ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                 Exporting...
               </>
             ) : (
               <>
-                <Download className="w-4 h-4" />
+                <Download className="w-4 h-4" aria-hidden="true" />
                 Export
               </>
             )}
@@ -510,8 +515,9 @@ export function AuditLogExport({
             onClick={() => handleQuickExport('csv')}
             className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
             title="Export as CSV"
+            aria-label="Quick export as CSV"
           >
-            <FileSpreadsheet className="w-4 h-4" />
+            <FileSpreadsheet className="w-4 h-4" aria-hidden="true" />
             CSV
           </button>
           <button
@@ -519,8 +525,9 @@ export function AuditLogExport({
             onClick={() => handleQuickExport('json')}
             className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
             title="Export as JSON"
+            aria-label="Quick export as JSON"
           >
-            <FileJson className="w-4 h-4" />
+            <FileJson className="w-4 h-4" aria-hidden="true" />
             JSON
           </button>
         </div>
@@ -530,8 +537,9 @@ export function AuditLogExport({
           type="button"
           onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+          aria-label="Open export options"
         >
-          <Download className="w-4 h-4" />
+          <Download className="w-4 h-4" aria-hidden="true" />
           Export
           {totalCount > logs.length && (
             <span className="text-xs bg-blue-500 px-1.5 py-0.5 rounded">
