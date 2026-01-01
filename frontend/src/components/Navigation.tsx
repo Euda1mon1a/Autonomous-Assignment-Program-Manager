@@ -65,17 +65,26 @@ export function Navigation() {
   )
 
   return (
-    <nav className="bg-white shadow-sm" aria-label="Main navigation">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Left Side: Mobile Menu + Logo */}
-          <div className="flex items-center gap-2">
+    <>
+      {/* Skip to main content link for keyboard navigation */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg"
+      >
+        Skip to main content
+      </a>
+
+      <nav className="bg-white shadow-sm" aria-label="Main navigation">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            {/* Left Side: Mobile Menu + Logo */}
+            <div className="flex items-center gap-2">
             {/* Mobile Hamburger */}
             <MobileNav />
 
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
-              <Calendar className="w-8 h-8 text-blue-600" />
+            <Link href="/" className="flex items-center gap-2" aria-label="Residency Scheduler home">
+              <Calendar className="w-8 h-8 text-blue-600" aria-hidden="true" />
               <span className="font-bold text-xl text-gray-900 hidden sm:block">
                 Residency Scheduler
               </span>
@@ -96,13 +105,14 @@ export function Navigation() {
                   key={item.href}
                   href={item.href}
                   aria-current={isActive ? 'page' : undefined}
+                  aria-label={item.label}
                   className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActive
                       ? 'bg-blue-100 text-blue-700'
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-4 h-4" aria-hidden="true" />
                   {item.label}
                 </Link>
               )
@@ -120,13 +130,14 @@ export function Navigation() {
                 <Link
                   href="/login"
                   aria-current={pathname === '/login' ? 'page' : undefined}
+                  aria-label="Login to your account"
                   className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     pathname === '/login'
                       ? 'bg-blue-100 text-blue-700'
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`}
                 >
-                  <LogIn className="w-4 h-4" />
+                  <LogIn className="w-4 h-4" aria-hidden="true" />
                   <span className="hidden sm:inline">Login</span>
                 </Link>
               )}
@@ -135,5 +146,6 @@ export function Navigation() {
         </div>
       </div>
     </nav>
+    </>
   )
 }

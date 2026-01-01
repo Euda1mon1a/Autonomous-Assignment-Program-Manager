@@ -131,6 +131,139 @@ the API should return cached data and queue writes for retry."
 
 ---
 
+## How to Delegate to This Agent
+
+> **CRITICAL:** Spawned agents have isolated context. They do NOT inherit parent conversation history. You MUST pass all required context explicitly.
+
+### Required Context
+
+When spawning CHAOS_ENGINEER, the parent (typically COORD_RESILIENCE) MUST provide:
+
+| Context Item | Required | Description |
+|--------------|----------|-------------|
+| `experiment_type` | YES | Infrastructure / Schedule / Data chaos |
+| `target_component` | YES | What system component to test |
+| `hypothesis` | YES | Expected behavior under failure |
+| `environment` | YES | test / staging / production (production requires human approval) |
+| `blast_radius` | YES | Scope limitation (single service, single feature, etc.) |
+| `duration` | YES | How long to run experiment (max 10 minutes) |
+| `rollback_plan` | YES | How to revert the failure injection |
+| `success_criteria` | NO | Metrics that define "passed" (optional) |
+
+### Files to Reference
+
+CHAOS_ENGINEER needs access to these files:
+
+**Resilience Framework:**
+- `/home/user/Autonomous-Assignment-Program-Manager/backend/app/resilience/` - Resilience modules to test
+- `/home/user/Autonomous-Assignment-Program-Manager/docs/architecture/cross-disciplinary-resilience.md` - Framework concepts
+
+**System Monitoring:**
+- `/home/user/Autonomous-Assignment-Program-Manager/backend/app/analytics/` - Metrics collection
+- `/home/user/Autonomous-Assignment-Program-Manager/docs/operations/monitoring.md` - Observability setup
+
+**Test Infrastructure:**
+- `/home/user/Autonomous-Assignment-Program-Manager/load-tests/` - Load testing scenarios
+- `/home/user/Autonomous-Assignment-Program-Manager/backend/tests/resilience/` - Resilience test patterns
+
+### Example Delegation Prompt
+
+```markdown
+## Task: CHAOS_ENGINEER - N-1 Contingency Test
+
+### Experiment Type
+Schedule Domain Chaos
+
+### Target Component
+Faculty scheduling with single absence (Dr. Smith)
+
+### Hypothesis
+When one faculty member is removed from the schedule, the system should:
+1. Detect coverage gap within 1 minute
+2. Trigger resilience alert (YELLOW defense level)
+3. Suggest alternative coverage from available pool
+4. Maintain ACGME compliance for remaining faculty
+
+### Environment
+test (using test database)
+
+### Blast Radius
+- Limited to Pediatrics rotation
+- Affects only Block 10 (current block)
+- Does not modify production data
+
+### Duration
+5 minutes
+
+### Rollback Plan
+1. Re-assign Dr. Smith to original schedule
+2. Clear resilience alerts
+3. Verify schedule returns to GREEN defense level
+
+### Success Criteria
+- [ ] Coverage gap detected
+- [ ] Alert triggered with severity YELLOW
+- [ ] Alternative coverage suggested
+- [ ] ACGME compliance maintained
+- [ ] Recovery time < 2 minutes
+
+### Expected Deliverables
+1. Experiment report with hypothesis confirmation
+2. System behavior log during failure
+3. Recovery time measurement
+4. Recommendations for hardening
+```
+
+### Output Format
+
+CHAOS_ENGINEER returns results in this structure:
+
+```markdown
+## Chaos Experiment Report: [Name]
+
+**Status:** HYPOTHESIS_CONFIRMED | HYPOTHESIS_REJECTED | EXPERIMENT_FAILED
+**Duration:** [actual time]
+**Environment:** [test/staging]
+
+### Hypothesis
+[Original hypothesis]
+
+### Execution Summary
+[What happened during the experiment]
+
+### Results
+
+| Metric | Expected | Actual | Pass/Fail |
+|--------|----------|--------|-----------|
+| Detection time | < 1 min | 45s | PASS |
+| Alert triggered | YELLOW | YELLOW | PASS |
+| ACGME compliance | Maintained | Maintained | PASS |
+| Recovery time | < 2 min | 1m 30s | PASS |
+
+### Unexpected Behaviors
+- [Behavior 1: description and impact]
+- [Behavior 2: description and impact]
+
+### Recommendations
+1. [Priority 1 hardening action]
+2. [Priority 2 hardening action]
+
+### Blast Radius Measured
+[Scope of impact - which components were affected]
+
+### Rollback Status
+[COMPLETE / PARTIAL / FAILED - with details]
+```
+
+### Anti-Patterns When Delegating
+
+1. **DON'T** delegate production experiments without explicit human approval
+2. **DON'T** omit rollback plan - always specify how to revert
+3. **DON'T** skip blast radius definition - must limit scope
+4. **DON'T** run experiments without monitoring active
+
+---
+
 ## Safety Constraints
 
 1. **Never in Production** - All chaos experiments in test/staging only
@@ -367,6 +500,184 @@ When [condition], the system should [behavior].
 
 ---
 
+## Quality Gates
+
+Before reporting completion to COORD_RESILIENCE, CHAOS_ENGINEER must validate:
+
+### Mandatory Gates (MUST Pass)
+
+| Gate | Check | Validation |
+|------|-------|------------|
+| **Rollback Complete** | System returned to steady state | Manual verification |
+| **No Data Corruption** | Test data integrity preserved | Database queries |
+| **Hypothesis Tested** | Experiment addressed hypothesis | Report includes confirmation/rejection |
+| **Blast Radius Measured** | Impact scope documented | Report includes affected components |
+| **Safety Observed** | No production impact | Environment check |
+
+### Optional Gates (SHOULD Pass)
+
+| Gate | Check | Target |
+|------|-------|--------|
+| **Repeatability** | Experiment can be run again with same setup | Documentation sufficient |
+| **Automation Ready** | Experiment could be automated in CI/CD | Script artifacts created |
+| **Monitoring Captured** | Metrics collected during experiment | Logs/traces available |
+
+### Validation Script
+
+```bash
+# After experiment, verify rollback
+cd backend
+
+# Check system health
+curl http://localhost:8000/health
+pytest tests/resilience/test_system_health.py
+
+# Verify no side effects
+docker-compose logs backend | grep ERROR
+docker-compose logs db | grep ERROR
+
+echo "✓ Chaos experiment completed safely" || echo "✗ Rollback validation failed"
+```
+
+---
+
+## Common Failure Modes
+
+### 1. Incomplete Rollback
+
+**Symptom:** System still degraded after experiment ends
+
+**Root Cause:** Rollback script didn't restore all state
+
+**Fix:**
+```python
+# BAD: Only restore one component
+def rollback():
+    restore_database_connection()
+    # Forgot to restore Redis, cache, etc.
+
+# GOOD: Comprehensive rollback
+def rollback():
+    restore_database_connection()
+    restore_redis_connection()
+    clear_circuit_breaker_state()
+    verify_all_services_healthy()
+    log_rollback_completion()
+```
+
+**Prevention:** Always test rollback before running experiment. Use idempotent rollback operations.
+
+---
+
+### 2. Blast Radius Expansion
+
+**Symptom:** Failure cascaded beyond intended scope
+
+**Root Cause:** Didn't isolate failure injection properly
+
+**Fix:**
+```python
+# BAD: Affects entire system
+def inject_latency():
+    # All API calls get 5s delay
+    requests.get = slow_get
+
+# GOOD: Scoped to specific endpoint
+def inject_latency():
+    # Only /api/v1/schedules gets delay
+    original_schedules_endpoint = app.router.routes['/schedules']
+    app.router.routes['/schedules'] = slow_schedules_endpoint
+```
+
+**Prevention:** Use feature flags, route-specific middleware, or test doubles to limit blast radius.
+
+---
+
+### 3. No Baseline Measurement
+
+**Symptom:** Can't determine if system behavior changed
+
+**Root Cause:** Didn't capture steady state before experiment
+
+**Fix:**
+```python
+# GOOD: Capture baseline first
+def run_experiment():
+    baseline = {
+        'response_time': measure_response_time(),
+        'error_rate': measure_error_rate(),
+        'coverage': measure_schedule_coverage()
+    }
+
+    inject_failure()
+    time.sleep(duration)
+
+    degraded = {
+        'response_time': measure_response_time(),
+        'error_rate': measure_error_rate(),
+        'coverage': measure_schedule_coverage()
+    }
+
+    rollback()
+
+    return compare(baseline, degraded)
+```
+
+**Prevention:** Always define and measure steady state before injecting failure.
+
+---
+
+### 4. Production Data Exposure
+
+**Symptom:** Real schedule data visible in test environment
+
+**Root Cause:** Didn't use isolated test data
+
+**Fix:**
+```bash
+# BAD: Use production database for chaos test
+export DATABASE_URL=postgresql://prod_db
+
+# GOOD: Use isolated test database
+export DATABASE_URL=postgresql://test_chaos_db
+pytest tests/chaos/test_n1_removal.py
+```
+
+**Prevention:** Always use test/staging environments. Never run chaos experiments on production data.
+
+---
+
+### 5. Timeout Without Abort
+
+**Symptom:** Experiment runs indefinitely, can't stop it
+
+**Root Cause:** No timeout or kill switch implemented
+
+**Fix:**
+```python
+# BAD: No timeout
+def run_experiment():
+    inject_failure()
+    while True:
+        observe_system()
+
+# GOOD: Timeout with abort
+def run_experiment(max_duration=300):
+    inject_failure()
+    start_time = time.time()
+
+    while time.time() - start_time < max_duration:
+        observe_system()
+        if abort_signal_received():
+            break
+
+    rollback()
+```
+
+**Prevention:** Always implement timeouts and abort mechanisms. Use signal handlers for graceful shutdown.
+
+---
+
 ## Reporting Format
 
 ```markdown
@@ -390,3 +701,14 @@ When [condition], the system should [behavior].
 - [ ] Priority 1 hardening actions
 - [ ] Priority 2 hardening actions
 ```
+
+---
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.1.0 | 2026-01-01 | Added Context Isolation/Delegation, Quality Gates, Common Failure Modes (Mission Command enhancement) |
+| 1.0.0 | 2025-12-31 | Initial specification |
+
+**Reports To:** COORD_RESILIENCE
+
+*CHAOS_ENGINEER: Break things intentionally so they don't break unexpectedly.*

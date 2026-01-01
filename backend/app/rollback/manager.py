@@ -36,7 +36,6 @@ Usage:
     )
 """
 
-import gzip
 import json
 import logging
 from dataclasses import asdict, dataclass, field
@@ -212,14 +211,20 @@ class RollbackManager:
     # Roles authorized to create/execute rollbacks
     AUTHORIZED_ROLES = {"admin", "coordinator"}
 
-    def __init__(self, db: Session):
+    # Storage directory for rollback points
+    ROLLBACK_STORAGE_DIR = Path("data/rollback_points")
+
+    def __init__(self, db: Session, storage_dir: Path | str | None = None):
         """
         Initialize rollback manager.
 
         Args:
             db: Database session
+            storage_dir: Optional custom storage directory for rollback points
         """
         self.db = db
+        self.storage_dir = Path(storage_dir) if storage_dir else self.ROLLBACK_STORAGE_DIR
+        self.storage_dir.mkdir(parents=True, exist_ok=True)
 
     def create_rollback_point(
         self,
@@ -1126,257 +1131,299 @@ class RollbackManager:
         )
 
     # =========================================================================
-    # Persistence Methods (File-based storage with gzip compression)
+    # Persistence Methods (JSON File-Based Storage)
     # =========================================================================
-
-    # Default storage directory for rollback points
-    ROLLBACK_STORAGE_DIR = Path("/tmp/rollback_points")
-
-    def _ensure_storage_dir(self) -> Path:
-        """
-        Ensure the rollback storage directory exists.
-
-        Returns:
-            Path: The storage directory path
-        """
-        self.ROLLBACK_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
-        return self.ROLLBACK_STORAGE_DIR
-
-    def _get_rollback_path(self, rollback_point_id: UUID) -> Path:
-        """
-        Get filesystem path for a rollback point.
-
-        Args:
-            rollback_point_id: UUID of the rollback point
-
-        Returns:
-            Path: Path to the rollback point file
-        """
-        return self._ensure_storage_dir() / f"rollback_{rollback_point_id}.json.gz"
-
-    def _serialize_rollback_point(self, rollback_point: RollbackPoint) -> dict[str, Any]:
-        """
-        Serialize a RollbackPoint to a JSON-compatible dictionary.
-
-        Args:
-            rollback_point: The rollback point to serialize
-
-        Returns:
-            dict: JSON-serializable dictionary
-        """
-        # Convert dataclass to dict, handling nested dataclasses
-        data = {
-            "id": str(rollback_point.id),
-            "name": rollback_point.name,
-            "description": rollback_point.description,
-            "created_at": rollback_point.created_at.isoformat(),
-            "created_by": str(rollback_point.created_by),
-            "status": rollback_point.status.value,
-            "scope": rollback_point.scope.value,
-            "metadata": rollback_point.metadata,
-            "expires_at": (
-                rollback_point.expires_at.isoformat()
-                if rollback_point.expires_at
-                else None
-            ),
-            "tags": rollback_point.tags,
-            "entity_snapshots": [
-                {
-                    "entity_type": snap.entity_type,
-                    "entity_id": str(snap.entity_id),
-                    "version_id": snap.version_id,
-                    "state": snap.state,
-                    "timestamp": snap.timestamp.isoformat(),
-                    "dependencies": [
-                        (dep_type, str(dep_id)) for dep_type, dep_id in snap.dependencies
-                    ],
-                    "metadata": snap.metadata,
-                }
-                for snap in rollback_point.entity_snapshots
-            ],
-        }
-        return data
-
-    def _deserialize_rollback_point(self, data: dict[str, Any]) -> RollbackPoint:
-        """
-        Deserialize a dictionary to a RollbackPoint.
-
-        Args:
-            data: Dictionary from JSON storage
-
-        Returns:
-            RollbackPoint: Reconstructed rollback point
-        """
-        entity_snapshots = [
-            EntitySnapshot(
-                entity_type=snap["entity_type"],
-                entity_id=UUID(snap["entity_id"]),
-                version_id=snap["version_id"],
-                state=snap["state"],
-                timestamp=datetime.fromisoformat(snap["timestamp"]),
-                dependencies=[
-                    (dep_type, UUID(dep_id)) for dep_type, dep_id in snap["dependencies"]
-                ],
-                metadata=snap.get("metadata", {}),
-            )
-            for snap in data.get("entity_snapshots", [])
-        ]
-
-        return RollbackPoint(
-            id=UUID(data["id"]),
-            name=data["name"],
-            description=data.get("description"),
-            created_at=datetime.fromisoformat(data["created_at"]),
-            created_by=UUID(data["created_by"]),
-            entity_snapshots=entity_snapshots,
-            status=RollbackStatus(data["status"]),
-            scope=RollbackScope(data["scope"]),
-            metadata=data.get("metadata", {}),
-            expires_at=(
-                datetime.fromisoformat(data["expires_at"])
-                if data.get("expires_at")
-                else None
-            ),
-            tags=data.get("tags", []),
-        )
 
     def _persist_rollback_point(self, rollback_point: RollbackPoint) -> None:
         """
-        Persist rollback point to file storage with gzip compression.
+        Persist rollback point to JSON file storage.
 
-        Stores rollback points as gzip-compressed JSON files in the storage directory.
-        Uses atomic write pattern to prevent corruption.
+        Each rollback point is stored as a separate JSON file named by its UUID.
+        Includes metadata index for quick listing and filtering.
 
         Args:
-            rollback_point: The rollback point to persist
+            rollback_point: RollbackPoint to persist
 
         Raises:
-            ValueError: If persistence fails
+            IOError: If file write fails
         """
         try:
-            # Serialize the rollback point
+            # Serialize rollback point to dict
             data = self._serialize_rollback_point(rollback_point)
 
-            # Compress and write atomically
-            file_path = self._get_rollback_path(rollback_point.id)
-            temp_path = file_path.with_suffix(".tmp")
+            # Write to file
+            file_path = self.storage_dir / f"{rollback_point.id}.json"
+            with open(file_path, "w") as f:
+                json.dump(data, f, indent=2, default=str)
 
-            json_bytes = json.dumps(data, indent=2).encode("utf-8")
-            compressed = gzip.compress(json_bytes)
+            # Update index
+            self._update_rollback_index(rollback_point)
 
-            # Write to temp file first, then rename (atomic on POSIX)
-            temp_path.write_bytes(compressed)
-            temp_path.rename(file_path)
-
-            logger.info(
-                f"Persisted rollback point {rollback_point.id} "
-                f"({len(compressed) / 1024:.2f} KB compressed)"
-            )
+            logger.debug(f"Persisted rollback point {rollback_point.id} to {file_path}")
 
         except Exception as e:
             logger.error(
-                f"Failed to persist rollback point {rollback_point.id}: {e}",
-                exc_info=True,
+                f"Failed to persist rollback point {rollback_point.id}: {str(e)}"
             )
-            raise ValueError(f"Failed to persist rollback point: {e}")
+            raise
 
     def _load_rollback_point(self, rollback_point_id: UUID) -> RollbackPoint | None:
         """
-        Load rollback point from file storage.
+        Load rollback point from JSON file storage.
 
         Args:
-            rollback_point_id: UUID of the rollback point to load
+            rollback_point_id: UUID of rollback point to load
 
         Returns:
             RollbackPoint if found, None otherwise
         """
         try:
-            file_path = self._get_rollback_path(rollback_point_id)
+            file_path = self.storage_dir / f"{rollback_point_id}.json"
 
             if not file_path.exists():
-                logger.debug(f"Rollback point {rollback_point_id} not found in storage")
+                logger.warning(f"Rollback point {rollback_point_id} not found")
                 return None
 
-            # Read and decompress
-            compressed = file_path.read_bytes()
-            json_bytes = gzip.decompress(compressed)
-            data = json.loads(json_bytes.decode("utf-8"))
+            with open(file_path) as f:
+                data = json.load(f)
 
             rollback_point = self._deserialize_rollback_point(data)
-            logger.debug(f"Loaded rollback point {rollback_point_id} from storage")
+            logger.debug(f"Loaded rollback point {rollback_point_id} from {file_path}")
+
             return rollback_point
 
-        except json.JSONDecodeError as e:
-            logger.error(f"Corrupted rollback point file {rollback_point_id}: {e}")
-            return None
         except Exception as e:
-            logger.error(f"Failed to load rollback point {rollback_point_id}: {e}")
+            logger.error(
+                f"Failed to load rollback point {rollback_point_id}: {str(e)}"
+            )
             return None
 
     def _list_persisted_rollback_points(self, limit: int = 100) -> list[RollbackPoint]:
         """
-        List persisted rollback points from file storage.
+        List persisted rollback points from storage.
+
+        Reads index file for quick listing, then loads individual points.
+        Sorted by creation time descending (newest first).
 
         Args:
             limit: Maximum number of rollback points to return
 
         Returns:
-            List of RollbackPoint objects, sorted by created_at descending
+            List of RollbackPoint objects
         """
         try:
-            storage_dir = self._ensure_storage_dir()
-            rollback_points: list[RollbackPoint] = []
+            index_path = self.storage_dir / "index.json"
 
-            # Find all rollback point files
-            for file_path in storage_dir.glob("rollback_*.json.gz"):
-                try:
-                    # Extract UUID from filename
-                    filename = file_path.stem.replace(".json", "")
-                    point_id_str = filename.replace("rollback_", "")
-                    point_id = UUID(point_id_str)
+            if not index_path.exists():
+                return []
 
-                    # Load the rollback point
-                    point = self._load_rollback_point(point_id)
-                    if point:
-                        rollback_points.append(point)
+            with open(index_path) as f:
+                index = json.load(f)
 
-                except (ValueError, Exception) as e:
-                    logger.warning(f"Skipping invalid rollback file {file_path}: {e}")
-                    continue
+            # Sort by created_at descending
+            sorted_entries = sorted(
+                index.get("rollback_points", []),
+                key=lambda x: x.get("created_at", ""),
+                reverse=True,
+            )
 
-            # Sort by created_at descending (newest first)
-            rollback_points.sort(key=lambda p: p.created_at, reverse=True)
+            # Load rollback points (up to limit)
+            rollback_points = []
+            for entry in sorted_entries[:limit]:
+                rollback_id = UUID(entry["id"])
+                rollback_point = self._load_rollback_point(rollback_id)
+                if rollback_point:
+                    rollback_points.append(rollback_point)
 
-            return rollback_points[:limit]
+            return rollback_points
 
         except Exception as e:
-            logger.error(f"Failed to list rollback points: {e}")
+            logger.error(f"Failed to list rollback points: {str(e)}")
             return []
 
     def _delete_persisted_rollback_point(self, rollback_point_id: UUID) -> None:
         """
-        Delete persisted rollback point from file storage.
+        Delete persisted rollback point from storage.
+
+        Removes both the rollback point file and its index entry.
 
         Args:
-            rollback_point_id: UUID of the rollback point to delete
+            rollback_point_id: UUID of rollback point to delete
 
         Raises:
-            ValueError: If deletion fails
+            IOError: If deletion fails
         """
         try:
-            file_path = self._get_rollback_path(rollback_point_id)
+            file_path = self.storage_dir / f"{rollback_point_id}.json"
 
             if file_path.exists():
                 file_path.unlink()
-                logger.info(f"Deleted rollback point {rollback_point_id} from storage")
-            else:
-                logger.debug(
-                    f"Rollback point {rollback_point_id} not found for deletion"
-                )
+                logger.debug(f"Deleted rollback point file {file_path}")
+
+            # Remove from index
+            self._remove_from_rollback_index(rollback_point_id)
 
         except Exception as e:
             logger.error(
-                f"Failed to delete rollback point {rollback_point_id}: {e}",
-                exc_info=True,
+                f"Failed to delete rollback point {rollback_point_id}: {str(e)}"
             )
-            raise ValueError(f"Failed to delete rollback point: {e}")
+            raise
+
+    def _serialize_rollback_point(self, rollback_point: RollbackPoint) -> dict[str, Any]:
+        """
+        Serialize RollbackPoint to JSON-compatible dict.
+
+        Handles UUID, datetime, and enum serialization.
+
+        Args:
+            rollback_point: RollbackPoint to serialize
+
+        Returns:
+            Dictionary suitable for JSON serialization
+        """
+        data = asdict(rollback_point)
+
+        # Convert UUIDs, datetimes, enums to strings
+        data["id"] = str(data["id"])
+        data["created_by"] = str(data["created_by"])
+        data["created_at"] = data["created_at"].isoformat() if data["created_at"] else None
+        data["expires_at"] = data["expires_at"].isoformat() if data["expires_at"] else None
+        data["status"] = data["status"].value if isinstance(data["status"], Enum) else data["status"]
+        data["scope"] = data["scope"].value if isinstance(data["scope"], Enum) else data["scope"]
+
+        # Serialize entity snapshots
+        for snapshot in data["entity_snapshots"]:
+            snapshot["entity_id"] = str(snapshot["entity_id"])
+            snapshot["timestamp"] = snapshot["timestamp"].isoformat() if snapshot["timestamp"] else None
+            # Convert dependency tuples (type, UUID) to serializable format
+            snapshot["dependencies"] = [
+                [dep_type, str(dep_id)] for dep_type, dep_id in snapshot.get("dependencies", [])
+            ]
+
+        return data
+
+    def _deserialize_rollback_point(self, data: dict[str, Any]) -> RollbackPoint:
+        """
+        Deserialize RollbackPoint from JSON dict.
+
+        Converts strings back to UUIDs, datetimes, and enums.
+
+        Args:
+            data: Dictionary from JSON
+
+        Returns:
+            RollbackPoint object
+        """
+        # Convert string UUIDs back to UUID objects
+        data["id"] = UUID(data["id"])
+        data["created_by"] = UUID(data["created_by"])
+
+        # Convert ISO strings back to datetime
+        data["created_at"] = datetime.fromisoformat(data["created_at"]) if data["created_at"] else None
+        data["expires_at"] = datetime.fromisoformat(data["expires_at"]) if data["expires_at"] else None
+
+        # Convert enum strings back to enums
+        data["status"] = RollbackStatus(data["status"])
+        data["scope"] = RollbackScope(data["scope"])
+
+        # Deserialize entity snapshots
+        snapshots = []
+        for snapshot_data in data["entity_snapshots"]:
+            snapshot_data["entity_id"] = UUID(snapshot_data["entity_id"])
+            snapshot_data["timestamp"] = (
+                datetime.fromisoformat(snapshot_data["timestamp"])
+                if snapshot_data["timestamp"]
+                else None
+            )
+            # Convert dependency lists back to tuples
+            snapshot_data["dependencies"] = [
+                (dep_type, UUID(dep_id))
+                for dep_type, dep_id in snapshot_data.get("dependencies", [])
+            ]
+            snapshots.append(EntitySnapshot(**snapshot_data))
+
+        data["entity_snapshots"] = snapshots
+
+        return RollbackPoint(**data)
+
+    def _update_rollback_index(self, rollback_point: RollbackPoint) -> None:
+        """
+        Update index file with rollback point metadata.
+
+        The index enables quick listing and filtering without loading full snapshots.
+
+        Args:
+            rollback_point: RollbackPoint to add/update in index
+        """
+        try:
+            index_path = self.storage_dir / "index.json"
+
+            # Load existing index
+            if index_path.exists():
+                with open(index_path) as f:
+                    index = json.load(f)
+            else:
+                index = {"rollback_points": []}
+
+            # Remove existing entry if present
+            index["rollback_points"] = [
+                entry
+                for entry in index["rollback_points"]
+                if entry["id"] != str(rollback_point.id)
+            ]
+
+            # Add new entry
+            index["rollback_points"].append(
+                {
+                    "id": str(rollback_point.id),
+                    "name": rollback_point.name,
+                    "created_at": rollback_point.created_at.isoformat(),
+                    "created_by": str(rollback_point.created_by),
+                    "status": rollback_point.status.value,
+                    "scope": rollback_point.scope.value,
+                    "entity_count": len(rollback_point.entity_snapshots),
+                    "tags": rollback_point.tags,
+                    "expires_at": (
+                        rollback_point.expires_at.isoformat()
+                        if rollback_point.expires_at
+                        else None
+                    ),
+                }
+            )
+
+            # Write index
+            with open(index_path, "w") as f:
+                json.dump(index, f, indent=2)
+
+        except Exception as e:
+            logger.error(f"Failed to update rollback index: {str(e)}")
+
+    def _remove_from_rollback_index(self, rollback_point_id: UUID) -> None:
+        """
+        Remove rollback point from index.
+
+        Args:
+            rollback_point_id: UUID of rollback point to remove
+        """
+        try:
+            index_path = self.storage_dir / "index.json"
+
+            if not index_path.exists():
+                return
+
+            with open(index_path) as f:
+                index = json.load(f)
+
+            # Remove entry
+            index["rollback_points"] = [
+                entry
+                for entry in index["rollback_points"]
+                if entry["id"] != str(rollback_point_id)
+            ]
+
+            # Write index
+            with open(index_path, "w") as f:
+                json.dump(index, f, indent=2)
+
+        except Exception as e:
+            logger.error(f"Failed to remove from rollback index: {str(e)}")

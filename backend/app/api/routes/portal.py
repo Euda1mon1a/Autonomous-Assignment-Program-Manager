@@ -32,7 +32,7 @@ Related Schemas:
 
 import logging
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession, joinedload
 
 from app.core.config import get_settings
-from app.core.security import get_current_active_user
+from app.core.security import get_current_user
 from app.db.session import get_async_db
 from app.models.assignment import Assignment
 from app.models.block import Block
@@ -152,7 +152,7 @@ async def _check_marketplace_access(db: AsyncSession, user: User) -> bool:
 async def get_my_schedule(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> MyScheduleResponse:
+):
     """
     Get the current user's FMIT schedule.
 
@@ -282,7 +282,7 @@ async def get_my_schedule(
 async def get_my_swaps(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> MySwapsResponse:
+):
     """
     Get swap requests related to the current user.
 
@@ -397,7 +397,7 @@ async def create_swap_request(
     request: SwapRequestCreate,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> SwapRequestResponse:
+):
     """
     Create a new swap request to offload an FMIT week.
 
@@ -585,7 +585,7 @@ async def respond_to_swap(
     request: SwapRespondRequest,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> dict:
+):
     """
     Respond to an incoming swap request.
 
@@ -705,7 +705,7 @@ async def respond_to_swap(
 async def get_my_preferences(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> PreferencesResponse:
+):
     """
     Get the current user's FMIT scheduling preferences.
 
@@ -827,7 +827,7 @@ async def update_my_preferences(
     request: PreferencesUpdate,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> PreferencesResponse:
+):
     """
     Update the current user's FMIT scheduling preferences.
 
@@ -986,7 +986,7 @@ async def update_my_preferences(
 async def get_my_dashboard(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> DashboardResponse:
+):
     """
     Get the dashboard view for the current user.
 
@@ -1234,7 +1234,7 @@ async def get_my_dashboard(
 async def get_swap_marketplace(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> MarketplaceResponse:
+):
     """
     Get available swap opportunities in the marketplace.
 
@@ -1393,7 +1393,7 @@ def _get_faculty_for_user(db: Session, user: User) -> Person:
     return faculty
 
 
-def _get_week_start(any_date) -> date:
+def _get_week_start(any_date: datetime | date) -> date:
     """
     Get the Monday of the week containing the given date.
 

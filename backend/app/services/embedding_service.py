@@ -26,18 +26,10 @@ class EmbeddingService:
     EMBEDDING_DIM = 384
 
     @classmethod
-    def get_model(cls):  # type: ignore
-        """Lazy load the sentence-transformer model.
+    def get_model(cls) -> Any:  # type: ignore
+        """Lazy load the sentence-transformer model."""
+        from typing import Any
 
-        Initializes the model on first call and reuses it for subsequent calls.
-        Uses the all-MiniLM-L6-v2 model for efficient CPU-based embeddings.
-
-        Returns:
-            SentenceTransformer model instance
-
-        Raises:
-            ImportError: If sentence-transformers library is not installed
-        """
         if not SENTENCE_TRANSFORMERS_AVAILABLE:
             raise ImportError(
                 "sentence-transformers not available. "
@@ -90,16 +82,8 @@ class EmbeddingService:
 
 @lru_cache(maxsize=100)
 def get_cached_embedding(text: str) -> tuple:
-    """Get embedding with LRU caching for repeated queries.
+    """Get embedding with LRU caching (for repeated queries).
 
-    Caches up to 100 most recently used embeddings to avoid redundant
-    computation. Returns tuple instead of list for hashability required
-    by LRU cache.
-
-    Args:
-        text: Text to embed
-
-    Returns:
-        Tuple of floats representing the 384-dimensional embedding vector
+    Returns tuple for hashability.
     """
     return tuple(EmbeddingService.embed_text(text))

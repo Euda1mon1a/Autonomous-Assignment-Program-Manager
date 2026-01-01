@@ -348,7 +348,25 @@ class ConflictAutoDetector:
         faculty_id: UUID,
         fmit_weeks: list[date],
     ) -> list[ConflictInfo]:
-        """Check for back-to-back FMIT conflicts."""
+        """
+        Check for back-to-back FMIT conflicts.
+
+        Identifies FMIT rotations that are scheduled too close together
+        (less than 2 weeks apart). Back-to-back FMIT rotations can lead
+        to burnout and scheduling fatigue.
+
+        Args:
+            faculty_id: UUID of faculty member to check
+            fmit_weeks: List of FMIT week start dates for this faculty
+
+        Returns:
+            list[ConflictInfo]: Conflicts for any back-to-back FMIT weeks.
+                Empty list if no conflicts found.
+
+        Note:
+            Policy requires at least 2 weeks between FMIT rotations to
+            allow for recovery and other duties.
+        """
         from app.services.xlsx_import import has_back_to_back_conflict
 
         if has_back_to_back_conflict(sorted(fmit_weeks)):
@@ -382,7 +400,24 @@ class ConflictAutoDetector:
         Detect double-booking across residency and FMIT systems.
 
         Checks if a person is assigned to both residency rotation and FMIT
-        on the same date/time.
+        on the same date/time. This can occur when schedules are managed
+        in separate systems that don't sync.
+
+        Args:
+            faculty_id: Optional UUID to check specific faculty member.
+                If None, checks all faculty.
+            start_date: Start of date range to scan
+            end_date: End of date range to scan
+
+        Returns:
+            list[ConflictInfo]: Double-booking conflicts where same person
+                is assigned to multiple rotations simultaneously. Each conflict
+                includes details of both assignments and suggested resolution.
+
+        Note:
+            This detector prevents scenarios where a faculty member is
+            scheduled for both FMIT clinic duty and residency teaching
+            on the same half-day block.
         """
         from app.models.assignment import Assignment
         from app.models.block import Block
@@ -496,7 +531,26 @@ class ConflictAutoDetector:
         start_date: date,
         end_date: date,
     ) -> list[ConflictInfo]:
-        """Check for 80-hour work week violations."""
+        """
+        Check for 80-hour work week violations.
+
+        ACGME requires residents work no more than 80 hours per week,
+        averaged over a 4-week period. This method checks weekly totals
+        assuming 4 hours per half-day block.
+
+        Args:
+            person: Person object (resident) to check
+            start_date: Start of period to check
+            end_date: End of period to check
+
+        Returns:
+            list[ConflictInfo]: Violations where weekly hours exceed 80.
+                Includes week start date, total hours worked, and severity.
+
+        Note:
+            Each half-day block is counted as 4 hours. Full-day assignments
+            (AM + PM on same date) count as 8 hours.
+        """
         from app.models.assignment import Assignment
         from app.models.block import Block
 
@@ -552,7 +606,27 @@ class ConflictAutoDetector:
         start_date: date,
         end_date: date,
     ) -> list[ConflictInfo]:
-        """Check for 1-in-7 rest day violations (must have 1 day off per week)."""
+        """
+        Check for 1-in-7 rest day violations.
+
+        ACGME requires residents have at least one 24-hour period free from
+        clinical and educational duties every 7 days. This method detects
+        consecutive work day streaks exceeding 6 days.
+
+        Args:
+            person: Person object (resident) to check
+            start_date: Start of period to check
+            end_date: End of period to check
+
+        Returns:
+            list[ConflictInfo]: Violations where resident worked more than
+                6 consecutive days without a day off. Includes streak start/end
+                dates and consecutive day count.
+
+        Note:
+            A "work day" is any day with at least one assignment (AM or PM block).
+            The method identifies consecutive calendar days, not just work blocks.
+        """
         from app.models.assignment import Assignment
         from app.models.block import Block
 
@@ -632,9 +706,28 @@ class ConflictAutoDetector:
         """
         Detect supervision ratio violations.
 
-        ACGME requires:
-        - PGY-1: 1 faculty per 2 residents (1:2)
-        - PGY-2/3: 1 faculty per 4 residents (1:4)
+        ACGME requires minimum supervision ratios based on resident level:
+        - PGY-1 residents: 1 faculty per 2 residents (1:2 ratio)
+        - PGY-2/3 residents: 1 faculty per 4 residents (1:4 ratio)
+
+        This method identifies blocks where these ratios are violated or
+        where residents are assigned without any faculty supervision.
+
+        Args:
+            faculty_id: Optional UUID to filter by specific faculty member.
+                If None, checks all blocks in date range.
+            start_date: Start of period to check
+            end_date: End of period to check
+
+        Returns:
+            list[ConflictInfo]: Supervision violations including:
+                - Missing supervision (no faculty assigned with residents)
+                - Ratio violations (too many residents per faculty)
+                Each includes the block, resident/faculty counts, and current ratio.
+
+        Note:
+            Uses eager loading to prevent N+1 queries when checking multiple
+            blocks with many assignments.
         """
         from app.models.assignment import Assignment
         from app.models.block import Block
@@ -750,12 +843,27 @@ class ConflictAutoDetector:
         """
         Group conflicts by specified criteria.
 
+        Organizes a list of conflicts into groups for easier analysis and
+        presentation. Useful for generating reports or filtering conflicts
+        by category.
+
         Args:
-            conflicts: List of conflicts to group
-            group_by: Grouping criteria - "type", "person", "severity", "date"
+            conflicts: List of ConflictInfo objects to group
+            group_by: Grouping criteria. Must be one of:
+                - "type": Group by conflict_type (e.g., "leave_fmit_overlap")
+                - "person": Group by faculty member
+                - "severity": Group by severity level ("critical", "high", etc.)
+                - "date": Group by start date
+                Defaults to "type".
 
         Returns:
-            Dictionary mapping group key to list of conflicts
+            dict[str, list[ConflictInfo]]: Dictionary mapping group key to
+                list of conflicts in that group. Keys depend on group_by parameter.
+
+        Example:
+            >>> conflicts = detector.detect_all_conflicts()
+            >>> by_severity = detector.group_conflicts(conflicts, "severity")
+            >>> print(f"Critical conflicts: {len(by_severity.get('critical', []))}")
         """
         groups = defaultdict(list)
 
@@ -782,11 +890,25 @@ class ConflictAutoDetector:
         """
         Generate summary statistics for conflicts.
 
+        Produces an aggregated view of conflicts including counts by severity,
+        type, and affected people. Useful for dashboards and reports.
+
         Args:
-            conflicts: List of conflicts to summarize
+            conflicts: List of ConflictInfo objects to summarize
 
         Returns:
-            Dictionary with summary statistics
+            dict: Summary statistics containing:
+                - total_conflicts (int): Total number of conflicts
+                - by_severity (dict): Count of conflicts per severity level
+                - by_type (dict): Count of conflicts per conflict type
+                - affected_people (list): List of {id, name} dicts for all
+                  faculty/residents involved in conflicts, sorted by name
+
+        Example:
+            >>> conflicts = detector.detect_all_conflicts()
+            >>> summary = detector.get_conflict_summary(conflicts)
+            >>> print(f"Found {summary['total_conflicts']} conflicts")
+            >>> print(f"Critical: {summary['by_severity'].get('critical', 0)}")
         """
         if not conflicts:
             return {
@@ -817,7 +939,30 @@ class ConflictAutoDetector:
 
     @staticmethod
     def _severity_priority(severity: str) -> int:
-        """Get numeric priority for severity level (higher = more severe)."""
+        """
+        Get numeric priority for severity level.
+
+        Converts severity strings to numeric values for comparison and sorting.
+        Higher numbers indicate more severe conflicts.
+
+        Args:
+            severity: Severity level as string ("low", "medium", "high",
+                "critical", "warning", or "info")
+
+        Returns:
+            int: Numeric priority where higher = more severe:
+                - "low" or "info": 1
+                - "medium" or "warning": 2
+                - "high": 3
+                - "critical": 4
+
+        Example:
+            >>> detector = ConflictAutoDetector(db)
+            >>> detector._severity_priority("critical")
+            4
+            >>> detector._severity_priority("low")
+            1
+        """
         priorities = {
             "low": 1,
             "medium": 2,

@@ -356,6 +356,129 @@ docker compose exec db psql -U scheduler -d residency_scheduler \
   -c "SELECT COUNT(*) FROM people;"
 ```
 
+## Workflow Diagram
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│           SAFE SCHEDULE GENERATION WORKFLOW                      │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  STEP 1: Pre-Flight Safety Checks                                │
+│  ┌────────────────────────────────────────────────┐             │
+│  │ Check backend health (/health endpoint)        │             │
+│  │ Verify data exists (people, rotation templates)│             │
+│  │ Confirm auth working                           │             │
+│  └────────────────────────────────────────────────┘             │
+│                         ↓                                       │
+│  STEP 2: Backup Verification (MANDATORY)                        │
+│  ┌────────────────────────────────────────────────┐             │
+│  │ Check for backup < 2 hours old                 │             │
+│  │ If none exists: ./scripts/backup-db.sh --docker│             │
+│  │ Verify backup file created successfully        │             │
+│  │ ⚠️ NEVER proceed without verified backup       │             │
+│  └────────────────────────────────────────────────┘             │
+│                         ↓                                       │
+│  STEP 3: User Confirmation                                      │
+│  ┌────────────────────────────────────────────────┐             │
+│  │ Show backup timestamp and database contents    │             │
+│  │ Ask: "Proceed with schedule generation?"       │             │
+│  │ Wait for explicit YES                          │             │
+│  └────────────────────────────────────────────────┘             │
+│                         ↓                                       │
+│  STEP 4: Schedule Generation                                    │
+│  ┌────────────────────────────────────────────────┐             │
+│  │ Call API or MCP tool with parameters           │             │
+│  │ Monitor progress (log streaming if available)  │             │
+│  │ Capture result (success/failure)               │             │
+│  └────────────────────────────────────────────────┘             │
+│                         ↓                                       │
+│  STEP 5: Result Validation                                      │
+│  ┌────────────────────────────────────────────────┐             │
+│  │ Check: ACGME violations < 5                    │             │
+│  │ Check: Coverage rate > 80%                     │             │
+│  │ Check: N-1 compliant (if resilience enabled)   │             │
+│  │ If ANY fail → Offer rollback                   │             │
+│  └────────────────────────────────────────────────┘             │
+│                         ↓                                       │
+│  STEP 6: Success or Rollback                                    │
+│  ┌────────────────────────────────────────────────┐             │
+│  │ Success: Report metrics, keep backup           │             │
+│  │ Failure: Restore from backup, report error     │             │
+│  └────────────────────────────────────────────────┘             │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+## Concrete Usage Example: Generating Block 10 Schedule
+
+See detailed walkthrough in skill documentation above showing complete safety check workflow.
+
+## Failure Mode Handling
+
+### Failure Mode 1: No Recent Backup
+
+**Symptom:** No backup exists or last backup > 2 hours old
+
+**Recovery:** Create new backup with `./scripts/backup-db.sh --docker` before proceeding
+
+### Failure Mode 2: Generation Fails with Partial Data
+
+**Symptom:** Error response with `partial_assignments` count > 0
+
+**Recovery:** Offer rollback to user, restore from backup if confirmed
+
+### Failure Mode 3: Excessive ACGME Violations
+
+**Symptom:** `validation.acgme_violations >= 5`
+
+**Recovery:** Automatic rollback offer, do not accept schedule
+
+### Failure Mode 4: Backend Crash During Generation
+
+**Symptom:** Connection refused or 500 errors
+
+**Recovery:** Restart backend, check database integrity, rollback if needed
+
+### Failure Mode 5: Backup Restoration Fails
+
+**Symptom:** Duplicate key or constraint violations during restore
+
+**Recovery:** Try clean restore (drop/recreate database), escalate if fails
+
+## Integration with Other Skills
+
+### With schedule-validator
+Post-generation ACGME compliance check and coverage gap detection
+
+### With resilience-dashboard
+Burnout risk assessment and N-1/N-2 compliance verification
+
+### With database-migration
+Pre-migration backup creation and rollback capability
+
+### With systematic-debugger
+Investigation of repeated generation failures
+
+## Validation Checklists
+
+### Pre-Generation
+- [ ] Backend health verified
+- [ ] Data loaded (people, templates, absences)
+- [ ] Backup exists and recent
+- [ ] User confirmation obtained
+
+### Success Validation
+- [ ] HTTP 200 response
+- [ ] ACGME violations < 5
+- [ ] Coverage > 80%
+- [ ] N-1 compliant (if enabled)
+
+### Escalation
+- [ ] Backup fails repeatedly
+- [ ] ACGME violations > 10
+- [ ] Database corruption
+- [ ] Infeasible constraints
+
 ## Quick Reference Card
 
 ```

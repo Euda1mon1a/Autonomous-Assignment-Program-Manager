@@ -17,8 +17,6 @@ Tier 2 (Strategic) endpoints:
 - Stress and compensation tracking
 """
 
-from __future__ import annotations
-
 import logging
 import time
 from datetime import date, datetime, timedelta
@@ -123,7 +121,7 @@ from app.services.resilience.homeostasis import (
 router = APIRouter()
 
 
-def get_resilience_service(db: Session) -> ResilienceService:
+def get_resilience_service(db: Session) -> "ResilienceService":
     """Get or create ResilienceService instance."""
     from app.core.config import get_resilience_config
     from app.resilience.service import ResilienceService
@@ -132,8 +130,10 @@ def get_resilience_service(db: Session) -> ResilienceService:
     return ResilienceService(db=db, config=config)
 
 
-def persist_health_check(db: Session, report, metrics_snapshot: dict = None) -> ResilienceHealthCheck:
+async def persist_health_check(db: AsyncSession, report: Any, metrics_snapshot: dict | None = None) -> ResilienceHealthCheck:
     """Persist health check results to database."""
+    from typing import Any
+
     health_check = ResilienceHealthCheck(
         timestamp=report.timestamp,
         overall_status=report.overall_status,
@@ -169,7 +169,7 @@ def persist_event(
     new_state: dict = None,
     metadata: dict = None,
     health_check_id: UUID = None,
-) -> ResilienceEvent:
+):
     """Persist resilience event to database."""
     event = ResilienceEvent(
         timestamp=datetime.utcnow(),
@@ -204,7 +204,7 @@ async def get_system_health(
         None, ge=1, description="Optional limit for assignment records"
     ),
     db: AsyncSession = Depends(get_async_db),
-) -> HealthCheckResponse:
+):
     """
     Get current system health status.
 
@@ -337,7 +337,7 @@ async def activate_crisis_response(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
-) -> CrisisResponse:
+):
     """
     Activate crisis response mode. Requires admin role.
 
@@ -379,7 +379,7 @@ async def deactivate_crisis_response(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
-) -> CrisisResponse:
+):
     """
     Deactivate crisis response and begin recovery. Requires admin role.
 
@@ -410,7 +410,7 @@ async def deactivate_crisis_response(
 @router.get("/fallbacks", response_model=FallbackListResponse)
 async def list_fallbacks(
     db: AsyncSession = Depends(get_async_db),
-) -> FallbackListResponse:
+):
     """
     List all available fallback schedules.
 
@@ -463,7 +463,7 @@ async def activate_fallback(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
-) -> FallbackActivationResponse:
+):
     """
     Activate a pre-computed fallback schedule. Requires admin role.
 
@@ -541,7 +541,7 @@ async def deactivate_fallback(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
-) -> FallbackDeactivationResponse:
+):
     """
     Deactivate a fallback schedule and return to normal operations.
     Requires admin role.
@@ -599,7 +599,7 @@ async def deactivate_fallback(
 @router.get("/load-shedding", response_model=LoadSheddingStatus)
 async def get_load_shedding_status(
     db: AsyncSession = Depends(get_async_db),
-) -> LoadSheddingStatus:
+):
     """
     Get current load shedding status.
 
@@ -623,7 +623,7 @@ async def set_load_shedding_level(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
-) -> LoadSheddingStatus:
+):
     """
     Manually set load shedding level. Requires admin role.
 
@@ -686,7 +686,7 @@ async def set_load_shedding_level(
     )
 
 
-def get_contingency_service(db: Session) -> ContingencyService:
+def get_contingency_service(db: Session) -> "ContingencyService":
     """Get or create ContingencyService instance with dependency injection."""
     from app.services.resilience.contingency import ContingencyService
 
@@ -699,7 +699,7 @@ async def get_vulnerability_report(
     end_date: date | None = None,
     include_n2: bool = Query(True, description="Include N-2 analysis (more expensive)"),
     db: AsyncSession = Depends(get_async_db),
-) -> VulnerabilityReportResponse:
+):
     """
     Run full N-1/N-2 vulnerability analysis.
 
@@ -815,7 +815,7 @@ async def get_comprehensive_report(
         None, ge=1, description="Optional limit for assignment records"
     ),
     db: AsyncSession = Depends(get_async_db),
-) -> ComprehensiveReportResponse:
+):
     """
     Generate comprehensive resilience report.
 
@@ -901,7 +901,7 @@ async def get_health_check_history(
     page_size: int = Query(50, ge=1, le=100),
     status: OverallStatus | None = None,
     db: AsyncSession = Depends(get_async_db),
-) -> HealthCheckHistoryResponse:
+):
     """
     Get historical health check records.
 
@@ -950,7 +950,7 @@ async def get_event_history(
     page_size: int = Query(50, ge=1, le=100),
     event_type: str | None = None,
     db: AsyncSession = Depends(get_async_db),
-) -> EventHistoryResponse:
+):
     """
     Get historical resilience events.
 
@@ -1027,7 +1027,7 @@ async def get_mtf_compliance(
         True, description="Check circuit breaker status"
     ),
     db: AsyncSession = Depends(get_async_db),
-) -> MTFComplianceResponse:
+):
     """
     Get MTF (Military Treatment Facility) compliance status using the Iron Dome service.
 
@@ -1202,7 +1202,7 @@ async def get_mtf_compliance(
 @router.get("/tier2/homeostasis", response_model=HomeostasisStatusResponse)
 async def get_homeostasis_status(
     db: AsyncSession = Depends(get_async_db),
-) -> HomeostasisStatusResponse:
+):
     """
     Get current homeostasis status including feedback loops and allostatic load.
 
@@ -1316,7 +1316,7 @@ async def calculate_allostatic_load(
     entity_type: str,
     stress_factors: dict,
     db: AsyncSession = Depends(get_async_db),
-) -> AllostasisMetricsResponse:
+):
     """
     Calculate allostatic load for a faculty member or system.
 
@@ -1362,7 +1362,7 @@ async def calculate_allostatic_load(
 @router.get("/tier2/zones", response_model=ZoneListResponse)
 async def list_zones(
     db: AsyncSession = Depends(get_async_db),
-) -> ZoneListResponse:
+):
     """
     List all scheduling zones and their current status.
     """
@@ -1401,7 +1401,7 @@ async def list_zones(
 @router.get("/tier2/zones/report", response_model=BlastRadiusReportResponse)
 async def get_blast_radius_report(
     db: AsyncSession = Depends(get_async_db),
-) -> BlastRadiusReportResponse:
+):
     """
     Get comprehensive blast radius containment report.
 
@@ -1469,7 +1469,7 @@ async def create_zone(
     priority: int = 5,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> ZoneResponse:
+):
     """
     Create a new scheduling zone. Requires authentication.
     """
@@ -1522,7 +1522,7 @@ async def assign_faculty_to_zone(
     role: str = "primary",
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> ZoneAssignmentResponse:
+):
     """
     Assign a faculty member to a zone. Requires authentication.
 
@@ -1547,7 +1547,7 @@ async def record_zone_incident(
     services_affected: list[str] = None,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> ZoneIncidentResponse:
+):
     """
     Record an incident affecting a zone. Requires authentication.
 
@@ -1589,7 +1589,7 @@ async def set_containment_level(
     reason: str,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> ContainmentSetResponse:
+):
     """
     Set system-wide containment level. Requires authentication.
 
@@ -1628,7 +1628,7 @@ async def set_containment_level(
 @router.get("/tier2/equilibrium", response_model=EquilibriumReportResponse)
 async def get_equilibrium_report(
     db: AsyncSession = Depends(get_async_db),
-) -> EquilibriumReportResponse:
+):
     """
     Get comprehensive equilibrium analysis report.
 
@@ -1709,7 +1709,7 @@ async def apply_stress(
     is_reversible: bool = True,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> StressResponse:
+):
     """
     Apply a stress to the system. Requires authentication.
 
@@ -1765,7 +1765,7 @@ async def resolve_stress(
     resolution_notes: str = "",
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> StressResolveResponse:
+):
     """
     Mark a stress as resolved. Requires authentication.
     """
@@ -1787,7 +1787,7 @@ async def initiate_compensation(
     hidden_cost: float = 0.0,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> CompensationResponse:
+):
     """
     Initiate a compensation response to a stress. Requires authentication.
 
@@ -1848,7 +1848,7 @@ async def predict_stress_response(
     capacity_impact: float,
     demand_impact: float = 0.0,
     db: AsyncSession = Depends(get_async_db),
-) -> StressPredictionResponse:
+):
     """
     Predict how the system will respond to a potential stress.
 
@@ -1904,7 +1904,7 @@ async def calculate_equilibrium_shift(
     original_capacity: float,
     original_demand: float,
     db: AsyncSession = Depends(get_async_db),
-) -> EquilibriumShiftResponse:
+):
     """
     Calculate the equilibrium shift from original state to current.
 
@@ -1948,7 +1948,7 @@ async def calculate_equilibrium_shift(
 @router.get("/tier2/status", response_model=Tier2StatusResponse)
 async def get_tier2_status(
     db: AsyncSession = Depends(get_async_db),
-) -> Tier2StatusResponse:
+):
     """
     Get combined status of all Tier 2 resilience components.
 
@@ -1999,7 +1999,7 @@ async def start_cognitive_session(
     user_id: UUID,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> CognitiveSessionStartResponse:
+):
     """
     Start a new cognitive session for decision-making.
 
@@ -2025,7 +2025,7 @@ async def end_cognitive_session(
     session_id: UUID,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> CognitiveSessionEndResponse:
+):
     """End a cognitive session."""
     service = get_resilience_service(db)
     service.end_cognitive_session(session_id)
@@ -2040,7 +2040,7 @@ async def end_cognitive_session(
 async def get_cognitive_session_status(
     session_id: UUID,
     db: AsyncSession = Depends(get_async_db),
-) -> CognitiveSessionStatusResponse:
+):
     """
     Get cognitive load status for a session.
 
@@ -2076,7 +2076,7 @@ async def create_decision(
     safe_default: str | None = None,
     is_urgent: bool = False,
     db: AsyncSession = Depends(get_async_db),
-) -> DecisionCreateResponse:
+):
     """
     Create a new decision request.
 
@@ -2144,7 +2144,7 @@ async def resolve_decision(
     actual_time_seconds: float | None = None,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> DecisionResolveResponse:
+):
     """Record a decision that was made."""
     service = get_resilience_service(db)
     service.record_decision(
@@ -2165,7 +2165,7 @@ async def resolve_decision(
 @router.get("/tier3/cognitive/queue", response_model=DecisionQueueResponse)
 async def get_decision_queue(
     db: AsyncSession = Depends(get_async_db),
-) -> DecisionQueueResponse:
+):
     """
     Get status of pending decision queue.
 
@@ -2194,7 +2194,7 @@ async def get_decision_queue(
 )
 async def get_prioritized_decisions(
     db: AsyncSession = Depends(get_async_db),
-) -> PrioritizedDecisionsResponse:
+):
     """Get pending decisions in recommended processing order."""
     service = get_resilience_service(db)
     decisions = service.get_prioritized_decisions()
@@ -2220,7 +2220,7 @@ async def get_prioritized_decisions(
 async def analyze_schedule_cognitive_load(
     schedule_changes: list[dict],
     db: AsyncSession = Depends(get_async_db),
-) -> CognitiveLoadAnalysis:
+):
     """
     Calculate cognitive load imposed by a schedule on coordinators.
 
@@ -2247,7 +2247,7 @@ async def record_preference(
     strength: float = 0.5,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> PreferenceRecordResponse:
+):
     """
     Record a preference trail for a faculty member.
 
@@ -2293,7 +2293,7 @@ async def record_behavioral_signal(
     slot_id: UUID | None = None,
     target_faculty_id: UUID | None = None,
     db: AsyncSession = Depends(get_async_db),
-) -> BehavioralSignalResponse:
+):
     """
     Record a behavioral signal that updates preference trails.
 
@@ -2334,7 +2334,7 @@ async def get_collective_preference(
     slot_type: str | None = None,
     slot_id: UUID | None = None,
     db: AsyncSession = Depends(get_async_db),
-) -> CollectivePreferenceResponse:
+):
     """Get aggregated preference for a slot or slot type."""
     service = get_resilience_service(db)
     pref = service.get_collective_preference(slot_type, slot_id)
@@ -2368,7 +2368,7 @@ async def get_faculty_preferences(
     trail_type: str | None = None,
     min_strength: float = 0.1,
     db: AsyncSession = Depends(get_async_db),
-) -> FacultyPreferencesResponse:
+):
     """Get all preference trails for a faculty member."""
     from app.resilience.stigmergy import TrailType
 
@@ -2406,7 +2406,7 @@ async def get_faculty_preferences(
 @router.get("/tier3/stigmergy/swap-network", response_model=SwapNetworkResponse)
 async def get_swap_network(
     db: AsyncSession = Depends(get_async_db),
-) -> SwapNetworkResponse:
+):
     """Get swap affinity network showing faculty pairings."""
     service = get_resilience_service(db)
     network = service.get_swap_network()
@@ -2433,7 +2433,7 @@ async def suggest_assignments(
     slot_type: str,
     available_faculty: list[UUID],
     db: AsyncSession = Depends(get_async_db),
-) -> AssignmentSuggestionsResponse:
+):
     """Suggest faculty for a slot based on preference trails."""
     service = get_resilience_service(db)
     suggestions = service.suggest_assignments(slot_id, slot_type, available_faculty)
@@ -2454,7 +2454,7 @@ async def suggest_assignments(
 @router.get("/tier3/stigmergy/status", response_model=StigmergyStatusResponse)
 async def get_stigmergy_status(
     db: AsyncSession = Depends(get_async_db),
-) -> StigmergyStatusResponse:
+):
     """Get overall status of the stigmergy system."""
     service = get_resilience_service(db)
     status = service.get_stigmergy_status()
@@ -2477,7 +2477,7 @@ async def get_stigmergy_status(
 @router.get("/tier3/stigmergy/patterns", response_model=StigmergyPatternsResponse)
 async def detect_preference_patterns(
     db: AsyncSession = Depends(get_async_db),
-) -> StigmergyPatternsResponse:
+):
     """Detect emergent patterns from collective trails."""
     service = get_resilience_service(db)
     patterns = service.detect_preference_patterns()
@@ -2490,7 +2490,7 @@ async def evaporate_trails(
     force: bool = False,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> TrailEvaporationResponse:
+):
     """Apply evaporation to all preference trails."""
     service = get_resilience_service(db)
     service.evaporate_trails(force)
@@ -2514,7 +2514,7 @@ async def analyze_hubs(
         None, ge=1, description="Optional limit for assignment records"
     ),
     db: AsyncSession = Depends(get_async_db),
-) -> HubAnalysisResponse:
+):
     """
     Run hub vulnerability analysis on faculty.
 
@@ -2602,7 +2602,7 @@ async def analyze_hubs(
 async def get_top_hubs(
     n: int = Query(5, ge=1, le=20),
     db: AsyncSession = Depends(get_async_db),
-) -> TopHubsResponse:
+):
     """Get top N most critical hubs."""
     service = get_resilience_service(db)
     hubs = service.get_top_hubs(n)
@@ -2626,7 +2626,7 @@ async def get_top_hubs(
 async def get_hub_profile(
     faculty_id: UUID,
     db: AsyncSession = Depends(get_async_db),
-) -> HubProfileDetailResponse:
+):
     """Get detailed profile for a hub faculty member."""
     service = get_resilience_service(db)
 
@@ -2656,7 +2656,7 @@ async def get_hub_profile(
 )
 async def get_cross_training_recommendations(
     db: AsyncSession = Depends(get_async_db),
-) -> CrossTrainingRecommendationsResponse:
+):
     """Get cross-training recommendations to reduce hub concentration."""
     service = get_resilience_service(db)
 
@@ -2695,7 +2695,7 @@ async def create_hub_protection_plan(
     assign_backup: bool = True,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-) -> HubProtectionPlanCreateResponse:
+):
     """Create a protection plan for a hub during a high-risk period."""
     service = get_resilience_service(db)
 
@@ -2731,7 +2731,7 @@ async def create_hub_protection_plan(
 @router.get("/tier3/hubs/distribution", response_model=HubDistributionReportResponse)
 async def get_hub_distribution_report(
     db: AsyncSession = Depends(get_async_db),
-) -> HubDistributionReportResponse:
+):
     """Get report on hub distribution across the system."""
     service = get_resilience_service(db)
 
@@ -2759,7 +2759,7 @@ async def get_hub_distribution_report(
 @router.get("/tier3/hubs/status", response_model=HubStatusResponse)
 async def get_hub_status(
     db: AsyncSession = Depends(get_async_db),
-) -> HubStatusResponse:
+):
     """Get summary status of hub analysis."""
     service = get_resilience_service(db)
     status = service.get_hub_status()
@@ -2775,7 +2775,7 @@ async def get_hub_status(
 @router.get("/tier3/status", response_model=Tier3StatusResponse)
 async def get_tier3_status(
     db: AsyncSession = Depends(get_async_db),
-) -> Tier3StatusResponse:
+):
     """
     Get combined status of all Tier 3 resilience components.
 

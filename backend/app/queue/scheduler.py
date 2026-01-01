@@ -356,9 +356,19 @@ class TaskScheduler:
         # Calculate next run time
         now = datetime.utcnow()
         if isinstance(task_schedule, crontab):
-            # For crontab, we need to check when it will next run
-            # This is approximate - actual calculation is complex
-            return now  # Placeholder
+            # Use crontab's is_due method to find next occurrence
+            # is_due returns (is_due, next_time_to_run_in_seconds)
+            remaining_s = task_schedule.remaining_estimate(now)
+            if remaining_s is not None:
+                return now + timedelta(seconds=max(0, remaining_s))
+            else:
+                # Fallback: estimate based on crontab fields
+                # Most common case: runs every N minutes/hours
+                logger.warning(
+                    f"Could not calculate exact next run for {task_name}, using fallback"
+                )
+                # Default to 1 hour if we can't determine
+                return now + timedelta(hours=1)
         elif isinstance(task_schedule, schedule):
             # For interval schedule
             return now + task_schedule.run_every

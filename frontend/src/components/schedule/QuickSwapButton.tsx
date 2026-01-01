@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef, useId } from 'react'
 import { ArrowLeftRight, X, Loader2, Check, Calendar, Clock } from 'lucide-react'
 import { format } from 'date-fns'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -53,6 +53,10 @@ export function QuickSwapButton({
   const [reason, setReason] = useState('')
   const { user } = useAuth()
   const queryClient = useQueryClient()
+  const modalRef = useRef<HTMLDivElement>(null)
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const titleId = useId()
+  const descId = useId()
 
   const swapMutation = useMutation({
     mutationFn: async (data: SwapRequestData) => {
@@ -84,6 +88,31 @@ export function QuickSwapButton({
     onClose?.()
   }, [onClose])
 
+  // Focus management and keyboard handling
+  useEffect(() => {
+    if (isOpen) {
+      // Focus close button when modal opens
+      closeButtonRef.current?.focus()
+
+      // Prevent body scroll
+      document.body.style.overflow = 'hidden'
+
+      // Handle Escape key
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape' && !swapMutation.isPending) {
+          handleClose()
+        }
+      }
+
+      document.addEventListener('keydown', handleEscape)
+
+      return () => {
+        document.body.style.overflow = 'unset'
+        document.removeEventListener('keydown', handleEscape)
+      }
+    }
+  }, [isOpen, handleClose, swapMutation.isPending])
+
   const sizeClasses = {
     sm: 'p-1.5 text-xs',
     md: 'p-2 text-sm',
@@ -106,9 +135,14 @@ export function QuickSwapButton({
           ${sizeClasses[size]}
           ${className}
         `}
-        title="Request swap for this assignment"
-        aria-label={`Request swap for ${activity} on ${date} ${timeOfDay}`}
-        aria-haspopup="dialog"
+        aria-label="Request swap for this assignment"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            e.stopPropagation()
+            setIsOpen(true)
+          }
+        }}
       >
         <ArrowLeftRight className={iconSize} aria-hidden="true" />
         {size === 'md' && <span>Swap</span>}
@@ -125,10 +159,12 @@ export function QuickSwapButton({
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
               onClick={handleClose}
+              aria-hidden="true"
             />
 
             {/* Modal */}
             <motion.div
+              ref={modalRef}
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -136,7 +172,8 @@ export function QuickSwapButton({
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
-              aria-labelledby="swap-dialog-title"
+              aria-labelledby={titleId}
+              aria-describedby={descId}
             >
               <div className="bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
                 {/* Header */}
@@ -146,21 +183,22 @@ export function QuickSwapButton({
                       <ArrowLeftRight className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                      <h3 id="swap-dialog-title" className="font-semibold text-gray-900">Request Swap</h3>
+                      <h3 id={titleId} className="font-semibold text-gray-900">Request Swap</h3>
                       <p className="text-sm text-gray-500">Find someone to cover this shift</p>
                     </div>
                   </div>
                   <button
+                    ref={closeButtonRef}
                     onClick={handleClose}
                     className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-                    aria-label="Close"
+                    aria-label="Close swap request dialog"
                   >
-                    <X className="w-5 h-5 text-gray-500" />
+                    <X className="w-5 h-5 text-gray-500" aria-hidden="true" />
                   </button>
                 </div>
 
                 {/* Assignment Details */}
-                <div className="p-4 bg-gray-50 border-b border-gray-100">
+                <div id={descId} className="p-4 bg-gray-50 border-b border-gray-100">
                   <div className="flex items-center gap-4 text-sm">
                     <div className="flex items-center gap-2 text-gray-600">
                       <Calendar className="w-4 h-4" aria-hidden="true" />
@@ -201,14 +239,22 @@ export function QuickSwapButton({
 
                   {/* Error Message */}
                   {swapMutation.isError && (
-                    <div role="alert" aria-live="polite" className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                    <div
+                      className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"
+                      role="alert"
+                      aria-live="assertive"
+                    >
                       Failed to submit swap request. Please try again.
                     </div>
                   )}
 
                   {/* Success Message */}
                   {swapMutation.isSuccess && (
-                    <div role="status" aria-live="polite" className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 flex items-center gap-2">
+                    <div
+                      className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 flex items-center gap-2"
+                      role="status"
+                      aria-live="polite"
+                    >
                       <Check className="w-4 h-4" aria-hidden="true" />
                       Swap request submitted successfully!
                     </div>
@@ -227,7 +273,6 @@ export function QuickSwapButton({
                     <button
                       type="submit"
                       disabled={swapMutation.isPending || swapMutation.isSuccess}
-                      aria-busy={swapMutation.isPending || undefined}
                       className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg
                         hover:bg-blue-700 transition-colors text-sm font-medium
                         disabled:opacity-50 disabled:cursor-not-allowed
@@ -235,17 +280,17 @@ export function QuickSwapButton({
                     >
                       {swapMutation.isPending ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                          <Loader2 className="w-4 h-4 animate-spin" />
                           Submitting...
                         </>
                       ) : swapMutation.isSuccess ? (
                         <>
-                          <Check className="w-4 h-4" aria-hidden="true" />
+                          <Check className="w-4 h-4" />
                           Submitted
                         </>
                       ) : (
                         <>
-                          <ArrowLeftRight className="w-4 h-4" aria-hidden="true" />
+                          <ArrowLeftRight className="w-4 h-4" />
                           Submit Request
                         </>
                       )}
@@ -288,9 +333,8 @@ export function QuickSwapLink({
           setIsOpen(true)
         }}
         className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
-        aria-label="Request swap for this assignment"
       >
-        <ArrowLeftRight className="w-3.5 h-3.5" aria-hidden="true" />
+        <ArrowLeftRight className="w-3.5 h-3.5" />
         Request Swap
       </button>
 

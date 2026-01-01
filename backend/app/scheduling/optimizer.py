@@ -303,7 +303,25 @@ class SchedulingOptimizer:
         }
 
     def _get_available_solvers(self) -> list[str]:
-        """Get list of available solver algorithms."""
+        """
+        Get list of available solver algorithms.
+
+        Checks which solver algorithms are available based on installed
+        dependencies. Standard solvers (greedy, pulp, cp_sat, hybrid) are
+        always available, while quantum-inspired solvers require additional
+        packages (dwave, pyqubo).
+
+        Returns:
+            list[str]: List of available solver algorithm names. Always includes
+                standard solvers; may include "quantum_inspired" and
+                "quantum_hardware" if D-Wave libraries are installed.
+
+        Example:
+            >>> optimizer = SchedulingOptimizer()
+            >>> solvers = optimizer._get_available_solvers()
+            >>> print(f"Available: {', '.join(solvers)}")
+            Available: greedy, pulp, cp_sat, hybrid
+        """
         solvers = ["greedy", "pulp", "cp_sat", "hybrid"]
 
         # Check for quantum-inspired solvers
@@ -321,7 +339,24 @@ class SchedulingOptimizer:
         return solvers
 
     def _filter_active_residents(self, context: SchedulingContext) -> list:
-        """Filter residents who have at least one available block."""
+        """
+        Filter residents who have at least one available block.
+
+        Removes residents who are unavailable for the entire scheduling period
+        (100% absent) to reduce solver complexity. Residents with partial
+        availability are retained.
+
+        Args:
+            context: SchedulingContext with residents and availability data
+
+        Returns:
+            list: Residents who have at least one non-weekend block available.
+                Excludes residents with zero availability (completely absent).
+
+        Note:
+            Weekend blocks are excluded from availability checks since residents
+            typically aren't scheduled on weekends.
+        """
         active = []
 
         for resident in context.residents:
@@ -354,7 +389,25 @@ class SchedulingOptimizer:
     def _filter_assignable_blocks(
         self, context: SchedulingContext, residents: list
     ) -> list:
-        """Filter blocks that have at least one available resident."""
+        """
+        Filter blocks that have at least one available resident.
+
+        Removes blocks where all residents are unavailable (e.g., holiday when
+        all residents are on leave) to reduce solver search space. This prevents
+        the solver from attempting to assign residents to uncoverable blocks.
+
+        Args:
+            context: SchedulingContext with availability matrix
+            residents: List of active residents (already filtered)
+
+        Returns:
+            list: Blocks that have at least one resident available for assignment.
+                Excludes blocks where all residents are absent.
+
+        Note:
+            This optimization is particularly effective when there are system-wide
+            absences (holidays, conferences, etc.) affecting all residents.
+        """
         assignable = []
 
         for block in context.blocks:

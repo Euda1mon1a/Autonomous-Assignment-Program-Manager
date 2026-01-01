@@ -352,199 +352,6 @@ async def get_schedule(
 ```
 ````
 
-## Examples
-
-### Example 1: Standard PR Review (Feature Addition)
-
-**Context:** PR #523 adds resident work hour summary endpoint
-
-**Input:**
-```bash
-gh pr view 523 --json title,files,commits
-```
-
-**Process:**
-1. **Gather context:**
-   - Title: "feat: Add work hour summary endpoint"
-   - Files changed: 3 (route, service, tests)
-   - Commits: 2 commits
-2. **Check CI status:**
-   ```bash
-   gh pr checks 523
-   # ✓ Tests: passing
-   # ✓ Lint: passing
-   # ✗ Coverage: 65% (below 70% threshold)
-   ```
-3. **Review code:**
-   - Route follows layered architecture ✓
-   - Service has business logic ✓
-   - Tests added but incomplete (missing edge cases)
-4. **Run quality gates locally:**
-   ```bash
-   git fetch origin pull/523/head:pr-523
-   git checkout pr-523
-   pytest --cov=app.services.work_hour_service --cov-fail-under=70
-   # FAIL: 65% coverage
-   ```
-
-**Output:**
-```markdown
-## PR Review: #523 - Add work hour summary endpoint
-
-**Decision:** REQUEST CHANGES
-
-### Quality Gate Results
-| Gate | Status | Notes |
-|------|--------|-------|
-| Tests | ✓ | 12 tests pass |
-| Linting | ✓ | No errors |
-| Types | ✓ | No errors |
-| Coverage | ✗ | 65% (target 70%) |
-
-### Required Changes (Blocking)
-1. **Insufficient test coverage** (app/services/work_hour_service.py:45-78)
-   - Missing tests for edge cases:
-     - Empty assignment list
-     - Assignments spanning multiple weeks
-     - Null duration handling
-   - Add tests to bring coverage to 70%+
-
-### Suggestions (Non-blocking)
-1. Consider caching work hour calculations (line 56)
-   - Reduces database load for frequently accessed residents
-   - Use Redis with 15-minute TTL
-
-### Approval Checklist
-- [x] Architecture follows patterns
-- [x] Tests exist
-- [ ] Coverage >= 70% (BLOCKING)
-- [x] Linting passes
-- [x] Types valid
-
-**Next Steps:** Add missing tests, push update, request re-review.
-```
-
-### Example 2: Security-Critical PR Review
-
-**Context:** PR #478 modifies authentication middleware
-
-**Input:**
-```python
-# Changed file: backend/app/api/deps.py
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    # CHANGE: Removed JWT expiration check
-    payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-    return payload.get("sub")
-```
-
-**Process:**
-1. **Identify security-sensitive area:** Authentication code
-2. **Compare with previous version:**
-   ```diff
-   - if payload.get("exp") < time.time():
-   -     raise HTTPException(401, "Token expired")
-   + # Expiration check removed
-   ```
-3. **Assess impact:** CRITICAL - allows expired tokens
-4. **Trigger security-audit skill** for full analysis
-
-**Output:**
-```markdown
-## PR Review: #478 - Update auth middleware
-
-**Decision:** :red_circle: BLOCK MERGE - CRITICAL SECURITY ISSUE
-
-### Security Finding
-
-**Severity:** CRITICAL
-**Issue:** JWT Expiration Check Removed
-
-This change allows expired tokens to authenticate, violating authentication security.
-
-**Security Impact:**
-- Tokens never expire (OWASP A07:2021 - Authentication Failures)
-- Compromised tokens remain valid indefinitely
-- No mechanism to revoke access
-- Violates standard JWT security practices
-
-**Required Fix:**
-1. Revert expiration check removal
-2. Add explicit test for expired token rejection
-3. Security review required before merge
-
-**Escalation:** Triggered security-audit skill for full assessment.
-
-### Action Required
-- [ ] Revert to include expiration check
-- [ ] Add test: `test_expired_token_rejected()`
-- [ ] Human security review before re-submit
-```
-
-### Example 3: Database Migration PR Review
-
-**Context:** PR #501 adds `email_verified` field to User model
-
-**Input:**
-```bash
-gh pr diff 501 --name-only
-# backend/app/models/user.py
-# backend/alembic/versions/abc123_add_email_verified.py
-```
-
-**Process:**
-1. **Check model and migration together:** ✓ Both files present
-2. **Review migration:**
-   ```python
-   def upgrade() -> None:
-       op.add_column('users', sa.Column('email_verified', sa.Boolean(), nullable=False))
-   ```
-3. **Identify issue:** Adding non-nullable column to table with existing rows will fail
-4. **Verify locally:**
-   ```bash
-   alembic upgrade head
-   # ERROR: column "email_verified" contains null values
-   ```
-
-**Output:**
-```markdown
-## PR Review: #501 - Add email_verified field
-
-**Decision:** REQUEST CHANGES
-
-### Database Migration Issue
-
-**Problem:** Non-nullable column added to table with existing rows
-
-This migration will fail in production because:
-1. Existing users don't have `email_verified` value
-2. Column is `nullable=False` (requires value)
-3. No default provided
-
-**Current Migration:**
-```python
-op.add_column('users', sa.Column('email_verified', sa.Boolean(), nullable=False))
-```
-
-**Required Fix - Three-Phase Migration:**
-```python
-# Migration 1: Add as nullable
-op.add_column('users', sa.Column('email_verified', sa.Boolean(), nullable=True))
-
-# Migration 2: Backfill
-op.execute("UPDATE users SET email_verified = false WHERE email_verified IS NULL")
-
-# Migration 3: Make non-nullable
-op.alter_column('users', 'email_verified', nullable=False)
-```
-
-**Testing:**
-- [ ] Test migration on database with existing data
-- [ ] Verify downgrade path works
-- [ ] Document rollback procedure
-
-**Escalation:** Deferred to database-migration skill for implementation.
-```
-
 ## Lesson Learned: PR #442 (2025-12-26)
 
 **What happened:** A fix changed a filter from one value to another, but the new value
@@ -557,38 +364,6 @@ was also incorrect because comments/docs said "outpatient" while code used "clin
 - [ ] Confirm the filter will actually find matching records
 
 **Key insight:** Always ask "will this filter find what we expect?" and verify empirically.
-
-## Common Failure Modes
-
-| Failure Mode | Symptom | Root Cause | Recovery Steps |
-|--------------|---------|------------|----------------|
-| **CI Passes But Code Broken** | All checks green, but feature doesn't work | Insufficient test coverage or wrong tests | 1. Manual testing reveals issue<br>2. Add missing test cases<br>3. Re-run CI with new tests |
-| **Merge Conflict During Review** | PR becomes outdated while under review | Long review cycle, active main branch | 1. Request author to rebase<br>2. Re-run quality gates after rebase<br>3. Re-review changed sections only |
-| **False Positive Security Alert** | Bandit flags safe code as vulnerable | Static analysis limitation | 1. Manual review confirms false positive<br>2. Add `# nosec` comment with justification<br>3. Document in review |
-| **Coverage Drops After Merge** | PR shows 80% coverage, but repo drops to 65% | Coverage calculated only for changed files | 1. Check overall repo coverage before approve<br>2. Require tests for affected areas, not just new code<br>3. Use `--cov=app` not `--cov=app.services.new_module` |
-| **Database Migration Not Tested** | Migration file present but untested | CI doesn't run migrations in test environment | 1. Manually test migration locally<br>2. Request author to test `upgrade` and `downgrade`<br>3. Add migration testing to CI |
-| **Breaking API Change Undetected** | Pydantic schema changed without version bump | No API contract testing | 1. Check schema diff against previous version<br>2. Determine if breaking (required field added, field removed)<br>3. Require API version bump or revert change |
-
-## Validation Checklist
-
-After reviewing a PR, verify:
-
-- [ ] **PR Description:** Clear summary of what/why
-- [ ] **Linked Issues:** References issue number or motivation
-- [ ] **CI Checks:** All automated checks pass
-- [ ] **Tests Added:** New code has corresponding tests
-- [ ] **Coverage:** >= 70% for changed files
-- [ ] **Linting:** No lint errors
-- [ ] **Type Checking:** No type errors
-- [ ] **Security:** No vulnerabilities detected
-- [ ] **Architecture:** Follows layered pattern
-- [ ] **Database Migrations:** If model changed, migration present and tested
-- [ ] **Breaking Changes:** Documented or avoided
-- [ ] **Documentation:** Updated if needed (README, API docs)
-- [ ] **No Secrets:** No hardcoded credentials or sensitive data
-- [ ] **Dependency Changes:** If `requirements.txt` changed, justified
-- [ ] **Manual Testing:** For complex features, manually verified
-- [ ] **Conflicts Resolved:** No merge conflicts present
 
 ## Escalation Rules
 
@@ -632,300 +407,644 @@ For simple fixes:
 3. Re-run quality gates
 4. Update PR status
 
-## Concrete Usage Example
+## Workflow Diagram
 
-### End-to-End: Reviewing PR #442 (Real Example)
+```
+┌───────────────────────────────────────────────────────────────────┐
+│                   PR REVIEW WORKFLOW                              │
+├───────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  STEP 1: Gather Context                                           │
+│  ┌──────────────────────────────────────────────────┐             │
+│  │ gh pr view <number> --json ...                   │             │
+│  │ gh pr diff <number>                              │             │
+│  │ gh pr checks <number>                            │             │
+│  │ Understand: What, Why, How                       │             │
+│  └──────────────────────────────────────────────────┘             │
+│                         ↓                                         │
+│  STEP 2: Checkout and Test Locally                                │
+│  ┌──────────────────────────────────────────────────┐             │
+│  │ git fetch origin pull/<N>/head:pr-<N>            │             │
+│  │ git checkout pr-<N>                              │             │
+│  │ Run tests, linting, type checks                  │             │
+│  └──────────────────────────────────────────────────┘             │
+│                         ↓                                         │
+│  STEP 3: Quality Gate Checks                                      │
+│  ┌──────────────────────────────────────────────────┐             │
+│  │ Tests: ALL PASS?                                 │             │
+│  │ Linting: 0 errors?                               │             │
+│  │ Types: No critical issues?                       │             │
+│  │ Security: No vulnerabilities?                    │             │
+│  │ Coverage: >= 70%?                                │             │
+│  └──────────────────────────────────────────────────┘             │
+│                         ↓                                         │
+│  STEP 4: Code Review Categories                                   │
+│  ┌──────────────────────────────────────────────────┐             │
+│  │ A. Code Quality  B. Testing                      │             │
+│  │ C. Security      D. Architecture                 │             │
+│  │ E. Documentation                                 │             │
+│  └──────────────────────────────────────────────────┘             │
+│                         ↓                                         │
+│  STEP 5: Make Decision                                            │
+│  ┌──────────────────────────────────────────────────┐             │
+│  │ All gates PASS → APPROVE                         │             │
+│  │ Major issues   → REQUEST CHANGES                 │             │
+│  │ Questions only → COMMENT                         │             │
+│  └──────────────────────────────────────────────────┘             │
+│                         ↓                                         │
+│  STEP 6: Post Review                                              │
+│  ┌──────────────────────────────────────────────────┐             │
+│  │ gh pr review <number> --approve/--request-changes│             │
+│  │ Include summary, gate results, feedback          │             │
+│  └──────────────────────────────────────────────────┘             │
+│                                                                   │
+└───────────────────────────────────────────────────────────────────┘
+```
 
-**Scenario:** PR fixes template filtering in schedule solver. Change is small but critical.
+## Concrete Usage Example: Reviewing PR #123
 
-**Step 1: Fetch and Understand**
+**Scenario:** Review PR that adds a new ACGME constraint for call spacing.
+
+### Complete Review Walkthrough
+
+**Step 1: Gather Context**
+
+```bash
+# View PR details
+gh pr view 123 --json title,body,author,state,reviews,files,commits
+
+# Output:
+# {
+#   "title": "feat: add minimum call spacing constraint",
+#   "author": "developer",
+#   "state": "OPEN",
+#   "body": "Adds 72-hour minimum spacing between call shifts..."
+#   "files": [
+#     "backend/app/scheduling/constraints/call_spacing.py",
+#     "backend/app/scheduling/constraints/__init__.py",
+#     "backend/app/scheduling/constraints/manager.py",
+#     "backend/tests/test_call_spacing_constraint.py"
+#   ]
+# }
+
+# View the diff
+gh pr diff 123 > pr123.diff
+
+# Check CI status
+gh pr checks 123
+
+# Output:
+# ✓ Backend Tests   passed
+# ✓ Frontend Tests  passed
+# ✓ Lint Check      passed
+# ✗ Type Check      failed
+```
+
+**Analysis:**
+- What: New constraint for call spacing
+- Why: ACGME requirement for resident wellbeing
+- How: Soft constraint with weight 8.0
+- Issue: Type check failing ⚠️
+
+**Step 2: Checkout and Test Locally**
+
 ```bash
 cd /home/user/Autonomous-Assignment-Program-Manager
 
-# Get PR details
-gh pr view 442 --json title,body,files
+# Fetch PR
+git fetch origin pull/123/head:pr-123
+git checkout pr-123
 
-# Output:
-# Title: "Fix template filtering to use 'outpatient' activity type"
-# Files: backend/app/scheduling/solvers.py (1 line changed)
-
-# View the diff
-gh pr diff 442
-
-# Output shows:
-# - activity_type="clinic"
-# + activity_type="outpatient"
-```
-
-**Step 2: Check Context**
-```bash
-# Read the surrounding code
-grep -B10 -A10 "activity_type" backend/app/scheduling/solvers.py
-
-# Check seed data to verify which value is correct
-grep "activity_type" scripts/seed_templates.py
-```
-
-**Finding:** Need to verify which activity_type value is correct for elective/selective templates.
-
-**Step 3: Verify Against Canonical Data**
-```bash
-# Check BLOCK_10_ROADMAP or seed data
-grep -i "neurology\|palliative\|peds" scripts/seed_templates.py
-
-# Output shows:
-# Template("Neurology", activity_type="outpatient", ...)
-# Template("Palliative Care", activity_type="outpatient", ...)
-```
-
-**Finding:** ✅ "outpatient" is correct! These electives use outpatient activity type.
-
-**Step 4: Check Code Comments vs Implementation**
-```bash
-# Look for comments describing this filter
-grep -B5 "activity_type" backend/app/scheduling/solvers.py
-```
-
-**Finding:** ⚠️ Comment says "filter to elective templates" but doesn't specify activity_type value. Could be clearer.
-
-**Step 5: Run Quality Gates**
-```bash
-# Checkout the PR
-git fetch origin pull/442/head:pr-442
-git checkout pr-442
-
-# Run tests
+# Run quality checks
 cd backend
-pytest tests/test_scheduling_engine.py -v
-# Result: All pass
 
-# Check if change breaks anything else
-pytest -k "template" -v
-# Result: All pass
-```
+# Tests
+pytest
+# Output: 47 passed, 0 failed ✓
 
-**Finding:** ✅ Tests pass, no regressions.
+# Linting
+ruff check app/ tests/
+# Output: All clear ✓
 
-**Step 6: Check for Similar Issues**
-```bash
-# Search for other hardcoded activity_type filters
-grep -n 'activity_type.*=.*"' backend/app/scheduling/*.py
-
+# Type check (this was failing in CI)
+mypy app/ --python-version 3.11
 # Output:
-# solvers.py:145: activity_type="outpatient"  # Our fix
-# engine.py:203: activity_type="clinic"      # Different context - FM Clinic capacity
+# app/scheduling/constraints/call_spacing.py:45: error: Incompatible return type
+# Expected "ConstraintResult", got "None"
 ```
 
-**Finding:** ⚠️ Need to verify engine.py:203 is intentional (it is - different constraint).
+**Found the issue!** Type check fails because `validate()` method doesn't return value in all code paths.
 
-**Step 7: Lessons Learned Check**
+**Step 3: Quality Gate Results**
 
-**Was this issue caused by a known pattern?**
+| Gate | Status | Notes |
+|------|--------|-------|
+| Tests | :white_check_mark: PASS | 47 passed |
+| Linting | :white_check_mark: PASS | 0 errors |
+| Types | :x: FAIL | Missing return in validate() |
+| Security | :white_check_mark: PASS | No issues |
+| Coverage | :white_check_mark: PASS | 85% (target 70%) |
+| Architecture | :warning: NEEDS REVIEW | Constraint pattern followed |
 
-Review pr-reviewer/SKILL.md "Lesson Learned: PR #442" section:
-- This is the ORIGINAL PR #442 that caught the issue!
-- The lesson: Always verify filter values against seed data
-- This is a GOOD CATCH example, not a failure
+**Decision:** REQUEST CHANGES (type error is blocking)
 
-**Step 8: Write Review**
+**Step 4: Code Review by Category**
+
+**A. Code Quality**
+```python
+# ❌ Issue found in call_spacing.py line 45
+def validate(self, assignments, context):
+    violations = []
+    for person_id, person_assignments in group_by_person(assignments):
+        # ... logic ...
+        if spacing < self.min_hours:
+            violations.append(...)
+    # ❌ MISSING: return ConstraintResult(violations)
+```
+
+**Suggestion:**
+```python
+def validate(self, assignments, context) -> ConstraintResult:
+    violations = []
+    for person_id, person_assignments in group_by_person(assignments):
+        # ... logic ...
+        if spacing < self.min_hours:
+            violations.append(...)
+    # ✓ FIX: Add return statement
+    return ConstraintResult(
+        passed=len(violations) == 0,
+        violations=violations,
+        score=1.0 - (len(violations) * 0.1)
+    )
+```
+
+**B. Testing**
+- :white_check_mark: Unit tests added
+- :white_check_mark: Registration test included
+- :white_check_mark: Edge cases covered (24-hour call, overnight)
+- :warning: Suggested: Add integration test with scheduler
+
+**C. Security**
+- :white_check_mark: No sensitive data in logs
+- :white_check_mark: Input validation present
+- :white_check_mark: No SQL injection risk
+
+**D. Architecture**
+- :white_check_mark: Follows SoftConstraint base class
+- :white_check_mark: Exported in __init__.py
+- :white_check_mark: Registered in manager.py
+- :white_check_mark: Weight (8.0) positioned correctly in hierarchy
+
+**E. Documentation**
+- :white_check_mark: Docstring explains constraint purpose
+- :white_check_mark: Clinical rationale documented
+- :white_check_mark: ACGME rule cited
+- :warning: Suggested: Add example to docstring
+
+**Step 5: Generate Review Summary**
 
 ```markdown
-## PR Review: #442
+## Review Summary
 
-**Decision:** APPROVE ✅
+**Decision:** REQUEST CHANGES
 
 ### What This PR Does
-Fixes template filtering to use correct activity_type value for elective/selective rotations.
+Adds CallSpacingConstraint to enforce 72-hour minimum spacing between
+inpatient call shifts, implementing ACGME burnout prevention guidelines.
 
 ### Quality Gate Results
 | Gate | Status | Notes |
 |------|--------|-------|
-| Tests | ✅ | All passing |
-| Linting | ✅ | 0 errors |
-| Correctness | ✅ | Verified against seed data |
+| Tests | :white_check_mark: | 47 passed |
+| Linting | :white_check_mark: | 0 errors |
+| Types | :x: | **BLOCKING**: Missing return in validate() |
+| Security | :white_check_mark: | bandit clear |
+| Coverage | :white_check_mark: | 85% (target 70%) |
 
-### Verification Performed
-1. ✅ Checked seed_templates.py - "outpatient" is correct for electives
-2. ✅ Ran relevant tests - all pass
-3. ✅ Verified comment/code consistency
-4. ✅ Checked for similar issues elsewhere - found none
+### Changes Reviewed
+- `app/scheduling/constraints/call_spacing.py` - New constraint implementation
+- `app/scheduling/constraints/manager.py` - Registration (verified)
+- `tests/test_call_spacing_constraint.py` - Test coverage
 
-### What I Liked
-- Small, focused change
-- Caught before merge (good process!)
-- Properly documented in commit message
+### Required Changes (Blocking)
+
+#### 1. [call_spacing.py:45] Missing return statement
+**Impact:** Type check fails, method returns None instead of ConstraintResult
+
+**Fix:**
+```python
+def validate(self, assignments, context) -> ConstraintResult:
+    violations = []
+    # ... validation logic ...
+    return ConstraintResult(  # ← Add this
+        passed=len(violations) == 0,
+        violations=violations,
+        score=1.0 - (len(violations) * 0.1)
+    )
+```
 
 ### Suggestions (Non-blocking)
-1. Consider adding a comment above the filter explaining why "outpatient":
-   ```python
-   # Filter to elective/selective templates (activity_type="outpatient")
-   # FM Clinic uses "clinic" type and has separate capacity constraints
-   templates = self._get_rotation_templates(activity_type="outpatient")
-   ```
 
-2. Add test case that verifies correct templates are loaded:
-   ```python
-   def test_get_rotation_templates_filters_to_outpatient():
-       """Ensure elective templates use outpatient activity type."""
-       templates = engine._get_rotation_templates(activity_type="outpatient")
-       assert all(t.activity_type == "outpatient" for t in templates)
-       assert "Neurology" in [t.name for t in templates]
-       assert "Family Medicine Clinic" not in [t.name for t in templates]
-   ```
+#### 1. Add integration test with scheduler
+Suggested test:
+```python
+async def test_call_spacing_integration_with_scheduler(db):
+    """Test call spacing is enforced during schedule generation."""
+    # Generate schedule, verify no call shifts within 72 hours
+```
+
+#### 2. Add concrete example to docstring
+```python
+class CallSpacingConstraint(SoftConstraint):
+    """
+    Enforce minimum spacing between call shifts.
+
+    Example:
+        If resident has call Monday 5pm-Tuesday 5pm (24 hours),
+        they cannot take another call until Thursday 5pm (72 hours later).
+    """
+```
+
+### Testing Notes
+Tested locally:
+- [x] Unit tests pass
+- [x] Integration tests pass
+- [x] Manual verification: weight hierarchy correct
 
 ### Merge Checklist
-- [x] All conversations resolved
-- [x] CI checks passing
-- [x] Verified against canonical data
-- [x] No similar issues found
-
-**Recommendation:** Merge when ready. Suggestions are optional improvements.
+- [ ] Fix type error in validate()
+- [ ] Type check passes (`mypy app/`)
+- [ ] Re-run CI checks
+- [ ] Address suggestions (optional)
 ```
 
-**Step 9: Submit Review**
+**Step 6: Post Review**
+
 ```bash
-gh pr review 442 --approve --body "$(cat review.md)"
+# Post review with feedback
+gh pr review 123 --request-changes --body "$(cat <<'EOF'
+## Review Summary
+
+**Decision:** REQUEST CHANGES
+
+[... full review summary from above ...]
+
+EOF
+)"
+
+# Add inline comment on specific line
+gh api repos/{owner}/{repo}/pulls/123/comments \
+  -f body="Missing return statement here. See main review for fix." \
+  -f commit_id="abc123" \
+  -f path="backend/app/scheduling/constraints/call_spacing.py" \
+  -f position=45
 ```
 
-**Total Time:** ~10 minutes (small, focused PR)
+**Follow-up after fixes applied:**
 
-## Workflow Diagram
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│ PULL REQUEST REVIEW WORKFLOW                                │
-└─────────────────────────────────────────────────────────────┘
-
-1. FETCH PR CONTEXT
-   ├─ gh pr view <number> --json title,body,files
-   ├─ gh pr diff <number>
-   └─ Understand the "why"
-              ↓
-2. VERIFY CORRECTNESS
-   ├─ Check against canonical data sources
-   ├─ Verify filter values will find expected records
-   └─ Review comments match implementation
-              ↓
-3. CHECKOUT & TEST
-   ├─ git fetch origin pull/<n>/head:pr-<n>
-   ├─ git checkout pr-<n>
-   ├─ Run: pytest (relevant tests)
-   └─ Run: ruff check, mypy
-              ↓
-4. QUALITY GATES
-   ├─ Tests: All must pass
-   ├─ Linting: 0 errors
-   ├─ Security: No vulnerabilities
-   └─ Coverage: >= 70%
-              ↓
-5. CONTEXTUAL REVIEW
-   ├─ Check for similar issues elsewhere
-   ├─ Verify against lessons learned
-   └─ Consider broader impact
-              ↓
-6. DECISION MATRIX
-   ├─ Any gate failed? → REQUEST CHANGES
-   ├─ Security/auth changes? → ESCALATE TO HUMAN
-   ├─ Minor suggestions only? → APPROVE with comments
-   └─ All perfect? → APPROVE
-              ↓
-7. SUBMIT REVIEW
-   ├─ gh pr review <number> --approve/--request-changes
-   └─ Include detailed feedback
-```
-
-## Common Failure Modes
-
-### Failure Mode 1: Approving Without Testing
-**Symptom:** PR looks good in diff but breaks when deployed
-
-**Example:** PR changes database query but tests aren't run locally
 ```bash
-# BAD - Just reading the diff
-gh pr diff 123
-# Looks good!
-gh pr review 123 --approve
+# Author pushes fix
+# Re-check the PR
 
-# GOOD - Actually test it
+gh pr checks 123
+# Output: All checks passing ✓
+
+# Re-review
+gh pr review 123 --approve --body "$(cat <<'EOF'
+## Re-Review Summary
+
+**Decision:** APPROVE ✓
+
+### Changes Verified
+- ✓ Type error fixed - validate() now returns ConstraintResult
+- ✓ All CI checks passing
+- ✓ Type check passes
+
+Ready to merge!
+EOF
+)"
+```
+
+## Failure Mode Handling
+
+### Failure Mode 1: CI Checks Failing
+
+**Symptom:**
+```bash
+$ gh pr checks 123
+
+✗ Backend Tests   failed
+✗ Type Check      failed
+✓ Lint Check      passed
+```
+
+**Recovery:**
+
+```bash
+# 1. Checkout PR locally
 git fetch origin pull/123/head:pr-123
 git checkout pr-123
-pytest
-# Oh, tests fail! Good thing we checked.
+
+# 2. Run tests to see failures
+cd backend
+pytest -v
+
+# Output shows which tests failed
+
+# 3. Request changes with specific test failures
+gh pr review 123 --request-changes --body "$(cat <<'EOF'
+CI checks are failing. Please fix before re-review:
+
+**Failed Tests:**
+- test_call_spacing_overnight - AssertionError on line 45
+- test_call_spacing_edge_case - Expected 2 violations, got 0
+
+**Type Errors:**
+- call_spacing.py:45 - Missing return type
+
+Please address these issues and push updates.
+EOF
+)"
 ```
 
-**Prevention:** Always checkout and run tests for non-trivial changes
+### Failure Mode 2: PR Changes Core Security Code
 
-### Failure Mode 2: Missing Broader Impact
-**Symptom:** Change breaks something in unexpected area
+**Symptom:** PR modifies `backend/app/core/security.py`
 
-**Example:** PR changes constraint weight, but doesn't check solver performance
-```python
-# PR changes:
-- CallSpacingConstraint(weight=8.0)
-+ CallSpacingConstraint(weight=15.0)  # Make it stronger
+**Recovery:**
 
-# Reviewer approves without checking impact
-# Result: Solver now takes 10x longer because this constraint conflicts with others
-```
-
-**Detection:**
-- Search for other usages: `grep -r "CallSpacing" backend/`
-- Check if weight is referenced in docs
-- Look for related tests
-
-**Prevention:** For infrastructure changes, run performance tests
-
-### Failure Mode 3: Trusting Comments Over Code
-**Symptom:** Comments say one thing, code does another
-
-**Example from PR #442:**
-```python
-# Comment says: "Filter to clinic templates"
-# Code says: activity_type="outpatient"
-# Actual data: Clinic uses "clinic", outpatient uses "outpatient"
-
-# Which is right? Must verify against seed data!
-```
-
-**Detection:** Always verify claims against actual data/behavior
-
-**Prevention:** Add to checklist: "Do comments match implementation?"
-
-### Failure Mode 4: Not Checking Seed Data Alignment
-**Symptom:** Filter values don't match canonical data sources
-
-**Example:**
-```python
-# PR filters for:
-templates = filter(lambda t: t.category == "elective", all_templates)
-
-# But seed data uses:
-Template("Neurology", type="selective", ...)  # Not "elective"!
-
-# Filter will miss records!
-```
-
-**Detection:**
 ```bash
-# Always check seed data
-grep -i "neurology" scripts/seed_templates.py
-grep -i "category\|type" scripts/seed_templates.py
+# 1. Immediately invoke security-audit skill
+# (Don't approve without security review)
+
+# 2. Flag for human review
+gh pr comment 123 --body "$(cat <<'EOF'
+⚠️ **SECURITY REVIEW REQUIRED**
+
+This PR modifies core security code (`core/security.py`).
+Flagging for human security review before approval.
+
+@security-team please review authentication changes.
+EOF
+)"
+
+# 3. Mark as REQUEST CHANGES until security cleared
+gh pr review 123 --request-changes --body "$(cat <<'EOF'
+Holding for security review. See comment above.
+
+Changes to security code require human approval.
+EOF
+)"
 ```
 
-**Prevention:** Add to review checklist: "Verify filter values against seed data"
+### Failure Mode 3: Database Migration Without Testing
 
-### Failure Mode 5: Skipping Lessons Learned
-**Symptom:** Same mistakes repeated across PRs
+**Symptom:** PR includes Alembic migration but no evidence of upgrade/downgrade testing
 
-**Example:** PR #400 had auth issue. PR #450 has same auth issue because reviewer didn't check lessons learned.
+**Recovery:**
 
-**Detection:** Before each review:
 ```bash
-# Check for relevant lessons
-grep -i "lesson\|failure mode" .claude/skills/pr-reviewer/SKILL.md
+# 1. Verify migration testing in PR description or commits
+gh pr view 123 --json body | grep -i "alembic\|migration\|upgrade\|downgrade"
+
+# If no evidence found:
+
+# 2. Request testing evidence
+gh pr review 123 --request-changes --body "$(cat <<'EOF'
+⚠️ **Database Migration Detected**
+
+This PR includes a database migration but doesn't show testing evidence.
+
+**Required before approval:**
+- [ ] Demonstrate `alembic upgrade head` succeeds
+- [ ] Demonstrate `alembic downgrade -1` succeeds
+- [ ] Demonstrate `alembic upgrade head` succeeds again
+- [ ] Verify application starts with new schema
+- [ ] Verify all tests pass
+
+Please add this evidence to PR description or commit message.
+EOF
+)"
 ```
 
-**Prevention:** Maintain "Lesson Learned" section in this skill file
+### Failure Mode 4: Coverage Drop Below Threshold
+
+**Symptom:**
+```bash
+$ pytest --cov=app --cov-fail-under=70
+
+FAILED: Coverage 65% is below threshold 70%
+```
+
+**Recovery:**
+
+```bash
+# 1. Identify uncovered code
+pytest --cov=app --cov-report=html
+# Open htmlcov/index.html
+
+# 2. Request additional tests
+gh pr review 123 --request-changes --body "$(cat <<'EOF'
+Test coverage dropped to 65% (below 70% threshold).
+
+**Uncovered code:**
+- `call_spacing.py` lines 45-52 (edge case handling)
+- `call_spacing.py` lines 78-82 (error handling)
+
+Please add tests for these code paths.
+EOF
+)"
+```
+
+### Failure Mode 5: Unclear PR Purpose
+
+**Symptom:** PR description says "fixes stuff" with no details
+
+**Recovery:**
+
+```bash
+# Request clarification before reviewing
+gh pr comment 123 --body "$(cat <<'EOF'
+Could you please provide more context in the PR description?
+
+**Helpful information:**
+- What problem does this solve?
+- What approach did you take?
+- How was it tested?
+- Are there any breaking changes?
+
+This helps with review and serves as documentation for future reference.
+EOF
+)"
+
+# Don't approve until description is clear
+```
+
+## Integration Examples (Extended)
+
+### With code-review (Detailed)
+
+```
+[PR #123 opened]
+[pr-reviewer activated]
+
+Step 1: pr-reviewer gathers context
+→ Identifies 4 files changed
+→ Detects new constraint code
+
+Step 2: Invoke code-review for line-by-line analysis
+→ code-review examines call_spacing.py
+→ Finds: Missing return statement, unclear variable name, missing type hint
+
+Step 3: pr-reviewer synthesizes findings
+→ Combines code-review findings with quality gates
+→ Generates unified review with inline suggestions
+
+Step 4: Post review
+→ gh pr review 123 --request-changes
+→ Includes both structural issues (gates) and code quality issues (code-review)
+```
+
+### With security-audit (Detailed)
+
+```
+[PR #456 modifies auth logic]
+[pr-reviewer activated]
+
+→ Detects security-sensitive file: backend/app/api/routes/auth.py
+→ STOP: Do not auto-approve
+
+[Invoke security-audit skill]
+→ Checks for: password handling, token generation, SQL injection, XSS
+→ Finds: Hardcoded secret key in test (violation)
+
+[pr-reviewer includes security findings]
+Review:
+"🔒 Security Review Required
+
+security-audit found:
+- Hardcoded secret 'test123' in test_auth.py line 45
+- Missing rate limiting on new endpoint
+- No input validation on email parameter
+
+These must be addressed before approval."
+```
+
+### With automated-code-fixer (Detailed)
+
+```
+[PR #789 has simple linting errors]
+[pr-reviewer activated]
+
+→ Runs quality gates
+→ Linting: 5 errors (missing imports, unused variables, formatting)
+
+Instead of requesting changes:
+
+[Invoke automated-code-fixer]
+→ automated-code-fixer runs ruff check --fix
+→ All 5 errors auto-fixed
+→ Push fixes to PR branch
+
+[pr-reviewer re-runs gates]
+→ All gates now PASS
+→ Post review: "Auto-fixed linting errors. Approved after fixes."
+```
+
+## Validation Checklist (Extended)
+
+### Pre-Review Checklist
+- [ ] PR has clear description
+- [ ] PR is not too large (< 500 lines ideal)
+- [ ] PR targets correct base branch
+- [ ] PR has been rebased on latest main (no conflicts)
+- [ ] Author has reviewed own code first
+
+### Context Gathering Checklist
+- [ ] Read PR title and description
+- [ ] View changed files list
+- [ ] Check commit history
+- [ ] Review CI check status
+- [ ] Read any linked issues
+
+### Local Testing Checklist
+- [ ] Successfully checked out PR branch
+- [ ] Tests pass locally
+- [ ] Linting passes
+- [ ] Type checking passes
+- [ ] Application runs without errors
+- [ ] No obvious regressions observed
+
+### Code Quality Review Checklist
+- [ ] Code follows project architecture
+- [ ] Type hints on all functions
+- [ ] Docstrings on public APIs
+- [ ] No hardcoded values
+- [ ] DRY principle followed
+- [ ] Error handling appropriate
+- [ ] No obvious performance issues
+
+### Security Review Checklist
+- [ ] No hardcoded secrets
+- [ ] Input validation present
+- [ ] Auth checks in place
+- [ ] No sensitive data in logs
+- [ ] SQL injection prevented
+- [ ] XSS vulnerabilities prevented
+- [ ] Rate limiting on new endpoints
+
+### Testing Review Checklist
+- [ ] Tests added for new code
+- [ ] Tests cover edge cases
+- [ ] Tests are readable
+- [ ] Coverage >= 70%
+- [ ] No flaky tests
+- [ ] Tests document expected behavior
+
+### Architecture Review Checklist
+- [ ] Follows layered architecture
+- [ ] Database changes have migrations
+- [ ] Async/await used correctly
+- [ ] Pydantic schemas for I/O
+- [ ] No circular dependencies
+- [ ] Integration points documented
+
+### Documentation Review Checklist
+- [ ] PR description is clear
+- [ ] Complex logic commented
+- [ ] API docs updated if needed
+- [ ] CHANGELOG updated for features
+- [ ] Breaking changes documented
+- [ ] Code/comment consistency verified
+
+### Special Cases Checklist
+
+**If PR includes database migration:**
+- [ ] Model and migration committed together
+- [ ] Upgrade tested
+- [ ] Downgrade tested
+- [ ] Data safety verified
+- [ ] Backup plan documented
+
+**If PR modifies security code:**
+- [ ] Security-audit skill invoked
+- [ ] Human review requested
+- [ ] No obvious vulnerabilities
+- [ ] Authentication not weakened
+- [ ] Authorization maintained
+
+**If PR adds constraint:**
+- [ ] Constraint-preflight skill invoked
+- [ ] Registration verified
+- [ ] Weight hierarchy correct
+- [ ] Clinical rationale documented
+
+### Post-Review Checklist
+- [ ] Decision made (approve/request-changes/comment)
+- [ ] Review summary posted
+- [ ] Inline comments added
+- [ ] Blocking vs. non-blocking issues clear
+- [ ] Follow-up actions specified
 
 ## References
 

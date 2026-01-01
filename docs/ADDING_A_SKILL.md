@@ -425,20 +425,22 @@ Use this template for files in the `Workflows/` directory:
 ```markdown
 # Workflow: [Workflow Name]
 
+> **Note:** This is a template. Replace all placeholders in [brackets] with actual content specific to your skill's workflow.
+
 ## Overview
 
 [2-3 sentence description of what this workflow does and when to use it]
 
 ## Prerequisites
 
-- [ ] [Prerequisite 1]
-- [ ] [Prerequisite 2]
-- [ ] [Prerequisite 3]
+- [ ] [Prerequisite 1 - e.g., "Database schema initialized with required tables"]
+- [ ] [Prerequisite 2 - e.g., "API authentication configured"]
+- [ ] [Prerequisite 3 - e.g., "Required MCP tools available"]
 
 ## Input Requirements
 
-- **[Input 1]**: [Description, data type, constraints]
-- **[Input 2]**: [Description, data type, constraints]
+- **[Input 1]**: [Description, data type, constraints - e.g., "resident_id: UUID, must exist in persons table"]
+- **[Input 2]**: [Description, data type, constraints - e.g., "start_date: ISO 8601 date string, must be future date"]
 
 ## Workflow Steps
 
@@ -484,8 +486,8 @@ Use this template for files in the `Workflows/` directory:
 ```
 
 **Validation:**
-- [ ] [Validation check 1]
-- [ ] [Validation check 2]
+- [ ] [Validation check 1 - e.g., "Confirm API returned 200 status"]
+- [ ] [Validation check 2 - e.g., "Verify database record was created"]
 
 ### Step 3: [Step Name]
 
@@ -493,9 +495,9 @@ Use this template for files in the `Workflows/` directory:
 
 **Decision Point:**
 ```
-IF [condition]:
+IF [condition - e.g., "schedule conflicts detected"]:
     → Go to Step 4
-ELSE IF [condition]:
+ELSE IF [condition - e.g., "ACGME compliance violated"]:
     → Go to Step 5
 ELSE:
     → ABORT with error
@@ -508,9 +510,9 @@ ELSE:
 ## Final Verification
 
 After completing all steps:
-- [ ] [Final check 1]
-- [ ] [Final check 2]
-- [ ] [Final check 3]
+- [ ] [Final check 1 - e.g., "All test cases pass"]
+- [ ] [Final check 2 - e.g., "No compliance violations detected"]
+- [ ] [Final check 3 - e.g., "Audit log entries created"]
 
 ## Error Handling
 

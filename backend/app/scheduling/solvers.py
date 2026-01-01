@@ -154,7 +154,25 @@ class BaseSolver(ABC):
         resident: Person,
         templates: list[RotationTemplate],
     ) -> RotationTemplate | None:
-        """Select appropriate rotation template for a resident."""
+        """
+        Select appropriate rotation template for a resident.
+
+        Filters templates to find those suitable for the resident based on
+        credential requirements. Currently checks for procedure credentials
+        but could be extended to consider PGY level, specialty, etc.
+
+        Args:
+            resident: Person object for the resident being assigned
+            templates: List of available rotation templates to choose from
+
+        Returns:
+            RotationTemplate if a suitable template is found, None otherwise.
+            Returns the first suitable template in the list.
+
+        Note:
+            Templates requiring procedure credentials are excluded unless the
+            resident has the necessary qualifications.
+        """
         suitable = []
         for template in templates:
             # Skip templates requiring procedure credentials

@@ -68,104 +68,132 @@ class CoverageConstraintTemplate(SoftConstraint):
         """
         Add coverage constraint to CP-SAT model.
 
-        Ensures that required slots have at least min_coverage assignments.
-        Uses slack variables for soft constraint handling (penalize undercoverage).
-
-        Args:
-            model: OR-Tools CP-SAT model
-            variables: Dict containing 'assignments' decision variables
-            context: SchedulingContext with block data
+        Ensures required slots have minimum coverage and penalizes
+        uncovered slots in the objective.
         """
         x = variables.get("assignments", {})
-        if not x or not self.required_slots:
+        template_vars = variables.get("template_assignments", {})
+
+        if not x and not template_vars:
             return
 
-        # Build block index mapping
-        block_to_idx = {b.id: context.block_idx[b.id] for b in context.blocks}
+        # For each required slot, ensure minimum coverage
+        uncovered_penalties = []
 
-        # For each required slot, ensure coverage
-        undercoverage_vars = []
-        for slot in self.required_slots:
+        for slot in self.required_slots or []:
             block_id, rotation_id = slot
-            if block_id not in block_to_idx:
+            b_i = context.block_idx.get(block_id)
+
+            if b_i is None:
                 continue
 
-            b_i = block_to_idx[block_id]
+            # Collect variables for this slot
+            slot_vars = []
 
-            # Collect all assignment variables for this block
-            # (summing across all persons assigned to this block)
-            slot_vars = [x[key] for key in x if key[1] == b_i]
+            # Check regular assignments
+            for person in context.residents + context.faculty:
+                p_i = context.resident_idx.get(person.id)
+                if p_i is not None and (p_i, b_i) in x:
+                    slot_vars.append(x[p_i, b_i])
+
+            # Check template-specific assignments
+            if template_vars:
+                for person in context.residents + context.faculty:
+                    p_i = context.resident_idx.get(person.id)
+                    if p_i is not None:
+                        for template in context.templates:
+                            if (
+                                template.id == rotation_id
+                                and (p_i, b_i, template.id) in template_vars
+                            ):
+                                slot_vars.append(template_vars[p_i, b_i, template.id])
 
             if slot_vars:
-                slot_sum = sum(slot_vars)
+                # Create penalty variable for uncovered slots
+                is_covered = model.NewBoolVar(f"covered_{block_id}_{rotation_id}")
+                model.Add(sum(slot_vars) >= self.min_coverage).OnlyEnforceIf(is_covered)
+                model.Add(sum(slot_vars) < self.min_coverage).OnlyEnforceIf(
+                    is_covered.Not()
+                )
 
-                # Create undercoverage slack variable
-                slack = model.NewIntVar(0, self.min_coverage, f"coverage_slack_{block_id}")
-                undercoverage_vars.append(slack)
+                # Penalty for not being covered
+                uncovered_penalties.append(is_covered.Not())
 
-                # coverage + slack >= min_coverage
-                model.Add(slot_sum + slack >= self.min_coverage)
-
-        # Add weighted undercoverage to soft objectives
-        if undercoverage_vars:
-            if "soft_objectives" not in variables:
-                variables["soft_objectives"] = []
-            variables["soft_objectives"].append(
-                (int(self.weight * 10), sum(undercoverage_vars))  # Higher weight for coverage
-            )
+        # Add penalties to objective
+        if uncovered_penalties:
+            objective_vars = variables.get("objective_terms", [])
+            for penalty_var in uncovered_penalties:
+                objective_vars.append((penalty_var, int(self.weight)))
+            variables["objective_terms"] = objective_vars
 
     def add_to_pulp(self, model, variables, context):
         """
         Add coverage constraint to PuLP model.
 
-        Ensures that required slots have at least min_coverage assignments.
-
-        Args:
-            model: PuLP model
-            variables: Dict containing 'assignments' decision variables
-            context: SchedulingContext with block data
+        Ensures required slots have minimum coverage with penalty
+        for uncovered slots.
         """
         import pulp
 
         x = variables.get("assignments", {})
-        if not x or not self.required_slots:
+        template_vars = variables.get("template_assignments", {})
+
+        if not x and not template_vars:
             return
 
-        # Build block index mapping
-        block_to_idx = {b.id: context.block_idx[b.id] for b in context.blocks}
+        # For each required slot, add coverage penalty
+        total_penalty = 0
 
-        # For each required slot, ensure coverage
-        undercoverage_vars = []
-        for slot in self.required_slots:
+        for slot in self.required_slots or []:
             block_id, rotation_id = slot
-            if block_id not in block_to_idx:
+            b_i = context.block_idx.get(block_id)
+
+            if b_i is None:
                 continue
 
-            b_i = block_to_idx[block_id]
+            # Collect variables for this slot
+            slot_vars = []
 
-            # Collect all assignment variables for this block
-            slot_vars = [x[key] for key in x if key[1] == b_i]
+            # Check regular assignments
+            for person in context.residents + context.faculty:
+                p_i = context.resident_idx.get(person.id)
+                if p_i is not None and (p_i, b_i) in x:
+                    slot_vars.append(x[p_i, b_i])
+
+            # Check template-specific assignments
+            if template_vars:
+                for person in context.residents + context.faculty:
+                    p_i = context.resident_idx.get(person.id)
+                    if p_i is not None:
+                        for template in context.templates:
+                            if (
+                                template.id == rotation_id
+                                and (p_i, b_i, template.id) in template_vars
+                            ):
+                                slot_vars.append(template_vars[p_i, b_i, template.id])
 
             if slot_vars:
-                # Create undercoverage slack variable
-                slack = pulp.LpVariable(
-                    f"coverage_slack_{block_id}",
-                    lowBound=0,
-                    upBound=self.min_coverage,
-                    cat="Integer"
+                # Create binary variable for coverage violation
+                is_uncovered = pulp.LpVariable(
+                    f"uncovered_{block_id}_{rotation_id}",
+                    0,
+                    1,
+                    cat="Binary",
                 )
-                undercoverage_vars.append(slack)
 
-                # coverage + slack >= min_coverage
+                # If sum < min_coverage, is_uncovered can be 1 (penalized)
+                # This is approximated by: sum + is_uncovered * M >= min_coverage
+                # Where M is a large number
+                M = len(context.residents) + len(context.faculty)
                 model += (
-                    pulp.lpSum(slot_vars) + slack >= self.min_coverage,
-                    f"coverage_{block_id}"
+                    pulp.lpSum(slot_vars) + is_uncovered * M >= self.min_coverage,
+                    f"coverage_penalty_{block_id}_{rotation_id}",
                 )
 
-        # Add weighted undercoverage to soft objectives
-        if undercoverage_vars:
-            if "soft_objectives" not in variables:
-                variables["soft_objectives"] = []
-            variables["soft_objectives"].append(
-                (self.weight * 10, pulp.lpSum(undercoverage_vars))
-            )
+                total_penalty += is_uncovered
+
+        # Add total penalty to objective
+        if total_penalty:
+            obj_terms = variables.get("objective_terms", [])
+            obj_terms.append(self.weight * total_penalty)
+            variables["objective_terms"] = obj_terms

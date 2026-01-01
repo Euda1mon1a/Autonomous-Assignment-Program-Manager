@@ -1,23 +1,6 @@
 ---
 name: constraint-preflight
 description: Pre-flight verification for scheduling constraint development. Use when adding, modifying, or testing constraints to ensure they are properly implemented, exported, registered, and tested before commit.
-model_tier: sonnet
-parallel_hints:
-  can_parallel_with: [test-writer, code-review]
-  must_serialize_with: [SCHEDULING, schedule-optimization]
-  preferred_batch_size: 1
-context_hints:
-  max_file_context: 50
-  compression_level: 1
-  requires_git_context: true
-  requires_db_context: false
-escalation_triggers:
-  - pattern: "ACGME.*constraint"
-    reason: "ACGME constraint changes require domain expert review"
-  - pattern: "weight.*hierarchy"
-    reason: "Weight hierarchy changes require clinical input"
-  - keyword: ["compliance", "regulation"]
-    reason: "Regulatory constraints require human verification"
 ---
 
 # Constraint Pre-Flight Verification
@@ -299,294 +282,554 @@ For call equity constraints, follow this hierarchy (highest impact first):
 | TuesdayCallPreference | 2.0 | Academic scheduling preference |
 | DeptChiefWednesdayPreference | 1.0 | Personal preference (lowest) |
 
-## Concrete Usage Example
+## Workflow Diagram
 
-### End-to-End: Adding a New Constraint
-
-**Scenario:** You need to add a constraint that prevents residents from being scheduled for more than 2 consecutive weekend calls.
-
-**Step 1: Create the Constraint Class**
-```bash
-# Create new file
-touch backend/app/scheduling/constraints/weekend_call_limit.py
+```
+┌──────────────────────────────────────────────────────────────────┐
+│            CONSTRAINT PRE-FLIGHT WORKFLOW                        │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  STEP 1: Implement Constraint Class                             │
+│  ┌────────────────────────────────────────────────┐             │
+│  │ Create class in constraints/*.py               │             │
+│  │ Implement: __init__, add_to_cpsat,             │             │
+│  │            add_to_pulp, validate                │             │
+│  └────────────────────────────────────────────────┘             │
+│                         ↓                                        │
+│  STEP 2: Export in __init__.py                                  │
+│  ┌────────────────────────────────────────────────┐             │
+│  │ Add import statement                           │             │
+│  │ Add to __all__ list                            │             │
+│  └────────────────────────────────────────────────┘             │
+│                         ↓                                        │
+│  STEP 3: Register in ConstraintManager (CRITICAL!)              │
+│  ┌────────────────────────────────────────────────┐             │
+│  │ Import in manager.py                           │             │
+│  │ Add to create_default()                        │             │
+│  │ Add to create_resilience_aware()               │             │
+│  │ ⚠️ MUST BE IN BOTH FACTORY METHODS             │             │
+│  └────────────────────────────────────────────────┘             │
+│                         ↓                                        │
+│  STEP 4: Write Tests                                            │
+│  ┌────────────────────────────────────────────────┐             │
+│  │ Unit tests for constraint logic                │             │
+│  │ Registration test in manager                   │             │
+│  │ Integration test with scheduler                │             │
+│  └────────────────────────────────────────────────┘             │
+│                         ↓                                        │
+│  STEP 5: Run Pre-Flight Verification (MANDATORY)                │
+│  ┌────────────────────────────────────────────────┐             │
+│  │ python ../scripts/verify_constraints.py        │             │
+│  │ ✓ Registration check                           │             │
+│  │ ✓ Weight hierarchy check                       │             │
+│  │ ✓ Manager consistency check                    │             │
+│  └────────────────────────────────────────────────┘             │
+│                         ↓                                        │
+│  STEP 6: Commit Only If All Pass                                │
+│  ┌────────────────────────────────────────────────┐             │
+│  │ All verifications PASS                         │             │
+│  │ Tests PASS                                     │             │
+│  │ → Safe to commit                               │             │
+│  └────────────────────────────────────────────────┘             │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-```python
-# backend/app/scheduling/constraints/weekend_call_limit.py
-from typing import Any, Dict
-from app.scheduling.constraints.base import SoftConstraint, ConstraintType, ConstraintPriority, ConstraintResult
+## Concrete Usage Example: Adding FridayCallAvoidanceConstraint
 
-class WeekendCallLimitConstraint(SoftConstraint):
+**Scenario:** Program director wants to minimize Friday call assignments to improve weekend coverage.
+
+### Complete Implementation Walkthrough
+
+**Step 1: Implement the Constraint Class**
+
+```python
+# backend/app/scheduling/constraints/friday_call_avoidance.py
+
+"""Soft constraint to minimize Friday call assignments."""
+
+from typing import Any, Dict, List
+from app.scheduling.constraints.base import SoftConstraint, ConstraintResult
+from app.scheduling.constraints.types import ConstraintType, ConstraintPriority
+
+
+class FridayCallAvoidanceConstraint(SoftConstraint):
     """
-    Prevents residents from working more than 2 consecutive weekend calls.
-    Soft constraint - penalizes violations rather than blocking them.
+    Minimize Friday inpatient call assignments to improve weekend coverage.
+
+    Clinical rationale: Friday call often extends into Saturday coverage,
+    reducing resident availability for weekend shifts.
+
+    Weight: 3.0 (medium-low priority, below call equity constraints)
     """
-    def __init__(self, weight: float = 6.0, max_consecutive: int = 2) -> None:
+
+    def __init__(self, weight: float = 3.0) -> None:
         super().__init__(
-            name="WeekendCallLimit",
-            constraint_type=ConstraintType.WORKLOAD,
+            name="FridayCallAvoidance",
+            constraint_type=ConstraintType.PREFERENCE,
             weight=weight,
             priority=ConstraintPriority.MEDIUM,
         )
-        self.max_consecutive = max_consecutive
 
-    def add_to_cpsat(self, model, variables, context) -> None:
-        # Implementation for CP-SAT solver
+    def add_to_cpsat(
+        self, model: Any, variables: Dict[str, Any], context: Dict[str, Any]
+    ) -> None:
+        """Add penalty for Friday call assignments in CP-SAT solver."""
+        # Implementation details...
         pass
 
-    def validate(self, assignments, context) -> ConstraintResult:
-        # Validation implementation
+    def add_to_pulp(
+        self, model: Any, variables: Dict[str, Any], context: Dict[str, Any]
+    ) -> None:
+        """Add penalty for Friday call assignments in PuLP solver."""
+        # Implementation details...
+        pass
+
+    def validate(
+        self, assignments: List[Any], context: Dict[str, Any]
+    ) -> ConstraintResult:
+        """Validate Friday call distribution."""
+        # Implementation details...
         pass
 ```
 
-**Step 2: Export in `__init__.py`**
-```bash
-# Edit backend/app/scheduling/constraints/__init__.py
-```
+**Step 2: Export in __init__.py**
 
-Add to exports:
 ```python
-from .weekend_call_limit import WeekendCallLimitConstraint
+# backend/app/scheduling/constraints/__init__.py
+
+from .friday_call_avoidance import FridayCallAvoidanceConstraint
 
 __all__ = [
     # ... existing exports ...
-    "WeekendCallLimitConstraint",
+    "CallSpacingConstraint",
+    "SundayCallEquityConstraint",
+    "TuesdayCallPreferenceConstraint",
+    "WeekdayCallEquityConstraint",
+    # NEW:
+    "FridayCallAvoidanceConstraint",  # ← Add this!
 ]
 ```
 
-**Step 3: Register in Manager (CRITICAL!)**
-```bash
-# Edit backend/app/scheduling/constraints/manager.py
-```
+**Step 3: Register in ConstraintManager (CRITICAL!)**
 
-Add to both factory methods:
 ```python
-from .weekend_call_limit import WeekendCallLimitConstraint
+# backend/app/scheduling/constraints/manager.py
+
+from .friday_call_avoidance import FridayCallAvoidanceConstraint
 
 class ConstraintManager:
     @classmethod
     def create_default(cls) -> "ConstraintManager":
+        """Create manager with standard constraint set."""
         manager = cls()
+
         # ... existing constraints ...
-        manager.add(WeekendCallLimitConstraint(weight=6.0))  # ADD THIS!
+
+        # Call equity constraints (weight hierarchy matters!)
+        manager.add(SundayCallEquityConstraint(weight=10.0))
+        manager.add(CallSpacingConstraint(weight=8.0))
+        manager.add(WeekdayCallEquityConstraint(weight=5.0))
+        manager.add(TuesdayCallPreferenceConstraint(weight=2.0))
+
+        # NEW: Add Friday avoidance (weight=3.0, below call equity)
+        manager.add(FridayCallAvoidanceConstraint(weight=3.0))  # ← Add this!
+
         return manager
 
     @classmethod
-    def create_resilience_aware(cls, ...) -> "ConstraintManager":
+    def create_resilience_aware(
+        cls,
+        n1_compliant: bool = True,
+        utilization_cap: float = 0.8,
+        defense_level: int = 2,
+    ) -> "ConstraintManager":
+        """Create manager with resilience-aware constraints."""
         manager = cls()
+
         # ... existing constraints ...
-        manager.add(WeekendCallLimitConstraint(weight=6.0))  # AND THIS!
+
+        # Call preferences
+        manager.add(SundayCallEquityConstraint(weight=10.0))
+        manager.add(CallSpacingConstraint(weight=8.0))
+        manager.add(WeekdayCallEquityConstraint(weight=5.0))
+        manager.add(TuesdayCallPreferenceConstraint(weight=2.0))
+
+        # NEW: Add here too!
+        manager.add(FridayCallAvoidanceConstraint(weight=3.0))  # ← And this!
+
         return manager
 ```
 
 **Step 4: Write Tests**
+
 ```python
-# backend/tests/test_weekend_call_limit.py
+# backend/tests/test_friday_call_avoidance.py
+
 import pytest
-from app.scheduling.constraints import WeekendCallLimitConstraint, ConstraintManager
+from app.scheduling.constraints import (
+    FridayCallAvoidanceConstraint,
+    ConstraintManager,
+)
 
-class TestWeekendCallLimitConstraint:
+
+class TestFridayCallAvoidanceConstraint:
     def test_constraint_initialization(self):
-        """Test basic initialization."""
-        constraint = WeekendCallLimitConstraint()
-        assert constraint.name == "WeekendCallLimit"
-        assert constraint.weight == 6.0
-        assert constraint.max_consecutive == 2
+        """Verify constraint initializes with correct values."""
+        constraint = FridayCallAvoidanceConstraint()
+        assert constraint.name == "FridayCallAvoidance"
+        assert constraint.weight == 3.0
+        assert constraint.constraint_type == ConstraintType.PREFERENCE
 
-    def test_constraint_registered_in_manager(self):
-        """CRITICAL: Verify constraint is actually used!"""
+    def test_custom_weight(self):
+        """Test constraint with custom weight."""
+        constraint = FridayCallAvoidanceConstraint(weight=5.0)
+        assert constraint.weight == 5.0
+
+    def test_constraint_registered_in_default_manager(self):
+        """CRITICAL: Verify constraint is in create_default()."""
         manager = ConstraintManager.create_default()
         registered_types = {type(c) for c in manager.constraints}
-        assert WeekendCallLimitConstraint in registered_types
+        assert FridayCallAvoidanceConstraint in registered_types
+
+    def test_constraint_registered_in_resilience_manager(self):
+        """CRITICAL: Verify constraint is in create_resilience_aware()."""
+        manager = ConstraintManager.create_resilience_aware()
+        registered_types = {type(c) for c in manager.constraints}
+        assert FridayCallAvoidanceConstraint in registered_types
+
+    def test_validate_friday_distribution(self):
+        """Test validation logic for Friday call assignments."""
+        # Implementation...
+        pass
 ```
 
 **Step 5: Run Pre-Flight Verification**
+
 ```bash
-cd backend
+cd /home/user/Autonomous-Assignment-Program-Manager/backend
+
+# Run verification script
 python ../scripts/verify_constraints.py
 ```
 
-Expected output should show:
+**Expected Output:**
 ```
-Registered constraints (24 total):  # One more than before
+============================================================
+CONSTRAINT PRE-FLIGHT VERIFICATION
+============================================================
+
+============================================================
+CONSTRAINT REGISTRATION VERIFICATION
+============================================================
+
+Registered constraints (24 total):  # ← Was 23, now 24
+  - 1in7Rule: ENABLED
+  - 80HourRule: ENABLED
+  - Availability: ENABLED
+  - CallSpacing: ENABLED weight=8.0
   ...
-  - WeekendCallLimit: ENABLED weight=6.0
-  ...
+  - FridayCallAvoidance: ENABLED weight=3.0  # ← NEW!
+
+Block 10 Constraint Check:
+  [OK] CallSpacingConstraint
+  [OK] SundayCallEquityConstraint
+  [OK] TuesdayCallPreferenceConstraint
+  [OK] WeekdayCallEquityConstraint
+  [OK] FridayCallAvoidanceConstraint  # ← NEW!
+
+============================================================
+WEIGHT HIERARCHY VERIFICATION
+============================================================
+
+Call preference weight hierarchy:
+  [OK] SundayCallEquity: weight=10.0
+  [OK] CallSpacing: weight=8.0
+  [OK] WeekdayCallEquity: weight=5.0
+  [OK] FridayCallAvoidance: weight=3.0  # ← NEW! Correctly positioned
+  [OK] TuesdayCallPreference: weight=2.0
+
+============================================================
+MANAGER CONSISTENCY VERIFICATION
+============================================================
+
+Block 10 constraints in both managers:
+  [OK] FridayCallAvoidance  # ← In both create_default() and create_resilience_aware()
+
+============================================================
+SUMMARY
+============================================================
+  Registration: PASS ✓
+  Weight Hierarchy: PASS ✓
+  Manager Consistency: PASS ✓
 
 [SUCCESS] All verifications passed!
 ```
 
-**Step 6: Run Tests**
+**Step 6: Run Tests and Commit**
+
 ```bash
-cd backend
-pytest tests/test_weekend_call_limit.py -v
-pytest tests/test_constraint_registration.py -v  # Ensure it passes
+# Run tests
+pytest tests/test_friday_call_avoidance.py -v
+pytest tests/test_constraint_registration.py -v
+
+# All pass? Commit!
+git add backend/app/scheduling/constraints/friday_call_avoidance.py
+git add backend/app/scheduling/constraints/__init__.py
+git add backend/app/scheduling/constraints/manager.py
+git add backend/tests/test_friday_call_avoidance.py
+
+git commit -m "$(cat <<'EOF'
+feat: add FridayCallAvoidanceConstraint to minimize Friday calls
+
+Implements soft constraint (weight=3.0) to reduce Friday inpatient
+call assignments, improving weekend coverage availability.
+
+- Constraint registered in both default and resilience-aware managers
+- Weight positioned below call equity (5.0) but above Tuesday preference (2.0)
+- Verified with pre-flight check and registration tests
+EOF
+)"
 ```
 
-**Step 7: Commit**
+## Failure Mode Handling
+
+### Failure Mode 1: Constraint Not Registered
+
+**Symptom:**
 ```bash
-git add .
-git commit -m "feat(constraints): add WeekendCallLimitConstraint
+$ python ../scripts/verify_constraints.py
 
-Prevents residents from working >2 consecutive weekend calls.
-Weight: 6.0 (between CallSpacing and WeekdayCallEquity)
-
-- Implemented constraint class with CP-SAT support
-- Exported in __init__.py
-- Registered in both ConstraintManager factory methods
-- Added tests including registration verification
-- Verified with pre-flight script"
+[ERROR] FridayCallAvoidanceConstraint exported but NOT registered in ConstraintManager!
 ```
 
-**Total Time:** ~20 minutes for a simple constraint
+**Root cause:** Forgot Step 3 (registering in manager.py)
 
-## Workflow Diagram
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│ CONSTRAINT DEVELOPMENT WORKFLOW                             │
-└─────────────────────────────────────────────────────────────┘
-
-1. CREATE CLASS
-   ├─ Write constraint logic in constraints/*.py
-   ├─ Inherit from SoftConstraint or HardConstraint
-   └─ Implement add_to_cpsat() and validate()
-              ↓
-2. EXPORT
-   ├─ Add import to __init__.py
-   └─ Add class name to __all__ list
-              ↓
-3. REGISTER (CRITICAL - Don't Skip!)
-   ├─ Add to ConstraintManager.create_default()
-   └─ Add to ConstraintManager.create_resilience_aware()
-              ↓
-4. TEST
-   ├─ Write unit tests for constraint logic
-   ├─ Write registration test (verifies in manager)
-   └─ Run all tests: pytest
-              ↓
-5. PRE-FLIGHT VERIFICATION
-   ├─ Run: python ../scripts/verify_constraints.py
-   ├─ Check: Registration, weights, consistency
-   └─ Must pass before commit
-              ↓
-6. COMMIT
-   └─ Only if all checks pass
-```
-
-## Common Failure Modes
-
-### Failure Mode 1: Forgot to Register
-**Symptom:** Tests pass, but schedule generation doesn't use the constraint
-
-**Cause:** Constraint created and exported, but not added to `ConstraintManager`
-
-**Detection:**
-```bash
-python ../scripts/verify_constraints.py
-# Shows: "Not registered: WeekendCallLimitConstraint"
-```
-
-**Fix:** Add to both `create_default()` and `create_resilience_aware()`
-
-### Failure Mode 2: Wrong Weight Hierarchy
-**Symptom:** Pre-flight fails with weight hierarchy error
-
-**Cause:** Weight doesn't follow documented precedence
-
-**Example:**
-```
-CallSpacing: weight=8.0
-WeekendCallLimit: weight=10.0  # WRONG - higher than CallSpacing
-WeekdayCallEquity: weight=5.0
-```
-
-**Fix:** Adjust weight to fit hierarchy (e.g., 6.0 for between CallSpacing and WeekdayCallEquity)
-
-### Failure Mode 3: Only Registered in One Manager
-**Symptom:** Works in normal mode, fails in resilience-aware mode (or vice versa)
-
-**Cause:** Added to `create_default()` but forgot `create_resilience_aware()`
-
-**Detection:**
-```bash
-python ../scripts/verify_constraints.py
-# Shows: "Manager consistency: FAIL"
-```
-
-**Fix:** Add to both factory methods
-
-### Failure Mode 4: Import but No Export
-**Symptom:** ImportError when trying to use constraint
-
-**Cause:** Imported in manager.py but not exported from __init__.py
-
-**Detection:**
+**Recovery:**
 ```python
-from app.scheduling.constraints import WeekendCallLimitConstraint
-# ImportError: cannot import name 'WeekendCallLimitConstraint'
+# 1. Add to manager.py
+from .friday_call_avoidance import FridayCallAvoidanceConstraint
+
+# 2. Add to BOTH factory methods
+def create_default(cls):
+    manager.add(FridayCallAvoidanceConstraint(weight=3.0))  # Add this!
+
+def create_resilience_aware(cls, ...):
+    manager.add(FridayCallAvoidanceConstraint(weight=3.0))  # And this!
+
+# 3. Re-run verification
+python ../scripts/verify_constraints.py
+# Should now PASS
 ```
 
-**Fix:** Add to __all__ list in constraints/__init__.py
+### Failure Mode 2: Weight Hierarchy Violation
 
-### Failure Mode 5: Tests Pass Locally, CI Fails
-**Symptom:** Local tests pass, but CI reports "constraint not found"
+**Symptom:**
+```bash
+$ python ../scripts/verify_constraints.py
 
-**Cause:** Forgot to commit the constraint file or __init__.py update
+[WARNING] Weight hierarchy violated:
+  SundayCallEquity: 10.0
+  CallSpacing: 8.0
+  FridayCallAvoidance: 9.0  ← TOO HIGH! Should be < 8.0
+  WeekdayCallEquity: 5.0
+```
 
-**Prevention:** Double-check `git status` before pushing
+**Root cause:** Weight set too high, violating call equity hierarchy
+
+**Recovery:**
+```python
+# 1. Adjust weight in manager.py
+# OLD:
+manager.add(FridayCallAvoidanceConstraint(weight=9.0))  # Wrong!
+
+# NEW:
+manager.add(FridayCallAvoidanceConstraint(weight=3.0))  # Correct
+
+# 2. Document rationale
+# Weight must be < 5.0 (below WeekdayCallEquity)
+# but > 2.0 (above TuesdayCallPreference)
+# because Friday avoidance is more important than day preference
+
+# 3. Re-run verification
+python ../scripts/verify_constraints.py
+```
+
+### Failure Mode 3: Missing from One Manager
+
+**Symptom:**
+```bash
+$ python ../scripts/verify_constraints.py
+
+[ERROR] Manager consistency check FAILED:
+  FridayCallAvoidance in create_default() ✓
+  FridayCallAvoidance in create_resilience_aware() ✗ MISSING!
+```
+
+**Root cause:** Added to `create_default()` but forgot `create_resilience_aware()`
+
+**Recovery:**
+```python
+# Add to BOTH methods:
+@classmethod
+def create_resilience_aware(cls, ...):
+    manager = cls()
+    # ... other constraints ...
+    manager.add(FridayCallAvoidanceConstraint(weight=3.0))  # ← Add this!
+    return manager
+```
+
+### Failure Mode 4: Tests Fail Despite Correct Code
+
+**Symptom:**
+```bash
+$ pytest tests/test_constraint_registration.py -v
+
+FAILED test_constraint_registered_in_default_manager
+AssertionError: FridayCallAvoidanceConstraint not in registered types
+```
+
+**Root cause:** Test ran before constraint was imported in manager
+
+**Recovery:**
+```bash
+# 1. Verify import exists in manager.py
+grep "FridayCallAvoidanceConstraint" backend/app/scheduling/constraints/manager.py
+
+# 2. If missing, add import:
+from .friday_call_avoidance import FridayCallAvoidanceConstraint
+
+# 3. Clear Python cache
+find . -type d -name __pycache__ -exec rm -rf {} +
+find . -type f -name "*.pyc" -delete
+
+# 4. Re-run tests
+pytest tests/test_constraint_registration.py -v
+```
 
 ## Integration with Other Skills
 
-### With `code-review`
-**When:** After implementing constraint, before committing
-**Purpose:** Review constraint logic, type hints, docstrings
-**Workflow:**
-1. Complete constraint implementation
-2. Invoke code-review skill to check quality
-3. Address any issues found
-4. Run pre-flight verification
-5. Commit
+### With automated-code-fixer
 
-### With `test-writer`
-**When:** Need comprehensive test coverage for complex constraint
-**Purpose:** Generate edge case tests
-**Workflow:**
-1. Implement basic constraint
-2. Invoke test-writer with constraint logic
-3. Review generated tests
-4. Add to test suite
-5. Run pre-flight verification
+**Scenario:** Pre-flight fails, automated-code-fixer can add registration
 
-### With `systematic-debugger`
-**When:** Constraint not behaving as expected in solver
-**Purpose:** Debug why constraint isn't being enforced
-**Workflow:**
-1. Notice constraint violation in generated schedule
-2. Invoke systematic-debugger
-3. Check if constraint is registered (often the issue!)
-4. Debug constraint logic if registered
-5. Fix and re-verify
+```
+[constraint-preflight detects missing registration]
+→ "FridayCallAvoidanceConstraint exported but not registered"
 
-### With `schedule-optimization`
-**When:** Understanding how constraint affects schedule quality
-**Purpose:** Tune constraint weights for optimal results
-**Workflow:**
-1. Implement and register constraint
-2. Invoke schedule-optimization to test impact
-3. Adjust weight based on results
-4. Re-run verification
-5. Document weight rationale
+[Invoke automated-code-fixer]
+→ automated-code-fixer adds manager.add() lines to both methods
+→ Re-runs verification
+→ All checks PASS
+→ Commits fix
+```
 
-### With `database-migration`
-**When:** Constraint needs new database fields (e.g., max_consecutive preference per person)
-**Purpose:** Coordinate schema changes with constraint implementation
+### With test-writer
+
 **Workflow:**
-1. Invoke database-migration to add fields
-2. Implement constraint using new fields
-3. Register constraint
-4. Test with migration applied
-5. Commit both migration and constraint
+```
+[User creates new constraint class]
+[constraint-preflight activated]
+
+Step 1-3: Implement, export, register
+Step 4: Invoke test-writer skill
+
+"Generate comprehensive tests for FridayCallAvoidanceConstraint:
+- Initialization tests
+- Registration tests
+- Validation logic tests
+- Weight hierarchy tests"
+
+[test-writer generates test suite]
+[constraint-preflight verifies tests cover registration]
+```
+
+### With code-review
+
+**Pre-commit integration:**
+```
+[About to commit constraint changes]
+[constraint-preflight runs verification]
+→ All checks PASS
+
+[Invoke code-review skill]
+→ Reviews constraint implementation
+→ Checks weight rationale is documented
+→ Verifies clinical justification in docstring
+→ Approves or requests changes
+
+[Commit only after both skills approve]
+```
+
+### With pr-reviewer
+
+**PR workflow:**
+```
+[PR created with new constraint]
+[pr-reviewer activated]
+
+→ Detects constraint-related changes
+→ Invokes constraint-preflight automatically
+→ Runs verification in CI
+→ Includes verification output in PR review:
+
+"Constraint Pre-Flight Check: PASS ✓
+- Registration verified
+- Weight hierarchy correct
+- Manager consistency confirmed"
+```
+
+## Validation Checklist
+
+### Pre-Implementation Checklist
+- [ ] Constraint purpose is clear and documented
+- [ ] Clinical/operational rationale defined
+- [ ] Weight determined relative to existing constraints
+- [ ] Decided if hard or soft constraint
+- [ ] Identified which managers need registration
+
+### Implementation Checklist
+- [ ] Constraint class created with all required methods
+- [ ] Docstring explains purpose and rationale
+- [ ] Exported in `__init__.py`
+- [ ] Imported in `manager.py`
+- [ ] Added to `create_default()`
+- [ ] Added to `create_resilience_aware()` (if applicable)
+- [ ] Weight documented with justification
+
+### Testing Checklist
+- [ ] Unit tests for constraint logic
+- [ ] Registration test in default manager
+- [ ] Registration test in resilience manager (if applicable)
+- [ ] Weight hierarchy test (for soft constraints)
+- [ ] Integration test with scheduler
+- [ ] All tests PASS
+
+### Verification Checklist
+- [ ] Run `python ../scripts/verify_constraints.py`
+- [ ] Registration check: PASS
+- [ ] Weight hierarchy check: PASS
+- [ ] Manager consistency check: PASS
+- [ ] Run `pytest tests/test_constraint_registration.py -v`: ALL PASS
+- [ ] Run full test suite: ALL PASS
+
+### Pre-Commit Checklist
+- [ ] All verification checks PASS
+- [ ] All tests PASS
+- [ ] No linting errors
+- [ ] Weight rationale documented in code
+- [ ] Clinical justification in docstring
+- [ ] Ready to commit
+
+### Escalation Checklist
+
+**Escalate to human if ANY of these are true:**
+- [ ] New constraint category (not equity/preference/workload)
+- [ ] Weight hierarchy decision needs clinical input
+- [ ] Affects ACGME compliance rules
+- [ ] Conflicts with existing constraints
+- [ ] Requires new solver techniques
+- [ ] Pre-flight verification fails with unclear errors
 
 ## Escalation Rules
 
@@ -595,5 +838,3 @@ Escalate to human when:
 2. Weight hierarchy decisions need clinical input
 3. New constraint category needs architectural review
 4. Constraint affects ACGME compliance rules
-5. Constraint requires database schema changes
-6. Multiple constraints conflict with each other
