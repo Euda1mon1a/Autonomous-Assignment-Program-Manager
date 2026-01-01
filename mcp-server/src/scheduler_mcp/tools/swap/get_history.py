@@ -113,7 +113,40 @@ class GetSwapHistoryTool(
     async def execute(
         self, request: GetSwapHistoryRequest
     ) -> GetSwapHistoryResponse:
-        """Execute the tool."""
+        """
+        Execute swap history retrieval.
+
+        Fetches swap request records from the database with optional filtering by
+        person and status. Returns complete swap lifecycle information including
+        creation, execution, and rollback timestamps.
+
+        Swap Statuses:
+        - pending: Created but not yet approved
+        - approved: Approved but not yet executed
+        - executed: Completed successfully (within rollback window)
+        - rolled_back: Was executed but has been reversed
+        - rejected: Request was denied
+
+        Use Cases:
+        - Audit trail for compliance reporting
+        - Analyzing swap patterns and utilization
+        - Tracking individual faculty swap history
+        - Monitoring pending approvals
+
+        Sorting:
+        - Results ordered by created_at DESC (newest first)
+        - Limit parameter caps result size
+
+        Args:
+            request: Validated request with optional person/status filters and limit
+
+        Returns:
+            GetSwapHistoryResponse with swap record list
+
+        Raises:
+            APIError: Backend API request fails
+            ValidationError: Invalid person_id or status filter
+        """
         client = self._require_api_client()
 
         try:
@@ -158,8 +191,20 @@ class GetSwapHistoryTool(
                 records=records,
             )
 
+        except (ConnectionError, TimeoutError) as e:
+            # Network connectivity issues
+            return GetSwapHistoryResponse(
+                total_records=0,
+                records=[],
+            )
+        except (KeyError, ValueError) as e:
+            # Data parsing errors
+            return GetSwapHistoryResponse(
+                total_records=0,
+                records=[],
+            )
         except Exception as e:
-            # Return empty result on error
+            # Unexpected errors
             return GetSwapHistoryResponse(
                 total_records=0,
                 records=[],

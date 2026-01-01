@@ -165,7 +165,7 @@ export function useRAGHealth(options?: { enabled?: boolean; refetchInterval?: nu
  *       { query, category: 'acgme_rules', top_k: 5 },
  *       {
  *         onSuccess: (result) => {
- *           console.log(`Found ${result.chunks.length} results`);
+ *           // console.log(`Found ${result.chunks.length} results`);
  *         },
  *       }
  *     );

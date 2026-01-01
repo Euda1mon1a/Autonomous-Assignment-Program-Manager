@@ -1,8 +1,34 @@
 #!/bin/bash
-# Health Check Script for Residency Scheduler Monitoring Stack
-# Run this script to verify all monitoring services are healthy
+# ============================================================
+# Script: health-check.sh (monitoring)
+# Purpose: Verify monitoring stack health
+# Usage: ./monitoring/scripts/health-check.sh
+#
+# Description:
+#   Checks health status of all monitoring services:
+#   Prometheus, Grafana, Alertmanager, Loki, and backend metrics.
+#   Validates HTTP endpoints and service responsiveness.
+#
+# Services Checked:
+#   - Prometheus (metrics collection)
+#   - Grafana (visualization)
+#   - Alertmanager (alert routing)
+#   - Loki (log aggregation)
+#   - Backend metrics endpoint
+#
+# Exit Codes:
+#   0 - All services healthy
+#   1 - One or more services degraded
+#   2 - Critical service failure
+#
+# Environment Variables:
+#   PROMETHEUS_URL    - Prometheus endpoint (default: http://localhost:9090)
+#   GRAFANA_URL       - Grafana endpoint (default: http://localhost:3001)
+#   ALERTMANAGER_URL  - Alertmanager endpoint (default: http://localhost:9093)
+#   LOKI_URL          - Loki endpoint (default: http://localhost:3100)
+# ============================================================
 
-set -e
+set -euo pipefail
 
 # Colors for output
 RED='\033[0;31m'
@@ -19,6 +45,12 @@ BACKEND_URL="${BACKEND_URL:-http://localhost:8000}"
 
 # Timeout for HTTP requests
 TIMEOUT=5
+
+# Verify curl or wget is available for health checks
+if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then
+    echo -e "${RED}ERROR: curl or wget required for health checks${NC}" >&2
+    exit 1
+fi
 
 echo "============================================"
 echo "  Residency Scheduler Health Check"

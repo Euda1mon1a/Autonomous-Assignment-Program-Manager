@@ -95,7 +95,27 @@ class GenerateScheduleTool(
     async def execute(
         self, request: GenerateScheduleRequest
     ) -> GenerateScheduleResponse:
-        """Execute the tool."""
+        """
+        Execute schedule generation using constraint-based optimization.
+
+        Generates an ACGME-compliant schedule for the specified date range using
+        the selected algorithm. Supported algorithms:
+        - greedy: Fast heuristic approach (< 1s for small schedules)
+        - cp_sat: Google OR-Tools constraint programming (production quality)
+        - pulp: Linear programming solver (research/comparison)
+        - hybrid: Multi-stage approach combining greedy + cp_sat
+
+        Args:
+            request: Validated request with algorithm, timeout, and date range
+
+        Returns:
+            GenerateScheduleResponse with assignment count and validation status
+
+        Raises:
+            APIError: Backend API request fails
+            TimeoutError: Solver exceeds timeout_seconds limit
+            ValidationError: Generated schedule violates ACGME rules
+        """
         client = self._require_api_client()
 
         try:
@@ -120,10 +140,43 @@ class GenerateScheduleTool(
                 details=result,
             )
 
+        except TimeoutError as e:
+            return GenerateScheduleResponse(
+                success=False,
+                message=f"Schedule generation timed out after {request.timeout_seconds}s",
+                start_date=request.start_date,
+                end_date=request.end_date,
+                algorithm=request.algorithm,
+                assignments_created=0,
+                validation_passed=False,
+                details={"error": "timeout", "timeout_seconds": request.timeout_seconds},
+            )
+        except (ConnectionError, OSError) as e:
+            return GenerateScheduleResponse(
+                success=False,
+                message=f"Backend service unavailable: {type(e).__name__}",
+                start_date=request.start_date,
+                end_date=request.end_date,
+                algorithm=request.algorithm,
+                assignments_created=0,
+                validation_passed=False,
+                details={"error": "connection_error"},
+            )
+        except ValueError as e:
+            return GenerateScheduleResponse(
+                success=False,
+                message=f"Invalid generation parameters: {str(e)}",
+                start_date=request.start_date,
+                end_date=request.end_date,
+                algorithm=request.algorithm,
+                assignments_created=0,
+                validation_passed=False,
+                details={"error": "validation_error", "details": str(e)},
+            )
         except Exception as e:
             return GenerateScheduleResponse(
                 success=False,
-                message=f"Failed to generate schedule: {e}",
+                message=f"Failed to generate schedule: {type(e).__name__}",
                 start_date=request.start_date,
                 end_date=request.end_date,
                 algorithm=request.algorithm,

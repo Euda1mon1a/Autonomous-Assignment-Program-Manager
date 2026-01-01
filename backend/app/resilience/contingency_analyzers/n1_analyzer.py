@@ -12,11 +12,38 @@ Detects:
 - Coverage vulnerabilities
 """
 
+import logging
 from dataclasses import dataclass
 from datetime import date
 from typing import Optional
 
 import networkx as nx
+
+logger = logging.getLogger(__name__)
+
+# N-1 Criticality Thresholds
+CRITICALITY_LOW_WITH_BACKUP = 0.5
+CRITICALITY_HIGH_NO_BACKUP = 0.5
+CRITICALITY_SPOF_THRESHOLD = 0.7
+CRITICALITY_SPECIALTY_SINGLE = 0.9
+CRITICALITY_SPECIALTY_DUAL = 0.6
+CRITICALITY_SPECIALTY_MULTIPLE = 0.3
+
+# Recovery Time Constants (hours)
+RECOVERY_TIME_WITH_BACKUP = 2.0
+RECOVERY_TIME_PER_SLOT_NO_BACKUP = 4.0
+RECOVERY_TIME_SPECIALTY_WITH_BACKUP_MULTIPLIER = 2.0
+RECOVERY_TIME_SPECIALTY_NO_BACKUP_MULTIPLIER = 8.0
+
+# Cascade Thresholds
+CASCADE_POTENTIAL_WITH_BACKUP = 0.0
+CASCADE_SPECIALTY_SINGLE = 0.7
+CASCADE_SPECIALTY_DUAL = 0.4
+CASCADE_SPECIALTY_MULTIPLE = 0.1
+
+# Assignment Thresholds
+ASSIGNMENTS_PER_CRITICALITY_UNIT = 20.0
+ASSIGNMENTS_PER_BACKUP = 10
 
 
 @dataclass
@@ -69,6 +96,7 @@ class N1Analyzer:
         Returns:
             N1FailureScenario with impact analysis
         """
+        logger.info("Analyzing N-1 person failure for %s with %d assigned slots", person_id, len(assigned_slots))
         num_affected = len(assigned_slots)
 
         # Check backup coverage
@@ -80,24 +108,29 @@ class N1Analyzer:
 
         has_backup = len(viable_backups) > 0
 
+        if not has_backup:
+            logger.warning("No viable backups found for person %s affecting %d slots", person_id, num_affected)
+
         # Calculate criticality
         if num_affected == 0:
             criticality = 0.0
         elif has_backup:
             # Low criticality if backups available
-            criticality = min(0.5, num_affected / 20.0)
+            criticality = min(CRITICALITY_LOW_WITH_BACKUP, num_affected / ASSIGNMENTS_PER_CRITICALITY_UNIT)
         else:
             # High criticality if no backups
-            criticality = min(1.0, 0.5 + num_affected / 10.0)
+            criticality = min(1.0, CRITICALITY_HIGH_NO_BACKUP + num_affected / ASSIGNMENTS_PER_BACKUP)
+
+        logger.debug("Criticality score: %.2f, backup available: %s", criticality, has_backup)
 
         # Estimate recovery time
         if has_backup:
-            recovery_hours = 2.0  # Quick swap
+            recovery_hours = RECOVERY_TIME_WITH_BACKUP  # Quick swap
         else:
-            recovery_hours = num_affected * 4.0  # Need to find coverage
+            recovery_hours = num_affected * RECOVERY_TIME_PER_SLOT_NO_BACKUP  # Need to find coverage
 
         # Cascade potential - higher if no backups
-        cascade_potential = 0.0 if has_backup else min(0.8, num_affected / 15.0)
+        cascade_potential = CASCADE_POTENTIAL_WITH_BACKUP if has_backup else min(0.8, num_affected / 15.0)
 
         # Determine mitigation strategy
         if has_backup:
@@ -149,16 +182,16 @@ class N1Analyzer:
         has_backup = len(available_specialists) > 1 or len(cross_trained) > 0
 
         if len(available_specialists) == 1:
-            criticality = 0.9  # Single point of failure
-            cascade_potential = 0.7
+            criticality = CRITICALITY_SPECIALTY_SINGLE  # Single point of failure
+            cascade_potential = CASCADE_SPECIALTY_SINGLE
         elif len(available_specialists) == 2:
-            criticality = 0.6  # Limited redundancy
-            cascade_potential = 0.4
+            criticality = CRITICALITY_SPECIALTY_DUAL  # Limited redundancy
+            cascade_potential = CASCADE_SPECIALTY_DUAL
         else:
-            criticality = 0.3  # Multiple specialists
-            cascade_potential = 0.1
+            criticality = CRITICALITY_SPECIALTY_MULTIPLE  # Multiple specialists
+            cascade_potential = CASCADE_SPECIALTY_MULTIPLE
 
-        recovery_hours = required_slots * 2.0 if has_backup else required_slots * 8.0
+        recovery_hours = required_slots * RECOVERY_TIME_SPECIALTY_WITH_BACKUP_MULTIPLIER if has_backup else required_slots * RECOVERY_TIME_SPECIALTY_NO_BACKUP_MULTIPLIER
 
         if has_backup:
             mitigation = f"Activate cross-trained personnel: {cross_trained}"
@@ -183,7 +216,7 @@ class N1Analyzer:
 
     def find_single_points_of_failure(
         self,
-        min_criticality: float = 0.7,
+        min_criticality: float = CRITICALITY_SPOF_THRESHOLD,
     ) -> list[N1FailureScenario]:
         """
         Find single points of failure (SPOF).

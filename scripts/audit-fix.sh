@@ -1,8 +1,25 @@
 #!/bin/bash
-# NPM Audit Fix Script
-# Fixes npm security vulnerabilities in the frontend
+# ============================================================
+# Script: audit-fix.sh
+# Purpose: Fix npm security vulnerabilities in frontend
+# Usage: ./scripts/audit-fix.sh
+#
+# Description:
+#   Runs npm audit fix to automatically update vulnerable packages.
+#   Creates backup of package-lock.json before making changes.
+#   Attempts safe fixes first, then force fixes if needed.
+#
+# Safety Features:
+#   - Backs up package-lock.json before changes
+#   - Shows vulnerability report before and after
+#   - Logs all changes made
+#
+# Exit Codes:
+#   0 - All vulnerabilities fixed or no vulnerabilities found
+#   1 - Some vulnerabilities remain or fix failed
+# ============================================================
 
-set -e
+set -euo pipefail
 
 echo "=============================================="
 echo "NPM Security Audit Fix Script"
@@ -10,18 +27,44 @@ echo "=============================================="
 echo ""
 
 FRONTEND_DIR="$(dirname "$0")/../frontend"
-cd "$FRONTEND_DIR"
+
+# Validate frontend directory exists
+if [ ! -d "$FRONTEND_DIR" ]; then
+    echo "ERROR: Frontend directory not found: $FRONTEND_DIR" >&2
+    exit 1
+fi
+
+cd "$FRONTEND_DIR" || {
+    echo "ERROR: Failed to change to frontend directory" >&2
+    exit 1
+}
+
+# Verify package.json exists
+if [ ! -f "package.json" ]; then
+    echo "ERROR: package.json not found in frontend directory" >&2
+    exit 1
+fi
+
+# Verify npm is available
+if ! command -v npm >/dev/null 2>&1; then
+    echo "ERROR: npm command not found" >&2
+    exit 1
+fi
 
 echo "Current directory: $(pwd)"
 echo ""
 
 # First, run audit to see current status
+# npm audit checks all dependencies for known security vulnerabilities
+# Output shows severity levels: low, moderate, high, critical
 echo "1. Running npm audit to assess vulnerabilities..."
 echo "-------------------------------------------"
 npm audit || true
 echo ""
 
 # Create backup of package-lock.json
+# This allows rollback if audit fix breaks the build
+# Backup file should be committed if fix is successful
 echo "2. Creating backup of package-lock.json..."
 cp package-lock.json package-lock.json.backup
 echo "   Backup created: package-lock.json.backup"

@@ -70,7 +70,35 @@ class GetUtilizationTool(BaseTool[GetUtilizationRequest, GetUtilizationResponse]
     async def execute(
         self, request: GetUtilizationRequest
     ) -> GetUtilizationResponse:
-        """Execute the tool."""
+        """
+        Execute workload utilization calculation.
+
+        Calculates utilization metrics based on queuing theory's 80% threshold.
+        Utilization above 80% leads to exponential queue growth and cascade failures
+        (from M/M/c queuing model).
+
+        Status Thresholds:
+        - safe: < 80% utilization (normal operations)
+        - warning: 80-90% utilization (approaching capacity)
+        - critical: >= 90% utilization (high risk of cascade failure)
+
+        Metrics Calculated:
+        - Average utilization across all person-days
+        - Maximum utilization (peak load)
+        - Days exceeding 80% threshold
+        - Total person-days analyzed
+        - Over-capacity days (>100% utilization)
+
+        Args:
+            request: Validated request with date range
+
+        Returns:
+            GetUtilizationResponse with metrics, status, and recommendations
+
+        Raises:
+            APIError: Backend API request fails
+            ValidationError: Invalid date range or missing data
+        """
         client = self._require_api_client()
 
         try:
@@ -111,8 +139,8 @@ class GetUtilizationTool(BaseTool[GetUtilizationRequest, GetUtilizationResponse]
                 recommendations=data.get("recommendations", []),
             )
 
-        except Exception as e:
-            # Return empty metrics
+        except (ConnectionError, TimeoutError) as e:
+            # Network connectivity issues
             return GetUtilizationResponse(
                 start_date=request.start_date,
                 end_date=request.end_date,
@@ -124,5 +152,35 @@ class GetUtilizationTool(BaseTool[GetUtilizationRequest, GetUtilizationResponse]
                     over_capacity_days=0,
                 ),
                 status="unknown",
-                recommendations=[f"Error: {e}"],
+                recommendations=[f"Backend service unavailable: {type(e).__name__}"],
+            )
+        except (KeyError, ValueError, TypeError) as e:
+            # Data parsing errors
+            return GetUtilizationResponse(
+                start_date=request.start_date,
+                end_date=request.end_date,
+                metrics=UtilizationMetrics(
+                    average_utilization=0.0,
+                    max_utilization=0.0,
+                    threshold_80_exceeded_days=0,
+                    total_person_days=0,
+                    over_capacity_days=0,
+                ),
+                status="unknown",
+                recommendations=[f"Invalid response data: {type(e).__name__}"],
+            )
+        except Exception as e:
+            # Unexpected errors
+            return GetUtilizationResponse(
+                start_date=request.start_date,
+                end_date=request.end_date,
+                metrics=UtilizationMetrics(
+                    average_utilization=0.0,
+                    max_utilization=0.0,
+                    threshold_80_exceeded_days=0,
+                    total_person_days=0,
+                    over_capacity_days=0,
+                ),
+                status="unknown",
+                recommendations=[f"Error: {type(e).__name__}"],
             )

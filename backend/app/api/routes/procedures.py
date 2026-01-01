@@ -42,14 +42,14 @@ async def list_procedures(
 
 
 @router.get("/specialties", response_model=list[str])
-async def get_specialties(db=Depends(get_db)):
+async def get_specialties(db=Depends(get_async_db)):
     """Get all unique specialties from procedures."""
     controller = ProcedureController(db)
     return controller.get_specialties()
 
 
 @router.get("/categories", response_model=list[str])
-async def get_categories(db=Depends(get_db)):
+async def get_categories(db=Depends(get_async_db)):
     """Get all unique categories from procedures."""
     controller = ProcedureController(db)
     return controller.get_categories()

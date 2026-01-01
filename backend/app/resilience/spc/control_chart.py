@@ -10,12 +10,15 @@ Chart types:
 - EWMA (Exponentially weighted moving average)
 """
 
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import Optional
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 class ControlChartType(str, Enum):
@@ -88,7 +91,9 @@ class ControlChart:
         Returns:
             ControlLimits object
         """
+        logger.info("Calculating %s control limits from %d baseline points", self.chart_type, len(baseline_data))
         if len(baseline_data) < 5:
+            logger.error("Insufficient baseline data: need >= 5 points, got %d", len(baseline_data))
             raise ValueError("Need at least 5 baseline points")
 
         data = np.array(baseline_data)
@@ -96,6 +101,7 @@ class ControlChart:
         sigma = float(np.std(data, ddof=1))  # Sample std dev
 
         center_line = target if target is not None else mean
+        logger.debug("Control limits: center=%.2f, sigma=%.2f", center_line, sigma)
 
         # Calculate control limits
         ucl = center_line + self.sigma_multiplier * sigma

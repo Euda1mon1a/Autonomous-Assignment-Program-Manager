@@ -131,6 +131,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # Run MyPy static type checker with detailed reporting
+      # Generates summary with error/warning counts for PR review
+      # Non-blocking to support gradual type adoption
+      # TODO: Make blocking once codebase is fully typed
       - name: Run MyPy type checker
         working-directory: backend
         run: |
@@ -153,6 +157,7 @@ jobs:
           WARNING_COUNT=$(grep -c ": warning:" mypy-output.txt || echo "0")
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Errors:** $ERROR_COUNT | **Warnings:** $WARNING_COUNT" >> $GITHUB_STEP_SUMMARY
+        # Allow type errors while gradually adopting type hints
         continue-on-error: true
 
   # ============================================

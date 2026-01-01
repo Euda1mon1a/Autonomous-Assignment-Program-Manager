@@ -1,11 +1,50 @@
 #!/bin/bash
-# Script to label Dependabot PRs and add auto-merge commands
-# Run this with: bash .github/scripts/label-dependabot-prs.sh
-# Requires: gh CLI authenticated with repo access
+# ============================================================
+# Script: label-dependabot-prs.sh
+# Purpose: Label and manage Dependabot PRs automatically
+# Usage: bash .github/scripts/label-dependabot-prs.sh
+#
+# Description:
+#   Automatically labels Dependabot pull requests and triggers
+#   auto-merge for safe dependency updates. Creates labels if
+#   they don't exist and applies appropriate merge strategy.
+#
+# Labels Created/Applied:
+#   - safe-to-merge       - Can auto-merge after CI passes
+#   - needs-investigation - Requires manual review
+#   - breaking-change     - Do not auto-merge
+#   - blocked             - External dependency blocking
+#   - dependencies        - Dependency update PR
+#   - javascript/frontend - Technology-specific labels
+#
+# Requirements:
+#   - gh CLI installed and authenticated
+#   - Repository write access
+#   - GITHUB_TOKEN with repo scope
+#
+# Safety Features:
+#   - Labels breaking changes as needs-investigation
+#   - Skips auto-merge for major version bumps
+#   - Adds review notes for complex updates
+# ============================================================
 
-set -e
+set -euo pipefail
 
 REPO="Euda1mon1a/Autonomous-Assignment-Program-Manager"
+
+# Verify gh CLI is installed and authenticated
+if ! command -v gh >/dev/null 2>&1; then
+    echo "ERROR: GitHub CLI (gh) not found" >&2
+    echo "Install from: https://cli.github.com/" >&2
+    exit 1
+fi
+
+# Verify gh is authenticated
+if ! gh auth status >/dev/null 2>&1; then
+    echo "ERROR: GitHub CLI not authenticated" >&2
+    echo "Run: gh auth login" >&2
+    exit 1
+fi
 
 echo "🏷️  Creating labels if they don't exist..."
 

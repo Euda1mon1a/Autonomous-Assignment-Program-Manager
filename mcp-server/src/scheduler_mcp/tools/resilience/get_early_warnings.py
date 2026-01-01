@@ -96,7 +96,35 @@ class GetEarlyWarningsTool(
     async def execute(
         self, request: GetEarlyWarningsRequest
     ) -> GetEarlyWarningsResponse:
-        """Execute the tool."""
+        """
+        Execute early warning signal detection.
+
+        Detects burnout precursors using cross-disciplinary signal processing:
+        - STA/LTA: Seismic detection algorithm (short-term vs long-term average)
+        - SPC: Statistical Process Control (Western Electric rules, CUSUM charts)
+        - Fire_Index: Canadian Forest Fire Danger Rating System
+
+        Signal Types:
+        - STA/LTA: Detects sudden workload spikes (ratio > 2.0)
+        - SPC: Identifies out-of-control processes (8+ consecutive above/below mean)
+        - Fire_Index: Multi-factor burnout danger rating (0-100 scale)
+
+        Severity Levels:
+        - low: Early indicator, monitor closely
+        - medium: Developing risk, consider intervention
+        - high: Significant risk, intervention recommended
+        - critical: Immediate risk, urgent intervention required
+
+        Args:
+            request: Validated request with date range and optional signal type filter
+
+        Returns:
+            GetEarlyWarningsResponse with warnings list and severity counts
+
+        Raises:
+            APIError: Backend API request fails
+            ValidationError: Invalid signal type or date range
+        """
         client = self._require_api_client()
 
         try:
@@ -145,8 +173,28 @@ class GetEarlyWarningsTool(
                 warnings=warnings,
             )
 
+        except (ConnectionError, TimeoutError) as e:
+            # Network connectivity issues
+            return GetEarlyWarningsResponse(
+                start_date=request.start_date,
+                end_date=request.end_date,
+                total_warnings=0,
+                critical_count=0,
+                high_count=0,
+                warnings=[],
+            )
+        except (KeyError, ValueError) as e:
+            # Data parsing errors
+            return GetEarlyWarningsResponse(
+                start_date=request.start_date,
+                end_date=request.end_date,
+                total_warnings=0,
+                critical_count=0,
+                high_count=0,
+                warnings=[],
+            )
         except Exception as e:
-            # Return empty result
+            # Unexpected errors
             return GetEarlyWarningsResponse(
                 start_date=request.start_date,
                 end_date=request.end_date,

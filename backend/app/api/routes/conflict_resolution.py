@@ -52,12 +52,13 @@ async def analyze_conflict(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
+            detail=f"Conflict not found: {str(e)}",
         )
-    except Exception:
+    except (KeyError, AttributeError) as e:
+        logger.error(f"Error analyzing conflict {conflict_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error analyzing conflict",
+            detail="Error analyzing conflict - data integrity issue",
         )
 
 

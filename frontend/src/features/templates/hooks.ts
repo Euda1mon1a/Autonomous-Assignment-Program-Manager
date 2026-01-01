@@ -37,7 +37,7 @@ function getStoredTemplates(): ScheduleTemplate[] {
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored ? JSON.parse(stored) : [];
   } catch (error) {
-    console.error('Failed to read templates from localStorage:', error);
+    // console.error('Failed to read templates from localStorage:', error);
     return [];
   }
 }

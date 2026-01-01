@@ -3,7 +3,7 @@
 from datetime import date, datetime
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from app.validators.date_validators import validate_date_range
 
@@ -71,8 +71,7 @@ class CertificationTypeResponse(CertificationTypeBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CertificationTypeListResponse(BaseModel):
@@ -89,8 +88,7 @@ class CertificationTypeSummary(BaseModel):
     name: str
     full_name: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================================================
@@ -199,8 +197,7 @@ class PersonCertificationResponse(PersonCertificationBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PersonCertificationWithTypeResponse(PersonCertificationResponse):
@@ -239,8 +236,7 @@ class PersonSummary(BaseModel):
     type: str
     email: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ExpiringCertificationResponse(BaseModel):

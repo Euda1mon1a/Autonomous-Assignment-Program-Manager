@@ -90,7 +90,34 @@ class RunN1AnalysisTool(BaseTool[RunN1AnalysisRequest, RunN1AnalysisResponse]):
     async def execute(
         self, request: RunN1AnalysisRequest
     ) -> RunN1AnalysisResponse:
-        """Execute the tool."""
+        """
+        Execute N-1 contingency analysis.
+
+        Tests schedule resilience against loss scenarios (borrowed from power grid
+        N-1 security). Simulates removal of each person individually to identify
+        critical single points of failure.
+
+        Scenarios:
+        - single_absence: One person absent (illness, emergency)
+        - double_absence: Two people absent simultaneously (N-2 test)
+        - deployment: Military deployment scenario (extended absence)
+
+        Impact Score (0.0-1.0):
+        - 0.0-0.3: Low impact (coverage maintained)
+        - 0.3-0.6: Medium impact (degraded coverage, workarounds needed)
+        - 0.6-0.8: High impact (significant coverage gaps)
+        - 0.8-1.0: Critical impact (coverage failure, ACGME violations)
+
+        Args:
+            request: Validated request with scenario type and date range
+
+        Returns:
+            RunN1AnalysisResponse with vulnerability list and resilience status
+
+        Raises:
+            APIError: Backend API request fails
+            ValidationError: Invalid scenario type
+        """
         client = self._require_api_client()
 
         try:
@@ -131,8 +158,8 @@ class RunN1AnalysisTool(BaseTool[RunN1AnalysisRequest, RunN1AnalysisResponse]):
                 recommendations=result.get("recommendations", []),
             )
 
-        except Exception as e:
-            # Return empty result
+        except (ConnectionError, TimeoutError) as e:
+            # Network connectivity issues
             return RunN1AnalysisResponse(
                 start_date=request.start_date,
                 end_date=request.end_date,
@@ -141,5 +168,29 @@ class RunN1AnalysisTool(BaseTool[RunN1AnalysisRequest, RunN1AnalysisResponse]):
                 critical_count=0,
                 vulnerabilities=[],
                 resilient=False,
-                recommendations=[f"Error: {e}"],
+                recommendations=[f"Backend service unavailable: {type(e).__name__}"],
+            )
+        except (KeyError, ValueError) as e:
+            # Data parsing errors
+            return RunN1AnalysisResponse(
+                start_date=request.start_date,
+                end_date=request.end_date,
+                scenario=request.scenario,
+                total_vulnerabilities=0,
+                critical_count=0,
+                vulnerabilities=[],
+                resilient=False,
+                recommendations=[f"Invalid response data: {type(e).__name__}"],
+            )
+        except Exception as e:
+            # Unexpected errors
+            return RunN1AnalysisResponse(
+                start_date=request.start_date,
+                end_date=request.end_date,
+                scenario=request.scenario,
+                total_vulnerabilities=0,
+                critical_count=0,
+                vulnerabilities=[],
+                resilient=False,
+                recommendations=[f"Error: {type(e).__name__}"],
             )

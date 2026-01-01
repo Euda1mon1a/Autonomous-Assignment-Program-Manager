@@ -77,7 +77,7 @@ router = APIRouter(prefix="/portal", tags=["portal"])
 SWAP_MARKETPLACE_FLAG_KEY = "swap_marketplace_enabled"
 
 
-def _check_marketplace_access(db: Session, user: User) -> bool:
+async def _check_marketplace_access(db: AsyncSession, user: User) -> bool:
     """
     Check if the user has access to the swap marketplace.
 

@@ -30,7 +30,7 @@ export interface DropdownProps {
  *     { label: 'Edit', value: 'edit' },
  *     { label: 'Delete', value: 'delete', danger: true },
  *   ]}
- *   onSelect={(value) => console.log(value)}
+ *   onSelect={(value) => // console.log(value)}
  * />
  * ```
  */

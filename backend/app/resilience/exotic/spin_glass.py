@@ -17,10 +17,13 @@ Based on:
 - Simulated annealing on rugged energy landscapes
 """
 
+import logging
 from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -67,12 +70,15 @@ class SpinGlassModel:
             temperature: System temperature for sampling
             frustration_level: Degree of conflicting constraints (0-1)
         """
+        logger.info("Initializing spin glass model: num_spins=%d, temperature=%.2f, frustration=%.2f",
+                   num_spins, temperature, frustration_level)
         self.num_spins = num_spins
         self.temperature = temperature
         self.frustration_level = frustration_level
 
         # Random coupling matrix (interaction strengths)
         self.couplings = self._generate_couplings()
+        logger.debug("Generated %dx%d coupling matrix", num_spins, num_spins)
 
     def _generate_couplings(self) -> np.ndarray:
         """

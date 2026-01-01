@@ -79,7 +79,7 @@ async def retrieve_documents(
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except (KeyError, AttributeError) as e:
         logger.error(f"RAG retrieval failed: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Retrieval failed")
 

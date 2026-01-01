@@ -64,7 +64,30 @@ class GetDefenseLevelTool(
     async def execute(
         self, request: GetDefenseLevelRequest
     ) -> GetDefenseLevelResponse:
-        """Execute the tool."""
+        """
+        Execute defense level calculation.
+
+        Returns current resilience status using Defense in Depth 5-level system
+        (borrowed from cybersecurity). Combines utilization, burnout Rt, and early
+        warning signals into unified threat level.
+
+        Defense Levels:
+        - GREEN: Normal operations (utilization < 70%, Rt < 0.9, no warnings)
+        - YELLOW: Elevated watch (utilization 70-80%, Rt 0.9-1.1, minor warnings)
+        - ORANGE: Heightened alert (utilization 80-90%, Rt 1.1-1.5, warnings present)
+        - RED: Severe risk (utilization 90-95%, Rt > 1.5, critical warnings)
+        - BLACK: Critical failure (utilization > 95%, epidemic burnout, system collapse imminent)
+
+        Args:
+            request: Validated request with optional date (defaults to today)
+
+        Returns:
+            GetDefenseLevelResponse with level, metrics, and recommendations
+
+        Raises:
+            APIError: Backend API request fails
+            ValidationError: Invalid date format
+        """
         client = self._require_api_client()
 
         try:
@@ -92,14 +115,36 @@ class GetDefenseLevelTool(
                 recommendations=data.get("recommendations", []),
             )
 
-        except Exception as e:
-            # Return safe default
+        except (ConnectionError, TimeoutError) as e:
+            # Network connectivity issues
             return GetDefenseLevelResponse(
                 date=request.date or "",
                 defense_level="UNKNOWN",
                 utilization=0.0,
                 burnout_rt=0.0,
                 early_warnings=0,
-                status_message=f"Error: {e}",
+                status_message=f"Backend service unavailable: {type(e).__name__}",
+                recommendations=[],
+            )
+        except (KeyError, ValueError) as e:
+            # Data parsing errors
+            return GetDefenseLevelResponse(
+                date=request.date or "",
+                defense_level="UNKNOWN",
+                utilization=0.0,
+                burnout_rt=0.0,
+                early_warnings=0,
+                status_message=f"Invalid response data: {type(e).__name__}",
+                recommendations=[],
+            )
+        except Exception as e:
+            # Unexpected errors
+            return GetDefenseLevelResponse(
+                date=request.date or "",
+                defense_level="UNKNOWN",
+                utilization=0.0,
+                burnout_rt=0.0,
+                early_warnings=0,
+                status_message=f"Error: {type(e).__name__}",
                 recommendations=[],
             )

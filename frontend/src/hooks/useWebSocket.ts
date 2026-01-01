@@ -340,12 +340,12 @@ function parseMessage(data: string): AnyWebSocketEvent | null {
   try {
     const parsed = JSON.parse(data) as AnyWebSocketEvent
     if (!parsed.event_type) {
-      console.warn('[useWebSocket] Received message without event_type:', parsed)
+      // Invalid message format
       return null
     }
     return parsed
   } catch (error) {
-    console.error('[useWebSocket] Failed to parse message:', error)
+    // Failed to parse WebSocket message
     return null
   }
 }
@@ -551,7 +551,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       ws.onerror = (error) => {
         if (!mountedRef.current) return
 
-        console.error('[useWebSocket] Error:', error)
+        // WebSocket error occurred
         onErrorRef.current?.(error)
       }
 
@@ -595,7 +595,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
         }
       }
     } catch (error) {
-      console.error('[useWebSocket] Failed to create WebSocket:', error)
+      // Failed to create WebSocket connection
       setConnectionState('disconnected')
     }
   }, [

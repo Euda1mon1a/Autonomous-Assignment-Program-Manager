@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class AssignmentReasonEnum(str, Enum):
@@ -37,6 +37,14 @@ class BlockAssignmentBase(BaseModel):
             raise ValueError(f"assignment_reason must be one of {valid_reasons}")
         return v
 
+    @field_validator("notes")
+    @classmethod
+    def validate_notes(cls, v: str | None) -> str | None:
+        """Validate notes are not too long."""
+        if v is not None and len(v) > 1000:
+            raise ValueError("notes must be less than 1000 characters")
+        return v
+
 
 class BlockAssignmentCreate(BlockAssignmentBase):
     """Schema for creating a block assignment."""
@@ -62,6 +70,14 @@ class BlockAssignmentUpdate(BaseModel):
                 raise ValueError(f"assignment_reason must be one of {valid_reasons}")
         return v
 
+    @field_validator("notes")
+    @classmethod
+    def validate_notes(cls, v: str | None) -> str | None:
+        """Validate notes are not too long."""
+        if v is not None and len(v) > 1000:
+            raise ValueError("notes must be less than 1000 characters")
+        return v
+
 
 class RotationTemplateInfo(BaseModel):
     """Minimal rotation template info for responses."""
@@ -71,8 +87,7 @@ class RotationTemplateInfo(BaseModel):
     activity_type: str
     leave_eligible: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ResidentInfo(BaseModel):
@@ -82,8 +97,7 @@ class ResidentInfo(BaseModel):
     name: str
     pgy_level: int | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BlockAssignmentResponse(BaseModel):
@@ -106,8 +120,7 @@ class BlockAssignmentResponse(BaseModel):
     resident: ResidentInfo | None = None
     rotation_template: RotationTemplateInfo | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BlockAssignmentListResponse(BaseModel):

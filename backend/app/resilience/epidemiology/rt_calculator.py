@@ -11,12 +11,24 @@ primary case at time t.
 Uses Cori method (EpiEstim package) for real-time Rt estimation.
 """
 
+import logging
 from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Optional
 
 import numpy as np
 from scipy.stats import gamma
+
+logger = logging.getLogger(__name__)
+
+# Rt Interpretation Thresholds
+RT_DECLINING_THRESHOLD = 0.9
+RT_GROWING_THRESHOLD = 1.1
+RT_STABLE_LOWER = 0.9
+RT_STABLE_UPPER = 1.1
+
+# Confidence Thresholds
+MIN_CASES_FOR_CONFIDENCE = 10.0
 
 
 @dataclass
@@ -69,7 +81,9 @@ class RtCalculator:
         Returns:
             List of RtEstimate objects, one per day
         """
+        logger.info("Calculating Rt for %d days of incidence data (window=%d)", len(incidence), window_size)
         if len(incidence) < window_size:
+            logger.warning("Insufficient data for Rt calculation: need >= %d days", window_size)
             return []
 
         estimates = []
@@ -83,13 +97,14 @@ class RtCalculator:
 
             # Determine confidence based on case counts
             total_cases = sum(window)
-            confidence = min(1.0, total_cases / 10.0)  # Need ~10 cases for confidence
+            confidence = min(1.0, total_cases / MIN_CASES_FOR_CONFIDENCE)  # Need ~10 cases for confidence
 
             # Interpret trend
-            if rt_mean < 0.9:
+            if rt_mean < RT_DECLINING_THRESHOLD:
                 interpretation = "declining"
-            elif rt_mean > 1.1:
+            elif rt_mean > RT_GROWING_THRESHOLD:
                 interpretation = "growing"
+                logger.warning("Rt > %.1f detected: burnout is spreading (Rt=%.2f)", RT_GROWING_THRESHOLD, rt_mean)
             else:
                 interpretation = "stable"
 

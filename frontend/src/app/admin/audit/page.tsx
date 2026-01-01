@@ -519,7 +519,7 @@ export default function AdminAuditPage() {
     // Simulate export
     await new Promise((resolve) => setTimeout(resolve, 1500));
     setIsExporting(false);
-    console.log('Export complete');
+    // Export complete
   };
 
   return (

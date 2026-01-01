@@ -1,23 +1,33 @@
 import React, { createContext, useContext, ReactNode } from 'react';
-import { useClaudeChat, SavedSession } from '../hooks/useClaudeChat';
-import { ChatMessage, ChatSession, ClaudeCodeExecutionContext, StreamUpdate } from '../types/chat';
+import { useClaudeChat, SavedSession, ClaudeCodeContext } from '../hooks/useClaudeChat';
+import { ChatMessage, ChatSession, StreamUpdate } from '../types/chat';
 
-interface SessionExport {
-  session: ChatSession;
-  exportedAt: Date;
-  version: string;
+/**
+ * Exported session data structure.
+ */
+interface ExportedSession {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  createdAt: Date;
+  updatedAt: Date;
+  programId: string;
+  adminId: string;
 }
 
+/**
+ * Claude Chat context type providing chat functionality to components.
+ */
 interface ClaudeChatContextType {
   session: ChatSession | null;
   messages: ChatMessage[];
   isLoading: boolean;
   error: string | null;
   initializeSession: (programId: string, adminId: string, title?: string) => ChatSession;
-  sendMessage: (userInput: string, context?: Partial<ClaudeCodeExecutionContext>, onStreamUpdate?: (update: StreamUpdate) => void) => Promise<void>;
+  sendMessage: (userInput: string, context?: Partial<ClaudeCodeContext>, onStreamUpdate?: (update: StreamUpdate) => void) => Promise<void>;
   cancelRequest: () => void;
   clearMessages: () => void;
-  exportSession: () => SessionExport;
+  exportSession: () => ExportedSession | null;
   getSavedSessions: () => SavedSession[];
   loadSession: (sessionId: string) => boolean;
 }

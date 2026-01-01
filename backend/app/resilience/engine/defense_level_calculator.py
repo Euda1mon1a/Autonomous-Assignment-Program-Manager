@@ -11,12 +11,15 @@ Defense in Depth - Five-tier safety system from cybersecurity and power grid:
 Based on power grid NERC standards and cybersecurity defense-in-depth.
 """
 
+import logging
 from dataclasses import dataclass
 from datetime import date, datetime
 from enum import Enum
 from typing import Optional
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 class DefenseLevel(str, Enum):
@@ -138,6 +141,8 @@ class DefenseLevelCalculator:
         Returns:
             DefenseLevelResult with level, metrics, and recommendations
         """
+        logger.info("Calculating defense level: utilization=%.2f, n1=%d, n2=%d, cascade=%.2f",
+                   utilization, n1_failures, n2_failures, cascade_risk)
         metrics = DefenseMetrics(
             utilization=utilization,
             n1_failures=n1_failures,
@@ -177,6 +182,12 @@ class DefenseLevelCalculator:
 
         # Map combined score to defense level
         level = self._score_to_level(combined_score)
+
+        logger.debug("Defense level determined: %s (score=%.2f)", level, combined_score)
+        if level in (DefenseLevel.RED, DefenseLevel.BLACK):
+            logger.error("CRITICAL: Defense level %s - immediate action required", level)
+        elif level == DefenseLevel.ORANGE:
+            logger.warning("Defense level ORANGE - degraded state detected")
 
         # Generate rationale and recommendations
         rationale = self._generate_rationale(

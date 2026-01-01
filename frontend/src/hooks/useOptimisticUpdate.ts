@@ -8,6 +8,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 
+/**
+ * Context returned from onMutate handler containing rollback data.
+ */
 export interface MutationContext<T> {
   previousData?: T;
 }

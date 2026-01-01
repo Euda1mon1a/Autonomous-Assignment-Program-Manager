@@ -381,6 +381,250 @@ curl -s "http://localhost:8000/api/v1/schedule/validate?start_date=2026-03-10&en
 curl -s http://localhost:8000/api/v1/schedule/conflicts/2026-03-10/2026-04-06
 ```
 
+**Resolution:**
+1. Review violations in detail:
+   ```bash
+   curl -s "http://localhost:8000/api/v1/schedule/validate" | jq '.violations[] | select(.severity == "CRITICAL")'
+   ```
+
+2. Common violation types and fixes:
+   - **80-hour rule violations:** Reduce call frequency or add residents
+   - **1-in-7 violations:** Ensure adequate off-day spacing
+   - **Supervision violations:** Increase faculty coverage for PGY-1s
+   - **Back-to-back call:** Review call assignment logic
+
+3. Regenerate with stricter constraints if needed
+
+### Insufficient Coverage
+
+**Symptoms:**
+- Schedule generates but has gaps
+- Coverage percentage < 95%
+- "Not enough residents available" errors
+
+**Diagnosis:**
+```bash
+# Check available residents
+curl -s "http://localhost:8000/api/v1/persons?role=resident&active=true" | jq '.total'
+
+# Check blocks without assignments
+curl -s "http://localhost:8000/api/v1/schedule/gaps?start_date=2026-03-10&end_date=2026-04-06"
+
+# Review absence/leave conflicts
+curl -s "http://localhost:8000/api/v1/absences?start_date=2026-03-10&end_date=2026-04-06&status=approved"
+```
+
+**Resolution:**
+1. Reduce date range to shorten block period
+2. Add more residents to roster
+3. Review approved absences/deployments - reschedule if possible
+4. Use greedy algorithm for partial coverage
+
+### Solver Hangs or Takes Too Long
+
+**Symptoms:**
+- Generation runs for > 10 minutes
+- CPU usage at 100% but no progress
+- API becomes unresponsive
+
+**Diagnosis:**
+```bash
+# Check active solver runs
+curl -s "http://localhost:8000/api/v1/scheduler/runs/active" | jq '.runs[]'
+
+# Check backend logs
+docker-compose logs --tail=100 backend | grep "Solver"
+
+# Check container resource usage
+docker stats --no-stream
+```
+
+**Resolution:**
+1. **Abort the run:**
+   ```bash
+   curl -X POST "http://localhost:8000/api/v1/scheduler/runs/{run_id}/abort" \
+     -H "Content-Type: application/json" \
+     -d '{"reason": "Timeout - manual abort", "requested_by": "admin"}'
+   ```
+
+2. **Try simpler algorithm:**
+   ```bash
+   # Use greedy instead of CP-SAT
+   curl -X POST "http://localhost:8000/api/v1/schedule/generate" \
+     -d '{"algorithm": "greedy", "timeout_seconds": 60}'
+   ```
+
+3. **Reduce problem size:**
+   - Shorter date range (1 block instead of 3)
+   - Fewer constraints (relax soft constraints)
+   - Pre-assign critical assignments manually
+
+### Memory Issues
+
+**Symptoms:**
+- Container crashes with OOM (Out of Memory)
+- Solver fails midway through generation
+- "MemoryError" in logs
+
+**Diagnosis:**
+```bash
+# Check container memory usage
+docker stats --no-stream backend
+
+# Check logs for memory errors
+docker-compose logs backend | grep -i "memory\|oom"
+```
+
+**Resolution:**
+1. **Increase Docker memory limit:**
+   Edit `docker-compose.yml`:
+   ```yaml
+   backend:
+     mem_limit: 4g  # Increase from default
+   ```
+
+2. **Restart Docker with new limits:**
+   ```bash
+   docker-compose down
+   docker-compose up -d
+   ```
+
+3. **Optimize generation:**
+   - Use greedy algorithm (lower memory footprint)
+   - Reduce date range
+   - Clear old solver runs from database
+
+### Schedule Validation Fails
+
+**Symptoms:**
+- API returns 422 validation error
+- "Invalid request parameters" errors
+- Missing required fields
+
+**Diagnosis:**
+```bash
+# Test minimal valid request
+curl -X POST "http://localhost:8000/api/v1/schedule/generate" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "start_date": "2026-03-10",
+    "end_date": "2026-04-06"
+  }'
+```
+
+**Common Issues:**
+- **Date format:** Use YYYY-MM-DD format only
+- **Date range:** start_date must be before end_date
+- **Block alignment:** Dates should align with block boundaries
+- **Future dates:** Cannot generate schedules in the past
+
+### Idempotency Conflicts
+
+**Symptoms:**
+- "Idempotency key already used" (409 Conflict)
+- Generation appears to succeed but no changes made
+
+**Diagnosis:**
+```bash
+# Check idempotency key status
+curl -s "http://localhost:8000/api/v1/idempotency/{key}" | jq '.'
+```
+
+**Resolution:**
+1. **Use new idempotency key:**
+   ```bash
+   NEW_KEY=$(uuidgen)
+   curl -X POST "http://localhost:8000/api/v1/schedule/generate" \
+     -H "Idempotency-Key: $NEW_KEY" \
+     -d '{"start_date": "2026-03-10", "end_date": "2026-04-06"}'
+   ```
+
+2. **Clear old idempotency records (admin only):**
+   ```bash
+   # Delete idempotency records older than 24 hours
+   docker-compose exec backend python -c "from app.db.session import SessionLocal; from app.models import IdempotencyKey; from datetime import datetime, timedelta; db = SessionLocal(); cutoff = datetime.utcnow() - timedelta(hours=24); db.query(IdempotencyKey).filter(IdempotencyKey.created_at < cutoff).delete(); db.commit()"
+   ```
+
+### Permission Denied Errors
+
+**Symptoms:**
+- "Insufficient permissions" (403 Forbidden)
+- "Coordinator or admin role required"
+
+**Diagnosis:**
+```bash
+# Check current user's role
+curl -s "http://localhost:8000/api/v1/auth/me" \
+  -H "Authorization: Bearer $TOKEN" | jq '.role'
+```
+
+**Resolution:**
+- Use admin or coordinator account for schedule generation
+- Request role elevation from administrator
+- Check JWT token hasn't expired: `jwt decode $TOKEN`
+
+### Rate Limiting
+
+**Symptoms:**
+- "Too many requests" (429)
+- "Rate limit exceeded"
+
+**Diagnosis:**
+```bash
+# Check rate limit headers
+curl -I "http://localhost:8000/api/v1/schedule/generate" \
+  -H "Authorization: Bearer $TOKEN"
+# Look for X-RateLimit-* headers
+```
+
+**Resolution:**
+1. Wait for rate limit reset (check `X-RateLimit-Reset` header)
+2. Use exponential backoff:
+   ```bash
+   for i in {1..5}; do
+     curl -X POST "http://localhost:8000/api/v1/schedule/generate" \
+       -d '{...}' && break
+     sleep $((2**i))  # Wait 2, 4, 8, 16, 32 seconds
+   done
+   ```
+
+### MCP Server Unavailable
+
+**Symptoms:**
+- Schedule generation uses MCP tools but MCP server is down
+- "Connection refused" to MCP server
+- Degraded functionality
+
+**Diagnosis:**
+```bash
+# Check MCP server status
+docker-compose ps mcp-server
+
+# Check MCP server health
+curl -s "http://localhost:8080/health"  # If using HTTP transport
+
+# Check logs
+docker-compose logs --tail=50 mcp-server
+```
+
+**Resolution:**
+1. **Restart MCP server:**
+   ```bash
+   docker-compose restart mcp-server
+   ```
+
+2. **Rebuild if configuration changed:**
+   ```bash
+   docker-compose up -d --build mcp-server
+   ```
+
+3. **Verify connectivity from backend:**
+   ```bash
+   docker-compose exec backend curl -s http://mcp-server:8080/health
+   ```
+
+4. **Fallback:** Schedule generation will work without MCP but may have reduced resilience analysis
+
 ---
 
 ## Pre-Generation Checklist

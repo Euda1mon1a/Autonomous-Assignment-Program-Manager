@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class CallType(str, Enum):
@@ -32,6 +32,14 @@ class CallAssignmentBase(BaseModel):
         default=False, description="Whether this is a holiday call"
     )
 
+    @field_validator("call_type")
+    @classmethod
+    def validate_call_type(cls, v: str) -> str:
+        """Validate call_type is one of the valid types."""
+        if v not in ("overnight", "weekend", "backup"):
+            raise ValueError("call_type must be 'overnight', 'weekend', or 'backup'")
+        return v
+
 
 class CallAssignmentCreate(CallAssignmentBase):
     """Schema for creating a new call assignment."""
@@ -47,6 +55,25 @@ class CallAssignmentUpdate(BaseModel):
     call_type: str | None = None
     is_weekend: bool | None = None
     is_holiday: bool | None = None
+
+    @field_validator("call_type")
+    @classmethod
+    def validate_call_type(cls, v: str | None) -> str | None:
+        """Validate call_type is one of the valid types."""
+        if v is not None and v not in ("overnight", "weekend", "backup"):
+            raise ValueError("call_type must be 'overnight', 'weekend', or 'backup'")
+        return v
+
+    @field_validator("call_date")
+    @classmethod
+    def validate_call_date_not_future(cls, v: date | None) -> date | None:
+        """Validate call date is not too far in future."""
+        if v is not None:
+            from datetime import date as dt_date, timedelta
+            max_future = dt_date.today() + timedelta(days=730)  # 2 years
+            if v > max_future:
+                raise ValueError("call_date cannot be more than 2 years in the future")
+        return v
 
 
 class PersonBrief(BaseModel):
@@ -92,6 +119,14 @@ class BulkCallAssignmentCreate(BaseModel):
         default=False,
         description="If true, delete existing assignments in the date range first",
     )
+
+    @field_validator("assignments")
+    @classmethod
+    def validate_not_empty(cls, v: list[CallAssignmentCreate]) -> list[CallAssignmentCreate]:
+        """Ensure assignments list is not empty."""
+        if not v:
+            raise ValueError("assignments list cannot be empty")
+        return v
 
 
 class BulkCallAssignmentResponse(BaseModel):

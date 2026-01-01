@@ -132,7 +132,7 @@ export function SwapRequestCard({
       setNotes('');
       onActionComplete?.();
     } catch (error) {
-      console.error('Failed to accept swap:', error);
+      // console.error('Failed to accept swap:', error);
     }
   };
 
@@ -143,7 +143,7 @@ export function SwapRequestCard({
       setNotes('');
       onActionComplete?.();
     } catch (error) {
-      console.error('Failed to reject swap:', error);
+      // console.error('Failed to reject swap:', error);
     }
   };
 
@@ -156,7 +156,7 @@ export function SwapRequestCard({
       await cancelMutation.mutateAsync();
       onActionComplete?.();
     } catch (error) {
-      console.error('Failed to cancel swap:', error);
+      // console.error('Failed to cancel swap:', error);
     }
   };
 

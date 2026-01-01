@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class AssignmentRole(str, Enum):
@@ -33,6 +33,14 @@ class AssignmentBase(BaseModel):
         max_length=500,
         description="Reason for acknowledging ACGME violations",
     )
+
+    @field_validator("notes")
+    @classmethod
+    def validate_notes_length(cls, v: str | None) -> str | None:
+        """Validate notes field length."""
+        if v is not None and len(v) > 1000:
+            raise ValueError("notes must be less than 1000 characters")
+        return v
 
 
 class AssignmentCreate(AssignmentBase):
@@ -66,6 +74,14 @@ class AssignmentUpdate(BaseModel):
         ..., description="Current timestamp for optimistic locking"
     )
 
+    @field_validator("notes")
+    @classmethod
+    def validate_notes_length(cls, v: str | None) -> str | None:
+        """Validate notes field length."""
+        if v is not None and len(v) > 1000:
+            raise ValueError("notes must be less than 1000 characters")
+        return v
+
 
 class AssignmentResponse(AssignmentBase):
     """Schema for assignment response."""
@@ -84,8 +100,7 @@ class AssignmentResponse(AssignmentBase):
     )
     score: float | None = Field(None, description="Objective score for this assignment")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AssignmentWithWarnings(AssignmentResponse):
@@ -103,8 +118,7 @@ class AssignmentListResponse(BaseModel):
     page: int | None = None
     page_size: int | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AssignmentWithExplanation(AssignmentResponse):
@@ -128,8 +142,7 @@ class AssignmentWithExplanation(AssignmentResponse):
         None, description="Plain-English trade-off explanation"
     )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
     @classmethod
     def from_assignment(cls, assignment, include_explanation: bool = True):

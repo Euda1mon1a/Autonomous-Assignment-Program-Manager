@@ -1,9 +1,33 @@
 #!/bin/bash
-# PII/OPSEC/PERSEC Pre-commit Scanner
-# Runs locally before commits to catch potential data leakage
-# Part of layered defense (pre-commit -> GitHub Actions -> periodic audit)
+# ============================================================
+# Script: pii-scan.sh
+# Purpose: PII/OPSEC/PERSEC pre-commit security scanner
+# Usage: ./scripts/pii-scan.sh [--staged-only]
+#
+# Description:
+#   Scans codebase for personally identifiable information (PII),
+#   operational security (OPSEC), and personnel security (PERSEC)
+#   violations before committing code.
+#
+# Security Patterns Detected:
+#   - SSN patterns (###-##-####)
+#   - Military service numbers
+#   - Full names in production code
+#   - Email addresses
+#   - Phone numbers
+#   - Home addresses
+#
+# Defense Layers:
+#   1. Pre-commit hook (this script)
+#   2. GitHub Actions workflow
+#   3. Periodic security audits
+#
+# Exit Codes:
+#   0 - No PII/security issues found
+#   1 - Potential issues found (fails commit)
+# ============================================================
 
-set -e
+set -euo pipefail
 
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
@@ -11,6 +35,12 @@ GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
 ERRORS=0
+
+# Verify grep is available
+if ! command -v grep >/dev/null 2>&1; then
+    echo -e "${RED}ERROR: grep command not found${NC}" >&2
+    exit 1
+fi
 
 echo "Running PII/OPSEC/PERSEC scan..."
 

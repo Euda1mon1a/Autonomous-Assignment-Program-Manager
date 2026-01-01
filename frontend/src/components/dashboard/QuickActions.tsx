@@ -29,7 +29,7 @@ export function QuickActions() {
     try {
       await exportToLegacyXlsx(blockStartStr, blockEndStr)
     } catch (error) {
-      console.error('Export failed:', error)
+      // console.error('Export failed:', error)
     } finally {
       setIsExporting(false)
     }

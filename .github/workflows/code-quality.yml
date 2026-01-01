@@ -64,28 +64,37 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # Lint Python code with Ruff for style and potential issues
+      # Output formatted for GitHub annotations in PR
       - name: Run Ruff linter
         working-directory: backend
         run: |
           ruff check . --output-format=github
 
+      # Verify Ruff code formatting compliance
+      # Ensures consistent code style across the codebase
       - name: Run Ruff formatter check
         working-directory: backend
         run: |
           ruff format --check .
 
+      # Verify Black code formatting compliance
+      # Shows diff of formatting issues for easy review
       - name: Run Black formatter check
         working-directory: backend
         run: |
           black --check --diff .
 
+      # Run MyPy static type checking
+      # Currently non-blocking to allow gradual type adoption
+      # TODO: Remove || true once codebase is fully typed
       - name: Run MyPy type checker
         working-directory: backend
         run: |
           mypy app --ignore-missing-imports --no-error-summary || true
-          # Note: Using || true to not fail on type errors initially
-          # Remove || true once codebase is fully typed
 
+      # Verify import statement ordering with Ruff
+      # Ensures consistent import organization
       - name: Check import sorting
         working-directory: backend
         run: |
@@ -112,19 +121,25 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      # Lint TypeScript/JavaScript code with ESLint
+      # Enforces code quality and catches potential bugs
       - name: Run ESLint
         working-directory: frontend
         run: npm run lint
 
+      # Verify TypeScript type correctness without emitting files
+      # Catches type errors early in development cycle
       - name: Run TypeScript type check
         working-directory: frontend
         run: npx tsc --noEmit
 
+      # Check Prettier code formatting compliance
+      # Currently non-blocking while Prettier config is finalized
+      # TODO: Remove || true once Prettier is fully configured
       - name: Check Prettier formatting
         working-directory: frontend
         run: |
           npx prettier --check "src/**/*.{ts,tsx,js,jsx,json,css,md}" || true
-          # Using || true since Prettier might not be fully configured
 
   # Check for common issues across the codebase
   common-checks:
@@ -134,6 +149,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      # Prevent accidental commits of merge conflict markers
+      # Scans all code files for Git conflict syntax
       - name: Check for merge conflicts markers
         run: |
           if grep -rn "<<<<<<< HEAD" --include="*.py" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" .; then
@@ -142,6 +159,8 @@ jobs:
           fi
           echo "No merge conflict markers found"
 
+      # Detect debug statements that should not be committed
+      # Checks for pdb, breakpoint(), and debugger statements
       - name: Check for debug statements
         run: |
           echo "Checking for debug statements..."
@@ -180,6 +199,9 @@ jobs:
           done
           echo "Secret pattern check completed"
 
+      # Validate YAML syntax in workflow and config files
+      # Prevents syntax errors from breaking CI/CD pipelines
+      # Checks first 20 YAML files to avoid timeout
       - name: Validate YAML files
         run: |
           echo "Validating YAML files..."
@@ -192,6 +214,8 @@ jobs:
             fi
           done
 
+      # Validate JSON syntax in config files
+      # Skips .vscode and .zed which use JSONC (JSON with comments)
       - name: Check JSON files
         run: |
           echo "Validating JSON files..."

@@ -86,3 +86,57 @@ Losers:  K_new = K_old + (bid_amount / num_losers)
 
 - **[Advanced Scheduling Architecture](../architecture/advanced-scheduling.md#1-karma-mechanism)** - Full implementation details
 - **Service**: `backend/app/services/karma_mechanism.py`
+
+---
+
+## Common Patterns
+
+### Auto-Find Swap Candidates
+
+```python
+def find_swap_candidates(token, faculty_id, week_to_give_away):
+    """Find faculty who can swap with given week."""
+    # Get all faculty
+    response = requests.get(
+        "http://localhost:8000/api/v1/people",
+        headers={"Authorization": f"Bearer {token}"},
+        params={"type": "faculty", "active": True}
+    )
+
+    faculty = response.json()['items']
+    candidates = []
+
+    for candidate in faculty:
+        if candidate['id'] == faculty_id:
+            continue
+
+        # Try validation
+        validation = requests.post(
+            "http://localhost:8000/api/v1/swaps/validate",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "source_faculty_id": faculty_id,
+                "source_week": week_to_give_away,
+                "target_faculty_id": candidate['id'],
+                "swap_type": "absorb"
+            }
+        ).json()
+
+        if validation['valid']:
+            candidates.append({
+                "name": candidate['name'],
+                "id": candidate['id'],
+                "warnings": validation.get('warnings', [])
+            })
+
+    return candidates
+
+# Usage
+candidates = find_swap_candidates(token, faculty_id, "2025-07-15")
+print(f"Found {len(candidates)} swap candidates")
+```
+
+## See Also
+
+- [Absences API](absences.md)
+- [Quick Reference](../QUICK_REFERENCE.md)

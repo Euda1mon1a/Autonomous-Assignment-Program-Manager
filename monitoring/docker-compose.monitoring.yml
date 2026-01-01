@@ -43,6 +43,9 @@ services:
     networks:
       - monitoring
       - app-network
+    # Health check - validates Prometheus scraping engine readiness
+    # Uses Prometheus built-in health endpoint for status
+    # Extended start period allows TSDB initialization and first scrape
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
       interval: 30s
@@ -76,6 +79,9 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD:-}
       - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
       - PAGERDUTY_SERVICE_KEY=${PAGERDUTY_SERVICE_KEY:-}
+    # Health check - ensures Alertmanager is processing alerts
+    # Checks built-in health endpoint for service readiness
+    # Short start period since Alertmanager starts quickly
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:9093/-/healthy"]
       interval: 30s
@@ -113,6 +119,9 @@ services:
     depends_on:
       - prometheus
       - loki
+    # Health check - verifies Grafana API and database are ready
+    # Uses Grafana's health API endpoint for comprehensive status
+    # Start period allows plugin installation and dashboard provisioning
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
@@ -133,6 +142,9 @@ services:
       - "3100:3100"
     networks:
       - monitoring
+    # Health check - validates Loki log ingestion readiness
+    # Checks /ready endpoint to ensure ingester and querier are operational
+    # Extended start period for storage initialization
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3100/ready"]
       interval: 30s
@@ -154,6 +166,15 @@ services:
       - monitoring
     depends_on:
       - loki
+    # Health check - verifies Promtail log shipping readiness
+    # Checks HTTP server endpoint for agent status
+    # Start period allows service discovery and target initialization
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9080/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
   # Node Exporter - Host Metrics
   node-exporter:

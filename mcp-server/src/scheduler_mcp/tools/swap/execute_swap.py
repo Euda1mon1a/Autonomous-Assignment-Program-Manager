@@ -64,7 +64,31 @@ class ExecuteSwapTool(BaseTool[ExecuteSwapRequest, ExecuteSwapResponse]):
         )
 
     async def execute(self, request: ExecuteSwapRequest) -> ExecuteSwapResponse:
-        """Execute the tool."""
+        """
+        Execute an approved swap request.
+
+        Completes the swap transaction by updating all affected assignments in the
+        database. Enables a 24-hour rollback window for reversing the swap if needed.
+        The swap must be in "approved" status before execution.
+
+        Workflow:
+        1. Verify swap is in "approved" status
+        2. Update person assignments for both parties
+        3. Record execution timestamp
+        4. Calculate 24-hour rollback deadline
+        5. Send notifications to affected parties
+
+        Args:
+            request: Validated request with swap_id and optional approver
+
+        Returns:
+            ExecuteSwapResponse with execution timestamp and rollback deadline
+
+        Raises:
+            APIError: Backend API request fails
+            ValidationError: Swap not approved or already executed
+            ConflictError: Assignment conflicts detected
+        """
         client = self._require_api_client()
 
         try:
@@ -87,9 +111,27 @@ class ExecuteSwapTool(BaseTool[ExecuteSwapRequest, ExecuteSwapResponse]):
                 rollback_deadline=data.get("rollback_deadline"),
             )
 
+        except (ConnectionError, TimeoutError) as e:
+            return ExecuteSwapResponse(
+                success=False,
+                message=f"Backend service unavailable: {type(e).__name__}",
+                swap_id=request.swap_id,
+            )
+        except PermissionError as e:
+            return ExecuteSwapResponse(
+                success=False,
+                message=f"Insufficient permissions to execute swap: {str(e)}",
+                swap_id=request.swap_id,
+            )
+        except ValueError as e:
+            return ExecuteSwapResponse(
+                success=False,
+                message=f"Invalid swap state or data: {str(e)}",
+                swap_id=request.swap_id,
+            )
         except Exception as e:
             return ExecuteSwapResponse(
                 success=False,
-                message=f"Failed to execute swap: {e}",
+                message=f"Failed to execute swap: {type(e).__name__}",
                 swap_id=request.swap_id,
             )

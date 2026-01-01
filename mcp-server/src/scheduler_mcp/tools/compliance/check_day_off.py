@@ -82,7 +82,28 @@ class CheckDayOffTool(BaseTool[DayOffCheckRequest, DayOffCheckResponse]):
         )
 
     async def execute(self, request: DayOffCheckRequest) -> DayOffCheckResponse:
-        """Execute the tool."""
+        """
+        Execute ACGME 1-in-7 day-off compliance check.
+
+        Validates that all residents receive at least one 24-hour period off
+        every 7 days, per ACGME Common Program Requirements. Tracks longest
+        consecutive work stretches to identify violations.
+
+        ACGME Rule:
+        - Residents must have at least one full 24-hour period off per week
+        - Averaged over 4 weeks (can work up to 13 days if compensated later)
+        - "Day off" = free from all clinical and educational activities
+
+        Args:
+            request: Validated request with date range and optional person filter
+
+        Returns:
+            DayOffCheckResponse with per-person compliance and violation summary
+
+        Raises:
+            APIError: Backend API request fails
+            ValidationError: Invalid person_id or date range
+        """
         client = self._require_api_client()
 
         try:
@@ -122,8 +143,30 @@ class CheckDayOffTool(BaseTool[DayOffCheckRequest, DayOffCheckResponse]):
                 people=people,
             )
 
+        except (ConnectionError, TimeoutError) as e:
+            # Network connectivity issues
+            return DayOffCheckResponse(
+                start_date=request.start_date,
+                end_date=request.end_date,
+                total_people_checked=0,
+                compliant_count=0,
+                violation_count=0,
+                overall_compliant=False,
+                people=[],
+            )
+        except KeyError as e:
+            # Missing required data fields
+            return DayOffCheckResponse(
+                start_date=request.start_date,
+                end_date=request.end_date,
+                total_people_checked=0,
+                compliant_count=0,
+                violation_count=0,
+                overall_compliant=False,
+                people=[],
+            )
         except Exception as e:
-            # Return empty result on error
+            # Unexpected errors
             return DayOffCheckResponse(
                 start_date=request.start_date,
                 end_date=request.end_date,

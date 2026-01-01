@@ -14,6 +14,7 @@ Application to scheduling:
 - Service time = consultation duration
 """
 
+import logging
 from dataclasses import dataclass
 from math import factorial
 from typing import Optional
@@ -21,6 +22,8 @@ from typing import Optional
 import numpy as np
 from scipy.optimize import fsolve
 from scipy.special import factorial as scipy_factorial
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -66,11 +69,13 @@ class ErlangC:
         Returns:
             ErlangCResult with all metrics
         """
+        logger.info("Calculating Erlang C: arrival_rate=%.2f, service_rate=%.2f, num_servers=%d", arrival_rate, service_rate, num_servers)
         # Traffic intensity (utilization)
         rho = arrival_rate / (num_servers * service_rate)
 
         if rho >= 1.0:
             # System unstable - queue infinite
+            logger.error("CRITICAL: Erlang C utilization %.2f >= 1.0 - system unstable", rho)
             return ErlangCResult(
                 arrival_rate=arrival_rate,
                 service_rate=service_rate,

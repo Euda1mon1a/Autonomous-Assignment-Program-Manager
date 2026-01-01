@@ -13,6 +13,9 @@ services:
       POSTGRES_DB: residency_scheduler
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # Health check - verifies PostgreSQL can accept connections
+    # Uses pg_isready to check server status and database connectivity
+    # Higher retry count ensures stability during startup
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U scheduler -d residency_scheduler"]
       interval: 10s
@@ -34,6 +37,9 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD:-dev_only_password}
     volumes:
       - redis_data:/data
+    # Health check - verifies Redis is accepting commands
+    # Uses authenticated PING command to validate server health
+    # Quick startup period since Redis initializes fast
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-dev_only_password}", "ping"]
       interval: 10s
@@ -81,12 +87,15 @@ services:
       TELEMETRY_TRACE_HTTP: ${TELEMETRY_TRACE_HTTP:-true}
     ports:
       - "8000:8000"
+    # Health check - verifies FastAPI server and /health endpoint
+    # Uses Python urllib to check HTTP health endpoint response
+    # Start period allows time for database migrations
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 40s
     networks:
       - app-network
 
@@ -118,6 +127,9 @@ services:
     command: celery -A app.core.celery_app worker --loglevel=info -Q default,resilience,notifications,metrics,exports,security
     networks:
       - app-network
+    # Health check - verifies Celery worker is responsive
+    # Uses inspect ping to check worker heartbeat
+    # Extended start period allows worker to initialize queues
     healthcheck:
       test: ["CMD-SHELL", "celery -A app.core.celery_app inspect ping -d celery@$$HOSTNAME"]
       interval: 30s
@@ -151,6 +163,9 @@ services:
       TELEMETRY_ENVIRONMENT: ${TELEMETRY_ENVIRONMENT:-production}
       TELEMETRY_EXPORTER_ENDPOINT: ${TELEMETRY_EXPORTER_ENDPOINT:-http://localhost:4317}
     command: celery -A app.core.celery_app beat --loglevel=info
+    # Health check - verifies Celery beat scheduler is running
+    # Checks for schedule file presence as indicator of active scheduler
+    # Extended start period allows beat to create initial schedule
     healthcheck:
       test: ["CMD-SHELL", "[ -f celerybeat-schedule ] && echo 'healthy' || exit 1"]
       interval: 30s
@@ -173,6 +188,14 @@ services:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     ports:
       - "3000:3000"
+    # Health check - ensures Next.js server is responding
+    # Checks root route for 200 OK response
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - app-network
 
@@ -227,6 +250,9 @@ services:
       - "127.0.0.1:8080:8080"
     networks:
       - app-network
+    # Health check - verifies MCP server module loads successfully
+    # Tests Python import to ensure server initialization
+    # Quick startup since MCP initializes rapidly
     healthcheck:
       test: ["CMD", "python", "-c", "from scheduler_mcp.server import mcp; print('healthy')"]
       interval: 30s
@@ -253,6 +279,14 @@ services:
       - GENERIC_TIMEZONE=America/New_York
     volumes:
       - n8n_data:/home/node/.n8n
+    # Health check - ensures n8n workflow engine is ready
+    # Checks healthz endpoint for service availability
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     networks:
       - app-network
 

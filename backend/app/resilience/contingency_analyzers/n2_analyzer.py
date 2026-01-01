@@ -11,12 +11,38 @@ N-2 failures are more severe than N-1:
 - Tests true system resilience
 """
 
+import logging
 from dataclasses import dataclass
 from datetime import date
 from itertools import combinations
 from typing import Optional
 
 import networkx as nx
+
+logger = logging.getLogger(__name__)
+
+# N-2 Criticality Thresholds
+N2_BASE_CRITICALITY = 0.6
+N2_HIGH_IMPACT_THRESHOLD = 20
+N2_HIGH_IMPACT_CRITICALITY = 1.0
+N2_CORRELATION_PENALTY = 0.2
+N2_CATASTROPHIC_THRESHOLD = 0.85
+N2_CRITICAL_THRESHOLD = 0.7
+
+# N-2 Correlation Thresholds
+CORRELATION_COUPLED_THRESHOLD = 0.7
+CORRELATION_CORRELATED_THRESHOLD = 0.3
+
+# N-2 Cascade Thresholds
+CASCADE_WITH_BACKUP_BASE = 0.2
+CASCADE_WITHOUT_BACKUP_BASE = 0.5
+CASCADE_CORRELATION_FACTOR = 0.3
+CASCADE_NO_BACKUP_CORRELATION_FACTOR = 0.4
+CASCADE_HIGH_RISK_THRESHOLD = 0.7
+
+# N-2 Recovery Time Factors
+RECOVERY_WITH_BACKUP_MULTIPLIER = 0.5
+RECOVERY_WITHOUT_BACKUP_MULTIPLIER = 6.0
 
 
 @dataclass
@@ -77,20 +103,24 @@ class N2Analyzer:
         Returns:
             N2FailureScenario with impact analysis
         """
+        logger.info("Analyzing N-2 dual failure: %s and %s (correlation: %.2f)", person1_id, person2_id, correlation)
         total_affected = len(person1_slots) + len(person2_slots)
 
         # Check for overlapping assignments (increases severity)
         overlap = self._find_slot_overlap(person1_slots, person2_slots)
         if overlap:
+            logger.warning("N-2 scenario has %d overlapping slots - increased severity", len(overlap))
             total_affected += len(overlap) * 2  # Double penalty for overlap
 
         # Determine interdependency type
-        if correlation > 0.7:
+        if correlation > CORRELATION_COUPLED_THRESHOLD:
             interdependency = "coupled"  # Failures likely to occur together
-        elif correlation > 0.3:
+        elif correlation > CORRELATION_CORRELATED_THRESHOLD:
             interdependency = "correlated"  # Some connection
         else:
             interdependency = "independent"
+
+        logger.debug("Interdependency type: %s, total affected slots: %d", interdependency, total_affected)
 
         # Check backup coverage
         viable_backups = []
@@ -101,29 +131,32 @@ class N2Analyzer:
 
         has_backup = len(viable_backups) > 0
 
+        if not has_backup:
+            logger.error("CRITICAL: N-2 scenario with no viable backups for %d affected slots", total_affected)
+
         # Calculate criticality (N-2 is inherently more critical)
-        base_criticality = 0.6  # N-2 starts higher than N-1
-        if total_affected > 20:
-            criticality = min(1.0, base_criticality + 0.4)
+        base_criticality = N2_BASE_CRITICALITY  # N-2 starts higher than N-1
+        if total_affected > N2_HIGH_IMPACT_THRESHOLD:
+            criticality = min(N2_HIGH_IMPACT_CRITICALITY, base_criticality + 0.4)
         elif has_backup:
             criticality = base_criticality
         else:
-            criticality = min(1.0, base_criticality + total_affected / 50.0)
+            criticality = min(N2_HIGH_IMPACT_CRITICALITY, base_criticality + total_affected / 50.0)
 
         # Add correlation penalty
-        criticality = min(1.0, criticality + correlation * 0.2)
+        criticality = min(N2_HIGH_IMPACT_CRITICALITY, criticality + correlation * N2_CORRELATION_PENALTY)
 
         # Cascade probability - much higher for N-2
         if has_backup:
-            cascade_prob = 0.2 + correlation * 0.3
+            cascade_prob = CASCADE_WITH_BACKUP_BASE + correlation * CASCADE_CORRELATION_FACTOR
         else:
-            cascade_prob = 0.5 + correlation * 0.4
+            cascade_prob = CASCADE_WITHOUT_BACKUP_BASE + correlation * CASCADE_NO_BACKUP_CORRELATION_FACTOR
 
         # Recovery time
         if has_backup:
-            recovery_hours = total_affected * 0.5  # Parallel recovery
+            recovery_hours = total_affected * RECOVERY_WITH_BACKUP_MULTIPLIER  # Parallel recovery
         else:
-            recovery_hours = total_affected * 6.0  # Serial recovery
+            recovery_hours = total_affected * RECOVERY_WITHOUT_BACKUP_MULTIPLIER  # Serial recovery
 
         # Mitigation strategy
         if has_backup:
@@ -252,7 +285,7 @@ class N2Analyzer:
 
     def find_catastrophic_n2_scenarios(
         self,
-        min_criticality: float = 0.85,
+        min_criticality: float = N2_CATASTROPHIC_THRESHOLD,
     ) -> list[N2FailureScenario]:
         """
         Find catastrophic N-2 scenarios.
@@ -273,8 +306,8 @@ class N2Analyzer:
         for scenario in self.scenarios:
             is_catastrophic = (
                 scenario.criticality_score >= min_criticality
-                or (not scenario.backup_available and scenario.criticality_score >= 0.7)
-                or scenario.cascade_probability >= 0.7
+                or (not scenario.backup_available and scenario.criticality_score >= N2_CRITICAL_THRESHOLD)
+                or scenario.cascade_probability >= CASCADE_HIGH_RISK_THRESHOLD
             )
 
             if is_catastrophic:

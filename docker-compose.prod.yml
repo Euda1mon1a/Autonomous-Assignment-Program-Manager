@@ -65,11 +65,15 @@ services:
     volumes:
       - redis_data:/data
       - ./backups/redis:/backups
+    # Production health check - strict Redis availability monitoring
+    # Fails fast with minimal retries for production alerting
+    # Interval kept short for rapid failure detection
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   # FastAPI Backend - Production Settings
   backend:
@@ -100,6 +104,9 @@ services:
         max-size: "20m"
         max-file: "5"
         compress: "true"
+    # Production health check - uses curl for robust HTTP checking
+    # Extended start period accounts for migration and warmup time
+    # Fails on non-200 responses for strict production monitoring
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
       interval: 30s
@@ -191,6 +198,9 @@ services:
         max-size: "10m"
         max-file: "3"
         compress: "true"
+    # Production health check - ensures Next.js is serving requests
+    # Extended start period for build and initialization
+    # Uses curl for production-grade HTTP validation
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000 || exit 1"]
       interval: 30s
@@ -233,6 +243,9 @@ services:
         max-size: "10m"
         max-file: "3"
         compress: "true"
+    # Production health check - validates MCP server initialization
+    # Python import test ensures module dependencies are available
+    # Short start period since MCP has minimal dependencies
     healthcheck:
       test: ["CMD", "python", "-c", "from scheduler_mcp.server import mcp; print('healthy')"]
       interval: 30s
@@ -271,11 +284,15 @@ services:
         max-size: "20m"
         max-file: "5"
         compress: "true"
+    # Production health check - validates nginx reverse proxy
+    # Checks /health endpoint routing to backend service
+    # Uses wget for minimal Alpine image compatibility
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:80/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 20s
 
 volumes:
   postgres_data:

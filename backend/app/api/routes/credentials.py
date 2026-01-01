@@ -139,7 +139,7 @@ async def delete_credential(
 ):
     """Delete a credential. Requires authentication."""
     controller = CredentialController(db)
-    controller.delete_credential(credential_id)
+    await controller.delete_credential(credential_id)
 
 
 @router.post("/{credential_id}/suspend", response_model=CredentialResponse)

@@ -37,7 +37,7 @@
  *       useMockData={true}
  *       showControls={true}
  *       showLegend={true}
- *       onPointClick={(point) => console.log('Selected:', point)}
+ *       onPointClick={(point) => // console.log('Selected:', point)}
  *     />
  *   );
  * }

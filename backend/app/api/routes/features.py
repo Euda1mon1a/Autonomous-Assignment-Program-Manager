@@ -37,7 +37,7 @@ router = APIRouter()
 )
 async def create_feature_flag(
     flag_in: FeatureFlagCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -74,7 +74,7 @@ async def list_feature_flags(
     environment: str | None = Query(None, description="Filter by environment"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(50, ge=1, le=100, description="Items per page"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -104,7 +104,7 @@ async def list_feature_flags(
 
 @router.get("/stats", response_model=FeatureFlagStatsResponse)
 async def get_feature_flag_stats(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -133,7 +133,7 @@ async def get_feature_flag_stats(
 @router.get("/{key}", response_model=FeatureFlagResponse)
 async def get_feature_flag(
     key: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -158,7 +158,7 @@ async def update_feature_flag(
     key: str,
     flag_update: FeatureFlagUpdate,
     reason: str | None = Query(None, description="Reason for update"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -189,7 +189,7 @@ async def update_feature_flag(
 async def delete_feature_flag(
     key: str,
     reason: str | None = Query(None, description="Reason for deletion"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -213,7 +213,7 @@ async def delete_feature_flag(
 @router.post("/evaluate", response_model=FeatureFlagEvaluationResponse)
 async def evaluate_feature_flag(
     evaluation_request: FeatureFlagEvaluationRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -247,7 +247,7 @@ async def evaluate_feature_flag(
 @router.post("/evaluate/bulk", response_model=FeatureFlagBulkEvaluationResponse)
 async def evaluate_feature_flags_bulk(
     evaluation_request: FeatureFlagBulkEvaluationRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -288,7 +288,7 @@ async def evaluate_feature_flags_bulk(
 async def enable_feature_flag(
     key: str,
     reason: str | None = Query(None, description="Reason for enabling"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -315,7 +315,7 @@ async def enable_feature_flag(
 async def disable_feature_flag(
     key: str,
     reason: str | None = Query(None, description="Reason for disabling"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_admin_user),
 ):
     """

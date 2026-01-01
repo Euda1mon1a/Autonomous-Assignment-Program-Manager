@@ -81,3 +81,67 @@ Schedule management API endpoints.
 ## Delete Assignment
 
 <span class="endpoint-badge delete">DELETE</span> `/api/v1/assignments/{id}`
+
+---
+
+## Best Practices
+
+### 1. Always Validate After Generation
+
+```bash
+# Generate
+curl -X POST http://localhost:8000/api/v1/schedule/generate \
+  -d '{"start_date": "2025-07-01", "end_date": "2025-09-30"}'
+
+# Immediately validate
+curl "http://localhost:8000/api/v1/compliance/validate?start_date=2025-07-01&end_date=2025-09-30"
+```
+
+### 2. Use Idempotency Keys
+
+```python
+import uuid
+
+# Generate unique key
+idempotency_key = str(uuid.uuid4())
+
+response = requests.post(
+    "http://localhost:8000/api/v1/schedule/generate",
+    headers={
+        "Authorization": f"Bearer {token}",
+        "Idempotency-Key": idempotency_key
+    },
+    json={"start_date": "2025-07-01", "end_date": "2025-09-30"}
+)
+```
+
+### 3. Monitor Long-Running Generations
+
+```python
+# Start generation
+response = requests.post(
+    "http://localhost:8000/api/v1/schedule/generate",
+    json={"start_date": "2025-07-01", "end_date": "2025-09-30"}
+)
+
+run_id = response.json()['run_id']
+
+# Poll status
+import time
+while True:
+    status = requests.get(
+        f"http://localhost:8000/api/v1/scheduler/runs/{run_id}"
+    ).json()
+
+    if status['state'] in ['completed', 'failed']:
+        break
+
+    print(f"Progress: {status['progress']}%")
+    time.sleep(5)
+```
+
+## See Also
+
+- [Schedule Generation Runbook](../guides/SCHEDULE_GENERATION_RUNBOOK.md)
+- [Compliance API](endpoints/compliance.md)
+- [Quick Reference](../QUICK_REFERENCE.md)

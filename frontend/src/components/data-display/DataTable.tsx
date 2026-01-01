@@ -35,7 +35,7 @@ type SortDirection = 'asc' | 'desc' | null;
  *     { key: 'role', header: 'Role', accessor: (r) => r.role },
  *   ]}
  *   keyExtractor={(r) => r.id}
- *   onRowClick={(r) => console.log(r)}
+ *   onRowClick={(r) => // console.log(r)}
  * />
  * ```
  */

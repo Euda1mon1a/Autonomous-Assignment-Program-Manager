@@ -4,7 +4,7 @@ from datetime import date, datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from app.validators.date_validators import validate_academic_year_date
 
@@ -77,6 +77,14 @@ class AbsenceBase(BaseModel):
             raise ValueError("end_date must be >= start_date")
         return self
 
+    @field_validator("notes")
+    @classmethod
+    def validate_notes_length(cls, v: str | None) -> str | None:
+        """Validate notes field length."""
+        if v is not None and len(v) > 2000:
+            raise ValueError("notes must be less than 2000 characters")
+        return v
+
 
 class AbsenceCreate(AbsenceBase):
     """
@@ -129,6 +137,14 @@ class AbsenceUpdate(BaseModel):
             raise ValueError(f"absence_type must be one of {VALID_ABSENCE_TYPES}")
         return v
 
+    @field_validator("notes")
+    @classmethod
+    def validate_notes_length(cls, v: str | None) -> str | None:
+        """Validate notes field length."""
+        if v is not None and len(v) > 2000:
+            raise ValueError("notes must be less than 2000 characters")
+        return v
+
 
 class AbsenceResponse(AbsenceBase):
     """Schema for absence response."""
@@ -139,8 +155,7 @@ class AbsenceResponse(AbsenceBase):
     created_by_id: UUID | None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AbsenceListResponse(BaseModel):
@@ -151,5 +166,4 @@ class AbsenceListResponse(BaseModel):
     page: int | None = None
     page_size: int | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

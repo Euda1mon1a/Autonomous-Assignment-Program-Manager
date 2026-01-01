@@ -65,7 +65,33 @@ class UpdateAssignmentTool(BaseTool[UpdateAssignmentRequest, UpdateAssignmentRes
     async def execute(
         self, request: UpdateAssignmentRequest
     ) -> UpdateAssignmentResponse:
-        """Execute the tool."""
+        """
+        Execute assignment update.
+
+        Updates an existing assignment's person, rotation, or notes. Partial updates
+        are supported (only specified fields are changed). Validates:
+        - New person (if changed) is qualified for the rotation
+        - New rotation (if changed) exists and is active
+        - Update doesn't violate ACGME compliance
+        - No conflicts with other assignments
+
+        Update Scenarios:
+        - Reassign block to different person (person_id)
+        - Change rotation type (rotation_id)
+        - Add/modify administrative notes (notes)
+
+        Args:
+            request: Validated request with assignment_id and optional field updates
+
+        Returns:
+            UpdateAssignmentResponse with success status and updated details
+
+        Raises:
+            APIError: Backend API request fails
+            NotFoundError: Assignment, person, or rotation not found
+            ValidationError: No fields to update or invalid values
+            ConflictError: Update would create scheduling conflict
+        """
         client = self._require_api_client()
 
         try:
@@ -95,9 +121,27 @@ class UpdateAssignmentTool(BaseTool[UpdateAssignmentRequest, UpdateAssignmentRes
                 details=data,
             )
 
+        except (ConnectionError, TimeoutError) as e:
+            return UpdateAssignmentResponse(
+                success=False,
+                message=f"Backend service unavailable: {type(e).__name__}",
+                details={"error": "connection_error"},
+            )
+        except KeyError as e:
+            return UpdateAssignmentResponse(
+                success=False,
+                message=f"Assignment, person, or rotation not found: {str(e)}",
+                details={"error": "not_found"},
+            )
+        except ValueError as e:
+            return UpdateAssignmentResponse(
+                success=False,
+                message=f"Invalid update data: {str(e)}",
+                details={"error": "validation_error"},
+            )
         except Exception as e:
             return UpdateAssignmentResponse(
                 success=False,
-                message=f"Failed to update assignment: {e}",
+                message=f"Failed to update assignment: {type(e).__name__}",
                 details={"error": str(e)},
             )

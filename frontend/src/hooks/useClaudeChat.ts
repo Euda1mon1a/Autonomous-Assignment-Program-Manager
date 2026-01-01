@@ -11,7 +11,15 @@ const STORAGE_KEY_SESSION = 'claude_chat_session';
 const STORAGE_KEY_MESSAGES = 'claude_chat_messages';
 const STORAGE_KEY_SESSIONS_LIST = 'claude_chat_sessions_list';
 
-// Helper to safely parse dates from JSON
+/**
+ * Helper to safely parse dates from JSON.
+ *
+ * Reviver function for JSON.parse that converts ISO date strings to Date objects.
+ *
+ * @param key - The property key being parsed
+ * @param value - The property value being parsed
+ * @returns Date object if value is an ISO date string, otherwise the original value
+ */
 const reviveDates = (key: string, value: unknown): unknown => {
   if (typeof value === 'string') {
     // Check for ISO date format
@@ -31,19 +39,122 @@ const loadFromStorage = <T>(key: string): T | null => {
       return JSON.parse(stored, reviveDates);
     }
   } catch (e) {
-    console.warn(`Failed to load ${key} from localStorage:`, e);
+    // Silent failure - localStorage may be unavailable
   }
   return null;
 };
 
-// Helper to save to localStorage
+/**
+ * Helper to save data to localStorage.
+ *
+ * Serializes the value to JSON and stores it in localStorage with error handling.
+ *
+ * @param key - The localStorage key
+ * @param value - The value to store (must be JSON-serializable)
+ */
 const saveToStorage = (key: string, value: unknown): void => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (e) {
-    console.warn(`Failed to save ${key} to localStorage:`, e);
+    // Silent failure - localStorage may be full or unavailable
   }
 };
+
+/**
+ * Validates if a value is a valid ChatSession.
+ *
+ * @param value - Value to validate
+ * @returns True if value is a ChatSession
+ */
+function isChatSession(value: unknown): value is ChatSession {
+  if (!value || typeof value !== 'object') return false;
+  const obj = value as Record<string, unknown>;
+  return (
+    typeof obj.id === 'string' &&
+    typeof obj.title === 'string' &&
+    typeof obj.programId === 'string' &&
+    typeof obj.adminId === 'string' &&
+    Array.isArray(obj.messages)
+  );
+}
+
+/**
+ * Validates if a value is a valid ChatMessage array.
+ *
+ * @param value - Value to validate
+ * @returns True if value is a ChatMessage array
+ */
+function isChatMessageArray(value: unknown): value is ChatMessage[] {
+  return Array.isArray(value) && value.every(msg =>
+    msg && typeof msg === 'object' &&
+    'id' in msg && 'role' in msg && 'content' in msg
+  );
+}
+
+/**
+ * Validates if a string is a valid ISO date.
+ *
+ * @param value - String to validate
+ * @returns True if value is a valid ISO date string
+ */
+function isValidISODate(value: string): boolean {
+  const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
+  if (!dateRegex.test(value)) return false;
+  const date = new Date(value);
+  return !isNaN(date.getTime());
+}
+
+/**
+ * Context data for Claude Code requests.
+ */
+export interface ClaudeCodeContext {
+  programId: string;
+  adminId: string;
+  sessionId: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Code block metadata from streaming response.
+ */
+export interface CodeBlockMetadata {
+  language?: string;
+  filename?: string;
+  startLine?: number;
+  endLine?: number;
+  [key: string]: unknown;
+}
+
+/**
+ * Artifact metadata from streaming response.
+ */
+export interface ArtifactMetadata {
+  type?: string;
+  title?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Error types for Claude Chat operations.
+ */
+export type ClaudeChatErrorType =
+  | 'NO_SESSION'
+  | 'EMPTY_MESSAGE'
+  | 'NETWORK_ERROR'
+  | 'STREAM_ERROR'
+  | 'PARSE_ERROR'
+  | 'ABORT_ERROR'
+  | 'UNKNOWN_ERROR';
+
+/**
+ * Structured error for Claude Chat operations.
+ */
+export interface ClaudeChatError {
+  type: ClaudeChatErrorType;
+  message: string;
+  originalError?: Error;
+  timestamp: Date;
+}
 
 export interface SavedSession {
   id: string;
@@ -147,11 +258,17 @@ export const useClaudeChat = () => {
     []
   );
 
-  // Send message to Claude with streaming
+  /**
+   * Send message to Claude with streaming response.
+   *
+   * @param userInput - The user's message to send
+   * @param context - Optional context data for the request
+   * @param onStreamUpdate - Optional callback for stream updates
+   */
   const sendMessage = useCallback(
     async (
       userInput: string,
-      context?: Record<string, unknown>,
+      context?: Partial<ClaudeCodeContext>,
       onStreamUpdate?: (update: StreamUpdate) => void
     ) => {
       if (!session) {
@@ -159,7 +276,10 @@ export const useClaudeChat = () => {
         return;
       }
 
-      if (!userInput.trim()) return;
+      if (!userInput.trim()) {
+        setError('Message cannot be empty');
+        return;
+      }
 
       // Add user message
       const userMessage: ChatMessage = {
@@ -221,8 +341,8 @@ export const useClaudeChat = () => {
 
         const decoder = new TextDecoder();
         let fullContent = '';
-        const codeBlocks: CodeBlock[] = [];
-        const artifacts: ChatArtifact[] = [];
+        const codeBlocks: CodeBlockMetadata[] = [];
+        const artifacts: ArtifactMetadata[] = [];
 
         while (true) {
           const { done, value } = await reader.read();
@@ -258,8 +378,11 @@ export const useClaudeChat = () => {
                       : msg
                   )
                 );
-              } catch (e) {
+              } catch (error) {
                 // Continue on JSON parse error
+                if (error instanceof Error) {
+                  console.warn('[useClaudeChat] Failed to parse stream chunk:', error.message);
+                }
               }
             }
           }
@@ -279,10 +402,20 @@ export const useClaudeChat = () => {
               : msg
           )
         );
-      } catch (err) {
+      } catch (error) {
         const errorMessage =
-          err instanceof Error ? err.message : 'Unknown error occurred';
+          error instanceof Error ? error.message : 'Unknown error occurred';
         setError(errorMessage);
+
+        // Log detailed error for debugging
+        if (error instanceof Error) {
+          console.error('[useClaudeChat] Stream error:', {
+            message: error.message,
+            name: error.name,
+            stack: error.stack,
+          });
+        }
+
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === assistantMessage.id
