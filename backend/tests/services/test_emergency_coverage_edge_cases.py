@@ -357,7 +357,10 @@ class TestEmergencyCoverageEdgeCases:
     # ===== TESTS FOR _is_critical_service() =====
 
     def test_is_critical_service_call(
-        self, service: EmergencyCoverageService, db: Session, critical_rotation: RotationTemplate
+        self,
+        service: EmergencyCoverageService,
+        db: Session,
+        critical_rotation: RotationTemplate,
     ):
         """Test _is_critical_service identifies call as critical."""
         assignment = Assignment(
@@ -372,7 +375,10 @@ class TestEmergencyCoverageEdgeCases:
         assert service._is_critical_service(assignment) is True
 
     def test_is_critical_service_inpatient(
-        self, service: EmergencyCoverageService, db: Session, inpatient_rotation: RotationTemplate
+        self,
+        service: EmergencyCoverageService,
+        db: Session,
+        inpatient_rotation: RotationTemplate,
     ):
         """Test _is_critical_service identifies inpatient as critical."""
         assignment = Assignment(
@@ -387,7 +393,10 @@ class TestEmergencyCoverageEdgeCases:
         assert service._is_critical_service(assignment) is True
 
     def test_is_critical_service_clinic(
-        self, service: EmergencyCoverageService, db: Session, non_critical_rotation: RotationTemplate
+        self,
+        service: EmergencyCoverageService,
+        db: Session,
+        non_critical_rotation: RotationTemplate,
     ):
         """Test _is_critical_service identifies clinic as non-critical."""
         assignment = Assignment(
@@ -401,9 +410,7 @@ class TestEmergencyCoverageEdgeCases:
 
         assert service._is_critical_service(assignment) is False
 
-    def test_is_critical_service_no_template(
-        self, service: EmergencyCoverageService
-    ):
+    def test_is_critical_service_no_template(self, service: EmergencyCoverageService):
         """Test _is_critical_service with assignment lacking rotation template."""
         assignment = Assignment(
             id=uuid4(),

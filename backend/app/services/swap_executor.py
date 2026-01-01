@@ -231,9 +231,7 @@ class SwapExecutor:
                 swap_type_enum = swap_type
 
             # Execute in transactional context with retry on deadlock
-            with transactional_with_retry(
-                self.db, max_retries=3, timeout_seconds=30.0
-            ):
+            with transactional_with_retry(self.db, max_retries=3, timeout_seconds=30.0):
                 # Persist SwapRecord to database
                 swap_record = SwapRecord(
                     id=swap_id,
@@ -329,9 +327,7 @@ class SwapExecutor:
         logger.info("Rollback requested for swap %s, reason: %s", swap_id, reason)
 
         try:
-            with transactional_with_retry(
-                self.db, max_retries=3, timeout_seconds=30.0
-            ):
+            with transactional_with_retry(self.db, max_retries=3, timeout_seconds=30.0):
                 # Retrieve swap record with row-level lock to prevent concurrent rollbacks
                 swap_record = (
                     self.db.query(SwapRecord)

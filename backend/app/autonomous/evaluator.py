@@ -632,14 +632,14 @@ class ScheduleEvaluator:
         for assignment in assignments:
             if assignment.person_id in faculty_ids:
                 block = (
-                    self.db.query(Block)
-                    .filter(Block.id == assignment.block_id)
-                    .first()
+                    self.db.query(Block).filter(Block.id == assignment.block_id).first()
                 )
                 if block:
                     if assignment.person_id not in faculty_assignments:
                         faculty_assignments[assignment.person_id] = []
-                    faculty_assignments[assignment.person_id].append((assignment, block))
+                    faculty_assignments[assignment.person_id].append(
+                        (assignment, block)
+                    )
 
         # Score calculation
         total_checks = 0
@@ -689,7 +689,9 @@ class ScheduleEvaluator:
             # Bonus for preferred week matches (small bonus)
             preferred_bonus = min(0.1, preferred_week_matches * 0.02)
 
-            raw_score = max(0.0, min(1.0, satisfaction_ratio - violation_penalty + preferred_bonus))
+            raw_score = max(
+                0.0, min(1.0, satisfaction_ratio - violation_penalty + preferred_bonus)
+            )
             details = (
                 f"Checked {total_checks} assignments, "
                 f"{blocked_week_violations} blocked week violations, "

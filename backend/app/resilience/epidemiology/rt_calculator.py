@@ -81,9 +81,15 @@ class RtCalculator:
         Returns:
             List of RtEstimate objects, one per day
         """
-        logger.info("Calculating Rt for %d days of incidence data (window=%d)", len(incidence), window_size)
+        logger.info(
+            "Calculating Rt for %d days of incidence data (window=%d)",
+            len(incidence),
+            window_size,
+        )
         if len(incidence) < window_size:
-            logger.warning("Insufficient data for Rt calculation: need >= %d days", window_size)
+            logger.warning(
+                "Insufficient data for Rt calculation: need >= %d days", window_size
+            )
             return []
 
         estimates = []
@@ -97,14 +103,20 @@ class RtCalculator:
 
             # Determine confidence based on case counts
             total_cases = sum(window)
-            confidence = min(1.0, total_cases / MIN_CASES_FOR_CONFIDENCE)  # Need ~10 cases for confidence
+            confidence = min(
+                1.0, total_cases / MIN_CASES_FOR_CONFIDENCE
+            )  # Need ~10 cases for confidence
 
             # Interpret trend
             if rt_mean < RT_DECLINING_THRESHOLD:
                 interpretation = "declining"
             elif rt_mean > RT_GROWING_THRESHOLD:
                 interpretation = "growing"
-                logger.warning("Rt > %.1f detected: burnout is spreading (Rt=%.2f)", RT_GROWING_THRESHOLD, rt_mean)
+                logger.warning(
+                    "Rt > %.1f detected: burnout is spreading (Rt=%.2f)",
+                    RT_GROWING_THRESHOLD,
+                    rt_mean,
+                )
             else:
                 interpretation = "stable"
 

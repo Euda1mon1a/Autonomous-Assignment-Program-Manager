@@ -66,7 +66,10 @@ class StrategyCreate(BaseModel):
         3, ge=1, le=5, description="Defense level activation threshold (1-5)"
     )
     response_timeout_ms: int = Field(
-        5000, ge=100, le=60000, description="Response timeout in milliseconds (100-60000)"
+        5000,
+        ge=100,
+        le=60000,
+        description="Response timeout in milliseconds (100-60000)",
     )
 
     # Strategy behavior

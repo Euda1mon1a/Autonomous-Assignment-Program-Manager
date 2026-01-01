@@ -202,9 +202,7 @@ class TestBatchProcessor:
         assert "not found" in results[0].error.lower()
 
     @pytest.mark.asyncio
-    async def test_process_update_batch_optimistic_locking(
-        self, db, sample_assignment
-    ):
+    async def test_process_update_batch_optimistic_locking(self, db, sample_assignment):
         """Test optimistic locking in batch update."""
         processor = BatchProcessor(db)
 
@@ -348,7 +346,9 @@ class TestBatchProcessor:
         assert all(r.success for r in results)
 
         # Verify all deleted
-        remaining = db.query(Assignment).filter(
-            Assignment.id.in_([a.id for a in assignments])
-        ).count()
+        remaining = (
+            db.query(Assignment)
+            .filter(Assignment.id.in_([a.id for a in assignments]))
+            .count()
+        )
         assert remaining == 0

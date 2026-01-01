@@ -186,8 +186,10 @@ async def get_my_schedule(
 
     # Query actual FMIT weeks from schedule
     fmit_template = (
-        (await db.execute(select(RotationTemplate).where(RotationTemplate.name == "FMIT"))).scalar_one_or_none()
-    )
+        await db.execute(
+            select(RotationTemplate).where(RotationTemplate.name == "FMIT")
+        )
+    ).scalar_one_or_none()
 
     fmit_weeks = []
     if fmit_template:
@@ -450,8 +452,10 @@ async def create_swap_request(
     # Implement swap request creation
     # 1. Verify week is assigned to this faculty
     fmit_template = (
-        (await db.execute(select(RotationTemplate).where(RotationTemplate.name == "FMIT"))).scalar_one_or_none()
-    )
+        await db.execute(
+            select(RotationTemplate).where(RotationTemplate.name == "FMIT")
+        )
+    ).scalar_one_or_none()
 
     if not fmit_template:
         raise HTTPException(
@@ -1020,8 +1024,10 @@ async def get_my_dashboard(
 
     # Get FMIT template
     fmit_template = (
-        (await db.execute(select(RotationTemplate).where(RotationTemplate.name == "FMIT"))).scalar_one_or_none()
-    )
+        await db.execute(
+            select(RotationTemplate).where(RotationTemplate.name == "FMIT")
+        )
+    ).scalar_one_or_none()
 
     # Initialize counters
     weeks_assigned = 0
@@ -1305,8 +1311,10 @@ async def get_swap_marketplace(
 
     # Get faculty's current FMIT schedule to check compatibility
     fmit_template = (
-        (await db.execute(select(RotationTemplate).where(RotationTemplate.name == "FMIT"))).scalar_one_or_none()
-    )
+        await db.execute(
+            select(RotationTemplate).where(RotationTemplate.name == "FMIT")
+        )
+    ).scalar_one_or_none()
 
     faculty_scheduled_weeks = set()
     if fmit_template:

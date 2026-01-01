@@ -297,9 +297,7 @@ class TestQuantumInspiredSolverFallback:
     def test_solve_dwave_connection_fails(self, mock_context):
         """Test fallback when D-Wave connection fails."""
         # Mock D-Wave sampler to raise exception
-        with patch(
-            "app.scheduling.quantum.qubo_solver.DWaveSampler"
-        ) as mock_sampler:
+        with patch("app.scheduling.quantum.qubo_solver.DWaveSampler") as mock_sampler:
             mock_sampler.side_effect = Exception("Connection timeout")
 
             solver = QuantumInspiredSolver(

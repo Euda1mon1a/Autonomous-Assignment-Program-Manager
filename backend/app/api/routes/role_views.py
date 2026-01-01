@@ -60,7 +60,9 @@ async def get_role_config(
 
 
 @router.get("/views/config")
-async def get_current_user_view_config(current_user: User = Depends(get_current_active_user)):
+async def get_current_user_view_config(
+    current_user: User = Depends(get_current_active_user),
+):
     """
     Get view configuration for current user.
 
@@ -120,7 +122,9 @@ async def list_all_roles(current_user: User = Depends(get_current_active_user)):
 
 
 @router.get("/views/permissions", response_model=dict)
-async def get_all_role_permissions(current_user: User = Depends(get_current_active_user)):
+async def get_all_role_permissions(
+    current_user: User = Depends(get_current_active_user),
+):
     """
     Get permissions for all roles.
 

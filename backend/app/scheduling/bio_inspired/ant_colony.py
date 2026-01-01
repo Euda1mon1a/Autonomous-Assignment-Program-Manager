@@ -425,7 +425,9 @@ class AntColonySolver(BioInspiredSolver):
 
             # Apply local search to best solutions
             if self.config.local_search:
-                top_k = sorted(ant_solutions, key=lambda x: x[2], reverse=True)[:ACO_TOP_K_FOR_LOCAL_SEARCH]
+                top_k = sorted(ant_solutions, key=lambda x: x[2], reverse=True)[
+                    :ACO_TOP_K_FOR_LOCAL_SEARCH
+                ]
                 for chrom, fit, weighted in top_k:
                     improved = self._local_search(chrom, context)
                     new_fit = self.evaluate_fitness(improved, context)
@@ -511,7 +513,9 @@ class AntColonySolver(BioInspiredSolver):
             for b_idx in unavail:
                 if 0 <= b_idx < n_blocks:
                     # Set all templates to low probability
-                    self.heuristic_matrix[r_idx, b_idx, :] = ACO_UNAVAILABLE_SLOT_HEURISTIC
+                    self.heuristic_matrix[r_idx, b_idx, :] = (
+                        ACO_UNAVAILABLE_SLOT_HEURISTIC
+                    )
 
         # Boost unassigned to prevent over-scheduling
         self.heuristic_matrix[:, :, 0] *= ACO_UNASSIGNED_BOOST
@@ -743,7 +747,10 @@ class AntColonySolver(BioInspiredSolver):
         top_transitions = []
         for from_t in range(self.pheromone.n_templates):
             for to_t in range(self.pheromone.n_templates):
-                if self.pheromone.transition[from_t, to_t] > ACO_STRONG_TRANSITION_THRESHOLD:
+                if (
+                    self.pheromone.transition[from_t, to_t]
+                    > ACO_STRONG_TRANSITION_THRESHOLD
+                ):
                     top_transitions.append(
                         {
                             "from": from_t,

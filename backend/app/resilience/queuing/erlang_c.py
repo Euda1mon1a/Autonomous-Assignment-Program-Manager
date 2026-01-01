@@ -69,13 +69,20 @@ class ErlangC:
         Returns:
             ErlangCResult with all metrics
         """
-        logger.info("Calculating Erlang C: arrival_rate=%.2f, service_rate=%.2f, num_servers=%d", arrival_rate, service_rate, num_servers)
+        logger.info(
+            "Calculating Erlang C: arrival_rate=%.2f, service_rate=%.2f, num_servers=%d",
+            arrival_rate,
+            service_rate,
+            num_servers,
+        )
         # Traffic intensity (utilization)
         rho = arrival_rate / (num_servers * service_rate)
 
         if rho >= 1.0:
             # System unstable - queue infinite
-            logger.error("CRITICAL: Erlang C utilization %.2f >= 1.0 - system unstable", rho)
+            logger.error(
+                "CRITICAL: Erlang C utilization %.2f >= 1.0 - system unstable", rho
+            )
             return ErlangCResult(
                 arrival_rate=arrival_rate,
                 service_rate=service_rate,

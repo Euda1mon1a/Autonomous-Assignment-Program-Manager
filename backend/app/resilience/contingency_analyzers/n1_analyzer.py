@@ -96,7 +96,11 @@ class N1Analyzer:
         Returns:
             N1FailureScenario with impact analysis
         """
-        logger.info("Analyzing N-1 person failure for %s with %d assigned slots", person_id, len(assigned_slots))
+        logger.info(
+            "Analyzing N-1 person failure for %s with %d assigned slots",
+            person_id,
+            len(assigned_slots),
+        )
         num_affected = len(assigned_slots)
 
         # Check backup coverage
@@ -109,28 +113,45 @@ class N1Analyzer:
         has_backup = len(viable_backups) > 0
 
         if not has_backup:
-            logger.warning("No viable backups found for person %s affecting %d slots", person_id, num_affected)
+            logger.warning(
+                "No viable backups found for person %s affecting %d slots",
+                person_id,
+                num_affected,
+            )
 
         # Calculate criticality
         if num_affected == 0:
             criticality = 0.0
         elif has_backup:
             # Low criticality if backups available
-            criticality = min(CRITICALITY_LOW_WITH_BACKUP, num_affected / ASSIGNMENTS_PER_CRITICALITY_UNIT)
+            criticality = min(
+                CRITICALITY_LOW_WITH_BACKUP,
+                num_affected / ASSIGNMENTS_PER_CRITICALITY_UNIT,
+            )
         else:
             # High criticality if no backups
-            criticality = min(1.0, CRITICALITY_HIGH_NO_BACKUP + num_affected / ASSIGNMENTS_PER_BACKUP)
+            criticality = min(
+                1.0, CRITICALITY_HIGH_NO_BACKUP + num_affected / ASSIGNMENTS_PER_BACKUP
+            )
 
-        logger.debug("Criticality score: %.2f, backup available: %s", criticality, has_backup)
+        logger.debug(
+            "Criticality score: %.2f, backup available: %s", criticality, has_backup
+        )
 
         # Estimate recovery time
         if has_backup:
             recovery_hours = RECOVERY_TIME_WITH_BACKUP  # Quick swap
         else:
-            recovery_hours = num_affected * RECOVERY_TIME_PER_SLOT_NO_BACKUP  # Need to find coverage
+            recovery_hours = (
+                num_affected * RECOVERY_TIME_PER_SLOT_NO_BACKUP
+            )  # Need to find coverage
 
         # Cascade potential - higher if no backups
-        cascade_potential = CASCADE_POTENTIAL_WITH_BACKUP if has_backup else min(0.8, num_affected / 15.0)
+        cascade_potential = (
+            CASCADE_POTENTIAL_WITH_BACKUP
+            if has_backup
+            else min(0.8, num_affected / 15.0)
+        )
 
         # Determine mitigation strategy
         if has_backup:
@@ -191,7 +212,11 @@ class N1Analyzer:
             criticality = CRITICALITY_SPECIALTY_MULTIPLE  # Multiple specialists
             cascade_potential = CASCADE_SPECIALTY_MULTIPLE
 
-        recovery_hours = required_slots * RECOVERY_TIME_SPECIALTY_WITH_BACKUP_MULTIPLIER if has_backup else required_slots * RECOVERY_TIME_SPECIALTY_NO_BACKUP_MULTIPLIER
+        recovery_hours = (
+            required_slots * RECOVERY_TIME_SPECIALTY_WITH_BACKUP_MULTIPLIER
+            if has_backup
+            else required_slots * RECOVERY_TIME_SPECIALTY_NO_BACKUP_MULTIPLIER
+        )
 
         if has_backup:
             mitigation = f"Activate cross-trained personnel: {cross_trained}"

@@ -402,7 +402,9 @@ class ConflictAutoResolver:
                     report.resolutions_deferred += 1
 
             except (SQLAlchemyError, ValueError, KeyError, TypeError) as e:
-                logger.error(f"Error processing conflict {conflict_id}: {e}", exc_info=True)
+                logger.error(
+                    f"Error processing conflict {conflict_id}: {e}", exc_info=True
+                )
                 failed_conflicts.append(conflict_id)
                 report.resolutions_failed += 1
                 results.append(
@@ -471,9 +473,7 @@ class ConflictAutoResolver:
 
     # ==================== PRIVATE HELPER METHODS ====================
 
-    def _get_alert(
-        self, conflict_id: UUID, lock: bool = False
-    ) -> ConflictAlert | None:
+    def _get_alert(self, conflict_id: UUID, lock: bool = False) -> ConflictAlert | None:
         """
         Get conflict alert by ID.
 
@@ -1391,9 +1391,7 @@ class ConflictAutoResolver:
 
         try:
             # Execute resolution in transaction with retry on deadlock
-            with transactional_with_retry(
-                self.db, max_retries=3, timeout_seconds=30.0
-            ):
+            with transactional_with_retry(self.db, max_retries=3, timeout_seconds=30.0):
                 # Re-fetch alert with lock to prevent concurrent modifications
                 locked_alert = self._get_alert(alert.id, lock=True)
                 if not locked_alert:
@@ -1429,7 +1427,9 @@ class ConflictAutoResolver:
                     )
                     if success:
                         changes_applied.append(msg)
-                        entities_modified["assignments"].append(str(locked_alert.faculty_id))
+                        entities_modified["assignments"].append(
+                            str(locked_alert.faculty_id)
+                        )
                     else:
                         return ResolutionResult(
                             resolution_option_id=option.id,
@@ -1509,7 +1509,9 @@ class ConflictAutoResolver:
             )
 
         except (SQLAlchemyError, ValueError, KeyError, TypeError) as e:
-            logger.error(f"Error applying resolution for conflict {alert.id}: {e}", exc_info=True)
+            logger.error(
+                f"Error applying resolution for conflict {alert.id}: {e}", exc_info=True
+            )
             return ResolutionResult(
                 resolution_option_id=option.id,
                 conflict_id=alert.id,

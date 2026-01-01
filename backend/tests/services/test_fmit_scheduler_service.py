@@ -196,9 +196,7 @@ class TestFMITSchedulerService:
     # Schedule Validation Tests
     # =========================================================================
 
-    def test_validate_schedule_detects_coverage_gaps(
-        self, db, fmit_rotation_template
-    ):
+    def test_validate_schedule_detects_coverage_gaps(self, db, fmit_rotation_template):
         """Test validation detects weeks without coverage."""
         service = FMITSchedulerService(db)
         result = service.validate_schedule(
@@ -348,9 +346,7 @@ class TestFMITSchedulerService:
     # Faculty Load Tests
     # =========================================================================
 
-    def test_get_faculty_load(
-        self, db, sample_faculty_list, fmit_rotation_template
-    ):
+    def test_get_faculty_load(self, db, sample_faculty_list, fmit_rotation_template):
         """Test calculating faculty workload."""
         service = FMITSchedulerService(db)
 

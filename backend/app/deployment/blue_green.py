@@ -529,7 +529,11 @@ class HealthCheck:
                                 in (200, 401, 403),  # Auth errors are OK
                             }
                         )
-                    except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as e:
+                    except (
+                        httpx.TimeoutException,
+                        httpx.ConnectError,
+                        httpx.NetworkError,
+                    ) as e:
                         results.append(
                             {
                                 "endpoint": endpoint,
@@ -908,7 +912,9 @@ class BlueGreenDeploymentManager:
 
             return False
         except (ValueError, TypeError) as e:
-            logger.error(f"Invalid configuration during traffic switch: {e}", exc_info=True)
+            logger.error(
+                f"Invalid configuration during traffic switch: {e}", exc_info=True
+            )
 
             if self.config.notify_on_failure:
                 await self._send_notification(
@@ -1125,11 +1131,14 @@ class BlueGreenDeploymentManager:
 
                 # Count recently active users (active in last 15 minutes)
                 from datetime import timedelta
+
                 cutoff = datetime.utcnow() - timedelta(minutes=15)
 
                 result = self.db.execute(
                     select(func.count(User.id)).where(
-                        User.last_active >= cutoff if hasattr(User, "last_active") else True
+                        User.last_active >= cutoff
+                        if hasattr(User, "last_active")
+                        else True
                     )
                 )
                 count = result.scalar() or 0
@@ -1302,15 +1311,16 @@ class BlueGreenDeploymentManager:
 
             # Run migration in a separate process to avoid blocking
             process = await asyncio.create_subprocess_exec(
-                "alembic", "upgrade", "head",
+                "alembic",
+                "upgrade",
+                "head",
                 cwd=".",  # Use project root
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
 
             stdout, stderr = await asyncio.wait_for(
-                process.communicate(),
-                timeout=self.config.migration_timeout_seconds
+                process.communicate(), timeout=self.config.migration_timeout_seconds
             )
 
             if process.returncode != 0:
@@ -1320,13 +1330,16 @@ class BlueGreenDeploymentManager:
 
             # Get current migration version
             version_result = await asyncio.create_subprocess_exec(
-                "alembic", "current",
+                "alembic",
+                "current",
                 cwd=".",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
             version_stdout, _ = await version_result.communicate()
-            current_version = version_stdout.decode().strip() if version_stdout else "unknown"
+            current_version = (
+                version_stdout.decode().strip() if version_stdout else "unknown"
+            )
 
             # Update deployment record
             if self.db and deployment_id:
@@ -1338,7 +1351,9 @@ class BlueGreenDeploymentManager:
                     deployment.migration_version = current_version
                 self.db.commit()
 
-            logger.info(f"Database migrations completed successfully. Version: {current_version}")
+            logger.info(
+                f"Database migrations completed successfully. Version: {current_version}"
+            )
             return True
 
         except RuntimeError as e:

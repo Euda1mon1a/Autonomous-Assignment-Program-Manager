@@ -7,6 +7,7 @@ Tests that all routes:
 - Handle concurrent requests properly
 - Maintain transaction isolation
 """
+
 import asyncio
 import pytest
 from httpx import AsyncClient
@@ -54,7 +55,7 @@ class TestAsyncRouteMigration:
         for module in modules_to_check:
             router = module.router
             for route in router.routes:
-                if hasattr(route, 'endpoint'):
+                if hasattr(route, "endpoint"):
                     endpoint = route.endpoint
                     # Check if endpoint is a coroutine function
                     assert asyncio.iscoroutinefunction(endpoint), (
@@ -80,6 +81,7 @@ class TestAsyncRouteMigration:
     @pytest.mark.asyncio
     async def test_transaction_isolation(self):
         """Test that concurrent sessions maintain transaction isolation."""
+
         # Create two concurrent sessions
         async def session_operation(session_id: int):
             async for db in get_async_db():
@@ -110,7 +112,7 @@ class TestAsyncRouteMigration:
         routes_dir = Path(__file__).parent.parent / "app" / "api" / "routes"
 
         # Pattern to detect db.query() calls (sync SQLAlchemy)
-        sync_query_pattern = re.compile(r'\bdb\.query\(')
+        sync_query_pattern = re.compile(r"\bdb\.query\(")
 
         files_with_sync_queries = []
 
@@ -124,9 +126,7 @@ class TestAsyncRouteMigration:
             # Check for db.query() calls
             matches = sync_query_pattern.findall(content)
             if matches:
-                files_with_sync_queries.append(
-                    (route_file.name, len(matches))
-                )
+                files_with_sync_queries.append((route_file.name, len(matches)))
 
         # Report findings
         if files_with_sync_queries:
@@ -145,9 +145,7 @@ class TestAsyncRouteMigration:
         routes_dir = Path(__file__).parent.parent / "app" / "api" / "routes"
 
         # Pattern to detect sync Session usage
-        sync_session_pattern = re.compile(
-            r'db:\s*Session\s*=\s*Depends\(get_db\)'
-        )
+        sync_session_pattern = re.compile(r"db:\s*Session\s*=\s*Depends\(get_db\)")
 
         files_with_sync_session = []
 
@@ -161,9 +159,7 @@ class TestAsyncRouteMigration:
             # Check for sync Session usage
             matches = sync_session_pattern.findall(content)
             if matches:
-                files_with_sync_session.append(
-                    (route_file.name, len(matches))
-                )
+                files_with_sync_session.append((route_file.name, len(matches)))
 
         # Report findings
         if files_with_sync_session:
@@ -200,6 +196,7 @@ class TestCriticalRoutesAsync:
 
 # Fixtures
 
+
 @pytest.fixture
 async def async_client():
     """Create async test client."""
@@ -213,6 +210,4 @@ async def async_client():
 @pytest.fixture
 def auth_headers():
     """Mock auth headers for testing."""
-    return {
-        "Authorization": "Bearer test-token"
-    }
+    return {"Authorization": "Bearer test-token"}

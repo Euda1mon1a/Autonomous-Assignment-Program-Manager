@@ -70,8 +70,12 @@ class SpinGlassModel:
             temperature: System temperature for sampling
             frustration_level: Degree of conflicting constraints (0-1)
         """
-        logger.info("Initializing spin glass model: num_spins=%d, temperature=%.2f, frustration=%.2f",
-                   num_spins, temperature, frustration_level)
+        logger.info(
+            "Initializing spin glass model: num_spins=%d, temperature=%.2f, frustration=%.2f",
+            num_spins,
+            temperature,
+            frustration_level,
+        )
         self.num_spins = num_spins
         self.temperature = temperature
         self.frustration_level = frustration_level

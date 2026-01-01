@@ -97,7 +97,9 @@ class PreferenceConstraintTemplate(SoftConstraint):
                     block, "session", None
                 )
                 if block_time and self.preferred_value:
-                    violates = str(block_time).upper() != str(self.preferred_value).upper()
+                    violates = (
+                        str(block_time).upper() != str(self.preferred_value).upper()
+                    )
 
             elif self.preference_type == "day_of_week":
                 # Check weekday preference (0=Monday, 6=Sunday)
@@ -115,9 +117,7 @@ class PreferenceConstraintTemplate(SoftConstraint):
             penalty_weight = int(self.weight * self.penalty_for_violation)
             if "soft_objectives" not in variables:
                 variables["soft_objectives"] = []
-            variables["soft_objectives"].append(
-                (penalty_weight, sum(violation_vars))
-            )
+            variables["soft_objectives"].append((penalty_weight, sum(violation_vars)))
 
     def add_to_pulp(self, model, variables, context):
         """
@@ -149,7 +149,9 @@ class PreferenceConstraintTemplate(SoftConstraint):
                     block, "session", None
                 )
                 if block_time and self.preferred_value:
-                    violates = str(block_time).upper() != str(self.preferred_value).upper()
+                    violates = (
+                        str(block_time).upper() != str(self.preferred_value).upper()
+                    )
 
             elif self.preference_type == "day_of_week":
                 # Check weekday preference (0=Monday, 6=Sunday)

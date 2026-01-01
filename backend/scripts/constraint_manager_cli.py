@@ -30,9 +30,9 @@ sys.path.insert(0, str(backend_dir))
 
 # Import directly from config module to avoid scheduling/__init__.py dependencies
 import importlib.util
+
 spec = importlib.util.spec_from_file_location(
-    "config",
-    backend_dir / "app" / "scheduling" / "constraints" / "config.py"
+    "config", backend_dir / "app" / "scheduling" / "constraints" / "config.py"
 )
 config_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(config_module)
@@ -54,11 +54,7 @@ def cmd_list(args):
     print("=" * 70)
 
     for category in ConstraintCategory:
-        constraints = [
-            c
-            for c in config._configs.values()
-            if c.category == category
-        ]
+        constraints = [c for c in config._configs.values() if c.category == category]
         if constraints:
             print(f"\n{category.value}:")
             for constraint in sorted(constraints, key=lambda c: c.name):

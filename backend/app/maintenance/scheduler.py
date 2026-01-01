@@ -331,7 +331,9 @@ class BackupScheduler:
                     }
                 )
             except RuntimeError as e:
-                logger.error(f"Unexpected error during daily backup: {e}", exc_info=True)
+                logger.error(
+                    f"Unexpected error during daily backup: {e}", exc_info=True
+                )
                 results.append(
                     {
                         "type": "daily",
@@ -385,7 +387,9 @@ class BackupScheduler:
                     }
                 )
             except RuntimeError as e:
-                logger.error(f"Unexpected error during weekly backup: {e}", exc_info=True)
+                logger.error(
+                    f"Unexpected error during weekly backup: {e}", exc_info=True
+                )
                 results.append(
                     {
                         "type": "weekly",
@@ -403,7 +407,9 @@ class BackupScheduler:
                 self._apply_retention_policy()
                 self._save_config()
             except OSError as e:
-                logger.error(f"File I/O error applying retention policy: {e}", exc_info=True)
+                logger.error(
+                    f"File I/O error applying retention policy: {e}", exc_info=True
+                )
             except RuntimeError as e:
                 logger.error(f"Error applying retention policy: {e}", exc_info=True)
                 # Don't fail the whole operation if retention policy fails

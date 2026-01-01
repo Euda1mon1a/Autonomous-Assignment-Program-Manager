@@ -140,7 +140,10 @@ class TrendDetector:
         # Determine confidence based on p-value and R²
         if p_value < HIGH_CONFIDENCE_P_VALUE and r_value**2 > HIGH_CONFIDENCE_R_SQUARED:
             confidence = "high"
-        elif p_value < MEDIUM_CONFIDENCE_P_VALUE and r_value**2 > MEDIUM_CONFIDENCE_R_SQUARED:
+        elif (
+            p_value < MEDIUM_CONFIDENCE_P_VALUE
+            and r_value**2 > MEDIUM_CONFIDENCE_R_SQUARED
+        ):
             confidence = "medium"
         else:
             confidence = "low"

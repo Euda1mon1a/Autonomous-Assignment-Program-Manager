@@ -47,12 +47,20 @@ class Assignment(Base):
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     block_id = Column(
-        GUID(), ForeignKey("blocks.id", ondelete="CASCADE"), nullable=False, index=True  # Performance: Indexed for frequent foreign key lookups
+        GUID(),
+        ForeignKey("blocks.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,  # Performance: Indexed for frequent foreign key lookups
     )
     person_id = Column(
-        GUID(), ForeignKey("people.id", ondelete="CASCADE"), nullable=False, index=True  # Performance: Indexed for frequent foreign key lookups
+        GUID(),
+        ForeignKey("people.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,  # Performance: Indexed for frequent foreign key lookups
     )
-    rotation_template_id = Column(GUID(), ForeignKey("rotation_templates.id"), index=True)  # Performance: Indexed for template-based queries
+    rotation_template_id = Column(
+        GUID(), ForeignKey("rotation_templates.id"), index=True
+    )  # Performance: Indexed for template-based queries
 
     role = Column(String(50), nullable=False)  # 'primary', 'supervising', 'backup'
 

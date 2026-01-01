@@ -24,7 +24,7 @@ class TestLeaveProviderFactory:
 
     def test_create_csv_provider(self):
         """Test creating a CSV provider."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             csv_path = Path(f.name)
             f.write("person_id,start_date,end_date,absence_type\n")
             f.write("123,2025-01-01,2025-01-05,vacation\n")
@@ -175,7 +175,7 @@ class TestCSVLeaveProvider:
     def test_load_absences_from_csv(self):
         """Test loading absences from CSV file."""
         # Create temporary CSV file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             csv_path = Path(f.name)
             f.write("person_id,start_date,end_date,absence_type,notes\n")
             f.write("person-123,2025-01-01,2025-01-05,vacation,Annual leave\n")
@@ -192,7 +192,7 @@ class TestCSVLeaveProvider:
 
     def test_get_absences_for_person_from_csv(self):
         """Test getting absences for a specific person from CSV."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             csv_path = Path(f.name)
             f.write("person_id,start_date,end_date,absence_type\n")
             f.write("person-123,2025-01-01,2025-01-05,vacation\n")
@@ -218,7 +218,7 @@ class TestCSVLeaveProvider:
 
     def test_empty_csv_file(self):
         """Test CSV provider with empty file."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             csv_path = Path(f.name)
             f.write("person_id,start_date,end_date,absence_type\n")
             # No data rows
@@ -232,7 +232,7 @@ class TestCSVLeaveProvider:
 
     def test_csv_malformed_data(self):
         """Test CSV provider with malformed data."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             csv_path = Path(f.name)
             f.write("person_id,start_date,end_date,absence_type\n")
             f.write("person-123,invalid-date,2025-01-05,vacation\n")

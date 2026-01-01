@@ -304,7 +304,9 @@ class NSGA2Config:
     crossover_rate: float = NSGA2_DEFAULT_CROSSOVER_RATE
     mutation_rate: float = NSGA2_DEFAULT_MUTATION_RATE
     adaptive_mutation: bool = True
-    tournament_size: int = NSGA2_DEFAULT_TOURNAMENT_SIZE  # Binary tournament for NSGA-II
+    tournament_size: int = (
+        NSGA2_DEFAULT_TOURNAMENT_SIZE  # Binary tournament for NSGA-II
+    )
     early_stop_generations: int = NSGA2_EARLY_STOP_GENERATIONS
 
 

@@ -70,6 +70,7 @@ class CallAssignmentUpdate(BaseModel):
         """Validate call date is not too far in future."""
         if v is not None:
             from datetime import date as dt_date, timedelta
+
             max_future = dt_date.today() + timedelta(days=730)  # 2 years
             if v > max_future:
                 raise ValueError("call_date cannot be more than 2 years in the future")
@@ -122,7 +123,9 @@ class BulkCallAssignmentCreate(BaseModel):
 
     @field_validator("assignments")
     @classmethod
-    def validate_not_empty(cls, v: list[CallAssignmentCreate]) -> list[CallAssignmentCreate]:
+    def validate_not_empty(
+        cls, v: list[CallAssignmentCreate]
+    ) -> list[CallAssignmentCreate]:
         """Ensure assignments list is not empty."""
         if not v:
             raise ValueError("assignments list cannot be empty")

@@ -165,7 +165,9 @@ class TestIdempotencyServiceErrorHandling:
             service.cleanup_expired()
             # Should not raise error
 
-    def test_check_idempotency_expired_key(self, service: IdempotencyService, db: Session):
+    def test_check_idempotency_expired_key(
+        self, service: IdempotencyService, db: Session
+    ):
         """Test that expired keys can be reused."""
         # This test assumes keys expire after some time
         # Implementation depends on service design
@@ -351,10 +353,7 @@ class TestIdempotencyServiceErrorHandling:
         now = datetime.utcnow()
 
         # Create keys with different timestamps
-        keys = [
-            f"{base}_{(now + timedelta(seconds=i)).isoformat()}"
-            for i in range(5)
-        ]
+        keys = [f"{base}_{(now + timedelta(seconds=i)).isoformat()}" for i in range(5)]
 
         results = [service.check_idempotency(key) for key in keys]
 

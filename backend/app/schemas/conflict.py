@@ -84,10 +84,10 @@ class ConflictInfo(ConflictBase):
 
     # ACGME-specific data
     hours_worked: float | None = Field(None, ge=0, description="Hours worked")
-    consecutive_days: int | None = Field(None, ge=0, description="Consecutive work days")
-    supervision_ratio: float | None = Field(
-        None, ge=0, description="Supervision ratio"
+    consecutive_days: int | None = Field(
+        None, ge=0, description="Consecutive work days"
     )
+    supervision_ratio: float | None = Field(None, ge=0, description="Supervision ratio")
 
     # Recommendations
     suggested_resolution: str | None = Field(
@@ -135,7 +135,9 @@ class ConflictAlertResponse(BaseModel):
 
     # Status tracking
     created_at: datetime = Field(..., description="Creation timestamp")
-    acknowledged_at: datetime | None = Field(None, description="Acknowledgment timestamp")
+    acknowledged_at: datetime | None = Field(
+        None, description="Acknowledgment timestamp"
+    )
     acknowledged_by_id: UUID | None = Field(None, description="ID of acknowledger")
     resolved_at: datetime | None = Field(None, description="Resolution timestamp")
     resolved_by_id: UUID | None = Field(None, description="ID of resolver")
@@ -232,7 +234,9 @@ class SupervisionRatioCheck(BaseModel):
     faculty_count: int = Field(..., ge=0, description="Faculty count")
 
     # Ratios (actual vs required)
-    pgy1_ratio_actual: float | None = Field(None, ge=0, description="Actual PGY-1 ratio")
+    pgy1_ratio_actual: float | None = Field(
+        None, ge=0, description="Actual PGY-1 ratio"
+    )
     pgy1_ratio_required: float = Field(
         2.0, ge=0, description="Required PGY-1 ratio (1:2)"
     )

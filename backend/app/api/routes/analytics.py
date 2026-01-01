@@ -165,10 +165,10 @@ async def get_current_metrics(
             status_code=500, detail="Database error occurred retrieving metrics"
         )
     except (ValueError, TypeError, KeyError, AttributeError) as e:
-        logger.error(f"Data validation error getting current metrics: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail="Data validation error occurred"
+        logger.error(
+            f"Data validation error getting current metrics: {e}", exc_info=True
         )
+        raise HTTPException(status_code=500, detail="Data validation error occurred")
 
 
 @router.get("/analytics/metrics/history", response_model=list[MetricTimeSeries])
@@ -239,10 +239,14 @@ async def get_metrics_history(
                     )
                 )
             except SQLAlchemyError as e:
-                logger.warning(f"Database error analyzing run {run.id}: {e}", exc_info=True)
+                logger.warning(
+                    f"Database error analyzing run {run.id}: {e}", exc_info=True
+                )
                 continue
             except (ValueError, TypeError, KeyError, AttributeError) as e:
-                logger.warning(f"Data processing error analyzing run {run.id}: {e}", exc_info=True)
+                logger.warning(
+                    f"Data processing error analyzing run {run.id}: {e}", exc_info=True
+                )
                 continue
 
         if not data_points:
@@ -290,10 +294,10 @@ async def get_metrics_history(
             status_code=500, detail="Database error occurred retrieving metrics history"
         )
     except (ValueError, TypeError, KeyError, AttributeError) as e:
-        logger.error(f"Data processing error getting metrics history: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail="Data processing error occurred"
+        logger.error(
+            f"Data processing error getting metrics history: {e}", exc_info=True
         )
+        raise HTTPException(status_code=500, detail="Data processing error occurred")
 
 
 @router.get("/analytics/fairness/trend", response_model=FairnessTrendReport)
@@ -357,10 +361,14 @@ async def get_fairness_trend(
                 fairness_values.append(fairness_index)
 
             except SQLAlchemyError as e:
-                logger.warning(f"Database error analyzing run {run.id}: {e}", exc_info=True)
+                logger.warning(
+                    f"Database error analyzing run {run.id}: {e}", exc_info=True
+                )
                 continue
             except (ValueError, TypeError, KeyError, AttributeError) as e:
-                logger.warning(f"Data processing error analyzing run {run.id}: {e}", exc_info=True)
+                logger.warning(
+                    f"Data processing error analyzing run {run.id}: {e}", exc_info=True
+                )
                 continue
 
         if not data_points:
@@ -432,10 +440,10 @@ async def get_fairness_trend(
             status_code=500, detail="Database error occurred retrieving fairness trend"
         )
     except (ValueError, TypeError, KeyError, AttributeError) as e:
-        logger.error(f"Data processing error getting fairness trend: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail="Data processing error occurred"
+        logger.error(
+            f"Data processing error getting fairness trend: {e}", exc_info=True
         )
+        raise HTTPException(status_code=500, detail="Data processing error occurred")
 
 
 @router.get(
@@ -458,8 +466,12 @@ async def compare_versions(
 
         # For now, treat version as run_id
         # In a more sophisticated system, you might have version management
-        run_a = (await db.execute(select(ScheduleRun).where(ScheduleRun.id == version_a))).scalar_one_or_none()
-        run_b = (await db.execute(select(ScheduleRun).where(ScheduleRun.id == version_b))).scalar_one_or_none()
+        run_a = (
+            await db.execute(select(ScheduleRun).where(ScheduleRun.id == version_a))
+        ).scalar_one_or_none()
+        run_b = (
+            await db.execute(select(ScheduleRun).where(ScheduleRun.id == version_b))
+        ).scalar_one_or_none()
 
         if not run_a or not run_b:
             raise HTTPException(
@@ -578,9 +590,7 @@ async def compare_versions(
         )
     except (ValueError, TypeError, KeyError, AttributeError) as e:
         logger.error(f"Data processing error comparing versions: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail="Data processing error occurred"
-        )
+        raise HTTPException(status_code=500, detail="Data processing error occurred")
 
 
 @router.post("/analytics/what-if", response_model=WhatIfResult)
@@ -629,7 +639,9 @@ async def what_if_analysis(
 
         # Analyze each change
         for change in proposed_changes:
-            person = (await db.execute(select(Person).where(Person.id == change.person_id))).scalar_one_or_none()
+            person = (
+                await db.execute(select(Person).where(Person.id == change.person_id))
+            ).scalar_one_or_none()
             if person:
                 affected_residents.add(person.name)
 
@@ -734,13 +746,12 @@ async def what_if_analysis(
     except SQLAlchemyError as e:
         logger.error(f"Database error in what-if analysis: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail="Database error occurred performing what-if analysis"
+            status_code=500,
+            detail="Database error occurred performing what-if analysis",
         )
     except (ValueError, TypeError, KeyError, AttributeError) as e:
         logger.error(f"Data processing error in what-if analysis: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail="Data processing error occurred"
-        )
+        raise HTTPException(status_code=500, detail="Data processing error occurred")
 
 
 @router.get("/analytics/export/research", response_model=ResearchDataExport)
@@ -944,7 +955,7 @@ async def export_for_research(
             status_code=500, detail="Database error occurred exporting research data"
         )
     except (ValueError, TypeError, KeyError, AttributeError) as e:
-        logger.error(f"Data processing error exporting research data: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail="Data processing error occurred"
+        logger.error(
+            f"Data processing error exporting research data: {e}", exc_info=True
         )
+        raise HTTPException(status_code=500, detail="Data processing error occurred")

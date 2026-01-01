@@ -628,7 +628,9 @@ class FreeEnergyScheduler(BioInspiredSolver):
 
         return updated_schedule, updated_forecast
 
-    def update_generative_model(self, historical_outcomes: list[ScheduleOutcome]) -> None:
+    def update_generative_model(
+        self, historical_outcomes: list[ScheduleOutcome]
+    ) -> None:
         """
         Update generative model from historical outcomes.
 

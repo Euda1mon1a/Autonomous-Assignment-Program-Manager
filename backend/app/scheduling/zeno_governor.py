@@ -41,7 +41,9 @@ from uuid import UUID, uuid4
 # Quantum Zeno Governor Constants
 DEFAULT_MAX_CHECKS_PER_DAY = 3  # Default maximum schedule reviews per day
 DEFAULT_MIN_INTERVAL_HOURS = 8  # Default minimum hours between interventions
-DEFAULT_AUTO_LOCK_THRESHOLD = 0.95  # Default confidence threshold for auto-locking (95%)
+DEFAULT_AUTO_LOCK_THRESHOLD = (
+    0.95  # Default confidence threshold for auto-locking (95%)
+)
 
 # Zeno Risk Level Thresholds
 LOW_RISK_MAX_INTERVENTIONS = 3  # Low risk: < 3 interventions/day
@@ -84,10 +86,12 @@ class InterventionPolicy:
     """Recommended intervention policy to prevent Zeno freezing."""
 
     max_checks_per_day: int = field(
-        default=DEFAULT_MAX_CHECKS_PER_DAY, metadata={"description": "Maximum schedule reviews per day"}
+        default=DEFAULT_MAX_CHECKS_PER_DAY,
+        metadata={"description": "Maximum schedule reviews per day"},
     )
     min_interval_hours: int = field(
-        default=DEFAULT_MIN_INTERVAL_HOURS, metadata={"description": "Minimum hours between interventions"}
+        default=DEFAULT_MIN_INTERVAL_HOURS,
+        metadata={"description": "Minimum hours between interventions"},
     )
     recommended_windows: list[str] = field(
         default_factory=lambda: ["08:00-09:00", "14:00-15:00", "17:00-18:00"],

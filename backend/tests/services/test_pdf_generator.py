@@ -100,7 +100,9 @@ class TestPDFReportGenerator:
         col_widths = [1.5, 2.0, 1.0]  # In inches
 
         # Act
-        table = pdf_generator._create_table(data, col_widths=col_widths, header_row=True)
+        table = pdf_generator._create_table(
+            data, col_widths=col_widths, header_row=True
+        )
 
         # Assert
         assert isinstance(table, Table)
@@ -149,7 +151,9 @@ class TestPDFReportGenerator:
         """Test generating PDF without page numbers."""
         # Arrange
         elements = [
-            Paragraph("Report Without Page Numbers", pdf_generator.styles["ReportTitle"]),
+            Paragraph(
+                "Report Without Page Numbers", pdf_generator.styles["ReportTitle"]
+            ),
         ]
 
         # Act
@@ -281,7 +285,10 @@ class TestPDFReportGenerator:
             ),
             Spacer(1, 20),
             Paragraph("ACGME Compliance", pdf_generator.styles["SubsectionHeader"]),
-            Paragraph("All residents are compliant with work hour limits.", pdf_generator.styles["ReportBody"]),
+            Paragraph(
+                "All residents are compliant with work hour limits.",
+                pdf_generator.styles["ReportBody"],
+            ),
         ]
 
         # Act

@@ -168,9 +168,7 @@ def calculate_free_energy(
     free_energy = internal_energy - entropy_term
 
     # Count violations for reporting
-    violations = sum(
-        1 for a in assignments if getattr(a, "has_violation", False)
-    )
+    violations = sum(1 for a in assignments if getattr(a, "has_violation", False))
 
     return FreeEnergyMetrics(
         free_energy=free_energy,
@@ -281,7 +279,9 @@ class EnergyLandscapeAnalyzer:
             "is_local_minimum": is_local_minimum,
             "estimated_basin_size": len([g for g in gradients if g >= 0]),
             "mean_barrier_height": np.mean(barriers) if barriers else 0.0,
-            "mean_gradient": float(np.mean(np.abs(gradient_array))) if len(gradient_array) > 0 else 0.0,
+            "mean_gradient": float(np.mean(np.abs(gradient_array)))
+            if len(gradient_array) > 0
+            else 0.0,
             "landscape_ruggedness": ruggedness,
         }
 
@@ -344,10 +344,12 @@ class EnergyLandscapeAnalyzer:
                 current_energy = candidate_energy
 
         # Record the found minimum
-        minima.append({
-            "energy": current_energy,
-            "is_minimum": True,
-        })
+        minima.append(
+            {
+                "energy": current_energy,
+                "is_minimum": True,
+            }
+        )
 
         return minima
 
@@ -383,7 +385,7 @@ def adaptive_temperature(
 
     if schedule == "exponential":
         # Geometric cooling: T(t) = T0 * rate^t
-        temp = initial_temp * (cooling_rate ** iteration)
+        temp = initial_temp * (cooling_rate**iteration)
 
     elif schedule == "linear":
         # Linear cooling: T(t) = max(T0 - rate * t, min_temp)
@@ -406,14 +408,12 @@ def adaptive_temperature(
 
     else:
         # Default to exponential
-        temp = initial_temp * (cooling_rate ** iteration)
+        temp = initial_temp * (cooling_rate**iteration)
 
     return max(temp, min_temp)
 
 
-def boltzmann_probability(
-    energy_delta: float, temperature: float
-) -> float:
+def boltzmann_probability(energy_delta: float, temperature: float) -> float:
     """
     Calculate Boltzmann acceptance probability.
 

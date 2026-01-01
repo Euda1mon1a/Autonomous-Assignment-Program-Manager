@@ -1154,7 +1154,9 @@ class RollbackManager:
         """
         return self._ensure_storage_dir() / f"rollback_{rollback_point_id}.json.gz"
 
-    def _serialize_rollback_point(self, rollback_point: RollbackPoint) -> dict[str, Any]:
+    def _serialize_rollback_point(
+        self, rollback_point: RollbackPoint
+    ) -> dict[str, Any]:
         """
         Serialize a RollbackPoint to a JSON-compatible dictionary.
 
@@ -1188,7 +1190,8 @@ class RollbackManager:
                     "state": snap.state,
                     "timestamp": snap.timestamp.isoformat(),
                     "dependencies": [
-                        (dep_type, str(dep_id)) for dep_type, dep_id in snap.dependencies
+                        (dep_type, str(dep_id))
+                        for dep_type, dep_id in snap.dependencies
                     ],
                     "metadata": snap.metadata,
                 }
@@ -1215,7 +1218,8 @@ class RollbackManager:
                 state=snap["state"],
                 timestamp=datetime.fromisoformat(snap["timestamp"]),
                 dependencies=[
-                    (dep_type, UUID(dep_id)) for dep_type, dep_id in snap["dependencies"]
+                    (dep_type, UUID(dep_id))
+                    for dep_type, dep_id in snap["dependencies"]
                 ],
                 metadata=snap.get("metadata", {}),
             )

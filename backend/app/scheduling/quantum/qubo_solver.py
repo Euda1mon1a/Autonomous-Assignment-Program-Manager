@@ -932,9 +932,7 @@ class QuantumInspiredSolver(BaseSolver):
 
         except Exception as e:
             # Graceful fallback to classical SA
-            logger.warning(
-                f"D-Wave quantum solve failed: {e.__class__.__name__}: {e}"
-            )
+            logger.warning(f"D-Wave quantum solve failed: {e.__class__.__name__}: {e}")
             logger.info("Falling back to classical simulated annealing")
             sample, energy = SimulatedQuantumAnnealingSolver(
                 timeout_seconds=self.timeout_seconds

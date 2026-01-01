@@ -334,9 +334,7 @@ class IncrementalScheduleUpdater:
                 person_quals = person.get("qualifications", [])
 
                 # If person has all required qualifications (or no requirements)
-                if not required_quals or all(
-                    q in person_quals for q in required_quals
-                ):
+                if not required_quals or all(q in person_quals for q in required_quals):
                     available.append(rotation_id)
 
         logger.debug(

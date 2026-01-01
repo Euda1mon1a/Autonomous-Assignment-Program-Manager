@@ -706,7 +706,9 @@ class ReadModelSyncService:
         """
         # Get the projector
         if projector_name not in self._projectors:
-            logger.warning(f"Projector {projector_name} not found for consistency check")
+            logger.warning(
+                f"Projector {projector_name} not found for consistency check"
+            )
             return
 
         projector = self._projectors[projector_name]
@@ -717,7 +719,9 @@ class ReadModelSyncService:
             return
 
         # Check consistency between write and read state
-        is_consistent, conflict = await self.verify_consistency(projector_name, aggregate_id)
+        is_consistent, conflict = await self.verify_consistency(
+            projector_name, aggregate_id
+        )
 
         if not is_consistent and conflict:
             # Log the inconsistency
@@ -726,7 +730,9 @@ class ReadModelSyncService:
                 extra={
                     "projector": projector_name,
                     "aggregate_id": aggregate_id,
-                    "event_id": str(event.metadata.event_id) if event.metadata else None,
+                    "event_id": str(event.metadata.event_id)
+                    if event.metadata
+                    else None,
                     "conflict_type": conflict.conflict_type,
                 },
             )
@@ -784,8 +790,12 @@ class ReadModelSyncService:
                     conflict = SyncConflict(
                         read_model_name=projector_name,
                         aggregate_id=aggregate_id,
-                        event_id=str(latest_events[-1].metadata.event_id) if latest_events[-1].metadata else "",
-                        event_sequence=latest_events[-1].metadata.sequence if latest_events[-1].metadata else 0,
+                        event_id=str(latest_events[-1].metadata.event_id)
+                        if latest_events[-1].metadata
+                        else "",
+                        event_sequence=latest_events[-1].metadata.sequence
+                        if latest_events[-1].metadata
+                        else 0,
                         conflict_type="sync_lag",
                         write_value={"pending_events": lag_count},
                         read_value={"last_sequence": sync_state.last_synced_sequence},
@@ -796,7 +806,9 @@ class ReadModelSyncService:
             # Check metrics for processing errors
             metrics = self._metrics.get(projector_name)
             if metrics and metrics.events_processed_failure > 0:
-                error_rate = metrics.events_processed_failure / max(metrics.total_events_processed, 1)
+                error_rate = metrics.events_processed_failure / max(
+                    metrics.total_events_processed, 1
+                )
                 if error_rate > 0.1:  # More than 10% failure rate
                     conflict = SyncConflict(
                         read_model_name=projector_name,

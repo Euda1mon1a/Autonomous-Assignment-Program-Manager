@@ -422,7 +422,9 @@ class TestDetectPeriodicPatterns:
         assert len(patterns) >= 0  # May detect pattern or empty if not enough data
         # If patterns are detected, should include weekly
         if patterns:
-            pattern_periods = [p.get("period", p.get("detected_period", 0)) for p in patterns]
+            pattern_periods = [
+                p.get("period", p.get("detected_period", 0)) for p in patterns
+            ]
             # Should detect 7-day or close to it
             assert any(6 <= p <= 8 for p in pattern_periods) or len(patterns) == 0
 
@@ -444,7 +446,9 @@ class TestDetectPeriodicPatterns:
         # Should detect pattern around 14 days or empty if algorithm doesn't find it
         assert isinstance(patterns, list)
         if patterns:
-            pattern_periods = [p.get("period", p.get("detected_period", 0)) for p in patterns]
+            pattern_periods = [
+                p.get("period", p.get("detected_period", 0)) for p in patterns
+            ]
             # Should be around 14-day period
             assert any(12 <= p <= 16 for p in pattern_periods) or len(patterns) == 0
 

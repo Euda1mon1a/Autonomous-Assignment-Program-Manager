@@ -243,7 +243,9 @@ async def create_leave(
     Automatically triggers conflict detection in the background.
     """
     # Verify faculty exists
-    person = (await db.execute(select(Person).where(Person.id == request.faculty_id))).scalar_one_or_none()
+    person = (
+        await db.execute(select(Person).where(Person.id == request.faculty_id))
+    ).scalar_one_or_none()
     if not person:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -289,7 +291,9 @@ async def update_leave(
     current_user: User = Depends(get_current_active_user),
 ):
     """Update an existing leave record."""
-    absence = (await db.execute(select(Absence).where(Absence.id == leave_id))).scalar_one_or_none()
+    absence = (
+        await db.execute(select(Absence).where(Absence.id == leave_id))
+    ).scalar_one_or_none()
     if not absence:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -331,7 +335,9 @@ async def delete_leave(
     current_user: User = Depends(get_current_active_user),
 ):
     """Delete a leave record."""
-    absence = (await db.execute(select(Absence).where(Absence.id == leave_id))).scalar_one_or_none()
+    absence = (
+        await db.execute(select(Absence).where(Absence.id == leave_id))
+    ).scalar_one_or_none()
     if not absence:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

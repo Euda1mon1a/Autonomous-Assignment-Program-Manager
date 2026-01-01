@@ -30,6 +30,7 @@ def analyze_constraint_manager():
 
     # Find all disable() calls
     import re
+
     disable_pattern = r'manager\.disable\("([^"]+)"\)'
     disabled = re.findall(disable_pattern, content)
 
@@ -74,7 +75,11 @@ def analyze_test_coverage():
     constraint_test_files = []
 
     # Find all test files related to constraints
-    for pattern in ["**/test_*constraint*.py", "**/test_*call*.py", "**/test_*fmit*.py"]:
+    for pattern in [
+        "**/test_*constraint*.py",
+        "**/test_*call*.py",
+        "**/test_*fmit*.py",
+    ]:
         for file in tests_dir.glob(pattern):
             constraint_test_files.append(file.relative_to(tests_dir))
 
@@ -120,10 +125,10 @@ def check_enable_disable_logic():
     print(f"  - get_enabled() method: {'✓' if has_get_enabled else '✗'}")
 
     return {
-        'registry_enable': has_enable,
-        'registry_disable': has_disable,
-        'manager_enable': has_manager_enable,
-        'manager_disable': has_manager_disable,
+        "registry_enable": has_enable,
+        "registry_disable": has_disable,
+        "manager_enable": has_manager_enable,
+        "manager_disable": has_manager_disable,
     }
 
 

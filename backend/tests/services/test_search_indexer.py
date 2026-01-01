@@ -72,7 +72,9 @@ class TestSearchIndexer:
         assert "facets" in result
 
     @pytest.mark.asyncio
-    async def test_search_calculates_pagination_correctly(self, search_indexer, mock_backend):
+    async def test_search_calculates_pagination_correctly(
+        self, search_indexer, mock_backend
+    ):
         """Test search calculates total pages correctly."""
         # Arrange
         query = QueryBuilder().search("test").everywhere().page(1, 10).build()
@@ -91,7 +93,9 @@ class TestSearchIndexer:
         assert result["total_pages"] == 5  # Ceiling of 45/10
 
     @pytest.mark.asyncio
-    async def test_quick_search_returns_limited_results(self, search_indexer, mock_backend):
+    async def test_quick_search_returns_limited_results(
+        self, search_indexer, mock_backend
+    ):
         """Test quick search returns limited results without pagination metadata."""
         # Arrange
         mock_backend.search.return_value = {
@@ -135,7 +139,9 @@ class TestSearchIndexer:
         assert len(result["items"]) == 1
 
     @pytest.mark.asyncio
-    async def test_search_rotations_with_category_filter(self, search_indexer, mock_backend):
+    async def test_search_rotations_with_category_filter(
+        self, search_indexer, mock_backend
+    ):
         """Test searching rotations with category filter."""
         # Arrange
         mock_backend.search.return_value = {
@@ -182,7 +188,9 @@ class TestSearchIndexer:
         assert "Central Line" in result["items"][0]["name"]
 
     @pytest.mark.asyncio
-    async def test_global_search_across_all_entities(self, search_indexer, mock_backend):
+    async def test_global_search_across_all_entities(
+        self, search_indexer, mock_backend
+    ):
         """Test global search across all entity types."""
         # Arrange
         mock_backend.search.return_value = {
@@ -208,7 +216,9 @@ class TestSearchIndexer:
         assert result["facets"]["entity_type"]["person"] == 1
 
     @pytest.mark.asyncio
-    async def test_suggest_returns_autocomplete_suggestions(self, search_indexer, mock_backend):
+    async def test_suggest_returns_autocomplete_suggestions(
+        self, search_indexer, mock_backend
+    ):
         """Test suggest returns autocomplete suggestions."""
         # Arrange
         mock_backend.suggest.return_value = ["Dr. Smith", "Dr. Jones", "Dr. Brown"]
@@ -258,7 +268,9 @@ class TestSearchIndexer:
         assert call_args.kwargs["limit"] == 0
 
     @pytest.mark.asyncio
-    async def test_count_results_without_retrieving_items(self, search_indexer, mock_backend):
+    async def test_count_results_without_retrieving_items(
+        self, search_indexer, mock_backend
+    ):
         """Test counting results without retrieving items."""
         # Arrange
         mock_backend.search.return_value = {
@@ -299,7 +311,9 @@ class TestSearchService:
     async def test_service_search_with_filters(self, search_service):
         """Test service layer search with filters."""
         # Arrange
-        with patch.object(search_service.indexer, "search", new_callable=AsyncMock) as mock_search:
+        with patch.object(
+            search_service.indexer, "search", new_callable=AsyncMock
+        ) as mock_search:
             mock_search.return_value = {
                 "items": [{"id": str(uuid4()), "name": "Test"}],
                 "total": 1,
@@ -328,7 +342,9 @@ class TestSearchService:
     async def test_service_search_people(self, search_service):
         """Test service layer search_people method."""
         # Arrange
-        with patch.object(search_service.indexer, "search_people", new_callable=AsyncMock) as mock_search_people:
+        with patch.object(
+            search_service.indexer, "search_people", new_callable=AsyncMock
+        ) as mock_search_people:
             mock_search_people.return_value = {
                 "items": [{"id": str(uuid4()), "name": "Dr. Smith", "pgy_level": 2}],
                 "total": 1,
@@ -362,7 +378,9 @@ class TestSearchService:
     async def test_service_suggest(self, search_service):
         """Test service layer suggest method."""
         # Arrange
-        with patch.object(search_service.indexer, "suggest", new_callable=AsyncMock) as mock_suggest:
+        with patch.object(
+            search_service.indexer, "suggest", new_callable=AsyncMock
+        ) as mock_suggest:
             mock_suggest.return_value = ["Dr. Smith", "Dr. Jones"]
 
             # Act

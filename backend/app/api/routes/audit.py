@@ -429,7 +429,9 @@ async def get_audit_logs(
                 totalPages=total_pages,
             )
     except (ValueError, KeyError, AttributeError) as e:
-        logger.warning(f"Error fetching real audit data, falling back to mock: {e}", exc_info=True)
+        logger.warning(
+            f"Error fetching real audit data, falling back to mock: {e}", exc_info=True
+        )
 
     # Fall back to mock data if no real data or error occurred
     logger.info("Using mock audit data as fallback")
@@ -523,7 +525,8 @@ async def get_audit_statistics(
             )
     except (ValueError, KeyError, AttributeError) as e:
         logger.warning(
-            f"Error fetching real audit statistics, falling back to mock: {e}", exc_info=True
+            f"Error fetching real audit statistics, falling back to mock: {e}",
+            exc_info=True,
         )
 
     # Fall back to mock data
@@ -601,7 +604,9 @@ async def get_audit_users(
             logger.info(f"Retrieved {len(users)} real audit users")
             return users
     except (ValueError, KeyError, AttributeError) as e:
-        logger.warning(f"Error fetching real audit users, falling back to mock: {e}", exc_info=True)
+        logger.warning(
+            f"Error fetching real audit users, falling back to mock: {e}", exc_info=True
+        )
 
     # Fall back to mock data
     logger.info("Using mock audit users as fallback")
@@ -662,7 +667,8 @@ async def export_audit_logs(
             logger.info(f"Exporting {len(entries)} real audit entries")
     except (ValueError, KeyError, AttributeError) as e:
         logger.warning(
-            f"Error fetching real audit data for export, falling back to mock: {e}", exc_info=True
+            f"Error fetching real audit data for export, falling back to mock: {e}",
+            exc_info=True,
         )
 
     # Fall back to mock data if needed

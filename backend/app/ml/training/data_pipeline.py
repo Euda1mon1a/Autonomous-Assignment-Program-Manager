@@ -126,7 +126,9 @@ class TrainingDataPipeline:
 
             # Calculate historical stats from database
             historical_stats = await self._calculate_preference_historical_stats(
-                person.id, block.date, rotation_template.id if rotation_template else None
+                person.id,
+                block.date,
+                rotation_template.id if rotation_template else None,
             )
 
             # Build feature dict (mimicking PreferencePredictor.extract_features)
