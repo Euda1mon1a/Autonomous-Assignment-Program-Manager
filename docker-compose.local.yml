@@ -123,6 +123,7 @@ services:
       # Don't override these directories
       - /app/__pycache__
       - /app/.pytest_cache
+      - /app/alembic/versions
       - backend_local_venv:/app/venv
     networks:
       - app-network
@@ -162,6 +163,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/__pycache__
+      - /app/alembic/versions
       - backend_local_venv:/app/venv
     networks:
       - app-network
@@ -201,6 +203,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/__pycache__
+      - /app/alembic/versions
       - backend_local_venv:/app/venv
     networks:
       - app-network
