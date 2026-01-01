@@ -206,18 +206,46 @@ def _handle_assignment_event(
     """
     logger.info(f"Processing assignment event: {event_type}")
 
-    # Example: Send notifications for assignment changes
-    if event_type == "assignment.created":
-        # Could trigger notification to affected person
-        pass
-    elif event_type == "assignment.updated":
-        # Could trigger change notification
-        pass
-    elif event_type == "assignment.deleted":
-        # Could trigger deletion notification
-        pass
+    # Extract common fields from payload
+    assignment_id = payload.get("assignment_id")
+    person_id = payload.get("person_id")
+    block_id = payload.get("block_id")
+    rotation_id = payload.get("rotation_id")
 
-    return {"status": "success", "event_type": event_type}
+    # Send notifications for assignment changes
+    if event_type == "assignment.created":
+        # Trigger notification to affected person
+        logger.info(
+            f"Assignment created: person={person_id}, block={block_id}, "
+            f"rotation={rotation_id}"
+        )
+        # TODO: Integrate with notification service when available
+        # Example: send_notification(person_id, "New assignment created", payload)
+
+    elif event_type == "assignment.updated":
+        # Trigger change notification
+        old_rotation = payload.get("old_rotation_id")
+        new_rotation = payload.get("new_rotation_id")
+        logger.info(
+            f"Assignment updated: assignment={assignment_id}, "
+            f"rotation changed from {old_rotation} to {new_rotation}"
+        )
+        # TODO: Integrate with notification service
+        # Example: send_notification(person_id, "Assignment updated", payload)
+
+    elif event_type == "assignment.deleted":
+        # Trigger deletion notification
+        logger.info(
+            f"Assignment deleted: assignment={assignment_id}, person={person_id}"
+        )
+        # TODO: Integrate with notification service
+        # Example: send_notification(person_id, "Assignment removed", payload)
+
+    return {
+        "status": "success",
+        "event_type": event_type,
+        "assignment_id": assignment_id,
+    }
 
 
 def _handle_swap_event(
@@ -238,15 +266,44 @@ def _handle_swap_event(
     """
     logger.info(f"Processing swap event: {event_type}")
 
-    # Example: Send notifications for swap events
-    if event_type == "swap.executed":
-        # Could trigger notifications to both parties
-        pass
-    elif event_type == "swap.requested":
-        # Could trigger request notification
-        pass
+    # Extract common fields from payload
+    swap_id = payload.get("swap_id")
+    requester_id = payload.get("requester_id")
+    target_id = payload.get("target_id")
+    swap_type = payload.get("swap_type")
 
-    return {"status": "success", "event_type": event_type}
+    # Send notifications for swap events
+    if event_type == "swap.executed":
+        # Trigger notifications to both parties
+        logger.info(
+            f"Swap executed: swap_id={swap_id}, type={swap_type}, "
+            f"requester={requester_id}, target={target_id}"
+        )
+        # TODO: Integrate with notification service
+        # Example: send_notification(requester_id, "Swap completed", payload)
+        # Example: send_notification(target_id, "Swap completed", payload)
+
+    elif event_type == "swap.requested":
+        # Trigger request notification to target
+        logger.info(
+            f"Swap requested: swap_id={swap_id}, type={swap_type}, "
+            f"from={requester_id}, to={target_id}"
+        )
+        # TODO: Integrate with notification service
+        # Example: send_notification(target_id, "New swap request", payload)
+
+    elif event_type == "swap.approved":
+        # Notify requester of approval
+        logger.info(f"Swap approved: swap_id={swap_id}, requester={requester_id}")
+        # TODO: send_notification(requester_id, "Swap request approved", payload)
+
+    elif event_type == "swap.rejected":
+        # Notify requester of rejection
+        reason = payload.get("rejection_reason", "No reason provided")
+        logger.info(f"Swap rejected: swap_id={swap_id}, reason={reason}")
+        # TODO: send_notification(requester_id, f"Swap rejected: {reason}", payload)
+
+    return {"status": "success", "event_type": event_type, "swap_id": swap_id}
 
 
 def _handle_conflict_event(
@@ -267,12 +324,56 @@ def _handle_conflict_event(
     """
     logger.info(f"Processing conflict event: {event_type}")
 
-    # Example: Send alerts for conflicts
-    if event_type == "conflict.detected":
-        # Could trigger alert notification
-        pass
+    # Extract common fields from payload
+    conflict_id = payload.get("conflict_id")
+    conflict_type = payload.get("conflict_type")
+    affected_persons = payload.get("affected_persons", [])
+    severity = payload.get("severity", "medium")
+    details = payload.get("details", {})
 
-    return {"status": "success", "event_type": event_type}
+    # Send alerts for conflicts
+    if event_type == "conflict.detected":
+        # Trigger alert notification to affected persons and coordinators
+        logger.warning(
+            f"Conflict detected: id={conflict_id}, type={conflict_type}, "
+            f"severity={severity}, affected_persons={affected_persons}"
+        )
+        # TODO: Integrate with notification service
+        # Example: For high-severity conflicts, notify coordinators immediately
+        # if severity == "high":
+        #     send_notification("coordinator", "High-severity conflict detected", payload)
+        #
+        # Example: Notify affected persons
+        # for person_id in affected_persons:
+        #     send_notification(person_id, f"Schedule conflict: {conflict_type}", payload)
+
+    elif event_type == "conflict.resolved":
+        # Notify affected persons that conflict has been resolved
+        resolution = payload.get("resolution", "Unknown resolution")
+        logger.info(
+            f"Conflict resolved: id={conflict_id}, resolution={resolution}, "
+            f"affected_persons={affected_persons}"
+        )
+        # TODO: send notifications about resolution
+        # for person_id in affected_persons:
+        #     send_notification(person_id, "Conflict resolved", payload)
+
+    elif event_type == "conflict.escalated":
+        # Escalate to higher authority (e.g., program director)
+        escalation_level = payload.get("escalation_level", 1)
+        logger.warning(
+            f"Conflict escalated: id={conflict_id}, level={escalation_level}, "
+            f"type={conflict_type}"
+        )
+        # TODO: Send escalation notifications
+        # send_notification("program_director", "Conflict requires attention", payload)
+
+    return {
+        "status": "success",
+        "event_type": event_type,
+        "conflict_id": conflict_id,
+        "severity": severity,
+    }
 
 
 @celery_app.task(
