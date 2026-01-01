@@ -51,6 +51,7 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from typing import Any
 from uuid import UUID
 
 from app.models.assignment import Assignment
@@ -108,7 +109,7 @@ class SolverResult:
             call_assignments or []
         )  # (person_id, block_id, call_type)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"SolverResult(success={self.success}, assignments={len(self.assignments)}, status={self.status})"
 
 
@@ -648,7 +649,7 @@ class SolverProgressCallback:
             logger.warning("OR-Tools not available, progress callback disabled")
             self._callback = None
 
-    def get_callback(self):
+    def get_callback(self) -> Any | None:
         """Get the underlying OR-Tools callback object."""
         return self._callback
 

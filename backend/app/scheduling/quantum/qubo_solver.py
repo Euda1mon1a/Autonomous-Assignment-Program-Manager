@@ -123,7 +123,7 @@ class QUBOFormulation:
         # QUBO matrix (sparse representation)
         self.Q: dict[tuple[int, int], float] = {}
 
-    def _build_variable_index(self):
+    def _build_variable_index(self) -> None:
         """Build mapping from (resident, block, template) to flat index."""
         idx = 0
         for resident in self.context.residents:
@@ -172,13 +172,13 @@ class QUBOFormulation:
 
         return self.Q
 
-    def _add_coverage_objective(self):
+    def _add_coverage_objective(self) -> None:
         """Add objective to maximize coverage (assign as many blocks as possible)."""
         for idx in range(self.num_variables):
             # Negative weight encourages x[i] = 1
             self._add_linear(idx, -1.0)
 
-    def _add_one_per_block_constraint(self):
+    def _add_one_per_block_constraint(self) -> None:
         """
         Constraint: At most one resident assigned per block.
 
@@ -201,7 +201,7 @@ class QUBOFormulation:
                 for idx2 in indices[i + 1 :]:
                     self._add_quadratic(idx1, idx2, self.HARD_CONSTRAINT_PENALTY)
 
-    def _add_availability_constraints(self):
+    def _add_availability_constraints(self) -> None:
         """
         Constraint: Cannot assign during unavailable periods.
 
@@ -220,7 +220,7 @@ class QUBOFormulation:
                             idx = self.var_index[(r_i, b_i, t_i)]
                             self._add_linear(idx, self.HARD_CONSTRAINT_PENALTY)
 
-    def _add_80_hour_constraint(self):
+    def _add_80_hour_constraint(self) -> None:
         """
         Constraint: Max 80 hours per week (simplified as max blocks).
 
@@ -260,7 +260,7 @@ class QUBOFormulation:
                         for idx2 in week_vars[i + 1 :]:
                             self._add_quadratic(idx1, idx2, penalty_factor)
 
-    def _add_equity_objective(self):
+    def _add_equity_objective(self) -> None:
         """
         Soft objective: Minimize variance in workload distribution.
 
@@ -285,12 +285,12 @@ class QUBOFormulation:
                 for idx2 in indices[i + 1 :]:
                     self._add_quadratic(idx1, idx2, penalty * 0.01)
 
-    def _add_linear(self, i: int, value: float):
+    def _add_linear(self, i: int, value: float) -> None:
         """Add linear term Q[i,i] += value."""
         key = (i, i)
         self.Q[key] = self.Q.get(key, 0.0) + value
 
-    def _add_quadratic(self, i: int, j: int, value: float):
+    def _add_quadratic(self, i: int, j: int, value: float) -> None:
         """Add quadratic term Q[i,j] += value (symmetric)."""
         if i > j:
             i, j = j, i

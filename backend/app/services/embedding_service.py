@@ -26,7 +26,7 @@ class EmbeddingService:
     EMBEDDING_DIM = 384
 
     @classmethod
-    def get_model(cls):  # type: ignore
+    def get_model(cls) -> object:
         """Lazy load the sentence-transformer model."""
         if not SENTENCE_TRANSFORMERS_AVAILABLE:
             raise ImportError(

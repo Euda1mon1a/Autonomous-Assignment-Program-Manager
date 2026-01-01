@@ -9,15 +9,21 @@ These endpoints are designed to be called by n8n workflows for
 autonomous scheduling operations via Slack commands.
 """
 
+from __future__ import annotations
+
 import logging
 import secrets
 import uuid
 from datetime import datetime, timedelta
 from itertools import islice
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
+
+if TYPE_CHECKING:
+    from app.resilience.service import ResilienceService
 
 from app.core.security import get_current_active_user
 from app.db.session import get_async_db
@@ -61,7 +67,7 @@ _fix_it_executions: dict[str, dict] = {}
 # ============================================================================
 
 
-def _get_resilience_service(db: Session):
+def _get_resilience_service(db: Session) -> ResilienceService:
     """Get or create ResilienceService instance."""
     from app.core.config import get_resilience_config
     from app.resilience.service import ResilienceService

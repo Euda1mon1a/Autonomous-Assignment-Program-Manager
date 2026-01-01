@@ -98,7 +98,7 @@ class SSOSessionState(BaseModel):
 _sso_sessions: dict[str, SSOSessionState] = {}
 
 
-def get_or_create_user(db: Session, attributes: dict[str, str], provider: str) -> User:
+async def get_or_create_user(db: AsyncSession, attributes: dict[str, str], provider: str) -> User:
     """
     Get existing user or create new user (JIT provisioning).
 
@@ -238,7 +238,7 @@ def create_session(response: Response, user: User) -> dict:
 
 
 @router.get("/saml/metadata")
-async def saml_metadata():
+async def saml_metadata() -> Response:
     """
     Get SAML Service Provider metadata.
 
@@ -257,7 +257,7 @@ async def saml_metadata():
 
 
 @router.get("/saml/login")
-async def saml_login(relay_state: str | None = None):
+async def saml_login(relay_state: str | None = None) -> RedirectResponse:
     """
     Initiate SAML login flow.
 
@@ -290,7 +290,7 @@ async def saml_acs(
     request: Request,
     response: Response,
     db: AsyncSession = Depends(get_async_db),
-):
+) -> HTMLResponse:
     """
     SAML Assertion Consumer Service (ACS).
 
@@ -330,7 +330,7 @@ async def saml_acs(
     attributes = saml_data["attributes"]
 
     # Get or create user
-    user = get_or_create_user(db, attributes, "saml")
+    user = await get_or_create_user(db, attributes, "saml")
 
     # Create session
     session_data = create_session(response, user)
@@ -357,7 +357,7 @@ async def saml_acs(
 
 
 @router.get("/saml/logout")
-async def saml_logout(name_id: str, session_index: str | None = None):
+async def saml_logout(name_id: str, session_index: str | None = None) -> RedirectResponse:
     """
     Initiate SAML logout flow.
 
@@ -379,7 +379,7 @@ async def saml_logout(name_id: str, session_index: str | None = None):
 
 
 @router.get("/oauth2/login")
-async def oauth2_login(redirect_uri: str | None = None):
+async def oauth2_login(redirect_uri: str | None = None) -> RedirectResponse:
     """
     Initiate OAuth2/OIDC login flow.
 
@@ -416,7 +416,7 @@ async def oauth2_callback(
     code: str,
     state: str,
     db: AsyncSession = Depends(get_async_db),
-):
+) -> RedirectResponse:
     """
     OAuth2/OIDC callback endpoint.
 
@@ -477,7 +477,7 @@ async def oauth2_callback(
     attributes = provider.map_claims_to_user(userinfo)
 
     # Get or create user
-    user = get_or_create_user(db, attributes, "oauth2")
+    user = await get_or_create_user(db, attributes, "oauth2")
 
     # Create session
     session_data = create_session(response, user)
@@ -493,7 +493,7 @@ async def oauth2_callback(
 
 
 @router.get("/providers")
-async def list_providers():
+async def list_providers() -> dict:
     """
     List available SSO providers.
 
@@ -528,7 +528,7 @@ async def list_providers():
 
 
 @router.get("/status")
-async def sso_status():
+async def sso_status() -> dict:
     """
     Get SSO configuration status.
 
