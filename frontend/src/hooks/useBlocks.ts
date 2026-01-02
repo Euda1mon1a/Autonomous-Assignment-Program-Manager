@@ -100,6 +100,16 @@ export function useBlocks(
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: true,
+    // Don't retry on 401 errors - the API client handles redirect to login
+    // This prevents infinite retry loops when user is not authenticated
+    retry: (failureCount, error) => {
+      // Don't retry on auth errors (401/403)
+      if (error.status === 401 || error.status === 403) {
+        return false
+      }
+      // Retry up to 3 times for other errors
+      return failureCount < 3
+    },
     ...options,
   })
 }
@@ -187,6 +197,16 @@ export function useBlockRanges(
     staleTime: 10 * 60 * 1000, // 10 minutes (blocks don't change often)
     gcTime: 60 * 60 * 1000, // 1 hour
     refetchOnWindowFocus: false, // Don't refetch on focus (stable data)
+    // Don't retry on 401 errors - the API client handles redirect to login
+    // This prevents infinite retry loops when user is not authenticated
+    retry: (failureCount, error) => {
+      // Don't retry on auth errors (401/403)
+      if (error.status === 401 || error.status === 403) {
+        return false
+      }
+      // Retry up to 3 times for other errors
+      return failureCount < 3
+    },
     ...options,
   })
 }

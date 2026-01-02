@@ -1,6 +1,9 @@
 'use client'
 
-import { format, startOfWeek, addDays, subDays } from 'date-fns'
+import { useMemo } from 'react'
+import { format, addDays, subDays, parseISO } from 'date-fns'
+import { useBlocks, useBlockRanges } from '@/hooks'
+import type { BlockRange } from '@/hooks'
 
 interface BlockNavigationProps {
   startDate: Date
@@ -11,45 +14,125 @@ interface BlockNavigationProps {
 /**
  * Navigation controls for the schedule grid
  * Provides Previous/Next block buttons, Today, This Block, and date pickers
+ *
+ * Block number and date ranges are fetched from the API to ensure accuracy.
+ * The API returns actual block boundaries from the database rather than
+ * using hardcoded calculations.
+ *
+ * Gracefully handles authentication errors (401) by showing fallback navigation
+ * that works with manual date offsets instead of block data.
  */
 export function BlockNavigation({
   startDate,
   endDate,
   onDateRangeChange,
 }: BlockNavigationProps) {
-  // Get the start of the current 4-week block (starts on Monday)
-  const getCurrentBlockStart = () => {
-    const today = new Date()
-    const monday = startOfWeek(today, { weekStartsOn: 1 })
-    return monday
-  }
+  // Format dates for API query
+  const startDateStr = format(startDate, 'yyyy-MM-dd')
+  const endDateStr = format(endDate, 'yyyy-MM-dd')
 
-  // Navigate to previous 4-week block
+  // Fetch blocks for the current date range to get the block number
+  // Error handling: On 401, blocksData will be undefined and we fall back to date-based nav
+  const { data: blocksData, isLoading: blocksLoading, error: blocksError } = useBlocks({
+    start_date: startDateStr,
+    end_date: endDateStr,
+  })
+
+  // Fetch all block ranges for navigation (to find prev/next blocks and "This Block")
+  // Error handling: On 401, blockRanges will be undefined and we use date offsets
+  const { data: blockRanges, isLoading: rangesLoading, error: rangesError } = useBlockRanges()
+
+  // Determine if we're in fallback mode (API unavailable or auth error)
+  const isFallbackMode = Boolean(blocksError || rangesError)
+
+  // Get the block number from the fetched blocks
+  // All blocks in the range should have the same block_number (or we take the first one)
+  const currentBlockNumber = useMemo(() => {
+    if (!blocksData?.items?.length) return null
+    // Get unique block numbers from the fetched blocks
+    const blockNumbers = [...new Set(blocksData.items.map((b) => b.block_number))]
+    // If we're viewing a single block, return that number
+    // If multiple blocks are in view, return the first one (start of range)
+    return blockNumbers[0] ?? null
+  }, [blocksData])
+
+  // Find current block range, previous block, and next block
+  const { currentBlockRange, previousBlockRange, nextBlockRange, todayBlockRange } = useMemo(() => {
+    if (!blockRanges?.length) {
+      return {
+        currentBlockRange: null,
+        previousBlockRange: null,
+        nextBlockRange: null,
+        todayBlockRange: null,
+      }
+    }
+
+    // Find the block range that matches our current block number
+    const currentIdx = blockRanges.findIndex((r) => r.block_number === currentBlockNumber)
+    const current = currentIdx >= 0 ? blockRanges[currentIdx] : null
+    const previous = currentIdx > 0 ? blockRanges[currentIdx - 1] : null
+    const next = currentIdx >= 0 && currentIdx < blockRanges.length - 1 ? blockRanges[currentIdx + 1] : null
+
+    // Find the block that contains today's date
+    const today = format(new Date(), 'yyyy-MM-dd')
+    const todayBlock = blockRanges.find((r) => r.start_date <= today && r.end_date >= today)
+
+    return {
+      currentBlockRange: current,
+      previousBlockRange: previous,
+      nextBlockRange: next,
+      todayBlockRange: todayBlock ?? null,
+    }
+  }, [blockRanges, currentBlockNumber])
+
+  // Navigate to previous block using actual block boundaries from API
   const handlePreviousBlock = () => {
-    const newStart = subDays(startDate, 28)
-    const newEnd = subDays(endDate, 28)
-    onDateRangeChange(newStart, newEnd)
+    if (previousBlockRange) {
+      const newStart = parseISO(previousBlockRange.start_date)
+      const newEnd = parseISO(previousBlockRange.end_date)
+      onDateRangeChange(newStart, newEnd)
+    } else {
+      // Fallback: move back 28 days if no previous block data
+      const newStart = subDays(startDate, 28)
+      const newEnd = subDays(endDate, 28)
+      onDateRangeChange(newStart, newEnd)
+    }
   }
 
-  // Navigate to next 4-week block
+  // Navigate to next block using actual block boundaries from API
   const handleNextBlock = () => {
-    const newStart = addDays(startDate, 28)
-    const newEnd = addDays(endDate, 28)
-    onDateRangeChange(newStart, newEnd)
+    if (nextBlockRange) {
+      const newStart = parseISO(nextBlockRange.start_date)
+      const newEnd = parseISO(nextBlockRange.end_date)
+      onDateRangeChange(newStart, newEnd)
+    } else {
+      // Fallback: move forward 28 days if no next block data
+      const newStart = addDays(startDate, 28)
+      const newEnd = addDays(endDate, 28)
+      onDateRangeChange(newStart, newEnd)
+    }
   }
 
-  // Jump to today's date (centered in a 4-week block)
+  // Jump to today's block using actual block boundaries from API
   const handleToday = () => {
-    const today = new Date()
-    const monday = startOfWeek(today, { weekStartsOn: 1 })
-    onDateRangeChange(monday, addDays(monday, 27))
+    if (todayBlockRange) {
+      const newStart = parseISO(todayBlockRange.start_date)
+      const newEnd = parseISO(todayBlockRange.end_date)
+      onDateRangeChange(newStart, newEnd)
+    } else {
+      // Fallback: use today's date as start
+      const today = new Date()
+      onDateRangeChange(today, addDays(today, 27))
+    }
   }
 
-  // Jump to current 4-week block
+  // Jump to current block (same as Today if we're viewing a different range)
   const handleThisBlock = () => {
-    const blockStart = getCurrentBlockStart()
-    onDateRangeChange(blockStart, addDays(blockStart, 27))
+    handleToday()
   }
+
+  // Show loading skeleton during initial fetch
+  const isLoading = blocksLoading || rangesLoading
 
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -59,6 +142,7 @@ export function BlockNavigation({
           onClick={handlePreviousBlock}
           className="btn-secondary flex items-center gap-1"
           aria-label="Previous block"
+          disabled={isLoading}
         >
           <svg
             className="w-4 h-4"
@@ -74,15 +158,16 @@ export function BlockNavigation({
               d="M15 19l-7-7 7-7"
             />
           </svg>
-          Previous Block
+          {isFallbackMode ? 'Previous' : 'Previous Block'}
         </button>
 
         <button
           onClick={handleNextBlock}
           className="btn-secondary flex items-center gap-1"
           aria-label="Next block"
+          disabled={isLoading}
         >
-          Next Block
+          {isFallbackMode ? 'Next' : 'Next Block'}
           <svg
             className="w-4 h-4"
             fill="none"
@@ -106,24 +191,35 @@ export function BlockNavigation({
           onClick={handleToday}
           className="btn-secondary text-sm"
           aria-label="Jump to today"
+          disabled={isLoading}
         >
           Today
         </button>
-        <button
-          onClick={handleThisBlock}
-          className="btn-secondary text-sm"
-          aria-label="Jump to this block"
-        >
-          This Block
-        </button>
+        {!isFallbackMode && (
+          <button
+            onClick={handleThisBlock}
+            className="btn-secondary text-sm"
+            aria-label="Jump to this block"
+            disabled={isLoading}
+          >
+            This Block
+          </button>
+        )}
       </div>
 
       {/* Date range display (read-only - use navigation buttons to change) */}
       <div className="flex items-center gap-2 text-sm" role="status" aria-live="polite">
-        <span className="text-gray-600">Block:</span>
-        <span className="font-medium text-gray-900 bg-gray-100 px-3 py-1 rounded">
-          {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')}
-        </span>
+        {isLoading ? (
+          <span className="font-medium text-gray-400 bg-gray-100 px-3 py-1 rounded animate-pulse">
+            Loading...
+          </span>
+        ) : (
+          <span className="font-medium text-gray-900 bg-gray-100 px-3 py-1 rounded">
+            {currentBlockNumber !== null && !isFallbackMode ? `Block ${currentBlockNumber} (` : ''}
+            {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')}
+            {currentBlockNumber !== null && !isFallbackMode ? ')' : ''}
+          </span>
+        )}
       </div>
 
       {/* Current range display */}

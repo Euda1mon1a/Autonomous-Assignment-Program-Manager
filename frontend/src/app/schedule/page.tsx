@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
-import { startOfWeek, addDays, format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
+import { startOfWeek, addDays, format, startOfMonth, endOfMonth, eachDayOfInterval, parseISO } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { BlockNavigation } from '@/components/schedule/BlockNavigation'
@@ -12,7 +12,7 @@ import { WeekView } from '@/components/schedule/WeekView'
 import { DayView } from '@/components/schedule/DayView'
 import { ResidentAcademicYearView, FacultyInpatientWeeksView } from '@/components/schedule/drag'
 import { get } from '@/lib/api'
-import { usePeople, useRotationTemplates, ListResponse } from '@/lib/hooks'
+import { usePeople, useRotationTemplates, useBlockRanges, ListResponse } from '@/lib/hooks'
 import type { Assignment, Block, RotationTemplate } from '@/types/api'
 
 /**
@@ -58,17 +58,44 @@ export default function SchedulePage() {
   // Current date for Day/Week/Month views
   const [currentDate, setCurrentDate] = useState(() => new Date())
 
-  // Initialize to current 4-week block starting from Monday (for block view)
+  // Fetch block ranges from API to get actual block boundaries
+  const { data: blockRanges } = useBlockRanges()
+
+  // Track if we've already initialized from API data
+  const hasInitializedFromApi = useRef(false)
+
+  // Initialize with a temporary fallback (will be updated once API data arrives)
+  // Using today's date as a reasonable starting point before API data loads
   const getInitialDates = () => {
     const today = new Date()
-    const monday = startOfWeek(today, { weekStartsOn: 1 })
+    // Temporary fallback: start from today, show 28 days
+    // This will be replaced by actual block data from the API
     return {
-      start: monday,
-      end: addDays(monday, 27), // 28 days total (4 weeks)
+      start: today,
+      end: addDays(today, 27),
     }
   }
 
   const [dateRange, setDateRange] = useState(getInitialDates)
+
+  // Update date range once we have block data from the API
+  // Find the block that contains today's date and use its actual boundaries
+  useEffect(() => {
+    if (blockRanges?.length && !hasInitializedFromApi.current) {
+      const today = format(new Date(), 'yyyy-MM-dd')
+      const todayBlock = blockRanges.find(
+        (range) => range.start_date <= today && range.end_date >= today
+      )
+
+      if (todayBlock) {
+        hasInitializedFromApi.current = true
+        setDateRange({
+          start: parseISO(todayBlock.start_date),
+          end: parseISO(todayBlock.end_date),
+        })
+      }
+    }
+  }, [blockRanges])
 
   // Calculate date range based on current view
   const viewDateRange = useMemo(() => {
