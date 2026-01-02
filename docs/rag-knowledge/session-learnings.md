@@ -340,11 +340,130 @@ class ResilienceHealthResponse(BaseModel):
 - [ ] Expected outcomes clearly defined
 - [ ] Return path documented
 
+## The 99/1 Rule (Critical Orchestration Pattern)
+
+**Pattern Discovered:** mcp-refinement session (2026-01-01)
+
+**Core Principle:** ORCHESTRATOR delegates 99% of the time. Direct action is the nuclear option (1%).
+
+**Why This Matters:**
+- Direct execution by ORCHESTRATOR exhausts context rapidly
+- Delegation to Deputies (ARCHITECT/SYNTHESIZER) enables parallel execution
+- ORCHESTRATOR should only synthesize results and resolve blockers
+
+**The Rule in Practice:**
+```
+99% of the time: Spawn ARCHITECT and/or SYNTHESIZER with Commander's Intent
+1% of the time: Direct action (when NO agent can do the job)
+```
+
+**Decision Gate:** If ORCHESTRATOR is about to use Read, Edit, Write, or Bash directly → STOP. Ask: "Which Deputy handles this domain?" Then spawn them.
+
+**Routing Table:**
+| Task Domain | Spawn |
+|-------------|-------|
+| Database, API, infrastructure | ARCHITECT → COORD_PLATFORM |
+| Tests, code quality, CI | ARCHITECT → COORD_QUALITY |
+| Scheduling engine, solver | ARCHITECT → COORD_ENGINE |
+| Documentation, releases | SYNTHESIZER → COORD_OPS |
+| Resilience, compliance | SYNTHESIZER → COORD_RESILIENCE |
+| Frontend, UX | SYNTHESIZER → COORD_FRONTEND |
+| Reconnaissance | G2_RECON (via /search-party) |
+| Planning | G5_PLANNING (via /plan-party) |
+
+## Embarrassingly Parallel Pattern (Critical)
+
+**Pattern Discovered:** mcp-refinement session (2026-01-01)
+
+**The Anti-Pattern (Context Collapse):**
+Spawning 1 agent to do N file edits serially causes failure:
+- Agent reads all N files into context
+- Context grows with each file
+- Eventually hits token limit
+- Work stops partway through
+
+**Example Failure:** 2 agents assigned 25 files each. Both hit context limits, 0 files edited.
+
+**The Correct Pattern (Parallel Isolation):**
+Spawn N agents for N independent tasks:
+- Each agent has isolated context
+- Each reads only 1 file
+- No cross-contamination
+- All succeed trivially
+
+**Formula:** If tasks are independent, parallelism is free.
+
+**Cost Analysis:**
+| Approach | Token Cost | Wall-Clock Time | Success Rate |
+|----------|------------|-----------------|--------------|
+| 1 agent, N tasks | N files processed | Time(N) | ~60% (context limited) |
+| N agents, 1 task each | N files processed | Time(1) | ~100% (isolated context) |
+
+Token cost is identical (each file processed once either way), but parallel approach finishes in time of 1 task instead of N, with 100% success rate.
+
+**When to Apply:**
+- Updating multiple files with similar changes
+- Running validation across many files
+- Any "for each file, do X" operation
+- Search/reconnaissance across directories
+- Batch processing operations
+
+**Related Protocols:**
+- /search-party: 120 parallel probes (12 G-2 RECON agents x 10 probes each)
+- /qa-party: 8+ parallel QA agents for validation
+- /plan-party: 10 parallel planning probes for strategy generation
+
+## Special Operators Model
+
+**Pattern Discovered:** mcp-refinement session (2026-01-01)
+
+**Analogy:** Agents are like special operations forces - trained individuals acting as one unit.
+
+**Key Properties:**
+- Each agent knows their role (specialty, domain expertise)
+- Each agent knows their chain of command (who spawned them, who they spawn)
+- Each agent knows their spawn context (what context to inherit)
+- Deputies beget Coordinators, Coordinators beget Specialists
+
+**Chain of Command Structure:**
+```
+ORCHESTRATOR (Strategic Commander)
+├── ARCHITECT (Deputy for Systems)
+│   └── COORD_PLATFORM, COORD_QUALITY, COORD_ENGINE, COORD_TOOLING
+└── SYNTHESIZER (Deputy for Operations)
+    └── COORD_OPS, COORD_RESILIENCE, COORD_FRONTEND, COORD_INTEL
+```
+
+**Spawn Context Documentation:**
+Every agent spec (.claude/Agents/*.md) now has a "Spawn Context" section:
+- **Spawned By:** Which agent spawns this one
+- **Reports To:** Where results flow
+- **This Agent Spawns:** Downstream agents it can invoke
+- **Related Protocols:** Slash commands that use this agent
+
+## Always ORCHESTRATOR Mode
+
+**Pattern Discovered:** mcp-refinement session (2026-01-01)
+
+**Insight:** Claude is ALWAYS in ORCHESTRATOR mode, not just when `/startupO` is invoked.
+
+**Implications:**
+- Every session should default to delegation mindset
+- The `/startupO` skill formalizes and loads context, but the pattern applies always
+- Direct execution should feel unusual, not default
+
+**Mental Model:**
+- Before `/startupO`: ORCHESTRATOR with minimal context loaded
+- After `/startupO`: ORCHESTRATOR with full context loaded
+
+Both are ORCHESTRATOR. The difference is situational awareness, not role.
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0.0 | 2025-12-30 | Initial session learnings from Session 020 |
+| 1.1.0 | 2026-01-01 | Added 99/1 Rule, Embarrassingly Parallel, Special Operators, Always ORCHESTRATOR |
 
 ---
 

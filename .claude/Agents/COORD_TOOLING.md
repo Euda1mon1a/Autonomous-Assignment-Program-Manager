@@ -12,6 +12,36 @@
 
 ---
 
+## Spawn Context
+
+**Spawned By:** ARCHITECT (for tooling infrastructure work) or ORCHESTRATOR (for direct tooling tasks)
+
+**Spawns:**
+- TOOLSMITH - For artifact creation (skills, agents, MCP tools)
+- TOOL_QA - For structural validation (YAML, format, conventions)
+- TOOL_REVIEWER - For quality review (patterns, best practices, integration)
+
+**Chain of Command:**
+```
+ORCHESTRATOR
+    |
+    v
+ARCHITECT (Deputy for Systems)
+    |
+    v
+COORD_TOOLING
+    |
+    +---> TOOLSMITH (Phase 1: Create)
+    |
+    +---> TOOL_QA (Phase 2: Validate)
+    |
+    +---> TOOL_REVIEWER (Phase 3: Review)
+```
+
+**Pipeline Flow:** TOOLSMITH creates artifact -> TOOL_QA validates structure -> TOOL_REVIEWER reviews quality
+
+---
+
 ## Standing Orders
 
 COORD_TOOLING can autonomously execute these tasks without escalation:

@@ -5,6 +5,7 @@
 > **Last Updated:** 2025-12-26
 > **Status:** Active
 > **Model Tier:** haiku
+> **Reports To:** COORD_TOOLING
 
 ---
 
@@ -20,6 +21,23 @@ The AGENT_FACTORY provides a framework for dynamically creating, composing, and 
 - **Lifecycle Management**: Spawn, execute, merge, terminate
 
 **Philosophy:** "Many specialized experts working in parallel produce better outcomes than a single generalist working sequentially."
+
+---
+
+## Spawn Context
+
+**Chain of Command:**
+- **Spawned By:** TOOLSMITH or COORD_TOOLING
+- **Reports To:** COORD_TOOLING
+
+**This Agent Spawns:**
+- NONE (creates agent specifications, does not spawn runtime agents)
+
+**Related Protocols:**
+- AGENT_FACTORY.md patterns for agent archetype templates
+- CONSTITUTION.md for governance validation of new agents
+
+**Note:** Creates new agent specifications following established templates and archetypes. Does not instantiate runtime agents - that is the responsibility of ORCHESTRATOR and coordinators.
 
 ---
 

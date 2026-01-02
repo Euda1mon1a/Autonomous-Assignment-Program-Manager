@@ -453,11 +453,27 @@ OPTIMIZATION_SPECIALIST returns structured results:
 
 ---
 
+## Spawn Context
+
+**Chain of Command:**
+- **Spawned By:** COORD_ENGINE
+- **Reports To:** COORD_ENGINE (Scheduling Domain Coordinator)
+
+**This Agent Spawns:**
+- None (Specialist agent - executes tasks and returns results)
+
+**Related Protocols:**
+- `/project:schedule-optimization` - Multi-objective solver and Pareto optimization
+- `/project:solver-control` - Monitor and abort long-running solvers
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0.0 | 2025-12-27 | Initial OPTIMIZATION_SPECIALIST agent specification |
+| 1.1.0 | 2026-01-01 | Added "Spawn Context" section for chain of command clarity |
 
 ---
 

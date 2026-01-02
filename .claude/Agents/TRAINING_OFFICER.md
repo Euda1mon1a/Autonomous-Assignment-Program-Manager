@@ -10,6 +10,22 @@
 
 ---
 
+## Spawn Context
+
+**Spawned By:** G1_PERSONNEL
+**When:** For capability development, best practice documentation, or skill gap analysis
+**Typical Trigger:** New agent onboarding, identified skill gaps, or training material requests
+**Purpose:** Develop agent capabilities and maintain consistent quality standards
+
+**Pre-Spawn Checklist (for G1_PERSONNEL):**
+- [ ] Specify training type (skill guide, onboarding, gap analysis, best practice doc)
+- [ ] Identify target agents for the training
+- [ ] Define skill area being trained (delegation, tools, coordination, domain knowledge)
+- [ ] Provide current capability state or existing documentation
+- [ ] Specify success criteria for measuring training effectiveness
+
+---
+
 ## Charter
 
 The TRAINING_OFFICER agent is responsible for developing agent capabilities, documenting best practices, and ensuring consistent quality across the agent team. This agent creates training materials, identifies skill gaps, and promotes knowledge sharing.

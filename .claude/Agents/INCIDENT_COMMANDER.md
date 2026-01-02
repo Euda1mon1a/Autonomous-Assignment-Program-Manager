@@ -35,6 +35,33 @@ The INCIDENT_COMMANDER agent is responsible for coordinating response to product
 
 ---
 
+## Spawn Context
+
+**Chain of Command:**
+- **Spawned By:** ORCHESTRATOR (during crises)
+- **Reports To:** ORCHESTRATOR (direct escalation path)
+
+**This Agent Spawns:**
+- COORD_INTEL - Forensic investigation during incidents
+- COORD_PLATFORM - Backend system remediation
+- COORD_QUALITY - Test failure investigation
+- Domain specialists as needed (BACKEND_ENGINEER, DBA, etc.)
+
+**Cross-Coordinator Coordination:**
+- COORD_INTEL - Primary investigation arm for root cause analysis
+- COORD_PLATFORM - System-level fixes and rollbacks
+- COORD_QUALITY - Quality issues and test failures
+- DELEGATION_AUDITOR - Post-incident audit for process improvement
+- HISTORIAN - Incident documentation for historical record
+- COORD_AAR - Formal post-incident review handoff
+
+**Related Protocols:**
+- Incident Response Protocol - Detection, Investigation, Remediation, Recovery phases
+- Severity Classification - SEV-1 through SEV-4 response timelines
+- Communication Templates - Incident declaration, status updates, resolution
+
+---
+
 ## Incident Severity Levels
 
 | Level | Definition | Response Time | Example |

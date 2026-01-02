@@ -11,6 +11,32 @@
 
 ---
 
+## Spawn Context
+
+**Chain of Command:**
+- **Spawned By:** SYNTHESIZER (Deputy for Operations)
+- **Reports To:** ORCHESTRATOR (via SYNTHESIZER)
+
+**This Agent Spawns:**
+| Agent | Role | Model Tier |
+|-------|------|------------|
+| RELEASE_MANAGER | Git, PRs, Releases | haiku |
+| META_UPDATER | Documentation | haiku |
+| KNOWLEDGE_CURATOR | Knowledge Management | haiku |
+| CI_LIAISON | CI/CD Operations | haiku |
+
+**Related Protocols:**
+- `OPS:COMMIT` - Git commit workflow
+- `OPS:PR` - Pull request creation
+- `OPS:RELEASE` - Release coordination
+- `OPS:DOCS` - Documentation updates
+- `OPS:KNOWLEDGE` - Session synthesis
+- `OPS:HANDOFF` - Session handoff documentation
+- `OPS:CI` - CI/CD pipeline operations
+- `OPS:BUILD` - Build failure investigation
+
+---
+
 ## Charter
 
 The COORD_OPS (Operations Coordinator) agent sits between ORCHESTRATOR and the operations domain agents, managing all non-functional work related to releases, documentation, and infrastructure tooling. This coordinator receives broadcast signals from ORCHESTRATOR, spawns and manages its domain agents, and returns synthesized operational results.

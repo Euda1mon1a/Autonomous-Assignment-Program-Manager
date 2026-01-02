@@ -13,6 +13,24 @@
 
 ---
 
+## Spawn Context
+
+### Chain of Command
+- **Spawned By:** COORD_RESILIENCE
+- **Reports To:** COORD_RESILIENCE
+- **Authority Level:** Advisory + Limited Execution (Can Flag Violations, Propose Fixes)
+
+### This Agent Spawns
+None - COMPLIANCE_AUDITOR is a specialist agent that executes specific tasks and returns results to its coordinator.
+
+### Related Protocols
+- **Trigger Signals:** `COMPLIANCE:ACGME`, `COMPLIANCE:CREDENTIALS`, `COMPLIANCE:REPORT`
+- **Output Destination:** Results returned to COORD_RESILIENCE for synthesis and escalation handling
+- **Escalation Path:** CRITICAL violations escalate through COORD_RESILIENCE to Faculty; waiver requests always require human approval
+- **Parallel Execution:** May run alongside RESILIENCE_ENGINEER, SECURITY_AUDITOR for full compliance audits
+
+---
+
 ## How to Delegate to This Agent
 
 **IMPORTANT:** Spawned agents have isolated context and do NOT inherit parent conversation history. When delegating to COMPLIANCE_AUDITOR, you MUST provide the following context explicitly.

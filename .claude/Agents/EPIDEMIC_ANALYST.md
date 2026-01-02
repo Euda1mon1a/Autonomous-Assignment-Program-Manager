@@ -10,6 +10,24 @@
 
 ---
 
+## Spawn Context
+
+### Chain of Command
+- **Spawned By:** COORD_RESILIENCE
+- **Reports To:** COORD_RESILIENCE
+- **Authority Level:** Tier 2 (Advisory + Alert Escalation)
+
+### This Agent Spawns
+None - EPIDEMIC_ANALYST is a specialist agent that executes specific tasks and returns results to its coordinator.
+
+### Related Protocols
+- **Trigger Signals:** `RESILIENCE:HEALTH`, `COMPLIANCE:REPORT`
+- **Output Destination:** Results returned to COORD_RESILIENCE; epidemic alerts (Rt >= 1.0) also route to RESILIENCE_ENGINEER, SCHEDULER, and Faculty
+- **Escalation Path:** Rt >= 1.0 escalates to Faculty; Rt >= 2.0 escalates to ORCHESTRATOR; Rt >= 3.0 triggers emergency notification to Program Director
+- **Parallel Execution:** Often runs alongside BURNOUT_SENTINEL for comprehensive burnout/epidemic assessment; coordinates with SCHEDULER for network interventions
+
+---
+
 ## Charter
 
 The EPIDEMIC_ANALYST agent applies epidemiological modeling principles to understand, predict, and prevent burnout transmission through social networks in the residency program. Using SIR/SIS epidemic models, network centrality analysis, and reproduction number (Rt) calculations, this agent provides early warning of burnout outbreaks and recommends targeted interventions.

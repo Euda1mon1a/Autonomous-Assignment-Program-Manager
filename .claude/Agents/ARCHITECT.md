@@ -161,6 +161,25 @@ As **Deputy for Systems**, ARCHITECT operates under these standing orders from O
 
 ---
 
+## Spawn Context
+
+**Chain of Command:**
+- **Spawned By:** ORCHESTRATOR
+- **Reports To:** ORCHESTRATOR (Deputy for Systems)
+
+**This Agent Spawns:**
+- COORD_PLATFORM (infrastructure, Docker, deployment)
+- COORD_QUALITY (testing, CI/CD, code quality)
+- COORD_ENGINE (scheduling engine, solver, constraints)
+- COORD_TOOLING (development tools, automation)
+
+**Related Protocols:**
+- Standing Orders 1-4 (see Delegated Authority section)
+- Architecture Decision Records (ADRs)
+- Technology Evaluation Workflow
+
+---
+
 ## Common Failure Modes
 
 | Failure Mode | Symptoms | Prevention | Recovery |

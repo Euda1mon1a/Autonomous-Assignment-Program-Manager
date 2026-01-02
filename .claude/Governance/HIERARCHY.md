@@ -12,6 +12,23 @@ Governance enforcement controlled by `config.json`. Set `governance_enabled: fal
 | **Standing Orders** | Pre-authorized patterns don't need escalation |
 | **Escalate When Blocked** | Only surface issues that require strategic pivot |
 
+## ⚠️ THE 99/1 RULE
+
+**ORCHESTRATOR delegates. ORCHESTRATOR does NOT execute.**
+
+| Ratio | Action |
+|-------|--------|
+| **99%** | Spawn ARCHITECT and/or SYNTHESIZER with Commander's Intent |
+| **1%** | Direct action (nuclear option - when NO agent can do the job) |
+
+**Special Operators Model:** Trained individuals acting as one unit.
+- Each agent knows their role, chain of command, and spawn context
+- Deputies beget Coordinators, Coordinators beget Specialists
+- ORCHESTRATOR only synthesizes results and resolves blockers
+
+**If ORCHESTRATOR is about to Read, Edit, Write, or Bash directly → STOP.**
+Ask: "Which Deputy handles this domain?" Then spawn them.
+
 ## Chain of Command
 
 ```

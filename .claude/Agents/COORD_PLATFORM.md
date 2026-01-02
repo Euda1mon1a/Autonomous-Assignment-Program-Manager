@@ -43,6 +43,45 @@ As a tactical sonnet coordinator, COORD_PLATFORM can spawn specialist agents (ha
 
 ---
 
+## Spawn Context
+
+### Chain of Command
+
+```
+ORCHESTRATOR
+    └── ARCHITECT (sub-orchestrator)
+            └── COORD_PLATFORM (this agent)
+                    ├── DBA
+                    ├── BACKEND_ENGINEER
+                    └── API_DEVELOPER
+```
+
+**Spawned By:** ARCHITECT (or ORCHESTRATOR directly for platform-focused tasks)
+**Reports To:** ARCHITECT or SYNTHESIZER (sub-orchestrators)
+**Authority Source:** Receives broadcast signals from ORCHESTRATOR, tactical direction from ARCHITECT
+
+### This Agent Spawns
+
+| Agent | Model Tier | Trigger Conditions |
+|-------|------------|-------------------|
+| **DBA** | haiku | Schema changes, migrations, query optimization, index management |
+| **BACKEND_ENGINEER** | haiku | Service implementation, business logic, controller patterns, Celery tasks |
+| **API_DEVELOPER** | haiku | Endpoint design, route implementation, OpenAPI documentation, API versioning |
+
+**Spawn Limit:** Up to 3 agents in parallel
+**Coordination:** COORD_PLATFORM synthesizes results from all spawned agents before reporting upstream
+
+### Related Protocols
+
+| Protocol | Location | Purpose |
+|----------|----------|---------|
+| Context Isolation | `.claude/Governance/CONTEXT_ISOLATION.md` | Passing context to spawned agents |
+| Quality Gates | `.claude/Governance/QUALITY_GATES.md` | 80% success threshold enforcement |
+| Signal Patterns | `.claude/Governance/SIGNAL_PATTERNS.md` | PLATFORM:* broadcast handling |
+| Escalation Matrix | `.claude/Governance/ESCALATION_MATRIX.md` | When to escalate to ARCHITECT |
+
+---
+
 ## Standing Orders (Execute Without Escalation)
 
 COORD_PLATFORM is pre-authorized to execute these actions autonomously:

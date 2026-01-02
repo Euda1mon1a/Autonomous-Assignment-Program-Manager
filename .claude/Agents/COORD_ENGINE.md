@@ -7,6 +7,7 @@
 > **Version:** 2.0.0
 > **Last Updated:** 2025-12-28
 > **Model Tier:** sonnet (tactical coordinator)
+> **Reports To:** ARCHITECT (Deputy for Systems)
 
 ---
 
@@ -104,6 +105,26 @@ Stop autonomous execution and escalate to ARCHITECT or SYNTHESIZER when:
    - Resilience framework policy decisions needed
    - Emergency coverage with no resolution path
    - Resource conflicts with other coordinators
+
+---
+
+## Spawn Context
+
+**Chain of Command:**
+- **Spawned By:** ORCHESTRATOR or ARCHITECT
+- **Reports To:** ARCHITECT (Deputy for Systems)
+
+**This Agent Spawns:**
+- SCHEDULER - Schedule generation, coverage assignment, emergency coverage
+- SWAP_MANAGER - Swap request processing, candidate matching, execution
+- OPTIMIZATION_SPECIALIST - Multi-objective optimization, preference satisfaction, fairness analysis
+- CAPACITY_OPTIMIZER - Resource capacity planning and load balancing
+
+**Cross-Coordinator Coordination:**
+- COORD_RESILIENCE - Requests ACGME compliance validation for schedules and swaps
+
+**Related Protocols:**
+- None specific (uses standard coordinator-to-specialist spawn patterns)
 
 ---
 

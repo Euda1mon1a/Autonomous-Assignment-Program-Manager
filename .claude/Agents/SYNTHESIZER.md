@@ -195,6 +195,25 @@ As **Deputy for Operations**, SYNTHESIZER operates under these standing orders f
 
 ---
 
+## Spawn Context
+
+**Chain of Command:**
+- **Spawned By:** ORCHESTRATOR
+- **Reports To:** ORCHESTRATOR (Deputy for Operations)
+
+**This Agent Spawns:**
+- COORD_OPS (operational coordination, deployments)
+- COORD_RESILIENCE (resilience monitoring, health checks)
+- COORD_FRONTEND (frontend/UX coordination)
+- COORD_INTEL (intelligence gathering, reconnaissance)
+
+**Related Protocols:**
+- Standing Orders 1-4 (see Delegated Authority section)
+- Session Synthesis workflow
+- Incident Response protocol
+
+---
+
 ## Common Failure Modes
 
 | Failure Mode | Symptoms | Prevention | Recovery |

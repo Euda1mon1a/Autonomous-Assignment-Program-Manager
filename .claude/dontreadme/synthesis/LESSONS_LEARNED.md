@@ -4,7 +4,7 @@
 
 **Format:** Organized by theme, chronologically within theme
 
-**Last Updated:** 2025-12-31 (Session 37)
+**Last Updated:** 2026-01-01 (Session mcp-refinement)
 
 ---
 
@@ -338,6 +338,44 @@ const { data } = useQuery({
 - Create session notes before clearing context
 
 **Tradeoff:** Context refresh takes time, but improves response speed
+
+---
+
+### Session mcp-refinement (2026-01-01): Embarrassingly Parallel = N Agents for N Tasks
+
+**Insight:** For N independent tasks, spawn N agents (not 1 agent doing N tasks serially)
+
+**Context:** 2 agents assigned 25 files each. Both hit context limits, 0 files successfully edited.
+
+**Anti-Pattern (Context Collapse):**
+- Agent reads file_1 into context
+- Agent reads file_2, context grows
+- ...continues until context limit hit
+- Work stops partway through, session fails
+
+**Correct Pattern (Parallel Isolation):**
+- Spawn 1 agent per file
+- Each agent reads only 1 file (isolated context)
+- All complete trivially
+- 100% success rate
+
+**Cost Analysis:**
+| Approach | Token Cost | Wall Clock | Success Rate |
+|----------|------------|------------|--------------|
+| 1 agent, N tasks | N files | Time(N) | ~60% |
+| N agents, 1 task | N files | Time(1) | ~100% |
+
+**Formula:** `if tasks_are_independent: parallelism = free()`
+
+**Applications:**
+- Multi-file edits with similar changes
+- Batch validation across files
+- Any "for each X, do Y" operation
+- Search/reconnaissance operations
+
+**Priority:** HIGH - Fundamental multi-agent orchestration principle
+
+**See:** `.claude/dontreadme/synthesis/PATTERNS.md#embarrassingly-parallel--n-agents-for-n-tasks`
 
 ---
 

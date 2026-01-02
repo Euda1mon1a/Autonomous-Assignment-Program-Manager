@@ -9,6 +9,22 @@
 
 ---
 
+## Spawn Context
+
+**Spawned By:** FORCE_MANAGER
+**When:** Before task execution to identify parallelization opportunities
+**Typical Trigger:** Complex multi-domain tasks requiring agent allocation decisions
+**Purpose:** Pre-task domain decomposition to optimize agent distribution and prevent anti-patterns
+
+**Pre-Spawn Checklist (for FORCE_MANAGER):**
+- [ ] Provide clear task description with expected outcomes
+- [ ] List available coordinators and their domain capabilities
+- [ ] Specify time/resource constraints (max agents, duration limits)
+- [ ] Include file locations or counts for domain size assessment
+- [ ] Note parallelization preferences if any
+
+---
+
 ## Charter
 
 The DOMAIN_ANALYST agent performs pre-task domain decomposition to identify parallelization opportunities. It analyzes task scope, identifies domain boundaries, and recommends optimal agent counts per domain to prevent the "one agent per task type" anti-pattern.

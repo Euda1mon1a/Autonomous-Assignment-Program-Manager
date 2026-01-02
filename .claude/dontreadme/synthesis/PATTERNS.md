@@ -2,7 +2,7 @@
 
 **Purpose:** Document recurring patterns identified across development sessions to accelerate future implementations and avoid reinventing solutions.
 
-**Last Updated:** 2025-12-31 (Session 37)
+**Last Updated:** 2026-01-01 (Session mcp-refinement)
 
 ---
 
@@ -305,6 +305,53 @@ const mutation = useMutation({
 **Use Case:** Large codebase exploration, issue diagnosis
 
 **Session:** 36 (SEARCH_PARTY implementation)
+
+### Embarrassingly Parallel = N Agents for N Tasks
+
+**Pattern:** For N independent tasks, spawn N agents (not 1 agent doing N tasks)
+
+**Discovery:** Session mcp-refinement (2026-01-01)
+
+**Anti-Pattern (Context Collapse):**
+```
+# BAD: 1 agent for 25 files
+Agent reads file_1 → context grows
+Agent reads file_2 → context grows more
+...
+Agent reads file_15 → CONTEXT LIMIT HIT
+Result: 0 files edited, session failed
+```
+
+**Correct Pattern (Parallel Isolation):**
+```
+# GOOD: 25 agents for 25 files
+Agent_1 reads file_1 only → small context → SUCCESS
+Agent_2 reads file_2 only → small context → SUCCESS
+...
+Agent_25 reads file_25 only → small context → SUCCESS
+Result: 25/25 files edited
+```
+
+**Formula:** `if tasks_are_independent: parallelism = free()`
+
+**Cost Analysis:**
+| Approach | Token Cost | Wall Clock | Success Rate |
+|----------|------------|------------|--------------|
+| 1 agent, N tasks | N files processed | Time(N) | ~60% (context limited) |
+| N agents, 1 task each | N files processed | Time(1) | ~100% (context isolated) |
+
+**When to Apply:**
+- Updating multiple files with similar changes
+- Running validation across many files
+- Any "for each file, do X" operation
+- Search/reconnaissance across directories
+
+**Related Skills:**
+- `/search-party`: 120 parallel probes (12 G-2s x 10 probes each)
+- `/qa-party`: 8+ parallel QA agents
+- `/plan-party`: 10 parallel planning probes
+
+**Priority:** HIGH - This is a fundamental multi-agent orchestration principle
 
 ### Parallel Terminal Orchestration
 

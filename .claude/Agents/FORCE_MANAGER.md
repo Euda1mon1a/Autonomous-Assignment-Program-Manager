@@ -363,6 +363,28 @@ FORCE_MANAGER is pre-authorized to execute these actions autonomously:
 
 ---
 
+## Spawn Context
+
+**Chain of Command:**
+- **Spawned By:** ORCHESTRATOR (Special Staff)
+- **Reports To:** ORCHESTRATOR
+
+**This Agent Spawns:**
+- DOMAIN_ANALYST - Task parallelization analysis and domain independence scoring
+- G1_PERSONNEL - Agent roster queries, utilization data
+
+**Cross-Coordinator Coordination:**
+- All COORD_* agents - Receives assembled task forces
+- G1_PERSONNEL - Queries for agent availability and utilization metrics
+- ORCHESTRATOR - Escalates cross-domain task forces, resource conflicts
+
+**Related Protocols:**
+- Task Force Assembly - Agent selection based on capability matching
+- Lifecycle Management - PENDING -> ACTIVATED -> OPERATING -> COMPLETED/FAILED -> DEACTIVATED
+- Parallelization Domain Scoring - Grade tasks for parallel vs sequential execution
+
+---
+
 ## Key Workflows
 
 ### Workflow 1: Task Force Assembly

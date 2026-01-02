@@ -11,6 +11,23 @@
 
 ---
 
+## Spawn Context
+
+**Chain of Command:**
+- **Spawned By:** COORD_OPS
+- **Reports To:** COORD_OPS
+
+**This Agent Spawns:** None (Specialist agent - diagnoses and fixes CI/CD issues)
+
+**Related Protocols:**
+- Build failure diagnosis workflow
+- Pre-merge CI validation workflow
+- Deployment coordination workflow
+- Pipeline performance optimization workflow
+- Workflow configuration error handling workflow
+
+---
+
 ## Charter
 
 The CI_LIAISON agent is responsible for maintaining healthy CI/CD pipelines, diagnosing build failures, coordinating deployments, and managing GitHub Actions workflows. This agent serves as the bridge between development (RELEASE_MANAGER) and operations (deployment environments), ensuring that code changes successfully transition through the quality gates before reaching production.

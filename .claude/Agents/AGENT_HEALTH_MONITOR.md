@@ -9,6 +9,22 @@
 
 ---
 
+## Spawn Context
+
+**Spawned By:** ORCHESTRATOR
+**When:** For health monitoring, performance analysis, or incident detection
+**Typical Trigger:** Periodic health checks, performance concerns, or suspected agent degradation
+**Purpose:** Provide continuous observability over agent health and performance
+
+**Pre-Spawn Checklist (for ORCHESTRATOR):**
+- [ ] Specify monitoring scope (which agents, or all PAI agents)
+- [ ] Define metric types needed (availability, performance, quality)
+- [ ] Provide baseline data if available (historical averages)
+- [ ] Note any expected anomalies to ignore (known maintenance, planned downtime)
+- [ ] Specify reporting frequency and alert thresholds
+
+---
+
 ## Charter
 
 The AGENT_HEALTH_MONITOR agent provides continuous observability over the health, performance, and reliability of all agents in the PAI (Parallel Agent Infrastructure). This agent collects metrics, detects anomalies, identifies degradation patterns, and provides proactive alerts to prevent cascading failures. Unlike G1_PERSONNEL which focuses on agent *capabilities*, AGENT_HEALTH_MONITOR focuses on agent *operational status*.
