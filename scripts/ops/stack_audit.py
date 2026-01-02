@@ -656,12 +656,24 @@ def check_sacred_backups() -> CheckResult:
             duration_ms=int((time.time() - start) * 1000)
         )
 
-    # Check for sacred backups
-    sacred_backups = list(backup_dir.glob("sacred_*.dump")) + list(backup_dir.glob("sacred_*.sql"))
-    regular_backups = list(backup_dir.glob("*.dump")) + list(backup_dir.glob("*.sql"))
+    # Check for sacred backups (can be nested in sacred_*/ directories)
+    sacred_backups = (
+        list(backup_dir.glob("sacred_*.dump")) +
+        list(backup_dir.glob("sacred_*.sql")) +
+        list(backup_dir.glob("sacred_*/**/*.dump")) +
+        list(backup_dir.glob("sacred_*/**/*.sql"))
+    )
+
+    # Check for regular backups (including nested full_*/ directories)
+    regular_backups = (
+        list(backup_dir.glob("*.dump")) +
+        list(backup_dir.glob("*.sql")) +
+        list(backup_dir.glob("full_*/**/*.dump")) +
+        list(backup_dir.glob("full_*/**/*.sql"))
+    )
 
     # Filter out sacred from regular
-    regular_backups = [b for b in regular_backups if "sacred" not in b.name]
+    regular_backups = [b for b in regular_backups if "sacred" not in str(b)]
 
     if sacred_backups:
         # Find most recent
@@ -670,8 +682,10 @@ def check_sacred_backups() -> CheckResult:
         age_hours = (time.time() - most_recent.stat().st_mtime) / 3600
         size_mb = most_recent.stat().st_size / (1024 * 1024)
 
+        # Show relative path from backups/ for clarity
+        rel_path = most_recent.relative_to(backup_dir)
         details.append(f"Sacred backups: {len(sacred_backups)} found")
-        details.append(f"Most recent: {most_recent.name} ({size_mb:.1f} MB, {age_hours:.1f}h ago)")
+        details.append(f"Most recent: {rel_path} ({size_mb:.1f} MB, {age_hours:.1f}h ago)")
 
         if age_hours > 168:  # Older than 1 week
             details.append("WARNING: Most recent sacred backup is over 1 week old")

@@ -48,6 +48,6 @@ export const useSearchParams = jest.fn<MockSearchParams, []>(() => ({
 
 export const useParams = jest.fn<Record<string, string | string[]>, []>(() => ({}));
 
-export const redirect = jest.fn<never, [string, 'replace' | 'push'?]>();
+export const redirect = jest.fn<never, [string, ('replace' | 'push')?]>();
 
 export const notFound = jest.fn<never, []>();

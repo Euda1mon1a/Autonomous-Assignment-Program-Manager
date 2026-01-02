@@ -266,7 +266,9 @@ export function MonthView({
                       {format(day, 'd')}
                     </span>
                     {stats?.hasIssues && (
-                      <AlertCircle className="w-4 h-4 text-red-500" aria-hidden="true" title="Has issues" />
+                      <span title="Has issues">
+                        <AlertCircle className="w-4 h-4 text-red-500" aria-hidden="true" />
+                      </span>
                     )}
                   </div>
 

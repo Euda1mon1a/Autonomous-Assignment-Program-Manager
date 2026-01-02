@@ -13,6 +13,7 @@ import React, { ReactElement } from 'react';
 import { render, RenderOptions, RenderResult, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
+import '@testing-library/jest-dom';
 
 // ============================================================================
 // Test Configuration Constants
@@ -49,12 +50,8 @@ export function createTestQueryClient(): QueryClient {
         retry: false,
       },
     },
-    logger: {
-      log: console.log,
-      warn: console.warn,
-      // Don't log errors during tests to avoid noise
-      error: () => {},
-    },
+    // Note: logger was removed in TanStack Query v5
+    // Errors are handled by the global error handler instead
   });
 }
 
@@ -346,7 +343,7 @@ export async function waitForElement(
  * Wait for loading to finish
  */
 export async function waitForLoadingToFinish(
-  queryByText: (text: string) => HTMLElement | null = () => null
+  queryByText: (text: string | RegExp) => HTMLElement | null = () => null
 ): Promise<void> {
   await waitFor(
     () => {

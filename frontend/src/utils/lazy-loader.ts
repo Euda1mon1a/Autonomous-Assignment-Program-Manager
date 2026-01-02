@@ -54,12 +54,16 @@ export function lazyLoadWithRetry<P = Record<string, unknown>>(
 
 /**
  * Preload a lazy component.
+ * Note: We cast to 'any' because React.createElement with LazyExoticComponent
+ * has overly strict type constraints that don't match runtime behavior.
  */
 export function preloadComponent<P = Record<string, unknown>>(
   lazyComponent: React.LazyExoticComponent<React.ComponentType<P>>
 ): void {
-  // Trigger the lazy loading
-  const temp = React.createElement(lazyComponent);
+  // Trigger the lazy loading by creating an element
+  // The cast is safe because we're not rendering, just triggering the load
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  React.createElement(lazyComponent as React.ComponentType<any>);
   // Component will be cached by React
 }
 

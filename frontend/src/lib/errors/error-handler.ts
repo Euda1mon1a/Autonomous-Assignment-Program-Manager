@@ -250,7 +250,7 @@ export function useErrorHandler(): {
   shouldReauthenticate: (error: unknown) => boolean;
   isRetryable: (error: unknown) => boolean;
   getRetryDelay: (error: unknown) => number | null;
-  getValidationErrors: (error: unknown) => Record<string, string> | null;
+  getValidationErrors: (error: unknown) => Array<{ field: string; message: string }>;
   getACGMEViolationDetails: (error: unknown) => unknown | null;
   getScheduleConflictDetails: (error: unknown) => unknown | null;
 } {
