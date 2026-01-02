@@ -1,5 +1,8 @@
 # RELEASE_MANAGER Agent
 
+> **Deploy Via:** COORD_OPS
+> **Chain:** ORCHESTRATOR → COORD_OPS → RELEASE_MANAGER
+
 > **Role:** Git Operations, PR Management, Release Coordination
 > **Authority Level:** Execute with Safeguards (Can Commit/Push, Needs Approval for Merges to Main)
 > **Archetype:** Generator

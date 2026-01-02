@@ -4259,6 +4259,174 @@ async def assess_schedule_fatigue_risk_tool(
     )
 
 
+# ==================== RAG KNOWLEDGE BASE TOOLS ====================
+
+
+@mcp.tool()
+async def rag_search(
+    query: str,
+    top_k: int = 5,
+    doc_type: str | None = None,
+    min_similarity: float = 0.5,
+) -> dict[str, Any]:
+    """
+    Search the RAG knowledge base for relevant documents.
+
+    Performs semantic similarity search against indexed documentation
+    including ACGME rules, scheduling policies, swap procedures, and more.
+
+    Args:
+        query: Natural language search query.
+        top_k: Number of results to return (default: 5).
+        doc_type: Optional filter by document type. Options:
+                 acgme_rules, scheduling_policy, swap_system,
+                 military_specific, resilience_concepts, user_guide_faq,
+                 agent_spec, session_handoff, ai_patterns, ai_decisions.
+        min_similarity: Minimum similarity threshold 0-1 (default: 0.5).
+
+    Returns:
+        Dict with:
+        - query: Original query
+        - documents: List of matching documents with content and similarity scores
+        - total_results: Number of documents found
+        - execution_time_ms: Query execution time
+
+    Example:
+        result = await rag_search(
+            query="What are the ACGME work hour limits?",
+            doc_type="acgme_rules"
+        )
+
+        for doc in result["documents"]:
+            print(f"Score: {doc['similarity_score']:.2f}")
+            print(f"Content: {doc['content'][:200]}...")
+    """
+    api_client = await get_api_client()
+    return await api_client.rag_retrieve(
+        query=query,
+        top_k=top_k,
+        doc_type=doc_type,
+        min_similarity=min_similarity,
+    )
+
+
+@mcp.tool()
+async def rag_context(
+    query: str,
+    max_tokens: int = 2000,
+    doc_type: str | None = None,
+) -> dict[str, Any]:
+    """
+    Build context from RAG knowledge base for LLM injection.
+
+    Retrieves relevant documents and formats them into a context
+    string suitable for injecting into LLM prompts.
+
+    Args:
+        query: Query to retrieve context for.
+        max_tokens: Maximum tokens in context (default: 2000).
+        doc_type: Optional filter by document type.
+
+    Returns:
+        Dict with:
+        - query: Original query
+        - context: Formatted context string ready for LLM
+        - sources: Source documents used
+        - token_count: Approximate token count
+        - metadata: Context generation metadata
+
+    Example:
+        result = await rag_context(
+            query="How do schedule swaps work?",
+            max_tokens=1500
+        )
+
+        # Use result["context"] in your prompt
+        prompt = f"Based on this context:\\n{result['context']}\\n\\nAnswer: ..."
+    """
+    api_client = await get_api_client()
+    return await api_client.rag_build_context(
+        query=query,
+        max_tokens=max_tokens,
+        doc_type=doc_type,
+    )
+
+
+@mcp.tool()
+async def rag_health() -> dict[str, Any]:
+    """
+    Get health status of the RAG knowledge base system.
+
+    Returns information about the RAG system including document counts,
+    index status, and recommendations.
+
+    Returns:
+        Dict with:
+        - status: "healthy" or "unhealthy"
+        - total_documents: Total indexed chunks
+        - documents_by_type: Breakdown by document type
+        - embedding_model: Model used for embeddings
+        - embedding_dimensions: Vector dimension size
+        - vector_index_status: Index status (ready/building/missing)
+        - recommendations: System improvement suggestions
+
+    Example:
+        health = await rag_health()
+
+        print(f"Status: {health['status']}")
+        print(f"Total chunks: {health['total_documents']}")
+        for doc_type, count in health['documents_by_type'].items():
+            print(f"  {doc_type}: {count}")
+    """
+    api_client = await get_api_client()
+    return await api_client.rag_health()
+
+
+@mcp.tool()
+async def rag_ingest(
+    content: str,
+    doc_type: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """
+    Ingest a document into the RAG knowledge base.
+
+    Chunks the content and stores with embeddings for later retrieval.
+    Use this to add new documentation or update existing content.
+
+    Args:
+        content: Document text content to ingest.
+        doc_type: Type of document. Suggested types:
+                 acgme_rules, scheduling_policy, swap_system,
+                 military_specific, resilience_concepts, user_guide_faq,
+                 agent_spec, session_handoff, ai_patterns, ai_decisions.
+        metadata: Optional metadata dict to store with chunks.
+
+    Returns:
+        Dict with:
+        - status: "success" or "error"
+        - chunks_created: Number of chunks created
+        - chunk_ids: List of created chunk UUIDs
+        - doc_type: Document type
+        - message: Status message
+
+    Example:
+        result = await rag_ingest(
+            content="# New Policy\\n\\nThis is the new scheduling policy...",
+            doc_type="scheduling_policy",
+            metadata={"source": "admin_update", "date": "2026-01-01"}
+        )
+
+        print(f"Created {result['chunks_created']} chunks")
+    """
+    api_client = await get_api_client()
+    return await api_client.rag_ingest(
+        content=content,
+        doc_type=doc_type,
+        metadata=metadata,
+    )
+
+
 # Server lifecycle functions (called by lifespan context manager)
 
 

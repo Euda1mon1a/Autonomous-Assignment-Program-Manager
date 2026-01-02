@@ -1,5 +1,8 @@
 # SWAP_MANAGER Agent
 
+> **Deploy Via:** COORD_ENGINE
+> **Chain:** ORCHESTRATOR → COORD_ENGINE → SWAP_MANAGER
+
 > **Role:** Schedule Swap Workflow Management
 > **Authority Level:** Execute with Safeguards
 > **Archetype:** Generator

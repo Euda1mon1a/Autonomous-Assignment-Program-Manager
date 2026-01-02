@@ -1,5 +1,8 @@
 # COMPLIANCE_AUDITOR Agent
 
+> **Deploy Via:** COORD_RESILIENCE
+> **Chain:** ORCHESTRATOR → COORD_RESILIENCE → COMPLIANCE_AUDITOR
+
 > **Role:** ACGME Audit Workflows and Violation Remediation
 > **Authority Level:** Advisory + Limited Execution (Can Flag Violations, Propose Fixes)
 > **Archetype:** Validator/Critic

@@ -1,5 +1,8 @@
 # SECURITY_AUDITOR Agent
 
+> **Deploy Via:** COORD_RESILIENCE
+> **Chain:** ORCHESTRATOR → COORD_RESILIENCE → SECURITY_AUDITOR
+
 > **Role:** Security Review & HIPAA/OPSEC Compliance Auditor
 > **Authority Level:** Validator (Can Block)
 > **Archetype:** Critic

@@ -4,7 +4,72 @@
 
 ---
 
-## Next Session Priority (2025-12-25)
+## Priority: Import/Export Staging DB (2026-01-01)
+
+**Status:** BLOCKING for production round-trip workflow
+**Context:** Current import is preview-only - no DB writes. Need staging tables for proper import workflow.
+
+### Problem
+- Excel import parses data but doesn't persist
+- No way to import a modified Block 10 back into the system
+- Can't do round-trip: Export → Edit → Re-import
+
+### Proposed Schema
+
+```sql
+-- Import batch tracking
+CREATE TABLE import_batches (
+    id UUID PRIMARY KEY,
+    created_at TIMESTAMP NOT NULL,
+    created_by UUID REFERENCES users(id),
+    filename VARCHAR(255),
+    file_hash VARCHAR(64),  -- SHA-256 for dedup
+    status VARCHAR(20) NOT NULL,  -- staged/approved/rejected/applied
+    target_block INTEGER,
+    target_start_date DATE,
+    target_end_date DATE,
+    notes TEXT,
+    applied_at TIMESTAMP,
+    rollback_available BOOLEAN DEFAULT TRUE
+);
+
+-- Staged assignments before commit
+CREATE TABLE import_staged_assignments (
+    id UUID PRIMARY KEY,
+    batch_id UUID REFERENCES import_batches(id) ON DELETE CASCADE,
+    row_number INTEGER,  -- Original Excel row
+    person_name VARCHAR(255),
+    matched_person_id UUID REFERENCES persons(id),  -- Fuzzy match result
+    assignment_date DATE,
+    slot VARCHAR(10),  -- AM/PM
+    rotation_name VARCHAR(255),
+    matched_rotation_id UUID REFERENCES rotation_templates(id),
+    conflict_type VARCHAR(20),  -- none/duplicate/overwrite
+    existing_assignment_id UUID,  -- If overwriting
+    status VARCHAR(20) DEFAULT 'pending',  -- pending/approved/skipped
+    validation_errors JSONB
+);
+```
+
+### Implementation Steps
+- [ ] Create Alembic migration for staging tables
+- [ ] Add `/import/stage` endpoint - parse and stage (no commit)
+- [ ] Add `/import/batches` endpoint - list staged batches
+- [ ] Add `/import/batches/{id}/preview` - show staged vs existing
+- [ ] Add `/import/batches/{id}/apply` - commit staged to live
+- [ ] Add `/import/batches/{id}/rollback` - undo applied batch
+- [ ] Frontend: Staged import review UI
+
+### Conflict Resolution Modes
+| Mode | Behavior |
+|------|----------|
+| Replace | Delete block assignments, insert staged |
+| Merge | Keep existing, add new, skip conflicts |
+| Upsert | Update if person+date+slot exists, else insert |
+
+---
+
+## Completed (2025-12-25)
 
 ### 1. Block 10 Schedule Generation - COMPLETE ✅
 **Priority:** High
@@ -112,6 +177,42 @@ Two new resident call types need to be captured in the scheduling system:
 - Create scheduling constraints
 - Update ACGME compliance checks if needed
 - Add to solver if applicable
+
+---
+
+## Process Improvements (2026-01-01)
+
+### CCW Burn Quality Protocol
+**Priority:** High
+**Added:** 2026-01-01 (Session 047)
+**Status:** Needs protocol design
+
+**Problem:**
+- CCW (Claude Code Worker) burns can introduce subtle errors that compound
+- Session 047 spent significant time recreating work from earlier in the week
+- Merging without proper vetting leads to "time loops" - redoing the same fixes
+
+**Requested Protocol:**
+1. **Quarantine Area** - Isolated branch/directory for CCW burn outputs before merge
+2. **Decontamination Process** - Validation checklist before accepting CCW work
+3. **Common Error Catalog** - Document recurring CCW error patterns
+
+**Known CCW Error Patterns (from CCW_BURN_POSTMORTEM.md):**
+- Token concatenation bugs: `await sawait ervice` → `await service`
+- Missing imports after refactoring
+- Incomplete type annotations
+- Orphaned test files
+
+**Action Items:**
+- [ ] Create formal CCW_BURN_PROTOCOL.md with pre-merge gates
+- [ ] Analyze common error patterns from past burns
+- [ ] Add automated detection for known CCW error signatures
+- [ ] Establish "quarantine" branch naming convention (e.g., `ccw/burn-*`)
+- [ ] Require stack audit GREEN before merging CCW burns
+
+**See Also:**
+- `.claude/Scratchpad/CCW_BURN_POSTMORTEM.md`
+- `.claude/protocols/CCW_BURN_PROTOCOL.md` (if exists)
 
 ---
 

@@ -1,5 +1,8 @@
 # SCHEDULER Agent
 
+> **Deploy Via:** COORD_ENGINE
+> **Chain:** ORCHESTRATOR → COORD_ENGINE → SCHEDULER
+
 > **Role:** Schedule Generation & Optimization
 > **Authority Level:** Tier 1 (Operational - with safeguards)
 > **Status:** Active

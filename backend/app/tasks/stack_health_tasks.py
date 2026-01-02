@@ -37,10 +37,10 @@ REPORT_DIR = PROJECT_ROOT / ".claude" / "dontreadme" / "stack-health"
 
 
 def run_command(
-    cmd: List[str],
-    cwd: Optional[Path] = None,
+    cmd: list[str],
+    cwd: Path | None = None,
     timeout: int = 120,
-) -> Tuple[int, str, str]:
+) -> tuple[int, str, str]:
     """Run a command and return (return_code, stdout, stderr)."""
     try:
         result = subprocess.run(
@@ -59,7 +59,7 @@ def run_command(
         return -3, "", str(e)
 
 
-def check_frontend_typecheck() -> Dict[str, Any]:
+def check_frontend_typecheck() -> dict[str, Any]:
     """Check frontend TypeScript compilation."""
     if not FRONTEND_DIR.exists():
         return {"status": "skip", "message": "Frontend directory not found", "count": 0}
@@ -87,7 +87,7 @@ def check_frontend_typecheck() -> Dict[str, Any]:
         }
 
 
-def check_frontend_lint() -> Dict[str, Any]:
+def check_frontend_lint() -> dict[str, Any]:
     """Check frontend ESLint."""
     if not FRONTEND_DIR.exists():
         return {"status": "skip", "message": "Frontend directory not found", "count": 0}
@@ -120,7 +120,7 @@ def check_frontend_lint() -> Dict[str, Any]:
         return {"status": "fail", "count": errors}
 
 
-def check_backend_lint() -> Dict[str, Any]:
+def check_backend_lint() -> dict[str, Any]:
     """Check backend Ruff linting."""
     if not BACKEND_DIR.exists():
         return {"status": "skip", "message": "Backend directory not found", "count": 0}
@@ -146,7 +146,7 @@ def check_backend_lint() -> Dict[str, Any]:
         return {"status": "fail", "count": issues if issues > 0 else 1}
 
 
-def check_migration_state() -> Dict[str, Any]:
+def check_migration_state() -> dict[str, Any]:
     """Check Alembic migration state."""
     if not BACKEND_DIR.exists():
         return {"status": "skip", "message": "Backend directory not found", "count": 0}
@@ -191,7 +191,7 @@ def check_migration_state() -> Dict[str, Any]:
     return {"status": "pass", "count": 0}
 
 
-def check_docker_health() -> Dict[str, Any]:
+def check_docker_health() -> dict[str, Any]:
     """Check Docker container health."""
     code, stdout, stderr = run_command(
         ["docker", "compose", "ps", "--format", "json"],
@@ -236,7 +236,7 @@ def check_docker_health() -> Dict[str, Any]:
     default_retry_delay=60,
     queue="maintenance",
 )
-def stack_health_check(self, write_report: bool = True) -> Dict[str, Any]:
+def stack_health_check(self, write_report: bool = True) -> dict[str, Any]:
     """
     Perform stack health check and optionally write report.
 
@@ -321,7 +321,7 @@ def stack_health_check(self, write_report: bool = True) -> Dict[str, Any]:
     return result
 
 
-def generate_report(result: Dict[str, Any]) -> str:
+def generate_report(result: dict[str, Any]) -> str:
     """Generate markdown report from check results."""
     lines = [
         "# Stack Health Audit (Celery)",
@@ -364,7 +364,7 @@ def generate_report(result: Dict[str, Any]) -> str:
     max_retries=0,
     queue="maintenance",
 )
-def quick_stack_check(self) -> Dict[str, Any]:
+def quick_stack_check(self) -> dict[str, Any]:
     """
     Quick stack health check (no report writing, minimal checks).
 

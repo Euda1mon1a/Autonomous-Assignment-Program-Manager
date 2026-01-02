@@ -1,5 +1,8 @@
 # UX_SPECIALIST Agent
 
+> **Deploy Via:** COORD_FRONTEND
+> **Chain:** ORCHESTRATOR → COORD_FRONTEND → UX_SPECIALIST
+
 > **Role:** User Experience Design & Accessibility Specialist
 > **Archetype:** Critic
 > **Authority Level:** Execute with Safeguards
