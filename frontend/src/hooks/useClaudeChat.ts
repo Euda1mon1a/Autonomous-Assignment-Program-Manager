@@ -1,9 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { ChatMessage, ChatSession, ClaudeCodeRequest, ClaudeCodeResponse, StreamUpdate, CodeBlock, ChatArtifact, StreamMetadata } from '../types/chat';
+import { ChatMessage, ChatSession, ClaudeCodeRequest, StreamUpdate, CodeBlock, ChatArtifact, StreamMetadata } from '../types/chat';
 import { v4 as uuidv4 } from 'uuid';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-const CLAUDE_CHAT_ENDPOINT = `${API_BASE_URL}/api/claude/chat`;
 const CLAUDE_STREAM_ENDPOINT = `${API_BASE_URL}/api/claude/chat/stream`;
 
 // localStorage keys
@@ -20,7 +19,7 @@ const STORAGE_KEY_SESSIONS_LIST = 'claude_chat_sessions_list';
  * @param value - The property value being parsed
  * @returns Date object if value is an ISO date string, otherwise the original value
  */
-const reviveDates = (key: string, value: unknown): unknown => {
+const reviveDates = (_key: string, value: unknown): unknown => {
   if (typeof value === 'string') {
     // Check for ISO date format
     const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
@@ -38,7 +37,7 @@ const loadFromStorage = <T>(key: string): T | null => {
     if (stored) {
       return JSON.parse(stored, reviveDates);
     }
-  } catch (e) {
+  } catch {
     // Silent failure - localStorage may be unavailable
   }
   return null;
@@ -55,54 +54,11 @@ const loadFromStorage = <T>(key: string): T | null => {
 const saveToStorage = (key: string, value: unknown): void => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
-  } catch (e) {
+  } catch {
     // Silent failure - localStorage may be full or unavailable
   }
 };
 
-/**
- * Validates if a value is a valid ChatSession.
- *
- * @param value - Value to validate
- * @returns True if value is a ChatSession
- */
-function isChatSession(value: unknown): value is ChatSession {
-  if (!value || typeof value !== 'object') return false;
-  const obj = value as Record<string, unknown>;
-  return (
-    typeof obj.id === 'string' &&
-    typeof obj.title === 'string' &&
-    typeof obj.programId === 'string' &&
-    typeof obj.adminId === 'string' &&
-    Array.isArray(obj.messages)
-  );
-}
-
-/**
- * Validates if a value is a valid ChatMessage array.
- *
- * @param value - Value to validate
- * @returns True if value is a ChatMessage array
- */
-function isChatMessageArray(value: unknown): value is ChatMessage[] {
-  return Array.isArray(value) && value.every(msg =>
-    msg && typeof msg === 'object' &&
-    'id' in msg && 'role' in msg && 'content' in msg
-  );
-}
-
-/**
- * Validates if a string is a valid ISO date.
- *
- * @param value - String to validate
- * @returns True if value is a valid ISO date string
- */
-function isValidISODate(value: string): boolean {
-  const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
-  if (!dateRegex.test(value)) return false;
-  const date = new Date(value);
-  return !isNaN(date.getTime());
-}
 
 /**
  * Context data for Claude Code requests.
@@ -197,6 +153,7 @@ export const useClaudeChat = () => {
       // Also update sessions list
       updateSessionsList(session, messages.length);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only trigger on session changes, not messages.length
   }, [session]);
 
   // Persist messages to localStorage when they change
@@ -206,6 +163,7 @@ export const useClaudeChat = () => {
     if (session && messages.length > 0) {
       updateSessionsList({ ...session, updatedAt: new Date() }, messages.length);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only trigger on messages changes, not session
   }, [messages]);
 
   // Update sessions list for session history

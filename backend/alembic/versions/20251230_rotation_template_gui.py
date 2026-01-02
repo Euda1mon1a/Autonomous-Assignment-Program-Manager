@@ -37,7 +37,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers
 revision = "20251230_rotation_gui"
-down_revision = "acfc96d01118"  # TODO: Update to actual latest revision
+down_revision = "acfc96d01118"
 branch_labels = None
 depends_on = None
 
