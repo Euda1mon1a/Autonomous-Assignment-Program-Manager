@@ -30,6 +30,7 @@ class RotationTemplate(Base):
         String(255), nullable=False
     )  # "clinic", "inpatient", "outpatient", "procedure", "procedures", "conference", "education", "absence", "off", "recovery"
     abbreviation = Column(String(10))  # For Excel export: "C", "FMIT", "LEC"
+    display_abbreviation = Column(String(20))  # User-facing code for schedule grid
     font_color = Column(String(50))  # Tailwind color class for text
     background_color = Column(String(50))  # Tailwind color class for background
 
