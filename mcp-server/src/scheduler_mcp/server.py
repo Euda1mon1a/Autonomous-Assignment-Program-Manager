@@ -4715,7 +4715,7 @@ Examples:
             # Also mount at root for backwards compatibility
             routes.append(Mount("/", app=mcp_app))
 
-            app = Starlette(routes=routes)
+            app = Starlette(routes=routes, lifespan=mcp_app.lifespan)
 
             # Wrap with auth middleware
             app = APIKeyAuthMiddleware(app)
