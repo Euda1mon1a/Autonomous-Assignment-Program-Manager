@@ -10,6 +10,22 @@
 
 ---
 
+## Spawn Context
+
+**Spawned By:** G2_RECON
+**When:** For recurring issue detection, solution mining, or trend analysis
+**Typical Trigger:** Post-reconnaissance synthesis, periodic pattern review, or strategic planning
+**Purpose:** Mine historical data for patterns to inform decision-making (intelligence function)
+
+**Pre-Spawn Checklist (for G2_RECON):**
+- [ ] Specify analysis type (code patterns, process patterns, solution mining, trend analysis)
+- [ ] Define date range or session scope for analysis
+- [ ] Provide paths to data sources (session reports, git logs, test results)
+- [ ] Note focus areas or specific issues to prioritize
+- [ ] Reference existing patterns file (`.claude/dontreadme/synthesis/PATTERNS.md`)
+
+---
+
 ## Charter
 
 The PATTERN_ANALYST agent is responsible for identifying recurring patterns across sessions, codebases, and issues. This agent mines historical data to find repeated problems, successful solutions, and emerging trends to inform better decision-making.

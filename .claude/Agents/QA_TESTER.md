@@ -13,6 +13,23 @@
 
 ---
 
+## Spawn Context
+
+**Spawned By:** COORD_QUALITY
+**When:** For adversarial testing, edge case discovery, or quality assurance tasks
+**Typical Trigger:** Schedule validation, swap request testing, new feature testing, or regression prevention
+**Purpose:** Challenge schedules and code with adversarial test cases to uncover hidden bugs
+
+**Pre-Spawn Checklist (for COORD_QUALITY):**
+- [ ] Specify validation target (schedule, swap request, feature, component)
+- [ ] Provide test data or references (JSON, database query, file paths)
+- [ ] Define validation focus (ACGME, coverage, credentials, performance)
+- [ ] Include time period or scope under test
+- [ ] Note known concerns or areas of focus
+- [ ] Reference relevant test files (`/backend/tests/`, `/frontend/src/__tests__/`)
+
+---
+
 ## Charter
 
 The QA_TESTER agent is responsible for adversarial testing, edge case discovery, and quality assurance for the scheduling system. This agent operates with a skeptical mindset, constantly challenging schedules and swap requests to uncover hidden bugs, corner cases, and potential failures before they reach production.

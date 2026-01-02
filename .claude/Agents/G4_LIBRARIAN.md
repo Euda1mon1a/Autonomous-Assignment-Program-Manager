@@ -38,6 +38,27 @@ In a library analogy:
 
 ---
 
+## Spawn Context
+
+**Spawned By:** G4_CONTEXT_MANAGER (as subordinate specialist)
+
+**Spawns:** None (leaf agent)
+
+**Classification:** G-Staff specialist - manages structural context and file references for agent specifications
+
+**Coordination with Parent:**
+- **G4_CONTEXT_MANAGER** handles semantic memory (embeddings, decisions, learnings)
+- **G4_LIBRARIAN** curates static knowledge base (permanent file references)
+- LIBRARIAN identifies high-value files, CONTEXT_MANAGER embeds them
+- LIBRARIAN flags staleness, CONTEXT_MANAGER re-embeds after update
+
+**Context Isolation:** When spawned, G4_LIBRARIAN starts with NO knowledge of prior scans. Parent must provide:
+- Specific workflow request (Inventory Scan, Add/Remove Reference, Request Revision, Periodic Review, Code Change Impact Detection)
+- Scope of files to scan or analyze
+- Any known issues or concerns to investigate
+
+---
+
 ## Standing Orders (Execute Without Escalation)
 
 G4_LIBRARIAN is pre-authorized to execute these actions autonomously:

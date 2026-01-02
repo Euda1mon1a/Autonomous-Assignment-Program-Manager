@@ -14,6 +14,24 @@
 
 ---
 
+## Spawn Context
+
+### Chain of Command
+- **Spawned By:** COORD_RESILIENCE
+- **Reports To:** COORD_RESILIENCE
+- **Authority Level:** Validator (Can Block)
+
+### This Agent Spawns
+None - SECURITY_AUDITOR is a specialist agent that executes specific tasks and returns results to its coordinator.
+
+### Related Protocols
+- **Trigger Signals:** `SECURITY:AUDIT`, `SECURITY:HIPAA`
+- **Output Destination:** Results returned to COORD_RESILIENCE; CRITICAL issues also escalate to PR_REVIEWER for merge blocking
+- **Escalation Path:** CRITICAL vulnerabilities escalate to human security expert; HIPAA violations to compliance officer; OPSEC violations to military command security
+- **Parallel Execution:** May run alongside RESILIENCE_ENGINEER, COMPLIANCE_AUDITOR for `RESILIENCE:FULL_AUDIT` signals
+
+---
+
 ## How to Delegate to This Agent
 
 **IMPORTANT:** Spawned agents have isolated context and do NOT inherit parent conversation history. When delegating to SECURITY_AUDITOR, you MUST provide the following context explicitly.

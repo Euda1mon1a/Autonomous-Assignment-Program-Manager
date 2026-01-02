@@ -864,12 +864,29 @@ Expected output: Schedule generation result with quality metrics and faculty rev
 
 ---
 
+## Spawn Context
+
+**Chain of Command:**
+- **Spawned By:** COORD_ENGINE
+- **Reports To:** COORD_ENGINE (Scheduling Domain Coordinator)
+
+**This Agent Spawns:**
+- None (Specialist agent - executes tasks and returns results)
+
+**Related Protocols:**
+- `/project:SCHEDULING` - Schedule generation skill for complex scheduling requests
+- `/project:safe-schedule-generation` - Mandatory backup before schedule writes
+- `/project:schedule-verification` - Human verification checklist for generated schedules
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2025-12-26 | Initial SCHEDULER agent specification |
 | 1.1 | 2025-12-29 | Added "How to Delegate to This Agent" section for context isolation |
+| 1.2 | 2026-01-01 | Added "Spawn Context" section for chain of command clarity |
 
 ---
 

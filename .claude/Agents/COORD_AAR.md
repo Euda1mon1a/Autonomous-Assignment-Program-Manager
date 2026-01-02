@@ -12,6 +12,36 @@
 
 ---
 
+## Spawn Context
+
+**Spawned By:** ORCHESTRATOR (at session end)
+
+**Spawns:**
+- DELEGATION_AUDITOR - For session delegation metrics analysis
+- HISTORIAN - For noteworthy session narrative documentation (conditional)
+
+**Chain of Command:**
+```
+ORCHESTRATOR
+    |
+    v
+COORD_AAR (this agent) [session end]
+    |
+    +---> DELEGATION_AUDITOR (always)
+    |
+    +---> HISTORIAN (if session noteworthy)
+```
+
+**Typical Spawn Triggers:**
+- Explicit invocation: User or ORCHESTRATOR runs `/project:coord-aar`
+- Session close signal: User says "ending session", "wrapping up", "that's all"
+- Context limit warning: Context window >80% consumed
+- PR merge complete with no new tasks queued
+
+**Returns Results To:** ORCHESTRATOR (AAR report with handoff notes, metrics, and HISTORIAN recommendation)
+
+---
+
 ## Standing Orders
 
 COORD_AAR can autonomously execute these tasks without escalation:

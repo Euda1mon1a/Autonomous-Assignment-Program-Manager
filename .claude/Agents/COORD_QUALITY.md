@@ -8,6 +8,7 @@
 > **Version:** 1.1.0
 > **Last Updated:** 2025-12-28
 > **Model Tier:** sonnet
+> **Reports To:** ARCHITECT (Deputy for Systems)
 
 ---
 
@@ -30,6 +31,27 @@ COORD_QUALITY can autonomously execute these tasks without escalation:
 - Quality gate bypass requested
 - ACGME compliance tests failing
 - Architecture review needed for major changes
+
+---
+
+## Spawn Context
+
+**Chain of Command:**
+- **Spawned By:** ORCHESTRATOR or ARCHITECT
+- **Reports To:** ARCHITECT (Deputy for Systems)
+
+**This Agent Spawns:**
+- QA_TESTER - Test writing, edge case discovery, adversarial testing, performance benchmarks
+- CODE_REVIEWER - Code quality review, style checks, best practices audit
+- ARCHITECT - Database design, API architecture, system design decisions
+
+**Cross-Coordinator Coordination:**
+- COORD_AAR - Reports quality metrics and division performance
+
+**Related Protocols:**
+- `/qa-party` - QA_PARTY protocol for scaled 120-agent deployment (8+ parallel QA agents per domain)
+  - Deploys 12 QA-IG commanders each managing 10 haiku workers
+  - Used for comprehensive pre-PR validation, regression testing, post-incident verification
 
 ---
 

@@ -96,10 +96,14 @@ Implementation-level documentation for LLM context loading.
 High-level patterns and cross-session learnings.
 
 ### Key Documents
-- PATTERNS.md - Recurring implementation patterns
+- PATTERNS.md - Recurring implementation patterns (NEW: Embarrassingly Parallel pattern)
 - DECISIONS.md - Architectural decision record (ADR)
 - LESSONS_LEARNED.md - Aggregated insights across sessions
 - CROSS_DISCIPLINARY_CONCEPTS.md - Resilience framework mappings
+
+### RAG Ingest Queue
+- RAG_INGEST_QUEUE/ - Documents pending ingestion into RAG knowledge base
+  - ai_pattern_embarrassingly_parallel.md - High-priority parallelization pattern
 
 ---
 
@@ -142,4 +146,4 @@ Multi-agent coordination and PAI (Programmatic Artificial Intelligence) specific
 - Synthesis documents updated quarterly or after major milestones
 - Agent notes added as new protocols emerge
 
-**Last Updated:** 2025-12-31 (Session 37)
+**Last Updated:** 2026-01-01 (Session mcp-refinement)

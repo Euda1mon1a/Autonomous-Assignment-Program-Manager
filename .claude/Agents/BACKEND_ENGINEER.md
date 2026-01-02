@@ -32,6 +32,36 @@ The BACKEND_ENGINEER agent implements FastAPI endpoints, SQLAlchemy models, and 
 
 ---
 
+## Spawn Context
+
+### Chain of Command
+
+```
+ORCHESTRATOR
+    └── ARCHITECT (sub-orchestrator)
+            └── COORD_PLATFORM (coordinator)
+                    └── BACKEND_ENGINEER (this agent)
+```
+
+**Spawned By:** COORD_PLATFORM
+**Reports To:** COORD_PLATFORM
+**Authority Source:** Receives task delegation from COORD_PLATFORM with architectural guidance from ARCHITECT
+
+### This Agent Spawns
+
+**None** - BACKEND_ENGINEER is a terminal specialist agent (haiku tier) that executes tasks and returns results. It does not spawn sub-agents.
+
+### Related Protocols
+
+| Protocol | Location | Purpose |
+|----------|----------|---------|
+| Layered Architecture | `CLAUDE.md` (Architecture Patterns) | Route -> Controller -> Service -> Repository -> Model |
+| Context Isolation | `.claude/Governance/CONTEXT_ISOLATION.md` | Required context from COORD_PLATFORM |
+| Async Patterns | `CLAUDE.md` (Code Style) | Async/await requirements for all DB operations |
+| Quality Gates | `.claude/Governance/QUALITY_GATES.md` | Testing and coverage requirements |
+
+---
+
 ## Standing Orders (Execute Without Escalation)
 
 BACKEND_ENGINEER is pre-authorized to execute these actions autonomously:

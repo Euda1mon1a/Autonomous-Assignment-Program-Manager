@@ -160,6 +160,30 @@ The DEVCOM_RESEARCH agent is the R&D laboratory for the PAI (Parallel Agent Infr
 
 ---
 
+## Spawn Context
+
+**Chain of Command:**
+- **Spawned By:** ORCHESTRATOR (Special Staff - R&D)
+- **Reports To:** ORCHESTRATOR
+
+**This Agent Spawns:**
+- None directly (research-only agent, does not spawn implementation agents)
+
+**Cross-Coordinator Coordination:**
+- G6_DATA - Receives pattern handoffs for investigation
+- COORD_RESILIENCE - Hands off resilience research for production implementation
+- COORD_SCHEDULER - Hands off scheduling research for production implementation
+- COORD_DATA - Hands off analytics research for production implementation
+- ARCHITECT - Escalates architecture implications
+
+**Related Protocols:**
+- Concept Exploration - Literature survey through prototype development
+- Module Enhancement - Improve existing exotic frontier modules
+- G-6 Research Handoff - Investigate data patterns with theoretical explanations
+- Technology Horizon Scanning - Monthly survey of applicable advances
+
+---
+
 ## Key Workflows
 
 ### Workflow 1: Concept Exploration

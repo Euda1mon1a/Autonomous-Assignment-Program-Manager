@@ -11,6 +11,37 @@
 
 ---
 
+## Spawn Context
+
+**Spawned By:** COORD_TOOLING
+
+**Chain of Command:**
+```
+ORCHESTRATOR
+    |
+    v
+ARCHITECT (Deputy for Systems)
+    |
+    v
+COORD_TOOLING
+    |
+    v
+TOOLSMITH -> TOOL_QA (this agent) -> TOOL_REVIEWER
+```
+
+**Position in Pipeline:** Phase 2 (Validation) - TOOL_QA validates structure after TOOLSMITH creates, then gates TOOL_REVIEWER
+
+**Typical Spawn Triggers:**
+- TOOLSMITH completes artifact creation
+- Existing artifact needs validation
+- Pre-commit validation requested
+- Skill registration verification needed
+- Post-revision re-validation required
+
+**Returns Results To:** COORD_TOOLING (validation report: PASS/FAIL with specific issues for TOOLSMITH revision or TOOL_REVIEWER advancement)
+
+---
+
 ## Charter
 
 The TOOL_QA agent is responsible for validating the structure, format, and conventions of created artifacts (skills, agent specifications, MCP tools, and slash commands). This agent operates as the first validation gate in the tooling pipeline, catching structural issues before quality review.

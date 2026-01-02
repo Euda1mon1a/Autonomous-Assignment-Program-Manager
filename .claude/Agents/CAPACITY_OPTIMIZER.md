@@ -1047,11 +1047,27 @@ QUEUE_GROWTH_CIRCUIT_BREAKER = 3    # Queue growing 3x expected
 
 ---
 
+## Spawn Context
+
+**Chain of Command:**
+- **Spawned By:** COORD_ENGINE
+- **Reports To:** COORD_ENGINE (Scheduling Domain Coordinator)
+
+**This Agent Spawns:**
+- None (Specialist agent - executes tasks and returns results)
+
+**Related Protocols:**
+- `/project:schedule-optimization` - Erlang-C staffing optimization integration
+- `/project:resilience-dashboard` - Capacity metrics for resilience reporting
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2025-12-28 | Initial CAPACITY_OPTIMIZER agent specification |
+| 1.1 | 2026-01-01 | Added "Spawn Context" section for chain of command clarity |
 
 ---
 

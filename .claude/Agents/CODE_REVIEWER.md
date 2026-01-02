@@ -950,11 +950,28 @@ Review the PR.
 
 ---
 
+## Spawn Context
+
+**Chain of Command:**
+- **Spawned By:** COORD_QUALITY
+- **Reports To:** COORD_QUALITY (Quality Domain Coordinator)
+
+**This Agent Spawns:**
+- None (Specialist agent - executes tasks and returns results)
+
+**Related Protocols:**
+- `/project:code-review` - Code quality review skill
+- `/project:lint-monorepo` - Unified linting for Python and TypeScript
+- `/project:pr-reviewer` - Pull request review workflow
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0.0 | 2025-12-29 | Initial CODE_REVIEWER agent specification |
+| 1.1.0 | 2026-01-01 | Added "Spawn Context" section for chain of command clarity |
 
 ---
 

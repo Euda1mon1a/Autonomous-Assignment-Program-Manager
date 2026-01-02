@@ -9,6 +9,23 @@
 
 ---
 
+## Spawn Context
+
+**Spawned By:** G3_OPERATIONS
+**When:** For complex multi-step workflows requiring checkpoint/rollback capability
+**Typical Trigger:** Database migrations, multi-agent coordination, or any workflow needing atomic execution
+**Purpose:** Execute step-by-step workflows with built-in safety, state management, and recovery
+
+**Pre-Spawn Checklist (for G3_OPERATIONS):**
+- [ ] Define workflow steps with sequence and dependencies
+- [ ] Specify checkpoint locations (after which steps)
+- [ ] Provide recovery procedures for each step
+- [ ] Define state variable schema
+- [ ] Set execution parameters (timeout, max retries, rollback policy)
+- [ ] List required invariants that must always hold
+
+---
+
 ## Charter
 
 The WORKFLOW_EXECUTOR agent is the specialized executor for complex multi-step workflows. This agent handles the detailed choreography of step-by-step workflows, managing state transitions, implementing checkpoints, handling rollbacks, and coordinating the atomic execution of workflow steps. Unlike G3_OPERATIONS which handles agent delegation and overall coordination, WORKFLOW_EXECUTOR focuses on the mechanics of step-by-step workflow execution with built-in safety and recovery.

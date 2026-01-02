@@ -10,6 +10,21 @@
 
 ---
 
+## Spawn Context
+
+**Spawned By:** ORCHESTRATOR
+**When:** At session end for delegation efficiency audit
+**Typical Trigger:** `/session-end` skill or ORCHESTRATOR's session wrap-up workflow
+**Purpose:** Provide independent oversight (Inspector General role) on ORCHESTRATOR's delegation patterns vs. direct execution
+
+**Pre-Spawn Checklist (for ORCHESTRATOR):**
+- [ ] Compile session action summary (Task tool invocations, Edit/Write actions, Bash commands)
+- [ ] Note any user directives that override normal delegation patterns
+- [ ] Provide session complexity estimate (Low/Medium/High)
+- [ ] Reference `.claude/Scratchpad/ORCHESTRATOR_ADVISOR_NOTES.md` if maintained
+
+---
+
 ## Charter
 
 The DELEGATION_AUDITOR agent monitors how effectively ORCHESTRATOR delegates work vs. executing directly. This provides visibility into delegation patterns, helps identify anti-patterns, and ensures ORCHESTRATOR operates at the strategic coordination level rather than doing tactical work.

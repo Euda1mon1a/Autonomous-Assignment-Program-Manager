@@ -145,6 +145,28 @@ MEDCOM has **NO execution authority**. Even lower than Propose-Only agents, MEDC
 
 ---
 
+## Spawn Context
+
+**Chain of Command:**
+- **Spawned By:** ORCHESTRATOR (Special Staff - Medical Advisory)
+- **Reports To:** ORCHESTRATOR (and ultimately the Physician)
+
+**This Agent Spawns:**
+- None (advisory-only agent, does not spawn other agents)
+
+**Cross-Coordinator Coordination:**
+- COORD_SCHEDULER - Provides clinical context for scheduling constraints
+- COORD_RESILIENCE - Receives metrics for clinical translation (Rt, SIR models)
+- Physician (Human) - ULTIMATE AUTHORITY - receives all advisories
+
+**Related Protocols:**
+- Pre-Generation Advisory - ACGME constraint summary for physician awareness
+- Post-Generation Clinical Surface - Clinical implications for physician review
+- Resilience Metric Translation - Convert technical metrics to clinical meaning
+- Patient Safety Surfacing - Flag patterns for physician review (informational only)
+
+---
+
 ## Key Workflows
 
 ### Workflow 1: Pre-Generation Advisory

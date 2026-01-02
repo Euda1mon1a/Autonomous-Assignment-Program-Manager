@@ -11,6 +11,31 @@
 
 ---
 
+## Spawn Context
+
+### Chain of Command
+- **Spawned By:** SYNTHESIZER (via ORCHESTRATOR broadcast signals)
+- **Reports To:** ORCHESTRATOR
+- **Authority Level:** Coordinator (receives broadcasts, spawns domain agents)
+
+### This Agent Spawns
+| Agent | Trigger | Purpose |
+|-------|---------|---------|
+| RESILIENCE_ENGINEER | `RESILIENCE:HEALTH`, `RESILIENCE:N1`, `RESILIENCE:N2`, `RESILIENCE:STRESS` | N-1/N-2 contingency analysis, health scoring, stress testing |
+| COMPLIANCE_AUDITOR | `COMPLIANCE:ACGME`, `COMPLIANCE:CREDENTIALS`, `COMPLIANCE:REPORT` | ACGME validation, credential audits, compliance reporting |
+| SECURITY_AUDITOR | `SECURITY:AUDIT`, `SECURITY:HIPAA` | Security reviews, HIPAA/PERSEC compliance |
+| CHAOS_ENGINEER | `RESILIENCE:STRESS`, `RESILIENCE:FULL_AUDIT` | Failure simulation, resilience testing |
+| BURNOUT_SENTINEL | `RESILIENCE:HEALTH`, `COMPLIANCE:REPORT` | Proactive burnout monitoring, early warning |
+| EPIDEMIC_ANALYST | `RESILIENCE:HEALTH`, `COMPLIANCE:REPORT` | Burnout epidemiology, Rt calculation |
+
+### Related Protocols
+- **Signal Reception:** Receives broadcast signals from ORCHESTRATOR for compliance/safety work
+- **Parallel Spawning:** Can spawn up to 3 managed agents in parallel
+- **Escalation Path:** CRITICAL issues escalate to Faculty; HIGH issues to G1_PERSONNEL
+- **100% Compliance:** Enforces zero-tolerance for ACGME and security violations
+
+---
+
 ## Standing Orders
 
 COORD_RESILIENCE can autonomously execute these tasks without escalation:

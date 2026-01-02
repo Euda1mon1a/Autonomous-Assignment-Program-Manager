@@ -838,3 +838,42 @@ The following documentation improvements were completed in Stream 9:
 
 - **PR #595**: Script ownership governance docs (ready to merge)
 - **PR #594**: Already merged (CCW burn documentation)
+
+---
+
+## PAI Agent Structure Decisions (2026-01-01)
+
+### G4 Context Management: Keep Separate or Consolidate?
+
+**Priority:** Low (decide when RAG usage patterns emerge)
+**Added:** 2026-01-01 (Session: mcp-refinement)
+**Status:** Awaiting decision
+
+**Current State:**
+- **G4_CONTEXT_MANAGER**: Semantic memory curator (RAG gatekeeper, decides what to remember)
+- **G4_LIBRARIAN**: File reference manager (tracks paths in agent specs)
+
+**RAG is now integrated into MCP** with 4 tools:
+- `rag_search` - Semantic search (185 chunks indexed)
+- `rag_context` - Build LLM context
+- `rag_health` - System status
+- `rag_ingest` - Add documents
+
+**Key Insight:** RAG provides the *mechanism*, G4 provides the *judgment*. Without intentional curation, RAG could become contaminated with:
+- Failed approaches later abandoned
+- Debugging tangents
+- Work-in-progress that got reverted
+
+**Options:**
+| Option | G4_CONTEXT_MANAGER | G4_LIBRARIAN | Notes |
+|--------|-------------------|--------------|-------|
+| A. Keep both | Curator for RAG | File path tracker | Current state |
+| B. Merge into one G4 | Combined semantic + structural | N/A | Simpler hierarchy |
+| C. Demote LIBRARIAN | Curator for RAG | Becomes periodic skill | File paths rarely change |
+
+**Decision Criteria:**
+- How often do spawned agents need file paths vs RAG queries?
+- Is file path management actually a recurring issue?
+- Does RAG reduce need for explicit file references?
+
+**Note:** File paths have been working; RAG is new. Wait for usage patterns to emerge before restructuring.

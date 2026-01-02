@@ -11,6 +11,31 @@
 
 ---
 
+## Spawn Context
+
+**Spawned By:** SYNTHESIZER (for cross-domain UI work) or ORCHESTRATOR (for direct frontend tasks)
+
+**Spawns:**
+- FRONTEND_ENGINEER - For component development, state management, data fetching
+- UX_SPECIALIST - For accessibility audits, design system compliance, user flow analysis
+
+**Chain of Command:**
+```
+ORCHESTRATOR
+    |
+    v
+SYNTHESIZER (for cross-domain synthesis)
+    |
+    v
+COORD_FRONTEND
+    |
+    +---> FRONTEND_ENGINEER
+    |
+    +---> UX_SPECIALIST
+```
+
+---
+
 ## Standing Orders
 
 COORD_FRONTEND can autonomously execute these tasks without escalation:

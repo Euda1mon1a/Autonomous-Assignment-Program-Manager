@@ -8,6 +8,7 @@
 > **Version:** 1.1.0
 > **Last Updated:** 2025-12-29
 > **Model Tier:** sonnet
+> **Reports To:** SYNTHESIZER (Deputy for Operations)
 
 ---
 
@@ -31,6 +32,34 @@ COORD_INTEL can autonomously execute these tasks without escalation:
 - ACGME compliance violations discovered
 - Need write access to database or code
 - Access to PHI/PII required (needs documented justification)
+
+---
+
+## Spawn Context
+
+**Chain of Command:**
+- **Spawned By:** ORCHESTRATOR or SYNTHESIZER
+- **Reports To:** SYNTHESIZER (Deputy for Operations)
+
+**This Agent Spawns:**
+- G6_EVIDENCE_COLLECTOR - Artifact collection, metric aggregation, evidence cataloging
+- HISTORIAN - Narrative documentation of paradigm-shifting discoveries
+- DBA - Database forensics, query history, schema archaeology
+- INTEL_FRONTEND - Browser/UI layer forensics (Layer 1)
+- INTEL_BACKEND - API/Service layer forensics (Layer 2)
+- INTEL_DBA - Database layer forensics (Layer 3)
+- INTEL_INFRA - Container/infrastructure forensics (Layer 4)
+- INTEL_QA - Bug reproduction specialist (Layer 5)
+- INTEL_DATA_VALIDATOR - Cross-layer data verification (Layer 6)
+
+**Cross-Coordinator Coordination:**
+- COORD_RESILIENCE - Escalates security incidents, requests audit logs
+- COORD_ENGINE - Requests solver history, constraint state
+- COORD_AAR - Provides investigation summaries, flags for historical documentation
+
+**Related Protocols:**
+- Full-Stack Investigation - Parallel spawn of all layer agents for unknown bug locations
+- Bug Reproduction Protocol - Systematic reproduction with evidence preservation
 
 ---
 

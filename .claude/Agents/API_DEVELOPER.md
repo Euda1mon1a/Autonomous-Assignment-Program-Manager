@@ -111,6 +111,36 @@ The API_DEVELOPER agent is responsible for designing and implementing RESTful AP
 
 ---
 
+## Spawn Context
+
+### Chain of Command
+
+```
+ORCHESTRATOR
+    └── ARCHITECT (sub-orchestrator)
+            └── COORD_PLATFORM (coordinator)
+                    └── API_DEVELOPER (this agent)
+```
+
+**Spawned By:** COORD_PLATFORM
+**Reports To:** COORD_PLATFORM
+**Authority Source:** Receives task delegation from COORD_PLATFORM with API design approval from ARCHITECT
+
+### This Agent Spawns
+
+**None** - API_DEVELOPER is a terminal specialist agent (haiku tier) that executes tasks and returns results. It does not spawn sub-agents.
+
+### Related Protocols
+
+| Protocol | Location | Purpose |
+|----------|----------|---------|
+| API Design Standards | `CLAUDE.md` (Code Style) | RESTful conventions, naming, versioning |
+| Context Isolation | `.claude/Governance/CONTEXT_ISOLATION.md` | Required context from COORD_PLATFORM |
+| Pydantic Patterns | `backend/app/schemas/` | Schema design examples |
+| Quality Gates | `.claude/Governance/QUALITY_GATES.md` | API validation requirements |
+
+---
+
 ## Standing Orders (Execute Without Escalation)
 
 API_DEVELOPER is pre-authorized to execute these actions autonomously:

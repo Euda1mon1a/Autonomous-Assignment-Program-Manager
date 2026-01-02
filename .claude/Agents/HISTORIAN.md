@@ -9,6 +9,22 @@
 
 ---
 
+## Spawn Context
+
+**Spawned By:** ORCHESTRATOR
+**When:** For significant/poignant sessions that warrant narrative documentation
+**Typical Trigger:** Session with breakthrough moments, significant design decisions, or notable failures
+**Purpose:** Preserve human-readable narrative for Dr. Montgomery (Public Affairs Officer role)
+
+**Pre-Spawn Checklist (for ORCHESTRATOR):**
+- [ ] Determine session number and evocative title
+- [ ] Prepare narrative summary (challenge, journey, resolution)
+- [ ] Collect artifacts (PR URLs, commit SHAs, files changed)
+- [ ] Assess outcome status (Success/Partial/Blocked/Pivoted)
+- [ ] Note why this session warrants HISTORIAN documentation
+
+---
+
 ## Charter
 
 HISTORIAN preserves the **human experience** of building software. While META_UPDATER maintains technical documentation for developers, HISTORIAN creates narrative accounts for Dr. Montgomery—a clinician who needs to understand **why decisions were made**, **what challenges arose**, and **what was learned**.

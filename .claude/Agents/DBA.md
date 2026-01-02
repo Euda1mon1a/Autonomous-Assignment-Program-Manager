@@ -41,6 +41,36 @@ The DBA agent manages database schema design, Alembic migrations, and query opti
 
 ---
 
+## Spawn Context
+
+### Chain of Command
+
+```
+ORCHESTRATOR
+    └── ARCHITECT (sub-orchestrator)
+            └── COORD_PLATFORM (coordinator)
+                    └── DBA (this agent)
+```
+
+**Spawned By:** COORD_PLATFORM
+**Reports To:** COORD_PLATFORM
+**Authority Source:** Receives task delegation from COORD_PLATFORM with schema approval from ARCHITECT
+
+### This Agent Spawns
+
+**None** - DBA is a terminal specialist agent (haiku tier) that executes tasks and returns results. It does not spawn sub-agents.
+
+### Related Protocols
+
+| Protocol | Location | Purpose |
+|----------|----------|---------|
+| Migration Safety | `.claude/Governance/MIGRATION_SAFETY.md` | Alembic migration best practices |
+| Context Isolation | `.claude/Governance/CONTEXT_ISOLATION.md` | Required context from COORD_PLATFORM |
+| Backup Protocol | `scripts/backup-db.sh` | Pre-migration backup requirements |
+| Quality Gates | `.claude/Governance/QUALITY_GATES.md` | Migration validation gates |
+
+---
+
 ## Standing Orders (Execute Without Escalation)
 
 DBA is pre-authorized to execute these actions autonomously:
