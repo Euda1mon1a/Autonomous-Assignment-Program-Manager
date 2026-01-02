@@ -40,7 +40,21 @@ await rag_ingest(
 
 | File | doc_type | Priority | Ingested |
 |------|----------|----------|----------|
-| ai_pattern_embarrassingly_parallel.md | ai_patterns | high | pending |
+| ai_pattern_embarrassingly_parallel.md | ai_patterns | high | **INGESTED** (2026-01-01) |
+
+### Ingestion Log
+
+**2026-01-01 (G4_CONTEXT_MANAGER - mcp-refinement session):**
+- Updated `docs/rag-knowledge/session-learnings.md` with:
+  - The 99/1 Rule (Cardinal Rule)
+  - Embarrassingly Parallel Pattern
+  - Special Operators Model
+  - Always ORCHESTRATOR Mode
+- Updated `docs/rag-knowledge/delegation-patterns.md` with:
+  - 99/1 Rule section (top of document)
+  - Embarrassingly Parallel Pattern section
+- Note: Content moved to canonical RAG knowledge files rather than kept as separate queue document
+- To re-embed, run: `python scripts/init_rag_embeddings.py`
 
 ## Automated Ingestion
 

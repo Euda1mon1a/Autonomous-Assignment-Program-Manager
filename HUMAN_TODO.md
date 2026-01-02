@@ -877,3 +877,26 @@ The following documentation improvements were completed in Stream 9:
 - Does RAG reduce need for explicit file references?
 
 **Note:** File paths have been working; RAG is new. Wait for usage patterns to emerge before restructuring.
+
+### Subagent MCP Context Gap
+
+**Priority:** Medium
+**Added:** 2026-01-01 (Session: mcp-refinement)
+**Status:** TODO
+
+**Problem:** Spawned subagents have **no MCP context**. They don't know:
+- What MCP tools are available
+- How to call them
+- RAG endpoint URLs
+
+**Observation:** G4_CONTEXT_MANAGER updated markdown files but didn't use MCP `rag_ingest` because it didn't have tool access in its spawned context.
+
+**Options:**
+| Option | Approach | Trade-off |
+|--------|----------|-----------|
+| A. Add MCP routes to agent prompts | Include API URLs in spawn prompt | More prompt tokens |
+| B. Include MCP tool list in agent specs | Update `.claude/Agents/*.md` | Manual maintenance |
+| C. Create MCP context skill | `/mcp-context` skill agents can invoke | Extra step |
+| D. Environment variable injection | Pass MCP URLs via task metadata | Cleanest but needs tooling |
+
+**Recommended:** Option A or B - include RAG API routes (http://localhost:8000/api/rag/*) in relevant agent specs.

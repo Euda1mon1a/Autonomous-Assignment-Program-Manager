@@ -106,6 +106,125 @@ This agent is responsible for maintaining semantic understanding of session hist
 
 ---
 
+## MCP/RAG Integration
+
+**CRITICAL: Use the API directly. Don't just update markdown files - actually ingest to pgvector.**
+
+### REST API Routes (Always Available)
+
+When the backend is running at `http://localhost:8000`, these endpoints are available:
+
+```bash
+# Health Check - Verify RAG system status
+GET  http://localhost:8000/api/rag/health
+
+# Semantic Search - Query the vector store
+GET  http://localhost:8000/api/rag/search?query=ACGME%20work%20hours&limit=10
+POST http://localhost:8000/api/rag/search
+  Body: {"query": "ACGME work hour limits", "limit": 10, "doc_type": "acgme_rules"}
+
+# Ingest Documents - Add content to vector store
+POST http://localhost:8000/api/rag/ingest
+  Body: {"content": "...", "doc_type": "...", "metadata": {...}}
+
+# Build LLM Context - Get relevant chunks formatted for prompts
+POST http://localhost:8000/api/rag/context
+  Body: {"query": "...", "max_chunks": 5}
+```
+
+### Curl Examples for Ingestion
+
+**Ingest a session learning:**
+```bash
+curl -X POST http://localhost:8000/api/rag/ingest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "Session 38 learned that MCP tools require explicit lifespan management in Starlette apps. The fix was adding lifespan=mcp.get_lifespan() to the Starlette constructor.",
+    "doc_type": "session_learnings",
+    "metadata": {
+      "session": "038",
+      "date": "2025-12-31",
+      "category": "mcp_integration",
+      "importance": "high"
+    }
+  }'
+```
+
+**Ingest an AI pattern:**
+```bash
+curl -X POST http://localhost:8000/api/rag/ingest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "Pattern: Coordinator Delegation - When admin requirements are encoded as JSON invariants and validated per-slot, use the slot-type invariant catalog in scheduling. This reduces manual eligibility checks.",
+    "doc_type": "ai_pattern",
+    "metadata": {
+      "pattern_name": "coordinator_delegation",
+      "domain": "scheduling",
+      "discovered_session": "037"
+    }
+  }'
+```
+
+**Ingest a key decision:**
+```bash
+curl -X POST http://localhost:8000/api/rag/ingest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "Decision: Use sentence-transformers all-MiniLM-L6-v2 for embeddings (384 dimensions). Rationale: Local inference, no API calls, good quality for domain text. Trade-off: Slightly lower quality than OpenAI ada-002 but zero cost and no network dependency.",
+    "doc_type": "decision_history",
+    "metadata": {
+      "decision_type": "architecture",
+      "date": "2025-12-29",
+      "reversible": true
+    }
+  }'
+```
+
+### Semantic Search Example
+
+```bash
+# Find relevant context about ACGME compliance
+curl -X POST http://localhost:8000/api/rag/search \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "80 hour work week limits averaging period",
+    "limit": 5,
+    "doc_type": "acgme_rules"
+  }'
+```
+
+### MCP Tools (If Available via ORCHESTRATOR)
+
+When operating through the MCP server, these tools may be available:
+
+| Tool | Purpose | Example |
+|------|---------|---------|
+| `rag_search` | Semantic search across 185+ chunks | `rag_search(query="supervision ratios", limit=5)` |
+| `rag_ingest` | Add documents to vector store | `rag_ingest(content="...", doc_type="session_learnings")` |
+| `rag_context` | Build LLM context from relevant chunks | `rag_context(query="swap validation", max_chunks=3)` |
+| `rag_health` | Check RAG system status | `rag_health()` |
+
+### Integration Guidance
+
+1. **Before capturing session context:** Always use `/api/rag/ingest` to persist to pgvector, not just markdown files
+2. **When retrieving context:** Use `/api/rag/search` with appropriate `doc_type` filters
+3. **For agent prompts:** Use `/api/rag/context` to get pre-formatted relevant chunks
+4. **Fallback only:** If the API is unavailable, fall back to markdown files in `.claude/dontreadme/`
+
+### Document Types for Ingestion
+
+| doc_type | Use For |
+|----------|---------|
+| `session_learnings` | Session-captured insights and discoveries |
+| `decision_history` | Key architectural/design decisions with rationale |
+| `ai_pattern` | Recurring patterns discovered during development |
+| `bug_fix` | Root cause analysis and fix documentation |
+| `acgme_rules` | ACGME compliance knowledge updates |
+| `scheduling_policy` | Scheduling constraints and policies |
+| `resilience_concepts` | Resilience framework patterns |
+
+---
+
 ## Personality Traits
 
 **Strategic Logistics Thinker**
@@ -498,6 +617,7 @@ our thinking has evolved."
 |---------|------|--------|---------|
 | 1.0.0 | 2025-12-29 | FUTURE (Placeholder) | Initial G4_CONTEXT_MANAGER specification created |
 | 2.0.0 | 2025-12-30 | ACTIVE | pgvector operational; updated implementation status; added curation guidelines; documented doc_types and API endpoints |
+| 2.1.0 | 2025-12-31 | ACTIVE | Added MCP/RAG Integration section with REST API routes, curl examples, MCP tool reference, and integration guidance |
 
 ---
 

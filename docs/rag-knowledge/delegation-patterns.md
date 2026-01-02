@@ -2,7 +2,84 @@
 
 > **Purpose:** Capture learned delegation patterns for AI agents to retrieve and apply
 > **Category:** `delegation_patterns` (for RAG system semantic search)
-> **Updated:** 2025-12-30 (Session 020 patterns)
+> **Updated:** 2026-01-01 (mcp-refinement session: 99/1 Rule, Embarrassingly Parallel)
+
+---
+
+## The 99/1 Rule (Cardinal Rule of Orchestration)
+
+**ORCHESTRATOR delegates 99% of the time. Direct action is the nuclear option (1%).**
+
+### Why This Matters
+
+- Direct execution by ORCHESTRATOR exhausts context rapidly
+- Delegation to Deputies (ARCHITECT/SYNTHESIZER) enables parallel execution
+- ORCHESTRATOR should only synthesize results and resolve blockers
+
+### The Decision Gate
+
+If ORCHESTRATOR is about to use Read, Edit, Write, or Bash directly:
+1. **STOP**
+2. Ask: "Which Deputy handles this domain?"
+3. Spawn that Deputy with Commander's Intent
+
+### Routing Table
+
+| Task Domain | Spawn |
+|-------------|-------|
+| Database, API, infrastructure | ARCHITECT → COORD_PLATFORM |
+| Tests, code quality, CI | ARCHITECT → COORD_QUALITY |
+| Scheduling engine, solver | ARCHITECT → COORD_ENGINE |
+| Documentation, releases | SYNTHESIZER → COORD_OPS |
+| Resilience, compliance | SYNTHESIZER → COORD_RESILIENCE |
+| Frontend, UX | SYNTHESIZER → COORD_FRONTEND |
+| Reconnaissance | G2_RECON (via /search-party) |
+| Planning | G5_PLANNING (via /plan-party) |
+
+---
+
+## Embarrassingly Parallel Pattern (Critical Anti-Pattern Avoidance)
+
+### The Anti-Pattern: Context Collapse
+
+**DO NOT** spawn 1 agent to do N file edits serially. This causes failure:
+- Agent reads all N files into context
+- Context grows with each file
+- Eventually hits token limit
+- Work stops partway through
+
+**Real-World Failure:** 2 agents assigned 25 files each. Both hit context limits, 0 files edited.
+
+### The Correct Pattern: Parallel Isolation
+
+**DO** spawn N agents for N independent tasks:
+- Each agent has isolated context
+- Each reads only 1 file
+- No cross-contamination
+- All succeed trivially
+
+### Cost Analysis
+
+| Approach | Token Cost | Wall-Clock Time | Success Rate |
+|----------|------------|-----------------|--------------|
+| 1 agent, N tasks | N files processed | Time(N) | ~60% (context limited) |
+| N agents, 1 task each | N files processed | Time(1) | ~100% (isolated context) |
+
+**Key Insight:** Token cost is identical. Parallel approach is faster with 100% success.
+
+### When to Apply
+
+- Updating multiple files with similar changes
+- Running validation across many files
+- Any "for each file, do X" operation
+- Search/reconnaissance across directories
+- Batch processing operations
+
+### Related Protocols
+
+- `/search-party`: 120 parallel probes (12 G-2 RECON agents x 10 probes each)
+- `/qa-party`: 8+ parallel QA agents for validation
+- `/plan-party`: 10 parallel planning probes for strategy generation
 
 ---
 
