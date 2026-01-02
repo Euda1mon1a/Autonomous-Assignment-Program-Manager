@@ -1,7 +1,7 @@
 """Add font_color and background_color to rotation_templates
 
 Revision ID: 20251231_rotation_colors
-Revises: 8e3f0e0b83c3
+Revises: 20260101_mod_columns
 Create Date: 2025-12-31
 
 Adds display color columns for rotation templates to support
@@ -14,7 +14,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = '20251231_rotation_colors'
-down_revision: Union[str, None] = '8e3f0e0b83c3'
+down_revision: Union[str, None] = '20260101_mod_columns'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

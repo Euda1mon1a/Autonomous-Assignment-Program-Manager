@@ -16,7 +16,7 @@ class BlockBase(BaseModel):
         ..., description="Time of day: AM or PM", pattern="^(AM|PM)$"
     )
     block_number: int = Field(
-        ..., ge=1, le=730, description="Block number in academic year (1-730)"
+        ..., ge=0, le=13, description="Academic block number (0-13)"
     )
     is_weekend: bool = Field(False, description="Whether this block falls on a weekend")
     is_holiday: bool = Field(False, description="Whether this block is a holiday")

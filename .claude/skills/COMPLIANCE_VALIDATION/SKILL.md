@@ -123,7 +123,7 @@ All compliance reports must follow this structure:
 ```
 ╔══════════════════════════════════════════════════════════════════╗
 ║  ACGME COMPLIANCE AUDIT REPORT                                   ║
-║  Schedule: Block 10 (2026-03-10 to 2026-04-06)                  ║
+║  Schedule: Block 10 (2026-03-12 to 2026-04-08)                  ║
 ║  Generated: 2025-12-26 15:30:00                                  ║
 ║  Validator: COMPLIANCE_VALIDATION Skill                          ║
 ╠══════════════════════════════════════════════════════════════════╣

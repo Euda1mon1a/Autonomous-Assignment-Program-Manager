@@ -17,7 +17,7 @@ Generates scheduling blocks (AM/PM half-days) for the academic year. Each day ha
 
 ```bash
 # Generate blocks for a single block period
-python scripts/generate_blocks.py --start 2026-03-10 --end 2026-04-06 --block-number 10
+python scripts/generate_blocks.py --start 2026-03-12 --end 2026-04-08 --block-number 10
 
 # Generate full academic year 2025-2026 (July 1, 2025 - June 30, 2026)
 python scripts/generate_blocks.py --academic-year 2025
@@ -135,7 +135,7 @@ Human-facing schedule verification script. Runs 12 checks against the database a
 ```bash
 # From backend directory
 cd backend
-python ../scripts/verify_schedule.py --block 10 --start 2026-03-10 --end 2026-04-06
+python ../scripts/verify_schedule.py --block 10 --start 2026-03-12 --end 2026-04-08
 
 # Via Docker
 docker compose exec backend python ../scripts/verify_schedule.py --block 10

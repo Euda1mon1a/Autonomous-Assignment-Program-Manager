@@ -33,7 +33,26 @@ class RotationTemplateBase(BaseModel):
     @classmethod
     def validate_activity_type(cls, v: str) -> str:
         """Validate activity_type is one of the valid types."""
-        valid_types = ("clinic", "inpatient", "procedure", "conference")
+        # Valid activity types used across the system:
+        # - clinic/outpatient: Clinic sessions and outpatient rotations
+        # - inpatient: Hospital ward rotations (FMIT, wards)
+        # - procedure/procedures: Procedural rotations
+        # - conference/education: Educational activities, didactics
+        # - absence: Leave, vacation, sick time
+        # - off: Days off, recovery days
+        # - recovery: Post-call recovery
+        valid_types = (
+            "clinic",
+            "inpatient",
+            "procedure",
+            "procedures",
+            "conference",
+            "education",
+            "outpatient",
+            "absence",
+            "off",
+            "recovery",
+        )
         if v not in valid_types:
             raise ValueError(f"activity_type must be one of {valid_types}")
         return v
@@ -89,7 +108,18 @@ class RotationTemplateUpdate(BaseModel):
     def validate_activity_type(cls, v: str | None) -> str | None:
         """Validate activity_type is one of the valid types."""
         if v is not None:
-            valid_types = ("clinic", "inpatient", "procedure", "conference")
+            valid_types = (
+                "clinic",
+                "inpatient",
+                "procedure",
+                "procedures",
+                "conference",
+                "education",
+                "outpatient",
+                "absence",
+                "off",
+                "recovery",
+            )
             if v not in valid_types:
                 raise ValueError(f"activity_type must be one of {valid_types}")
         return v

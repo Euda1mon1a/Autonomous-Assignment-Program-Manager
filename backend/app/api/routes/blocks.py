@@ -2,6 +2,10 @@
 
 Thin routing layer that connects URL paths to controllers.
 All business logic is in the service layer.
+
+Note: GET endpoints are public (no authentication required) as block data
+is not sensitive - it contains only date ranges and block numbers. This allows
+the frontend to display schedule views before user login.
 """
 
 from datetime import date
@@ -26,9 +30,12 @@ async def list_blocks(
         None, description="Filter by academic block number"
     ),
     db=Depends(get_async_db),
-    current_user: User = Depends(get_current_active_user),
 ):
-    """List blocks, optionally filtered by date range or block number. Requires authentication."""
+    """List blocks, optionally filtered by date range or block number.
+
+    This endpoint is public (no authentication required) as block data
+    is not sensitive - it contains only date ranges and block numbers.
+    """
     controller = BlockController(db)
     return controller.list_blocks(
         start_date=start_date,
@@ -41,9 +48,12 @@ async def list_blocks(
 async def get_block(
     block_id: UUID,
     db=Depends(get_async_db),
-    current_user: User = Depends(get_current_active_user),
 ):
-    """Get a block by ID. Requires authentication."""
+    """Get a block by ID.
+
+    This endpoint is public (no authentication required) as block data
+    is not sensitive - it contains only date ranges and block numbers.
+    """
     controller = BlockController(db)
     return controller.get_block(block_id)
 

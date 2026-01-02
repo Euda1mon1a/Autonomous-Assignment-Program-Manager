@@ -12,7 +12,7 @@ Copy these prompts to direct Claude Code:
 Step 1: "Check if all Docker containers are running and healthy"
 Step 2: "Verify database connectivity and show me the counts of people, blocks, and rotations"
 Step 3: "Run the health check endpoints and show me the results"
-Step 4: "Generate a schedule for Block 10 (2026-03-10 to 2026-04-06) using the CP-SAT algorithm"
+Step 4: "Generate a schedule for Block 10 (2026-03-12 to 2026-04-08) using the CP-SAT algorithm"
 Step 5: "Verify the generated schedule and show me any violations"
 Step 6: "Show me a human-readable summary of the schedule"
 ```
@@ -150,7 +150,7 @@ curl -s http://localhost:8000/api/v1/health/detailed | python -m json.tool
 
 **Prompt to Claude Code:**
 ```
-Generate a schedule for Block 10 (March 10 - April 6, 2026) using:
+Generate a schedule for Block 10 (March 12 - April 8, 2026) using:
 - CP-SAT algorithm (best quality)
 - 5-minute timeout
 - All PGY levels (1, 2, 3)
@@ -165,8 +165,8 @@ curl -X POST http://localhost:8000/api/v1/schedule/generate \
   -H "Content-Type: application/json" \
   -H "Idempotency-Key: block10-$(date +%Y%m%d-%H%M%S)" \
   -d '{
-    "start_date": "2026-03-10",
-    "end_date": "2026-04-06",
+    "start_date": "2026-03-12",
+    "end_date": "2026-04-08",
     "algorithm": "cp_sat",
     "pgy_levels": [1, 2, 3],
     "timeout_seconds": 300
@@ -212,20 +212,20 @@ Show me any issues found.
 **What Claude Code should run:**
 ```bash
 # API validation endpoint
-curl -s "http://localhost:8000/api/v1/schedule/validate?start_date=2026-03-10&end_date=2026-04-06" \
+curl -s "http://localhost:8000/api/v1/schedule/validate?start_date=2026-03-12&end_date=2026-04-08" \
   | python -m json.tool
 
 # Comprehensive verification script
 docker-compose exec backend python ../scripts/verify_schedule.py \
   --block 10 \
-  --start 2026-03-10 \
-  --end 2026-04-06
+  --start 2026-03-12 \
+  --end 2026-04-08
 ```
 
 **Expected Output (Clean):**
 ```
 === Block 10 Schedule Verification ===
-Date Range: 2026-03-10 to 2026-04-06 (28 days)
+Date Range: 2026-03-12 to 2026-04-08 (28 days)
 
 FMIT Rotation Check:
   ✓ No back-to-back FMIT weeks for faculty
@@ -274,7 +274,7 @@ Format it as a table I can review.
 **What Claude Code should run:**
 ```bash
 # Get schedule data
-curl -s "http://localhost:8000/api/v1/schedule/2026-03-10/2026-04-06" \
+curl -s "http://localhost:8000/api/v1/schedule/2026-03-12/2026-04-08" \
   | python -m json.tool
 
 # Or query directly for summary
@@ -288,7 +288,7 @@ FROM assignments a
 JOIN rotation_templates rt ON a.rotation_template_id = rt.id
 JOIN persons p ON a.person_id = p.id
 JOIN blocks b ON a.block_id = b.id
-WHERE b.date BETWEEN '2026-03-10' AND '2026-04-06'
+WHERE b.date BETWEEN '2026-03-12' AND '2026-04-08'
 GROUP BY rt.name
 ORDER BY assignments DESC;
 
@@ -302,7 +302,7 @@ FROM persons p
 LEFT JOIN assignments a ON p.id = a.person_id
 LEFT JOIN blocks b ON a.block_id = b.id
 LEFT JOIN rotation_templates rt ON a.rotation_template_id = rt.id
-WHERE b.date BETWEEN '2026-03-10' AND '2026-04-06'
+WHERE b.date BETWEEN '2026-03-12' AND '2026-04-08'
 GROUP BY p.id, p.name, p.role
 ORDER BY p.role, total_assignments DESC;
 "
@@ -375,10 +375,10 @@ curl -X POST http://localhost:8000/api/v1/schedule/generate \
 ### Violations After Generation
 ```bash
 # Check specific violations
-curl -s "http://localhost:8000/api/v1/schedule/validate?start_date=2026-03-10&end_date=2026-04-06"
+curl -s "http://localhost:8000/api/v1/schedule/validate?start_date=2026-03-12&end_date=2026-04-08"
 
 # Run conflict detection with resolution suggestions
-curl -s http://localhost:8000/api/v1/schedule/conflicts/2026-03-10/2026-04-06
+curl -s http://localhost:8000/api/v1/schedule/conflicts/2026-03-12/2026-04-08
 ```
 
 **Resolution:**
@@ -408,10 +408,10 @@ curl -s http://localhost:8000/api/v1/schedule/conflicts/2026-03-10/2026-04-06
 curl -s "http://localhost:8000/api/v1/persons?role=resident&active=true" | jq '.total'
 
 # Check blocks without assignments
-curl -s "http://localhost:8000/api/v1/schedule/gaps?start_date=2026-03-10&end_date=2026-04-06"
+curl -s "http://localhost:8000/api/v1/schedule/gaps?start_date=2026-03-12&end_date=2026-04-08"
 
 # Review absence/leave conflicts
-curl -s "http://localhost:8000/api/v1/absences?start_date=2026-03-10&end_date=2026-04-06&status=approved"
+curl -s "http://localhost:8000/api/v1/absences?start_date=2026-03-12&end_date=2026-04-08&status=approved"
 ```
 
 **Resolution:**
@@ -507,8 +507,8 @@ docker-compose logs backend | grep -i "memory\|oom"
 curl -X POST "http://localhost:8000/api/v1/schedule/generate" \
   -H "Content-Type: application/json" \
   -d '{
-    "start_date": "2026-03-10",
-    "end_date": "2026-04-06"
+    "start_date": "2026-03-12",
+    "end_date": "2026-04-08"
   }'
 ```
 
@@ -536,7 +536,7 @@ curl -s "http://localhost:8000/api/v1/idempotency/{key}" | jq '.'
    NEW_KEY=$(uuidgen)
    curl -X POST "http://localhost:8000/api/v1/schedule/generate" \
      -H "Idempotency-Key: $NEW_KEY" \
-     -d '{"start_date": "2026-03-10", "end_date": "2026-04-06"}'
+     -d '{"start_date": "2026-03-12", "end_date": "2026-04-08"}'
    ```
 
 2. **Clear old idempotency records (admin only):**

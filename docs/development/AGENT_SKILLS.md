@@ -476,7 +476,7 @@ Every time this skill runs, it MUST:
 **CLI Tool**:
 ```bash
 cd backend
-python ../scripts/verify_schedule.py --block 10 --start 2026-03-10 --end 2026-04-06
+python ../scripts/verify_schedule.py --block 10 --start 2026-03-12 --end 2026-04-08
 ```
 
 **Integration**: Works with `acgme-compliance` skill and generates reports to `docs/reports/`.

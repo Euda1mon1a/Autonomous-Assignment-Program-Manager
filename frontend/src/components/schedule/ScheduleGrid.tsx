@@ -1,8 +1,8 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { format, eachDayOfInterval, isWeekend } from 'date-fns'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueries } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { get } from '@/lib/api'
 import { usePeople, useRotationTemplates, ListResponse } from '@/lib/hooks'
@@ -60,19 +60,87 @@ function useBlocks(startDate: string, endDate: string) {
   })
 }
 
+/** Maximum page size allowed by backend */
+const ASSIGNMENTS_PAGE_SIZE = 500
+
 /**
- * Custom hook to fetch assignments for a date range
+ * Custom hook to fetch ALL assignments for a date range with automatic pagination.
+ *
+ * Strategy:
+ * 1. First query fetches page 1 to get total count
+ * 2. Based on total, calculate number of pages needed
+ * 3. Fetch remaining pages in parallel
+ * 4. Combine all results
+ *
+ * For a typical 28-day block with ~1000 assignments (e.g., Block 10 with 992),
+ * this fetches 2 pages of 500 each.
  */
 function useAssignmentsForRange(startDate: string, endDate: string) {
-  return useQuery<ListResponse<Assignment>>({
-    queryKey: ['assignments', startDate, endDate],
+  const [pageCount, setPageCount] = useState(1)
+
+  // First query to get total count and first page of data
+  const firstPageQuery = useQuery<ListResponse<Assignment>>({
+    queryKey: ['assignments', startDate, endDate, 'page', 1],
     queryFn: () =>
       get<ListResponse<Assignment>>(
-        `/assignments?start_date=${startDate}&end_date=${endDate}`
+        `/assignments?start_date=${startDate}&end_date=${endDate}&page=1&page_size=${ASSIGNMENTS_PAGE_SIZE}`
       ),
     staleTime: ASSIGNMENTS_STALE_TIME_MS,
     gcTime: ASSIGNMENTS_GC_TIME_MS,
   })
+
+  // Calculate page count when first page loads
+  useEffect(() => {
+    if (firstPageQuery.data?.total) {
+      const total = firstPageQuery.data.total
+      const calculatedPages = Math.ceil(total / ASSIGNMENTS_PAGE_SIZE)
+      setPageCount(calculatedPages)
+    }
+  }, [firstPageQuery.data?.total])
+
+  // Generate queries for additional pages (pages 2+)
+  const additionalPageQueries = useQueries({
+    queries: Array.from({ length: Math.max(0, pageCount - 1) }, (_, i) => ({
+      queryKey: ['assignments', startDate, endDate, 'page', i + 2],
+      queryFn: () =>
+        get<ListResponse<Assignment>>(
+          `/assignments?start_date=${startDate}&end_date=${endDate}&page=${i + 2}&page_size=${ASSIGNMENTS_PAGE_SIZE}`
+        ),
+      staleTime: ASSIGNMENTS_STALE_TIME_MS,
+      gcTime: ASSIGNMENTS_GC_TIME_MS,
+      enabled: pageCount > 1, // Only run if we need more than 1 page
+    })),
+  })
+
+  // Combine results from all pages
+  const combinedData = useMemo((): ListResponse<Assignment> | undefined => {
+    if (!firstPageQuery.data) return undefined
+
+    // Start with first page items
+    const allItems = [...(firstPageQuery.data.items || [])]
+
+    // Add items from additional pages
+    for (const query of additionalPageQueries) {
+      if (query.data?.items) {
+        allItems.push(...query.data.items)
+      }
+    }
+
+    return {
+      items: allItems,
+      total: firstPageQuery.data.total,
+    }
+  }, [firstPageQuery.data, additionalPageQueries])
+
+  // Calculate aggregate loading/error states
+  const isLoading = firstPageQuery.isLoading || additionalPageQueries.some((q) => q.isLoading)
+  const error = firstPageQuery.error || additionalPageQueries.find((q) => q.error)?.error
+
+  return {
+    data: combinedData,
+    isLoading,
+    error,
+  }
 }
 
 /**
