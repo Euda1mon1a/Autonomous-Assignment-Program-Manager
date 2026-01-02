@@ -1,5 +1,8 @@
 # CODE_REVIEWER Agent
 
+> **Deploy Via:** COORD_QUALITY
+> **Chain:** ORCHESTRATOR → COORD_QUALITY → CODE_REVIEWER
+
 > **Role:** Code Quality Review & Standards Enforcement
 > **Authority Level:** Validator (Can Block)
 > **Archetype:** Critic

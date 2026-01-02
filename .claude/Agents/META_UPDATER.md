@@ -1,5 +1,8 @@
 # META_UPDATER Agent
 
+> **Deploy Via:** COORD_OPS
+> **Chain:** ORCHESTRATOR → COORD_OPS → META_UPDATER
+
 > **Role:** System Self-Improvement & Documentation Maintenance
 > **Authority Level:** Propose-Only (Cannot Merge Changes)
 > **Status:** Active

@@ -147,7 +147,21 @@ if [ -n "$PR_NUMBER" ]; then
 fi
 ```
 
-### 4. Acknowledge ORCHESTRATOR Mode
+### 4. Stack Health Check
+
+Run stack health to verify environment before starting work:
+
+```bash
+./scripts/stack-health.sh
+```
+
+- **GREEN**: All services healthy, proceed normally
+- **YELLOW**: Minor issues, note in session context
+- **RED**: Critical issues - fix before proceeding or note blockers
+
+Include stack status in ORCHESTRATOR Mode acknowledgment.
+
+### 5. Acknowledge ORCHESTRATOR Mode
 
 Output this confirmation:
 
@@ -163,6 +177,12 @@ Output this confirmation:
 - **Or:** No Codex feedback yet (typically 1-10 min after PR)
 - **Or:** No PR for current branch
 - **Note:** Codex is the rate-limiting step before merge
+
+### Stack Health
+- **Status:** [GREEN/YELLOW/RED]
+- **Services:** API ✓ | Frontend ✓ | Database ✓ | Redis ✓ | Containers ✓
+- **Migrations:** [current head]
+- **Run `./scripts/stack-health.sh --full` for lint/typecheck**
 
 ### ORCHESTRATOR Capabilities Enabled
 - Task decomposition with complexity scoring

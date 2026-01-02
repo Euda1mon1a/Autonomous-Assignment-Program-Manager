@@ -772,6 +772,135 @@ class SchedulerAPIClient:
         response.raise_for_status()
         return response.json()
 
+    # ==================== RAG METHODS ====================
+
+    async def rag_retrieve(
+        self,
+        query: str,
+        top_k: int = 5,
+        doc_type: str | None = None,
+        min_similarity: float = 0.5,
+    ) -> dict[str, Any]:
+        """Retrieve relevant documents from RAG knowledge base.
+
+        Args:
+            query: Search query text
+            top_k: Number of results to return
+            doc_type: Optional filter by document type
+            min_similarity: Minimum similarity threshold (0-1)
+
+        Returns:
+            Dict with query, documents, total_results, execution_time_ms
+        """
+        headers = await self._ensure_authenticated()
+        payload: dict[str, Any] = {
+            "query": query,
+            "top_k": top_k,
+            "min_similarity": min_similarity,
+        }
+        if doc_type:
+            payload["doc_type"] = doc_type
+
+        response = await self._request_with_retry(
+            "POST",
+            f"{self.config.api_prefix}/rag/retrieve",
+            headers=headers,
+            json=payload,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def rag_build_context(
+        self,
+        query: str,
+        max_tokens: int = 2000,
+        doc_type: str | None = None,
+        include_metadata: bool = True,
+    ) -> dict[str, Any]:
+        """Build context string for LLM injection from RAG knowledge base.
+
+        Args:
+            query: Query to retrieve context for
+            max_tokens: Maximum tokens in context
+            doc_type: Optional filter by document type
+            include_metadata: Include metadata in context string
+
+        Returns:
+            Dict with query, context, sources, token_count, metadata
+        """
+        headers = await self._ensure_authenticated()
+        payload: dict[str, Any] = {
+            "query": query,
+            "max_tokens": max_tokens,
+            "include_metadata": include_metadata,
+        }
+        if doc_type:
+            payload["doc_type"] = doc_type
+
+        response = await self._request_with_retry(
+            "POST",
+            f"{self.config.api_prefix}/rag/context",
+            headers=headers,
+            json=payload,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def rag_health(self) -> dict[str, Any]:
+        """Get health status of RAG system.
+
+        Returns:
+            Dict with status, total_documents, documents_by_type,
+            embedding_model, vector_index_status, recommendations
+        """
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/rag/health",
+            headers=headers,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def rag_ingest(
+        self,
+        content: str,
+        doc_type: str,
+        metadata: dict[str, Any] | None = None,
+        chunk_size: int = 500,
+        chunk_overlap: int = 50,
+    ) -> dict[str, Any]:
+        """Ingest a document into RAG knowledge base.
+
+        Args:
+            content: Document text content
+            doc_type: Type of document (acgme_rules, scheduling_policy, etc.)
+            metadata: Additional metadata to store
+            chunk_size: Target chunk size in tokens
+            chunk_overlap: Overlap between chunks
+
+        Returns:
+            Dict with status, chunks_created, chunk_ids, doc_type, message
+        """
+        headers = await self._ensure_authenticated()
+        payload: dict[str, Any] = {
+            "content": content,
+            "doc_type": doc_type,
+            "chunk_size": chunk_size,
+            "chunk_overlap": chunk_overlap,
+        }
+        if metadata:
+            payload["metadata"] = metadata
+
+        response = await self._request_with_retry(
+            "POST",
+            f"{self.config.api_prefix}/rag/ingest",
+            headers=headers,
+            json=payload,
+        )
+        response.raise_for_status()
+        return response.json()
+
 
 # Module-level client instance
 _api_client: SchedulerAPIClient | None = None

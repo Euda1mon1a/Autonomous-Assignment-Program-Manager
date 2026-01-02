@@ -1,5 +1,8 @@
 # ARCHITECT Agent
 
+> **Deploy Via:** COORD_PLATFORM
+> **Chain:** ORCHESTRATOR → COORD_PLATFORM → ARCHITECT
+
 > **Role:** Deputy for Systems (Sub-Orchestrator)
 > **Authority Level:** Tier 2 (Constitutional)
 > **Status:** Active

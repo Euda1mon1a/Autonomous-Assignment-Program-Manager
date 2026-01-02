@@ -26,16 +26,20 @@ escalation_triggers:
 
 ## Checklist (Required)
 
-### 1. Work State
+### 1. Stack Health
+- [ ] Run `./scripts/stack-health.sh` - all services GREEN
+- [ ] Run `./scripts/stack-health.sh --full` - lint/typecheck clean
+
+### 2. Work State
 - [ ] All changes committed or stashed
 - [ ] No failing tests introduced
 - [ ] Linters pass (ruff, eslint)
 
-### 2. Documentation
+### 4. Documentation
 - [ ] CHANGELOG updated if features added
 - [ ] TODOs resolved or documented in HUMAN_TODO.md
 
-### 3. Governance (if enabled)
+### 5. Governance (if enabled)
 
 **Invoke DELEGATION_AUDITOR (IG):**
 - Spawn count for session
@@ -91,6 +95,9 @@ Skips all checks. Logs bypass.
                            SESSION END REPORT
 ================================================================================
 
+## Stack Health
+[output of ./scripts/stack-health.sh --full]
+
 ## Work Summary
 - Commits: [count]
 - Files Modified: [count]
@@ -135,49 +142,57 @@ Skips all checks. Logs bypass.
 
 ## Execution Steps
 
-1. **Check Git State**
+1. **Stack Health Check**
+   ```bash
+   ./scripts/stack-health.sh --full
+   ```
+   - Must be GREEN to proceed
+   - YELLOW acceptable with justification
+   - RED blocks session end (fix issues first)
+
+2. **Check Git State**
    ```bash
    git status
    git diff --stat
    ```
 
-2. **Run Linters**
+4. **Run Linters** (if not already done by stack-health)
    ```bash
    cd backend && ruff check . --fix
    cd frontend && npm run lint:fix
    ```
 
-3. **Verify Tests**
+5. **Verify Tests**
    ```bash
    cd backend && pytest --tb=no -q
    cd frontend && npm test -- --passWithNoTests
    ```
 
-4. **Check Governance Config**
+6. **Check Governance Config**
    ```bash
    cat .claude/Governance/config.json
    ```
 
-5. **Generate IG Report** (if governance enabled)
+7. **Generate IG Report** (if governance enabled)
    - Review session for agent spawns
    - Check for chain-of-command violations
    - Document any bypasses
 
-6. **Conduct AAR** (if governance enabled)
+8. **Conduct AAR** (if governance enabled)
    - Reflect on session outcomes
    - Identify improvements
    - Capture patterns and lessons
 
-7. **Update HISTORIAN** (if significant session)
+9. **Update HISTORIAN** (if significant session)
    - Write to `.claude/History/sessions/`
    - Include major decisions and outcomes
 
-8. **Knowledge Preservation** (G-Staff)
-   - Spawn G4_CONTEXT_MANAGER for RAG/vector updates
-   - Spawn KNOWLEDGE_CURATOR for pattern synthesis
-   - Optionally spawn G4_LIBRARIAN for archival
+10. **Knowledge Preservation** (G-Staff)
+    - Spawn G4_CONTEXT_MANAGER for RAG/vector updates
+    - Spawn KNOWLEDGE_CURATOR for pattern synthesis
+    - Optionally spawn G4_LIBRARIAN for archival
 
-9. **Final Handoff**
+11. **Final Handoff**
    - Summarize state for next session
    - Note any pending work
    - Verify RAG index updated

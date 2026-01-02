@@ -45,6 +45,13 @@ from app.models.gateway_auth import (
     RequestSignature,
 )
 from app.models.idempotency import IdempotencyRequest, IdempotencyStatus
+from app.models.import_staging import (
+    ConflictResolutionMode,
+    ImportBatch,
+    ImportBatchStatus,
+    ImportStagedAssignment,
+    StagedAssignmentStatus,
+)
 from app.models.intern_stagger import InternStaggerPattern
 from app.models.notification import (
     Notification,
@@ -161,6 +168,12 @@ __all__ = [
     # Idempotency models
     "IdempotencyRequest",
     "IdempotencyStatus",
+    # Import staging models
+    "ImportBatch",
+    "ImportBatchStatus",
+    "ImportStagedAssignment",
+    "StagedAssignmentStatus",
+    "ConflictResolutionMode",
     # Credentialing models
     "Procedure",
     "ProcedureCredential",

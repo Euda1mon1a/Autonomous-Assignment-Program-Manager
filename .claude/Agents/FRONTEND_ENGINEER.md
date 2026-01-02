@@ -1,5 +1,8 @@
 # FRONTEND_ENGINEER Agent
 
+> **Deploy Via:** COORD_FRONTEND
+> **Chain:** ORCHESTRATOR → COORD_FRONTEND → FRONTEND_ENGINEER
+
 > **Role:** Frontend Development & User Interface
 > **Authority Level:** Tier 1 (Operational)
 > **Reports To:** COORD_FRONTEND

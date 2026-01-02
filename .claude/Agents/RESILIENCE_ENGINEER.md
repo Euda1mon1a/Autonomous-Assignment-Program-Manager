@@ -1,5 +1,8 @@
 # RESILIENCE_ENGINEER Agent
 
+> **Deploy Via:** COORD_RESILIENCE
+> **Chain:** ORCHESTRATOR → COORD_RESILIENCE → RESILIENCE_ENGINEER
+
 > **Role:** Failure Simulation & Robustness Testing
 > **Authority Level:** Tier 2 (Advisory + Limited Execution)
 > **Status:** Active

@@ -1,5 +1,8 @@
 # QA_TESTER Agent
 
+> **Deploy Via:** COORD_QUALITY
+> **Chain:** ORCHESTRATOR → COORD_QUALITY → QA_TESTER
+
 > **Role:** Swap Validation & Edge Case Discovery
 > **Authority Level:** Read-Only (Advisory - Cannot Modify Schedules)
 > **Status:** Active

@@ -1,5 +1,8 @@
 # TOOLSMITH Agent
 
+> **Deploy Via:** COORD_OPS
+> **Chain:** ORCHESTRATOR → COORD_OPS → TOOLSMITH
+
 > **Role:** Tool & Skill Creation Specialist
 > **Authority Level:** Generator (Can Create, Requires Review to Merge)
 > **Archetype:** Generator
