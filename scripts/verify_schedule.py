@@ -6,7 +6,7 @@ Runs all schedule verification checks and produces a markdown report.
 
 Usage:
     cd backend
-    python ../scripts/verify_schedule.py --block 10 --start 2026-03-10 --end 2026-04-06
+    python ../scripts/verify_schedule.py --block 10 --start 2026-03-12 --end 2026-04-08
 
 Or via Docker:
     docker compose exec backend python ../scripts/verify_schedule.py --block 10
@@ -493,8 +493,8 @@ class ScheduleVerifier:
 def main():
     parser = argparse.ArgumentParser(description="Verify schedule and generate report")
     parser.add_argument("--block", type=int, default=10, help="Block number")
-    parser.add_argument("--start", type=str, default="2026-03-10", help="Start date (YYYY-MM-DD)")
-    parser.add_argument("--end", type=str, default="2026-04-06", help="End date (YYYY-MM-DD)")
+    parser.add_argument("--start", type=str, default="2026-03-12", help="Start date (YYYY-MM-DD)")
+    parser.add_argument("--end", type=str, default="2026-04-08", help="End date (YYYY-MM-DD)")
     parser.add_argument("--db-url", type=str, default=None, help="Database URL (optional)")
     parser.add_argument("--no-save", action="store_true", help="Don't save report to file")
 

@@ -1897,7 +1897,7 @@ SKILL.md says "Use MCP tool mcp__vacation_validate"
 
 **Solution:** Use concrete, domain-specific examples
 ```
-✅ "Calculate health score for Block 10 (2026-03-10 to 2026-04-06) after approving PGY2-03 vacation"
+✅ "Calculate health score for Block 10 (2026-03-12 to 2026-04-08) after approving PGY2-03 vacation"
 ```
 
 ### Pitfall 5: Undocumented Dependencies

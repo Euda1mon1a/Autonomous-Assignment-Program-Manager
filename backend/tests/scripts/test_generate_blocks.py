@@ -50,7 +50,7 @@ class TestCalculateBlockDates:
         assert block_end == date(2025, 8, 25)
 
     def test_block_10_matches_expected_dates(self):
-        """Block 10 should be March 10 - April 6 for AY 2025-2026."""
+        """Block 10 should be March 12 - April 8 for AY 2025-2026."""
         academic_start = date(2025, 7, 1)
         block_start, block_end = calculate_block_dates(10, academic_start)
 

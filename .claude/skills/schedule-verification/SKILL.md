@@ -37,7 +37,7 @@ Systematic checklist for human verification of generated schedules. Ensures the 
 ```
 ╔══════════════════════════════════════════════════════════════════╗
 ║  SCHEDULE VERIFICATION REPORT                                    ║
-║  Block: 10  |  Date Range: 2026-03-10 to 2026-04-06              ║
+║  Block: 10  |  Date Range: 2026-03-12 to 2026-04-08              ║
 ║  Generated: 2025-12-26                                           ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║  CHECK                                    │ STATUS │ DETAILS     ║
@@ -161,7 +161,7 @@ JOIN people p ON a.person_id = p.id
 JOIN rotation_templates rt ON a.rotation_template_id = rt.id
 WHERE p.type = 'faculty'
   AND rt.activity_type = 'inpatient'
-  AND b.date BETWEEN '2026-03-10' AND '2026-04-06'
+  AND b.date BETWEEN '2026-03-12' AND '2026-04-08'
 ORDER BY p.last_name, b.date;
 ```
 
@@ -172,7 +172,7 @@ FROM assignments a
 JOIN blocks b ON a.block_id = b.id
 JOIN rotation_templates rt ON a.rotation_template_id = rt.id
 WHERE rt.name LIKE '%Night Float%'
-  AND b.date BETWEEN '2026-03-10' AND '2026-04-06'
+  AND b.date BETWEEN '2026-03-12' AND '2026-04-08'
 GROUP BY b.date, b.time_of_day
 HAVING COUNT(*) != 1;
 ```

@@ -2,7 +2,7 @@
 
 > **Created:** 2025-12-25
 > **Status:** Implemented, Tested, Verified
-> **Block 10 Dates:** 2026-03-10 to 2026-04-06
+> **Block 10 Dates:** 2026-03-12 to 2026-04-08
 
 ---
 
@@ -313,8 +313,8 @@ curl -s -X POST "http://localhost:8000/api/v1/schedule/generate" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "start_date": "2026-03-10",
-    "end_date": "2026-04-06",
+    "start_date": "2026-03-12",
+    "end_date": "2026-04-08",
     "algorithm": "cp_sat",
     "timeout_seconds": 120
   }'

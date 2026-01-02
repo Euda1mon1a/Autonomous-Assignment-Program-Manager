@@ -19,7 +19,7 @@ After running schedule generation, you MUST fill out this template with actual c
 ```bash
 # Run this command:
 docker compose exec db psql -U scheduler -d residency_scheduler -c \
-  "SELECT COUNT(*) as total_assignments FROM assignments WHERE date BETWEEN '2026-03-10' AND '2026-04-06';"
+  "SELECT COUNT(*) as total_assignments FROM assignments WHERE date BETWEEN '2026-03-12' AND '2026-04-08';"
 ```
 
 **Actual Output:**
@@ -42,7 +42,7 @@ SELECT
 FROM assignments a
 JOIN people p ON a.person_id = p.id
 JOIN rotation_templates rt ON a.rotation_template_id = rt.id
-WHERE a.date BETWEEN '2026-03-10' AND '2026-04-06'
+WHERE a.date BETWEEN '2026-03-12' AND '2026-04-08'
 ORDER BY p.name, a.date, a.time_of_day
 LIMIT 20;
 "
@@ -62,13 +62,13 @@ SELECT
   'Missing person' as issue, COUNT(*) as count
 FROM assignments a
 LEFT JOIN people p ON a.person_id = p.id
-WHERE p.id IS NULL AND a.date BETWEEN '2026-03-10' AND '2026-04-06'
+WHERE p.id IS NULL AND a.date BETWEEN '2026-03-12' AND '2026-04-08'
 UNION ALL
 SELECT
   'Missing rotation' as issue, COUNT(*) as count
 FROM assignments a
 LEFT JOIN rotation_templates rt ON a.rotation_template_id = rt.id
-WHERE rt.id IS NULL AND a.date BETWEEN '2026-03-10' AND '2026-04-06';
+WHERE rt.id IS NULL AND a.date BETWEEN '2026-03-12' AND '2026-04-08';
 "
 ```
 
@@ -92,7 +92,7 @@ TOKEN=$(curl -s -X POST 'http://localhost:8000/api/v1/auth/login/json' \
   -d '{"username": "admin", "password": "YOUR_PASSWORD"}' | jq -r '.access_token')
 
 # Then fetch schedule:
-curl -s "http://localhost:8000/api/v1/schedule?start_date=2026-03-10&end_date=2026-03-15" \
+curl -s "http://localhost:8000/api/v1/schedule?start_date=2026-03-12&end_date=2026-03-15" \
   -H "Authorization: Bearer $TOKEN" | jq '.assignments | length'
 ```
 
@@ -107,7 +107,7 @@ curl -s "http://localhost:8000/api/v1/schedule?start_date=2026-03-10&end_date=20
 curl -s -X POST 'http://localhost:8000/api/v1/schedule/validate' \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"start_date": "2026-03-10", "end_date": "2026-04-06"}' | jq '.'
+  -d '{"start_date": "2026-03-12", "end_date": "2026-04-08"}' | jq '.'
 ```
 
 **Actual Output:**
@@ -129,7 +129,7 @@ SELECT
   COUNT(DISTINCT a.person_id) as people_assigned,
   COUNT(*) as total_assignments
 FROM assignments a
-WHERE a.date BETWEEN '2026-03-10' AND '2026-04-06'
+WHERE a.date BETWEEN '2026-03-12' AND '2026-04-08'
 GROUP BY a.date, a.time_of_day
 ORDER BY a.date, a.time_of_day;
 "
@@ -149,7 +149,7 @@ SELECT
   COUNT(*) as assignment_count
 FROM assignments a
 JOIN people p ON a.person_id = p.id
-WHERE a.date BETWEEN '2026-03-10' AND '2026-04-06'
+WHERE a.date BETWEEN '2026-03-12' AND '2026-04-08'
 GROUP BY p.pgy_level
 ORDER BY p.pgy_level;
 "

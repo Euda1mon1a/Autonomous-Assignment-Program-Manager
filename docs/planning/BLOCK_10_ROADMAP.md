@@ -203,7 +203,7 @@ Completed on 2025-12-25:
 curl -s -X POST 'http://localhost:8000/api/v1/schedule/generate' \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"start_date": "2026-03-10", "end_date": "2026-04-06", "algorithm": "cp_sat"}'
+  -d '{"start_date": "2026-03-12", "end_date": "2026-04-08", "algorithm": "cp_sat"}'
 ```
 
 ### Checkpoint 3: Quality Analysis ✅ READY (No Longer Blocked)
@@ -365,7 +365,7 @@ docker compose exec db psql -U scheduler -d residency_scheduler \
 
 ### Block 10 Context
 
-- **Academic Block 10**: March 10 - April 6 (4 weeks, 28 days)
+- **Academic Block 10**: March 12 - April 8 (4 weeks, 28 days)
 - **Scheduling Units**: 56 half-days (28 days × 2 AM/PM blocks)
 - **Recent Fixes**: Import errors, NightFloatPostCallConstraint, GraphQL enums
 
@@ -1449,9 +1449,9 @@ To enable Claude Code analysis without PII exposure, please provide:
 
 ```csv
 date,half_day,rotation_type,pgy_level,is_covered
-2026-03-10,AM,CLINIC,PGY1,true
-2026-03-10,PM,INPATIENT,PGY2,true
-2026-03-10,AM,PROCEDURES,PGY3,true
+2026-03-12,AM,CLINIC,PGY1,true
+2026-03-12,PM,INPATIENT,PGY2,true
+2026-03-12,AM,PROCEDURES,PGY3,true
 ...
 ```
 

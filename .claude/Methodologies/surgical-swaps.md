@@ -96,7 +96,7 @@ impact = {
 **Option B: Regenerate Week (Brute Force)**
 ```python
 # Regenerate all assignments for the week
-regenerate_schedule(start="2026-03-10", end="2026-03-16")
+regenerate_schedule(start="2026-03-12", end="2026-03-16")
 
 impact = {
     "assignments_modified": 56,  # 28 assignments × 2 sessions
