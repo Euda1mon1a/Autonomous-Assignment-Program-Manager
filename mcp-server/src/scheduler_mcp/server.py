@@ -4694,45 +4694,13 @@ Examples:
     if args.transport == "stdio":
         mcp.run(transport="stdio")
     else:
-        # For HTTP transport, use ASGI app with auth middleware
-        try:
-            import uvicorn
-            from starlette.applications import Starlette
-            from starlette.routing import Route, Mount
-
-            # Get the MCP ASGI app
-            mcp_app = mcp.http_app()
-
-            # Create health endpoint
-            health_handler = create_health_endpoint()
-            routes = []
-            if health_handler:
-                routes.append(Route("/health", health_handler, methods=["GET"]))
-
-            # Mount MCP app at /mcp and add health at root
-            routes.append(Mount("/mcp", app=mcp_app))
-
-            # Also mount at root for backwards compatibility
-            routes.append(Mount("/", app=mcp_app))
-
-            app = Starlette(routes=routes, lifespan=mcp_app.lifespan)
-
-            # Wrap with auth middleware
-            app = APIKeyAuthMiddleware(app)
-
-            logger.info(f"Health check available at http://{args.host}:{args.port}/health")
-            logger.info(f"MCP endpoint available at http://{args.host}:{args.port}/mcp")
-
-            uvicorn.run(app, host=args.host, port=args.port, log_level=args.log_level.lower())
-
-        except ImportError as e:
-            logger.warning(f"Advanced HTTP features not available: {e}")
-            logger.info("Falling back to basic FastMCP HTTP transport")
-            mcp.run(
-                transport=args.transport,
-                host=args.host,
-                port=args.port,
-            )
+        # Use FastMCP's native SSE transport (avoids session management issues)
+        logger.info(f"Starting MCP server with SSE transport on {args.host}:{args.port}")
+        mcp.run(
+            transport="sse",
+            host=args.host,
+            port=args.port,
+        )
 
 
 if __name__ == "__main__":
