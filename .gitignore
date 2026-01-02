@@ -134,3 +134,6 @@ docs/data/people.json
 .sanitize/
 *.mapping.json
 backups/
+
+# Full stack backups (contain PHI)
+backups/full_*

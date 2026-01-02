@@ -189,6 +189,37 @@ VBA module for Excel that automatically exports worksheets to CSV files when the
 
 See `scripts/excel/README.md` for detailed instructions.
 
+### sync_rotation_names.py
+
+Syncs rotation template names in the database with an authoritative CSV file containing medical abbreviation definitions. Compares DB rotation names against CSV full meanings and updates mismatches.
+
+**Usage:**
+```bash
+# Dry run to see what would change
+python scripts/sync_rotation_names.py --csv ~/Desktop/medical_abbreviations.csv --dry-run
+
+# Apply changes
+python scripts/sync_rotation_names.py --csv ~/Desktop/medical_abbreviations.csv
+
+# Verbose mode shows all comparisons
+python scripts/sync_rotation_names.py --csv ~/Desktop/medical_abbreviations.csv -v
+```
+
+**CSV Format Expected:**
+```csv
+abbreviation,full_meaning,category,description,frequency,percentage,notes
+W,Weekend,OFF,,986,20.4,
+C,Clinic,Outpatient,,744,15.4,
+FMIT,Family Medicine Inpatient Team,inpatient,,202,4.2,
+```
+
+**Known Fixes Applied:**
+- ICU: "Intensive Care Unit" (removes erroneous "Intern" suffix)
+- LAD: "Labor and Delivery" (removes erroneous "Intern" suffix)
+- IM-INT: "Internal Medicine Ward Intern" (adds missing "Ward")
+- PEDS-W: "Pediatric Ward Intern" (uses singular form from CSV)
+- PC: "Post Call" (matches CSV, removes "Recovery")
+
 ### import_excel.py
 
 Imports scheduling data (absences, assignments) from Excel/CSV files into the database.
