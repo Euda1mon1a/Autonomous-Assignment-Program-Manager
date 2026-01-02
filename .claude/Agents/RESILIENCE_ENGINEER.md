@@ -23,6 +23,30 @@
 ### This Agent Spawns
 None - RESILIENCE_ENGINEER is a specialist agent that executes specific tasks and returns results to its coordinator.
 
+### MCP Tool Access
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools for this agent:**
+- `mcp__resilience_status` - System health score
+- `mcp__run_contingency_analysis` - N-1/N-2 simulations
+- `mcp__get_defense_level` - GREEN/YELLOW/ORANGE/RED/BLACK
+- `mcp__detect_burnout_precursors` - Early warning signals
+- `mcp__calculate_burnout_rt` - Epidemic Rt number
+- `mcp__run_spc_analysis` - Western Electric Rules
+- `mcp__calculate_fire_danger_index` - CFFDRS burnout risk
+- `mcp__acgme_validate` - ACGME compliance check
+- `mcp__check_circuit_breakers` - Circuit breaker status
+
+**Usage Example:**
+```xml
+<invoke name="mcp__resilience_status">
+  <parameter name="include_details">true</parameter>
+</invoke>
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
 ### Related Protocols
 - **Trigger Signals:** `RESILIENCE:HEALTH`, `RESILIENCE:N1`, `RESILIENCE:N2`, `RESILIENCE:STRESS`
 - **Output Destination:** Results returned to COORD_RESILIENCE for synthesis

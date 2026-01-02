@@ -119,6 +119,25 @@ G4_LIBRARIAN                                   G4_CONTEXT_MANAGER
 
 ---
 
+## MCP Tool Access
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools for this agent:**
+- `mcp__rag_search` - Semantic search in knowledge base
+- `mcp__rag_ingest` - Add content to vector store
+- `mcp__rag_context` - Build LLM context from relevant chunks
+- `mcp__rag_health` - Check RAG system status
+
+**Usage Example:**
+```xml
+<invoke name="mcp__rag_health" />
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
+---
+
 ## Standing Orders (Execute Without Escalation)
 
 G4_LIBRARIAN is pre-authorized to execute these actions autonomously:

@@ -864,6 +864,31 @@ Expected output: Schedule generation result with quality metrics and faculty rev
 
 ---
 
+## MCP Tool Access
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools for this agent:**
+- `mcp__schedule_generate` - Generate schedules
+- `mcp__schedule_validate` - Validate ACGME compliance
+- `mcp__detect_conflicts` - Find scheduling conflicts
+- `mcp__analyze_swap_candidates` - Find swap matches
+- `mcp__run_contingency_analysis` - N-1/N-2 analysis
+- `mcp__check_utilization_threshold` - 80% threshold check
+- `mcp__get_defense_level` - Resilience defense level
+
+**Usage Example:**
+```xml
+<invoke name="mcp__schedule_validate">
+  <parameter name="start_date">2025-07-01</parameter>
+  <parameter name="end_date">2025-08-31</parameter>
+</invoke>
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
+---
+
 ## Spawn Context
 
 **Chain of Command:**

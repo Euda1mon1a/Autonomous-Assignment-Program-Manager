@@ -28,6 +28,31 @@
 
 ---
 
+## MCP Tool Access
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools for this agent:**
+- `mcp__schedule_validate` - Validate schedule-related deployment configurations
+- `mcp__run_smoke_tests` - Run smoke test suite on deployed artifacts
+- `mcp__validate_deployment` - Pre-deploy validation of Docker images and configurations
+- `mcp__get_deployment_status` - Check deployment environment health
+- `mcp__detect_conflicts` - Find conflicts in deployment or container configurations
+- `mcp__list_active_tasks` - Monitor deployment and build task queue
+
+**Usage Example:**
+```xml
+<invoke name="mcp__validate_deployment">
+  <parameter name="environment">staging</parameter>
+  <parameter name="image">residency-scheduler:v1.2.0</parameter>
+  <parameter name="validation_type">pre_deploy_check</parameter>
+</invoke>
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
+---
+
 ## Charter
 
 The CI_LIAISON agent is responsible for maintaining healthy CI/CD pipelines, diagnosing build failures, coordinating deployments, and managing GitHub Actions workflows. This agent serves as the bridge between development (RELEASE_MANAGER) and operations (deployment environments), ensuring that code changes successfully transition through the quality gates before reaching production.

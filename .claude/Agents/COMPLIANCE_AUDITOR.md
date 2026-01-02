@@ -23,6 +23,27 @@
 ### This Agent Spawns
 None - COMPLIANCE_AUDITOR is a specialist agent that executes specific tasks and returns results to its coordinator.
 
+### MCP Tool Access
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools for this agent:**
+- `mcp__acgme_validate` - ACGME compliance check
+- `mcp__get_work_hours` - Calculate hours for a person/period
+- `mcp__check_supervision_ratio` - Verify faculty-resident ratios
+- `mcp__list_violations` - Query violation history
+- `mcp__generate_compliance_report` - Create formatted audit report
+
+**Usage Example:**
+```xml
+<invoke name="mcp__acgme_validate">
+  <parameter name="start_date">2025-07-01</parameter>
+  <parameter name="end_date">2025-08-31</parameter>
+</invoke>
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
 ### Related Protocols
 - **Trigger Signals:** `COMPLIANCE:ACGME`, `COMPLIANCE:CREDENTIALS`, `COMPLIANCE:REPORT`
 - **Output Destination:** Results returned to COORD_RESILIENCE for synthesis and escalation handling

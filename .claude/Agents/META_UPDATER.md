@@ -30,6 +30,28 @@
 
 ---
 
+## MCP Tool Access
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools for this agent:**
+- `mcp__rag_search` - Semantic search in knowledge base
+- `mcp__rag_ingest` - Add content to vector store
+- `mcp__rag_context` - Build LLM context from relevant chunks
+- `mcp__rag_health` - Check RAG system status
+
+**Usage Example:**
+```xml
+<invoke name="mcp__rag_ingest">
+  <parameter name="content">Session learning: MCP tools are inherited by subagents</parameter>
+  <parameter name="doc_type">session_learnings</parameter>
+</invoke>
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
+---
+
 ## Charter
 
 The META_UPDATER agent is responsible for analyzing agent performance, identifying recurring patterns, and proposing improvements to the Personal AI Infrastructure itself. This agent observes how other agents work, learns from successes and failures, and suggests updates to skills, documentation, and workflows.

@@ -1047,6 +1047,32 @@ QUEUE_GROWTH_CIRCUIT_BREAKER = 3    # Queue growing 3x expected
 
 ---
 
+## MCP Tool Access
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools for this agent:**
+- `mcp__optimize_erlang_coverage` - M/M/c queuing optimization
+- `mcp__calculate_erlang_metrics` - Erlang-C metrics for configurations
+- `mcp__calculate_process_capability` - Six Sigma Cp/Cpk/Cpm
+- `mcp__calculate_equity_metrics` - Gini coefficient and fairness
+- `mcp__generate_lorenz_curve` - Equity visualization data
+- `mcp__check_utilization_threshold` - 80% threshold monitoring
+- `mcp__analyze_staffing_scenario` - What-if scenario modeling
+
+**Usage Example:**
+```xml
+<invoke name="mcp__calculate_erlang_metrics">
+  <parameter name="arrival_rate">8.5</parameter>
+  <parameter name="service_rate">3.2</parameter>
+  <parameter name="num_servers">4</parameter>
+</invoke>
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
+---
+
 ## Spawn Context
 
 **Chain of Command:**

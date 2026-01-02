@@ -57,6 +57,26 @@ The G3_OPERATIONS agent is the "Operations Officer" function for the PAI (Parall
 - Current system health score
 - Available agents and resources
 
+## MCP Tool Access
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools:**
+- `mcp__resilience_status` - Real-time system health for workflow execution decisions
+- `mcp__get_defense_level` - Current defense posture to ensure safe execution
+- `mcp__schedule_validate` - Validate schedules before deployment
+- `mcp__rag_search` - Query knowledge base for operational procedures
+- `mcp__rag_context` - Build context for complex workflows
+
+**Usage Example:**
+```xml
+<invoke name="mcp__resilience_status">
+  <parameter name="include_details">true</parameter>
+</invoke>
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
 ---
 
 ## Personality Traits

@@ -28,6 +28,28 @@
 
 ---
 
+## MCP Tool Access
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools for this agent:**
+- `mcp__rag_search` - Semantic search in knowledge base
+- `mcp__rag_ingest` - Add content to vector store
+- `mcp__rag_context` - Build LLM context from relevant chunks
+- `mcp__rag_health` - Check RAG system status
+
+**Usage Example:**
+```xml
+<invoke name="mcp__rag_ingest">
+  <parameter name="content">Pattern: MCP subagent inheritance confirmed</parameter>
+  <parameter name="doc_type">patterns</parameter>
+</invoke>
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
+---
+
 ## Charter
 
 The KNOWLEDGE_CURATOR agent is responsible for capturing, organizing, and synthesizing knowledge across sessions. This agent documents session-ending decisions, identifies cross-session patterns, maintains the knowledge base, and prepares handoff materials for subsequent sessions. KNOWLEDGE_CURATOR ensures organizational learning is preserved and made accessible.

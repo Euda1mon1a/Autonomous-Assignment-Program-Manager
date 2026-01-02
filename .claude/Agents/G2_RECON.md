@@ -58,6 +58,28 @@ The G2_RECON agent is the "Intelligence & Reconnaissance" function for the PAI (
 
 ---
 
+## MCP Tool Access
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools for this agent:**
+- `mcp__rag_search` - Semantic search in knowledge base
+- `mcp__rag_ingest` - Add content to vector store
+- `mcp__rag_context` - Build LLM context from relevant chunks
+- `mcp__rag_health` - Check RAG system status
+
+**Usage Example:**
+```xml
+<invoke name="mcp__rag_search">
+  <parameter name="query">reconnaissance patterns scheduling</parameter>
+  <parameter name="top_k">10</parameter>
+</invoke>
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
+---
+
 ## Personality Traits
 
 **Scout Mentality**

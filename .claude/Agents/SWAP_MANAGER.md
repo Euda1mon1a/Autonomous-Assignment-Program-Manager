@@ -569,6 +569,31 @@ Before completing any swap operation:
 
 ---
 
+## MCP Tool Access
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools for this agent:**
+- `mcp__analyze_swap_candidates` - Find compatible swap partners
+- `mcp__validate_swap_compliance` - Check ACGME compliance for swap
+- `mcp__execute_swap` - Execute validated swap transaction
+- `mcp__detect_conflicts` - Identify conflicts from swap
+- `mcp__check_credential_requirements` - Verify credential eligibility
+- `mcp__get_coverage_impact` - Assess coverage changes from swap
+- `mcp__run_contingency_analysis` - Verify N-1/N-2 still pass
+
+**Usage Example:**
+```xml
+<invoke name="mcp__analyze_swap_candidates">
+  <parameter name="requester_id">PGY2-01</parameter>
+  <parameter name="assignment_id">A123</parameter>
+</invoke>
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
+---
+
 ## Spawn Context
 
 **Chain of Command:**

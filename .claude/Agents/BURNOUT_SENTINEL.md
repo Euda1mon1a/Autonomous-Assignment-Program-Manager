@@ -20,6 +20,28 @@
 ### This Agent Spawns
 None - BURNOUT_SENTINEL is a specialist agent that executes specific tasks and returns results to its coordinator.
 
+### MCP Tool Access
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools for this agent:**
+- `mcp__detect_burnout_precursors` - Seismic STA/LTA detection for behavioral precursors
+- `mcp__run_spc_analysis` - Western Electric Rules for workload drift monitoring
+- `mcp__calculate_fire_danger_index` - CFFDRS Fire Weather Index for multi-temporal risk
+- `mcp__calculate_burnout_rt` - Epidemiological Rt for burnout spread dynamics
+- `mcp__get_unified_critical_index` - Composite risk aggregation across all domains
+- `mcp__resilience_status` - System health score
+- `mcp__check_circuit_breakers` - Circuit breaker status
+
+**Usage Example:**
+```xml
+<invoke name="mcp__detect_burnout_precursors">
+  <parameter name="threshold">0.8</parameter>
+</invoke>
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
 ### Related Protocols
 - **Trigger Signals:** `RESILIENCE:HEALTH`, `COMPLIANCE:REPORT`
 - **Output Destination:** Results returned to COORD_RESILIENCE; alerts may also route to SCHEDULER and RESILIENCE_ENGINEER for coordination

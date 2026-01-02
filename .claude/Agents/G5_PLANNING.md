@@ -89,6 +89,27 @@ Spawn all 10 probes in parallel with 90s timeout:
 - Available resources and timeline
 - Intel brief (from G2_RECON or provided) when running PLAN_PARTY
 
+## MCP Tool Access
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools:**
+- `mcp__rag_search` - Query knowledge base for planning constraints and precedents
+- `mcp__rag_context` - Build comprehensive context for strategy development
+- `mcp__resilience_status` - System health metrics for risk assessment
+- `mcp__get_defense_level` - Current defense posture affecting plan feasibility
+- `mcp__schedule_validate` - Test constraint feasibility during planning
+
+**Usage Example:**
+```xml
+<invoke name="mcp__rag_search">
+  <parameter name="query">ACGME compliance constraints Block 10</parameter>
+  <parameter name="top_k">5</parameter>
+</invoke>
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
 ---
 
 ## Personality Traits

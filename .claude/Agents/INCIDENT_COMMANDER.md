@@ -47,6 +47,25 @@ The INCIDENT_COMMANDER agent is responsible for coordinating response to product
 - COORD_QUALITY - Test failure investigation
 - Domain specialists as needed (BACKEND_ENGINEER, DBA, etc.)
 
+**MCP Tool Access:**
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools for this agent:**
+- `mcp__resilience_status` - System health score during crisis
+- `mcp__check_circuit_breakers` - Circuit breaker status and manual override
+- `mcp__run_contingency_analysis` - Determine if N-1/N-2 applicable
+- `mcp__acgme_validate` - Verify compliance during recovery
+- `mcp__get_defense_level` - Current threat level (GREEN/YELLOW/ORANGE/RED/BLACK)
+- `mcp__generate_compliance_report` - Compliance impact assessment
+
+**Usage Example:**
+```xml
+<invoke name="mcp__get_defense_level" />
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
 **Cross-Coordinator Coordination:**
 - COORD_INTEL - Primary investigation arm for root cause analysis
 - COORD_PLATFORM - System-level fixes and rollbacks

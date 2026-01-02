@@ -62,6 +62,29 @@ ORCHESTRATOR
 
 ---
 
+## MCP Tool Access
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools for this agent:**
+- `mcp__validate_schedule` - Validate schedule data for ACGME compliance
+- `mcp__detect_conflicts` - Find overlapping assignments or schedule conflicts
+- `mcp__run_smoke_tests` - Run smoke test suite to verify backend integrity
+- `mcp__list_active_tasks` - Check background task queue status
+- `mcp__get_task_status` - Monitor long-running backend operations
+
+**Usage Example:**
+```xml
+<invoke name="mcp__validate_schedule">
+  <parameter name="start_date">2025-07-01</parameter>
+  <parameter name="end_date">2025-08-31</parameter>
+</invoke>
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
+---
+
 ## Standing Orders (Execute Without Escalation)
 
 BACKEND_ENGINEER is pre-authorized to execute these actions autonomously:

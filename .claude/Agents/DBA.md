@@ -71,6 +71,23 @@ ORCHESTRATOR
 
 ---
 
+## MCP Tool Access
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools for this agent:**
+- `mcp__validate_database` - Validate database schema and data integrity
+- `mcp__list_active_tasks` - Check background tasks related to database operations
+
+**Usage Example:**
+```xml
+<invoke name="mcp__validate_database" />
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
+---
+
 ## Standing Orders (Execute Without Escalation)
 
 DBA is pre-authorized to execute these actions autonomously:

@@ -47,6 +47,25 @@ The G1_PERSONNEL agent is the "Human Resources" function for the PAI (Parallel A
 - File paths to delegation metrics if needed
 - Specific workflow request (Roster Maintenance, Gap Analysis, Utilization Tracking, or Effectiveness Tracking)
 
+## MCP Tool Access
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools:**
+- `mcp__rag_search` - Query knowledge base for agent capability patterns
+- `mcp__rag_context` - Build context for roster analysis
+- `mcp__resilience_status` - System health metrics for utilization planning
+- `mcp__get_defense_level` - Current defense posture affecting resource allocation
+
+**Usage Example:**
+```xml
+<invoke name="mcp__rag_search">
+  <parameter name="query">agent capabilities roster</parameter>
+</invoke>
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
 ---
 
 ## Personality Traits

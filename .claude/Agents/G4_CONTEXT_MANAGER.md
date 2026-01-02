@@ -110,27 +110,45 @@ This agent is responsible for maintaining semantic understanding of session hist
 
 **CRITICAL: Use the API directly. Don't just update markdown files - actually ingest to pgvector.**
 
-### REST API Routes (Always Available)
+### REST API Routes (CORRECTED)
 
-When the backend is running at `http://localhost:8000`, these endpoints are available:
+**IMPORTANT:** RAG endpoints require authentication and use `/api/v1/` prefix.
 
 ```bash
-# Health Check - Verify RAG system status
-GET  http://localhost:8000/api/rag/health
+# Health Check (public)
+GET  http://localhost:8000/health
 
-# Semantic Search - Query the vector store
-GET  http://localhost:8000/api/rag/search?query=ACGME%20work%20hours&limit=10
-POST http://localhost:8000/api/rag/search
-  Body: {"query": "ACGME work hour limits", "limit": 10, "doc_type": "acgme_rules"}
-
-# Ingest Documents - Add content to vector store
-POST http://localhost:8000/api/rag/ingest
-  Body: {"content": "...", "doc_type": "...", "metadata": {...}}
-
-# Build LLM Context - Get relevant chunks formatted for prompts
-POST http://localhost:8000/api/rag/context
-  Body: {"query": "...", "max_chunks": 5}
+# RAG endpoints (require auth - see LIMITATION below)
+POST http://localhost:8000/api/v1/rag/ingest
+POST http://localhost:8000/api/v1/rag/retrieve
+POST http://localhost:8000/api/v1/rag/context
+GET  http://localhost:8000/api/v1/rag/stats
+DELETE http://localhost:8000/api/v1/rag/documents/{doc_type}
 ```
+
+### MCP RAG Tools (PREFERRED)
+
+**MCP tools exist and handle authentication automatically:**
+
+| Tool | Purpose | Example |
+|------|---------|---------|
+| `mcp__rag_search` | Semantic search | `mcp__rag_search(query="ACGME work hours", top_k=5)` |
+| `mcp__rag_ingest` | Add to vector store | `mcp__rag_ingest(content="...", doc_type="session_learnings")` |
+| `mcp__rag_context` | Build LLM context | `mcp__rag_context(query="swap validation", max_tokens=2000)` |
+| `mcp__rag_health` | Check RAG status | `mcp__rag_health()` |
+
+**MCP Tool Usage:**
+Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly:
+
+```xml
+<invoke name="mcp__rag_ingest">
+  <parameter name="content">Session learning about MCP architecture</parameter>
+  <parameter name="doc_type">session_learnings</parameter>
+  <parameter name="metadata">{"session": "039", "category": "mcp_architecture"}</parameter>
+</invoke>
+```
+
+**Fallback (only if MCP unavailable):** Markdown files in `.claude/dontreadme/`
 
 ### Curl Examples for Ingestion
 
@@ -193,16 +211,16 @@ curl -X POST http://localhost:8000/api/rag/search \
   }'
 ```
 
-### MCP Tools (If Available via ORCHESTRATOR)
+### MCP RAG Tools (Direct Access)
 
-When operating through the MCP server, these tools may be available:
+Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly:
 
 | Tool | Purpose | Example |
 |------|---------|---------|
-| `rag_search` | Semantic search across 185+ chunks | `rag_search(query="supervision ratios", limit=5)` |
-| `rag_ingest` | Add documents to vector store | `rag_ingest(content="...", doc_type="session_learnings")` |
-| `rag_context` | Build LLM context from relevant chunks | `rag_context(query="swap validation", max_chunks=3)` |
-| `rag_health` | Check RAG system status | `rag_health()` |
+| `mcp__rag_search` | Semantic search across 185+ chunks | `mcp__rag_search(query="supervision ratios", limit=5)` |
+| `mcp__rag_ingest` | Add documents to vector store | `mcp__rag_ingest(content="...", doc_type="session_learnings")` |
+| `mcp__rag_context` | Build LLM context from relevant chunks | `mcp__rag_context(query="swap validation", max_chunks=3)` |
+| `mcp__rag_health` | Check RAG system status | `mcp__rag_health()` |
 
 ### Integration Guidance
 

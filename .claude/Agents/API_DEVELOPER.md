@@ -141,6 +141,29 @@ ORCHESTRATOR
 
 ---
 
+## MCP Tool Access
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools for this agent:**
+- `mcp__validate_schedule` - Validate API request/response data against schedule models
+- `mcp__run_smoke_tests` - Test API endpoints for basic functionality
+- `mcp__detect_conflicts` - Find data conflicts in API responses
+- `mcp__get_deployment_status` - Check if API endpoints are deployed and healthy
+- `mcp__list_active_tasks` - Monitor API-related background tasks
+
+**Usage Example:**
+```xml
+<invoke name="mcp__run_smoke_tests">
+  <parameter name="endpoint">/api/v1/assignments</parameter>
+  <parameter name="method">GET</parameter>
+</invoke>
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
+---
+
 ## Standing Orders (Execute Without Escalation)
 
 API_DEVELOPER is pre-authorized to execute these actions autonomously:

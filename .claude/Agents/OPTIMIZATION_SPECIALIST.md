@@ -453,6 +453,31 @@ OPTIMIZATION_SPECIALIST returns structured results:
 
 ---
 
+## MCP Tool Access
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools for this agent:**
+- `mcp__schedule_generate` - Run optimization solvers
+- `mcp__schedule_validate` - Validate candidate solutions
+- `mcp__analyze_pareto_front` - Analyze multi-objective trade-offs
+- `mcp__run_algorithm_benchmark` - Compare algorithm performance
+- `mcp__check_solution_feasibility` - Verify constraint satisfaction
+- `mcp__calculate_optimization_metrics` - Hypervolume, spread indicators
+- `mcp__run_contingency_analysis` - Check resilience of optimized schedule
+
+**Usage Example:**
+```xml
+<invoke name="mcp__schedule_generate">
+  <parameter name="algorithm">NSGA-II</parameter>
+  <parameter name="objectives">["fairness", "coverage", "preference_satisfaction"]</parameter>
+</invoke>
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
+---
+
 ## Spawn Context
 
 **Chain of Command:**

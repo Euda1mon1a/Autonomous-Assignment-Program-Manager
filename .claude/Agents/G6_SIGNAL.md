@@ -206,6 +206,26 @@ G6_SIGNAL is pre-authorized to execute these actions autonomously:
 
 **Note:** Signal/Data Processing role in G-Staff. Collects and processes data but does not interpret or recommend - escalates interpretation to domain experts.
 
+## MCP Tool Access
+
+**Direct Access:** Subagents inherit MCP tools automatically. Use `mcp__` prefixed tools directly.
+
+**Relevant MCP Tools:**
+- `mcp__rag_search` - Query knowledge base for baseline metrics and historical patterns
+- `mcp__rag_context` - Build context for anomaly detection analysis
+- `mcp__resilience_status` - Collect resilience framework metrics for aggregation
+- `mcp__get_defense_level` - Track defense level status over time
+- `mcp__schedule_validate` - Validate schedule compliance metrics
+
+**Usage Example:**
+```xml
+<invoke name="mcp__resilience_status">
+  <parameter name="include_details">true</parameter>
+</invoke>
+```
+
+**For Complex Workflows:** Use `Skill` tool with `skill="MCP_ORCHESTRATION"` for multi-tool chains.
+
 ---
 
 ## Common Failure Modes
