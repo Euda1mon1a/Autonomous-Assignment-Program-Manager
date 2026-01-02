@@ -28,10 +28,56 @@ const activityTypeOptions = [
   { value: 'call', label: 'Call' },
 ];
 
+const fontColorOptions = [
+  { value: '', label: 'Default' },
+  { value: 'black', label: 'Black' },
+  { value: 'white', label: 'White' },
+  { value: 'gray-200', label: 'Light Gray' },
+  { value: 'gray-600', label: 'Medium Gray' },
+  { value: 'gray-800', label: 'Dark Gray' },
+];
+
+const backgroundColorOptions = [
+  { value: '', label: 'Default' },
+  { value: 'green-500', label: 'Green (Outpatient)' },
+  { value: 'yellow-300', label: 'Yellow (Procedures)' },
+  { value: 'sky-500', label: 'Sky Blue (Inpatient)' },
+  { value: 'black', label: 'Black (Night Float)' },
+  { value: 'purple-700', label: 'Purple (Education)' },
+  { value: 'gray-100', label: 'Light Gray' },
+  { value: 'gray-200', label: 'Gray (Off)' },
+  { value: 'red-300', label: 'Red (Leave)' },
+  { value: 'blue-300', label: 'Blue (Weekend)' },
+  { value: 'amber-200', label: 'Amber (Post Call)' },
+  { value: 'orange-400', label: 'Orange (Off-site)' },
+  { value: 'teal-300', label: 'Teal (Supervision)' },
+];
+
+// Map Tailwind color names to hex for preview
+const tailwindToHex: Record<string, string> = {
+  'black': '#000000',
+  'white': '#ffffff',
+  'gray-100': '#f3f4f6',
+  'gray-200': '#e5e7eb',
+  'gray-600': '#4b5563',
+  'gray-800': '#1f2937',
+  'green-500': '#22c55e',
+  'yellow-300': '#fde047',
+  'sky-500': '#0ea5e9',
+  'purple-700': '#7e22ce',
+  'red-300': '#fca5a5',
+  'blue-300': '#93c5fd',
+  'amber-200': '#fde68a',
+  'orange-400': '#fb923c',
+  'teal-300': '#5eead4',
+};
+
 export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateModalProps) {
   const [name, setName] = useState('');
   const [activityType, setActivityType] = useState('clinic');
   const [abbreviation, setAbbreviation] = useState('');
+  const [fontColor, setFontColor] = useState('');
+  const [backgroundColor, setBackgroundColor] = useState('');
   const [clinicLocation, setClinicLocation] = useState('');
   const [maxResidents, setMaxResidents] = useState('');
   const [requiresSpecialty, setRequiresSpecialty] = useState('');
@@ -48,6 +94,8 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
       setName(template.name);
       setActivityType(template.activity_type);
       setAbbreviation(template.abbreviation || '');
+      setFontColor(template.font_color || '');
+      setBackgroundColor(template.background_color || '');
       setClinicLocation(template.clinic_location || '');
       setMaxResidents(template.max_residents?.toString() || '');
       setRequiresSpecialty(template.requires_specialty || '');
@@ -88,6 +136,8 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
       name: name.trim(),
       activity_type: activityType,
       abbreviation: abbreviation.trim() || undefined,
+      font_color: fontColor || undefined,
+      background_color: backgroundColor || undefined,
       clinic_location: clinicLocation.trim() || undefined,
       max_residents: maxResidents ? parseInt(maxResidents) : undefined,
       requires_specialty: requiresSpecialty.trim() || undefined,
@@ -144,6 +194,68 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
             onChange={(e) => setAbbreviation(e.target.value)}
             placeholder="e.g., IM"
           />
+        </div>
+
+        {/* Color Selectors with Preview */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Color Theme</label>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Font Color</label>
+              <div className="flex gap-2">
+                <select
+                  value={fontColor}
+                  onChange={(e) => setFontColor(e.target.value)}
+                  className="flex-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                >
+                  {fontColorOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                {fontColor && (
+                  <div
+                    className="w-8 h-8 rounded border border-gray-300"
+                    style={{ backgroundColor: tailwindToHex[fontColor] || fontColor }}
+                  />
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Background Color</label>
+              <div className="flex gap-2">
+                <select
+                  value={backgroundColor}
+                  onChange={(e) => setBackgroundColor(e.target.value)}
+                  className="flex-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                >
+                  {backgroundColorOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                {backgroundColor && (
+                  <div
+                    className="w-8 h-8 rounded border border-gray-300"
+                    style={{ backgroundColor: tailwindToHex[backgroundColor] || backgroundColor }}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+          {/* Live Preview */}
+          {(fontColor || backgroundColor) && (
+            <div className="mt-2">
+              <label className="block text-xs text-gray-500 mb-1">Preview</label>
+              <div
+                className="inline-block px-3 py-1 rounded text-sm font-medium"
+                style={{
+                  color: tailwindToHex[fontColor] || fontColor || '#000000',
+                  backgroundColor: tailwindToHex[backgroundColor] || backgroundColor || '#e5e7eb',
+                }}
+              >
+                {abbreviation || 'ABC'}
+              </div>
+            </div>
+          )}
         </div>
 
         <Input

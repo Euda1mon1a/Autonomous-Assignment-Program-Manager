@@ -127,7 +127,7 @@ export function FilterPanel({
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={filter.value || false}
+                    checked={typeof filter.value === 'boolean' ? filter.value : false}
                     onChange={(e) => onFilterChange(filter.key, e.target.checked)}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />

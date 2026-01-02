@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { ChatMessage, ChatSession, ClaudeCodeRequest, ClaudeCodeResponse, StreamUpdate, CodeBlock, ChatArtifact } from '../types/chat';
+import { ChatMessage, ChatSession, ClaudeCodeRequest, ClaudeCodeResponse, StreamUpdate, CodeBlock, ChatArtifact, StreamMetadata } from '../types/chat';
 import { v4 as uuidv4 } from 'uuid';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -115,23 +115,36 @@ export interface ClaudeCodeContext {
 }
 
 /**
- * Code block metadata from streaming response.
+ * Helper function to extract CodeBlock from streaming metadata.
+ * Converts StreamMetadata to CodeBlock format.
  */
-export interface CodeBlockMetadata {
-  language?: string;
-  filename?: string;
-  startLine?: number;
-  endLine?: number;
-  [key: string]: unknown;
+function extractCodeBlock(content: string, metadata?: StreamMetadata): CodeBlock | null {
+  if (!metadata) return null;
+  return {
+    language: typeof metadata.language === 'string' ? metadata.language : 'text',
+    code: content,
+    filename: typeof metadata.filename === 'string' ? metadata.filename : undefined,
+  };
 }
 
 /**
- * Artifact metadata from streaming response.
+ * Helper function to extract ChatArtifact from streaming data.
  */
-export interface ArtifactMetadata {
-  type?: string;
-  title?: string;
-  [key: string]: unknown;
+function extractArtifact(content: string, metadata?: StreamMetadata): ChatArtifact | null {
+  if (!metadata) return null;
+  const artifactType = typeof metadata.type === 'string' ? metadata.type : 'configuration';
+  const validTypes = ['schedule', 'analysis', 'report', 'configuration'] as const;
+  const type = validTypes.includes(artifactType as typeof validTypes[number])
+    ? (artifactType as typeof validTypes[number])
+    : 'configuration';
+
+  return {
+    id: `artifact-${Date.now()}`,
+    type,
+    title: typeof metadata.title === 'string' ? metadata.title : 'Artifact',
+    data: { content },
+    createdAt: new Date(),
+  };
 }
 
 /**
@@ -341,8 +354,8 @@ export const useClaudeChat = () => {
 
         const decoder = new TextDecoder();
         let fullContent = '';
-        const codeBlocks: CodeBlockMetadata[] = [];
-        const artifacts: ArtifactMetadata[] = [];
+        const codeBlocks: CodeBlock[] = [];
+        const artifacts: ChatArtifact[] = [];
 
         while (true) {
           const { done, value } = await reader.read();
@@ -358,9 +371,15 @@ export const useClaudeChat = () => {
                 fullContent += data.content;
 
                 if (data.type === 'code') {
-                  codeBlocks.push(data.metadata);
+                  const codeBlock = extractCodeBlock(data.content, data.metadata);
+                  if (codeBlock) {
+                    codeBlocks.push(codeBlock);
+                  }
                 } else if (data.type === 'artifact') {
-                  artifacts.push(data.metadata);
+                  const artifact = extractArtifact(data.content, data.metadata);
+                  if (artifact) {
+                    artifacts.push(artifact);
+                  }
                 }
 
                 onStreamUpdate?.(data);

@@ -39,6 +39,7 @@ celery_app = Celery(
         "app.resilience.tasks",
         "app.notifications.tasks",
         "app.tasks.schedule_metrics_tasks",
+        "app.tasks.stack_health_tasks",
         "app.exports.jobs",
         "app.security.rotation_tasks",
     ],
@@ -159,12 +160,20 @@ celery_app.conf.update(
             "kwargs": {"retention_days": 730},
             "options": {"queue": "security"},
         },
+        # Stack Health - Check codebase/infrastructure health every 4 hours
+        "stack-health-periodic": {
+            "task": "app.tasks.stack_health_tasks.stack_health_check",
+            "schedule": crontab(hour="*/4", minute=15),
+            "kwargs": {"write_report": True},
+            "options": {"queue": "maintenance"},
+        },
     },
     # Task routes
     task_routes={
         "app.resilience.tasks.*": {"queue": "resilience"},
         "app.notifications.tasks.*": {"queue": "notifications"},
         "app.tasks.schedule_metrics_tasks.*": {"queue": "metrics"},
+        "app.tasks.stack_health_tasks.*": {"queue": "maintenance"},
         "app.exports.jobs.*": {"queue": "exports"},
         "app.security.rotation_tasks.*": {"queue": "security"},
     },
@@ -176,6 +185,7 @@ celery_app.conf.update(
         "metrics": {},
         "exports": {},
         "security": {},
+        "maintenance": {},
     },
 )
 

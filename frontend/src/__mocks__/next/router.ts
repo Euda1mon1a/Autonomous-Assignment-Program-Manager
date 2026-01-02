@@ -53,4 +53,10 @@ export const useRouter = jest.fn<MockNextRouter, []>(() => ({
   isPreview: false,
 }));
 
-export const withRouter = <P extends object>(Component: React.ComponentType<P & { router: NextRouter }>): React.ComponentType<P> => Component;
+export const withRouter = <P extends object>(
+  Component: React.ComponentType<P & { router: NextRouter }>
+): React.ComponentType<Omit<P, 'router'>> => {
+  // Return a wrapper component that injects the router
+  // For mocking purposes, we just cast the component
+  return Component as unknown as React.ComponentType<Omit<P, 'router'>>;
+};

@@ -173,7 +173,11 @@ function DefaultErrorFallback({ error, reset }: DefaultErrorFallbackProps) {
 /**
  * Hook to use error boundary programmatically
  */
-export function useErrorBoundary(): { throwError: (error: Error) => void; resetError: () => void } {
+export function useErrorBoundary(): {
+  error: Error | null;
+  throwError: (error: Error) => void;
+  resetError: () => void;
+} {
   const [error, setError] = React.useState<Error | null>(null)
 
   React.useEffect(() => {

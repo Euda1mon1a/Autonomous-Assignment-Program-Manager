@@ -64,6 +64,11 @@ export function DataTable<T>({
       const aVal = column.accessor(a);
       const bVal = column.accessor(b);
 
+      // Handle null/undefined values - put them at the end
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return sortDirection === 'asc' ? 1 : -1;
+      if (bVal == null) return sortDirection === 'asc' ? -1 : 1;
+
       if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
       if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
       return 0;
@@ -161,12 +166,16 @@ export function DataTable<T>({
                 >
                   {columns.map((column) => {
                     const value = column.accessor(row);
+                    // Convert Date to string for display, leave other values as-is
+                    const displayValue = value instanceof Date
+                      ? value.toLocaleDateString()
+                      : value;
                     return (
                       <td
                         key={column.key}
                         className="px-4 py-3 text-sm text-gray-900"
                       >
-                        {column.render ? column.render(value, row) : value}
+                        {column.render ? column.render(value, row) : displayValue}
                       </td>
                     );
                   })}
