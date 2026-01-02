@@ -878,25 +878,31 @@ The following documentation improvements were completed in Stream 9:
 
 **Note:** File paths have been working; RAG is new. Wait for usage patterns to emerge before restructuring.
 
-### Subagent MCP Context Gap
+### Subagent MCP Tool Awareness
 
-**Priority:** Medium
+**Priority:** MEDIUM (tools exist, agents need education)
 **Added:** 2026-01-01 (Session: mcp-refinement)
-**Status:** TODO
+**Updated:** 2026-01-01 (MCP tools discovered)
+**Status:** IN PROGRESS
 
-**Problem:** Spawned subagents have **no MCP context**. They don't know:
-- What MCP tools are available
-- How to call them
-- RAG endpoint URLs
+**Discovery:** MCP RAG tools **already exist** in `server.py` lines 4266-4423:
+- `rag_search` → wraps `api_client.rag_retrieve()` with auth
+- `rag_ingest` → wraps `api_client.rag_ingest()` with auth
+- `rag_context` → wraps `api_client.rag_build_context()` with auth
+- `rag_health` → wraps `api_client.rag_health()` with auth
 
-**Observation:** G4_CONTEXT_MANAGER updated markdown files but didn't use MCP `rag_ingest` because it didn't have tool access in its spawned context.
+**Problem:** Subagents don't know these tools exist. G4_CONTEXT_MANAGER tried REST API directly instead of using MCP tools.
 
-**Options:**
-| Option | Approach | Trade-off |
-|--------|----------|-----------|
-| A. Add MCP routes to agent prompts | Include API URLs in spawn prompt | More prompt tokens |
-| B. Include MCP tool list in agent specs | Update `.claude/Agents/*.md` | Manual maintenance |
-| C. Create MCP context skill | `/mcp-context` skill agents can invoke | Extra step |
-| D. Environment variable injection | Pass MCP URLs via task metadata | Cleanest but needs tooling |
+**Solution (IN PROGRESS):**
+1. ✅ Update G4_CONTEXT_MANAGER spec with MCP tool info
+2. ⏳ Update other knowledge agents with MCP tool awareness
+3. ⏳ Test that mcp__* tools work from spawned agents
+4. ⏳ Add MCP tool list to context-aware-delegation skill
 
-**Recommended:** Option A or B - include RAG API routes (http://localhost:8000/api/rag/*) in relevant agent specs.
+**MCP RAG Tools (for agent specs):**
+```
+mcp__rag_search(query, top_k=5, doc_type=None)
+mcp__rag_ingest(content, doc_type, metadata=None)
+mcp__rag_context(query, max_tokens=2000)
+mcp__rag_health()
+```

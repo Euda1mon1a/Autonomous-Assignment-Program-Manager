@@ -55,6 +55,8 @@ class DocumentIngestRequest(BaseModel):
             "meeting_notes",
             "research_paper",
             "clinical_guideline",
+            "mcp_architecture",  # MCP tool categories and agent access patterns
+            "agent_patterns",    # PAI agent behavior patterns and requirements
             "other",
         }
         if v.lower() not in allowed_types:
