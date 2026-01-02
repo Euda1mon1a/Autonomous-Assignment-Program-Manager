@@ -477,6 +477,10 @@ export interface RotationTemplateCreate {
   activity_type: string;
   /** Short abbreviation for display in schedules */
   abbreviation?: string;
+  /** Tailwind color class for text */
+  font_color?: string;
+  /** Tailwind color class for background */
+  background_color?: string;
   /** Physical location of the clinic/rotation */
   clinic_location?: string;
   /** Maximum number of residents that can be assigned simultaneously */
@@ -501,6 +505,10 @@ export interface RotationTemplateUpdate {
   activity_type?: string;
   /** Short abbreviation for display in schedules */
   abbreviation?: string;
+  /** Tailwind color class for text */
+  font_color?: string;
+  /** Tailwind color class for background */
+  background_color?: string;
   /** Physical location of the clinic/rotation */
   clinic_location?: string;
   /** Maximum number of residents that can be assigned simultaneously */
