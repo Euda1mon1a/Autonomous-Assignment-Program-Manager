@@ -214,8 +214,8 @@ services:
       redis:
         condition: service_healthy
     environment:
-      # Transport mode - use HTTP for Docker container (STDIO exits without stdin)
-      MCP_TRANSPORT: http
+      # Transport mode - use SSE for Claude Code compatibility
+      MCP_TRANSPORT: sse
       MCP_HOST: "0.0.0.0"
       MCP_PORT: "8080"
       # API Integration - connects to FastAPI backend (not direct DB)
