@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useCallback } from 'react';
+import { useMemo } from 'react';
 import { RefreshCw, FileText, Download } from 'lucide-react';
 import type { ScheduleTemplate } from '../types';
 import { TemplateCard } from './TemplateCard';
@@ -141,7 +141,7 @@ function TemplateListItem({
   onEdit,
   onDelete,
   onDuplicate,
-  onShare,
+
   onPreview,
   onApply,
 }: TemplateListItemProps) {

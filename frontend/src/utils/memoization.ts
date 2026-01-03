@@ -24,7 +24,7 @@ export function memoize<T, R>(fn: (arg: T) => R): (arg: T) => R {
 /**
  * Memoization with multiple arguments using JSON serialization.
  */
-export function memoizeMulti<T extends any[], R>(
+export function memoizeMulti<T extends unknown[], R>(
   fn: (...args: T) => R
 ): (...args: T) => R {
   const cache = new Map<string, R>();
@@ -96,7 +96,7 @@ export class LRUCache<K, V> {
 /**
  * Memoization with LRU cache.
  */
-export function memoizeLRU<T extends any[], R>(
+export function memoizeLRU<T extends unknown[], R>(
   fn: (...args: T) => R,
   maxSize = 100
 ): (...args: T) => R {
@@ -119,7 +119,7 @@ export function memoizeLRU<T extends any[], R>(
 /**
  * Memoization with TTL (Time To Live).
  */
-export function memoizeWithTTL<T extends any[], R>(
+export function memoizeWithTTL<T extends unknown[], R>(
   fn: (...args: T) => R,
   ttlMs = 60000 // 1 minute default
 ): (...args: T) => R {
@@ -287,7 +287,7 @@ export class MemoizationMonitor {
 /**
  * Monitored memoization.
  */
-export function memoizeWithMonitoring<T extends any[], R>(
+export function memoizeWithMonitoring<T extends unknown[], R>(
   fn: (...args: T) => R,
   monitor: MemoizationMonitor
 ): (...args: T) => R {

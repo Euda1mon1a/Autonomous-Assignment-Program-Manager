@@ -31,20 +31,9 @@ import {
   TrendingUp,
   TrendingDown,
   BarChart3,
-  Settings,
 } from 'lucide-react';
 import type {
   ServiceStatus,
-  ServiceHealth,
-  ServiceComponent,
-  DatabaseHealth,
-  CacheHealth,
-  QueueHealth,
-  ApiHealth,
-  ResourceMetrics,
-  HealthAlert,
-  AlertSeverity,
-  AlertStatus,
   SystemHealthSummary,
   HealthDashboardTab,
 } from '@/types/admin-health';

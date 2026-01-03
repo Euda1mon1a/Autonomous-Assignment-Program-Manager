@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { HeatmapView, HeatmapControls, HeatmapLegend, getDefaultDateRange, useHeatmapData } from '@/features/heatmap'
-import type { HeatmapFilters, HeatmapViewMode, DateRange, HeatmapData } from '@/features/heatmap'
+import type { HeatmapFilters, DateRange, HeatmapData } from '@/features/heatmap'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 // Default empty heatmap data to avoid undefined errors
@@ -20,7 +20,7 @@ export default function HeatmapPage() {
     end_date: defaultDateRange.end,
     group_by: 'person',
   })
-  const [_viewMode, setViewMode] = useState<HeatmapViewMode>('coverage')
+  // const [_viewMode, setViewMode] = useState<HeatmapViewMode>('coverage')
 
   // Fetch heatmap data based on filters
   const { data, isLoading, error } = useHeatmapData(filters)
@@ -65,7 +65,7 @@ export default function HeatmapPage() {
 
           {/* Legend */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <HeatmapLegend viewMode={_viewMode} />
+            <HeatmapLegend viewMode='coverage' />
           </div>
         </div>
       </div>

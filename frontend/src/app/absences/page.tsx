@@ -62,8 +62,8 @@ export default function AbsencesPage() {
   const deleteAbsence = useDeleteAbsence()
   const updateAbsence = useUpdateAbsence()
 
-  const people = peopleData?.items || []
-  const allAbsences = absencesData?.items || []
+  const people = useMemo(() => peopleData?.items || [], [peopleData?.items])
+  const allAbsences = useMemo(() => absencesData?.items || [], [absencesData?.items])
 
   // Prepare export data with person names resolved
   const exportData = useMemo(() => {

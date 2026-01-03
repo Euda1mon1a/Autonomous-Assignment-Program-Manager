@@ -26,7 +26,6 @@ export function PatternEditor({
   onUpdate,
   onRemove,
   onDuplicate,
-  onReorder,
   readOnly = false,
 }: PatternEditorProps) {
   const [expandedPatterns, setExpandedPatterns] = useState<Set<string>>(new Set());

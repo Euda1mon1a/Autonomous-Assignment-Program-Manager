@@ -77,10 +77,71 @@ export const Select: React.FC<SelectProps> = ({
     setSearchQuery('');
   };
 
+  const [activeIndex, setActiveIndex] = useState(-1);
+
+  // Update active index when filtered options change
+  useEffect(() => {
+    setActiveIndex(-1);
+  }, [searchQuery]);
+
+  const scrollToOption = (index: number) => {
+    const listbox = document.getElementById('select-listbox');
+    const option = document.getElementById(`option-${index}`);
+    if (listbox && option) {
+      const listboxRect = listbox.getBoundingClientRect();
+      const optionRect = option.getBoundingClientRect();
+      if (optionRect.bottom > listboxRect.bottom) {
+        listbox.scrollTop += optionRect.bottom - listboxRect.bottom;
+      } else if (optionRect.top < listboxRect.top) {
+        listbox.scrollTop -= listboxRect.top - optionRect.top;
+      }
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      setIsOpen(false);
-      setSearchQuery('');
+    if (disabled) return;
+
+    switch (e.key) {
+      case 'Escape':
+      case 'Tab':
+        setIsOpen(false);
+        setSearchQuery('');
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        if (!isOpen) {
+          setIsOpen(true);
+        } else {
+          setActiveIndex(prev => {
+             const next = prev < filteredOptions.length - 1 ? prev + 1 : prev;
+             scrollToOption(next);
+             return next;
+          });
+        }
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        if (!isOpen) {
+          setIsOpen(true);
+        } else {
+          setActiveIndex(prev => {
+            const next = prev > 0 ? prev - 1 : 0;
+            scrollToOption(next);
+            return next;
+          });
+        }
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (isOpen && activeIndex >= 0 && activeIndex < filteredOptions.length) {
+          const option = filteredOptions[activeIndex];
+          if (!option.disabled) {
+            handleSelect(option.value);
+          }
+        } else if (!isOpen) {
+          setIsOpen(true);
+        }
+        break;
     }
   };
 
@@ -128,7 +189,12 @@ export const Select: React.FC<SelectProps> = ({
 
       {/* Dropdown */}
       {isOpen && !disabled && (
-        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden" role="listbox">
+        <div
+          id="select-listbox"
+          className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden"
+          role="listbox"
+          aria-activedescendant={activeIndex >= 0 ? `option-${activeIndex}` : undefined}
+        >
           {/* Search Input */}
           {searchable && (
             <div className="p-2 border-b border-gray-200">
@@ -139,6 +205,7 @@ export const Select: React.FC<SelectProps> = ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search..."
                 aria-label="Search options"
+                aria-controls="select-listbox"
                 className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 onKeyDown={handleKeyDown}
               />
@@ -152,19 +219,22 @@ export const Select: React.FC<SelectProps> = ({
                 No options found
               </div>
             ) : (
-              filteredOptions.map((option) => (
+              filteredOptions.map((option, index) => (
                 <button
                   key={option.value}
+                  id={`option-${index}`}
                   onClick={() => !option.disabled && handleSelect(option.value)}
                   disabled={option.disabled}
                   role="option"
                   aria-selected={option.value === value}
                   aria-disabled={option.disabled}
+                  onMouseEnter={() => setActiveIndex(index)}
                   className={`
                     w-full px-4 py-2 text-left text-sm transition-colors
+                    ${activeIndex === index ? 'bg-gray-100' : ''}
                     ${option.value === value ? 'bg-blue-50 text-blue-900 font-medium' : 'text-gray-900'}
                     ${option.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}
-                    focus:outline-none focus:bg-gray-100
+                    focus:outline-none
                   `}
                 >
                   {option.label}

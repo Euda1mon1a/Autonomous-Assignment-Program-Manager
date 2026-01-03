@@ -13,7 +13,6 @@ import { format, parseISO, isToday, isTomorrow, isWithinInterval, addDays } from
 import {
   Calendar,
   Clock,
-  MapPin,
   AlertCircle,
   ArrowRightLeft,
   Loader2,
@@ -31,6 +30,7 @@ interface UpcomingScheduleProps {
   assignments: UpcomingAssignment[];
   isLoading?: boolean;
   onSwapRequested?: () => void;
+  error?: Error | null;
 }
 
 interface AssignmentCardProps {
@@ -64,7 +64,7 @@ function AssignmentCard({ assignment, onSwapRequested }: AssignmentCardProps) {
       setReason('');
       onSwapRequested?.();
     } catch (error) {
-      // console.error('Failed to request swap:', error);
+      console.error('Failed to acknowledge notification', error);
     }
   };
 
@@ -207,7 +207,21 @@ export function UpcomingSchedule({
   assignments,
   isLoading = false,
   onSwapRequested,
+  error,
 }: UpcomingScheduleProps) {
+  if (error) {
+    console.error('Failed to load schedule:', error)
+    return (
+      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 flex items-center gap-3">
+        <AlertCircle className="w-5 h-5 flex-shrink-0" />
+        <div>
+          <p className="font-medium">Error loading schedule</p>
+          <p className="text-sm">{error.message || 'An unknown error occurred.'}</p>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-3">

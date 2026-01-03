@@ -6,7 +6,7 @@
  * experimentation, metrics, and manual overrides.
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { get, post, put, del, ApiError } from '@/lib/api';
+import { get, post, del, ApiError } from '@/lib/api';
 import type {
   RunConfiguration,
   RunResult,

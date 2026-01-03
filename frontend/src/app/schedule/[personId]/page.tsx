@@ -53,7 +53,7 @@ export default function PersonSchedulePage() {
     templatesData?.items?.forEach((t) => {
       map.set(t.id, {
         name: t.name,
-        abbreviation: t.abbreviation || t.name.substring(0, 3).toUpperCase(),
+        abbreviation: t.display_abbreviation || t.abbreviation || t.name.substring(0, 3).toUpperCase(),
         activity_type: t.activity_type,
       })
     })

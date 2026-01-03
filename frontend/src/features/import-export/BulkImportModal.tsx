@@ -142,7 +142,7 @@ export function BulkImportModal({
     setStep('importing');
     try {
       await executeImport();
-    } catch (error) {
+    } catch {
       // Error handled by hook
       // console.error('Import failed:', error);
     }

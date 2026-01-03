@@ -119,7 +119,6 @@ function transformAssignment(assignment: AssignmentApiResponse): UpcomingAssignm
  */
 function transformPendingSwap(swap: SwapApiResponse, currentUserId?: string): PendingSwapSummary {
   const isIncoming = swap.target_faculty_id === currentUserId;
-  const isOutgoing = swap.source_faculty_id === currentUserId;
 
   return {
     id: swap.id,

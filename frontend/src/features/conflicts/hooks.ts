@@ -6,7 +6,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
-import { get, post, put, del, ApiError } from '@/lib/api';
+import { get, post, put, ApiError } from '@/lib/api';
 import type {
   Conflict,
   ConflictFilters,

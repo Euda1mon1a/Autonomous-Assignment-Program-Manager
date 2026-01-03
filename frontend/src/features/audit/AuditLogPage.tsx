@@ -13,14 +13,17 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import {
+  History,
+  Filter,
+  Download,
+  Search,
+  RefreshCw,
+  FileText,
+  AlertTriangle,
   Table,
   Clock,
   ArrowLeftRight,
-  RefreshCw,
-  BarChart3,
   Shield,
-  FileText,
-  AlertTriangle,
 } from 'lucide-react';
 import { AuditLogTable } from './AuditLogTable';
 import { AuditLogFilters } from './AuditLogFilters';

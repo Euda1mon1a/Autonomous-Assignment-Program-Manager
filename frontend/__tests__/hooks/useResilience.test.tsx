@@ -1,145 +1,402 @@
-import { renderHook, waitFor } from '@testing-library/react'
-import { useResilience } from '@/hooks/useResilience'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ReactNode } from 'react'
+import { renderHook, waitFor } from "@testing-library/react";
+import {
+  useSystemHealth,
+  useVulnerabilityReport,
+  useEmergencyCoverage,
+} from "@/hooks/useResilience";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactNode } from "react";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
+// Mock the api module
+jest.mock("@/api/resilience", () => ({
+  fetchSystemHealth: jest.fn(),
+  fetchVulnerabilityReport: jest.fn(),
+  requestEmergencyCoverage: jest.fn(),
+}));
+
+import {
+  fetchSystemHealth,
+  fetchVulnerabilityReport,
+  requestEmergencyCoverage,
+} from "@/api/resilience";
+
+const mockedFetchSystemHealth = fetchSystemHealth as jest.Mock;
+const mockedFetchVulnerabilityReport = fetchVulnerabilityReport as jest.Mock;
+const mockedRequestEmergencyCoverage = requestEmergencyCoverage as jest.Mock;
+
+const createQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
     },
-  },
-})
+  });
 
-const wrapper = ({ children }: { children: ReactNode }) => (
-  <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-)
+const createWrapper = (queryClient: QueryClient) => {
+  const Wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+  return Wrapper;
+};
 
-describe('useResilience', () => {
+describe("useSystemHealth", () => {
+  let queryClient: QueryClient;
+
   beforeEach(() => {
-    queryClient.clear()
-    global.fetch = jest.fn()
-  })
+    queryClient = createQueryClient();
+    jest.clearAllMocks();
+  });
 
-  describe('Fetching Resilience Data', () => {
-    it('should fetch resilience metrics', async () => {
+  afterEach(() => {
+    queryClient.clear();
+  });
+
+  describe("Fetching System Health Data", () => {
+    it("should fetch system health metrics", async () => {
       const mockData = {
-        utilization: 0.75,
-        n_minus_1_viable: true,
-        defense_level: 'GREEN',
-      }
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockData,
-      })
+        timestamp: "2025-01-01T00:00:00Z",
+        overall_status: "healthy",
+        utilization: {
+          utilization_rate: 0.75,
+          level: "YELLOW",
+          buffer_remaining: 0.05,
+          wait_time_multiplier: 1.2,
+          safe_capacity: 100,
+          current_demand: 75,
+          theoretical_capacity: 120,
+        },
+        defense_level: "PREVENTION",
+        redundancy_status: [],
+        load_shedding_level: "NORMAL",
+        active_fallbacks: [],
+        crisis_mode: false,
+        n1_pass: true,
+        n2_pass: true,
+        phase_transition_risk: "low",
+        immediate_actions: [],
+        watch_items: [],
+      };
+      mockedFetchSystemHealth.mockResolvedValueOnce(mockData);
 
-      const { result } = renderHook(() => useResilience(), { wrapper })
+      const { result } = renderHook(() => useSystemHealth(), {
+        wrapper: createWrapper(queryClient),
+      });
 
-      await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(result.current.data).toEqual(mockData)
-    })
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(result.current.data).toEqual(mockData);
+    });
 
-    it('should handle loading state', () => {
-      ;(global.fetch as jest.Mock).mockImplementation(
-        () => new Promise(() => {})
-      )
+    it("should handle loading state", () => {
+      mockedFetchSystemHealth.mockImplementation(() => new Promise(() => {}));
 
-      const { result } = renderHook(() => useResilience(), { wrapper })
+      const { result } = renderHook(() => useSystemHealth(), {
+        wrapper: createWrapper(queryClient),
+      });
 
-      expect(result.current.isLoading).toBe(true)
-      expect(result.current.data).toBeUndefined()
-    })
+      expect(result.current.isLoading).toBe(true);
+      expect(result.current.data).toBeUndefined();
+    });
 
-    it('should handle error state', async () => {
-      ;(global.fetch as jest.Mock).mockRejectedValueOnce(
-        new Error('API Error')
-      )
+    it("should handle error state", async () => {
+      mockedFetchSystemHealth.mockRejectedValueOnce(new Error("API Error"));
 
-      const { result } = renderHook(() => useResilience(), { wrapper })
+      const { result } = renderHook(() => useSystemHealth(), {
+        wrapper: createWrapper(queryClient),
+      });
 
-      await waitFor(() => expect(result.current.isError).toBe(true))
-      expect(result.current.error).toBeDefined()
-    })
-  })
+      await waitFor(() => expect(result.current.isError).toBe(true));
+      expect(result.current.error).toBeDefined();
+    });
+  });
 
-  describe('Defense Level Classification', () => {
-    it('should classify GREEN defense level', async () => {
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ utilization: 0.6, defense_level: 'GREEN' }),
-      })
+  describe("Defense Level Classification", () => {
+    it("should report PREVENTION defense level", async () => {
+      mockedFetchSystemHealth.mockResolvedValueOnce({
+        timestamp: "2025-01-01T00:00:00Z",
+        overall_status: "healthy",
+        defense_level: "PREVENTION",
+        utilization: { utilization_rate: 0.6, level: "GREEN" },
+        redundancy_status: [],
+        load_shedding_level: "NORMAL",
+        active_fallbacks: [],
+        crisis_mode: false,
+        n1_pass: true,
+        n2_pass: true,
+        phase_transition_risk: "low",
+        immediate_actions: [],
+        watch_items: [],
+      });
 
-      const { result } = renderHook(() => useResilience(), { wrapper })
+      const { result } = renderHook(() => useSystemHealth(), {
+        wrapper: createWrapper(queryClient),
+      });
 
-      await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(result.current.data?.defense_level).toBe('GREEN')
-    })
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(result.current.data?.defense_level).toBe("PREVENTION");
+    });
 
-    it('should classify YELLOW defense level', async () => {
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ utilization: 0.75, defense_level: 'YELLOW' }),
-      })
+    it("should report EMERGENCY defense level", async () => {
+      mockedFetchSystemHealth.mockResolvedValueOnce({
+        timestamp: "2025-01-01T00:00:00Z",
+        overall_status: "emergency",
+        defense_level: "EMERGENCY",
+        utilization: { utilization_rate: 0.95, level: "BLACK" },
+        redundancy_status: [],
+        load_shedding_level: "CRITICAL",
+        active_fallbacks: ["fallback-1"],
+        crisis_mode: true,
+        n1_pass: false,
+        n2_pass: false,
+        phase_transition_risk: "critical",
+        immediate_actions: ["Activate emergency coverage"],
+        watch_items: [],
+      });
 
-      const { result } = renderHook(() => useResilience(), { wrapper })
+      const { result } = renderHook(() => useSystemHealth(), {
+        wrapper: createWrapper(queryClient),
+      });
 
-      await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(result.current.data?.defense_level).toBe('YELLOW')
-    })
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(result.current.data?.defense_level).toBe("EMERGENCY");
+      expect(result.current.data?.crisis_mode).toBe(true);
+    });
+  });
 
-    it('should classify RED defense level', async () => {
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ utilization: 0.9, defense_level: 'RED' }),
-      })
+  describe("N-1/N-2 Contingency", () => {
+    it("should report n1_pass and n2_pass status", async () => {
+      mockedFetchSystemHealth.mockResolvedValueOnce({
+        timestamp: "2025-01-01T00:00:00Z",
+        overall_status: "healthy",
+        defense_level: "PREVENTION",
+        utilization: { utilization_rate: 0.7, level: "GREEN" },
+        redundancy_status: [],
+        load_shedding_level: "NORMAL",
+        active_fallbacks: [],
+        crisis_mode: false,
+        n1_pass: true,
+        n2_pass: true,
+        phase_transition_risk: "low",
+        immediate_actions: [],
+        watch_items: [],
+      });
 
-      const { result } = renderHook(() => useResilience(), { wrapper })
+      const { result } = renderHook(() => useSystemHealth(), {
+        wrapper: createWrapper(queryClient),
+      });
 
-      await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(result.current.data?.defense_level).toBe('RED')
-    })
-  })
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(result.current.data?.n1_pass).toBe(true);
+      expect(result.current.data?.n2_pass).toBe(true);
+    });
 
-  describe('N-1 Contingency', () => {
-    it('should report n-1 viable status', async () => {
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ n_minus_1_viable: true }),
-      })
+    it("should report n1_pass failure", async () => {
+      mockedFetchSystemHealth.mockResolvedValueOnce({
+        timestamp: "2025-01-01T00:00:00Z",
+        overall_status: "warning",
+        defense_level: "CONTROL",
+        utilization: { utilization_rate: 0.85, level: "ORANGE" },
+        redundancy_status: [],
+        load_shedding_level: "YELLOW",
+        active_fallbacks: [],
+        crisis_mode: false,
+        n1_pass: false,
+        n2_pass: false,
+        phase_transition_risk: "medium",
+        immediate_actions: ["Review coverage gaps"],
+        watch_items: ["Faculty utilization high"],
+      });
 
-      const { result } = renderHook(() => useResilience(), { wrapper })
+      const { result } = renderHook(() => useSystemHealth(), {
+        wrapper: createWrapper(queryClient),
+      });
 
-      await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(result.current.data?.n_minus_1_viable).toBe(true)
-    })
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(result.current.data?.n1_pass).toBe(false);
+    });
+  });
 
-    it('should report n-1 failure', async () => {
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ n_minus_1_viable: false }),
-      })
+  describe("Auto-refresh", () => {
+    it("should support refetch", async () => {
+      mockedFetchSystemHealth.mockResolvedValue({
+        timestamp: "2025-01-01T00:00:00Z",
+        overall_status: "healthy",
+        defense_level: "PREVENTION",
+        utilization: { utilization_rate: 0.7, level: "GREEN" },
+        redundancy_status: [],
+        load_shedding_level: "NORMAL",
+        active_fallbacks: [],
+        crisis_mode: false,
+        n1_pass: true,
+        n2_pass: true,
+        phase_transition_risk: "low",
+        immediate_actions: [],
+        watch_items: [],
+      });
 
-      const { result } = renderHook(() => useResilience(), { wrapper })
+      const { result } = renderHook(() => useSystemHealth(), {
+        wrapper: createWrapper(queryClient),
+      });
 
-      await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(result.current.data?.n_minus_1_viable).toBe(false)
-    })
-  })
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-  describe('Auto-refresh', () => {
-    it('should support refetch', async () => {
-      ;(global.fetch as jest.Mock).mockResolvedValue({
-        ok: true,
-        json: async () => ({ utilization: 0.7 }),
-      })
+      await result.current.refetch();
 
-      const { result } = renderHook(() => useResilience(), { wrapper })
+      expect(mockedFetchSystemHealth).toHaveBeenCalledTimes(2);
+    });
+  });
+});
 
-      await waitFor(() => expect(result.current.isSuccess).toBe(true))
+describe("useVulnerabilityReport", () => {
+  let queryClient: QueryClient;
 
-      await result.current.refetch()
+  beforeEach(() => {
+    queryClient = createQueryClient();
+    jest.clearAllMocks();
+  });
 
-      expect(global.fetch).toHaveBeenCalledTimes(2)
-    })
-  })
-})
+  afterEach(() => {
+    queryClient.clear();
+  });
+
+  it("should fetch vulnerability report", async () => {
+    const mockData = {
+      analyzed_at: "2025-01-01T00:00:00Z",
+      period_start: "2025-01-01",
+      period_end: "2025-01-31",
+      n1_pass: true,
+      n2_pass: true,
+      phase_transition_risk: "low",
+      n1_vulnerabilities: [],
+      n2_fatal_pairs: [],
+      most_critical_faculty: [],
+      recommended_actions: [],
+    };
+    mockedFetchVulnerabilityReport.mockResolvedValueOnce(mockData);
+
+    const { result } = renderHook(() => useVulnerabilityReport(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual(mockData);
+  });
+
+  it("should pass params to fetch function", async () => {
+    const params = {
+      start_date: "2025-01-01",
+      end_date: "2025-01-31",
+      include_n2: true,
+    };
+    mockedFetchVulnerabilityReport.mockResolvedValueOnce({});
+
+    renderHook(() => useVulnerabilityReport(params), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => {
+      expect(mockedFetchVulnerabilityReport).toHaveBeenCalledWith(params);
+    });
+  });
+});
+
+describe("useEmergencyCoverage", () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    queryClient = createQueryClient();
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    queryClient.clear();
+  });
+
+  it("should request emergency coverage successfully", async () => {
+    const mockRequest = {
+      person_id: "person-123",
+      start_date: "2025-01-15",
+      end_date: "2025-01-20",
+      reason: "Military deployment",
+      is_deployment: true,
+    };
+    const mockResponse = {
+      status: "success" as const,
+      replacements_found: 5,
+      coverage_gaps: 0,
+      requires_manual_review: false,
+      details: [],
+    };
+    mockedRequestEmergencyCoverage.mockResolvedValueOnce(mockResponse);
+
+    const { result } = renderHook(() => useEmergencyCoverage(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    const response = await result.current.mutateAsync(mockRequest);
+
+    expect(mockedRequestEmergencyCoverage).toHaveBeenCalled();
+    expect(response).toEqual(mockResponse);
+  });
+
+  it("should handle partial coverage status", async () => {
+    const mockRequest = {
+      person_id: "person-123",
+      start_date: "2025-01-15",
+      end_date: "2025-01-20",
+      reason: "Medical emergency",
+      is_deployment: false,
+    };
+    const mockResponse = {
+      status: "partial" as const,
+      replacements_found: 3,
+      coverage_gaps: 2,
+      requires_manual_review: true,
+      details: [
+        {
+          date: "2025-01-18",
+          original_assignment: "Morning Shift",
+          status: "gap" as const,
+        },
+      ],
+    };
+    mockedRequestEmergencyCoverage.mockResolvedValueOnce(mockResponse);
+
+    const { result } = renderHook(() => useEmergencyCoverage(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    const response = await result.current.mutateAsync(mockRequest);
+
+    expect(response.status).toBe("partial");
+    expect(response.requires_manual_review).toBe(true);
+    expect(response.coverage_gaps).toBe(2);
+  });
+
+  it("should handle failed coverage request", async () => {
+    const mockRequest = {
+      person_id: "person-123",
+      start_date: "2025-01-15",
+      end_date: "2025-01-20",
+      reason: "TDY",
+      is_deployment: false,
+    };
+    const mockResponse = {
+      status: "failed" as const,
+      replacements_found: 0,
+      coverage_gaps: 5,
+      requires_manual_review: true,
+      details: [],
+    };
+    mockedRequestEmergencyCoverage.mockResolvedValueOnce(mockResponse);
+
+    const { result } = renderHook(() => useEmergencyCoverage(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    const response = await result.current.mutateAsync(mockRequest);
+
+    expect(response.status).toBe("failed");
+    expect(response.coverage_gaps).toBe(5);
+  });
+});

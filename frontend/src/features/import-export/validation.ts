@@ -5,12 +5,8 @@
 import type {
   ImportDataType,
   ImportValidationError,
-  ImportPreviewRow,
   ImportPreviewResult,
-  PersonImportRow,
-  AssignmentImportRow,
-  AbsenceImportRow,
-  ScheduleImportRow,
+  ImportPreviewRow,
 } from './types';
 
 import {

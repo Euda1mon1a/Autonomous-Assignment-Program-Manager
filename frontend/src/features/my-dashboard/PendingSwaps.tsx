@@ -13,7 +13,6 @@ import {
   ArrowRightLeft,
   ArrowRight,
   Calendar,
-  User,
   Clock,
   MessageSquare,
   CheckCircle,

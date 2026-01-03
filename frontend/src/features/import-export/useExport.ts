@@ -4,7 +4,6 @@
 
 import { useState, useCallback } from 'react';
 import type {
-  ExportFormat,
   ExportColumn,
   ExportOptions,
   ExportProgress,

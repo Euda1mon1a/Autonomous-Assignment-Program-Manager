@@ -1,23 +1,37 @@
 import { useSystemHealth } from "@/hooks/useResilience";
 import { OverallStatus } from "@/types/resilience";
 import { RefreshCw, ShieldAlert } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BurnoutDashboard } from "./components/BurnoutDashboard";
 import { N1Analysis } from "./components/N1Analysis";
 import { ResilienceMetrics } from "./components/ResilienceMetrics";
 import { UtilizationChart } from "./components/UtilizationChart";
 
+/**
+ * ResilienceHub - Main resilience dashboard orchestrator
+ *
+ * This component serves as the main resilience monitoring dashboard.
+ * Child components (ResilienceMetrics, UtilizationChart, BurnoutDashboard, N1Analysis)
+ * are now self-contained and fetch their own data via hooks.
+ *
+ * The parent still fetches system health for:
+ * - Emergency mode detection
+ * - Timestamp display
+ * - Manual refresh functionality
+ */
 export function ResilienceHub() {
-  const { data, isLoading, refetch, isRefetching } = useSystemHealth();
+  const { data, refetch, isRefetching } = useSystemHealth();
   const [emergencyMode, setEmergencyMode] = useState(false);
 
   // Auto-enable emergency visual mode if system status is CRITICAL or EMERGENCY
-  if (
-    data?.overall_status === OverallStatus.CRITICAL ||
-    data?.overall_status === OverallStatus.EMERGENCY
-  ) {
-    if (!emergencyMode) setEmergencyMode(true);
-  }
+  useEffect(() => {
+    if (
+      data?.overall_status === OverallStatus.CRITICAL ||
+      data?.overall_status === OverallStatus.EMERGENCY
+    ) {
+      setEmergencyMode(true);
+    }
+  }, [data?.overall_status]);
 
   return (
     <div
@@ -70,22 +84,26 @@ export function ResilienceHub() {
           </div>
         </div>
 
-        {/* Key Metrics */}
-        <ResilienceMetrics data={data} isLoading={isLoading} />
+        {/* Key Metrics - Self-contained, fetches own data */}
+        <ResilienceMetrics />
 
         {/* Main Dashboard Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[500px]">
           {/* Chart Section - Takes up 2/3 width */}
           <div className="lg:col-span-2 h-full">
-            <UtilizationChart data={data} isLoading={isLoading} />
+            {/* Self-contained, fetches own data via useSystemHealth and useUtilizationThreshold */}
+            <UtilizationChart />
           </div>
 
           {/* Recommendations / Sidebar - Takes up 1/3 width */}
           <div className="h-full flex flex-col gap-6">
             <div className="flex-1">
-              <BurnoutDashboard data={data} isLoading={isLoading} />
+              {/* Self-contained, fetches own data via useSystemHealth and optionally useBurnoutRt */}
+              {/* To enable burnout Rt, pass burnedOutProviderIds prop */}
+              <BurnoutDashboard />
             </div>
             <div className="flex-1">
+              {/* Self-contained, fetches own data via useVulnerabilityReport */}
               <N1Analysis />
             </div>
           </div>

@@ -550,7 +550,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
   }, [
     state.preview,
     state.options,
-    state.dataType,
+    // state.dataType intentionally omitted to prevent re-creation on type change if not needed
     updateProgress,
     importMutation,
   ]);

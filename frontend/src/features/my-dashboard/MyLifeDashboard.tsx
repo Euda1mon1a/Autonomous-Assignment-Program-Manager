@@ -63,9 +63,9 @@ export function MyLifeDashboard({ className = '' }: MyLifeDashboardProps) {
     refetch();
   };
 
-  const handleSwapAction = (swapId: string) => {
+  const handleSwapAction = (_swapId: string) => {
     // Navigate to swap marketplace or show swap details
-    // console.log('Handle swap action for:', swapId);
+    // console.log('Handle swap action for:', _swapId);
     // For now, just refresh
     refetch();
   };

@@ -49,7 +49,7 @@ export function SwapRequestCard({
   marketplaceEntry,
   onActionComplete,
 }: SwapRequestCardProps) {
-  const [showNotes, setShowNotes] = useState(false);
+
   const [notes, setNotes] = useState('');
   const [actionMode, setActionMode] = useState<'accept' | 'reject' | null>(null);
 
@@ -131,8 +131,8 @@ export function SwapRequestCard({
       setActionMode(null);
       setNotes('');
       onActionComplete?.();
-    } catch (error) {
-      // console.error('Failed to accept swap:', error);
+    } catch {
+      // console.error('Failed to accept swap');
     }
   };
 
@@ -142,8 +142,8 @@ export function SwapRequestCard({
       setActionMode(null);
       setNotes('');
       onActionComplete?.();
-    } catch (error) {
-      // console.error('Failed to reject swap:', error);
+    } catch {
+      // console.error('Failed to reject swap');
     }
   };
 
@@ -155,8 +155,8 @@ export function SwapRequestCard({
     try {
       await cancelMutation.mutateAsync();
       onActionComplete?.();
-    } catch (error) {
-      // console.error('Failed to cancel swap:', error);
+    } catch {
+      // console.error('Failed to cancel swap');
     }
   };
 

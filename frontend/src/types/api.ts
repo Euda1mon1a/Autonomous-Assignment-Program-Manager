@@ -447,6 +447,8 @@ export interface RotationTemplate {
   activity_type: string;
   /** Short abbreviation for display in schedules */
   abbreviation: string | null;
+  /** User-facing abbreviation code for schedule grid (preferred over abbreviation) */
+  display_abbreviation: string | null;
   /** Tailwind color class for text */
   font_color: string | null;
   /** Tailwind color class for background */
@@ -477,6 +479,8 @@ export interface RotationTemplateCreate {
   activity_type: string;
   /** Short abbreviation for display in schedules */
   abbreviation?: string;
+  /** User-facing abbreviation code for schedule grid (preferred over abbreviation) */
+  display_abbreviation?: string;
   /** Tailwind color class for text */
   font_color?: string;
   /** Tailwind color class for background */
@@ -505,6 +509,8 @@ export interface RotationTemplateUpdate {
   activity_type?: string;
   /** Short abbreviation for display in schedules */
   abbreviation?: string;
+  /** User-facing abbreviation code for schedule grid (preferred over abbreviation) */
+  display_abbreviation?: string;
   /** Tailwind color class for text */
   font_color?: string;
   /** Tailwind color class for background */

@@ -5,7 +5,7 @@
  * with React Query caching and httpOnly cookie-based authentication.
  */
 import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useRef } from 'react'
 import { ApiError } from '@/lib/api'
 import {
   login as loginApi,
@@ -14,7 +14,6 @@ import {
   checkAuth,
   validateToken,
   performRefresh,
-  clearTokenState,
   isTokenExpired,
   getTimeUntilExpiry,
   type User,

@@ -188,6 +188,7 @@ export function FacultyInpatientWeeksView({
         id: assignment.id,
         abbreviation:
           assignment.activity_override ||
+          template?.display_abbreviation ||
           template?.abbreviation ||
           template?.name?.substring(0, 3).toUpperCase() ||
           '???',

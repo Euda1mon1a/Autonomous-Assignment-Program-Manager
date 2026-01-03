@@ -8,7 +8,6 @@
 import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { get, post, ApiError } from '@/lib/api';
 import type {
-  HeatmapData,
   HeatmapFilters,
   HeatmapResponse,
   CoverageHeatmapResponse,

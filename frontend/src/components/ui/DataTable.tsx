@@ -119,28 +119,43 @@ export function DataTable<T>({
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              {columns.map((column) => (
-                <th
-                  key={column.key}
-                  className={`px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider ${
-                    column.width ? `w-${column.width}` : ''
-                  } ${column.sortable ? 'cursor-pointer hover:bg-gray-100' : ''}`}
-                  onClick={() => column.sortable && handleSort(column.key)}
-                >
-                  <div className="flex items-center gap-2">
-                    <span>{column.header}</span>
-                    {column.sortable && (
-                      <span className="text-gray-400">
-                        {sortColumn === column.key ? (
-                          sortDirection === 'asc' ? '↑' : '↓'
-                        ) : (
-                          '↕'
-                        )}
-                      </span>
+              {columns.map((column) => {
+                const getSortDirection = () => {
+                   if (sortColumn !== column.key) return undefined;
+                   return sortDirection === 'asc' ? 'ascending' : 'descending';
+                };
+
+                return (
+                  <th
+                    key={column.key}
+                    scope="col"
+                    aria-sort={getSortDirection()}
+                    className={`px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider ${
+                      column.width ? `w-${column.width}` : ''
+                    }`}
+                  >
+                    {column.sortable ? (
+                      <button
+                        onClick={() => handleSort(column.key)}
+                        className="flex items-center gap-2 hover:text-gray-900 focus:outline-none focus:underline group"
+                      >
+                        <span>{column.header}</span>
+                        <span className="text-gray-400 group-hover:text-gray-600">
+                          {sortColumn === column.key ? (
+                            sortDirection === 'asc' ? '↑' : '↓'
+                          ) : (
+                            '↕'
+                          )}
+                        </span>
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                         <span>{column.header}</span>
+                      </div>
                     )}
-                  </div>
-                </th>
-              ))}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">

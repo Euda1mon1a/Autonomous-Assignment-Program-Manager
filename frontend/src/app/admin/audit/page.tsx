@@ -12,27 +12,21 @@ import {
   Search,
   Filter,
   Download,
-  Calendar,
   Clock,
   User,
   AlertTriangle,
   Info,
   XCircle,
   AlertCircle,
-  ChevronDown,
-  ChevronUp,
   BarChart3,
   List,
   RefreshCw,
-  ExternalLink,
 } from 'lucide-react';
 import type {
   AuditEntry,
   AuditCategory,
   AuditSeverity,
-  AuditAction,
   AuditViewMode,
-  AuditFilters,
   AuditStats,
 } from '@/types/admin-audit';
 import {

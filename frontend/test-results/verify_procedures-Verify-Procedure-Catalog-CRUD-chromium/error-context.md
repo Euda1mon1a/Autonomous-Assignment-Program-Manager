@@ -1,0 +1,155 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - navigation "Main navigation" [ref=e4]:
+      - generic [ref=e6]:
+        - link "Residency Scheduler home" [ref=e8] [cursor=pointer]:
+          - /url: /
+          - img [ref=e9]
+          - generic [ref=e11]: Residency Scheduler
+        - generic [ref=e12]:
+          - link "Dashboard" [ref=e13] [cursor=pointer]:
+            - /url: /
+            - img [ref=e14]
+            - text: Dashboard
+          - link "My Schedule" [ref=e16] [cursor=pointer]:
+            - /url: /my-schedule
+            - img [ref=e17]
+            - text: My Schedule
+          - link "Schedule" [ref=e20] [cursor=pointer]:
+            - /url: /schedule
+            - img [ref=e21]
+            - text: Schedule
+          - link "People" [ref=e23] [cursor=pointer]:
+            - /url: /people
+            - img [ref=e24]
+            - text: People
+          - link "Swaps" [ref=e29] [cursor=pointer]:
+            - /url: /swaps
+            - img [ref=e30]
+            - text: Swaps
+          - link "Call Roster" [ref=e33] [cursor=pointer]:
+            - /url: /call-roster
+            - img [ref=e34]
+            - text: Call Roster
+          - link "Manifest" [ref=e36] [cursor=pointer]:
+            - /url: /daily-manifest
+            - img [ref=e37]
+            - text: Manifest
+          - link "Heatmap" [ref=e40] [cursor=pointer]:
+            - /url: /heatmap
+            - img [ref=e41]
+            - text: Heatmap
+          - link "Conflicts" [ref=e43] [cursor=pointer]:
+            - /url: /conflicts
+            - img [ref=e44]
+            - text: Conflicts
+          - link "Templates" [ref=e46] [cursor=pointer]:
+            - /url: /templates
+            - img [ref=e47]
+            - text: Templates
+          - link "Absences" [ref=e50] [cursor=pointer]:
+            - /url: /absences
+            - img [ref=e51]
+            - text: Absences
+          - link "Import/Export" [ref=e55] [cursor=pointer]:
+            - /url: /import-export
+            - img [ref=e56]
+            - text: Import/Export
+          - link "Help" [ref=e60] [cursor=pointer]:
+            - /url: /help
+            - img [ref=e61]
+            - text: Help
+          - link "Procedures" [ref=e64] [cursor=pointer]:
+            - /url: /admin/procedures
+            - img [ref=e65]
+            - text: Procedures
+          - link "Lab" [ref=e69] [cursor=pointer]:
+            - /url: /admin/scheduling
+            - img [ref=e70]
+            - text: Lab
+          - link "Users" [ref=e72] [cursor=pointer]:
+            - /url: /admin/users
+            - img [ref=e73]
+            - text: Users
+          - link "Audit" [ref=e75] [cursor=pointer]:
+            - /url: /admin/audit
+            - img [ref=e76]
+            - text: Audit
+          - link "Health" [ref=e79] [cursor=pointer]:
+            - /url: /admin/health
+            - img [ref=e80]
+            - text: Health
+          - link "Settings" [ref=e82] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e83]
+            - text: Settings
+        - button "User menu for admin" [ref=e89] [cursor=pointer]:
+          - generic [ref=e90]: A
+          - generic [ref=e91]: admin
+          - img [ref=e92]
+    - main [ref=e94]:
+      - generic [ref=e96]:
+        - generic [ref=e97]:
+          - generic [ref=e98]:
+            - heading "Procedure Catalog" [level=1] [ref=e99]
+            - paragraph [ref=e100]: Manage medical procedures and supervision requirements.
+          - button "New Procedure" [ref=e101] [cursor=pointer]:
+            - img [ref=e102]
+            - text: New Procedure
+        - generic [ref=e103]:
+          - paragraph [ref=e104]: No procedures found.
+          - paragraph [ref=e105]: Create a new procedure to get started.
+        - generic [ref=e107]:
+          - generic [ref=e108]:
+            - heading "New Procedure" [level=2] [ref=e109]
+            - button [ref=e110] [cursor=pointer]:
+              - img [ref=e111]
+          - generic [ref=e114]:
+            - generic [ref=e115]:
+              - text: Procedure Name *
+              - textbox "e.g. Central Line Placement" [ref=e116]: Test Procedure
+            - generic [ref=e117]:
+              - text: Description
+              - textbox "Brief description of the procedure..." [ref=e118]: Test Description
+            - generic [ref=e119]:
+              - generic [ref=e120]:
+                - text: Specialty
+                - textbox "e.g. Internal Medicine" [ref=e121]
+              - generic [ref=e122]:
+                - text: Category
+                - textbox "e.g. Invasive" [ref=e123]
+            - generic [ref=e124]:
+              - generic [ref=e125]:
+                - text: Complexity
+                - combobox [ref=e126]:
+                  - option "Basic"
+                  - option "Standard" [selected]
+                  - option "Advanced"
+                  - option "Complex"
+              - generic [ref=e127]:
+                - text: Supervision Ratio
+                - spinbutton [ref=e128]: "1"
+            - generic [ref=e129]:
+              - generic [ref=e130]:
+                - text: Min PGY Level
+                - spinbutton [ref=e131]: "1"
+              - generic [ref=e132]:
+                - checkbox "Requires Certification" [ref=e133]
+                - generic [ref=e134]: Requires Certification
+            - generic [ref=e135]:
+              - button "Cancel" [ref=e136] [cursor=pointer]
+              - button "Save Procedure" [ref=e137] [cursor=pointer]
+  - alert [ref=e138]
+  - generic "Notifications" [ref=e139]:
+    - alert [ref=e140]:
+      - generic [ref=e142]:
+        - img [ref=e144]
+        - paragraph [ref=e147]: "Failed to create procedure: [object Object]"
+        - button "Dismiss notification" [ref=e148] [cursor=pointer]:
+          - img [ref=e149]
+```

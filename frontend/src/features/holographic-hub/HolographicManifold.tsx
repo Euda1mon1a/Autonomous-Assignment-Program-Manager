@@ -21,21 +21,16 @@ import React, {
   useRef,
   useEffect,
   useState,
-  useMemo,
   useCallback,
 } from "react";
 import { format } from "date-fns";
 
 import {
   ManifoldPoint,
-  HolographicDataset,
-  SpectralLayer,
   ConstraintType,
-  LayerVisibility,
-  ConstraintVisibility,
-  CameraState,
+  SpectralLayer,
   CONSTRAINT_COLORS,
-  LAYER_COLORS,
+  LayerVisibility,
 } from "./types";
 import {
   useHolographicData,
@@ -52,7 +47,6 @@ import {
 const POINT_BASE_SIZE = 8;
 const CAMERA_SPEED = 0.01;
 const ZOOM_SPEED = 0.1;
-const WORLD_SCALE = 30; // Scale factor for 3D projection
 
 // Color helper
 function rgbToHex(r: number, g: number, b: number): string {
@@ -61,16 +55,6 @@ function rgbToHex(r: number, g: number, b: number): string {
       .toString(16)
       .padStart(2, "0");
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-}
-
-function hexToRgb(hex: string): [number, number, number] {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  if (!result) return [1, 1, 1];
-  return [
-    parseInt(result[1], 16) / 255,
-    parseInt(result[2], 16) / 255,
-    parseInt(result[3], 16) / 255,
-  ];
 }
 
 // ============================================================================
@@ -387,7 +371,7 @@ export function HolographicManifold({
     selectPoint,
     hoverPoint,
     setAnimating,
-    setAnimationSpeed,
+    setQuality,
     setAllLayersVisible,
     setAllConstraintsVisible,
   } = useHolographicState();
@@ -736,12 +720,19 @@ export function HolographicManifold({
               {state.isAnimating ? "Pause" : "Animate"}
             </button>
           </div>
+        </div>
+      )}
 
-          {/* Layer toggles */}
-          <div className="border-t border-gray-700 pt-3">
+      {/* Legend Panel */}
+      {showLegend && (
+        <div className="absolute top-4 right-4 z-10 bg-gray-800/90 p-4 rounded-lg text-white text-sm w-64">
+          <div className="mb-4">
+            <h4 className="font-bold mb-2 text-blue-400 border-b border-gray-700 pb-1">
+              Spectral Layers
+            </h4>
             <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-400 text-xs">Spectral Layers</span>
-              <div className="flex gap-1">
+              <span className="text-xs text-gray-500">Visibility</span>
+              <div className="flex gap-2">
                 <button
                   onClick={() => setAllLayersVisible(true)}
                   className="text-xs text-blue-400 hover:text-blue-300"
@@ -758,33 +749,51 @@ export function HolographicManifold({
               </div>
             </div>
             <div className="grid grid-cols-2 gap-1">
-              {(Object.keys(state.layerVisibility) as SpectralLayer[]).map(
-                (layer) => (
-                  <button
-                    key={layer}
-                    onClick={() => toggleLayer(layer)}
-                    className={`px-2 py-1 rounded text-xs text-left ${
-                      state.layerVisibility[layer]
-                        ? "bg-blue-600/50 text-white"
-                        : "bg-gray-700/50 text-gray-500"
-                    }`}
-                  >
-                    {layer.charAt(0).toUpperCase() + layer.slice(0, 4)}
-                  </button>
-                )
-              )}
+              {(Object.keys(state.layerVisibility) as Array<keyof LayerVisibility>).map((layer) => (
+                <button
+                  key={layer}
+                  onClick={() => toggleLayer(layer)}
+                  className={`px-2 py-1 rounded text-xs text-left ${
+                    state.layerVisibility[layer]
+                      ? "bg-blue-600/50 text-white"
+                      : "bg-gray-700/50 text-gray-500"
+                  }`}
+                >
+                  {layer.charAt(0).toUpperCase() + layer.slice(0, 4)}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
-      )}
 
-      {/* Legend Panel */}
-      {showLegend && (
-        <div className="absolute top-4 right-4 z-10 bg-gray-800/90 p-4 rounded-lg text-white text-sm">
-          <h4 className="font-bold mb-3 text-purple-400">Constraint Types</h4>
-          <div className="space-y-1">
-            {(Object.entries(CONSTRAINT_COLORS) as [ConstraintType, [number, number, number]][]).map(
-              ([type, color]) => (
+          <div>
+            <h4 className="font-bold mb-2 text-purple-400 border-b border-gray-700 pb-1">
+              Constraint Types
+            </h4>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs text-gray-500">Filter</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setAllConstraintsVisible(true)}
+                  className="text-xs text-blue-400 hover:text-blue-300"
+                >
+                  All
+                </button>
+                <span className="text-gray-600">|</span>
+                <button
+                  onClick={() => setAllConstraintsVisible(false)}
+                  className="text-xs text-gray-400 hover:text-gray-300"
+                >
+                  None
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-1">
+              {(
+                Object.entries(CONSTRAINT_COLORS) as [
+                  ConstraintType,
+                  [number, number, number]
+                ][]
+              ).map(([type, color]) => (
                 <button
                   key={type}
                   onClick={() => toggleConstraint(type)}
@@ -796,12 +805,14 @@ export function HolographicManifold({
                 >
                   <div
                     className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: rgbToHex(color[0], color[1], color[2]) }}
+                    style={{
+                      backgroundColor: rgbToHex(color[0], color[1], color[2]),
+                    }}
                   />
                   <span className="capitalize">{type}</span>
                 </button>
-              )
-            )}
+              ))}
+            </div>
           </div>
         </div>
       )}

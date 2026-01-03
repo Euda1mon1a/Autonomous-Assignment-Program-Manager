@@ -9,7 +9,6 @@ import {
   Check,
   Loader2,
   ThumbsUp,
-  ThumbsDown,
   Info,
   User,
   Repeat,
@@ -20,7 +19,7 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { useResolutionSuggestions, useApplyResolution } from './hooks';
-import type { Conflict, ResolutionSuggestion, ResolutionChange } from './types';
+import type { Conflict, ResolutionChange } from './types';
 
 // ============================================================================
 // Props

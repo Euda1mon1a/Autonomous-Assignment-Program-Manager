@@ -1,14 +1,10 @@
-import type { HealthCheckResponse } from "@/types/resilience";
+import { useSystemHealth } from "@/hooks";
+import type { Variants } from "framer-motion";
 import { OverallStatus, UtilizationLevel } from "@/types/resilience";
 import { motion } from "framer-motion";
-import { Activity, AlertTriangle, Shield, Users } from "lucide-react";
+import { Activity, AlertTriangle, Shield, Users, AlertCircle } from "lucide-react";
 
-interface ResilienceMetricsProps {
-  data: HealthCheckResponse | undefined;
-  isLoading: boolean;
-}
-
-const STAT_VARIANTS: any = {
+const STAT_VARIANTS: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: (i: number) => ({
     opacity: 1,
@@ -55,13 +51,35 @@ function getUtilizationColor(level: UtilizationLevel) {
   }
 }
 
-export function ResilienceMetrics({ data, isLoading }: ResilienceMetricsProps) {
+/**
+ * ResilienceMetrics - Key system health indicators
+ *
+ * Self-contained component that fetches resilience data via useSystemHealth hook.
+ * Displays four key metrics: System Health, Utilization, N-1 Compliance, and Active Fallbacks.
+ */
+export function ResilienceMetrics() {
+  const { data, isLoading, error } = useSystemHealth();
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="h-32 bg-slate-800/50 rounded-xl" />
         ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="col-span-full p-6 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-400" />
+          <div>
+            <p className="text-red-300 font-medium">Unable to load resilience metrics</p>
+            <p className="text-red-400/80 text-sm">{error.message}</p>
+          </div>
+        </div>
       </div>
     );
   }

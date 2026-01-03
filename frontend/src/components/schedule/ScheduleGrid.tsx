@@ -194,6 +194,7 @@ export function ScheduleGrid({ startDate, endDate }: ScheduleGridProps) {
       const processed: ProcessedAssignment = {
         abbreviation:
           assignment.activity_override ||
+          template?.display_abbreviation ||
           template?.abbreviation ||
           template?.name?.substring(0, ABBREVIATION_LENGTH).toUpperCase() ||
           '???',

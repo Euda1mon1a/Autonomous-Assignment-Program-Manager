@@ -8,6 +8,8 @@ import { ApiError, del, get, patch, post } from "@/lib/api";
 import type {
   ActivityAction,
   ActivityLogResponse,
+  AdminUserApiResponse,
+  AdminUserListApiResponse,
   BulkActionRequest,
   User,
   UserCreate,
@@ -95,6 +97,39 @@ export const adminUsersQueryKeys = {
 // ============================================================================
 
 /**
+ * Transform a raw API user response to the frontend User type.
+ * Handles snake_case to camelCase conversion and status derivation.
+ */
+function transformApiUser(apiUser: AdminUserApiResponse): User {
+  // Derive status from is_active and is_locked flags
+  let status: UserStatus;
+  if (apiUser.is_locked) {
+    status = "locked";
+  } else if (!apiUser.is_active) {
+    status = "inactive";
+  } else if (apiUser.invite_sent_at && !apiUser.invite_accepted_at) {
+    status = "pending";
+  } else {
+    status = "active";
+  }
+
+  return {
+    id: apiUser.id,
+    email: apiUser.email,
+    firstName: apiUser.first_name || "",
+    lastName: apiUser.last_name || "",
+    role: apiUser.role as UserRole,
+    status,
+    lastLogin: apiUser.last_login || undefined,
+    createdAt: apiUser.created_at || new Date().toISOString(),
+    updatedAt: apiUser.updated_at || new Date().toISOString(),
+    mfaEnabled: false, // Not provided by API, default to false
+    failedLoginAttempts: 0, // Not provided by API, default to 0
+    lockedUntil: undefined,
+  };
+}
+
+/**
  * Fetches admin users list from API
  */
 async function fetchUsers(filters?: AdminUserFilters): Promise<UsersResponse> {
@@ -113,13 +148,22 @@ async function fetchUsers(filters?: AdminUserFilters): Promise<UsersResponse> {
     params.set("page", String(filters.page));
   }
   if (filters?.pageSize !== undefined) {
-    params.set("page_size", String(filters.pageSize));
+    params.set("pageSize", String(filters.pageSize));
   }
 
   const queryString = params.toString();
-  return get<UsersResponse>(
+  const response = await get<AdminUserListApiResponse>(
     `/admin/users${queryString ? `?${queryString}` : ""}`
   );
+
+  // Transform API response to frontend format
+  return {
+    users: response.items.map(transformApiUser),
+    total: response.total,
+    page: response.page,
+    pageSize: response.pageSize,
+    totalPages: response.totalPages,
+  };
 }
 
 /**
@@ -199,7 +243,10 @@ export function useUser(
 ) {
   return useQuery<User, ApiError>({
     queryKey: adminUsersQueryKeys.detail(id),
-    queryFn: () => get<User>(`/admin/users/${id}`),
+    queryFn: async () => {
+      const response = await get<AdminUserApiResponse>(`/admin/users/${id}`);
+      return transformApiUser(response);
+    },
     staleTime: 2 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     enabled: !!id,
@@ -218,7 +265,21 @@ export function useCreateUser() {
   const queryClient = useQueryClient();
 
   return useMutation<User, ApiError, UserCreate>({
-    mutationFn: (data) => post<User>("/admin/users", data),
+    mutationFn: async (data) => {
+      // Transform camelCase to snake_case for API
+      const apiPayload = {
+        email: data.email,
+        first_name: data.firstName,
+        last_name: data.lastName,
+        role: data.role,
+        send_invite: data.sendInvite,
+      };
+      const response = await post<AdminUserApiResponse>(
+        "/admin/users",
+        apiPayload
+      );
+      return transformApiUser(response);
+    },
     onSuccess: () => {
       // Invalidate and refetch users list
       queryClient.invalidateQueries({ queryKey: adminUsersQueryKeys.all });
@@ -233,7 +294,24 @@ export function useUpdateUser() {
   const queryClient = useQueryClient();
 
   return useMutation<User, ApiError, { id: string; data: UserUpdate }>({
-    mutationFn: ({ id, data }) => patch<User>(`/admin/users/${id}`, data),
+    mutationFn: async ({ id, data }) => {
+      // Transform camelCase to snake_case for API
+      const apiPayload: Record<string, unknown> = {};
+      if (data.email !== undefined) apiPayload.email = data.email;
+      if (data.firstName !== undefined) apiPayload.first_name = data.firstName;
+      if (data.lastName !== undefined) apiPayload.last_name = data.lastName;
+      if (data.role !== undefined) apiPayload.role = data.role;
+      if (data.status !== undefined) {
+        // Map status to is_active
+        apiPayload.is_active = data.status === "active";
+      }
+
+      const response = await patch<AdminUserApiResponse>(
+        `/admin/users/${id}`,
+        apiPayload
+      );
+      return transformApiUser(response);
+    },
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: adminUsersQueryKeys.all });
       queryClient.invalidateQueries({
@@ -265,8 +343,26 @@ export function useToggleUserLock() {
 
   return useMutation<LockUserResponse, ApiError, { id: string; lock: boolean }>(
     {
-      mutationFn: ({ id, lock }) =>
-        post<LockUserResponse>(`/admin/users/${id}/lock`, { lock }),
+      mutationFn: async ({ id, lock }) => {
+        // Backend expects 'locked' field, not 'lock'
+        const response = await post<{
+          userId: string;
+          isLocked: boolean;
+          lockReason: string | null;
+          lockedAt: string | null;
+          lockedBy: string | null;
+          message: string;
+        }>(`/admin/users/${id}/lock`, { locked: lock });
+
+        // Transform response to match expected format
+        return {
+          success: true,
+          user: {
+            id: response.userId,
+          } as User,
+          message: response.message,
+        };
+      },
       onSuccess: (_, { id }) => {
         queryClient.invalidateQueries({ queryKey: adminUsersQueryKeys.all });
         queryClient.invalidateQueries({
@@ -302,8 +398,29 @@ export function useBulkUserAction() {
   const queryClient = useQueryClient();
 
   return useMutation<BulkActionResponse, ApiError, BulkActionRequest>({
-    mutationFn: (request) =>
-      post<BulkActionResponse>("/admin/users/bulk", request),
+    mutationFn: async (request) => {
+      // Transform to snake_case for API
+      const apiPayload = {
+        user_ids: request.userIds,
+        action: request.action,
+      };
+
+      const response = await post<{
+        action: string;
+        affectedCount: number;
+        successIds: string[];
+        failedIds: string[];
+        errors: string[];
+        message: string;
+      }>("/admin/users/bulk", apiPayload);
+
+      return {
+        success: response.failedIds.length === 0,
+        affected: response.affectedCount,
+        failures: response.errors,
+        message: response.message,
+      };
+    },
     onSuccess: () => {
       // Refresh entire users list after bulk action
       queryClient.invalidateQueries({ queryKey: adminUsersQueryKeys.all });

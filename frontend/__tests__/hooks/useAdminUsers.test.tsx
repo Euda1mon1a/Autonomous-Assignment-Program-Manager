@@ -16,7 +16,7 @@ import {
   useToggleUserLock,
   useResendInvite,
   useBulkUserAction,
-} from './useAdminUsers';
+} from '@/hooks/useAdminUsers';
 import * as api from '@/lib/api';
 
 // Mock the API module
@@ -24,22 +24,56 @@ jest.mock('@/lib/api');
 
 const mockedApi = api as jest.Mocked<typeof api>;
 
-// Test data
-const mockUser = {
+// Test data - raw API response format (snake_case)
+const mockApiUser = {
   id: 'user-123',
   email: 'test@example.com',
   username: 'testuser',
-  role: 'faculty' as const,
-  status: 'active' as const,
+  first_name: 'Test',
+  last_name: 'User',
+  role: 'faculty',
+  is_active: true,
+  is_locked: false,
+  lock_reason: null,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
+  last_login: null,
+  invite_sent_at: null,
+  invite_accepted_at: null,
 };
 
-const mockUsersResponse = {
-  users: [mockUser],
+// Raw API response from backend
+const mockApiUsersResponse = {
+  items: [mockApiUser],
   total: 1,
   page: 1,
   pageSize: 20,
+  totalPages: 1,
+};
+
+// Transformed frontend user format (camelCase)
+const mockTransformedUser = {
+  id: 'user-123',
+  email: 'test@example.com',
+  firstName: 'Test',
+  lastName: 'User',
+  role: 'faculty',
+  status: 'active',
+  lastLogin: undefined,
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T00:00:00Z',
+  mfaEnabled: false,
+  failedLoginAttempts: 0,
+  lockedUntil: undefined,
+};
+
+// Transformed response as returned by useUsers
+const mockUsersResponse = {
+  users: [mockTransformedUser],
+  total: 1,
+  page: 1,
+  pageSize: 20,
+  totalPages: 1,
 };
 
 // Create wrapper with QueryClient
@@ -61,8 +95,9 @@ describe('useUsers', () => {
     jest.clearAllMocks();
   });
 
-  it('fetches users list successfully', async () => {
-    mockedApi.get.mockResolvedValueOnce(mockUsersResponse);
+  it('fetches users list successfully and transforms response', async () => {
+    // Mock returns raw API format (snake_case)
+    mockedApi.get.mockResolvedValueOnce(mockApiUsersResponse);
 
     const { result } = renderHook(() => useUsers(), {
       wrapper: createWrapper(),
@@ -72,12 +107,13 @@ describe('useUsers', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
+    // Hook transforms to frontend format (camelCase)
     expect(result.current.data).toEqual(mockUsersResponse);
     expect(mockedApi.get).toHaveBeenCalledWith('/admin/users');
   });
 
   it('applies search filter', async () => {
-    mockedApi.get.mockResolvedValueOnce(mockUsersResponse);
+    mockedApi.get.mockResolvedValueOnce(mockApiUsersResponse);
 
     const { result } = renderHook(
       () => useUsers({ search: 'test' }),
@@ -92,7 +128,7 @@ describe('useUsers', () => {
   });
 
   it('applies role filter', async () => {
-    mockedApi.get.mockResolvedValueOnce(mockUsersResponse);
+    mockedApi.get.mockResolvedValueOnce(mockApiUsersResponse);
 
     const { result } = renderHook(
       () => useUsers({ role: 'faculty' }),
@@ -107,7 +143,7 @@ describe('useUsers', () => {
   });
 
   it('applies pagination parameters', async () => {
-    mockedApi.get.mockResolvedValueOnce(mockUsersResponse);
+    mockedApi.get.mockResolvedValueOnce(mockApiUsersResponse);
 
     const { result } = renderHook(
       () => useUsers({ page: 2, pageSize: 50 }),
@@ -119,7 +155,7 @@ describe('useUsers', () => {
     });
 
     expect(mockedApi.get).toHaveBeenCalledWith(
-      '/admin/users?page=2&page_size=50'
+      '/admin/users?page=2&pageSize=50'
     );
   });
 
@@ -140,8 +176,13 @@ describe('useUsers', () => {
 });
 
 describe('useUser', () => {
-  it('fetches single user successfully', async () => {
-    mockedApi.get.mockResolvedValueOnce(mockUser);
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('fetches single user successfully and transforms response', async () => {
+    // Mock returns raw API format (snake_case)
+    mockedApi.get.mockResolvedValueOnce(mockApiUser);
 
     const { result } = renderHook(() => useUser('user-123'), {
       wrapper: createWrapper(),
@@ -151,7 +192,8 @@ describe('useUser', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(result.current.data).toEqual(mockUser);
+    // Hook transforms to frontend format (camelCase)
+    expect(result.current.data).toEqual(mockTransformedUser);
     expect(mockedApi.get).toHaveBeenCalledWith('/admin/users/user-123');
   });
 
@@ -169,19 +211,26 @@ describe('useUser', () => {
 });
 
 describe('useCreateUser', () => {
-  it('creates user successfully', async () => {
-    const newUser = { ...mockUser, id: 'user-456' };
-    mockedApi.post.mockResolvedValueOnce(newUser);
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('creates user successfully with snake_case payload', async () => {
+    // API returns raw format
+    const newApiUser = { ...mockApiUser, id: 'user-456' };
+    mockedApi.post.mockResolvedValueOnce(newApiUser);
 
     const { result } = renderHook(() => useCreateUser(), {
       wrapper: createWrapper(),
     });
 
+    // Frontend sends camelCase
     const createData = {
       email: 'new@example.com',
-      username: 'newuser',
+      firstName: 'New',
+      lastName: 'User',
       role: 'resident' as const,
-      password: 'password123',
+      sendInvite: true,
     };
 
     await act(async () => {
@@ -192,8 +241,14 @@ describe('useCreateUser', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(result.current.data).toEqual(newUser);
-    expect(mockedApi.post).toHaveBeenCalledWith('/admin/users', createData);
+    // Hook transforms to snake_case for API
+    expect(mockedApi.post).toHaveBeenCalledWith('/admin/users', {
+      email: 'new@example.com',
+      first_name: 'New',
+      last_name: 'User',
+      role: 'resident',
+      send_invite: true,
+    });
   });
 
   it('handles duplicate email error', async () => {
@@ -207,9 +262,10 @@ describe('useCreateUser', () => {
     await act(async () => {
       result.current.mutate({
         email: 'existing@example.com',
-        username: 'test',
+        firstName: 'Test',
+        lastName: 'User',
         role: 'resident',
-        password: 'pass',
+        sendInvite: false,
       });
     });
 
@@ -222,9 +278,14 @@ describe('useCreateUser', () => {
 });
 
 describe('useUpdateUser', () => {
-  it('updates user successfully', async () => {
-    const updatedUser = { ...mockUser, email: 'updated@example.com' };
-    mockedApi.patch.mockResolvedValueOnce(updatedUser);
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('updates user successfully and transforms response', async () => {
+    // API returns raw format
+    const updatedApiUser = { ...mockApiUser, email: 'updated@example.com' };
+    mockedApi.patch.mockResolvedValueOnce(updatedApiUser);
 
     const { result } = renderHook(() => useUpdateUser(), {
       wrapper: createWrapper(),
@@ -241,14 +302,45 @@ describe('useUpdateUser', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(result.current.data).toEqual(updatedUser);
+    // Result is transformed to camelCase
+    expect(result.current.data?.email).toBe('updated@example.com');
     expect(mockedApi.patch).toHaveBeenCalledWith('/admin/users/user-123', {
       email: 'updated@example.com',
+    });
+  });
+
+  it('transforms firstName/lastName to snake_case', async () => {
+    const updatedApiUser = { ...mockApiUser, first_name: 'Updated', last_name: 'Name' };
+    mockedApi.patch.mockResolvedValueOnce(updatedApiUser);
+
+    const { result } = renderHook(() => useUpdateUser(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => {
+      result.current.mutate({
+        id: 'user-123',
+        data: { firstName: 'Updated', lastName: 'Name' },
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
+
+    // Verify snake_case sent to API
+    expect(mockedApi.patch).toHaveBeenCalledWith('/admin/users/user-123', {
+      first_name: 'Updated',
+      last_name: 'Name',
     });
   });
 });
 
 describe('useDeleteUser', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('deletes user successfully', async () => {
     mockedApi.del.mockResolvedValueOnce(undefined);
 
@@ -286,14 +378,21 @@ describe('useDeleteUser', () => {
 });
 
 describe('useToggleUserLock', () => {
-  it('locks user successfully', async () => {
-    const lockedUser = { ...mockUser, status: 'locked' as const };
-    const response = {
-      success: true,
-      user: lockedUser,
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('locks user successfully with locked field', async () => {
+    // Backend returns this format
+    const apiResponse = {
+      userId: 'user-123',
+      isLocked: true,
+      lockReason: null,
+      lockedAt: '2024-01-01T00:00:00Z',
+      lockedBy: 'admin-1',
       message: 'User locked',
     };
-    mockedApi.post.mockResolvedValueOnce(response);
+    mockedApi.post.mockResolvedValueOnce(apiResponse);
 
     const { result } = renderHook(() => useToggleUserLock(), {
       wrapper: createWrapper(),
@@ -307,20 +406,25 @@ describe('useToggleUserLock', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(result.current.data).toEqual(response);
+    // Hook transforms response
+    expect(result.current.data?.success).toBe(true);
+    expect(result.current.data?.message).toBe('User locked');
+    // Backend expects 'locked' field, not 'lock'
     expect(mockedApi.post).toHaveBeenCalledWith('/admin/users/user-123/lock', {
-      lock: true,
+      locked: true,
     });
   });
 
   it('unlocks user successfully', async () => {
-    const unlockedUser = { ...mockUser, status: 'active' as const };
-    const response = {
-      success: true,
-      user: unlockedUser,
+    const apiResponse = {
+      userId: 'user-123',
+      isLocked: false,
+      lockReason: null,
+      lockedAt: null,
+      lockedBy: null,
       message: 'User unlocked',
     };
-    mockedApi.post.mockResolvedValueOnce(response);
+    mockedApi.post.mockResolvedValueOnce(apiResponse);
 
     const { result } = renderHook(() => useToggleUserLock(), {
       wrapper: createWrapper(),
@@ -334,11 +438,19 @@ describe('useToggleUserLock', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(result.current.data).toEqual(response);
+    expect(result.current.data?.success).toBe(true);
+    // Backend expects 'locked' field
+    expect(mockedApi.post).toHaveBeenCalledWith('/admin/users/user-123/lock', {
+      locked: false,
+    });
   });
 });
 
 describe('useResendInvite', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('resends invite successfully', async () => {
     const response = {
       success: true,
@@ -383,14 +495,21 @@ describe('useResendInvite', () => {
 });
 
 describe('useBulkUserAction', () => {
-  it('performs bulk activate action', async () => {
-    const response = {
-      success: true,
-      affected: 5,
-      failures: [],
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('performs bulk activate action with snake_case payload', async () => {
+    // Backend returns this format
+    const apiResponse = {
+      action: 'activate',
+      affectedCount: 5,
+      successIds: ['user-1', 'user-2', 'user-3', 'user-4', 'user-5'],
+      failedIds: [],
+      errors: [],
       message: '5 users activated',
     };
-    mockedApi.post.mockResolvedValueOnce(response);
+    mockedApi.post.mockResolvedValueOnce(apiResponse);
 
     const { result } = renderHook(() => useBulkUserAction(), {
       wrapper: createWrapper(),
@@ -407,21 +526,26 @@ describe('useBulkUserAction', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(result.current.data).toEqual(response);
+    // Hook transforms response
+    expect(result.current.data?.success).toBe(true);
+    expect(result.current.data?.affected).toBe(5);
+    // Backend expects snake_case 'user_ids'
     expect(mockedApi.post).toHaveBeenCalledWith('/admin/users/bulk', {
-      userIds: ['user-1', 'user-2', 'user-3', 'user-4', 'user-5'],
+      user_ids: ['user-1', 'user-2', 'user-3', 'user-4', 'user-5'],
       action: 'activate',
     });
   });
 
   it('reports partial success with failures', async () => {
-    const response = {
-      success: true,
-      affected: 3,
-      failures: ['user-2', 'user-4'],
+    const apiResponse = {
+      action: 'activate',
+      affectedCount: 3,
+      successIds: ['user-1', 'user-3', 'user-5'],
+      failedIds: ['user-2', 'user-4'],
+      errors: ['User user-2 not found', 'User user-4 has active assignments'],
       message: '3 users activated, 2 failures',
     };
-    mockedApi.post.mockResolvedValueOnce(response);
+    mockedApi.post.mockResolvedValueOnce(apiResponse);
 
     const { result } = renderHook(() => useBulkUserAction(), {
       wrapper: createWrapper(),
@@ -438,17 +562,21 @@ describe('useBulkUserAction', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
+    // Hook transforms: success is false when there are failures
+    expect(result.current.data?.success).toBe(false);
     expect(result.current.data?.failures).toHaveLength(2);
   });
 
   it('performs bulk delete action', async () => {
-    const response = {
-      success: true,
-      affected: 2,
-      failures: [],
+    const apiResponse = {
+      action: 'delete',
+      affectedCount: 2,
+      successIds: ['user-1', 'user-2'],
+      failedIds: [],
+      errors: [],
       message: '2 users deleted',
     };
-    mockedApi.post.mockResolvedValueOnce(response);
+    mockedApi.post.mockResolvedValueOnce(apiResponse);
 
     const { result } = renderHook(() => useBulkUserAction(), {
       wrapper: createWrapper(),
