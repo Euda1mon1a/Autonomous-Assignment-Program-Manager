@@ -47,10 +47,15 @@ class PHIMiddleware(BaseHTTPMiddleware):
             # Note: valid user might not be set yet depending on middleware order,
             # but we log what we can.
             user_id = "anonymous"
-            if hasattr(request.state, "user"):
-                user_id = getattr(
-                    request.state.user, "username", str(request.state.user.id)
-                )
+            if hasattr(request.state, "user") and request.state.user is not None:
+                user = request.state.user
+                # Handle different user representations (User object, dict, etc.)
+                if hasattr(user, "username"):
+                    user_id = user.username
+                elif hasattr(user, "id"):
+                    user_id = str(user.id)
+                elif isinstance(user, dict):
+                    user_id = user.get("username", str(user.get("id", "unknown")))
 
             logger.info(
                 "PHI_ACCESS_ATTEMPT",
