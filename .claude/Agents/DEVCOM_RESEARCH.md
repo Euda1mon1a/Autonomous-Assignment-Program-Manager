@@ -182,6 +182,12 @@ The DEVCOM_RESEARCH agent is the R&D laboratory for the PAI (Parallel Agent Infr
 - G-6 Research Handoff - Investigate data patterns with theoretical explanations
 - Technology Horizon Scanning - Monthly survey of applicable advances
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Key Workflows

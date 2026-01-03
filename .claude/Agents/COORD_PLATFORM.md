@@ -63,7 +63,13 @@ ORCHESTRATOR
 ### This Agent Spawns
 
 | Agent | Model Tier | Trigger Conditions |
-|-------|------------|-------------------|
+|
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+-------|------------|-------------------|
 | **DBA** | haiku | Schema changes, migrations, query optimization, index management |
 | **BACKEND_ENGINEER** | haiku | Service implementation, business logic, controller patterns, Celery tasks |
 | **API_DEVELOPER** | haiku | Endpoint design, route implementation, OpenAPI documentation, API versioning |

@@ -23,6 +23,12 @@
 - [ ] Assess outcome status (Success/Partial/Blocked/Pivoted)
 - [ ] Note why this session warrants HISTORIAN documentation
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Charter

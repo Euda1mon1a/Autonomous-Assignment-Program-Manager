@@ -212,6 +212,12 @@ As **Deputy for Operations**, SYNTHESIZER operates under these standing orders f
 - Session Synthesis workflow
 - Incident Response protocol
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Common Failure Modes

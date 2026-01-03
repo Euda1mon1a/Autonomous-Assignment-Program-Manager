@@ -23,6 +23,12 @@
 - [ ] Note any expected anomalies to ignore (known maintenance, planned downtime)
 - [ ] Specify reporting frequency and alert thresholds
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Charter

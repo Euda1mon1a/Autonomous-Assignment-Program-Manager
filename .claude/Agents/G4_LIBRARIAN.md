@@ -117,6 +117,12 @@ G4_LIBRARIAN                                   G4_CONTEXT_MANAGER
 - Scope of files to scan or analyze
 - Any known issues or concerns to investigate
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Standing Orders (Execute Without Escalation)

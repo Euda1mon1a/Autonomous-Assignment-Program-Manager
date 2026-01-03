@@ -28,6 +28,12 @@
 - Skill enhancement proposal workflow
 - Agent specification update workflow
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Charter

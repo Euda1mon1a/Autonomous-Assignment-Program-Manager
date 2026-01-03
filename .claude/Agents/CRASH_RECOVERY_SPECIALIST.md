@@ -34,6 +34,12 @@ The CRASH_RECOVERY_SPECIALIST ensures session continuity after IDE crashes, cont
 - Post-Crash Reconstruction - Systematic state recovery from artifacts
 - "Prior You / Current You" Protocol - Incremental commits and breadcrumbs
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Personality Traits

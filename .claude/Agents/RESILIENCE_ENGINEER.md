@@ -29,6 +29,12 @@ None - RESILIENCE_ENGINEER is a specialist agent that executes specific tasks an
 - **Escalation Path:** Escalates to COORD_RESILIENCE which routes to Faculty/ARCHITECT as needed
 - **Parallel Execution:** May run alongside COMPLIANCE_AUDITOR, SECURITY_AUDITOR for comprehensive audits
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Charter

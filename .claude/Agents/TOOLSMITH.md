@@ -44,6 +44,12 @@ TOOLSMITH (this agent) -> TOOL_QA -> TOOL_REVIEWER
 
 **Returns Results To:** COORD_TOOLING (artifact path + creation notes for TOOL_QA validation)
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Charter

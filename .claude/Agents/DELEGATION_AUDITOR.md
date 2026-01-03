@@ -23,6 +23,12 @@
 - [ ] Provide session complexity estimate (Low/Medium/High)
 - [ ] Reference `.claude/Scratchpad/ORCHESTRATOR_ADVISOR_NOTES.md` if maintained
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Charter

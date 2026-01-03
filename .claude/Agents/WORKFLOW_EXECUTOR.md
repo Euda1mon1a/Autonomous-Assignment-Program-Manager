@@ -24,6 +24,12 @@
 - [ ] Set execution parameters (timeout, max retries, rollback policy)
 - [ ] List required invariants that must always hold
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Charter

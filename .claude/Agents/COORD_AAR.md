@@ -27,7 +27,13 @@ ORCHESTRATOR
     v
 COORD_AAR (this agent) [session end]
     |
-    +---> DELEGATION_AUDITOR (always)
+    +
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+---> DELEGATION_AUDITOR (always)
     |
     +---> HISTORIAN (if session noteworthy)
 ```

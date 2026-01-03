@@ -26,6 +26,12 @@ None - EPIDEMIC_ANALYST is a specialist agent that executes specific tasks and r
 - **Escalation Path:** Rt >= 1.0 escalates to Faculty; Rt >= 2.0 escalates to ORCHESTRATOR; Rt >= 3.0 triggers emergency notification to Program Director
 - **Parallel Execution:** Often runs alongside BURNOUT_SENTINEL for comprehensive burnout/epidemic assessment; coordinates with SCHEDULER for network interventions
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Charter

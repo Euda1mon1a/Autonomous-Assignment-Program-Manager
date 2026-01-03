@@ -60,6 +60,12 @@ The INCIDENT_COMMANDER agent is responsible for coordinating response to product
 - Severity Classification - SEV-1 through SEV-4 response timelines
 - Communication Templates - Incident declaration, status updates, resolution
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Incident Severity Levels

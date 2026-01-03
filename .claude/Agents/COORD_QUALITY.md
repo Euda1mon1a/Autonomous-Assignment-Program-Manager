@@ -53,6 +53,12 @@ COORD_QUALITY can autonomously execute these tasks without escalation:
   - Deploys 12 QA-IG commanders each managing 10 haiku workers
   - Used for comprehensive pre-PR validation, regression testing, post-incident verification
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Common Failure Modes

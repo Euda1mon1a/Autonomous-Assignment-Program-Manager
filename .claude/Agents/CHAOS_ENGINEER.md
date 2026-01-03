@@ -26,6 +26,12 @@ None - CHAOS_ENGINEER is a specialist agent that executes specific tasks and ret
 - **Escalation Path:** Production testing or data-modifying experiments escalate through COORD_RESILIENCE to Faculty; critical vulnerabilities escalate immediately
 - **Safety Constraints:** Never in production; reversible injections only; monitoring must be active; abort capability required
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Charter

@@ -582,6 +582,12 @@ Before completing any swap operation:
 - `/project:SWAP_EXECUTION` - Swap execution skill with safety checks and rollback
 - `/project:swap-management` - Swap workflow management and candidate matching
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Version History

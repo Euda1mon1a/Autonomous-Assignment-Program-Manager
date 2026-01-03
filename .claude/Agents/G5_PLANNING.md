@@ -89,6 +89,12 @@ Spawn all 10 probes in parallel with 90s timeout:
 - Available resources and timeline
 - Intel brief (from G2_RECON or provided) when running PLAN_PARTY
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Personality Traits

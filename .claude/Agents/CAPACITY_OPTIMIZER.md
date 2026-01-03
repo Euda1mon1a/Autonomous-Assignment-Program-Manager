@@ -1060,6 +1060,12 @@ QUEUE_GROWTH_CIRCUIT_BREAKER = 3    # Queue growing 3x expected
 - `/project:schedule-optimization` - Erlang-C staffing optimization integration
 - `/project:resilience-dashboard` - Capacity metrics for resilience reporting
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Version History

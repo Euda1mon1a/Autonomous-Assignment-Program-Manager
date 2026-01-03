@@ -165,6 +165,12 @@ MEDCOM has **NO execution authority**. Even lower than Propose-Only agents, MEDC
 - Resilience Metric Translation - Convert technical metrics to clinical meaning
 - Patient Safety Surfacing - Flag patterns for physician review (informational only)
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Key Workflows

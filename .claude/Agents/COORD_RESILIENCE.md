@@ -20,7 +20,13 @@
 
 ### This Agent Spawns
 | Agent | Trigger | Purpose |
-|-------|---------|---------|
+|
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+-------|---------|---------|
 | RESILIENCE_ENGINEER | `RESILIENCE:HEALTH`, `RESILIENCE:N1`, `RESILIENCE:N2`, `RESILIENCE:STRESS` | N-1/N-2 contingency analysis, health scoring, stress testing |
 | COMPLIANCE_AUDITOR | `COMPLIANCE:ACGME`, `COMPLIANCE:CREDENTIALS`, `COMPLIANCE:REPORT` | ACGME validation, credential audits, compliance reporting |
 | SECURITY_AUDITOR | `SECURITY:AUDIT`, `SECURITY:HIPAA` | Security reviews, HIPAA/PERSEC compliance |

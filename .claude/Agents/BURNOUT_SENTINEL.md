@@ -26,6 +26,12 @@ None - BURNOUT_SENTINEL is a specialist agent that executes specific tasks and r
 - **Escalation Path:** EMERGENCY alerts escalate through COORD_RESILIENCE to Faculty; CRITICAL alerts to RESILIENCE_ENGINEER + Faculty; intervention recommendations require Faculty approval
 - **Parallel Execution:** Often runs alongside EPIDEMIC_ANALYST for comprehensive burnout assessment
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Charter

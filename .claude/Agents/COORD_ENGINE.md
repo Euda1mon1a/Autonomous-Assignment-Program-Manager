@@ -126,6 +126,12 @@ Stop autonomous execution and escalate to ARCHITECT or SYNTHESIZER when:
 **Related Protocols:**
 - None specific (uses standard coordinator-to-specialist spawn patterns)
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Common Failure Modes

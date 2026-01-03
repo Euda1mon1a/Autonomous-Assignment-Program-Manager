@@ -31,7 +31,13 @@ ARCHITECT (Deputy for Systems)
     v
 COORD_TOOLING
     |
-    +---> TOOLSMITH (Phase 1: Create)
+    +
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+---> TOOLSMITH (Phase 1: Create)
     |
     +---> TOOL_QA (Phase 2: Validate)
     |

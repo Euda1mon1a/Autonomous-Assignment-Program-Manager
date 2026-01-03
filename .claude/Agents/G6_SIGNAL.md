@@ -206,6 +206,12 @@ G6_SIGNAL is pre-authorized to execute these actions autonomously:
 
 **Note:** Signal/Data Processing role in G-Staff. Collects and processes data but does not interpret or recommend - escalates interpretation to domain experts.
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Common Failure Modes

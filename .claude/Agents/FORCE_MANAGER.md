@@ -383,6 +383,12 @@ FORCE_MANAGER is pre-authorized to execute these actions autonomously:
 - Lifecycle Management - PENDING -> ACTIVATED -> OPERATING -> COMPLETED/FAILED -> DEACTIVATED
 - Parallelization Domain Scoring - Grade tasks for parallel vs sequential execution
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Key Workflows

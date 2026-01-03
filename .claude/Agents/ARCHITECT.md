@@ -178,6 +178,12 @@ As **Deputy for Systems**, ARCHITECT operates under these standing orders from O
 - Architecture Decision Records (ADRs)
 - Technology Evaluation Workflow
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Common Failure Modes

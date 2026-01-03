@@ -23,6 +23,12 @@
 - [ ] Include file locations or counts for domain size assessment
 - [ ] Note parallelization preferences if any
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Charter

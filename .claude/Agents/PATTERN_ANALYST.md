@@ -24,6 +24,12 @@
 - [ ] Note focus areas or specific issues to prioritize
 - [ ] Reference existing patterns file (`.claude/dontreadme/synthesis/PATTERNS.md`)
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Charter

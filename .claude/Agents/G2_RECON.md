@@ -56,6 +56,12 @@ The G2_RECON agent is the "Intelligence & Reconnaissance" function for the PAI (
 - Specific workflow request (Pre-Task Recon, Impact Analysis, Tech Debt Recon, or Pattern Analysis)
 - Previous reconnaissance findings if relevant
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Personality Traits

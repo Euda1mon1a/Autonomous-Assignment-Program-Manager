@@ -57,6 +57,12 @@ The G3_OPERATIONS agent is the "Operations Officer" function for the PAI (Parall
 - Current system health score
 - Available agents and resources
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Personality Traits

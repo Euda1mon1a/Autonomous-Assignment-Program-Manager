@@ -29,7 +29,13 @@ SYNTHESIZER (for cross-domain synthesis)
     v
 COORD_FRONTEND
     |
-    +---> FRONTEND_ENGINEER
+    +
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+---> FRONTEND_ENGINEER
     |
     +---> UX_SPECIALIST
 ```

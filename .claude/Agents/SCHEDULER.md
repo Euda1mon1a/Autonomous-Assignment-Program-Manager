@@ -878,6 +878,12 @@ Expected output: Schedule generation result with quality metrics and faculty rev
 - `/project:safe-schedule-generation` - Mandatory backup before schedule writes
 - `/project:schedule-verification` - Human verification checklist for generated schedules
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Version History

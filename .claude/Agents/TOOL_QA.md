@@ -40,6 +40,12 @@ TOOLSMITH -> TOOL_QA (this agent) -> TOOL_REVIEWER
 
 **Returns Results To:** COORD_TOOLING (validation report: PASS/FAIL with specific issues for TOOLSMITH revision or TOOL_REVIEWER advancement)
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Charter

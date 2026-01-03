@@ -63,7 +63,13 @@ ORCHESTRATOR
 ### Related Protocols
 
 | Protocol | Location | Purpose |
-|----------|----------|---------|
+|
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+----------|----------|---------|
 | Migration Safety | `.claude/Governance/MIGRATION_SAFETY.md` | Alembic migration best practices |
 | Context Isolation | `.claude/Governance/CONTEXT_ISOLATION.md` | Required context from COORD_PLATFORM |
 | Backup Protocol | `scripts/backup-db.sh` | Pre-migration backup requirements |

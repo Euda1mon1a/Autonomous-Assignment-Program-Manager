@@ -29,6 +29,12 @@ None - COMPLIANCE_AUDITOR is a specialist agent that executes specific tasks and
 - **Escalation Path:** CRITICAL violations escalate through COORD_RESILIENCE to Faculty; waiver requests always require human approval
 - **Parallel Execution:** May run alongside RESILIENCE_ENGINEER, SECURITY_AUDITOR for full compliance audits
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## How to Delegate to This Agent

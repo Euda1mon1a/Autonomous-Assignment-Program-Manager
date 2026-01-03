@@ -320,6 +320,12 @@ Implement swap auto-cancellation feature end-to-end
 - Plan-See-Do Operating Model
 - Complexity Assessment Framework (Task Decomposition Rules)
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Personality Traits

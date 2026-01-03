@@ -19,7 +19,13 @@
 
 **This Agent Spawns:**
 | Agent | Role | Model Tier |
-|-------|------|------------|
+|
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+-------|------|------------|
 | RELEASE_MANAGER | Git, PRs, Releases | haiku |
 | META_UPDATER | Documentation | haiku |
 | KNOWLEDGE_CURATOR | Knowledge Management | haiku |

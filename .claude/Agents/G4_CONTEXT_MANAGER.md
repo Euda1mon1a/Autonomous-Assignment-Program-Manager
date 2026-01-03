@@ -64,6 +64,12 @@ G4_CONTEXT_MANAGER is pre-authorized to execute these actions autonomously:
 
 **Note:** Manages RAG knowledge base curation. Intentional about what to remember - not everything is worth embedding. Curates knowledge for long-term value.
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Common Failure Modes

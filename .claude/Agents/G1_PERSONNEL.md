@@ -47,6 +47,12 @@ The G1_PERSONNEL agent is the "Human Resources" function for the PAI (Parallel A
 - File paths to delegation metrics if needed
 - Specific workflow request (Roster Maintenance, Gap Analysis, Utilization Tracking, or Effectiveness Tracking)
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Personality Traits

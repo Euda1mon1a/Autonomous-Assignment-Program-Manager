@@ -61,6 +61,12 @@ COORD_INTEL can autonomously execute these tasks without escalation:
 - Full-Stack Investigation - Parallel spawn of all layer agents for unknown bug locations
 - Bug Reproduction Protocol - Systematic reproduction with evidence preservation
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 ---
 
 ## Common Failure Modes
