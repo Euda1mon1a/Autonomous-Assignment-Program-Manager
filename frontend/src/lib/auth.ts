@@ -196,7 +196,7 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
       token_type: tokenResponse.data.token_type,
       user,
     }
-  } catch (error) {
+  } catch (_error) {
     // Login succeeded (token is set in cookie), but failed to fetch user data
     // This is a partial success - the user is authenticated but we can't get their details
     // Throw a descriptive error for the UI to handle
@@ -238,7 +238,7 @@ export async function logout(): Promise<boolean> {
   try {
     await post('/auth/logout', {})
     return true
-  } catch (error) {
+  } catch (_error) {
     // Even if the request fails, the user is logged out client-side
     return false
   }
@@ -319,7 +319,7 @@ export async function checkAuth(): Promise<AuthCheckResponse> {
     // Transform the User response into AuthCheckResponse format
     const user = await get<User>('/auth/me')
     return { authenticated: true, user }
-  } catch (error) {
+  } catch (_error) {
     // If request fails, user is not authenticated
     return { authenticated: false }
   }
@@ -377,7 +377,7 @@ export async function validateToken(): Promise<User | null> {
   try {
     const user = await getCurrentUser()
     return user
-  } catch (error) {
+  } catch (_error) {
     // Token is invalid or missing
     return null
   }
@@ -481,7 +481,7 @@ export async function performRefresh(): Promise<RefreshTokenResponse | null> {
       storeTokens(response.refresh_token)
 
       return response
-    } catch (error) {
+    } catch (_error) {
       // Clear state on failure - user needs to re-login
       clearTokenState()
 

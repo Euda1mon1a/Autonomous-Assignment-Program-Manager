@@ -4,8 +4,8 @@
 
 set -e
 
-echo "Running database migrations..."
-alembic upgrade head
+echo "Skipping migrations (manual control)..."
+# alembic upgrade head
 
 # Check if the first argument is 'celery'
 if [ "$1" = "celery" ]; then

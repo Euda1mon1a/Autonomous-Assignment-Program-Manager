@@ -6,7 +6,6 @@
 
 import {
   ErrorCode,
-  ErrorResponse,
   isRFC7807Error,
   isValidationError,
 } from './error-types'

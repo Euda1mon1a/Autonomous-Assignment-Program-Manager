@@ -5,7 +5,7 @@
  */
 
 import React from 'react'
-import { getErrorMessage, getErrorTitle, getDetailedErrorMessage } from './error-messages'
+import { getErrorTitle, getDetailedErrorMessage } from './error-messages'
 import { ErrorSeverity, getErrorSeverity, isRFC7807Error } from './error-types'
 
 interface ErrorToastProps {
@@ -207,8 +207,8 @@ export function ErrorToastContainer({
       setToasts((prev) => [...prev, toast])
     }
 
-    window.addEventListener('error-toast' as any, handleAddToast)
-    return () => window.removeEventListener('error-toast' as any, handleAddToast)
+    window.addEventListener('error-toast', handleAddToast as EventListener)
+    return () => window.removeEventListener('error-toast', handleAddToast as EventListener)
   }, [])
 
   const removeToast = (id: string) => {
