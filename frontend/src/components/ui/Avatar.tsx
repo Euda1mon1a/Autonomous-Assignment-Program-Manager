@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { User } from 'lucide-react';
 
 export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -78,10 +79,12 @@ export function Avatar({
         className={`${sizeStyles[size]} rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-medium overflow-hidden`}
       >
         {showImage ? (
-          <img
-            src={src}
+          <Image
+            src={src!}
             alt={alt}
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover"
             onError={() => setImageError(true)}
           />
         ) : initials ? (

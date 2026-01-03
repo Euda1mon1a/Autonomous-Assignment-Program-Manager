@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react'
 
 // ============================================================================
@@ -135,7 +135,7 @@ export function Toast({
         clearInterval(progressIntervalRef.current)
       }
     }
-  }, [duration, isPaused, persistent])
+  }, [duration, isPaused, persistent, handleDismiss])
 
   // Handle pause
   const handleMouseEnter = () => {
@@ -162,13 +162,13 @@ export function Toast({
   }
 
   // Handle dismiss with exit animation
-  const handleDismiss = () => {
+  const handleDismiss = useCallback(() => {
     setIsLeaving(true)
     // Wait for animation to complete before removing
     setTimeout(() => {
       onDismiss(id)
     }, 300)
-  }
+  }, [id, onDismiss])
 
   // Handle action button click
   const handleActionClick = () => {

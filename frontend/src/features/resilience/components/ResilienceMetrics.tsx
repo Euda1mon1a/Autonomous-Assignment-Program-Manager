@@ -1,9 +1,10 @@
-import { useSystemHealth, useDefenseLevel } from "@/hooks";
+import { useSystemHealth } from "@/hooks";
+import type { Variants } from "framer-motion";
 import { OverallStatus, UtilizationLevel } from "@/types/resilience";
 import { motion } from "framer-motion";
 import { Activity, AlertTriangle, Shield, Users, AlertCircle } from "lucide-react";
 
-const STAT_VARIANTS: any = {
+const STAT_VARIANTS: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: (i: number) => ({
     opacity: 1,
@@ -58,13 +59,6 @@ function getUtilizationColor(level: UtilizationLevel) {
  */
 export function ResilienceMetrics() {
   const { data, isLoading, error } = useSystemHealth();
-
-  // Also fetch defense level details for enhanced display
-  const coverageRate = data?.utilization?.utilization_rate ?? 0;
-  const { data: defenseLevelData } = useDefenseLevel(
-    1 - coverageRate, // Coverage rate is inverse of utilization for defense level
-    { enabled: !!data && coverageRate > 0 }
-  );
 
   if (isLoading) {
     return (
