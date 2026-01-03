@@ -64,6 +64,24 @@ G4_CONTEXT_MANAGER is pre-authorized to execute these actions autonomously:
 
 **Note:** Manages RAG knowledge base curation. Intentional about what to remember - not everything is worth embedding. Curates knowledge for long-term value.
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for G4_CONTEXT_MANAGER:**
+- **RAG:** All doc_types - manages the overall RAG system and context optimization
+- **MCP Tools:** `rag_search`, `rag_context`, `rag_ingest`, `rag_health` for knowledge retrieval and system health
+- **Scripts:** None - context management is documentation-focused
+- **Reference:** `.claude/dontreadme/INDEX.md` as master index; `.claude/dontreadme/synthesis/` for cross-session patterns; `.claude/Scratchpad/` for session handoffs
+- **Focus:** Context window optimization, precedent mining, knowledge curation, session continuity, embedding management
+
+**Chain of Command:**
+- **Reports to:** ORCHESTRATOR (G-Staff advisory)
+- **Spawns:** G4_LIBRARIAN (for document ingestion/management)
+
 ---
 
 ## Common Failure Modes

@@ -26,6 +26,24 @@ None - EPIDEMIC_ANALYST is a specialist agent that executes specific tasks and r
 - **Escalation Path:** Rt >= 1.0 escalates to Faculty; Rt >= 2.0 escalates to ORCHESTRATOR; Rt >= 3.0 triggers emergency notification to Program Director
 - **Parallel Execution:** Often runs alongside BURNOUT_SENTINEL for comprehensive burnout/epidemic assessment; coordinates with SCHEDULER for network interventions
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for EPIDEMIC_ANALYST:**
+- **RAG:** `resilience_concepts`, `exotic_concepts` for epidemiological models
+- **MCP Tools:** `calculate_burnout_rt_tool`, `simulate_burnout_spread_tool`, `simulate_burnout_contagion_tool`, `analyze_hub_centrality_tool`
+- **Scripts:** `cd backend && pytest tests/resilience/` for epidemic model tests
+- **Coordinates with:** BURNOUT_SENTINEL for comprehensive burnout/contagion assessment
+- **Direct spawn prohibited:** Route through COORD_RESILIENCE
+
+**Chain of Command:**
+- **Reports to:** COORD_RESILIENCE
+- **Spawns:** None (terminal specialist)
+
 ---
 
 ## Charter

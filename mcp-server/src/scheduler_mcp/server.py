@@ -50,6 +50,9 @@ from .circuit_breaker_tools import (
     test_half_open_breaker,
 )
 
+# Import API client for RAG tools
+from .api_client import get_api_client
+
 # Import composite/advanced resilience tools
 from .composite_resilience_tools import (
     # Creep Fatigue

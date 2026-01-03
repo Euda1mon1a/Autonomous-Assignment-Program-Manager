@@ -26,6 +26,24 @@ None - CHAOS_ENGINEER is a specialist agent that executes specific tasks and ret
 - **Escalation Path:** Production testing or data-modifying experiments escalate through COORD_RESILIENCE to Faculty; critical vulnerabilities escalate immediately
 - **Safety Constraints:** Never in production; reversible injections only; monitoring must be active; abort capability required
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for CHAOS_ENGINEER:**
+- **RAG:** `resilience_concepts`, `exotic_concepts` for failure mode patterns
+- **MCP Tools:** `run_contingency_analysis_resilience_tool`, `calculate_blast_radius_tool`, `check_circuit_breakers_tool`, `benchmark_resilience_tool`
+- **Scripts:** `cd backend && pytest tests/resilience/` for chaos experiment validation
+- **Safety:** Never test in production; always verify abort capability active
+- **Direct spawn prohibited:** Route through COORD_RESILIENCE
+
+**Chain of Command:**
+- **Reports to:** COORD_RESILIENCE
+- **Spawns:** None (terminal specialist)
+
 ---
 
 ## Charter

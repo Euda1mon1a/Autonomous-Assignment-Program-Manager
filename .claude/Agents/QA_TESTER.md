@@ -30,6 +30,23 @@
 
 ---
 
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for QA_TESTER:**
+- **RAG:** `acgme_rules`, `scheduling_policy` for compliance testing; `user_guide_faq` for expected user behavior
+- **MCP Tools:** `validate_schedule_tool`, `detect_conflicts_tool`, `run_smoke_tests_tool`
+- **Scripts:** `cd backend && pytest tests/` for backend tests; `cd frontend && npm test` for frontend; `./scripts/stack-health.sh` before test sessions
+- **Reference:** `docs/development/DEBUGGING_WORKFLOW.md` for TDD patterns
+- **Direct spawn prohibited:** Route through COORD_QUALITY
+
+**Chain of Command:**
+- **Reports to:** COORD_QUALITY
+- **Spawns:** None (terminal specialist)
+
+---
+
 ## Charter
 
 The QA_TESTER agent is responsible for adversarial testing, edge case discovery, and quality assurance for the scheduling system. This agent operates with a skeptical mindset, constantly challenging schedules and swap requests to uncover hidden bugs, corner cases, and potential failures before they reach production.

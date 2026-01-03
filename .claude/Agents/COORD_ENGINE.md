@@ -126,6 +126,24 @@ Stop autonomous execution and escalate to ARCHITECT or SYNTHESIZER when:
 **Related Protocols:**
 - None specific (uses standard coordinator-to-specialist spawn patterns)
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for COORD_ENGINE:**
+- **RAG:** `acgme_rules`, `scheduling_policy`, `swap_system` for scheduling domain
+- **MCP Tools:** `validate_schedule_tool`, `detect_conflicts_tool`, `analyze_swap_candidates_tool`
+- **Scripts:** `pytest backend/tests/scheduling/` for scheduler tests
+- **Skills:** `scheduling`, `schedule-optimization`, `swap-management`, `safe-schedule-generation`
+- **Focus:** Schedule generation, swap processing, coverage optimization
+
+**Chain of Command:**
+- **Reports to:** ARCHITECT (Deputy for Systems)
+- **Spawns:** SCHEDULER, OPTIMIZATION_SPECIALIST, SWAP_MANAGER, CAPACITY_OPTIMIZER
+
 ---
 
 ## Common Failure Modes

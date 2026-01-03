@@ -582,6 +582,23 @@ Before completing any swap operation:
 - `/project:SWAP_EXECUTION` - Swap execution skill with safety checks and rollback
 - `/project:swap-management` - Swap workflow management and candidate matching
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for SWAP_MANAGER:**
+- **RAG:** `swap_system`, `acgme_rules` before processing swap requests
+- **MCP Tools:** `analyze_swap_candidates_tool`, `validate_schedule_tool`, `detect_conflicts_tool`
+- **Scripts:** `cd backend && pytest tests/services/test_swap*.py` for swap tests
+- **Direct spawn prohibited:** Route through COORD_ENGINE
+
+**Chain of Command:**
+- **Reports to:** COORD_ENGINE
+- **Spawns:** None (terminal specialist)
+
 ---
 
 ## Version History

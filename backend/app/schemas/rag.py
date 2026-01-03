@@ -48,6 +48,7 @@ class DocumentIngestRequest(BaseModel):
     def validate_doc_type(cls, v: str) -> str:
         """Validate and normalize doc_type."""
         allowed_types = {
+            # Core documentation types
             "acgme_rules",
             "scheduling_policy",
             "user_guide",
@@ -55,11 +56,23 @@ class DocumentIngestRequest(BaseModel):
             "meeting_notes",
             "research_paper",
             "clinical_guideline",
+            # RAG knowledge base categories (from docs/rag-knowledge/)
+            "swap_system",
+            "military_specific",
+            "resilience_concepts",
+            "user_guide_faq",
+            "session_handoff",
+            "ai_patterns",
+            "ai_decisions",
+            "delegation_patterns",
+            "exotic_concepts",
+            "agent_spec",
+            # Fallback
             "other",
         }
         if v.lower() not in allowed_types:
             raise ValueError(
-                f"Invalid doc_type. Must be one of: {', '.join(allowed_types)}"
+                f"Invalid doc_type. Must be one of: {', '.join(sorted(allowed_types))}"
             )
         return v.lower()
 

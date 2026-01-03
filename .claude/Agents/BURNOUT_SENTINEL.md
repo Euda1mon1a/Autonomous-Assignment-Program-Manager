@@ -26,6 +26,24 @@ None - BURNOUT_SENTINEL is a specialist agent that executes specific tasks and r
 - **Escalation Path:** EMERGENCY alerts escalate through COORD_RESILIENCE to Faculty; CRITICAL alerts to RESILIENCE_ENGINEER + Faculty; intervention recommendations require Faculty approval
 - **Parallel Execution:** Often runs alongside EPIDEMIC_ANALYST for comprehensive burnout assessment
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for BURNOUT_SENTINEL:**
+- **RAG:** `resilience_concepts`, `exotic_concepts` for burnout detection patterns
+- **MCP Tools:** `detect_burnout_precursors_tool`, `predict_burnout_magnitude_tool`, `run_spc_analysis_tool`, `calculate_fire_danger_index_tool`, `assess_creep_fatigue_tool`
+- **Scripts:** `cd backend && pytest tests/resilience/` for burnout monitoring tests
+- **Coordinates with:** EPIDEMIC_ANALYST for comprehensive burnout assessment
+- **Direct spawn prohibited:** Route through COORD_RESILIENCE
+
+**Chain of Command:**
+- **Reports to:** COORD_RESILIENCE
+- **Spawns:** None (terminal specialist)
+
 ---
 
 ## Charter

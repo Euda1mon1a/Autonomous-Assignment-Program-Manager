@@ -63,13 +63,25 @@ ORCHESTRATOR
 ### This Agent Spawns
 
 | Agent | Model Tier | Trigger Conditions |
-|-------|------------|-------------------|
-| **DBA** | haiku | Schema changes, migrations, query optimization, index management |
-| **BACKEND_ENGINEER** | haiku | Service implementation, business logic, controller patterns, Celery tasks |
-| **API_DEVELOPER** | haiku | Endpoint design, route implementation, OpenAPI documentation, API versioning |
+|
+---
 
-**Spawn Limit:** Up to 3 agents in parallel
-**Coordination:** COORD_PLATFORM synthesizes results from all spawned agents before reporting upstream
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for COORD_PLATFORM:**
+- **RAG:** `scheduling_policy` for domain context
+- **MCP Tools:** Database-related tools (via DBA agent)
+- **Scripts:** `pytest backend/tests/` for backend tests; `alembic upgrade head` for migrations
+- **Skills:** `database-migration`, `fastapi-production`
+- **Focus:** Backend infrastructure, API development, database schema management
+
+**Chain of Command:**
+- **Reports to:** ARCHITECT (Deputy for Systems)
+- **Spawns:** DBA, BACKEND_ENGINEER, API_DEVELOPER
+
+---
 
 ### Related Protocols
 

@@ -24,6 +24,26 @@
 - [ ] Note focus areas or specific issues to prioritize
 - [ ] Reference existing patterns file (`.claude/dontreadme/synthesis/PATTERNS.md`)
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for PATTERN_ANALYST:**
+- **RAG:** All doc_types for cross-session pattern analysis; especially `ai_patterns`, `session_handoff`, `ai_decisions`
+- **MCP Tools:** `rag_search` for knowledge base queries; `detect_schedule_changepoints_tool` for trend detection
+- **Scripts:** `git log --oneline --since` for commit pattern analysis
+- **Reference:** `.claude/dontreadme/synthesis/PATTERNS.md` for existing patterns; `.claude/dontreadme/sessions/` for session reports
+- **Data sources:** Session reports, git history, test failures, incident reports
+- **Focus:** Recurring issues, solution patterns, anti-patterns, trend analysis
+- **Direct spawn prohibited:** Route through COORD_INTEL or G2_RECON
+
+**Chain of Command:**
+- **Reports to:** COORD_INTEL (primary) or G2_RECON (intelligence chain)
+- **Spawns:** None (terminal specialist)
+
 ---
 
 ## Charter

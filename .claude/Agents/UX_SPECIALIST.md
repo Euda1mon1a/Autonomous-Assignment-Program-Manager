@@ -45,6 +45,26 @@ UX_SPECIALIST (this agent)
 
 **Returns Results To:** COORD_FRONTEND (for synthesis with implementation work from FRONTEND_ENGINEER)
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for UX_SPECIALIST:**
+- **RAG:** `user_guide_faq` for user context and requirements
+- **MCP Tools:** `rag_search` for domain documentation
+- **Scripts:**
+  - `cd frontend && npm run lint` for frontend validation
+- **Reference:** `frontend/tailwind.config.ts` for design tokens; WCAG 2.1 AA guidelines
+- **Focus:** Accessibility (contrast ratios, keyboard navigation, ARIA), responsive design validation
+- **Direct spawn prohibited:** Route through COORD_FRONTEND
+
+**Chain of Command:**
+- **Reports to:** COORD_FRONTEND
+- **Spawns:** None (terminal specialist)
+
 ---
 
 ## Charter

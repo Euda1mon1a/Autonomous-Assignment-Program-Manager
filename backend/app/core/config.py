@@ -5,7 +5,7 @@ import secrets
 from functools import lru_cache
 from urllib.parse import urlparse
 
-from pydantic import Field, field_validator
+from pydantic import Field, computed_field, field_validator
 from pydantic_settings import BaseSettings
 
 logger = logging.getLogger(__name__)
@@ -85,6 +85,7 @@ class Settings(BaseSettings):
     CACHE_SCHEDULE_TTL: int = 1800  # Schedule data cache TTL (30 minutes)
     CACHE_ROTATION_TTL: int = 86400  # Rotation template cache TTL (24 hours)
 
+    @computed_field
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
         """
@@ -99,6 +100,7 @@ class Settings(BaseSettings):
             "postgresql://", "postgresql+asyncpg://"
         )
 
+    @computed_field
     @property
     def redis_url_with_password(self) -> str:
         """

@@ -27,18 +27,24 @@ ORCHESTRATOR
     v
 COORD_AAR (this agent) [session end]
     |
-    +---> DELEGATION_AUDITOR (always)
-    |
-    +---> HISTORIAN (if session noteworthy)
-```
+    +
+---
 
-**Typical Spawn Triggers:**
-- Explicit invocation: User or ORCHESTRATOR runs `/project:coord-aar`
-- Session close signal: User says "ending session", "wrapping up", "that's all"
-- Context limit warning: Context window >80% consumed
-- PR merge complete with no new tasks queued
+## Standard Operations
 
-**Returns Results To:** ORCHESTRATOR (AAR report with handoff notes, metrics, and HISTORIAN recommendation)
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for COORD_AAR:**
+- **RAG:** `ai_patterns`, `delegation_patterns`, `session_handoff` for session analysis
+- **MCP Tools:** None directly (coordination/synthesis role)
+- **Scripts:** None (retrospective analysis)
+- **Skills:** `session-end` for mandatory session close-out
+- **Scratchpad:** Update `ORCHESTRATOR_ADVISOR_NOTES.md`, `DELEGATION_METRICS.md`
+- **Focus:** Session wrap-up, XO report collection, handoff notes
+
+**Chain of Command:**
+- **Reports to:** ORCHESTRATOR
+- **Spawns:** DELEGATION_AUDITOR (always), HISTORIAN (if noteworthy)
 
 ---
 

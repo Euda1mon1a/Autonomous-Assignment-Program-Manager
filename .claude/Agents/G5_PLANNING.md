@@ -89,6 +89,26 @@ Spawn all 10 probes in parallel with 90s timeout:
 - Available resources and timeline
 - Intel brief (from G2_RECON or provided) when running PLAN_PARTY
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for G5_PLANNING:**
+- **RAG:** All doc_types for comprehensive planning context; especially `scheduling_policy`, `resilience_concepts`, `ai_patterns`, `delegation_patterns` for task decomposition
+- **MCP Tools:** Uses constraint-related tools for validation; `rag_search` for knowledge retrieval
+- **Scripts:** N/A (planning/analysis agent, does not execute)
+- **Protocol:** `/plan-party` for 10-probe parallel planning deployment
+- **Reference:** `.claude/docs/PARALLELISM_FRAMEWORK.md` for agent parallelism rules; `.claude/Agents/COORD_*.md` for domain boundaries
+- **Skills:** `schedule-optimization` for multi-objective analysis
+- **Focus:** Pre-execution planning, constraint analysis, task decomposition, G5 probe coordination, Pareto optimization
+
+**Chain of Command:**
+- **Reports to:** ORCHESTRATOR (G-Staff advisory)
+- **Spawns:** G5 probes via PLAN_PARTY protocol (CRITICAL_PATH, RISK_MINIMAL, PARALLEL_MAX, RESOURCE_MIN, QUALITY_GATE, INCREMENTAL, DOMAIN_EXPERT, PRECEDENT, ADVERSARIAL, SYNTHESIS)
+
 ---
 
 ## Personality Traits

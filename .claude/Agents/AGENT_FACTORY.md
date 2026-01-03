@@ -39,6 +39,25 @@ The AGENT_FACTORY provides a framework for dynamically creating, composing, and 
 
 **Note:** Creates new agent specifications following established templates and archetypes. Does not instantiate runtime agents - that is the responsibility of ORCHESTRATOR and coordinators.
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for AGENT_FACTORY:**
+- **RAG:** `ai_patterns`, `delegation_patterns` for agent archetype patterns
+- **MCP Tools:** `rag_search`, `rag_ingest` for knowledge base operations
+- **Scripts:** Use `agent-factory` skill for guided agent creation
+- **Reference:** `.claude/CONSTITUTION.md` for governance validation; `.claude/Agents/*.md` for template patterns
+- **Focus:** Creates agent specifications (archetypes: Researcher, Validator, Generator, Critic, Synthesizer)
+- **Direct spawn prohibited:** Route through COORD_TOOLING
+
+**Chain of Command:**
+- **Reports to:** COORD_TOOLING
+- **Spawns:** None (terminal specialist - creates agent specifications, does not spawn runtime agents)
+
 ---
 
 ## II. AGENT COMPOSITION MODEL

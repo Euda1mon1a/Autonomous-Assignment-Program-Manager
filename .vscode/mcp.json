@@ -1,86 +1,8 @@
 {
-  "$schema": "https://modelcontextprotocol.io/schema/mcp.json",
   "mcpServers": {
     "residency-scheduler": {
-      "description": "Medical residency scheduling MCP server (Docker)",
-      "command": "docker",
-      "args": ["compose", "exec", "-T", "mcp-server", "python", "-m", "scheduler_mcp.server"],
-      "env": {
-        "LOG_LEVEL": "INFO"
-      },
-      "transport": "stdio",
-      "autoStart": false,
-      "capabilities": {
-        "resources": {
-          "enabled": true,
-          "resources": [
-            "schedule://status",
-            "schedule://compliance"
-          ]
-        },
-        "tools": {
-          "enabled": true,
-          "tools": [
-            "validate_schedule_tool",
-            "run_contingency_analysis_tool",
-            "detect_conflicts_tool",
-            "analyze_swap_candidates_tool"
-          ]
-        }
-      },
-      "security": {
-        "allowedPaths": [
-          "${workspaceFolder}/mcp-server",
-          "${workspaceFolder}/backend"
-        ],
-        "readOnlyMode": true,
-        "requireApproval": true,
-        "sensitiveData": {
-          "phi_protection": true,
-          "audit_logging": true,
-          "redact_pii": true
-        }
-      },
-      "metadata": {
-        "version": "0.1.0",
-        "healthCheck": {
-          "enabled": true,
-          "interval": 60000,
-          "timeout": 5000
-        },
-        "features": [
-          "acgme-compliance",
-          "conflict-detection",
-          "contingency-analysis",
-          "swap-matching"
-        ]
-      }
-    },
-    "residency-scheduler-local": {
-      "description": "Medical residency scheduling MCP server (local Python - requires pip install)",
-      "command": "python",
-      "args": ["-m", "scheduler_mcp.server"],
-      "cwd": "${workspaceFolder}/mcp-server/src",
-      "env": {
-        "DATABASE_URL": "${env:DATABASE_URL}",
-        "REDIS_URL": "${env:REDIS_URL}",
-        "API_BASE_URL": "http://localhost:8000",
-        "LOG_LEVEL": "INFO",
-        "PYTHONPATH": "${workspaceFolder}/mcp-server/src"
-      },
-      "transport": "stdio",
-      "autoStart": false,
-      "disabled": true
-    }
-  },
-  "global": {
-    "logLevel": "info",
-    "logFile": "${workspaceFolder}/.vscode/mcp.log",
-    "timeout": 30000,
-    "retryAttempts": 3,
-    "security": {
-      "allowedHosts": ["localhost", "127.0.0.1"],
-      "requireTls": false
+      "type": "sse",
+      "url": "http://127.0.0.1:8080/mcp/sse"
     }
   }
 }

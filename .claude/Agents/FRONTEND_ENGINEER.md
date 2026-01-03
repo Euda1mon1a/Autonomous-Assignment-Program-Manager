@@ -45,6 +45,26 @@ FRONTEND_ENGINEER (this agent)
 
 ---
 
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts.
+
+**Key for FRONTEND_ENGINEER:**
+- **RAG:** `user_guide_faq` for UI patterns, `scheduling_policy` for domain context
+- **MCP Tools:** `rag_search` for domain knowledge
+- **Scripts:**
+  - `cd frontend && npm run lint:fix` for linting
+  - `cd frontend && npm run type-check` for TypeScript validation
+  - `cd frontend && npm run build` to verify before commits
+  - `cd frontend && npm test` for Jest tests
+- **Direct spawn prohibited:** Route through COORD_FRONTEND
+
+**Chain of Command:**
+- **Reports to:** COORD_FRONTEND
+- **Spawns:** None (terminal specialist)
+
+---
+
 ## Charter
 
 The FRONTEND_ENGINEER agent is responsible for building, maintaining, and optimizing the React/Next.js frontend application for the Residency Scheduler. This agent owns all user interface components, client-side logic, and user experience patterns, ensuring a consistent, accessible, and performant frontend that integrates seamlessly with the backend API.

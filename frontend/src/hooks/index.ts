@@ -7,260 +7,256 @@
  */
 
 // Import types needed for queryKeys object
-import type { AssignmentFilters } from './useSchedule'
-import type { PeopleFilters } from './usePeople'
-import type { AbsenceFilters } from './useAbsences'
-import type { SwapFilters } from './useSwaps'
+import type { AbsenceFilters } from "./useAbsences";
+import type { PeopleFilters } from "./usePeople";
+import type { AssignmentFilters } from "./useSchedule";
+import type { SwapFilters } from "./useSwaps";
 
 // ============================================================================
 // Authentication Hooks
 // ============================================================================
 export {
+  authQueryKeys,
   useAuth,
+  useAuthCheck,
   useLogin,
   useLogout,
-  useUser,
-  useAuthCheck,
-  useValidateSession,
   usePermissions,
   useRole,
-  authQueryKeys,
-  type UserRole,
+  useUser,
+  useValidateSession,
   type Permission,
-} from './useAuth'
+  type UserRole,
+} from "./useAuth";
 
 // ============================================================================
 // Schedule Hooks
 // ============================================================================
 export {
-  useSchedule,
-  useGenerateSchedule,
-  useValidateSchedule,
-  useRotationTemplates,
-  useRotationTemplate,
-  useCreateTemplate,
-  useUpdateTemplate,
-  useDeleteTemplate,
+  scheduleQueryKeys,
   useAssignments,
   useCreateAssignment,
-  useUpdateAssignment,
+  useCreateTemplate,
   useDeleteAssignment,
-  scheduleQueryKeys,
+  useDeleteTemplate,
+  useGenerateSchedule,
+  useRotationTemplate,
+  useRotationTemplates,
+  useSchedule,
+  useUpdateAssignment,
+  useUpdateTemplate,
+  useValidateSchedule,
+  type AssignmentFilters,
   type ScheduleGenerateRequest,
   type ScheduleGenerateResponse,
-  type AssignmentFilters,
-} from './useSchedule'
+} from "./useSchedule";
 
 // ============================================================================
 // People Hooks
 // ============================================================================
 export {
+  peopleQueryKeys,
+  useCertifications,
+  useCreatePerson,
+  useDeletePerson,
+  useFaculty,
   usePeople,
   usePerson,
   useResidents,
-  useFaculty,
-  useCreatePerson,
   useUpdatePerson,
-  useDeletePerson,
-  useCertifications,
-  peopleQueryKeys,
-  type PeopleFilters,
-  type PersonType,
-  type PersonStatus,
   type CertificationStatus,
   type CertificationType,
+  type PeopleFilters,
   type PersonCertification,
-} from './usePeople'
+  type PersonStatus,
+  type PersonType,
+} from "./usePeople";
 
 // ============================================================================
 // Absence Hooks
 // ============================================================================
 export {
-  useAbsences,
-  useAbsence,
-  useCreateAbsence,
-  useUpdateAbsence,
-  useDeleteAbsence,
   absenceQueryKeys,
+  useAbsence,
+  useAbsences,
+  useCreateAbsence,
+  useDeleteAbsence,
+  useUpdateAbsence,
   type AbsenceFilters,
-} from './useAbsences'
+} from "./useAbsences";
 
 // ============================================================================
 // Block Hooks
 // ============================================================================
 export {
-  useBlocks,
-  useBlockRanges,
   blockQueryKeys,
+  useBlockRanges,
+  useBlocks,
   type BlockFilters,
   type BlockRange,
-} from './useBlocks'
+} from "./useBlocks";
 
 // ============================================================================
 // Resilience Hooks
 // ============================================================================
-export {
-  useEmergencyCoverage,
-  type EmergencyCoverageRequest,
-  type EmergencyCoverageResponse,
-} from './useResilience'
+export {} from "./useResilience";
 
 // ============================================================================
 // Health Hooks
 // ============================================================================
 export {
+  healthQueryKeys,
+  useHealthDetailed,
   useHealthLive,
   useHealthReady,
-  useHealthDetailed,
   useServiceHealth,
-  healthQueryKeys,
-  type ServiceHealth,
+  type HealthDetailedResponse,
   type HealthLiveResponse,
   type HealthReadyResponse,
-  type HealthDetailedResponse,
-} from './useHealth'
+  type ServiceHealth,
+} from "./useHealth";
 
 // ============================================================================
 // Swap Hooks
 // ============================================================================
 export {
-  useSwapRequest,
-  useSwapList,
-  useSwapCandidates,
-  useSwapCreate,
-  useSwapApprove,
-  useSwapReject,
-  useAutoMatch,
   swapQueryKeys,
   SwapStatus,
   SwapType,
-  type SwapRequest,
-  type SwapCreateRequest,
-  type SwapCreateResponse,
-  type SwapApproveRequest,
-  type SwapRejectRequest,
-  type SwapActionResponse,
-  type SwapCandidate,
+  useAutoMatch,
+  useSwapApprove,
+  useSwapCandidates,
+  useSwapCreate,
+  useSwapList,
+  useSwapReject,
+  useSwapRequest,
   type AutoMatchRequest,
   type AutoMatchResponse,
+  type SwapActionResponse,
+  type SwapApproveRequest,
+  type SwapCandidate,
+  type SwapCreateRequest,
+  type SwapCreateResponse,
   type SwapFilters,
-} from './useSwaps'
+  type SwapRejectRequest,
+  type SwapRequest,
+} from "./useSwaps";
 
 // ============================================================================
 // Admin Scheduling Hooks
 // ============================================================================
 export {
-  useScheduleRuns,
-  useScheduleRun,
-  useRunComparison,
-  useConstraintConfigs,
-  useValidateConfiguration,
-  useGenerateScheduleRun,
-  useScenarioPresets,
-  useRunQueue,
-  useQueueExperiments,
+  adminSchedulingKeys,
   useCancelExperiment,
-  useScheduleMetrics,
-  useMetricsTrend,
-  useLockedAssignments,
-  useLockAssignment,
-  useUnlockAssignment,
-  useEmergencyHolidays,
+  useConstraintConfigs,
   useCreateEmergencyHoliday,
-  useDeleteEmergencyHoliday,
-  useRollbackPoints,
   useCreateRollbackPoint,
+  useDeleteEmergencyHoliday,
+  useEmergencyHolidays,
+  useGenerateScheduleRun,
+  useLockAssignment,
+  useLockedAssignments,
+  useMetricsTrend,
+  useQueueExperiments,
   useRevertToRollbackPoint,
+  useRollbackPoints,
+  useRunComparison,
+  useRunQueue,
+  useScenarioPresets,
+  useScheduleMetrics,
+  useScheduleRun,
+  useScheduleRuns,
+  useSeedCleanup,
   useSyncMetadata,
   useTriggerSync,
-  useSeedCleanup,
-  adminSchedulingKeys,
-} from './useAdminScheduling'
+  useUnlockAssignment,
+  useValidateConfiguration,
+} from "./useAdminScheduling";
 
 // ============================================================================
 // Admin User Management Hooks
 // ============================================================================
 export {
-  useUsers,
-  useUser as useAdminUser,
-  useCreateUser,
-  useUpdateUser,
-  useDeleteUser,
-  useToggleUserLock,
-  useResendInvite,
-  useBulkUserAction,
   adminUsersQueryKeys,
+  useUser as useAdminUser,
+  useBulkUserAction,
+  useCreateUser,
+  useDeleteUser,
+  useResendInvite,
+  useToggleUserLock,
+  useUpdateUser,
+  useUsers,
   type AdminUserFilters,
+  type BulkActionResponse,
   type LockUserResponse,
   type ResendInviteResponse,
-  type BulkActionResponse,
-} from './useAdminUsers'
+} from "./useAdminUsers";
 
 // ============================================================================
 // Procedure Credentialing Hooks
 // ============================================================================
 export {
-  useProcedures,
-  useProcedure,
-  useCredentials,
-  useCredential,
-  useFacultyCredentials,
-  useQualifiedFaculty,
-  useCreateCredential,
-  useUpdateCredential,
-  useDeleteCredential,
-  useCreateProcedure,
-  useUpdateProcedure,
-  procedureKeys,
   credentialKeys,
-  type Procedure,
+  procedureKeys,
+  useCreateCredential,
+  useCreateProcedure,
+  useCredential,
+  useCredentials,
+  useDeleteCredential,
+  useFacultyCredentials,
+  useProcedure,
+  useProcedures,
+  useQualifiedFaculty,
+  useUpdateCredential,
+  useUpdateProcedure,
   type Credential,
   type CredentialWithProcedure,
   type FacultyCredentialSummary,
-} from './useProcedures'
+  type Procedure,
+} from "./useProcedures";
 
 // ============================================================================
 // RAG Hooks
 // ============================================================================
 export {
+  ragQueryKeys,
   useRAGHealth,
   useRAGSearch,
-  ragQueryKeys,
   type RAGCategory,
   type RAGChunk,
+  type RAGHealthResponse,
   type RAGRetrieveRequest,
   type RAGRetrieveResponse,
-  type RAGHealthResponse,
-} from './useRAG'
+} from "./useRAG";
 
 // ============================================================================
 // WebSocket Hooks
 // ============================================================================
 export {
-  useWebSocket,
-  useScheduleWebSocket,
   usePersonWebSocket,
-  type EventType,
-  type WebSocketEvent,
-  type ScheduleUpdatedEvent,
-  type AssignmentChangedEvent,
-  type SwapRequestedEvent,
-  type SwapApprovedEvent,
-  type ConflictDetectedEvent,
-  type ResilienceAlertEvent,
-  type ConnectionAckEvent,
+  useScheduleWebSocket,
+  useWebSocket,
   type AnyWebSocketEvent,
+  type AssignmentChangedEvent,
   type ClientAction,
   type ClientMessage,
+  type ConflictDetectedEvent,
+  type ConnectionAckEvent,
   type ConnectionState,
+  type EventType,
+  type ResilienceAlertEvent,
+  type ScheduleUpdatedEvent,
+  type SwapApprovedEvent,
+  type SwapRequestedEvent,
   type UseWebSocketOptions,
   type UseWebSocketReturn,
-} from './useWebSocket'
+  type WebSocketEvent,
+} from "./useWebSocket";
 
 // ============================================================================
 // Shared Types
 // ============================================================================
-export type { ListResponse } from './useSchedule'
+export type { ListResponse } from "./useSchedule";
 
 // ============================================================================
 // Query Keys (backward compatibility)
@@ -291,31 +287,36 @@ export type { ListResponse } from './useSchedule'
  */
 export const queryKeys = {
   // Auth-related keys
-  authUser: () => ['auth', 'user'] as const,
-  authCheck: () => ['auth', 'check'] as const,
-  authValidate: () => ['auth', 'validate'] as const,
+  authUser: () => ["auth", "user"] as const,
+  authCheck: () => ["auth", "check"] as const,
+  authValidate: () => ["auth", "validate"] as const,
 
   // Schedule-related keys
-  schedule: (startDate: string, endDate: string) => ['schedule', startDate, endDate] as const,
-  rotationTemplates: (activityType?: string) => ['rotation-templates', activityType] as const,
-  rotationTemplate: (id: string) => ['rotation-templates', id] as const,
-  validation: (startDate: string, endDate: string) => ['validation', startDate, endDate] as const,
-  assignments: (filters?: AssignmentFilters) => ['assignments', filters] as const,
+  schedule: (startDate: string, endDate: string) =>
+    ["schedule", startDate, endDate] as const,
+  rotationTemplates: (activityType?: string) =>
+    ["rotation-templates", activityType] as const,
+  rotationTemplate: (id: string) => ["rotation-templates", id] as const,
+  validation: (startDate: string, endDate: string) =>
+    ["validation", startDate, endDate] as const,
+  assignments: (filters?: AssignmentFilters) =>
+    ["assignments", filters] as const,
 
   // People-related keys
-  people: (filters?: PeopleFilters) => ['people', filters] as const,
-  person: (id: string) => ['people', id] as const,
-  residents: (pgyLevel?: number) => ['residents', pgyLevel] as const,
-  faculty: (specialty?: string) => ['faculty', specialty] as const,
-  certifications: (personId: string) => ['certifications', 'person', personId] as const,
+  people: (filters?: PeopleFilters) => ["people", filters] as const,
+  person: (id: string) => ["people", id] as const,
+  residents: (pgyLevel?: number) => ["residents", pgyLevel] as const,
+  faculty: (specialty?: string) => ["faculty", specialty] as const,
+  certifications: (personId: string) =>
+    ["certifications", "person", personId] as const,
 
   // Absence-related keys
-  absences: (filters?: AbsenceFilters) => ['absences', filters] as const,
-  absence: (id: string) => ['absences', id] as const,
+  absences: (filters?: AbsenceFilters) => ["absences", filters] as const,
+  absence: (id: string) => ["absences", id] as const,
 
   // Swap-related keys
-  swaps: (filters?: SwapFilters) => ['swaps', 'list', filters] as const,
-  swap: (id: string) => ['swaps', 'detail', id] as const,
+  swaps: (filters?: SwapFilters) => ["swaps", "list", filters] as const,
+  swap: (id: string) => ["swaps", "detail", id] as const,
   swapCandidates: (sourceId: string, sourceWeek: string) =>
-    ['swaps', 'candidates', sourceId, sourceWeek] as const,
-}
+    ["swaps", "candidates", sourceId, sourceWeek] as const,
+};

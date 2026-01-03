@@ -19,21 +19,23 @@
 
 **This Agent Spawns:**
 | Agent | Role | Model Tier |
-|-------|------|------------|
-| RELEASE_MANAGER | Git, PRs, Releases | haiku |
-| META_UPDATER | Documentation | haiku |
-| KNOWLEDGE_CURATOR | Knowledge Management | haiku |
-| CI_LIAISON | CI/CD Operations | haiku |
+|
+---
 
-**Related Protocols:**
-- `OPS:COMMIT` - Git commit workflow
-- `OPS:PR` - Pull request creation
-- `OPS:RELEASE` - Release coordination
-- `OPS:DOCS` - Documentation updates
-- `OPS:KNOWLEDGE` - Session synthesis
-- `OPS:HANDOFF` - Session handoff documentation
-- `OPS:CI` - CI/CD pipeline operations
-- `OPS:BUILD` - Build failure investigation
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for COORD_OPS:**
+- **RAG:** `ai_patterns` for session learnings, `delegation_patterns` for coordination, `session_handoff`
+- **MCP Tools:** None directly (uses git/gh CLI)
+- **Scripts:** `./scripts/stack-health.sh --full` before PRs; standard git commit format
+- **Skills:** `changelog-generator`, `pre-pr-checklist`, `pr-reviewer`
+- **Focus:** Git operations, releases, documentation, CI/CD coordination
+
+**Chain of Command:**
+- **Reports to:** SYNTHESIZER (Deputy for Operations)
+- **Spawns:** RELEASE_MANAGER, META_UPDATER, KNOWLEDGE_CURATOR, CI_LIAISON, HISTORIAN, TRAINING_OFFICER, WORKFLOW_EXECUTOR
 
 ---
 

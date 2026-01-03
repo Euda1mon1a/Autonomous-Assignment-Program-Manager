@@ -3,6 +3,32 @@
 from typing import Any
 
 EMAIL_TEMPLATES = {
+    "admin_welcome": {
+        "subject": "Arrhythmia Residency Scheduler - Admin Account Access",
+        "html": """
+<h2 style="color: #003366;">Welcome to the Residency Scheduler</h2>
+<p>Hello <strong>{{username}}</strong>,</p>
+<p>An administrator account has been created for you.</p>
+
+<div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #003366; margin: 20px 0;">
+    <p><strong>Username:</strong> {{username}}</p>
+    <p><strong>Temporary Password:</strong> <code style="background-color: #e9ecef; padding: 2px 4px; border-radius: 3px;">{{temp_password}}</code></p>
+</div>
+
+<p>Please log in immediately and change your password.</p>
+
+<p>
+    <a href="{{login_url}}" style="background-color: #003366; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">
+        Log In Now
+    </a>
+</p>
+
+<p style="font-size: 12px; color: #6c757d; margin-top: 30px;">
+    Note: This temporary password will expire in 24 hours.<br>
+    If you did not request this account, please contact the system administrator immediately.
+</p>
+        """,
+    },
     "acgme_warning": {
         "subject": "ACGME Compliance Alert: {{violation_type}}",
         "html": """

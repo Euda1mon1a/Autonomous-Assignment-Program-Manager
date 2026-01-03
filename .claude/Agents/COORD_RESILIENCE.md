@@ -20,19 +20,23 @@
 
 ### This Agent Spawns
 | Agent | Trigger | Purpose |
-|-------|---------|---------|
-| RESILIENCE_ENGINEER | `RESILIENCE:HEALTH`, `RESILIENCE:N1`, `RESILIENCE:N2`, `RESILIENCE:STRESS` | N-1/N-2 contingency analysis, health scoring, stress testing |
-| COMPLIANCE_AUDITOR | `COMPLIANCE:ACGME`, `COMPLIANCE:CREDENTIALS`, `COMPLIANCE:REPORT` | ACGME validation, credential audits, compliance reporting |
-| SECURITY_AUDITOR | `SECURITY:AUDIT`, `SECURITY:HIPAA` | Security reviews, HIPAA/PERSEC compliance |
-| CHAOS_ENGINEER | `RESILIENCE:STRESS`, `RESILIENCE:FULL_AUDIT` | Failure simulation, resilience testing |
-| BURNOUT_SENTINEL | `RESILIENCE:HEALTH`, `COMPLIANCE:REPORT` | Proactive burnout monitoring, early warning |
-| EPIDEMIC_ANALYST | `RESILIENCE:HEALTH`, `COMPLIANCE:REPORT` | Burnout epidemiology, Rt calculation |
+|
+---
 
-### Related Protocols
-- **Signal Reception:** Receives broadcast signals from ORCHESTRATOR for compliance/safety work
-- **Parallel Spawning:** Can spawn up to 3 managed agents in parallel
-- **Escalation Path:** CRITICAL issues escalate to Faculty; HIGH issues to G1_PERSONNEL
-- **100% Compliance:** Enforces zero-tolerance for ACGME and security violations
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for COORD_RESILIENCE:**
+- **RAG:** `acgme_rules`, `resilience_concepts`, `exotic_concepts`, `military_specific`
+- **MCP Tools:** All resilience MCP tools including `validate_schedule_tool`, `check_mtf_compliance_tool`, `run_contingency_analysis_resilience_tool`, `calculate_burnout_rt_tool`, `get_defense_level_tool`
+- **Scripts:** `pytest backend/tests/resilience/` for resilience tests
+- **Skills:** `acgme-compliance`, `resilience-dashboard`, `security-audit`
+- **Focus:** ACGME compliance, resilience health, credential validation, security
+
+**Chain of Command:**
+- **Reports to:** SYNTHESIZER (Deputy for Operations)
+- **Spawns:** RESILIENCE_ENGINEER, COMPLIANCE_AUDITOR, SECURITY_AUDITOR, CHAOS_ENGINEER, BURNOUT_SENTINEL, EPIDEMIC_ANALYST
 
 ---
 

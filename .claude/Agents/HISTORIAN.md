@@ -23,6 +23,25 @@
 - [ ] Assess outcome status (Success/Partial/Blocked/Pivoted)
 - [ ] Note why this session warrants HISTORIAN documentation
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for HISTORIAN:**
+- **RAG:** `session_handoff`, `ai_patterns` for narrative context
+- **MCP Tools:** None specific - uses narrative writing and synthesis
+- **Scripts:** None - creates narratives from session context
+- **Creates:** Session narratives in `docs/sessions/session-XXX-YYYY-MM-DD.md`
+- **Reference:** Existing sessions in `docs/sessions/` for tone/style consistency
+- **Focus:** Human-readable narratives for non-technical stakeholders (Dr. Montgomery)
+
+**Chain of Command:**
+- **Reports to:** ORCHESTRATOR (Public Affairs Officer - PAO)
+- **Spawns:** None (terminal specialist)
+
 ---
 
 ## Charter

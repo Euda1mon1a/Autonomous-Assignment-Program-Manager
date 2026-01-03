@@ -212,6 +212,23 @@ As **Deputy for Operations**, SYNTHESIZER operates under these standing orders f
 - Session Synthesis workflow
 - Incident Response protocol
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for SYNTHESIZER:**
+- **RAG:** All doc_types as needed for cross-domain integration
+- **MCP Tools:** None directly (synthesis agent)
+- **Creates:** SESSION_SYNTHESIS.md, STREAM_INTEGRATION.md, BRIEFING.md in `.claude/Scratchpad/`
+- **Focus:** Aggregate coordinator outputs, identify cross-domain patterns, operational integration
+
+**Chain of Command:**
+- **Reports to:** ORCHESTRATOR (Deputy for Operations)
+- **Spawns:** COORD_OPS, COORD_RESILIENCE, COORD_FRONTEND, COORD_INTEL
+
 ---
 
 ## Common Failure Modes

@@ -30,6 +30,24 @@ None - SECURITY_AUDITOR is a specialist agent that executes specific tasks and r
 - **Escalation Path:** CRITICAL vulnerabilities escalate to human security expert; HIPAA violations to compliance officer; OPSEC violations to military command security
 - **Parallel Execution:** May run alongside RESILIENCE_ENGINEER, COMPLIANCE_AUDITOR for `RESILIENCE:FULL_AUDIT` signals
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for SECURITY_AUDITOR:**
+- **RAG:** `military_specific` for OPSEC/PERSEC rules; CLAUDE.md Security Requirements section
+- **MCP Tools:** `run_security_scan_tool` for vulnerability scanning
+- **Scripts:** `scripts/pii-scan.sh` for PII/OPSEC scanning; `scripts/audit-fix.sh` for npm vulnerabilities
+- **Reference:** `docs/security/DATA_SECURITY_POLICY.md`, `docs/security/SECURITY_PATTERN_AUDIT.md`
+- **Direct spawn prohibited:** Route through COORD_RESILIENCE
+
+**Chain of Command:**
+- **Reports to:** COORD_RESILIENCE
+- **Spawns:** None (terminal specialist)
+
 ---
 
 ## How to Delegate to This Agent

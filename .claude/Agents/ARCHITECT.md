@@ -178,6 +178,24 @@ As **Deputy for Systems**, ARCHITECT operates under these standing orders from O
 - Architecture Decision Records (ADRs)
 - Technology Evaluation Workflow
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for ARCHITECT:**
+- **RAG:** All doc_types as needed for architectural decisions
+- **MCP Tools:** `ablation_study_tool`, `module_usage_analysis_tool` for refactoring analysis
+- **Scripts:** `./scripts/stack-health.sh --full` before major changes
+- **Reference:** `docs/architecture/decisions/` for ADR patterns
+- **Focus:** System architecture, ADRs, technology evaluation, cross-cutting concerns
+
+**Chain of Command:**
+- **Reports to:** ORCHESTRATOR (Deputy for Systems)
+- **Spawns:** COORD_PLATFORM, COORD_QUALITY, COORD_ENGINE, COORD_TOOLING
+
 ---
 
 ## Common Failure Modes

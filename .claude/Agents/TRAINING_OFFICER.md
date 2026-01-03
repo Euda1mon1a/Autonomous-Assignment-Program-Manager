@@ -24,6 +24,26 @@
 - [ ] Provide current capability state or existing documentation
 - [ ] Specify success criteria for measuring training effectiveness
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for TRAINING_OFFICER:**
+- **RAG:** `ai_patterns`, `delegation_patterns` for training material development
+- **MCP Tools:** None specific - uses documentation and pattern analysis
+- **Scripts:** None - creates training materials and assessments
+- **Reference:** `.claude/Agents/*.md` for agent capability assessment; `.claude/CONSTITUTION.md` for foundational rules
+- **Creates:** Skill guides, onboarding materials, gap analysis reports
+- **Focus:** Agent capability development, best practice documentation, skill gap analysis
+- **Direct spawn prohibited:** Route through G1_PERSONNEL
+
+**Chain of Command:**
+- **Reports to:** G1_PERSONNEL
+- **Spawns:** None (terminal specialist)
+
 ---
 
 ## Charter

@@ -31,6 +31,23 @@
 
 ---
 
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for RELEASE_MANAGER:**
+- **RAG:** `ai_patterns` for release workflow patterns
+- **MCP Tools:** `validate_deployment_tool`, `promote_to_production_tool`, `list_deployments_tool`
+- **Scripts:** `gh pr create`, `gh pr merge`, `git tag`, `git push` for Git operations; `./scripts/stack-health.sh --full` before PRs
+- **Reference:** `docs/development/AI_RULES_OF_ENGAGEMENT.md` for PR workflow; `CHANGELOG.md` for version history
+- **Direct spawn prohibited:** Route through COORD_OPS
+
+**Chain of Command:**
+- **Reports to:** COORD_OPS
+- **Spawns:** None (terminal specialist)
+
+---
+
 ## Charter
 
 The RELEASE_MANAGER agent is responsible for managing the git workflow, creating pull requests, updating changelogs, and coordinating releases. This agent serves as the bridge between development work and production releases, ensuring all changes follow proper git hygiene and documentation standards.

@@ -117,6 +117,24 @@ G4_LIBRARIAN                                   G4_CONTEXT_MANAGER
 - Scope of files to scan or analyze
 - Any known issues or concerns to investigate
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for G4_LIBRARIAN:**
+- **RAG:** All doc_types - this agent manages the knowledge base itself
+- **MCP Tools:** `rag_search`, `rag_ingest`, `rag_context`, `rag_health` for knowledge base management
+- **Scripts:** None - knowledge base operations only
+- **Reference:** `.claude/dontreadme/INDEX.md` for documentation structure; `.claude/Agents/*.md` for agent file references; `docs/` for human-readable docs
+- **Focus:** Document classification, ingestion, file freshness tracking, staleness detection, duplication analysis
+
+**Chain of Command:**
+- **Reports to:** G4_CONTEXT_MANAGER (primary) or ORCHESTRATOR (when directly spawned)
+- **Spawns:** None (terminal specialist)
+
 ---
 
 ## Standing Orders (Execute Without Escalation)

@@ -85,6 +85,7 @@ class SchedulerAPIClient:
         method: str,
         url: str,
         max_retries: int = DEFAULT_MAX_RETRIES,
+        _token_refreshed: bool = False,
         **kwargs: Any,
     ) -> httpx.Response:
         """
@@ -94,6 +95,7 @@ class SchedulerAPIClient:
             method: HTTP method (GET, POST, PUT, DELETE)
             url: URL to request
             max_retries: Maximum number of retry attempts
+            _token_refreshed: Internal flag to prevent infinite token refresh loop
             **kwargs: Additional arguments to pass to httpx request
 
         Returns:
@@ -107,6 +109,16 @@ class SchedulerAPIClient:
         for attempt in range(max_retries + 1):
             try:
                 response = await self.client.request(method, url, **kwargs)
+
+                # Handle 401 Unauthorized - try token refresh once
+                if response.status_code == 401 and not _token_refreshed:
+                    logger.warning("Received 401 Unauthorized, attempting token refresh")
+                    self._token = None  # Clear stale token
+                    new_headers = await self._ensure_authenticated()
+                    kwargs["headers"] = new_headers
+                    return await self._request_with_retry(
+                        method, url, max_retries=max_retries, _token_refreshed=True, **kwargs
+                    )
 
                 # Don't retry on success or client errors (4xx except 408, 429)
                 if response.status_code < 400:

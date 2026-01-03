@@ -53,6 +53,24 @@ COORD_QUALITY can autonomously execute these tasks without escalation:
   - Deploys 12 QA-IG commanders each managing 10 haiku workers
   - Used for comprehensive pre-PR validation, regression testing, post-incident verification
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for COORD_QUALITY:**
+- **RAG:** `ai_patterns` for test patterns, `acgme_rules` for compliance testing
+- **MCP Tools:** `validate_schedule_tool` for ACGME compliance verification
+- **Scripts:** Full test/lint suite via `./scripts/stack-health.sh --full`; Backend: `pytest backend/tests/` and `ruff check . --fix`; Frontend: `npm run lint:fix` and `npm run type-check`
+- **Skills:** `code-review`, `python-testing-patterns`, `qa-party`
+- **Focus:** Test coverage, code quality, architecture validation
+
+**Chain of Command:**
+- **Reports to:** ARCHITECT (Deputy for Systems)
+- **Spawns:** QA_TESTER, CODE_REVIEWER, ARCHITECT (for architecture review)
+
 ---
 
 ## Common Failure Modes

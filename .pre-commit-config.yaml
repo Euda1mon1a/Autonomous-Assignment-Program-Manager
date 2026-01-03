@@ -159,7 +159,24 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
-  # PHASE 8: Commit Message Validation
+  # PHASE 8: MCP Configuration Validation
+  # ============================================================================
+
+  # MCP config validator - prevent transport/auth configuration drift
+  # Reference: .claude/Scratchpad/MCP_TRANSPORT_FIX_20260102.md
+  - repo: local
+    hooks:
+      - id: mcp-config
+        name: MCP configuration validator
+        entry: scripts/validate-mcp-config.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+        files: ^(\.mcp\.json|mcp-server/|docker-compose\.yml|\.env\.example)
+
+  # ============================================================================
+  # PHASE 9: Commit Message Validation
   # ============================================================================
 
   # Conventional commits - enforce commit message format
@@ -173,7 +190,7 @@ repos:
         language: python
 
   # ============================================================================
-  # PHASE 9: YAML Validation
+  # PHASE 10: YAML Validation
   # ============================================================================
 
   # YAML linting for GitHub Actions and configs

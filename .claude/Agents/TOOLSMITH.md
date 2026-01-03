@@ -44,6 +44,25 @@ TOOLSMITH (this agent) -> TOOL_QA -> TOOL_REVIEWER
 
 **Returns Results To:** COORD_TOOLING (artifact path + creation notes for TOOL_QA validation)
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for TOOLSMITH:**
+- **RAG:** `ai_patterns`, `delegation_patterns` for skill/agent patterns
+- **MCP Tools:** `rag_search`, `rag_ingest` for knowledge base operations
+- **Scripts:** Use `skill-factory` and `agent-factory` skills for artifact creation
+- **Reference:** `.claude/skills/*/SKILL.md` and `.claude/Agents/*.md` for templates; `.claude/CONSTITUTION.md` for governance validation
+- **Pipeline:** Creates artifacts -> passes to TOOL_QA for validation
+- **Direct spawn prohibited:** Route through COORD_TOOLING
+
+**Chain of Command:**
+- **Reports to:** COORD_TOOLING
+- **Spawns:** None (terminal specialist)
+
 ---
 
 ## Charter

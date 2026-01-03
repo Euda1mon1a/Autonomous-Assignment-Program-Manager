@@ -466,6 +466,24 @@ OPTIMIZATION_SPECIALIST returns structured results:
 - `/project:schedule-optimization` - Multi-objective solver and Pareto optimization
 - `/project:solver-control` - Monitor and abort long-running solvers
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for OPTIMIZATION_SPECIALIST:**
+- **RAG:** `scheduling_policy`, `resilience_concepts` for optimization context
+- **MCP Tools:** `benchmark_solvers_tool`, `benchmark_constraints_tool` for solver analysis
+- **Scripts:** `cd backend && pytest tests/scheduling/` for solver tests
+- **Reference:** `docs/architecture/SOLVER_ALGORITHM.md` for algorithm documentation
+- **Direct spawn prohibited:** Route through COORD_ENGINE
+
+**Chain of Command:**
+- **Reports to:** COORD_ENGINE
+- **Spawns:** None (terminal specialist)
+
 ---
 
 ## Version History

@@ -126,7 +126,7 @@ class EmailService:
             Always prefers HTML body, falls back to plain text if provided.
         """
         if not self.config.enabled:
-            logger.info(f"Email disabled. Would send to {to_email}: {subject}")
+            logger.info(f"Email disabled. Would send to [EMAIL REDACTED]: {subject}")
             return True
 
         if not to_email:
@@ -152,11 +152,11 @@ class EmailService:
                     server.login(self.config.user, self.config.password)
                 server.sendmail(self.config.from_email, to_email, msg.as_string())
 
-            logger.info(f"Email sent to {to_email}: {subject}")
+            logger.info("Email sent successfully")
             return True
 
         except Exception as e:
-            logger.error(f"Failed to send email to {to_email}: {e}")
+            logger.error(f"Failed to send email: {e}")
             return False
 
     def send_certification_reminder(
@@ -183,7 +183,7 @@ class EmailService:
             - > 90 days: NOTICE (blue)
         """
         if not person.email:
-            logger.warning(f"No email for {person.name}, skipping reminder")
+            logger.warning(f"No email for Person {person.id}, skipping reminder")
             return False
 
         cert_name = certification.certification_type.name

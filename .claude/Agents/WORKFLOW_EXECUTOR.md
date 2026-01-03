@@ -24,6 +24,25 @@
 - [ ] Set execution parameters (timeout, max retries, rollback policy)
 - [ ] List required invariants that must always hold
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for WORKFLOW_EXECUTOR:**
+- **RAG:** `ai_patterns` for workflow execution patterns
+- **MCP Tools:** None specific - uses step-by-step execution with validation
+- **Scripts:** Use `database-migration` skill for atomic transaction support
+- **Focus:** Step-by-step workflow execution, checkpoint management, rollback capability
+- **Safety:** Validate preconditions, maintain invariants, complete audit trail
+- **Direct spawn prohibited:** Route through G3_OPERATIONS
+
+**Chain of Command:**
+- **Reports to:** G3_OPERATIONS
+- **Spawns:** None (terminal specialist)
+
 ---
 
 ## Charter

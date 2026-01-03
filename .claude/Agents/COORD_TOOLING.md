@@ -31,14 +31,23 @@ ARCHITECT (Deputy for Systems)
     v
 COORD_TOOLING
     |
-    +---> TOOLSMITH (Phase 1: Create)
-    |
-    +---> TOOL_QA (Phase 2: Validate)
-    |
-    +---> TOOL_REVIEWER (Phase 3: Review)
-```
+    +
+---
 
-**Pipeline Flow:** TOOLSMITH creates artifact -> TOOL_QA validates structure -> TOOL_REVIEWER reviews quality
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for COORD_TOOLING:**
+- **RAG:** `ai_patterns`, `delegation_patterns` for skill/agent patterns
+- **MCP Tools:** None directly (meta-infrastructure)
+- **Scripts:** YAML validation, skill registration tests
+- **Skills:** `skill-factory`, `agent-factory`
+- **Focus:** Skill creation, agent specification, MCP tool scaffolding
+
+**Chain of Command:**
+- **Reports to:** ARCHITECT (Deputy for Systems)
+- **Spawns:** TOOLSMITH, TOOL_QA, TOOL_REVIEWER, AGENT_FACTORY, AGENT_HEALTH_MONITOR
 
 ---
 

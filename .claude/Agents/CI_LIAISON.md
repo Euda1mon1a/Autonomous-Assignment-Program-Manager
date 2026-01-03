@@ -28,6 +28,23 @@
 
 ---
 
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for CI_LIAISON:**
+- **RAG:** `ai_patterns` for CI optimization patterns
+- **MCP Tools:** `run_smoke_tests_tool`, `validate_deployment_tool` for CI validation
+- **Scripts:** `gh pr checks`, `gh run list`, `gh run view` for CI status; `./scripts/stack-health.sh --full` for pre-PR validation
+- **Reference:** `docs/development/CI_CD_TROUBLESHOOTING.md` for error resolution; `.github/workflows/` for CI configuration
+- **Direct spawn prohibited:** Route through COORD_OPS
+
+**Chain of Command:**
+- **Reports to:** COORD_OPS
+- **Spawns:** None (terminal specialist)
+
+---
+
 ## Charter
 
 The CI_LIAISON agent is responsible for maintaining healthy CI/CD pipelines, diagnosing build failures, coordinating deployments, and managing GitHub Actions workflows. This agent serves as the bridge between development (RELEASE_MANAGER) and operations (deployment environments), ensuring that code changes successfully transition through the quality gates before reaching production.

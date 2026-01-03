@@ -60,6 +60,23 @@ The INCIDENT_COMMANDER agent is responsible for coordinating response to product
 - Severity Classification - SEV-1 through SEV-4 response timelines
 - Communication Templates - Incident declaration, status updates, resolution
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for INCIDENT_COMMANDER:**
+- **RAG:** `resilience_concepts` for incident response patterns
+- **MCP Tools:** `check_circuit_breakers_tool`, `get_breaker_health_tool`, `run_smoke_tests_tool`, `rollback_deployment_tool`
+- **Scripts:** `./scripts/stack-health.sh` for service status; `docker-compose logs -f` for diagnostics
+- **Focus:** Production incident response, crisis management, incident timeline documentation
+
+**Chain of Command:**
+- **Reports to:** ORCHESTRATOR (direct escalation path)
+- **Spawns:** COORD_INTEL, COORD_PLATFORM, COORD_QUALITY, domain specialists
+
 ---
 
 ## Incident Severity Levels

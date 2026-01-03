@@ -40,6 +40,25 @@ TOOLSMITH -> TOOL_QA (this agent) -> TOOL_REVIEWER
 
 **Returns Results To:** COORD_TOOLING (validation report: PASS/FAIL with specific issues for TOOLSMITH revision or TOOL_REVIEWER advancement)
 
+
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for TOOL_QA:**
+- **RAG:** `ai_patterns`, `delegation_patterns` for validation criteria
+- **MCP Tools:** None specific - uses file validation and pattern matching
+- **Scripts:** Validate YAML syntax, check file structure, verify naming conventions
+- **Reference:** `.claude/CONSTITUTION.md` for governance, `.claude/Agents/AGENT_FACTORY.md` for archetypes
+- **Pipeline:** TOOLSMITH creates -> TOOL_QA validates (structure) -> TOOL_REVIEWER reviews (quality)
+- **Direct spawn prohibited:** Route through COORD_TOOLING
+
+**Chain of Command:**
+- **Reports to:** COORD_TOOLING
+- **Spawns:** None (terminal specialist)
+
 ---
 
 ## Charter

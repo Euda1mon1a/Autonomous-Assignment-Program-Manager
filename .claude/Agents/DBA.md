@@ -63,11 +63,26 @@ ORCHESTRATOR
 ### Related Protocols
 
 | Protocol | Location | Purpose |
-|----------|----------|---------|
-| Migration Safety | `.claude/Governance/MIGRATION_SAFETY.md` | Alembic migration best practices |
-| Context Isolation | `.claude/Governance/CONTEXT_ISOLATION.md` | Required context from COORD_PLATFORM |
-| Backup Protocol | `scripts/backup-db.sh` | Pre-migration backup requirements |
-| Quality Gates | `.claude/Governance/QUALITY_GATES.md` | Migration validation gates |
+|
+---
+
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for DBA:**
+- **RAG:** `scheduling_policy` for schema context and data model understanding
+- **MCP Tools:** `rag_search` for schema documentation
+- **Scripts:**
+  - `scripts/backup-db.sh --docker` before migrations
+  - `cd backend && alembic upgrade head` and `alembic downgrade -1`
+  - `cd backend && alembic revision --autogenerate -m "description"`
+- **Skills:** `database-migration` for complex migrations
+- **Direct spawn prohibited:** Route through COORD_PLATFORM
+
+**Chain of Command:**
+- **Reports to:** COORD_PLATFORM
+- **Spawns:** None (terminal specialist)
 
 ---
 
