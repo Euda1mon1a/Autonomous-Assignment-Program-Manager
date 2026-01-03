@@ -22,7 +22,6 @@ ORCHESTRATOR ─┬─ ARCHITECT ─┬─ COORD_PLATFORM ─┬─ DBA
               │                                └─ CI_LIAISON
               │
               ├─ SYNTHESIZER ┬─ COORD_OPS ─────┬─ META_UPDATER
-              │              │                 ├─ TOOLSMITH
               │              │                 └─ RELEASE_MANAGER
               │              │
               │              ├─ COORD_RESILIENCE ┬─ RESILIENCE_ENGINEER
@@ -32,7 +31,8 @@ ORCHESTRATOR ─┬─ ARCHITECT ─┬─ COORD_PLATFORM ─┬─ DBA
               │              ├─ COORD_FRONTEND ──┬─ FRONTEND_ENGINEER
               │              │                   └─ UX_SPECIALIST
               │              │
-              │              └─ COORD_TOOLING ───┬─ TOOL_QA
+              │              └─ COORD_TOOLING ───┬─ TOOLSMITH
+              │                                  ├─ TOOL_QA
               │                                  └─ TOOL_REVIEWER
               │
               ├─ G-STAFF ────┬─ G1_PERSONNEL
@@ -63,7 +63,7 @@ ORCHESTRATOR ─┬─ ARCHITECT ─┬─ COORD_PLATFORM ─┬─ DBA
 | **COORD_PLATFORM** | Infrastructure | DBA, BACKEND_ENGINEER, API_DEVELOPER |
 | **COORD_QUALITY** | Testing/QA | QA_TESTER, CODE_REVIEWER, CI_LIAISON |
 | **COORD_ENGINE** | Scheduling | SCHEDULER, SWAP_MANAGER, OPTIMIZATION_SPECIALIST |
-| **COORD_OPS** | Operations | META_UPDATER, TOOLSMITH, RELEASE_MANAGER |
+| **COORD_OPS** | Operations | META_UPDATER, RELEASE_MANAGER |
 | **COORD_RESILIENCE** | Compliance | RESILIENCE_ENGINEER, COMPLIANCE_AUDITOR, SECURITY_AUDITOR |
 | **COORD_FRONTEND** | UI/UX | FRONTEND_ENGINEER, UX_SPECIALIST |
 | **COORD_TOOLING** | Tools/Skills | TOOLSMITH, TOOL_QA, TOOL_REVIEWER |
