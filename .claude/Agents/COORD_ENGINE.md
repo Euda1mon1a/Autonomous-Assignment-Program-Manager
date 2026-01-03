@@ -132,6 +132,13 @@ Stop autonomous execution and escalate to ARCHITECT or SYNTHESIZER when:
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for COORD_ENGINE:**
+- RAG: `acgme_rules`, `scheduling_policy`, `swap_system` for scheduling domain
+- MCP: `validate_schedule_tool`, `detect_conflicts_tool`, `analyze_swap_candidates_tool`
+- Scripts: `pytest backend/tests/scheduling/` for scheduler tests
+- Spawn: SCHEDULER, OPTIMIZATION_SPECIALIST, SWAP_MANAGER
+
 ---
 
 ## Common Failure Modes

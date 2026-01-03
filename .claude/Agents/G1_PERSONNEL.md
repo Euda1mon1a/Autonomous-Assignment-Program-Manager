@@ -53,6 +53,13 @@ The G1_PERSONNEL agent is the "Human Resources" function for the PAI (Parallel A
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for G1_PERSONNEL:**
+- RAG: `delegation_patterns`, `ai_patterns` for agent utilization patterns
+- Reference: `.claude/Agents/*.md` for agent roster, `.claude/Scratchpad/DELEGATION_METRICS.md`
+- Track agent capabilities, model tiers, and utilization
+- Spawn: TRAINING_OFFICER for capability gap analysis
+
 ---
 
 ## Personality Traits

@@ -33,7 +33,14 @@
 
 ## Standard Operations
 
+**Key for META_UPDATER:**
+- RAG: All doc_types for pattern analysis and documentation updates
+- Creates: Weekly health reports, monthly retrospectives in `.claude/Scratchpad/`
+- Reference: `.claude/Agents/*.md`, `.claude/skills/*.md` for improvement proposals
+- Propose-only: Creates PRs but NEVER merges own changes
+
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
 ---
 
 ## Charter

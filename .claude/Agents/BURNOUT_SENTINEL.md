@@ -32,6 +32,13 @@ None - BURNOUT_SENTINEL is a specialist agent that executes specific tasks and r
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for BURNOUT_SENTINEL:**
+- RAG: `resilience_concepts`, `exotic_concepts` for burnout detection patterns
+- MCP: `detect_burnout_precursors_tool`, `predict_burnout_magnitude_tool`, `run_spc_analysis_tool`, `calculate_fire_danger_index_tool`, `assess_creep_fatigue_tool`
+- Scripts: `pytest backend/tests/resilience/` for burnout monitoring tests
+- Coordinates with EPIDEMIC_ANALYST for comprehensive burnout assessment
+
 ---
 
 ## Charter

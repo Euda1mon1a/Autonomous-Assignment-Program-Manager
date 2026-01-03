@@ -212,6 +212,13 @@ G6_SIGNAL is pre-authorized to execute these actions autonomously:
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for G6_SIGNAL:**
+- RAG: `resilience_concepts` for metrics patterns
+- MCP: All resilience metrics tools for data collection
+- Reference: `docs/sessions/` for session metrics
+- Aggregates scheduling data, resilience metrics, and system health indicators
+
 ---
 
 ## Common Failure Modes

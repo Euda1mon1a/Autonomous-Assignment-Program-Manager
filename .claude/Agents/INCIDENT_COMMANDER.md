@@ -65,7 +65,14 @@ The INCIDENT_COMMANDER agent is responsible for coordinating response to product
 
 ## Standard Operations
 
+**Key for INCIDENT_COMMANDER:**
+- RAG: `resilience_concepts` for incident response patterns
+- MCP: `check_circuit_breakers_tool`, `get_breaker_health_tool`, `run_smoke_tests_tool`, `rollback_deployment_tool`
+- Scripts: `./scripts/stack-health.sh` for service status; `docker-compose logs -f` for diagnostics
+- Spawn COORD_INTEL for forensics, COORD_PLATFORM for remediation
+
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
 ---
 
 ## Incident Severity Levels

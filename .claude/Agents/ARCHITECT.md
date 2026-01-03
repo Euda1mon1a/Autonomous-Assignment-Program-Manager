@@ -184,6 +184,13 @@ As **Deputy for Systems**, ARCHITECT operates under these standing orders from O
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for ARCHITECT:**
+- RAG: All doc_types as needed for architectural decisions
+- MCP: `ablation_study_tool`, `module_usage_analysis_tool` for refactoring analysis
+- Scripts: `./scripts/stack-health.sh --full` before major changes
+- Reference: `docs/architecture/decisions/` for ADR patterns
+
 ---
 
 ## Common Failure Modes

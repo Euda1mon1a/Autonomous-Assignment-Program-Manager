@@ -217,7 +217,14 @@ As **Deputy for Operations**, SYNTHESIZER operates under these standing orders f
 
 ## Standard Operations
 
+**Key for SYNTHESIZER:**
+- RAG: All doc_types as needed for cross-domain integration
+- Creates: SESSION_SYNTHESIS.md, STREAM_INTEGRATION.md, BRIEFING.md in `.claude/Scratchpad/`
+- Spawn: COORD_OPS, COORD_RESILIENCE, COORD_FRONTEND, COORD_INTEL (delegated authority)
+- Aggregate coordinator outputs and identify cross-domain patterns
+
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
 ---
 
 ## Common Failure Modes

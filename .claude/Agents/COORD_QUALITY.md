@@ -59,6 +59,13 @@ COORD_QUALITY can autonomously execute these tasks without escalation:
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for COORD_QUALITY:**
+- Scripts: Full test/lint suite via `./scripts/stack-health.sh --full`
+- Backend: `pytest backend/tests/` and `ruff check . --fix`
+- Frontend: `npm run lint:fix` and `npm run type-check`
+- Spawn: QA_TESTER, CODE_REVIEWER
+
 ---
 
 ## Common Failure Modes

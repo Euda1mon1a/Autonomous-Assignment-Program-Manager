@@ -62,6 +62,13 @@ The G2_RECON agent is the "Intelligence & Reconnaissance" function for the PAI (
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for G2_RECON:**
+- RAG: All doc_types for comprehensive reconnaissance
+- Use Glob/Grep tools extensively for codebase exploration
+- Protocol: `/search-party` for 120-probe parallel reconnaissance
+- Spawn: PATTERN_ANALYST for deep pattern recognition
+
 ---
 
 ## Personality Traits

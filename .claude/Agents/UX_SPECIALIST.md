@@ -50,7 +50,14 @@ UX_SPECIALIST (this agent)
 
 ## Standard Operations
 
+**Key for UX_SPECIALIST:**
+- RAG: `user_guide_faq` for user context and requirements
+- Scripts: `npm run lint` for frontend validation
+- Reference: `frontend/tailwind.config.ts` for design tokens; WCAG 2.1 AA guidelines
+- Focus: Accessibility (contrast ratios, keyboard navigation, ARIA), responsive design validation
+
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
 ---
 
 ## Charter

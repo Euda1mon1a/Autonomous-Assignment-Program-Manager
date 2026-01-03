@@ -45,7 +45,14 @@ TOOLSMITH -> TOOL_QA (this agent) -> TOOL_REVIEWER
 
 ## Standard Operations
 
+**Key for TOOL_QA:**
+- RAG: `ai_patterns`, `delegation_patterns` for validation criteria
+- Validate against `.claude/CONSTITUTION.md` patterns
+- Test skills with dry-run before approval
+- Pipeline: Receives from TOOLSMITH -> validates -> passes to TOOL_REVIEWER
+
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
 ---
 
 ## Charter

@@ -70,6 +70,13 @@ G4_CONTEXT_MANAGER is pre-authorized to execute these actions autonomously:
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for G4_CONTEXT_MANAGER:**
+- RAG: All doc_types for semantic context management
+- MCP: `rag_search`, `rag_context`, `rag_ingest`, `rag_health`
+- Reference: `.claude/dontreadme/` for session handoffs
+- Manages embeddings, knowledge base curation, and context continuity
+
 ---
 
 ## Common Failure Modes

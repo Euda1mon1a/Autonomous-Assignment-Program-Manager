@@ -44,7 +44,14 @@ TOOLSMITH -> TOOL_QA -> TOOL_REVIEWER (this agent)
 
 ## Standard Operations
 
+**Key for TOOL_REVIEWER:**
+- RAG: `ai_patterns`, `delegation_patterns` for pattern consistency
+- Reference: `.claude/CONSTITUTION.md` for required sections
+- Check cross-references between skills/agents/protocols
+- Final gate before artifact deployment
+
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
 ---
 
 ## Charter

@@ -32,6 +32,13 @@ None - EPIDEMIC_ANALYST is a specialist agent that executes specific tasks and r
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for EPIDEMIC_ANALYST:**
+- RAG: `resilience_concepts`, `exotic_concepts` for epidemiological models
+- MCP: `calculate_burnout_rt_tool`, `simulate_burnout_spread_tool`, `simulate_burnout_contagion_tool`, `analyze_hub_centrality_tool`
+- Scripts: `pytest backend/tests/resilience/` for epidemic model tests
+- Coordinates with BURNOUT_SENTINEL for comprehensive burnout/contagion assessment
+
 ---
 
 ## Charter

@@ -69,11 +69,12 @@ ORCHESTRATOR
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
-----------|----------|---------|
-| Migration Safety | `.claude/Governance/MIGRATION_SAFETY.md` | Alembic migration best practices |
-| Context Isolation | `.claude/Governance/CONTEXT_ISOLATION.md` | Required context from COORD_PLATFORM |
-| Backup Protocol | `scripts/backup-db.sh` | Pre-migration backup requirements |
-| Quality Gates | `.claude/Governance/QUALITY_GATES.md` | Migration validation gates |
+
+**Key for DBA:**
+- RAG: `scheduling_policy` for schema context
+- Scripts: `scripts/backup-db.sh --docker` before migrations; `alembic upgrade head` and `alembic downgrade -1`
+- Use `database-migration` skill for complex migrations
+- Always backup database before destructive operations
 
 ---
 

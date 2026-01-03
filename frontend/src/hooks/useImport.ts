@@ -34,7 +34,7 @@ export function useImportBatches(page = 1, status?: string) {
   return useQuery<ImportBatchListResponse, ApiError>({
     queryKey: importQueryKeys.list(page, status),
     queryFn: () => listBatches(page, 50, status),
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
   });
 }
 
@@ -51,7 +51,7 @@ export function useImportPreview(batchId: string, page = 1) {
     queryKey: importQueryKeys.preview(batchId, page),
     queryFn: () => getBatchPreview(batchId, page),
     enabled: !!batchId,
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
   });
 }
 

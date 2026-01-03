@@ -37,14 +37,12 @@ COORD_TOOLING
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
----> TOOLSMITH (Phase 1: Create)
-    |
-    +---> TOOL_QA (Phase 2: Validate)
-    |
-    +---> TOOL_REVIEWER (Phase 3: Review)
-```
 
-**Pipeline Flow:** TOOLSMITH creates artifact -> TOOL_QA validates structure -> TOOL_REVIEWER reviews quality
+**Key for COORD_TOOLING:**
+- RAG: `ai_patterns`, `delegation_patterns` for skill/agent patterns
+- Use `skill-factory` skill for creating new skills
+- Use `agent-factory` skill for creating new agents
+- Spawn: TOOLSMITH, TOOL_QA, TOOL_REVIEWER
 
 ---
 

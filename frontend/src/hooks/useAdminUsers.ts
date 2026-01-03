@@ -181,7 +181,7 @@ export function useActivityLog(
     queryKey: adminUsersQueryKeys.activity(filters),
     queryFn: () => fetchActivityLog(filters),
     staleTime: 30 * 1000, // 30 seconds
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
     ...options,
   });
 }

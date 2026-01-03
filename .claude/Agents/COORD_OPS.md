@@ -25,21 +25,12 @@
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
--------|------|------------|
-| RELEASE_MANAGER | Git, PRs, Releases | haiku |
-| META_UPDATER | Documentation | haiku |
-| KNOWLEDGE_CURATOR | Knowledge Management | haiku |
-| CI_LIAISON | CI/CD Operations | haiku |
 
-**Related Protocols:**
-- `OPS:COMMIT` - Git commit workflow
-- `OPS:PR` - Pull request creation
-- `OPS:RELEASE` - Release coordination
-- `OPS:DOCS` - Documentation updates
-- `OPS:KNOWLEDGE` - Session synthesis
-- `OPS:HANDOFF` - Session handoff documentation
-- `OPS:CI` - CI/CD pipeline operations
-- `OPS:BUILD` - Build failure investigation
+**Key for COORD_OPS:**
+- RAG: `ai_patterns` for session learnings, `delegation_patterns` for coordination
+- Scripts: `./scripts/stack-health.sh --full` before PRs
+- Use standard git commit format from STANDARD_OPERATIONS
+- Spawn: RELEASE_MANAGER, META_UPDATER, KNOWLEDGE_CURATOR, CI_LIAISON
 
 ---
 

@@ -69,13 +69,14 @@ ORCHESTRATOR
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
--------|------------|-------------------|
-| **DBA** | haiku | Schema changes, migrations, query optimization, index management |
-| **BACKEND_ENGINEER** | haiku | Service implementation, business logic, controller patterns, Celery tasks |
-| **API_DEVELOPER** | haiku | Endpoint design, route implementation, OpenAPI documentation, API versioning |
 
-**Spawn Limit:** Up to 3 agents in parallel
-**Coordination:** COORD_PLATFORM synthesizes results from all spawned agents before reporting upstream
+**Key for COORD_PLATFORM:**
+- RAG: `scheduling_policy` for domain context
+- Scripts: `pytest backend/tests/` for backend tests; `alembic upgrade head` for migrations
+- Use `database-migration` skill for schema changes
+- Spawn: DBA, BACKEND_ENGINEER, API_DEVELOPER
+
+---
 
 ### Related Protocols
 

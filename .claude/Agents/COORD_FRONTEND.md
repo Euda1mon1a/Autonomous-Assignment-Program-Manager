@@ -35,10 +35,12 @@ COORD_FRONTEND
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
----> FRONTEND_ENGINEER
-    |
-    +---> UX_SPECIALIST
-```
+
+**Key for COORD_FRONTEND:**
+- Scripts: `npm run lint:fix`, `npm run type-check`, `npm run build`
+- RAG: `user_guide_faq` for UI patterns
+- Use `frontend-development` skill for Next.js/React patterns
+- Spawn: FRONTEND_ENGINEER, UX_SPECIALIST
 
 ---
 

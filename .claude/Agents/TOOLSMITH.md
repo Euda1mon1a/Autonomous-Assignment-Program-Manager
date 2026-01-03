@@ -49,7 +49,14 @@ TOOLSMITH (this agent) -> TOOL_QA -> TOOL_REVIEWER
 
 ## Standard Operations
 
+**Key for TOOLSMITH:**
+- RAG: `ai_patterns`, `delegation_patterns` for skill/agent patterns
+- Use `skill-factory` and `agent-factory` skills for artifact creation
+- Reference: `.claude/skills/*/SKILL.md` and `.claude/Agents/*.md` for templates
+- Pipeline: Creates artifacts -> passes to TOOL_QA for validation
+
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
 ---
 
 ## Charter

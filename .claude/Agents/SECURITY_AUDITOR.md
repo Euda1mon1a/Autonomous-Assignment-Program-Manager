@@ -35,7 +35,14 @@ None - SECURITY_AUDITOR is a specialist agent that executes specific tasks and r
 
 ## Standard Operations
 
+**Key for SECURITY_AUDITOR:**
+- RAG: `military_specific` for OPSEC/PERSEC rules; CLAUDE.md Security Requirements section
+- MCP: `run_security_scan_tool` for vulnerability scanning
+- Scripts: `scripts/pii-scan.sh` for PII/OPSEC scanning; `scripts/audit-fix.sh` for npm vulnerabilities
+- Reference: `docs/security/DATA_SECURITY_POLICY.md`, `docs/security/SECURITY_PATTERN_AUDIT.md`
+
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
 ---
 
 ## How to Delegate to This Agent

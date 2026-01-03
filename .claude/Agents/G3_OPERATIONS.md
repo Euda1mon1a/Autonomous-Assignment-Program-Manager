@@ -63,6 +63,13 @@ The G3_OPERATIONS agent is the "Operations Officer" function for the PAI (Parall
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for G3_OPERATIONS:**
+- Scripts: `./scripts/stack-health.sh` for system health checks
+- Real-time status monitoring and progress tracking
+- Resource allocation and workflow coordination
+- Spawn: WORKFLOW_EXECUTOR for specialized execution
+
 ---
 
 ## Personality Traits

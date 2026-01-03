@@ -28,7 +28,14 @@
 
 ## Standard Operations
 
+**Key for HISTORIAN:**
+- RAG: `session_handoff`, `ai_patterns` for narrative context
+- Creates: Session narratives in `docs/sessions/session-XXX-YYYY-MM-DD.md`
+- Reference: Existing sessions in `docs/sessions/` for tone/style consistency
+- Focus: Human-readable narratives for non-technical stakeholders (Dr. Montgomery)
+
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
 ---
 
 ## Charter

@@ -139,11 +139,12 @@ ORCHESTRATOR
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
-----------|----------|---------|
-| API Design Standards | `CLAUDE.md` (Code Style) | RESTful conventions, naming, versioning |
-| Context Isolation | `.claude/Governance/CONTEXT_ISOLATION.md` | Required context from COORD_PLATFORM |
-| Pydantic Patterns | `backend/app/schemas/` | Schema design examples |
-| Quality Gates | `.claude/Governance/QUALITY_GATES.md` | API validation requirements |
+
+**Key for API_DEVELOPER:**
+- RAG: `scheduling_policy`, `swap_system` for domain API patterns
+- Scripts: `pytest backend/tests/api/` for API tests; `ruff check` and `ruff format` before commits
+- Reference: `backend/app/schemas/` for Pydantic patterns, `docs/api/` for API documentation
+- Validate OpenAPI spec with `npm run generate:types` in frontend after API changes
 
 ---
 

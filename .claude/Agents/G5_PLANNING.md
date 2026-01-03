@@ -95,6 +95,13 @@ Spawn all 10 probes in parallel with 90s timeout:
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for G5_PLANNING:**
+- RAG: `scheduling_policy`, `resilience_concepts` for constraint planning
+- Protocol: `/plan-party` for 10-probe parallel strategy generation
+- Use `schedule-optimization` skill for multi-objective analysis
+- Coordinates PLAN_PARTY probes for strategy development
+
 ---
 
 ## Personality Traits

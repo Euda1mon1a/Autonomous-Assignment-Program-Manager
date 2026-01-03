@@ -123,6 +123,13 @@ G4_LIBRARIAN                                   G4_CONTEXT_MANAGER
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for G4_LIBRARIAN:**
+- RAG: All doc_types for file reference management
+- MCP: `rag_search`, `rag_health` for knowledge base status
+- Reference: `.claude/Agents/*.md` for agent file references
+- Tracks file freshness, staleness, and duplication across agents
+
 ---
 
 ## Standing Orders (Execute Without Escalation)

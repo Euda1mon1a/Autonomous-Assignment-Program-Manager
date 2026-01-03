@@ -81,5 +81,5 @@ export async function rollbackBatch(
 }
 
 export async function deleteBatch(batchId: string): Promise<void> {
-  return del<void>(`${BASE_URL}/batches/${batchId}`);
+  return del(`${BASE_URL}/batches/${batchId}`);
 }

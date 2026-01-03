@@ -6,33 +6,33 @@
  * fallback using SheetJS if the backend is unavailable.
  */
 
-import { useState, useCallback, useRef } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import * as XLSX from 'xlsx';
-import { post, ApiError } from '@/lib/api';
+import { ApiError, post } from "@/lib/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useRef, useState } from "react";
+import * as XLSX from "xlsx";
 import type {
   ImportDataType,
   ImportFileFormat,
   ImportOptions,
-  ImportProgress,
   ImportPreviewResult,
+  ImportProgress,
   ImportResult,
   ImportValidationError,
-} from './types';
+} from "./types";
 import {
-  detectFileFormat,
   detectDataType,
+  detectFileFormat,
+  normalizeColumns,
   parseCSV,
   parseJSON,
-  readFileAsText,
   readFileAsArrayBuffer,
-  normalizeColumns,
-} from './utils';
+  readFileAsText,
+} from "./utils";
 import {
-  validateImportData,
   findDuplicates,
   findOverlappingAbsences,
-} from './validation';
+  validateImportData,
+} from "./validation";
 
 // ============================================================================
 // Backend XLSX Parse Response Type
@@ -61,7 +61,7 @@ const DEFAULT_IMPORT_OPTIONS: ImportOptions = {
   skipDuplicates: true,
   updateExisting: false,
   skipInvalidRows: true,
-  dateFormat: 'YYYY-MM-DD',
+  dateFormat: "YYYY-MM-DD",
   trimWhitespace: true,
 };
 
@@ -70,10 +70,10 @@ const DEFAULT_IMPORT_OPTIONS: ImportOptions = {
 // ============================================================================
 
 const IMPORT_ENDPOINTS: Record<ImportDataType, string> = {
-  people: '/people/bulk',
-  assignments: '/assignments/bulk',
-  absences: '/absences/bulk',
-  schedules: '/schedule/import',
+  people: "/people/bulk",
+  assignments: "/assignments/bulk",
+  absences: "/absences/bulk",
+  schedules: "/schedule/import",
 };
 
 // ============================================================================
@@ -91,7 +91,7 @@ interface ImportState {
   file: File | null;
   format: ImportFileFormat;
   dataType: ImportDataType;
-  dataTypeSource: 'auto' | 'manual';
+  dataTypeSource: "auto" | "manual";
   preview: ImportPreviewResult | null;
   progress: ImportProgress;
   options: ImportOptions;
@@ -111,19 +111,19 @@ export function useImport(hookOptions: UseImportOptions = {}) {
 
   const [state, setState] = useState<ImportState>({
     file: null,
-    format: 'csv',
-    dataType: hookOptions.dataType || 'schedules',
-    dataTypeSource: hookOptions.dataType ? 'manual' : 'auto',
+    format: "csv",
+    dataType: hookOptions.dataType || "schedules",
+    dataTypeSource: hookOptions.dataType ? "manual" : "auto",
     preview: null,
     progress: {
-      status: 'idle',
+      status: "idle",
       currentRow: 0,
       totalRows: 0,
       processedRows: 0,
       successCount: 0,
       errorCount: 0,
       warningCount: 0,
-      message: '',
+      message: "",
       errors: [],
     },
     options: DEFAULT_IMPORT_OPTIONS,
@@ -135,246 +135,288 @@ export function useImport(hookOptions: UseImportOptions = {}) {
   // Update Progress
   // ============================================================================
 
-  const updateProgress = useCallback((updates: Partial<ImportProgress>) => {
-    setState(prev => {
-      const newProgress = { ...prev.progress, ...updates };
-      hookOptions.onProgress?.(newProgress);
-      return { ...prev, progress: newProgress };
-    });
-  }, [hookOptions]);
+  const updateProgress = useCallback(
+    (updates: Partial<ImportProgress>) => {
+      setState((prev) => {
+        const newProgress = { ...prev.progress, ...updates };
+        hookOptions.onProgress?.(newProgress);
+        return { ...prev, progress: newProgress };
+      });
+    },
+    [hookOptions]
+  );
 
   // ============================================================================
   // Parse XLSX via Backend API
   // ============================================================================
 
-  const parseXlsxViaBackend = useCallback(async (file: File): Promise<{
-    rows: Record<string, unknown>[];
-    warnings: string[];
-  }> => {
-    const formData = new FormData();
-    formData.append('file', file);
+  const parseXlsxViaBackend = useCallback(
+    async (
+      file: File
+    ): Promise<{
+      rows: Record<string, unknown>[];
+      warnings: string[];
+    }> => {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    // Use fetch directly for FormData upload
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-    const response = await fetch(`${apiBase}/imports/parse-xlsx`, {
-      method: 'POST',
-      body: formData,
-      credentials: 'include',
-    });
+      // Use fetch directly for FormData upload
+      const apiBase =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+      const response = await fetch(`${apiBase}/imports/parse-xlsx`, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Unknown error' })) as BackendXlsxError;
-      throw new Error(errorData.error || `Backend error: ${response.status}`);
-    }
+      if (!response.ok) {
+        const errorData = (await response
+          .json()
+          .catch(() => ({ error: "Unknown error" }))) as BackendXlsxError;
+        throw new Error(errorData.error || `Backend error: ${response.status}`);
+      }
 
-    const data = await response.json() as BackendXlsxResponse;
+      const data = (await response.json()) as BackendXlsxResponse;
 
-    if (!data.success) {
-      throw new Error((data as unknown as BackendXlsxError).error || 'Backend parsing failed');
-    }
+      if (!data.success) {
+        throw new Error(
+          (data as unknown as BackendXlsxError).error ||
+            "Backend parsing failed"
+        );
+      }
 
-    return {
-      rows: data.rows,
-      warnings: data.warnings || [],
-    };
-  }, []);
+      return {
+        rows: data.rows,
+        warnings: data.warnings || [],
+      };
+    },
+    []
+  );
 
   // ============================================================================
   // Parse XLSX Client-Side (Fallback)
   // ============================================================================
 
-  const parseXlsxClientSide = useCallback(async (file: File): Promise<{
-    rows: Record<string, unknown>[];
-    warnings: string[];
-  }> => {
-    const warnings: string[] = [
-      'Using client-side Excel parsing (backend unavailable). Some features like color detection may not work.',
-    ];
+  const parseXlsxClientSide = useCallback(
+    async (
+      file: File
+    ): Promise<{
+      rows: Record<string, unknown>[];
+      warnings: string[];
+    }> => {
+      const warnings: string[] = [
+        "Using client-side Excel parsing (backend unavailable). Some features like color detection may not work.",
+      ];
 
-    const arrayBuffer = await readFileAsArrayBuffer(file);
-    const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
+      const arrayBuffer = await readFileAsArrayBuffer(file);
+      const workbook = XLSX.read(arrayBuffer, {
+        type: "array",
+        cellDates: true,
+      });
 
-    // Use first sheet
-    const sheetName = workbook.SheetNames[0];
-    if (!sheetName) {
-      throw new Error('No sheets found in Excel file');
-    }
+      // Use first sheet
+      const sheetName = workbook.SheetNames[0];
+      if (!sheetName) {
+        throw new Error("No sheets found in Excel file");
+      }
 
-    const worksheet = workbook.Sheets[sheetName];
-    if (!worksheet) {
-      throw new Error(`Failed to read sheet: ${sheetName}`);
-    }
+      const worksheet = workbook.Sheets[sheetName];
+      if (!worksheet) {
+        throw new Error(`Failed to read sheet: ${sheetName}`);
+      }
 
-    // Convert to JSON with headers from first row
-    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, {
-      header: undefined, // Use first row as headers
-      defval: null, // Default value for empty cells
-      raw: false, // Convert dates to strings
-    });
+      // Convert to JSON with headers from first row
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(
+        worksheet,
+        {
+          header: undefined, // Use first row as headers
+          defval: null, // Default value for empty cells
+          raw: false, // Convert dates to strings
+        }
+      );
 
-    if (rows.length === 0) {
-      warnings.push('No data rows found in Excel file');
-    }
+      if (rows.length === 0) {
+        warnings.push("No data rows found in Excel file");
+      }
 
-    return { rows, warnings };
-  }, []);
+      return { rows, warnings };
+    },
+    []
+  );
 
   // ============================================================================
   // Parse File (Main Entry Point)
   // ============================================================================
 
-  const parseFile = useCallback(async (file: File): Promise<Record<string, unknown>[]> => {
-    const format = detectFileFormat(file);
+  const parseFile = useCallback(
+    async (file: File): Promise<Record<string, unknown>[]> => {
+      const format = detectFileFormat(file);
 
-    setState(prev => ({
-      ...prev,
-      file,
-      format,
-      xlsxFallbackUsed: false,
-      xlsxWarnings: [],
-    }));
-
-    if (format === 'csv') {
-      const content = await readFileAsText(file);
-      return parseCSV(content);
-    }
-
-    if (format === 'json') {
-      const content = await readFileAsText(file);
-      return parseJSON(content);
-    }
-
-    if (format === 'xlsx') {
-      // Try backend first, fall back to client-side
-      let rows: Record<string, unknown>[];
-      let warnings: string[] = [];
-      let usedFallback = false;
-
-      try {
-        const result = await parseXlsxViaBackend(file);
-        rows = result.rows;
-        warnings = result.warnings;
-      } catch (backendError) {
-        // Backend failed, try client-side fallback
-        console.warn(
-          'Backend xlsx parsing failed, using client-side fallback:',
-          backendError instanceof Error ? backendError.message : backendError
-        );
-
-        usedFallback = true;
-        const result = await parseXlsxClientSide(file);
-        rows = result.rows;
-        warnings = result.warnings;
-      }
-
-      // Update state with fallback info
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
-        xlsxFallbackUsed: usedFallback,
-        xlsxWarnings: warnings,
+        file,
+        format,
+        xlsxFallbackUsed: false,
+        xlsxWarnings: [],
       }));
 
-      return rows;
-    }
+      if (format === "csv") {
+        const content = await readFileAsText(file);
+        return parseCSV(content);
+      }
 
-    throw new Error(`Unsupported file format: ${format}`);
-  }, [parseXlsxViaBackend, parseXlsxClientSide]);
+      if (format === "json") {
+        const content = await readFileAsText(file);
+        return parseJSON(content);
+      }
+
+      if (format === "xlsx") {
+        // Try backend first, fall back to client-side
+        let rows: Record<string, unknown>[];
+        let warnings: string[] = [];
+        let usedFallback = false;
+
+        try {
+          const result = await parseXlsxViaBackend(file);
+          rows = result.rows;
+          warnings = result.warnings;
+        } catch (backendError) {
+          // Backend failed, try client-side fallback
+          console.warn(
+            "Backend xlsx parsing failed, using client-side fallback:",
+            backendError instanceof Error ? backendError.message : backendError
+          );
+
+          usedFallback = true;
+          const result = await parseXlsxClientSide(file);
+          rows = result.rows;
+          warnings = result.warnings;
+        }
+
+        // Update state with fallback info
+        setState((prev) => ({
+          ...prev,
+          xlsxFallbackUsed: usedFallback,
+          xlsxWarnings: warnings,
+        }));
+
+        return rows;
+      }
+
+      throw new Error(`Unsupported file format: ${format}`);
+    },
+    [parseXlsxViaBackend, parseXlsxClientSide]
+  );
 
   // ============================================================================
   // Preview Import
   // ============================================================================
 
-  const previewImport = useCallback(async (file: File): Promise<ImportPreviewResult> => {
-    updateProgress({
-      status: 'parsing',
-      message: 'Parsing file...',
-      currentRow: 0,
-      totalRows: 0,
-    });
-
-    try {
-      // Parse the file
-      const rawData = await parseFile(file);
-
-      if (rawData.length === 0) {
-        throw new Error('No data found in file');
-      }
-
-      // Normalize column names
-      const normalizedData = normalizeColumns(rawData);
-      const columns = Object.keys(normalizedData[0] || {});
-
-      // Use manual selection if user explicitly chose, otherwise auto-detect
-      const detectedType =
-        state.dataTypeSource === 'manual' ? state.dataType : detectDataType(columns);
-
+  const previewImport = useCallback(
+    async (file: File): Promise<ImportPreviewResult> => {
       updateProgress({
-        status: 'validating',
-        message: 'Validating data...',
-        totalRows: normalizedData.length,
+        status: "parsing",
+        message: "Parsing file...",
+        currentRow: 0,
+        totalRows: 0,
       });
 
-      // Validate the data
-      const preview = validateImportData(normalizedData, detectedType, columns);
-      preview.detectedFormat = detectFileFormat(file);
+      try {
+        // Parse the file
+        const rawData = await parseFile(file);
 
-      // Add duplicate warnings
-      const duplicateWarnings = findDuplicates(normalizedData, detectedType);
-      if (duplicateWarnings.length > 0) {
-        for (const warning of duplicateWarnings) {
-          const row = preview.rows.find(r => r.rowNumber === warning.row);
-          if (row) {
-            row.warnings.push(warning);
-            if (row.status === 'valid') {
-              row.status = 'warning';
-              preview.warningRows++;
+        if (rawData.length === 0) {
+          throw new Error("No data found in file");
+        }
+
+        // Normalize column names
+        const normalizedData = normalizeColumns(rawData);
+        const columns = Object.keys(normalizedData[0] || {});
+
+        // Use manual selection if user explicitly chose, otherwise auto-detect
+        const detectedType =
+          state.dataTypeSource === "manual"
+            ? state.dataType
+            : detectDataType(columns);
+
+        updateProgress({
+          status: "validating",
+          message: "Validating data...",
+          totalRows: normalizedData.length,
+        });
+
+        // Validate the data
+        const preview = validateImportData(
+          normalizedData,
+          detectedType,
+          columns
+        );
+        preview.detectedFormat = detectFileFormat(file);
+
+        // Add duplicate warnings
+        const duplicateWarnings = findDuplicates(normalizedData, detectedType);
+        if (duplicateWarnings.length > 0) {
+          for (const warning of duplicateWarnings) {
+            const row = preview.rows.find((r) => r.rowNumber === warning.row);
+            if (row) {
+              row.warnings.push(warning);
+              if (row.status === "valid") {
+                row.status = "warning";
+                preview.warningRows++;
+              }
             }
           }
         }
-      }
 
-      // Add overlapping absence warnings
-      if (detectedType === 'absences') {
-        const overlapWarnings = findOverlappingAbsences(normalizedData);
-        for (const warning of overlapWarnings) {
-          const row = preview.rows.find(r => r.rowNumber === warning.row);
-          if (row) {
-            row.warnings.push(warning);
-            if (row.status === 'valid') {
-              row.status = 'warning';
-              preview.warningRows++;
+        // Add overlapping absence warnings
+        if (detectedType === "absences") {
+          const overlapWarnings = findOverlappingAbsences(normalizedData);
+          for (const warning of overlapWarnings) {
+            const row = preview.rows.find((r) => r.rowNumber === warning.row);
+            if (row) {
+              row.warnings.push(warning);
+              if (row.status === "valid") {
+                row.status = "warning";
+                preview.warningRows++;
+              }
             }
           }
         }
+
+        setState((prev) => ({
+          ...prev,
+          dataType: detectedType,
+          preview,
+        }));
+
+        updateProgress({
+          status: "idle",
+          message: "Preview ready",
+          processedRows: normalizedData.length,
+        });
+
+        return preview;
+      } catch (error) {
+        updateProgress({
+          status: "error",
+          message:
+            error instanceof Error ? error.message : "Failed to parse file",
+        });
+        throw error;
       }
-
-      setState(prev => ({
-        ...prev,
-        dataType: detectedType,
-        preview,
-      }));
-
-      updateProgress({
-        status: 'idle',
-        message: 'Preview ready',
-        processedRows: normalizedData.length,
-      });
-
-      return preview;
-    } catch (error) {
-      updateProgress({
-        status: 'error',
-        message: error instanceof Error ? error.message : 'Failed to parse file',
-      });
-      throw error;
-    }
-  }, [state.dataType, state.dataTypeSource, parseFile, updateProgress]);
+    },
+    [state.dataType, state.dataTypeSource, parseFile, updateProgress]
+  );
 
   // ============================================================================
   // Execute Import Mutation
   // ============================================================================
 
-  const importMutation = useMutation<ImportResult, ApiError, Record<string, unknown>[]>({
+  const importMutation = useMutation<
+    ImportResult,
+    ApiError,
+    Record<string, unknown>[]
+  >({
     mutationFn: async (data) => {
       const endpoint = IMPORT_ENDPOINTS[state.dataType];
       return post<ImportResult>(endpoint, {
@@ -384,11 +426,11 @@ export function useImport(hookOptions: UseImportOptions = {}) {
     },
     onSuccess: (result) => {
       // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['people'] });
-      queryClient.invalidateQueries({ queryKey: ['assignments'] });
-      queryClient.invalidateQueries({ queryKey: ['absences'] });
-      queryClient.invalidateQueries({ queryKey: ['schedule'] });
-      queryClient.invalidateQueries({ queryKey: ['validation'] });
+      queryClient.invalidateQueries({ queryKey: ["people"] });
+      queryClient.invalidateQueries({ queryKey: ["assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["absences"] });
+      queryClient.invalidateQueries({ queryKey: ["schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["validation"] });
 
       hookOptions.onComplete?.(result);
     },
@@ -403,24 +445,25 @@ export function useImport(hookOptions: UseImportOptions = {}) {
 
   const executeImport = useCallback(async (): Promise<ImportResult> => {
     if (!state.preview) {
-      throw new Error('No preview available. Please preview the import first.');
+      throw new Error("No preview available. Please preview the import first.");
     }
 
     // Create abort controller for cancellation
     abortControllerRef.current = new AbortController();
 
-    const validRows = state.preview.rows.filter(row =>
-      row.status === 'valid' ||
-      (row.status === 'warning' && state.options.skipInvalidRows)
+    const validRows = state.preview.rows.filter(
+      (row) =>
+        row.status === "valid" ||
+        (row.status === "warning" && state.options.skipInvalidRows)
     );
 
     if (validRows.length === 0) {
-      throw new Error('No valid rows to import');
+      throw new Error("No valid rows to import");
     }
 
     updateProgress({
-      status: 'importing',
-      message: 'Importing data...',
+      status: "importing",
+      message: "Importing data...",
       totalRows: validRows.length,
       currentRow: 0,
       processedRows: 0,
@@ -429,7 +472,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
       warningCount: state.preview.warningRows,
     });
 
-    const dataToImport = validRows.map(row => row.data);
+    const dataToImport = validRows.map((row) => row.data);
     const batchSize = 100;
     const totalBatches = Math.ceil(dataToImport.length / batchSize);
 
@@ -442,7 +485,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
       for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
         // Check for cancellation
         if (abortControllerRef.current?.signal.aborted) {
-          throw new Error('Import cancelled');
+          throw new Error("Import cancelled");
         }
 
         const start = batchIndex * batchSize;
@@ -460,10 +503,13 @@ export function useImport(hookOptions: UseImportOptions = {}) {
           errorCount += batch.length;
           errors.push({
             row: start + 2,
-            column: 'batch',
+            column: "batch",
             value: null,
-            message: batchError instanceof Error ? batchError.message : 'Batch import failed',
-            severity: 'error',
+            message:
+              batchError instanceof Error
+                ? batchError.message
+                : "Batch import failed",
+            severity: "error",
           });
         }
 
@@ -488,7 +534,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
       };
 
       updateProgress({
-        status: 'complete',
+        status: "complete",
         message: `Import complete: ${successCount} succeeded, ${errorCount} failed`,
         errors,
       });
@@ -496,12 +542,18 @@ export function useImport(hookOptions: UseImportOptions = {}) {
       return result;
     } catch (error) {
       updateProgress({
-        status: 'error',
-        message: error instanceof Error ? error.message : 'Import failed',
+        status: "error",
+        message: error instanceof Error ? error.message : "Import failed",
       });
       throw error;
     }
-  }, [state.preview, state.options, state.dataType, updateProgress, importMutation]);
+  }, [
+    state.preview,
+    state.options,
+    state.dataType,
+    updateProgress,
+    importMutation,
+  ]);
 
   // ============================================================================
   // Cancel Import
@@ -510,8 +562,8 @@ export function useImport(hookOptions: UseImportOptions = {}) {
   const cancelImport = useCallback(() => {
     abortControllerRef.current?.abort();
     updateProgress({
-      status: 'idle',
-      message: 'Import cancelled',
+      status: "idle",
+      message: "Import cancelled",
     });
   }, [updateProgress]);
 
@@ -523,19 +575,19 @@ export function useImport(hookOptions: UseImportOptions = {}) {
     abortControllerRef.current?.abort();
     setState({
       file: null,
-      format: 'csv',
-      dataType: hookOptions.dataType || 'schedules',
-      dataTypeSource: hookOptions.dataType ? 'manual' : 'auto',
+      format: "csv",
+      dataType: hookOptions.dataType || "schedules",
+      dataTypeSource: hookOptions.dataType ? "manual" : "auto",
       preview: null,
       progress: {
-        status: 'idle',
+        status: "idle",
         currentRow: 0,
         totalRows: 0,
         processedRows: 0,
         successCount: 0,
         errorCount: 0,
         warningCount: 0,
-        message: '',
+        message: "",
         errors: [],
       },
       options: DEFAULT_IMPORT_OPTIONS,
@@ -549,7 +601,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
   // ============================================================================
 
   const updateOptions = useCallback((options: Partial<ImportOptions>) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       options: { ...prev.options, ...options },
     }));
@@ -560,7 +612,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
   // ============================================================================
 
   const setDataType = useCallback((dataType: ImportDataType) => {
-    setState(prev => ({ ...prev, dataType, dataTypeSource: 'manual' }));
+    setState((prev) => ({ ...prev, dataType, dataTypeSource: "manual" }));
   }, []);
 
   // ============================================================================
@@ -575,8 +627,10 @@ export function useImport(hookOptions: UseImportOptions = {}) {
     preview: state.preview,
     progress: state.progress,
     options: state.options,
-    isLoading: importMutation.isPending || ['parsing', 'validating', 'importing'].includes(state.progress.status),
-    isError: state.progress.status === 'error',
+    isLoading:
+      importMutation.isPending ||
+      ["parsing", "validating", "importing"].includes(state.progress.status),
+    isError: state.progress.status === "error",
     /** True if xlsx was parsed client-side (backend was unavailable) */
     xlsxFallbackUsed: state.xlsxFallbackUsed,
     /** Warnings from xlsx parsing */
@@ -591,9 +645,5 @@ export function useImport(hookOptions: UseImportOptions = {}) {
     setDataType,
   };
 }
-
-// ============================================================================
-// Export hook type
-// ============================================================================
 
 export type UseImportReturn = ReturnType<typeof useImport>;

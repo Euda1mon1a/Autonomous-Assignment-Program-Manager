@@ -472,6 +472,13 @@ OPTIMIZATION_SPECIALIST returns structured results:
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for OPTIMIZATION_SPECIALIST:**
+- RAG: `scheduling_policy`, `resilience_concepts` for optimization context
+- MCP: `benchmark_solvers_tool`, `benchmark_constraints_tool` for solver analysis
+- Scripts: `pytest backend/tests/scheduling/` for solver tests
+- Reference: `docs/architecture/SOLVER_ALGORITHM.md` for algorithm documentation
+
 ---
 
 ## Version History

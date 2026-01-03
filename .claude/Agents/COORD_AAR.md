@@ -33,18 +33,12 @@ COORD_AAR (this agent) [session end]
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
----> DELEGATION_AUDITOR (always)
-    |
-    +---> HISTORIAN (if session noteworthy)
-```
 
-**Typical Spawn Triggers:**
-- Explicit invocation: User or ORCHESTRATOR runs `/project:coord-aar`
-- Session close signal: User says "ending session", "wrapping up", "that's all"
-- Context limit warning: Context window >80% consumed
-- PR merge complete with no new tasks queued
-
-**Returns Results To:** ORCHESTRATOR (AAR report with handoff notes, metrics, and HISTORIAN recommendation)
+**Key for COORD_AAR:**
+- RAG: `ai_patterns`, `delegation_patterns` for session analysis
+- Scratchpad: Update `ORCHESTRATOR_ADVISOR_NOTES.md`, `DELEGATION_METRICS.md`
+- Use `session-end` skill for mandatory session close-out
+- Spawn: DELEGATION_AUDITOR (always), HISTORIAN (if noteworthy)
 
 ---
 

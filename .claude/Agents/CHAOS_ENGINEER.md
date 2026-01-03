@@ -32,6 +32,13 @@ None - CHAOS_ENGINEER is a specialist agent that executes specific tasks and ret
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for CHAOS_ENGINEER:**
+- RAG: `resilience_concepts`, `exotic_concepts` for failure mode patterns
+- MCP: `run_contingency_analysis_resilience_tool`, `calculate_blast_radius_tool`, `check_circuit_breakers_tool`, `benchmark_resilience_tool`
+- Scripts: `pytest backend/tests/resilience/` for chaos experiment validation
+- Safety: Never test in production; always verify abort capability active
+
 ---
 
 ## Charter

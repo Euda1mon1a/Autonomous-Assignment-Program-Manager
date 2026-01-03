@@ -8,7 +8,7 @@ interface ResilienceMetricsProps {
   isLoading: boolean;
 }
 
-const STAT_VARIANTS = {
+const STAT_VARIANTS: any = {
   hidden: { opacity: 0, y: 20 },
   visible: (i: number) => ({
     opacity: 1,
