@@ -214,8 +214,10 @@ services:
   mcp-server:
     restart: always
     environment:
-      # Transport mode - STDIO for production security (internal use only)
-      MCP_TRANSPORT: stdio
+      # Transport mode - HTTP for parallel agent access
+      MCP_TRANSPORT: streamable-http
+      MCP_HOST: "0.0.0.0"
+      MCP_PORT: "8080"
       # API Integration - connects to FastAPI backend via internal network
       API_BASE_URL: http://backend:8000
       API_USERNAME: ${API_USERNAME}

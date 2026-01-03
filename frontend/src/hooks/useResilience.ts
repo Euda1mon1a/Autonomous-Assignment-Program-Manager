@@ -1,95 +1,51 @@
 /**
- * Resilience Framework Hooks
- *
- * Hooks for emergency coverage, deployment handling, and
- * schedule resilience features with React Query caching.
+ * Resilience Hooks
  */
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { post, ApiError } from '@/lib/api'
+import { fetchSystemHealth, fetchVulnerabilityReport } from "@/api/resilience";
+import { ApiError } from "@/lib/api";
+import type {
+  HealthCheckResponse,
+  VulnerabilityReportResponse,
+} from "@/types/resilience";
+import { useQuery, UseQueryOptions } from "@tanstack/react-query";
 
-// ============================================================================
-// Types
-// ============================================================================
+export const resilienceQueryKeys = {
+  all: ["resilience"] as const,
+  health: () => ["resilience", "health"] as const,
+  vulnerability: (params?: any) =>
+    ["resilience", "vulnerability", params] as const,
+};
 
-export interface EmergencyCoverageRequest {
-  person_id: string
-  start_date: string
-  end_date: string
-  reason: string
-  is_deployment?: boolean
+export function useSystemHealth(
+  options?: Omit<
+    UseQueryOptions<HealthCheckResponse, ApiError>,
+    "queryKey" | "queryFn"
+  >
+) {
+  return useQuery<HealthCheckResponse, ApiError>({
+    queryKey: resilienceQueryKeys.health(),
+    queryFn: fetchSystemHealth,
+    refetchInterval: 30000, // Poll every 30 seconds
+    staleTime: 10000, // Consider data stale after 10 seconds
+    ...options,
+  });
 }
 
-export interface EmergencyCoverageResponse {
-  status: 'success' | 'partial' | 'failed'
-  replacements_found: number
-  coverage_gaps: number
-  requires_manual_review: boolean
-  details: Array<{
-    date: string
-    original_assignment: string
-    replacement?: string
-    status: string
-  }>
-}
-
-// ============================================================================
-// Emergency Coverage Hooks
-// ============================================================================
-
-/**
- * Handles emergency coverage requests when a person becomes unavailable.
- *
- * This mutation hook initiates an automated coverage search when a resident
- * or faculty member needs emergency replacement due to illness, deployment,
- * or other urgent circumstances. The system attempts to find suitable
- * replacements while maintaining ACGME compliance and schedule integrity.
- *
- * @returns Mutation object containing:
- *   - `mutate`: Function to trigger emergency coverage
- *   - `mutateAsync`: Async version returning a Promise
- *   - `isPending`: Whether the request is in progress
- *   - `isSuccess`: Whether the request completed successfully
- *   - `isError`: Whether an error occurred
- *   - `error`: Any error that occurred during processing
- *   - `data`: Coverage response with replacement details
- *
- * @example
- * ```tsx
- * function EmergencyCoverageDialog({ personId }: Props) {
- *   const { mutate, isPending } = useEmergencyCoverage();
- *
- *   const handleSubmit = (data: EmergencyCoverageRequest) => {
- *     mutate(data, {
- *       onSuccess: (result) => {
- *         if (result.status === 'success') {
- *           toast.success(`Found ${result.replacements_found} replacements`);
- *         } else if (result.requires_manual_review) {
- *           toast.warning('Manual review required for coverage gaps');
- *         }
- *       },
- *       onError: (error) => {
- *         toast.error(`Failed to process coverage: ${error.message}`);
- *       },
- *     });
- *   };
- *
- *   return <CoverageForm onSubmit={handleSubmit} loading={isPending} />;
- * }
- * ```
- *
- * @see EmergencyCoverageRequest - Input parameters for coverage request
- * @see EmergencyCoverageResponse - Detailed response with replacement status
- */
-export function useEmergencyCoverage() {
-  const queryClient = useQueryClient()
-
-  return useMutation<EmergencyCoverageResponse, ApiError, EmergencyCoverageRequest>({
-    mutationFn: (data) => post<EmergencyCoverageResponse>('/schedule/emergency-coverage', data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['schedule'] })
-      queryClient.invalidateQueries({ queryKey: ['assignments'] })
-      queryClient.invalidateQueries({ queryKey: ['absences'] })
-      queryClient.invalidateQueries({ queryKey: ['validation'] })
-    },
-  })
+export function useVulnerabilityReport(
+  params?: {
+    start_date?: string;
+    end_date?: string;
+    include_n2?: boolean;
+  },
+  options?: Omit<
+    UseQueryOptions<VulnerabilityReportResponse, ApiError>,
+    "queryKey" | "queryFn"
+  >
+) {
+  return useQuery<VulnerabilityReportResponse, ApiError>({
+    queryKey: resilienceQueryKeys.vulnerability(params),
+    queryFn: () => fetchVulnerabilityReport(params),
+    staleTime: 5 * 60 * 1000, // 5 minutes (expensive call)
+    ...options,
+  });
 }

@@ -900,3 +900,55 @@ The following documentation improvements were completed in Stream 9:
 | D. Environment variable injection | Pass MCP URLs via task metadata | Cleanest but needs tooling |
 
 **Recommended:** Option A or B - include RAG API routes (http://localhost:8000/api/rag/*) in relevant agent specs.
+
+---
+
+## MCP API Client Improvements (2026-01-02)
+
+### Token Refresh on 401 Unauthorized
+**Priority:** Medium
+**Added:** 2026-01-02 (Session: subagent-rag exploration)
+**Status:** Roadmap
+
+**Problem:** MCP API client singleton caches JWT token indefinitely. If:
+- Token expires (backend JWT lifetime)
+- Token is invalidated (password change, logout)
+- Container started before backend was ready
+
+...the client returns 401 for all subsequent calls until container restart.
+
+**Current Behavior:**
+```python
+# api_client.py - only checks if token is None
+async def _ensure_authenticated(self) -> dict[str, str]:
+    if self._token is None:  # <-- Doesn't detect expired/invalid tokens
+        await self._login()
+    return {"Authorization": f"Bearer {self._token}"}
+```
+
+**Proposed Fix:**
+```python
+async def _request_with_retry(self, method: str, url: str, **kwargs) -> httpx.Response:
+    # ... existing retry logic ...
+
+    # On 401, try refreshing token once before giving up
+    if response.status_code == 401 and not kwargs.get("_token_refreshed"):
+        logger.warning("Received 401 Unauthorized, attempting token refresh")
+        self._token = None  # Clear stale token
+        kwargs["headers"] = await self._ensure_authenticated()
+        kwargs["_token_refreshed"] = True  # Prevent infinite loop
+        return await self._request_with_retry(method, url, **kwargs)
+```
+
+**Files to modify:**
+- `mcp-server/src/scheduler_mcp/api_client.py`
+
+**Testing:**
+- [ ] Unit test: 401 triggers token refresh
+- [ ] Unit test: Second 401 after refresh raises (prevents loop)
+- [ ] Integration test: Token expiry recovery
+
+**Workaround (current):** Restart MCP container to clear stale client:
+```bash
+docker compose restart mcp-server
+```

@@ -70,9 +70,10 @@
   },
 
   "mcp": {
-    "autoConnect": true,
+    "autoConnect": false,
     "serverPath": "../mcp-server",
-    "healthCheckInterval": 60
+    "healthCheckInterval": 60,
+    "note": "Disabled - conflicts with Claude Code .mcp.json schema"
   },
 
   "projectContext": {
