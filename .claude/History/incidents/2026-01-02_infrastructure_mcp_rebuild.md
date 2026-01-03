@@ -147,12 +147,44 @@ docker compose up -d
 
 ## Follow-Up Actions
 
-- [ ] Re-enable migrations in `backend/docker-entrypoint.sh` after alembic reconciliation
-- [ ] Database restore decision (Jan 1 backup vs fresh seed)
+- [x] Re-enable migrations in `backend/docker-entrypoint.sh` after alembic reconciliation ✅ (Session 052B)
+- [x] Database restore decision → Fresh start with admin user only ✅ (Session 052B)
 - [ ] Consider GitHub Container Registry for sacred images
 - [ ] Add pre-commit hook for MCP config validation
 
 ---
 
+## Session 052B Addendum: Immaculate Empty Baseline
+
+After resolving the incident, established the **Immaculate Empty** baseline:
+
+### Additional Backups Created
+
+| Tier | Tag | Archive | Description |
+|------|-----|---------|-------------|
+| IMMACULATE | `*:immaculate-empty` | `immaculate_empty_20260102_213208.tar.gz` | Verified working, zero data |
+| SACRED | `*:sacred-612` | `sacred_612_20260102_212112.tar.gz` | PR 612 milestone |
+
+### Backup Hierarchy Established
+
+| Tier | Protection | Deletion Protocol |
+|------|------------|-------------------|
+| **IMMACULATE** | Highest | User manually locates and deletes |
+| **SACRED** | High | Ask user twice, require explicit approval |
+| **Backup** | Standard | Normal cleanup |
+
+### Verified System State
+
+- All services healthy
+- MCP tools working (tested via tool call)
+- 50+ migrations applied
+- Admin user created
+- Alembic migrations re-enabled on startup
+
+See: `.claude/History/milestones/2026-01-02_immaculate_empty_baseline.md`
+
+---
+
 **Recorded By:** ORCHESTRATOR (Session 052)
+**Updated By:** ORCHESTRATOR (Session 052B)
 **Reviewed By:** Pending
