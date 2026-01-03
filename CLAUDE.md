@@ -264,6 +264,13 @@ Follow layered architecture. Write tests. Run tests before commit. Use Alembic f
 - `rag_search('resilience framework')` - Cross-industry patterns
 - `rag_search('debugging workflow')` - Troubleshooting guide
 - `rag_search('common pitfalls')` - Known gotchas
+- `rag_search('context isolation agents')` - Agent spawning patterns
+- `rag_search('parallel agent efficiency')` - 50×1 > 5×10 (critical)
+- `rag_search('standing orders session')` - Cross-session guidance
+- `rag_search('session handoff protocol')` - Handoff patterns
+- `rag_search('CCW error patterns')` - Token bugs, import removal
+- `rag_search('MCP configuration type http')` - MCP client config (critical)
+- `rag_search('docker volume mount masking')` - Container state gotcha
 
 ---
 
