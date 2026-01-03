@@ -6,21 +6,44 @@
 
 ---
 
-## Command Structure
+## Full Command Structure (Left → Right)
 
 ```
-                              ORCHESTRATOR
-                     (Strategic Commander - 99/1 Rule)
-                                   │
-            ┌──────────────────────┼──────────────────────┐
-            │                      │                      │
-       ARCHITECT              SYNTHESIZER            G-STAFF
-      (Technical)            (Integration)         (Army Doctrine)
-            │                      │                      │
-   ┌────────┴────────┐    ┌───────┴───────┐    ┌─────────┴─────────┐
-   │                 │    │               │    │                   │
-COORD_PLATFORM  COORD_QUALITY  COORD_OPS  COORD_FRONTEND   G1-G6 + IG/PAO
-COORD_ENGINE    COORD_RESILIENCE          COORD_TOOLING
+ORCHESTRATOR ─┬─ ARCHITECT ─┬─ COORD_PLATFORM ─┬─ DBA
+(99/1 Rule)   │             │                  ├─ BACKEND_ENGINEER
+              │             │                  └─ API_DEVELOPER
+              │             │
+              │             ├─ COORD_ENGINE ───┬─ SCHEDULER
+              │             │                  ├─ SWAP_MANAGER
+              │             │                  └─ OPTIMIZATION_SPECIALIST
+              │             │
+              │             └─ COORD_QUALITY ──┬─ QA_TESTER
+              │                                ├─ CODE_REVIEWER
+              │                                └─ CI_LIAISON
+              │
+              ├─ SYNTHESIZER ┬─ COORD_OPS ─────┬─ META_UPDATER
+              │              │                 ├─ TOOLSMITH
+              │              │                 └─ RELEASE_MANAGER
+              │              │
+              │              ├─ COORD_RESILIENCE ┬─ RESILIENCE_ENGINEER
+              │              │                   ├─ COMPLIANCE_AUDITOR
+              │              │                   └─ SECURITY_AUDITOR
+              │              │
+              │              ├─ COORD_FRONTEND ──┬─ FRONTEND_ENGINEER
+              │              │                   └─ UX_SPECIALIST
+              │              │
+              │              └─ COORD_TOOLING ───┬─ TOOL_QA
+              │                                  └─ TOOL_REVIEWER
+              │
+              └─ G-STAFF ────┬─ G1_PERSONNEL
+                             ├─ G2_RECON ──────── /search-party (120 probes)
+                             ├─ G3_OPERATIONS
+                             ├─ G4_CONTEXT_MGR ─┬─ G4_LIBRARIAN
+                             │                  └─ KNOWLEDGE_CURATOR
+                             ├─ G5_PLANNING ───── /plan-party (10 probes)
+                             ├─ G6_SIGNAL
+                             ├─ IG (AUDITOR) ──── /qa-party (120 agents)
+                             └─ PAO (HISTORIAN)
 ```
 
 ---
