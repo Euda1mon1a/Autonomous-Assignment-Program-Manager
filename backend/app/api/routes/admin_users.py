@@ -14,12 +14,17 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from sqlalchemy import select, func, or_
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.security import get_admin_user, get_password_hash
 from app.db.session import get_async_db
 from app.models.user import User
+from app.notifications.channels.email.email_templates import render_email_template
+from app.notifications.tasks import send_email
+
+router = APIRouter()
 from app.schemas.admin_user import (
     AccountLockRequest,
     AccountLockResponse,
@@ -37,8 +42,6 @@ from app.schemas.admin_user import (
     UserRole,
     UserStatus,
 )
-
-router = APIRouter()
 
 
 def _user_to_admin_response(user: User) -> AdminUserResponse:
@@ -233,7 +236,33 @@ async def create_user(
         request=request,
     )
 
-    # TODO: Send invitation email if user_data.send_invite is True
+    # Send invitation email if user_data.send_invite is True
+    if user_data.send_invite:
+        settings = get_settings()
+        # Determine base URL (prefer first CORS origin which is usually frontend URL)
+        base_url = (
+            settings.CORS_ORIGINS[0]
+            if settings.CORS_ORIGINS
+            else "http://localhost:3000"
+        )
+        login_url = f"{base_url.rstrip('/')}/login"
+
+        email_data = render_email_template(
+            "admin_welcome",
+            {
+                "username": new_user.username,
+                "temp_password": temp_password,
+                "login_url": login_url,
+            },
+        )
+
+        if email_data:
+            send_email.delay(
+                to=new_user.email,
+                subject=email_data["subject"],
+                body="Your admin account has been created.",  # Fallback plain text
+                html=email_data["html"],
+            )
 
     return _user_to_admin_response(new_user)
 
@@ -492,9 +521,11 @@ async def lock_user_account(
         lockReason=getattr(user, "lock_reason", None),
         lockedAt=getattr(user, "locked_at", None),
         lockedBy=current_user.email if lock_data.locked else None,
-        message="Account locked successfully"
-        if lock_data.locked
-        else "Account unlocked successfully",
+        message=(
+            "Account locked successfully"
+            if lock_data.locked
+            else "Account unlocked successfully"
+        ),
     )
 
 
@@ -540,6 +571,10 @@ async def resend_invite(
     await db.commit()
     await db.refresh(user)
 
+    # Generate new temporary password
+    temp_password = uuid.uuid4().hex
+    user.hashed_password = get_password_hash(temp_password)
+
     # Log activity
     _log_activity(
         db=db,
@@ -549,13 +584,35 @@ async def resend_invite(
         request=request,
     )
 
-    # TODO: Actually send the invitation email
+    # Send the invitation email
+    settings = get_settings()
+    base_url = (
+        settings.CORS_ORIGINS[0] if settings.CORS_ORIGINS else "http://localhost:3000"
+    )
+    login_url = f"{base_url.rstrip('/')}/login"
+
+    email_data = render_email_template(
+        "admin_welcome",
+        {
+            "username": user.username,
+            "temp_password": temp_password,
+            "login_url": login_url,
+        },
+    )
+
+    if email_data:
+        send_email.delay(
+            to=user.email,
+            subject=email_data["subject"],
+            body="Your admin account invitation has been resent.",
+            html=email_data["html"],
+        )
 
     return ResendInviteResponse(
         userId=user.id,
         email=user.email,
         sentAt=datetime.utcnow(),
-        message="Invitation resent successfully",
+        message="Invitation resent successfully with new credentials",
     )
 
 
