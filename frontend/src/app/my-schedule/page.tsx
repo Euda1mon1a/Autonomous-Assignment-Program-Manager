@@ -110,6 +110,7 @@ export default function MySchedulePage() {
           activity: template?.activity_type || 'default',
           abbreviation:
             assignment.activity_override ||
+            template?.display_abbreviation ||
             template?.abbreviation ||
             template?.name?.substring(0, 3).toUpperCase() ||
             '???',

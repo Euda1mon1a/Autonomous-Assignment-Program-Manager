@@ -115,7 +115,7 @@ export function CallRoster({ startDate, endDate, showOnlyOnCall = true }: CallRo
     templatesData?.items?.forEach((template) => {
       map.set(template.id, {
         name: template.name,
-        abbreviation: template.abbreviation || template.name.substring(0, 3).toUpperCase(),
+        abbreviation: template.display_abbreviation || template.abbreviation || template.name.substring(0, 3).toUpperCase(),
         activity_type: template.activity_type,
       })
     })
