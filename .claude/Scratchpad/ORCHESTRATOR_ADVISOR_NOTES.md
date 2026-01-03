@@ -1879,8 +1879,56 @@ jq -e '.mcpServers["residency-scheduler"].type == "http"' .mcp.json || exit 1
 
 ---
 
+---
+
+### Session 051: 2026-01-02 — PR Consolidation & Skills Creation
+
+**Context:** Continued from Session 050. MCP working. Focus on PR consolidation and organizational tools.
+
+**Work Completed:**
+
+1. **PR Consolidation:**
+   - Closed PR #606 (superseded)
+   - Cherry-picked PR #607 scripts to PR #608
+   - Merged PR #608 (consolidated system hardening)
+   - Created/merged PR #609 (Codex feedback fixes)
+   - Created/merged PR #610 (hierarchy + parties skills)
+
+2. **MCP/RAG Testing:**
+   - Verified RAG health (35 documents)
+   - Ingested 3 new documents (MCP patterns, chain of command, session learnings)
+   - Ran schedule validation (100% compliant Jan 2026)
+
+3. **New Skills Created:**
+   - `/hierarchy` - PAI org chart with full chain of command
+   - `/parties` - Party protocol structures (SEARCH_PARTY, QA_PARTY, PLAN_PARTY)
+
+4. **Organizational Fixes:**
+   - TOOLSMITH moved from COORD_OPS → COORD_TOOLING
+   - Added COORD_AAR and COORD_INTEL to Special Staff
+   - Full Special Staff roster now documented
+
+**Codex Fixes (PR #609):**
+- P1: Multipart upload headers in `frontend/src/api/import.ts`
+- P2: PHI middleware safe user access in `backend/app/middleware/phi_middleware.py`
+
+**Delegation Assessment:**
+- Direct execution appropriate for quick PR consolidation
+- Skills created efficiently (organizational documentation)
+- User merged 3 PRs in rapid succession
+
+**User Patterns Observed:**
+- "merged" with minimal review for clean PRs
+- Quick corrections ("we need special staff", "toolsmith needs reassignment")
+- Knows the org structure deeply, spots gaps immediately
+
+**Trust Evolution:**
+- User comfortable with rapid PR cadence
+- Organizational refinement driven by user vision
+- Session end requested at 97% context usage
+
 *File created: 2025-12-27*
-*Last updated: 2026-01-02 (Session 050 - MCP Investigation & Revert)*
+*Last updated: 2026-01-02 (Session 051 - PR Consolidation & Skills)*
 *Maintained by: ORCHESTRATOR / G-5 META_UPDATER*
 
 ---
