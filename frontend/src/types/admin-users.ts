@@ -10,42 +10,42 @@
 // ============================================================================
 
 export type UserRole =
-  | 'admin'
-  | 'coordinator'
-  | 'faculty'
-  | 'resident'
-  | 'clinical_staff'
-  | 'rn'
-  | 'lpn'
-  | 'msa';
+  | "admin"
+  | "coordinator"
+  | "faculty"
+  | "resident"
+  | "clinical_staff"
+  | "rn"
+  | "lpn"
+  | "msa";
 
 export const USER_ROLE_LABELS: Record<UserRole, string> = {
-  admin: 'Administrator',
-  coordinator: 'Coordinator',
-  faculty: 'Faculty',
-  resident: 'Resident',
-  clinical_staff: 'Clinical Staff',
-  rn: 'Registered Nurse',
-  lpn: 'Licensed Practical Nurse',
-  msa: 'Medical Support Assistant',
+  admin: "Administrator",
+  coordinator: "Coordinator",
+  faculty: "Faculty",
+  resident: "Resident",
+  clinical_staff: "Clinical Staff",
+  rn: "Registered Nurse",
+  lpn: "Licensed Practical Nurse",
+  msa: "Medical Support Assistant",
 };
 
 export const USER_ROLE_COLORS: Record<UserRole, string> = {
-  admin: 'bg-red-100 text-red-800',
-  coordinator: 'bg-purple-100 text-purple-800',
-  faculty: 'bg-blue-100 text-blue-800',
-  resident: 'bg-green-100 text-green-800',
-  clinical_staff: 'bg-yellow-100 text-yellow-800',
-  rn: 'bg-teal-100 text-teal-800',
-  lpn: 'bg-cyan-100 text-cyan-800',
-  msa: 'bg-gray-100 text-gray-800',
+  admin: "bg-red-100 text-red-800",
+  coordinator: "bg-purple-100 text-purple-800",
+  faculty: "bg-blue-100 text-blue-800",
+  resident: "bg-green-100 text-green-800",
+  clinical_staff: "bg-yellow-100 text-yellow-800",
+  rn: "bg-teal-100 text-teal-800",
+  lpn: "bg-cyan-100 text-cyan-800",
+  msa: "bg-gray-100 text-gray-800",
 };
 
 // ============================================================================
 // User Types
 // ============================================================================
 
-export type UserStatus = 'active' | 'inactive' | 'pending' | 'locked';
+export type UserStatus = "active" | "inactive" | "pending" | "locked";
 
 export interface User {
   id: string;
@@ -88,24 +88,24 @@ export interface UserUpdate {
 // ============================================================================
 
 export type Permission =
-  | 'schedule:read'
-  | 'schedule:write'
-  | 'schedule:generate'
-  | 'schedule:approve'
-  | 'people:read'
-  | 'people:write'
-  | 'absences:read'
-  | 'absences:write'
-  | 'absences:approve'
-  | 'swaps:read'
-  | 'swaps:write'
-  | 'swaps:approve'
-  | 'templates:read'
-  | 'templates:write'
-  | 'admin:users'
-  | 'admin:settings'
-  | 'admin:audit'
-  | 'admin:scheduling';
+  | "schedule:read"
+  | "schedule:write"
+  | "schedule:generate"
+  | "schedule:approve"
+  | "people:read"
+  | "people:write"
+  | "absences:read"
+  | "absences:write"
+  | "absences:approve"
+  | "swaps:read"
+  | "swaps:write"
+  | "swaps:approve"
+  | "templates:read"
+  | "templates:write"
+  | "admin:users"
+  | "admin:settings"
+  | "admin:audit"
+  | "admin:scheduling";
 
 export interface RolePermissions {
   role: UserRole;
@@ -128,8 +128,8 @@ export interface UserFilters {
 }
 
 export interface UserSortOptions {
-  field: 'name' | 'email' | 'role' | 'status' | 'lastLogin' | 'createdAt';
-  direction: 'asc' | 'desc';
+  field: "name" | "email" | "role" | "status" | "lastLogin" | "createdAt";
+  direction: "asc" | "desc";
 }
 
 // ============================================================================
@@ -137,11 +137,11 @@ export interface UserSortOptions {
 // ============================================================================
 
 export type BulkAction =
-  | 'activate'
-  | 'deactivate'
-  | 'resetPassword'
-  | 'resendInvite'
-  | 'delete';
+  | "activate"
+  | "deactivate"
+  | "resetPassword"
+  | "resendInvite"
+  | "delete";
 
 export interface BulkActionRequest {
   userIds: string[];
@@ -170,11 +170,34 @@ export interface UserActivityLog {
   details?: Record<string, unknown>;
 }
 
+export interface ActivityLogResponse {
+  items: UserActivityLog[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export enum ActivityAction {
+  USER_CREATED = "user_created",
+  USER_UPDATED = "user_updated",
+  USER_DELETED = "user_deleted",
+  USER_LOCKED = "user_locked",
+  USER_UNLOCKED = "user_unlocked",
+  INVITE_SENT = "invite_sent",
+  INVITE_RESENT = "invite_resent",
+  INVITE_ACCEPTED = "invite_accepted",
+  PASSWORD_RESET = "password_reset",
+  LOGIN = "login",
+  LOGOUT = "logout",
+  BULK_ACTION = "bulk_action",
+}
+
 // ============================================================================
 // State Types
 // ============================================================================
 
-export type UserManagementTab = 'users' | 'roles' | 'activity';
+export type UserManagementTab = "users" | "roles" | "activity";
 
 export interface UserManagementState {
   activeTab: UserManagementTab;

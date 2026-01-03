@@ -76,11 +76,12 @@ Added 10 new doc_types to the validator:
 
 ## Key Learnings
 
-### MCP Token Caching Issue
+### MCP Token Caching Issue ✅ FIXED
 The MCP client singleton caches JWT token from container startup. When token expires:
 - 401 Unauthorized errors
-- **Fix:** `docker compose restart mcp-server`
-- **Permanent fix needed:** Token refresh on 401 (documented in HUMAN_TODO.md)
+- **Permanent fix implemented:** Auto-refresh on 401 in `_request_with_retry`
+- **File:** `mcp-server/src/scheduler_mcp/api_client.py` (lines 88, 114-121)
+- **Commit:** `fa20b830` - "fix(mcp): Add automatic token refresh on 401 Unauthorized"
 
 ### Container Rebuild Required for Schema Changes
 Just restarting backend doesn't pick up Python code changes in Docker:
@@ -105,10 +106,10 @@ mcp__residency-scheduler__rag_search "What are the ACGME work hour limits?"
 
 ## Next Steps (For Future Session)
 
-1. **Merge schema fix to main** if not already committed upstream
+1. **Merge to main** - RAG schema fix + token refresh fix
 2. **Consider adding:** session_handoff doc_type for session handoff notes
 3. **Monitor:** If search results feel thin on specific topics, selectively add detail
-4. **Permanent fix:** MCP token refresh on 401 (avoid container restart dance)
+4. ~~**Permanent fix:** MCP token refresh on 401~~ ✅ DONE (commit fa20b830)
 
 ---
 
