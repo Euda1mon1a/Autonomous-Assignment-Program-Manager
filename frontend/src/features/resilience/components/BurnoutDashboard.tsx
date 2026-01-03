@@ -1,16 +1,44 @@
-import type { HealthCheckResponse } from "@/types/resilience";
+import { useSystemHealth, useBurnoutRt } from "@/hooks";
 import { motion } from "framer-motion";
-import { AlertCircle, CheckCircle, Info } from "lucide-react";
+import { AlertCircle, CheckCircle, Info, Activity, TrendingUp, TrendingDown } from "lucide-react";
 
 interface BurnoutDashboardProps {
-  data: HealthCheckResponse | undefined;
-  isLoading: boolean;
+  /** Optional list of provider IDs currently experiencing burnout for Rt calculation */
+  burnedOutProviderIds?: string[];
 }
 
-export function BurnoutDashboard({ data, isLoading }: BurnoutDashboardProps) {
+/**
+ * BurnoutDashboard - Analysis & Recommendations with optional Burnout Rt
+ *
+ * Self-contained component that fetches system health data via useSystemHealth hook.
+ * Displays immediate actions and watch items from the resilience system.
+ *
+ * When burnedOutProviderIds are provided, also displays burnout epidemiological
+ * metrics including the reproduction number (Rt) via useBurnoutRt hook.
+ */
+export function BurnoutDashboard({ burnedOutProviderIds = [] }: BurnoutDashboardProps) {
+  const { data, isLoading, error } = useSystemHealth();
+
+  // Only fetch burnout Rt if we have provider IDs (the hook is disabled with empty array)
+  const {
+    data: burnoutData,
+    isLoading: burnoutLoading,
+  } = useBurnoutRt(burnedOutProviderIds);
+
   if (isLoading) {
     return (
-      <div className="h-[300px] w-full bg-slate-800/30 rounded-xl animate-pulse" />
+      <div className="h-full w-full bg-slate-800/30 rounded-xl animate-pulse" />
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-full p-6 bg-slate-900/50 border border-red-500/20 rounded-xl flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-6 h-6 text-red-400 mx-auto mb-2" />
+          <p className="text-red-300 text-sm">Unable to load data</p>
+        </div>
+      </div>
     );
   }
 
