@@ -26,6 +26,9 @@ except ImportError:
     JSONResponse = None  # type: ignore
     Route = None  # type: ignore
 
+# Import API client for RAG tools
+from .api_client import get_api_client
+
 from .async_tools import (
     ActiveTasksResult,
     BackgroundTaskResult,
@@ -480,8 +483,6 @@ def parse_date_range(date_range: str) -> tuple[date, date]:
 @mcp.resource("schedule://status/{date_range}")
 async def schedule_status_resource(
     date_range: str = "current",
-    start_date: str | None = None,
-    end_date: str | None = None,
 ) -> ScheduleStatusResource:
     """
     Get current schedule status.
@@ -495,28 +496,17 @@ async def schedule_status_resource(
             - "month" or "this-month": Next 30 days
             - "YYYY-MM-DD:YYYY-MM-DD": Explicit date range
             - Any other value: Default to 30 days
-        start_date: Start date in YYYY-MM-DD format (overrides date_range if provided)
-        end_date: End date in YYYY-MM-DD format (overrides date_range if provided)
 
     Returns:
         Current schedule status with assignments and metrics
     """
-    # If explicit start/end dates are provided, use them
-    if start_date or end_date:
-        start = date.fromisoformat(start_date) if start_date else None
-        end = date.fromisoformat(end_date) if end_date else None
-    else:
-        # Parse date_range preset
-        start, end = parse_date_range(date_range)
-
+    start, end = parse_date_range(date_range)
     return await get_schedule_status(start_date=start, end_date=end)
 
 
 @mcp.resource("schedule://compliance/{date_range}")
 async def compliance_summary_resource(
     date_range: str = "current",
-    start_date: str | None = None,
-    end_date: str | None = None,
 ) -> ComplianceSummaryResource:
     """
     Get ACGME compliance summary.
@@ -531,20 +521,11 @@ async def compliance_summary_resource(
             - "month" or "this-month": Next 30 days
             - "YYYY-MM-DD:YYYY-MM-DD": Explicit date range
             - Any other value: Default to 30 days
-        start_date: Start date in YYYY-MM-DD format (overrides date_range if provided)
-        end_date: End date in YYYY-MM-DD format (overrides date_range if provided)
 
     Returns:
         Compliance summary with violations and recommendations
     """
-    # If explicit start/end dates are provided, use them
-    if start_date or end_date:
-        start = date.fromisoformat(start_date) if start_date else None
-        end = date.fromisoformat(end_date) if end_date else None
-    else:
-        # Parse date_range preset
-        start, end = parse_date_range(date_range)
-
+    start, end = parse_date_range(date_range)
     return await get_compliance_summary(start_date=start, end_date=end)
 
 
@@ -4700,8 +4681,10 @@ Examples:
             from starlette.applications import Starlette
             from starlette.routing import Route, Mount
 
-            # Get the MCP ASGI app
-            mcp_app = mcp.http_app()
+            # Get the MCP ASGI app with stateless_http=True to disable session management
+            # This is required because Claude Code's HTTP transport doesn't send
+            # Mcp-Session-Id headers that FastMCP 2.x normally requires.
+            mcp_app = mcp.http_app(stateless_http=True)
 
             # Create health endpoint
             health_handler = create_health_endpoint()
@@ -4715,6 +4698,7 @@ Examples:
             # Also mount at root for backwards compatibility
             routes.append(Mount("/", app=mcp_app))
 
+            # Must use mcp_app.lifespan for FastMCP 2.x to initialize properly
             app = Starlette(routes=routes, lifespan=mcp_app.lifespan)
 
             # Wrap with auth middleware
@@ -4725,14 +4709,16 @@ Examples:
 
             uvicorn.run(app, host=args.host, port=args.port, log_level=args.log_level.lower())
 
-        except ImportError as e:
+        except (ImportError, AttributeError) as e:
             logger.warning(f"Advanced HTTP features not available: {e}")
-            logger.info("Falling back to basic FastMCP HTTP transport")
-            mcp.run(
-                transport=args.transport,
-                host=args.host,
-                port=args.port,
-            )
+            logger.info("Falling back to basic FastMCP HTTP transport (SSE)")
+            # FastMCP 1.x uses settings object for host/port configuration
+            mcp.settings.host = args.host
+            mcp.settings.port = args.port
+            # FastMCP 1.x uses 'sse' transport for HTTP
+            transport = "sse" if args.transport in ("http", "streamable-http") else args.transport
+            logger.info(f"Starting SSE server on {args.host}:{args.port}")
+            mcp.run(transport=transport)
 
 
 if __name__ == "__main__":

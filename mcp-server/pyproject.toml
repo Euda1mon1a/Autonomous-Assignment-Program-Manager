@@ -31,7 +31,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "fastmcp>=0.2.0",
+    "fastmcp>=2.10.0",  # Need 2.10+ for http_app() method - use WITHOUT lifespan to disable sessions
     "sqlalchemy>=2.0.0",
     "psycopg2-binary>=2.9.0",
     "pydantic>=2.0.0",
