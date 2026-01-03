@@ -45,11 +45,13 @@ ORCHESTRATOR ─┬─ ARCHITECT ─┬─ COORD_PLATFORM ─┬─ DBA
               │              ├─ IG (AUDITOR) ──── /qa-party (120 agents)
               │              └─ PAO (HISTORIAN)
               │
-              └─ SPECIAL ────┬─ FORCE_MANAGER ─── Team assembly
-                STAFF        ├─ DEVCOM_RESEARCH ─ R&D / exotic concepts
-                             ├─ MEDCOM ────────── Medical advisory
+              └─ SPECIAL ────┬─ FORCE_MANAGER ───── Team assembly
+                STAFF        ├─ COORD_AAR ────────── After Action Review
+                             ├─ COORD_INTEL ──────── Full-stack forensics
+                             ├─ DEVCOM_RESEARCH ─── R&D / exotic concepts
+                             ├─ MEDCOM ────────────── Medical advisory
                              ├─ INCIDENT_COMMANDER ─ Crisis response
-                             └─ BURNOUT_SENTINEL ── Workload monitoring
+                             └─ BURNOUT_SENTINEL ─── Workload monitoring
 ```
 
 ---
@@ -90,6 +92,8 @@ ORCHESTRATOR ─┬─ ARCHITECT ─┬─ COORD_PLATFORM ─┬─ DBA
 | Agent | Role |
 |-------|------|
 | **FORCE_MANAGER** | Team assembly, coordinator assignment |
+| **COORD_AAR** | After Action Review (auto-trigger at session end) |
+| **COORD_INTEL** | Full-stack forensics & investigation |
 | **DEVCOM_RESEARCH** | R&D - exotic concepts, cross-disciplinary |
 | **MEDCOM** | Medical Advisory - ACGME, clinical implications |
 | **INCIDENT_COMMANDER** | Crisis response |
