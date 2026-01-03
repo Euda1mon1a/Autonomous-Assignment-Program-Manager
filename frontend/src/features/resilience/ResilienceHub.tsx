@@ -3,6 +3,7 @@ import { OverallStatus } from "@/types/resilience";
 import { RefreshCw, ShieldAlert } from "lucide-react";
 import { useState } from "react";
 import { BurnoutDashboard } from "./components/BurnoutDashboard";
+import { N1Analysis } from "./components/N1Analysis";
 import { ResilienceMetrics } from "./components/ResilienceMetrics";
 import { UtilizationChart } from "./components/UtilizationChart";
 
@@ -80,8 +81,13 @@ export function ResilienceHub() {
           </div>
 
           {/* Recommendations / Sidebar - Takes up 1/3 width */}
-          <div className="h-full">
-            <BurnoutDashboard data={data} isLoading={isLoading} />
+          <div className="h-full flex flex-col gap-6">
+            <div className="flex-1">
+              <BurnoutDashboard data={data} isLoading={isLoading} />
+            </div>
+            <div className="flex-1">
+              <N1Analysis />
+            </div>
           </div>
         </div>
 
