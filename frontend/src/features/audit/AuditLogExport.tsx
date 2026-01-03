@@ -20,7 +20,7 @@ import {
   CheckCircle,
   AlertCircle,
 } from 'lucide-react';
-import { downloadFile, exportToCSV, exportToJSON, Column } from '@/lib/export';
+import { exportToCSV, exportToJSON, Column } from '@/lib/export';
 import type {
   AuditLogEntry,
   AuditLogFilters,

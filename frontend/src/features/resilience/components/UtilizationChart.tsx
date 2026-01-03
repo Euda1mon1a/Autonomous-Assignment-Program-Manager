@@ -1,36 +1,48 @@
-import type { HealthCheckResponse } from "@/types/resilience";
+import { useSystemHealth, useUtilizationThreshold } from "@/hooks";
 import { motion } from "framer-motion";
-import { useMemo } from "react";
+import { AlertCircle, TrendingUp } from "lucide-react";
 
-interface UtilizationChartProps {
-  data: HealthCheckResponse | undefined;
-  isLoading: boolean;
-}
+/**
+ * UtilizationChart - System utilization visualization
+ *
+ * Self-contained component that fetches utilization data via useSystemHealth hook.
+ * Displays real-time utilization metrics including:
+ * - Total utilization bar
+ * - Safety buffer indicator
+ * - Demand/Capacity/Wait time metrics grid
+ *
+ * Additionally fetches detailed utilization threshold analysis for enhanced recommendations.
+ */
+export function UtilizationChart() {
+  const { data, isLoading, error } = useSystemHealth();
 
-export function UtilizationChart({ data, isLoading }: UtilizationChartProps) {
-  // Memoize chart data to safely handle nulls
-  const chartData = useMemo(() => {
-    if (!data) return [];
-
-    // Create a single data point for now based on current snapshot
-    // Ideally this would be historical data, but we'll start with the instantaneous view
-    return [
-      {
-        name: "Capacity",
-        utilization: data.utilization.utilization_rate * 100,
-        safe_limit: 100, // Normalized to %
-        demand:
-          (data.utilization.current_demand /
-            data.utilization.theoretical_capacity) *
-          100,
-      },
-    ];
-  }, [data]);
+  // Fetch detailed utilization threshold analysis when we have faculty/block data
+  const { data: thresholdData } = useUtilizationThreshold(
+    {
+      available_faculty: data?.utilization?.safe_capacity ?? 0,
+      required_blocks: data?.utilization?.current_demand ?? 0,
+    },
+    {
+      enabled: !!data && data.utilization.safe_capacity > 0,
+    }
+  );
 
   if (isLoading) {
     return (
-      <div className="h-[300px] w-full bg-slate-800/30 rounded-xl animate-pulse flex items-center justify-center">
+      <div className="h-full w-full bg-slate-800/30 rounded-xl animate-pulse flex items-center justify-center">
         <span className="text-slate-500">Loading visualization...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-full w-full bg-slate-900/50 border border-red-500/20 rounded-xl flex items-center justify-center p-6">
+        <div className="text-center">
+          <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
+          <p className="text-red-300 font-medium">Unable to load utilization data</p>
+          <p className="text-red-400/80 text-sm mt-1">{error.message}</p>
+        </div>
       </div>
     );
   }
@@ -145,6 +157,32 @@ export function UtilizationChart({ data, isLoading }: UtilizationChartProps) {
               <div className="text-xs text-slate-400">Multiplier</div>
             </div>
           </div>
+
+          {/* Threshold Status from detailed analysis */}
+          {thresholdData && (
+            <div className="pt-4 border-t border-slate-800">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="w-4 h-4 text-slate-400" />
+                <span className="text-xs text-slate-400 uppercase tracking-wider">
+                  Threshold Analysis
+                </span>
+              </div>
+              <p className="text-sm text-slate-300">{thresholdData.message}</p>
+              {thresholdData.recommendations && thresholdData.recommendations.length > 0 && (
+                <ul className="mt-2 space-y-1">
+                  {thresholdData.recommendations.slice(0, 2).map((rec, i) => (
+                    <li
+                      key={i}
+                      className="text-xs text-slate-400 flex items-start gap-2"
+                    >
+                      <span className="text-blue-400">-</span>
+                      {rec}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

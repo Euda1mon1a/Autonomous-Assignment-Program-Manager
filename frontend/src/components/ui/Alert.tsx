@@ -65,7 +65,7 @@ export function Alert({
   return (
     <div
       className={`rounded-lg border p-4 ${config.container} ${className}`}
-      role="alert"
+      role={variant === 'error' || variant === 'warning' ? 'alert' : 'status'}
     >
       <div className="flex gap-3">
         <Icon className={`w-5 h-5 flex-shrink-0 ${config.iconColor}`} aria-hidden="true" />

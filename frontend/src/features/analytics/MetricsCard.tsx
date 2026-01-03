@@ -18,6 +18,7 @@ import { METRIC_STATUS_COLORS } from './types';
 interface MetricsCardProps {
   metric: Metric;
   onClick?: () => void;
+  trendLabel?: string;
   className?: string;
   compact?: boolean;
 }

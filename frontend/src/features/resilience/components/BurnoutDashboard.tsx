@@ -1,16 +1,44 @@
-import type { HealthCheckResponse } from "@/types/resilience";
+import { useSystemHealth, useBurnoutRt } from "@/hooks";
 import { motion } from "framer-motion";
-import { AlertCircle, CheckCircle, Info } from "lucide-react";
+import { AlertCircle, CheckCircle, Info, Activity, TrendingUp, TrendingDown } from "lucide-react";
 
 interface BurnoutDashboardProps {
-  data: HealthCheckResponse | undefined;
-  isLoading: boolean;
+  /** Optional list of provider IDs currently experiencing burnout for Rt calculation */
+  burnedOutProviderIds?: string[];
 }
 
-export function BurnoutDashboard({ data, isLoading }: BurnoutDashboardProps) {
+/**
+ * BurnoutDashboard - Analysis & Recommendations with optional Burnout Rt
+ *
+ * Self-contained component that fetches system health data via useSystemHealth hook.
+ * Displays immediate actions and watch items from the resilience system.
+ *
+ * When burnedOutProviderIds are provided, also displays burnout epidemiological
+ * metrics including the reproduction number (Rt) via useBurnoutRt hook.
+ */
+export function BurnoutDashboard({ burnedOutProviderIds = [] }: BurnoutDashboardProps) {
+  const { data, isLoading, error } = useSystemHealth();
+
+  // Only fetch burnout Rt if we have provider IDs (the hook is disabled with empty array)
+  const {
+    data: burnoutData,
+    isLoading: burnoutLoading,
+  } = useBurnoutRt(burnedOutProviderIds);
+
   if (isLoading) {
     return (
-      <div className="h-[300px] w-full bg-slate-800/30 rounded-xl animate-pulse" />
+      <div className="h-full w-full bg-slate-800/30 rounded-xl animate-pulse" />
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-full p-6 bg-slate-900/50 border border-red-500/20 rounded-xl flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-6 h-6 text-red-400 mx-auto mb-2" />
+          <p className="text-red-300 text-sm">Unable to load data</p>
+        </div>
+      </div>
     );
   }
 
@@ -95,6 +123,85 @@ export function BurnoutDashboard({ data, isLoading }: BurnoutDashboardProps) {
               </p>
             </div>
           )}
+
+        {/* Burnout Rt Section (only shown when provider IDs are available) */}
+        {burnedOutProviderIds.length > 0 && (
+          <div className="space-y-3 pt-4 border-t border-slate-700">
+            <h4 className="text-xs font-bold text-purple-400 uppercase tracking-wider flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              Burnout Epidemiology
+            </h4>
+
+            {burnoutLoading ? (
+              <div className="p-3 bg-slate-800/50 rounded-lg animate-pulse">
+                <div className="h-4 bg-slate-700 rounded w-1/2 mb-2" />
+                <div className="h-3 bg-slate-700 rounded w-3/4" />
+              </div>
+            ) : burnoutData ? (
+              <motion.div
+                initial={{ x: -10, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                className={`p-4 rounded-lg border ${
+                  burnoutData.rt > 1
+                    ? "bg-red-500/10 border-red-500/20"
+                    : burnoutData.rt > 0.8
+                    ? "bg-yellow-500/10 border-yellow-500/20"
+                    : "bg-green-500/10 border-green-500/20"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-white">
+                    Reproduction Number (Rt)
+                  </span>
+                  <div className="flex items-center gap-1">
+                    {burnoutData.rt > 1 ? (
+                      <TrendingUp className="w-4 h-4 text-red-400" />
+                    ) : (
+                      <TrendingDown className="w-4 h-4 text-green-400" />
+                    )}
+                    <span
+                      className={`text-lg font-bold ${
+                        burnoutData.rt > 1
+                          ? "text-red-400"
+                          : burnoutData.rt > 0.8
+                          ? "text-yellow-400"
+                          : "text-green-400"
+                      }`}
+                    >
+                      {burnoutData.rt.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+                <p
+                  className={`text-xs ${
+                    burnoutData.rt > 1
+                      ? "text-red-200/80"
+                      : burnoutData.rt > 0.8
+                      ? "text-yellow-200/80"
+                      : "text-green-200/80"
+                  }`}
+                >
+                  Status:{" "}
+                  <span className="capitalize">{burnoutData.status}</span>
+                  {burnoutData.secondary_cases > 0 &&
+                    ` (${burnoutData.secondary_cases} secondary cases)`}
+                </p>
+
+                {/* Interventions */}
+                {burnoutData.interventions && burnoutData.interventions.length > 0 && (
+                  <ul className="mt-3 space-y-1">
+                    {burnoutData.interventions.slice(0, 2).map((intervention, i) => (
+                      <li key={i} className="text-xs text-slate-300 flex items-start gap-2">
+                        <span className="text-purple-400">-</span>
+                        {intervention}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </motion.div>
+            ) : null}
+          </div>
+        )}
       </div>
     </motion.div>
   );

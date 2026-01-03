@@ -18,19 +18,18 @@ import {
   useValidateStrategy,
   useAnalyzeConfig,
 } from '@/hooks/useGameTheory';
-import { PayoffMatrix } from '@/components/game-theory/PayoffMatrix';
 import { EvolutionChart } from '@/components/game-theory/EvolutionChart';
 import { StrategyCard } from '@/components/game-theory/StrategyCard';
 import { TournamentCard } from '@/components/game-theory/TournamentCard';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { STRATEGY_COLORS, STRATEGY_LABELS, STATUS_COLORS } from '@/types/game-theory';
+import { STRATEGY_LABELS, STATUS_COLORS } from '@/types/game-theory';
 import type { ConfigStrategy, TournamentCreate, EvolutionCreate, GameTheorySummary, Tournament, Evolution, ConfigAnalysisRequest, ConfigAnalysisResult } from '@/types/game-theory';
 
 export default function GameTheoryPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'strategies' | 'tournaments' | 'evolution' | 'analysis'>('overview');
   const [selectedStrategies, setSelectedStrategies] = useState<string[]>([]);
-  const [showTournamentModal, setShowTournamentModal] = useState(false);
-  const [showEvolutionModal, setShowEvolutionModal] = useState(false);
+  // const [showTournamentModal, setShowTournamentModal] = useState(false);
+  // const [showEvolutionModal, setShowEvolutionModal] = useState(false);
 
   const { data: summary, isLoading: summaryLoading } = useGameTheorySummary();
   const { data: strategies, isLoading: strategiesLoading } = useStrategies();
@@ -63,7 +62,7 @@ export default function GameTheoryPage() {
     createTournament.mutate(tournamentData, {
       onSuccess: (): void => {
         setSelectedStrategies([]);
-        setShowTournamentModal(false);
+        // setShowTournamentModal(false);
       },
     });
   };
@@ -91,7 +90,7 @@ export default function GameTheoryPage() {
     createEvolution.mutate(evolutionData, {
       onSuccess: (): void => {
         setSelectedStrategies([]);
-        setShowEvolutionModal(false);
+        // setShowEvolutionModal(false);
       },
     });
   };
@@ -645,7 +644,7 @@ function AnalysisTab({
               Performance vs Standard Opponents
             </h4>
             <div className="space-y-2">
-              {Object.entries(result.matchup_results).map(([opponent, data]: [string, any]) => (
+              {Object.entries(result.matchup_results).map(([opponent, data]: [string, { score: number; outcome: string }]) => (
                 <div
                   key={opponent}
                   className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded"

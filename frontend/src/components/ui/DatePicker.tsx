@@ -211,7 +211,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     onClick={() => !disabled && handleDateClick(day.date)}
                     disabled={disabled}
                     aria-label={`${day.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}${today ? ' (today)' : ''}${selected ? ' (selected)' : ''}`}
-                    aria-selected={selected}
+                    aria-pressed={selected}
                     aria-disabled={disabled}
                     className={`
                       aspect-square p-1 text-sm rounded transition-colors

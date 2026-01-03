@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react'
 
 // ============================================================================
@@ -88,6 +88,15 @@ export function Toast({
   const styles = toastStyles[type]
   const icon = toastIcons[type]
 
+  // Handle dismiss with exit animation (defined before useEffect that uses it)
+  const handleDismiss = useCallback(() => {
+    setIsLeaving(true)
+    // Wait for animation to complete before removing
+    setTimeout(() => {
+      onDismiss(id)
+    }, 300)
+  }, [id, onDismiss])
+
   // Handle entrance animation
   useEffect(() => {
     // Trigger slide-in animation after mount
@@ -135,7 +144,7 @@ export function Toast({
         clearInterval(progressIntervalRef.current)
       }
     }
-  }, [duration, isPaused, persistent])
+  }, [duration, isPaused, persistent, handleDismiss])
 
   // Handle pause
   const handleMouseEnter = () => {
@@ -159,15 +168,6 @@ export function Toast({
   const handleMouseLeave = () => {
     if (persistent || duration <= 0) return
     setIsPaused(false)
-  }
-
-  // Handle dismiss with exit animation
-  const handleDismiss = () => {
-    setIsLeaving(true)
-    // Wait for animation to complete before removing
-    setTimeout(() => {
-      onDismiss(id)
-    }, 300)
   }
 
   // Handle action button click

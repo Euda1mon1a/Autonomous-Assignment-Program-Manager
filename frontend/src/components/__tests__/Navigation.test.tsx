@@ -7,6 +7,7 @@ import React from 'react';
 import { render, screen } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { Navigation } from '../Navigation';
+import * as AuthContext from '@/contexts/AuthContext';
 
 // Mock Next.js navigation
 jest.mock('next/navigation', () => ({
@@ -15,9 +16,11 @@ jest.mock('next/navigation', () => ({
 
 // Mock Next.js Link
 jest.mock('next/link', () => {
-  return ({ children, href, ...props }: any) => {
+  const MockLink = ({ children, href, ...props }: any) => {
     return <a href={href} {...props}>{children}</a>;
   };
+  MockLink.displayName = 'Link';
+  return MockLink;
 });
 
 // Mock Auth context
@@ -53,10 +56,13 @@ describe('Navigation', () => {
   });
 
   it('shows admin links for admin users', () => {
-    jest.spyOn(require('@/contexts/AuthContext'), 'useAuth').mockReturnValue({
+    jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
       user: { ...mockAuth.user, role: 'admin' },
       isAuthenticated: true,
-    });
+      logout: jest.fn(),
+      hasPermission: jest.fn(),
+      hasRole: jest.fn(),
+    } as any);
 
     render(<Navigation />);
     expect(screen.getByText('Settings')).toBeInTheDocument();

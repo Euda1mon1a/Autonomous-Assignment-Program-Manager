@@ -32,11 +32,7 @@ async function getAuthModule(): Promise<typeof import('./auth')> {
  * Queue of failed requests waiting for token refresh.
  * Each entry contains resolve/reject functions to continue or fail the request.
  */
-interface QueuedRequest {
-  resolve: (config: InternalAxiosRequestConfig) => void
-  reject: (error: Error) => void
-  config: InternalAxiosRequestConfig
-}
+
 
 /**
  * Standardized API error shape returned by all API operations.
@@ -206,7 +202,7 @@ function createApiClient(): AxiosInstance {
                 return client(originalRequest)
               }
             }
-          } catch (refreshError) {
+          } catch {
             // Refresh failed - will redirect to login
           }
 

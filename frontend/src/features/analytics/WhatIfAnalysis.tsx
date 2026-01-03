@@ -20,8 +20,8 @@ import {
   TrendingDown,
 } from 'lucide-react';
 import { useWhatIfAnalysis, useScheduleVersions } from './hooks';
-import type { ProposedChange, ChangeType, WhatIfAnalysisRequest } from './types';
-import { CHANGE_TYPE_LABELS, METRIC_CATEGORY_LABELS } from './types';
+import type { ProposedChange, ChangeType, WhatIfAnalysisRequest, WhatIfAnalysisResult, ConstraintImpact } from './types';
+import { CHANGE_TYPE_LABELS } from './types';
 
 // ============================================================================
 // Types
@@ -209,22 +209,14 @@ function WarningItem({
 function ConstraintImpactItem({
   constraint,
 }: {
-  constraint: {
-    constraintType: string;
-    constraintName: string;
-    currentValue: number;
-    projectedValue: number;
-    violated: boolean;
-    violationSeverity?: 'minor' | 'major' | 'critical';
-  };
+  constraint: ConstraintImpact;
 }) {
   // Performance: Memoize expensive calculations to avoid recalculating on every render
-  const { isIncrease, change, changePercentage } = useMemo(() => {
-    const change = constraint.projectedValue - constraint.currentValue;
+  const { isIncrease, changePercentage } = useMemo(() => {
+    const changeVal = constraint.projectedValue - constraint.currentValue;
     return {
       isIncrease: constraint.projectedValue > constraint.currentValue,
-      change,
-      changePercentage: (change / constraint.currentValue) * 100,
+      changePercentage: (changeVal / constraint.currentValue) * 100,
     };
   }, [constraint.projectedValue, constraint.currentValue]);
 
@@ -286,37 +278,7 @@ function ConstraintImpactItem({
 function ResultsPanel({
   result,
 }: {
-  result: {
-    predictedImpact: {
-      metrics: Record<string, any>;
-      comparisonToBaseline: Array<{
-        metricName: string;
-        delta: number;
-        deltaPercentage: number;
-        improved: boolean;
-      }>;
-      warnings: Array<{
-        severity: 'info' | 'warning' | 'error';
-        message: string;
-        affectedEntity: string;
-        suggestion?: string;
-      }>;
-      constraints: Array<{
-        constraintType: string;
-        constraintName: string;
-        currentValue: number;
-        projectedValue: number;
-        violated: boolean;
-        violationSeverity?: 'minor' | 'major' | 'critical';
-      }>;
-      confidence: number;
-    };
-    recommendation: {
-      approved: boolean;
-      reasoning: string;
-      alternatives?: string[];
-    };
-  };
+  result: WhatIfAnalysisResult;
 }) {
   const { predictedImpact, recommendation } = result;
 
@@ -504,24 +466,6 @@ export function WhatIfAnalysis({ baseVersionId, className = '' }: WhatIfAnalysis
     selectedVersionId && changes.length > 0 && changes.every((c) => c.description),
     [selectedVersionId, changes]
   );
-
-  // Performance: Memoize sorted and grouped constraint impacts
-  const sortedConstraintImpacts = useMemo(() => {
-    if (!result?.predictedImpact?.constraints) return [];
-    return [...result.predictedImpact.constraints].sort((a, b) => {
-      if (a.violated !== b.violated) return a.violated ? -1 : 1;
-      return Math.abs(b.projectedValue - b.currentValue) - Math.abs(a.projectedValue - a.currentValue);
-    });
-  }, [result?.predictedImpact?.constraints]);
-
-  // Performance: Memoize warning counts by severity
-  const warningCounts = useMemo(() => {
-    if (!result?.predictedImpact?.warnings) return { info: 0, warning: 0, error: 0 };
-    return result.predictedImpact.warnings.reduce((acc, w) => {
-      acc[w.severity] = (acc[w.severity] || 0) + 1;
-      return acc;
-    }, { info: 0, warning: 0, error: 0 } as Record<string, number>);
-  }, [result?.predictedImpact?.warnings]);
 
   return (
     <div className={`space-y-6 ${className}`}>

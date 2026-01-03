@@ -20,7 +20,6 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { useCalendarSync } from './hooks';
-import type { CalendarSyncRequest } from './types';
 
 // ============================================================================
 // Types
@@ -44,7 +43,7 @@ function isValidCalendarUrl(url: string): boolean {
     const parsed = new URL(url);
     const allowedProtocols = ['webcal:', 'https:', 'http:'];
     return allowedProtocols.includes(parsed.protocol);
-  } catch (error) {
+  } catch {
     // console.error('Invalid URL provided:', error);
     return false;
   }
@@ -88,8 +87,8 @@ export function CalendarSync({ className = '' }: CalendarSyncProps) {
       setTimeout(() => {
         setShowModal(false);
       }, 2000);
-    } catch (error) {
-      // console.error('Failed to sync calendar:', error);
+    } catch {
+      // Error handled by hook
     }
   };
 

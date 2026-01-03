@@ -153,11 +153,50 @@ export interface BulkActionRequest {
 // API Response Types
 // ============================================================================
 
+/**
+ * API response for listing users.
+ * Note: The API returns snake_case fields, but axios with proper config
+ * transforms them. We also need to handle both `items` (API) and `users` (legacy).
+ */
 export interface UsersResponse {
+  /** List of users (mapped from 'items' in API response) */
   users: User[];
   total: number;
   page: number;
   pageSize: number;
+  totalPages?: number;
+}
+
+/**
+ * Raw API response from backend (before transformation).
+ * Used internally by the hooks for data mapping.
+ */
+export interface AdminUserListApiResponse {
+  items: AdminUserApiResponse[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+/**
+ * Raw user data from API (snake_case).
+ */
+export interface AdminUserApiResponse {
+  id: string;
+  username: string;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  role: string;
+  is_active: boolean;
+  is_locked: boolean;
+  lock_reason: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  last_login: string | null;
+  invite_sent_at: string | null;
+  invite_accepted_at: string | null;
 }
 
 export interface UserActivityLog {

@@ -136,10 +136,7 @@ function drawVoxel(
   offsetX: number,
   offsetY: number
 ): void {
-  const size = VOXEL_SIZE * 0.9;
-
   // Get the four corners of the top face
-  const topCenter = isoProject(x, y, z, offsetX, offsetY);
   const topLeft = isoProject(x - 0.5, y, z - 0.5, offsetX, offsetY);
   const topRight = isoProject(x + 0.5, y, z - 0.5, offsetX, offsetY);
   const topFront = isoProject(x + 0.5, y, z + 0.5, offsetX, offsetY);
@@ -149,7 +146,6 @@ function drawVoxel(
   const height = 0.8;
   const botLeft = isoProject(x - 0.5, y + height, z - 0.5, offsetX, offsetY);
   const botRight = isoProject(x + 0.5, y + height, z - 0.5, offsetX, offsetY);
-  const botFront = isoProject(x + 0.5, y + height, z + 0.5, offsetX, offsetY);
   const botBack = isoProject(x - 0.5, y + height, z + 0.5, offsetX, offsetY);
 
   ctx.globalAlpha = opacity;
@@ -260,11 +256,10 @@ export function VoxelScheduleView({
   onVoxelClick,
   onVoxelHover,
   showConflictsOnly = false,
-  colorMode = "activity",
+  colorMode: _colorMode = "activity",
 }: VoxelScheduleViewProps): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hoveredVoxel, setHoveredVoxel] = useState<Voxel | null>(null);
-  const [rotation, setRotation] = useState({ x: 0, z: 0 });
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -305,10 +300,7 @@ export function VoxelScheduleView({
 
         if (e.shiftKey) {
           // Rotate with shift+drag
-          setRotation((prev) => ({
-            x: prev.x + dy * 0.01,
-            z: prev.z + dx * 0.01,
-          }));
+          // Not implemented yet
         } else {
           // Pan without shift
           setPan((prev) => ({

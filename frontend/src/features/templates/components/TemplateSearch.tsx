@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, X, SlidersHorizontal } from 'lucide-react';
 import type { TemplateFilters, TemplateCategory, TemplateVisibility, TemplateStatus } from '../types';
-import { TEMPLATE_CATEGORIES, VISIBILITY_OPTIONS, STATUS_COLORS } from '../constants';
+import { TEMPLATE_CATEGORIES, VISIBILITY_OPTIONS } from '../constants';
 
 interface TemplateSearchProps {
   filters: TemplateFilters;

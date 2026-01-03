@@ -14,12 +14,12 @@ import type {
   MySwapsResponse,
   CreateSwapRequest,
   CreateSwapResponse,
-  SwapRespondRequest,
   SwapRespondResponse,
   FacultyPreference,
   SwapFilters,
+  SwapStatus,
+  SwapType,
 } from './types';
-import { SwapStatus, SwapType } from './types';
 
 // Backend API response types
 interface SwapRequestApiResponse {

@@ -36,8 +36,8 @@ function getStoredTemplates(): ScheduleTemplate[] {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored ? JSON.parse(stored) : [];
-  } catch (error) {
-    // console.error('Failed to read templates from localStorage:', error);
+    } catch (e) {
+      console.error('Failed to read templates from localStorage:', e);
     return [];
   }
 }
@@ -431,7 +431,7 @@ export function useApplyTemplate() {
     Error,
     { templateId: string; config: TemplatePreviewConfig }
   >({
-    mutationFn: async ({ templateId, config }) => {
+    mutationFn: async ({ templateId, config: _config }) => {
       // Simulate template application
       await new Promise((resolve) => setTimeout(resolve, 1000));
 

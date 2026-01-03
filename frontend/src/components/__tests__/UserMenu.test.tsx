@@ -7,6 +7,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { UserMenu } from '../UserMenu';
+import * as AuthContext from '@/contexts/AuthContext';
 
 // Mock Auth context
 const mockLogout = jest.fn();
@@ -26,9 +27,11 @@ jest.mock('@/contexts/AuthContext', () => ({
 
 // Mock Next.js Link
 jest.mock('next/link', () => {
-  return ({ children, href, ...props }: any) => {
+  const MockLink = ({ children, href, ...props }: any) => {
     return <a href={href} {...props}>{children}</a>;
   };
+  MockLink.displayName = 'Link';
+  return MockLink;
 });
 
 describe('UserMenu', () => {
@@ -48,10 +51,13 @@ describe('UserMenu', () => {
     });
 
     it('renders nothing when no user', () => {
-      jest.spyOn(require('@/contexts/AuthContext'), 'useAuth').mockReturnValue({
+      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
         user: null,
         logout: mockLogout,
-      });
+        isAuthenticated: false,
+        hasPermission: jest.fn(),
+        hasRole: jest.fn(),
+      } as any);
 
       const { container } = render(<UserMenu />);
       expect(container).toBeEmptyDOMElement();
@@ -140,10 +146,13 @@ describe('UserMenu', () => {
     });
 
     it('handles admin role badge color', () => {
-      jest.spyOn(require('@/contexts/AuthContext'), 'useAuth').mockReturnValue({
+      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
         user: { ...mockUser, role: 'admin' },
         logout: mockLogout,
-      });
+        isAuthenticated: true,
+        hasPermission: jest.fn(),
+        hasRole: jest.fn(),
+      } as any);
 
       render(<UserMenu />);
       fireEvent.click(screen.getByRole('button'));
@@ -200,10 +209,13 @@ describe('UserMenu', () => {
     });
 
     it('limits initials to 2 characters', () => {
-      jest.spyOn(require('@/contexts/AuthContext'), 'useAuth').mockReturnValue({
+      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
         user: { ...mockUser, username: 'John Paul Smith' },
         logout: mockLogout,
-      });
+        isAuthenticated: true,
+        hasPermission: jest.fn(),
+        hasRole: jest.fn(),
+      } as any);
 
       render(<UserMenu />);
       fireEvent.click(screen.getByRole('button'));
@@ -212,10 +224,13 @@ describe('UserMenu', () => {
     });
 
     it('uppercases initials', () => {
-      jest.spyOn(require('@/contexts/AuthContext'), 'useAuth').mockReturnValue({
+      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
         user: { ...mockUser, username: 'jane smith' },
         logout: mockLogout,
-      });
+        isAuthenticated: true,
+        hasPermission: jest.fn(),
+        hasRole: jest.fn(),
+      } as any);
 
       render(<UserMenu />);
       expect(screen.getByText('JS')).toBeInTheDocument();
