@@ -30,6 +30,7 @@ import {
   ConstraintType,
   SpectralLayer,
   CONSTRAINT_COLORS,
+  LayerVisibility,
 } from "./types";
 import {
   useHolographicData,
@@ -748,12 +749,12 @@ export function HolographicManifold({
               </div>
             </div>
             <div className="grid grid-cols-2 gap-1">
-              {(Object.keys(state.layerVisibility) as string[]).map((layer) => (
+              {(Object.keys(state.layerVisibility) as Array<keyof LayerVisibility>).map((layer) => (
                 <button
                   key={layer}
-                  onClick={() => toggleLayer(layer as any)}
+                  onClick={() => toggleLayer(layer)}
                   className={`px-2 py-1 rounded text-xs text-left ${
-                    state.layerVisibility[layer as any]
+                    state.layerVisibility[layer]
                       ? "bg-blue-600/50 text-white"
                       : "bg-gray-700/50 text-gray-500"
                   }`}

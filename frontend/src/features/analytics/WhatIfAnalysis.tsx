@@ -20,12 +20,8 @@ import {
   TrendingDown,
 } from 'lucide-react';
 import { useWhatIfAnalysis, useScheduleVersions } from './hooks';
-import type { ProposedChange, ChangeType, WhatIfAnalysisRequest } from './types';
+import type { ProposedChange, ChangeType, WhatIfAnalysisRequest, WhatIfAnalysisResult, ConstraintImpact } from './types';
 import { CHANGE_TYPE_LABELS } from './types';
-import type {
-  ConstraintType,
-  MetricCategory,
-} from "./types";
 
 // ============================================================================
 // Types
@@ -213,14 +209,7 @@ function WarningItem({
 function ConstraintImpactItem({
   constraint,
 }: {
-  constraint: {
-    constraintType: ConstraintType;
-    constraintName: string;
-    currentValue: number;
-    projectedValue: number;
-    violated: boolean;
-    violationSeverity?: 'minor' | 'major' | 'critical';
-  };
+  constraint: ConstraintImpact;
 }) {
   // Performance: Memoize expensive calculations to avoid recalculating on every render
   const { isIncrease, changePercentage } = useMemo(() => {
@@ -289,37 +278,7 @@ function ConstraintImpactItem({
 function ResultsPanel({
   result,
 }: {
-  result: {
-    predictedImpact: {
-      metrics: Record<string, MetricCategory>;
-      comparisonToBaseline: Array<{
-        metricName: string;
-        delta: number;
-        deltaPercentage: number;
-        improved: boolean;
-      }>;
-      warnings: Array<{
-        severity: 'info' | 'warning' | 'error';
-        message: string;
-        affectedEntity: string;
-        suggestion?: string;
-      }>;
-      constraints: Array<{
-        constraintType: ConstraintType;
-        constraintName: string;
-        currentValue: number;
-        projectedValue: number;
-        violated: boolean;
-        violationSeverity?: 'minor' | 'major' | 'critical';
-      }>;
-      confidence: number;
-    };
-    recommendation: {
-      approved: boolean;
-      reasoning: string;
-      alternatives?: string[];
-    };
-  };
+  result: WhatIfAnalysisResult;
 }) {
   const { predictedImpact, recommendation } = result;
 
