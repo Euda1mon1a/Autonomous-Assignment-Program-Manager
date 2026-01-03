@@ -131,6 +131,48 @@ class PersonResponse(PersonBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @classmethod
+    def from_orm_masked(cls, person: object, user_role: str) -> "PersonResponse":  # type: ignore
+        """Return masked version for non-admin users.
+
+        Args:
+            person: The person ORM object or dictionary
+            user_role: The role of the requesting user
+
+        Returns:
+            PersonResponse with masked fields if user is not admin
+        """
+        # If it's an ORM object, convert to dict-like access for consistency
+        # or access attributes directly.
+
+        # Helper to get attribute safely
+        def get_attr(obj, name, default=None):
+            return getattr(obj, name, default)
+
+        is_admin = user_role == "admin"
+
+        data = {
+            "id": get_attr(person, "id"),
+            "name": (
+                get_attr(person, "name")
+                if is_admin
+                else f"Person-{str(get_attr(person, 'id'))[:8]}"
+            ),
+            "email": get_attr(person, "email") if is_admin else None,
+            "type": get_attr(person, "type"),
+            "pgy_level": get_attr(person, "pgy_level"),
+            "performs_procedures": get_attr(person, "performs_procedures", False),
+            "specialties": get_attr(person, "specialties"),
+            "primary_duty": get_attr(person, "primary_duty"),
+            "faculty_role": get_attr(person, "faculty_role"),
+            "created_at": get_attr(person, "created_at"),
+            "updated_at": get_attr(person, "updated_at"),
+            "sunday_call_count": get_attr(person, "sunday_call_count", 0),
+            "weekday_call_count": get_attr(person, "weekday_call_count", 0),
+            "fmit_weeks_count": get_attr(person, "fmit_weeks_count", 0),
+        }
+        return cls(**data)
+
 
 class PersonListResponse(BaseModel):
     """Schema for list of persons."""

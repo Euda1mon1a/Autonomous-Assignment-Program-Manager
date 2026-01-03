@@ -20,6 +20,7 @@ from app.core.exceptions import AppException
 from app.core.logging import get_logger, setup_logging
 from app.core.slowapi_limiter import limiter, rate_limit_exceeded_handler
 from app.middleware.audit import AuditContextMiddleware
+from app.middleware.phi_middleware import PHIMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 
 settings = get_settings()
@@ -330,6 +331,9 @@ if settings.TRUSTED_HOSTS:
 
 # Audit context middleware - captures user for version history tracking
 app.add_middleware(AuditContextMiddleware)
+
+# PHI Middleware - adds warning headers and audits access
+app.add_middleware(PHIMiddleware)
 
 # Request ID middleware - adds X-Request-ID for distributed tracing
 try:

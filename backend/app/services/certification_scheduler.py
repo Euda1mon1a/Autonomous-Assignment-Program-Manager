@@ -214,12 +214,16 @@ class CertificationScheduler:
             expiring = cert_service.get_expiring_certifications(days=180)
             expired = cert_service.get_expired_certifications()
 
+            if not self.admin_email:
+                logger.warning("No admin email configured, skipping summary")
+                return
+
             email_service.send_compliance_summary(
                 to_email=self.admin_email,
                 expiring_certs=expiring["items"],
                 expired_certs=expired["items"],
             )
-            logger.info(f"Sent compliance summary to {self.admin_email}")
+            logger.info("Sent compliance summary to admin")
         except Exception as e:
             logger.error(f"Failed to send admin summary: {e}")
 

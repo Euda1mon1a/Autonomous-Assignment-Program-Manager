@@ -245,11 +245,9 @@ This is an automated alert from the Residency Scheduler system.
 """,
                             html=None,
                         )
-                        logger.info(f"Violation alert email queued for {email}")
+                        logger.info("Violation alert email queued")
                     except Exception as e:
-                        logger.error(
-                            f"Failed to queue violation alert email for {email}: {e}"
-                        )
+                        logger.error(f"Failed to queue violation alert email: {e}")
 
             return {
                 "success": True,
@@ -365,11 +363,9 @@ This is an automated report from the Residency Scheduler system.
 """,
                         html=None,
                     )
-                    logger.info(f"Weekly report email queued for {email}")
+                    logger.info("Weekly report email queued")
                 except Exception as e:
-                    logger.error(
-                        f"Failed to queue weekly report email for {email}: {e}"
-                    )
+                    logger.error(f"Failed to queue weekly report email: {e}")
 
             logger.info(
                 f"Weekly compliance report generated: {filename} "
@@ -510,11 +506,9 @@ This is an automated report from the Residency Scheduler system.
 """,
                         html=None,
                     )
-                    logger.info(f"Monthly executive report email queued for {email}")
+                    logger.info("Monthly executive report email queued")
                 except Exception as e:
-                    logger.error(
-                        f"Failed to queue monthly executive email for {email}: {e}"
-                    )
+                    logger.error(f"Failed to queue monthly executive email: {e}")
 
             logger.info(
                 f"Monthly executive summary generated: {filename_pdf} "
@@ -782,13 +776,9 @@ This is an automated alert from the Residency Scheduler system.
 """,
                             html=None,
                         )
-                        logger.info(
-                            f"Critical violation alert email queued for {email}"
-                        )
+                        logger.info("Critical violation alert email queued")
                     except Exception as e:
-                        logger.error(
-                            f"Failed to queue violation alert email for {email}: {e}"
-                        )
+                        logger.error(f"Failed to queue violation alert email: {e}")
 
                 # Create in-app notifications for program directors
                 from app.models.notification import Notification
