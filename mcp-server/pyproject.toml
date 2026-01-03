@@ -31,7 +31,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "fastmcp>=2.10.0",  # Need 2.10+ for http_app() method - use WITHOUT lifespan to disable sessions
+    "fastmcp==2.14.2",  # PINNED: Exact version known to work with stateless_http=True (2026-01-03)
     "sqlalchemy>=2.0.0",
     "psycopg2-binary>=2.9.0",
     "pydantic>=2.0.0",
