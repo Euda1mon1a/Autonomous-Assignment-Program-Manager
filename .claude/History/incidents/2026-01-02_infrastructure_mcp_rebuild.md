@@ -1,11 +1,15 @@
 # Infrastructure Incident: MCP Connection Failures & Full Rebuild
 
+> **CORRECTION (Session 052B):** This incident report contains outdated config info.
+> The correct MCP config uses `"type": "http"` NOT `"transport": "http"`.
+> See `.claude/Scratchpad/SESSION_052B_MCP_CONFIG_FINAL.md` for authoritative config.
+
 **Summary:** Full infrastructure teardown and rebuild to resolve recurring MCP connection failures spanning 6+ sessions.
 
 **Date:** 2026-01-02 (Hawaii) / 2026-01-03 (UTC)
-**Session:** 052
+**Session:** 052 (updated 052B)
 **Branch:** `fix/system-hardening-2026-01-02-b`
-**PR:** #611
+**PR:** #612
 **Severity:** HIGH (blocking AI agent operations)
 
 ---
