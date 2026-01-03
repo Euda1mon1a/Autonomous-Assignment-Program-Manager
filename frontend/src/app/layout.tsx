@@ -1,9 +1,13 @@
+import { Inter, JetBrains_Mono } from 'next/font/google'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { Providers } from './providers'
 import { Navigation } from '@/components/Navigation'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { KeyboardShortcutHelp } from '@/components/common/KeyboardShortcutHelp'
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' })
 
 export const metadata: Metadata = {
   title: 'Residency Scheduler',
@@ -28,16 +32,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="h-full">
-      <head>
-        {/* Load Inter + JetBrains Mono from Google Fonts CDN for production */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="en" className={`h-full ${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="h-full font-sans antialiased overflow-x-hidden">
         <Providers>
           <ErrorBoundary>
