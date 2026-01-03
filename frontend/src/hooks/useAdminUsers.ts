@@ -8,6 +8,8 @@ import { ApiError, del, get, patch, post } from "@/lib/api";
 import type {
   ActivityAction,
   ActivityLogResponse,
+  AdminUserApiResponse,
+  AdminUserListApiResponse,
   BulkActionRequest,
   User,
   UserCreate,
@@ -95,6 +97,39 @@ export const adminUsersQueryKeys = {
 // ============================================================================
 
 /**
+ * Transform a raw API user response to the frontend User type.
+ * Handles snake_case to camelCase conversion and status derivation.
+ */
+function transformApiUser(apiUser: AdminUserApiResponse): User {
+  // Derive status from is_active and is_locked flags
+  let status: UserStatus;
+  if (apiUser.is_locked) {
+    status = "locked";
+  } else if (!apiUser.is_active) {
+    status = "inactive";
+  } else if (apiUser.invite_sent_at && !apiUser.invite_accepted_at) {
+    status = "pending";
+  } else {
+    status = "active";
+  }
+
+  return {
+    id: apiUser.id,
+    email: apiUser.email,
+    firstName: apiUser.first_name || "",
+    lastName: apiUser.last_name || "",
+    role: apiUser.role as UserRole,
+    status,
+    lastLogin: apiUser.last_login || undefined,
+    createdAt: apiUser.created_at || new Date().toISOString(),
+    updatedAt: apiUser.updated_at || new Date().toISOString(),
+    mfaEnabled: false, // Not provided by API, default to false
+    failedLoginAttempts: 0, // Not provided by API, default to 0
+    lockedUntil: undefined,
+  };
+}
+
+/**
  * Fetches admin users list from API
  */
 async function fetchUsers(filters?: AdminUserFilters): Promise<UsersResponse> {
@@ -113,13 +148,22 @@ async function fetchUsers(filters?: AdminUserFilters): Promise<UsersResponse> {
     params.set("page", String(filters.page));
   }
   if (filters?.pageSize !== undefined) {
-    params.set("page_size", String(filters.pageSize));
+    params.set("pageSize", String(filters.pageSize));
   }
 
   const queryString = params.toString();
-  return get<UsersResponse>(
+  const response = await get<AdminUserListApiResponse>(
     `/admin/users${queryString ? `?${queryString}` : ""}`
   );
+
+  // Transform API response to frontend format
+  return {
+    users: response.items.map(transformApiUser),
+    total: response.total,
+    page: response.page,
+    pageSize: response.pageSize,
+    totalPages: response.totalPages,
+  };
 }
 
 /**

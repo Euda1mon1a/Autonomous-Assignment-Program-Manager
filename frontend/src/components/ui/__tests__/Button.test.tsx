@@ -215,26 +215,26 @@ describe('Button', () => {
     });
 
     it('renders IconButton variant', () => {
-      render(<IconButton>🔍</IconButton>);
+      render(<IconButton aria-label="Search">🔍</IconButton>);
 
       expect(screen.getByText('🔍')).toBeInTheDocument();
     });
 
     it('IconButton has correct padding for sizes', () => {
-      const { container, rerender } = render(<IconButton size="sm">🔍</IconButton>);
+      const { container, rerender } = render(<IconButton aria-label="Search" size="sm">🔍</IconButton>);
 
       expect(container.querySelector('.p-1\\.5')).toBeInTheDocument();
 
-      rerender(<IconButton size="md">🔍</IconButton>);
+      rerender(<IconButton aria-label="Search" size="md">🔍</IconButton>);
       expect(container.querySelector('.p-2')).toBeInTheDocument();
 
-      rerender(<IconButton size="lg">🔍</IconButton>);
+      rerender(<IconButton aria-label="Search" size="lg">🔍</IconButton>);
       expect(container.querySelector('.p-3')).toBeInTheDocument();
     });
 
     it('IconButton forwards ref correctly', () => {
       const ref = React.createRef<HTMLButtonElement>();
-      render(<IconButton ref={ref}>🔍</IconButton>);
+      render(<IconButton aria-label="Search" ref={ref}>🔍</IconButton>);
 
       expect(ref.current).toBeInstanceOf(HTMLButtonElement);
     });

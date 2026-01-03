@@ -98,11 +98,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button';
 
-/**
  * Icon-only button variant
  */
-export const IconButton = forwardRef<HTMLButtonElement, Omit<ButtonProps, 'leftIcon' | 'rightIcon'>>(
-  ({ children, size = 'md', className = '', ...props }, ref) => {
+export interface IconButtonProps extends Omit<ButtonProps, 'leftIcon' | 'rightIcon' | 'children'> {
+  'aria-label': string; // Enforce accessible label
+  icon?: React.ReactNode;
+  children?: React.ReactNode; // Keep children for flexibility but encourage icon prop
+}
+
+export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
+  ({ children, icon, size = 'md', className = '', ...props }, ref) => {
     const iconSizes = {
       sm: 'p-1.5',
       md: 'p-2',
@@ -116,7 +121,7 @@ export const IconButton = forwardRef<HTMLButtonElement, Omit<ButtonProps, 'leftI
         className={`${iconSizes[size]} ${className}`}
         {...props}
       >
-        {children}
+        {icon || children}
       </Button>
     );
   }
