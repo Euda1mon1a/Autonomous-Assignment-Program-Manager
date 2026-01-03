@@ -243,7 +243,10 @@ export function useUser(
 ) {
   return useQuery<User, ApiError>({
     queryKey: adminUsersQueryKeys.detail(id),
-    queryFn: () => get<User>(`/admin/users/${id}`),
+    queryFn: async () => {
+      const response = await get<AdminUserApiResponse>(`/admin/users/${id}`);
+      return transformApiUser(response);
+    },
     staleTime: 2 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     enabled: !!id,
@@ -262,7 +265,21 @@ export function useCreateUser() {
   const queryClient = useQueryClient();
 
   return useMutation<User, ApiError, UserCreate>({
-    mutationFn: (data) => post<User>("/admin/users", data),
+    mutationFn: async (data) => {
+      // Transform camelCase to snake_case for API
+      const apiPayload = {
+        email: data.email,
+        first_name: data.firstName,
+        last_name: data.lastName,
+        role: data.role,
+        send_invite: data.sendInvite,
+      };
+      const response = await post<AdminUserApiResponse>(
+        "/admin/users",
+        apiPayload
+      );
+      return transformApiUser(response);
+    },
     onSuccess: () => {
       // Invalidate and refetch users list
       queryClient.invalidateQueries({ queryKey: adminUsersQueryKeys.all });
@@ -277,7 +294,24 @@ export function useUpdateUser() {
   const queryClient = useQueryClient();
 
   return useMutation<User, ApiError, { id: string; data: UserUpdate }>({
-    mutationFn: ({ id, data }) => patch<User>(`/admin/users/${id}`, data),
+    mutationFn: async ({ id, data }) => {
+      // Transform camelCase to snake_case for API
+      const apiPayload: Record<string, unknown> = {};
+      if (data.email !== undefined) apiPayload.email = data.email;
+      if (data.firstName !== undefined) apiPayload.first_name = data.firstName;
+      if (data.lastName !== undefined) apiPayload.last_name = data.lastName;
+      if (data.role !== undefined) apiPayload.role = data.role;
+      if (data.status !== undefined) {
+        // Map status to is_active
+        apiPayload.is_active = data.status === "active";
+      }
+
+      const response = await patch<AdminUserApiResponse>(
+        `/admin/users/${id}`,
+        apiPayload
+      );
+      return transformApiUser(response);
+    },
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: adminUsersQueryKeys.all });
       queryClient.invalidateQueries({
@@ -309,8 +343,26 @@ export function useToggleUserLock() {
 
   return useMutation<LockUserResponse, ApiError, { id: string; lock: boolean }>(
     {
-      mutationFn: ({ id, lock }) =>
-        post<LockUserResponse>(`/admin/users/${id}/lock`, { lock }),
+      mutationFn: async ({ id, lock }) => {
+        // Backend expects 'locked' field, not 'lock'
+        const response = await post<{
+          userId: string;
+          isLocked: boolean;
+          lockReason: string | null;
+          lockedAt: string | null;
+          lockedBy: string | null;
+          message: string;
+        }>(`/admin/users/${id}/lock`, { locked: lock });
+
+        // Transform response to match expected format
+        return {
+          success: true,
+          user: {
+            id: response.userId,
+          } as User,
+          message: response.message,
+        };
+      },
       onSuccess: (_, { id }) => {
         queryClient.invalidateQueries({ queryKey: adminUsersQueryKeys.all });
         queryClient.invalidateQueries({
@@ -346,8 +398,29 @@ export function useBulkUserAction() {
   const queryClient = useQueryClient();
 
   return useMutation<BulkActionResponse, ApiError, BulkActionRequest>({
-    mutationFn: (request) =>
-      post<BulkActionResponse>("/admin/users/bulk", request),
+    mutationFn: async (request) => {
+      // Transform to snake_case for API
+      const apiPayload = {
+        user_ids: request.userIds,
+        action: request.action,
+      };
+
+      const response = await post<{
+        action: string;
+        affectedCount: number;
+        successIds: string[];
+        failedIds: string[];
+        errors: string[];
+        message: string;
+      }>("/admin/users/bulk", apiPayload);
+
+      return {
+        success: response.failedIds.length === 0,
+        affected: response.affectedCount,
+        failures: response.errors,
+        message: response.message,
+      };
+    },
     onSuccess: () => {
       // Refresh entire users list after bulk action
       queryClient.invalidateQueries({ queryKey: adminUsersQueryKeys.all });

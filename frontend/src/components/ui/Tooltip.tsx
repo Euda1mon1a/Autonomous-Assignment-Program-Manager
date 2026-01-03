@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 
 export interface TooltipProps {
   content: React.ReactNode;
-  children: React.ReactNode;
+  children: React.ReactElement; // Must be a single element for aria-describedby injection
   position?: 'top' | 'bottom' | 'left' | 'right';
   delay?: number;
   className?: string;
@@ -65,6 +65,10 @@ export function Tooltip({
     };
   }, []);
 
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+  const tooltipId = React.useId();
+  const child = React.Children.only(children) as React.ReactElement;
+
   return (
     <div
       className={`relative inline-block ${className}`}
@@ -73,10 +77,13 @@ export function Tooltip({
       onFocus={showTooltip}
       onBlur={hideTooltip}
     >
-      {children}
+      {React.cloneElement(child, {
+        'aria-describedby': isVisible ? tooltipId : undefined,
+      })}
 
       {isVisible && (
         <div
+          id={tooltipId}
           role="tooltip"
           className={`absolute z-50 px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg whitespace-nowrap ${positionStyles[position]}`}
         >
