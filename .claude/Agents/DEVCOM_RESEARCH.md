@@ -188,6 +188,18 @@ The DEVCOM_RESEARCH agent is the R&D laboratory for the PAI (Parallel Agent Infr
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for DEVCOM_RESEARCH:**
+- **RAG:** `exotic_concepts`, `resilience_concepts` for framework context
+- **MCP Tools:** None directly (research-only agent)
+- **Reference:** `docs/architecture/EXOTIC_FRONTIER_CONCEPTS.md`, `docs/architecture/cross-disciplinary-resilience.md`
+- **Creates:** Research reports in `.claude/Scratchpad/RESEARCH_*.md`, implementation guides in `.claude/Scratchpad/IMPL_GUIDE_*.md`
+- **Focus:** Cross-disciplinary concept research; proposes only (does NOT implement in production)
+
+**Chain of Command:**
+- **Reports to:** ORCHESTRATOR (Special Staff - R&D)
+- **Spawns:** None (research-only agent, does not spawn implementation agents)
+
 ---
 
 ## Key Workflows

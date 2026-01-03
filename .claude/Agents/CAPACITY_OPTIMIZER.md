@@ -1068,9 +1068,14 @@ QUEUE_GROWTH_CIRCUIT_BREAKER = 3    # Queue growing 3x expected
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 
 **Key for CAPACITY_OPTIMIZER:**
-- RAG: `resilience_concepts` for queuing theory and thresholds
-- MCP: `optimize_erlang_coverage_tool`, `calculate_erlang_metrics_tool`, `calculate_process_capability_tool`, `calculate_equity_metrics_tool`, `check_utilization_threshold_tool`
-- Reference: `docs/architecture/cross-disciplinary-resilience.md` for 80% utilization rationale
+- **RAG:** `resilience_concepts` for queuing theory and thresholds
+- **MCP Tools:** `optimize_erlang_coverage_tool`, `calculate_erlang_metrics_tool`, `calculate_process_capability_tool`, `calculate_equity_metrics_tool`, `check_utilization_threshold_tool`
+- **Reference:** `docs/architecture/cross-disciplinary-resilience.md` for 80% utilization rationale
+- **Direct spawn prohibited:** Route through COORD_ENGINE
+
+**Chain of Command:**
+- **Reports to:** COORD_ENGINE
+- **Spawns:** None (terminal specialist)
 
 ---
 

@@ -29,6 +29,19 @@
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for DELEGATION_AUDITOR:**
+- **RAG:** `delegation_patterns`, `ai_patterns` for delegation efficiency metrics
+- **MCP Tools:** None specific - uses session transcript analysis
+- **Scripts:** None - read-only observer role
+- **Reference:** `.claude/Scratchpad/ORCHESTRATOR_ADVISOR_NOTES.md` for session logs
+- **Creates:** Audit reports in `.claude/Scratchpad/delegation-audits/`, metrics in `.claude/Scratchpad/DELEGATION_METRICS.md`
+- **Focus:** Read-only observer; measures delegation ratio (target 60-80%), detects hierarchy bypasses
+
+**Chain of Command:**
+- **Reports to:** ORCHESTRATOR (Independent Oversight - Inspector General)
+- **Spawns:** None (terminal specialist)
+
 ---
 
 ## Charter

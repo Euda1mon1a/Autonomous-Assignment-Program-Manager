@@ -31,13 +31,19 @@
 
 ## Standard Operations
 
-**Key for KNOWLEDGE_CURATOR:**
-- RAG: All doc_types for cross-referencing and gap analysis
-- MCP: `rag_search`, `rag_context`, `rag_health`, `rag_ingest` for knowledge base operations
-- Reference: `.claude/dontreadme/INDEX.md` for documentation structure
-- Coordinate with G4_LIBRARIAN for RAG indexing
-
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for KNOWLEDGE_CURATOR:**
+- **RAG:** All doc_types for cross-referencing and gap analysis
+- **MCP Tools:** `rag_search`, `rag_context`, `rag_health`, `rag_ingest` for knowledge base operations
+- **Scripts:** None - uses RAG tools for knowledge management
+- **Reference:** `.claude/dontreadme/INDEX.md` for documentation structure
+- **Coordinate with:** G4_LIBRARIAN for RAG indexing
+- **Direct spawn prohibited:** Route through COORD_OPS
+
+**Chain of Command:**
+- **Reports to:** COORD_OPS
+- **Spawns:** None (terminal specialist)
 
 ---
 

@@ -67,10 +67,18 @@ ORCHESTRATOR
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts.
 
 **Key for BACKEND_ENGINEER:**
-- Always use `ruff check . --fix && ruff format .` for linting
-- Run `pytest` before commits
-- Use RAG (`mcp__residency-scheduler__rag_search`) to look up scheduling policies before modifying scheduler
-- Use `docker compose up -d --build backend` (not restart) after code changes
+- **RAG:** `scheduling_policy`, `swap_system`, `acgme_rules` for domain context before modifying scheduling logic
+- **MCP Tools:** `validate_schedule_tool`, `detect_conflicts_tool` for testing schedule operations
+- **Scripts:**
+  - `cd backend && ruff check . --fix && ruff format .` before commits
+  - `cd backend && pytest` for all tests
+  - `cd backend && pytest tests/services/` for service layer tests
+  - `docker compose up -d --build backend` (not restart) after code changes
+- **Direct spawn prohibited:** Route through COORD_PLATFORM
+
+**Chain of Command:**
+- **Reports to:** COORD_PLATFORM
+- **Spawns:** None (terminal specialist)
 
 ---
 

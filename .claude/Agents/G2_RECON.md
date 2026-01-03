@@ -64,10 +64,17 @@ The G2_RECON agent is the "Intelligence & Reconnaissance" function for the PAI (
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 
 **Key for G2_RECON:**
-- RAG: All doc_types for comprehensive reconnaissance
-- Use Glob/Grep tools extensively for codebase exploration
-- Protocol: `/search-party` for 120-probe parallel reconnaissance
-- Spawn: PATTERN_ANALYST for deep pattern recognition
+- **RAG:** All doc_types for comprehensive reconnaissance; especially `ai_patterns`, `session_handoff` for cross-session intelligence
+- **MCP Tools:** `rag_search` for knowledge base queries; N/A for MCP scheduling tools (read-only reconnaissance)
+- **Scripts:** `git log`, `git blame` for historical analysis; `./scripts/stack-health.sh` for system state
+- **Reference:** Use Glob/Grep tools extensively for codebase exploration
+- **Protocol:** `/search-party` for 120-probe parallel reconnaissance (12 G-2s x 10 probes)
+- **Focus:** Pre-task reconnaissance, impact analysis, tech debt surveillance, pattern recognition
+- **Spawn:** PATTERN_ANALYST for deep pattern recognition and cross-session analysis
+
+**Chain of Command:**
+- **Reports to:** ORCHESTRATOR (G-Staff advisory)
+- **Spawns:** PATTERN_ANALYST (for deep analysis)
 
 ---
 

@@ -968,12 +968,18 @@ Review the PR.
 
 ## Standard Operations
 
-**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts.
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 
 **Key for CODE_REVIEWER:**
-- Verify code follows standard lint scripts
-- Use RAG (`mcp__residency-scheduler__rag_search`) to check domain compliance (ACGME, scheduling policies)
-- Ensure quality gates are met before approval
+- **RAG:** `acgme_rules`, `scheduling_policy` for domain compliance; `ai_patterns` for code quality patterns
+- **MCP Tools:** `run_security_scan_tool` for security review; `validate_schedule_tool` for scheduling code review
+- **Scripts:** `cd backend && ruff check . && ruff format . --check` for Python lint; `cd frontend && npm run lint` for TypeScript lint
+- **Reference:** `CLAUDE.md` for project code style, `docs/development/AI_RULES_OF_ENGAGEMENT.md` for PR workflow
+- **Direct spawn prohibited:** Route through COORD_QUALITY
+
+**Chain of Command:**
+- **Reports to:** COORD_QUALITY
+- **Spawns:** None (terminal specialist)
 
 ---
 

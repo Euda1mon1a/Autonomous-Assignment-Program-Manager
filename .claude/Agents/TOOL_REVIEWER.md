@@ -44,13 +44,19 @@ TOOLSMITH -> TOOL_QA -> TOOL_REVIEWER (this agent)
 
 ## Standard Operations
 
-**Key for TOOL_REVIEWER:**
-- RAG: `ai_patterns`, `delegation_patterns` for pattern consistency
-- Reference: `.claude/CONSTITUTION.md` for required sections
-- Check cross-references between skills/agents/protocols
-- Final gate before artifact deployment
-
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for TOOL_REVIEWER:**
+- **RAG:** `ai_patterns`, `delegation_patterns` for pattern consistency
+- **MCP Tools:** None specific - uses quality review and pattern analysis
+- **Scripts:** Compare against reference artifacts, check cross-references
+- **Reference:** `.claude/CONSTITUTION.md` for governance, `.claude/Agents/AGENT_FACTORY.md` for archetypes
+- **Pipeline:** TOOLSMITH creates -> TOOL_QA validates (structure) -> TOOL_REVIEWER reviews (quality)
+- **Direct spawn prohibited:** Route through COORD_TOOLING
+
+**Chain of Command:**
+- **Reports to:** COORD_TOOLING
+- **Spawns:** None (terminal specialist)
 
 ---
 

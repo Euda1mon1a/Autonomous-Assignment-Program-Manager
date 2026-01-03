@@ -590,10 +590,14 @@ Before completing any swap operation:
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 
 **Key for SWAP_MANAGER:**
-- RAG: `swap_system`, `acgme_rules` before processing swap requests
-- MCP: `analyze_swap_candidates_tool`, `validate_schedule_tool`, `detect_conflicts_tool`
-- Scripts: `pytest backend/tests/services/test_swap*.py` for swap tests
-- Always validate ACGME compliance before and after swap execution
+- **RAG:** `swap_system`, `acgme_rules` before processing swap requests
+- **MCP Tools:** `analyze_swap_candidates_tool`, `validate_schedule_tool`, `detect_conflicts_tool`
+- **Scripts:** `cd backend && pytest tests/services/test_swap*.py` for swap tests
+- **Direct spawn prohibited:** Route through COORD_ENGINE
+
+**Chain of Command:**
+- **Reports to:** COORD_ENGINE
+- **Spawns:** None (terminal specialist)
 
 ---
 

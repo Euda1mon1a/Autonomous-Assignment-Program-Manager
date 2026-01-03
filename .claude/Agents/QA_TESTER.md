@@ -32,12 +32,18 @@
 
 ## Standard Operations
 
-**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts.
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 
 **Key for QA_TESTER:**
-- Run `pytest` via standard scripts, not ad-hoc
-- Use RAG (`mcp__residency-scheduler__rag_search`) to look up ACGME rules before testing compliance
-- Run `./scripts/stack-health.sh` before test sessions
+- **RAG:** `acgme_rules`, `scheduling_policy` for compliance testing; `user_guide_faq` for expected user behavior
+- **MCP Tools:** `validate_schedule_tool`, `detect_conflicts_tool`, `run_smoke_tests_tool`
+- **Scripts:** `cd backend && pytest tests/` for backend tests; `cd frontend && npm test` for frontend; `./scripts/stack-health.sh` before test sessions
+- **Reference:** `docs/development/DEBUGGING_WORKFLOW.md` for TDD patterns
+- **Direct spawn prohibited:** Route through COORD_QUALITY
+
+**Chain of Command:**
+- **Reports to:** COORD_QUALITY
+- **Spawns:** None (terminal specialist)
 
 ---
 

@@ -35,10 +35,16 @@ COORD_AAR (this agent) [session end]
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 
 **Key for COORD_AAR:**
-- RAG: `ai_patterns`, `delegation_patterns` for session analysis
-- Scratchpad: Update `ORCHESTRATOR_ADVISOR_NOTES.md`, `DELEGATION_METRICS.md`
-- Use `session-end` skill for mandatory session close-out
-- Spawn: DELEGATION_AUDITOR (always), HISTORIAN (if noteworthy)
+- **RAG:** `ai_patterns`, `delegation_patterns`, `session_handoff` for session analysis
+- **MCP Tools:** None directly (coordination/synthesis role)
+- **Scripts:** None (retrospective analysis)
+- **Skills:** `session-end` for mandatory session close-out
+- **Scratchpad:** Update `ORCHESTRATOR_ADVISOR_NOTES.md`, `DELEGATION_METRICS.md`
+- **Focus:** Session wrap-up, XO report collection, handoff notes
+
+**Chain of Command:**
+- **Reports to:** ORCHESTRATOR
+- **Spawns:** DELEGATION_AUDITOR (always), HISTORIAN (if noteworthy)
 
 ---
 

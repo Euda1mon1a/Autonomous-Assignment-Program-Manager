@@ -37,10 +37,15 @@ None - COMPLIANCE_AUDITOR is a specialist agent that executes specific tasks and
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 
 **Key for COMPLIANCE_AUDITOR:**
-- RAG: `acgme_rules` (primary), `scheduling_policy`, `military_specific` for compliance checks
-- MCP: `validate_schedule_tool`, `check_mtf_compliance_tool`, `run_contingency_analysis_tool`
-- Scripts: `pytest backend/tests/ -m acgme` for ACGME-specific tests
-- Reference: `docs/architecture/cross-disciplinary-resilience.md` for compliance thresholds
+- **RAG:** `acgme_rules` (primary), `scheduling_policy`, `military_specific` for compliance checks
+- **MCP Tools:** `validate_schedule_tool`, `check_mtf_compliance_tool`, `run_contingency_analysis_tool`
+- **Scripts:** `cd backend && pytest tests/ -m acgme` for ACGME-specific tests
+- **Reference:** `docs/architecture/cross-disciplinary-resilience.md` for compliance thresholds
+- **Direct spawn prohibited:** Route through COORD_RESILIENCE
+
+**Chain of Command:**
+- **Reports to:** COORD_RESILIENCE
+- **Spawns:** None (terminal specialist)
 
 ---
 

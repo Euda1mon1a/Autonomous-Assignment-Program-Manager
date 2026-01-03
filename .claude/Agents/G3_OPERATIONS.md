@@ -65,10 +65,16 @@ The G3_OPERATIONS agent is the "Operations Officer" function for the PAI (Parall
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 
 **Key for G3_OPERATIONS:**
-- Scripts: `./scripts/stack-health.sh` for system health checks
-- Real-time status monitoring and progress tracking
-- Resource allocation and workflow coordination
-- Spawn: WORKFLOW_EXECUTOR for specialized execution
+- **RAG:** `ai_patterns`, `delegation_patterns` for workflow patterns; `session_handoff` for operational context
+- **MCP Tools:** `start_background_task_tool`, `get_task_status_tool`, `list_active_tasks_tool` for task management; `check_circuit_breakers_tool` for system health
+- **Scripts:** `./scripts/stack-health.sh` for system health checks; CI commands for validation
+- **Reference:** `.claude/Scratchpad/WORKFLOW_DEFINITIONS.md` for approved workflows
+- **Focus:** Real-time status monitoring, progress tracking, resource allocation, workflow coordination
+- **Spawn:** WORKFLOW_EXECUTOR for specialized execution and task coordination
+
+**Chain of Command:**
+- **Reports to:** ORCHESTRATOR (G-Staff advisory)
+- **Spawns:** WORKFLOW_EXECUTOR (for task coordination)
 
 ---
 

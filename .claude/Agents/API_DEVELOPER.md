@@ -141,10 +141,18 @@ ORCHESTRATOR
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 
 **Key for API_DEVELOPER:**
-- RAG: `scheduling_policy`, `swap_system` for domain API patterns
-- Scripts: `pytest backend/tests/api/` for API tests; `ruff check` and `ruff format` before commits
-- Reference: `backend/app/schemas/` for Pydantic patterns, `docs/api/` for API documentation
-- Validate OpenAPI spec with `npm run generate:types` in frontend after API changes
+- **RAG:** `scheduling_policy`, `swap_system`, `acgme_rules` for domain API patterns
+- **MCP Tools:** `validate_schedule_tool`, `rag_search` for domain knowledge
+- **Scripts:**
+  - `cd backend && pytest tests/api/` for API tests
+  - `cd backend && ruff check . --fix && ruff format .` before commits
+  - `cd frontend && npm run generate:types` after API changes
+- **Reference:** `backend/app/schemas/` for Pydantic patterns, `docs/api/` for API documentation
+- **Direct spawn prohibited:** Route through COORD_PLATFORM
+
+**Chain of Command:**
+- **Reports to:** COORD_PLATFORM
+- **Spawns:** None (terminal specialist)
 
 ---
 

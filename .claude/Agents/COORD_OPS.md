@@ -27,10 +27,15 @@
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 
 **Key for COORD_OPS:**
-- RAG: `ai_patterns` for session learnings, `delegation_patterns` for coordination
-- Scripts: `./scripts/stack-health.sh --full` before PRs
-- Use standard git commit format from STANDARD_OPERATIONS
-- Spawn: RELEASE_MANAGER, META_UPDATER, KNOWLEDGE_CURATOR, CI_LIAISON
+- **RAG:** `ai_patterns` for session learnings, `delegation_patterns` for coordination, `session_handoff`
+- **MCP Tools:** None directly (uses git/gh CLI)
+- **Scripts:** `./scripts/stack-health.sh --full` before PRs; standard git commit format
+- **Skills:** `changelog-generator`, `pre-pr-checklist`, `pr-reviewer`
+- **Focus:** Git operations, releases, documentation, CI/CD coordination
+
+**Chain of Command:**
+- **Reports to:** SYNTHESIZER (Deputy for Operations)
+- **Spawns:** RELEASE_MANAGER, META_UPDATER, KNOWLEDGE_CURATOR, CI_LIAISON, HISTORIAN, TRAINING_OFFICER, WORKFLOW_EXECUTOR
 
 ---
 

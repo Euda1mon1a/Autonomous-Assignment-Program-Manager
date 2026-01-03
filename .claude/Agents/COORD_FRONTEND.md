@@ -37,10 +37,15 @@ COORD_FRONTEND
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 
 **Key for COORD_FRONTEND:**
-- Scripts: `npm run lint:fix`, `npm run type-check`, `npm run build`
-- RAG: `user_guide_faq` for UI patterns
-- Use `frontend-development` skill for Next.js/React patterns
-- Spawn: FRONTEND_ENGINEER, UX_SPECIALIST
+- **RAG:** `user_guide_faq` for UI patterns
+- **MCP Tools:** None directly (frontend domain)
+- **Scripts:** `npm run lint:fix`, `npm run type-check`, `npm run build`
+- **Skills:** `frontend-development`, `react-typescript`
+- **Focus:** React components, Next.js pages, accessibility, performance
+
+**Chain of Command:**
+- **Reports to:** SYNTHESIZER (Deputy for Operations)
+- **Spawns:** FRONTEND_ENGINEER, UX_SPECIALIST
 
 ---
 

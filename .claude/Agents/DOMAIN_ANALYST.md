@@ -29,6 +29,20 @@
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for DOMAIN_ANALYST:**
+- **RAG:** `delegation_patterns`, `ai_patterns` for task decomposition patterns
+- **MCP Tools:** `rag_search` for context retrieval (read-only)
+- **Scripts:** N/A (read-only analysis agent)
+- **Reference:** `.claude/docs/PARALLELISM_FRAMEWORK.md` for domain rules; coordinator specs for capability mapping
+- **Focus:** Pre-task domain decomposition, parallelization scoring, agent count recommendations
+- **Constraints:** Analysis must complete < 5 minutes; read-only (proposes, does not execute)
+- **Direct spawn prohibited:** Route through COORD_INTEL
+
+**Chain of Command:**
+- **Reports to:** COORD_INTEL (or FORCE_MANAGER for team assembly tasks)
+- **Spawns:** None (terminal specialist)
+
 ---
 
 ## Charter

@@ -29,6 +29,20 @@
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for AGENT_HEALTH_MONITOR:**
+- **RAG:** `resilience_concepts` for health monitoring patterns; `ai_patterns` for agent operational patterns
+- **MCP Tools:** `check_circuit_breakers_tool`, `get_breaker_health_tool` for system health; `analyze_homeostasis_tool` for feedback analysis
+- **Scripts:** `./scripts/stack-health.sh` for infrastructure health baseline
+- **Reference:** `resilience-dashboard` skill for health score integration
+- **Metrics:** Availability, success rate, latency, resource consumption per agent
+- **Alert thresholds:** CRITICAL (unresponsive >5min), HIGH (success <80%), MEDIUM (success <90%)
+- **Direct spawn prohibited:** Route through COORD_TOOLING
+
+**Chain of Command:**
+- **Reports to:** COORD_TOOLING
+- **Spawns:** None (terminal specialist)
+
 ---
 
 ## Charter

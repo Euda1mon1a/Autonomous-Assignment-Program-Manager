@@ -214,10 +214,15 @@ G6_SIGNAL is pre-authorized to execute these actions autonomously:
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 
 **Key for G6_SIGNAL:**
-- RAG: `resilience_concepts` for metrics patterns
-- MCP: All resilience metrics tools for data collection
-- Reference: `docs/sessions/` for session metrics
-- Aggregates scheduling data, resilience metrics, and system health indicators
+- **RAG:** All doc_types for data context; especially `resilience_concepts`, `exotic_concepts` for data patterns
+- **MCP Tools:** `detect_schedule_changepoints_tool`, `calculate_schedule_entropy_tool`, `check_utilization_threshold_tool` for data analysis; all resilience metrics tools for data collection
+- **Scripts:** Data processing scripts in `scripts/` directory; `./scripts/stack-health.sh` for system metrics
+- **Reference:** `docs/sessions/` for session metrics; `docs/architecture/cross-disciplinary-resilience.md` for data pattern frameworks
+- **Focus:** Data pipeline management, signal processing, metrics aggregation, anomaly detection, observability dashboards
+
+**Chain of Command:**
+- **Reports to:** ORCHESTRATOR (G-Staff advisory)
+- **Spawns:** Data processing specialists as needed for large-scale aggregation
 
 ---
 

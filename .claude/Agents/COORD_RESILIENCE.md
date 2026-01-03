@@ -28,10 +28,15 @@
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 
 **Key for COORD_RESILIENCE:**
-- RAG: `acgme_rules`, `resilience_concepts`, `exotic_concepts`, `military_specific`
-- MCP: All resilience MCP tools, `validate_schedule_tool`, `check_mtf_compliance_tool`
-- Scripts: `pytest backend/tests/resilience/` for resilience tests
-- Spawn: RESILIENCE_ENGINEER, COMPLIANCE_AUDITOR, SECURITY_AUDITOR, CHAOS_ENGINEER, BURNOUT_SENTINEL, EPIDEMIC_ANALYST
+- **RAG:** `acgme_rules`, `resilience_concepts`, `exotic_concepts`, `military_specific`
+- **MCP Tools:** All resilience MCP tools including `validate_schedule_tool`, `check_mtf_compliance_tool`, `run_contingency_analysis_resilience_tool`, `calculate_burnout_rt_tool`, `get_defense_level_tool`
+- **Scripts:** `pytest backend/tests/resilience/` for resilience tests
+- **Skills:** `acgme-compliance`, `resilience-dashboard`, `security-audit`
+- **Focus:** ACGME compliance, resilience health, credential validation, security
+
+**Chain of Command:**
+- **Reports to:** SYNTHESIZER (Deputy for Operations)
+- **Spawns:** RESILIENCE_ENGINEER, COMPLIANCE_AUDITOR, SECURITY_AUDITOR, CHAOS_ENGINEER, BURNOUT_SENTINEL, EPIDEMIC_ANALYST
 
 ---
 

@@ -50,9 +50,18 @@ FRONTEND_ENGINEER (this agent)
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts.
 
 **Key for FRONTEND_ENGINEER:**
-- Always use `npm run lint:fix` and `npm run type-check`
-- Run `npm run build` to verify before commits
-- Use RAG (`mcp__residency-scheduler__rag_search`) to look up UI patterns
+- **RAG:** `user_guide_faq` for UI patterns, `scheduling_policy` for domain context
+- **MCP Tools:** `rag_search` for domain knowledge
+- **Scripts:**
+  - `cd frontend && npm run lint:fix` for linting
+  - `cd frontend && npm run type-check` for TypeScript validation
+  - `cd frontend && npm run build` to verify before commits
+  - `cd frontend && npm test` for Jest tests
+- **Direct spawn prohibited:** Route through COORD_FRONTEND
+
+**Chain of Command:**
+- **Reports to:** COORD_FRONTEND
+- **Spawns:** None (terminal specialist)
 
 ---
 

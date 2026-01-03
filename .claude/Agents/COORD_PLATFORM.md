@@ -71,10 +71,15 @@ ORCHESTRATOR
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 
 **Key for COORD_PLATFORM:**
-- RAG: `scheduling_policy` for domain context
-- Scripts: `pytest backend/tests/` for backend tests; `alembic upgrade head` for migrations
-- Use `database-migration` skill for schema changes
-- Spawn: DBA, BACKEND_ENGINEER, API_DEVELOPER
+- **RAG:** `scheduling_policy` for domain context
+- **MCP Tools:** Database-related tools (via DBA agent)
+- **Scripts:** `pytest backend/tests/` for backend tests; `alembic upgrade head` for migrations
+- **Skills:** `database-migration`, `fastapi-production`
+- **Focus:** Backend infrastructure, API development, database schema management
+
+**Chain of Command:**
+- **Reports to:** ARCHITECT (Deputy for Systems)
+- **Spawns:** DBA, BACKEND_ENGINEER, API_DEVELOPER
 
 ---
 

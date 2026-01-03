@@ -37,10 +37,15 @@ None - RESILIENCE_ENGINEER is a specialist agent that executes specific tasks an
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 
 **Key for RESILIENCE_ENGINEER:**
-- RAG: `resilience_concepts`, `exotic_concepts` for framework patterns
-- MCP: `run_contingency_analysis_resilience_tool`, `check_utilization_threshold_tool`, `get_defense_level_tool`, `calculate_burnout_rt_tool`
-- Scripts: `pytest backend/tests/resilience/` for resilience tests
-- Reference: `docs/architecture/cross-disciplinary-resilience.md`, `docs/architecture/EXOTIC_FRONTIER_CONCEPTS.md`
+- **RAG:** `resilience_concepts`, `exotic_concepts` for framework patterns
+- **MCP Tools:** `run_contingency_analysis_resilience_tool`, `check_utilization_threshold_tool`, `get_defense_level_tool`, `calculate_burnout_rt_tool`, `get_unified_critical_index_tool`
+- **Scripts:** `cd backend && pytest tests/resilience/` for resilience tests
+- **Reference:** `docs/architecture/cross-disciplinary-resilience.md`, `docs/architecture/EXOTIC_FRONTIER_CONCEPTS.md`
+- **Direct spawn prohibited:** Route through COORD_RESILIENCE
+
+**Chain of Command:**
+- **Reports to:** COORD_RESILIENCE
+- **Spawns:** None (terminal specialist)
 
 ---
 

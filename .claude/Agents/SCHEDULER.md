@@ -886,10 +886,15 @@ Expected output: Schedule generation result with quality metrics and faculty rev
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 
 **Key for SCHEDULER:**
-- RAG: `acgme_rules`, `scheduling_policy` before any schedule modifications
-- MCP: `validate_schedule_tool`, `detect_conflicts_tool`, `analyze_swap_candidates_tool`
-- Scripts: `pytest backend/tests/scheduling/` for scheduler tests
-- Always backup database before schedule generation (use `safe-schedule-generation` skill)
+- **RAG:** `acgme_rules`, `scheduling_policy`, `swap_system` before any schedule modifications
+- **MCP Tools:** `validate_schedule_tool`, `detect_conflicts_tool`, `analyze_swap_candidates_tool`, `run_contingency_analysis_tool`
+- **Scripts:** `cd backend && pytest tests/scheduling/` for scheduler tests
+- **Safety:** Always backup database before schedule generation (use `safe-schedule-generation` skill)
+- **Direct spawn prohibited:** Route through COORD_ENGINE
+
+**Chain of Command:**
+- **Reports to:** COORD_ENGINE
+- **Spawns:** None (terminal specialist)
 
 ---
 

@@ -171,6 +171,18 @@ MEDCOM has **NO execution authority**. Even lower than Propose-Only agents, MEDC
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for MEDCOM:**
+- **RAG:** `acgme_rules`, `military_specific` for clinical context
+- **MCP Tools:** None (advisory-only agent)
+- **Reference:** `docs/architecture/cross-disciplinary-resilience.md` for Rt/SIR metric meanings
+- **Creates:** Advisory notes in `.claude/Scratchpad/MEDCOM_ADVISORY.md`
+- **Focus:** Advisory-only; surfaces clinical information for physician; NEVER makes medical decisions
+
+**Chain of Command:**
+- **Reports to:** ORCHESTRATOR (Special Staff - Medical Advisory)
+- **Spawns:** None (advisory-only agent)
+
 ---
 
 ## Key Workflows

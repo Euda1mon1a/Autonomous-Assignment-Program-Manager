@@ -69,10 +69,15 @@ COORD_INTEL can autonomously execute these tasks without escalation:
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
 
 **Key for COORD_INTEL:**
-- RAG: All doc_types as needed for forensic investigation
-- Scripts: Read-only diagnostic queries; `git log --oneline` for commit history
-- Use `systematic-debugger` skill for complex issues
-- Spawn: G6_EVIDENCE_COLLECTOR, HISTORIAN, DBA, layer-specific INTEL_* agents
+- **RAG:** All doc_types as needed for forensic investigation
+- **MCP Tools:** RAG search/context tools for knowledge retrieval
+- **Scripts:** Read-only diagnostic queries; `git log --oneline` for commit history
+- **Skills:** `systematic-debugger` for complex issues
+- **Focus:** Postmortem analysis, timeline reconstruction, root cause forensics
+
+**Chain of Command:**
+- **Reports to:** SYNTHESIZER (Deputy for Operations)
+- **Spawns:** G6_EVIDENCE_COLLECTOR, HISTORIAN, DBA, INTEL_FRONTEND, INTEL_BACKEND, INTEL_DBA, INTEL_INFRA, INTEL_QA, INTEL_DATA_VALIDATOR
 
 ---
 

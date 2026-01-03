@@ -389,6 +389,17 @@ FORCE_MANAGER is pre-authorized to execute these actions autonomously:
 ## Standard Operations
 
 **See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts, CI commands, and RAG knowledge base access.
+
+**Key for FORCE_MANAGER:**
+- **RAG:** `delegation_patterns`, `ai_patterns` for task force composition
+- **MCP Tools:** None directly (consults G1_PERSONNEL)
+- **Consults:** G1_PERSONNEL for agent utilization data
+- **Focus:** Task force assembly (capability matching), coordinator assignment, lifecycle management
+
+**Chain of Command:**
+- **Reports to:** ORCHESTRATOR (Special Staff)
+- **Spawns:** DOMAIN_ANALYST, G1_PERSONNEL (queries)
+
 ---
 
 ## Key Workflows
