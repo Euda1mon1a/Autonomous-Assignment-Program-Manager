@@ -59,14 +59,55 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const modalRef = useRef<HTMLDivElement>(null)
   const cancelButtonRef = useRef<HTMLButtonElement>(null)
+  const triggerRef = useRef<HTMLElement | null>(null)
   const titleId = useId()
   const descId = useId()
 
   // Focus cancel button when dialog opens (safer default)
+  // Capture trigger and focus cancel button
   useEffect(() => {
-    if (isOpen && cancelButtonRef.current) {
-      cancelButtonRef.current.focus()
+    if (isOpen) {
+      triggerRef.current = document.activeElement as HTMLElement
+      if (cancelButtonRef.current) {
+        cancelButtonRef.current.focus()
+      }
     }
+  }, [isOpen])
+
+  // Return focus on close
+  useEffect(() => {
+    if (!isOpen && triggerRef.current) {
+      triggerRef.current.focus()
+      triggerRef.current = null
+    }
+  }, [isOpen])
+
+  // Focus trap
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return
+
+      const focusableElements = modalRef.current?.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      if (!focusableElements || focusableElements.length === 0) return
+
+      const firstElement = focusableElements[0]
+      const lastElement = focusableElements[focusableElements.length - 1]
+
+      if (e.shiftKey && document.activeElement === firstElement) {
+        e.preventDefault()
+        lastElement.focus()
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        e.preventDefault()
+        firstElement.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleTabKey)
+    return () => document.removeEventListener('keydown', handleTabKey)
   }, [isOpen])
 
   // Handle escape key and body scroll
