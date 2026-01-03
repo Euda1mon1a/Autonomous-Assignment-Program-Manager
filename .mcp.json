@@ -2,7 +2,7 @@
   "mcpServers": {
     "residency-scheduler": {
       "url": "http://127.0.0.1:8080/mcp",
-      "transport": "http"
+      "type": "http"
     },
     "residency-scheduler-stdio": {
       "command": "docker",
@@ -22,7 +22,7 @@
         "PYTHONPATH": "mcp-server/src",
         "LOG_LEVEL": "INFO"
       },
-      "transport": "stdio",
+      "type": "stdio",
       "disabled": true,
       "_comment": "Local Python STDIO transport for development without Docker."
     }

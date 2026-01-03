@@ -113,8 +113,8 @@ export class RouteLazyLoader {
     try {
       await route.component();
       this.loadedRoutes.add(path);
-    } catch (error) {
-      // console.error(`Failed to preload route ${path}:`, error);
+    } catch (_error) {
+      // Silently ignore preload failures - not critical for user experience
     }
   }
 
@@ -201,7 +201,7 @@ export function useImageLazyLoad(props: ImageLazyLoadProps) {
       onLoad?.();
     };
 
-    img.onerror = (error) => {
+    img.onerror = (_event) => {
       setHasError(true);
       setIsLoading(false);
       onError?.(new Error('Image failed to load'));

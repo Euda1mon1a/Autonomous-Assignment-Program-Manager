@@ -69,6 +69,44 @@ CREATE TABLE import_staged_assignments (
 
 ---
 
+## Post-Rebuild Fixes (2026-01-02)
+
+**Context:** After Session 052 infrastructure rebuild, several items need attention.
+
+### 1. Re-enable Alembic Migrations in docker-entrypoint.sh
+**Priority:** High
+**Status:** TODO
+
+Migrations were commented out during rebuild to prevent issues:
+```bash
+# alembic upgrade head   # <-- Currently commented out
+```
+
+**Action:** Uncomment after verifying migrations are clean:
+```bash
+alembic upgrade head
+```
+
+**File:** `backend/docker-entrypoint.sh`
+
+### 2. Fix Misleading "/mcp not authenticated" Display
+**Priority:** Low
+**Status:** TODO
+
+The `/mcp` command shows "not authenticated" even when tools work fine. This is because:
+- Claude Code checks `api_key_configured` in MCP health response
+- `MCP_API_KEY` is optional (for external clients), not required for tool operation
+- Backend JWT auth (`API_USERNAME`/`API_PASSWORD`) is what actually matters
+
+**Options:**
+1. Set a dummy `MCP_API_KEY` env var to make display show "authenticated"
+2. Update MCP health endpoint to report auth based on backend JWT capability
+3. Document that "not authenticated" is cosmetic when tools work
+
+**Impact:** Confusing for operators, but tools function correctly.
+
+---
+
 ## Completed (2025-12-25)
 
 ### 1. Block 10 Schedule Generation - COMPLETE ✅
