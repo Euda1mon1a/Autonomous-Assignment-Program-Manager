@@ -1,6 +1,7 @@
 /**
  * Import Staging API Client
  */
+import { api } from "@/lib/api";
 import { del, get, post } from "@/lib/api";
 import type {
   ConflictResolutionMode,
@@ -16,10 +17,16 @@ const BASE_URL = "/import";
 export async function stageImport(
   data: FormData
 ): Promise<{ batch_id: string }> {
-  // Use fetch directly or specialized axios config for Multipart/Form-Data if needed,
-  // but assuming our `post` helper handles FormData correctly or we configure it.
-  // Standard axios handles FormData automatically.
-  return post<{ batch_id: string }>(`${BASE_URL}/stage`, data);
+  // Use raw api instance with explicit multipart config.
+  // The default axios client sets Content-Type: application/json which prevents
+  // FormData auto-detection. Setting to 'multipart/form-data' lets axios
+  // correctly append the boundary parameter for the FormData payload.
+  const response = await api.post<{ batch_id: string }>(`${BASE_URL}/stage`, data, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
 }
 
 export async function listBatches(
