@@ -20,6 +20,10 @@ import {
   RefreshCw,
   FileText,
   AlertTriangle,
+  Table,
+  Clock,
+  ArrowLeftRight,
+  Shield,
 } from 'lucide-react';
 import { AuditLogTable } from './AuditLogTable';
 import { AuditLogFilters } from './AuditLogFilters';

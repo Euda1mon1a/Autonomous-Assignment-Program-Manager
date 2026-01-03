@@ -25,7 +25,7 @@ import { CHANGE_TYPE_LABELS } from './types';
 import type {
   ConstraintType,
   MetricCategory,
-} from "../types";
+} from "./types";
 
 // ============================================================================
 // Types
@@ -464,7 +464,7 @@ export function WhatIfAnalysis({ baseVersionId, className = '' }: WhatIfAnalysis
   const [changes, setChanges] = useState<ProposedChange[]>([]);
 
   const { data: versions } = useScheduleVersions();
-  const { mutate: runAnalysis, data: result, isPending } = useWhatIfAnalysis();
+  const { mutate: runAnalysis, data: result, isPending, error } = useWhatIfAnalysis();
 
   // Performance: Memoize change handlers to prevent re-creation on every render
   const handleAddChange = useCallback(() => {
