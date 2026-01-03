@@ -14,23 +14,33 @@ import {
   History,
   Shield,
   Play,
-  Pause,
-  RotateCcw,
-  AlertTriangle,
-  CheckCircle2,
   Clock,
   Zap,
   Target,
+  TrendingUp,
+  TrendingDown,
+  Lock,
+  Unlock,
+  Calendar,
+  RefreshCw,
+  Trash2,
+  GitCompare,
+  Download,
+  ChevronDown,
+  ChevronUp,
   Info,
   XCircle,
   Loader2,
+  CheckCircle2,
+  AlertTriangle,
+  RotateCcw,
+  Pause,
 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import {
   useScheduleRuns,
   useRunQueue,
   useConstraintConfigs,
-  useScenarioPresets,
   useScheduleMetrics,
   useLockedAssignments,
   useEmergencyHolidays,
@@ -39,7 +49,6 @@ import {
   useGenerateScheduleRun,
   useQueueExperiments,
   useCancelExperiment,
-  useLockAssignment,
   useUnlockAssignment,
   useCreateRollbackPoint,
   useRevertToRollbackPoint,
@@ -50,7 +59,6 @@ import type {
   Algorithm,
   RunConfiguration,
   ConstraintConfig,
-  AdminSchedulingTab,
   AdminSchedulingTab,
   ConfigWarning,
   RunLogEntry,
@@ -153,11 +161,7 @@ export default function AdminSchedulingPage() {
     [runs?.runs]
   );
 
-  // Performance: Memoize active constraints count
-  const activeConstraintsCount = useMemo(() =>
-    configuration.constraints.filter(c => c.enabled).length,
-    [configuration.constraints]
-  );
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -449,7 +453,7 @@ function ConfigurationPanel({
           icon={Target}
           expanded={expandedSections.constraints}
           onToggle={() => toggleSection('constraints')}
-          badge={constraints.filter(c => c.enabled).length}
+          badge={configuration.constraints.filter(c => c.enabled).length}
         >
           <div className="space-y-2">
             {constraints.length === 0 ? (
@@ -1285,7 +1289,7 @@ function OverridesPanel({
   onSync,
   onUnlock,
   isCreatingRollback,
-  isReverting,
+  isReverting: _isReverting,
   isSyncing,
   isUnlocking,
 }: {

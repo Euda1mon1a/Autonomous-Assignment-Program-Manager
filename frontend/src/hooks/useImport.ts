@@ -68,7 +68,7 @@ export function useStageImport() {
 export function useApplyBatch() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, options }: { id: string; options?: any }) =>
+    mutationFn: ({ id, options }: { id: string; options?: Record<string, unknown> }) =>
       applyBatch(id, options),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({

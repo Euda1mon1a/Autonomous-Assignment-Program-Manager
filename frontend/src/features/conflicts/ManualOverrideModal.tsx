@@ -162,8 +162,10 @@ export function ManualOverrideModal({
         onOverrideCreated(result);
       }
       onClose();
-    } catch (err) {
-      // Error handled by mutation
+      } catch {
+        // Assuming setError is defined elsewhere or needs to be added
+        // For now, just keeping the comment as per original instruction
+        // setError('Failed to apply override');
     }
   };
 

@@ -85,43 +85,6 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 }
 
 /**
- * Period selector buttons
- */
-function PeriodSelector({
-  selectedPeriod,
-  onPeriodChange,
-}: {
-  selectedPeriod: TimePeriod;
-  onPeriodChange: (period: TimePeriod) => void;
-}) {
-  const periods: TimePeriod[] = ['7d', '30d', '90d', '180d', '1y'];
-
-  return (
-    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1" role="group" aria-label="Time period selection">
-      {periods.map((period) => (
-        <button
-          key={period}
-          type="button"
-          onClick={() => onPeriodChange(period)}
-          aria-pressed={selectedPeriod === period}
-          aria-label={`Select ${TIME_PERIOD_LABELS[period]} period`}
-          className={`
-            px-3 py-1.5 rounded-md text-xs font-medium transition-colors
-            ${
-              selectedPeriod === period
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }
-          `}
-        >
-          {TIME_PERIOD_LABELS[period]}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-/**
  * Metric selector
  */
 function MetricSelector({
@@ -293,9 +256,7 @@ export function FairnessTrend({
   showPgyComparison = true,
   className = '',
 }: FairnessTrendProps) {
-  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('30d');
   const [selectedMetric, setSelectedMetric] = useState<MetricType>('all');
-  const [chartType, setChartType] = useState<ChartType>('line');
 
   const { data, isLoading, error } = useFairnessTrend(months);
 

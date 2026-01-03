@@ -21,7 +21,11 @@ import {
 } from 'lucide-react';
 import { useWhatIfAnalysis, useScheduleVersions } from './hooks';
 import type { ProposedChange, ChangeType, WhatIfAnalysisRequest } from './types';
-import { CHANGE_TYPE_LABELS, METRIC_CATEGORY_LABELS } from './types';
+import { CHANGE_TYPE_LABELS } from './types';
+import type {
+  ConstraintType,
+  MetricCategory,
+} from "../types";
 
 // ============================================================================
 // Types
@@ -210,7 +214,7 @@ function ConstraintImpactItem({
   constraint,
 }: {
   constraint: {
-    constraintType: string;
+    constraintType: ConstraintType;
     constraintName: string;
     currentValue: number;
     projectedValue: number;
@@ -219,12 +223,11 @@ function ConstraintImpactItem({
   };
 }) {
   // Performance: Memoize expensive calculations to avoid recalculating on every render
-  const { isIncrease, change, changePercentage } = useMemo(() => {
-    const change = constraint.projectedValue - constraint.currentValue;
+  const { isIncrease, changePercentage } = useMemo(() => {
+    const changeVal = constraint.projectedValue - constraint.currentValue;
     return {
       isIncrease: constraint.projectedValue > constraint.currentValue,
-      change,
-      changePercentage: (change / constraint.currentValue) * 100,
+      changePercentage: (changeVal / constraint.currentValue) * 100,
     };
   }, [constraint.projectedValue, constraint.currentValue]);
 
@@ -288,7 +291,7 @@ function ResultsPanel({
 }: {
   result: {
     predictedImpact: {
-      metrics: Record<string, any>;
+      metrics: Record<string, MetricCategory>;
       comparisonToBaseline: Array<{
         metricName: string;
         delta: number;
@@ -302,7 +305,7 @@ function ResultsPanel({
         suggestion?: string;
       }>;
       constraints: Array<{
-        constraintType: string;
+        constraintType: ConstraintType;
         constraintName: string;
         currentValue: number;
         projectedValue: number;
@@ -461,7 +464,7 @@ export function WhatIfAnalysis({ baseVersionId, className = '' }: WhatIfAnalysis
   const [changes, setChanges] = useState<ProposedChange[]>([]);
 
   const { data: versions } = useScheduleVersions();
-  const { mutate: runAnalysis, data: result, isPending, error } = useWhatIfAnalysis();
+  const { mutate: runAnalysis, data: result, isPending } = useWhatIfAnalysis();
 
   // Performance: Memoize change handlers to prevent re-creation on every render
   const handleAddChange = useCallback(() => {
@@ -504,24 +507,6 @@ export function WhatIfAnalysis({ baseVersionId, className = '' }: WhatIfAnalysis
     selectedVersionId && changes.length > 0 && changes.every((c) => c.description),
     [selectedVersionId, changes]
   );
-
-  // Performance: Memoize sorted and grouped constraint impacts
-  const sortedConstraintImpacts = useMemo(() => {
-    if (!result?.predictedImpact?.constraints) return [];
-    return [...result.predictedImpact.constraints].sort((a, b) => {
-      if (a.violated !== b.violated) return a.violated ? -1 : 1;
-      return Math.abs(b.projectedValue - b.currentValue) - Math.abs(a.projectedValue - a.currentValue);
-    });
-  }, [result?.predictedImpact?.constraints]);
-
-  // Performance: Memoize warning counts by severity
-  const warningCounts = useMemo(() => {
-    if (!result?.predictedImpact?.warnings) return { info: 0, warning: 0, error: 0 };
-    return result.predictedImpact.warnings.reduce((acc, w) => {
-      acc[w.severity] = (acc[w.severity] || 0) + 1;
-      return acc;
-    }, { info: 0, warning: 0, error: 0 } as Record<string, number>);
-  }, [result?.predictedImpact?.warnings]);
 
   return (
     <div className={`space-y-6 ${className}`}>

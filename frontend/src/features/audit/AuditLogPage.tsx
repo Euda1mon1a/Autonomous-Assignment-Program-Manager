@@ -13,12 +13,11 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import {
-  Table,
-  Clock,
-  ArrowLeftRight,
+  History,
+  Filter,
+  Download,
+  Search,
   RefreshCw,
-  BarChart3,
-  Shield,
   FileText,
   AlertTriangle,
 } from 'lucide-react';

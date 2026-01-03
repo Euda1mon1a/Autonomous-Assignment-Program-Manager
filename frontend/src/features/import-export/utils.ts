@@ -180,14 +180,6 @@ export function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
 // ============================================================================
 
 /**
- * Required columns for each data type
- */
-const DATA_TYPE_COLUMNS: Record<ImportDataType, string[]> = {
-  people: ['name', 'type'],
-  assignments: ['date', 'time_of_day', 'role'],
-  absences: ['start_date', 'end_date', 'absence_type'],
-  schedules: ['date', 'time_of_day', 'person_name', 'role'],
-};
 
 /**
  * Detect import data type from column headers

@@ -8,7 +8,7 @@
  * and creating new swap requests.
  */
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   ShoppingCart,
   List,
@@ -106,7 +106,7 @@ export function SwapMarketplace() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, marketplaceData?.entries.length]);
+  }, [activeTab, marketplaceData?.entries.length, marketplaceData?.entries]);
 
   // Reset selection when changing tabs or data
   useEffect(() => {

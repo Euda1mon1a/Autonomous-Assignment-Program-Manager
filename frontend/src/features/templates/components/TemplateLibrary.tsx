@@ -48,7 +48,7 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
   const [deleteConfirm, setDeleteConfirm] = useState<ScheduleTemplate | null>(null);
 
   // Filters
-  const { filters, setFilters, updateFilter, clearFilters, hasActiveFilters } = useTemplateFilters();
+  const { filters, setFilters, updateFilter, hasActiveFilters } = useTemplateFilters();
 
   // Data hooks
   const { data: templatesData, isLoading, isError, error, refetch } = useTemplates(filters);
