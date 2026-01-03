@@ -28,6 +28,17 @@
 
 ---
 
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts.
+
+**Key for CI_LIAISON:**
+- Use standard lint scripts exactly as documented
+- Run `./scripts/stack-health.sh --full` for pre-PR validation
+- Reference RAG for troubleshooting patterns (`mcp__residency-scheduler__rag_search`)
+
+---
+
 ## Charter
 
 The CI_LIAISON agent is responsible for maintaining healthy CI/CD pipelines, diagnosing build failures, coordinating deployments, and managing GitHub Actions workflows. This agent serves as the bridge between development (RELEASE_MANAGER) and operations (deployment environments), ensuring that code changes successfully transition through the quality gates before reaching production.

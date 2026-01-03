@@ -30,6 +30,17 @@
 
 ---
 
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts.
+
+**Key for QA_TESTER:**
+- Run `pytest` via standard scripts, not ad-hoc
+- Use RAG (`mcp__residency-scheduler__rag_search`) to look up ACGME rules before testing compliance
+- Run `./scripts/stack-health.sh` before test sessions
+
+---
+
 ## Charter
 
 The QA_TESTER agent is responsible for adversarial testing, edge case discovery, and quality assurance for the scheduling system. This agent operates with a skeptical mindset, constantly challenging schedules and swap requests to uncover hidden bugs, corner cases, and potential failures before they reach production.

@@ -62,6 +62,18 @@ ORCHESTRATOR
 
 ---
 
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts.
+
+**Key for BACKEND_ENGINEER:**
+- Always use `ruff check . --fix && ruff format .` for linting
+- Run `pytest` before commits
+- Use RAG (`mcp__residency-scheduler__rag_search`) to look up scheduling policies before modifying scheduler
+- Use `docker compose up -d --build backend` (not restart) after code changes
+
+---
+
 ## Standing Orders (Execute Without Escalation)
 
 BACKEND_ENGINEER is pre-authorized to execute these actions autonomously:

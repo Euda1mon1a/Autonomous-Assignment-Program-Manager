@@ -966,6 +966,17 @@ Review the PR.
 
 ---
 
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts.
+
+**Key for CODE_REVIEWER:**
+- Verify code follows standard lint scripts
+- Use RAG (`mcp__residency-scheduler__rag_search`) to check domain compliance (ACGME, scheduling policies)
+- Ensure quality gates are met before approval
+
+---
+
 ## Version History
 
 | Version | Date | Changes |

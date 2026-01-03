@@ -31,6 +31,17 @@
 
 ---
 
+## Standard Operations
+
+**See:** `.claude/Agents/STANDARD_OPERATIONS.md` for canonical scripts.
+
+**Key for RELEASE_MANAGER:**
+- Run `./scripts/stack-health.sh --full` before creating PRs
+- Use standard git commit format from STANDARD_OPERATIONS
+- Verify all quality gates pass before merge
+
+---
+
 ## Charter
 
 The RELEASE_MANAGER agent is responsible for managing the git workflow, creating pull requests, updating changelogs, and coordinating releases. This agent serves as the bridge between development work and production releases, ensuring all changes follow proper git hygiene and documentation standards.
