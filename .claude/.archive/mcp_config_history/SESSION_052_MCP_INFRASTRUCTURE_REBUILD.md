@@ -1,5 +1,8 @@
 # Session 052: MCP Infrastructure Rebuild
 
+> **CORRECTION (Session 052b):** MCP config field is `"type": "http"` NOT `"transport": "http"`.
+> The validation script and Claude Code schema require `type` field. Updated in PR #612.
+
 > **Date:** 2026-01-02/03
 > **Branch:** `fix/system-hardening-2026-01-02-b`
 > **PR:** #611

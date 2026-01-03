@@ -3,6 +3,10 @@
  * Mirrors backend/app/schemas/resilience.py
  */
 
+// ============================================================================
+// Enums
+// ============================================================================
+
 export enum UtilizationLevel {
   GREEN = "GREEN", // < 70% - healthy buffer
   YELLOW = "YELLOW", // 70-80% - approaching threshold
@@ -36,6 +40,12 @@ export enum OverallStatus {
   EMERGENCY = "emergency",
 }
 
+export type EmergencyCoverageStatus = "success" | "partial" | "failed";
+
+// ============================================================================
+// Base Interfaces
+// ============================================================================
+
 export interface UtilizationMetrics {
   utilization_rate: number;
   level: UtilizationLevel;
@@ -53,6 +63,20 @@ export interface RedundancyStatus {
   minimum_required: number;
   buffer: number;
 }
+
+export interface CentralityScore {
+  faculty_id: string; // UUID
+  faculty_name: string;
+  centrality_score: number;
+  services_covered: number;
+  unique_coverage_slots: number;
+  replacement_difficulty: number;
+  risk_level: string;
+}
+
+// ============================================================================
+// Health Check Types
+// ============================================================================
 
 export interface HealthCheckResponse {
   timestamp: string; // ISO date string
@@ -76,15 +100,9 @@ export interface HealthCheckResponse {
   watch_items: string[];
 }
 
-export interface CentralityScore {
-  faculty_id: string; // UUID
-  faculty_name: string;
-  centrality_score: number;
-  services_covered: number;
-  unique_coverage_slots: number;
-  replacement_difficulty: number;
-  risk_level: string;
-}
+// ============================================================================
+// Vulnerability Report Types
+// ============================================================================
 
 export interface VulnerabilityReportResponse {
   analyzed_at: string;
@@ -109,4 +127,91 @@ export interface VulnerabilityReportResponse {
   most_critical_faculty: CentralityScore[];
 
   recommended_actions: string[];
+}
+
+// ============================================================================
+// Emergency Coverage Types
+// ============================================================================
+
+/**
+ * Request to find emergency coverage for an absence
+ */
+export interface EmergencyCoverageRequest {
+  person_id: string;
+  start_date: string;
+  end_date: string;
+  reason: string;
+  is_deployment: boolean;
+}
+
+/**
+ * Detail about a single replacement or gap
+ */
+export interface CoverageDetail {
+  date: string;
+  original_assignment: string;
+  replacement?: string;
+  status: "replaced" | "gap";
+}
+
+/**
+ * Response from emergency coverage request
+ */
+export interface EmergencyCoverageResponse {
+  status: EmergencyCoverageStatus;
+  replacements_found: number;
+  coverage_gaps: number;
+  requires_manual_review: boolean;
+  details: CoverageDetail[];
+}
+
+// ============================================================================
+// Defense Level Types
+// ============================================================================
+
+/**
+ * Response from defense level endpoint
+ */
+export interface DefenseLevelResponse {
+  level: DefenseLevel;
+  level_number: number;
+  description: string;
+  recommended_actions: string[];
+  escalation_threshold: number;
+}
+
+// ============================================================================
+// Utilization Threshold Types
+// ============================================================================
+
+/**
+ * Response from utilization threshold check
+ */
+export interface UtilizationThresholdResponse {
+  utilization_rate: number;
+  level: UtilizationLevel;
+  above_threshold: boolean;
+  buffer_remaining: number;
+  wait_time_multiplier: number;
+  message: string;
+  recommendations: string[];
+}
+
+// ============================================================================
+// Burnout Epidemiology Types
+// ============================================================================
+
+/**
+ * Response from burnout Rt calculation
+ */
+export interface BurnoutRtResponse {
+  rt: number;
+  status: "declining" | "stable" | "growing" | "crisis";
+  secondary_cases: number;
+  time_window_days: number;
+  confidence_interval?: {
+    lower: number;
+    upper: number;
+  };
+  interventions: string[];
 }

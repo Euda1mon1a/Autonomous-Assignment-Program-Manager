@@ -7,6 +7,37 @@
 
 ---
 
+## CRITICAL CORRECTIONS (Session 052B - 2026-01-03)
+
+**MCP Configuration - IGNORE ALL PRIOR SESSION NOTES (046/047/048/052)**
+
+The correct MCP client configuration is:
+```json
+{
+  "mcpServers": {
+    "residency-scheduler": {
+      "url": "http://127.0.0.1:8080/mcp",
+      "type": "http"
+    }
+  }
+}
+```
+
+| Correct | Wrong (DO NOT USE) |
+|---------|-------------------|
+| `"type": "http"` | `"transport": "http"` |
+| `"type": "http"` | `"type": "sse"` |
+| `"type": "http"` | `"transport": "streamable-http"` |
+
+Sessions 046-048 had progressive misdiagnoses. Session 052B resolved with:
+- Field: `type` (not `transport`)
+- Value: `http` (not `sse` or `streamable-http`)
+- Server: `stateless_http=True` in `server.py`
+
+**Authoritative reference:** `.claude/Scratchpad/SESSION_052B_MCP_CONFIG_FINAL.md`
+
+---
+
 ## User Profile: Dr. Montgomery
 
 ### Communication Style
@@ -1927,8 +1958,81 @@ jq -e '.mcpServers["residency-scheduler"].type == "http"' .mcp.json || exit 1
 - Organizational refinement driven by user vision
 - Session end requested at 97% context usage
 
+---
+
+### Session 052B: 2026-01-02/03 — MCP Death Spiral Resolution
+
+**Context:** Multi-day infrastructure crisis finally resolved. 6+ sessions (046-052B) spent on MCP config.
+
+**The Root Cause (Final, Verified):**
+```
+Field: "type" (NOT "transport")
+Value: "http" (NOT "sse", "streamable-http", or anything else)
+Server: stateless_http=True (REQUIRED in server.py)
+```
+
+**Key User Insight (Post-Resolution):**
+> "I think the biggest lesson learned for me is that the repo is not everything; containers are separate and can load stale repo data"
+
+**Docker ≠ Git Lesson:**
+- Git commit doesn't update running containers
+- Container rebuild doesn't always use latest pip packages
+- Docker image tags are the "source of truth" for running state
+- Solution: IMMACULATE baseline images as known-good reference
+
+**Backup Hierarchy Established:**
+| Tier | Protection | Use Case |
+|------|------------|----------|
+| IMMACULATE | Highest | Verified working baselines (empty + loaded) |
+| SACRED | High | PR milestone snapshots |
+| DATA | Standard | SQL dumps only (safe) |
+| QUARANTINE | Danger | Pre-fix backups (configs are poison) |
+
+**RAG Now Operational:**
+User noted: "we got RAG actually hooked up to you, which again, I don't fully understand, but I know it will help you realize your potential"
+
+This enables semantic search across:
+- ACGME rules
+- Scheduling policies
+- Resilience concepts
+- Agent specifications
+- Session learnings
+
+**Dual MCP Setup:**
+System now has two MCP servers:
+- `residency-scheduler` (HTTP) - Primary 34+ scheduling tools
+- `residency-scheduler-stdio` (stdio via docker exec) - Backup/testing
+
+User noted: "seems like we have a little bit of an odd setup with the dual MCP, but should work to our benefit"
+
+**What This Cost:**
+- ~3 days of troubleshooting
+- 6+ sessions of wasted context
+- Multiple false diagnoses
+
+**What We Gained:**
+- IMMACULATE baseline system
+- Quarantine documentation
+- Clear SOP for restoration
+- RAG integration verified
+- Deep understanding of MCP transport
+
+**Standing Order (CRITICAL):**
+> **NEVER change `.mcp.json` field names or transport values.**
+> If MCP breaks, the problem is:
+> 1. Container not rebuilt
+> 2. Missing `stateless_http=True`
+> 3. Something else entirely
+>
+> The client config is now LOCKED: `"type": "http"`
+
+**User Energy Level:**
+Expressed fatigue ("phew, that was a few days of a shit show") but also relief and appreciation. Ready to return to mission-focused work.
+
+---
+
 *File created: 2025-12-27*
-*Last updated: 2026-01-02 (Session 051 - PR Consolidation & Skills)*
+*Last updated: 2026-01-03 (Session 052B - MCP Death Spiral Resolution)*
 *Maintained by: ORCHESTRATOR / G-5 META_UPDATER*
 
 ---

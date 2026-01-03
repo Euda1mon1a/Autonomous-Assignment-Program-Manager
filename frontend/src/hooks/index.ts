@@ -99,7 +99,15 @@ export {
 // ============================================================================
 // Resilience Hooks
 // ============================================================================
-export {} from "./useResilience";
+export {
+  resilienceQueryKeys,
+  useBurnoutRt,
+  useDefenseLevel,
+  useEmergencyCoverage,
+  useSystemHealth,
+  useUtilizationThreshold,
+  useVulnerabilityReport,
+} from "./useResilience";
 
 // ============================================================================
 // Health Hooks
