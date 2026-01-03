@@ -35,15 +35,21 @@ ORCHESTRATOR ─┬─ ARCHITECT ─┬─ COORD_PLATFORM ─┬─ DBA
               │              └─ COORD_TOOLING ───┬─ TOOL_QA
               │                                  └─ TOOL_REVIEWER
               │
-              └─ G-STAFF ────┬─ G1_PERSONNEL
-                             ├─ G2_RECON ──────── /search-party (120 probes)
-                             ├─ G3_OPERATIONS
-                             ├─ G4_CONTEXT_MGR ─┬─ G4_LIBRARIAN
-                             │                  └─ KNOWLEDGE_CURATOR
-                             ├─ G5_PLANNING ───── /plan-party (10 probes)
-                             ├─ G6_SIGNAL
-                             ├─ IG (AUDITOR) ──── /qa-party (120 agents)
-                             └─ PAO (HISTORIAN)
+              ├─ G-STAFF ────┬─ G1_PERSONNEL
+              │              ├─ G2_RECON ──────── /search-party (120 probes)
+              │              ├─ G3_OPERATIONS
+              │              ├─ G4_CONTEXT_MGR ─┬─ G4_LIBRARIAN
+              │              │                  └─ KNOWLEDGE_CURATOR
+              │              ├─ G5_PLANNING ───── /plan-party (10 probes)
+              │              ├─ G6_SIGNAL
+              │              ├─ IG (AUDITOR) ──── /qa-party (120 agents)
+              │              └─ PAO (HISTORIAN)
+              │
+              └─ SPECIAL ────┬─ FORCE_MANAGER ─── Team assembly
+                STAFF        ├─ DEVCOM_RESEARCH ─ R&D / exotic concepts
+                             ├─ MEDCOM ────────── Medical advisory
+                             ├─ INCIDENT_COMMANDER ─ Crisis response
+                             └─ BURNOUT_SENTINEL ── Workload monitoring
 ```
 
 ---
