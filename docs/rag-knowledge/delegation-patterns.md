@@ -6,6 +6,56 @@
 
 ---
 
+## CRITICAL: Agent Autonomy Rule
+
+**Agents think AND do. They analyze the problem, plan the approach, execute the work, and report results.**
+
+### The Pattern
+
+Agents are autonomous workers, not just reporters or blind executors:
+
+1. **Analyze** - Read files, understand context, identify what needs doing
+2. **Plan** - Determine approach with supervisor guidance
+3. **Execute** - Use tools (Edit, Write, Bash) to make changes
+4. **Report** - Summarize what was done and any issues
+
+### Spawning Properly
+
+```
+Task(
+  description="[AGENT_NAME] task description",  # Visible to user
+  prompt="""**AGENT: META_UPDATER**
+**Reports To:** COORD_OPS
+**Model:** haiku
+
+MISSION: Clean up phantom tasks in HUMAN_TODO.md
+
+GUIDANCE:
+- Import/Export Staging is DONE (verified by ORCHESTRATOR)
+- Mark complete, don't delete history
+
+AUTONOMY: Analyze the file, determine what needs changing, make the edits, report results.""",
+  model="haiku"
+)
+```
+
+### Key Principles
+
+1. **Name in description** - `[META_UPDATER]` for user visibility
+2. **Specify model tier** - haiku for specialists, sonnet for analysts
+3. **Give mission + guidance** - What to do and key context
+4. **Grant autonomy** - Agent decides HOW to accomplish mission
+5. **Agents have all tools** - They read, write, edit, run commands
+
+### Model Tiers
+
+| Tier | Agents |
+|------|--------|
+| **haiku** | META_UPDATER, FRONTEND_ENGINEER, QA_TESTER, BACKEND_ENGINEER |
+| **sonnet** | G2_RECON, ARCHITECT, SYNTHESIZER, coordinators |
+
+---
+
 ## The 99/1 Rule (Cardinal Rule of Orchestration)
 
 **ORCHESTRATOR delegates 99% of the time. Direct action is the nuclear option (1%).**
