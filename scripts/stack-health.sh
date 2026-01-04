@@ -125,7 +125,8 @@ else
 fi
 
 # 6. Migration State
-MIG_RESULT=$(docker compose exec -T backend alembic current 2>&1 | grep -v "^time=\|^INFO\|^2026\|warning" | grep -E "[a-z0-9_]+.*head" | head -1 || echo "")
+# Filter out log timestamps (2026-01-04) but keep migration IDs (20260103_name)
+MIG_RESULT=$(docker compose exec -T backend alembic current 2>&1 | grep -v "^time=\|^INFO\|^2026-\|warning" | grep -E "[a-z0-9_]+.*head" | head -1 || echo "")
 if [ -z "$MIG_RESULT" ]; then
     MIG_RESULT=$(docker compose exec -T backend alembic current 2>&1 | grep -oE "[0-9]{8}_[a-z_]+" | head -1 || echo "unknown")
 fi
