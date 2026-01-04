@@ -528,6 +528,136 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 })
   }),
 
+  // Weekly patterns endpoints
+  http.get(`${API_BASE_URL}/rotation-templates/:id/patterns`, ({ params }) => {
+    const template = mockRotationTemplates.find((t) => t.id === params.id)
+
+    if (!template) {
+      return HttpResponse.json(
+        { detail: 'Rotation template not found' },
+        { status: 404 }
+      )
+    }
+
+    // Return mock patterns for the template
+    const mockPatterns = [
+      {
+        id: `pattern-${params.id}-1`,
+        rotation_template_id: params.id,
+        day_of_week: 1, // Monday
+        time_of_day: 'AM',
+        activity_type: 'fm_clinic',
+        linked_template_id: 'template-2',
+        is_protected: false,
+        notes: null,
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+      },
+      {
+        id: `pattern-${params.id}-2`,
+        rotation_template_id: params.id,
+        day_of_week: 1, // Monday
+        time_of_day: 'PM',
+        activity_type: 'fm_clinic',
+        linked_template_id: 'template-2',
+        is_protected: false,
+        notes: null,
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+      },
+    ]
+
+    return HttpResponse.json(mockPatterns)
+  }),
+
+  http.put(`${API_BASE_URL}/rotation-templates/:id/patterns`, async ({ params, request }) => {
+    const template = mockRotationTemplates.find((t) => t.id === params.id)
+
+    if (!template) {
+      return HttpResponse.json(
+        { detail: 'Rotation template not found' },
+        { status: 404 }
+      )
+    }
+
+    const body = await request.json() as { patterns: Array<Record<string, unknown>> }
+    const now = new Date().toISOString()
+
+    // Return the created patterns
+    const createdPatterns = body.patterns.map((p, index) => ({
+      id: `pattern-${params.id}-${index}`,
+      rotation_template_id: params.id,
+      day_of_week: p.day_of_week,
+      time_of_day: p.time_of_day,
+      activity_type: p.activity_type,
+      linked_template_id: p.linked_template_id,
+      is_protected: p.is_protected || false,
+      notes: p.notes || null,
+      created_at: now,
+      updated_at: now,
+    }))
+
+    return HttpResponse.json(createdPatterns)
+  }),
+
+  // Rotation preferences endpoints
+  http.get(`${API_BASE_URL}/rotation-templates/:id/preferences`, ({ params }) => {
+    const template = mockRotationTemplates.find((t) => t.id === params.id)
+
+    if (!template) {
+      return HttpResponse.json(
+        { detail: 'Rotation template not found' },
+        { status: 404 }
+      )
+    }
+
+    // Return mock preferences
+    const mockPreferences = [
+      {
+        id: `pref-${params.id}-1`,
+        rotation_template_id: params.id,
+        preference_type: 'full_day_grouping',
+        weight: 'medium',
+        config_json: {},
+        is_active: true,
+        description: 'Prefer full days when possible',
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+      },
+    ]
+
+    return HttpResponse.json(mockPreferences)
+  }),
+
+  http.put(`${API_BASE_URL}/rotation-templates/:id/preferences`, async ({ params, request }) => {
+    const template = mockRotationTemplates.find((t) => t.id === params.id)
+
+    if (!template) {
+      return HttpResponse.json(
+        { detail: 'Rotation template not found' },
+        { status: 404 }
+      )
+    }
+
+    const body = await request.json() as Array<Record<string, unknown>>
+    const now = new Date().toISOString()
+
+    // Return the created preferences
+    const createdPreferences = body.map((p, index) => ({
+      id: `pref-${params.id}-${index}`,
+      rotation_template_id: params.id,
+      preference_type: p.preference_type,
+      weight: p.weight || 'medium',
+      config_json: p.config_json || {},
+      is_active: p.is_active !== undefined ? p.is_active : true,
+      description: p.description || null,
+      created_at: now,
+      updated_at: now,
+    }))
+
+    return HttpResponse.json(createdPreferences)
+  }),
+
   // Schedule endpoints
   http.post(`${API_BASE_URL}/schedule/generate`, async ({ request }) => {
     const body = await request.json() as Record<string, unknown>
