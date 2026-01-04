@@ -1,5 +1,27 @@
 #!/usr/bin/env bash
-# Restore full stack from backup
+# =============================================================================
+# DEPRECATED - Use stack-backup.sh instead
+# =============================================================================
+# This script has been superseded by the unified stack-backup.sh
+#
+# New usage:
+#   ./scripts/stack-backup.sh restore [BACKUP_NAME]
+#   ./scripts/stack-backup.sh emergency --confirm  # For immaculate restore
+#
+# This script will be removed in a future version.
+# =============================================================================
+
+echo ""
+echo "⚠️  DEPRECATED: This script has been replaced by stack-backup.sh"
+echo ""
+echo "Use instead:"
+echo "  ./scripts/stack-backup.sh restore backup_20260103_183045"
+echo ""
+echo "Continuing with legacy script in 5 seconds... (Ctrl+C to cancel)"
+sleep 5
+echo ""
+
+# Restore full stack from backup (LEGACY)
 # Usage: ./scripts/restore_full_stack.sh <backup_dir>
 # Example: ./scripts/restore_full_stack.sh backups/full_20260101_170249
 

@@ -42,7 +42,11 @@ This document maps all executable scripts in the repository to their owning agen
 
 | Script | Owner Agent | Coordinator | Purpose | Trigger Condition |
 |--------|-------------|-------------|---------|-------------------|
+| `scripts/stack-backup.sh` | DBA | COORD_PLATFORM | **Unified** backup/restore with immaculate fallback | Before risky operations, recovery, emergency |
 | `scripts/backup-db.sh` | DBA | COORD_PLATFORM | Create compressed PostgreSQL backups with rotation | Scheduled backups, before destructive operations |
+| `scripts/backup_full_stack.sh` | DBA | COORD_PLATFORM | **DEPRECATED** - Use stack-backup.sh | Legacy |
+| `scripts/full-stack-backup.sh` | DBA | COORD_PLATFORM | **DEPRECATED** - Use stack-backup.sh | Legacy |
+| `scripts/restore_full_stack.sh` | DBA | COORD_PLATFORM | **DEPRECATED** - Use stack-backup.sh | Legacy |
 
 ### Security Scripts (SECURITY_AUDITOR Domain)
 
@@ -60,6 +64,76 @@ This document maps all executable scripts in the repository to their owning agen
 ---
 
 ## Detailed Script Documentation
+
+### `scripts/stack-backup.sh` ⭐ PRIMARY
+
+**Owner:** DBA
+**Coordinator:** COORD_PLATFORM
+
+**Description:**
+Unified backup, restore, and emergency recovery script. Consolidates `backup_full_stack.sh`, `full-stack-backup.sh`, and `restore_full_stack.sh`. Includes immaculate baseline verification and emergency restore capability.
+
+**Modes:**
+```bash
+backup     # Create comprehensive backup
+restore    # Restore from a backup
+emergency  # Break glass: restore from immaculate baseline
+```
+
+**CLI Options:**
+```bash
+# Backup mode
+./scripts/stack-backup.sh backup                      # Timestamped backup
+./scripts/stack-backup.sh backup --name pre-refactor  # Named backup
+./scripts/stack-backup.sh backup --include-redis      # Include Redis volume
+
+# Restore mode
+./scripts/stack-backup.sh restore                     # List & prompt
+./scripts/stack-backup.sh restore backup_20260103     # Restore specific
+
+# Emergency mode (immaculate fallback)
+./scripts/stack-backup.sh emergency --confirm         # Break glass
+```
+
+**Safety Features:**
+- Disk space pre-check (1GB minimum)
+- Verifies immaculate baseline exists (warns if missing)
+- Generates SHA256 checksums
+- Creates pre-restore snapshot before any restore
+- Compares Alembic versions (warns on mismatch)
+- Redis flush option on restore
+- Double confirmation for emergency restore
+
+**Backup Contents:**
+- `database/dump.sql.gz` - PostgreSQL dump
+- `database/alembic_version.txt` - Schema version
+- `volumes/postgres_volume.tar.gz` - Volume backup
+- `volumes/redis_volume.tar.gz` - Optional
+- `docker/images/*.tar.gz` - Docker images
+- `git/HEAD_COMMIT`, `UNCOMMITTED.patch` - Git state
+- `config/` - requirements.txt, package.json, .mcp.json
+- `MANIFEST.md` - Restore instructions
+- `CHECKSUM.sha256` - Integrity verification
+
+**Pre-requisites:**
+- Docker Compose stack running
+- 1GB+ free disk space
+- For emergency: immaculate baseline images tagged
+
+**Examples:**
+```bash
+# Before risky migration
+./scripts/stack-backup.sh backup --name before-migration-051
+
+# Something broke, restore
+./scripts/stack-backup.sh restore before-migration-051
+
+# Everything is REALLY broken
+./scripts/stack-backup.sh emergency --confirm
+# Then re-ingest RAG: ./scripts/init_rag_embeddings.py
+```
+
+---
 
 ### `scripts/backup-db.sh`
 
