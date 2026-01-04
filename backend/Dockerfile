@@ -60,6 +60,9 @@ COPY --from=builder /opt/venv /opt/venv
 # Copy application code
 COPY . .
 
+# Save requirements hash for staleness detection at runtime
+RUN md5sum requirements.txt | cut -d' ' -f1 > .requirements_hash
+
 # Copy and make entrypoint executable
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh

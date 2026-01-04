@@ -120,10 +120,12 @@ services:
     volumes:
       # Mount source code for hot reload
       - ./backend:/app
-      # Don't override these directories
+      # Mount scripts for seed/admin commands
+      - ./scripts:/scripts
+      # Don't override these directories (caches only - NOT alembic/versions!)
       - /app/__pycache__
       - /app/.pytest_cache
-      - /app/alembic/versions
+      # NOTE: alembic/versions removed - migrations MUST sync from host
       - backend_local_venv:/app/venv
     networks:
       - app-network
@@ -163,7 +165,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/__pycache__
-      - /app/alembic/versions
+      # NOTE: alembic/versions not excluded - migrations must sync from host
       - backend_local_venv:/app/venv
     networks:
       - app-network
@@ -203,7 +205,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/__pycache__
-      - /app/alembic/versions
+      # NOTE: alembic/versions not excluded - migrations must sync from host
       - backend_local_venv:/app/venv
     networks:
       - app-network

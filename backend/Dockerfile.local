@@ -84,6 +84,9 @@ COPY --from=builder /opt/venv /opt/venv
 # so changes to source code will be reflected immediately
 COPY . .
 
+# Save requirements hash for staleness detection at runtime
+RUN md5sum requirements.txt | cut -d' ' -f1 > .requirements_hash
+
 # Expose port
 EXPOSE 8000
 
