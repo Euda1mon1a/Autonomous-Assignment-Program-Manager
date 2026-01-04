@@ -1,6 +1,8 @@
-"""Email service for sending certification expiration reminders.
+"""Email service for sending notifications.
 
 This service handles sending email notifications for:
+- User invitation emails (new user onboarding)
+- Password reset emails (self-service recovery)
 - Certification expiration reminders (6 months, 3 months, 1 month, 2 weeks, 1 week)
 - Compliance summary reports
 
@@ -422,3 +424,239 @@ This is an automated message from the Residency Scheduling System.
         """
 
         return self.send_email(to_email, subject, body_html)
+
+    def send_invitation_email(
+        self,
+        to_email: str,
+        invite_token: str,
+        invited_by: str,
+    ) -> bool:
+        """Send an invitation email to a new user.
+
+        This is a placeholder implementation that logs the invitation details
+        without actually sending an email. When SMTP is configured, this will
+        send a proper invitation email with a link to complete registration.
+
+        Args:
+            to_email: Email address of the invited user.
+            invite_token: Unique token for completing the invitation.
+            invited_by: Name or email of the person who sent the invitation.
+
+        Returns:
+            True if the email was logged/sent successfully, False otherwise.
+
+        Note:
+            Currently a stub implementation - logs invitation details but does not
+            send actual emails until SMTP is configured. The token should be used
+            to construct a registration URL like:
+            {base_url}/register?token={invite_token}
+        """
+        if not to_email:
+            logger.warning("No email address provided for invitation, skipping")
+            return False
+
+        # Placeholder: Log the invitation instead of sending
+        # TODO: Implement actual email sending when SMTP is configured
+        logger.info(
+            f"[INVITATION STUB] Would send invitation email to {to_email} "
+            f"(invited by: {invited_by}, token: {invite_token[:8]}...)"
+        )
+
+        # Build the email content for when SMTP is enabled
+        subject = "You've been invited to the Residency Scheduler"
+
+        body_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background-color: #2563eb; color: white; padding: 20px; text-align: center; }}
+                .content {{ padding: 20px; background-color: #f9f9f9; }}
+                .btn {{ display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 5px; margin: 15px 0; }}
+                .footer {{ padding: 15px; font-size: 12px; color: #666; text-align: center; }}
+                .token-box {{ background-color: #e5e7eb; padding: 10px; border-radius: 5px; font-family: monospace; word-break: break-all; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Welcome to Residency Scheduler</h1>
+                </div>
+                <div class="content">
+                    <p>Hello,</p>
+
+                    <p>You have been invited by <strong>{invited_by}</strong> to join the
+                    Residency Scheduling System.</p>
+
+                    <p>To complete your registration, please click the button below:</p>
+
+                    <p style="text-align: center;">
+                        <a href="#" class="btn">Complete Registration</a>
+                    </p>
+
+                    <p>Or use this invitation token:</p>
+                    <div class="token-box">{invite_token}</div>
+
+                    <p><strong>This invitation will expire in 7 days.</strong></p>
+
+                    <p>If you did not expect this invitation, you can safely ignore this email.</p>
+                </div>
+                <div class="footer">
+                    <p>This is an automated message from the Residency Scheduling System.</p>
+                    <p>Please do not reply to this email.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        body_text = f"""
+Welcome to Residency Scheduler
+
+Hello,
+
+You have been invited by {invited_by} to join the Residency Scheduling System.
+
+To complete your registration, use the following invitation token:
+
+{invite_token}
+
+This invitation will expire in 7 days.
+
+If you did not expect this invitation, you can safely ignore this email.
+
+---
+This is an automated message from the Residency Scheduling System.
+        """
+
+        # When SMTP is not configured, we still want to "succeed" for testing
+        if not self.config.enabled:
+            logger.info("Email disabled. Invitation logged for: [EMAIL REDACTED]")
+            return True
+
+        return self.send_email(to_email, subject, body_html, body_text)
+
+    def send_password_reset_email(
+        self,
+        to_email: str,
+        reset_token: str,
+    ) -> bool:
+        """Send a password reset email.
+
+        This is a placeholder implementation that logs the reset details
+        without actually sending an email. When SMTP is configured, this will
+        send a proper password reset email with a secure link.
+
+        Args:
+            to_email: Email address of the user requesting password reset.
+            reset_token: Unique token for password reset verification.
+
+        Returns:
+            True if the email was logged/sent successfully, False otherwise.
+
+        Note:
+            Currently a stub implementation - logs reset details but does not
+            send actual emails until SMTP is configured. The token should be used
+            to construct a reset URL like:
+            {base_url}/reset-password?token={reset_token}
+
+        Security:
+            - Reset tokens should expire within 1 hour
+            - Tokens should be single-use
+            - Never reveal if an email exists in the system
+        """
+        if not to_email:
+            logger.warning("No email address provided for password reset, skipping")
+            return False
+
+        # Placeholder: Log the reset request instead of sending
+        # TODO: Implement actual email sending when SMTP is configured
+        logger.info(
+            f"[PASSWORD RESET STUB] Would send password reset email to {to_email} "
+            f"(token: {reset_token[:8]}...)"
+        )
+
+        # Build the email content for when SMTP is enabled
+        subject = "Password Reset Request - Residency Scheduler"
+
+        body_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background-color: #dc2626; color: white; padding: 20px; text-align: center; }}
+                .content {{ padding: 20px; background-color: #f9f9f9; }}
+                .btn {{ display: inline-block; padding: 12px 24px; background-color: #dc2626; color: white; text-decoration: none; border-radius: 5px; margin: 15px 0; }}
+                .footer {{ padding: 15px; font-size: 12px; color: #666; text-align: center; }}
+                .warning {{ background-color: #fef3c7; border: 1px solid #f59e0b; padding: 10px; border-radius: 5px; margin: 15px 0; }}
+                .token-box {{ background-color: #e5e7eb; padding: 10px; border-radius: 5px; font-family: monospace; word-break: break-all; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Password Reset Request</h1>
+                </div>
+                <div class="content">
+                    <p>Hello,</p>
+
+                    <p>We received a request to reset your password for the
+                    Residency Scheduling System.</p>
+
+                    <p>To reset your password, click the button below:</p>
+
+                    <p style="text-align: center;">
+                        <a href="#" class="btn">Reset Password</a>
+                    </p>
+
+                    <p>Or use this reset token:</p>
+                    <div class="token-box">{reset_token}</div>
+
+                    <div class="warning">
+                        <strong>Important:</strong> This link will expire in 1 hour.
+                        If you did not request a password reset, please ignore this email
+                        and your password will remain unchanged.
+                    </div>
+
+                    <p>For security reasons, never share this link or token with anyone.</p>
+                </div>
+                <div class="footer">
+                    <p>This is an automated message from the Residency Scheduling System.</p>
+                    <p>Please do not reply to this email.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        body_text = f"""
+Password Reset Request
+
+Hello,
+
+We received a request to reset your password for the Residency Scheduling System.
+
+To reset your password, use the following reset token:
+
+{reset_token}
+
+IMPORTANT: This link will expire in 1 hour.
+If you did not request a password reset, please ignore this email
+and your password will remain unchanged.
+
+For security reasons, never share this link or token with anyone.
+
+---
+This is an automated message from the Residency Scheduling System.
+        """
+
+        # When SMTP is not configured, we still want to "succeed" for testing
+        if not self.config.enabled:
+            logger.info("Email disabled. Password reset logged for: [EMAIL REDACTED]")
+            return True
+
+        return self.send_email(to_email, subject, body_html, body_text)

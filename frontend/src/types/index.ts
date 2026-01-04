@@ -13,6 +13,9 @@ export * from './state';
 // Re-export chat types
 export * from './chat';
 
+// Re-export weekly pattern types
+export * from './weekly-pattern';
+
 // Import specific types for use in view-specific interfaces
 import {
   UUID,
