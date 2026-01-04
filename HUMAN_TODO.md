@@ -572,7 +572,7 @@ All 8 API hooks fully wired to 8 backend endpoints:
 - **Impact:** Significantly improved OpenAPI documentation, response consistency
 
 #### 7. CD Pipeline - Deployment Logic Placeholder-Only
-**Priority:** HIGH
+**Priority:** HIGH → RESOLVED
 **Location:** `.github/workflows/cd.yml`
 **Found:** G2_RECON audit (2025-12-30)
 **Status:** ✅ FIXED (Session 025, 2025-12-30)
@@ -612,7 +612,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml config --quiet
 **29+ MCP tools now available in production** with proper security (localhost-only binding, no-new-privileges)
 
 #### 9. Frontend Procedure Hooks - All Stubs
-**Priority:** HIGH
+**Priority:** HIGH → RESOLVED
 **Location:** `/frontend/src/hooks/useProcedures.ts`
 **Found:** G2_RECON audit (2025-12-30)
 **Status:** ✅ FIXED (Session 025, 2025-12-30)
@@ -654,7 +654,7 @@ All 4 components are fully functional and wired to backend:
 **Previous concern:** G2_RECON found skeleton-only claim in MVP report; verification shows complete implementation was already in place
 
 #### 11. Frontend TypeScript Errors - Pre-existing Build Issues
-**Priority:** HIGH
+**Priority:** HIGH → RESOLVED
 **Location:** Various frontend components
 **Found:** Session 025 reconnaissance (2025-12-30)
 **Status:** ✅ FIXED (Session 025, 2025-12-30)
