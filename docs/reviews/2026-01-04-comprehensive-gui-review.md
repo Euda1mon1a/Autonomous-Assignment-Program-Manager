@@ -39,7 +39,17 @@ A complete GUI interaction review was performed across 4 phases covering the ent
 | `/import-export` | **Functional** | UI loads and is ready for interaction.                                               |
 | `/settings`      | **CORS Error** | "Could not load settings". Console shows blocking CORS error for `/api/v1/settings`. |
 
+### Phase 5: Extended Audit (✅ Pass)
+| Route               | Status         | Notes                                                                            |
+| ------------------- | -------------- | -------------------------------------------------------------------------------- |
+| `/admin/users`      | **Functional** | User management UI loads with filters and "Add User" action.                     |
+| `/admin/procedures` | **Functional** | Procedure catalog loads (empty state verified) with "New Procedure" action.      |
+| `/admin/health`     | **Functional** | System dashboard is live: API, DB, and Redis healthy. Celery warning noted.      |
+| `/templates`        | **Functional** | Public template gallery loads with cards for Rotations (e.g. Sports Med, Botox). |
+| `/help`             | **Functional** | Quick reference guide loads correctly.                                           |
+
 ## Recommendations
 1.  **Backend Config**: Urgently investigate the `403` and `404` errors in Phase 3. The Analysis services may not be running or are misrouted.
 2.  **CORS Policy**: Update the backend CORS configuration to allow requests from the frontend for the `/settings` endpoint.
 3.  **Data seeding**: Phase 3 tools (Heatmap, Compliance) appear to rely on generated schedule data that might be missing or not linked to the current view.
+4.  **Celery Workers**: Monitor the Celery worker status as indicated by the warning on the Health dashboard.
