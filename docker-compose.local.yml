@@ -210,6 +210,13 @@ services:
     networks:
       - app-network
     command: celery -A app.core.celery_app beat --loglevel=debug
+    healthcheck:
+      # Beat doesn't expose HTTP - check if schedule file exists and is recent
+      test: ["CMD-SHELL", "test -f /app/celerybeat-schedule || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # ===========================================================================
   # Next.js Frontend (Development Mode with Hot Reload)
@@ -294,7 +301,8 @@ services:
 
       # Credentials - uses hardcoded local dev credentials
       # These match the default admin user created during db seed
-      API_USERNAME: admin@example.com
+      # NOTE: Use username "admin", NOT email "admin@example.com"
+      API_USERNAME: admin
       API_PASSWORD: admin123
 
       # Logging

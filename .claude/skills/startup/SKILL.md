@@ -104,6 +104,32 @@ docker compose ps 2>/dev/null || echo "Docker not running"
 curl -s http://localhost:8000/health 2>/dev/null || echo "Backend not available"
 ```
 
+### 5. Check MCP/RAG Health (CRITICAL)
+
+**Without MCP, Claude Code loses access to RAG and 30+ scheduling tools.**
+
+```bash
+# Check MCP container
+MCP_STATUS=$(docker inspect scheduler-local-mcp --format '{{.State.Health.Status}}' 2>/dev/null || echo "not running")
+if [ "$MCP_STATUS" != "healthy" ]; then
+  echo "⚠️  WARNING: MCP container is $MCP_STATUS"
+  echo "   Claude Code has NO RAG access and NO MCP tools!"
+  echo "   Run: ./scripts/start-local.sh"
+fi
+```
+
+Then verify RAG is accessible by calling `mcp__residency-scheduler__rag_health`.
+
+**If RAG check fails with 401 or connection error:**
+```
+⚠️  CRITICAL: RAG/MCP NOT AVAILABLE
+   - Cannot search knowledge base
+   - Cannot use scheduling MCP tools
+   - Cannot validate ACGME compliance via MCP
+
+   Fix: ./scripts/start-local.sh (starts all services including MCP)
+```
+
 ---
 
 ## Output Format
@@ -139,6 +165,10 @@ Provide a concise summary in this format:
 ### System Status
 - Backend: Running/Not running
 - Database: X assignments in Block Y
+- MCP: healthy/unhealthy/not running
+- RAG: X documents indexed / unavailable
+
+**⚠️ If MCP unavailable:** Run `./scripts/start-local.sh`
 
 Ready to work. What's the task?
 ```

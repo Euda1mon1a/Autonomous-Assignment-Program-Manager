@@ -189,7 +189,36 @@ Run stack health to verify environment before starting work:
 
 Include stack status in ORCHESTRATOR Mode acknowledgment.
 
-### 5. Acknowledge ORCHESTRATOR Mode
+### 5. MCP/RAG Health Check (CRITICAL)
+
+**Without MCP, ORCHESTRATOR loses access to RAG and 30+ scheduling tools.**
+
+```bash
+# Check MCP container
+MCP_STATUS=$(docker inspect scheduler-local-mcp --format '{{.State.Health.Status}}' 2>/dev/null || echo "not running")
+if [ "$MCP_STATUS" != "healthy" ]; then
+  echo "⚠️  CRITICAL: MCP is $MCP_STATUS - NO RAG ACCESS"
+fi
+```
+
+Then call `mcp__residency-scheduler__rag_health` to verify RAG is accessible.
+
+**If MCP/RAG unavailable:**
+```
+⚠️  CRITICAL: MCP/RAG NOT AVAILABLE
+   - Cannot use rag_search() or rag_context()
+   - Cannot use 30+ mcp__residency-scheduler__* tools
+   - ORCHESTRATOR is flying blind without institutional knowledge
+
+   Fix: ./scripts/start-local.sh (auto-creates admin user if missing)
+```
+
+**Common Issues:**
+1. MCP container not started → Run `./scripts/start-local.sh`
+2. Admin user missing → Script auto-creates `admin/admin123`
+3. Wrong credentials → MCP uses username `admin`, NOT email
+
+### 6. Acknowledge ORCHESTRATOR Mode
 
 Output this confirmation:
 
@@ -208,9 +237,15 @@ Output this confirmation:
 
 ### Stack Health
 - **Status:** [GREEN/YELLOW/RED]
-- **Services:** API ✓ | Frontend ✓ | Database ✓ | Redis ✓ | Containers ✓
+- **Services:** API ✓ | Frontend ✓ | Database ✓ | Redis ✓ | MCP ✓
 - **Migrations:** [current head]
 - **Run `./scripts/stack-health.sh --full` for lint/typecheck**
+
+### MCP/RAG Status
+- **MCP:** [healthy/unhealthy/not running]
+- **RAG:** [X documents indexed / unavailable]
+- **Tools:** 30+ mcp__residency-scheduler__* available
+- **⚠️ If unavailable:** Run `./scripts/start-local.sh`
 
 ### ORCHESTRATOR Capabilities Enabled
 - Task decomposition with complexity scoring
