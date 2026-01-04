@@ -16,7 +16,6 @@ import type {
   WeeklyPatternUpdateRequest,
   RotationTemplateRef,
   WeeklyPatternGrid,
-  WeeklyPatternSlot,
   DayOfWeek,
   WeeklyPatternTimeOfDay,
 } from '@/types/weekly-pattern';
@@ -74,6 +73,10 @@ function convertBackendToGrid(
         dayOfWeek: bp.day_of_week as DayOfWeek,
         timeOfDay: bp.time_of_day as WeeklyPatternTimeOfDay,
         rotationTemplateId: bp.linked_template_id,
+        // Preserve activity_type for slots without linked_template_id
+        activityType: bp.activity_type,
+        isProtected: bp.is_protected,
+        notes: bp.notes,
       };
     }
   }
@@ -107,14 +110,17 @@ function convertGridToBackend(
   notes: string | null;
 }> } {
   const patterns = grid.slots
-    .filter(slot => slot.rotationTemplateId !== null)
+    // Include slots that have either a linked template OR an activity type
+    .filter(slot => slot.rotationTemplateId !== null || slot.activityType)
     .map(slot => ({
       day_of_week: slot.dayOfWeek,
       time_of_day: slot.timeOfDay,
-      activity_type: 'scheduled', // Default activity type for assigned slots
+      // Use existing activity_type or default to 'scheduled' for linked templates
+      activity_type: slot.activityType || 'scheduled',
       linked_template_id: slot.rotationTemplateId,
-      is_protected: false,
-      notes: null,
+      // Preserve existing is_protected and notes values from grid model
+      is_protected: slot.isProtected ?? false,
+      notes: slot.notes ?? null,
     }));
 
   return { patterns };

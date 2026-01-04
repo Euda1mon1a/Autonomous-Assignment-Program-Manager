@@ -84,6 +84,12 @@ export interface WeeklyPatternSlot {
   timeOfDay: WeeklyPatternTimeOfDay;
   /** ID of assigned rotation template, or null if slot is empty */
   rotationTemplateId: UUID | null;
+  /** Activity type for the slot (e.g., 'scheduled', 'off', 'conference') */
+  activityType?: string | null;
+  /** Whether this slot is protected from automatic changes */
+  isProtected?: boolean;
+  /** Optional notes for this slot */
+  notes?: string | null;
 }
 
 // ============================================================================
