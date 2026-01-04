@@ -44,6 +44,8 @@ function getActivityColor(activityType: string | undefined | null): string {
 
 interface CellAssignment {
   abbreviation: string
+  /** User-facing abbreviation for schedule grid (short codes like C, FMIT) */
+  display_abbreviation?: string
   activityType: string
   fontColor?: string
   backgroundColor?: string
@@ -153,6 +155,9 @@ export function ScheduleCell({
     .filter(Boolean)
     .join('\n')
 
+  // Prefer display_abbreviation (short codes like C, FMIT) over abbreviation (may include time suffix like C-AM)
+  const displayCode = assignment.display_abbreviation || assignment.abbreviation
+
   return (
     <td className={baseStyles}>
       <div
@@ -164,7 +169,7 @@ export function ScheduleCell({
         style={customStyle}
         title={tooltipContent}
       >
-        {assignment.abbreviation}
+        {displayCode}
       </div>
     </td>
   )

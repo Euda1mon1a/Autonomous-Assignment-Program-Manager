@@ -69,8 +69,10 @@ export interface AssignmentDetail {
   role: AssignmentRole;
   /** Activity/rotation name */
   activity: string;
-  /** Short abbreviation for display */
+  /** Short abbreviation for display (may include time suffix like C-AM) */
   abbreviation: string;
+  /** User-facing abbreviation for schedule grid (short codes like C, FMIT) */
+  display_abbreviation?: string;
 }
 
 /**

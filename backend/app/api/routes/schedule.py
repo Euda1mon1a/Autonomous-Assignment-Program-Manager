@@ -459,6 +459,7 @@ async def get_schedule(
                 "role": assignment.role,
                 "activity": assignment.activity_name,
                 "abbreviation": assignment.abbreviation,
+                "display_abbreviation": assignment.display_abbreviation,
             }
         )
 

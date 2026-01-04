@@ -127,3 +127,18 @@ class Assignment(Base):
         if self.rotation_template and self.rotation_template.abbreviation:
             return self.rotation_template.abbreviation
         return self.activity_name[:3].upper()
+
+    @property
+    def display_abbreviation(self) -> str:
+        """Get display abbreviation for GUI schedule grid.
+
+        Prefers display_abbreviation (short codes like "C", "FMIT") over
+        abbreviation (which may include time suffix like "C-AM", "FMIT-AM").
+        Falls back to abbreviation if display_abbreviation is not set.
+        """
+        if self.rotation_template:
+            if self.rotation_template.display_abbreviation:
+                return self.rotation_template.display_abbreviation
+            if self.rotation_template.abbreviation:
+                return self.rotation_template.abbreviation
+        return self.activity_name[:3].upper()
