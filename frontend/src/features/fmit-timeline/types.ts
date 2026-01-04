@@ -253,7 +253,49 @@ export function getDefaultDateRange(): DateRange {
 }
 
 /**
- * Get weeks in date range
+ * Get the Friday-Thursday FMIT week containing the given date.
+ *
+ * FMIT weeks run from Friday to Thursday, independent of calendar weeks.
+ * This aligns with backend constraint logic in backend/app/scheduling/constraints/fmit.py
+ *
+ * Note: Uses UTC methods to avoid timezone issues when dates are parsed from
+ * ISO date strings (which are interpreted as UTC midnight).
+ *
+ * @param date - Any date within the desired FMIT week
+ * @returns Object with friday (week start) and thursday (week end) dates
+ */
+export function getFmitWeekDates(date: Date): { friday: Date; thursday: Date } {
+  // Use UTC day to avoid timezone issues with ISO date strings
+  const dayOfWeek = date.getUTCDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
+
+  // Calculate days since last Friday
+  // Friday (5) -> 0, Saturday (6) -> 1, Sunday (0) -> 2, Monday (1) -> 3, etc.
+  let daysSinceFriday: number;
+  if (dayOfWeek >= 5) {
+    // Friday (5) or Saturday (6)
+    daysSinceFriday = dayOfWeek - 5;
+  } else {
+    // Sunday (0) through Thursday (4)
+    daysSinceFriday = dayOfWeek + 2;
+  }
+
+  const friday = new Date(date);
+  friday.setUTCDate(friday.getUTCDate() - daysSinceFriday);
+
+  const thursday = new Date(friday);
+  thursday.setUTCDate(thursday.getUTCDate() + 6);
+
+  return { friday, thursday };
+}
+
+/**
+ * Get weeks in date range using FMIT Friday-Thursday boundaries.
+ *
+ * FMIT (Faculty Management Information Timeline) weeks align with
+ * the backend constraint system where weeks run Friday to Thursday.
+ *
+ * Note: Uses UTC methods consistently to avoid timezone issues when
+ * dates are parsed from ISO date strings.
  */
 export function getWeeksInRange(startDate: string, endDate: string): TimePeriod[] {
   const periods: TimePeriod[] = [];
@@ -261,13 +303,15 @@ export function getWeeksInRange(startDate: string, endDate: string): TimePeriod[
   const end = new Date(endDate);
   const today = new Date();
 
-  const current = new Date(start);
+  // Adjust start to the Friday of the FMIT week containing the start date
+  const { friday: firstFriday } = getFmitWeekDates(start);
+  const current = new Date(firstFriday);
   let weekNum = 1;
 
   while (current <= end) {
-    const weekStart = new Date(current);
+    const weekStart = new Date(current); // Friday
     const weekEnd = new Date(current);
-    weekEnd.setDate(weekEnd.getDate() + 6);
+    weekEnd.setUTCDate(weekEnd.getUTCDate() + 6); // Thursday
 
     const isCurrent = today >= weekStart && today <= weekEnd;
 
@@ -278,7 +322,7 @@ export function getWeeksInRange(startDate: string, endDate: string): TimePeriod[
       is_current: isCurrent,
     });
 
-    current.setDate(current.getDate() + 7);
+    current.setUTCDate(current.getUTCDate() + 7); // Next Friday
     weekNum++;
   }
 
