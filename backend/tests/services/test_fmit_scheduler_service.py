@@ -485,3 +485,141 @@ class TestFMITSchedulerIntegration:
         # 4. Verify assignment is gone
         schedule_after = service.get_week_assignments(week_date)
         assert len(schedule_after) == 0
+
+
+# =============================================================================
+# Week Boundary Tests (Friday-Thursday FMIT weeks)
+# =============================================================================
+
+
+class TestFMITWeekBoundaries:
+    """Test that FMIT service uses Friday-Thursday week boundaries.
+
+    FMIT weeks run from Friday to Thursday, not Monday to Sunday.
+    This aligns with the constraint logic in app.scheduling.constraints.fmit.
+
+    Note: These tests use a mock session to avoid SQLite/JSONB compatibility
+    issues in the test infrastructure. The _get_week_start method doesn't
+    actually use the database session.
+    """
+
+    @pytest.fixture
+    def mock_db(self):
+        """Mock database session (not actually used by _get_week_start)."""
+        from unittest.mock import MagicMock
+
+        return MagicMock()
+
+    def test_get_week_start_returns_friday(self, mock_db):
+        """Test _get_week_start returns Friday for any date in the week."""
+        service = FMITSchedulerService(mock_db)
+
+        # Wednesday Jan 8, 2025 should return Friday Jan 3, 2025
+        wednesday = date(2025, 1, 8)
+        week_start = service._get_week_start(wednesday)
+        assert week_start == date(2025, 1, 3)  # Friday
+        assert week_start.weekday() == 4  # Friday = weekday 4
+
+    def test_get_week_start_friday_returns_same(self, mock_db):
+        """Test _get_week_start returns same Friday if given a Friday."""
+        service = FMITSchedulerService(mock_db)
+
+        friday = date(2025, 1, 3)  # Friday
+        week_start = service._get_week_start(friday)
+        assert week_start == friday
+        assert week_start.weekday() == 4
+
+    def test_get_week_start_thursday_returns_previous_friday(self, mock_db):
+        """Test Thursday (end of FMIT week) returns previous Friday."""
+        service = FMITSchedulerService(mock_db)
+
+        thursday = date(2025, 1, 9)  # Thursday (end of FMIT week)
+        week_start = service._get_week_start(thursday)
+        assert week_start == date(2025, 1, 3)  # Friday (start of same FMIT week)
+        assert week_start.weekday() == 4
+
+    def test_get_week_start_saturday_returns_previous_friday(self, mock_db):
+        """Test Saturday returns the Friday of the current FMIT week."""
+        service = FMITSchedulerService(mock_db)
+
+        saturday = date(2025, 1, 4)  # Saturday
+        week_start = service._get_week_start(saturday)
+        assert week_start == date(2025, 1, 3)  # Previous Friday
+        assert week_start.weekday() == 4
+
+    def test_get_week_start_sunday_returns_previous_friday(self, mock_db):
+        """Test Sunday returns the Friday of the current FMIT week."""
+        service = FMITSchedulerService(mock_db)
+
+        sunday = date(2025, 1, 5)  # Sunday
+        week_start = service._get_week_start(sunday)
+        assert week_start == date(2025, 1, 3)  # Previous Friday
+        assert week_start.weekday() == 4
+
+    def test_get_week_start_monday_returns_previous_friday(self, mock_db):
+        """Test Monday returns the Friday of the current FMIT week.
+
+        This is the key behavioral change from the bug fix.
+        Previously, Monday Jan 6 would return Monday Jan 6.
+        Now it should return Friday Jan 3 (same FMIT week).
+        """
+        service = FMITSchedulerService(mock_db)
+
+        monday = date(2025, 1, 6)  # Monday
+        week_start = service._get_week_start(monday)
+        # Monday Jan 6 is part of the Fri Jan 3 - Thu Jan 9 FMIT week
+        assert week_start == date(2025, 1, 3)  # Friday
+        assert week_start.weekday() == 4
+
+    def test_week_boundary_alignment_with_constraints(self, mock_db):
+        """Test that service week boundaries align with constraint module.
+
+        The service should use the same Friday-Thursday boundaries as
+        get_fmit_week_dates() from app.scheduling.constraints.fmit.
+        """
+        from app.scheduling.constraints.fmit import get_fmit_week_dates
+
+        service = FMITSchedulerService(mock_db)
+
+        # Test several dates
+        test_dates = [
+            date(2025, 1, 3),  # Friday
+            date(2025, 1, 6),  # Monday
+            date(2025, 1, 9),  # Thursday
+            date(2025, 2, 15),  # Saturday
+            date(2025, 3, 20),  # Thursday
+        ]
+
+        for test_date in test_dates:
+            service_week_start = service._get_week_start(test_date)
+            constraint_friday, _ = get_fmit_week_dates(test_date)
+            assert service_week_start == constraint_friday, (
+                f"For {test_date}: service returned {service_week_start}, "
+                f"constraint returned {constraint_friday}"
+            )
+
+    def test_year_boundary_fmit_week(self, mock_db):
+        """Test FMIT week spanning year boundary."""
+        service = FMITSchedulerService(mock_db)
+
+        # Dec 31, 2024 is a Tuesday, part of Fri Dec 27 - Thu Jan 2 week
+        dec_31 = date(2024, 12, 31)
+        week_start = service._get_week_start(dec_31)
+        assert week_start == date(2024, 12, 27)  # Friday Dec 27, 2024
+        assert week_start.weekday() == 4
+
+    def test_consecutive_weeks_non_overlapping(self, mock_db):
+        """Test consecutive FMIT weeks don't overlap."""
+        service = FMITSchedulerService(mock_db)
+
+        # Week 1: Fri Jan 3 - Thu Jan 9
+        date_in_week1 = date(2025, 1, 5)  # Sunday
+        week1_start = service._get_week_start(date_in_week1)
+
+        # Week 2: Fri Jan 10 - Thu Jan 16
+        date_in_week2 = date(2025, 1, 12)  # Sunday
+        week2_start = service._get_week_start(date_in_week2)
+
+        # Week 1 end (Thursday) should be day before week 2 start (Friday)
+        week1_end = week1_start + timedelta(days=6)
+        assert week1_end + timedelta(days=1) == week2_start

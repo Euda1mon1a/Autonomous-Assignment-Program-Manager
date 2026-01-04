@@ -13,6 +13,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from app.scheduling.constraints.fmit import get_fmit_week_dates
 from app.services.conflict_auto_detector import ConflictAutoDetector, ConflictInfo
 
 if TYPE_CHECKING:
@@ -209,7 +210,7 @@ class FMITSchedulerService:
         Get faculty assigned to a specific week.
 
         Args:
-            week_date: Any date within the target week (will be normalized to Monday)
+            week_date: Any date within the target week (will be normalized to Friday)
 
         Returns:
             List of FMITWeekAssignment for that week
@@ -720,16 +721,19 @@ class FMITSchedulerService:
 
     def _get_week_start(self, any_date: date) -> date:
         """
-        Get the Monday of the week containing the given date.
+        Get the Friday of the FMIT week containing the given date.
+
+        FMIT weeks run Friday-Thursday, not Monday-Sunday.
+        This aligns with the constraint logic in app.scheduling.constraints.fmit.
 
         Args:
             any_date: Any date in the target week
 
         Returns:
-            Monday of that week
+            Friday of that FMIT week
         """
-        days_since_monday = any_date.weekday()
-        return any_date - timedelta(days=days_since_monday)
+        friday, _ = get_fmit_week_dates(any_date)
+        return friday
 
     def _get_or_create_blocks(
         self,
