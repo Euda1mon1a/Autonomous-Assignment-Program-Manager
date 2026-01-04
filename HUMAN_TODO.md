@@ -75,19 +75,19 @@ CREATE TABLE import_staged_assignments (
 
 ### 1. Re-enable Alembic Migrations in docker-entrypoint.sh
 **Priority:** High
-**Status:** TODO
+**Status:** DONE (verified 2026-01-03)
 
-Migrations were commented out during rebuild to prevent issues:
-```bash
-# alembic upgrade head   # <-- Currently commented out
-```
+~~Migrations were commented out during rebuild to prevent issues.~~
 
-**Action:** Uncomment after verifying migrations are clean:
+**Verified:** `alembic upgrade head` is ACTIVE at line 22 of `backend/docker-entrypoint.sh`.
+The migration runs on every container startup as intended.
+
 ```bash
+# From backend/docker-entrypoint.sh:22
 alembic upgrade head
 ```
 
-**File:** `backend/docker-entrypoint.sh`
+**No action required** - this was a phantom task.
 
 ### 2. Fix Misleading "/mcp not authenticated" Display
 **Priority:** Low
@@ -696,35 +696,47 @@ Pre-existing TypeScript errors discovered during Session 025 audit:
 - Backend WebSocket fully implemented (8 event types)
 - Frontend only has SSE, no native WebSocket client
 
-#### 17. Admin Email Invitations Never Sent
+#### 17. Admin Email Invitations - IMPLEMENTED
 **Priority:** MEDIUM
-**Location:** `/backend/app/api/routes/admin_users.py:232`
-**Found:** G2_RECON audit (2025-12-30)
+**Status:** DONE (verified 2026-01-03) - was a phantom task
 
-- User creation endpoint contains TODO: "Send invitation email"
-- Email notification not implemented
-- New users receive no welcome/setup instructions
-- **Impact:** Poor onboarding experience
+~~User creation endpoint contains TODO: "Send invitation email"~~
 
-**Action needed:**
-- Implement email sending via Celery task
-- Create email template for user invitations
-- Add SMTP configuration validation
+**Actually Implemented:**
+- `admin_users.py:239-265`: Sends email via `send_email.delay()` Celery task when `send_invite=True`
+- `admin_users.py:588-610`: Resend invite also uses `send_email.delay()`
+- Celery task: `backend/app/notifications/tasks.py:119-192` - fully implemented with retry logic
+- Email template: `backend/app/notifications/channels/email/email_templates.py` - `admin_welcome` template exists
+- EmailService: `backend/app/services/email_service.py` - full SMTP implementation
 
-#### 18. Activity Logging Not Implemented
+**Email Infrastructure Status:**
+| Component | Status | Location |
+|-----------|--------|----------|
+| Celery task | Implemented | `notifications/tasks.py:send_email` |
+| Email template | Implemented | `email_templates.py:admin_welcome` |
+| SMTP service | Implemented | `email_service.py:EmailService` |
+| Route wiring | Implemented | `admin_users.py:260,605` |
+
+**Note:** Actual email delivery depends on SMTP configuration (`SMTP_HOST`, `SMTP_USER`, etc.).
+Infrastructure is wired; SMTP credentials are environment-specific.
+
+#### 18. Activity Logging - MODEL & MIGRATION ADDED
 **Priority:** MEDIUM
-**Location:** Backend audit logging system
-**Found:** G2_RECON audit (2025-12-30)
+**Status:** PARTIALLY DONE (verified 2026-01-03) - infrastructure exists
 
-- Activity logging referenced in multiple controllers
-- Awaiting `activity_log` database table
-- No audit trail for user actions
-- **Impact:** Cannot track who made schedule changes, compliance risk
+~~Activity logging referenced in multiple controllers - awaiting `activity_log` database table~~
 
-**Action needed:**
-- Create `activity_log` table via Alembic migration
-- Implement activity logging service
-- Wire into schedule modification endpoints
+**Actually Implemented:**
+- Model: `backend/app/models/activity_log.py` - Full ActivityLog model with 26 action types
+- Migration: `backend/alembic/versions/20260103_add_activity_log_table.py` - Creates table with indexes
+- Enum: `ActivityActionType` covers user, auth, schedule, swap, and settings actions
+
+**Remaining Work:**
+- [ ] Wire ActivityLog into `admin_users.py` (currently uses placeholder `_log_activity()`)
+- [ ] Add activity logging to schedule modification endpoints
+- [ ] Create activity log query endpoint
+
+**Note:** The table schema and model are ready; wiring into controllers is incremental work.
 
 #### 19. Penrose Efficiency - Placeholder Logic
 **Priority:** MEDIUM
