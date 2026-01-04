@@ -136,7 +136,7 @@ class TestGameTheoryService:
 
         tournament = gt_service.create_tournament(
             name="Test Tournament",
-            strategy_ids=[strategy1.id, strategy2.id],
+            strategy_ids=[str(strategy1.id), str(strategy2.id)],
             description="A test tournament",
             turns_per_match=100,
             repetitions=5,
@@ -151,7 +151,7 @@ class TestGameTheoryService:
             name="Minimal Strategy", strategy_type="cooperative"
         )
         created = gt_service.create_tournament(
-            name="Retrievable Tournament", strategy_ids=[strategy.id]
+            name="Retrievable Tournament", strategy_ids=[str(strategy.id)]
         )
         retrieved = gt_service.get_tournament(created.id)
         assert retrieved is not None
@@ -162,8 +162,8 @@ class TestGameTheoryService:
         strategy = gt_service.create_strategy(
             name="List Strategy", strategy_type="tit_for_tat"
         )
-        gt_service.create_tournament(name="Tournament 1", strategy_ids=[strategy.id])
-        gt_service.create_tournament(name="Tournament 2", strategy_ids=[strategy.id])
+        gt_service.create_tournament(name="Tournament 1", strategy_ids=[str(strategy.id)])
+        gt_service.create_tournament(name="Tournament 2", strategy_ids=[str(strategy.id)])
 
         tournaments = gt_service.list_tournaments(limit=10)
         assert isinstance(tournaments, list)
@@ -181,7 +181,7 @@ class TestGameTheoryService:
 
         tournament = gt_service.create_tournament(
             name="Runnable Tournament",
-            strategy_ids=[strategy1.id, strategy2.id],
+            strategy_ids=[str(strategy1.id), str(strategy2.id)],
             turns_per_match=50,
             repetitions=3,
         )
@@ -367,7 +367,7 @@ class TestGameTheoryServiceEdgeCases:
 
         tournament = gt_service.create_tournament(
             name="Custom Payoff Tournament",
-            strategy_ids=[strategy.id],
+            strategy_ids=[str(strategy.id)],
             payoff_cc=5.0,  # Custom payoff values
             payoff_cd=1.0,
             payoff_dc=7.0,
@@ -447,7 +447,7 @@ class TestGameTheoryWithoutAxelrod:
             name="Tournament Creation Strategy", strategy_type="cooperative"
         )
         tournament = gt_service.create_tournament(
-            name="Created Tournament", strategy_ids=[strategy.id]
+            name="Created Tournament", strategy_ids=[str(strategy.id)]
         )
         assert tournament is not None
 

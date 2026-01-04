@@ -8,23 +8,23 @@ Provides endpoints for admin-only user management operations including:
 - Bulk operations
 """
 
+import logging
 import math
 import uuid
 from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from sqlalchemy import func, or_, select
+from sqlalchemy import desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.security import get_admin_user, get_password_hash
 from app.db.session import get_async_db
+from app.models.activity_log import ActivityLog
 from app.models.user import User
 from app.notifications.channels.email.email_templates import render_email_template
 from app.notifications.tasks import send_email
-
-router = APIRouter()
 from app.schemas.admin_user import (
     AccountLockRequest,
     AccountLockResponse,
@@ -42,6 +42,10 @@ from app.schemas.admin_user import (
     UserRole,
     UserStatus,
 )
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter()
 
 
 def _user_to_admin_response(user: User) -> AdminUserResponse:
@@ -64,7 +68,7 @@ def _user_to_admin_response(user: User) -> AdminUserResponse:
     )
 
 
-def _log_activity(
+async def _log_activity(
     db: AsyncSession,
     action: ActivityAction,
     admin_user: User,
@@ -74,12 +78,52 @@ def _log_activity(
 ) -> None:
     """Log an admin activity to the database.
 
-    Note: This is a placeholder implementation. In production, this would
-    write to an activity_log table. For now, we just pass through.
+    Creates an immutable audit trail entry for administrative actions.
+    PHI is minimized - only user IDs are stored, not names/emails in details.
+
+    Args:
+        db: Database session.
+        action: Type of activity being logged.
+        admin_user: User performing the action.
+        target_user: User affected by the action (if applicable).
+        details: Additional context (avoid PHI).
+        request: FastAPI Request for IP/user-agent extraction.
     """
-    # TODO: Implement activity logging to activity_log table when it exists
-    # For now, this is a no-op placeholder
-    pass
+    try:
+        # Extract request metadata for security auditing
+        ip_address = None
+        user_agent = None
+        if request:
+            # Get client IP (consider X-Forwarded-For for proxied requests)
+            forwarded = request.headers.get("X-Forwarded-For")
+            if forwarded:
+                ip_address = forwarded.split(",")[0].strip()
+            else:
+                ip_address = request.client.host if request.client else None
+            user_agent = request.headers.get("User-Agent", "")[:500]  # Truncate
+
+        # Map ActivityAction enum to action_type string
+        action_type = action.value.upper()
+
+        # Create activity log entry
+        log_entry = ActivityLog.create_entry(
+            action_type=action_type,
+            user_id=admin_user.id,
+            target_entity="User" if target_user else None,
+            target_id=str(target_user.id) if target_user else None,
+            details=details,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+
+        db.add(log_entry)
+        # Note: We don't commit here - the calling function handles the transaction
+        # This ensures activity logs are atomic with the operation they're logging
+
+    except Exception as e:
+        # Log the error but don't fail the main operation
+        # Audit logging should not break admin functionality
+        logger.error(f"Failed to log activity: {action.value} - {e}", exc_info=True)
 
 
 @router.get("", response_model=AdminUserListResponse)
@@ -110,33 +154,23 @@ async def list_users(
         Paginated list of users
     """
     # Build base query
-    query = db.query(User)
+    query = select(User)
 
     # Apply role filter
     if role:
-        query = query.filter(User.role == role.value)
+        query = query.where(User.role == role.value)
 
     # Apply status filter
     if status:
         if status == UserStatus.ACTIVE:
-            query = query.filter(User.is_active == True)
-            if hasattr(User, "is_locked"):
-                query = query.filter(User.is_locked == False)
+            query = query.where(User.is_active == True)  # noqa: E712
         elif status == UserStatus.INACTIVE:
-            query = query.filter(User.is_active == False)
-        elif status == UserStatus.LOCKED:
-            if hasattr(User, "is_locked"):
-                query = query.filter(User.is_locked == True)
-        elif status == UserStatus.PENDING:
-            # Pending users have invite_sent but not accepted
-            if hasattr(User, "invite_sent_at") and hasattr(User, "invite_accepted_at"):
-                query = query.filter(User.invite_sent_at.isnot(None))
-                query = query.filter(User.invite_accepted_at.is_(None))
+            query = query.where(User.is_active == False)  # noqa: E712
 
     # Apply search filter
     if search:
         search_term = f"%{search}%"
-        query = query.filter(
+        query = query.where(
             or_(
                 User.username.ilike(search_term),
                 User.email.ilike(search_term),
@@ -144,14 +178,17 @@ async def list_users(
         )
 
     # Count total
-    total = query.count()
+    count_query = select(func.count()).select_from(query.subquery())
+    total = (await db.execute(count_query)).scalar() or 0
 
     # Calculate pagination
     total_pages = math.ceil(total / page_size) if total > 0 else 1
     offset = (page - 1) * page_size
 
     # Apply pagination and ordering
-    users = query.order_by(User.created_at.desc()).offset(offset).limit(page_size).all()
+    query = query.order_by(desc(User.created_at)).offset(offset).limit(page_size)
+    result = await db.execute(query)
+    users = result.scalars().all()
 
     return AdminUserListResponse(
         items=[_user_to_admin_response(user) for user in users],
@@ -223,11 +260,9 @@ async def create_user(
         new_user.invite_sent_at = datetime.utcnow()
 
     db.add(new_user)
-    await db.commit()
-    await db.refresh(new_user)
 
-    # Log activity
-    _log_activity(
+    # Log activity before commit so it's atomic with user creation
+    await _log_activity(
         db=db,
         action=ActivityAction.USER_CREATED,
         admin_user=current_user,
@@ -235,6 +270,9 @@ async def create_user(
         details={"send_invite": user_data.send_invite},
         request=request,
     )
+
+    await db.commit()
+    await db.refresh(new_user)
 
     # Send invitation email if user_data.send_invite is True
     if user_data.send_invite:
@@ -322,10 +360,10 @@ async def update_user(
     if user_data.email is not None and user_data.email != user.email:
         # Check email uniqueness
         existing = (
-            db.query(User)
-            .filter(User.email == user_data.email, User.id != user_id)
-            .first()
-        )
+            await db.execute(
+                select(User).where(User.email == user_data.email, User.id != user_id)
+            )
+        ).scalar_one_or_none()
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -356,12 +394,9 @@ async def update_user(
 
     user.updated_at = datetime.utcnow()
 
-    await db.commit()
-    await db.refresh(user)
-
-    # Log activity
+    # Log activity if there were changes
     if changes:
-        _log_activity(
+        await _log_activity(
             db=db,
             action=ActivityAction.USER_UPDATED,
             admin_user=current_user,
@@ -369,6 +404,9 @@ async def update_user(
             details={"changes": changes},
             request=request,
         )
+
+    await db.commit()
+    await db.refresh(user)
 
     return _user_to_admin_response(user)
 
@@ -407,8 +445,8 @@ async def delete_user(
             detail="Cannot delete your own account",
         )
 
-    # Log activity before deletion
-    _log_activity(
+    # Log activity before deletion (capture user info before it's gone)
+    await _log_activity(
         db=db,
         action=ActivityAction.USER_DELETED,
         admin_user=current_user,
@@ -470,10 +508,8 @@ async def lock_user_account(
             message = "Account activated"
 
         user.updated_at = datetime.utcnow()
-        await db.commit()
-        await db.refresh(user)
 
-        _log_activity(
+        await _log_activity(
             db=db,
             action=action,
             admin_user=current_user,
@@ -481,6 +517,9 @@ async def lock_user_account(
             details={"reason": lock_data.reason} if lock_data.reason else None,
             request=request,
         )
+
+        await db.commit()
+        await db.refresh(user)
 
         return AccountLockResponse(
             userId=user.id,
@@ -501,13 +540,11 @@ async def lock_user_account(
         user.locked_by = str(current_user.id) if lock_data.locked else None
 
     user.updated_at = datetime.utcnow()
-    await db.commit()
-    await db.refresh(user)
 
     action = (
         ActivityAction.USER_LOCKED if lock_data.locked else ActivityAction.USER_UNLOCKED
     )
-    _log_activity(
+    await _log_activity(
         db=db,
         action=action,
         admin_user=current_user,
@@ -515,6 +552,9 @@ async def lock_user_account(
         details={"reason": lock_data.reason} if lock_data.reason else None,
         request=request,
     )
+
+    await db.commit()
+    await db.refresh(user)
 
     return AccountLockResponse(
         userId=user.id,
@@ -569,21 +609,22 @@ async def resend_invite(
         user.invite_sent_at = datetime.utcnow()
 
     user.updated_at = datetime.utcnow()
-    await db.commit()
-    await db.refresh(user)
 
     # Generate new temporary password
     temp_password = uuid.uuid4().hex
     user.hashed_password = get_password_hash(temp_password)
 
     # Log activity
-    _log_activity(
+    await _log_activity(
         db=db,
         action=ActivityAction.INVITE_RESENT,
         admin_user=current_user,
         target_user=user,
         request=request,
     )
+
+    await db.commit()
+    await db.refresh(user)
 
     # Send the invitation email
     settings = get_settings()
@@ -637,8 +678,7 @@ async def get_activity_log(
     """
     Get paginated activity log.
 
-    Note: This is a placeholder implementation. In production, this would
-    query an activity_log table. For now, returns an empty response.
+    Queries the activity_log table for admin audit trail entries.
 
     Args:
         page: Page number
@@ -651,14 +691,80 @@ async def get_activity_log(
     Returns:
         Paginated activity log entries
     """
-    # TODO: Implement when activity_log table exists
-    # For now, return empty response
+    # Build base query
+    query = select(ActivityLog)
+
+    # Apply filters
+    if user_id:
+        query = query.where(ActivityLog.user_id == user_id)
+    if action:
+        query = query.where(ActivityLog.action_type == action.value.upper())
+    if date_from:
+        query = query.where(ActivityLog.created_at >= date_from)
+    if date_to:
+        query = query.where(ActivityLog.created_at <= date_to)
+
+    # Count total
+    count_query = select(func.count()).select_from(query.subquery())
+    total = (await db.execute(count_query)).scalar() or 0
+
+    # Calculate pagination
+    total_pages = math.ceil(total / page_size) if total > 0 else 1
+    offset = (page - 1) * page_size
+
+    # Apply pagination and ordering (most recent first)
+    query = query.order_by(desc(ActivityLog.created_at)).offset(offset).limit(page_size)
+    result = await db.execute(query)
+    logs = result.scalars().all()
+
+    # Convert to response format
+    items = []
+    for log in logs:
+        # Fetch admin user email if available
+        admin_email = None
+        if log.user_id:
+            admin_user = (
+                await db.execute(select(User).where(User.id == log.user_id))
+            ).scalar_one_or_none()
+            if admin_user:
+                admin_email = admin_user.email
+
+        # Fetch target user email if available
+        target_email = None
+        if log.target_id:
+            try:
+                target_user = (
+                    await db.execute(
+                        select(User).where(User.id == uuid.UUID(log.target_id))
+                    )
+                ).scalar_one_or_none()
+                if target_user:
+                    target_email = target_user.email
+            except ValueError:
+                # target_id might not be a UUID for non-user entities
+                pass
+
+        items.append(
+            ActivityLogEntry(
+                id=log.id,
+                timestamp=log.created_at,
+                userId=log.user_id,
+                userEmail=admin_email,
+                action=log.action_type,
+                targetUserId=uuid.UUID(log.target_id) if log.target_id else None,
+                targetUserEmail=target_email,
+                details=log.details,
+                ipAddress=log.ip_address,
+                userAgent=log.user_agent,
+            )
+        )
+
     return ActivityLogResponse(
-        items=[],
-        total=0,
+        items=items,
+        total=total,
         page=page,
         pageSize=page_size,
-        totalPages=0,
+        totalPages=total_pages,
     )
 
 
@@ -707,7 +813,7 @@ async def bulk_user_action(
             elif bulk_data.action == BulkAction.DEACTIVATE:
                 user.is_active = False
             elif bulk_data.action == BulkAction.DELETE:
-                db.delete(user)
+                await db.delete(user)
 
             if bulk_data.action != BulkAction.DELETE:
                 user.updated_at = datetime.utcnow()
@@ -718,8 +824,6 @@ async def bulk_user_action(
             errors.append(f"Failed to process user {uid}: {str(e)}")
             logger.error(f"Bulk action error for user {uid}: {e}", exc_info=True)
 
-    await db.commit()
-
     # Determine activity action
     activity_action = {
         BulkAction.ACTIVATE: ActivityAction.USER_UPDATED,
@@ -727,7 +831,7 @@ async def bulk_user_action(
         BulkAction.DELETE: ActivityAction.USER_DELETED,
     }.get(bulk_data.action, ActivityAction.USER_UPDATED)
 
-    _log_activity(
+    await _log_activity(
         db=db,
         action=activity_action,
         admin_user=current_user,
@@ -738,6 +842,8 @@ async def bulk_user_action(
         },
         request=request,
     )
+
+    await db.commit()
 
     action_past_tense = {
         BulkAction.ACTIVATE: "activated",

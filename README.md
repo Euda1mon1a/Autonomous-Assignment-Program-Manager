@@ -333,7 +333,7 @@ cd backend
 python verify_celery.py
 ```
 
-See [Celery Setup](docs/archived/CELERY_SETUP_SUMMARY.md) for configuration reference.
+See [Operations Guide](docs/operations/) for configuration reference.
 
 ---
 
@@ -404,25 +404,7 @@ residency-scheduler/
 
 ## Screenshots
 
-### Dashboard
-*Overview with schedule summary, compliance alerts, and quick actions*
-
-![Dashboard](docs/images/dashboard-placeholder.png)
-
-### Schedule View
-*Interactive calendar with drag-and-drop assignment management*
-
-![Schedule](docs/images/schedule-placeholder.png)
-
-### People Management
-*Resident and faculty directory with filtering*
-
-![People](docs/images/people-placeholder.png)
-
-### Compliance Monitor
-*ACGME compliance status and violation tracking*
-
-![Compliance](docs/images/compliance-placeholder.png)
+*Screenshots available in the [User Guide](docs/user-guide/USER_GUIDE.md)*
 
 ---
 
@@ -431,7 +413,7 @@ residency-scheduler/
 ### Getting Started
 | Document | Description |
 |----------|-------------|
-| [User Guide](USER_GUIDE.md) | Complete user guide |
+| [User Guide](docs/user-guide/USER_GUIDE.md) | Complete user guide |
 | [Getting Started](docs/getting-started/index.md) | Installation and quickstart |
 | [macOS Deploy Guide](docs/getting-started/macos-deploy.md) | Complete macOS Terminal deployment |
 | [Configuration](docs/getting-started/configuration.md) | Environment setup |
@@ -484,8 +466,8 @@ residency-scheduler/
 ### Planning & Status
 | Document | Description |
 |----------|-------------|
-| [Roadmap](ROADMAP.md) | Feature roadmap and milestones |
-| [Strategic Decisions](STRATEGIC_DECISIONS.md) | Key project decisions |
+| [Roadmap](docs/planning/ROADMAP.md) | Feature roadmap and milestones |
+| [Strategic Decisions](docs/planning/STRATEGIC_DECISIONS.md) | Key project decisions |
 | [Human TODO](HUMAN_TODO.md) | Tasks requiring human action |
 
 ### Reference Materials

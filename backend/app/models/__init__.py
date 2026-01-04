@@ -1,6 +1,7 @@
 """Database models."""
 
 from app.models.absence import Absence
+from app.models.activity_log import ActivityActionType, ActivityLog
 from app.models.agent_memory import AgentEmbedding, ModelTier, TaskHistory
 from app.models.assignment import Assignment
 from app.models.block_assignment import AssignmentReason, BlockAssignment
@@ -138,6 +139,9 @@ from app.webhooks.models import (
 )
 
 __all__ = [
+    # Activity Log models
+    "ActivityLog",
+    "ActivityActionType",
     "Person",
     "ScreenerRole",
     "Block",
