@@ -8,6 +8,7 @@ from app.services.absence_service import AbsenceService
 from app.services.assignment_service import AssignmentService
 from app.services.auth_service import AuthService
 from app.services.block_service import BlockService
+from app.services.email_service import EmailConfig, EmailService
 from app.services.conflict_alert_service import ConflictAlertService
 from app.services.conflict_auto_detector import ConflictAutoDetector, ConflictInfo
 from app.services.faculty_outpatient_service import (
@@ -37,6 +38,9 @@ __all__ = [
     "BlockService",
     "AbsenceService",
     "AuthService",
+    # Email service
+    "EmailService",
+    "EmailConfig",
     # Role-based filtering
     "RoleFilterService",
     "UserRole",

@@ -10,6 +10,7 @@ Generated: 2026-01-02
 - **Invitation email system** (`backend/app/api/routes/admin_users.py:236, 552`) - User invitations are not actually being sent
 
 ## Medium Priority (This Month)
+- **Academic Year (AY) model** - No explicit AcademicYear entity to scope rotations/blocks. Currently AY is implicit (July 1 start) but not queryable. Need: AY model with start/end dates, FK from Block/Assignment to AY, API filtering by AY.
 - **Service layer pagination** (`backend/app/controllers/absence_controller.py:45`) - Pagination currently applied at controller level instead of service layer; affects query performance
 - **Shapley value service integration** (`mcp-server/src/scheduler_mcp/server.py:1701`) - MCP tool returns placeholder data instead of actual fair workload calculations
 
@@ -71,9 +72,9 @@ Generated: 2026-01-02
 |----------|-------|
 | Critical | 0 |
 | High | 3 |
-| Medium | 2 |
+| Medium | 3 |
 | Low | 3 |
-| **Total** | **8** |
+| **Total** | **9** |
 
 ## Recommended Next Steps
 

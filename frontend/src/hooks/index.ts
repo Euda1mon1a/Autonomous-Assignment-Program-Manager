@@ -238,6 +238,16 @@ export {
 } from "./useRAG";
 
 // ============================================================================
+// Weekly Pattern Hooks
+// ============================================================================
+export {
+  weeklyPatternQueryKeys,
+  useWeeklyPattern,
+  useUpdateWeeklyPattern,
+  useAvailableTemplates,
+} from "./useWeeklyPattern";
+
+// ============================================================================
 // WebSocket Hooks
 // ============================================================================
 export {
