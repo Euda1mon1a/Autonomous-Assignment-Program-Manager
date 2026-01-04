@@ -163,7 +163,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/__pycache__
-      - /app/alembic/versions
+      # NOTE: alembic/versions not excluded - migrations must sync from host
       - backend_local_venv:/app/venv
     networks:
       - app-network
@@ -203,7 +203,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/__pycache__
-      - /app/alembic/versions
+      # NOTE: alembic/versions not excluded - migrations must sync from host
       - backend_local_venv:/app/venv
     networks:
       - app-network
