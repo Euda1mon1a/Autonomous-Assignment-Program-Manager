@@ -1,0 +1,38 @@
+# Documentation Link Validation
+# Checks for broken links in markdown files on PRs and pushes
+
+name: Documentation Link Check
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - '**.md'
+      - '.github/workflows/docs-link-check.yml'
+      - '.markdown-link-check.json'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '**.md'
+      - '.github/workflows/docs-link-check.yml'
+      - '.markdown-link-check.json'
+
+jobs:
+  check-links:
+    name: Check Markdown Links
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          config-file: '.markdown-link-check.json'
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'yes'
+          folder-path: 'docs/, .claude/'
+          file-path: './README.md, ./CLAUDE.md, ./CHANGELOG.md'
+          check-modified-files-only: 'no'
