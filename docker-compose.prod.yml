@@ -134,8 +134,9 @@ services:
         reservations:
           cpus: '2.0'
           memory: 2G
-      # Scale workers based on load
-      replicas: 2
+      # Note: Using high concurrency (8) instead of multiple replicas
+      # to avoid container_name conflict. For horizontal scaling,
+      # remove container_name from docker-compose.yml and add replicas here.
     logging:
       driver: "json-file"
       options:
@@ -214,8 +215,9 @@ services:
   mcp-server:
     restart: always
     environment:
-      # Transport mode - HTTP for parallel agent access
-      MCP_TRANSPORT: streamable-http
+      # Transport mode - HTTP for Docker container compatibility
+      # HTTP enables parallel MCP connections while maintaining security via localhost binding
+      MCP_TRANSPORT: http
       MCP_HOST: "0.0.0.0"
       MCP_PORT: "8080"
       # API Integration - connects to FastAPI backend via internal network
@@ -225,12 +227,15 @@ services:
       # Celery for async task management
       CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/0
-      # Production logging
+      # Production logging - reduced verbosity for performance
       LOG_LEVEL: WARNING
       # Python path for imports
       PYTHONPATH: /app/src
-    # No port exposure - internal network only for production security
-    # Access via: docker exec -i residency-scheduler-mcp python -m scheduler_mcp.server
+    # Port exposed on localhost only for security
+    # Enables AI agent access while preventing network exposure
+    # Inherited security_opt (no-new-privileges) from base config
+    ports:
+      - "127.0.0.1:8080:8080"
     deploy:
       resources:
         limits:
