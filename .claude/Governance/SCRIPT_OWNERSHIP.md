@@ -1,7 +1,7 @@
 # Script Ownership Matrix
 
 > **Purpose:** Standing context for AI agents mapping scripts to their owning agents
-> **Last Updated:** 2026-01-01 (Session 045)
+> **Last Updated:** 2026-01-03
 > **Authority:** COORD_OPS
 > **References:** ADR-011 (CI_LIAISON owns container management)
 
@@ -33,7 +33,10 @@ This document maps all executable scripts in the repository to their owning agen
 
 | Script | Owner Agent | Coordinator | Purpose | Trigger Condition |
 |--------|-------------|-------------|---------|-------------------|
+| `scripts/start-local.sh` | CI_LIAISON | COORD_OPS | **Full stack startup** - DB, Redis, Celery, MCP, API, Frontend | Session start, development environment setup |
+| `scripts/stack-health.sh` | CI_LIAISON | COORD_OPS | **Unified health check** - API, frontend, DB, Redis, containers | Pre-flight checks, session-end validation, troubleshooting |
 | `scripts/health-check.sh` | CI_LIAISON | COORD_OPS | Verify all services are running and healthy | Pre-flight checks, monitoring, troubleshooting |
+| `scripts/validate-mcp-config.sh` | CI_LIAISON | COORD_OPS | Validate MCP configuration for transport/auth issues | Pre-commit, CI/CD, MCP troubleshooting |
 | `scripts/start-celery.sh` | CI_LIAISON | COORD_OPS | Start Celery worker and beat scheduler | Background task processing needed |
 | `scripts/pre-deploy-validate.sh` | CI_LIAISON | COORD_OPS | Pre-deployment validation and safety checks | Before any production deployment |
 | `scripts/test-mcp-integration.sh` | CI_LIAISON | COORD_OPS | Integration testing for MCP server | After MCP changes, CI validation |
@@ -403,6 +406,117 @@ Integration testing for MCP server with FastAPI backend. Tests module imports, P
 
 ---
 
+### `scripts/start-local.sh` ⭐ PRIMARY
+
+**Owner:** CI_LIAISON
+**Coordinator:** COORD_OPS
+
+**Description:**
+Unified script to start the complete local development stack. This is the recommended way to start all services for development.
+
+**Services Started:**
+1. PostgreSQL database
+2. Redis cache/broker
+3. Celery worker
+4. Celery beat scheduler
+5. MCP server (AI tooling)
+6. FastAPI backend
+7. Next.js frontend
+
+**CLI Options:**
+```bash
+./scripts/start-local.sh           # Start all services
+./scripts/start-local.sh --no-frontend  # Skip frontend (if running separately)
+```
+
+**Pre-requisites:**
+- Docker and Docker Compose installed
+- docker-compose.local.yml present
+- Port availability (5432, 6379, 8000, 3000, 8001)
+
+**Example:**
+```bash
+./scripts/start-local.sh
+# Wait for all services to report healthy
+```
+
+---
+
+### `scripts/stack-health.sh` ⭐ PRIMARY
+
+**Owner:** CI_LIAISON
+**Coordinator:** COORD_OPS
+
+**Description:**
+Unified health check for Docker-based development stack. Checks API, frontend, database, Redis, and container status. Used by session-end validation.
+
+**Checks Performed:**
+1. API health endpoint (HTTP 200)
+2. Frontend accessibility
+3. Database connectivity (via Docker)
+4. Redis connectivity (via Docker)
+5. Container status and health
+
+**CLI Options:**
+```bash
+./scripts/stack-health.sh          # Basic health check
+./scripts/stack-health.sh --full   # Include lint/typecheck
+./scripts/stack-health.sh --json   # JSON output for automation
+```
+
+**Exit Codes:**
+- 0: All services healthy (GREEN)
+- 1: Some services degraded (YELLOW)
+- 2: Critical services down (RED)
+
+**Pre-requisites:**
+- Docker containers running
+- curl available
+
+**Example:**
+```bash
+./scripts/stack-health.sh --full  # Full check including linting
+```
+
+---
+
+### `scripts/validate-mcp-config.sh`
+
+**Owner:** CI_LIAISON
+**Coordinator:** COORD_OPS
+
+**Description:**
+Validates MCP configuration to prevent transport and authentication issues. Addresses recurring configuration problems documented in project history.
+
+**Validation Checks:**
+1. `.mcp.json` syntax validity
+2. Transport type ("http" required for Claude Code)
+3. Authentication configuration
+4. URL accessibility
+5. Schema compliance
+
+**When to Run:**
+- Before commits (pre-commit hook)
+- In CI/CD pipeline
+- After MCP configuration changes
+- When troubleshooting MCP connectivity
+
+**Exit Codes:**
+- 0: Configuration valid
+- 1: Configuration errors found
+
+**Pre-requisites:**
+- `.mcp.json` exists
+- jq installed (for JSON parsing)
+- curl available (for URL checks)
+
+**Example:**
+```bash
+./scripts/validate-mcp-config.sh
+```
+
+---
+
 ### `scripts/build-wheelhouse.sh`
 
 **Owner:** CI_LIAISON
@@ -484,6 +598,18 @@ Pre-downloads Python packages for offline installation. Creates a wheelhouse dir
 |--------|-------|---------|
 | `scripts/init_rag_embeddings.py` | CI_LIAISON | Initialize RAG embeddings |
 | `scripts/example_rag_usage.py` | CI_LIAISON | Example RAG usage patterns |
+
+### Backend CLI Scripts (`backend/scripts/`)
+
+| Script | Owner | Purpose |
+|--------|-------|---------|
+| `backend/scripts/analyze_schedule.py` | SCHEDULER | Analyze Excel schedules for conflicts |
+| `backend/scripts/audit_constraints.py` | SCHEDULER | Audit constraint implementations |
+| `backend/scripts/constraint_manager_cli.py` | SCHEDULER | CLI for managing constraints |
+| `backend/scripts/export_openapi.py` | ARCHITECT | Export OpenAPI schema to JSON |
+| `backend/scripts/export_sanitized_metrics.py` | RESILIENCE_ENGINEER | Export sanitized metrics for analysis |
+| `backend/scripts/migration_utils.py` | DBA | Alembic migration utilities/helpers |
+| `backend/scripts/seed_data.py` | DBA | Database seeding for dev/test |
 
 ---
 
@@ -585,6 +711,8 @@ Scripts that enforce security policies:
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0.0 | 2026-01-01 | COORD_OPS | Initial script ownership matrix |
+| 1.1.0 | 2026-01-03 | COORD_OPS | Added stack-backup.sh (unified), deprecated 3 backup scripts |
+| 1.2.0 | 2026-01-03 | COORD_OPS | Added start-local.sh, stack-health.sh, validate-mcp-config.sh, backend/scripts/* |
 
 ---
 
