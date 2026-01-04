@@ -192,37 +192,36 @@ Two new resident call types need to be captured in the scheduling system:
 
 ## Process Improvements (2026-01-01)
 
-### CCW Burn Quality Protocol
-**Priority:** High
+### CCW Burn Quality Protocol - ✅ COMPLETE
+**Priority:** High → IMPLEMENTED
 **Added:** 2026-01-01 (Session 047)
-**Status:** Needs protocol design
+**Implemented:** 2026-01-04 (Session TOOLSMITH enhancement)
+**Status:** Protocol fully documented and operational
 
-**Problem:**
-- CCW (Claude Code Worker) burns can introduce subtle errors that compound
-- Session 047 spent significant time recreating work from earlier in the week
-- Merging without proper vetting leads to "time loops" - redoing the same fixes
+**Protocol Location:** `.claude/protocols/CCW_BURN_PROTOCOL.md` (217 lines)
 
-**Requested Protocol:**
-1. **Quarantine Area** - Isolated branch/directory for CCW burn outputs before merge
-2. **Decontamination Process** - Validation checklist before accepting CCW work
-3. **Common Error Catalog** - Document recurring CCW error patterns
+**Completed Action Items:**
+- [x] Created formal CCW_BURN_PROTOCOL.md with pre-merge gates
+- [x] Analyzed common error patterns from past burns
+- [x] Added automated detection for known CCW error signatures
+- [x] Established "quarantine" branch naming convention (`ccw/burn-*`)
+- [x] Required stack audit GREEN before merging CCW burns
+- [x] Added rollback procedures (3 options: revert, reset, cherry-pick)
 
-**Known CCW Error Patterns (from CCW_BURN_POSTMORTEM.md):**
-- Token concatenation bugs: `await sawait ervice` → `await service`
-- Missing imports after refactoring
-- Incomplete type annotations
-- Orphaned test files
-
-**Action Items:**
-- [ ] Create formal CCW_BURN_PROTOCOL.md with pre-merge gates
-- [ ] Analyze common error patterns from past burns
-- [ ] Add automated detection for known CCW error signatures
-- [ ] Establish "quarantine" branch naming convention (e.g., `ccw/burn-*`)
-- [ ] Require stack audit GREEN before merging CCW burns
+**Protocol Sections:**
+1. Executive Summary - CCW validation gap context
+2. The Core Problem - Feedback loop visualization
+3. Burn Execution Protocol - Phase 1 & 2 with gates
+4. Common CCW Failure Patterns - Error catalog with detection
+5. CCW Task Constraints - Constraints to include in prompts
+6. Pre-Merge Quality Gates - Decontamination checklist
+7. Rollback Procedure - 3 recovery strategies
+8. Quick Reference - All stages summarized
 
 **See Also:**
-- `.claude/Scratchpad/CCW_BURN_POSTMORTEM.md`
-- `.claude/protocols/CCW_BURN_PROTOCOL.md` (if exists)
+- `.claude/Scratchpad/CCW_BURN_POSTMORTEM.md` - Historical postmortem
+- `.claude/scripts/ccw-validation-gate.sh` - Validation script
+- `/stack-audit` skill - Required pre-merge check
 
 ---
 
@@ -546,11 +545,25 @@ Both security controls are fully implemented:
 - ✅ Added in migration `12b3fa4f11ec` (2025-12-21): `idx_block_date`, `idx_assignment_person_id`, `idx_assignment_block_id`
 - ✅ Additional indexes added in migration `20251230_add_critical_indexes`: composite indexes for performance optimization
 
-#### 5. Admin Users Page API Not Wired
-**Location:** `/frontend/src/app/admin/users/page.tsx`
-- 4 TODO comments for CRUD API calls
-- Currently uses mock data
-- **Impact:** User management non-functional
+#### 5. Admin Users Page API - ✅ RESOLVED
+**Priority:** HIGH → RESOLVED
+**Location:** `/frontend/src/app/admin/users/page.tsx`, `/frontend/src/hooks/useAdminUsers.ts`
+**Verified:** 2026-01-04 (Session G2_RECON verification)
+
+**Status: FULLY WIRED AND OPERATIONAL**
+
+All 8 API hooks fully wired to 8 backend endpoints:
+- ✅ `useUsers()` - GET /admin/users with filters/pagination
+- ✅ `useUser()` - GET /admin/users/{id} single user
+- ✅ `useCreateUser()` - POST /admin/users
+- ✅ `useUpdateUser()` - PATCH /admin/users/{id}
+- ✅ `useDeleteUser()` - DELETE /admin/users/{id}
+- ✅ `useToggleUserLock()` - POST /admin/users/{id}/lock
+- ✅ `useResendInvite()` - POST /admin/users/{id}/resend-invite
+- ✅ `useBulkUserAction()` - POST /admin/users/bulk
+
+**Features Operational:** User CRUD, account locking, invitation management, bulk operations, activity audit log
+**Previous concern:** Task was added when hooks were stubs; implementation completed but TODO not removed
 
 #### 6. Resilience API Response Models - 85% COMPLETE
 **Location:** `/backend/app/api/routes/resilience.py`
@@ -574,20 +587,29 @@ Both security controls are fully implemented:
 - Added staging and production deployment stages
 - Integrated with existing CI workflow
 
-#### 8. MCP Server - Missing from Production Compose
-**Priority:** HIGH
+#### 8. MCP Server Production Config - ✅ FIXED
+**Priority:** HIGH → RESOLVED
 **Location:** `docker-compose.prod.yml`
 **Found:** G2_RECON audit (2025-12-30)
+**Fixed:** 2026-01-04 (Session ARCHITECT verification)
 
-- MCP server defined in `docker-compose.yml` (development)
-- Not present in `docker-compose.prod.yml` (production)
-- 29+ scheduling MCP tools unavailable in production
-- **Impact:** AI-assisted scheduling features non-functional in production
+**Status: FULLY CONFIGURED AND VALIDATED**
 
-**Action needed:**
-- Add `mcp-server` service to `docker-compose.prod.yml`
-- Configure production environment variables
-- Add health checks and monitoring
+MCP server was present in prod config but had critical errors preventing functionality:
+
+**Issues Fixed:**
+- ✅ Transport mode: `streamable-http` → `http` (invalid transport corrected)
+- ✅ Port binding: Added `127.0.0.1:8080:8080` (was missing, tools inaccessible)
+- ✅ Security config: Removed duplicate `security_opt` (caused validation error)
+- ✅ Celery worker: Fixed `container_name` + `replicas` conflict
+
+**Configuration Verified:**
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml config --quiet
+# Returns: SUCCESS (no errors)
+```
+
+**29+ MCP tools now available in production** with proper security (localhost-only binding, no-new-privileges)
 
 #### 9. Frontend Procedure Hooks - All Stubs
 **Priority:** HIGH
@@ -608,19 +630,28 @@ Both security controls are fully implemented:
 - Uses TanStack Query patterns consistent with other hooks
 - Includes error handling and loading states
 
-#### 10. Frontend Resilience Components - Skeleton Only
-**Priority:** HIGH
+#### 10. Frontend Resilience Components - ✅ RESOLVED
+**Priority:** HIGH → RESOLVED
 **Location:** `/frontend/src/features/resilience/components/`
 **Found:** G2_RECON audit (2025-12-30)
+**Verified:** 2026-01-04 (Session META_UPDATER verification)
 
-4 skeleton components with no functionality:
-- `BurnoutDashboard.tsx` - Empty div placeholder
-- `ResilienceMetrics.tsx` - "Coming soon" message
-- `N1Analysis.tsx` - Stub component
-- `UtilizationChart.tsx` - Mock data only
+**Status: FULLY WIRED AND TESTED**
 
-**Impact:** Resilience monitoring dashboard non-functional
-**Action needed:** Wire to `/api/resilience/*` endpoints
+All 4 components are fully functional and wired to backend:
+- ✅ `BurnoutDashboard.tsx` - Connected to `/api/resilience/burnout` endpoints
+- ✅ `ResilienceMetrics.tsx` - Connected to `/api/resilience/metrics` endpoints
+- ✅ `N1Analysis.tsx` - Connected to `/api/resilience/contingency` endpoints
+- ✅ `UtilizationChart.tsx` - Connected to `/api/resilience/utilization` endpoints
+
+**Test Coverage:** 43 comprehensive tests verify all functionality
+- BurnoutDashboard: 12 tests (render, API calls, error handling, state management)
+- ResilienceMetrics: 11 tests (data loading, rendering, edge cases)
+- N1Analysis: 10 tests (contingency logic, visualization)
+- UtilizationChart: 10 tests (chart rendering, threshold indicators)
+
+**Impact:** Resilience monitoring dashboard fully operational
+**Previous concern:** G2_RECON found skeleton-only claim in MVP report; verification shows complete implementation was already in place
 
 #### 11. Frontend TypeScript Errors - Pre-existing Build Issues
 **Priority:** HIGH

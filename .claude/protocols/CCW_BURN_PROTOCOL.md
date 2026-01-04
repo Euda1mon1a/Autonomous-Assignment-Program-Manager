@@ -102,15 +102,116 @@ constraints:
 
 ---
 
+---
+
+## Pre-Merge Quality Gates
+
+### Decontamination Checklist
+
+Before merging any CCW burn branch to main:
+
+```bash
+# 1. Run stack audit
+python3 scripts/ops/stack_audit.py
+
+# Must show: ✅ GREEN status (all checks pass)
+# If YELLOW or RED: Fix issues before merging
+```
+
+**Stack audit validates:**
+- Frontend type-check, lint, build
+- Backend lint (Ruff), type-check (mypy)
+- Migration state consistency
+- Docker container health
+- API endpoint health
+- Backup freshness
+
+### Error Signature Detection
+
+Run automated detection for known CCW error patterns:
+
+```bash
+# Token concatenation
+grep -rE "[a-z]await [a-z]" backend --include="*.py" | grep -v venv
+
+# Missing imports (if file has async/await but no import)
+grep -l "async def\|await " backend/**/*.py | \
+  xargs grep -L "from typing import\|import asyncio"
+
+# Orphaned test files (tests without corresponding source)
+# Manual review of git diff --name-status
+```
+
+---
+
+## Rollback Procedure
+
+If CCW burn introduces issues after merge:
+
+### Option 1: Revert Merge Commit (Safest)
+
+```bash
+# Find the merge commit
+git log --oneline --merges -10
+
+# Revert the merge (creates new revert commit)
+git revert -m 1 <merge-commit-sha>
+
+# Push revert
+git push origin main
+```
+
+### Option 2: Reset to Pre-Merge State (Dangerous)
+
+**⚠️ Only if merge was very recent and no one else pulled**
+
+```bash
+# Find the commit before the merge
+git log --oneline -10
+
+# Reset main to pre-merge state
+git reset --hard <pre-merge-commit-sha>
+
+# Force push (requires approval)
+git push --force origin main
+```
+
+### Option 3: Cherry-Pick Good Changes
+
+If CCW burn has both good and bad changes:
+
+```bash
+# Create new branch from main (before merge)
+git checkout -b ccw/burn-cherry-pick <pre-merge-commit-sha>
+
+# Cherry-pick specific good commits from burn branch
+git cherry-pick <good-commit-1> <good-commit-2>
+
+# Test, then merge
+python3 scripts/ops/stack_audit.py
+git checkout main && git merge ccw/burn-cherry-pick
+```
+
+---
+
 ## Quick Reference
 
 ```
-PRE-BURN:   npm run build && npm run type-check  (must pass)
-DURING:     Validate every 20 tasks
-POST-BURN:  Full validation suite
-FAILURE:    Count unique errors, fix root cause, verify
+PRE-BURN:    npm run build && npm run type-check  (must pass)
+             git checkout -b ccw/burn-$(date +%Y%m%d)
+
+DURING:      Validate every 20 tasks via ccw-validation-gate.sh
+
+PRE-MERGE:   python3 scripts/ops/stack_audit.py  (must be GREEN)
+             Error signature detection (token corruption, missing imports)
+
+POST-MERGE:  Verify CI passes, run smoke tests
+
+ROLLBACK:    git revert -m 1 <merge-commit> (safest)
+             OR git reset --hard (dangerous, needs approval)
 ```
 
 ---
 
 *Protocol established after 1000-task burn revealed validation gap.*
+*Updated 2026-01-04: Added pre-merge gates, stack audit requirement, rollback procedures.*
