@@ -12,6 +12,7 @@ import {
   DAY_ABBREVIATIONS,
   getSlot,
   updateSlot,
+  ensureCompletePattern,
 } from '@/types/weekly-pattern';
 
 // ============================================================================
@@ -188,6 +189,9 @@ export function WeeklyGridEditor({
   readOnly = false,
   className = '',
 }: WeeklyGridEditorProps) {
+  // Ensure pattern has all 14 slots (handles sparse backend data)
+  const completePattern = ensureCompletePattern(pattern);
+
   // Track selected cell for template assignment
   const [selectedCell, setSelectedCell] = useState<{
     dayOfWeek: DayOfWeek;
@@ -227,7 +231,7 @@ export function WeeklyGridEditor({
       if (!selectedCell) return;
 
       const newPattern = updateSlot(
-        pattern,
+        completePattern,
         selectedCell.dayOfWeek,
         selectedCell.timeOfDay,
         rotationTemplateId
@@ -236,12 +240,12 @@ export function WeeklyGridEditor({
       onChange(newPattern);
       setSelectedCell(null);
     },
-    [selectedCell, pattern, onChange]
+    [selectedCell, completePattern, onChange]
   );
 
   // Get the currently selected slot's template ID
   const selectedSlot = selectedCell
-    ? getSlot(pattern, selectedCell.dayOfWeek, selectedCell.timeOfDay)
+    ? getSlot(completePattern, selectedCell.dayOfWeek, selectedCell.timeOfDay)
     : null;
 
   // Days of the week (0-6)
@@ -285,9 +289,8 @@ export function WeeklyGridEditor({
                   {time}
                 </td>
                 {days.map((day) => {
-                  const slot = getSlot(pattern, day, time);
-                  if (!slot) return null;
-
+                  // Always get slot from complete pattern (never null)
+                  const slot = getSlot(completePattern, day, time)!;
                   const template = getTemplateById(slot.rotationTemplateId);
                   const isSelected =
                     selectedCell?.dayOfWeek === day &&

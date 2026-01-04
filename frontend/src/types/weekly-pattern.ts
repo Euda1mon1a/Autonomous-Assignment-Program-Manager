@@ -18,35 +18,38 @@ import type { UUID } from './api';
 export type WeeklyPatternTimeOfDay = 'AM' | 'PM';
 
 /**
- * Day of week (0 = Monday, 6 = Sunday)
- * Follows ISO 8601 weekday numbering where Monday = 0
+ * Day of week (0 = Sunday, 6 = Saturday)
+ * Matches backend convention: 0=Sunday, 1=Monday, ..., 6=Saturday
+ * (See backend/app/models/weekly_pattern.py)
  */
 export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 /**
  * Human-readable day names for display
+ * Index matches backend: 0=Sunday, 1=Monday, ..., 6=Saturday
  */
 export const DAY_NAMES: Record<DayOfWeek, string> = {
-  0: 'Monday',
-  1: 'Tuesday',
-  2: 'Wednesday',
-  3: 'Thursday',
-  4: 'Friday',
-  5: 'Saturday',
-  6: 'Sunday',
+  0: 'Sunday',
+  1: 'Monday',
+  2: 'Tuesday',
+  3: 'Wednesday',
+  4: 'Thursday',
+  5: 'Friday',
+  6: 'Saturday',
 };
 
 /**
  * Short day names for compact display
+ * Index matches backend: 0=Sunday, 1=Monday, ..., 6=Saturday
  */
 export const DAY_ABBREVIATIONS: Record<DayOfWeek, string> = {
-  0: 'Mon',
-  1: 'Tue',
-  2: 'Wed',
-  3: 'Thu',
-  4: 'Fri',
-  5: 'Sat',
-  6: 'Sun',
+  0: 'Sun',
+  1: 'Mon',
+  2: 'Tue',
+  3: 'Wed',
+  4: 'Thu',
+  5: 'Fri',
+  6: 'Sat',
 };
 
 // ============================================================================
@@ -175,6 +178,7 @@ export interface WeeklyPatternResponse {
 export function createEmptyPattern(): WeeklyPatternGrid {
   const slots: WeeklyPatternSlot[] = [];
 
+  // Create slots for each day (0=Sunday through 6=Saturday) and time period
   for (let day = 0; day <= 6; day++) {
     slots.push({
       dayOfWeek: day as DayOfWeek,
@@ -189,6 +193,29 @@ export function createEmptyPattern(): WeeklyPatternGrid {
   }
 
   return { slots };
+}
+
+/**
+ * Ensures a pattern has all 14 slots, filling in missing ones.
+ * Use this when receiving sparse data from the backend.
+ *
+ * @param pattern - Potentially sparse pattern from backend
+ * @returns Complete WeeklyPatternGrid with all 14 slots
+ */
+export function ensureCompletePattern(pattern: WeeklyPatternGrid): WeeklyPatternGrid {
+  const complete = createEmptyPattern();
+
+  // Overlay existing slots onto the complete grid
+  for (const slot of pattern.slots) {
+    const index = complete.slots.findIndex(
+      (s) => s.dayOfWeek === slot.dayOfWeek && s.timeOfDay === slot.timeOfDay
+    );
+    if (index !== -1) {
+      complete.slots[index] = slot;
+    }
+  }
+
+  return complete;
 }
 
 /**

@@ -14,7 +14,7 @@ import type {
   WeeklyPatternUpdateRequest,
   RotationTemplateRef,
 } from '@/types/weekly-pattern';
-import { createEmptyPattern } from '@/types/weekly-pattern';
+import { createEmptyPattern, ensureCompletePattern } from '@/types/weekly-pattern';
 
 // ============================================================================
 // Query Keys
@@ -85,33 +85,38 @@ const MOCK_TEMPLATES: RotationTemplateRef[] = [
 /**
  * Mock pattern data for development.
  * Replace with actual API call when backend endpoint exists.
+ *
+ * Day numbering matches backend: 0=Sunday, 1=Monday, ..., 6=Saturday
+ * Slots are ordered: [Sun AM, Sun PM, Mon AM, Mon PM, ..., Sat AM, Sat PM]
  */
 function getMockPattern(templateId: string): WeeklyPatternResponse {
   const pattern = createEmptyPattern();
 
   // Add some sample assignments for visual testing
+  // Pattern array: [0]=Sun AM, [1]=Sun PM, [2]=Mon AM, [3]=Mon PM, etc.
   if (templateId) {
-    // Monday AM/PM: Clinic
-    pattern.slots[0].rotationTemplateId = 'clinic-001';
-    pattern.slots[1].rotationTemplateId = 'clinic-001';
-    // Tuesday AM: Inpatient, PM: Conference
-    pattern.slots[2].rotationTemplateId = 'inpatient-001';
-    pattern.slots[3].rotationTemplateId = 'conference-001';
-    // Wednesday AM/PM: FMIT
-    pattern.slots[4].rotationTemplateId = 'fmit-001';
-    pattern.slots[5].rotationTemplateId = 'fmit-001';
-    // Thursday AM: Procedure, PM: Clinic
-    pattern.slots[6].rotationTemplateId = 'procedure-001';
-    pattern.slots[7].rotationTemplateId = 'clinic-001';
-    // Friday AM/PM: Clinic
-    pattern.slots[8].rotationTemplateId = 'clinic-001';
+    // Sunday: Off (null) - slots[0], slots[1]
+    // Monday AM/PM: Clinic - slots[2], slots[3]
+    pattern.slots[2].rotationTemplateId = 'clinic-001';
+    pattern.slots[3].rotationTemplateId = 'clinic-001';
+    // Tuesday AM: Inpatient, PM: Conference - slots[4], slots[5]
+    pattern.slots[4].rotationTemplateId = 'inpatient-001';
+    pattern.slots[5].rotationTemplateId = 'conference-001';
+    // Wednesday AM/PM: FMIT - slots[6], slots[7]
+    pattern.slots[6].rotationTemplateId = 'fmit-001';
+    pattern.slots[7].rotationTemplateId = 'fmit-001';
+    // Thursday AM: Procedure, PM: Clinic - slots[8], slots[9]
+    pattern.slots[8].rotationTemplateId = 'procedure-001';
     pattern.slots[9].rotationTemplateId = 'clinic-001';
-    // Saturday/Sunday: Off (null)
+    // Friday AM/PM: Clinic - slots[10], slots[11]
+    pattern.slots[10].rotationTemplateId = 'clinic-001';
+    pattern.slots[11].rotationTemplateId = 'clinic-001';
+    // Saturday: Off (null) - slots[12], slots[13]
   }
 
   return {
     templateId,
-    pattern,
+    pattern: ensureCompletePattern(pattern), // Ensure all 14 slots present
     updatedAt: new Date().toISOString(),
   };
 }
