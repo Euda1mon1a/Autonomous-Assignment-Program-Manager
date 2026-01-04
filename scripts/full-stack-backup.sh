@@ -1,6 +1,30 @@
 #!/bin/bash
 # =============================================================================
-# Full Stack Backup Script
+# DEPRECATED - Use stack-backup.sh instead
+# =============================================================================
+# This script has been superseded by the unified stack-backup.sh
+#
+# New usage:
+#   ./scripts/stack-backup.sh backup [--name NAME] [--include-redis]
+#   ./scripts/stack-backup.sh restore [BACKUP_NAME]
+#   ./scripts/stack-backup.sh emergency --confirm
+#
+# This script will be removed in a future version.
+# =============================================================================
+
+echo ""
+echo "⚠️  DEPRECATED: This script has been replaced by stack-backup.sh"
+echo ""
+echo "Use instead:"
+echo "  ./scripts/stack-backup.sh backup --name my-backup"
+echo "  ./scripts/stack-backup.sh restore my-backup"
+echo ""
+echo "Continuing with legacy script in 5 seconds... (Ctrl+C to cancel)"
+sleep 5
+echo ""
+
+# =============================================================================
+# Full Stack Backup Script (LEGACY)
 # =============================================================================
 # Creates a complete snapshot of the entire stack including:
 #   - Docker images (tagged and saved)
