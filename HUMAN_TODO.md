@@ -129,6 +129,40 @@ The `/mcp` command shows "not authenticated" even when tools work fine. This is 
 
 ## Feature Requests - Pending Investigation
 
+### Admin GUI: Bulk Rotation Template Editing
+**Priority:** Medium
+**Added:** 2026-01-04
+**Status:** TODO - Feature Request
+
+**Request:** Add admin interface for bulk editing rotation templates.
+
+**Use Cases:**
+- [ ] View all rotation templates in a table/grid
+- [ ] Bulk enable/disable templates
+- [ ] Bulk edit capacity, supervision requirements
+- [ ] Bulk assign activity_type (outpatient, clinic, inpatient, etc.)
+- [ ] Filter/sort templates by type, status, capacity
+- [ ] Import/export template configurations
+
+**Current State:**
+- Rotation templates managed via database/API only
+- No admin UI for template management
+- Individual template editing requires direct API calls
+
+**Implementation Considerations:**
+- Add `/admin/rotation-templates` page
+- CRUD operations via existing API endpoints
+- Bulk actions (select multiple → apply change)
+- Confirmation dialogs for destructive actions
+- Audit logging for template changes
+
+**Related Files:**
+- `backend/app/models/rotation_template.py` - Model
+- `backend/app/api/routes/rotation_templates.py` - API endpoints
+- `frontend/src/app/admin/` - Admin pages location
+
+---
+
 ### ACGME Rest Hours - PGY-Level Differentiation
 **Priority:** Medium
 **Added:** 2025-12-30
