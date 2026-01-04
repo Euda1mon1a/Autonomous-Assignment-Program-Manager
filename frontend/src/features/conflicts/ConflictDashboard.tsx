@@ -1,29 +1,25 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
 import {
-  AlertTriangle,
   AlertOctagon,
-  AlertCircle,
-  Info,
-  Check,
-  Clock,
-  TrendingUp,
-  TrendingDown,
+  AlertTriangle,
   BarChart3,
+  Check,
   History,
   Layers,
-  X,
-  Loader2,
   RefreshCw,
-} from 'lucide-react';
-import { ConflictList } from './ConflictList';
-import { ConflictResolutionSuggestions } from './ConflictResolutionSuggestions';
-import { ManualOverrideModal } from './ManualOverrideModal';
-import { ConflictHistory, ConflictHistoryTimeline } from './ConflictHistory';
-import { BatchResolution } from './BatchResolution';
-import { useConflictStatistics, useConflicts } from './hooks';
-import type { Conflict, ConflictFilters } from './types';
+  TrendingDown,
+  TrendingUp,
+  X,
+} from "lucide-react";
+import { useCallback, useState } from "react";
+import { BatchResolution } from "./BatchResolution";
+import { ConflictHistory, ConflictHistoryTimeline } from "./ConflictHistory";
+import { ConflictList } from "./ConflictList";
+import { ConflictResolutionSuggestions } from "./ConflictResolutionSuggestions";
+import { useConflictStatistics, useConflicts } from "./hooks";
+import { ManualOverrideModal } from "./ManualOverrideModal";
+import type { Conflict, ConflictFilters } from "./types";
 
 // ============================================================================
 // Props
@@ -37,7 +33,7 @@ interface ConflictDashboardProps {
 // View Types
 // ============================================================================
 
-type ActiveView = 'list' | 'suggestions' | 'history' | 'batch';
+type ActiveView = "list" | "suggestions" | "history" | "batch";
 
 // ============================================================================
 // Component
@@ -45,29 +41,31 @@ type ActiveView = 'list' | 'suggestions' | 'history' | 'batch';
 
 export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
   // State
-  const [activeView, setActiveView] = useState<ActiveView>('list');
-  const [selectedConflict, setSelectedConflict] = useState<Conflict | null>(null);
+  const [activeView, setActiveView] = useState<ActiveView>("list");
+  const [selectedConflict, setSelectedConflict] = useState<Conflict | null>(
+    null
+  );
   const [showOverrideModal, setShowOverrideModal] = useState(false);
   const [batchConflicts, setBatchConflicts] = useState<Conflict[]>([]);
 
   // Queries
   const { data: statistics, isLoading: statsLoading } = useConflictStatistics();
-  const { data: conflictsData, refetch: refetchConflicts } = useConflicts(initialFilters);
+  const { refetch: refetchConflicts } = useConflicts(initialFilters); // Removed 'data: conflictsData'
 
   // Handlers
   const handleConflictSelect = useCallback((conflict: Conflict) => {
     setSelectedConflict(conflict);
-    setActiveView('suggestions');
+    setActiveView("suggestions");
   }, []);
 
   const handleViewSuggestions = useCallback((conflict: Conflict) => {
     setSelectedConflict(conflict);
-    setActiveView('suggestions');
+    setActiveView("suggestions");
   }, []);
 
   const handleViewHistory = useCallback((conflict: Conflict) => {
     setSelectedConflict(conflict);
-    setActiveView('history');
+    setActiveView("history");
   }, []);
 
   const handleOverride = useCallback((conflict: Conflict) => {
@@ -82,28 +80,28 @@ export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
 
   const handleResolve = useCallback((conflict: Conflict) => {
     setSelectedConflict(conflict);
-    setActiveView('suggestions');
+    setActiveView("suggestions");
   }, []);
 
   const handleBatchSelect = useCallback((conflicts: Conflict[]) => {
     setBatchConflicts(conflicts);
-    setActiveView('batch');
+    setActiveView("batch");
   }, []);
 
   const handleResolved = useCallback(() => {
     setSelectedConflict(null);
-    setActiveView('list');
+    setActiveView("list");
     refetchConflicts();
   }, [refetchConflicts]);
 
   const handleClosePanel = useCallback(() => {
     setSelectedConflict(null);
-    setActiveView('list');
+    setActiveView("list");
   }, []);
 
   const handleBatchComplete = useCallback(() => {
     setBatchConflicts([]);
-    setActiveView('list');
+    setActiveView("list");
     refetchConflicts();
   }, [refetchConflicts]);
 
@@ -120,7 +118,9 @@ export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
         <div className="px-6 py-4">
           <div className="flex items-center justify-between mb-4 animate-slideDown">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Conflict Resolution</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Conflict Resolution
+              </h1>
               <p className="text-sm text-gray-500 mt-1">
                 Detect, review, and resolve scheduling conflicts
               </p>
@@ -136,7 +136,12 @@ export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
           </div>
 
           {/* Statistics cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4" role="region" aria-label="Conflict statistics summary" aria-live="polite">
+          <div
+            className="grid grid-cols-1 md:grid-cols-4 gap-4"
+            role="region"
+            aria-label="Conflict statistics summary"
+            aria-live="polite"
+          >
             {/* Unresolved conflicts */}
             <StatCard
               label="Unresolved Conflicts"
@@ -167,9 +172,9 @@ export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
             {/* Trend */}
             <StatCard
               label="Trend"
-              value={trendingUp ? 'Increasing' : 'Stable'}
+              value={trendingUp ? "Increasing" : "Stable"}
               icon={trendingUp ? TrendingUp : TrendingDown}
-              color={trendingUp ? 'red' : 'green'}
+              color={trendingUp ? "red" : "green"}
               loading={statsLoading}
             />
           </div>
@@ -177,23 +182,27 @@ export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
 
         {/* Secondary nav */}
         <div className="px-6 border-t">
-          <nav className="flex gap-4 -mb-px" role="navigation" aria-label="Conflict views">
+          <nav
+            className="flex gap-4 -mb-px"
+            role="navigation"
+            aria-label="Conflict views"
+          >
             <NavTab
               label="All Conflicts"
               icon={Layers}
-              isActive={activeView === 'list'}
+              isActive={activeView === "list"}
               onClick={() => {
                 setSelectedConflict(null);
-                setActiveView('list');
+                setActiveView("list");
               }}
             />
             <NavTab
               label="Patterns"
               icon={BarChart3}
-              isActive={activeView === 'history' && !selectedConflict}
+              isActive={activeView === "history" && !selectedConflict}
               onClick={() => {
                 setSelectedConflict(null);
-                setActiveView('history');
+                setActiveView("history");
               }}
             />
           </nav>
@@ -203,13 +212,15 @@ export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
       {/* Main content */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Left panel - List */}
-        <div className={`
-          ${activeView === 'batch' ? 'hidden' : 'flex'}
+        <div
+          className={`
+          ${activeView === "batch" ? "hidden" : "flex"}
           flex-col bg-white border-r
-          ${selectedConflict ? 'md:w-1/2' : 'w-full'}
-          ${selectedConflict ? 'hidden md:flex' : 'flex'}
+          ${selectedConflict ? "md:w-1/2" : "w-full"}
+          ${selectedConflict ? "hidden md:flex" : "flex"}
           transition-all duration-300 ease-in-out
-        `}>
+        `}
+        >
           <ConflictList
             initialFilters={initialFilters}
             onConflictSelect={handleConflictSelect}
@@ -224,18 +235,18 @@ export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
         </div>
 
         {/* Right panel - Details/Suggestions/History */}
-        {selectedConflict && activeView !== 'batch' && (
+        {selectedConflict && activeView !== "batch" && (
           <div className="w-full md:w-1/2 flex flex-col bg-white animate-slideInRight">
             {/* Panel header */}
             <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50 shadow-sm">
               <div className="flex items-center gap-2">
-                {activeView === 'suggestions' && (
+                {activeView === "suggestions" && (
                   <>
                     <AlertTriangle className="w-5 h-5 text-amber-500" />
                     <span className="font-medium">Resolution Suggestions</span>
                   </>
                 )}
-                {activeView === 'history' && (
+                {activeView === "history" && (
                   <>
                     <History className="w-5 h-5 text-blue-500" />
                     <span className="font-medium">Conflict History</span>
@@ -243,18 +254,18 @@ export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
                 )}
               </div>
               <div className="flex items-center gap-2">
-                {activeView === 'suggestions' && (
+                {activeView === "suggestions" && (
                   <button
-                    onClick={() => setActiveView('history')}
+                    onClick={() => setActiveView("history")}
                     className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                   >
                     <History className="w-4 h-4 inline mr-1" />
                     History
                   </button>
                 )}
-                {activeView === 'history' && (
+                {activeView === "history" && (
                   <button
-                    onClick={() => setActiveView('suggestions')}
+                    onClick={() => setActiveView("suggestions")}
                     className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                   >
                     <AlertTriangle className="w-4 h-4 inline mr-1" />
@@ -273,14 +284,14 @@ export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
 
             {/* Panel content */}
             <div className="flex-1 overflow-hidden">
-              {activeView === 'suggestions' && (
+              {activeView === "suggestions" && (
                 <ConflictResolutionSuggestions
                   conflict={selectedConflict}
                   onResolved={handleResolved}
                   onClose={handleClosePanel}
                 />
               )}
-              {activeView === 'history' && (
+              {activeView === "history" && (
                 <div className="h-full overflow-y-auto p-4">
                   <ConflictHistoryTimeline conflictId={selectedConflict.id} />
                 </div>
@@ -290,21 +301,21 @@ export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
         )}
 
         {/* Patterns view (when no conflict selected and in history mode) */}
-        {!selectedConflict && activeView === 'history' && (
+        {!selectedConflict && activeView === "history" && (
           <div className="w-full bg-white">
             <ConflictHistory showPatterns />
           </div>
         )}
 
         {/* Batch resolution view */}
-        {activeView === 'batch' && batchConflicts.length > 0 && (
+        {activeView === "batch" && batchConflicts.length > 0 && (
           <div className="w-full bg-white">
             <BatchResolution
               conflicts={batchConflicts}
               onComplete={handleBatchComplete}
               onCancel={() => {
                 setBatchConflicts([]);
-                setActiveView('list');
+                setActiveView("list");
               }}
             />
           </div>
@@ -337,33 +348,55 @@ interface StatCardProps {
   label: string;
   value: string | number;
   icon: React.ComponentType<{ className?: string }>;
-  color: 'amber' | 'red' | 'green' | 'blue' | 'gray';
+  color: "amber" | "red" | "green" | "blue" | "gray";
   loading?: boolean;
 }
 
 function StatCard({ label, value, icon: Icon, color, loading }: StatCardProps) {
-  const colorStyles: Record<string, { bg: string; icon: string; text: string }> = {
-    amber: { bg: 'bg-amber-50', icon: 'text-amber-500', text: 'text-amber-900' },
-    red: { bg: 'bg-red-50', icon: 'text-red-500', text: 'text-red-900' },
-    green: { bg: 'bg-green-50', icon: 'text-green-500', text: 'text-green-900' },
-    blue: { bg: 'bg-blue-50', icon: 'text-blue-500', text: 'text-blue-900' },
-    gray: { bg: 'bg-gray-50', icon: 'text-gray-500', text: 'text-gray-900' },
+  const colorStyles: Record<
+    string,
+    { bg: string; icon: string; text: string }
+  > = {
+    amber: {
+      bg: "bg-amber-50",
+      icon: "text-amber-500",
+      text: "text-amber-900",
+    },
+    red: { bg: "bg-red-50", icon: "text-red-500", text: "text-red-900" },
+    green: {
+      bg: "bg-green-50",
+      icon: "text-green-500",
+      text: "text-green-900",
+    },
+    blue: { bg: "bg-blue-50", icon: "text-blue-500", text: "text-blue-900" },
+    gray: { bg: "bg-gray-50", icon: "text-gray-500", text: "text-gray-900" },
   };
 
   const styles = colorStyles[color];
 
   return (
-    <div className={`p-4 rounded-lg ${styles.bg} transition-all duration-300 hover:shadow-md hover:scale-105 animate-fadeInUp`} role="group" aria-label={`${label}: ${value}`}>
+    <div
+      className={`p-4 rounded-lg ${styles.bg} transition-all duration-300 hover:shadow-md hover:scale-105 animate-fadeInUp`}
+      role="group"
+      aria-label={`${label}: ${value}`}
+    >
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm text-gray-600 font-medium">{label}</span>
-        <Icon className={`w-5 h-5 ${styles.icon} transition-transform duration-300 hover:scale-110`} aria-hidden="true" />
+        <Icon
+          className={`w-5 h-5 ${styles.icon} transition-transform duration-300 hover:scale-110`}
+          aria-hidden="true"
+        />
       </div>
       {loading ? (
         <div className="space-y-2 animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-20"></div>
         </div>
       ) : (
-        <p className={`text-2xl font-bold ${styles.text} transition-colors duration-300`}>{value}</p>
+        <p
+          className={`text-2xl font-bold ${styles.text} transition-colors duration-300`}
+        >
+          {value}
+        </p>
       )}
     </div>
   );
@@ -390,13 +423,19 @@ function NavTab({ label, icon: Icon, isActive, onClick, badge }: NavTabProps) {
       aria-label={label}
       className={`
         flex items-center gap-2 py-3 px-1 border-b-2 text-sm font-medium transition-all duration-200
-        ${isActive
-          ? 'border-blue-500 text-blue-600'
-          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+        ${
+          isActive
+            ? "border-blue-500 text-blue-600"
+            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
         }
       `}
     >
-      <Icon className={`w-4 h-4 transition-transform duration-200 ${isActive ? 'scale-110' : ''}`} aria-hidden="true" />
+      <Icon
+        className={`w-4 h-4 transition-transform duration-200 ${
+          isActive ? "scale-110" : ""
+        }`}
+        aria-hidden="true"
+      />
       {label}
       {badge !== undefined && badge > 0 && (
         <span className="px-1.5 py-0.5 text-xs bg-red-100 text-red-700 rounded-full animate-pulse">
