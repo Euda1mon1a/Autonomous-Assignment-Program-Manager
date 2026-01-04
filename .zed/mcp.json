@@ -1,16 +1,10 @@
 {
   "mcpServers": {
     "residency-scheduler": {
-      "description": "Medical residency scheduling MCP server (Docker)",
-      "command": {
-        "path": "docker",
-        "args": ["compose", "exec", "-T", "mcp-server", "python", "-m", "scheduler_mcp.server"],
-        "env": {
-          "LOG_LEVEL": "INFO"
-        }
-      },
+      "description": "Medical residency scheduling MCP server (HTTP)",
+      "url": "http://127.0.0.1:8080/mcp",
       "transport": {
-        "type": "stdio"
+        "type": "http"
       },
       "autoStart": false,
       "features": {
@@ -42,26 +36,6 @@
           "intervalMs": 60000
         }
       }
-    },
-    "residency-scheduler-local": {
-      "description": "Medical residency scheduling MCP server (local - requires pip install)",
-      "command": {
-        "path": "python",
-        "args": ["-m", "scheduler_mcp.server"],
-        "cwd": "mcp-server/src",
-        "env": {
-          "DATABASE_URL": "$DATABASE_URL",
-          "REDIS_URL": "$REDIS_URL",
-          "API_BASE_URL": "http://localhost:8000",
-          "LOG_LEVEL": "INFO",
-          "PYTHONPATH": "mcp-server/src"
-        }
-      },
-      "transport": {
-        "type": "stdio"
-      },
-      "autoStart": false,
-      "disabled": true
     }
   },
   "settings": {

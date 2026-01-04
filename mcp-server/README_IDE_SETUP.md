@@ -36,9 +36,9 @@ The Residency Scheduler MCP (Model Context Protocol) server provides AI assistan
 ```
 IDE (VSCode/Zed/Claude Code)
     ↓
-MCP Client (stdio transport)
+MCP Client (HTTP transport)
     ↓
-Docker Container (mcp-server)
+Docker Container (mcp-server on port 8080)
     ↓
 FastAPI Backend → PostgreSQL Database
 ```
@@ -118,15 +118,8 @@ The project includes a pre-configured `.mcp.json`:
 {
   "mcpServers": {
     "residency-scheduler": {
-      "command": "docker",
-      "args": [
-        "compose", "exec", "-T", "mcp-server",
-        "python", "-m", "scheduler_mcp.server"
-      ],
-      "env": {
-        "LOG_LEVEL": "INFO"
-      },
-      "transport": "stdio"
+      "type": "http",
+      "url": "http://localhost:8080/mcp"
     }
   }
 }
@@ -157,25 +150,26 @@ docker compose ps  # Verify all services are "Up"
 
 ### Step 2: Configuration (Already Set Up)
 
-The project includes `.vscode/mcp.json` pre-configured for Docker:
+The project includes `.vscode/mcp.json` pre-configured for HTTP transport:
 
 ```json
 {
   "mcpServers": {
     "residency-scheduler": {
-      "command": "docker",
-      "args": ["compose", "exec", "-T", "mcp-server", "python", "-m", "scheduler_mcp.server"],
-      "transport": "stdio"
+      "type": "http",
+      "url": "http://localhost:8080/mcp"
     }
   }
 }
 ```
 
-### Step 3: Start the MCP Server
+### Step 3: Verify MCP Server is Running
 
-1. **Open Command Palette**: `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux)
-2. **Type**: `MCP: Start Server`
-3. **Select**: `residency-scheduler`
+Ensure Docker services are up and the MCP server is accessible:
+
+```bash
+curl http://localhost:8080/health
+```
 
 ### Step 4: Verify Connection
 
@@ -193,27 +187,26 @@ docker compose up -d
 
 ### Step 2: Configuration (Already Set Up)
 
-The project includes `.zed/mcp.json` pre-configured for Docker:
+The project includes `.zed/mcp.json` pre-configured for HTTP transport:
 
 ```json
 {
   "mcpServers": {
     "residency-scheduler": {
-      "command": {
-        "path": "docker",
-        "args": ["compose", "exec", "-T", "mcp-server", "python", "-m", "scheduler_mcp.server"]
-      },
-      "transport": { "type": "stdio" }
+      "type": "http",
+      "url": "http://localhost:8080/mcp"
     }
   }
 }
 ```
 
-### Step 3: Start the MCP Server
+### Step 3: Verify MCP Server is Running
 
-1. **Open Command Palette**: `Cmd+Shift+P`
-2. **Type**: `mcp start`
-3. **Select**: `residency-scheduler`
+Ensure Docker services are up and the MCP server is accessible:
+
+```bash
+curl http://localhost:8080/health
+```
 
 ---
 
@@ -415,7 +408,7 @@ The `.zed/mcp.json` file contains:
 ```
 
 Key features:
-- **STDIO transport**: Standard input/output communication
+- **HTTP transport**: RESTful communication over port 8080
 - **Data protection enabled**: User data security
 - **Audit logging**: All operations are logged
 - **Health checks**: Automatic server health monitoring

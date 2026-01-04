@@ -480,21 +480,7 @@ mcp-server:
 
 ### Claude Code Integration Options
 
-**Option 1: Docker exec (stdio transport)**
-```json
-{
-  "mcpServers": {
-    "residency-scheduler": {
-      "command": "docker",
-      "args": ["exec", "-i", "residency-scheduler-mcp",
-               "python", "-m", "scheduler_mcp.server"],
-      "transport": "stdio"
-    }
-  }
-}
-```
-
-**Option 2: HTTP transport (development)**
+**Option 1: HTTP transport (recommended)**
 ```json
 {
   "mcpServers": {

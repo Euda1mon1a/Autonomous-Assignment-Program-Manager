@@ -114,10 +114,10 @@ Codex typically reviews within 1-10 minutes of push. Check with `/check-codex` b
 
 ## MCP Server Status
 
-- **Transport:** STDIO (secure, no network exposure)
+- **Transport:** HTTP (secure, containerized)
 - **Tools:** 34 available
 - **Container:** Running in docker compose
-- **Connection:** `docker compose exec -T -e MCP_TRANSPORT=stdio mcp-server python -m scheduler_mcp.server`
+- **Connection:** HTTP via docker compose network
 
 ---
 

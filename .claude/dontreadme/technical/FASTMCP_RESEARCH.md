@@ -26,7 +26,7 @@ FastMCP is an open-source Python framework designed to make building Model Conte
   - Testing frameworks
   - Comprehensive client libraries
 - **ASGI-Compatible**: Built on Starlette, allowing easy integration with other ASGI-compatible frameworks like FastAPI
-- **Multiple Transports**: Supports stdio, HTTP, and SSE (Server-Sent Events) transports
+- **Multiple Transports**: Supports HTTP and SSE (Server-Sent Events) transports
 
 ### MCP Protocol Overview
 
@@ -71,12 +71,7 @@ if __name__ == "__main__":
 
 ### Running the Server
 
-**Stdio Transport (Traditional)**
-```bash
-python my_server.py
-```
-
-**HTTP Transport (Web-based)**
+**HTTP Transport (Recommended)**
 ```python
 mcp.run(transport="http", host="127.0.0.1", port=8000, path="/mcp")
 ```
@@ -588,12 +583,7 @@ For an MCP server to be production-ready, it needs:
 
 ### Transport Selection
 
-**Stdio Transport**
-- Traditional MCP connection method
-- Good for local integrations
-- Used by Claude Desktop and similar clients
-
-**HTTP/SSE Transport (Recommended for Production)**
+**HTTP/SSE Transport (Recommended)**
 - Efficient and modern
 - Runs as persistent HTTP server using Uvicorn
 - Handles multiple client connections

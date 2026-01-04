@@ -1,38 +1,31 @@
 # MCP Transport Configuration & Security Guide
 
-> **Updated:** 2025-12-29
-> **Purpose:** Configure MCP transport for security and multi-agent concurrency
+> **Updated:** 2026-01-03
+> **Purpose:** Configure MCP HTTP transport for security and multi-agent concurrency
 
 ---
 
 ## Table of Contents
 
-1. [Transport Types Overview](#transport-types-overview)
-2. [STDIO vs HTTP: When to Use Each](#stdio-vs-http-when-to-use-each)
-3. [Multi-Agent Concurrency Issue](#multi-agent-concurrency-issue)
-4. [Secure HTTP Configuration](#secure-http-configuration)
-5. [Configuration Examples](#configuration-examples)
-6. [Security Checklist](#security-checklist)
-7. [Troubleshooting](#troubleshooting)
+1. [Transport Overview](#transport-overview)
+2. [Secure HTTP Configuration](#secure-http-configuration)
+3. [Configuration Examples](#configuration-examples)
+4. [Security Checklist](#security-checklist)
+5. [Troubleshooting](#troubleshooting)
 
 ---
 
-## Transport Types Overview
+## Transport Overview
 
-MCP (Model Context Protocol) supports multiple transport mechanisms:
+MCP (Model Context Protocol) uses HTTP transport for all deployments:
 
 | Transport | Use Case | Concurrency | Security |
 |-----------|----------|-------------|----------|
-| **STDIO** | Local development, single agent | Single client | Inherently safe (no network) |
-| **HTTP** | Multi-agent, remote access | Many clients | Requires configuration |
-| **SSE** | Legacy remote (deprecated) | Many clients | Being phased out |
+| **HTTP** | All deployments | Many clients | Requires configuration |
 
-### Key Architectural Difference
+### Architecture
 
 ```
-STDIO Transport:
-Claude Code Session ──(single pipe)──> MCP Server Process
-
 HTTP Transport:
 Claude Code Session A ──┐
 Claude Code Session B ──┼──(HTTP)──> MCP Server (port 8080)
@@ -41,57 +34,11 @@ Spawned Agent C ────────┘
 
 **Source:** [MCP Architecture](https://modelcontextprotocol.io/docs/learn/architecture)
 
----
-
-## STDIO vs HTTP: When to Use Each
-
-### Use STDIO When
-
-- Single Claude Code session (no parallel agents using MCP)
-- Maximum simplicity desired
-- No network exposure needed
-- Local development only
-
-### Use HTTP When
-
-- Spawning agents that need MCP tool access
-- Running parallel MCP tool calls
+HTTP transport enables:
+- Multi-agent workflows with spawned agents
+- Parallel MCP tool calls
 - IDE integration (VSCode, Cursor, Zed)
 - Multiple developers sharing one MCP server
-
----
-
-## Multi-Agent Concurrency Issue
-
-### The Problem
-
-When using STDIO transport with Claude Code's Task tool (subagents):
-
-1. Main session holds the STDIO pipe
-2. Spawned agents cannot acquire the pipe
-3. Agents see "Not connected" or "Permission prompts unavailable"
-4. MCP tools appear blocked even though server is healthy
-
-### Evidence
-
-From Session 012 testing with 5 parallel agents:
-
-| Agent | MCP Result | Cause |
-|-------|------------|-------|
-| Stream A | 0/4 tools | Pipe contention |
-| Stream B | 4/13 tools | First to acquire pipe |
-| Stream C | Timeout | Pipe busy |
-| Stream D | 0/10 tools | Pipe contention |
-
-### Root Cause
-
-From [MCP specification](https://modelcontextprotocol.io/docs/learn/architecture):
-
-> "Local MCP servers that use the STDIO transport typically serve a **single MCP client**, whereas remote MCP servers that use the Streamable HTTP transport will typically serve **many MCP clients**."
-
-### The Fix
-
-Switch to HTTP transport for multi-agent workloads. See [Secure HTTP Configuration](#secure-http-configuration).
 
 ---
 
@@ -153,48 +100,11 @@ ports:
 }
 ```
 
-#### 3. Keep STDIO as Fallback (Optional)
-
-```json
-{
-  "mcpServers": {
-    "residency-scheduler": {
-      "url": "http://127.0.0.1:8080/mcp",
-      "transport": "http"
-    },
-    "residency-scheduler-stdio": {
-      "command": "docker",
-      "args": ["compose", "exec", "-T", "mcp-server", "python", "-m", "scheduler_mcp.server"],
-      "transport": "stdio",
-      "disabled": true
-    }
-  }
-}
-```
-
 ---
 
 ## Configuration Examples
 
-### Development (Single Developer, No Agents)
-
-Use STDIO for simplicity:
-
-```json
-{
-  "mcpServers": {
-    "residency-scheduler": {
-      "command": "docker",
-      "args": ["compose", "exec", "-T", "mcp-server", "python", "-m", "scheduler_mcp.server"],
-      "transport": "stdio"
-    }
-  }
-}
-```
-
-### Development (Multi-Agent Workflows)
-
-Use HTTP for concurrency:
+### Development (Local)
 
 ```json
 {

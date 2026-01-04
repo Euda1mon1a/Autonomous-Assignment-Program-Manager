@@ -31,7 +31,7 @@
 | **Async Pattern** | Promise-based | `async`/`await` native |
 | **Tool Definition** | `FunctionTool` class | Function decorators + type hints |
 | **Agent Definition** | `Agent` class with config | `query()` + options |
-| **Transport** | HTTP/gRPC | MCP protocol (stdio/HTTP) |
+| **Transport** | HTTP/gRPC | MCP protocol (HTTP/SSE) |
 | **Memory Overhead** | ~200MB per agent | ~100MB per client |
 
 ### 1.2 Agent Lifecycle
@@ -858,7 +858,7 @@ async def call_tool(tool_name: str, request: dict):
     """
     Call an MCP tool via HTTP.
 
-    This enables ADK (TypeScript) to call MCP tools without stdio transport.
+    This enables ADK (TypeScript) to call MCP tools via HTTP transport.
     """
     # Find tool by name
     tool = next((t for t in mcp.tools if t.name == tool_name), None)

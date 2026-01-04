@@ -160,7 +160,7 @@ For marathon sessions requiring 5-10 parallel terminals, this protocol defines:
 
 ### Key Decisions Made
 
-1. Chose HTTP transport over STDIO for MCP (rationale: debugging)
+1. Chose HTTP transport for MCP (rationale: concurrent connections, debugging)
 2. Deferred performance optimization to next session
 
 ---

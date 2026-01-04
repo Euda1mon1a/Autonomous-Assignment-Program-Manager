@@ -83,7 +83,7 @@
 - Status: Monolithic design
 
 **Phase 2 (Sessions 006-010): Infrastructure Maturation**
-- MCP transport troubleshooting (STDIO vs HTTP)
+- MCP transport troubleshooting
 - Multi-coordinator architecture (3 coordinators added)
 - Synthesis patterns documented (draft)
 - Status: Infrastructure validated
@@ -271,7 +271,7 @@ Plus:
 > "If there is literally no cost to parallelization, why wouldn't you launch all 25 at once?"
 
 **Hidden Technical Detail (Sessions 007-011):**
-- MCP STDIO transport has single-client limitation
+- MCP transport was initially misconfigured
 - Solution: HTTP transport enables concurrent requests
 - Docs incomplete; configuration took 4 sessions to debug
 

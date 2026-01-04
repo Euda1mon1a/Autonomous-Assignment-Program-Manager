@@ -306,7 +306,7 @@ Following the Docker MCP Toolkit patterns, the MCP server runs as an isolated co
 
 ```
 AI Client (Claude Code/VS Code/Cursor)
-         ↓ stdio/SSE/HTTP
+         ↓ HTTP
    MCP Server Container (residency-scheduler-mcp)
          ↓ HTTP (internal network)
    FastAPI Backend Container (residency-scheduler-backend)
@@ -350,18 +350,16 @@ Following Docker's MCP Toolkit security patterns:
 | **No Host Access** | No volume mounts (prod) | Filesystem isolation |
 | **Secret Injection** | Environment variables | No secrets in image |
 
-### Transport Modes
+### Transport Mode
 
 | Mode | Use Case | Configuration |
 |------|----------|---------------|
-| **stdio** | Claude Code IDE | Default (no ports exposed) |
-| **HTTP** | Testing, multi-client | `ports: ["8080:8080"]` |
-| **SSE** | Streaming responses | Not yet implemented |
+| **HTTP** | All deployments | `ports: ["127.0.0.1:8080:8080"]` |
 
 ### Development vs Production
 
 **Production (docker-compose.yml):**
-- No ports exposed (stdio transport)
+- Port bound to localhost only (`127.0.0.1:8080:8080`)
 - 1 CPU, 2GB RAM limits
 - INFO log level
 - No volume mounts
@@ -374,29 +372,14 @@ Following Docker's MCP Toolkit security patterns:
 
 ### Claude Code Integration
 
-Claude Code connects via the unified Gateway pattern:
+Claude Code connects via HTTP:
 
 ```json
-// .claude/settings.json
+// .mcp.json
 {
   "mcpServers": {
     "residency-scheduler": {
-      "command": "docker",
-      "args": ["exec", "-i", "residency-scheduler-mcp",
-               "python", "-m", "scheduler_mcp.server"],
-      "transport": "stdio"
-    }
-  }
-}
-```
-
-Or for development with HTTP:
-
-```json
-{
-  "mcpServers": {
-    "residency-scheduler": {
-      "url": "http://localhost:8080",
+      "url": "http://127.0.0.1:8080/mcp",
       "transport": "http"
     }
   }
