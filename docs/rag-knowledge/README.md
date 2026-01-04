@@ -2,6 +2,60 @@
 
 This directory contains markdown documents that are embedded into the pgvector database for semantic search and RAG (Retrieval-Augmented Generation) capabilities.
 
+## Content Policy
+
+RAG is for **institutional knowledge** - stable information that doesn't change frequently and benefits from semantic search. It is NOT for operational/transient data.
+
+### BELONGS in RAG
+
+| Category | Examples | Why |
+|----------|----------|-----|
+| **Regulatory** | ACGME rules, compliance requirements | Stable, needs semantic lookup |
+| **Domain Knowledge** | Scheduling policies, swap system mechanics | How things work |
+| **Architecture** | Resilience concepts, system design | Reference material |
+| **Agent Specs** | How to delegate, agent capabilities | Reusable patterns |
+| **User Guides** | FAQ, how-to documentation | Searchable help |
+
+### DOES NOT BELONG in RAG
+
+| Category | Examples | Why | Where Instead |
+|----------|----------|-----|---------------|
+| **Session Handoffs** | SESSION_HANDOFF_*.md | Transient, read directly | `.claude/Scratchpad/` |
+| **Current Priorities** | HUMAN_TODO.md status | Changes daily | Read file directly |
+| **Task Status** | What's done/pending | Operational state | Read file directly |
+| **Git State** | Current branch, PR status | Changes constantly | `git` commands |
+| **Session Context** | What happened this session | Ephemeral | Conversation history |
+
+### Why This Matters
+
+1. **Stale data causes wrong decisions** - If RAG says "import/export is BLOCKING" but it's done, agents waste time investigating solved problems
+2. **Semantic search is wrong tool** - You don't semantic search "what's the current priority" - you read HUMAN_TODO.md
+3. **RAG pollution** - Transient docs dilute search results with outdated information
+
+### Valid doc_types
+
+```
+acgme_rules        - ACGME compliance (stable)
+scheduling_policy  - How scheduling works (stable)
+swap_system        - Swap mechanics (stable)
+military_specific  - Military medical context (stable)
+resilience_concepts - Framework concepts (stable)
+user_guide_faq     - Help documentation (stable)
+agent_spec         - Agent capabilities (stable)
+ai_patterns        - Reusable AI patterns (stable)
+exotic_concepts    - Advanced concepts (stable)
+```
+
+### Invalid doc_types (should be purged)
+
+```
+session_handoff    - Read .claude/Scratchpad/ directly
+session_learnings  - Consolidate into patterns, then delete
+ai_decisions       - If session-specific, doesn't belong
+```
+
+---
+
 ## Documents
 
 | Document | Type | Description | Status |
