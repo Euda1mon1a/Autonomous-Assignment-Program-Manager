@@ -227,10 +227,8 @@ python -m scheduler_mcp.server
 {
   "mcpServers": {
     "residency-scheduler": {
-      "command": "docker",
-      "args": ["compose", "exec", "-T", "mcp-server",
-               "python", "-m", "scheduler_mcp.server"],
-      "transport": "stdio"
+      "type": "http",
+      "url": "http://localhost:8080/mcp"
     }
   }
 }

@@ -65,7 +65,7 @@ This MCP server exposes the Residency Scheduler's scheduling, resilience, and an
 │                  (Claude Desktop)                       │
 └──────────────────────┬──────────────────────────────────┘
                        │ MCP Protocol
-                       │ (stdio/SSE)
+                       │ (HTTP/SSE)
 ┌──────────────────────▼──────────────────────────────────┐
 │              MCP Server (Python)                        │
 │  ┌─────────────────────────────────────────────────┐   │
@@ -147,7 +147,7 @@ The MCP server reads credentials from environment variables:
 # MCP Server Configuration
 MCP_SERVER_PORT=3000
 MCP_SERVER_HOST=localhost
-MCP_TRANSPORT=stdio  # or sse
+MCP_TRANSPORT=http  # or sse
 
 # Backend API Configuration
 BACKEND_API_URL=http://localhost:8000
@@ -2613,7 +2613,7 @@ All errors follow the JSON-RPC 2.0 error format:
 **MCP Server:**
 - **Language:** Python 3.11+
 - **Framework:** `mcp` Python SDK
-- **Transport:** stdio or Server-Sent Events (SSE)
+- **Transport:** HTTP or Server-Sent Events (SSE)
 - **HTTP Client:** `httpx` (async)
 - **Validation:** `pydantic` v2
 
@@ -2676,7 +2676,7 @@ mcp-server/
 """MCP server for Residency Scheduler."""
 import asyncio
 from mcp.server import Server
-from mcp.server.stdio import stdio_server
+from mcp.server.http import http_server
 
 from .resources.schedule import ScheduleResource
 from .resources.resilience import ResilienceResource
@@ -2722,8 +2722,8 @@ async def main():
     workflow_prompts = WorkflowPrompts()
     server.register_prompts(workflow_prompts)
 
-    # Run server with stdio transport
-    async with stdio_server() as (read_stream, write_stream):
+    # Run server with HTTP transport
+    async with http_server(host="0.0.0.0", port=8080) as (read_stream, write_stream):
         await server.run(
             read_stream,
             write_stream,
@@ -3152,7 +3152,7 @@ async def generate_schedule(
 
 - Use **TLS/SSL** for all backend API communication
 - Consider MCP SSE transport for web-based clients
-- stdio transport for local Claude Desktop usage
+- HTTP transport for local Claude Desktop usage
 
 ---
 
@@ -3286,7 +3286,7 @@ MCP_SERVER_NAME=residency-scheduler-mcp
 MCP_SERVER_VERSION=1.0.0
 MCP_SERVER_PORT=3000
 MCP_SERVER_HOST=localhost
-MCP_TRANSPORT=stdio  # or sse
+MCP_TRANSPORT=http  # or sse
 
 # Backend API Configuration
 BACKEND_API_URL=http://localhost:8000

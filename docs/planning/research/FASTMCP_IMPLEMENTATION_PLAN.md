@@ -87,7 +87,7 @@ async def long_running_operation(ctx: Context, data: str) -> str:
 | **Async Support** | Manual async handling | Native async-first, supports both sync/async |
 | **FastAPI Integration** | Not available | Automatic conversion via `from_fastapi()` |
 | **Middleware** | Custom implementation | Standard ASGI middleware support |
-| **Deployment** | DIY | Built-in SSE, stdio, HTTP transports |
+| **Deployment** | DIY | Built-in SSE, HTTP transports |
 | **Background Tasks** | Manual implementation | Protocol-native with `task=True` |
 
 **Verdict:** FastMCP 2.0 provides a significantly better developer experience with production-grade features out of the box.

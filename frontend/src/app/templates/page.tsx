@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, RefreshCw, FileText } from 'lucide-react'
+import { Plus, RefreshCw, FileText, Calendar } from 'lucide-react'
 import { useRotationTemplates, useDeleteTemplate } from '@/lib/hooks'
 import { CardSkeleton } from '@/components/skeletons'
 import { CreateTemplateModal } from '@/components/CreateTemplateModal'
 import { EditTemplateModal } from '@/components/EditTemplateModal'
+import { TemplatePatternModal } from '@/components/TemplatePatternModal'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { EmptyState } from '@/components/EmptyState'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
@@ -14,6 +15,7 @@ import type { RotationTemplate } from '@/types/api'
 export default function TemplatesPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState<RotationTemplate | null>(null)
+  const [patternTemplate, setPatternTemplate] = useState<RotationTemplate | null>(null)
   const [templateToDelete, setTemplateToDelete] = useState<RotationTemplate | null>(null)
 
   const { data, isLoading, isError, error, refetch } = useRotationTemplates()
@@ -86,6 +88,7 @@ export default function TemplatesPage() {
                 key={template.id}
                 template={template}
                 onEdit={() => setEditingTemplate(template)}
+                onEditPattern={() => setPatternTemplate(template)}
                 onDelete={() => handleDeleteClick(template)}
               />
             ))
@@ -118,6 +121,17 @@ export default function TemplatesPage() {
           variant="danger"
           isLoading={deleteTemplate.isPending}
         />
+
+        {/* Edit Pattern Modal */}
+        {patternTemplate && (
+          <TemplatePatternModal
+            isOpen={patternTemplate !== null}
+            onClose={() => setPatternTemplate(null)}
+            templateId={patternTemplate.id}
+            templateName={patternTemplate.name}
+            onSaved={() => refetch()}
+          />
+        )}
       </div>
     </ProtectedRoute>
   )
@@ -126,10 +140,12 @@ export default function TemplatesPage() {
 function TemplateCard({
   template,
   onEdit,
+  onEditPattern,
   onDelete,
 }: {
   template: RotationTemplate
   onEdit: () => void
+  onEditPattern: () => void
   onDelete: () => void
 }) {
   const activityColors: Record<string, string> = {
@@ -184,6 +200,13 @@ function TemplateCard({
           className="text-blue-600 hover:underline text-sm"
         >
           Edit
+        </button>
+        <button
+          onClick={onEditPattern}
+          className="text-green-600 hover:underline text-sm flex items-center gap-1"
+        >
+          <Calendar className="w-3 h-3" />
+          Pattern
         </button>
         <button
           onClick={onDelete}

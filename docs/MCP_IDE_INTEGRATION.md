@@ -232,25 +232,20 @@ Both IDE configurations use environment variable substitution:
 {
   "mcpServers": {
     "residency-scheduler": {
-      "command": "docker",
-      "args": ["compose", "exec", "-T", "mcp-server", "python", "-m", "scheduler_mcp.server"],
-      "env": { "LOG_LEVEL": "INFO" },
-      "transport": "stdio"
-    },
-    "residency-scheduler-local": {
-      "command": "python",
-      "args": ["-m", "scheduler_mcp.server"],
-      "cwd": "mcp-server/src",
-      "disabled": true
+      "type": "http",
+      "url": "http://localhost:8080/mcp",
+      "headers": {
+        "Authorization": "Bearer ${MCP_AUTH_TOKEN}"
+      }
     }
   }
 }
 ```
 
 **Key Features:**
-- Docker-first approach (dependencies included)
-- Local fallback option (disabled by default)
-- stdio transport for CLI integration
+- HTTP transport for production-grade communication
+- Bearer token authentication
+- Docker container exposes HTTP endpoint
 
 ### VSCode Configuration (`.vscode/mcp.json`)
 
@@ -258,16 +253,15 @@ Both IDE configurations use environment variable substitution:
 {
   "mcpServers": {
     "residency-scheduler": {
-      "command": "docker",
-      "args": ["compose", "exec", "-T", "mcp-server", "python", "-m", "scheduler_mcp.server"],
-      "transport": "stdio"
+      "type": "http",
+      "url": "http://localhost:8080/mcp"
     }
   }
 }
 ```
 
 **Key Features:**
-- Docker-based execution (no local deps needed)
+- HTTP transport (no local deps needed)
 - Built-in security features (read-only, approval required)
 - Automatic health checks every 60 seconds
 
@@ -277,11 +271,8 @@ Both IDE configurations use environment variable substitution:
 {
   "mcpServers": {
     "residency-scheduler": {
-      "command": {
-        "path": "docker",
-        "args": ["compose", "exec", "-T", "mcp-server", "python", "-m", "scheduler_mcp.server"]
-      },
-      "transport": { "type": "stdio" }
+      "transport": { "type": "http" },
+      "url": "http://localhost:8080/mcp"
     }
   }
 }

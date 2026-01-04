@@ -69,9 +69,8 @@ USER mcp
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "from scheduler_mcp.server import mcp; print('healthy')" || exit 1
 
-# Default command - run MCP server in stdio mode
-# For HTTP mode, override with: --host 0.0.0.0 --port 8080
-ENTRYPOINT ["python", "-m", "scheduler_mcp.server"]
+# Default command - run MCP server in HTTP mode
+ENTRYPOINT ["python", "-m", "scheduler_mcp.server", "--host", "0.0.0.0", "--port", "8080"]
 
 # Expose port for HTTP transport mode (optional)
 EXPOSE 8080

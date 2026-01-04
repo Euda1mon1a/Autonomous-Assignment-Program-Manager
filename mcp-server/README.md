@@ -185,29 +185,28 @@ python -m scheduler_mcp.server
 
 The project includes pre-configured `.mcp.json` for Claude Code CLI.
 
-**Default: Docker exec (stdio transport)**
+**Default: HTTP transport (Docker)**
 ```json
 {
   "mcpServers": {
     "residency-scheduler": {
-      "command": "docker",
-      "args": ["compose", "exec", "-T", "mcp-server",
-               "python", "-m", "scheduler_mcp.server"],
-      "transport": "stdio"
+      "type": "http",
+      "url": "http://localhost:8080/mcp"
     }
   }
 }
 ```
 
-**Alternative: Local Python (disabled by default)**
+**Alternative: Remote deployment**
 ```json
 {
   "mcpServers": {
-    "residency-scheduler-local": {
-      "command": "python",
-      "args": ["-m", "scheduler_mcp.server"],
-      "cwd": "mcp-server/src",
-      "disabled": true
+    "residency-scheduler-remote": {
+      "type": "http",
+      "url": "https://residency-scheduler-mcp.onrender.com/mcp",
+      "headers": {
+        "Authorization": "Bearer <your-mcp-api-key>"
+      }
     }
   }
 }

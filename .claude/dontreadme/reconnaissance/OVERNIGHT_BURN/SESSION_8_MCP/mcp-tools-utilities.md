@@ -15,7 +15,7 @@ The Residency Scheduler MCP Server is a **comprehensive AI integration platform*
 - **Total Tools:** 81
 - **Functional Domains:** 8 (Core Scheduling, Resilience, Early Warning, Empirical, Deployment, Advanced Analytics, Thermodynamics, Immune System)
 - **Framework:** FastMCP (decorator-based, type-validated)
-- **Transport:** Stdio (Docker exec) or HTTP (development)
+- **Transport:** HTTP (containerized)
 - **Async Support:** Full Celery integration for long-running operations
 
 ---
@@ -914,7 +914,7 @@ async def validate_schedule_tool(...) -> ScheduleValidationResult:
 1. **Type Validation** - Automatic via Pydantic
 2. **Documentation Generation** - From docstrings
 3. **Error Handling** - Via exception handlers
-4. **Transport Abstraction** - Stdio, SSE, HTTP
+4. **Transport Abstraction** - SSE, HTTP
 
 ### Framework Limitations
 
@@ -956,18 +956,17 @@ mcp-server:
   networks:
     - app-network
   ports:
-    - "8080:8080"  # HTTP (dev only)
+    - "8080:8080"  # HTTP
 ```
 
-### Stdio Transport (Production)
+### HTTP Transport (Production)
 
 ```json
 {
   "mcpServers": {
     "residency-scheduler": {
-      "command": "docker",
-      "args": ["compose", "exec", "-T", "mcp-server", "python", "-m", "scheduler_mcp.server"],
-      "transport": "stdio"
+      "type": "http",
+      "url": "http://localhost:8088/mcp"
     }
   }
 }

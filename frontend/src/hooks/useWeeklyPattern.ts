@@ -4,15 +4,20 @@
  * TanStack Query hooks for fetching and updating weekly rotation patterns.
  * These patterns define recurring weekly schedules for rotation templates.
  *
- * NOTE: API endpoints do not exist yet. These hooks use mock data for
- * frontend development. Update to real API calls when backend is ready.
+ * Uses real API endpoints:
+ * - GET /api/rotation-templates/{templateId}/patterns
+ * - PUT /api/rotation-templates/{templateId}/patterns
  */
 import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
+import { get, put } from '@/lib/api';
 import type { ApiError } from '@/lib/api';
 import type {
   WeeklyPatternResponse,
   WeeklyPatternUpdateRequest,
   RotationTemplateRef,
+  WeeklyPatternGrid,
+  DayOfWeek,
+  WeeklyPatternTimeOfDay,
 } from '@/types/weekly-pattern';
 import { createEmptyPattern, ensureCompletePattern } from '@/types/weekly-pattern';
 
@@ -30,95 +35,95 @@ export const weeklyPatternQueryKeys = {
 };
 
 // ============================================================================
-// Mock Data (Remove when API is ready)
+// API Response Types (from backend)
 // ============================================================================
 
 /**
- * Mock rotation templates for development.
- * Replace with actual API call when backend endpoint exists.
+ * Backend weekly pattern response structure.
+ * Matches backend/app/schemas/rotation_template_gui.py WeeklyPatternResponse
  */
-const MOCK_TEMPLATES: RotationTemplateRef[] = [
-  {
-    id: 'clinic-001',
-    name: 'Clinic',
-    displayAbbreviation: 'C',
-    backgroundColor: 'bg-clinic-light',
-    fontColor: 'text-clinic-dark',
-  },
-  {
-    id: 'inpatient-001',
-    name: 'Inpatient Service',
-    displayAbbreviation: 'IP',
-    backgroundColor: 'bg-inpatient-light',
-    fontColor: 'text-inpatient-dark',
-  },
-  {
-    id: 'call-001',
-    name: 'Call',
-    displayAbbreviation: 'Call',
-    backgroundColor: 'bg-call-light',
-    fontColor: 'text-call-dark',
-  },
-  {
-    id: 'fmit-001',
-    name: 'FMIT',
-    displayAbbreviation: 'FMIT',
-    backgroundColor: 'bg-purple-100',
-    fontColor: 'text-purple-800',
-  },
-  {
-    id: 'procedure-001',
-    name: 'Procedure Clinic',
-    displayAbbreviation: 'Proc',
-    backgroundColor: 'bg-amber-100',
-    fontColor: 'text-amber-800',
-  },
-  {
-    id: 'conference-001',
-    name: 'Conference',
-    displayAbbreviation: 'Conf',
-    backgroundColor: 'bg-cyan-100',
-    fontColor: 'text-cyan-800',
-  },
-];
+interface BackendWeeklyPattern {
+  id: string;
+  rotation_template_id: string;
+  day_of_week: number;
+  time_of_day: 'AM' | 'PM';
+  activity_type: string;
+  linked_template_id: string | null;
+  is_protected: boolean;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 /**
- * Mock pattern data for development.
- * Replace with actual API call when backend endpoint exists.
- *
- * Day numbering matches backend: 0=Sunday, 1=Monday, ..., 6=Saturday
- * Slots are ordered: [Sun AM, Sun PM, Mon AM, Mon PM, ..., Sat AM, Sat PM]
+ * Convert backend patterns array to frontend WeeklyPatternGrid format.
  */
-function getMockPattern(templateId: string): WeeklyPatternResponse {
+function convertBackendToGrid(
+  templateId: string,
+  backendPatterns: BackendWeeklyPattern[]
+): WeeklyPatternResponse {
   const pattern = createEmptyPattern();
 
-  // Add some sample assignments for visual testing
-  // Pattern array: [0]=Sun AM, [1]=Sun PM, [2]=Mon AM, [3]=Mon PM, etc.
-  if (templateId) {
-    // Sunday: Off (null) - slots[0], slots[1]
-    // Monday AM/PM: Clinic - slots[2], slots[3]
-    pattern.slots[2].rotationTemplateId = 'clinic-001';
-    pattern.slots[3].rotationTemplateId = 'clinic-001';
-    // Tuesday AM: Inpatient, PM: Conference - slots[4], slots[5]
-    pattern.slots[4].rotationTemplateId = 'inpatient-001';
-    pattern.slots[5].rotationTemplateId = 'conference-001';
-    // Wednesday AM/PM: FMIT - slots[6], slots[7]
-    pattern.slots[6].rotationTemplateId = 'fmit-001';
-    pattern.slots[7].rotationTemplateId = 'fmit-001';
-    // Thursday AM: Procedure, PM: Clinic - slots[8], slots[9]
-    pattern.slots[8].rotationTemplateId = 'procedure-001';
-    pattern.slots[9].rotationTemplateId = 'clinic-001';
-    // Friday AM/PM: Clinic - slots[10], slots[11]
-    pattern.slots[10].rotationTemplateId = 'clinic-001';
-    pattern.slots[11].rotationTemplateId = 'clinic-001';
-    // Saturday: Off (null) - slots[12], slots[13]
+  // Map backend patterns to frontend slots
+  for (const bp of backendPatterns) {
+    // Find the slot index: day * 2 + (PM ? 1 : 0)
+    const slotIndex = bp.day_of_week * 2 + (bp.time_of_day === 'PM' ? 1 : 0);
+    if (slotIndex >= 0 && slotIndex < 14) {
+      pattern.slots[slotIndex] = {
+        dayOfWeek: bp.day_of_week as DayOfWeek,
+        timeOfDay: bp.time_of_day as WeeklyPatternTimeOfDay,
+        rotationTemplateId: bp.linked_template_id,
+        // Preserve activity_type for slots without linked_template_id
+        activityType: bp.activity_type,
+        isProtected: bp.is_protected,
+        notes: bp.notes,
+      };
+    }
   }
+
+  // Find the latest updated_at
+  const updatedAt = backendPatterns.length > 0
+    ? backendPatterns.reduce((latest, p) =>
+        p.updated_at > latest ? p.updated_at : latest,
+        backendPatterns[0].updated_at
+      )
+    : new Date().toISOString();
 
   return {
     templateId,
-    pattern: ensureCompletePattern(pattern), // Ensure all 14 slots present
-    updatedAt: new Date().toISOString(),
+    pattern: ensureCompletePattern(pattern),
+    updatedAt,
   };
+}
+
+/**
+ * Convert frontend grid to backend format for PUT request.
+ */
+function convertGridToBackend(
+  grid: WeeklyPatternGrid
+): { patterns: Array<{
+  day_of_week: number;
+  time_of_day: 'AM' | 'PM';
+  activity_type: string;
+  linked_template_id: string | null;
+  is_protected: boolean;
+  notes: string | null;
+}> } {
+  const patterns = grid.slots
+    // Include slots that have either a linked template OR an activity type
+    .filter(slot => slot.rotationTemplateId !== null || slot.activityType)
+    .map(slot => ({
+      day_of_week: slot.dayOfWeek,
+      time_of_day: slot.timeOfDay,
+      // Use existing activity_type or default to 'scheduled' for linked templates
+      activity_type: slot.activityType || 'scheduled',
+      linked_template_id: slot.rotationTemplateId,
+      // Preserve existing is_protected and notes values from grid model
+      is_protected: slot.isProtected ?? false,
+      notes: slot.notes ?? null,
+    }));
+
+  return { patterns };
 }
 
 // ============================================================================
@@ -161,12 +166,13 @@ export function useWeeklyPattern(
   return useQuery<WeeklyPatternResponse, ApiError>({
     queryKey: weeklyPatternQueryKeys.pattern(templateId),
     queryFn: async () => {
-      // TODO: Replace with actual API call when backend endpoint exists
-      // return get<WeeklyPatternResponse>(`/rotation-templates/${templateId}/weekly-pattern`);
+      // Fetch patterns from API
+      const backendPatterns = await get<BackendWeeklyPattern[]>(
+        `/rotation-templates/${templateId}/patterns`
+      );
 
-      // Mock implementation for frontend development
-      await new Promise((resolve) => setTimeout(resolve, 300)); // Simulate network delay
-      return getMockPattern(templateId);
+      // Convert backend format to frontend grid format
+      return convertBackendToGrid(templateId, backendPatterns);
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
@@ -207,19 +213,17 @@ export function useUpdateWeeklyPattern() {
 
   return useMutation<WeeklyPatternResponse, ApiError, WeeklyPatternUpdateRequest>({
     mutationFn: async (request) => {
-      // TODO: Replace with actual API call when backend endpoint exists
-      // return put<WeeklyPatternResponse>(
-      //   `/rotation-templates/${request.templateId}/weekly-pattern`,
-      //   request.pattern
-      // );
+      // Convert frontend grid format to backend format
+      const backendPayload = convertGridToBackend(request.pattern);
 
-      // Mock implementation for frontend development
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate network delay
-      return {
-        templateId: request.templateId,
-        pattern: request.pattern,
-        updatedAt: new Date().toISOString(),
-      };
+      // PUT to update patterns (atomic replace)
+      const updatedPatterns = await put<BackendWeeklyPattern[]>(
+        `/rotation-templates/${request.templateId}/patterns`,
+        backendPayload
+      );
+
+      // Convert response back to frontend format
+      return convertBackendToGrid(request.templateId, updatedPatterns);
     },
     onSuccess: (data, variables) => {
       // Invalidate the specific pattern query
@@ -264,25 +268,45 @@ export function useUpdateWeeklyPattern() {
  * }
  * ```
  */
+/**
+ * Backend rotation template structure from API.
+ */
+interface BackendRotationTemplate {
+  id: string;
+  name: string;
+  activity_type: string;
+  abbreviation: string | null;
+  display_abbreviation: string | null;
+  font_color: string | null;
+  background_color: string | null;
+  // ... other fields not needed for pattern editor
+}
+
+/**
+ * Response wrapper for template list.
+ */
+interface TemplateListResponse {
+  items: BackendRotationTemplate[];
+  total: number;
+}
+
 export function useAvailableTemplates(
   options?: Omit<UseQueryOptions<RotationTemplateRef[], ApiError>, 'queryKey' | 'queryFn'>
 ) {
   return useQuery<RotationTemplateRef[], ApiError>({
     queryKey: weeklyPatternQueryKeys.templates(),
     queryFn: async () => {
-      // TODO: Replace with actual API call when backend endpoint exists
-      // const response = await get<ListResponse<RotationTemplate>>('/rotation-templates');
-      // return response.items.map((t) => ({
-      //   id: t.id,
-      //   name: t.name,
-      //   displayAbbreviation: t.display_abbreviation,
-      //   backgroundColor: t.background_color,
-      //   fontColor: t.font_color,
-      // }));
+      // Fetch templates from API
+      const response = await get<TemplateListResponse>('/rotation-templates');
 
-      // Mock implementation for frontend development
-      await new Promise((resolve) => setTimeout(resolve, 200)); // Simulate network delay
-      return MOCK_TEMPLATES;
+      // Convert to frontend format
+      return response.items.map((t) => ({
+        id: t.id,
+        name: t.name,
+        displayAbbreviation: t.display_abbreviation || t.abbreviation,
+        backgroundColor: t.background_color,
+        fontColor: t.font_color,
+      }));
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes

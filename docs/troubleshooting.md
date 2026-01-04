@@ -216,16 +216,20 @@ docker compose logs --tail=20 celery-beat
 
 #### Issue 2: mcp-server Restart Loop
 
-**Root Cause:** The MCP server is configured to run in **stdio mode** by default, but inside a Docker container with no interactive input, it exits immediately.
+**Root Cause:** The MCP server may fail to start if the backend API is not yet available, or if environment variables are misconfigured.
 
 **Fix Options:**
 
 ```bash
-# Option A: Run in HTTP mode (add to docker-compose.yml under mcp-server)
-command: ["--host", "0.0.0.0", "--port", "8080"]
+# Option A: Check that backend is running first
+docker compose up -d backend
+docker compose up -d mcp-server
 
-# Option B: Just stop it if not needed for schedule generation
-docker compose stop mcp-server
+# Option B: Check MCP server logs for specific errors
+docker compose logs mcp-server
+
+# Option C: Restart if needed after backend is healthy
+docker compose restart mcp-server
 ```
 
 #### Issue 3: Environment Variable Mismatch

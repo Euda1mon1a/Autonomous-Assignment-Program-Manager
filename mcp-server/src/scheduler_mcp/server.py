@@ -4606,20 +4606,17 @@ Environment Variables:
   DATABASE_URL     PostgreSQL connection string
   API_BASE_URL     Optional: Main application API URL
   LOG_LEVEL        Logging level (DEBUG, INFO, WARNING, ERROR)
-  MCP_TRANSPORT    Transport mode: stdio, http, sse (default: stdio)
+  MCP_TRANSPORT    Transport mode: http, sse, streamable-http (default: http)
   MCP_HOST         Host to bind for HTTP/SSE (default: 127.0.0.1)
   MCP_PORT         Port to bind for HTTP/SSE (default: 8080)
   MCP_API_KEY      API key for HTTP authentication (required for production)
 
 Examples:
-  # Run with STDIO transport (default, for Claude Desktop/IDE)
-  scheduler-mcp
+  # Run with HTTP transport (default)
+  scheduler-mcp --host 0.0.0.0 --port 8080
 
-  # Run with HTTP transport (for Docker containers)
-  MCP_TRANSPORT=http scheduler-mcp --host 0.0.0.0 --port 8080
-
-  # Run with HTTP transport and authentication (for Render deployment)
-  MCP_TRANSPORT=http MCP_API_KEY=your-secret-key scheduler-mcp --host 0.0.0.0 --port 8080
+  # Run with HTTP transport and authentication (for production)
+  MCP_API_KEY=your-secret-key scheduler-mcp --host 0.0.0.0 --port 8080
 
   # Run with debug logging
   LOG_LEVEL=DEBUG scheduler-mcp
@@ -4641,9 +4638,9 @@ Examples:
 
     parser.add_argument(
         "--transport",
-        default=os.getenv("MCP_TRANSPORT", "stdio"),
-        choices=["stdio", "http", "sse", "streamable-http"],
-        help="Transport mode (default: stdio, use http for Docker)",
+        default=os.getenv("MCP_TRANSPORT", "http"),
+        choices=["http", "sse", "streamable-http"],
+        help="Transport mode (default: http)",
     )
 
     parser.add_argument(
@@ -4659,69 +4656,64 @@ Examples:
     logging.getLogger().setLevel(getattr(logging, args.log_level))
 
     logger.info(f"Transport: {args.transport.upper()}")
-    if args.transport != "stdio":
-        logger.info(f"Starting MCP server on {args.host}:{args.port}")
+    logger.info(f"Starting MCP server on {args.host}:{args.port}")
 
-        # Check for API key in production
-        api_key = os.environ.get("MCP_API_KEY")
-        if api_key:
-            logger.info("API key authentication enabled")
-        else:
-            logger.warning(
-                "MCP_API_KEY not set - server running without authentication. "
-                "This is insecure for production deployments!"
-            )
+    # Check for API key in production
+    api_key = os.environ.get("MCP_API_KEY")
+    if api_key:
+        logger.info("API key authentication enabled")
+    else:
+        logger.warning(
+            "MCP_API_KEY not set - server running without authentication. "
+            "This is insecure for production deployments!"
+        )
 
     logger.info(f"Log level: {args.log_level}")
 
-    # Run the server with appropriate transport
-    if args.transport == "stdio":
-        mcp.run(transport="stdio")
-    else:
-        # For HTTP transport, use ASGI app with auth middleware
-        try:
-            import uvicorn
-            from starlette.applications import Starlette
-            from starlette.routing import Route, Mount
+    # Run the server with HTTP transport
+    try:
+        import uvicorn
+        from starlette.applications import Starlette
+        from starlette.routing import Route, Mount
 
-            # Get the MCP ASGI app with stateless_http=True to disable session management
-            # This is required because Claude Code's HTTP transport doesn't send
-            # Mcp-Session-Id headers that FastMCP 2.x normally requires.
-            mcp_app = mcp.http_app(stateless_http=True)
+        # Get the MCP ASGI app with stateless_http=True to disable session management
+        # This is required because Claude Code's HTTP transport doesn't send
+        # Mcp-Session-Id headers that FastMCP 2.x normally requires.
+        mcp_app = mcp.http_app(stateless_http=True)
 
-            # Create health endpoint
-            health_handler = create_health_endpoint()
-            routes = []
-            if health_handler:
-                routes.append(Route("/health", health_handler, methods=["GET"]))
+        # Create health endpoint
+        health_handler = create_health_endpoint()
+        routes = []
+        if health_handler:
+            routes.append(Route("/health", health_handler, methods=["GET"]))
 
-            # Mount MCP app at /mcp and add health at root
-            routes.append(Mount("/mcp", app=mcp_app))
+        # Mount MCP app at /mcp and add health at root
+        routes.append(Mount("/mcp", app=mcp_app))
 
-            # Also mount at root for backwards compatibility
-            routes.append(Mount("/", app=mcp_app))
+        # Also mount at root for backwards compatibility
+        routes.append(Mount("/", app=mcp_app))
 
-            # Must use mcp_app.lifespan for FastMCP 2.x to initialize properly
-            app = Starlette(routes=routes, lifespan=mcp_app.lifespan)
+        # Must use mcp_app.lifespan for FastMCP 2.x to initialize properly
+        app = Starlette(routes=routes, lifespan=mcp_app.lifespan)
 
-            # Wrap with auth middleware
-            app = APIKeyAuthMiddleware(app)
+        # Wrap with auth middleware
+        app = APIKeyAuthMiddleware(app)
 
-            logger.info(f"Health check available at http://{args.host}:{args.port}/health")
-            logger.info(f"MCP endpoint available at http://{args.host}:{args.port}/mcp")
+        logger.info(f"Health check available at http://{args.host}:{args.port}/health")
+        logger.info(f"MCP endpoint available at http://{args.host}:{args.port}/mcp")
 
-            uvicorn.run(app, host=args.host, port=args.port, log_level=args.log_level.lower())
+        uvicorn.run(app, host=args.host, port=args.port, log_level=args.log_level.lower())
 
-        except (ImportError, AttributeError) as e:
-            logger.warning(f"Advanced HTTP features not available: {e}")
-            logger.info("Falling back to basic FastMCP HTTP transport (SSE)")
-            # FastMCP 1.x uses settings object for host/port configuration
-            mcp.settings.host = args.host
-            mcp.settings.port = args.port
-            # FastMCP 1.x uses 'sse' transport for HTTP
-            transport = "sse" if args.transport in ("http", "streamable-http") else args.transport
-            logger.info(f"Starting SSE server on {args.host}:{args.port}")
-            mcp.run(transport=transport)
+    except (ImportError, AttributeError) as e:
+        logger.warning(f"Advanced HTTP features not available: {e}")
+        logger.info("Falling back to basic FastMCP HTTP transport (SSE)")
+        # FastMCP 1.x uses settings object for host/port configuration
+        mcp.settings.host = args.host
+        mcp.settings.port = args.port
+        # FastMCP 1.x uses 'sse' transport for HTTP
+        transport = "sse" if args.transport in ("http", "streamable-http") else args.transport
+        logger.info(f"Starting SSE server on {args.host}:{args.port}")
+        mcp.run(transport=transport)
 
 
 if __name__ == "__main__":

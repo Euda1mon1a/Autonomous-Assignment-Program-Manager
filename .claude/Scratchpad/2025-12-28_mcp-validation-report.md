@@ -3,7 +3,7 @@
 > **Generated:** 2025-12-28
 > **Agent:** COORD_PLATFORM (acb972c)
 > **MCP Server:** Residency Scheduler v0.1.0
-> **Transport:** STDIO (primary), HTTP (secondary)
+> **Transport:** HTTP
 
 ---
 
@@ -13,7 +13,7 @@
 
 The MCP server is operational. Core scheduling and resilience tools work correctly. Failures are due to container isolation (Celery dependencies not in MCP container).
 
-**The MCP STDIO transport fix was successful.** Logging now correctly goes to stderr.
+**The MCP transport is operational.** Logging correctly configured.
 
 ---
 

@@ -23,42 +23,7 @@ docker compose exec -T mcp-server python -c \
 
 ### 1. `.mcp.json` (Project Root)
 
-Defines the MCP server configuration with Docker-first approach:
-
-```json
-{
-  "mcpServers": {
-    "residency-scheduler": {
-      "command": "docker",
-      "args": ["compose", "exec", "-T", "mcp-server", "python", "-m", "scheduler_mcp.server"],
-      "env": { "LOG_LEVEL": "INFO" },
-      "transport": "stdio"
-    },
-    "residency-scheduler-local": {
-      "command": "python",
-      "args": ["-m", "scheduler_mcp.server"],
-      "cwd": "mcp-server/src",
-      "disabled": true
-    }
-  }
-}
-```
-
-**Key Points:**
-- Primary server uses Docker (no local Python deps needed)
-- Local fallback available but disabled by default
-- Transport: stdio (standard input/output)
-
-### Transport Selection
-
-| Transport | Use Case | Concurrency |
-|-----------|----------|-------------|
-| **STDIO** | Single agent, simple setup | Single client only |
-| **HTTP** | Multi-agent workflows, spawned agents | Many clients |
-
-**Important:** STDIO transport supports only one client at a time. If you spawn agents that need MCP access, they will see "Not connected" errors due to pipe contention.
-
-For multi-agent workflows, switch to HTTP transport:
+Defines the MCP server configuration with HTTP transport:
 
 ```json
 {
@@ -70,6 +35,11 @@ For multi-agent workflows, switch to HTTP transport:
   }
 }
 ```
+
+**Key Points:**
+- MCP server runs as Docker container with HTTP transport
+- Supports multi-agent workflows and spawned agents
+- Port bound to localhost only for security
 
 See **[MCP Transport Security Guide](./MCP_TRANSPORT_SECURITY.md)** for secure HTTP configuration.
 
@@ -87,7 +57,7 @@ Starts the MCP server with all required dependencies:
 2. Starts backend with Docker Compose if needed
 3. Waits for backend health check
 4. Sets required environment variables
-5. Launches MCP server in stdio mode
+5. Launches MCP server with HTTP transport
 
 **Usage:**
 ```bash
@@ -113,7 +83,7 @@ Integration test suite for MCP server:
 
 ```
 Claude Code IDE
-    ↓ (stdio)
+    ↓ (HTTP)
 MCP Server (scheduler_mcp.server)
     ↓ (HTTP)
 FastAPI Backend (localhost:8000)
@@ -127,7 +97,7 @@ When Claude Code starts in this project:
 1. Reads `.mcp.json` to discover available MCP servers
 2. Checks `.claude/settings.json` for approval
 3. Since `enableAllProjectMcpServers: true`, automatically connects
-4. Launches MCP server as subprocess with stdio transport
+4. Connects to MCP server via HTTP transport
 5. MCP server tools become available in Claude Code context
 
 ### Available MCP Tools
