@@ -2,7 +2,7 @@
 
 **Purpose:** Document recurring patterns identified across development sessions to accelerate future implementations and avoid reinventing solutions.
 
-**Last Updated:** 2026-01-01 (Session mcp-refinement)
+**Last Updated:** 2026-01-03 (Session 47 - Unified Backup)
 
 ---
 
@@ -443,6 +443,68 @@ solver.parameters.max_time_in_seconds = 300
 ```
 
 **Monitoring:** Use `solver-control` skill for kill-switch
+
+---
+
+## Infrastructure Patterns
+
+### Emergency Restore Safety Chain
+
+**Pattern:** Multi-gate safety chain for critical restore operations
+
+```
+Disk Check → Immaculate Verify → Pre-Snapshot → Restore → Verify
+```
+
+**Why:** Each gate must pass before proceeding. Pre-snapshot ensures recovery even from failed restore.
+
+**Implementation:** `scripts/stack-backup.sh emergency --confirm`
+
+**Session 47 Discovery**
+
+### Tiered Backup System
+
+**Pattern:** Four-tier backup hierarchy for escalating recovery scenarios
+
+| Tier | Location | Purpose | When to Use |
+|------|----------|---------|-------------|
+| 1 | `data/` | Quick SQL dumps | Daily snapshots |
+| 2 | `backups/` | Named backup sets | Before risky ops |
+| 3 | `immaculate/` | Frozen verified baseline | "Break glass" |
+| 4 | `sacred/` | PR milestone tags | Rollback points |
+
+**Key Rule:** Immaculate is never modified - create new immaculate baselines.
+
+**User Philosophy:** "immaculate will usually be called on by me when things are fucky"
+
+### Self-Documenting Backups
+
+**Pattern:** Embed restore instructions in backup manifest
+
+```markdown
+# MANIFEST.md
+**Restore Command:**
+./scripts/stack-backup.sh restore backup_name
+
+**Contents:**
+- database/dump.sql.gz
+- docker/images/*.tar.gz
+- CHECKSUM.sha256
+```
+
+**Why:** Future-you doesn't remember which script to use
+
+### Script Deprecation via Warning
+
+**Pattern:** Add 5-second warning before legacy script execution
+
+```bash
+echo "⚠️  DEPRECATED: Use stack-backup.sh instead"
+sleep 5
+# ... continue with legacy behavior
+```
+
+**Why:** No breaking changes, clear migration path, muscle memory preserved
 
 ---
 
