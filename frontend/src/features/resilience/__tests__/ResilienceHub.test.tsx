@@ -1,4 +1,4 @@
-import { useSystemHealth } from "@/hooks/useResilience";
+import { useSystemHealth, useVulnerabilityReport, useBurnoutRt, useUtilizationThreshold } from "@/hooks/useResilience";
 import { OverallStatus, UtilizationLevel } from "@/types/resilience";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { ResilienceHub } from "../ResilienceHub";
@@ -6,6 +6,9 @@ import { ResilienceHub } from "../ResilienceHub";
 // Mock the hook
 jest.mock("@/hooks/useResilience", () => ({
   useSystemHealth: jest.fn(),
+  useVulnerabilityReport: jest.fn(),
+  useBurnoutRt: jest.fn(),
+  useUtilizationThreshold: jest.fn(),
 }));
 
 // Mock child components to isolate Hub testing
@@ -17,6 +20,9 @@ jest.mock("../components/UtilizationChart", () => ({
 }));
 jest.mock("../components/BurnoutDashboard", () => ({
   BurnoutDashboard: () => <div data-testid="burnout-component">Burnout</div>,
+}));
+jest.mock("../components/N1Analysis", () => ({
+  N1Analysis: () => <div data-testid="n1-component">N1 Analysis</div>,
 }));
 
 describe("ResilienceHub", () => {
@@ -53,6 +59,7 @@ describe("ResilienceHub", () => {
     expect(screen.getByTestId("metrics-component")).toBeInTheDocument();
     expect(screen.getByTestId("chart-component")).toBeInTheDocument();
     expect(screen.getByTestId("burnout-component")).toBeInTheDocument();
+    expect(screen.getByTestId("n1-component")).toBeInTheDocument();
   });
 
   it("refreshes data when refresh button is clicked", () => {
