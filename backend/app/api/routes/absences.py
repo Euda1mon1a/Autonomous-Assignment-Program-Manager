@@ -7,7 +7,7 @@ All business logic is in the service layer.
 from datetime import date
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 
 from app.controllers.absence_controller import AbsenceController
 from app.core.security import get_current_active_user
@@ -25,6 +25,7 @@ router = APIRouter()
 
 @router.get("", response_model=AbsenceListResponse)
 async def list_absences(
+    response: Response,
     start_date: date | None = Query(None, description="Filter absences starting from"),
     end_date: date | None = Query(None, description="Filter absences ending by"),
     person_id: UUID | None = Query(None, description="Filter by person"),
@@ -34,7 +35,20 @@ async def list_absences(
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """List absences with optional filters and pagination. Requires authentication."""
+    """List absences with optional filters and pagination.
+
+    Security:
+        Requires authentication.
+
+    PHI/OPSEC Warning:
+        This endpoint returns Protected Health Information (PHI) and OPSEC-sensitive
+        data including absence types (medical), deployment orders, and TDY locations.
+        X-Contains-PHI header is set.
+    """
+    # Add PHI warning headers
+    response.headers["X-Contains-PHI"] = "true"
+    response.headers["X-PHI-Fields"] = "person_id,absence_type,deployment_orders,tdy_location,notes"
+
     controller = AbsenceController(db)
     return controller.list_absences(
         start_date=start_date,
@@ -49,10 +63,24 @@ async def list_absences(
 @router.get("/{absence_id}", response_model=AbsenceResponse)
 async def get_absence(
     absence_id: UUID,
+    response: Response,
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Get an absence by ID. Requires authentication."""
+    """Get an absence by ID.
+
+    Security:
+        Requires authentication.
+
+    PHI/OPSEC Warning:
+        This endpoint returns Protected Health Information (PHI) and OPSEC-sensitive
+        data including absence types (medical), deployment orders, and TDY locations.
+        X-Contains-PHI header is set.
+    """
+    # Add PHI warning headers
+    response.headers["X-Contains-PHI"] = "true"
+    response.headers["X-PHI-Fields"] = "person_id,absence_type,deployment_orders,tdy_location,notes"
+
     controller = AbsenceController(db)
     return controller.get_absence(absence_id)
 

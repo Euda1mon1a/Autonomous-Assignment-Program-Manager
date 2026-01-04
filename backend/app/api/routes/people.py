@@ -6,7 +6,7 @@ All business logic is in the service layer.
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 
 from app.controllers.credential_controller import CredentialController
 from app.controllers.person_controller import PersonController
@@ -31,6 +31,7 @@ router = APIRouter()
 
 @router.get("", response_model=PersonListResponse)
 async def list_people(
+    response: Response,
     type: str | None = Query(
         None, description="Filter by type: 'resident' or 'faculty'"
     ),
@@ -41,6 +42,7 @@ async def list_people(
     """List all people (residents and faculty) with optional filters.
 
     Args:
+        response: FastAPI Response object for adding headers.
         type: Filter by person type ('resident' or 'faculty').
         pgy_level: Filter residents by PGY level (1, 2, or 3).
         db: Database session.
@@ -51,13 +53,22 @@ async def list_people(
 
     Security:
         Requires authentication.
+
+    PHI Warning:
+        This endpoint returns Protected Health Information (PHI) including
+        person names and email addresses. X-Contains-PHI header is set.
     """
+    # Add PHI warning headers
+    response.headers["X-Contains-PHI"] = "true"
+    response.headers["X-PHI-Fields"] = "name,email"
+
     controller = PersonController(db)
     return controller.list_people(type=type, pgy_level=pgy_level)
 
 
 @router.get("/residents", response_model=PersonListResponse)
 async def list_residents(
+    response: Response,
     pgy_level: int | None = Query(None, description="Filter by PGY level (1, 2, or 3)"),
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
@@ -65,6 +76,7 @@ async def list_residents(
     """List all residents with optional PGY level filter.
 
     Args:
+        response: FastAPI Response object for adding headers.
         pgy_level: Filter by PGY level (1, 2, or 3).
         db: Database session.
         current_user: Authenticated user.
@@ -74,13 +86,22 @@ async def list_residents(
 
     Security:
         Requires authentication.
+
+    PHI Warning:
+        This endpoint returns Protected Health Information (PHI) including
+        resident names and email addresses. X-Contains-PHI header is set.
     """
+    # Add PHI warning headers
+    response.headers["X-Contains-PHI"] = "true"
+    response.headers["X-PHI-Fields"] = "name,email"
+
     controller = PersonController(db)
     return controller.list_residents(pgy_level=pgy_level)
 
 
 @router.get("/faculty", response_model=PersonListResponse)
 async def list_faculty(
+    response: Response,
     specialty: str | None = Query(None, description="Filter by specialty"),
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
@@ -88,6 +109,7 @@ async def list_faculty(
     """List all faculty with optional specialty filter.
 
     Args:
+        response: FastAPI Response object for adding headers.
         specialty: Filter by medical specialty (e.g., 'Family Medicine', 'Pediatrics').
         db: Database session.
         current_user: Authenticated user.
@@ -97,7 +119,15 @@ async def list_faculty(
 
     Security:
         Requires authentication.
+
+    PHI Warning:
+        This endpoint returns Protected Health Information (PHI) including
+        faculty names and email addresses. X-Contains-PHI header is set.
     """
+    # Add PHI warning headers
+    response.headers["X-Contains-PHI"] = "true"
+    response.headers["X-PHI-Fields"] = "name,email"
+
     controller = PersonController(db)
     return controller.list_faculty(specialty=specialty)
 
@@ -105,6 +135,7 @@ async def list_faculty(
 @router.get("/{person_id}", response_model=PersonResponse)
 async def get_person(
     person_id: UUID,
+    response: Response,
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -112,6 +143,7 @@ async def get_person(
 
     Args:
         person_id: UUID of the person to retrieve.
+        response: FastAPI Response object for adding headers.
         db: Database session.
         current_user: Authenticated user.
 
@@ -121,9 +153,17 @@ async def get_person(
     Security:
         Requires authentication.
 
+    PHI Warning:
+        This endpoint returns Protected Health Information (PHI) including
+        person name and email address. X-Contains-PHI header is set.
+
     Raises:
         HTTPException: 404 if person not found.
     """
+    # Add PHI warning headers
+    response.headers["X-Contains-PHI"] = "true"
+    response.headers["X-PHI-Fields"] = "name,email"
+
     controller = PersonController(db)
     return controller.get_person(person_id)
 

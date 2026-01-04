@@ -7,7 +7,7 @@ All business logic is in the service layer.
 from datetime import date
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 
 from app.controllers.assignment_controller import AssignmentController
 from app.core.security import get_current_active_user, get_scheduler_user
@@ -26,6 +26,7 @@ router = APIRouter()
 
 @router.get("", response_model=AssignmentListResponse)
 async def list_assignments(
+    response: Response,
     start_date: date | None = Query(None, description="Filter from this date"),
     end_date: date | None = Query(None, description="Filter until this date"),
     person_id: UUID | None = Query(None, description="Filter by person"),
@@ -41,6 +42,7 @@ async def list_assignments(
     """List schedule assignments with filters and pagination.
 
     Args:
+        response: FastAPI Response object for adding headers.
         start_date: Filter assignments starting on or after this date.
         end_date: Filter assignments ending on or before this date.
         person_id: Filter assignments for a specific person.
@@ -56,7 +58,16 @@ async def list_assignments(
 
     Security:
         Requires authentication.
+
+    PHI/OPSEC Warning:
+        This endpoint returns schedule patterns that link person_id to duty assignments,
+        revealing operational patterns (OPSEC-sensitive for military medical personnel).
+        Notes and override_reason fields may contain PHI. X-Contains-PHI header is set.
     """
+    # Add PHI warning headers
+    response.headers["X-Contains-PHI"] = "true"
+    response.headers["X-PHI-Fields"] = "person_id,notes,override_reason"
+
     controller = AssignmentController(db)
     return controller.list_assignments(
         start_date=start_date,
@@ -72,6 +83,7 @@ async def list_assignments(
 @router.get("/{assignment_id}", response_model=AssignmentResponse)
 async def get_assignment(
     assignment_id: UUID,
+    response: Response,
     db=Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -79,6 +91,7 @@ async def get_assignment(
 
     Args:
         assignment_id: UUID of the assignment to retrieve.
+        response: FastAPI Response object for adding headers.
         db: Database session.
         current_user: Authenticated user.
 
@@ -88,9 +101,18 @@ async def get_assignment(
     Security:
         Requires authentication.
 
+    PHI/OPSEC Warning:
+        This endpoint returns schedule patterns that link person_id to duty assignments,
+        revealing operational patterns (OPSEC-sensitive for military medical personnel).
+        Notes and override_reason fields may contain PHI. X-Contains-PHI header is set.
+
     Raises:
         HTTPException: 404 if assignment not found.
     """
+    # Add PHI warning headers
+    response.headers["X-Contains-PHI"] = "true"
+    response.headers["X-PHI-Fields"] = "person_id,notes,override_reason"
+
     controller = AssignmentController(db)
     return controller.get_assignment(assignment_id)
 
