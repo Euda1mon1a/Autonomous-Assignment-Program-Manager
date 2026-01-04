@@ -12,3 +12,13 @@ export type { AlgorithmMetrics, AlgorithmComparisonChartProps } from './Algorith
 
 export { default as ClaudeCodeChat } from './ClaudeCodeChat';
 export { default as MCPCapabilitiesPanel } from './MCPCapabilitiesPanel';
+
+// Template management components
+export { TemplateTable } from './TemplateTable';
+export type { TemplateTableProps } from './TemplateTable';
+
+export { BulkActionsToolbar } from './BulkActionsToolbar';
+export type { BulkActionsToolbarProps } from './BulkActionsToolbar';
+
+export { PreferenceEditor } from './PreferenceEditor';
+export type { PreferenceEditorProps } from './PreferenceEditor';
