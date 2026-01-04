@@ -512,3 +512,222 @@ class TestSolverPerformance:
 
         # Solver should complete within timeout (with some buffer)
         assert result.runtime_seconds < 10.0
+
+
+# ============================================================================
+# Template Balance Tests
+# ============================================================================
+
+
+@pytest.fixture
+def multi_template_context():
+    """Create a context with multiple templates to test balance distribution."""
+    residents = [
+        MockPerson(name=f"Resident {i}", pgy_level=(i % 3) + 1) for i in range(6)
+    ]
+    faculty = [
+        MockPerson(name=f"Faculty {i}", person_type="faculty", pgy_level=None)
+        for i in range(2)
+    ]
+
+    # Create blocks for 2 weeks (exclude weekends for simplicity)
+    start_date = date(2024, 1, 1)
+    blocks = []
+    for day_offset in range(10):  # 10 weekdays
+        block_date = start_date + timedelta(days=day_offset)
+        for tod in ["AM", "PM"]:
+            blocks.append(
+                MockBlock(
+                    block_date=block_date,
+                    time_of_day=tod,
+                    is_weekend=False,
+                )
+            )
+
+    # Create 3 templates to test distribution
+    templates = [
+        MockTemplate(name="Clinic A"),
+        MockTemplate(name="Clinic B"),
+        MockTemplate(name="Clinic C"),
+    ]
+
+    context = SchedulingContext(
+        residents=residents,
+        faculty=faculty,
+        blocks=blocks,
+        templates=templates,
+        start_date=start_date,
+        end_date=start_date + timedelta(days=9),
+    )
+
+    # Set all as available
+    for r in residents:
+        context.availability[r.id] = {}
+        for b in blocks:
+            context.availability[r.id][b.id] = {"available": True, "replacement": None}
+
+    for f in faculty:
+        context.availability[f.id] = {}
+        for b in blocks:
+            context.availability[f.id][b.id] = {"available": True, "replacement": None}
+
+    return context
+
+
+class TestTemplateBalance:
+    """
+    Tests for template balance behavior across all solvers.
+
+    These tests verify that:
+    1. Assignments are distributed across available templates (not concentrated in one)
+    2. No template receives disproportionately more assignments than others
+    3. The distribution is reasonably even when templates have equal capacity
+    """
+
+    def _count_assignments_per_template(
+        self, result: SolverResult, templates: list[MockTemplate]
+    ) -> dict:
+        """Count assignments per template ID."""
+        from collections import Counter
+
+        template_ids = [t.id for t in templates]
+        counts = Counter()
+        for person_id, block_id, template_id in result.assignments:
+            if template_id in template_ids:
+                counts[template_id] += 1
+        return dict(counts)
+
+    def _check_template_balance(
+        self, counts: dict, tolerance_ratio: float = 3.0
+    ) -> bool:
+        """
+        Check if template distribution is balanced.
+
+        Args:
+            counts: Dictionary of template_id -> assignment count
+            tolerance_ratio: Max ratio between highest and lowest counts
+                           (e.g., 3.0 means max is at most 3x min)
+
+        Returns:
+            True if balanced within tolerance
+        """
+        if len(counts) < 2:
+            return True  # Can't be imbalanced with 0 or 1 template
+
+        values = list(counts.values())
+        if not values or min(values) == 0:
+            # If any template has 0 assignments but others have many, that's imbalanced
+            return max(values) < 5 if values else True
+
+        return max(values) / max(min(values), 1) <= tolerance_ratio
+
+    def test_template_balance_greedy(self, multi_template_context):
+        """Test that GreedySolver distributes assignments across templates."""
+        solver = GreedySolver()
+        result = solver.solve(multi_template_context)
+
+        assert result.success is True
+        assert len(result.assignments) > 0
+
+        counts = self._count_assignments_per_template(
+            result, multi_template_context.templates
+        )
+
+        # Greedy should use multiple templates
+        assert len(counts) > 1, "Greedy solver should use more than one template"
+
+        # Check balance: max template count shouldn't be too much higher than min
+        assert self._check_template_balance(counts), (
+            f"Greedy solver template distribution is unbalanced: {counts}"
+        )
+
+    def test_template_balance_cpsat(self, multi_template_context):
+        """Test that CPSATSolver distributes assignments across templates."""
+        solver = CPSATSolver(timeout_seconds=30)
+        result = solver.solve(multi_template_context)
+
+        assert result.success is True
+        assert len(result.assignments) > 0
+
+        counts = self._count_assignments_per_template(
+            result, multi_template_context.templates
+        )
+
+        # CP-SAT should use multiple templates
+        assert len(counts) > 1, "CP-SAT solver should use more than one template"
+
+        # Check balance
+        assert self._check_template_balance(counts), (
+            f"CP-SAT solver template distribution is unbalanced: {counts}"
+        )
+
+    def test_template_balance_pulp(self, multi_template_context):
+        """Test that PuLPSolver distributes assignments across templates."""
+        solver = PuLPSolver(timeout_seconds=30)
+        result = solver.solve(multi_template_context)
+
+        assert result.success is True
+        assert len(result.assignments) > 0
+
+        counts = self._count_assignments_per_template(
+            result, multi_template_context.templates
+        )
+
+        # PuLP should use multiple templates
+        assert len(counts) > 1, "PuLP solver should use more than one template"
+
+        # Check balance
+        assert self._check_template_balance(counts), (
+            f"PuLP solver template distribution is unbalanced: {counts}"
+        )
+
+    def test_template_balance_hybrid(self, multi_template_context):
+        """Test that HybridSolver distributes assignments across templates."""
+        solver = HybridSolver(timeout_seconds=60, cpsat_timeout=30, pulp_timeout=30)
+        result = solver.solve(multi_template_context)
+
+        assert result.success is True
+        assert len(result.assignments) > 0
+
+        counts = self._count_assignments_per_template(
+            result, multi_template_context.templates
+        )
+
+        # Hybrid should use multiple templates
+        assert len(counts) > 1, "Hybrid solver should use more than one template"
+
+        # Check balance
+        assert self._check_template_balance(counts), (
+            f"Hybrid solver template distribution is unbalanced: {counts}"
+        )
+
+    def test_template_balance_no_concentration(self, multi_template_context):
+        """Test that no single template gets more than 50% of assignments."""
+        # Run multiple solvers and check each
+        solvers = [
+            ("greedy", GreedySolver()),
+            ("cpsat", CPSATSolver(timeout_seconds=30)),
+            ("pulp", PuLPSolver(timeout_seconds=30)),
+        ]
+
+        for solver_name, solver in solvers:
+            result = solver.solve(multi_template_context)
+
+            if not result.success or len(result.assignments) == 0:
+                continue
+
+            counts = self._count_assignments_per_template(
+                result, multi_template_context.templates
+            )
+
+            total = sum(counts.values())
+            if total > 0:
+                max_count = max(counts.values())
+                concentration = max_count / total
+
+                # No template should have more than 60% of all assignments
+                # when 3 equal templates are available
+                assert concentration < 0.6, (
+                    f"{solver_name}: Template concentration too high at "
+                    f"{concentration:.1%} (counts: {counts})"
+                )

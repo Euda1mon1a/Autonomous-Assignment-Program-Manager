@@ -129,6 +129,40 @@ The `/mcp` command shows "not authenticated" even when tools work fine. This is 
 
 ## Feature Requests - Pending Investigation
 
+### Admin GUI: Bulk Rotation Template Editing
+**Priority:** Medium
+**Added:** 2026-01-04
+**Status:** TODO - Feature Request
+
+**Request:** Add admin interface for bulk editing rotation templates.
+
+**Use Cases:**
+- [ ] View all rotation templates in a table/grid
+- [ ] Bulk enable/disable templates
+- [ ] Bulk edit capacity, supervision requirements
+- [ ] Bulk assign activity_type (outpatient, clinic, inpatient, etc.)
+- [ ] Filter/sort templates by type, status, capacity
+- [ ] Import/export template configurations
+
+**Current State:**
+- Rotation templates managed via database/API only
+- No admin UI for template management
+- Individual template editing requires direct API calls
+
+**Implementation Considerations:**
+- Add `/admin/rotation-templates` page
+- CRUD operations via existing API endpoints
+- Bulk actions (select multiple → apply change)
+- Confirmation dialogs for destructive actions
+- Audit logging for template changes
+
+**Related Files:**
+- `backend/app/models/rotation_template.py` - Model
+- `backend/app/api/routes/rotation_templates.py` - API endpoints
+- `frontend/src/app/admin/` - Admin pages location
+
+---
+
 ### ACGME Rest Hours - PGY-Level Differentiation
 **Priority:** Medium
 **Added:** 2025-12-30
@@ -427,10 +461,19 @@ From: [date] To: [date] Group by: [dropdown] ☑ Include FMIT [Filters]
 | **PuLP** | 5/5 pass | Operational | 9,9 distribution |
 | **Hybrid** | 5/5 pass | Operational | Fallback chain working |
 
-**Test Coverage Gap Identified:**
-- No explicit balance behavior tests exist
-- Balance is verified implicitly through assignment distribution
-- Recommendation: Add dedicated `test_template_balance_*` tests to each solver's test class
+**Test Coverage Gap - FIXED (2026-01-04):**
+- ~~No explicit balance behavior tests exist~~ RESOLVED
+- ~~Balance is verified implicitly through assignment distribution~~ RESOLVED
+- ~~Recommendation: Add dedicated `test_template_balance_*` tests~~ RESOLVED
+
+**Implementation:** Added `TestTemplateBalance` class with 5 dedicated tests:
+- `test_template_balance_greedy` - Verifies GreedySolver distributes across templates
+- `test_template_balance_cpsat` - Verifies CPSATSolver distributes across templates
+- `test_template_balance_pulp` - Verifies PuLPSolver distributes across templates
+- `test_template_balance_hybrid` - Verifies HybridSolver distributes across templates
+- `test_template_balance_no_concentration` - Ensures no template exceeds 60% of assignments
+
+**Location:** `backend/tests/test_solvers.py` (lines 517-733)
 
 ---
 
@@ -470,17 +513,18 @@ From: [date] To: [date] Group by: [dropdown] ☑ Include FMIT [Filters]
 - [x] Updated all cross-references in docs/sessions/README.md, docs/README.md, CHANGELOG.md
 - [x] Verified .gitignore is properly configured (no committed secrets/artifacts)
 
-### Broken Documentation Links (Need Decision)
+### Broken Documentation Links - FIXED
+**Status:** RESOLVED (verified 2026-01-04)
 
-The following links in `README.md` point to non-existent files:
+~~The following links in `README.md` point to non-existent files:~~
 
-| Broken Link | Suggested Fix |
-|-------------|---------------|
-| `docs/api/endpoints/credentials.md` (line 81) | → `docs/api/authentication.md` |
-| `docs/SETUP.md` (line 180) | → `docs/getting-started/installation.md` |
-| `docs/API_REFERENCE.md` (line 376) | → `docs/api/index.md` |
+| Original Broken Link | Fixed To | Status |
+|---------------------|----------|--------|
+| ~~`docs/api/endpoints/credentials.md`~~ | `docs/api/authentication.md` (line 113) | FIXED |
+| ~~`docs/SETUP.md`~~ | `docs/getting-started/installation.md` (line 298) | FIXED |
+| ~~`docs/API_REFERENCE.md`~~ | `docs/api/index.md` (line 426, 530) | FIXED |
 
-**Decision needed:** Fix links to existing files, or create the missing files?
+**Verification:** All README.md links now point to existing documentation files. The fixes were applied in a previous session but this TODO was not updated.
 
 ### Big Ideas (Deferred for Morning Review)
 
@@ -676,10 +720,24 @@ Pre-existing TypeScript errors discovered during Session 025 audit:
 
 ### 🟢 MEDIUM PRIORITY - Post-Launch Sprint
 
-#### 13. Frontend Accessibility Gaps
-- Only 24/80 core components have ARIA attributes
-- Missing `<thead>` in ScheduleGrid tables
-- Missing `aria-label` on icon-only buttons
+#### 13. Frontend Accessibility Gaps - AUDIT UPDATE (2026-01-04)
+**Status:** Partially addressed, some items were phantom tasks
+
+| Issue | Status | Notes |
+|-------|--------|-------|
+| ~~Missing `<thead>` in ScheduleGrid~~ | RESOLVED | `ScheduleHeader.tsx` line 35 uses proper `<thead>` |
+| ~~Missing `aria-label` on icon-only buttons~~ | RESOLVED | `IconButton` component enforces `aria-label` as required prop (line 105) |
+| ARIA attributes coverage | IN PROGRESS | Navigation.tsx, Button.tsx, ScheduleGrid.tsx have proper ARIA |
+
+**Components with proper ARIA verified:**
+- `Navigation.tsx`: Skip-to-content link, nav role, aria-current, aria-labels on icons
+- `Button.tsx`: aria-busy, aria-disabled
+- `IconButton.tsx`: Enforces aria-label as required prop
+- `ScheduleHeader.tsx`: Proper `<thead>`, scope attributes on `<th>`
+- `ScheduleGrid.tsx`: role="grid", aria-label, role="row", role="rowheader"
+- `LoadingSpinner`: role="status", aria-live, aria-busy
+
+**Remaining work:** Audit remaining 70+ components for ARIA compliance (medium priority)
 
 #### 14. Token Refresh Not Implemented - ✅ RESOLVED
 **Priority:** MEDIUM → RESOLVED
@@ -733,12 +791,19 @@ Infrastructure is wired; SMTP credentials are environment-specific.
 - ✅ Enum: `ActivityActionType` covers user, auth, schedule, swap, and settings actions
 - ✅ Table deployed: Database migration runs on startup, table exists in production
 
-**Wiring Status:**
-- [ ] Wire ActivityLog into `admin_users.py` (placeholder `_log_activity()` remains)
-- [ ] Add activity logging to schedule modification endpoints
-- [ ] Create activity log query endpoint
+**Wiring Status:** FULLY WIRED (verified 2026-01-04)
+- [x] `_log_activity()` in `admin_users.py` - 8 call sites fully implemented:
+  - Line 265: USER_CREATED on user creation
+  - Line 399: USER_UPDATED on user updates
+  - Line 449: USER_DELETED on user deletion
+  - Line 512: USER_LOCKED/UNLOCKED on toggle
+  - Line 547: Lock/unlock with reason
+  - Line 618: INVITE_RESENT on resend
+  - Line 834: Bulk operations
+- [x] `GET /admin/users/activity-log` endpoint implemented (line 661)
+- [ ] Add activity logging to schedule modification endpoints (enhancement)
 
-**Note:** Core infrastructure complete and deployed. Wiring into controllers is incremental work that can proceed independently.
+**Note:** Admin audit trail fully operational. Schedule endpoint logging is an enhancement, not a blocker.
 
 #### 19. Penrose Efficiency - Placeholder Logic
 **Priority:** MEDIUM
