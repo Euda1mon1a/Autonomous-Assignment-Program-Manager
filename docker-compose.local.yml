@@ -120,6 +120,8 @@ services:
     volumes:
       # Mount source code for hot reload
       - ./backend:/app
+      # Mount scripts for seed/admin commands
+      - ./scripts:/scripts
       # Don't override these directories (caches only - NOT alembic/versions!)
       - /app/__pycache__
       - /app/.pytest_cache
