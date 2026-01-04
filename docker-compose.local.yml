@@ -301,7 +301,8 @@ services:
 
       # Credentials - uses hardcoded local dev credentials
       # These match the default admin user created during db seed
-      API_USERNAME: admin@example.com
+      # NOTE: Use username "admin", NOT email "admin@example.com"
+      API_USERNAME: admin
       API_PASSWORD: admin123
 
       # Logging

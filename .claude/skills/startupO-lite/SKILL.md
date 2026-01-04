@@ -28,11 +28,17 @@ git fetch origin main 2>/dev/null && git rev-list --count HEAD..origin/main 2>/d
 PR=$(gh pr view --json number -q '.number' 2>/dev/null) && [ -n "$PR" ] && gh api repos/$(gh repo view --json nameWithOwner -q '.nameWithOwner')/pulls/$PR/comments --jq '[.[] | select(.user.login == "chatgpt-codex-connector[bot]")] | length' 2>/dev/null
 ```
 
-### 2. Stack Health
+### 2. Stack + MCP Health
 
 ```bash
 ./scripts/stack-health.sh 2>/dev/null | grep -E "^(Overall|CRITICAL)" || echo "Run ./scripts/stack-health.sh"
+
+# CRITICAL: Check MCP/RAG
+MCP_STATUS=$(docker inspect scheduler-local-mcp --format '{{.State.Health.Status}}' 2>/dev/null || echo "not running")
+[ "$MCP_STATUS" != "healthy" ] && echo "⚠️ MCP: $MCP_STATUS - NO RAG ACCESS! Run ./scripts/start-local.sh"
 ```
+
+Then call `mcp__residency-scheduler__rag_health` - if it fails, you're flying blind.
 
 ### 3. Output
 
@@ -40,6 +46,7 @@ PR=$(gh pr view --json number -q '.number' 2>/dev/null) && [ -n "$PR" ] && gh ap
 ## ORCHESTRATOR Lite Active
 
 **Branch:** `[branch]` | **Status:** [Clean/Dirty] | **Behind:** [N] | **Codex:** [N/No PR]
+**MCP:** [healthy/⚠️ unavailable] | **RAG:** [X docs / ⚠️ offline]
 
 ### Agents
 | Agent | Domain | Agent | Domain |

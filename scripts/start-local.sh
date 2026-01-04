@@ -90,6 +90,44 @@ else
     echo -e "${GREEN}MCP server healthy - Claude Code has full RAG/tool access${NC}"
 fi
 
+# Ensure admin user exists (required for MCP auth)
+echo ""
+echo -e "${YELLOW}Checking admin user for MCP authentication...${NC}"
+ADMIN_CHECK=$(docker exec scheduler-local-backend python -c "
+from app.db.session import SessionLocal
+from app.models.user import User
+db = SessionLocal()
+admin = db.query(User).filter(User.username == 'admin').first()
+print('exists' if admin else 'missing')
+db.close()
+" 2>/dev/null || echo "error")
+
+if [ "$ADMIN_CHECK" = "missing" ]; then
+    echo -e "${YELLOW}Admin user not found - creating...${NC}"
+    docker exec scheduler-local-backend python -c "
+from app.db.session import SessionLocal
+from app.models.user import User
+from app.core.security import get_password_hash
+from uuid import uuid4
+db = SessionLocal()
+admin = User(
+    id=str(uuid4()),
+    username='admin',
+    hashed_password=get_password_hash('admin123'),
+    role='admin',
+    is_active=True
+)
+db.add(admin)
+db.commit()
+print('created')
+db.close()
+" 2>/dev/null && echo -e "${GREEN}Admin user created (admin/admin123)${NC}" || echo -e "${RED}Failed to create admin user${NC}"
+elif [ "$ADMIN_CHECK" = "exists" ]; then
+    echo -e "${GREEN}Admin user exists - MCP can authenticate${NC}"
+else
+    echo -e "${YELLOW}Could not verify admin user (backend may still be starting)${NC}"
+fi
+
 echo ""
 echo -e "${GREEN}Access Points:${NC}"
 echo "  Frontend:  http://localhost:3000"
