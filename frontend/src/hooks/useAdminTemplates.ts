@@ -24,6 +24,8 @@ import type {
   BatchTemplateUpdateRequest,
   BatchTemplateResponse,
   BatchTemplateCreateRequest,
+  BatchArchiveRequest,
+  BatchRestoreRequest,
   ConflictCheckRequest,
   ConflictCheckResponse,
   TemplateExportRequest,
@@ -62,19 +64,23 @@ export function useAdminTemplates(
   options?: Omit<
     UseQueryOptions<RotationTemplateListResponse, ApiError>,
     'queryKey' | 'queryFn'
-  >
+  > & { includeArchived?: boolean }
 ) {
+  const { includeArchived = false, ...queryOptions } = options || {};
   const filters = activityType ? { activity_type: activityType } : undefined;
 
   return useQuery<RotationTemplateListResponse, ApiError>({
     queryKey: adminTemplatesQueryKeys.list(filters),
     queryFn: async () => {
-      const params = activityType ? `?activity_type=${activityType}` : '';
-      return get<RotationTemplateListResponse>(`/rotation-templates${params}`);
+      const params = new URLSearchParams();
+      if (activityType) params.append('activity_type', activityType);
+      if (includeArchived) params.append('include_archived', 'true');
+      const queryString = params.toString();
+      return get<RotationTemplateListResponse>(`/rotation-templates${queryString ? `?${queryString}` : ''}`);
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
-    ...options,
+    ...queryOptions,
   });
 }
 
@@ -377,6 +383,92 @@ export function useExportTemplates() {
   return useMutation<TemplateExportResponse, ApiError, TemplateExportRequest>({
     mutationFn: async (request) => {
       return post<TemplateExportResponse>('/rotation-templates/export', request);
+    },
+  });
+}
+
+// ============================================================================
+// Archive/Restore Hooks
+// ============================================================================
+
+/**
+ * Archives a single rotation template (soft delete).
+ */
+export function useArchiveTemplate() {
+  const queryClient = useQueryClient();
+
+  return useMutation<RotationTemplate, ApiError, string>({
+    mutationFn: async (templateId) => {
+      return put<RotationTemplate>(`/rotation-templates/${templateId}/archive`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminTemplatesQueryKeys.all,
+      });
+    },
+  });
+}
+
+/**
+ * Restores a single archived rotation template.
+ */
+export function useRestoreTemplate() {
+  const queryClient = useQueryClient();
+
+  return useMutation<RotationTemplate, ApiError, string>({
+    mutationFn: async (templateId) => {
+      return put<RotationTemplate>(`/rotation-templates/${templateId}/restore`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminTemplatesQueryKeys.all,
+      });
+    },
+  });
+}
+
+/**
+ * Archives multiple rotation templates atomically using batch endpoint.
+ * All succeed or all fail - no partial archives.
+ */
+export function useBulkArchiveTemplates() {
+  const queryClient = useQueryClient();
+
+  return useMutation<BatchTemplateResponse, ApiError, string[]>({
+    mutationFn: async (templateIds) => {
+      const request: BatchArchiveRequest = {
+        template_ids: templateIds,
+        dry_run: false,
+      };
+      return put<BatchTemplateResponse>('/rotation-templates/batch/archive', request);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminTemplatesQueryKeys.all,
+      });
+    },
+  });
+}
+
+/**
+ * Restores multiple archived rotation templates atomically using batch endpoint.
+ * All succeed or all fail - no partial restores.
+ */
+export function useBulkRestoreTemplates() {
+  const queryClient = useQueryClient();
+
+  return useMutation<BatchTemplateResponse, ApiError, string[]>({
+    mutationFn: async (templateIds) => {
+      const request: BatchRestoreRequest = {
+        template_ids: templateIds,
+        dry_run: false,
+      };
+      return put<BatchTemplateResponse>('/rotation-templates/batch/restore', request);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminTemplatesQueryKeys.all,
+      });
     },
   });
 }

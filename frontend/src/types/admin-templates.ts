@@ -39,6 +39,9 @@ export interface RotationTemplate {
   supervision_required: boolean;
   max_supervision_ratio: number | null;
   created_at: string;
+  is_archived?: boolean;
+  archived_at?: string | null;
+  archived_by?: string | null;
 }
 
 export interface RotationTemplateListResponse {
