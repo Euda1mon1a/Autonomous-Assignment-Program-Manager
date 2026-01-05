@@ -330,3 +330,167 @@ class RotationTemplateService:
     async def rollback(self) -> None:
         """Rollback the current transaction."""
         await self.db.rollback()
+
+    # =========================================================================
+    # Batch Operations
+    # =========================================================================
+
+    async def batch_delete(
+        self, template_ids: list[UUID], dry_run: bool = False
+    ) -> dict[str, Any]:
+        """Atomically delete multiple rotation templates.
+
+        This operation is all-or-nothing: if any template doesn't exist or
+        cannot be deleted, the entire batch is rolled back.
+
+        Args:
+            template_ids: List of template UUIDs to delete
+            dry_run: If True, validate only without deleting
+
+        Returns:
+            Dict with operation results:
+            - operation_type: "delete"
+            - total: Number of requested deletions
+            - succeeded: Number of successful deletions
+            - failed: Number of failed deletions
+            - results: Per-template results
+            - dry_run: Whether this was a dry run
+
+        Raises:
+            ValueError: If any template not found (atomic rollback)
+        """
+        results = []
+        templates_to_delete = []
+
+        # Phase 1: Validate all templates exist
+        for idx, template_id in enumerate(template_ids):
+            template = await self.get_template_by_id(template_id)
+            if not template:
+                results.append(
+                    {
+                        "index": idx,
+                        "template_id": template_id,
+                        "success": False,
+                        "error": f"Template with ID {template_id} not found",
+                    }
+                )
+            else:
+                templates_to_delete.append((idx, template_id, template))
+                results.append(
+                    {
+                        "index": idx,
+                        "template_id": template_id,
+                        "success": True,
+                        "error": None,
+                    }
+                )
+
+        # Check for failures
+        failures = [r for r in results if not r["success"]]
+        if failures:
+            return {
+                "operation_type": "delete",
+                "total": len(template_ids),
+                "succeeded": 0,
+                "failed": len(failures),
+                "results": results,
+                "dry_run": dry_run,
+            }
+
+        # Phase 2: Execute deletions (if not dry run)
+        if not dry_run:
+            for idx, template_id, template in templates_to_delete:
+                await self.db.delete(template)
+            await self.db.flush()
+
+        return {
+            "operation_type": "delete",
+            "total": len(template_ids),
+            "succeeded": len(templates_to_delete),
+            "failed": 0,
+            "results": results,
+            "dry_run": dry_run,
+        }
+
+    async def batch_update(
+        self, updates: list[dict[str, Any]], dry_run: bool = False
+    ) -> dict[str, Any]:
+        """Atomically update multiple rotation templates.
+
+        This operation is all-or-nothing: if any template doesn't exist or
+        validation fails, the entire batch is rolled back.
+
+        Args:
+            updates: List of dicts, each with:
+                - template_id: UUID of template to update
+                - updates: Dict of field updates
+            dry_run: If True, validate only without updating
+
+        Returns:
+            Dict with operation results:
+            - operation_type: "update"
+            - total: Number of requested updates
+            - succeeded: Number of successful updates
+            - failed: Number of failed updates
+            - results: Per-template results
+            - dry_run: Whether this was a dry run
+
+        Raises:
+            ValueError: If any template not found or validation fails
+        """
+        results = []
+        templates_to_update = []
+
+        # Phase 1: Validate all templates exist and collect updates
+        for idx, update_item in enumerate(updates):
+            template_id = update_item["template_id"]
+            update_data = update_item["updates"]
+
+            template = await self.get_template_by_id(template_id)
+            if not template:
+                results.append(
+                    {
+                        "index": idx,
+                        "template_id": template_id,
+                        "success": False,
+                        "error": f"Template with ID {template_id} not found",
+                    }
+                )
+            else:
+                templates_to_update.append((idx, template_id, template, update_data))
+                results.append(
+                    {
+                        "index": idx,
+                        "template_id": template_id,
+                        "success": True,
+                        "error": None,
+                    }
+                )
+
+        # Check for failures
+        failures = [r for r in results if not r["success"]]
+        if failures:
+            return {
+                "operation_type": "update",
+                "total": len(updates),
+                "succeeded": 0,
+                "failed": len(failures),
+                "results": results,
+                "dry_run": dry_run,
+            }
+
+        # Phase 2: Apply updates (if not dry run)
+        if not dry_run:
+            for idx, template_id, template, update_data in templates_to_update:
+                for field, value in update_data.items():
+                    setattr(template, field, value)
+            await self.db.flush()
+
+        return {
+            "operation_type": "update",
+            "total": len(updates),
+            "succeeded": len(templates_to_update),
+            "failed": 0,
+            "results": results,
+            "dry_run": dry_run,
+        }

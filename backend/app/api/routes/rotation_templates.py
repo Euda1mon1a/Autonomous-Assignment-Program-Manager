@@ -17,6 +17,9 @@ from app.db.session import get_async_db
 from app.models.rotation_template import RotationTemplate
 from app.models.user import User
 from app.schemas.rotation_template import (
+    BatchTemplateDeleteRequest,
+    BatchTemplateResponse,
+    BatchTemplateUpdateRequest,
     RotationTemplateCreate,
     RotationTemplateListResponse,
     RotationTemplateResponse,
@@ -122,6 +125,148 @@ async def delete_rotation_template(
 
     db.delete(template)
     await db.commit()
+
+
+# =============================================================================
+# Batch Operation Endpoints
+# =============================================================================
+
+
+@router.delete("/batch", response_model=BatchTemplateResponse)
+async def batch_delete_rotation_templates(
+    request: BatchTemplateDeleteRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Delete multiple rotation templates atomically.
+
+    Features:
+    - Delete up to 100 templates at once
+    - Dry-run mode for validation without deleting
+    - Atomic operation (all or nothing)
+
+    Args:
+        request: BatchTemplateDeleteRequest with list of template IDs
+        db: Database session
+        current_user: Current authenticated user
+
+    Returns:
+        BatchTemplateResponse with operation results
+
+    Raises:
+        HTTPException: 400 if any template not found
+
+    Example:
+        ```json
+        {
+          "template_ids": ["uuid1", "uuid2", "uuid3"],
+          "dry_run": false
+        }
+        ```
+    """
+    service = RotationTemplateService(db)
+
+    try:
+        result = await service.batch_delete(request.template_ids, request.dry_run)
+
+        # If any failed, return 400
+        if result["failed"] > 0:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "message": "Batch delete operation failed",
+                    "failed": result["failed"],
+                    "results": result["results"],
+                },
+            )
+
+        await service.commit()
+        return BatchTemplateResponse(**result)
+
+    except HTTPException:
+        await service.rollback()
+        raise
+    except Exception as e:
+        await service.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.put("/batch", response_model=BatchTemplateResponse)
+async def batch_update_rotation_templates(
+    request: BatchTemplateUpdateRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Update multiple rotation templates atomically.
+
+    Features:
+    - Update up to 100 templates at once
+    - Each template can have different update values
+    - Dry-run mode for validation without updating
+    - Atomic operation (all or nothing)
+
+    Args:
+        request: BatchTemplateUpdateRequest with list of template updates
+        db: Database session
+        current_user: Current authenticated user
+
+    Returns:
+        BatchTemplateResponse with operation results
+
+    Raises:
+        HTTPException: 400 if any template not found or validation fails
+
+    Example:
+        ```json
+        {
+          "templates": [
+            {
+              "template_id": "uuid1",
+              "updates": {"max_residents": 5, "supervision_required": true}
+            },
+            {
+              "template_id": "uuid2",
+              "updates": {"activity_type": "inpatient"}
+            }
+          ],
+          "dry_run": false
+        }
+        ```
+    """
+    service = RotationTemplateService(db)
+
+    try:
+        # Convert request to dict format expected by service
+        updates = [
+            {
+                "template_id": item.template_id,
+                "updates": item.updates.model_dump(exclude_unset=True),
+            }
+            for item in request.templates
+        ]
+
+        result = await service.batch_update(updates, request.dry_run)
+
+        # If any failed, return 400
+        if result["failed"] > 0:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "message": "Batch update operation failed",
+                    "failed": result["failed"],
+                    "results": result["results"],
+                },
+            )
+
+        await service.commit()
+        return BatchTemplateResponse(**result)
+
+    except HTTPException:
+        await service.rollback()
+        raise
+    except Exception as e:
+        await service.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 # =============================================================================

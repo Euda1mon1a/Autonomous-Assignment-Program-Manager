@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class RotationTemplateBase(BaseModel):
@@ -157,3 +157,71 @@ class RotationTemplateListResponse(BaseModel):
 
     items: list[RotationTemplateResponse]
     total: int
+
+
+# =============================================================================
+# Batch Operation Schemas
+# =============================================================================
+
+
+class BatchTemplateDeleteRequest(BaseModel):
+    """Request schema for batch delete of rotation templates.
+
+    Performs atomic deletion of multiple templates - all succeed or all fail.
+    """
+
+    template_ids: list[UUID] = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="List of template IDs to delete (max 100)",
+    )
+    dry_run: bool = Field(
+        default=False, description="If True, validate only without deleting"
+    )
+
+
+class BatchTemplateUpdateItem(BaseModel):
+    """Single template update in a batch operation."""
+
+    template_id: UUID
+    updates: RotationTemplateUpdate
+
+
+class BatchTemplateUpdateRequest(BaseModel):
+    """Request schema for batch update of rotation templates.
+
+    Performs atomic update of multiple templates - all succeed or all fail.
+    """
+
+    templates: list[BatchTemplateUpdateItem] = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="List of template updates (max 100)",
+    )
+    dry_run: bool = Field(
+        default=False, description="If True, validate only without updating"
+    )
+
+
+class BatchOperationResult(BaseModel):
+    """Result for a single operation in a batch."""
+
+    index: int = Field(..., description="Index of the operation in the batch")
+    template_id: UUID
+    success: bool
+    error: str | None = None
+
+
+class BatchTemplateResponse(BaseModel):
+    """Response schema for batch template operations."""
+
+    operation_type: str  # "delete" or "update"
+    total: int = Field(..., description="Total number of operations requested")
+    succeeded: int = Field(..., description="Number of successful operations")
+    failed: int = Field(..., description="Number of failed operations")
+    results: list[BatchOperationResult] = Field(
+        default_factory=list, description="Detailed results for each operation"
+    )
+    dry_run: bool = Field(default=False, description="Whether this was a dry run")
