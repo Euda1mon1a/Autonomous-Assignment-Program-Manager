@@ -15,6 +15,9 @@ from app.db.session import get_async_db
 from app.models.user import User
 from app.schemas.absence import (
     AbsenceCreate,
+    AbsenceBulkApply,
+    AbsenceBulkCreate,
+    AbsenceBulkPreview,
     AbsenceListResponse,
     AbsenceResponse,
     AbsenceUpdate,
@@ -121,3 +124,71 @@ async def delete_absence(
     """Delete an absence. Requires authentication."""
     controller = AbsenceController(db)
     await controller.delete_absence(absence_id)
+
+
+# ============================================================================
+# Bulk Import Endpoints
+# ============================================================================
+
+
+@router.post(
+    "/bulk/preview",
+    response_model=AbsenceBulkPreview,
+    summary="Preview bulk absence import",
+    description="Validate bulk absences and return preview with errors and summary.",
+)
+async def preview_bulk_absences(
+    bulk_data: AbsenceBulkCreate,
+    response: Response,
+    db=Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Preview bulk absence import before applying.
+
+    Validates each absence in the list and returns:
+    - valid: List of absences that passed validation
+    - errors: List of validation errors with index, field, and message
+    - summary: Counts by type, date range, unique persons
+
+    Security:
+        Requires authentication.
+
+    PHI/OPSEC Warning:
+        This endpoint processes Protected Health Information (PHI) and OPSEC-sensitive
+        data including absence types (medical), deployment orders, and TDY locations.
+        X-Contains-PHI header is set.
+    """
+    # Add PHI warning headers
+    response.headers["X-Contains-PHI"] = "true"
+    response.headers["X-PHI-Fields"] = (
+        "person_id,absence_type,deployment_orders,tdy_location,notes"
+    )
+
+    controller = AbsenceController(db)
+    return controller.preview_bulk_absences(bulk_data)
+
+
+@router.post(
+    "/bulk/apply",
+    response_model=AbsenceBulkApply,
+    status_code=201,
+    summary="Apply bulk absence import",
+    description="Create validated absences from bulk import.",
+)
+async def apply_bulk_absences(
+    bulk_data: AbsenceBulkCreate,
+    db=Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Apply bulk absence import.
+
+    Creates all valid absences, skipping those with conflicts. Returns:
+    - created: Number of absences successfully created
+    - skipped: Number of absences skipped due to validation errors or conflicts
+    - errors: List of errors encountered during apply
+
+    Security:
+        Requires authentication.
+    """
+    controller = AbsenceController(db)
+    return controller.apply_bulk_absences(bulk_data)

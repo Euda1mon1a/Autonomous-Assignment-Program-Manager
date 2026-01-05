@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Plus, Calendar, List, RefreshCw } from 'lucide-react'
+import { Plus, Calendar, List, RefreshCw, Upload } from 'lucide-react'
 import { useAbsences, usePeople, useDeleteAbsence, useUpdateAbsence } from '@/lib/hooks'
 import { CardSkeleton } from '@/components/skeletons'
 import { AddAbsenceModal } from '@/components/AddAbsenceModal'
@@ -12,6 +12,7 @@ import { Select, DatePicker, TextArea } from '@/components/forms'
 import { ExportButton } from '@/components/ExportButton'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { useToast } from '@/contexts/ToastContext'
+import { BulkImportModal } from '@/features/import-export/BulkImportModal'
 import type { Absence } from '@/types/api'
 
 const absenceExportColumns = [
@@ -47,6 +48,7 @@ export default function AbsencesPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('calendar')
   const [typeFilter, setTypeFilter] = useState<AbsenceTypeFilter>('all')
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false)
   const [editingAbsence, setEditingAbsence] = useState<Absence | null>(null)
   const [absenceToDelete, setAbsenceToDelete] = useState<Absence | null>(null)
 
@@ -142,6 +144,13 @@ export default function AbsencesPage() {
             filename="absences"
             columns={absenceExportColumns}
           />
+          <button
+            onClick={() => setIsBulkImportModalOpen(true)}
+            className="btn-secondary flex items-center gap-2"
+          >
+            <Upload className="w-4 h-4" />
+            Bulk Import
+          </button>
           <button
             onClick={() => setIsAddModalOpen(true)}
             className="btn-primary flex items-center gap-2"
@@ -309,6 +318,18 @@ export default function AbsencesPage() {
         cancelLabel="Cancel"
         variant="danger"
         isLoading={deleteAbsence.isPending}
+      />
+
+      {/* Bulk Import Modal */}
+      <BulkImportModal
+        isOpen={isBulkImportModalOpen}
+        onClose={() => setIsBulkImportModalOpen(false)}
+        onSuccess={() => {
+          refetch()
+          toast.success('Absences imported successfully')
+        }}
+        defaultDataType="absences"
+        title="Bulk Import Absences"
       />
     </div>
   )
