@@ -5,8 +5,9 @@ Provides test database setup, API client, and common fixtures
 for testing the Residency Scheduler API.
 """
 
-from collections.abc import Generator
+from collections.abc import AsyncGenerator, Generator
 from datetime import date, timedelta
+from typing import Any
 from uuid import uuid4
 
 import pytest
@@ -17,7 +18,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.core.security import get_password_hash
 from app.db.base import Base
-from app.db.session import get_db
+from app.db.session import get_async_db, get_db
 from app.main import app
 from app.models.absence import Absence
 from app.models.assignment import Assignment
@@ -38,6 +39,53 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 # Configure mappers to ensure SQLAlchemy-Continuum creates version tables
 configure_mappers()
+
+
+class AsyncSessionWrapper:
+    """Wraps a sync Session to provide async-compatible interface for tests.
+
+    This allows sync tests using TestClient to work with code that expects
+    AsyncSession methods. The wrapper makes sync methods awaitable.
+    """
+
+    def __init__(self, sync_session: Session):
+        self._session = sync_session
+
+    async def execute(self, statement, *args, **kwargs):
+        """Execute statement and return result (makes sync execute awaitable)."""
+        return self._session.execute(statement, *args, **kwargs)
+
+    async def commit(self):
+        """Commit transaction."""
+        self._session.commit()
+
+    async def rollback(self):
+        """Rollback transaction."""
+        self._session.rollback()
+
+    async def flush(self):
+        """Flush session."""
+        self._session.flush()
+
+    async def refresh(self, obj, *args, **kwargs):
+        """Refresh object from database."""
+        self._session.refresh(obj, *args, **kwargs)
+
+    async def delete(self, obj):
+        """Delete object."""
+        self._session.delete(obj)
+
+    def add(self, obj):
+        """Add object to session."""
+        self._session.add(obj)
+
+    async def close(self):
+        """Close session."""
+        self._session.close()
+
+    def __getattr__(self, name):
+        """Proxy attribute access to underlying session."""
+        return getattr(self._session, name)
 
 
 def override_get_db() -> Generator[Session, None, None]:
@@ -69,8 +117,23 @@ def db() -> Generator[Session, None, None]:
 def client(db: Session) -> Generator[TestClient, None, None]:
     """
     Create a test client with database dependency override.
+
+    Overrides both sync and async database dependencies to use
+    the same in-memory SQLite database for tests, wrapped for async
+    compatibility.
     """
+    # Override sync session
     app.dependency_overrides[get_db] = lambda: db
+
+    # Create async-compatible wrapper
+    async_wrapper = AsyncSessionWrapper(db)
+
+    # Override async session with wrapped session
+    async def get_async_db_override() -> AsyncGenerator[Any, None]:
+        yield async_wrapper
+
+    app.dependency_overrides[get_async_db] = get_async_db_override
+
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
