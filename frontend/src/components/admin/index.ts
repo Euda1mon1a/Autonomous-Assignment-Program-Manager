@@ -22,3 +22,37 @@ export type { BulkActionsToolbarProps } from './BulkActionsToolbar';
 
 export { PreferenceEditor } from './PreferenceEditor';
 export type { PreferenceEditorProps } from './PreferenceEditor';
+
+// Inline editing components
+export { EditableCell } from './EditableCell';
+export type { EditableCellProps, EditableCellType, SelectOption } from './EditableCell';
+
+export { ColorPickerCell } from './ColorPickerCell';
+export type { ColorPickerCellProps } from './ColorPickerCell';
+
+export { BulkProgressModal } from './BulkProgressModal';
+export type {
+  BulkProgressModalProps,
+  BulkProgressItem,
+  BulkOperationType,
+} from './BulkProgressModal';
+
+// Bulk creation modals
+export { BulkCreateModal } from './BulkCreateModal';
+export type { BulkCreateModalProps } from './BulkCreateModal';
+
+export { CSVImportModal } from './CSVImportModal';
+export type { CSVImportModalProps } from './CSVImportModal';
+
+export { DuplicateTemplateModal } from './DuplicateTemplateModal';
+export type { DuplicateTemplateModalProps } from './DuplicateTemplateModal';
+
+// Archive and bulk pattern/preference components
+export { ArchivedTemplatesDrawer } from './ArchivedTemplatesDrawer';
+export type { ArchivedTemplatesDrawerProps } from './ArchivedTemplatesDrawer';
+
+export { BulkPatternModal } from './BulkPatternModal';
+export type { BulkPatternModalProps, SchedulePattern } from './BulkPatternModal';
+
+export { BulkPreferenceModal } from './BulkPreferenceModal';
+export type { BulkPreferenceModalProps } from './BulkPreferenceModal';

@@ -1,0 +1,180 @@
+/**
+ * Rigidity Score Hook
+ *
+ * React Query hook for calculating time crystal rigidity score
+ * using the exotic resilience API endpoint.
+ *
+ * Rigidity measures schedule stability: how much a schedule changes
+ * between versions. High rigidity (close to 1.0) means minimal churn.
+ */
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { post } from '@/lib/api';
+import type { ApiError } from '@/lib/api';
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface RigidityRequest {
+  /** Current schedule ID */
+  current_schedule_id?: string | null;
+  /** Proposed schedule ID to compare */
+  proposed_schedule_id?: string | null;
+  /** Alternative: provide assignment lists directly */
+  current_assignments?: Array<Record<string, string>> | null;
+  /** Alternative: provide assignment lists directly */
+  proposed_assignments?: Array<Record<string, string>> | null;
+}
+
+export interface RigidityResponse {
+  /** Rigidity score (1.0 = no changes, 0.0 = complete overhaul) */
+  rigidity_score: number;
+  /** Number of assignments changed */
+  changed_assignments: number;
+  /** Total assignments compared */
+  total_assignments: number;
+  /** Fraction of assignments changed (0.0 - 1.0) */
+  change_rate: number;
+  /** Faculty with changed assignments */
+  affected_faculty: string[];
+  /** Detailed churn breakdown */
+  churn_analysis: Record<string, unknown>;
+  /** Stability rating: excellent, good, fair, poor, unstable */
+  stability_grade: string;
+  /** Data source */
+  source: string;
+}
+
+// ============================================================================
+// Query Keys
+// ============================================================================
+
+export const rigidityScoreQueryKeys = {
+  all: ['rigidity-score'] as const,
+  calculate: (
+    currentAssignments: Array<Record<string, string>> | null,
+    proposedAssignments: Array<Record<string, string>> | null
+  ) => ['rigidity-score', 'calculate', currentAssignments, proposedAssignments] as const,
+};
+
+// ============================================================================
+// Hook
+// ============================================================================
+
+/**
+ * Calculate schedule rigidity score using time crystal analysis.
+ *
+ * Measures how much a schedule changes between current and proposed versions.
+ * Higher rigidity = more stable (less churn). Based on time-crystal-inspired
+ * anti-churn optimization.
+ *
+ * @param currentAssignments - Current schedule assignments
+ * @param proposedAssignments - Proposed schedule assignments
+ * @param options - React Query options
+ * @returns Query result with rigidity score and stability grade
+ *
+ * @example
+ * ```tsx
+ * function RigidityPreview({ currentTemplates, proposedChanges }: Props) {
+ *   const current = convertToAssignments(currentTemplates);
+ *   const proposed = applyChanges(current, proposedChanges);
+ *   const { data, isLoading } = useRigidityScore(current, proposed);
+ *
+ *   if (isLoading) return <Skeleton />;
+ *
+ *   return (
+ *     <div className={getRigidityColor(data.rigidity_score)}>
+ *       <span>Rigidity: {data.rigidity_score.toFixed(2)}</span>
+ *       <p>{data.stability_grade}</p>
+ *       <p>{data.changed_assignments} assignments changed</p>
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+export function useRigidityScore(
+  currentAssignments: Array<Record<string, string>> | null,
+  proposedAssignments: Array<Record<string, string>> | null,
+  options?: Omit<UseQueryOptions<RigidityResponse, ApiError>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery<RigidityResponse, ApiError>({
+    queryKey: rigidityScoreQueryKeys.calculate(currentAssignments, proposedAssignments),
+    queryFn: async () => {
+      if (
+        !currentAssignments ||
+        !proposedAssignments ||
+        currentAssignments.length === 0 ||
+        proposedAssignments.length === 0
+      ) {
+        // Return default values for empty input
+        return {
+          rigidity_score: 1.0,
+          changed_assignments: 0,
+          total_assignments: 0,
+          change_rate: 0.0,
+          affected_faculty: [],
+          churn_analysis: {},
+          stability_grade: 'excellent',
+          source: 'frontend',
+        };
+      }
+
+      const request: RigidityRequest = {
+        current_assignments: currentAssignments,
+        proposed_assignments: proposedAssignments,
+      };
+
+      // Call exotic resilience API endpoint
+      const response = await post<RigidityResponse>(
+        '/exotic-resilience/time-crystal/rigidity',
+        request
+      );
+
+      return response;
+    },
+    enabled:
+      !!currentAssignments &&
+      !!proposedAssignments &&
+      currentAssignments.length > 0 &&
+      proposedAssignments.length > 0,
+    staleTime: 30 * 1000, // 30 seconds
+    ...options,
+  });
+}
+
+/**
+ * Helper: Get rigidity score color class.
+ *
+ * @param rigidity - Rigidity score (0-1)
+ * @returns Tailwind color class
+ */
+export function getRigidityColorClass(rigidity: number): string {
+  if (rigidity >= 0.95) return 'text-green-500';
+  if (rigidity >= 0.85) return 'text-blue-500';
+  if (rigidity >= 0.70) return 'text-yellow-500';
+  if (rigidity >= 0.50) return 'text-orange-500';
+  return 'text-red-500';
+}
+
+/**
+ * Helper: Get stability grade icon.
+ *
+ * @param grade - Stability grade (excellent, good, fair, poor, unstable)
+ * @returns Icon name or emoji
+ */
+export function getStabilityIcon(grade: string): string {
+  switch (grade) {
+    case 'excellent':
+      return '🔒';
+    case 'good':
+      return '✓';
+    case 'fair':
+      return '⚠';
+    case 'poor':
+      return '⚠⚠';
+    case 'unstable':
+      return '🔥';
+    default:
+      return '?';
+  }
+}
