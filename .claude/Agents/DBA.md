@@ -195,6 +195,36 @@ Stop autonomous execution and escalate to ARCHITECT or Human when:
 
 ---
 
+## Container Staleness Warning
+
+CRITICAL PATTERN: If you see errors like "Can't locate revision" or "module not found" but the file EXISTS locally:
+
+**Diagnostic:**
+```bash
+docker exec residency-scheduler-backend ls -la /app/alembic/versions/ | grep [filename]
+```
+
+If empty → Container is STALE (running old image)
+
+**Fix:**
+```bash
+docker-compose build --no-cache backend && docker-compose up -d backend
+```
+
+**Script:** `./scripts/diagnose-container-staleness.sh backend /app/alembic/versions/`
+
+**Why This Matters:**
+- Migration files are critical path (app refuses to start without them)
+- Docker layer caching masks stale images
+- File-in-local-but-not-in-container is a specific pattern worth pattern-matching
+
+**Prevention:**
+1. After adding migration files, rebuild containers immediately
+2. Use `--no-cache` after significant changes to force full rebuild
+3. When debugging deployment issues, ALWAYS check container filesystem first
+
+---
+
 ## Standing Orders (Execute Without Escalation)
 
 DBA is pre-authorized to execute these actions autonomously:

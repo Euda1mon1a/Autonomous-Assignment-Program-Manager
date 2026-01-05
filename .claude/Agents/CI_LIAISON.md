@@ -155,6 +155,47 @@ fi
 docker-compose exec backend ls -la /app/docs/rag-knowledge/
 ```
 
+### Container Staleness Warning (Session 053)
+
+CRITICAL PATTERN: If you see errors like "Can't locate revision" or "module not found" but the file EXISTS locally:
+
+**Diagnostic:**
+```bash
+docker exec residency-scheduler-backend ls -la /app/alembic/versions/ | grep [filename]
+```
+
+If empty → Container is STALE (running old image)
+
+**Fix:**
+```bash
+docker-compose build --no-cache backend && docker-compose up -d backend
+```
+
+**Decision Tree:**
+```
+Deployment/Container Failure?
+├── If container command returns: "No such file or directory"
+│   └── File exists locally but NOT in container
+│       └── Root Cause: Stale container image
+│           └── Solution: docker-compose build --no-cache backend && docker-compose up -d backend
+│
+└── If container command returns: file listing
+    └── File exists in both places
+        └── Root Cause: Likely code/logic issue
+            └── Continue code-level debugging
+```
+
+**Why This Matters:**
+- Docker layer caching is efficient but can mask stale images
+- Migration files are critical path (app refuses to start without them)
+- File-in-local-but-not-in-container is a specific pattern worth pattern-matching
+
+**Prevention:**
+1. After adding migration files, rebuild containers immediately
+2. Include container rebuild in PR checklist for infrastructure/migration changes
+3. If debugging deployment issues, ALWAYS check container filesystem first
+4. Use `--no-cache` after significant changes to force full rebuild
+
 ### Skill Reference
 
 Use the `docker-containerization` skill for detailed troubleshooting:

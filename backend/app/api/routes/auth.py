@@ -25,7 +25,7 @@ from app.core.security import (
     oauth2_scheme,
     verify_refresh_token,
 )
-from app.db.session import get_async_db
+from app.db.session import get_async_db, get_db
 from app.models.user import User
 from app.schemas.auth import (
     RefreshTokenRequest,
@@ -56,7 +56,7 @@ rate_limit_register = create_rate_limit_dependency(
 async def login(
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     _rate_limit: None = Depends(rate_limit_login),
 ):
     """
@@ -105,7 +105,7 @@ async def login(
 async def login_json(
     response: Response,
     credentials: UserLogin,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     _rate_limit: None = Depends(rate_limit_login),
 ):
     """
@@ -155,7 +155,7 @@ async def logout(
     response: Response,
     current_user: User = Depends(get_current_active_user),
     token: str = Depends(oauth2_scheme),
-    db=Depends(get_async_db),
+    db=Depends(get_db),
 ):
     """
     Logout current user by blacklisting their token.
@@ -196,7 +196,7 @@ async def logout(
 async def refresh_token(
     response: Response,
     request: RefreshTokenRequest,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
 ):
     """
     Exchange a refresh token for a new access token.
@@ -294,7 +294,7 @@ async def get_current_user_info(
 @router.post("/register", response_model=UserResponse, status_code=201)
 async def register_user(
     user_in: UserCreate,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User | None = Depends(get_current_user),
     _rate_limit: None = Depends(rate_limit_register),
 ):
@@ -328,7 +328,7 @@ async def register_user(
 
 @router.get("/users", response_model=list[UserResponse])
 async def list_users(
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """List all users in the system.
