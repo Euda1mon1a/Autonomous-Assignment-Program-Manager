@@ -50,6 +50,7 @@ from app.api.routes import (
     rag,
     rate_limit,
     reports,
+    resident_weekly_requirements,
     resilience,
     role_views,
     rotation_templates,
@@ -87,6 +88,11 @@ api_router.include_router(
 )
 api_router.include_router(
     rotation_templates.router, prefix="/rotation-templates", tags=["rotation-templates"]
+)
+api_router.include_router(
+    resident_weekly_requirements.router,
+    prefix="/resident-weekly-requirements",
+    tags=["resident-weekly-requirements"],
 )
 api_router.include_router(
     daily_manifest.router, prefix="/assignments", tags=["daily-manifest"]

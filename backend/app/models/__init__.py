@@ -108,6 +108,7 @@ from app.models.rotation_enums import (
     RotationSettingType,
     TimeOfDay,
 )
+from app.models.resident_weekly_requirement import ResidentWeeklyRequirement
 from app.models.rotation_halfday_requirement import RotationHalfDayRequirement
 from app.models.rotation_preference import PREFERENCE_DEFAULTS, RotationPreference
 from app.models.rotation_template import RotationTemplate
@@ -149,6 +150,7 @@ __all__ = [
     "AssignmentReason",
     "RotationTemplate",
     "RotationHalfDayRequirement",
+    "ResidentWeeklyRequirement",
     "WeeklyPattern",
     "RotationPreference",
     "PREFERENCE_DEFAULTS",

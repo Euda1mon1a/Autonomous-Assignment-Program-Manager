@@ -426,12 +426,22 @@ async def batch_archive_rotation_templates(
 
         # If any failed, return 400
         if result["failed"] > 0:
+            # Convert UUIDs to strings for JSON serialization
+            serializable_results = [
+                {
+                    "index": r["index"],
+                    "template_id": str(r["template_id"]),
+                    "success": r["success"],
+                    "error": r.get("error"),
+                }
+                for r in result["results"]
+            ]
             raise HTTPException(
                 status_code=400,
                 detail={
                     "message": "Batch archive operation failed",
                     "failed": result["failed"],
-                    "results": result["results"],
+                    "results": serializable_results,
                 },
             )
 
