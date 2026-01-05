@@ -84,24 +84,15 @@ export function EditableCell({
     }
   }, [isEditing, value]);
 
-  // Handle click outside to cancel
-  useEffect(() => {
-    if (!isEditing) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        handleCancel();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isEditing]);
-
   const handleStartEdit = useCallback(() => {
     if (disabled || isSaving) return;
     setIsEditing(true);
   }, [disabled, isSaving]);
+
+  const handleCancel = useCallback(() => {
+    setIsEditing(false);
+    setEditValue(value?.toString() ?? '');
+  }, [value]);
 
   const handleSave = useCallback(() => {
     if (isSaving) return;
@@ -135,12 +126,21 @@ export function EditableCell({
       onSave(newValue);
     }
     setIsEditing(false);
-  }, [editValue, type, min, max, value, onSave, isSaving]);
+  }, [editValue, type, min, max, value, onSave, isSaving, handleCancel]);
 
-  const handleCancel = useCallback(() => {
-    setIsEditing(false);
-    setEditValue(value?.toString() ?? '');
-  }, [value]);
+  // Handle click outside to cancel
+  useEffect(() => {
+    if (!isEditing) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        handleCancel();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isEditing, handleCancel]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
