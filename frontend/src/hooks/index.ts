@@ -293,6 +293,22 @@ export {
 } from "./useDebounce";
 
 // ============================================================================
+// Impersonation Hooks
+// ============================================================================
+export {
+  impersonationQueryKeys,
+  useImpersonation,
+  useImpersonationStatus,
+  useStartImpersonation,
+  useEndImpersonation,
+  getImpersonationToken,
+  type ImpersonatedUser,
+  type ImpersonationStatusResponse,
+  type StartImpersonationResponse,
+  type EndImpersonationResponse,
+} from "./useImpersonation";
+
+// ============================================================================
 // Shared Types
 // ============================================================================
 export type { ListResponse } from "./useSchedule";

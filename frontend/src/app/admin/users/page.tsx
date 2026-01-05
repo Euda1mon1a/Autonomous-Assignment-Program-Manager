@@ -43,6 +43,7 @@ import {
   Clock,
   Download,
   Edit2,
+  Eye,
   Loader2,
   Lock,
   Mail,
@@ -57,6 +58,8 @@ import {
   XCircle,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useImpersonation } from "@/hooks/useImpersonation";
 
 // ============================================================================
 // Mock Role Permissions Data (for display purposes only)
@@ -291,6 +294,8 @@ interface UserRowProps {
   onDelete: (user: User) => void;
   onToggleLock: (user: User) => void;
   onResendInvite: (user: User) => void;
+  onViewAs: (user: User) => void;
+  isViewAsLoading: boolean;
 }
 
 function UserRow({
@@ -301,8 +306,13 @@ function UserRow({
   onDelete,
   onToggleLock,
   onResendInvite,
+  onViewAs,
+  isViewAsLoading,
 }: UserRowProps) {
   const [showMenu, setShowMenu] = useState(false);
+
+  // Determine if View As should be shown (non-admin users only)
+  const canViewAs = user.role !== "admin" && user.status === "active";
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return "Never";
@@ -376,6 +386,23 @@ function UserRow({
                 onClick={() => setShowMenu(false)}
               />
               <div className="absolute right-0 top-full mt-1 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-20">
+                {canViewAs && (
+                  <button
+                    onClick={() => {
+                      onViewAs(user);
+                      setShowMenu(false);
+                    }}
+                    disabled={isViewAsLoading}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-amber-400 hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isViewAsLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                    View As User
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     onEdit(user);
@@ -774,8 +801,15 @@ function ActivityPanel() {
 // ============================================================================
 
 export default function AdminUsersPage() {
+  // Router for navigation
+  const router = useRouter();
+
   // Toast notifications
   const { toast } = useToast();
+
+  // Impersonation
+  const { startImpersonation, isStarting: isViewAsLoading, isImpersonating } =
+    useImpersonation();
 
   // UI State
   const [activeTab, setActiveTab] = useState<UserManagementTab>("users");
@@ -992,6 +1026,38 @@ export default function AdminUsersPage() {
     [selectedUsers, bulkActionMutation, toast]
   );
 
+  const handleViewAs = useCallback(
+    (user: User) => {
+      // Don't allow impersonating admins
+      if (user.role === "admin") {
+        toast.error("Cannot impersonate admin users");
+        return;
+      }
+
+      // Don't allow if already impersonating
+      if (isImpersonating) {
+        toast.error("Already impersonating a user. End current session first.");
+        return;
+      }
+
+      startImpersonation.mutate(user.id, {
+        onSuccess: () => {
+          toast.success(`Now viewing as ${user.firstName} ${user.lastName}`);
+          // Redirect to home page to see the app as the impersonated user
+          router.push("/");
+        },
+        onError: (error) => {
+          toast.error(
+            typeof error === "object" && error !== null && "message" in error
+              ? (error as { message: string }).message
+              : "Failed to start impersonation"
+          );
+        },
+      });
+    },
+    [startImpersonation, toast, router, isImpersonating]
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
@@ -1185,6 +1251,8 @@ export default function AdminUsersPage() {
                           onDelete={handleDeleteUser}
                           onToggleLock={handleToggleLock}
                           onResendInvite={handleResendInvite}
+                          onViewAs={handleViewAs}
+                          isViewAsLoading={isViewAsLoading}
                         />
                       ))
                     )}

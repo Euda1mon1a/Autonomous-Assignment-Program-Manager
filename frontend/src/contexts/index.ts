@@ -22,6 +22,11 @@ export { ToastProvider, useToast } from './ToastContext';
 export { ClaudeChatProvider, useClaudeChatContext } from './ClaudeChatContext';
 
 // ============================================================================
+// Impersonation Context
+// ============================================================================
+export { ImpersonationProvider, useImpersonationContext } from './ImpersonationContext';
+
+// ============================================================================
 // Type Re-exports
 // ============================================================================
 // Types are available from @/types/state

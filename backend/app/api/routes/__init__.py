@@ -35,6 +35,7 @@ from app.api.routes import (
     game_theory,
     health,
     import_staging,
+    impersonation,
     imports,
     jobs,
     leave,
@@ -109,6 +110,9 @@ api_router.include_router(absences.router, prefix="/absences", tags=["absences"]
 api_router.include_router(schedule.router, prefix="/schedule", tags=["schedule"])
 api_router.include_router(settings.router, prefix="/settings", tags=["settings"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+api_router.include_router(
+    impersonation.router, prefix="/auth", tags=["auth", "impersonation"]
+)
 api_router.include_router(oauth2.router, prefix="/oauth2", tags=["oauth2"])
 api_router.include_router(
     admin_users.router, prefix="/admin/users", tags=["admin-users"]

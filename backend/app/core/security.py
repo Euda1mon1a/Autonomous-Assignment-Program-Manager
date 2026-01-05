@@ -333,8 +333,12 @@ async def get_current_user(
     """
     Get the current authenticated user from JWT token.
 
-    Security: Checks httpOnly cookie first, then falls back to Authorization header.
-    This prevents XSS attacks while maintaining backward compatibility.
+    Security: Checks for impersonation token first, then httpOnly cookie,
+    then falls back to Authorization header. This prevents XSS attacks
+    while maintaining backward compatibility.
+
+    When impersonating, the target user is returned but the original admin's
+    ID is attached to request.state.original_admin_id for audit logging.
 
     Args:
         request: FastAPI request object to access cookies
@@ -344,6 +348,17 @@ async def get_current_user(
     Returns:
         User object if authenticated, None otherwise
     """
+    # Priority 0: Check for impersonation token (admin "View As" feature)
+    impersonation_token = _get_impersonation_token_from_request(request)
+    if impersonation_token:
+        impersonation_result = _verify_impersonation_token(impersonation_token, db)
+        if impersonation_result:
+            target_user, original_admin = impersonation_result
+            # Attach original admin ID to request state for audit logging
+            request.state.original_admin_id = original_admin.id
+            request.state.is_impersonating = True
+            return target_user
+
     # Priority 1: Check httpOnly cookie (secure against XSS)
     cookie_token = request.cookies.get("access_token")
     if cookie_token:
@@ -364,7 +379,91 @@ async def get_current_user(
     if user is None or not user.is_active:
         return None
 
+    # Clear impersonation state for normal auth
+    request.state.original_admin_id = None
+    request.state.is_impersonating = False
+
     return user
+
+
+def _get_impersonation_token_from_request(request: Request) -> str | None:
+    """Extract impersonation token from request.
+
+    Checks for token in:
+    1. X-Impersonation-Token header
+    2. impersonation_token cookie
+
+    Args:
+        request: FastAPI request object.
+
+    Returns:
+        Impersonation token if found, None otherwise.
+    """
+    # Check header first
+    token = request.headers.get("X-Impersonation-Token")
+    if token:
+        return token
+
+    # Fall back to cookie
+    cookie_token = request.cookies.get("impersonation_token")
+    if cookie_token:
+        return cookie_token
+
+    return None
+
+
+def _verify_impersonation_token(token: str, db: Session) -> tuple[User, User] | None:
+    """Verify an impersonation token and return the users.
+
+    This validates the impersonation token and returns both the target user
+    (who is being impersonated) and the original admin (who initiated it).
+
+    Args:
+        token: The impersonation token to verify.
+        db: Database session.
+
+    Returns:
+        Tuple of (target_user, original_admin) if valid, None otherwise.
+    """
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+
+        # Verify this is an impersonation token
+        if payload.get("type") != "impersonation":
+            return None
+
+        jti = payload.get("jti")
+        original_admin_id = payload.get("original_admin_id")
+        target_user_id = payload.get("target_user_id")
+
+        if not all([jti, original_admin_id, target_user_id]):
+            return None
+
+        # Check if token is blacklisted
+        if TokenBlacklist.is_blacklisted(db, jti):
+            return None
+
+        # Get users
+        target_user = db.query(User).filter(User.id == UUID(target_user_id)).first()
+        original_admin = (
+            db.query(User).filter(User.id == UUID(original_admin_id)).first()
+        )
+
+        if not target_user or not original_admin:
+            return None
+
+        # Verify target user is still active
+        if not target_user.is_active:
+            return None
+
+        # Verify original admin is still active and still admin
+        if not original_admin.is_active or not original_admin.is_admin:
+            return None
+
+        return (target_user, original_admin)
+
+    except JWTError:
+        return None
 
 
 async def get_current_active_user(
