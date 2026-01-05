@@ -4,7 +4,7 @@
 
 **Format:** Organized by theme, chronologically within theme
 
-**Last Updated:** 2026-01-01 (Session mcp-refinement)
+**Last Updated:** 2026-01-04 (Session 53 - Container Image Staleness)
 
 ---
 
@@ -321,6 +321,62 @@ const { data } = useQuery({
 **Lesson:** Load test before launch
 
 **See:** `load-tests/`
+
+---
+
+### Session 53: Container Image Staleness vs Code Problems
+
+**Incident:** SYNTHESIZER agent spent 20 minutes diagnosing deployment failure as code issue when root cause was stale Docker image.
+
+**Root Cause of Agent Failure:**
+- Treated deployment/container issue as code problem
+- Didn't check if file existed INSIDE container vs locally
+- Should have asked: "When was container built vs when was migration file created?"
+
+**The Problem:**
+When migration files are added to source code but containers aren't rebuilt, the container's `/app/alembic/versions/` directory will be empty while the local filesystem has the files. The application fails because it can't find migrations during startup.
+
+**Key Diagnostic Command:**
+```bash
+docker exec residency-scheduler-backend ls -la /app/alembic/versions/ | grep [revision_code]
+```
+
+**Decision Tree:**
+```
+Deployment/Container Failure?
+├── If container command returns: "No such file or directory"
+│   └── File exists locally but NOT in container
+│       └── Root Cause: Stale container image
+│           └── Solution: docker-compose build --no-cache backend && docker-compose up -d backend
+│
+└── If container command returns: file listing
+    └── File exists in both places
+        └── Root Cause: Likely code/logic issue
+            └── Continue code-level debugging
+```
+
+**The Fix:**
+```bash
+# Rebuild container WITHOUT using layer cache
+docker-compose build --no-cache backend
+
+# Restart service with new image
+docker-compose up -d backend
+```
+
+**Why This Matters:**
+- Docker layer caching is efficient but can mask stale images
+- Migration files are critical path (app refuses to start without them)
+- File-in-local-but-not-in-container is a specific pattern worth pattern-matching
+
+**Prevention:**
+1. After adding migration files, rebuild containers immediately
+2. Include container rebuild in PR checklist for infrastructure/migration changes
+3. If debugging deployment issues, ALWAYS check container filesystem first
+4. Use `--no-cache` after significant changes to force full rebuild
+
+**Agent Lesson:**
+When deployment fails, ask: "Is this a code problem or a container problem?" before diving into code review. The diagnostic takes 5 seconds; wrong diagnosis takes 20 minutes.
 
 ---
 

@@ -2,7 +2,7 @@
 
 Comprehensive reference of all REST API endpoints in the Residency Scheduler.
 
-> **Last Updated:** 2025-12-24
+> **Last Updated:** 2026-01-04
 > **Total Endpoints:** 200+
 > **Base URL:** `/api/v1`
 > **OpenAPI Spec:** `http://localhost:8000/openapi.json`
@@ -400,17 +400,112 @@ See [Swaps](swaps.md) for full details.
 
 **Prefix:** `/api/v1/rotation-templates`
 
+### Core CRUD Operations
+
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/rotation-templates` | Bearer | List templates with activity filter |
+| GET | `/rotation-templates` | Bearer | List templates (supports `activity_type`, `include_archived` filters) |
 | GET | `/rotation-templates/{template_id}` | Bearer | Get template by ID |
-| POST | `/rotation-templates` | Scheduler | Create template |
-| PUT | `/rotation-templates/{template_id}` | Scheduler | Update template |
-| DELETE | `/rotation-templates/{template_id}` | Admin | Delete template |
+| POST | `/rotation-templates` | Bearer | Create template |
+| PUT | `/rotation-templates/{template_id}` | Bearer | Update template |
+| DELETE | `/rotation-templates/{template_id}` | Bearer | Hard delete template |
+
+### Batch Operations (Atomic)
+
+All batch operations support `dry_run` mode for validation without side effects.
+Maximum 100 items per batch. Operations are atomic (all-or-nothing).
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| DELETE | `/rotation-templates/batch` | Bearer | Delete multiple templates atomically |
+| PUT | `/rotation-templates/batch` | Bearer | Update multiple templates atomically |
+| POST | `/rotation-templates/batch` | Bearer | Create multiple templates atomically |
+| POST | `/rotation-templates/batch/conflicts` | Bearer | Check conflicts before batch operations |
+| POST | `/rotation-templates/export` | Bearer | Export templates with patterns/preferences |
+
+### Archive/Restore Operations
+
+Soft delete alternative that preserves data for recovery.
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| PUT | `/rotation-templates/{template_id}/archive` | Bearer | Archive single template (soft delete) |
+| PUT | `/rotation-templates/{template_id}/restore` | Bearer | Restore archived template |
+| PUT | `/rotation-templates/batch/archive` | Bearer | Archive multiple templates atomically |
+| PUT | `/rotation-templates/batch/restore` | Bearer | Restore multiple archived templates |
+
+### Weekly Patterns
+
+Visual grid editor support (7 days x 2 slots = 14 max patterns per template).
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/rotation-templates/{template_id}/patterns` | Bearer | Get all weekly patterns for template |
+| PUT | `/rotation-templates/{template_id}/patterns` | Bearer | Replace all patterns atomically |
+| PUT | `/rotation-templates/batch/patterns` | Bearer | Apply same pattern to multiple templates |
+
+### Rotation Preferences
+
+Soft constraints for scheduling optimizer.
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/rotation-templates/{template_id}/preferences` | Bearer | Get all preferences for template |
+| PUT | `/rotation-templates/{template_id}/preferences` | Bearer | Replace all preferences atomically |
+| PUT | `/rotation-templates/batch/preferences` | Bearer | Apply same preferences to multiple templates |
+
+### Version History
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/rotation-templates/{template_id}/history` | Bearer | Get version history (SQLAlchemy-Continuum) |
 
 ### Activity Types
 
 `CLINIC`, `INPATIENT`, `PROCEDURES`, `CONFERENCE`, `ADMIN`, `CALL`, `OFF`
+
+### Preference Types
+
+| Type | Description |
+|------|-------------|
+| `full_day_grouping` | Prefer AM+PM of same activity together |
+| `consecutive_specialty` | Group specialty sessions consecutively |
+| `avoid_isolated` | Avoid single orphaned half-day sessions |
+| `preferred_days` | Prefer specific activities on specific days |
+| `avoid_friday_pm` | Keep Friday PM open as travel buffer |
+| `balance_weekly` | Distribute activities evenly across week |
+
+### Batch Request Examples
+
+**Batch Delete:**
+```json
+{
+  "template_ids": ["uuid1", "uuid2", "uuid3"],
+  "dry_run": false
+}
+```
+
+**Batch Update:**
+```json
+{
+  "templates": [
+    {"template_id": "uuid1", "updates": {"max_residents": 5}},
+    {"template_id": "uuid2", "updates": {"activity_type": "inpatient"}}
+  ],
+  "dry_run": false
+}
+```
+
+**Batch Create:**
+```json
+{
+  "templates": [
+    {"name": "New Clinic", "activity_type": "clinic"},
+    {"name": "New Inpatient", "activity_type": "inpatient"}
+  ],
+  "dry_run": false
+}
+```
 
 ---
 

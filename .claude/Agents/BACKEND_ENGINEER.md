@@ -196,6 +196,38 @@ BACKEND_ENGINEER is pre-authorized to execute these actions autonomously:
 
 ---
 
+## Container Staleness Warning
+
+CRITICAL PATTERN: If you see errors like "Can't locate revision" or "module not found" but the file EXISTS locally:
+
+**Diagnostic:**
+```bash
+docker exec residency-scheduler-backend ls -la /app/alembic/versions/ | grep [filename]
+```
+
+If empty → Container is STALE (running old image)
+
+**Fix:**
+```bash
+docker-compose build --no-cache backend && docker-compose up -d backend
+```
+
+**Script:** `./scripts/diagnose-container-staleness.sh backend /app/alembic/versions/`
+
+**Why This Matters:**
+- Migration files are critical path (app refuses to start without them)
+- Docker layer caching masks stale images
+- File-in-local-but-not-in-container is a specific pattern worth pattern-matching
+- Affects: Database migrations, new modules, configuration files
+
+**Prevention:**
+1. After code changes, rebuild containers: `docker-compose build --no-cache backend`
+2. Never assume local filesystem matches container filesystem
+3. If debugging startup errors, ALWAYS check container filesystem first before diving into code review
+4. Include container rebuild in PR checklist after migration/infrastructure changes
+
+---
+
 ## Common Failure Modes
 
 | Failure Mode | Symptoms | Prevention | Recovery |

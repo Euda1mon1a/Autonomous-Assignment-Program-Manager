@@ -9,6 +9,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Session 049 - Rotation Template Bulk Editing (2026-01-04)
+
+**Rotation Template Batch Operations (Backend):**
+- `DELETE /rotation-templates/batch` - Atomic delete of multiple templates
+- `PUT /rotation-templates/batch` - Atomic update of multiple templates
+- `POST /rotation-templates/batch` - Atomic create of multiple templates
+- `POST /rotation-templates/batch/conflicts` - Pre-flight conflict detection
+- `POST /rotation-templates/export` - Export templates with patterns/preferences
+- `PUT /rotation-templates/batch/archive` - Batch archive (soft delete)
+- `PUT /rotation-templates/batch/restore` - Batch restore from archive
+- `PUT /rotation-templates/batch/patterns` - Apply patterns to multiple templates
+- `PUT /rotation-templates/batch/preferences` - Apply preferences to multiple templates
+
+**Single Template Archive/Restore:**
+- `PUT /rotation-templates/{id}/archive` - Archive single template
+- `PUT /rotation-templates/{id}/restore` - Restore archived template
+- `GET /rotation-templates/{id}/history` - Version history (SQLAlchemy-Continuum)
+
+**Patterns & Preferences Management:**
+- `GET/PUT /rotation-templates/{id}/patterns` - Weekly pattern CRUD
+- `GET/PUT /rotation-templates/{id}/preferences` - Scheduling preferences CRUD
+
+**Key Features:**
+- All batch operations are atomic (all-or-nothing)
+- `dry_run` mode for validation without side effects
+- Maximum 100 items per batch operation
+- Duplicate name detection for batch creates
+- Conflict checking before destructive operations
+
+**Frontend Admin Components:**
+- Bulk creation modals for templates, patterns, preferences
+- Archive/restore UI with batch selection
+- Inline editing for template properties
+- Export functionality with pattern/preference inclusion
+- 47 passing frontend tests
+
+**API Documentation:**
+- Updated `docs/api/ENDPOINT_CATALOG.md` with 18 new rotation template endpoints
+- Added batch request/response examples
+- Documented preference types and activity types
+
+**Testing:**
+- `AsyncSessionWrapper` for sync/async session compatibility in tests
+- Comprehensive batch operation test coverage
+
+**Files Changed:** 15+ files across backend and frontend
+
 #### Stream 10 - Documentation & Synthesis (2026-01-01)
 
 **Architectural Decision Records (ADRs):**

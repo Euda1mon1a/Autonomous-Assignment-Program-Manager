@@ -37,6 +37,7 @@ from app.api.routes import (
     imports,
     jobs,
     leave,
+    mcp_proxy,
     me_dashboard,
     metrics,
     ml,
@@ -154,6 +155,7 @@ api_router.include_router(rag.router, prefix="/rag", tags=["rag"])
 api_router.include_router(
     qubo_templates.router, prefix="/qubo-templates", tags=["qubo-templates"]
 )
+api_router.include_router(mcp_proxy.router, prefix="/mcp", tags=["mcp-proxy"])
 # FMIT scheduling routes
 api_router.include_router(swap.router)  # prefix="/swaps" defined in router
 api_router.include_router(leave.router)  # prefix="/leave" defined in router
