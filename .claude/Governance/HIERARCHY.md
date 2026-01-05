@@ -140,12 +140,18 @@ See individual Coordinator specs for pre-authorized actions.
 
 ## G-Staff Notes
 
-### G-4 Split Architecture
-G-4 (Logistics/Context) operates as two complementary agents:
+### G-4 Triad Architecture
+G-4 (Logistics/Context) operates as three complementary agents:
 - **G4_CONTEXT_MANAGER**: Semantic memory via pgvector embeddings, RAG
 - **G4_LIBRARIAN**: Structural memory via file references
+- **G4_SCRIPT_KIDDY**: Executable inventory via script discovery and tracking
 
-G4_LIBRARIAN reports to G4_CONTEXT_MANAGER, not directly to ORCHESTRATOR.
+Both G4_LIBRARIAN and G4_SCRIPT_KIDDY report to G4_CONTEXT_MANAGER, not directly to ORCHESTRATOR.
+
+**Complementary Responsibilities:**
+- G4_CONTEXT_MANAGER = Semantic discovery (embeddings, search)
+- G4_LIBRARIAN = What agents read (documentation files)
+- G4_SCRIPT_KIDDY = What agents execute (scripts, tools, automation)
 
 ### Key Distinction: G-3 vs SYNTHESIZER
 - **G3_OPERATIONS** = Advisory on operational status (sonnet, G-Staff)
