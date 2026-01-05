@@ -272,6 +272,27 @@ export {
 } from "./useWebSocket";
 
 // ============================================================================
+// Keyboard Shortcuts Hooks
+// ============================================================================
+export {
+  useKeyboardShortcuts,
+  useKeyboardShortcut,
+  getShortcutDisplay,
+  type KeyboardShortcut,
+  type ModifierKey,
+  type UseKeyboardShortcutsOptions,
+} from "./useKeyboardShortcuts";
+
+// ============================================================================
+// Debounce Hooks
+// ============================================================================
+export {
+  useDebounce,
+  useDebouncedCallback,
+  useDebouncedState,
+} from "./useDebounce";
+
+// ============================================================================
 // Shared Types
 // ============================================================================
 export type { ListResponse } from "./useSchedule";
