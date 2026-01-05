@@ -2,8 +2,13 @@
 
 Provides endpoints for:
 - CRUD operations on rotation templates
+- Batch operations (delete, update, create, archive, restore)
 - Weekly pattern management (GET/PUT for patterns)
 - Rotation preference management (GET/PUT for preferences)
+- Export and conflict detection
+
+IMPORTANT: Route order matters in FastAPI. Specific paths like "/batch" must be
+defined BEFORE parametric paths like "/{template_id}" to avoid path conflicts.
 """
 
 from uuid import UUID
@@ -12,6 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from app.core.logging import get_logger
 from app.core.security import get_current_active_user
 from app.db.session import get_async_db
 from app.models.rotation_template import RotationTemplate
@@ -45,14 +51,37 @@ from app.services.rotation_template_service import RotationTemplateService
 router = APIRouter()
 
 
+# =============================================================================
+# Collection-level endpoints (no path parameters)
+# These MUST come before parametric routes to avoid path conflicts
+# =============================================================================
+
+
 @router.get("", response_model=RotationTemplateListResponse)
 async def list_rotation_templates(
     activity_type: str | None = Query(None, description="Filter by activity type"),
+    include_archived: bool = Query(False, description="Include archived templates in results"),
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """List all rotation templates, optionally filtered by activity type. Requires authentication."""
+    """List all rotation templates, optionally filtered by activity type.
+
+    By default, archived templates are excluded. Use include_archived=true to see all templates.
+
+    Args:
+        activity_type: Filter by activity type (e.g., 'clinic', 'inpatient')
+        include_archived: Include archived templates (default: False)
+        db: Database session
+        current_user: Current authenticated user
+
+    Returns:
+        RotationTemplateListResponse with filtered templates
+    """
     query = select(RotationTemplate)
+
+    # Exclude archived templates by default
+    if not include_archived:
+        query = query.where(RotationTemplate.is_archived == False)
 
     if activity_type:
         query = query.where(RotationTemplate.activity_type == activity_type)
@@ -61,23 +90,6 @@ async def list_rotation_templates(
     result = await db.execute(query)
     templates = list(result.scalars().all())
     return RotationTemplateListResponse(items=templates, total=len(templates))
-
-
-@router.get("/{template_id}", response_model=RotationTemplateResponse)
-async def get_rotation_template(
-    template_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_user: User = Depends(get_current_active_user),
-):
-    """Get a rotation template by ID. Requires authentication."""
-    template = (
-        await db.execute(
-            select(RotationTemplate).where(RotationTemplate.id == template_id)
-        )
-    ).scalar_one_or_none()
-    if not template:
-        raise HTTPException(status_code=404, detail="Rotation template not found")
-    return template
 
 
 @router.post("", response_model=RotationTemplateResponse, status_code=201)
@@ -94,52 +106,9 @@ async def create_rotation_template(
     return template
 
 
-@router.put("/{template_id}", response_model=RotationTemplateResponse)
-async def update_rotation_template(
-    template_id: UUID,
-    template_in: RotationTemplateUpdate,
-    db: AsyncSession = Depends(get_async_db),
-    current_user: User = Depends(get_current_active_user),
-):
-    """Update an existing rotation template. Requires authentication."""
-    template = (
-        await db.execute(
-            select(RotationTemplate).where(RotationTemplate.id == template_id)
-        )
-    ).scalar_one_or_none()
-    if not template:
-        raise HTTPException(status_code=404, detail="Rotation template not found")
-
-    update_data = template_in.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(template, field, value)
-
-    await db.commit()
-    await db.refresh(template)
-    return template
-
-
-@router.delete("/{template_id}", status_code=204)
-async def delete_rotation_template(
-    template_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_user: User = Depends(get_current_active_user),
-):
-    """Delete a rotation template. Requires authentication."""
-    template = (
-        await db.execute(
-            select(RotationTemplate).where(RotationTemplate.id == template_id)
-        )
-    ).scalar_one_or_none()
-    if not template:
-        raise HTTPException(status_code=404, detail="Rotation template not found")
-
-    db.delete(template)
-    await db.commit()
-
-
 # =============================================================================
 # Batch Operation Endpoints
+# These MUST come before /{template_id} routes to avoid path conflicts
 # =============================================================================
 
 
@@ -421,6 +390,447 @@ async def export_rotation_templates(
         exported_at=datetime.fromisoformat(result["exported_at"]),
         total=result["total"],
     )
+
+
+@router.put("/batch/archive", response_model=BatchTemplateResponse)
+async def batch_archive_rotation_templates(
+    request: BatchArchiveRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Archive multiple rotation templates atomically (soft delete).
+
+    Features:
+    - Archive up to 100 templates at once
+    - Dry-run mode for validation without archiving
+    - Atomic operation (all or nothing)
+    - Archived templates excluded from default queries
+
+    Args:
+        request: BatchArchiveRequest with list of template IDs
+        db: Database session
+        current_user: Current authenticated user
+
+    Returns:
+        BatchTemplateResponse with operation results
+
+    Raises:
+        HTTPException: 400 if any template not found or already archived
+    """
+    service = RotationTemplateService(db)
+
+    try:
+        result = await service.batch_archive(
+            request.template_ids, str(current_user.id), request.dry_run
+        )
+
+        # If any failed, return 400
+        if result["failed"] > 0:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "message": "Batch archive operation failed",
+                    "failed": result["failed"],
+                    "results": result["results"],
+                },
+            )
+
+        await service.commit()
+        return BatchTemplateResponse(**result)
+
+    except HTTPException:
+        await service.rollback()
+        raise
+    except Exception as e:
+        await service.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.put("/batch/restore", response_model=BatchTemplateResponse)
+async def batch_restore_rotation_templates(
+    request: BatchRestoreRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Restore multiple archived rotation templates atomically.
+
+    Features:
+    - Restore up to 100 templates at once
+    - Dry-run mode for validation without restoring
+    - Atomic operation (all or nothing)
+    - Restored templates visible in default queries
+
+    Args:
+        request: BatchRestoreRequest with list of template IDs
+        db: Database session
+        current_user: Current authenticated user
+
+    Returns:
+        BatchTemplateResponse with operation results
+
+    Raises:
+        HTTPException: 400 if any template not found or not archived
+    """
+    service = RotationTemplateService(db)
+
+    try:
+        result = await service.batch_restore(request.template_ids, request.dry_run)
+
+        # If any failed, return 400
+        if result["failed"] > 0:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "message": "Batch restore operation failed",
+                    "failed": result["failed"],
+                    "results": result["results"],
+                },
+            )
+
+        await service.commit()
+        return BatchTemplateResponse(**result)
+
+    except HTTPException:
+        await service.rollback()
+        raise
+    except Exception as e:
+        await service.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.put("/batch/patterns", response_model=BatchTemplateResponse)
+async def batch_apply_patterns(
+    request: dict,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Apply the same weekly pattern to multiple templates atomically.
+
+    Useful for bulk operations like applying a standard clinic pattern
+    to all clinic templates.
+
+    Features:
+    - Apply patterns to up to 100 templates at once
+    - Dry-run mode for validation without updating
+    - Atomic operation (all or nothing)
+    - Pattern validation before application
+
+    Args:
+        request: Dict with:
+            - template_ids: List of template UUIDs
+            - patterns: List of WeeklyPatternCreate
+            - dry_run: Optional boolean (default False)
+        db: Database session
+        current_user: Current authenticated user
+
+    Returns:
+        BatchTemplateResponse with operation results
+
+    Raises:
+        HTTPException: 400 if validation fails or templates not found
+    """
+    from app.schemas.rotation_template_gui import WeeklyPatternCreate
+
+    service = RotationTemplateService(db)
+
+    try:
+        # Parse request
+        template_ids = [UUID(tid) for tid in request.get("template_ids", [])]
+        patterns_data = request.get("patterns", [])
+        dry_run = request.get("dry_run", False)
+
+        # Convert patterns to Pydantic models
+        patterns = [WeeklyPatternCreate(**p) for p in patterns_data]
+
+        result = await service.batch_apply_patterns(template_ids, patterns, dry_run)
+
+        # If any failed, return 400
+        if result["failed"] > 0:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "message": "Batch apply patterns operation failed",
+                    "failed": result["failed"],
+                    "results": result["results"],
+                },
+            )
+
+        await service.commit()
+        return BatchTemplateResponse(**result)
+
+    except HTTPException:
+        await service.rollback()
+        raise
+    except Exception as e:
+        await service.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.put("/batch/preferences", response_model=BatchTemplateResponse)
+async def batch_apply_preferences(
+    request: dict,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Apply the same preferences to multiple templates atomically.
+
+    Useful for bulk operations like applying standard preference
+    configurations to all templates of a certain type.
+
+    Features:
+    - Apply preferences to up to 100 templates at once
+    - Dry-run mode for validation without updating
+    - Atomic operation (all or nothing)
+    - Preference validation before application
+
+    Args:
+        request: Dict with:
+            - template_ids: List of template UUIDs
+            - preferences: List of RotationPreferenceCreate
+            - dry_run: Optional boolean (default False)
+        db: Database session
+        current_user: Current authenticated user
+
+    Returns:
+        BatchTemplateResponse with operation results
+
+    Raises:
+        HTTPException: 400 if validation fails or templates not found
+    """
+    from app.schemas.rotation_template_gui import RotationPreferenceCreate
+
+    service = RotationTemplateService(db)
+
+    try:
+        # Parse request
+        template_ids = [UUID(tid) for tid in request.get("template_ids", [])]
+        preferences_data = request.get("preferences", [])
+        dry_run = request.get("dry_run", False)
+
+        # Convert preferences to Pydantic models
+        preferences = [RotationPreferenceCreate(**p) for p in preferences_data]
+
+        result = await service.batch_apply_preferences(
+            template_ids, preferences, dry_run
+        )
+
+        # If any failed, return 400
+        if result["failed"] > 0:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "message": "Batch apply preferences operation failed",
+                    "failed": result["failed"],
+                    "results": result["results"],
+                },
+            )
+
+        await service.commit()
+        return BatchTemplateResponse(**result)
+
+    except HTTPException:
+        await service.rollback()
+        raise
+    except Exception as e:
+        await service.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# =============================================================================
+# Single Template Endpoints (parametric paths)
+# These MUST come after /batch routes to avoid path conflicts
+# =============================================================================
+
+
+@router.get("/{template_id}", response_model=RotationTemplateResponse)
+async def get_rotation_template(
+    template_id: UUID,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get a rotation template by ID. Requires authentication."""
+    template = (
+        await db.execute(
+            select(RotationTemplate).where(RotationTemplate.id == template_id)
+        )
+    ).scalar_one_or_none()
+    if not template:
+        raise HTTPException(status_code=404, detail="Rotation template not found")
+    return template
+
+
+@router.put("/{template_id}/archive", response_model=RotationTemplateResponse)
+async def archive_rotation_template(
+    template_id: UUID,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Archive a rotation template (soft delete).
+
+    Archived templates are excluded from default queries but can be
+    restored later. Use this instead of hard delete to preserve data.
+
+    Args:
+        template_id: UUID of the rotation template
+        db: Database session
+        current_user: Current authenticated user
+
+    Returns:
+        Archived RotationTemplateResponse
+
+    Raises:
+        404: Template not found
+        400: Template already archived
+    """
+    service = RotationTemplateService(db)
+
+    try:
+        template = await service.archive_template(template_id, str(current_user.id))
+        await service.commit()
+        return template
+    except ValueError as e:
+        await service.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.put("/{template_id}/restore", response_model=RotationTemplateResponse)
+async def restore_rotation_template(
+    template_id: UUID,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Restore an archived rotation template.
+
+    Restores a previously archived template, making it visible
+    in default queries again.
+
+    Args:
+        template_id: UUID of the rotation template
+        db: Database session
+        current_user: Current authenticated user
+
+    Returns:
+        Restored RotationTemplateResponse
+
+    Raises:
+        404: Template not found
+        400: Template not archived
+    """
+    service = RotationTemplateService(db)
+
+    try:
+        template = await service.restore_template(template_id)
+        await service.commit()
+        return template
+    except ValueError as e:
+        await service.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/{template_id}/history")
+async def get_rotation_template_history(
+    template_id: UUID,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get version history for a rotation template.
+
+    Returns all historical versions of the template tracked by SQLAlchemy-Continuum.
+    Each version includes:
+    - Version number (transaction_id)
+    - Timestamp (transaction.issued_at)
+    - User who made the change (transaction.user_id)
+    - Changed fields (modified properties)
+
+    Args:
+        template_id: UUID of the rotation template
+        db: Database session
+        current_user: Current authenticated user
+
+    Returns:
+        List of version history entries
+
+    Raises:
+        404: Template not found
+    """
+    service = RotationTemplateService(db)
+
+    # Verify template exists
+    template = await service.get_template_by_id(template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="Rotation template not found")
+
+    # Get version history
+    # Note: This requires the template to have __versioned__ = {} in the model
+    versions = []
+    try:
+        # Access versions relationship created by SQLAlchemy-Continuum
+        if hasattr(template, 'versions'):
+            for version in template.versions:
+                version_data = {
+                    "version_id": version.transaction_id,
+                    "timestamp": version.transaction.issued_at.isoformat() if version.transaction.issued_at else None,
+                    "user_id": version.transaction.user_id if hasattr(version.transaction, 'user_id') else None,
+                    "operation_type": version.operation_type if hasattr(version, 'operation_type') else None,
+                    "changed_fields": version.changeset if hasattr(version, 'changeset') else {},
+                }
+                versions.append(version_data)
+    except Exception as e:
+        # If versioning not configured or error accessing versions
+        logger = get_logger(__name__)
+        logger.warning(f"Error accessing version history for template {template_id}: {str(e)}")
+        versions = []
+
+    return {
+        "template_id": str(template_id),
+        "template_name": template.name,
+        "version_count": len(versions),
+        "versions": versions,
+    }
+
+
+@router.put("/{template_id}", response_model=RotationTemplateResponse)
+async def update_rotation_template(
+    template_id: UUID,
+    template_in: RotationTemplateUpdate,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Update an existing rotation template. Requires authentication."""
+    template = (
+        await db.execute(
+            select(RotationTemplate).where(RotationTemplate.id == template_id)
+        )
+    ).scalar_one_or_none()
+    if not template:
+        raise HTTPException(status_code=404, detail="Rotation template not found")
+
+    update_data = template_in.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(template, field, value)
+
+    await db.commit()
+    await db.refresh(template)
+    return template
+
+
+@router.delete("/{template_id}", status_code=204)
+async def delete_rotation_template(
+    template_id: UUID,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Delete a rotation template. Requires authentication."""
+    template = (
+        await db.execute(
+            select(RotationTemplate).where(RotationTemplate.id == template_id)
+        )
+    ).scalar_one_or_none()
+    if not template:
+        raise HTTPException(status_code=404, detail="Rotation template not found")
+
+    await db.delete(template)
+    await db.commit()
 
 
 # =============================================================================
