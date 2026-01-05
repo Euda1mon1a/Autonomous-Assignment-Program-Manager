@@ -169,3 +169,59 @@ class AbsenceListResponse(BaseModel):
     page_size: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ============================================================================
+# Bulk Import Schemas
+# ============================================================================
+
+
+class AbsenceBulkCreate(BaseModel):
+    """Schema for bulk absence creation.
+
+    Accepts a list of AbsenceCreate items to be validated and created.
+    """
+
+    absences: list[AbsenceCreate] = Field(
+        ..., description="List of absences to create", min_length=1, max_length=500
+    )
+
+
+class AbsenceValidationError(BaseModel):
+    """Schema for individual absence validation error."""
+
+    index: int = Field(..., description="Index of the absence in the input list")
+    field: str | None = Field(None, description="Field that caused the error")
+    message: str = Field(..., description="Error message")
+    absence_data: dict | None = Field(None, description="Original absence data")
+
+
+class AbsenceBulkPreview(BaseModel):
+    """Schema for bulk absence preview response.
+
+    Returns validated absences and any validation errors found.
+    """
+
+    valid: list[AbsenceCreate] = Field(
+        default_factory=list, description="Absences that passed validation"
+    )
+    errors: list[AbsenceValidationError] = Field(
+        default_factory=list, description="Validation errors"
+    )
+    summary: dict = Field(
+        default_factory=dict,
+        description="Summary counts (by type, date range, person count)",
+    )
+
+
+class AbsenceBulkApply(BaseModel):
+    """Schema for bulk absence apply response.
+
+    Reports results of applying validated absences.
+    """
+
+    created: int = Field(0, description="Number of absences successfully created")
+    skipped: int = Field(0, description="Number of absences skipped (e.g., duplicates)")
+    errors: list[AbsenceValidationError] = Field(
+        default_factory=list, description="Errors encountered during apply"
+    )

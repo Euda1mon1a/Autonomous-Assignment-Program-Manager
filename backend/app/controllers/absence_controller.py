@@ -8,6 +8,9 @@ from sqlalchemy.orm import Session
 
 from app.schemas.absence import (
     AbsenceCreate,
+    AbsenceBulkApply,
+    AbsenceBulkCreate,
+    AbsenceBulkPreview,
     AbsenceResponse,
     AbsenceUpdate,
 )
@@ -128,3 +131,34 @@ class AbsenceController:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=result["error"],
             )
+
+    # =========================================================================
+    # Bulk Operations
+    # =========================================================================
+
+    def preview_bulk_absences(self, bulk_data: AbsenceBulkCreate) -> AbsenceBulkPreview:
+        """Preview bulk absences before applying.
+
+        Validates all absences and returns a preview with valid entries,
+        validation errors, and summary statistics.
+
+        Args:
+            bulk_data: AbsenceBulkCreate with list of absences.
+
+        Returns:
+            AbsenceBulkPreview with validation results and summary.
+        """
+        return self.service.preview_bulk_absences(bulk_data)
+
+    def apply_bulk_absences(self, bulk_data: AbsenceBulkCreate) -> AbsenceBulkApply:
+        """Apply bulk absences after validation.
+
+        Creates all valid absences, skipping those with conflicts.
+
+        Args:
+            bulk_data: AbsenceBulkCreate with list of absences.
+
+        Returns:
+            AbsenceBulkApply with created count, skipped count, and errors.
+        """
+        return self.service.apply_bulk_absences(bulk_data)
