@@ -360,6 +360,10 @@ async def redirect_old_api(request: Request, call_next):
     if request.url.path.startswith("/api/") and not request.url.path.startswith(
         "/api/v1/"
     ):
+        # Skip redirect for OPTIONS requests to allow CORS preflight to work
+        # CORS middleware needs to handle OPTIONS requests before any redirect
+        if request.method == "OPTIONS":
+            return await call_next(request)
         new_path = request.url.path.replace("/api/", "/api/v1/", 1)
         return RedirectResponse(url=new_path, status_code=307)
     return await call_next(request)
