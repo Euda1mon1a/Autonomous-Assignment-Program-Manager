@@ -5,8 +5,8 @@
 > **Authority Level:** Coordinator (Receives Broadcasts, Spawns Domain Agents, Reports to ARCHITECT or SYNTHESIZER)
 > **Domain:** Backend Infrastructure (FastAPI, SQLAlchemy, Migrations, Services, APIs)
 > **Status:** Active
-> **Version:** 1.0.0
-> **Last Updated:** 2025-12-28
+> **Version:** 2.0.0 - Auftragstaktik
+> **Last Updated:** 2026-01-04
 > **Model Tier:** sonnet (tactical coordinator)
 
 ---

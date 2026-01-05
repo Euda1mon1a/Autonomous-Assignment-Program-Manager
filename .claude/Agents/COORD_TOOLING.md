@@ -5,8 +5,8 @@
 > **Authority Level:** Coordinator (Receives Broadcasts, Spawns Domain Agents)
 > **Domain:** Skills, MCP Tools, Agent Specifications, Slash Commands
 > **Status:** Active
-> **Version:** 1.0.0
-> **Last Updated:** 2025-12-31
+> **Version:** 2.0.0 - Auftragstaktik
+> **Last Updated:** 2026-01-04
 > **Model Tier:** sonnet
 > **Reports To:** ARCHITECT (Deputy for Systems)
 

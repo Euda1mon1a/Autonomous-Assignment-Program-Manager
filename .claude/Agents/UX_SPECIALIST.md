@@ -8,12 +8,12 @@
 > **Authority Level:** Execute with Safeguards
 > **Domain:** User Experience (Component UX, Accessibility, Design Systems, User Flows)
 > **Status:** Active
-> **Version:** 1.0.0
-> **Last Updated:** 2025-12-29
+> **Version:** 2.0.0 - Auftragstaktik
+> **Last Updated:** 2026-01-04
 > **Model Tier:** haiku (execution specialist)
 > **Reports To:** COORD_FRONTEND
 
-**Note:** Specialists execute specific tasks. They are spawned by Coordinators and return results.
+**Note:** Specialists are domain experts. They receive intent from coordinators, decide approach, execute, and report results.
 
 ---
 

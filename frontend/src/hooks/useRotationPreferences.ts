@@ -8,10 +8,15 @@
  * - GET /api/rotation-templates/{templateId}/preferences
  * - PUT /api/rotation-templates/{templateId}/preferences
  */
-import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
-import { get, put } from '@/lib/api';
-import type { ApiError } from '@/lib/api';
-import type { UUID } from '@/types/api';
+import type { ApiError } from "@/lib/api";
+import { get, put } from "@/lib/api";
+import type { UUID } from "@/types/api";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  UseQueryOptions,
+} from "@tanstack/react-query";
 
 // ============================================================================
 // Types
@@ -20,18 +25,18 @@ import type { UUID } from '@/types/api';
 /**
  * Valid preference weight levels.
  */
-export type PreferenceWeight = 'low' | 'medium' | 'high' | 'required';
+export type PreferenceWeight = "low" | "medium" | "high" | "required";
 
 /**
  * Valid preference types.
  */
 export type PreferenceType =
-  | 'full_day_grouping'
-  | 'consecutive_specialty'
-  | 'avoid_isolated'
-  | 'preferred_days'
-  | 'avoid_friday_pm'
-  | 'balance_weekly';
+  | "full_day_grouping"
+  | "consecutive_specialty"
+  | "avoid_isolated"
+  | "preferred_days"
+  | "avoid_friday_pm"
+  | "balance_weekly";
 
 /**
  * Rotation preference as returned from backend.
@@ -73,9 +78,10 @@ export interface PreferencesUpdateRequest {
 
 export const preferencesQueryKeys = {
   /** All preferences */
-  all: ['rotation-preferences'] as const,
+  all: ["rotation-preferences"] as const,
   /** Preferences for a specific template */
-  byTemplate: (templateId: string) => ['rotation-preferences', templateId] as const,
+  byTemplate: (templateId: string) =>
+    ["rotation-preferences", templateId] as const,
 };
 
 // ============================================================================
@@ -95,37 +101,37 @@ export const PREFERENCE_METADATA: Record<
   }
 > = {
   full_day_grouping: {
-    label: 'Full Day Grouping',
-    description: 'Prefer full days when possible (AM+PM same activity)',
-    defaultWeight: 'medium',
+    label: "Full Day Grouping",
+    description: "Prefer full days when possible (AM+PM same activity)",
+    defaultWeight: "medium",
   },
   consecutive_specialty: {
-    label: 'Consecutive Specialty',
-    description: 'Group specialty sessions consecutively',
-    defaultWeight: 'high',
-    configSchema: ['min_consecutive'],
+    label: "Consecutive Specialty",
+    description: "Group specialty sessions consecutively",
+    defaultWeight: "high",
+    configSchema: ["min_consecutive"],
   },
   avoid_isolated: {
-    label: 'Avoid Isolated Sessions',
-    description: 'Avoid single isolated half-day sessions',
-    defaultWeight: 'low',
+    label: "Avoid Isolated Sessions",
+    description: "Avoid single isolated half-day sessions",
+    defaultWeight: "low",
   },
   preferred_days: {
-    label: 'Preferred Days',
-    description: 'Prefer specific activities on specific days',
-    defaultWeight: 'medium',
-    configSchema: ['activity', 'days'],
+    label: "Preferred Days",
+    description: "Prefer specific activities on specific days",
+    defaultWeight: "medium",
+    configSchema: ["activity", "days"],
   },
   avoid_friday_pm: {
-    label: 'Avoid Friday PM',
-    description: 'Keep Friday PM open as travel buffer',
-    defaultWeight: 'low',
+    label: "Avoid Friday PM",
+    description: "Keep Friday PM open as travel buffer",
+    defaultWeight: "low",
   },
   balance_weekly: {
-    label: 'Balance Weekly',
-    description: 'Distribute activities evenly across the week',
-    defaultWeight: 'medium',
-    configSchema: ['max_same_per_day'],
+    label: "Balance Weekly",
+    description: "Distribute activities evenly across the week",
+    defaultWeight: "medium",
+    configSchema: ["max_same_per_day"],
   },
 };
 
@@ -169,7 +175,10 @@ export const WEIGHT_MULTIPLIERS: Record<PreferenceWeight, number> = {
  */
 export function useRotationPreferences(
   templateId: string,
-  options?: Omit<UseQueryOptions<RotationPreference[], ApiError>, 'queryKey' | 'queryFn'>
+  options?: Omit<
+    UseQueryOptions<RotationPreference[], ApiError>,
+    "queryKey" | "queryFn"
+  >
 ) {
   return useQuery<RotationPreference[], ApiError>({
     queryKey: preferencesQueryKeys.byTemplate(templateId),
@@ -228,7 +237,7 @@ export function useUpdateRotationPreferences() {
       });
       // Also invalidate rotation templates list
       queryClient.invalidateQueries({
-        queryKey: ['rotation-templates'],
+        queryKey: ["rotation-templates"],
       });
     },
   });
@@ -244,7 +253,6 @@ export function useUpdateRotationPreferences() {
  */
 export function useTogglePreference(templateId: string) {
   const queryClient = useQueryClient();
-  const updateMutation = useUpdateRotationPreferences();
 
   return useMutation<
     RotationPreference[],
@@ -258,7 +266,7 @@ export function useTogglePreference(templateId: string) {
       );
 
       if (!currentPreferences) {
-        throw new Error('Preferences not loaded');
+        throw new Error("Preferences not loaded");
       }
 
       // Toggle the specified preference
@@ -311,7 +319,7 @@ export function useUpdatePreferenceWeight(templateId: string) {
       );
 
       if (!currentPreferences) {
-        throw new Error('Preferences not loaded');
+        throw new Error("Preferences not loaded");
       }
 
       // Update the specified preference's weight

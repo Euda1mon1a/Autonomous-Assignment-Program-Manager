@@ -4,151 +4,156 @@
  * Hooks for managing schedule swap requests, approvals, rejections,
  * and auto-matching with React Query caching and optimistic updates.
  */
-import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query'
-import { get, post, put, del, ApiError } from '@/lib/api'
+import { ApiError, get, post } from "@/lib/api";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  UseQueryOptions,
+} from "@tanstack/react-query";
 
 // ============================================================================
 // Types
 // ============================================================================
 
 export interface ListResponse<T> {
-  items: T[]
-  total: number
+  items: T[];
+  total: number;
 }
 
 /**
  * Status of a swap request
  */
 export enum SwapStatus {
-  PENDING = 'pending',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  EXECUTED = 'executed',
-  CANCELLED = 'cancelled',
+  PENDING = "pending",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+  EXECUTED = "executed",
+  CANCELLED = "cancelled",
 }
 
 /**
  * Type of swap being requested
  */
 export enum SwapType {
-  ONE_TO_ONE = 'one_to_one',
-  ABSORB = 'absorb',
+  ONE_TO_ONE = "one_to_one",
+  ABSORB = "absorb",
 }
 
 /**
  * Swap request data structure
  */
 export interface SwapRequest {
-  id: string
-  source_faculty_id: string
-  source_faculty_name: string
-  source_week: string
-  target_faculty_id?: string
-  target_faculty_name?: string
-  target_week?: string
-  swap_type: SwapType
-  status: SwapStatus
-  requested_at: string
-  requested_by_id?: string
-  approved_at?: string
-  approved_by_id?: string
-  executed_at?: string
-  executed_by_id?: string
-  reason?: string
-  notes?: string
+  id: string;
+  source_faculty_id: string;
+  source_faculty_name: string;
+  source_week: string;
+  target_faculty_id?: string;
+  target_faculty_name?: string;
+  target_week?: string;
+  swap_type: SwapType;
+  status: SwapStatus;
+  requested_at: string;
+  requested_by_id?: string;
+  approved_at?: string;
+  approved_by_id?: string;
+  executed_at?: string;
+  executed_by_id?: string;
+  reason?: string;
+  notes?: string;
 }
 
 /**
  * Request data for creating a swap
  */
 export interface SwapCreateRequest {
-  source_faculty_id: string
-  source_week: string
-  target_faculty_id?: string
-  target_week?: string
-  swap_type: SwapType
-  reason?: string
-  auto_match?: boolean
+  source_faculty_id: string;
+  source_week: string;
+  target_faculty_id?: string;
+  target_week?: string;
+  swap_type: SwapType;
+  reason?: string;
+  auto_match?: boolean;
 }
 
 /**
  * Response after creating a swap
  */
 export interface SwapCreateResponse {
-  success: boolean
-  request_id: string
-  message: string
-  candidates_notified?: number
+  success: boolean;
+  request_id: string;
+  message: string;
+  candidates_notified?: number;
 }
 
 /**
  * Request data for approving a swap
  */
 export interface SwapApproveRequest {
-  swap_id: string
-  notes?: string
+  swap_id: string;
+  notes?: string;
 }
 
 /**
  * Response after approving/rejecting a swap
  */
 export interface SwapActionResponse {
-  success: boolean
-  message: string
-  swap_id: string
+  success: boolean;
+  message: string;
+  swap_id: string;
 }
 
 /**
  * Request data for rejecting a swap
  */
 export interface SwapRejectRequest {
-  swap_id: string
-  notes?: string
-  reason?: string
+  swap_id: string;
+  notes?: string;
+  reason?: string;
 }
 
 /**
  * Swap candidate data structure
  */
 export interface SwapCandidate {
-  faculty_id: string
-  faculty_name: string
-  available_weeks: string[]
-  compatibility_score: number
-  constraints_met: boolean
-  reason?: string
+  faculty_id: string;
+  faculty_name: string;
+  available_weeks: string[];
+  compatibility_score: number;
+  constraints_met: boolean;
+  reason?: string;
 }
 
 /**
  * Request data for auto-matching
  */
 export interface AutoMatchRequest {
-  source_faculty_id: string
-  source_week: string
-  max_candidates?: number
-  prefer_one_to_one?: boolean
+  source_faculty_id: string;
+  source_week: string;
+  max_candidates?: number;
+  prefer_one_to_one?: boolean;
 }
 
 /**
  * Response from auto-match operation
  */
 export interface AutoMatchResponse {
-  success: boolean
-  candidates: SwapCandidate[]
-  total_candidates: number
-  message: string
+  success: boolean;
+  candidates: SwapCandidate[];
+  total_candidates: number;
+  message: string;
 }
 
 /**
  * Filters for swap list queries
  */
 export interface SwapFilters {
-  status?: SwapStatus[]
-  swap_type?: SwapType[]
-  source_faculty_id?: string
-  target_faculty_id?: string
-  start_date?: string
-  end_date?: string
+  status?: SwapStatus[];
+  swap_type?: SwapType[];
+  source_faculty_id?: string;
+  target_faculty_id?: string;
+  start_date?: string;
+  end_date?: string;
 }
 
 // ============================================================================
@@ -156,14 +161,14 @@ export interface SwapFilters {
 // ============================================================================
 
 export const swapQueryKeys = {
-  all: ['swaps'] as const,
-  lists: () => [...swapQueryKeys.all, 'list'] as const,
+  all: ["swaps"] as const,
+  lists: () => [...swapQueryKeys.all, "list"] as const,
   list: (filters?: SwapFilters) => [...swapQueryKeys.lists(), filters] as const,
-  details: () => [...swapQueryKeys.all, 'detail'] as const,
+  details: () => [...swapQueryKeys.all, "detail"] as const,
   detail: (id: string) => [...swapQueryKeys.details(), id] as const,
   candidates: (sourceId: string, sourceWeek: string) =>
-    [...swapQueryKeys.all, 'candidates', sourceId, sourceWeek] as const,
-}
+    [...swapQueryKeys.all, "candidates", sourceId, sourceWeek] as const,
+};
 
 // ============================================================================
 // Query Hooks
@@ -207,7 +212,7 @@ export const swapQueryKeys = {
  */
 export function useSwapRequest(
   id: string,
-  options?: Omit<UseQueryOptions<SwapRequest, ApiError>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<SwapRequest, ApiError>, "queryKey" | "queryFn">
 ) {
   return useQuery<SwapRequest, ApiError>({
     queryKey: swapQueryKeys.detail(id),
@@ -216,7 +221,7 @@ export function useSwapRequest(
     gcTime: 30 * 60 * 1000, // 30 minutes
     enabled: !!id,
     ...options,
-  })
+  });
 }
 
 /**
@@ -273,38 +278,44 @@ export function useSwapRequest(
  */
 export function useSwapList(
   filters?: SwapFilters,
-  options?: Omit<UseQueryOptions<ListResponse<SwapRequest>, ApiError>, 'queryKey' | 'queryFn'>
+  options?: Omit<
+    UseQueryOptions<ListResponse<SwapRequest>, ApiError>,
+    "queryKey" | "queryFn"
+  >
 ) {
-  const params = new URLSearchParams()
+  const params = new URLSearchParams();
 
   if (filters?.status) {
-    filters.status.forEach(s => params.append('status', s))
+    filters.status.forEach((s) => params.append("status", s));
   }
   if (filters?.swap_type) {
-    filters.swap_type.forEach(t => params.append('swap_type', t))
+    filters.swap_type.forEach((t) => params.append("swap_type", t));
   }
   if (filters?.source_faculty_id) {
-    params.set('source_faculty_id', filters.source_faculty_id)
+    params.set("source_faculty_id", filters.source_faculty_id);
   }
   if (filters?.target_faculty_id) {
-    params.set('target_faculty_id', filters.target_faculty_id)
+    params.set("target_faculty_id", filters.target_faculty_id);
   }
   if (filters?.start_date) {
-    params.set('start_date', filters.start_date)
+    params.set("start_date", filters.start_date);
   }
   if (filters?.end_date) {
-    params.set('end_date', filters.end_date)
+    params.set("end_date", filters.end_date);
   }
 
-  const queryString = params.toString()
+  const queryString = params.toString();
 
   return useQuery<ListResponse<SwapRequest>, ApiError>({
     queryKey: swapQueryKeys.list(filters),
-    queryFn: () => get<ListResponse<SwapRequest>>(`/swaps${queryString ? `?${queryString}` : ''}`),
+    queryFn: () =>
+      get<ListResponse<SwapRequest>>(
+        `/swaps${queryString ? `?${queryString}` : ""}`
+      ),
     staleTime: 60 * 1000, // 1 minute
     gcTime: 10 * 60 * 1000, // 10 minutes
     ...options,
-  })
+  });
 }
 
 /**
@@ -345,18 +356,22 @@ export function useSwapList(
 export function useSwapCandidates(
   sourceId: string,
   sourceWeek: string,
-  options?: Omit<UseQueryOptions<ListResponse<SwapCandidate>, ApiError>, 'queryKey' | 'queryFn'>
+  options?: Omit<
+    UseQueryOptions<ListResponse<SwapCandidate>, ApiError>,
+    "queryKey" | "queryFn"
+  >
 ) {
   return useQuery<ListResponse<SwapCandidate>, ApiError>({
     queryKey: swapQueryKeys.candidates(sourceId, sourceWeek),
-    queryFn: () => get<ListResponse<SwapCandidate>>(
-      `/swaps/candidates?source_faculty_id=${sourceId}&source_week=${sourceWeek}`
-    ),
+    queryFn: () =>
+      get<ListResponse<SwapCandidate>>(
+        `/swaps/candidates?source_faculty_id=${sourceId}&source_week=${sourceWeek}`
+      ),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     enabled: !!sourceId && !!sourceWeek,
     ...options,
-  })
+  });
 }
 
 // ============================================================================
@@ -432,15 +447,15 @@ export function useSwapCandidates(
  * @see useSwapList - List is auto-refreshed after creation
  */
 export function useSwapCreate() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   return useMutation<SwapCreateResponse, ApiError, SwapCreateRequest>({
-    mutationFn: (request) => post<SwapCreateResponse>('/swaps', request),
+    mutationFn: (request) => post<SwapCreateResponse>("/swaps", request),
     onSuccess: () => {
       // Invalidate all swap lists to show the new request
-      queryClient.invalidateQueries({ queryKey: swapQueryKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: swapQueryKeys.lists() });
     },
-  })
+  });
 }
 
 /**
@@ -504,20 +519,22 @@ export function useSwapCreate() {
  * @see useSwapRequest - Detail query is auto-refreshed after approval
  */
 export function useSwapApprove() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   return useMutation<SwapActionResponse, ApiError, SwapApproveRequest>({
     mutationFn: ({ swap_id, notes }) =>
       post<SwapActionResponse>(`/swaps/${swap_id}/approve`, { notes }),
     onSuccess: (data) => {
       // Invalidate the specific swap and all lists
-      queryClient.invalidateQueries({ queryKey: swapQueryKeys.detail(data.swap_id) })
-      queryClient.invalidateQueries({ queryKey: swapQueryKeys.lists() })
+      queryClient.invalidateQueries({
+        queryKey: swapQueryKeys.detail(data.swap_id),
+      });
+      queryClient.invalidateQueries({ queryKey: swapQueryKeys.lists() });
       // Also invalidate schedule queries as the swap affects the schedule
-      queryClient.invalidateQueries({ queryKey: ['schedule'] })
-      queryClient.invalidateQueries({ queryKey: ['assignments'] })
+      queryClient.invalidateQueries({ queryKey: ["schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["assignments"] });
     },
-  })
+  });
 }
 
 /**
@@ -575,17 +592,19 @@ export function useSwapApprove() {
  * @see useSwapRequest - Detail query is auto-refreshed after rejection
  */
 export function useSwapReject() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   return useMutation<SwapActionResponse, ApiError, SwapRejectRequest>({
     mutationFn: ({ swap_id, notes, reason }) =>
       post<SwapActionResponse>(`/swaps/${swap_id}/reject`, { notes, reason }),
     onSuccess: (data) => {
       // Invalidate the specific swap and all lists
-      queryClient.invalidateQueries({ queryKey: swapQueryKeys.detail(data.swap_id) })
-      queryClient.invalidateQueries({ queryKey: swapQueryKeys.lists() })
+      queryClient.invalidateQueries({
+        queryKey: swapQueryKeys.detail(data.swap_id),
+      });
+      queryClient.invalidateQueries({ queryKey: swapQueryKeys.lists() });
     },
-  })
+  });
 }
 
 /**
@@ -650,15 +669,19 @@ export function useSwapReject() {
  * @see useSwapCreate - For creating swap with selected candidate
  */
 export function useAutoMatch() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   return useMutation<AutoMatchResponse, ApiError, AutoMatchRequest>({
-    mutationFn: (request) => post<AutoMatchResponse>('/swaps/auto-match', request),
+    mutationFn: (request) =>
+      post<AutoMatchResponse>("/swaps/auto-match", request),
     onSuccess: (data, variables) => {
       // Invalidate candidates query for this source/week
       queryClient.invalidateQueries({
-        queryKey: swapQueryKeys.candidates(variables.source_faculty_id, variables.source_week)
-      })
+        queryKey: swapQueryKeys.candidates(
+          variables.source_faculty_id,
+          variables.source_week
+        ),
+      });
     },
-  })
+  });
 }

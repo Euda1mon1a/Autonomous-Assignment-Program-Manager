@@ -5,6 +5,7 @@ Provides endpoints for comprehensive schedule conflict detection,
 analysis, resolution suggestions, and visualization.
 """
 
+import logging
 from datetime import date
 from uuid import UUID
 
@@ -20,6 +21,8 @@ from app.scheduling.conflicts import (
     ConflictVisualizer,
 )
 from app.scheduling.conflicts.types import ConflictSummary
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 

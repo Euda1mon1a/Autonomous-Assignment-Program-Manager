@@ -41,7 +41,7 @@ export function useDailyManifest(
     queryKey: manifestQueryKeys.byDate(date, timeOfDay),
     queryFn: () =>
       get<DailyManifestData>(
-        `/daily-manifest?${params.toString()}`
+        `/assignments/daily-manifest?${params.toString()}`
       ),
     staleTime: 30 * 1000, // 30 seconds - manifest changes frequently
     gcTime: 5 * 60 * 1000, // 5 minutes

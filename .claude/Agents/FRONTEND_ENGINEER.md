@@ -7,11 +7,11 @@
 > **Authority Level:** Tier 1 (Operational)
 > **Reports To:** COORD_FRONTEND
 > **Status:** Active
-> **Version:** 1.0.0
-> **Last Updated:** 2025-12-27
+> **Version:** 2.0.0 - Auftragstaktik
+> **Last Updated:** 2026-01-04
 > **Model Tier:** haiku (execution specialist)
 
-**Note:** Specialists execute specific tasks. They are spawned by Coordinators and return results.
+**Note:** Specialists are domain experts. They receive intent from coordinators, decide approach, execute, and report results.
 
 ---
 

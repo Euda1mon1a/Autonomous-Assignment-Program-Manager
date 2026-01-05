@@ -6,8 +6,8 @@
 > **Domain:** Session Wrap-up, Metrics Aggregation, Handoff Continuity
 > **Reports To:** ORCHESTRATOR
 > **Status:** Active
-> **Version:** 1.0.0
-> **Last Updated:** 2025-12-29
+> **Version:** 2.0.0 - Auftragstaktik
+> **Last Updated:** 2026-01-04
 > **Model Tier:** sonnet
 
 ---

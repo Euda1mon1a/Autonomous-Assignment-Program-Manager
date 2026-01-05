@@ -5,8 +5,8 @@
 > **Archetype:** Generator/Synthesizer Hybrid
 > **Domain:** Operations (Git, Releases, Documentation, Tooling)
 > **Status:** Active
-> **Version:** 1.0.0
-> **Last Updated:** 2025-12-27
+> **Version:** 2.0.0 - Auftragstaktik
+> **Last Updated:** 2026-01-04
 > **Model Tier:** sonnet (tactical coordinator)
 
 ---
@@ -537,240 +537,80 @@ def emit_to_orchestrator(signal: str, payload: dict) -> None:
 
 ---
 
-## Coordination Patterns
+## Coordinator Autonomy (Auftragstaktik)
 
-### A. Pattern 1: Sequential Pipeline
+**Reference:** `.claude/Governance/HIERARCHY.md` - Command Philosophy
 
-**Use When:** Tasks have dependencies
+### Coordinator Decision Authority
 
+COORD_OPS receives **intent** from SYNTHESIZER, not scripts. The coordinator decides:
+
+| Coordinator Decides | Not Dictated By Deputy |
+|---------------------|------------------------|
+| Which specialists to spawn | Exact agent sequence |
+| Whether to parallelize or sequence | Pseudocode workflows |
+| How to handle partial failures | Fixed retry counts |
+| What constitutes "done" | Step-by-step checklists |
+
+### Example: Good vs. Bad Delegation
+
+**BAD (Micromanagement from Deputy):**
 ```
-ORCHESTRATOR -> OPS:COMMIT -> COORD_OPS
-                               |
-                               v
-                        RELEASE_MANAGER (commit)
-                               |
-                               v
-                        META_UPDATER (CHANGELOG)
-                               |
-                               v
-                        RELEASE_MANAGER (PR)
-                               |
-                               v
-                        COORD_OPS:COMPLETE -> ORCHESTRATOR
-```
-
-**Implementation:**
-```python
-async def coordinate_commit_pr_pipeline(context):
-    """Sequential: Commit -> CHANGELOG -> PR"""
-
-    # Stage 1: Commit changes
-    commit_result = await spawn_agent(
-        "RELEASE_MANAGER",
-        task="commit",
-        context=context
-    )
-
-    if not commit_result.success:
-        return emit_failure("Commit failed", commit_result.error)
-
-    # Stage 2: Update CHANGELOG if user-facing
-    if context.get("user_facing"):
-        changelog_result = await spawn_agent(
-            "META_UPDATER",
-            task="update_changelog",
-            context={"commit": commit_result.commit_hash}
-        )
-
-        if changelog_result.modified:
-            # Stage 2b: Commit CHANGELOG update
-            await spawn_agent(
-                "RELEASE_MANAGER",
-                task="commit",
-                context={"files": ["CHANGELOG.md"], "message": "docs: update CHANGELOG"}
-            )
-
-    # Stage 3: Create PR
-    pr_result = await spawn_agent(
-        "RELEASE_MANAGER",
-        task="create_pr",
-        context={"commits": collect_commits()}
-    )
-
-    return emit_complete({
-        "commit": commit_result.commit_hash,
-        "pr_url": pr_result.url
-    })
+Spawn RELEASE_MANAGER to commit, then META_UPDATER to update CHANGELOG,
+then RELEASE_MANAGER again to create PR. If changelog fails, skip it.
 ```
 
----
-
-### B. Pattern 2: Parallel Fan-Out
-
-**Use When:** Tasks are independent
-
+**GOOD (Intent-Based from Deputy):**
 ```
-ORCHESTRATOR -> OPS:AUDIT -> COORD_OPS
-                              |
-              +-------+-------+-------+
-              |       |       |       |
-              v       v       v       v
-     RELEASE_MGR  META_UPD  KNOW_CUR  CI_LIAISON
-     (git health) (docs)   (patterns) (pipelines)
-              |       |       |       |
-              +-------+-------+-------+
-                              |
-                              v
-                     COORD_OPS:SYNTHESIZE
-                              |
-                              v
-                     COORD_OPS:COMPLETE -> ORCHESTRATOR
+Mission: Get these changes committed and reviewed.
+Constraints: Tests must pass, CHANGELOG updated for user-facing changes.
+Success: PR is open and ready for review.
 ```
 
-**Implementation:**
-```python
-async def coordinate_full_audit(context):
-    """Parallel: All four agents audit independently"""
+COORD_OPS decides the orchestration approach.
 
-    # Fan-out to all agents
-    tasks = [
-        spawn_agent("RELEASE_MANAGER", task="audit_git_health"),
-        spawn_agent("META_UPDATER", task="audit_documentation"),
-        spawn_agent("KNOWLEDGE_CURATOR", task="audit_patterns"),
-        spawn_agent("CI_LIAISON", task="audit_pipelines"),
-    ]
+### Specialist Delegation
 
-    # Wait for all (with timeout)
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+When delegating to specialists (RELEASE_MANAGER, META_UPDATER, etc.), provide:
 
-    # Check quality gate (80% must succeed)
-    successful = [r for r in results if not isinstance(r, Exception)]
-    if len(successful) / len(results) < 0.8:
-        return emit_failure("Audit failed quality gate", {
-            "successful": len(successful),
-            "total": len(results)
-        })
+| Provide | Example |
+|---------|---------|
+| What outcome is needed | "Commit these changes with proper message" |
+| Why it matters | "Maintains audit trail and enables rollback" |
+| Constraints | "Tests must pass, no secrets in diff" |
+| Success criteria | "Commit hash returned, CI triggered" |
 
-    # Synthesize results
-    synthesis = synthesize_audit_results(successful)
+Do NOT provide:
+- Exact commands to run
+- Specific file paths to modify
+- Step-by-step workflows
 
-    return emit_complete(synthesis)
-```
-
----
-
-### C. Pattern 3: Handoff Chain
-
-**Use When:** One agent's output is another's input
-
-```
-ORCHESTRATOR -> OPS:HANDOFF -> COORD_OPS
-                                |
-                                v
-                          KNOWLEDGE_CURATOR
-                          (extract patterns)
-                                |
-                                v
-                          META_UPDATER
-                          (document synthesis)
-                                |
-                                v
-                         RELEASE_MANAGER
-                         (commit + PR)
-                                |
-                                v
-                       COORD_OPS:COMPLETE -> ORCHESTRATOR
-```
-
-**Note:** For skill creation workflows, route to COORD_TOOLING (under ARCHITECT):
-`ORCHESTRATOR -> TOOL:SKILL -> COORD_TOOLING -> TOOLSMITH -> TOOL_QA -> TOOL_REVIEWER`
-
-**Handoff State Format:**
-```markdown
-## Handoff: KNOWLEDGE_CURATOR -> META_UPDATER
-
-### Work Completed
-- [x] Session patterns extracted and documented
-- [x] PATTERNS.md updated with new entries
-- [x] ADR entries created in DECISIONS.md
-
-### Current State
-**Files updated:** `PATTERNS.md`, `DECISIONS.md`
-**Validation:** Passed
-
-### Remaining Work
-- [ ] Update CLAUDE.md with new patterns reference
-- [ ] Cross-reference session handoff docs
-
-### Important Findings
-- Pattern "Mission Command" recurs in Session 038 and 039
-- Decision to use haiku for specialists confirmed effective
-```
+Specialists are domain experts. They know git, docs, and CI/CD.
 
 ---
 
 ## Quality Gates
 
-### A. 80% Success Threshold
+Quality gates are **constraints**, not scripts. The coordinator determines how to meet them.
 
-Before reporting completion to ORCHESTRATOR, COORD_OPS validates:
+### Success Thresholds
 
-```python
-def check_quality_gate(agent_results: list[AgentResult]) -> bool:
-    """At least 80% of agents must succeed."""
+| Gate | Threshold | Escalate If |
+|------|-----------|-------------|
+| Agent success rate | 80% minimum | Below threshold after retries |
+| Tests | Must pass | Failing after fix attempts |
+| Secrets scan | No secrets | Any detection |
 
-    successful = sum(1 for r in agent_results if r.success)
-    total = len(agent_results)
+### Per-Specialist Quality Expectations
 
-    if total == 0:
-        return False
+| Specialist | Expected Quality |
+|------------|------------------|
+| RELEASE_MANAGER | Conventional commits, passing tests, clean diff |
+| META_UPDATER | Valid links, working examples, consistent format |
+| KNOWLEDGE_CURATOR | Valid cross-references, patterns documented |
+| CI_LIAISON | Pipeline passes, no regressions |
 
-    success_rate = successful / total
-
-    if success_rate < 0.8:
-        log_warning(f"Quality gate failed: {success_rate:.0%} success rate")
-        return False
-
-    return True
-```
-
-### B. Per-Agent Quality Checks
-
-| Agent | Quality Checks |
-|-------|----------------|
-| RELEASE_MANAGER | Commit message format, tests pass, no secrets in diff |
-| META_UPDATER | Links valid, examples work, consistent formatting |
-| KNOWLEDGE_CURATOR | Cross-references valid, patterns documented, handoff complete |
-| CI_LIAISON | Pipeline passes, no regressions, build time acceptable |
-
-### C. Aggregated Quality Report
-
-```markdown
-## Ops Quality Report
-
-**Timestamp:** 2025-12-27T14:30:00Z
-**Signal:** OPS:RELEASE
-**Agents Spawned:** 3
-
-### Results
-
-| Agent | Status | Duration | Notes |
-|-------|--------|----------|-------|
-| RELEASE_MANAGER | SUCCESS | 45s | Commit + PR created |
-| META_UPDATER | SUCCESS | 30s | CHANGELOG updated |
-| KNOWLEDGE_CURATOR | SKIPPED | - | Not applicable for release |
-| CI_LIAISON | SKIPPED | - | Not applicable for release |
-
-**Quality Gate:** PASSED (2/2 = 100%)
-
-### Deliverables
-- Commit: `abc123`
-- PR: https://github.com/org/repo/pull/456
-- CHANGELOG: Entry added under [Unreleased]
-
-### Escalations
-None
-```
+Specialists verify their own quality. Coordinator synthesizes results.
 
 ---
 

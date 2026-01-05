@@ -1,137 +1,140 @@
-'use client'
+"use client";
 
 import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  ReactNode,
-} from 'react'
-import {
+  ToastAction,
   ToastContainer,
   ToastItem,
   ToastType,
-  ToastPosition,
-  ToastAction,
-} from '@/components/Toast'
-import { getErrorMessage } from '@/lib/errors'
+} from "@/components/Toast";
+import { getErrorMessage } from "@/lib/errors";
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useState,
+} from "react";
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface ToastOptions {
-  duration?: number
-  persistent?: boolean
-  action?: ToastAction
+  duration?: number;
+  persistent?: boolean;
+  action?: ToastAction;
 }
 
 // Max number of toasts visible at once
-const MAX_TOASTS = 3
+const MAX_TOASTS = 3;
 
 interface ToastMethods {
   /**
    * Show a success toast notification
    * @returns The toast ID for manual dismissal
    */
-  success: (message: string, options?: ToastOptions) => string
+  success: (message: string, options?: ToastOptions) => string;
 
   /**
    * Show an error toast notification
    * Accepts an error object, ApiError, or string message
    * @returns The toast ID for manual dismissal
    */
-  error: (error: unknown, options?: ToastOptions) => string
+  error: (error: unknown, options?: ToastOptions) => string;
 
   /**
    * Show a warning toast notification
    * @returns The toast ID for manual dismissal
    */
-  warning: (message: string, options?: ToastOptions) => string
+  warning: (message: string, options?: ToastOptions) => string;
 
   /**
    * Show an info toast notification
    * @returns The toast ID for manual dismissal
    */
-  info: (message: string, options?: ToastOptions) => string
+  info: (message: string, options?: ToastOptions) => string;
 
   /**
    * Dismiss a specific toast by ID
    */
-  dismiss: (id: string) => void
+  dismiss: (id: string) => void;
 
   /**
    * Dismiss all toasts
    */
-  dismissAll: () => void
+  dismissAll: () => void;
 }
 
 interface ToastContextType {
   /**
    * Toast methods for showing and dismissing toasts
    */
-  toast: ToastMethods
+  toast: ToastMethods;
 
   /**
    * Legacy: Show a toast notification with specified type and message
    * @deprecated Use toast.success(), toast.error(), etc. instead
    * @returns The toast ID for manual dismissal
    */
-  showToast: (type: ToastType, message: string, options?: ToastOptions) => string
+  showToast: (
+    type: ToastType,
+    message: string,
+    options?: ToastOptions
+  ) => string;
 
   /**
    * Legacy: Show a success toast notification
    * @deprecated Use toast.success() instead
    * @returns The toast ID for manual dismissal
    */
-  showSuccess: (message: string, options?: ToastOptions) => string
+  showSuccess: (message: string, options?: ToastOptions) => string;
 
   /**
    * Legacy: Show an error toast notification
    * @deprecated Use toast.error() instead
    * @returns The toast ID for manual dismissal
    */
-  showError: (error: unknown, options?: ToastOptions) => string
+  showError: (error: unknown, options?: ToastOptions) => string;
 
   /**
    * Legacy: Show a warning toast notification
    * @deprecated Use toast.warning() instead
    * @returns The toast ID for manual dismissal
    */
-  showWarning: (message: string, options?: ToastOptions) => string
+  showWarning: (message: string, options?: ToastOptions) => string;
 
   /**
    * Legacy: Show an info toast notification
    * @deprecated Use toast.info() instead
    * @returns The toast ID for manual dismissal
    */
-  showInfo: (message: string, options?: ToastOptions) => string
+  showInfo: (message: string, options?: ToastOptions) => string;
 
   /**
    * Legacy: Dismiss a specific toast by ID
    * @deprecated Use toast.dismiss() instead
    */
-  dismissToast: (id: string) => void
+  dismissToast: (id: string) => void;
 
   /**
    * Legacy: Dismiss all toasts
    * @deprecated Use toast.dismissAll() instead
    */
-  dismissAll: () => void
+  dismissAll: () => void;
 }
 
 // ============================================================================
 // Context
 // ============================================================================
 
-const ToastContext = createContext<ToastContextType | undefined>(undefined)
+const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 // ============================================================================
 // Provider
 // ============================================================================
 
 interface ToastProviderProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 /**
@@ -171,17 +174,17 @@ interface ToastProviderProps {
  * ```
  */
 export function ToastProvider({ children }: ToastProviderProps) {
-  const [toasts, setToasts] = useState<ToastItem[]>([])
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   // Generate unique ID for each toast
   const generateId = useCallback(() => {
-    return `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-  }, [])
+    return `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }, []);
 
   // Add a new toast with queue management
   const showToast = useCallback(
     (type: ToastType, message: string, options?: ToastOptions): string => {
-      const id = generateId()
+      const id = generateId();
       const newToast: ToastItem = {
         id,
         type,
@@ -189,61 +192,61 @@ export function ToastProvider({ children }: ToastProviderProps) {
         duration: options?.duration,
         persistent: options?.persistent,
         action: options?.action,
-      }
+      };
 
       setToasts((prev) => {
         // If we're at max capacity, remove the oldest toast
-        const updatedToasts = prev.length >= MAX_TOASTS ? prev.slice(1) : prev
-        return [...updatedToasts, newToast]
-      })
+        const updatedToasts = prev.length >= MAX_TOASTS ? prev.slice(1) : prev;
+        return [...updatedToasts, newToast];
+      });
 
-      return id
+      return id;
     },
     [generateId]
-  )
+  );
 
   // Show success toast
   const showSuccess = useCallback(
     (message: string, options?: ToastOptions): string => {
-      return showToast('success', message, options)
+      return showToast("success", message, options);
     },
     [showToast]
-  )
+  );
 
   // Show error toast - handles various error types
   const showError = useCallback(
     (error: unknown, options?: ToastOptions): string => {
-      const message = getErrorMessage(error)
-      return showToast('error', message, { duration: 7000, ...options })
+      const message = getErrorMessage(error);
+      return showToast("error", message, { duration: 7000, ...options });
     },
     [showToast]
-  )
+  );
 
   // Show warning toast
   const showWarning = useCallback(
     (message: string, options?: ToastOptions): string => {
-      return showToast('warning', message, options)
+      return showToast("warning", message, options);
     },
     [showToast]
-  )
+  );
 
   // Show info toast
   const showInfo = useCallback(
     (message: string, options?: ToastOptions): string => {
-      return showToast('info', message, options)
+      return showToast("info", message, options);
     },
     [showToast]
-  )
+  );
 
   // Dismiss a specific toast
   const dismissToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id))
-  }, [])
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  }, []);
 
   // Dismiss all toasts
   const dismissAll = useCallback(() => {
-    setToasts([])
-  }, [])
+    setToasts([]);
+  }, []);
 
   // Create the toast methods object
   const toastMethods: ToastMethods = {
@@ -253,7 +256,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
     info: showInfo,
     dismiss: dismissToast,
     dismissAll,
-  }
+  };
 
   const value: ToastContextType = {
     toast: toastMethods,
@@ -265,14 +268,14 @@ export function ToastProvider({ children }: ToastProviderProps) {
     showInfo,
     dismissToast,
     dismissAll,
-  }
+  };
 
   return (
     <ToastContext.Provider value={value}>
       {children}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </ToastContext.Provider>
-  )
+  );
 }
 
 // ============================================================================
@@ -315,9 +318,9 @@ export function ToastProvider({ children }: ToastProviderProps) {
  * ```
  */
 export function useToast(): ToastContextType {
-  const context = useContext(ToastContext)
+  const context = useContext(ToastContext);
   if (context === undefined) {
-    throw new Error('useToast must be used within a ToastProvider')
+    throw new Error("useToast must be used within a ToastProvider");
   }
-  return context
+  return context;
 }
