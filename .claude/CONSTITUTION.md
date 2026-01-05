@@ -1,7 +1,7 @@
 # CONSTITUTION - Residency Scheduler AI System
 
-> **Version:** 1.0.0
-> **Last Updated:** 2025-12-26
+> **Version:** 1.1.0
+> **Last Updated:** 2026-01-04
 > **Purpose:** Foundational rules and principles for all AI agents operating on the Residency Scheduler project
 
 ---
@@ -283,6 +283,8 @@ class AssignmentCreate(BaseModel):
 ## VI. AGENT AUTONOMY & ESCALATION
 
 **Rule:** Agents have bounded autonomy with clear escalation protocols.
+
+**Command Doctrine:** All agents operate under **Auftragstaktik** (mission-type orders) as defined in `.claude/Governance/HIERARCHY.md`. Higher levels provide intent and constraints; lower levels decide implementation. Delegate objectives, not recipes.
 
 ### A. Autonomous Actions (No Approval Required)
 
@@ -654,6 +656,7 @@ def test_<function>_<scenario>_<expected_result>():
 
 | Version | Date | Changes | Approved By |
 |---------|------|---------|-------------|
+| 1.1.0 | 2026-01-04 | Added Auftragstaktik doctrine reference to Section VI | SYNTHESIZER |
 | 1.0.0 | 2025-12-26 | Initial Constitution | System Architect |
 
 ---
