@@ -6,6 +6,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.schemas.person import (
+    BatchPersonResponse,
     PersonCreate,
     PersonListResponse,
     PersonResponse,
@@ -103,4 +104,89 @@ class PersonController:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=result["error"],
+            )
+
+    # =========================================================================
+    # Batch Operations
+    # =========================================================================
+
+    def batch_create_people(
+        self, people_data: list[dict], dry_run: bool = False
+    ) -> BatchPersonResponse:
+        """Batch create multiple people atomically."""
+        try:
+            result = self.service.batch_create(people_data, dry_run)
+
+            if result["failed"] > 0:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "message": "Batch create operation failed",
+                        "failed": result["failed"],
+                        "results": result["results"],
+                    },
+                )
+
+            return BatchPersonResponse(**result)
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e),
+            )
+
+    def batch_update_people(
+        self, updates: list[dict], dry_run: bool = False
+    ) -> BatchPersonResponse:
+        """Batch update multiple people atomically."""
+        try:
+            result = self.service.batch_update(updates, dry_run)
+
+            if result["failed"] > 0:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "message": "Batch update operation failed",
+                        "failed": result["failed"],
+                        "results": result["results"],
+                    },
+                )
+
+            return BatchPersonResponse(**result)
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e),
+            )
+
+    def batch_delete_people(
+        self, person_ids: list[UUID], dry_run: bool = False
+    ) -> BatchPersonResponse:
+        """Batch delete multiple people atomically."""
+        try:
+            result = self.service.batch_delete(person_ids, dry_run)
+
+            if result["failed"] > 0:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "message": "Batch delete operation failed",
+                        "failed": result["failed"],
+                        "results": result["results"],
+                    },
+                )
+
+            return BatchPersonResponse(**result)
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e),
             )

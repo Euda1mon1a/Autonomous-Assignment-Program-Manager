@@ -190,7 +190,10 @@ class TestCallAssignmentController:
         )
 
         controller.service.create_call_assignment = AsyncMock(
-            return_value={"call_assignment": None, "error": "Conflict with existing assignment"}
+            return_value={
+                "call_assignment": None,
+                "error": "Conflict with existing assignment",
+            }
         )
 
         with pytest.raises(HTTPException) as exc_info:
@@ -340,7 +343,9 @@ class TestCallAssignmentController:
         person_id = setup_data["resident"].id
 
         mock_assignments = [
-            MagicMock(id=uuid4(), date=date.today() + timedelta(days=i), call_type="overnight")
+            MagicMock(
+                id=uuid4(), date=date.today() + timedelta(days=i), call_type="overnight"
+            )
             for i in range(3)
         ]
         controller.service.get_call_assignments_by_person = AsyncMock(

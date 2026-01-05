@@ -14,6 +14,10 @@ from app.core.security import get_current_active_user
 from app.db.session import get_async_db
 from app.models.user import User
 from app.schemas.person import (
+    BatchPersonCreateRequest,
+    BatchPersonDeleteRequest,
+    BatchPersonResponse,
+    BatchPersonUpdateRequest,
     PersonCreate,
     PersonListResponse,
     PersonResponse,
@@ -281,3 +285,130 @@ async def get_person_procedures(
     service = CredentialService(db)
     result = service.list_procedures_for_faculty(person_id)
     return ProcedureListResponse(items=result["items"], total=result["total"])
+
+
+# ============================================================================
+# Batch operations for people
+# ============================================================================
+
+
+@router.post("/batch", response_model=BatchPersonResponse, status_code=201)
+async def batch_create_people(
+    request: BatchPersonCreateRequest,
+    response: Response,
+    db=Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Batch create multiple people atomically.
+
+    Features:
+    - Create up to 100 people at once
+    - Dry-run mode for validation without creating
+    - Atomic operation (all or nothing)
+    - Duplicate email detection within batch and database
+    - Validates resident PGY level requirements
+
+    Args:
+        request: BatchPersonCreateRequest with list of people to create
+        response: FastAPI Response object for adding headers
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        BatchPersonResponse with operation results
+
+    Security:
+        Requires authentication
+
+    PHI Warning:
+        This endpoint creates Protected Health Information (PHI).
+        X-Contains-PHI header is set.
+    """
+    # Add PHI warning headers
+    response.headers["X-Contains-PHI"] = "true"
+    response.headers["X-PHI-Fields"] = "name,email"
+
+    controller = PersonController(db)
+
+    # Convert Pydantic models to dicts
+    people_data = [person.model_dump() for person in request.people]
+
+    return controller.batch_create_people(people_data, request.dry_run)
+
+
+@router.put("/batch", response_model=BatchPersonResponse)
+async def batch_update_people(
+    request: BatchPersonUpdateRequest,
+    response: Response,
+    db=Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Batch update multiple people atomically.
+
+    Features:
+    - Update up to 100 people at once
+    - Dry-run mode for validation without updating
+    - Atomic operation (all or nothing)
+    - Per-person update tracking
+
+    Args:
+        request: BatchPersonUpdateRequest with list of person updates
+        response: FastAPI Response object for adding headers
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        BatchPersonResponse with operation results
+
+    Security:
+        Requires authentication
+
+    PHI Warning:
+        This endpoint updates Protected Health Information (PHI).
+        X-Contains-PHI header is set.
+    """
+    # Add PHI warning headers
+    response.headers["X-Contains-PHI"] = "true"
+    response.headers["X-PHI-Fields"] = "name,email"
+
+    controller = PersonController(db)
+
+    # Convert Pydantic models to dicts
+    updates = [
+        {
+            "person_id": item.person_id,
+            "updates": item.updates.model_dump(exclude_unset=True),
+        }
+        for item in request.people
+    ]
+
+    return controller.batch_update_people(updates, request.dry_run)
+
+
+@router.delete("/batch", response_model=BatchPersonResponse)
+async def batch_delete_people(
+    request: BatchPersonDeleteRequest,
+    db=Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Batch delete multiple people atomically.
+
+    Features:
+    - Delete up to 100 people at once
+    - Dry-run mode for validation without deleting
+    - Atomic operation (all or nothing)
+    - Validates all people exist before deletion
+
+    Args:
+        request: BatchPersonDeleteRequest with list of person IDs to delete
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        BatchPersonResponse with operation results
+
+    Security:
+        Requires authentication
+    """
+    controller = PersonController(db)
+    return controller.batch_delete_people(request.person_ids, request.dry_run)

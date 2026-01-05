@@ -60,7 +60,9 @@ router = APIRouter()
 @router.get("", response_model=RotationTemplateListResponse)
 async def list_rotation_templates(
     activity_type: str | None = Query(None, description="Filter by activity type"),
-    include_archived: bool = Query(False, description="Include archived templates in results"),
+    include_archived: bool = Query(
+        False, description="Include archived templates in results"
+    ),
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -339,9 +341,7 @@ async def check_batch_conflicts(
     """
     service = RotationTemplateService(db)
 
-    result = await service.check_conflicts(
-        request.template_ids, request.operation
-    )
+    result = await service.check_conflicts(request.template_ids, request.operation)
 
     return ConflictCheckResponse(
         has_conflicts=result["has_conflicts"],
@@ -765,20 +765,30 @@ async def get_rotation_template_history(
     versions = []
     try:
         # Access versions relationship created by SQLAlchemy-Continuum
-        if hasattr(template, 'versions'):
+        if hasattr(template, "versions"):
             for version in template.versions:
                 version_data = {
                     "version_id": version.transaction_id,
-                    "timestamp": version.transaction.issued_at.isoformat() if version.transaction.issued_at else None,
-                    "user_id": version.transaction.user_id if hasattr(version.transaction, 'user_id') else None,
-                    "operation_type": version.operation_type if hasattr(version, 'operation_type') else None,
-                    "changed_fields": version.changeset if hasattr(version, 'changeset') else {},
+                    "timestamp": version.transaction.issued_at.isoformat()
+                    if version.transaction.issued_at
+                    else None,
+                    "user_id": version.transaction.user_id
+                    if hasattr(version.transaction, "user_id")
+                    else None,
+                    "operation_type": version.operation_type
+                    if hasattr(version, "operation_type")
+                    else None,
+                    "changed_fields": version.changeset
+                    if hasattr(version, "changeset")
+                    else {},
                 }
                 versions.append(version_data)
     except Exception as e:
         # If versioning not configured or error accessing versions
         logger = get_logger(__name__)
-        logger.warning(f"Error accessing version history for template {template_id}: {str(e)}")
+        logger.warning(
+            f"Error accessing version history for template {template_id}: {str(e)}"
+        )
         versions = []
 
     return {

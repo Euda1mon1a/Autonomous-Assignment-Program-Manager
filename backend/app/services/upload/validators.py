@@ -18,6 +18,7 @@ from typing import Any
 # Optional dependency - libmagic
 try:
     import magic
+
     MAGIC_AVAILABLE = True
 except ImportError:
     magic = None  # type: ignore

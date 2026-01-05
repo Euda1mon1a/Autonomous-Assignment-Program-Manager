@@ -179,3 +179,91 @@ class PersonListResponse(BaseModel):
 
     items: list[PersonResponse]
     total: int
+
+
+# =============================================================================
+# Batch Operation Schemas
+# =============================================================================
+
+
+class BatchPersonCreateRequest(BaseModel):
+    """Request schema for batch create of people.
+
+    Performs atomic creation of multiple people - all succeed or all fail.
+    """
+
+    people: list[PersonCreate] = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="List of people to create (max 100)",
+    )
+    dry_run: bool = Field(
+        default=False, description="If True, validate only without creating"
+    )
+
+
+class BatchPersonUpdateItem(BaseModel):
+    """Single person update in a batch operation."""
+
+    person_id: UUID
+    updates: PersonUpdate
+
+
+class BatchPersonUpdateRequest(BaseModel):
+    """Request schema for batch update of people.
+
+    Performs atomic update of multiple people - all succeed or all fail.
+    """
+
+    people: list[BatchPersonUpdateItem] = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="List of person updates (max 100)",
+    )
+    dry_run: bool = Field(
+        default=False, description="If True, validate only without updating"
+    )
+
+
+class BatchPersonDeleteRequest(BaseModel):
+    """Request schema for batch delete of people.
+
+    Performs atomic deletion of multiple people - all succeed or all fail.
+    """
+
+    person_ids: list[UUID] = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="List of person IDs to delete (max 100)",
+    )
+    dry_run: bool = Field(
+        default=False, description="If True, validate only without deleting"
+    )
+
+
+class BatchOperationResult(BaseModel):
+    """Result for a single operation in a batch."""
+
+    index: int = Field(..., description="Index of the operation in the batch")
+    person_id: UUID | None = None
+    success: bool
+    error: str | None = None
+
+
+class BatchPersonResponse(BaseModel):
+    """Response schema for batch person operations."""
+
+    operation_type: str  # "delete", "update", "create"
+    total: int = Field(..., description="Total number of operations requested")
+    succeeded: int = Field(..., description="Number of successful operations")
+    failed: int = Field(..., description="Number of failed operations")
+    results: list[BatchOperationResult] = Field(
+        default_factory=list, description="Detailed results for each operation"
+    )
+    dry_run: bool = Field(default=False, description="Whether this was a dry run")
+    created_ids: list[UUID] | None = Field(
+        default=None, description="IDs of created people (for create operations)"
+    )

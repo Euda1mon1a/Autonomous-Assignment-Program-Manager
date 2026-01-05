@@ -162,8 +162,12 @@ class TestGameTheoryService:
         strategy = gt_service.create_strategy(
             name="List Strategy", strategy_type="tit_for_tat"
         )
-        gt_service.create_tournament(name="Tournament 1", strategy_ids=[str(strategy.id)])
-        gt_service.create_tournament(name="Tournament 2", strategy_ids=[str(strategy.id)])
+        gt_service.create_tournament(
+            name="Tournament 1", strategy_ids=[str(strategy.id)]
+        )
+        gt_service.create_tournament(
+            name="Tournament 2", strategy_ids=[str(strategy.id)]
+        )
 
         tournaments = gt_service.list_tournaments(limit=10)
         assert isinstance(tournaments, list)

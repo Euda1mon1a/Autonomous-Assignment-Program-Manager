@@ -197,9 +197,7 @@ class StagedAssignmentResponse(BaseModel):
     )
 
     # Conflict detection
-    conflict_type: str | None = Field(
-        None, description="none/duplicate/overwrite"
-    )
+    conflict_type: str | None = Field(None, description="none/duplicate/overwrite")
     existing_assignment_id: UUID | None = None
 
     # Status
@@ -219,7 +217,9 @@ class StagedAssignmentResponse(BaseModel):
     def validate_conflict_type(cls, v: str | None) -> str | None:
         """Validate conflict_type values."""
         if v is not None and v not in ("none", "duplicate", "overwrite"):
-            raise ValueError("conflict_type must be 'none', 'duplicate', or 'overwrite'")
+            raise ValueError(
+                "conflict_type must be 'none', 'duplicate', or 'overwrite'"
+            )
         return v
 
 
@@ -232,7 +232,9 @@ class StagedAssignmentUpdate(BaseModel):
 
     @field_validator("status")
     @classmethod
-    def validate_status_transition(cls, v: StagedAssignmentStatus) -> StagedAssignmentStatus:
+    def validate_status_transition(
+        cls, v: StagedAssignmentStatus
+    ) -> StagedAssignmentStatus:
         """Only allow transitioning to approved or skipped."""
         if v not in (StagedAssignmentStatus.APPROVED, StagedAssignmentStatus.SKIPPED):
             raise ValueError("status must be 'approved' or 'skipped'")
@@ -251,7 +253,9 @@ class StagedAssignmentBulkUpdate(BaseModel):
 
     @field_validator("status")
     @classmethod
-    def validate_status_transition(cls, v: StagedAssignmentStatus) -> StagedAssignmentStatus:
+    def validate_status_transition(
+        cls, v: StagedAssignmentStatus
+    ) -> StagedAssignmentStatus:
         """Only allow transitioning to approved or skipped."""
         if v not in (StagedAssignmentStatus.APPROVED, StagedAssignmentStatus.SKIPPED):
             raise ValueError("status must be 'approved' or 'skipped'")
@@ -320,9 +324,7 @@ class ImportApplyRequest(BaseModel):
     conflict_resolution: ConflictResolutionMode | None = Field(
         None, description="Override conflict resolution mode (optional)"
     )
-    dry_run: bool = Field(
-        False, description="If True, validate only without applying"
-    )
+    dry_run: bool = Field(False, description="If True, validate only without applying")
     validate_acgme: bool = Field(
         True, description="If True, validate ACGME compliance before apply"
     )
@@ -381,9 +383,7 @@ class ImportApplyResponse(BaseModel):
 class ImportRollbackRequest(BaseModel):
     """Request schema for rolling back an import batch."""
 
-    reason: str | None = Field(
-        None, max_length=500, description="Reason for rollback"
-    )
+    reason: str | None = Field(None, max_length=500, description="Reason for rollback")
 
 
 class ImportRollbackResponse(BaseModel):

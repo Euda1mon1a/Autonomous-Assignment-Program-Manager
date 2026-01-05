@@ -248,7 +248,9 @@ class TestRotationTemplateBatchArchive:
         )
         assert response.json()["is_archived"] is False
 
-    async def test_batch_archive_partial_failure(self, client, auth_headers, db_session):
+    async def test_batch_archive_partial_failure(
+        self, client, auth_headers, db_session
+    ):
         """Test batch archive with some invalid template IDs."""
         # Create one valid template
         response = await client.post(

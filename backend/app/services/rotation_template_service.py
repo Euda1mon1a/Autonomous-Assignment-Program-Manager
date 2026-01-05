@@ -36,7 +36,7 @@ class RotationTemplateService:
     execution contexts (production async, test sync).
     """
 
-    def __init__(self, db: Union[AsyncSession, Session]):
+    def __init__(self, db: AsyncSession | Session):
         """Initialize service with database session.
 
         Args:
@@ -46,8 +46,8 @@ class RotationTemplateService:
         # Check if session is async by checking for AsyncSession type
         # OR by checking for async method signatures (for test wrappers)
         self._is_async = (
-            isinstance(db, AsyncSession) or
-            hasattr(db, "_session")  # Test wrapper detection
+            isinstance(db, AsyncSession)
+            or hasattr(db, "_session")  # Test wrapper detection
         )
 
     async def _execute(self, stmt):
@@ -704,7 +704,9 @@ class RotationTemplateService:
                             "template_name": template.name,
                             "conflict_type": "has_assignments",
                             "description": f"Template has {len(assignments)} existing assignments",
-                            "severity": "warning" if operation == "archive" else "error",
+                            "severity": "warning"
+                            if operation == "archive"
+                            else "error",
                             "blocking": operation == "delete",
                         }
                     )
@@ -756,7 +758,9 @@ class RotationTemplateService:
                     "requires_procedure_credential": template.requires_procedure_credential,
                     "supervision_required": template.supervision_required,
                     "max_supervision_ratio": template.max_supervision_ratio,
-                    "created_at": template.created_at.isoformat() if template.created_at else None,
+                    "created_at": template.created_at.isoformat()
+                    if template.created_at
+                    else None,
                 },
                 "patterns": None,
                 "preferences": None,

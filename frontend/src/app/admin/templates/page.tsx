@@ -23,12 +23,14 @@ import {
   Settings,
   X,
   Keyboard,
+  Archive,
 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { TemplateTable } from '@/components/admin/TemplateTable';
 import { BulkActionsToolbar } from '@/components/admin/BulkActionsToolbar';
 import { PreferenceEditor } from '@/components/admin/PreferenceEditor';
 import { WeeklyGridEditor, WeeklyGridEditorSkeleton } from '@/components/scheduling/WeeklyGridEditor';
+import { ArchivedTemplatesDrawer } from '@/components/admin/ArchivedTemplatesDrawer';
 import {
   useAdminTemplates,
   useDeleteTemplate,
@@ -36,6 +38,7 @@ import {
   useBulkUpdateTemplates,
   useTemplatePreferences,
   useReplaceTemplatePreferences,
+  useBulkRestoreTemplates,
 } from '@/hooks/useAdminTemplates';
 import { useWeeklyPattern, useUpdateWeeklyPattern, useAvailableTemplates } from '@/hooks/useWeeklyPattern';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -84,6 +87,7 @@ export default function AdminTemplatesPage() {
   const [editorMode, setEditorMode] = useState<EditorMode>('none');
   const [editingTemplate, setEditingTemplate] = useState<RotationTemplate | null>(null);
   const [pendingAction, setPendingAction] = useState<BulkActionType | null>(null);
+  const [showArchivedDrawer, setShowArchivedDrawer] = useState(false);
 
   // Debounce search input for better performance
   const debouncedSearch = useDebounce(filters.search, 300);
@@ -94,6 +98,15 @@ export default function AdminTemplatesPage() {
     isLoading: templatesLoading,
     refetch: refetchTemplates,
   } = useAdminTemplates(filters.activity_type as ActivityType | '');
+
+  // Archived templates query (only fetch when drawer is open)
+  const {
+    data: archivedTemplatesData,
+    isLoading: archivedTemplatesLoading,
+  } = useAdminTemplates('', {
+    includeArchived: true,
+    enabled: showArchivedDrawer,
+  });
 
   // Pattern editing queries (conditional on editingTemplate)
   const {
@@ -120,6 +133,7 @@ export default function AdminTemplatesPage() {
   const bulkUpdate = useBulkUpdateTemplates();
   const updatePattern = useUpdateWeeklyPattern();
   const replacePreferences = useReplaceTemplatePreferences();
+  const bulkRestore = useBulkRestoreTemplates();
 
   // Derived data - uses debounced search for better performance
   const templates = useMemo(() => {
@@ -157,6 +171,13 @@ export default function AdminTemplatesPage() {
 
     return filtered;
   }, [templatesData?.items, debouncedSearch, sort]);
+
+  // Archived templates - filter from the includeArchived query
+  const archivedTemplates = useMemo(() => {
+    if (!archivedTemplatesData?.items) return [];
+    // Filter for only archived templates from the full list
+    return archivedTemplatesData.items.filter((t) => t.is_archived === true);
+  }, [archivedTemplatesData?.items]);
 
   // Handlers
   const handleSortChange = useCallback((field: SortField) => {
@@ -318,6 +339,18 @@ export default function AdminTemplatesPage() {
     [editingTemplate, replacePreferences, handleCloseEditor, toast]
   );
 
+  const handleRestoreTemplates = useCallback(
+    async (templateIds: string[]) => {
+      try {
+        await bulkRestore.mutateAsync(templateIds);
+        toast.success(`${templateIds.length} template(s) restored`);
+      } catch (error) {
+        toast.error(error);
+      }
+    },
+    [bulkRestore, toast]
+  );
+
   // Keyboard shortcuts
   useKeyboardShortcuts({
     shortcuts: [
@@ -395,6 +428,14 @@ export default function AdminTemplatesPage() {
                 title={`Refresh (${getShortcutDisplay({ key: 'r' })})`}
               >
                 <RefreshCw className={`w-5 h-5 ${templatesLoading ? 'animate-spin' : ''}`} />
+              </button>
+              <button
+                onClick={() => setShowArchivedDrawer(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors"
+                title="View archived templates"
+              >
+                <Archive className="w-4 h-4" />
+                View Archived
               </button>
               <button
                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-lg font-medium transition-all"
@@ -604,6 +645,16 @@ export default function AdminTemplatesPage() {
           </div>
         </div>
       )}
+
+      {/* Archived Templates Drawer */}
+      <ArchivedTemplatesDrawer
+        isOpen={showArchivedDrawer}
+        templates={archivedTemplates}
+        isLoading={archivedTemplatesLoading}
+        onClose={() => setShowArchivedDrawer(false)}
+        onRestore={handleRestoreTemplates}
+        isRestoring={bulkRestore.isPending}
+      />
     </div>
   );
 }

@@ -31,9 +31,7 @@ class RotationPreferenceRepository(AsyncBaseRepository[RotationPreference]):
         """
         super().__init__(RotationPreference, db)
 
-    async def get_by_template_id(
-        self, template_id: UUID
-    ) -> list[RotationPreference]:
+    async def get_by_template_id(self, template_id: UUID) -> list[RotationPreference]:
         """Get all preferences for a rotation template.
 
         Args:
