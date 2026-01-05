@@ -27,10 +27,11 @@ from sqlalchemy import (
     Text,
     Date,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
+from app.db.types import JSONType
 
 if TYPE_CHECKING:
     from app.models.person import Person
@@ -118,7 +119,9 @@ class ImportBatch(Base):
 
     # Rollback tracking
     rolled_back_at = Column(DateTime, nullable=True)
-    rolled_back_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    rolled_back_by_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
 
     # Relationships
     created_by = relationship("User", foreign_keys=[created_by_id])
@@ -131,7 +134,9 @@ class ImportBatch(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<ImportBatch {self.id} status={self.status.value} file={self.filename}>"
+        return (
+            f"<ImportBatch {self.id} status={self.status.value} file={self.filename}>"
+        )
 
 
 class ImportStagedAssignment(Base):
@@ -187,8 +192,8 @@ class ImportStagedAssignment(Base):
     )
 
     # Validation
-    validation_errors = Column(JSONB, nullable=True)
-    validation_warnings = Column(JSONB, nullable=True)
+    validation_errors = Column(JSONType, nullable=True)
+    validation_warnings = Column(JSONType, nullable=True)
 
     # After apply - link to created assignment
     created_assignment_id = Column(UUID(as_uuid=True), nullable=True)
@@ -196,7 +201,9 @@ class ImportStagedAssignment(Base):
     # Relationships
     batch = relationship("ImportBatch", back_populates="staged_assignments")
     matched_person = relationship("Person", foreign_keys=[matched_person_id])
-    matched_rotation = relationship("RotationTemplate", foreign_keys=[matched_rotation_id])
+    matched_rotation = relationship(
+        "RotationTemplate", foreign_keys=[matched_rotation_id]
+    )
 
     def __repr__(self) -> str:
         return f"<ImportStagedAssignment {self.person_name} {self.assignment_date} {self.rotation_name}>"
