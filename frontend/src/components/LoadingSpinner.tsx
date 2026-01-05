@@ -24,12 +24,12 @@ export function LoadingSpinner({ size = 'md', text }: LoadingSpinnerProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-3">
       <div
-        className={`${sizeClasses[size]} border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin`}
+        className={`${sizeClasses[size]} border-2 border-slate-700 border-t-violet-500 rounded-full animate-spin`}
         role="status"
         aria-label="Loading"
       />
       {text && (
-        <p className={`${textSizeClasses[size]} text-gray-600`}>{text}</p>
+        <p className={`${textSizeClasses[size]} text-slate-400`}>{text}</p>
       )}
     </div>
   );

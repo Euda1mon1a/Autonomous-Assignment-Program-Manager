@@ -8,9 +8,13 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
+  /** Use dark theme variant (slate palette) */
+  dark?: boolean;
+  /** Maximum width class (default: max-w-md) */
+  maxWidth?: string;
 }
 
-export function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, dark = false, maxWidth = 'max-w-md' }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
@@ -98,7 +102,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className={`absolute inset-0 ${dark ? 'bg-black/60 backdrop-blur-sm' : 'bg-black/50'}`}
         onClick={onClose}
         aria-hidden="true"
       />
@@ -109,14 +113,24 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4"
+        className={`relative rounded-lg shadow-xl w-full ${maxWidth} mx-4 ${
+          dark
+            ? 'bg-slate-800 border border-slate-700'
+            : 'bg-white'
+        }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 id={titleId} className="text-lg font-semibold">{title}</h2>
+        <div className={`flex items-center justify-between p-4 border-b ${
+          dark ? 'border-slate-700' : 'border-gray-200'
+        }`}>
+          <h2 id={titleId} className={`text-lg font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>{title}</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded"
+            className={`p-1 rounded transition-colors ${
+              dark
+                ? 'text-slate-400 hover:text-white hover:bg-slate-700'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+            }`}
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />

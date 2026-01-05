@@ -495,7 +495,7 @@ function UserModal({ user, isOpen, onClose, onSave }: UserModalProps) {
                 onChange={(e) =>
                   setFormData({ ...formData, firstName: e.target.value })
                 }
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
                 required
               />
             </div>
@@ -509,7 +509,7 @@ function UserModal({ user, isOpen, onClose, onSave }: UserModalProps) {
                 onChange={(e) =>
                   setFormData({ ...formData, lastName: e.target.value })
                 }
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
                 required
               />
             </div>
@@ -524,7 +524,7 @@ function UserModal({ user, isOpen, onClose, onSave }: UserModalProps) {
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
               }
-              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
               required
             />
           </div>
@@ -537,7 +537,7 @@ function UserModal({ user, isOpen, onClose, onSave }: UserModalProps) {
               onChange={(e) =>
                 setFormData({ ...formData, role: e.target.value as UserRole })
               }
-              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
             >
               {Object.entries(USER_ROLE_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -1008,7 +1008,7 @@ export default function AdminUsersPage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search users..."
-                    className="w-full pl-10 pr-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-full pl-10 pr-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
                   />
                 </div>
                 <div className="flex items-center gap-2">
@@ -1017,7 +1017,7 @@ export default function AdminUsersPage() {
                     onChange={(e) =>
                       setRoleFilter(e.target.value as UserRole | "all")
                     }
-                    className="px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-slate-300 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
                   >
                     <option value="all">All Roles</option>
                     {Object.entries(USER_ROLE_LABELS).map(([value, label]) => (
@@ -1031,7 +1031,7 @@ export default function AdminUsersPage() {
                     onChange={(e) =>
                       setStatusFilter(e.target.value as UserStatus | "all")
                     }
-                    className="px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-slate-300 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
                   >
                     <option value="all">All Status</option>
                     <option value="active">Active</option>
