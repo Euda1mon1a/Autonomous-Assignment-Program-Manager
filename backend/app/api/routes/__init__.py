@@ -29,6 +29,7 @@ from app.api.routes import (
     exports,
     fatigue_risk,
     features,
+    fmit_assignments,
     fmit_health,
     fmit_timeline,
     game_theory,
@@ -167,6 +168,9 @@ api_router.include_router(swap.router)  # prefix="/swaps" defined in router
 api_router.include_router(leave.router)  # prefix="/leave" defined in router
 api_router.include_router(portal.router)  # prefix="/portal" defined in router
 api_router.include_router(fmit_health.router, prefix="/fmit", tags=["fmit-health"])
+api_router.include_router(
+    fmit_assignments.router, prefix="/fmit", tags=["fmit-assignments"]
+)
 api_router.include_router(
     fmit_timeline.router, prefix="/fmit_timeline", tags=["fmit-timeline"]
 )

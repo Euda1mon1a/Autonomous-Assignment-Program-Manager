@@ -20,7 +20,7 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB
 
 # revision identifiers, used by Alembic.
 revision: str = '20260105_add_resident_weekly_requirements'
-down_revision: Union[str, None] = '20260104_add_archive_fields'
+down_revision: Union[str, None] = '20260105_ext_ver_col'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

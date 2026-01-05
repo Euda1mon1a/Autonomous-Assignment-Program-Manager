@@ -3,11 +3,12 @@
 Provides staging tables for import preview and batch operations:
 - ImportBatch: Tracks import sessions with status and rollback capability
 - ImportStagedAssignment: Staged assignments before commit to live tables
+- ImportStagedAbsence: Staged absences before commit to absences table
 
 Workflow:
-1. Upload Excel → Parse → Stage (ImportStagedAssignment records)
-2. Review staged vs existing (preview conflicts)
-3. Apply (commit to assignments table) or Reject
+1. Upload Excel → Parse → Stage (ImportStagedAssignment/ImportStagedAbsence records)
+2. Review staged vs existing (preview conflicts, overlap detection)
+3. Apply (commit to assignments/absences table) or Reject
 4. Rollback available for applied batches (within window)
 """
 
@@ -132,6 +133,11 @@ class ImportBatch(Base):
         back_populates="batch",
         cascade="all, delete-orphan",
     )
+    staged_absences = relationship(
+        "ImportStagedAbsence",
+        back_populates="batch",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return (
@@ -207,3 +213,119 @@ class ImportStagedAssignment(Base):
 
     def __repr__(self) -> str:
         return f"<ImportStagedAssignment {self.person_name} {self.assignment_date} {self.rotation_name}>"
+
+
+class StagedAbsenceStatus(str, enum.Enum):
+    """Status of a staged absence."""
+
+    PENDING = "pending"  # Awaiting batch decision
+    APPROVED = "approved"  # Will be applied
+    SKIPPED = "skipped"  # User chose to skip
+    APPLIED = "applied"  # Successfully applied
+    FAILED = "failed"  # Apply failed
+
+
+class OverlapType(str, enum.Enum):
+    """Types of overlap detected between staged and existing absences."""
+
+    NONE = "none"  # No overlap
+    PARTIAL = "partial"  # Partial overlap (dates overlap but not identical)
+    EXACT = "exact"  # Exact match (same person, same dates)
+    CONTAINED = "contained"  # Staged is within existing absence
+    CONTAINS = "contains"  # Staged fully contains existing absence
+
+
+class ImportStagedAbsence(Base):
+    """A single staged absence from an import batch.
+
+    Stores parsed absence data with fuzzy match results and overlap detection.
+    Not committed to live absences table until batch is applied.
+
+    Supports audit logging for PHI (Protected Health Information) since
+    absence data can contain sensitive medical information.
+
+    Overlap Detection:
+    - Checks against existing absences for same person
+    - Identifies exact, partial, contained, and contains overlaps
+    - Provides merge/replace/skip options for resolution
+    """
+
+    __tablename__ = "import_staged_absences"
+    __versioned__ = {}  # Enable audit trail for PHI compliance
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    batch_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("import_batches.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    # Source tracking
+    row_number = Column(Integer, nullable=True)  # Original Excel row
+    sheet_name = Column(String(100), nullable=True)
+
+    # Raw parsed data
+    person_name = Column(String(255), nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    absence_type = Column(String(50), nullable=False)  # vacation, deployment, tdy, etc.
+    raw_cell_value = Column(String(500), nullable=True)  # Original cell content
+    notes = Column(Text, nullable=True)  # Optional notes/reason
+
+    # Additional absence fields
+    is_blocking = Column(Boolean, nullable=True)  # If null, auto-determined
+    return_date_tentative = Column(Boolean, default=False)
+    tdy_location = Column(String(255), nullable=True)  # For TDY absences
+    replacement_activity = Column(String(255), nullable=True)
+
+    # Fuzzy match results
+    matched_person_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("people.id"),
+        nullable=True,
+    )
+    person_match_confidence = Column(Integer, nullable=True)  # 0-100
+
+    # Overlap detection with existing absences
+    overlap_type = Column(
+        Enum(OverlapType),
+        nullable=False,
+        default=OverlapType.NONE,
+    )
+    overlapping_absence_ids = Column(JSONType, nullable=True)  # List of UUIDs
+    overlap_details = Column(JSONType, nullable=True)  # Details about each overlap
+
+    # Status
+    status = Column(
+        Enum(StagedAbsenceStatus),
+        nullable=False,
+        default=StagedAbsenceStatus.PENDING,
+    )
+
+    # Validation
+    validation_errors = Column(JSONType, nullable=True)
+    validation_warnings = Column(JSONType, nullable=True)
+
+    # After apply - link to created/updated absence
+    created_absence_id = Column(UUID(as_uuid=True), nullable=True)
+    merged_into_absence_id = Column(UUID(as_uuid=True), nullable=True)  # If merged
+
+    # Relationships
+    batch = relationship("ImportBatch", back_populates="staged_absences")
+    matched_person = relationship("Person", foreign_keys=[matched_person_id])
+
+    def __repr__(self) -> str:
+        return (
+            f"<ImportStagedAbsence {self.person_name} "
+            f"{self.absence_type} {self.start_date} - {self.end_date}>"
+        )
+
+    @property
+    def duration_days(self) -> int:
+        """Calculate the duration of this absence in days."""
+        return (self.end_date - self.start_date).days + 1
+
+    @property
+    def has_overlap(self) -> bool:
+        """Check if this staged absence overlaps with existing absences."""
+        return self.overlap_type != OverlapType.NONE

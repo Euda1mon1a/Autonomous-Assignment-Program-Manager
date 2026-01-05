@@ -250,6 +250,46 @@ Follow layered architecture. Write tests. Run tests before commit. Use Alembic f
 
 ---
 
+## Migration Naming Convention
+
+**CRITICAL:** Alembic revision IDs must be **64 characters or less**.
+
+The `alembic_version.version_num` column has been extended to `varchar(128)`, but we enforce a 64-char limit for safety margin and to encourage concise naming.
+
+### Format
+
+```
+YYYYMMDD_short_description
+```
+
+### Examples
+
+| Good (under 64 chars) | Bad (too long) |
+|-----------------------|----------------|
+| `20260105_res_weekly_reqs` | `20260105_add_resident_weekly_requirements_with_fm_clinic_scheduling` |
+| `20260103_add_activity_log` | `20260103_add_activity_log_table_for_audit_tracking_purposes` |
+| `20251220_gateway_auth` | `20251220_add_gateway_authentication_and_authorization_tables` |
+
+### Rules
+
+1. **Date prefix:** Always start with `YYYYMMDD_`
+2. **Use abbreviations:** `req` not `requirement`, `col` not `column`
+3. **Be concise:** Focus on the what, not the why
+4. **Pre-commit check:** A hook validates length before commit
+
+### Validation
+
+```bash
+# Check all migrations
+./scripts/validate-migration-names.sh
+
+# The pre-commit hook runs automatically on staged migrations
+```
+
+> **History:** The default Alembic column is `varchar(32)` which caused repeated container startup failures. Migration `20260105_ext_ver_col` extended it to `varchar(128)`.
+
+---
+
 ## Common Commands
 
 > RAG: `rag_search('common commands')` for full command reference
