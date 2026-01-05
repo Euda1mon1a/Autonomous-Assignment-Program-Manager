@@ -36,3 +36,13 @@ export type {
   BulkProgressItem,
   BulkOperationType,
 } from './BulkProgressModal';
+
+// Bulk creation modals
+export { BulkCreateModal } from './BulkCreateModal';
+export type { BulkCreateModalProps } from './BulkCreateModal';
+
+export { CSVImportModal } from './CSVImportModal';
+export type { CSVImportModalProps } from './CSVImportModal';
+
+export { DuplicateTemplateModal } from './DuplicateTemplateModal';
+export type { DuplicateTemplateModalProps } from './DuplicateTemplateModal';
