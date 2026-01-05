@@ -348,3 +348,76 @@ async def list_users(
     """
     controller = AuthController(db)
     return controller.list_users()
+
+
+@router.post("/initialize-admin")
+async def initialize_admin(
+    db=Depends(get_async_db),
+):
+    """
+    Initialize database with default admin user if empty.
+
+    Creates a default admin user with credentials:
+    - username: admin
+    - password: admin123
+
+    This endpoint is idempotent - it only creates the user if the database
+    is completely empty (no users exist).
+
+    Security: This endpoint should only be called during initial setup.
+    It automatically becomes a no-op after the first user is created.
+
+    Returns:
+        - 201: Admin user created
+        - 200: Database already initialized (user already exists)
+        - 500: Error during initialization
+
+    Use Cases:
+        - Docker initialization scripts
+        - CI/CD setup pipelines
+        - Development environment setup
+        - RAG authentication bootstrap
+    """
+    from sqlalchemy import select
+
+    try:
+        # Check if any users exist
+        user_count = await db.execute(select(User))
+        existing_users = user_count.scalars().all()
+
+        if len(existing_users) > 0:
+            # Database already initialized
+            return {
+                "status": "already_initialized",
+                "message": "Database already contains users",
+                "user_count": len(existing_users),
+            }
+
+        # Create default admin user
+        from app.core.security import get_password_hash
+
+        admin_user = User(
+            username="admin",
+            email="admin@local.dev",
+            hashed_password=get_password_hash("admin123"),
+            role="admin",
+            is_active=True,
+        )
+
+        db.add(admin_user)
+        await db.commit()
+        await db.refresh(admin_user)
+
+        return {
+            "status": "created",
+            "message": "Default admin user created successfully",
+            "username": "admin",
+            "note": "IMPORTANT: Change the default password in production!",
+        }
+
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to initialize admin user: {str(e)}",
+        )

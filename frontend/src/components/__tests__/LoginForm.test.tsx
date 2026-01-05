@@ -249,6 +249,32 @@ describe('LoginForm', () => {
         expect(screen.getByText(/signing in/i)).toBeInTheDocument();
       });
     });
+
+    it('submits form when Enter key is pressed in password field', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ token: 'test-token', user: { id: '1', email: 'test@example.com' } }),
+      });
+
+      render(<LoginForm />);
+
+      const emailInput = screen.getByLabelText(/email/i);
+      const passwordInput = screen.getByLabelText(/password/i);
+
+      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+      fireEvent.change(passwordInput, { target: { value: 'password123' } });
+
+      fireEvent.keyDown(passwordInput, { key: 'Enter', code: 'Enter' });
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining('/api/auth/login'),
+          expect.objectContaining({
+            method: 'POST',
+          })
+        );
+      });
+    });
   });
 
   describe('Remember Me', () => {
