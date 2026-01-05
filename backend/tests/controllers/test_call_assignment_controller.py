@@ -51,10 +51,28 @@ class TestCallAssignmentController:
         """Test listing all call assignments."""
         controller = CallAssignmentController(mock_db)
 
-        # Mock service response
+        # Mock service response with properly typed attributes
+        person_id1 = uuid4()
+        person_id2 = uuid4()
         mock_items = [
-            MagicMock(id=uuid4(), date=date.today(), call_type="overnight"),
-            MagicMock(id=uuid4(), date=date.today(), call_type="weekend"),
+            MagicMock(
+                id=uuid4(),
+                call_date=date.today(),
+                call_type="overnight",
+                person_id=person_id1,
+                is_weekend=False,
+                is_holiday=False,
+                person=None,
+            ),
+            MagicMock(
+                id=uuid4(),
+                call_date=date.today(),
+                call_type="weekend",
+                person_id=person_id2,
+                is_weekend=True,
+                is_holiday=False,
+                person=None,
+            ),
         ]
         controller.service.get_call_assignments = AsyncMock(
             return_value={"items": mock_items, "total": 2}
@@ -124,12 +142,16 @@ class TestCallAssignmentController:
         """Test getting a single call assignment."""
         controller = CallAssignmentController(mock_db)
         call_id = uuid4()
+        person_id = uuid4()
 
         mock_call = MagicMock(
             id=call_id,
-            date=date.today(),
+            call_date=date.today(),
             call_type="overnight",
-            person_id=uuid4(),
+            person_id=person_id,
+            is_weekend=False,
+            is_holiday=False,
+            person=None,
         )
         controller.service.get_call_assignment = AsyncMock(return_value=mock_call)
 
@@ -159,16 +181,19 @@ class TestCallAssignmentController:
         controller = CallAssignmentController(mock_db)
 
         assignment_data = CallAssignmentCreate(
-            date=date.today() + timedelta(days=7),
+            call_date=date.today() + timedelta(days=7),
             person_id=setup_data["resident"].id,
             call_type="overnight",
         )
 
         mock_result = MagicMock(
             id=uuid4(),
-            date=assignment_data.date,
+            call_date=assignment_data.call_date,
             person_id=assignment_data.person_id,
             call_type="overnight",
+            is_weekend=False,
+            is_holiday=False,
+            person=None,
         )
         controller.service.create_call_assignment = AsyncMock(
             return_value={"call_assignment": mock_result, "error": None}
@@ -184,7 +209,7 @@ class TestCallAssignmentController:
         controller = CallAssignmentController(mock_db)
 
         assignment_data = CallAssignmentCreate(
-            date=date.today(),
+            call_date=date.today(),
             person_id=setup_data["resident"].id,
             call_type="overnight",
         )
@@ -210,13 +235,18 @@ class TestCallAssignmentController:
         """Test updating a call assignment."""
         controller = CallAssignmentController(mock_db)
         call_id = uuid4()
+        person_id = uuid4()
 
         update_data = CallAssignmentUpdate(call_type="backup")
 
         mock_result = MagicMock(
             id=call_id,
-            date=date.today(),
+            call_date=date.today(),
             call_type="backup",
+            person_id=person_id,
+            is_weekend=False,
+            is_holiday=False,
+            person=None,
         )
         controller.service.update_call_assignment = AsyncMock(
             return_value={"call_assignment": mock_result, "error": None}
@@ -284,7 +314,7 @@ class TestCallAssignmentController:
 
         assignments = [
             CallAssignmentCreate(
-                date=date.today() + timedelta(days=i),
+                call_date=date.today() + timedelta(days=i),
                 person_id=setup_data["resident"].id,
                 call_type="overnight",
             )
@@ -312,7 +342,7 @@ class TestCallAssignmentController:
 
         assignments = [
             CallAssignmentCreate(
-                date=date.today(),
+                call_date=date.today(),
                 person_id=setup_data["resident"].id,
                 call_type="overnight",
             )
@@ -344,7 +374,13 @@ class TestCallAssignmentController:
 
         mock_assignments = [
             MagicMock(
-                id=uuid4(), date=date.today() + timedelta(days=i), call_type="overnight"
+                id=uuid4(),
+                call_date=date.today() + timedelta(days=i),
+                call_type="overnight",
+                person_id=person_id,
+                is_weekend=False,
+                is_holiday=False,
+                person=None,
             )
             for i in range(3)
         ]
@@ -366,10 +402,28 @@ class TestCallAssignmentController:
         """Test getting call assignments for a specific date."""
         controller = CallAssignmentController(mock_db)
         target_date = date.today()
+        person_id1 = uuid4()
+        person_id2 = uuid4()
 
         mock_assignments = [
-            MagicMock(id=uuid4(), date=target_date, call_type="overnight"),
-            MagicMock(id=uuid4(), date=target_date, call_type="backup"),
+            MagicMock(
+                id=uuid4(),
+                call_date=target_date,
+                call_type="overnight",
+                person_id=person_id1,
+                is_weekend=False,
+                is_holiday=False,
+                person=None,
+            ),
+            MagicMock(
+                id=uuid4(),
+                call_date=target_date,
+                call_type="backup",
+                person_id=person_id2,
+                is_weekend=False,
+                is_holiday=False,
+                person=None,
+            ),
         ]
         controller.service.get_call_assignments_by_date_range = AsyncMock(
             return_value=mock_assignments
@@ -444,7 +498,7 @@ class TestCallAssignmentController:
 
         # Create assignment
         assignment_data = CallAssignmentCreate(
-            date=date.today() + timedelta(days=10),
+            call_date=date.today() + timedelta(days=10),
             person_id=setup_data["resident"].id,
             call_type="overnight",
         )
@@ -452,9 +506,12 @@ class TestCallAssignmentController:
         created_id = uuid4()
         mock_created = MagicMock(
             id=created_id,
-            date=assignment_data.date,
+            call_date=assignment_data.call_date,
             person_id=assignment_data.person_id,
             call_type="overnight",
+            is_weekend=False,
+            is_holiday=False,
+            person=None,
         )
         controller.service.create_call_assignment = AsyncMock(
             return_value={"call_assignment": mock_created, "error": None}
@@ -493,3 +550,245 @@ class TestCallAssignmentController:
         result = await controller.get_coverage_report(start_date, end_date)
 
         assert result.coverage_percentage < 100
+
+    # ========================================================================
+    # Bulk Update Tests
+    # ========================================================================
+
+    @pytest.mark.asyncio
+    async def test_bulk_update_call_assignments_success(self, mock_db, setup_data):
+        """Test bulk updating call assignments."""
+        controller = CallAssignmentController(mock_db)
+        from app.schemas.call_assignment import (
+            BulkCallAssignmentUpdateRequest,
+            BulkCallAssignmentUpdateInput,
+        )
+
+        assignment_ids = [uuid4(), uuid4()]
+        new_person_id = setup_data["resident"].id
+
+        request = BulkCallAssignmentUpdateRequest(
+            assignment_ids=assignment_ids,
+            updates=BulkCallAssignmentUpdateInput(person_id=new_person_id),
+        )
+
+        # Mock service response with properly typed MagicMocks
+        mock_assignment1 = MagicMock()
+        mock_assignment1.id = assignment_ids[0]
+        mock_assignment1.call_date = date.today()
+        mock_assignment1.person_id = new_person_id
+        mock_assignment1.call_type = "overnight"
+        mock_assignment1.is_weekend = False
+        mock_assignment1.is_holiday = False
+        mock_assignment1.person = None
+
+        mock_assignment2 = MagicMock()
+        mock_assignment2.id = assignment_ids[1]
+        mock_assignment2.call_date = date.today() + timedelta(days=1)
+        mock_assignment2.person_id = new_person_id
+        mock_assignment2.call_type = "overnight"
+        mock_assignment2.is_weekend = False
+        mock_assignment2.is_holiday = False
+        mock_assignment2.person = None
+
+        controller.service.bulk_update_call_assignments = AsyncMock(
+            return_value={
+                "updated": 2,
+                "errors": [],
+                "assignments": [mock_assignment1, mock_assignment2],
+            }
+        )
+
+        result = await controller.bulk_update_call_assignments(request)
+
+        assert result.updated == 2
+        assert len(result.errors) == 0
+        controller.service.bulk_update_call_assignments.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_bulk_update_all_fail_raises_400(self, mock_db, setup_data):
+        """Test bulk update with all failures raises HTTP 400."""
+        controller = CallAssignmentController(mock_db)
+        from app.schemas.call_assignment import (
+            BulkCallAssignmentUpdateRequest,
+            BulkCallAssignmentUpdateInput,
+        )
+
+        request = BulkCallAssignmentUpdateRequest(
+            assignment_ids=[uuid4()],
+            updates=BulkCallAssignmentUpdateInput(person_id=uuid4()),
+        )
+
+        controller.service.bulk_update_call_assignments = AsyncMock(
+            return_value={
+                "updated": 0,
+                "errors": ["Person not found"],
+                "assignments": [],
+            }
+        )
+
+        with pytest.raises(HTTPException) as exc_info:
+            await controller.bulk_update_call_assignments(request)
+
+        assert exc_info.value.status_code == 400
+
+    # ========================================================================
+    # PCAT Generation Tests
+    # ========================================================================
+
+    @pytest.mark.asyncio
+    async def test_generate_pcat_success(self, mock_db):
+        """Test PCAT generation for call assignments."""
+        controller = CallAssignmentController(mock_db)
+        from app.schemas.call_assignment import (
+            PCATGenerationRequest,
+            PCATGenerationResponse,
+            PCATAssignmentResult,
+        )
+
+        assignment_ids = [uuid4(), uuid4()]
+        request = PCATGenerationRequest(assignment_ids=assignment_ids)
+
+        # Mock service response
+        mock_response = PCATGenerationResponse(
+            processed=2,
+            pcat_created=2,
+            do_created=2,
+            errors=[],
+            results=[
+                PCATAssignmentResult(
+                    call_assignment_id=assignment_ids[0],
+                    call_date=date.today(),
+                    person_id=uuid4(),
+                    person_name="Dr. Test",
+                    pcat_created=True,
+                    do_created=True,
+                ),
+                PCATAssignmentResult(
+                    call_assignment_id=assignment_ids[1],
+                    call_date=date.today() + timedelta(days=1),
+                    person_id=uuid4(),
+                    person_name="Dr. Test 2",
+                    pcat_created=True,
+                    do_created=True,
+                ),
+            ],
+        )
+
+        controller.service.generate_pcat_for_assignments = AsyncMock(
+            return_value=mock_response
+        )
+
+        result = await controller.generate_pcat(request)
+
+        assert result.processed == 2
+        assert result.pcat_created == 2
+        assert result.do_created == 2
+        controller.service.generate_pcat_for_assignments.assert_called_once_with(
+            assignment_ids=assignment_ids
+        )
+
+    @pytest.mark.asyncio
+    async def test_generate_pcat_with_fri_sat_skipped(self, mock_db):
+        """Test PCAT generation skips Friday/Saturday calls."""
+        controller = CallAssignmentController(mock_db)
+        from app.schemas.call_assignment import (
+            PCATGenerationRequest,
+            PCATGenerationResponse,
+            PCATAssignmentResult,
+        )
+
+        assignment_id = uuid4()
+        request = PCATGenerationRequest(assignment_ids=[assignment_id])
+
+        # Mock service response - Friday call should be skipped
+        mock_response = PCATGenerationResponse(
+            processed=1,
+            pcat_created=0,
+            do_created=0,
+            errors=[],
+            results=[
+                PCATAssignmentResult(
+                    call_assignment_id=assignment_id,
+                    call_date=date.today(),  # Assume this is Friday
+                    person_id=uuid4(),
+                    person_name="Dr. Test",
+                    pcat_created=False,
+                    do_created=False,
+                    error="Call is Fri/Sat - use FMIT rules",
+                ),
+            ],
+        )
+
+        controller.service.generate_pcat_for_assignments = AsyncMock(
+            return_value=mock_response
+        )
+
+        result = await controller.generate_pcat(request)
+
+        assert result.processed == 1
+        assert result.pcat_created == 0
+        assert result.results[0].error is not None
+
+    # ========================================================================
+    # Equity Preview Tests
+    # ========================================================================
+
+    @pytest.mark.asyncio
+    async def test_equity_preview_success(self, mock_db, setup_data):
+        """Test equity preview with simulated changes."""
+        controller = CallAssignmentController(mock_db)
+        from app.schemas.call_assignment import (
+            EquityPreviewRequest,
+            EquityPreviewResponse,
+            CallEquityReport,
+            FacultyEquityDetail,
+            SimulatedChange,
+        )
+
+        start_date = date.today()
+        end_date = date.today() + timedelta(days=30)
+
+        request = EquityPreviewRequest(
+            start_date=start_date,
+            end_date=end_date,
+            simulated_changes=[
+                SimulatedChange(
+                    assignment_id=uuid4(),
+                    call_date=date.today(),
+                    old_person_id=uuid4(),
+                    new_person_id=setup_data["resident"].id,
+                )
+            ],
+        )
+
+        # Mock service response
+        mock_equity = CallEquityReport(
+            start_date=start_date,
+            end_date=end_date,
+            faculty_count=2,
+            total_overnight_calls=10,
+            sunday_call_stats={"min": 1, "max": 3, "mean": 2.0, "stdev": 0.5},
+            weekday_call_stats={"min": 2, "max": 5, "mean": 3.5, "stdev": 1.0},
+            distribution=[],
+        )
+
+        mock_response = EquityPreviewResponse(
+            start_date=start_date,
+            end_date=end_date,
+            current_equity=mock_equity,
+            projected_equity=mock_equity,
+            faculty_details=[],
+            improvement_score=0.15,
+        )
+
+        controller.service.get_equity_preview = AsyncMock(return_value=mock_response)
+
+        result = await controller.get_equity_preview(
+            start_date=request.start_date,
+            end_date=request.end_date,
+            simulated_changes=request.simulated_changes,
+        )
+
+        assert result.improvement_score == 0.15
+        controller.service.get_equity_preview.assert_called_once()

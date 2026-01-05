@@ -3,7 +3,7 @@
 import logging
 import statistics
 from collections import defaultdict
-from datetime import date
+from datetime import date, timedelta
 from uuid import UUID
 
 from sqlalchemy import delete, func, select
@@ -12,11 +12,20 @@ from sqlalchemy.orm import selectinload
 
 from app.models.call_assignment import CallAssignment
 from app.models.person import Person
+from app.models.rotation_template import RotationTemplate
+from app.models.block import Block
+from app.models.assignment import Assignment
 from app.schemas.call_assignment import (
+    BulkCallAssignmentUpdateInput,
     CallAssignmentCreate,
     CallAssignmentUpdate,
     CallCoverageReport,
     CallEquityReport,
+    EquityPreviewResponse,
+    FacultyEquityDetail,
+    PCATAssignmentResult,
+    PCATGenerationResponse,
+    SimulatedChange,
 )
 
 logger = logging.getLogger(__name__)
@@ -569,4 +578,460 @@ class CallAssignmentService:
                 else 0,
             },
             distribution=distribution,
+        )
+
+    # =========================================================================
+    # Bulk Update Methods
+    # =========================================================================
+
+    async def bulk_update_call_assignments(
+        self,
+        assignment_ids: list[UUID],
+        updates: BulkCallAssignmentUpdateInput,
+    ) -> dict:
+        """
+        Bulk update multiple call assignments with the same updates.
+
+        Args:
+            assignment_ids: List of call assignment IDs to update
+            updates: Fields to update on all selected assignments
+
+        Returns:
+            Dict with:
+            - updated: Number of assignments successfully updated
+            - errors: List of error messages for failed updates
+            - assignments: List of updated CallAssignment objects
+        """
+        updated_assignments = []
+        errors = []
+
+        # Validate new person_id if provided
+        if updates.person_id:
+            person_stmt = select(Person).where(Person.id == updates.person_id)
+            person_result = await self.db.execute(person_stmt)
+            person = person_result.scalar_one_or_none()
+
+            if not person:
+                return {
+                    "updated": 0,
+                    "errors": [f"Person with ID {updates.person_id} not found"],
+                    "assignments": [],
+                }
+
+        # Update each assignment
+        for assignment_id in assignment_ids:
+            stmt = (
+                select(CallAssignment)
+                .options(selectinload(CallAssignment.person))
+                .where(CallAssignment.id == assignment_id)
+            )
+            result = await self.db.execute(stmt)
+            call_assignment = result.scalar_one_or_none()
+
+            if not call_assignment:
+                errors.append(f"Call assignment {assignment_id} not found")
+                continue
+
+            # Apply updates
+            if updates.person_id:
+                call_assignment.person_id = updates.person_id
+
+            updated_assignments.append(call_assignment)
+
+        # Commit all changes
+        await self.db.flush()
+        await self.db.commit()
+
+        # Refresh to get updated relationships
+        for assignment in updated_assignments:
+            await self.db.refresh(assignment)
+
+        logger.info(
+            f"Bulk updated {len(updated_assignments)} call assignments, "
+            f"{len(errors)} errors"
+        )
+
+        return {
+            "updated": len(updated_assignments),
+            "errors": errors,
+            "assignments": updated_assignments,
+        }
+
+    # =========================================================================
+    # PCAT/DO Generation Methods
+    # =========================================================================
+
+    def _is_sun_thurs(self, d: date) -> bool:
+        """Check if date is Sunday through Thursday (valid overnight call days)."""
+        # Sunday = 6, Monday = 0, Tuesday = 1, Wednesday = 2, Thursday = 3
+        return d.weekday() in (0, 1, 2, 3, 6)
+
+    async def _find_template_by_abbrev(self, abbrev: str) -> RotationTemplate | None:
+        """Find rotation template by abbreviation."""
+        stmt = select(RotationTemplate).where(
+            func.upper(RotationTemplate.abbreviation) == abbrev.upper()
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def _find_block_for_date_time(
+        self, target_date: date, time_of_day: str
+    ) -> Block | None:
+        """Find schedule block for a specific date and time of day."""
+        stmt = select(Block).where(
+            Block.date == target_date,
+            Block.time_of_day == time_of_day,
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def _create_assignment_if_not_exists(
+        self,
+        person_id: UUID,
+        block_id: UUID,
+        template_id: UUID,
+    ) -> tuple[UUID | None, bool]:
+        """
+        Create assignment if it doesn't already exist.
+
+        Returns:
+            Tuple of (assignment_id, was_created)
+        """
+        # Check if assignment already exists
+        existing_stmt = select(Assignment).where(
+            Assignment.person_id == person_id,
+            Assignment.block_id == block_id,
+            Assignment.rotation_template_id == template_id,
+        )
+        existing_result = await self.db.execute(existing_stmt)
+        existing = existing_result.scalar_one_or_none()
+
+        if existing:
+            return existing.id, False
+
+        # Create new assignment - role defaults to 'primary' for PCAT/DO
+        new_assignment = Assignment(
+            person_id=person_id,
+            block_id=block_id,
+            rotation_template_id=template_id,
+            role="primary",
+        )
+        self.db.add(new_assignment)
+        await self.db.flush()
+
+        return new_assignment.id, True
+
+    async def generate_pcat_for_assignments(
+        self,
+        assignment_ids: list[UUID],
+    ) -> PCATGenerationResponse:
+        """
+        Generate PCAT (AM) and DO (PM) assignments for the day after overnight call.
+
+        For each call assignment on Sun-Thurs:
+        - Creates PCAT assignment for next day AM block
+        - Creates DO assignment for next day PM block
+
+        Args:
+            assignment_ids: List of call assignment IDs to process
+
+        Returns:
+            PCATGenerationResponse with results of the operation
+        """
+        results: list[PCATAssignmentResult] = []
+        errors: list[str] = []
+        pcat_created_count = 0
+        do_created_count = 0
+
+        # Find PCAT and DO templates
+        pcat_template = await self._find_template_by_abbrev("PCAT")
+        do_template = await self._find_template_by_abbrev("DO")
+
+        if not pcat_template:
+            errors.append("PCAT rotation template not found in database")
+        if not do_template:
+            errors.append("DO rotation template not found in database")
+
+        if not pcat_template or not do_template:
+            return PCATGenerationResponse(
+                processed=0,
+                pcat_created=0,
+                do_created=0,
+                errors=errors,
+                results=[],
+            )
+
+        # Process each call assignment
+        for assignment_id in assignment_ids:
+            # Fetch call assignment with person
+            stmt = (
+                select(CallAssignment)
+                .options(selectinload(CallAssignment.person))
+                .where(CallAssignment.id == assignment_id)
+            )
+            result = await self.db.execute(stmt)
+            call_assignment = result.scalar_one_or_none()
+
+            if not call_assignment:
+                errors.append(f"Call assignment {assignment_id} not found")
+                continue
+
+            # Skip if not Sun-Thurs (Friday/Saturday handled by FMIT)
+            if not self._is_sun_thurs(call_assignment.date):
+                results.append(
+                    PCATAssignmentResult(
+                        call_assignment_id=assignment_id,
+                        call_date=call_assignment.date,
+                        person_id=call_assignment.person_id,
+                        person_name=call_assignment.person.name
+                        if call_assignment.person
+                        else None,
+                        pcat_created=False,
+                        do_created=False,
+                        error=f"Call on {call_assignment.date} is Fri/Sat - use FMIT rules",
+                    )
+                )
+                continue
+
+            next_day = call_assignment.date + timedelta(days=1)
+            pcat_created = False
+            do_created = False
+            pcat_assignment_id = None
+            do_assignment_id = None
+            error_msg = None
+
+            # Find AM block for PCAT
+            am_block = await self._find_block_for_date_time(next_day, "AM")
+            if am_block:
+                pcat_id, was_created = await self._create_assignment_if_not_exists(
+                    person_id=call_assignment.person_id,
+                    block_id=am_block.id,
+                    template_id=pcat_template.id,
+                )
+                pcat_assignment_id = pcat_id
+                pcat_created = was_created
+                if was_created:
+                    pcat_created_count += 1
+            else:
+                error_msg = f"No AM block found for {next_day}"
+
+            # Find PM block for DO
+            pm_block = await self._find_block_for_date_time(next_day, "PM")
+            if pm_block:
+                do_id, was_created = await self._create_assignment_if_not_exists(
+                    person_id=call_assignment.person_id,
+                    block_id=pm_block.id,
+                    template_id=do_template.id,
+                )
+                do_assignment_id = do_id
+                do_created = was_created
+                if was_created:
+                    do_created_count += 1
+            else:
+                if error_msg:
+                    error_msg += f"; No PM block found for {next_day}"
+                else:
+                    error_msg = f"No PM block found for {next_day}"
+
+            results.append(
+                PCATAssignmentResult(
+                    call_assignment_id=assignment_id,
+                    call_date=call_assignment.date,
+                    person_id=call_assignment.person_id,
+                    person_name=call_assignment.person.name
+                    if call_assignment.person
+                    else None,
+                    pcat_created=pcat_created,
+                    do_created=do_created,
+                    pcat_assignment_id=pcat_assignment_id,
+                    do_assignment_id=do_assignment_id,
+                    error=error_msg,
+                )
+            )
+
+        # Commit all changes
+        await self.db.commit()
+
+        logger.info(
+            f"PCAT generation: processed {len(results)} call assignments, "
+            f"created {pcat_created_count} PCAT and {do_created_count} DO assignments"
+        )
+
+        return PCATGenerationResponse(
+            processed=len(results),
+            pcat_created=pcat_created_count,
+            do_created=do_created_count,
+            errors=errors,
+            results=results,
+        )
+
+    # =========================================================================
+    # Equity Preview Methods
+    # =========================================================================
+
+    async def get_equity_preview(
+        self,
+        start_date: date,
+        end_date: date,
+        simulated_changes: list[SimulatedChange],
+    ) -> EquityPreviewResponse:
+        """
+        Preview equity distribution with simulated changes applied.
+
+        Args:
+            start_date: Start date for analysis
+            end_date: End date for analysis
+            simulated_changes: List of simulated changes to apply
+
+        Returns:
+            EquityPreviewResponse with current vs projected equity
+        """
+        # Get current equity
+        current_equity = await self.get_equity_report(start_date, end_date)
+
+        # Get all assignments in range
+        assignments = await self.get_call_assignments_by_date_range(
+            start_date, end_date
+        )
+
+        # Build current counts
+        current_sunday: dict[UUID, int] = defaultdict(int)
+        current_weekday: dict[UUID, int] = defaultdict(int)
+        names: dict[UUID, str] = {}
+
+        for a in assignments:
+            if a.call_type == "overnight":
+                if a.date.weekday() == 6:  # Sunday
+                    current_sunday[a.person_id] += 1
+                else:
+                    current_weekday[a.person_id] += 1
+                if a.person:
+                    names[a.person_id] = a.person.name
+
+        # Start with current counts for projected
+        projected_sunday = dict(current_sunday)
+        projected_weekday = dict(current_weekday)
+
+        # Apply simulated changes
+        for change in simulated_changes:
+            # Decrement old person if specified
+            if change.old_person_id:
+                if change.call_date and change.call_date.weekday() == 6:
+                    projected_sunday[change.old_person_id] = max(
+                        0, projected_sunday.get(change.old_person_id, 0) - 1
+                    )
+                else:
+                    projected_weekday[change.old_person_id] = max(
+                        0, projected_weekday.get(change.old_person_id, 0) - 1
+                    )
+
+            # Increment new person
+            if change.call_date and change.call_date.weekday() == 6:
+                projected_sunday[change.new_person_id] = (
+                    projected_sunday.get(change.new_person_id, 0) + 1
+                )
+            else:
+                projected_weekday[change.new_person_id] = (
+                    projected_weekday.get(change.new_person_id, 0) + 1
+                )
+
+            # Fetch name if not known
+            if change.new_person_id not in names:
+                person_stmt = select(Person).where(Person.id == change.new_person_id)
+                person_result = await self.db.execute(person_stmt)
+                person = person_result.scalar_one_or_none()
+                if person:
+                    names[change.new_person_id] = person.name
+
+        # Calculate projected equity statistics
+        all_person_ids = set(current_sunday.keys()) | set(current_weekday.keys())
+        all_person_ids |= set(projected_sunday.keys()) | set(projected_weekday.keys())
+
+        projected_sunday_values = [projected_sunday.get(pid, 0) for pid in all_person_ids]
+        projected_weekday_values = [projected_weekday.get(pid, 0) for pid in all_person_ids]
+        projected_total_values = [
+            projected_sunday.get(pid, 0) + projected_weekday.get(pid, 0)
+            for pid in all_person_ids
+        ]
+
+        # Build projected distribution
+        projected_distribution = []
+        for pid in all_person_ids:
+            projected_distribution.append({
+                "person_id": str(pid),
+                "name": names.get(pid, "Unknown"),
+                "sunday_calls": projected_sunday.get(pid, 0),
+                "weekday_calls": projected_weekday.get(pid, 0),
+                "total_calls": projected_sunday.get(pid, 0) + projected_weekday.get(pid, 0),
+            })
+        projected_distribution.sort(key=lambda x: x["total_calls"], reverse=True)
+
+        projected_equity = CallEquityReport(
+            start_date=start_date,
+            end_date=end_date,
+            faculty_count=len(all_person_ids),
+            total_overnight_calls=sum(projected_total_values),
+            sunday_call_stats={
+                "min": min(projected_sunday_values) if projected_sunday_values else 0,
+                "max": max(projected_sunday_values) if projected_sunday_values else 0,
+                "mean": round(statistics.mean(projected_sunday_values), 2)
+                if projected_sunday_values
+                else 0,
+                "stdev": round(statistics.stdev(projected_sunday_values), 2)
+                if len(projected_sunday_values) > 1
+                else 0,
+            },
+            weekday_call_stats={
+                "min": min(projected_weekday_values) if projected_weekday_values else 0,
+                "max": max(projected_weekday_values) if projected_weekday_values else 0,
+                "mean": round(statistics.mean(projected_weekday_values), 2)
+                if projected_weekday_values
+                else 0,
+                "stdev": round(statistics.stdev(projected_weekday_values), 2)
+                if len(projected_weekday_values) > 1
+                else 0,
+            },
+            distribution=projected_distribution,
+        )
+
+        # Build faculty details
+        faculty_details = []
+        for pid in all_person_ids:
+            current_total = current_sunday.get(pid, 0) + current_weekday.get(pid, 0)
+            projected_total = projected_sunday.get(pid, 0) + projected_weekday.get(pid, 0)
+
+            faculty_details.append(
+                FacultyEquityDetail(
+                    person_id=pid,
+                    name=names.get(pid, "Unknown"),
+                    current_sunday_calls=current_sunday.get(pid, 0),
+                    current_weekday_calls=current_weekday.get(pid, 0),
+                    current_total_calls=current_total,
+                    projected_sunday_calls=projected_sunday.get(pid, 0),
+                    projected_weekday_calls=projected_weekday.get(pid, 0),
+                    projected_total_calls=projected_total,
+                    delta=projected_total - current_total,
+                )
+            )
+
+        # Calculate improvement score based on standard deviation reduction
+        current_stdev = current_equity.weekday_call_stats.get("stdev", 0)
+        projected_stdev = projected_equity.weekday_call_stats.get("stdev", 0)
+
+        # Improvement score: positive = more equitable, negative = less equitable
+        if current_stdev > 0:
+            improvement_score = (current_stdev - projected_stdev) / current_stdev
+        else:
+            improvement_score = 0.0
+
+        # Clamp to -1 to 1
+        improvement_score = max(-1.0, min(1.0, improvement_score))
+
+        return EquityPreviewResponse(
+            start_date=start_date,
+            end_date=end_date,
+            current_equity=current_equity,
+            projected_equity=projected_equity,
+            faculty_details=faculty_details,
+            improvement_score=round(improvement_score, 3),
         )

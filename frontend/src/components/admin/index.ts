@@ -56,3 +56,16 @@ export type { BulkPatternModalProps, SchedulePattern } from './BulkPatternModal'
 
 export { BulkPreferenceModal } from './BulkPreferenceModal';
 export type { BulkPreferenceModalProps } from './BulkPreferenceModal';
+
+// Faculty call administration components
+export { CallAssignmentTable } from './CallAssignmentTable';
+export type { CallAssignmentTableProps } from './CallAssignmentTable';
+
+export { CallBulkActionsToolbar } from './CallBulkActionsToolbar';
+export type { CallBulkActionsToolbarProps } from './CallBulkActionsToolbar';
+
+export { PCATPreviewModal, createPCATPreviewData } from './PCATPreviewModal';
+export type { PCATPreviewModalProps } from './PCATPreviewModal';
+
+export { EquityPreviewPanel } from './EquityPreviewPanel';
+export type { EquityPreviewPanelProps } from './EquityPreviewPanel';
