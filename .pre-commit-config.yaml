@@ -159,7 +159,24 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
-  # PHASE 8: MCP Configuration Validation
+  # PHASE 8: Migration Name Validation
+  # ============================================================================
+
+  # Alembic migration revision ID length validator
+  # Prevents varchar(32) overflow in alembic_version table
+  # Reference: Session 054 - alembic_version column length fix
+  - repo: local
+    hooks:
+      - id: migration-names
+        name: Migration revision ID length check
+        entry: scripts/validate-migration-names.sh --staged
+        language: script
+        pass_filenames: false
+        stages: [pre-commit]
+        files: ^backend/alembic/versions/.*\.py$
+
+  # ============================================================================
+  # PHASE 9: MCP Configuration Validation
   # ============================================================================
 
   # MCP config validator - prevent transport/auth configuration drift
@@ -176,7 +193,7 @@ repos:
         files: ^(\.mcp\.json|mcp-server/|docker-compose\.yml|\.env\.example)
 
   # ============================================================================
-  # PHASE 9: Commit Message Validation
+  # PHASE 10: Commit Message Validation
   # ============================================================================
 
   # Conventional commits - enforce commit message format
@@ -190,7 +207,7 @@ repos:
         language: python
 
   # ============================================================================
-  # PHASE 10: YAML Validation
+  # PHASE 11: YAML Validation
   # ============================================================================
 
   # YAML linting for GitHub Actions and configs
