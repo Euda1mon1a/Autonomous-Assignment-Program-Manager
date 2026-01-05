@@ -20,6 +20,9 @@ import type {
   TemplateCreateRequest,
   TemplateUpdateRequest,
   ActivityType,
+  BatchTemplateDeleteRequest,
+  BatchTemplateUpdateRequest,
+  BatchTemplateResponse,
 } from '@/types/admin-templates';
 
 // ============================================================================
@@ -173,18 +176,34 @@ export function useDeleteTemplate() {
 // ============================================================================
 
 /**
- * Deletes multiple rotation templates.
- * Note: This performs sequential deletions since bulk endpoint may not exist.
+ * Deletes multiple rotation templates atomically using batch endpoint.
+ * All succeed or all fail - no partial deletions.
  */
 export function useBulkDeleteTemplates() {
   const queryClient = useQueryClient();
 
-  return useMutation<void, ApiError, string[]>({
+  return useMutation<BatchTemplateResponse, ApiError, string[]>({
     mutationFn: async (templateIds) => {
-      // Sequential deletion - could be optimized with batch endpoint
-      for (const id of templateIds) {
-        await del(`/rotation-templates/${id}`);
+      const request: BatchTemplateDeleteRequest = {
+        template_ids: templateIds,
+        dry_run: false,
+      };
+      // Use fetch with DELETE + body (axios del doesn't support body)
+      // Use the same API base URL as other endpoints
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+      const response = await fetch(`${apiBaseUrl}/rotation-templates/batch`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(request),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw { status: response.status, message: error.detail?.message || 'Batch delete failed', ...error };
       }
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -199,21 +218,27 @@ export function useBulkDeleteTemplates() {
 // ============================================================================
 
 /**
- * Updates multiple rotation templates with the same values.
+ * Updates multiple rotation templates atomically using batch endpoint.
+ * All succeed or all fail - no partial updates.
+ * All templates receive the same update values.
  */
 export function useBulkUpdateTemplates() {
   const queryClient = useQueryClient();
 
   return useMutation<
-    void,
+    BatchTemplateResponse,
     ApiError,
     { templateIds: string[]; updates: TemplateUpdateRequest }
   >({
     mutationFn: async ({ templateIds, updates }) => {
-      // Sequential updates - could be optimized with batch endpoint
-      for (const id of templateIds) {
-        await put(`/rotation-templates/${id}`, updates);
-      }
+      const request: BatchTemplateUpdateRequest = {
+        templates: templateIds.map((id) => ({
+          template_id: id,
+          updates,
+        })),
+        dry_run: false,
+      };
+      return put<BatchTemplateResponse>('/rotation-templates/batch', request);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({

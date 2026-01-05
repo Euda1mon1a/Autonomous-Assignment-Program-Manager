@@ -255,6 +255,56 @@ export interface BulkUpdateRequest {
   updates: Partial<Pick<RotationTemplate, 'activity_type' | 'supervision_required' | 'max_residents'>>;
 }
 
+// ============================================================================
+// Batch Operation Types (API)
+// ============================================================================
+
+/**
+ * Request for batch delete operation - atomic all-or-nothing
+ */
+export interface BatchTemplateDeleteRequest {
+  template_ids: string[];
+  dry_run?: boolean;
+}
+
+/**
+ * Single template update in a batch operation
+ */
+export interface BatchTemplateUpdateItem {
+  template_id: string;
+  updates: TemplateUpdateRequest;
+}
+
+/**
+ * Request for batch update operation - atomic all-or-nothing
+ */
+export interface BatchTemplateUpdateRequest {
+  templates: BatchTemplateUpdateItem[];
+  dry_run?: boolean;
+}
+
+/**
+ * Result for a single operation in a batch
+ */
+export interface BatchOperationResult {
+  index: number;
+  template_id: string;
+  success: boolean;
+  error: string | null;
+}
+
+/**
+ * Response from batch operations
+ */
+export interface BatchTemplateResponse {
+  operation_type: 'delete' | 'update';
+  total: number;
+  succeeded: number;
+  failed: number;
+  results: BatchOperationResult[];
+  dry_run: boolean;
+}
+
 export interface TemplateCreateRequest {
   name: string;
   activity_type: ActivityType;
