@@ -22,3 +22,17 @@ export type { BulkActionsToolbarProps } from './BulkActionsToolbar';
 
 export { PreferenceEditor } from './PreferenceEditor';
 export type { PreferenceEditorProps } from './PreferenceEditor';
+
+// Inline editing components
+export { EditableCell } from './EditableCell';
+export type { EditableCellProps, EditableCellType, SelectOption } from './EditableCell';
+
+export { ColorPickerCell } from './ColorPickerCell';
+export type { ColorPickerCellProps } from './ColorPickerCell';
+
+export { BulkProgressModal } from './BulkProgressModal';
+export type {
+  BulkProgressModalProps,
+  BulkProgressItem,
+  BulkOperationType,
+} from './BulkProgressModal';

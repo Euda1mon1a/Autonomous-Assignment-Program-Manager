@@ -217,7 +217,7 @@ class BatchOperationResult(BaseModel):
 class BatchTemplateResponse(BaseModel):
     """Response schema for batch template operations."""
 
-    operation_type: str  # "delete" or "update"
+    operation_type: str  # "delete", "update", "create", "archive", "restore"
     total: int = Field(..., description="Total number of operations requested")
     succeeded: int = Field(..., description="Number of successful operations")
     failed: int = Field(..., description="Number of failed operations")
@@ -225,3 +225,137 @@ class BatchTemplateResponse(BaseModel):
         default_factory=list, description="Detailed results for each operation"
     )
     dry_run: bool = Field(default=False, description="Whether this was a dry run")
+    created_ids: list[UUID] | None = Field(
+        default=None, description="IDs of created templates (for create operations)"
+    )
+
+
+# =============================================================================
+# Bulk Create Schemas
+# =============================================================================
+
+
+class BatchTemplateCreateRequest(BaseModel):
+    """Request schema for batch create of rotation templates.
+
+    Performs atomic creation of multiple templates - all succeed or all fail.
+    """
+
+    templates: list[RotationTemplateCreate] = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="List of templates to create (max 100)",
+    )
+    dry_run: bool = Field(
+        default=False, description="If True, validate only without creating"
+    )
+
+
+# =============================================================================
+# Archive/Restore Schemas
+# =============================================================================
+
+
+class BatchArchiveRequest(BaseModel):
+    """Request schema for batch archive of rotation templates."""
+
+    template_ids: list[UUID] = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="List of template IDs to archive (max 100)",
+    )
+    dry_run: bool = Field(
+        default=False, description="If True, validate only without archiving"
+    )
+
+
+class BatchRestoreRequest(BaseModel):
+    """Request schema for batch restore of rotation templates."""
+
+    template_ids: list[UUID] = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="List of template IDs to restore (max 100)",
+    )
+    dry_run: bool = Field(
+        default=False, description="If True, validate only without restoring"
+    )
+
+
+# =============================================================================
+# Export Schema
+# =============================================================================
+
+
+class TemplateExportRequest(BaseModel):
+    """Request schema for exporting rotation templates."""
+
+    template_ids: list[UUID] = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="List of template IDs to export (max 100)",
+    )
+    include_patterns: bool = Field(
+        default=True, description="Include weekly patterns in export"
+    )
+    include_preferences: bool = Field(
+        default=True, description="Include preferences in export"
+    )
+
+
+class TemplateExportData(BaseModel):
+    """Single template export data."""
+
+    template: RotationTemplateResponse
+    patterns: list[dict] | None = None
+    preferences: list[dict] | None = None
+
+
+class TemplateExportResponse(BaseModel):
+    """Response schema for template export."""
+
+    templates: list[TemplateExportData]
+    exported_at: datetime
+    total: int
+
+
+# =============================================================================
+# Conflict Detection Schema
+# =============================================================================
+
+
+class ConflictCheckRequest(BaseModel):
+    """Request for checking conflicts before operations."""
+
+    template_ids: list[UUID] = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="Template IDs to check for conflicts",
+    )
+    operation: str = Field(
+        ..., description="Operation type: 'delete', 'archive', 'update'"
+    )
+
+
+class TemplateConflict(BaseModel):
+    """Single conflict item."""
+
+    template_id: UUID
+    template_name: str
+    conflict_type: str  # "has_assignments", "name_collision", "referenced_by"
+    description: str
+    severity: str = "warning"  # "warning", "error"
+    blocking: bool = False
+
+
+class ConflictCheckResponse(BaseModel):
+    """Response for conflict check."""
+
+    has_conflicts: bool
+    conflicts: list[TemplateConflict]
+    can_proceed: bool  # False if any blocking conflicts

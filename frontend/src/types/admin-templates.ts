@@ -297,12 +297,93 @@ export interface BatchOperationResult {
  * Response from batch operations
  */
 export interface BatchTemplateResponse {
-  operation_type: 'delete' | 'update';
+  operation_type: 'delete' | 'update' | 'create' | 'archive' | 'restore';
   total: number;
   succeeded: number;
   failed: number;
   results: BatchOperationResult[];
   dry_run: boolean;
+  created_ids?: string[] | null;
+}
+
+/**
+ * Request for batch create operation - atomic all-or-nothing
+ */
+export interface BatchTemplateCreateRequest {
+  templates: TemplateCreateRequest[];
+  dry_run?: boolean;
+}
+
+/**
+ * Request for batch archive operation
+ */
+export interface BatchArchiveRequest {
+  template_ids: string[];
+  dry_run?: boolean;
+}
+
+/**
+ * Request for batch restore operation
+ */
+export interface BatchRestoreRequest {
+  template_ids: string[];
+  dry_run?: boolean;
+}
+
+/**
+ * Request for checking conflicts before operations
+ */
+export interface ConflictCheckRequest {
+  template_ids: string[];
+  operation: 'delete' | 'archive' | 'update';
+}
+
+/**
+ * Single conflict item
+ */
+export interface TemplateConflict {
+  template_id: string;
+  template_name: string;
+  conflict_type: 'has_assignments' | 'name_collision' | 'referenced_by';
+  description: string;
+  severity: 'warning' | 'error';
+  blocking: boolean;
+}
+
+/**
+ * Response from conflict check
+ */
+export interface ConflictCheckResponse {
+  has_conflicts: boolean;
+  conflicts: TemplateConflict[];
+  can_proceed: boolean;
+}
+
+/**
+ * Request for template export
+ */
+export interface TemplateExportRequest {
+  template_ids: string[];
+  include_patterns?: boolean;
+  include_preferences?: boolean;
+}
+
+/**
+ * Single template export data
+ */
+export interface TemplateExportData {
+  template: RotationTemplate;
+  patterns?: Record<string, unknown>[] | null;
+  preferences?: Record<string, unknown>[] | null;
+}
+
+/**
+ * Response from template export
+ */
+export interface TemplateExportResponse {
+  templates: TemplateExportData[];
+  exported_at: string;
+  total: number;
 }
 
 export interface TemplateCreateRequest {

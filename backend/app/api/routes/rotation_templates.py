@@ -17,13 +17,22 @@ from app.db.session import get_async_db
 from app.models.rotation_template import RotationTemplate
 from app.models.user import User
 from app.schemas.rotation_template import (
+    BatchArchiveRequest,
+    BatchRestoreRequest,
+    BatchTemplateCreateRequest,
     BatchTemplateDeleteRequest,
     BatchTemplateResponse,
     BatchTemplateUpdateRequest,
+    ConflictCheckRequest,
+    ConflictCheckResponse,
     RotationTemplateCreate,
     RotationTemplateListResponse,
     RotationTemplateResponse,
     RotationTemplateUpdate,
+    TemplateConflict,
+    TemplateExportRequest,
+    TemplateExportResponse,
+    TemplateExportData,
 )
 from app.schemas.rotation_template_gui import (
     RotationPreferenceCreate,
@@ -43,12 +52,14 @@ async def list_rotation_templates(
     current_user: User = Depends(get_current_active_user),
 ):
     """List all rotation templates, optionally filtered by activity type. Requires authentication."""
-    query = db.query(RotationTemplate)
+    query = select(RotationTemplate)
 
     if activity_type:
-        query = query.filter(RotationTemplate.activity_type == activity_type)
+        query = query.where(RotationTemplate.activity_type == activity_type)
 
-    templates = query.order_by(RotationTemplate.name).all()
+    query = query.order_by(RotationTemplate.name)
+    result = await db.execute(query)
+    templates = list(result.scalars().all())
     return RotationTemplateListResponse(items=templates, total=len(templates))
 
 
@@ -267,6 +278,149 @@ async def batch_update_rotation_templates(
     except Exception as e:
         await service.rollback()
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/batch", response_model=BatchTemplateResponse, status_code=201)
+async def batch_create_rotation_templates(
+    request: BatchTemplateCreateRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Create multiple rotation templates atomically.
+
+    Features:
+    - Create up to 100 templates at once
+    - Each template validated independently
+    - Checks for duplicate names in batch and database
+    - Dry-run mode for validation without creating
+    - Atomic operation (all or nothing)
+
+    Args:
+        request: BatchTemplateCreateRequest with list of templates
+        db: Database session
+        current_user: Current authenticated user
+
+    Returns:
+        BatchTemplateResponse with operation results and created_ids
+
+    Raises:
+        HTTPException: 400 if validation fails or duplicates found
+
+    Example:
+        ```json
+        {
+          "templates": [
+            {"name": "New Clinic", "activity_type": "clinic"},
+            {"name": "New Inpatient", "activity_type": "inpatient"}
+          ],
+          "dry_run": false
+        }
+        ```
+    """
+    service = RotationTemplateService(db)
+
+    try:
+        # Convert Pydantic models to dicts
+        templates_data = [t.model_dump() for t in request.templates]
+
+        result = await service.batch_create(templates_data, request.dry_run)
+
+        # If any failed, return 400
+        if result["failed"] > 0:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "message": "Batch create operation failed",
+                    "failed": result["failed"],
+                    "results": result["results"],
+                },
+            )
+
+        await service.commit()
+        return BatchTemplateResponse(**result)
+
+    except HTTPException:
+        await service.rollback()
+        raise
+    except Exception as e:
+        await service.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/batch/conflicts", response_model=ConflictCheckResponse)
+async def check_batch_conflicts(
+    request: ConflictCheckRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Check for conflicts before performing batch operations.
+
+    Useful for preview before destructive operations like delete or archive.
+    Checks for:
+    - Existing assignments referencing templates
+    - Related patterns/preferences that would be affected
+
+    Args:
+        request: ConflictCheckRequest with template IDs and operation type
+        db: Database session
+        current_user: Current authenticated user
+
+    Returns:
+        ConflictCheckResponse with list of conflicts and can_proceed flag
+    """
+    service = RotationTemplateService(db)
+
+    result = await service.check_conflicts(
+        request.template_ids, request.operation
+    )
+
+    return ConflictCheckResponse(
+        has_conflicts=result["has_conflicts"],
+        conflicts=[TemplateConflict(**c) for c in result["conflicts"]],
+        can_proceed=result["can_proceed"],
+    )
+
+
+@router.post("/export", response_model=TemplateExportResponse)
+async def export_rotation_templates(
+    request: TemplateExportRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Export rotation templates with their patterns and preferences.
+
+    Creates a JSON export suitable for backup or transfer to another system.
+
+    Args:
+        request: TemplateExportRequest with template IDs and options
+        db: Database session
+        current_user: Current authenticated user
+
+    Returns:
+        TemplateExportResponse with template data, patterns, and preferences
+    """
+    from datetime import datetime
+
+    service = RotationTemplateService(db)
+
+    result = await service.export_templates(
+        request.template_ids,
+        request.include_patterns,
+        request.include_preferences,
+    )
+
+    return TemplateExportResponse(
+        templates=[
+            TemplateExportData(
+                template=t["template"],
+                patterns=t.get("patterns"),
+                preferences=t.get("preferences"),
+            )
+            for t in result["templates"]
+        ],
+        exported_at=datetime.fromisoformat(result["exported_at"]),
+        total=result["total"],
+    )
 
 
 # =============================================================================

@@ -494,3 +494,251 @@ class RotationTemplateService:
             "results": results,
             "dry_run": dry_run,
         }
+
+    async def batch_create(
+        self,
+        templates_data: list[dict[str, Any]],
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """Atomically create multiple rotation templates.
+
+        This operation is all-or-nothing: if any validation fails,
+        the entire batch is rolled back.
+
+        Args:
+            templates_data: List of template data dicts
+            dry_run: If True, validate only without creating
+
+        Returns:
+            Dict with operation results including created_ids
+
+        Raises:
+            ValueError: If validation fails
+        """
+        from app.schemas.rotation_template import RotationTemplateCreate
+
+        results = []
+        templates_to_create = []
+        created_ids = []
+
+        # Check for duplicate names within the batch
+        names_in_batch = [t.get("name", "").strip().lower() for t in templates_data]
+        seen_names = set()
+        for idx, name in enumerate(names_in_batch):
+            if name in seen_names:
+                results.append(
+                    {
+                        "index": idx,
+                        "template_id": None,
+                        "success": False,
+                        "error": f"Duplicate name in batch: '{templates_data[idx].get('name')}'",
+                    }
+                )
+            else:
+                seen_names.add(name)
+
+        # If duplicates found, fail early
+        if results:
+            return {
+                "operation_type": "create",
+                "total": len(templates_data),
+                "succeeded": 0,
+                "failed": len(results),
+                "results": results,
+                "dry_run": dry_run,
+                "created_ids": None,
+            }
+
+        # Check for name collisions with existing templates
+        for idx, template_data in enumerate(templates_data):
+            name = template_data.get("name", "").strip()
+            existing = await self.db.execute(
+                select(RotationTemplate).where(RotationTemplate.name == name)
+            )
+            if existing.scalar_one_or_none():
+                results.append(
+                    {
+                        "index": idx,
+                        "template_id": None,
+                        "success": False,
+                        "error": f"Template with name '{name}' already exists",
+                    }
+                )
+            else:
+                templates_to_create.append((idx, template_data))
+                results.append(
+                    {
+                        "index": idx,
+                        "template_id": None,
+                        "success": True,
+                        "error": None,
+                    }
+                )
+
+        # Check for failures
+        failures = [r for r in results if not r["success"]]
+        if failures:
+            return {
+                "operation_type": "create",
+                "total": len(templates_data),
+                "succeeded": 0,
+                "failed": len(failures),
+                "results": results,
+                "dry_run": dry_run,
+                "created_ids": None,
+            }
+
+        # Phase 2: Create templates (if not dry run)
+        if not dry_run:
+            now = datetime.utcnow()
+            for idx, template_data in templates_to_create:
+                template = RotationTemplate(
+                    **template_data,
+                    created_at=now,
+                )
+                self.db.add(template)
+                await self.db.flush()
+                await self.db.refresh(template)
+                created_ids.append(template.id)
+                # Update result with created ID
+                for r in results:
+                    if r["index"] == idx:
+                        r["template_id"] = template.id
+
+        return {
+            "operation_type": "create",
+            "total": len(templates_data),
+            "succeeded": len(templates_to_create),
+            "failed": 0,
+            "results": results,
+            "dry_run": dry_run,
+            "created_ids": created_ids if created_ids else None,
+        }
+
+    async def check_conflicts(
+        self,
+        template_ids: list[UUID],
+        operation: str,
+    ) -> dict[str, Any]:
+        """Check for conflicts before performing operations.
+
+        Args:
+            template_ids: List of template IDs to check
+            operation: Operation type ('delete', 'archive', 'update')
+
+        Returns:
+            Dict with conflicts and whether operation can proceed
+        """
+        from app.models.assignment import Assignment
+
+        conflicts = []
+
+        for template_id in template_ids:
+            template = await self.get_template_by_id(template_id)
+            if not template:
+                continue
+
+            # Check for existing assignments
+            if operation in ("delete", "archive"):
+                assignment_count = await self.db.execute(
+                    select(Assignment).where(
+                        Assignment.rotation_template_id == template_id
+                    )
+                )
+                assignments = list(assignment_count.scalars().all())
+                if assignments:
+                    conflicts.append(
+                        {
+                            "template_id": template_id,
+                            "template_name": template.name,
+                            "conflict_type": "has_assignments",
+                            "description": f"Template has {len(assignments)} existing assignments",
+                            "severity": "warning" if operation == "archive" else "error",
+                            "blocking": operation == "delete",
+                        }
+                    )
+
+        has_conflicts = len(conflicts) > 0
+        can_proceed = not any(c["blocking"] for c in conflicts)
+
+        return {
+            "has_conflicts": has_conflicts,
+            "conflicts": conflicts,
+            "can_proceed": can_proceed,
+        }
+
+    async def export_templates(
+        self,
+        template_ids: list[UUID],
+        include_patterns: bool = True,
+        include_preferences: bool = True,
+    ) -> dict[str, Any]:
+        """Export templates with their patterns and preferences.
+
+        Args:
+            template_ids: List of template IDs to export
+            include_patterns: Include weekly patterns
+            include_preferences: Include preferences
+
+        Returns:
+            Dict with exported template data
+        """
+        templates_data = []
+
+        for template_id in template_ids:
+            template = await self.get_template_with_relations(template_id)
+            if not template:
+                continue
+
+            export_item = {
+                "template": {
+                    "id": str(template.id),
+                    "name": template.name,
+                    "activity_type": template.activity_type,
+                    "abbreviation": template.abbreviation,
+                    "display_abbreviation": template.display_abbreviation,
+                    "font_color": template.font_color,
+                    "background_color": template.background_color,
+                    "clinic_location": template.clinic_location,
+                    "max_residents": template.max_residents,
+                    "requires_specialty": template.requires_specialty,
+                    "requires_procedure_credential": template.requires_procedure_credential,
+                    "supervision_required": template.supervision_required,
+                    "max_supervision_ratio": template.max_supervision_ratio,
+                    "created_at": template.created_at.isoformat() if template.created_at else None,
+                },
+                "patterns": None,
+                "preferences": None,
+            }
+
+            if include_patterns and template.weekly_patterns:
+                export_item["patterns"] = [
+                    {
+                        "day_of_week": p.day_of_week,
+                        "time_of_day": p.time_of_day,
+                        "activity_type": p.activity_type,
+                        "is_protected": p.is_protected,
+                        "notes": p.notes,
+                    }
+                    for p in template.weekly_patterns
+                ]
+
+            if include_preferences and template.preferences:
+                export_item["preferences"] = [
+                    {
+                        "preference_type": p.preference_type,
+                        "weight": p.weight,
+                        "config_json": p.config_json,
+                        "is_active": p.is_active,
+                        "description": p.description,
+                    }
+                    for p in template.preferences
+                ]
+
+            templates_data.append(export_item)
+
+        return {
+            "templates": templates_data,
+            "exported_at": datetime.utcnow().isoformat(),
+            "total": len(templates_data),
+        }

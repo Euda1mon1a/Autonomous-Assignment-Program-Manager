@@ -4,9 +4,10 @@
  * TemplateTable Component
  *
  * Displays rotation templates in a sortable, filterable table with row selection
- * for bulk operations. Follows the dark theme pattern from admin scheduling page.
+ * for bulk operations. Supports inline editing for quick field updates.
+ * Follows the dark theme pattern from admin scheduling page.
  */
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import {
   ChevronUp,
   ChevronDown,
@@ -21,8 +22,11 @@ import type {
   SortField,
   SortDirection,
   ActivityType,
+  TemplateUpdateRequest,
 } from '@/types/admin-templates';
-import { getActivityTypeConfig } from '@/types/admin-templates';
+import { getActivityTypeConfig, ACTIVITY_TYPE_CONFIGS } from '@/types/admin-templates';
+import { EditableCell } from './EditableCell';
+import { ColorPickerCell } from './ColorPickerCell';
 
 // ============================================================================
 // Types
@@ -51,6 +55,12 @@ export interface TemplateTableProps {
   onDelete?: (template: RotationTemplate) => void;
   /** Whether table is in loading state */
   isLoading?: boolean;
+  /** Enable inline editing mode */
+  enableInlineEdit?: boolean;
+  /** Callback for inline field updates */
+  onInlineUpdate?: (templateId: string, updates: TemplateUpdateRequest) => Promise<void>;
+  /** ID of template currently being updated inline */
+  inlineUpdatingId?: string | null;
 }
 
 // ============================================================================
@@ -161,7 +171,15 @@ export function TemplateTable({
   onEditPreferences,
   onDelete,
   isLoading = false,
+  enableInlineEdit = false,
+  onInlineUpdate,
+  inlineUpdatingId = null,
 }: TemplateTableProps) {
+  // Track which field is being edited for each template
+  const [editingField, setEditingField] = useState<{
+    templateId: string;
+    field: string;
+  } | null>(null);
   // Selection helpers
   const allSelected = useMemo(
     () => templates.length > 0 && selectedIds.length === templates.length,
@@ -190,6 +208,31 @@ export function TemplateTable({
       }
     },
     [selectedIds, onSelectionChange]
+  );
+
+  // Inline editing handler
+  const handleInlineUpdate = useCallback(
+    async (templateId: string, field: keyof TemplateUpdateRequest, value: string | number | boolean | null) => {
+      if (!onInlineUpdate) return;
+
+      const updates: TemplateUpdateRequest = { [field]: value };
+      try {
+        await onInlineUpdate(templateId, updates);
+      } finally {
+        setEditingField(null);
+      }
+    },
+    [onInlineUpdate]
+  );
+
+  // Activity type options for inline select
+  const activityTypeOptions = useMemo(
+    () =>
+      ACTIVITY_TYPE_CONFIGS.map((c) => ({
+        value: c.type,
+        label: c.label,
+      })),
+    []
   );
 
   if (isLoading) {
@@ -264,6 +307,11 @@ export function TemplateTable({
               <th className="text-left py-3 px-4 text-slate-400 font-medium">
                 Supervision
               </th>
+              {enableInlineEdit && (
+                <th className="text-left py-3 px-4 text-slate-400 font-medium">
+                  Colors
+                </th>
+              )}
               <th className="text-left py-3 px-4 text-slate-400">
                 <SortHeader
                   label="Created"
@@ -304,31 +352,134 @@ export function TemplateTable({
                           style={{ backgroundColor: template.background_color }}
                         />
                       )}
-                      <span className="text-white font-medium">
-                        {template.name}
-                      </span>
+                      {enableInlineEdit && onInlineUpdate ? (
+                        <EditableCell
+                          value={template.name}
+                          type="text"
+                          placeholder="Template name"
+                          onSave={(value) =>
+                            handleInlineUpdate(template.id, 'name', value as string)
+                          }
+                          isSaving={inlineUpdatingId === template.id && editingField?.field === 'name'}
+                          ariaLabel={`Edit name for ${template.name}`}
+                          className="text-white font-medium"
+                        />
+                      ) : (
+                        <span className="text-white font-medium">
+                          {template.name}
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="py-3 px-4">
-                    <ActivityTypeBadge
-                      activityType={template.activity_type as ActivityType}
-                    />
+                    {enableInlineEdit && onInlineUpdate ? (
+                      <EditableCell
+                        value={template.activity_type}
+                        type="select"
+                        options={activityTypeOptions}
+                        onSave={(value) =>
+                          handleInlineUpdate(template.id, 'activity_type', value as ActivityType)
+                        }
+                        isSaving={inlineUpdatingId === template.id && editingField?.field === 'activity_type'}
+                        ariaLabel={`Edit activity type for ${template.name}`}
+                        renderDisplay={() => (
+                          <ActivityTypeBadge
+                            activityType={template.activity_type as ActivityType}
+                          />
+                        )}
+                      />
+                    ) : (
+                      <ActivityTypeBadge
+                        activityType={template.activity_type as ActivityType}
+                      />
+                    )}
                   </td>
                   <td className="py-3 px-4 text-slate-300">
-                    {template.display_abbreviation ||
-                      template.abbreviation ||
-                      '-'}
+                    {enableInlineEdit && onInlineUpdate ? (
+                      <EditableCell
+                        value={template.display_abbreviation || template.abbreviation}
+                        type="text"
+                        placeholder="Abbrev"
+                        onSave={(value) =>
+                          handleInlineUpdate(template.id, 'display_abbreviation', value as string | null)
+                        }
+                        isSaving={inlineUpdatingId === template.id && editingField?.field === 'display_abbreviation'}
+                        ariaLabel={`Edit abbreviation for ${template.name}`}
+                      />
+                    ) : (
+                      template.display_abbreviation || template.abbreviation || '-'
+                    )}
                   </td>
                   <td className="py-3 px-4 text-slate-300">
-                    {template.max_residents ?? '-'}
+                    {enableInlineEdit && onInlineUpdate ? (
+                      <EditableCell
+                        value={template.max_residents}
+                        type="number"
+                        min={1}
+                        max={50}
+                        placeholder="Max"
+                        onSave={(value) =>
+                          handleInlineUpdate(template.id, 'max_residents', value as number | null)
+                        }
+                        isSaving={inlineUpdatingId === template.id && editingField?.field === 'max_residents'}
+                        ariaLabel={`Edit max residents for ${template.name}`}
+                      />
+                    ) : (
+                      template.max_residents ?? '-'
+                    )}
                   </td>
                   <td className="py-3 px-4">
-                    {template.supervision_required ? (
+                    {enableInlineEdit && onInlineUpdate ? (
+                      <EditableCell
+                        value={template.supervision_required ? 'true' : 'false'}
+                        type="select"
+                        options={[
+                          { value: 'true', label: 'Required' },
+                          { value: 'false', label: 'Not Required' },
+                        ]}
+                        onSave={(value) =>
+                          handleInlineUpdate(template.id, 'supervision_required', value === 'true')
+                        }
+                        isSaving={inlineUpdatingId === template.id && editingField?.field === 'supervision_required'}
+                        ariaLabel={`Edit supervision for ${template.name}`}
+                        renderDisplay={() =>
+                          template.supervision_required ? (
+                            <span className="text-emerald-400">Required</span>
+                          ) : (
+                            <span className="text-slate-500">Not Required</span>
+                          )
+                        }
+                      />
+                    ) : template.supervision_required ? (
                       <span className="text-emerald-400">Required</span>
                     ) : (
                       <span className="text-slate-500">Not Required</span>
                     )}
                   </td>
+                  {enableInlineEdit && (
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2">
+                        <ColorPickerCell
+                          value={template.background_color}
+                          onSave={(value) =>
+                            handleInlineUpdate(template.id, 'background_color', value)
+                          }
+                          isSaving={inlineUpdatingId === template.id && editingField?.field === 'background_color'}
+                          ariaLabel={`Background color for ${template.name}`}
+                          disabled={!onInlineUpdate}
+                        />
+                        <ColorPickerCell
+                          value={template.font_color}
+                          onSave={(value) =>
+                            handleInlineUpdate(template.id, 'font_color', value)
+                          }
+                          isSaving={inlineUpdatingId === template.id && editingField?.field === 'font_color'}
+                          ariaLabel={`Font color for ${template.name}`}
+                          disabled={!onInlineUpdate}
+                        />
+                      </div>
+                    </td>
+                  )}
                   <td className="py-3 px-4 text-slate-400">
                     {new Date(template.created_at).toLocaleDateString()}
                   </td>
