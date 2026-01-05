@@ -18,6 +18,7 @@ from app.api.routes import (
     certifications,
     changelog,
     conflict_resolution,
+    conflicts,
     credentials,
     daily_manifest,
     db_admin,
@@ -160,6 +161,9 @@ api_router.include_router(
 )
 api_router.include_router(
     conflict_resolution.router, prefix="/conflicts", tags=["conflict-resolution"]
+)
+api_router.include_router(
+    conflicts.router, prefix="/conflicts/analysis", tags=["conflicts-analysis"]
 )
 api_router.include_router(
     daily_manifest.router, prefix="/assignments", tags=["daily-manifest"]

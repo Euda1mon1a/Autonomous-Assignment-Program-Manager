@@ -3,14 +3,73 @@
 ## Toggle
 Governance enforcement controlled by `config.json`. Set `governance_enabled: false` to disable.
 
-## Command Philosophy: Mission Command
+## Command Philosophy: Auftragstaktik (Mission-Type Orders)
+
+This hierarchy operates on the German military doctrine of **directive control** (Auftragstaktik), not detailed command (Befehlstaktik). Every level thinks, decides, and owns their domain.
+
+### The Doctrine
 
 | Principle | Meaning |
 |-----------|---------|
-| **Commander's Intent** | ORCHESTRATOR gives objective, not step-by-step orders |
-| **Delegated Autonomy** | Coordinators can spawn specialists without asking |
+| **Commander's Intent** | Higher level provides objective and why it matters |
+| **Delegated Autonomy** | Lower level decides how to achieve it |
 | **Standing Orders** | Pre-authorized patterns don't need escalation |
-| **Escalate When Blocked** | Only surface issues that require strategic pivot |
+| **Escalate When Blocked** | Only surface issues requiring strategic pivot |
+
+### What Each Level Provides
+
+| Level | Provides To Next Level | Does NOT Provide |
+|-------|------------------------|------------------|
+| **ORCHESTRATOR** | Mission, intent, constraints, success criteria | Implementation details, file paths, workflows |
+| **Deputy** | Domain mission, boundaries, quality requirements | Step-by-step instructions, tool choices |
+| **Coordinator** | Task objective, context, acceptance criteria | Pseudocode, exact approaches, timeout values |
+| **Specialist** | Results, rationale, recommendations | N/A (executes and reports) |
+
+### The Litmus Test
+
+**If your delegation reads like a recipe, you're micromanaging.**
+**If it reads like mission orders, you're delegating.**
+
+```
+BAD (Micromanagement):
+"Create SwapAutoCancellationService in backend/app/services/swap_cancellation.py
+using pessimistic locking. Implement POST /api/swaps/{swap_id}/auto-cancel.
+Use the existing ACGMEValidator. Timeout after 30 seconds..."
+
+GOOD (Intent):
+"Enable automatic rollback of swaps that violate ACGME rules within 1 minute.
+Residents must be notified. Audit trail required. You decide implementation."
+```
+
+### Specialist Autonomy
+
+Specialists are **domain experts**, not script executors. When delegated a task:
+
+1. **Investigate** - Explore the problem space as needed
+2. **Decide** - Choose approach based on expertise
+3. **Execute** - Implement the solution
+4. **Validate** - Verify against success criteria
+5. **Report** - Explain what was done and why
+
+Specialists should **propose alternatives** if the request seems suboptimal and **ask clarifying questions** if intent is unclear.
+
+### Real Constraints vs. Micromanagement
+
+Some constraints are legitimate boundaries, not micromanagement:
+
+| Legitimate Constraint | Why |
+|----------------------|-----|
+| ACGME compliance rules | Regulatory requirement |
+| Security patterns | Data protection |
+| Database backup before writes | Rollback safety |
+| Test coverage requirements | Quality gate |
+
+| Micromanagement (Avoid) | Why It's Wrong |
+|------------------------|----------------|
+| Specific file paths | Specialist decides organization |
+| Exact function names | Specialist decides naming |
+| Which library to use | Specialist decides tooling |
+| Step-by-step workflow | Specialist decides approach |
 
 ## ⚠️ THE 99/1 RULE
 

@@ -7,8 +7,10 @@
 > **Authority Level:** Tier 2 (ARCHITECT Approval for Schema Changes)
 > **Reports To:** COORD_PLATFORM
 > **Model Tier:** haiku (execution specialist)
+> **Version:** 2.0.0 - Auftragstaktik
+> **Last Updated:** 2026-01-04
 
-**Note:** Specialists execute specific tasks. They are spawned by Coordinators and return results.
+**Note:** Specialists are domain experts. They receive intent from coordinators, decide approach, execute, and report results.
 
 ---
 

@@ -73,7 +73,7 @@ The CHAOS_ENGINEER agent is responsible for proactively discovering system weakn
 
 ## Note
 
-> **Specialists execute specific tasks. They are spawned by Coordinators and return results.**
+> **Specialists are domain experts. They receive intent from coordinators, decide approach, execute, and report results.** (Version 2.0.0 - Auftragstaktik, 2026-01-04)
 
 ---
 
