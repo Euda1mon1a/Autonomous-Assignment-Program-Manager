@@ -44,6 +44,20 @@ MCP_STATUS=$(docker inspect scheduler-local-mcp --format '{{.State.Health.Status
 
 Then call `mcp__residency-scheduler__rag_health` - if it fails, you're flying blind.
 
+### 2b. Container Staleness Check (if containers running)
+
+```bash
+# Quick staleness check on key files
+./scripts/diagnose-container-staleness.sh residency-scheduler-backend app/main.py 2>/dev/null | grep -E "(STALE|FRESH)" || echo "Containers not running"
+```
+
+**STANDING ORDER - "File Not Found" in Docker:**
+If ANY tool inside a container reports "file not found" but the file exists on host:
+1. **STOP chain diagnostics immediately**
+2. Run: `docker exec [container] ls -la /app/path/to/file`
+3. If missing: `./scripts/rebuild-containers.sh [service]`
+4. This is container staleness, NOT a code bug
+
 ### 3. Output
 
 ```markdown
