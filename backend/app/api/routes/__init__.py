@@ -88,6 +88,9 @@ api_router.include_router(
     rotation_templates.router, prefix="/rotation-templates", tags=["rotation-templates"]
 )
 api_router.include_router(
+    daily_manifest.router, prefix="/assignments", tags=["daily-manifest"]
+)
+api_router.include_router(
     assignments.router, prefix="/assignments", tags=["assignments"]
 )
 api_router.include_router(
@@ -165,9 +168,7 @@ api_router.include_router(
 api_router.include_router(
     conflicts.router, prefix="/conflicts/analysis", tags=["conflicts-analysis"]
 )
-api_router.include_router(
-    daily_manifest.router, prefix="/assignments", tags=["daily-manifest"]
-)
+
 api_router.include_router(role_views.router, prefix="/views", tags=["role-views"])
 api_router.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
 api_router.include_router(jobs.router, prefix="/jobs", tags=["jobs"])

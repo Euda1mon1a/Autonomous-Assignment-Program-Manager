@@ -25,13 +25,13 @@ A complete GUI interaction review was performed across 4 phases covering the ent
 | `/absences`    | **Functional** | Calendar loads, absence tagging visible. |
 
 ### Phase 3: Analysis & Tools (❌ Fail)
-| Route             | Status            | Error Details                                            |
-| ----------------- | ----------------- | -------------------------------------------------------- |
-| `/swaps`          | **403 Forbidden** | "Error Loading Marketplace: You do not have permission". |
-| `/conflicts`      | **404 Not Found** | Backend API endpoint `/api/v1/conflicts` missing.        |
-| `/heatmap`        | **Empty**         | "No data available" (likely backend data issue).         |
-| `/daily-manifest` | **404 Not Found** | Manifest service unavailable.                            |
-| `/compliance`     | **Empty**         | Loads but shows 0.0% coverage/validation.                |
+| Route             | Status                | Error Details                                                                   |
+| ----------------- | --------------------- | ------------------------------------------------------------------------------- |
+| `/swaps`          | **403 Forbidden**     | "Error Loading Marketplace: You do not have permission" (Expected/Permissions). |
+| `/conflicts`      | **Fixed**             | Page loads correctly (previously 404).                                          |
+| `/heatmap`        | **Empty**             | "No data available". User confirms persistent date skew/block data issue.       |
+| `/daily-manifest` | **422 Unprocessable** | Route collision fix applied (reordered `assignments` vs `daily-manifest`).      |
+| `/compliance`     | **Empty**             | Loads but shows 0.0% coverage/validation.                                       |
 
 ### Phase 4: Ops & Settings (⚠️ Mixed)
 | Route            | Status         | Error Details                                                                        |
