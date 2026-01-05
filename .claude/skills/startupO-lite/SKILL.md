@@ -47,8 +47,8 @@ Then call `mcp__residency-scheduler__rag_health` - if it fails, you're flying bl
 ### 2b. Container Staleness Check (if containers running)
 
 ```bash
-# Quick staleness check on key files
-./scripts/diagnose-container-staleness.sh residency-scheduler-backend app/main.py 2>/dev/null | grep -E "(STALE|FRESH)" || echo "Containers not running"
+# Quick staleness check - now checks LOCAL vs CONTAINER vs IMAGE
+./scripts/diagnose-container-staleness.sh residency-scheduler-backend app/main.py 2>/dev/null | grep -E "(ALL MATCH|IMAGE STALE|CONTAINER STALE)" || echo "Containers not running"
 ```
 
 **STANDING ORDER - "File Not Found" in Docker:**
