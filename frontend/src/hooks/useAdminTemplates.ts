@@ -23,6 +23,11 @@ import type {
   BatchTemplateDeleteRequest,
   BatchTemplateUpdateRequest,
   BatchTemplateResponse,
+  BatchTemplateCreateRequest,
+  ConflictCheckRequest,
+  ConflictCheckResponse,
+  TemplateExportRequest,
+  TemplateExportResponse,
 } from '@/types/admin-templates';
 
 // ============================================================================
@@ -317,4 +322,100 @@ export function useTemplatesMap(activityType?: ActivityType | '') {
     },
     {} as Record<string, RotationTemplate>
   );
+}
+
+// ============================================================================
+// Bulk Create Mutation
+// ============================================================================
+
+/**
+ * Creates multiple rotation templates atomically using batch endpoint.
+ * All succeed or all fail - no partial creates.
+ */
+export function useBulkCreateTemplates() {
+  const queryClient = useQueryClient();
+
+  return useMutation<BatchTemplateResponse, ApiError, TemplateCreateRequest[]>({
+    mutationFn: async (templates) => {
+      const request: BatchTemplateCreateRequest = {
+        templates,
+        dry_run: false,
+      };
+      return post<BatchTemplateResponse>('/rotation-templates/batch', request);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminTemplatesQueryKeys.all,
+      });
+    },
+  });
+}
+
+// ============================================================================
+// Conflict Check Hook
+// ============================================================================
+
+/**
+ * Checks for conflicts before performing batch operations.
+ */
+export function useCheckConflicts() {
+  return useMutation<ConflictCheckResponse, ApiError, ConflictCheckRequest>({
+    mutationFn: async (request) => {
+      return post<ConflictCheckResponse>('/rotation-templates/batch/conflicts', request);
+    },
+  });
+}
+
+// ============================================================================
+// Export Templates Hook
+// ============================================================================
+
+/**
+ * Exports selected templates with their patterns and preferences.
+ */
+export function useExportTemplates() {
+  return useMutation<TemplateExportResponse, ApiError, TemplateExportRequest>({
+    mutationFn: async (request) => {
+      return post<TemplateExportResponse>('/rotation-templates/export', request);
+    },
+  });
+}
+
+// ============================================================================
+// Inline Update Hook
+// ============================================================================
+
+/**
+ * Updates a single field on a template (for inline editing).
+ * Uses batch endpoint with single item for consistency.
+ */
+export function useInlineUpdateTemplate() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    BatchTemplateResponse,
+    ApiError,
+    { templateId: string; field: string; value: unknown }
+  >({
+    mutationFn: async ({ templateId, field, value }) => {
+      const request: BatchTemplateUpdateRequest = {
+        templates: [
+          {
+            template_id: templateId,
+            updates: { [field]: value } as TemplateUpdateRequest,
+          },
+        ],
+        dry_run: false,
+      };
+      return put<BatchTemplateResponse>('/rotation-templates/batch', request);
+    },
+    onSuccess: (_, { templateId }) => {
+      queryClient.invalidateQueries({
+        queryKey: adminTemplatesQueryKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: adminTemplatesQueryKeys.detail(templateId),
+      });
+    },
+  });
 }
