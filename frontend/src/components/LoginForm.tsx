@@ -49,6 +49,12 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     setTouched(prev => ({ ...prev, [field]: true }));
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && isFormValid && !isSubmitting) {
+      handleSubmit(e as unknown as FormEvent);
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
 
@@ -135,6 +141,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             onBlur={() => handleBlur('password')}
+            onKeyDown={handleKeyDown}
             className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
               touched.password && formErrors.password ? 'border-red-500' : 'border-gray-300'
             }`}

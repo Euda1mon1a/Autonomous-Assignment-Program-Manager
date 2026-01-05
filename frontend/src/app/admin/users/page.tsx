@@ -5,6 +5,11 @@
  *
  * Administrative interface for managing system users, roles, and permissions.
  * Provides CRUD operations for users and role assignment capabilities.
+ *
+ * Features:
+ * - Debounced search for better performance
+ * - Toast notifications for user feedback
+ * - Sticky table headers
  */
 import {
   useActivityLog,
@@ -16,6 +21,8 @@ import {
   useUpdateUser,
   useUsers,
 } from "@/hooks/useAdminUsers";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useToast } from "@/contexts/ToastContext";
 import type {
   BulkAction,
   RolePermissions,
@@ -495,7 +502,7 @@ function UserModal({ user, isOpen, onClose, onSave }: UserModalProps) {
                 onChange={(e) =>
                   setFormData({ ...formData, firstName: e.target.value })
                 }
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
                 required
               />
             </div>
@@ -509,7 +516,7 @@ function UserModal({ user, isOpen, onClose, onSave }: UserModalProps) {
                 onChange={(e) =>
                   setFormData({ ...formData, lastName: e.target.value })
                 }
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
                 required
               />
             </div>
@@ -524,7 +531,7 @@ function UserModal({ user, isOpen, onClose, onSave }: UserModalProps) {
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
               }
-              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
               required
             />
           </div>
@@ -537,7 +544,7 @@ function UserModal({ user, isOpen, onClose, onSave }: UserModalProps) {
               onChange={(e) =>
                 setFormData({ ...formData, role: e.target.value as UserRole })
               }
-              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
             >
               {Object.entries(USER_ROLE_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -767,6 +774,9 @@ function ActivityPanel() {
 // ============================================================================
 
 export default function AdminUsersPage() {
+  // Toast notifications
+  const { toast } = useToast();
+
   // UI State
   const [activeTab, setActiveTab] = useState<UserManagementTab>("users");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -775,6 +785,9 @@ export default function AdminUsersPage() {
   const [statusFilter, setStatusFilter] = useState<UserStatus | "all">("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | undefined>();
+
+  // Debounce search for better performance
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   // Confirmation dialog state
   const [deleteConfirm, setDeleteConfirm] = useState<{
@@ -790,7 +803,7 @@ export default function AdminUsersPage() {
     isLoading,
     refetch,
   } = useUsers({
-    search: searchQuery || undefined,
+    search: debouncedSearch || undefined,
     role: roleFilter,
     status: statusFilter,
   });
@@ -808,18 +821,19 @@ export default function AdminUsersPage() {
   const totalUsers = usersData?.total ?? users.length;
 
   // Client-side filtering for search (API handles role/status filters)
+  // Uses debounced search for better performance
   const filteredUsers = useMemo(() => {
     // If search is handled server-side, just return users
     // For now we still filter client-side for instant feedback
     return users.filter((user) => {
       const matchesSearch =
-        searchQuery === "" ||
-        user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase());
+        debouncedSearch === "" ||
+        user.firstName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        user.lastName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        user.email.toLowerCase().includes(debouncedSearch.toLowerCase());
       return matchesSearch;
     });
-  }, [users, searchQuery]);
+  }, [users, debouncedSearch]);
 
   const handleSelectUser = useCallback((userId: string) => {
     setSelectedUsers((prev) =>
@@ -841,12 +855,16 @@ export default function AdminUsersPage() {
     (data: UserCreate) => {
       createUserMutation.mutate(data, {
         onSuccess: () => {
+          toast.success(`User ${data.firstName} ${data.lastName} created`);
           setIsModalOpen(false);
           setEditingUser(undefined);
         },
+        onError: (error) => {
+          toast.error(error);
+        },
       });
     },
-    [createUserMutation]
+    [createUserMutation, toast]
   );
 
   const handleUpdateUser = useCallback(
@@ -864,13 +882,17 @@ export default function AdminUsersPage() {
         { id: editingUser.id, data: updateData },
         {
           onSuccess: () => {
+            toast.success(`User ${data.firstName} ${data.lastName} updated`);
             setIsModalOpen(false);
             setEditingUser(undefined);
+          },
+          onError: (error) => {
+            toast.error(error);
           },
         }
       );
     },
-    [editingUser, updateUserMutation]
+    [editingUser, updateUserMutation, toast]
   );
 
   const handleSaveUser = useCallback(
@@ -896,32 +918,56 @@ export default function AdminUsersPage() {
   const handleConfirmDelete = useCallback(() => {
     if (!deleteConfirm.user) return;
 
+    const userName = `${deleteConfirm.user.firstName} ${deleteConfirm.user.lastName}`;
     deleteUserMutation.mutate(deleteConfirm.user.id, {
       onSuccess: () => {
+        toast.success(`User ${userName} deleted`);
         setDeleteConfirm({ isOpen: false });
         setSelectedUsers((prev) =>
           prev.filter((id) => id !== deleteConfirm.user?.id)
         );
       },
-      onError: () => {
+      onError: (error) => {
+        toast.error(error);
         // Keep dialog open on error so user can see the error
       },
     });
-  }, [deleteConfirm.user, deleteUserMutation]);
+  }, [deleteConfirm.user, deleteUserMutation, toast]);
 
   const handleToggleLock = useCallback(
     (user: User) => {
       const shouldLock = user.status !== "locked";
-      toggleLockMutation.mutate({ id: user.id, lock: shouldLock });
+      toggleLockMutation.mutate(
+        { id: user.id, lock: shouldLock },
+        {
+          onSuccess: () => {
+            toast.success(
+              shouldLock
+                ? `User ${user.firstName} ${user.lastName} locked`
+                : `User ${user.firstName} ${user.lastName} unlocked`
+            );
+          },
+          onError: (error) => {
+            toast.error(error);
+          },
+        }
+      );
     },
-    [toggleLockMutation]
+    [toggleLockMutation, toast]
   );
 
   const handleResendInvite = useCallback(
     (user: User) => {
-      resendInviteMutation.mutate(user.id);
+      resendInviteMutation.mutate(user.id, {
+        onSuccess: () => {
+          toast.success(`Invitation sent to ${user.email}`);
+        },
+        onError: (error) => {
+          toast.error(error);
+        },
+      });
     },
-    [resendInviteMutation]
+    [resendInviteMutation, toast]
   );
 
   const handleBulkAction = useCallback(
@@ -932,12 +978,18 @@ export default function AdminUsersPage() {
         { userIds: selectedUsers, action },
         {
           onSuccess: () => {
+            toast.success(
+              `${selectedUsers.length} user(s) ${action === "delete" ? "deleted" : action + "d"}`
+            );
             setSelectedUsers([]);
+          },
+          onError: (error) => {
+            toast.error(error);
           },
         }
       );
     },
-    [selectedUsers, bulkActionMutation]
+    [selectedUsers, bulkActionMutation, toast]
   );
 
   return (
@@ -1008,7 +1060,7 @@ export default function AdminUsersPage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search users..."
-                    className="w-full pl-10 pr-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-full pl-10 pr-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
                   />
                 </div>
                 <div className="flex items-center gap-2">
@@ -1017,7 +1069,7 @@ export default function AdminUsersPage() {
                     onChange={(e) =>
                       setRoleFilter(e.target.value as UserRole | "all")
                     }
-                    className="px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-slate-300 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
                   >
                     <option value="all">All Roles</option>
                     {Object.entries(USER_ROLE_LABELS).map(([value, label]) => (
@@ -1031,7 +1083,7 @@ export default function AdminUsersPage() {
                     onChange={(e) =>
                       setStatusFilter(e.target.value as UserStatus | "all")
                     }
-                    className="px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-slate-300 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
                   >
                     <option value="all">All Status</option>
                     <option value="active">Active</option>
@@ -1082,9 +1134,9 @@ export default function AdminUsersPage() {
 
             {/* Users Table */}
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden shadow-xl shadow-black/20">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto max-h-[calc(100vh-350px)]">
                 <table className="w-full text-left border-collapse">
-                  <thead>
+                  <thead className="sticky top-0 z-10">
                     <tr className="bg-slate-900/50 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700/50">
                       <th className="px-4 py-3 w-10">
                         <input

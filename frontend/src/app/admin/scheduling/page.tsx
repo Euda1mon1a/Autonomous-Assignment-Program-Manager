@@ -516,7 +516,7 @@ function ConfigurationPanel({
                 type="number"
                 value={configuration.timeoutSeconds}
                 onChange={(e) => onChange({ timeoutSeconds: parseInt(e.target.value) || 300 })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
                 min={30}
                 max={3600}
               />
@@ -537,7 +537,7 @@ function ConfigurationPanel({
               <select
                 value={configuration.academicYear}
                 onChange={(e) => onChange({ academicYear: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
               >
                 <option value="2023-2024">2023-2024</option>
                 <option value="2024-2025">2024-2025</option>
@@ -552,7 +552,7 @@ function ConfigurationPanel({
                 onChange={(e) => onChange({
                   blockRange: { ...configuration.blockRange, start: parseInt(e.target.value) || 1 }
                 })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
                 min={1}
                 max={730}
               />
@@ -565,7 +565,7 @@ function ConfigurationPanel({
                 onChange={(e) => onChange({
                   blockRange: { ...configuration.blockRange, end: parseInt(e.target.value) || 730 }
                 })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
                 min={1}
                 max={730}
               />
@@ -1103,7 +1103,7 @@ function HistoryPanel({
         <select
           value={filters.algorithm}
           onChange={(e) => setFilters(prev => ({ ...prev, algorithm: e.target.value }))}
-          className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
+          className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
         >
           <option value="">All Algorithms</option>
           {ALGORITHMS.map(a => (
@@ -1114,7 +1114,7 @@ function HistoryPanel({
         <select
           value={filters.status}
           onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-          className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
+          className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
         >
           <option value="">All Statuses</option>
           <option value="success">Success</option>
@@ -1396,7 +1396,7 @@ function OverridesPanel({
             value={rollbackDescription}
             onChange={(e) => setRollbackDescription(e.target.value)}
             placeholder="Snapshot description..."
-            className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm placeholder-slate-500"
+            className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm placeholder-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
           />
           <button
             onClick={() => {

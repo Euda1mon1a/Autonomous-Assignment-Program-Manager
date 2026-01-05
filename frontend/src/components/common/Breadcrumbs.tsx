@@ -38,6 +38,8 @@ interface BreadcrumbsProps {
   showHome?: boolean
   /** Additional CSS classes */
   className?: string
+  /** Use dark theme variant (slate/violet palette) */
+  dark?: boolean
 }
 
 /**
@@ -50,6 +52,7 @@ export function Breadcrumbs({
   items,
   showHome = true,
   className = '',
+  dark = false,
 }: BreadcrumbsProps) {
   const pathname = usePathname()
 
@@ -108,24 +111,28 @@ export function Breadcrumbs({
           <li className="flex items-center">
             <Link
               href="/"
-              className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors p-1 -ml-1 rounded hover:bg-gray-100"
+              className={`flex items-center gap-1 p-1 -ml-1 rounded transition-colors ${
+                dark
+                  ? 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+              }`}
               aria-label="Home"
             >
               <Home className="w-4 h-4" />
               <span className="sr-only sm:not-sr-only sm:ml-1">Dashboard</span>
             </Link>
             {breadcrumbs.length > 0 && (
-              <ChevronRight className="w-4 h-4 text-gray-400 mx-1" aria-hidden="true" />
+              <ChevronRight className={`w-4 h-4 mx-1 ${dark ? 'text-slate-600' : 'text-gray-400'}`} aria-hidden="true" />
             )}
           </li>
         )}
 
         {/* Breadcrumb items */}
-        {breadcrumbs.map((crumb, index) => (
+        {breadcrumbs.map((crumb) => (
           <li key={crumb.href} className="flex items-center">
             {crumb.isCurrentPage ? (
               <span
-                className="text-gray-900 font-medium"
+                className={`font-medium ${dark ? 'text-white' : 'text-gray-900'}`}
                 aria-current="page"
               >
                 {crumb.label}
@@ -134,12 +141,16 @@ export function Breadcrumbs({
               <>
                 <Link
                   href={crumb.href}
-                  className="text-gray-500 hover:text-gray-700 transition-colors hover:underline"
+                  className={`transition-colors hover:underline ${
+                    dark
+                      ? 'text-slate-400 hover:text-white'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
                 >
                   {crumb.label}
                 </Link>
                 <ChevronRight
-                  className="w-4 h-4 text-gray-400 mx-1"
+                  className={`w-4 h-4 mx-1 ${dark ? 'text-slate-600' : 'text-gray-400'}`}
                   aria-hidden="true"
                 />
               </>
