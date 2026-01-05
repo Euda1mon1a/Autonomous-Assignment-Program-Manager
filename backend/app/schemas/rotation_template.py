@@ -148,6 +148,10 @@ class RotationTemplateResponse(RotationTemplateBase):
 
     id: UUID
     created_at: datetime
+    # Archive fields
+    is_archived: bool = False
+    archived_at: datetime | None = None
+    archived_by: UUID | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

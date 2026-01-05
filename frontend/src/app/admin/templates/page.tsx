@@ -24,6 +24,7 @@ import {
   X,
   Keyboard,
   Archive,
+  Clock,
 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { TemplateTable } from '@/components/admin/TemplateTable';
@@ -31,6 +32,7 @@ import { BulkActionsToolbar } from '@/components/admin/BulkActionsToolbar';
 import { PreferenceEditor } from '@/components/admin/PreferenceEditor';
 import { WeeklyGridEditor, WeeklyGridEditorSkeleton } from '@/components/scheduling/WeeklyGridEditor';
 import { ArchivedTemplatesDrawer } from '@/components/admin/ArchivedTemplatesDrawer';
+import { WeeklyRequirementsEditor } from '@/components/admin/WeeklyRequirementsEditor';
 import {
   useAdminTemplates,
   useDeleteTemplate,
@@ -60,7 +62,7 @@ import { ACTIVITY_TYPE_CONFIGS } from '@/types/admin-templates';
 // Types
 // ============================================================================
 
-type EditorMode = 'none' | 'patterns' | 'preferences';
+type EditorMode = 'none' | 'patterns' | 'preferences' | 'weekly-requirements';
 
 // ============================================================================
 // Main Page Component
@@ -291,6 +293,11 @@ export default function AdminTemplatesPage() {
     setEditorMode('preferences');
   }, []);
 
+  const handleEditWeeklyRequirements = useCallback((template: RotationTemplate) => {
+    setEditingTemplate(template);
+    setEditorMode('weekly-requirements');
+  }, []);
+
   const handleCloseEditor = useCallback(() => {
     setEditingTemplate(null);
     setEditorMode('none');
@@ -338,6 +345,11 @@ export default function AdminTemplatesPage() {
     },
     [editingTemplate, replacePreferences, handleCloseEditor, toast]
   );
+
+  const handleWeeklyRequirementsSave = useCallback(() => {
+    toast.success('Weekly requirements saved');
+    handleCloseEditor();
+  }, [handleCloseEditor, toast]);
 
   const handleRestoreTemplates = useCallback(
     async (templateIds: string[]) => {
@@ -553,6 +565,7 @@ export default function AdminTemplatesPage() {
             onDelete={handleDeleteSingle}
             onEditPatterns={handleEditPatterns}
             onEditPreferences={handleEditPreferences}
+            onEditWeeklyRequirements={handleEditWeeklyRequirements}
           />
         )}
       </main>
@@ -640,6 +653,38 @@ export default function AdminTemplatesPage() {
                 isLoading={preferencesLoading}
                 onSave={handlePreferencesSave}
                 isSaving={replacePreferences.isPending}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Weekly Requirements Editor Modal */}
+      {editorMode === 'weekly-requirements' && editingTemplate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-slate-700 bg-slate-800">
+              <div className="flex items-center gap-3">
+                <Clock className="w-5 h-5 text-cyan-400" />
+                <div>
+                  <h2 className="text-lg font-semibold text-white">Weekly Requirements</h2>
+                  <p className="text-sm text-slate-400">{editingTemplate.name}</p>
+                </div>
+              </div>
+              <button
+                onClick={handleCloseEditor}
+                className="p-2 text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <WeeklyRequirementsEditor
+                templateId={editingTemplate.id}
+                templateName={editingTemplate.name}
+                onSave={handleWeeklyRequirementsSave}
+                onClose={handleCloseEditor}
               />
             </div>
           </div>

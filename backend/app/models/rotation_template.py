@@ -58,7 +58,7 @@ class RotationTemplate(Base):
     is_archived = Column(Boolean, default=False, nullable=False, index=True)
     archived_at = Column(DateTime, nullable=True)
     archived_by = Column(
-        String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+        GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
 
     # Timestamps
@@ -81,6 +81,12 @@ class RotationTemplate(Base):
         "WeeklyPattern",
         back_populates="rotation_template",
         foreign_keys="[WeeklyPattern.rotation_template_id]",
+        cascade="all, delete-orphan",
+    )
+    weekly_requirements = relationship(
+        "ResidentWeeklyRequirement",
+        back_populates="rotation_template",
+        uselist=False,  # One-to-one relationship
         cascade="all, delete-orphan",
     )
 

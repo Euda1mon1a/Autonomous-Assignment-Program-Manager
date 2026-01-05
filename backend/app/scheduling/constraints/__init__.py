@@ -133,6 +133,13 @@ from .inpatient import (
     ResidentInpatientHeadcountConstraint,
 )
 
+# Resident weekly clinic constraints
+from .resident_weekly_clinic import (
+    ResidentAcademicTimeConstraint,
+    ResidentClinicDayPreferenceConstraint,
+    ResidentWeeklyClinicConstraint,
+)
+
 # Sports Medicine coordination constraints
 from .sports_medicine import SMResidentFacultyAlignmentConstraint
 
@@ -221,6 +228,10 @@ __all__ = [
     # Resident inpatient constraints
     "FMITResidentClinicDayConstraint",
     "ResidentInpatientHeadcountConstraint",
+    # Resident weekly clinic constraints
+    "ResidentWeeklyClinicConstraint",
+    "ResidentAcademicTimeConstraint",
+    "ResidentClinicDayPreferenceConstraint",
     # Manager
     "ConstraintManager",
 ]

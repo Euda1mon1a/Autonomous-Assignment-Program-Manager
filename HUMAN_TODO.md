@@ -163,6 +163,55 @@ The `/mcp` command shows "not authenticated" even when tools work fine. This is 
 
 ---
 
+### Admin GUI: Absence Loader (CRITICAL)
+**Priority:** HIGH
+**Added:** 2026-01-05
+**Status:** TODO - Feature Request
+
+**Request:** Admin interface for bulk loading absences for residents AND faculty via GUI.
+
+**Use Cases:**
+- [ ] Upload CSV/Excel with absence records
+- [ ] Preview staged absences before committing
+- [ ] Handle both resident and faculty absences
+- [ ] Support all absence types (Annual, Sick, TDY, Deployment, etc.)
+- [ ] Conflict detection (overlapping absences, coverage gaps)
+- [ ] Bulk approve/reject absences
+
+**Context:** Absences currently require direct API calls or database manipulation. A GUI loader would streamline the annual leave request workflow and military-specific absences (TDY, Deployment).
+
+**Related Files:**
+- `backend/app/models/absence.py` - Model
+- `backend/app/api/routes/absences.py` - API endpoints
+- `frontend/src/app/admin/` - Admin pages location
+- `backend/scripts/seed_antigravity.py` - Absence seeding reference
+
+---
+
+### Intern Scheduler Generator for Anticipated Leave
+**Priority:** Medium
+**Added:** 2026-01-05
+**Status:** TODO - Feature Request
+
+**Request:** Pre-generate schedules that accommodate anticipated (but not yet submitted) leave requests for incoming interns.
+
+**Context:** Intern leave requests are not received until just before the Academic Year starts. The scheduler needs to generate tentative schedules with placeholder leave slots that can be filled in once actual requests arrive.
+
+**Use Cases:**
+- [ ] Generate AY schedule with "anticipated leave" placeholders
+- [ ] Configure expected leave distribution (e.g., 4 weeks per intern)
+- [ ] Auto-balance leave across blocks to avoid coverage gaps
+- [ ] Allow manual override once actual requests arrive
+- [ ] Track which leave slots are "anticipated" vs "confirmed"
+
+**Implementation Considerations:**
+- Add `leave_status: anticipated | confirmed | denied` to Absence model
+- Generate schedule with anticipated absences distributed evenly
+- Provide UI to convert anticipated → confirmed when requests arrive
+- Alerting for interns who haven't submitted requests by deadline
+
+---
+
 ### ACGME Rest Hours - PGY-Level Differentiation
 **Priority:** Medium
 **Added:** 2025-12-30

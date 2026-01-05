@@ -16,6 +16,7 @@ import {
   Eye,
   Calendar,
   Settings,
+  Clock,
 } from 'lucide-react';
 import type {
   RotationTemplate,
@@ -51,6 +52,8 @@ export interface TemplateTableProps {
   onEditPatterns?: (template: RotationTemplate) => void;
   /** Callback to edit template preferences */
   onEditPreferences?: (template: RotationTemplate) => void;
+  /** Callback to edit weekly requirements */
+  onEditWeeklyRequirements?: (template: RotationTemplate) => void;
   /** Callback to delete single template */
   onDelete?: (template: RotationTemplate) => void;
   /** Whether table is in loading state */
@@ -169,6 +172,7 @@ export function TemplateTable({
   onEdit,
   onEditPatterns,
   onEditPreferences,
+  onEditWeeklyRequirements,
   onDelete,
   isLoading = false,
   enableInlineEdit = false,
@@ -519,6 +523,15 @@ export function TemplateTable({
                           title="Edit preferences"
                         >
                           <Settings className="w-4 h-4" />
+                        </button>
+                      )}
+                      {onEditWeeklyRequirements && (
+                        <button
+                          onClick={() => onEditWeeklyRequirements(template)}
+                          className="p-1.5 text-slate-400 hover:text-cyan-400 transition-colors"
+                          title="Edit weekly requirements"
+                        >
+                          <Clock className="w-4 h-4" />
                         </button>
                       )}
                       {onDelete && (
