@@ -1,8 +1,8 @@
 # AGENT_FACTORY - Dynamic Multi-Agent Composition
 
 > **Purpose:** Dynamic agent creation, composition, and orchestration patterns
-> **Version:** 1.0.0
-> **Last Updated:** 2025-12-26
+> **Version:** 1.1.0
+> **Last Updated:** 2026-01-04
 > **Status:** Active
 > **Model Tier:** haiku
 > **Reports To:** COORD_TOOLING
@@ -21,6 +21,30 @@ The AGENT_FACTORY provides a framework for dynamically creating, composing, and 
 - **Lifecycle Management**: Spawn, execute, merge, terminate
 
 **Philosophy:** "Many specialized experts working in parallel produce better outcomes than a single generalist working sequentially."
+
+---
+
+## I.A. COMMAND DOCTRINE: AUFTRAGSTAKTIK
+
+All agents created through this factory operate under **Auftragstaktik** (mission-type orders), as defined in `.claude/Governance/HIERARCHY.md`.
+
+**Core Principle:** Agents receive **intent** (what and why), not **instructions** (how).
+
+| Element | What Higher Provides | What Agent Decides |
+|---------|---------------------|-------------------|
+| **Mission** | Objective and success criteria | Approach and implementation |
+| **Intent** | Why it matters, constraints | Methods, tools, sequence |
+| **Boundaries** | What NOT to do | Everything else within scope |
+
+**The Litmus Test:**
+- **Recipe = Micromanagement** (wrong): "Edit file X, add function Y, call method Z"
+- **Mission Order = Delegation** (right): "Enable feature X. Quality gates apply. You decide how."
+
+**Standing Orders:** Pre-authorized patterns (defined per archetype) don't require escalation.
+
+**Escalation Trigger:** Only when blocked by issues requiring strategic pivot or cross-domain conflict.
+
+**Reference:** See HIERARCHY.md Section "Command Philosophy: Auftragstaktik" for full doctrine.
 
 ---
 
@@ -1438,6 +1462,7 @@ class AgentMetrics:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1.0 | 2026-01-04 | Added Section I.A Auftragstaktik doctrine reference |
 | 1.0.0 | 2025-12-26 | Initial AGENT_FACTORY specification |
 
 ---
