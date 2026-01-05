@@ -91,7 +91,7 @@ class CallAssignmentResponse(BaseModel):
     """Schema for call assignment response."""
 
     id: UUID
-    call_date: date
+    call_date: date = Field(..., description="Date of the call assignment")
     person_id: UUID
     call_type: str
     is_weekend: bool
@@ -177,4 +177,176 @@ class CallEquityReport(BaseModel):
     )
     distribution: list[dict[str, Any]] = Field(
         ..., description="Per-faculty call distribution details"
+    )
+
+
+# ============================================================================
+# Bulk Update Schemas
+# ============================================================================
+
+
+class BulkCallAssignmentUpdateInput(BaseModel):
+    """Schema for bulk update input - what fields can be updated."""
+
+    person_id: UUID | None = Field(None, description="New person ID to reassign to")
+
+
+class BulkCallAssignmentUpdateRequest(BaseModel):
+    """Schema for bulk updating multiple call assignments."""
+
+    assignment_ids: list[UUID] = Field(
+        ..., description="List of call assignment IDs to update"
+    )
+    updates: BulkCallAssignmentUpdateInput = Field(
+        ..., description="Fields to update on all selected assignments"
+    )
+
+    @field_validator("assignment_ids")
+    @classmethod
+    def validate_not_empty(cls, v: list[UUID]) -> list[UUID]:
+        """Ensure assignment_ids list is not empty."""
+        if not v:
+            raise ValueError("assignment_ids list cannot be empty")
+        return v
+
+
+class BulkCallAssignmentUpdateResponse(BaseModel):
+    """Schema for bulk update response."""
+
+    updated: int = Field(..., description="Number of assignments updated")
+    errors: list[str] = Field(
+        default_factory=list, description="Error messages for failed updates"
+    )
+    assignments: list[CallAssignmentResponse] = Field(
+        default_factory=list, description="Updated assignments"
+    )
+
+
+# ============================================================================
+# PCAT Generation Schemas
+# ============================================================================
+
+
+class PCATGenerationRequest(BaseModel):
+    """Schema for triggering PCAT/DO auto-assignment."""
+
+    assignment_ids: list[UUID] = Field(
+        ..., description="Call assignment IDs to generate PCAT/DO for"
+    )
+
+    @field_validator("assignment_ids")
+    @classmethod
+    def validate_not_empty(cls, v: list[UUID]) -> list[UUID]:
+        """Ensure assignment_ids list is not empty."""
+        if not v:
+            raise ValueError("assignment_ids list cannot be empty")
+        return v
+
+
+class PCATAssignmentResult(BaseModel):
+    """Schema for a single PCAT/DO assignment result."""
+
+    call_assignment_id: UUID = Field(
+        ..., description="Original call assignment ID"
+    )
+    call_date: date = Field(..., description="Date of the call")
+    person_id: UUID = Field(..., description="Person ID")
+    person_name: str | None = Field(None, description="Person name")
+    pcat_created: bool = Field(
+        default=False, description="Whether PCAT assignment was created"
+    )
+    do_created: bool = Field(
+        default=False, description="Whether DO assignment was created"
+    )
+    pcat_assignment_id: UUID | None = Field(
+        None, description="Created PCAT assignment ID"
+    )
+    do_assignment_id: UUID | None = Field(
+        None, description="Created DO assignment ID"
+    )
+    error: str | None = Field(None, description="Error message if failed")
+
+
+class PCATGenerationResponse(BaseModel):
+    """Schema for PCAT generation response."""
+
+    processed: int = Field(..., description="Number of call assignments processed")
+    pcat_created: int = Field(..., description="Number of PCAT assignments created")
+    do_created: int = Field(..., description="Number of DO assignments created")
+    errors: list[str] = Field(
+        default_factory=list, description="Error messages for failed operations"
+    )
+    results: list[PCATAssignmentResult] = Field(
+        default_factory=list, description="Detailed results per call assignment"
+    )
+
+
+# ============================================================================
+# Equity Preview Schemas
+# ============================================================================
+
+
+class SimulatedChange(BaseModel):
+    """Schema for a simulated change in equity preview."""
+
+    assignment_id: UUID | None = Field(
+        None, description="Existing assignment to modify (None for new)"
+    )
+    call_date: date | None = Field(None, description="Date of call (for new)")
+    old_person_id: UUID | None = Field(None, description="Current person (for swap)")
+    new_person_id: UUID = Field(..., description="New person to assign")
+    call_type: str = Field(default="overnight", description="Type of call")
+
+
+class EquityPreviewRequest(BaseModel):
+    """Schema for equity preview with simulated changes."""
+
+    start_date: date = Field(..., description="Start date for analysis")
+    end_date: date = Field(..., description="End date for analysis")
+    simulated_changes: list[SimulatedChange] = Field(
+        default_factory=list, description="Simulated changes to preview"
+    )
+
+
+class FacultyEquityDetail(BaseModel):
+    """Schema for per-faculty equity details in preview."""
+
+    person_id: UUID = Field(..., description="Faculty person ID")
+    name: str = Field(..., description="Faculty name")
+    current_sunday_calls: int = Field(
+        ..., description="Current Sunday call count"
+    )
+    current_weekday_calls: int = Field(
+        ..., description="Current weekday call count"
+    )
+    current_total_calls: int = Field(..., description="Current total call count")
+    projected_sunday_calls: int = Field(
+        ..., description="Projected Sunday calls after changes"
+    )
+    projected_weekday_calls: int = Field(
+        ..., description="Projected weekday calls after changes"
+    )
+    projected_total_calls: int = Field(
+        ..., description="Projected total calls after changes"
+    )
+    delta: int = Field(..., description="Change in total calls")
+
+
+class EquityPreviewResponse(BaseModel):
+    """Schema for equity preview response."""
+
+    start_date: date
+    end_date: date
+    current_equity: CallEquityReport = Field(
+        ..., description="Current equity distribution"
+    )
+    projected_equity: CallEquityReport = Field(
+        ..., description="Projected equity after simulated changes"
+    )
+    faculty_details: list[FacultyEquityDetail] = Field(
+        default_factory=list, description="Per-faculty current vs projected"
+    )
+    improvement_score: float = Field(
+        ...,
+        description="Score indicating equity improvement (-1 to 1, positive is better)",
     )

@@ -9,12 +9,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.call_assignment import (
     BulkCallAssignmentCreate,
     BulkCallAssignmentResponse,
+    BulkCallAssignmentUpdateRequest,
+    BulkCallAssignmentUpdateResponse,
     CallAssignmentCreate,
     CallAssignmentListResponse,
     CallAssignmentResponse,
     CallAssignmentUpdate,
     CallCoverageReport,
     CallEquityReport,
+    EquityPreviewResponse,
+    PCATGenerationRequest,
+    PCATGenerationResponse,
+    SimulatedChange,
 )
 from app.services.call_assignment_service import CallAssignmentService
 
@@ -157,3 +163,50 @@ class CallAssignmentController:
     ) -> CallEquityReport:
         """Get call equity/distribution report for a date range."""
         return await self.service.get_equity_report(start_date, end_date)
+
+    async def bulk_update_call_assignments(
+        self,
+        request: BulkCallAssignmentUpdateRequest,
+    ) -> BulkCallAssignmentUpdateResponse:
+        """Bulk update multiple call assignments."""
+        result = await self.service.bulk_update_call_assignments(
+            assignment_ids=request.assignment_ids,
+            updates=request.updates,
+        )
+
+        if result["errors"] and result["updated"] == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result["errors"][0],
+            )
+
+        return BulkCallAssignmentUpdateResponse(
+            updated=result["updated"],
+            errors=result["errors"],
+            assignments=[
+                CallAssignmentResponse.model_validate(a)
+                for a in result["assignments"]
+            ],
+        )
+
+    async def generate_pcat(
+        self,
+        request: PCATGenerationRequest,
+    ) -> PCATGenerationResponse:
+        """Generate PCAT/DO assignments for selected call assignments."""
+        return await self.service.generate_pcat_for_assignments(
+            assignment_ids=request.assignment_ids,
+        )
+
+    async def get_equity_preview(
+        self,
+        start_date: date,
+        end_date: date,
+        simulated_changes: list[SimulatedChange],
+    ) -> EquityPreviewResponse:
+        """Get equity preview with simulated changes."""
+        return await self.service.get_equity_preview(
+            start_date=start_date,
+            end_date=end_date,
+            simulated_changes=simulated_changes,
+        )

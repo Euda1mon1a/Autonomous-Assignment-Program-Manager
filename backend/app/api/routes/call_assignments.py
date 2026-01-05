@@ -26,12 +26,18 @@ from app.models.user import User
 from app.schemas.call_assignment import (
     BulkCallAssignmentCreate,
     BulkCallAssignmentResponse,
+    BulkCallAssignmentUpdateRequest,
+    BulkCallAssignmentUpdateResponse,
     CallAssignmentCreate,
     CallAssignmentListResponse,
     CallAssignmentResponse,
     CallAssignmentUpdate,
     CallCoverageReport,
     CallEquityReport,
+    EquityPreviewRequest,
+    EquityPreviewResponse,
+    PCATGenerationRequest,
+    PCATGenerationResponse,
 )
 
 router = APIRouter(prefix="/call-assignments", tags=["call-assignments"])
@@ -226,3 +232,83 @@ async def get_equity_report(
     """Get call equity/distribution report for a date range."""
     controller = CallAssignmentController(db)
     return await controller.get_equity_report(start_date, end_date)
+
+
+# ============================================================================
+# Bulk Operations
+# ============================================================================
+
+
+@router.post(
+    "/bulk-update",
+    response_model=BulkCallAssignmentUpdateResponse,
+    summary="Bulk update call assignments",
+    description="Update multiple call assignments at once (e.g., reassign person_id). Requires ADMIN or COORDINATOR role.",
+    dependencies=[Depends(require_role(["ADMIN", "COORDINATOR"]))],
+)
+async def bulk_update_call_assignments(
+    request: BulkCallAssignmentUpdateRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+) -> BulkCallAssignmentUpdateResponse:
+    """
+    Bulk update multiple call assignments.
+
+    Use this endpoint to reassign multiple call assignments to a different person.
+    All assignments in the request will be updated with the same values.
+    """
+    controller = CallAssignmentController(db)
+    return await controller.bulk_update_call_assignments(request)
+
+
+@router.post(
+    "/generate-pcat",
+    response_model=PCATGenerationResponse,
+    summary="Generate PCAT/DO assignments",
+    description="Trigger PCAT (Post-Call Attending) and DO (Direct Observation) auto-assignment for selected call assignments. Creates next-day AM PCAT and PM DO assignments for Sun-Thurs overnight calls. Requires ADMIN or COORDINATOR role.",
+    dependencies=[Depends(require_role(["ADMIN", "COORDINATOR"]))],
+)
+async def generate_pcat_assignments(
+    request: PCATGenerationRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+) -> PCATGenerationResponse:
+    """
+    Generate PCAT and DO assignments for overnight call.
+
+    For each selected call assignment on Sun-Thurs:
+    - Creates PCAT assignment for next day AM block
+    - Creates DO assignment for next day PM block
+
+    Friday/Saturday calls are handled by FMIT rules and will be skipped.
+    Existing assignments will not be duplicated.
+    """
+    controller = CallAssignmentController(db)
+    return await controller.generate_pcat(request)
+
+
+@router.post(
+    "/equity-preview",
+    response_model=EquityPreviewResponse,
+    summary="Preview equity with simulated changes",
+    description="Preview how proposed changes would affect equity distribution. Useful for planning reassignments. Requires ADMIN or COORDINATOR role.",
+    dependencies=[Depends(require_role(["ADMIN", "COORDINATOR"]))],
+)
+async def get_equity_preview(
+    request: EquityPreviewRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+) -> EquityPreviewResponse:
+    """
+    Preview equity distribution with simulated changes.
+
+    Allows testing how proposed reassignments would affect call equity
+    before actually making changes. Returns current vs projected distribution
+    and an improvement score indicating whether the changes improve equity.
+    """
+    controller = CallAssignmentController(db)
+    return await controller.get_equity_preview(
+        start_date=request.start_date,
+        end_date=request.end_date,
+        simulated_changes=request.simulated_changes,
+    )
