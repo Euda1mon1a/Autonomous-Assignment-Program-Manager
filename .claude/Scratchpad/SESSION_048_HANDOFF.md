@@ -1,128 +1,147 @@
-# Session 048 Handoff: RAG Schema Fix & Knowledge Base Population
+# Session 048 Handoff - Context Capacity Reached
 
-> **Date:** 2026-01-03
-> **Branch:** `fix/rag-schema-and-ingestion-20260103` (from `explore/subagents-rag-20260102`)
-> **Status:** RAG FULLY LOADED - Ready for next phase
-
----
-
-## Summary
-
-Fixed RAG ingestion 422 errors by expanding the Pydantic doc_type validator, then successfully populated the RAG knowledge base with 31 chunks across 9 document types.
+**Date:** 2026-01-04/05
+**Branch:** `main` (synced at `695cd76b`)
+**Status:** Session closing due to context capacity
 
 ---
 
-## Problem Solved
+## MAJOR ACCOMPLISHMENTS
 
-### Root Cause: Schema Validation Failure
+### 1. Auftragstaktik Transformation (COMPLETE)
+- **34+ agent docs refactored** from prescriptive scripts to intent-based delegation
+- **HIERARCHY.md v7.0.0** - canonical doctrine established
+- **CONSTITUTION.md v1.1.0** - doctrine enshrined in governance
+- **AGENT_FACTORY.md v1.1.0** - new agents inherit doctrine
+- **CLAUDE.md** - updated with doctrine reference
+- **startupO/startupO-lite** - updated with doctrine
+- **RAG** - `delegation_patterns` doc_type ingested
 
-The `DocumentIngestRequest` schema in `backend/app/schemas/rag.py` only allowed 8 doc_types:
-- `acgme_rules`, `scheduling_policy`, `user_guide`, `technical_doc`, `meeting_notes`, `research_paper`, `clinical_guideline`, `other`
+**Litmus Test:** "If your delegation reads like a recipe, you're micromanaging. If it reads like mission orders, you're delegating."
 
-Attempting to ingest with types like `swap_system`, `military_specific`, `exotic_concepts` returned **422 Unprocessable Entity**.
+### 2. GUI Fixes (COMPLETE)
+| Issue | Fix | PR |
+|-------|-----|-----|
+| `/conflicts` 404 | Registered conflicts.py router at `/conflicts/analysis` | #634 |
+| `/daily-manifest` 404 | Fixed route collision, updated frontend path | #634 |
+| `/settings` CORS | Fixed OPTIONS preflight in redirect middleware | #637 |
+| Frontend unhealthy | Removed wget healthcheck, use node-native | #634 |
 
-### Fix Applied
+### 3. Documentation Updates (COMPLETE)
+- `docs/reviews/2026-01-04-comprehensive-gui-review.md` - Updated with resolution summary
+- `.claude/dontreadme/sessions/SESSION_AUFTRAGSTAKTIK_TRANSFORMATION_20260104.md` - Session history
 
-Added 10 new doc_types to the validator:
+---
+
+## PRs MERGED THIS SESSION
+
+| PR | Description | Status |
+|----|-------------|--------|
+| #634 | Auftragstaktik transformation + GUI fixes (34 files) | MERGED |
+| #635 | Persistence fixes (CLAUDE.md, startupO, startupO-lite) | MERGED |
+| #636 | Doctrine gaps (AGENT_FACTORY, CONSTITUTION) | MERGED |
+| #637 | CORS fix + doc update | MERGED |
+
+---
+
+## OUTSTANDING WORK: BATCH ENDPOINTS
+
+### Current Problem
+- Frontend bulk operations are SEQUENTIAL (loop calling single endpoints)
+- No atomicity - partial failures possible
+- Works but not ideal for data integrity
+
+### Plan Party Assessment: MEDIUM LIFT (~7 hours)
+
+### Files to Modify
+```
+backend/app/schemas/rotation_template.py           # Add batch schemas
+backend/app/services/rotation_template_service.py  # Add batch_delete(), batch_update()
+backend/app/api/routes/rotation_templates.py       # Add DELETE/PUT /batch endpoints
+backend/tests/api/test_rotation_template_batch.py  # New test file
+frontend/src/hooks/useAdminTemplates.ts            # Switch to batch endpoints
+frontend/src/types/admin-templates.ts              # Add batch types
+```
+
+### Backend Pattern (copy from existing batch.py)
 ```python
-# RAG knowledge base categories (from docs/rag-knowledge/)
-"swap_system",
-"military_specific",
-"resilience_concepts",
-"user_guide_faq",
-"session_handoff",
-"ai_patterns",
-"ai_decisions",
-"delegation_patterns",
-"exotic_concepts",
-"agent_spec",
+@router.delete("/batch", response_model=BatchTemplateResponse)
+async def batch_delete_templates(
+    request: BatchTemplateDeleteRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    try:
+        for tid in request.template_ids:
+            template = await db.get(RotationTemplate, tid)
+            if not template:
+                raise ValueError(f"Template {tid} not found")
+            await db.delete(template)
+        await db.commit()  # All-or-nothing
+    except Exception:
+        await db.rollback()
+        raise
 ```
 
-**File:** `backend/app/schemas/rag.py` (lines 50-71)
+### Frontend Pattern
+```typescript
+// FROM (current - sequential):
+for (const id of templateIds) { await del(`/rotation-templates/${id}`); }
 
----
-
-## RAG Knowledge Base Status
-
-**Total Chunks:** 31
-**Vector Index:** Ready
-**Embedding Model:** all-MiniLM-L6-v2 (384 dimensions)
-
-| Document Type | Chunks | Source File |
-|---------------|--------|-------------|
-| `acgme_rules` | 7 | acgme-rules.md |
-| `scheduling_policy` | 9 | scheduling-policies.md |
-| `swap_system` | 2 | swap-system.md |
-| `military_specific` | 2 | military-specific.md |
-| `resilience_concepts` | 3 | resilience-concepts.md |
-| `user_guide_faq` | 2 | user-guide-faq.md |
-| `ai_patterns` | 2 | session-learnings.md |
-| `delegation_patterns` | 2 | delegation-patterns.md |
-| `exotic_concepts` | 2 | exotic-concepts.md |
-
----
-
-## Design Decision: Condensed vs Full Content
-
-**Decision:** Keep 31 condensed chunks (not expand to ~185 full chunks)
-
-**Rationale:**
-- RAG is for **quick semantic lookup of concepts**, not replacing documentation
-- Agents can `Read` source files when full detail needed
-- Less noise = higher signal-to-noise in search results
-- "Missing" content is mostly procedural UI instructions and code examples (redundant with codebase)
-
----
-
-## Key Learnings
-
-### MCP Token Caching Issue ✅ FIXED
-The MCP client singleton caches JWT token from container startup. When token expires:
-- 401 Unauthorized errors
-- **Permanent fix implemented:** Auto-refresh on 401 in `_request_with_retry`
-- **File:** `mcp-server/src/scheduler_mcp/api_client.py` (lines 88, 114-121)
-- **Commit:** `fa20b830` - "fix(mcp): Add automatic token refresh on 401 Unauthorized"
-
-### Container Rebuild Required for Schema Changes
-Just restarting backend doesn't pick up Python code changes in Docker:
-- **Wrong:** `docker compose restart backend`
-- **Right:** `docker compose up -d --build backend`
-
----
-
-## Verified Working
-
-```bash
-# RAG health check
-mcp__residency-scheduler__rag_health
-# Returns: 31 documents, healthy, ready
-
-# RAG search test
-mcp__residency-scheduler__rag_search "What are the ACGME work hour limits?"
-# Returns: Relevant chunks with similarity scores 0.66-0.71
+// TO (new - atomic batch):
+await post('/rotation-templates/batch/delete', { template_ids: templateIds });
 ```
 
----
-
-## Next Steps (For Future Session)
-
-1. **Merge to main** - RAG schema fix + token refresh fix
-2. **Consider adding:** session_handoff doc_type for session handoff notes
-3. **Monitor:** If search results feel thin on specific topics, selectively add detail
-4. ~~**Permanent fix:** MCP token refresh on 401~~ ✅ DONE (commit fa20b830)
+### Precedent
+`backend/app/api/routes/batch.py` (269 lines) has identical patterns for assignments.
 
 ---
 
-## Git State
+## OTHER PENDING ITEMS
 
+### Data Issues (NOT CODE BUGS)
+- `/heatmap` shows empty - needs generated schedule data
+- `/compliance` shows 0% - needs generated schedule data
+- **Fix:** Run `python -m cli.commands.db_seed all --profile=dev`
+
+### Swaps 403
+- Requires active authenticated user (`is_active=True`)
+
+---
+
+## CURRENT STATE
+
+### Stack: GREEN
+- All 8 containers healthy
+- Main at `695cd76b`
+- Clean working directory
+
+### Admin Rotation Template Bulk Editing
+- **PRODUCTION READY** at `/admin/templates`
+- Full CRUD works
+- Bulk operations work (sequential)
+- 47 passing tests
+
+---
+
+## NEXT SESSION: START HERE
+
+1. `/startupO-lite`
+2. Read this handoff
+3. Implement batch endpoints following plan above
+4. ~7 hours of work
+
+---
+
+## AUFTRAGSTAKTIK REMINDER
+
+**Chain of Command:**
 ```
-Branch: fix/rag-schema-and-ingestion-20260103
-Parent: explore/subagents-rag-20260102
-Status: Clean working tree
+ORCHESTRATOR -> Deputy (ARCHITECT/SYNTHESIZER) -> Coordinator -> Specialist
 ```
 
-Schema changes may already be committed in parent branch (check `git log` for commit containing "rag" schema updates).
+**Each level decides HOW, not just executes scripts.**
 
 ---
 
-*Handoff prepared for autocompact context transition.*
+*Session 048 complete. o7*
