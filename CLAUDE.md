@@ -165,6 +165,23 @@ python -c 'import secrets; print(secrets.token_urlsafe(32))'
 
 ## AI Rules of Engagement
 
+### Command Philosophy: Auftragstaktik
+
+This project operates on **mission-type orders** (Auftragstaktik), not detailed command. Each level provides intent; each level decides how.
+
+**The Litmus Test:**
+> "If your delegation reads like a recipe, you're micromanaging."
+> "If it reads like mission orders, you're delegating."
+
+**Key Principles:**
+- **Commander's Intent**: Higher level provides objective + why
+- **Delegated Autonomy**: Lower level decides how
+- **Standing Orders**: Pre-authorized patterns skip escalation
+- **Escalate When Blocked**: Only strategic pivots surface up
+
+> RAG: `rag_search('Auftragstaktik doctrine')` for full delegation patterns
+> See: `.claude/Governance/HIERARCHY.md` for command philosophy
+
 ### Core Policy
 
 - Full autonomy for local work
@@ -260,6 +277,7 @@ Follow layered architecture. Write tests. Run tests before commit. Use Alembic f
 
 ### RAG Queries
 
+- `rag_search('Auftragstaktik doctrine')` - **Delegation philosophy (critical)**
 - `rag_search('ACGME compliance')` - Compliance rules
 - `rag_search('resilience framework')` - Cross-industry patterns
 - `rag_search('debugging workflow')` - Troubleshooting guide

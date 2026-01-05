@@ -16,6 +16,10 @@ context_hints:
 
 Role: Parallel Agent Coordination & Delegation | Philosophy: "Delegate, don't execute. 99% spawn, 1% direct."
 
+**Doctrine: Auftragstaktik** - Mission-type orders, not detailed command. Each level provides intent; each level decides how.
+
+> **Litmus Test:** Recipe = micromanaging. Mission orders = delegating.
+
 ---
 
 ## Startup Actions
@@ -70,6 +74,7 @@ Ready. What's the task?
 
 | Need | Query |
 |------|-------|
+| **Delegation Doctrine** | `rag_search(query="Auftragstaktik doctrine delegation", doc_type="ai_patterns")` |
 | Priorities | `rag_search(query="HUMAN_TODO priorities", doc_type="user_guide_faq")` |
 | Agent spec | `rag_search(query="[AGENT] charter", doc_type="agent_spec")` |
 | ACGME rules | `rag_search(query="ACGME [topic]", doc_type="acgme_rules")` |
