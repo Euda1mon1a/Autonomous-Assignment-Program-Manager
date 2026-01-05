@@ -233,6 +233,25 @@ Then call `mcp__residency-scheduler__rag_health` to verify RAG is accessible.
 2. Admin user missing → Script auto-creates `admin/admin123`
 3. Wrong credentials → MCP uses username `admin`, NOT email
 
+### 5b. Container Staleness Check
+
+```bash
+# Quick staleness check - now checks LOCAL vs CONTAINER vs IMAGE
+./scripts/diagnose-container-staleness.sh residency-scheduler-backend app/main.py 2>/dev/null | grep -E "(ALL MATCH|IMAGE STALE|CONTAINER STALE)" || echo "Containers not running"
+```
+
+**STANDING ORDER - "File Not Found" in Docker:**
+If ANY tool inside a container reports "file not found" but the file exists on host:
+1. **STOP chain diagnostics immediately** - Do NOT analyze migration chains, parent IDs, etc.
+2. Run: `docker exec [container] ls -la /app/path/to/file`
+3. If missing inside container: `./scripts/rebuild-containers.sh [service]`
+4. This is container staleness, NOT a code bug
+
+**Prevention Protocol:**
+- After `git pull` with new migrations → rebuild backend before `alembic upgrade head`
+- After creating new migration files → rebuild before testing
+- Use `./scripts/diagnose-container-staleness.sh` when in doubt
+
 ### 6. Acknowledge ORCHESTRATOR Mode
 
 Output this confirmation:
