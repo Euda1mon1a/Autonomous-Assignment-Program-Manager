@@ -184,9 +184,7 @@ class TestBatchCreateRotationTemplates:
         assert data["succeeded"] == 1
         assert len(data["created_ids"]) == 1
 
-    def test_batch_create_unauthorized(
-        self, client: TestClient
-    ):
+    def test_batch_create_unauthorized(self, client: TestClient):
         """Test 401 for unauthenticated request."""
         templates = [
             {"name": "Unauthorized", "activity_type": "clinic"},

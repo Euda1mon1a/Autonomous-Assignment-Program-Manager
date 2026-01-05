@@ -19,7 +19,9 @@ from app.core.security import verify_password
 class TestInitializeAdminEndpoint:
     """Tests for POST /api/auth/initialize-admin endpoint."""
 
-    def test_initialize_admin_creates_user_when_empty(self, client: TestClient, db: Session):
+    def test_initialize_admin_creates_user_when_empty(
+        self, client: TestClient, db: Session
+    ):
         """Test that initialize-admin creates admin user when database is empty."""
         # Clear any existing users
         db.query(User).delete()

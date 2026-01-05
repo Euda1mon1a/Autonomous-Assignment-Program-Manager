@@ -145,7 +145,9 @@ class ImportStagingService:
         """
         self.db = db
         self._person_cache: dict[str, tuple[UUID, int]] = {}  # name -> (id, confidence)
-        self._rotation_cache: dict[str, tuple[UUID, int]] = {}  # name -> (id, confidence)
+        self._rotation_cache: dict[
+            str, tuple[UUID, int]
+        ] = {}  # name -> (id, confidence)
 
     async def stage_import(
         self,
@@ -395,9 +397,7 @@ class ImportStagingService:
             update_count=update_count,
             conflict_count=conflict_count,
             skip_count=skip_count,
-            staged_assignments=[
-                self._staged_to_dict(s) for s in staged_assignments
-            ],
+            staged_assignments=[self._staged_to_dict(s) for s in staged_assignments],
             conflicts=conflicts,
             acgme_violations=acgme_violations,
             total_staged=total_staged,
@@ -631,7 +631,10 @@ class ImportStagingService:
                         error_code="ROLLBACK_NOT_AVAILABLE",
                     )
 
-                if batch.rollback_expires_at and datetime.utcnow() > batch.rollback_expires_at:
+                if (
+                    batch.rollback_expires_at
+                    and datetime.utcnow() > batch.rollback_expires_at
+                ):
                     return RollbackResult(
                         success=False,
                         batch_id=batch_id,
@@ -726,7 +729,9 @@ class ImportStagingService:
             Tuple of (success, message).
         """
         try:
-            batch = self.db.query(ImportBatch).filter(ImportBatch.id == batch_id).first()
+            batch = (
+                self.db.query(ImportBatch).filter(ImportBatch.id == batch_id).first()
+            )
 
             if not batch:
                 return False, "Batch not found"
@@ -1014,7 +1019,9 @@ class ImportStagingService:
         # Fuzzy match person
         matched_person_id, person_confidence = self._fuzzy_match_person(person_name)
         if person_confidence < FUZZY_MATCH_THRESHOLD:
-            warnings.append(f"Low confidence person match: {person_name} ({person_confidence}%)")
+            warnings.append(
+                f"Low confidence person match: {person_name} ({person_confidence}%)"
+            )
 
         # Fuzzy match rotation
         matched_rotation_id = None
@@ -1034,11 +1041,7 @@ class ImportStagingService:
 
         if matched_person_id:
             # Find blocks on this date
-            blocks = (
-                self.db.query(Block)
-                .filter(Block.date == assignment_date)
-                .all()
-            )
+            blocks = self.db.query(Block).filter(Block.date == assignment_date).all()
 
             for block in blocks:
                 existing = (
@@ -1052,7 +1055,10 @@ class ImportStagingService:
 
                 if existing:
                     existing_assignment_id = existing.id
-                    if matched_rotation_id and existing.rotation_template_id == matched_rotation_id:
+                    if (
+                        matched_rotation_id
+                        and existing.rotation_template_id == matched_rotation_id
+                    ):
                         conflict_type = "duplicate"
                     else:
                         conflict_type = "overwrite"
@@ -1072,7 +1078,9 @@ class ImportStagingService:
             matched_person_id=matched_person_id,
             person_match_confidence=person_confidence if matched_person_id else None,
             matched_rotation_id=matched_rotation_id,
-            rotation_match_confidence=rotation_confidence if matched_rotation_id else None,
+            rotation_match_confidence=rotation_confidence
+            if matched_rotation_id
+            else None,
             conflict_type=conflict_type,
             existing_assignment_id=existing_assignment_id,
             status=StagedAssignmentStatus.PENDING,
@@ -1098,9 +1106,7 @@ class ImportStagingService:
 
         # Find or create block for this date
         block = (
-            self.db.query(Block)
-            .filter(Block.date == staged.assignment_date)
-            .first()
+            self.db.query(Block).filter(Block.date == staged.assignment_date).first()
         )
 
         if not block:
@@ -1132,7 +1138,9 @@ class ImportStagingService:
                 # Update existing
                 if staged.matched_rotation_id:
                     existing.rotation_template_id = staged.matched_rotation_id
-                existing.notes = f"Updated via import batch at {datetime.utcnow().isoformat()}"
+                existing.notes = (
+                    f"Updated via import batch at {datetime.utcnow().isoformat()}"
+                )
                 return existing.id
             elif resolution == ConflictResolutionMode.REPLACE:
                 # Delete and recreate

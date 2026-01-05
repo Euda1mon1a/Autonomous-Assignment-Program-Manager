@@ -57,7 +57,9 @@ class RotationTemplate(Base):
     # Archive fields (soft delete)
     is_archived = Column(Boolean, default=False, nullable=False, index=True)
     archived_at = Column(DateTime, nullable=True)
-    archived_by = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    archived_by = Column(
+        String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)

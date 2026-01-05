@@ -9,6 +9,7 @@ from app.models.person import Person
 
 # Add these methods to the PersonService class in person_service.py
 
+
 def batch_create(self, people_data: list[dict], dry_run: bool = False) -> dict:
     """
     Atomically create multiple people.
@@ -75,9 +76,7 @@ def batch_create(self, people_data: list[dict], dry_run: bool = False) -> dict:
             # Check for duplicate email in database
             email = person_data.get("email")
             if email:
-                existing = (
-                    self.db.query(Person).filter(Person.email == email).first()
-                )
+                existing = self.db.query(Person).filter(Person.email == email).first()
                 if existing:
                     results.append(
                         {

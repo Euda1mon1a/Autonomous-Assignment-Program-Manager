@@ -47,7 +47,9 @@ async def list_absences(
     """
     # Add PHI warning headers
     response.headers["X-Contains-PHI"] = "true"
-    response.headers["X-PHI-Fields"] = "person_id,absence_type,deployment_orders,tdy_location,notes"
+    response.headers["X-PHI-Fields"] = (
+        "person_id,absence_type,deployment_orders,tdy_location,notes"
+    )
 
     controller = AbsenceController(db)
     return controller.list_absences(
@@ -79,7 +81,9 @@ async def get_absence(
     """
     # Add PHI warning headers
     response.headers["X-Contains-PHI"] = "true"
-    response.headers["X-PHI-Fields"] = "person_id,absence_type,deployment_orders,tdy_location,notes"
+    response.headers["X-PHI-Fields"] = (
+        "person_id,absence_type,deployment_orders,tdy_location,notes"
+    )
 
     controller = AbsenceController(db)
     return controller.get_absence(absence_id)

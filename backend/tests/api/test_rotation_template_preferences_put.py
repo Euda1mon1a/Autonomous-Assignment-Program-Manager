@@ -178,7 +178,7 @@ class TestPutRotationPreferences:
 
         preferences = [
             {
-                "preference_type": f"full_day_grouping",  # Use same type, different weights
+                "preference_type": "full_day_grouping",  # Use same type, different weights
                 "weight": weight,
                 "config_json": {},
                 "is_active": True,

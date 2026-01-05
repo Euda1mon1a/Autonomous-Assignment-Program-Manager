@@ -246,9 +246,7 @@ class TestGenerateLorenzCurveEndpoint:
 class TestMCPProxyRoleRestrictions:
     """Tests for role-based access control on MCP proxy endpoints."""
 
-    def test_equity_metrics_admin_access(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_equity_metrics_admin_access(self, client: TestClient, auth_headers: dict):
         """Test that admin users can access equity metrics."""
         response = client.post(
             "/api/mcp/calculate-equity-metrics",

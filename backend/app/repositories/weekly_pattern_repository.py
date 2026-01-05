@@ -139,9 +139,7 @@ class WeeklyPatternRepository(AsyncBaseRepository[WeeklyPattern]):
         )
         return list(result.scalars().all())
 
-    async def count_by_activity_type(
-        self, template_id: UUID
-    ) -> dict[str, int]:
+    async def count_by_activity_type(self, template_id: UUID) -> dict[str, int]:
         """Count patterns by activity type for a template.
 
         Args:

@@ -169,9 +169,7 @@ class TestGetWeeklyPatterns:
         self, client: TestClient, sample_template: RotationTemplate
     ):
         """Test 401 for unauthenticated request."""
-        response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/patterns"
-        )
+        response = client.get(f"/api/rotation-templates/{sample_template.id}/patterns")
 
         assert response.status_code == 401
 

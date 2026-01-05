@@ -96,9 +96,7 @@ class Settings(BaseSettings):
         Returns:
             str: Database URI with asyncpg driver.
         """
-        return self.DATABASE_URL.replace(
-            "postgresql://", "postgresql+asyncpg://"
-        )
+        return self.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
 
     @computed_field
     @property
