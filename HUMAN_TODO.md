@@ -132,59 +132,42 @@ The `/mcp` command shows "not authenticated" even when tools work fine. This is 
 ### Admin GUI: Bulk Rotation Template Editing
 **Priority:** Medium
 **Added:** 2026-01-04
-**Status:** TODO - Feature Request
+**Status:** ✅ COMPLETE (PR #633, #638, #642 merged)
 
-**Request:** Add admin interface for bulk editing rotation templates.
+**Implementation:**
+- [x] View all rotation templates at `/admin/templates`
+- [x] Bulk enable/disable templates
+- [x] Bulk edit capacity, supervision requirements
+- [x] Bulk assign activity_type
+- [x] Filter/sort templates by type, status, capacity
+- [x] Pattern editor modal (weekly schedule grid)
+- [x] Preference editor modal
 
-**Use Cases:**
-- [ ] View all rotation templates in a table/grid
-- [ ] Bulk enable/disable templates
-- [ ] Bulk edit capacity, supervision requirements
-- [ ] Bulk assign activity_type (outpatient, clinic, inpatient, etc.)
-- [ ] Filter/sort templates by type, status, capacity
-- [ ] Import/export template configurations
-
-**Current State:**
-- Rotation templates managed via database/API only
-- No admin UI for template management
-- Individual template editing requires direct API calls
-
-**Implementation Considerations:**
-- Add `/admin/rotation-templates` page
-- CRUD operations via existing API endpoints
-- Bulk actions (select multiple → apply change)
-- Confirmation dialogs for destructive actions
-- Audit logging for template changes
-
-**Related Files:**
-- `backend/app/models/rotation_template.py` - Model
-- `backend/app/api/routes/rotation_templates.py` - API endpoints
-- `frontend/src/app/admin/` - Admin pages location
+**Files Created:**
+- `frontend/src/app/admin/templates/page.tsx`
+- `frontend/src/components/admin/TemplateTable.tsx`
+- `frontend/src/components/admin/BulkActionsToolbar.tsx`
+- `frontend/src/components/admin/PreferenceEditor.tsx`
+- `frontend/src/hooks/useAdminTemplates.ts`
 
 ---
 
 ### Admin GUI: Absence Loader (CRITICAL)
 **Priority:** HIGH
 **Added:** 2026-01-05
-**Status:** TODO - Feature Request
+**Status:** ✅ COMPLETE (PR #649 merged)
 
-**Request:** Admin interface for bulk loading absences for residents AND faculty via GUI.
+**Implementation:**
+- [x] Upload CSV/Excel with absence records
+- [x] Preview staged absences before committing (staging pattern)
+- [x] Handle both resident and faculty absences
+- [x] Support all absence types (Annual, Sick, TDY, Deployment, etc.)
+- [x] Conflict detection during preview
+- [x] Apply/rollback workflow
 
-**Use Cases:**
-- [ ] Upload CSV/Excel with absence records
-- [ ] Preview staged absences before committing
-- [ ] Handle both resident and faculty absences
-- [ ] Support all absence types (Annual, Sick, TDY, Deployment, etc.)
-- [ ] Conflict detection (overlapping absences, coverage gaps)
-- [ ] Bulk approve/reject absences
-
-**Context:** Absences currently require direct API calls or database manipulation. A GUI loader would streamline the annual leave request workflow and military-specific absences (TDY, Deployment).
-
-**Related Files:**
-- `backend/app/models/absence.py` - Model
-- `backend/app/api/routes/absences.py` - API endpoints
-- `frontend/src/app/admin/` - Admin pages location
-- `backend/scripts/seed_antigravity.py` - Absence seeding reference
+**Files Created:**
+- Backend bulk absence endpoints
+- Frontend absence loader UI with preview/apply pattern
 
 ---
 
