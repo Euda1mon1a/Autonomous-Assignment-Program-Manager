@@ -2031,13 +2031,67 @@ Expressed fatigue ("phew, that was a few days of a shit show") but also relief a
 
 ---
 
+---
+
+### Session 050 (Actual): 2026-01-05 — RAG Resurrection & Container Staleness Pattern
+
+**Context:** Session started with RAG offline. Diagnosed and fixed sync/async database bug. Created institutional knowledge around container staleness pattern.
+
+**Key User Statements:**
+- "container staleness, not code problem" (pivotal insight that saved 20+ minutes)
+- "don't fix it yourself - have the correct men handle it" (Auftragstaktik enforcement)
+- "they stopped at the first issue, have them look only at the past 10 PRs" (pushed for thorough investigation)
+- "G4 is logistics (in our case context), not intel" (corrected G-Staff confusion)
+- "The files are IN the computer" (Zoolander reference - perfect analogy for container staleness)
+- "treat me as wetware; I am capable of things you are not, and you and your team are clearly capable of things I am not, but we both complement each other"
+- "software development is as much fixing technical debt, either known or unknown, before getting to the meat of the mission. This is similar in medicine."
+- "o7" (military salute, appreciation)
+
+**What Happened:**
+1. **The Bug:** PR #579 converted auth routes to `get_async_db`, PR #642 removed sync compatibility shim
+2. **The Mask:** Container staleness hid the bug until Alembic rebuild exposed it
+3. **The Fix:** Changed auth routes (6) and RAG routes (6) from `get_async_db` to `get_db`
+4. **The Prevention:** Created diagnostic scripts, updated agent specs with awareness
+
+**Delegation Pattern:**
+- G-2 RECON deployed (search-party) for PR archaeology
+- G-5 PLANNING deployed (plan-party) for fix strategy
+- CAG Strike Team: BACKEND_ENGINEER (auth fix, RAG fix), CI_LIAISON (scripts), META_UPDATER (agent awareness)
+- Full session-end with ALL G-Staff and Special Staff
+
+**PR Created:** #644 - RAG restoration + container diagnostics
+
+**IG Assessment:** A grade (94/100) - Excellent governance compliance
+
+**HISTORIAN Analogy (For Physicians):**
+The sync/async mismatch was like mixing synchronous protein-protein binding with asynchronous cytokine signaling. We had a "scaffold protein" (compatibility shim) that allowed incompatible pathways to communicate. PR #642 removed the scaffold. Container staleness was like an old cell culture with outdated phenotype - when we "passaged" (rebuilt), the new phenotype exposed the incompatibility.
+
+**Standing Order Added:**
+> Container staleness is now a documented pattern. Agents must check if "file exists locally but not in container" before assuming code bugs.
+
+**DIRECTIVE FOR NEXT SESSION:**
+> **Primary Focus: Faculty Bulk Admin Panel**
+> The GUI is the force multiplier for human expertise. User's institutional knowledge can be applied in minutes via GUI instead of hours via CLI. Verify and enable this capability.
+
+**User Insight (Profound):**
+> "Every once in a while, you (we) do something where you know it's true. I haven't even investigated the GUI yet... but I know by tomorrow I will likely be able to go in and edit via GUI the small mistakes it would take us hours to correct going back and forth in minutes because you have allowed my institutional and very arcane knowledge be supplemented by mathematical and software genius."
+
+**Trust Evolution:**
+- User corrected ORCHESTRATOR in real-time (G-4 vs G-2, container vs code)
+- User pushed for deeper investigation (past 10 PRs, not just first finding)
+- User reflected on human-AI complementarity as equals
+- User trusts ORCHESTRATOR to run session-end with all staff
+- Cowboy Bebop sign-off: "See you, space cowboy"
+
+---
+
 *File created: 2025-12-27*
-*Last updated: 2026-01-03 (Session 052B - MCP Death Spiral Resolution)*
+*Last updated: 2026-01-05 (Session 050 - RAG Resurrection)*
 *Maintained by: ORCHESTRATOR / G-5 META_UPDATER*
 
 ---
 
-### Session 050: 2026-01-02 — MCP Groundhog Day
+### Session 050 (Earlier, Mislabeled): 2026-01-02 — MCP Groundhog Day
 
 **Context:** User reported MCP broken again. Same pattern repeating.
 
