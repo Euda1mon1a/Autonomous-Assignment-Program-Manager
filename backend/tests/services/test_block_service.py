@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from app.models.block import Block
 from app.services.block_service import BlockService
+from app.utils.academic_blocks import get_block_number_for_date, get_first_thursday
 
 
 class TestBlockService:
@@ -344,18 +345,20 @@ class TestBlockService:
         assert result["total"] == 14
 
     def test_generate_blocks_calculates_block_numbers(self, db):
-        """Test that generate_blocks calculates block numbers correctly."""
+        """Test that generate_blocks calculates block numbers using Thursday-Wednesday alignment."""
         service = BlockService(db)
-        start = date(2025, 1, 1)
-        end = date(2025, 1, 30)  # 30 days (slightly over 1 block period)
+        # Use dates within an academic year to test block number calculation
+        # AY 2025-2026: Block 1 starts July 3 (Thursday)
+        start = date(2025, 7, 3)  # First Thursday (Block 1 start)
+        end = date(2025, 8, 5)  # 33 days later (past Block 1 into Block 2)
 
-        result = service.generate_blocks(start, end, base_block_number=10)
+        result = service.generate_blocks(start, end)
 
-        # Blocks on days 0-27 should be block_number 10
-        # Blocks on days 28-29 should be block_number 11
+        # Block 1: July 3 - July 30 (28 days, Thursday-Wednesday)
+        # Block 2: July 31 onwards
         block_numbers = {block.block_number for block in result["items"]}
-        assert 10 in block_numbers
-        assert 11 in block_numbers
+        assert 1 in block_numbers
+        assert 2 in block_numbers
 
     def test_generate_blocks_sets_is_weekend_correctly(self, db):
         """Test that generate_blocks sets is_weekend correctly."""
@@ -420,35 +423,47 @@ class TestBlockService:
         # 365 days * 2 times per day = 730 blocks
         assert result["total"] == 730
 
-    def test_generate_blocks_custom_base_block_number(self, db):
-        """Test generating blocks with custom base block number."""
+    def test_generate_blocks_ignores_base_block_number(self, db):
+        """Test that base_block_number parameter is deprecated and ignored.
+
+        Block numbers are now calculated automatically using Thursday-Wednesday
+        alignment. The base_block_number parameter is kept for backward compatibility
+        but is ignored.
+        """
         service = BlockService(db)
-        start = date(2025, 9, 1)
+        start = date(2025, 9, 1)  # In academic year 2025-2026
         end = date(2025, 9, 3)
 
+        # Even though we pass base_block_number=100, it should be ignored
         result = service.generate_blocks(start, end, base_block_number=100)
 
-        assert all(block.block_number == 100 for block in result["items"])
+        # Block numbers should be calculated based on Thursday-Wednesday alignment
+        # Sept 1, 2025 falls in Block 3 of AY 2025-2026
+        expected_block, _ = get_block_number_for_date(start)
+        assert all(block.block_number == expected_block for block in result["items"])
 
-    def test_generate_blocks_block_number_increments_every_28_days(self, db):
-        """Test that block number increments every 28 days (4 weeks)."""
+    def test_generate_blocks_block_number_follows_thursday_alignment(self, db):
+        """Test that block numbers follow Thursday-Wednesday alignment."""
         service = BlockService(db)
-        start = date(2025, 1, 1)
-        end = date(2025, 2, 10)  # More than 28 days
+        # Start from first Thursday of AY 2025-2026
+        first_thursday = get_first_thursday(2025)  # July 3, 2025
+        start = first_thursday
+        end = first_thursday + timedelta(days=35)  # 36 days (past one block)
 
-        result = service.generate_blocks(start, end, base_block_number=1)
+        result = service.generate_blocks(start, end)
 
-        # Get blocks from days 1-27 (should be block 1)
-        early_blocks = [
-            b for b in result["items"] if b.date < start + timedelta(days=28)
-        ]
-        assert all(b.block_number == 1 for b in early_blocks)
+        # Block 1: July 3 - July 30 (28 days)
+        block_1_end = first_thursday + timedelta(days=27)
+        # Block 2: July 31+
+        block_2_start = first_thursday + timedelta(days=28)
 
-        # Get blocks from day 28+ (should be block 2)
-        later_blocks = [
-            b for b in result["items"] if b.date >= start + timedelta(days=28)
-        ]
-        assert all(b.block_number == 2 for b in later_blocks)
+        # Verify Block 1 blocks
+        block_1_blocks = [b for b in result["items"] if b.date <= block_1_end]
+        assert all(b.block_number == 1 for b in block_1_blocks)
+
+        # Verify Block 2 blocks
+        block_2_blocks = [b for b in result["items"] if b.date >= block_2_start]
+        assert all(b.block_number == 2 for b in block_2_blocks)
 
     # ========================================================================
     # Delete Block Tests

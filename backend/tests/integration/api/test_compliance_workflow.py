@@ -15,6 +15,7 @@ from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
+from app.utils.academic_blocks import get_block_number_for_date
 
 
 class TestComplianceWorkflow:
@@ -228,13 +229,15 @@ class TestComplianceWorkflow:
 
         for i in range(28):
             current_date = start_date + timedelta(days=i)
+            # Use Thursday-Wednesday aligned block number calculation
+            block_number, _ = get_block_number_for_date(current_date)
             for tod in ["AM", "PM"]:
                 client.post(
                     "/api/blocks/",
                     json={
                         "date": current_date.isoformat(),
                         "time_of_day": tod,
-                        "block_number": (i // 28) + 1,
+                        "block_number": block_number,
                     },
                     headers=auth_headers,
                 )

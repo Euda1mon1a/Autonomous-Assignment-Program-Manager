@@ -8,6 +8,7 @@ from faker import Faker
 from sqlalchemy.orm import Session
 
 from app.models.block import Block
+from app.utils.academic_blocks import get_block_number_for_date
 
 fake = Faker()
 
@@ -300,29 +301,21 @@ class BlockFactory:
     @staticmethod
     def _calculate_block_number(block_date: date) -> int:
         """
-        Calculate academic year block number (1-13) for a given date.
+        Calculate academic year block number (0-13) for a given date.
 
-        Academic year starts July 1. Each block is 28 days.
+        Uses Thursday-Wednesday aligned blocks:
+        - Block 0: July 1 through day before first Thursday (orientation)
+        - Blocks 1-12: 28 days each, Thursday start, Wednesday end
+        - Block 13: Starts Thursday, ends June 30 (variable length)
 
         Args:
             block_date: Date to calculate block number for
 
         Returns:
-            int: Block number (1-13)
+            int: Block number (0-13)
         """
-        # Determine academic year start
-        if block_date.month >= 7:
-            academic_year_start = date(block_date.year, 7, 1)
-        else:
-            academic_year_start = date(block_date.year - 1, 7, 1)
-
-        # Calculate days since academic year start
-        days_since_start = (block_date - academic_year_start).days
-
-        # Calculate block number (28-day blocks)
-        block_number = (days_since_start // 28) + 1
-
-        return min(block_number, 13)  # Cap at 13
+        block_number, _ = get_block_number_for_date(block_date)
+        return block_number
 
     @staticmethod
     def _check_holiday(check_date: date) -> tuple[bool, str | None]:

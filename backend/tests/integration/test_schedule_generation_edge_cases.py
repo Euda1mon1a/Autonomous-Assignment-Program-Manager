@@ -24,6 +24,7 @@ from app.models.rotation_template import RotationTemplate
 from app.scheduling.constraints import ConstraintManager, SchedulingContext
 from app.scheduling.engine import SchedulingEngine
 from app.scheduling.solvers import SolverFactory
+from app.utils.academic_blocks import get_block_number_for_date
 
 
 # ==============================================================================
@@ -150,11 +151,15 @@ def blocks_one_week(db: Session, start_date: date) -> list[Block]:
 
 @pytest.fixture
 def blocks_four_weeks(db: Session, start_date: date) -> list[Block]:
-    """Create blocks for four weeks (28 days, AM and PM)."""
+    """Create blocks for four weeks (28 days, AM and PM).
+
+    Block numbers use Thursday-Wednesday alignment via get_block_number_for_date.
+    """
     blocks = []
     for i in range(28):
         current_date = start_date + timedelta(days=i)
-        block_number = 1 + (i // 28)  # Block 1 for first 28 days
+        # Use Thursday-Wednesday aligned block number calculation
+        block_number, _ = get_block_number_for_date(current_date)
         for time_of_day in ["AM", "PM"]:
             block = Block(
                 id=uuid4(),

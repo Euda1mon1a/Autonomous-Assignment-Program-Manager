@@ -17,6 +17,7 @@ from app.models.absence import Absence
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
+from app.utils.academic_blocks import get_block_number_for_date
 
 # Color definitions (ARGB format for openpyxl)
 COLORS = {
@@ -91,12 +92,25 @@ def calculate_block_dates(
 ) -> tuple[date, date]:
     """
     Calculate start and end dates for a given block number.
-    Each block is 4 weeks (28 days).
-    Academic year typically starts July 1.
+
+    Uses Thursday-Wednesday alignment:
+    - Block 0: July 1 through day before first Thursday (orientation)
+    - Blocks 1-12: 28 days each, Thursday start, Wednesday end
+    - Block 13: Thursday start, June 30 end (variable length)
+
+    Args:
+        block_number: Block number (0-13)
+        academic_year_start: July 1 of academic year start (e.g., 2025-07-01 for AY 2025-2026)
+
+    Returns:
+        Tuple of (start_date, end_date)
     """
-    block_start = academic_year_start + timedelta(days=(block_number - 1) * 28)
-    block_end = block_start + timedelta(days=27)
-    return block_start, block_end
+    from app.utils.academic_blocks import get_block_dates as get_block_dates_util
+
+    # Extract academic year from start date
+    academic_year = academic_year_start.year if academic_year_start.month >= 7 else academic_year_start.year - 1
+    block = get_block_dates_util(block_number, academic_year)
+    return block.start_date, block.end_date
 
 
 def get_day_abbreviation(d: date) -> str:
@@ -469,14 +483,9 @@ def generate_legacy_xlsx(
     """
     exporter = LegacyXlsxExporter(db)
 
-    # Calculate block number if not provided (assume 28-day blocks starting July 1)
+    # Calculate block number if not provided using Thursday-Wednesday alignment
     if block_number is None:
-        # Rough calculation - days since July 1 divided by 28
-        july_1 = date(
-            start_date.year if start_date.month >= 7 else start_date.year - 1, 7, 1
-        )
-        days_since_start = (start_date - july_1).days
-        block_number = (days_since_start // 28) + 1
+        block_number, _ = get_block_number_for_date(start_date)
 
     exporter.generate_block_schedule(
         block_number=block_number,

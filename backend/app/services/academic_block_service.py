@@ -27,6 +27,7 @@ from app.schemas.academic_blocks import (
     MatrixCell,
     ResidentRow,
 )
+from app.utils.academic_blocks import get_all_block_dates
 from app.validators.advanced_acgme import AdvancedACGMEValidator
 
 
@@ -175,38 +176,38 @@ class AcademicBlockService:
         """
         Generate academic blocks (rotation periods) from date range.
 
-        Divides the academic year into ~13 blocks of 4 weeks each.
+        Uses Thursday-Wednesday aligned blocks:
+        - Block 0: July 1 through day before first Thursday (orientation, 0-6 days)
+        - Blocks 1-12: 28 days each, Thursday start, Wednesday end
+        - Block 13: Thursday start, June 30 end (variable length, 22-30 days)
 
         Args:
-            start_date: Start of academic year
-            end_date: End of academic year
+            start_date: Start of academic year (July 1)
+            end_date: End of academic year (June 30)
 
         Returns:
-            List of AcademicBlock objects
+            List of AcademicBlock objects (blocks 0-13)
         """
-        blocks = []
-        current_date = start_date
-        block_number = 1
+        # Extract academic year from start_date (July 1 of that year)
+        academic_year = start_date.year if start_date.month >= 7 else start_date.year - 1
 
-        while current_date <= end_date:
-            # Calculate block end date (4 weeks from start)
-            block_end = min(
-                current_date + timedelta(days=self.BLOCK_DURATION_DAYS - 1),
-                end_date,
-            )
+        # Use the centralized utility for Thursday-Wednesday aligned blocks
+        block_dates_list = get_all_block_dates(academic_year)
+
+        blocks = []
+        for block_dates in block_dates_list:
+            # Skip Block 0 if it has zero days (July 1 is Thursday)
+            if block_dates.duration_days <= 0:
+                continue
 
             blocks.append(
                 AcademicBlock(
-                    block_number=block_number,
-                    start_date=current_date,
-                    end_date=block_end,
-                    name=f"Block {block_number}",
+                    block_number=block_dates.block_number,
+                    start_date=block_dates.start_date,
+                    end_date=block_dates.end_date,
+                    name=f"Block {block_dates.block_number}",
                 )
             )
-
-            # Move to next block
-            current_date = block_end + timedelta(days=1)
-            block_number += 1
 
         return blocks
 

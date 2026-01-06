@@ -18,6 +18,7 @@ from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
+from app.utils.academic_blocks import get_block_number_for_date
 
 # ============================================================================
 # Performance Thresholds
@@ -345,6 +346,8 @@ def huge_dataset(
 
     Returns:
         dict with blocks, assignments, and residents
+
+    Block numbers use Thursday-Wednesday alignment via get_block_number_for_date.
     """
     blocks = []
     start_date = date.today()
@@ -353,13 +356,15 @@ def huge_dataset(
     for day_offset in range(84):
         current_date = start_date + timedelta(days=day_offset)
         is_weekend = current_date.weekday() >= 5
+        # Use Thursday-Wednesday aligned block number calculation
+        block_number, _ = get_block_number_for_date(current_date)
 
         for time_of_day in ["AM", "PM"]:
             block = Block(
                 id=uuid4(),
                 date=current_date,
                 time_of_day=time_of_day,
-                block_number=1 + (day_offset // 28),  # Rotate block numbers
+                block_number=block_number,
                 is_weekend=is_weekend,
                 is_holiday=False,
             )

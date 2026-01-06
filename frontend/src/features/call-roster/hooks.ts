@@ -3,23 +3,35 @@
  *
  * React Query hooks for fetching on-call assignment data
  * and contact information.
+ *
+ * ARCHITECTURE NOTE:
+ * The backend API returns assignments with only IDs (block_id, person_id,
+ * rotation_template_id), not nested objects. This hook performs client-side
+ * joins by fetching blocks, people, and rotation templates separately,
+ * then joining them in memory. This matches the pattern used by the
+ * schedule page for consistent data access.
  */
 
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { get, ApiError } from '@/lib/api';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import type {
-  AssignmentsResponse,
-  CallRosterFilters,
   CallAssignment,
   OnCallPerson,
-  Assignment,
+  RawAssignment,
+  RawAssignmentsResponse,
+  RawBlock,
+  RawBlocksResponse,
+  RawPerson,
+  RawPeopleResponse,
+  RawRotationTemplate,
+  RawRotationTemplatesResponse,
 } from './types';
 import {
-  isOnCallAssignment,
   getRoleType,
-  getPersonName,
   getShiftType,
+  isOnCallTemplate,
+  getPersonName,
 } from './types';
 
 // ============================================================================
@@ -42,78 +54,112 @@ export const callRosterQueryKeys = {
 };
 
 // ============================================================================
-// Helper Functions
+// Data Fetching Functions
 // ============================================================================
 
 /**
- * Build query string from filters
+ * Fetch assignments for a date range with activity_type filter for on_call
  */
-function buildAssignmentsQueryString(filters: {
-  start_date?: string;
-  end_date?: string;
-  person_id?: string;
-  role?: string;
-  activity_type?: string;
-}): string {
-  const params = new URLSearchParams();
-
-  if (filters.start_date) {
-    params.set('start_date', filters.start_date);
-  }
-  if (filters.end_date) {
-    params.set('end_date', filters.end_date);
-  }
-  if (filters.person_id) {
-    params.set('person_id', filters.person_id);
-  }
-  if (filters.role) {
-    params.set('role', filters.role);
-  }
-  if (filters.activity_type) {
-    params.set('activity_type', filters.activity_type);
-  }
-
-  return params.toString();
+async function fetchAssignments(startDate: string, endDate: string): Promise<RawAssignment[]> {
+  const params = new URLSearchParams({
+    start_date: startDate,
+    end_date: endDate,
+    activity_type: 'on_call',
+    page_size: '1000', // Ensure we get all on-call assignments
+  });
+  const response = await get<RawAssignmentsResponse>(`/assignments?${params}`);
+  return response.items;
 }
 
 /**
- * Transform API assignment to CallAssignment
+ * Fetch blocks for a date range
  */
-function transformToCallAssignment(assignment: Assignment): CallAssignment | null {
-  if (!isOnCallAssignment(assignment) || !assignment.person || !assignment.block) {
+async function fetchBlocks(startDate: string, endDate: string): Promise<Map<string, RawBlock>> {
+  const params = new URLSearchParams({
+    start_date: startDate,
+    end_date: endDate,
+  });
+  const response = await get<RawBlocksResponse>(`/blocks?${params}`);
+
+  const blockMap = new Map<string, RawBlock>();
+  response.items.forEach(block => blockMap.set(block.id, block));
+  return blockMap;
+}
+
+/**
+ * Fetch all people (cached separately for efficiency)
+ */
+async function fetchPeople(): Promise<Map<string, RawPerson>> {
+  const response = await get<RawPeopleResponse>('/people');
+
+  const personMap = new Map<string, RawPerson>();
+  response.items.forEach(person => personMap.set(person.id, person));
+  return personMap;
+}
+
+/**
+ * Fetch all rotation templates (cached separately for efficiency)
+ */
+async function fetchRotationTemplates(): Promise<Map<string, RawRotationTemplate>> {
+  const response = await get<RawRotationTemplatesResponse>('/rotation-templates');
+
+  const templateMap = new Map<string, RawRotationTemplate>();
+  response.items.forEach(template => templateMap.set(template.id, template));
+  return templateMap;
+}
+
+// ============================================================================
+// Transform Functions
+// ============================================================================
+
+/**
+ * Transform raw assignment to CallAssignment by joining with related data
+ */
+function transformToCallAssignment(
+  assignment: RawAssignment,
+  blockMap: Map<string, RawBlock>,
+  personMap: Map<string, RawPerson>,
+  templateMap: Map<string, RawRotationTemplate>
+): CallAssignment | null {
+  const block = blockMap.get(assignment.block_id);
+  const person = personMap.get(assignment.person_id);
+  const template = assignment.rotation_template_id
+    ? templateMap.get(assignment.rotation_template_id)
+    : null;
+
+  // Skip if we can't find the block or person
+  if (!block || !person) {
     return null;
   }
 
-  const roleType = getRoleType(assignment.person.pgy_level, assignment.role);
-  const shift = getShiftType(assignment.rotation_template?.name, assignment.notes);
+  // Skip if not an on-call template (double-check)
+  if (template && !isOnCallTemplate(template)) {
+    return null;
+  }
 
-  const person: OnCallPerson = {
-    id: assignment.person.id,
-    name: getPersonName(assignment.person),
-    pgy_level: assignment.person.pgy_level,
+  const roleType = getRoleType(person.pgy_level ?? undefined, assignment.role);
+  const shift = getShiftType(template?.name, assignment.notes);
+
+  const onCallPerson: OnCallPerson = {
+    id: person.id,
+    name: getPersonName(person),
+    pgy_level: person.pgy_level ?? undefined,
     role: roleType,
-    phone: assignment.person.phone,
-    pager: assignment.person.pager,
-    email: assignment.person.email,
+    email: person.email ?? undefined,
+    // Note: phone and pager are not in the current Person schema
+    // but we include the fields for future compatibility
+    phone: undefined,
+    pager: undefined,
   };
 
   return {
     id: assignment.id,
-    date: assignment.block.start_date,
+    date: block.date,
     shift,
-    person,
-    rotation_name: assignment.rotation_template?.name,
-    notes: assignment.notes,
+    person: onCallPerson,
+    rotation_name: template?.name,
+    notes: assignment.notes ?? undefined,
   };
-}
-
-/**
- * Filter and transform assignments to on-call assignments only
- */
-function filterOnCallAssignments(response: AssignmentsResponse): CallAssignment[] {
-  return response.items
-    .map(transformToCallAssignment)
-    .filter((assignment): assignment is CallAssignment => assignment !== null);
 }
 
 // ============================================================================
@@ -121,26 +167,29 @@ function filterOnCallAssignments(response: AssignmentsResponse): CallAssignment[
 // ============================================================================
 
 /**
- * Fetch on-call assignments for a date range
+ * Fetch on-call assignments for a date range with client-side joins
  */
 export function useOnCallAssignments(
   startDate: string,
   endDate: string,
   options?: Omit<UseQueryOptions<CallAssignment[], ApiError>, 'queryKey' | 'queryFn'>
 ) {
-  const queryString = buildAssignmentsQueryString({
-    start_date: startDate,
-    end_date: endDate,
-    activity_type: 'on_call', // Use server-side filtering for better performance
-  });
-
   return useQuery<CallAssignment[], ApiError>({
     queryKey: callRosterQueryKeys.byDate(startDate, endDate),
     queryFn: async () => {
-      const response = await get<AssignmentsResponse>(
-        `/assignments${queryString ? `?${queryString}` : ''}`
-      );
-      return filterOnCallAssignments(response);
+      // Fetch all required data in parallel
+      const [assignments, blockMap, personMap, templateMap] = await Promise.all([
+        fetchAssignments(startDate, endDate),
+        fetchBlocks(startDate, endDate),
+        fetchPeople(),
+        fetchRotationTemplates(),
+      ]);
+
+      // Transform and filter assignments
+      return assignments
+        .map(assignment => transformToCallAssignment(assignment, blockMap, personMap, templateMap))
+        .filter((assignment): assignment is CallAssignment => assignment !== null)
+        .sort((a, b) => a.date.localeCompare(b.date)); // Sort by date
     },
     staleTime: 60 * 1000, // 1 minute
     gcTime: 10 * 60 * 1000, // 10 minutes
@@ -159,7 +208,6 @@ export function useMonthlyOnCallRoster(
   const startDate = format(startOfMonth(month), 'yyyy-MM-dd');
   const endDate = format(endOfMonth(month), 'yyyy-MM-dd');
 
-  // Note: The query key is determined by the date range in useOnCallAssignments
   return useOnCallAssignments(startDate, endDate, options);
 }
 
@@ -174,15 +222,18 @@ export function useTodayOnCall(
   return useQuery<CallAssignment[], ApiError>({
     queryKey: callRosterQueryKeys.today(),
     queryFn: async () => {
-      const queryString = buildAssignmentsQueryString({
-        start_date: today,
-        end_date: today,
-        activity_type: 'on_call', // Use server-side filtering for better performance
-      });
-      const response = await get<AssignmentsResponse>(
-        `/assignments${queryString ? `?${queryString}` : ''}`
-      );
-      return filterOnCallAssignments(response);
+      // Fetch all required data in parallel
+      const [assignments, blockMap, personMap, templateMap] = await Promise.all([
+        fetchAssignments(today, today),
+        fetchBlocks(today, today),
+        fetchPeople(),
+        fetchRotationTemplates(),
+      ]);
+
+      // Transform and filter assignments
+      return assignments
+        .map(assignment => transformToCallAssignment(assignment, blockMap, personMap, templateMap))
+        .filter((assignment): assignment is CallAssignment => assignment !== null);
     },
     staleTime: 30 * 1000, // 30 seconds - today's data should be fresh
     gcTime: 5 * 60 * 1000, // 5 minutes
@@ -200,20 +251,23 @@ export function usePersonOnCallAssignments(
   endDate: string,
   options?: Omit<UseQueryOptions<CallAssignment[], ApiError>, 'queryKey' | 'queryFn'>
 ) {
-  const queryString = buildAssignmentsQueryString({
-    start_date: startDate,
-    end_date: endDate,
-    person_id: personId,
-    activity_type: 'on_call', // Use server-side filtering for better performance
-  });
-
   return useQuery<CallAssignment[], ApiError>({
     queryKey: ['call-roster', 'person', personId, startDate, endDate] as const,
     queryFn: async () => {
-      const response = await get<AssignmentsResponse>(
-        `/assignments${queryString ? `?${queryString}` : ''}`
-      );
-      return filterOnCallAssignments(response);
+      // Fetch all required data in parallel
+      const [assignments, blockMap, personMap, templateMap] = await Promise.all([
+        fetchAssignments(startDate, endDate),
+        fetchBlocks(startDate, endDate),
+        fetchPeople(),
+        fetchRotationTemplates(),
+      ]);
+
+      // Transform, filter by person, and return
+      return assignments
+        .filter(a => a.person_id === personId)
+        .map(assignment => transformToCallAssignment(assignment, blockMap, personMap, templateMap))
+        .filter((assignment): assignment is CallAssignment => assignment !== null)
+        .sort((a, b) => a.date.localeCompare(b.date));
     },
     staleTime: 60 * 1000, // 1 minute
     gcTime: 10 * 60 * 1000, // 10 minutes

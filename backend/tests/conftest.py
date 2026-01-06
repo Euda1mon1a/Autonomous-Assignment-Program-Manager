@@ -26,6 +26,7 @@ from app.models.block import Block
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.user import User
+from app.utils.academic_blocks import get_block_number_for_date
 
 # Use in-memory SQLite for tests
 TEST_DATABASE_URL = "sqlite:///:memory:"
@@ -384,16 +385,21 @@ def create_test_blocks(
     start_date: date,
     days: int = 7,
 ) -> list[Block]:
-    """Helper to create blocks for a date range."""
+    """Helper to create blocks for a date range.
+
+    Block numbers use Thursday-Wednesday alignment via get_block_number_for_date.
+    """
     blocks = []
     for i in range(days):
         current_date = start_date + timedelta(days=i)
+        # Use Thursday-Wednesday aligned block number calculation
+        block_number, _ = get_block_number_for_date(current_date)
         for time_of_day in ["AM", "PM"]:
             block = Block(
                 id=uuid4(),
                 date=current_date,
                 time_of_day=time_of_day,
-                block_number=1 + (i // 28),
+                block_number=block_number,
                 is_weekend=(current_date.weekday() >= 5),
             )
             db.add(block)

@@ -10,10 +10,12 @@ leave_eligible=True rotations so they don't disrupt FMIT/inpatient coverage.
 """
 
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import date
 from uuid import UUID
 
 from sqlalchemy.orm import Session
+
+from app.utils.academic_blocks import get_block_dates as _get_block_dates_util
 
 from app.models.absence import Absence
 from app.models.block_assignment import AssignmentReason, BlockAssignment
@@ -88,22 +90,20 @@ class BlockSchedulerService:
         """
         Calculate the start and end dates for an academic block.
 
-        Academic year starts July 1. Each block is 28 days.
-        Block 0 is orientation (late June/early July).
+        Academic blocks use Thursday-Wednesday alignment:
+        - Block 0: July 1 through day before first Thursday (orientation)
+        - Blocks 1-12: 28 days each, Thursday start, Wednesday end
+        - Block 13: Starts Thursday, ends June 30 (variable length)
+
+        Args:
+            block_number: Block number (0-13)
+            academic_year: Starting year of academic year (e.g., 2025 for AY 2025-2026)
+
+        Returns:
+            Tuple of (start_date, end_date)
         """
-        # Academic year starts July 1
-        year_start = date(academic_year, 7, 1)
-
-        if block_number == 0:
-            # Block 0 is orientation, typically last week of June
-            start = year_start - timedelta(days=7)
-            end = year_start - timedelta(days=1)
-        else:
-            # Regular blocks are 28 days each
-            start = year_start + timedelta(days=(block_number - 1) * 28)
-            end = start + timedelta(days=27)
-
-        return start, end
+        block = _get_block_dates_util(block_number, academic_year)
+        return block.start_date, block.end_date
 
     def get_residents_with_leave_in_block(
         self,

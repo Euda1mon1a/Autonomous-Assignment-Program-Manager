@@ -53,6 +53,7 @@ from app.scheduling.solvers import (
     SolverResult,
 )
 from app.scheduling.validator import ACGMEValidator
+from app.utils.academic_blocks import get_block_number_for_date
 
 
 class SchedulingEngine:
@@ -892,12 +893,20 @@ class SchedulingEngine:
         return call_assignments
 
     def _ensure_blocks_exist(self, commit: bool = True) -> list[Block]:
-        """Ensure half-day blocks exist for the date range."""
+        """Ensure half-day blocks exist for the date range.
+
+        Block numbers use Thursday-Wednesday alignment:
+        - Block 0: July 1 through day before first Thursday (orientation)
+        - Blocks 1-12: 28 days each, Thursday start, Wednesday end
+        - Block 13: Thursday start, June 30 end (variable length)
+        """
         blocks = []
         current_date = self.start_date
-        block_number = 1
 
         while current_date <= self.end_date:
+            # Use Thursday-Wednesday aligned block number calculation
+            block_number, _ = get_block_number_for_date(current_date)
+
             for time_of_day in ["AM", "PM"]:
                 existing = (
                     self.db.query(Block)
@@ -920,9 +929,6 @@ class SchedulingEngine:
                     self.db.add(block)
                     blocks.append(block)
 
-            # Update block number every 28 days
-            days_from_start = (current_date - self.start_date).days
-            block_number = 1 + (days_from_start // 28)
             current_date += timedelta(days=1)
 
         if commit:

@@ -43,6 +43,7 @@ from app.models.import_staging import (
 from app.models.person import FacultyRole, Person
 from app.models.rotation_template import RotationTemplate
 from app.models.user import User
+from app.utils.academic_blocks import get_block_number_for_date
 
 fake = Faker()
 Faker.seed(42)  # Reproducible fake data
@@ -856,9 +857,7 @@ class AntigravitySeed:
         print("Creating import history...")
 
         # Get a user for created_by
-        admin_user = next(
-            (u for u in self.created["users"] if u.role == "admin"), None
-        )
+        admin_user = next((u for u in self.created["users"] if u.role == "admin"), None)
         coord_user = next(
             (u for u in self.created["users"] if u.role == "coordinator"), None
         )
@@ -989,7 +988,9 @@ class AntigravitySeed:
                             "rotation_name": template.name if template else "Clinic",
                             "matched_person_id": str(resident.id),
                             "person_match_confidence": 95,
-                            "matched_rotation_id": str(template.id) if template else None,
+                            "matched_rotation_id": str(template.id)
+                            if template
+                            else None,
                             "rotation_match_confidence": 90 if template else 0,
                             "status": "pending",
                         },
@@ -1000,17 +1001,21 @@ class AntigravitySeed:
         print()
 
     def _calculate_block_number(self, block_date: date) -> int:
-        """Calculate academic year block number (1-13) for a given date.
+        """Calculate academic year block number (0-13) for a given date.
+
+        Uses Thursday-Wednesday aligned blocks:
+        - Block 0: July 1 through day before first Thursday (orientation)
+        - Blocks 1-12: 28 days each, Thursday start, Wednesday end
+        - Block 13: Starts Thursday, ends June 30 (variable length)
 
         Args:
             block_date: Date to calculate block number for
 
         Returns:
-            Block number (1-13)
+            Block number (0-13)
         """
-        days_since_start = (block_date - self.ay_start).days
-        block_number = (days_since_start // 28) + 1
-        return min(block_number, 13)
+        block_number, _ = get_block_number_for_date(block_date)
+        return block_number
 
     def _summary(self) -> dict:
         """Generate summary of created entities.
