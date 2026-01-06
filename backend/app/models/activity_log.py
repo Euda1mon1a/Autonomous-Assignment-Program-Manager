@@ -68,6 +68,10 @@ class ActivityActionType(str, enum.Enum):
     ENTITY_UPDATED = "ENTITY_UPDATED"
     ENTITY_DELETED = "ENTITY_DELETED"
 
+    # Impersonation actions
+    IMPERSONATION_STARTED = "IMPERSONATION_STARTED"
+    IMPERSONATION_ENDED = "IMPERSONATION_ENDED"
+
 
 class ActivityLog(Base):
     """

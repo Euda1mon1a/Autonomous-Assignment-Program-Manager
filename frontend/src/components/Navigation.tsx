@@ -2,6 +2,10 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import {
+  ImpersonationBanner,
+  ImpersonationBannerSpacer,
+} from "./ImpersonationBanner";
+import {
   Activity,
   AlertTriangle,
   ArrowLeftRight,
@@ -73,6 +77,10 @@ export function Navigation() {
 
   return (
     <>
+      {/* Impersonation Banner - shown above navigation when impersonating */}
+      <ImpersonationBanner />
+      <ImpersonationBannerSpacer />
+
       {/* Skip to main content link for keyboard navigation */}
       <a
         href="#main-content"
