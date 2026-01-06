@@ -12,13 +12,13 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies.role_filter import require_admin
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.user import User
 from app.schemas.game_theory import (
     ConfigAnalysisRequest,
@@ -57,7 +57,7 @@ router = APIRouter()
 @router.get("/strategies", response_model=StrategyListResponse)
 async def list_strategies(
     active_only: bool = Query(True, description="Only show active strategies"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> StrategyListResponse:
     """
     List all configuration strategies.
@@ -101,7 +101,7 @@ async def list_strategies(
 @router.post("/strategies", response_model=StrategyResponse)
 async def create_strategy(
     request: StrategyCreate,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> StrategyResponse:
     """
@@ -155,7 +155,7 @@ async def create_strategy(
 @router.get("/strategies/{strategy_id}", response_model=StrategyResponse)
 async def get_strategy(
     strategy_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> StrategyResponse:
     """Get a strategy by ID."""
     service = get_game_theory_service(db)
@@ -192,7 +192,7 @@ async def get_strategy(
 async def update_strategy(
     strategy_id: UUID,
     request: StrategyUpdate,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> StrategyResponse:
     """Update a strategy."""
@@ -230,7 +230,7 @@ async def update_strategy(
 
 @router.post("/strategies/defaults")
 async def create_default_strategies(
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ) -> dict[str, int | list[str]]:
@@ -257,7 +257,7 @@ async def create_default_strategies(
 @router.get("/tournaments", response_model=TournamentListResponse)
 async def list_tournaments(
     limit: int = Query(50, ge=1, le=100),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> TournamentListResponse:
     """List recent tournaments."""
     service = get_game_theory_service(db)
@@ -294,7 +294,7 @@ async def list_tournaments(
 async def create_tournament(
     request: TournamentCreate,
     background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> TournamentResponse:
     """
@@ -359,7 +359,7 @@ def run_tournament_background(tournament_id: UUID, db: Session) -> None:
 @router.get("/tournaments/{tournament_id}", response_model=TournamentResponse)
 async def get_tournament(
     tournament_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> TournamentResponse:
     """Get tournament details."""
     service = get_game_theory_service(db)
@@ -394,7 +394,7 @@ async def get_tournament(
 )
 async def get_tournament_results(
     tournament_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> TournamentResultsResponse:
     """Get detailed tournament results including rankings and payoff matrix."""
     service = get_game_theory_service(db)
@@ -446,7 +446,7 @@ async def get_tournament_results(
 @router.post("/tournaments/{tournament_id}/run")
 async def run_tournament_sync(
     tournament_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ) -> dict:
@@ -468,7 +468,7 @@ async def run_tournament_sync(
 @router.get("/evolution", response_model=EvolutionListResponse)
 async def list_evolutions(
     limit: int = Query(50, ge=1, le=100),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> EvolutionListResponse:
     """List recent evolutionary simulations."""
     service = get_game_theory_service(db)
@@ -506,7 +506,7 @@ async def list_evolutions(
 async def create_evolution(
     request: EvolutionCreate,
     background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> EvolutionResponse:
     """
@@ -568,7 +568,7 @@ def run_evolution_background(evolution_id: UUID, db: Session) -> None:
 @router.get("/evolution/{evolution_id}", response_model=EvolutionResponse)
 async def get_evolution(
     evolution_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> EvolutionResponse:
     """Get evolution simulation details."""
     service = get_game_theory_service(db)
@@ -604,7 +604,7 @@ async def get_evolution(
 )
 async def get_evolution_results(
     evolution_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> EvolutionResultsResponse:
     """Get detailed evolution results including population history."""
     service = get_game_theory_service(db)
@@ -650,7 +650,7 @@ async def get_evolution_results(
 @router.post("/validate", response_model=ValidationResponse)
 async def validate_strategy(
     request: ValidationRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> ValidationResponse:
     """
     Validate a strategy against Tit for Tat.
@@ -694,7 +694,7 @@ async def validate_strategy(
 @router.post("/analyze", response_model=ConfigAnalysisResponse)
 async def analyze_config(
     request: ConfigAnalysisRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> ConfigAnalysisResponse:
     """
     Analyze a resilience configuration using game theory.
@@ -723,7 +723,7 @@ async def analyze_config(
 
 @router.get("/summary")
 async def get_game_theory_summary(
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> dict:
     """
     Get summary of game theory analysis status.

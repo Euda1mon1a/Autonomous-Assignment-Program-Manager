@@ -14,12 +14,12 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy.orm import selectinload
 
 from app.core.logging import get_logger
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.resident_weekly_requirement import ResidentWeeklyRequirement
 from app.models.rotation_template import RotationTemplate
 from app.models.user import User
@@ -45,7 +45,7 @@ async def list_resident_weekly_requirements(
     activity_type: str | None = Query(
         None, description="Filter by rotation template activity type"
     ),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """List all resident weekly requirements, optionally filtered by activity type.
@@ -70,7 +70,7 @@ async def list_resident_weekly_requirements(
     # Exclude requirements for archived templates
     query = query.where(RotationTemplate.is_archived == False)
 
-    result = await db.execute(query)
+    result = db.execute(query)
     requirements = list(result.scalars().all())
 
     items = [
@@ -84,7 +84,7 @@ async def list_resident_weekly_requirements(
 @router.post("", response_model=ResidentWeeklyRequirementResponse, status_code=201)
 async def create_resident_weekly_requirement(
     requirement_in: ResidentWeeklyRequirementCreate,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Create a new resident weekly requirement for a rotation template.
@@ -107,7 +107,7 @@ async def create_resident_weekly_requirement(
         raise HTTPException(status_code=404, detail="Rotation template not found")
 
     # Check if requirement already exists
-    existing = await db.execute(
+    existing = db.execute(
         select(ResidentWeeklyRequirement).where(
             ResidentWeeklyRequirement.rotation_template_id
             == requirement_in.rotation_template_id
@@ -122,8 +122,8 @@ async def create_resident_weekly_requirement(
     # Create requirement
     requirement = ResidentWeeklyRequirement(**requirement_in.model_dump())
     db.add(requirement)
-    await db.commit()
-    await db.refresh(requirement)
+    db.commit()
+    db.refresh(requirement)
 
     logger.info(
         f"Created resident weekly requirement for template {template.name}",
@@ -144,7 +144,7 @@ async def create_resident_weekly_requirement(
 )
 async def get_requirement_by_template(
     template_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Get weekly requirement for a specific rotation template.
@@ -165,7 +165,7 @@ async def get_requirement_by_template(
     if not template:
         raise HTTPException(status_code=404, detail="Rotation template not found")
 
-    result = await db.execute(
+    result = db.execute(
         select(ResidentWeeklyRequirement).where(
             ResidentWeeklyRequirement.rotation_template_id == template_id
         )
@@ -194,7 +194,7 @@ async def get_requirement_by_template(
 async def upsert_requirement_by_template(
     template_id: UUID,
     requirement_in: ResidentWeeklyRequirementUpdate,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Create or update weekly requirement for a rotation template (upsert).
@@ -220,7 +220,7 @@ async def upsert_requirement_by_template(
         raise HTTPException(status_code=404, detail="Rotation template not found")
 
     # Check for existing requirement
-    result = await db.execute(
+    result = db.execute(
         select(ResidentWeeklyRequirement).where(
             ResidentWeeklyRequirement.rotation_template_id == template_id
         )
@@ -241,8 +241,8 @@ async def upsert_requirement_by_template(
         db.add(requirement)
         action = "Created"
 
-    await db.commit()
-    await db.refresh(requirement)
+    db.commit()
+    db.refresh(requirement)
 
     logger.info(
         f"{action} resident weekly requirement for template {template.name}",
@@ -260,7 +260,7 @@ async def upsert_requirement_by_template(
 @router.delete("/by-template/{template_id}", status_code=204)
 async def delete_requirement_by_template(
     template_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Delete weekly requirement for a rotation template.
@@ -278,7 +278,7 @@ async def delete_requirement_by_template(
     if not template:
         raise HTTPException(status_code=404, detail="Rotation template not found")
 
-    result = await db.execute(
+    result = db.execute(
         select(ResidentWeeklyRequirement).where(
             ResidentWeeklyRequirement.rotation_template_id == template_id
         )
@@ -291,8 +291,8 @@ async def delete_requirement_by_template(
             detail="No weekly requirement found for this template",
         )
 
-    await db.delete(requirement)
-    await db.commit()
+    db.delete(requirement)
+    db.commit()
 
     logger.info(
         f"Deleted resident weekly requirement for template {template.name}",
@@ -308,7 +308,7 @@ async def delete_requirement_by_template(
 @router.get("/{requirement_id}", response_model=ResidentWeeklyRequirementResponse)
 async def get_resident_weekly_requirement(
     requirement_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Get a resident weekly requirement by ID.
@@ -335,7 +335,7 @@ async def get_resident_weekly_requirement(
 async def update_resident_weekly_requirement(
     requirement_id: UUID,
     requirement_in: ResidentWeeklyRequirementUpdate,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Update an existing resident weekly requirement.
@@ -360,8 +360,8 @@ async def update_resident_weekly_requirement(
     for field, value in update_data.items():
         setattr(requirement, field, value)
 
-    await db.commit()
-    await db.refresh(requirement)
+    db.commit()
+    db.refresh(requirement)
 
     logger.info(
         f"Updated resident weekly requirement {requirement_id}",
@@ -374,7 +374,7 @@ async def update_resident_weekly_requirement(
 @router.delete("/{requirement_id}", status_code=204)
 async def delete_resident_weekly_requirement(
     requirement_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Delete a resident weekly requirement.
@@ -391,8 +391,8 @@ async def delete_resident_weekly_requirement(
     if not requirement:
         raise HTTPException(status_code=404, detail="Requirement not found")
 
-    await db.delete(requirement)
-    await db.commit()
+    db.delete(requirement)
+    db.commit()
 
     logger.info(
         f"Deleted resident weekly requirement {requirement_id}",
@@ -411,7 +411,7 @@ async def apply_outpatient_defaults(
     fm_clinic_min: int = Query(2, ge=0, le=10, description="Min FM clinic half-days"),
     fm_clinic_max: int = Query(3, ge=0, le=10, description="Max FM clinic half-days"),
     dry_run: bool = Query(False, description="If true, validate only without changes"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Apply ACGME-compliant defaults to outpatient rotation templates.
@@ -445,7 +445,7 @@ async def apply_outpatient_defaults(
     if template_ids:
         query = query.where(RotationTemplate.id.in_(template_ids))
 
-    result = await db.execute(query)
+    result = db.execute(query)
     templates = list(result.scalars().all())
 
     created = []
@@ -454,7 +454,7 @@ async def apply_outpatient_defaults(
 
     for template in templates:
         # Check for existing requirement
-        existing_result = await db.execute(
+        existing_result = db.execute(
             select(ResidentWeeklyRequirement).where(
                 ResidentWeeklyRequirement.rotation_template_id == template.id
             )
@@ -488,7 +488,7 @@ async def apply_outpatient_defaults(
             created.append(str(template.id))
 
     if not dry_run:
-        await db.commit()
+        db.commit()
         logger.info(
             f"Applied outpatient defaults: {len(created)} created, {len(updated)} updated",
             extra={"user_id": str(current_user.id)},

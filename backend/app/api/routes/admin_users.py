@@ -16,11 +16,11 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import desc, func, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.security import get_admin_user, get_password_hash
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.activity_log import ActivityLog
 from app.models.user import User
 from app.notifications.channels.email.email_templates import render_email_template
@@ -69,7 +69,7 @@ def _user_to_admin_response(user: User) -> AdminUserResponse:
 
 
 async def _log_activity(
-    db: AsyncSession,
+    db: Session,
     action: ActivityAction,
     admin_user: User,
     target_user: User | None = None,
@@ -137,7 +137,7 @@ async def list_users(
     search: str | None = Query(
         None, max_length=100, description="Search by name or email"
     ),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -179,7 +179,7 @@ async def list_users(
 
     # Count total
     count_query = select(func.count()).select_from(query.subquery())
-    total = (await db.execute(count_query)).scalar() or 0
+    total = (db.execute(count_query)).scalar() or 0
 
     # Calculate pagination
     total_pages = math.ceil(total / page_size) if total > 0 else 1
@@ -187,7 +187,7 @@ async def list_users(
 
     # Apply pagination and ordering
     query = query.order_by(desc(User.created_at)).offset(offset).limit(page_size)
-    result = await db.execute(query)
+    result = db.execute(query)
     users = result.scalars().all()
 
     return AdminUserListResponse(
@@ -203,7 +203,7 @@ async def list_users(
 async def create_user(
     user_data: AdminUserCreate,
     request: Request,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -217,7 +217,7 @@ async def create_user(
     """
     # Check if email already exists
     existing = (
-        await db.execute(select(User).where(User.email == user_data.email))
+        db.execute(select(User).where(User.email == user_data.email))
     ).scalar_one_or_none()
     if existing:
         raise HTTPException(
@@ -232,7 +232,7 @@ async def create_user(
 
     # Check if username already exists
     existing_username = (
-        await db.execute(select(User).where(User.username == username))
+        db.execute(select(User).where(User.username == username))
     ).scalar_one_or_none()
     if existing_username:
         # Append a random suffix
@@ -271,8 +271,8 @@ async def create_user(
         request=request,
     )
 
-    await db.commit()
-    await db.refresh(new_user)
+    db.commit()
+    db.refresh(new_user)
 
     # Send invitation email if user_data.send_invite is True
     if user_data.send_invite:
@@ -311,7 +311,7 @@ async def update_user(
     user_id: uuid.UUID,
     user_data: AdminUserUpdate,
     request: Request,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -326,7 +326,7 @@ async def update_user(
     """
     # Fetch user
     user = (
-        await db.execute(select(User).where(User.id == user_id))
+        db.execute(select(User).where(User.id == user_id))
     ).scalar_one_or_none()
 
     if not user:
@@ -360,7 +360,7 @@ async def update_user(
     if user_data.email is not None and user_data.email != user.email:
         # Check email uniqueness
         existing = (
-            await db.execute(
+            db.execute(
                 select(User).where(User.email == user_data.email, User.id != user_id)
             )
         ).scalar_one_or_none()
@@ -405,8 +405,8 @@ async def update_user(
             request=request,
         )
 
-    await db.commit()
-    await db.refresh(user)
+    db.commit()
+    db.refresh(user)
 
     return _user_to_admin_response(user)
 
@@ -415,7 +415,7 @@ async def update_user(
 async def delete_user(
     user_id: uuid.UUID,
     request: Request,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -429,7 +429,7 @@ async def delete_user(
     """
     # Fetch user
     user = (
-        await db.execute(select(User).where(User.id == user_id))
+        db.execute(select(User).where(User.id == user_id))
     ).scalar_one_or_none()
 
     if not user:
@@ -455,8 +455,8 @@ async def delete_user(
         request=request,
     )
 
-    await db.delete(user)
-    await db.commit()
+    db.delete(user)
+    db.commit()
 
 
 @router.post("/{user_id}/lock", response_model=AccountLockResponse)
@@ -464,7 +464,7 @@ async def lock_user_account(
     user_id: uuid.UUID,
     lock_data: AccountLockRequest,
     request: Request,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -479,7 +479,7 @@ async def lock_user_account(
     """
     # Fetch user
     user = (
-        await db.execute(select(User).where(User.id == user_id))
+        db.execute(select(User).where(User.id == user_id))
     ).scalar_one_or_none()
 
     if not user:
@@ -518,8 +518,8 @@ async def lock_user_account(
             request=request,
         )
 
-        await db.commit()
-        await db.refresh(user)
+        db.commit()
+        db.refresh(user)
 
         return AccountLockResponse(
             userId=user.id,
@@ -553,8 +553,8 @@ async def lock_user_account(
         request=request,
     )
 
-    await db.commit()
-    await db.refresh(user)
+    db.commit()
+    db.refresh(user)
 
     return AccountLockResponse(
         userId=user.id,
@@ -574,7 +574,7 @@ async def lock_user_account(
 async def resend_invite(
     user_id: uuid.UUID,
     request: Request,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -588,7 +588,7 @@ async def resend_invite(
     """
     # Fetch user
     user = (
-        await db.execute(select(User).where(User.id == user_id))
+        db.execute(select(User).where(User.id == user_id))
     ).scalar_one_or_none()
 
     if not user:
@@ -623,8 +623,8 @@ async def resend_invite(
         request=request,
     )
 
-    await db.commit()
-    await db.refresh(user)
+    db.commit()
+    db.refresh(user)
 
     # Send the invitation email
     settings = get_settings()
@@ -672,7 +672,7 @@ async def get_activity_log(
         None, alias="dateFrom", description="Start date"
     ),
     date_to: datetime | None = Query(None, alias="dateTo", description="End date"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -706,7 +706,7 @@ async def get_activity_log(
 
     # Count total
     count_query = select(func.count()).select_from(query.subquery())
-    total = (await db.execute(count_query)).scalar() or 0
+    total = (db.execute(count_query)).scalar() or 0
 
     # Calculate pagination
     total_pages = math.ceil(total / page_size) if total > 0 else 1
@@ -714,7 +714,7 @@ async def get_activity_log(
 
     # Apply pagination and ordering (most recent first)
     query = query.order_by(desc(ActivityLog.created_at)).offset(offset).limit(page_size)
-    result = await db.execute(query)
+    result = db.execute(query)
     logs = result.scalars().all()
 
     # Convert to response format
@@ -724,7 +724,7 @@ async def get_activity_log(
         admin_email = None
         if log.user_id:
             admin_user = (
-                await db.execute(select(User).where(User.id == log.user_id))
+                db.execute(select(User).where(User.id == log.user_id))
             ).scalar_one_or_none()
             if admin_user:
                 admin_email = admin_user.email
@@ -734,7 +734,7 @@ async def get_activity_log(
         if log.target_id:
             try:
                 target_user = (
-                    await db.execute(
+                    db.execute(
                         select(User).where(User.id == uuid.UUID(log.target_id))
                     )
                 ).scalar_one_or_none()
@@ -772,7 +772,7 @@ async def get_activity_log(
 async def bulk_user_action(
     bulk_data: BulkUserActionRequest,
     request: Request,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -797,7 +797,7 @@ async def bulk_user_action(
 
         # Fetch user
         user = (
-            await db.execute(select(User).where(User.id == uid))
+            db.execute(select(User).where(User.id == uid))
         ).scalar_one_or_none()
 
         if not user:
@@ -813,7 +813,7 @@ async def bulk_user_action(
             elif bulk_data.action == BulkAction.DEACTIVATE:
                 user.is_active = False
             elif bulk_data.action == BulkAction.DELETE:
-                await db.delete(user)
+                db.delete(user)
 
             if bulk_data.action != BulkAction.DELETE:
                 user.updated_at = datetime.utcnow()
@@ -843,7 +843,7 @@ async def bulk_user_action(
         request=request,
     )
 
-    await db.commit()
+    db.commit()
 
     action_past_tense = {
         BulkAction.ACTIVATE: "activated",

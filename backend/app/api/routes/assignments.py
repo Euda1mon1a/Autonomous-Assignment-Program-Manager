@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, Query, Response
 
 from app.controllers.assignment_controller import AssignmentController
 from app.core.security import get_current_active_user, get_scheduler_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.user import User
 from app.schemas.assignment import (
     AssignmentCreate,
@@ -36,7 +36,7 @@ async def list_assignments(
     ),
     page: int = Query(1, ge=1, description="Page number (1-indexed)"),
     page_size: int = Query(100, ge=1, le=500, description="Items per page (max 500)"),
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """List schedule assignments with filters and pagination.
@@ -84,7 +84,7 @@ async def list_assignments(
 async def get_assignment(
     assignment_id: UUID,
     response: Response,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Get a schedule assignment by ID.
@@ -120,7 +120,7 @@ async def get_assignment(
 @router.post("", response_model=AssignmentWithWarnings, status_code=201)
 async def create_assignment(
     assignment_in: AssignmentCreate,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_scheduler_user),
 ):
     """Create a new schedule assignment with ACGME validation.
@@ -153,7 +153,7 @@ async def create_assignment(
 async def update_assignment(
     assignment_id: UUID,
     assignment_in: AssignmentUpdate,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_scheduler_user),
 ):
     """Update an existing assignment with optimistic locking and ACGME validation.
@@ -187,7 +187,7 @@ async def update_assignment(
 @router.delete("/{assignment_id}", status_code=204)
 async def delete_assignment(
     assignment_id: UUID,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_scheduler_user),
 ):
     """Delete an assignment. Requires scheduler role (admin or coordinator)."""
@@ -199,7 +199,7 @@ async def delete_assignment(
 async def delete_assignments_bulk(
     start_date: date = Query(..., description="Delete assignments from this date"),
     end_date: date = Query(..., description="Delete assignments until this date"),
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_scheduler_user),
 ):
     """Delete all assignments in a date range. Requires scheduler role (admin or coordinator)."""

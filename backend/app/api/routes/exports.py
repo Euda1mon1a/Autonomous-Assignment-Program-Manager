@@ -13,11 +13,11 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.exports.jobs import execute_export_job
 from app.exports.scheduler import ExportSchedulerService
 from app.models.export_job import (
@@ -54,7 +54,7 @@ logger = logging.getLogger(__name__)
 @router.post("", response_model=ExportJobResponse, status_code=201)
 async def create_export_job(
     job_data: ExportJobCreate,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -80,7 +80,7 @@ async def list_export_jobs(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     enabled_only: bool = Query(False, description="Only return enabled jobs"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -112,7 +112,7 @@ async def list_export_jobs(
 @router.get("/{job_id}", response_model=ExportJobResponse)
 async def get_export_job(
     job_id: str,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -133,7 +133,7 @@ async def get_export_job(
 async def update_export_job(
     job_id: str,
     update_data: ExportJobUpdate,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -162,7 +162,7 @@ async def update_export_job(
 @router.delete("/{job_id}", status_code=204)
 async def delete_export_job(
     job_id: str,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -188,7 +188,7 @@ async def delete_export_job(
 async def run_export_job(
     job_id: str,
     request: ExportJobRunRequest | None = None,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -237,7 +237,7 @@ async def list_job_executions(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     status: ExportJobStatus | None = Query(None, description="Filter by status"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -265,13 +265,13 @@ async def list_job_executions(
         )
         if status:
             count_query = count_query.where(ExportJobExecution.status == status.value)
-        total_result = await db.execute(count_query)
+        total_result = db.execute(count_query)
         total = total_result.scalar()
 
         # Get paginated results
         query = query.order_by(ExportJobExecution.started_at.desc())
         query = query.offset((page - 1) * page_size).limit(page_size)
-        result = await db.execute(query)
+        result = db.execute(query)
         executions = list(result.scalars().all())
 
         total_pages = (total + page_size - 1) // page_size
@@ -292,7 +292,7 @@ async def list_job_executions(
 @router.get("/executions/{execution_id}", response_model=ExportJobExecutionResponse)
 async def get_execution(
     execution_id: str,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -300,7 +300,7 @@ async def get_execution(
 
     Requires authentication.
     """
-    result = await db.execute(
+    result = db.execute(
         select(ExportJobExecution).where(ExportJobExecution.id == execution_id)
     )
     execution = result.scalar_one_or_none()
@@ -427,7 +427,7 @@ async def list_export_templates(
 
 @router.get("/stats/overview", response_model=ExportJobStatsResponse)
 async def get_export_stats(
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -437,13 +437,13 @@ async def get_export_stats(
     """
     try:
         # Count total jobs
-        total_jobs_result = await db.execute(
+        total_jobs_result = db.execute(
             select(func.count()).select_from(ExportJob)
         )
         total_jobs = total_jobs_result.scalar()
 
         # Count active jobs
-        active_jobs_result = await db.execute(
+        active_jobs_result = db.execute(
             select(func.count())
             .select_from(ExportJob)
             .where(ExportJob.enabled.is_(True))
@@ -451,7 +451,7 @@ async def get_export_stats(
         active_jobs = active_jobs_result.scalar()
 
         # Count scheduled jobs
-        scheduled_jobs_result = await db.execute(
+        scheduled_jobs_result = db.execute(
             select(func.count())
             .select_from(ExportJob)
             .where(ExportJob.enabled.is_(True), ExportJob.schedule_enabled.is_(True))
@@ -459,13 +459,13 @@ async def get_export_stats(
         scheduled_jobs = scheduled_jobs_result.scalar()
 
         # Count executions
-        total_executions_result = await db.execute(
+        total_executions_result = db.execute(
             select(func.count()).select_from(ExportJobExecution)
         )
         total_executions = total_executions_result.scalar()
 
         # Count successful executions
-        successful_result = await db.execute(
+        successful_result = db.execute(
             select(func.count())
             .select_from(ExportJobExecution)
             .where(ExportJobExecution.status == ExportJobStatus.COMPLETED.value)
@@ -473,7 +473,7 @@ async def get_export_stats(
         successful_executions = successful_result.scalar()
 
         # Count failed executions
-        failed_result = await db.execute(
+        failed_result = db.execute(
             select(func.count())
             .select_from(ExportJobExecution)
             .where(ExportJobExecution.status == ExportJobStatus.FAILED.value)
@@ -481,7 +481,7 @@ async def get_export_stats(
         failed_executions = failed_result.scalar()
 
         # Calculate average runtime
-        avg_runtime_result = await db.execute(
+        avg_runtime_result = db.execute(
             select(func.avg(ExportJobExecution.runtime_seconds)).where(
                 ExportJobExecution.status == ExportJobStatus.COMPLETED.value
             )
@@ -489,14 +489,14 @@ async def get_export_stats(
         avg_runtime = avg_runtime_result.scalar()
 
         # Calculate total rows and bytes
-        total_rows_result = await db.execute(
+        total_rows_result = db.execute(
             select(func.sum(ExportJobExecution.row_count)).where(
                 ExportJobExecution.status == ExportJobStatus.COMPLETED.value
             )
         )
         total_rows = total_rows_result.scalar() or 0
 
-        total_bytes_result = await db.execute(
+        total_bytes_result = db.execute(
             select(func.sum(ExportJobExecution.file_size_bytes)).where(
                 ExportJobExecution.status == ExportJobStatus.COMPLETED.value
             )

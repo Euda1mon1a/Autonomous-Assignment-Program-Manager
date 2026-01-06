@@ -7,11 +7,11 @@ schedule conflicts with safety checks and impact assessment.
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy import select
 
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.user import User
 from app.schemas.conflict_resolution import (
     BatchResolutionReport,
@@ -27,7 +27,7 @@ router = APIRouter()
 @router.get("/{conflict_id}/analyze", response_model=ConflictAnalysis)
 async def analyze_conflict(
     conflict_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -66,7 +66,7 @@ async def analyze_conflict(
 async def get_resolution_options(
     conflict_id: UUID,
     max_options: int = Query(5, ge=1, le=10, description="Maximum options to return"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -102,7 +102,7 @@ async def get_resolution_options(
 async def resolve_conflict(
     conflict_id: UUID,
     strategy: str | None = Query(None, description="Specific strategy to use"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -144,7 +144,7 @@ async def batch_resolve_conflicts(
         None, description="Filter by severity: HIGH, MEDIUM, LOW"
     ),
     dry_run: bool = Query(False, description="Simulate without applying changes"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -175,7 +175,7 @@ async def batch_resolve_conflicts(
 @router.get("/{conflict_id}/can-auto-resolve")
 async def can_auto_resolve(
     conflict_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """

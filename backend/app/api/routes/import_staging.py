@@ -20,7 +20,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Upload
 from app.core.file_security import validate_excel_upload
 from app.core.logging import get_logger
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.import_staging import ConflictResolutionMode, ImportBatchStatus
 from app.models.user import User
 from app.schemas.import_staging import (
@@ -67,7 +67,7 @@ async def stage_import(
     sheet_name: str | None = Form(
         None, description="Specific sheet name to parse (default: first sheet)"
     ),
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -227,7 +227,7 @@ async def list_batches(
     page: int = Query(1, ge=1, description="Page number (1-indexed)"),
     page_size: int = Query(50, ge=1, le=100, description="Items per page"),
     status: str | None = Query(None, description="Filter by status"),
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -305,7 +305,7 @@ async def list_batches(
 )
 async def get_batch(
     batch_id: UUID,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Get details of a specific import batch."""
@@ -367,7 +367,7 @@ async def preview_batch(
     batch_id: UUID,
     page: int = Query(1, ge=1, description="Page number (1-indexed)"),
     page_size: int = Query(50, ge=1, le=100, description="Items per page"),
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -448,7 +448,7 @@ async def preview_batch(
 async def apply_batch(
     batch_id: UUID,
     request: ImportApplyRequest | None = None,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -510,7 +510,7 @@ async def apply_batch(
 async def rollback_batch(
     batch_id: UUID,
     request: ImportRollbackRequest | None = None,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -559,7 +559,7 @@ async def rollback_batch(
 )
 async def reject_batch(
     batch_id: UUID,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """

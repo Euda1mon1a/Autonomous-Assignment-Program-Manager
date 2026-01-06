@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, Query, Response
 
 from app.controllers.absence_controller import AbsenceController
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.user import User
 from app.schemas.absence import (
     AbsenceCreate,
@@ -35,7 +35,7 @@ async def list_absences(
     absence_type: str | None = Query(None, description="Filter by absence type"),
     page: int = Query(1, ge=1, description="Page number (1-indexed)"),
     page_size: int = Query(100, ge=1, le=500, description="Items per page (max 500)"),
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """List absences with optional filters and pagination.
@@ -69,7 +69,7 @@ async def list_absences(
 async def get_absence(
     absence_id: UUID,
     response: Response,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Get an absence by ID.
@@ -95,7 +95,7 @@ async def get_absence(
 @router.post("", response_model=AbsenceResponse, status_code=201)
 async def create_absence(
     absence_in: AbsenceCreate,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Create a new absence. Requires authentication."""
@@ -107,7 +107,7 @@ async def create_absence(
 async def update_absence(
     absence_id: UUID,
     absence_in: AbsenceUpdate,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Update an existing absence. Requires authentication."""
@@ -118,7 +118,7 @@ async def update_absence(
 @router.delete("/{absence_id}", status_code=204)
 async def delete_absence(
     absence_id: UUID,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Delete an absence. Requires authentication."""
@@ -140,7 +140,7 @@ async def delete_absence(
 async def preview_bulk_absences(
     bulk_data: AbsenceBulkCreate,
     response: Response,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Preview bulk absence import before applying.
@@ -177,7 +177,7 @@ async def preview_bulk_absences(
 )
 async def apply_bulk_absences(
     bulk_data: AbsenceBulkCreate,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Apply bulk absence import.
