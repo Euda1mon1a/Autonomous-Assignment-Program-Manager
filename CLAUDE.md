@@ -240,6 +240,26 @@ Before changes, AI MUST:
 - Frontend: `npm run lint:fix`
 - CI must pass before merge
 
+### Agent Spawning (MANDATORY)
+
+When spawning ANY PAI agent via Task(), you MUST:
+1. Read `.claude/Identities/[AGENT_NAME].identity.md`
+2. Include it as `## BOOT CONTEXT` at the start of the prompt
+
+```
+Task(
+  prompt="""
+  ## BOOT CONTEXT
+  [contents of identity card]
+
+  ## MISSION
+  [task description]
+  """
+)
+```
+
+**No exceptions.** Identity cards contain chain of command, spawn authority, and standing orders.
+
 ---
 
 ## Development Workflow
