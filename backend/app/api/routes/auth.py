@@ -25,7 +25,7 @@ from app.core.security import (
     oauth2_scheme,
     verify_refresh_token,
 )
-from app.db.session import get_async_db, get_db
+from app.db.session import get_db
 from app.models.user import User
 from app.schemas.auth import (
     RefreshTokenRequest,
@@ -352,7 +352,7 @@ async def list_users(
 
 @router.post("/initialize-admin")
 async def initialize_admin(
-    db=Depends(get_async_db),
+    db=Depends(get_db),
 ):
     """
     Initialize database with default admin user if empty.
@@ -382,7 +382,7 @@ async def initialize_admin(
 
     try:
         # Check if any users exist
-        user_count = await db.execute(select(User))
+        user_count = db.execute(select(User))
         existing_users = user_count.scalars().all()
 
         if len(existing_users) > 0:
@@ -405,8 +405,8 @@ async def initialize_admin(
         )
 
         db.add(admin_user)
-        await db.commit()
-        await db.refresh(admin_user)
+        db.commit()
+        db.refresh(admin_user)
 
         return {
             "status": "created",
@@ -416,7 +416,7 @@ async def initialize_admin(
         }
 
     except Exception as e:
-        await db.rollback()
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to initialize admin user: {str(e)}",

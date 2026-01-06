@@ -50,7 +50,7 @@ from pydantic import BaseModel
 
 from app.api.deps import get_current_active_user
 from app.core.config import settings
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.user import User
 
 logger = logging.getLogger(__name__)
@@ -341,7 +341,7 @@ async def execute_tool(tool_name: str, tool_input: dict, db) -> dict[str, Any]:
 
             # Get faculty and assignments for the period
             faculty = (
-                (await db.execute(select(Person).where(Person.type == "faculty")))
+                (db.execute(select(Person).where(Person.type == "faculty")))
                 .scalars()
                 .all()
             )

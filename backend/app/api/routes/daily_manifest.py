@@ -8,11 +8,11 @@ from collections import defaultdict
 from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
 
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
@@ -34,7 +34,7 @@ async def get_daily_manifest(
     time_of_day: str | None = Query(
         None, description="AM or PM (optional, shows all if omitted)"
     ),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """

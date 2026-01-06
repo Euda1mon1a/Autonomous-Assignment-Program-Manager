@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect, s
 from fastapi.exceptions import HTTPException
 
 from app.core.security import get_current_active_user, get_current_user, verify_token
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.user import User
 from app.websocket.manager import get_connection_manager
 
@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 async def get_websocket_user(
-    websocket: WebSocket, token: str | None = Query(None), db=Depends(get_async_db)
+    websocket: WebSocket, token: str | None = Query(None), db=Depends(get_db)
 ) -> User | None:
     """
     Authenticate WebSocket connection via token query parameter.
@@ -52,7 +52,7 @@ async def get_websocket_user(
 async def websocket_endpoint(
     websocket: WebSocket,
     token: str | None = Query(None),
-    db=Depends(get_async_db),
+    db=Depends(get_db),
 ) -> None:
     """
     WebSocket endpoint for real-time schedule updates.

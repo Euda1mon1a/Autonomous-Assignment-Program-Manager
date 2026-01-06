@@ -8,12 +8,12 @@ from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response, StreamingResponse
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
 
 from app.api.dependencies.role_filter import require_admin
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.absence import Absence
 from app.models.assignment import Assignment
 from app.models.block import Block
@@ -56,7 +56,7 @@ def create_json_response(data: list, filename: str) -> StreamingResponse:
 @router.get("/people")
 async def export_people(
     format: str = Query("csv", description="Export format: csv or json"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ):
@@ -93,7 +93,7 @@ async def export_absences(
     format: str = Query("csv", description="Export format: csv or json"),
     start_date: date | None = Query(None, description="Filter absences starting from"),
     end_date: date | None = Query(None, description="Filter absences ending by"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ):
@@ -147,7 +147,7 @@ async def export_schedule(
     format: str = Query("csv", description="Export format: csv or json"),
     start_date: date = Query(..., description="Schedule start date"),
     end_date: date = Query(..., description="Schedule end date"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ):
@@ -213,7 +213,7 @@ async def export_schedule_xlsx(
     federal_holidays: str | None = Query(
         None, description="Comma-separated federal holiday dates (YYYY-MM-DD)"
     ),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ):

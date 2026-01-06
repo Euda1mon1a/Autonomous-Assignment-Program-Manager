@@ -14,10 +14,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.scheduled_job import JobExecution
 from app.models.user import User
 from app.scheduler import get_scheduler
@@ -47,7 +47,7 @@ router = APIRouter()
 @router.post("/jobs", response_model=JobResponseSchema, status_code=201)
 async def create_job(
     job_data: JobCreateSchema,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -111,7 +111,7 @@ async def create_job(
 @router.get("/jobs", response_model=JobListResponseSchema)
 async def list_jobs(
     enabled_only: bool = Query(False, description="Only return enabled jobs"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -143,7 +143,7 @@ async def list_jobs(
 @router.get("/jobs/{job_id}", response_model=JobResponseSchema)
 async def get_job(
     job_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -174,7 +174,7 @@ async def get_job(
 async def update_job(
     job_id: UUID,
     job_data: JobUpdateSchema,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -232,7 +232,7 @@ async def update_job(
 @router.delete("/jobs/{job_id}", response_model=JobActionResponseSchema)
 async def delete_job(
     job_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -362,7 +362,7 @@ async def get_job_executions(
     job_id: UUID,
     limit: int = Query(100, ge=1, le=1000, description="Maximum records to return"),
     offset: int = Query(0, ge=0, description="Records to skip"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -414,7 +414,7 @@ async def get_job_executions(
 async def get_all_executions(
     limit: int = Query(100, ge=1, le=1000, description="Maximum records to return"),
     offset: int = Query(0, ge=0, description="Records to skip"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -457,7 +457,7 @@ async def get_all_executions(
 @router.get("/jobs/{job_id}/statistics", response_model=JobStatisticsSchema)
 async def get_job_statistics(
     job_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """

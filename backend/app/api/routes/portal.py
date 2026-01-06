@@ -38,12 +38,12 @@ from uuid import UUID
 logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload, Session
 
 from app.core.config import get_settings
 from app.core.security import get_current_user, get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.conflict_alert import ConflictAlert, ConflictAlertStatus
@@ -78,7 +78,7 @@ router = APIRouter(prefix="/portal", tags=["portal"])
 SWAP_MARKETPLACE_FLAG_KEY = "swap_marketplace_enabled"
 
 
-async def _check_marketplace_access(db: AsyncSession, user: User) -> bool:
+async def _check_marketplace_access(db: Session, user: User) -> bool:
     """
     Check if the user has access to the swap marketplace.
 
@@ -151,7 +151,7 @@ async def _check_marketplace_access(db: AsyncSession, user: User) -> bool:
 
 @router.get("/my/schedule", response_model=MyScheduleResponse)
 async def get_my_schedule(
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -187,7 +187,7 @@ async def get_my_schedule(
 
     # Query actual FMIT weeks from schedule
     fmit_template = (
-        await db.execute(
+        db.execute(
             select(RotationTemplate).where(RotationTemplate.name == "FMIT")
         )
     ).scalar_one_or_none()
@@ -283,7 +283,7 @@ async def get_my_schedule(
 
 @router.get("/my/swaps", response_model=MySwapsResponse)
 async def get_my_swaps(
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -398,7 +398,7 @@ async def get_my_swaps(
 @router.post("/my/swaps", response_model=SwapRequestResponse)
 async def create_swap_request(
     request: SwapRequestCreate,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -453,7 +453,7 @@ async def create_swap_request(
     # Implement swap request creation
     # 1. Verify week is assigned to this faculty
     fmit_template = (
-        await db.execute(
+        db.execute(
             select(RotationTemplate).where(RotationTemplate.name == "FMIT")
         )
     ).scalar_one_or_none()
@@ -536,8 +536,8 @@ async def create_swap_request(
     )
 
     db.add(swap_record)
-    await db.commit()
-    await db.refresh(swap_record)
+    db.commit()
+    db.refresh(swap_record)
 
     # 3. If auto_find_candidates, find and notify potential swap partners
     candidates_notified = 0
@@ -588,7 +588,7 @@ async def create_swap_request(
 async def respond_to_swap(
     swap_id: UUID,
     request: SwapRespondRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -679,7 +679,7 @@ async def respond_to_swap(
         if request.notes:
             swap.notes = (swap.notes or "") + f"\nResponse: {request.notes}"
 
-        await db.commit()
+        db.commit()
 
         return {
             "success": True,
@@ -696,7 +696,7 @@ async def respond_to_swap(
         if request.notes:
             swap.notes = (swap.notes or "") + f"\nRejection reason: {request.notes}"
 
-        await db.commit()
+        db.commit()
 
         return {
             "success": True,
@@ -708,7 +708,7 @@ async def respond_to_swap(
 
 @router.get("/my/preferences", response_model=PreferencesResponse)
 async def get_my_preferences(
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -830,7 +830,7 @@ async def get_my_preferences(
 @router.put("/my/preferences", response_model=PreferencesResponse)
 async def update_my_preferences(
     request: PreferencesUpdate,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -928,8 +928,8 @@ async def update_my_preferences(
     # Update timestamp
     preferences.updated_at = datetime.utcnow()
 
-    await db.commit()
-    await db.refresh(preferences)
+    db.commit()
+    db.refresh(preferences)
 
     # Convert back for response
     preferred_weeks = []
@@ -989,7 +989,7 @@ async def update_my_preferences(
 
 @router.get("/my/dashboard", response_model=DashboardResponse)
 async def get_my_dashboard(
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -1025,7 +1025,7 @@ async def get_my_dashboard(
 
     # Get FMIT template
     fmit_template = (
-        await db.execute(
+        db.execute(
             select(RotationTemplate).where(RotationTemplate.name == "FMIT")
         )
     ).scalar_one_or_none()
@@ -1239,7 +1239,7 @@ async def get_my_dashboard(
 
 @router.get("/marketplace", response_model=MarketplaceResponse)
 async def get_swap_marketplace(
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -1312,7 +1312,7 @@ async def get_swap_marketplace(
 
     # Get faculty's current FMIT schedule to check compatibility
     fmit_template = (
-        await db.execute(
+        db.execute(
             select(RotationTemplate).where(RotationTemplate.name == "FMIT")
         )
     ).scalar_one_or_none()

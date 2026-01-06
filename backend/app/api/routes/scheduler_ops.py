@@ -17,11 +17,11 @@ from itertools import islice
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select, and_, func
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy.orm import Session
 
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
@@ -548,7 +548,7 @@ def _calculate_coverage_metrics(db: Session) -> CoverageMetrics:
 
 @router.get("/sitrep", response_model=SitrepResponse)
 async def get_situation_report(
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> SitrepResponse:
     """
@@ -625,7 +625,7 @@ async def get_situation_report(
 @router.post("/fix-it", response_model=FixItResponse)
 async def initiate_fix_it_mode(
     request: FixItRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> FixItResponse:
     """
@@ -779,7 +779,7 @@ async def initiate_fix_it_mode(
 @router.post("/approve", response_model=ApprovalResponse)
 async def approve_task(
     request: ApprovalRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> ApprovalResponse:
     """
@@ -915,7 +915,7 @@ async def generate_approval_token(
     task_ids: list[str],
     task_type: str = "schedule_change",
     expires_in_hours: int = 24,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> dict:
     """
@@ -975,7 +975,7 @@ async def generate_approval_token(
 async def abort_solver_run(
     run_id: str,
     request: SolverAbortRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> SolverAbortResponse:
     """
@@ -1063,7 +1063,7 @@ async def abort_solver_run(
 @router.get("/runs/{run_id}/progress", response_model=SolverProgressResponse)
 async def get_solver_progress(
     run_id: str,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> SolverProgressResponse:
     """
@@ -1107,7 +1107,7 @@ async def get_solver_progress(
 
 @router.get("/runs/active", response_model=ActiveSolversResponse)
 async def get_active_solvers(
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> ActiveSolversResponse:
     """

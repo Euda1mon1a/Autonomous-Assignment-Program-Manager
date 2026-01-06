@@ -12,7 +12,7 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -21,7 +21,7 @@ from app.auth.sso.oauth2_provider import OAuth2Provider
 from app.auth.sso.saml_provider import SAMLProvider
 from app.core.config import get_settings
 from app.core.security import create_access_token, get_password_hash
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.user import User
 
 logger = logging.getLogger(__name__)
@@ -99,7 +99,7 @@ _sso_sessions: dict[str, SSOSessionState] = {}
 
 
 async def get_or_create_user(
-    db: AsyncSession, attributes: dict[str, str], provider: str
+    db: Session, attributes: dict[str, str], provider: str
 ) -> User:
     """
     Get existing user or create new user (JIT provisioning).
@@ -130,7 +130,7 @@ async def get_or_create_user(
 
     # Check if user exists by email
     user = (
-        await db.execute(select(User).where(User.email == email))
+        db.execute(select(User).where(User.email == email))
     ).scalar_one_or_none()
 
     if user:
@@ -138,7 +138,7 @@ async def get_or_create_user(
         from datetime import datetime
 
         user.last_login = datetime.utcnow()
-        await db.commit()
+        db.commit()
         return user
 
     # Auto-provision user if enabled
@@ -150,7 +150,7 @@ async def get_or_create_user(
 
     # Check if username is already taken
     existing_username = (
-        await db.execute(select(User).where(User.username == username))
+        db.execute(select(User).where(User.username == username))
     ).scalar_one_or_none()
     if existing_username:
         # Append random suffix to username
@@ -185,13 +185,13 @@ async def get_or_create_user(
             is_active=True,
         )
         db.add(new_user)
-        await db.commit()
-        await db.refresh(new_user)
+        db.commit()
+        db.refresh(new_user)
 
         return new_user
     except (SQLAlchemyError, ValueError) as e:
         logger.error(f"Failed to create user from SAML: {e}", exc_info=True)
-        await db.rollback()
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create user: {str(e)}",
@@ -295,7 +295,7 @@ async def saml_login(relay_state: str | None = None) -> RedirectResponse:
 async def saml_acs(
     request: Request,
     response: Response,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> HTMLResponse:
     """
     SAML Assertion Consumer Service (ACS).
@@ -423,7 +423,7 @@ async def oauth2_callback(
     response: Response,
     code: str,
     state: str,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> RedirectResponse:
     """
     OAuth2/OIDC callback endpoint.

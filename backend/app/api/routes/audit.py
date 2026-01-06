@@ -12,12 +12,12 @@ from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy import select
 
 from app.api.dependencies.role_filter import require_admin
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.user import User
 from app.schemas.audit import (
     AuditExportConfig,
@@ -378,7 +378,7 @@ async def get_audit_logs(
     search: str | None = Query(None, description="Search query"),
     entity_id: str | None = Query(None, description="Filter by specific entity ID"),
     acgme_overrides_only: bool = Query(False, description="Show only ACGME overrides"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -464,7 +464,7 @@ async def get_audit_logs(
 @router.get("/logs/{log_id}", response_model=AuditLogEntry)
 async def get_audit_log_by_id(
     log_id: str,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -486,7 +486,7 @@ async def get_audit_statistics(
         None, description="Statistics start date (ISO format)"
     ),
     end_date: str | None = Query(None, description="Statistics end date (ISO format)"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -589,7 +589,7 @@ async def get_audit_statistics(
 
 @router.get("/users")
 async def get_audit_users(
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -616,7 +616,7 @@ async def get_audit_users(
 @router.post("/export")
 async def export_audit_logs(
     config: AuditExportConfig,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ):
@@ -829,7 +829,7 @@ async def export_audit_logs(
 @router.post("/mark-reviewed", status_code=204)
 async def mark_audit_reviewed(
     request: MarkReviewedRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ):

@@ -2,14 +2,14 @@
 
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError, DBAPIError
 
 from app.core.file_security import FileValidationError, validate_excel_upload
 from app.core.logging import get_logger
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.user import User
 from app.scheduling.engine import SchedulingEngine
 from app.scheduling.validator import ACGMEValidator
@@ -67,7 +67,7 @@ logger = get_logger(__name__)
 @router.post("/generate", response_model=ScheduleResponse)
 async def generate_schedule(
     request: ScheduleRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     idempotency_key: str | None = Header(
         None,
@@ -213,7 +213,7 @@ async def generate_schedule(
                 response_body={"detail": error_msg},
                 response_status_code=409,
             )
-            await db.commit()
+            db.commit()
         raise HTTPException(status_code=409, detail=error_msg)
 
     algorithm = request.algorithm.value
@@ -274,7 +274,7 @@ async def generate_schedule(
                     response_body={"detail": error_msg},
                     response_status_code=422,
                 )
-                await db.commit()
+                db.commit()
             raise HTTPException(status_code=422, detail=error_msg)
         elif result["status"] == "partial":
             # Use 207 Multi-Status for partial success
@@ -290,7 +290,7 @@ async def generate_schedule(
                     response_body=response_body,
                     response_status_code=207,
                 )
-                await db.commit()
+                db.commit()
             return JSONResponse(
                 status_code=207,
                 content=response_body,
@@ -309,7 +309,7 @@ async def generate_schedule(
                 response_body=response_body,
                 response_status_code=200,
             )
-            await db.commit()
+            db.commit()
 
         return response
 
@@ -329,10 +329,10 @@ async def generate_schedule(
                 response_status_code=500,
             )
             try:
-                await db.commit()
+                db.commit()
             except (SQLAlchemyError, DBAPIError) as e:
                 logger.error(f"Failed to commit error audit log: {e}", exc_info=True)
-                await db.rollback()
+                db.rollback()
         raise HTTPException(status_code=500, detail=error_msg)
 
 
@@ -340,7 +340,7 @@ async def generate_schedule(
 async def validate_schedule(
     start_date: str,
     end_date: str,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ):
     """
     Validate current schedule for ACGME compliance.
@@ -369,7 +369,7 @@ async def validate_schedule(
 @router.post("/emergency-coverage", response_model=EmergencyResponse)
 async def handle_emergency_coverage(
     request: EmergencyRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -405,7 +405,7 @@ async def handle_emergency_coverage(
 
 @router.get("/{start_date}/{end_date}")
 async def get_schedule(
-    start_date: str, end_date: str, db: AsyncSession = Depends(get_async_db)
+    start_date: str, end_date: str, db: Session = Depends(get_db)
 ):
     """
     Get the schedule for a date range.
@@ -481,7 +481,7 @@ async def analyze_imported_schedules(
         None,
         description='JSON mapping of specialty to providers, e.g., {"Sports Medicine": ["FAC-SPORTS"]}',
     ),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ):
     """
     Import and analyze schedules for conflicts.
@@ -586,7 +586,7 @@ async def analyze_single_file(
     specialty_providers: str | None = Form(
         None, description="JSON mapping of specialty to providers"
     ),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ):
     """
     Quick analysis of a single schedule file.
@@ -711,7 +711,7 @@ async def parse_block_schedule_endpoint(
         None, description="JSON array of known person names for fuzzy matching"
     ),
     include_fmit: bool = Form(True, description="Include FMIT attending schedule"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -845,7 +845,7 @@ async def parse_block_schedule_endpoint(
 async def find_swap_candidates(
     fmit_file: UploadFile = File(..., description="FMIT rotation schedule Excel file"),
     request_json: str = Form(..., description="SwapFinderRequest as JSON string"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -1005,7 +1005,7 @@ async def find_swap_candidates(
 @router.post("/swaps/candidates", response_model=SwapCandidateJsonResponse)
 async def find_swap_candidates_json(
     request: SwapCandidateJsonRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -1038,7 +1038,7 @@ async def find_swap_candidates_json(
         raise HTTPException(status_code=400, detail="Invalid person_id format")
 
     requester = (
-        await db.execute(select(Person).where(Person.id == person_uuid))
+        db.execute(select(Person).where(Person.id == person_uuid))
     ).scalar_one_or_none()
     if not requester:
         raise HTTPException(
@@ -1056,14 +1056,14 @@ async def find_swap_candidates_json(
             raise HTTPException(status_code=400, detail="Invalid assignment_id format")
 
         target_assignment = (
-            await db.execute(select(Assignment).where(Assignment.id == assignment_uuid))
+            db.execute(select(Assignment).where(Assignment.id == assignment_uuid))
         ).scalar_one_or_none()
         if not target_assignment:
             raise HTTPException(
                 status_code=404, detail=f"Assignment {request.assignment_id} not found"
             )
         target_block = (
-            await db.execute(
+            db.execute(
                 select(Block).where(Block.id == target_assignment.block_id)
             )
         ).scalar_one_or_none()
@@ -1075,7 +1075,7 @@ async def find_swap_candidates_json(
             raise HTTPException(status_code=400, detail="Invalid block_id format")
 
         target_block = (
-            await db.execute(select(Block).where(Block.id == block_uuid))
+            db.execute(select(Block).where(Block.id == block_uuid))
         ).scalar_one_or_none()
         if not target_block:
             raise HTTPException(
@@ -1230,7 +1230,7 @@ async def generate_faculty_outpatient(
     regenerate: bool = True,
     include_clinic: bool = True,
     include_supervision: bool = True,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -1314,7 +1314,7 @@ async def generate_faculty_outpatient(
     except (SQLAlchemyError, ValueError, KeyError, TypeError) as e:
         # Use repr to avoid format string issues with loguru
         logger.error("Faculty outpatient generation error: {}", repr(e), exc_info=True)
-        await db.rollback()
+        db.rollback()
         raise HTTPException(
             status_code=500,
             detail=f"Faculty outpatient generation failed: {repr(e)}",

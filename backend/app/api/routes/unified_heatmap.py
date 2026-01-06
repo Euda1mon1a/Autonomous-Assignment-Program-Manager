@@ -6,11 +6,11 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import HTMLResponse, StreamingResponse
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy import select
 
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.user import User
 from app.schemas.unified_heatmap import (
     HeatmapExportRequest,
@@ -34,7 +34,7 @@ async def get_heatmap_data(
     end_date: date = Query(..., description="End date for heatmap"),
     include_fmit: bool = Query(True, description="Include FMIT assignments"),
     include_residency: bool = Query(True, description="Include residency assignments"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> UnifiedCoverageResponse:
     """
@@ -90,7 +90,7 @@ async def get_heatmap_data(
 @router.post("/heatmap/data", response_model=UnifiedCoverageResponse)
 async def post_heatmap_data(
     request: UnifiedCoverageRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> UnifiedCoverageResponse:
     """
@@ -142,7 +142,7 @@ async def render_heatmap(
     end_date: date = Query(..., description="End date for heatmap"),
     include_fmit: bool = Query(True, description="Include FMIT assignments"),
     include_residency: bool = Query(True, description="Include residency assignments"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> HTMLResponse:
     """
@@ -198,7 +198,7 @@ async def render_heatmap(
 @router.post("/heatmap/render", response_class=HTMLResponse)
 async def post_render_heatmap(
     request: HeatmapRenderRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> HTMLResponse:
     """
@@ -253,7 +253,7 @@ async def export_heatmap(
     include_residency: bool = Query(True, description="Include residency assignments"),
     width: int = Query(1200, description="Image width in pixels", gt=0, le=4000),
     height: int = Query(800, description="Image height in pixels", gt=0, le=4000),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -335,7 +335,7 @@ async def export_heatmap(
 @router.post("/heatmap/export")
 async def post_export_heatmap(
     request: HeatmapExportRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -417,7 +417,7 @@ async def get_person_coverage_data(
     start_date: date = Query(..., description="Start date for heatmap"),
     end_date: date = Query(..., description="End date for heatmap"),
     include_call: bool = Query(False, description="Include call assignments"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> PersonCoverageResponse:
     """
@@ -462,7 +462,7 @@ async def get_person_coverage_data(
 @router.post("/person-coverage/data", response_model=PersonCoverageResponse)
 async def post_person_coverage_data(
     request: PersonCoverageRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> PersonCoverageResponse:
     """
@@ -504,7 +504,7 @@ async def post_person_coverage_data(
 async def get_weekly_fmit_data(
     start_date: date = Query(..., description="Start date for heatmap"),
     end_date: date = Query(..., description="End date for heatmap"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> WeeklyFMITResponse:
     """
@@ -546,7 +546,7 @@ async def get_weekly_fmit_data(
 @router.post("/weekly-fmit/data", response_model=WeeklyFMITResponse)
 async def post_weekly_fmit_data(
     request: WeeklyFMITRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> WeeklyFMITResponse:
     """

@@ -15,11 +15,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select, and_
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload, Session
 
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
@@ -316,7 +316,7 @@ def calculate_aggregate_metrics(
 
 @router.get("/academic-year", response_model=TimelineResponse)
 async def get_academic_year_timeline(
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -356,7 +356,7 @@ async def get_faculty_timeline(
     end_date: date | None = Query(
         None, description="End date (default: academic year end)"
     ),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -376,7 +376,7 @@ async def get_faculty_timeline(
     """
     # Verify faculty exists
     faculty = (
-        await db.execute(select(Person).where(Person.id == faculty_id))
+        db.execute(select(Person).where(Person.id == faculty_id))
     ).scalar_one_or_none()
     if not faculty:
         raise HTTPException(
@@ -427,7 +427,7 @@ async def get_faculty_timeline(
 @router.get("/week/{week_start}", response_model=WeeklyViewResponse)
 async def get_weekly_view(
     week_start: date,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -563,7 +563,7 @@ async def get_gantt_data(
     faculty_ids: list[UUID] | None = Query(
         None, description="Filter by specific faculty IDs"
     ),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """

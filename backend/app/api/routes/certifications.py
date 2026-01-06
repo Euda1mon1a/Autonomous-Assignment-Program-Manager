@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from app.api.dependencies.role_filter import require_admin
 from app.controllers.certification_controller import CertificationController
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.user import User
 from app.schemas.certification import (
     CertificationTypeCreate,
@@ -40,7 +40,7 @@ router = APIRouter()
 @router.get("/types", response_model=CertificationTypeListResponse)
 async def list_certification_types(
     active_only: bool = Query(True, description="Only show active certification types"),
-    db=Depends(get_async_db),
+    db=Depends(get_db),
 ):
     """List all certification types (BLS, ACLS, PALS, etc.)."""
     controller = CertificationController(db)
@@ -50,7 +50,7 @@ async def list_certification_types(
 @router.get("/types/{cert_type_id}", response_model=CertificationTypeResponse)
 async def get_certification_type(
     cert_type_id: UUID,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
 ):
     """Get a certification type by ID."""
     controller = CertificationController(db)
@@ -60,7 +60,7 @@ async def get_certification_type(
 @router.post("/types", response_model=CertificationTypeResponse, status_code=201)
 async def create_certification_type(
     cert_type_in: CertificationTypeCreate,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Create a new certification type. Requires authentication."""
@@ -72,7 +72,7 @@ async def create_certification_type(
 async def update_certification_type(
     cert_type_id: UUID,
     cert_type_in: CertificationTypeUpdate,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Update a certification type. Requires authentication."""
@@ -88,7 +88,7 @@ async def update_certification_type(
 @router.get("/expiring", response_model=ExpiringCertificationsListResponse)
 async def get_expiring_certifications(
     days: int = Query(180, description="Days to look ahead (default 6 months)"),
-    db=Depends(get_async_db),
+    db=Depends(get_db),
 ):
     """Get all certifications expiring within N days."""
     controller = CertificationController(db)
@@ -97,7 +97,7 @@ async def get_expiring_certifications(
 
 @router.get("/compliance", response_model=ComplianceSummaryResponse)
 async def get_compliance_summary(
-    db=Depends(get_async_db),
+    db=Depends(get_db),
 ):
     """Get overall certification compliance summary."""
     controller = CertificationController(db)
@@ -107,7 +107,7 @@ async def get_compliance_summary(
 @router.get("/compliance/{person_id}", response_model=PersonComplianceResponse)
 async def get_person_compliance(
     person_id: UUID,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
 ):
     """Get certification compliance for a specific person."""
     controller = CertificationController(db)
@@ -123,7 +123,7 @@ async def get_person_compliance(
 async def list_certifications_for_person(
     person_id: UUID,
     include_expired: bool = Query(True, description="Include expired certifications"),
-    db=Depends(get_async_db),
+    db=Depends(get_db),
 ):
     """List all certifications for a specific person."""
     controller = CertificationController(db)
@@ -136,7 +136,7 @@ async def list_certifications_for_person(
 @router.get("/{cert_id}", response_model=PersonCertificationResponse)
 async def get_person_certification(
     cert_id: UUID,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
 ):
     """Get a person certification by ID."""
     controller = CertificationController(db)
@@ -146,7 +146,7 @@ async def get_person_certification(
 @router.post("", response_model=PersonCertificationResponse, status_code=201)
 async def create_person_certification(
     cert_in: PersonCertificationCreate,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Add a certification for a person. Requires authentication."""
@@ -158,7 +158,7 @@ async def create_person_certification(
 async def update_person_certification(
     cert_id: UUID,
     cert_in: PersonCertificationUpdate,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Update a person's certification. Requires authentication."""
@@ -178,7 +178,7 @@ class RenewalRequest(BaseModel):
 async def renew_certification(
     cert_id: UUID,
     renewal: RenewalRequest,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Renew a certification with new dates. Requires authentication."""
@@ -194,7 +194,7 @@ async def renew_certification(
 @router.delete("/{cert_id}", status_code=204)
 async def delete_person_certification(
     cert_id: UUID,
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Delete a person's certification. Requires authentication."""
@@ -209,7 +209,7 @@ async def delete_person_certification(
 
 @router.post("/admin/send-reminders")
 async def trigger_certification_reminders(
-    db=Depends(get_async_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ):

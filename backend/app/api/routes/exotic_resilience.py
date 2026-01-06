@@ -20,9 +20,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
-from app.api.deps import get_async_db
+from app.db.session import get_db
 from app.models.assignment import Assignment
 
 # Import thermodynamics modules
@@ -524,7 +524,7 @@ class CatastropheResponse(BaseModel):
 @router.post("/thermodynamics/entropy", response_model=EntropyMetricsResponse)
 async def analyze_schedule_entropy(
     request: EntropyAnalysisRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> EntropyMetricsResponse:
     """
     Analyze schedule entropy using information theory.
@@ -547,7 +547,7 @@ async def analyze_schedule_entropy(
     if request.schedule_id:
         query = query.where(Assignment.schedule_id == request.schedule_id)
 
-    result = await db.execute(query)
+    result = db.execute(query)
     assignments = list(result.scalars().all())
 
     if not assignments:
@@ -581,7 +581,7 @@ async def analyze_schedule_entropy(
 @router.post("/thermodynamics/phase-transition", response_model=PhaseTransitionResponse)
 async def detect_phase_transition(
     request: PhaseTransitionRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> PhaseTransitionResponse:
     """
     Detect approaching phase transitions using critical phenomena theory.
@@ -602,7 +602,7 @@ async def detect_phase_transition(
     if request.schedule_id:
         query = query.where(Assignment.schedule_id == request.schedule_id)
 
-    result = await db.execute(query)
+    result = db.execute(query)
     assignments = list(result.scalars().all())
 
     if len(assignments) < 10:
@@ -663,7 +663,7 @@ async def detect_phase_transition(
 @router.post("/immune/assess", response_model=ImmuneAssessmentResponse)
 async def assess_immune_response(
     request: ImmuneAssessmentRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> ImmuneAssessmentResponse:
     """
     Assess schedule anomalies using Artificial Immune System (AIS).
@@ -683,7 +683,7 @@ async def assess_immune_response(
     if request.schedule_id:
         query = query.where(Assignment.schedule_id == request.schedule_id)
 
-    result = await db.execute(query)
+    result = db.execute(query)
     assignments = list(result.scalars().all())
 
     if not assignments:
@@ -739,7 +739,7 @@ async def assess_immune_response(
 
 @router.get("/immune/memory-cells", response_model=MemoryCellsResponse)
 async def get_memory_cells(
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> MemoryCellsResponse:
     """
     Get status of immune system memory cells.
@@ -770,7 +770,7 @@ async def get_memory_cells(
 @router.post("/immune/antibody-analysis", response_model=AntibodyAnalysisResponse)
 async def analyze_antibodies(
     request: AntibodyAnalysisRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> AntibodyAnalysisResponse:
     """
     Analyze antibody (repair strategy) coverage for anomaly patterns.
@@ -839,7 +839,7 @@ async def analyze_antibodies(
 @router.post("/time-crystal/rigidity", response_model=RigidityResponse)
 async def calculate_rigidity(
     request: RigidityRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> RigidityResponse:
     """
     Calculate schedule rigidity (stability under perturbation).
@@ -861,14 +861,14 @@ async def calculate_rigidity(
         query = select(Assignment).where(
             Assignment.schedule_id == request.current_schedule_id
         )
-        result = await db.execute(query)
+        result = db.execute(query)
         current_assignments = list(result.scalars().all())
 
     if request.proposed_schedule_id:
         query = select(Assignment).where(
             Assignment.schedule_id == request.proposed_schedule_id
         )
-        result = await db.execute(query)
+        result = db.execute(query)
         proposed_assignments = list(result.scalars().all())
 
     # Or use provided assignment lists
@@ -908,7 +908,7 @@ async def calculate_rigidity(
 @router.post("/time-crystal/subharmonics", response_model=SubharmonicResponse)
 async def detect_subharmonics(
     request: SubharmonicRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> SubharmonicResponse:
     """
     Detect natural periodic cycles (subharmonics) in schedule patterns.
@@ -926,7 +926,7 @@ async def detect_subharmonics(
     if request.schedule_id:
         query = query.where(Assignment.schedule_id == request.schedule_id)
 
-    result = await db.execute(query)
+    result = db.execute(query)
     assignments = list(result.scalars().all())
 
     if len(assignments) < 14:
@@ -961,7 +961,7 @@ async def detect_subharmonics(
 @router.get("/time-crystal/checkpoints", response_model=CheckpointResponse)
 async def get_stroboscopic_checkpoints(
     schedule_id: UUID | None = None,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> CheckpointResponse:
     """
     Get stroboscopic checkpoint status.
@@ -1160,7 +1160,7 @@ def _grade_stability(rigidity: float) -> str:
 @router.post("/exotic/metastability", response_model=MetastabilityResponse)
 async def analyze_metastability(
     request: MetastabilityRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> MetastabilityResponse:
     """
     Detect metastable states using statistical mechanics.
@@ -1242,7 +1242,7 @@ async def analyze_metastability(
 @router.post("/exotic/reorganization-risk", response_model=ReorganizationRiskResponse)
 async def predict_reorganization_risk(
     request: ReorganizationRiskRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> ReorganizationRiskResponse:
     """
     Predict risk of sudden system reorganization.
@@ -1277,7 +1277,7 @@ async def predict_reorganization_risk(
 @router.post("/exotic/spin-glass", response_model=SpinGlassResponse)
 async def generate_spin_glass_replicas(
     request: SpinGlassRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> SpinGlassResponse:
     """
     Generate diverse schedule replicas using spin glass model.
@@ -1334,7 +1334,7 @@ async def generate_spin_glass_replicas(
 @router.post("/exotic/catastrophe", response_model=CatastropheResponse)
 async def predict_catastrophe(
     request: CatastropheRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
 ) -> CatastropheResponse:
     """
     Predict sudden system failures using catastrophe theory.

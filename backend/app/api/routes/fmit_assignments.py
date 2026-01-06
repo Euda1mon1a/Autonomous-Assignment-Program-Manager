@@ -17,12 +17,12 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import and_, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
 
 from app.core.logging import get_logger
 from app.core.security import get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.absence import Absence
 from app.models.assignment import Assignment
 from app.models.block import Block
@@ -60,9 +60,9 @@ BLOCKS_PER_WEEK = 14  # 7 days x 2 blocks (AM/PM)
 # =============================================================================
 
 
-async def get_fmit_template(db: AsyncSession) -> RotationTemplate | None:
+async def get_fmit_template(db: Session) -> RotationTemplate | None:
     """Get the FMIT rotation template."""
-    result = await db.execute(
+    result = db.execute(
         select(RotationTemplate).where(RotationTemplate.name == FMIT_ROTATION_NAME)
     )
     return result.scalar_one_or_none()
@@ -75,7 +75,7 @@ def get_week_start(any_date: date) -> date:
 
 
 async def get_or_create_blocks(
-    db: AsyncSession, start_date: date, end_date: date
+    db: Session, start_date: date, end_date: date
 ) -> list[Block]:
     """Get or create all blocks for a date range."""
     blocks = []
@@ -84,7 +84,7 @@ async def get_or_create_blocks(
     while current_date <= end_date:
         for time_of_day in ["AM", "PM"]:
             # Try to get existing block
-            result = await db.execute(
+            result = db.execute(
                 select(Block).where(
                     and_(Block.date == current_date, Block.time_of_day == time_of_day)
                 )
@@ -101,7 +101,7 @@ async def get_or_create_blocks(
                     is_holiday=False,
                 )
                 db.add(block)
-                await db.flush()
+                db.flush()
 
             blocks.append(block)
 
@@ -111,7 +111,7 @@ async def get_or_create_blocks(
 
 
 async def check_faculty_conflicts(
-    db: AsyncSession,
+    db: Session,
     faculty_id: UUID,
     week_start: date,
     week_end: date,
@@ -121,7 +121,7 @@ async def check_faculty_conflicts(
     conflicts = []
 
     # Check for blocking absences
-    result = await db.execute(
+    result = db.execute(
         select(Absence).where(
             and_(
                 Absence.person_id == faculty_id,
@@ -147,7 +147,7 @@ async def check_faculty_conflicts(
         )
 
     # Check for existing FMIT assignment
-    result = await db.execute(
+    result = db.execute(
         select(Assignment)
         .join(Block, Assignment.block_id == Block.id)
         .where(
@@ -176,7 +176,7 @@ async def check_faculty_conflicts(
     buffer_start = week_start - timedelta(days=14)
     buffer_end = week_end + timedelta(days=14)
 
-    result = await db.execute(
+    result = db.execute(
         select(Assignment)
         .join(Block, Assignment.block_id == Block.id)
         .where(
@@ -232,7 +232,7 @@ def calculate_jains_fairness_index(values: list[float]) -> float:
 )
 async def create_fmit_assignment(
     request: FMITAssignmentCreate,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -244,7 +244,7 @@ async def create_fmit_assignment(
     Requires coordinator or admin role.
     """
     # Validate faculty exists
-    result = await db.execute(
+    result = db.execute(
         select(Person).where(
             and_(Person.id == request.faculty_id, Person.type == "faculty")
         )
@@ -297,7 +297,7 @@ async def create_fmit_assignment(
 
     for block in blocks:
         # Check if already assigned to this block
-        result = await db.execute(
+        result = db.execute(
             select(Assignment).where(
                 and_(
                     Assignment.block_id == block.id,
@@ -316,10 +316,10 @@ async def create_fmit_assignment(
             created_by=created_by,
         )
         db.add(assignment)
-        await db.flush()
+        db.flush()
         assignment_ids.append(assignment.id)
 
-    await db.commit()
+    db.commit()
 
     logger.info(
         f"Created FMIT assignment for faculty {faculty.name} week {week_start}",
@@ -356,7 +356,7 @@ async def create_fmit_assignment(
 async def update_fmit_assignment(
     week_date: date,
     request: FMITAssignmentUpdate,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -376,7 +376,7 @@ async def update_fmit_assignment(
     week_end = week_start + timedelta(days=6)
 
     # Find existing assignments for this week
-    result = await db.execute(
+    result = db.execute(
         select(Assignment)
         .join(Block, Assignment.block_id == Block.id)
         .options(joinedload(Assignment.person))
@@ -399,7 +399,7 @@ async def update_fmit_assignment(
     # If reassigning to new faculty
     if request.faculty_id:
         # Validate new faculty
-        result = await db.execute(
+        result = db.execute(
             select(Person).where(
                 and_(Person.id == request.faculty_id, Person.type == "faculty")
             )
@@ -434,7 +434,7 @@ async def update_fmit_assignment(
         for assignment in existing_assignments:
             assignment.person_id = request.faculty_id
 
-        await db.commit()
+        db.commit()
 
         logger.info(
             f"Reassigned FMIT week {week_start} from {old_faculty_name} to {new_faculty.name}",
@@ -484,7 +484,7 @@ async def update_fmit_assignment(
 async def delete_fmit_assignment(
     faculty_id: UUID,
     week_date: date,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -501,7 +501,7 @@ async def delete_fmit_assignment(
     week_end = week_start + timedelta(days=6)
 
     # Find assignments to delete
-    result = await db.execute(
+    result = db.execute(
         select(Assignment)
         .join(Block, Assignment.block_id == Block.id)
         .where(
@@ -527,9 +527,9 @@ async def delete_fmit_assignment(
     deleted_count = len(assignments)
 
     for assignment in assignments:
-        await db.delete(assignment)
+        db.delete(assignment)
 
-    await db.commit()
+    db.commit()
 
     logger.info(
         f"Deleted {deleted_count} FMIT assignments for week {week_start}",
@@ -557,7 +557,7 @@ async def delete_fmit_assignment(
 )
 async def bulk_create_fmit_assignments(
     request: FMITBulkAssignmentRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -585,7 +585,7 @@ async def bulk_create_fmit_assignments(
         week_end = week_start + timedelta(days=6)
 
         # Validate faculty
-        result = await db.execute(
+        result = db.execute(
             select(Person).where(
                 and_(Person.id == item.faculty_id, Person.type == "faculty")
             )
@@ -674,7 +674,7 @@ async def bulk_create_fmit_assignments(
 
         for block in blocks:
             # Check if already exists
-            result = await db.execute(
+            result = db.execute(
                 select(Assignment).where(
                     and_(
                         Assignment.block_id == block.id,
@@ -693,7 +693,7 @@ async def bulk_create_fmit_assignments(
                 created_by=created_by,
             )
             db.add(assignment)
-            await db.flush()
+            db.flush()
             assignment_ids.append(assignment.id)
 
         successful_count += 1
@@ -708,7 +708,7 @@ async def bulk_create_fmit_assignments(
         )
 
     if not request.dry_run:
-        await db.commit()
+        db.commit()
 
     logger.info(
         f"Bulk FMIT assignment: {successful_count} successful, {failed_count} failed, {skipped_count} skipped",
@@ -744,7 +744,7 @@ async def get_year_grid(
     academic_year: bool = Query(
         True, description="Use academic year (July-June) instead of calendar year"
     ),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -769,7 +769,7 @@ async def get_year_grid(
         end_date = date(year, 12, 31)
 
     # Get all FMIT assignments in range
-    result = await db.execute(
+    result = db.execute(
         select(Assignment)
         .join(Block, Assignment.block_id == Block.id)
         .options(joinedload(Assignment.person))
@@ -830,7 +830,7 @@ async def get_year_grid(
         week_number += 1
 
     # Get all faculty and calculate summaries
-    result = await db.execute(select(Person).where(Person.type == "faculty"))
+    result = db.execute(select(Person).where(Person.type == "faculty"))
     all_faculty = result.scalars().all()
 
     faculty_summaries = []
@@ -894,7 +894,7 @@ async def get_year_grid(
 async def check_conflicts(
     faculty_id: UUID = Query(..., description="Faculty member UUID"),
     week_date: date = Query(..., description="Target week date"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -910,7 +910,7 @@ async def check_conflicts(
         )
 
     # Validate faculty
-    result = await db.execute(
+    result = db.execute(
         select(Person).where(and_(Person.id == faculty_id, Person.type == "faculty"))
     )
     faculty = result.scalar_one_or_none()
@@ -940,7 +940,7 @@ async def check_conflicts(
     suggestions = []
     if critical_conflicts:
         # Suggest alternative faculty
-        result = await db.execute(
+        result = db.execute(
             select(Person).where(
                 and_(Person.type == "faculty", Person.id != faculty_id)
             )

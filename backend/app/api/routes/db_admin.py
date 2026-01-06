@@ -8,12 +8,12 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from app.auth.permissions.decorators import require_role
 from app.core.security import get_current_active_user
 from app.db.optimization import IndexAdvisor
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.user import User
 
 logger = logging.getLogger(__name__)
@@ -164,7 +164,7 @@ class VacuumResponse(BaseModel):
     dependencies=[Depends(require_role("ADMIN"))],
 )
 async def get_database_health(
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> DatabaseHealthResponse:
     """
@@ -273,7 +273,7 @@ async def get_index_recommendations(
     min_table_size_mb: float = Query(
         1.0, ge=0, description="Minimum table size to analyze"
     ),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> list[IndexRecommendationResponse]:
     """
@@ -325,7 +325,7 @@ async def get_index_recommendations(
 async def get_unused_indexes(
     min_age_days: int = Query(7, ge=1, description="Minimum index age in days"),
     min_size_mb: float = Query(10.0, ge=0, description="Minimum index size in MB"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> list[IndexUsageStatsResponse]:
     """
@@ -378,7 +378,7 @@ async def get_unused_indexes(
     dependencies=[Depends(require_role("ADMIN"))],
 )
 async def get_index_usage_stats(
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> list[IndexUsageStatsResponse]:
     """
@@ -425,7 +425,7 @@ async def get_index_usage_stats(
 )
 async def get_table_statistics(
     table_name: str,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> TableStatisticsResponse:
     """
@@ -494,7 +494,7 @@ async def get_table_statistics(
 )
 async def get_query_statistics(
     request_id: str = Query(..., description="Request ID to analyze"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> QueryStatsResponse:
     """
@@ -544,7 +544,7 @@ async def get_query_statistics(
 async def vacuum_table(
     table_name: str,
     analyze: bool = Query(True, description="Also run ANALYZE"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> VacuumResponse:
     """
@@ -590,7 +590,7 @@ async def vacuum_table(
             )
 
         # VACUUM cannot run in a transaction, so we need to commit first
-        await db.commit()
+        db.commit()
 
         # Run VACUUM
         if analyze:

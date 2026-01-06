@@ -49,10 +49,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from app.core.security import get_current_active_user, get_current_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.models.swap import SwapRecord
 from app.models.user import User
 from app.schemas.swap import (
@@ -72,7 +72,7 @@ router = APIRouter(prefix="/swaps", tags=["swaps"])
 @router.post("/execute", response_model=SwapExecuteResponse)
 async def execute_swap(
     request: SwapExecuteRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -152,7 +152,7 @@ async def execute_swap(
 @router.post("/validate", response_model=SwapValidationResult)
 async def validate_swap(
     request: SwapExecuteRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -185,7 +185,7 @@ async def get_swap_history(
     end_date: date | None = None,
     page: int = 1,
     page_size: int = 20,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -230,12 +230,12 @@ async def get_swap_history(
 
     # Get total count for pagination
     count_query = select(func.count()).select_from(query.subquery())
-    total_result = await db.execute(count_query)
+    total_result = db.execute(count_query)
     total = total_result.scalar_one()
 
     # Apply pagination
     query = query.offset((page - 1) * page_size).limit(page_size)
-    result = await db.execute(query)
+    result = db.execute(query)
     swaps = result.scalars().all()
 
     # Build response items
@@ -277,7 +277,7 @@ async def get_swap_history(
 @router.get("/{swap_id}", response_model=SwapRecordResponse)
 async def get_swap(
     swap_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -299,7 +299,7 @@ async def get_swap(
             selectinload(SwapRecord.target_faculty),
         )
     )
-    result = await db.execute(query)
+    result = db.execute(query)
     swap = result.scalar_one_or_none()
 
     if not swap:
@@ -332,7 +332,7 @@ async def get_swap(
 async def rollback_swap(
     swap_id: UUID,
     request: SwapRollbackRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """

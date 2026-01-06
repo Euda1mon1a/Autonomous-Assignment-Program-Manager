@@ -9,11 +9,11 @@ Admin endpoints for managing experiments:
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy import select
 
 from app.core.security import get_admin_user, get_current_active_user
-from app.db.session import get_async_db
+from app.db.session import get_db
 from app.experiments import (
     Experiment,
     ExperimentService,
@@ -75,7 +75,7 @@ def _experiment_to_response(exp: Experiment) -> ExperimentResponse:
 )
 async def create_experiment(
     experiment_in: ExperimentCreateRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -116,7 +116,7 @@ async def list_experiments(
     ),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(50, ge=1, le=100, description="Items per page"),
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -149,7 +149,7 @@ async def list_experiments(
 
 @router.get("/stats", response_model=ExperimentStatsResponse)
 async def get_experiment_stats(
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -204,7 +204,7 @@ async def get_experiment_stats(
 @router.get("/{key}", response_model=ExperimentResponse)
 async def get_experiment(
     key: str,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -230,7 +230,7 @@ async def get_experiment(
 async def update_experiment(
     key: str,
     update_in: ExperimentUpdateRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -263,7 +263,7 @@ async def update_experiment(
 @router.delete("/{key}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_experiment(
     key: str,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -294,7 +294,7 @@ async def delete_experiment(
 @router.post("/{key}/start", response_model=ExperimentResponse)
 async def start_experiment(
     key: str,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -321,7 +321,7 @@ async def start_experiment(
 @router.post("/{key}/pause", response_model=ExperimentResponse)
 async def pause_experiment(
     key: str,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -347,7 +347,7 @@ async def pause_experiment(
 async def conclude_experiment(
     key: str,
     conclude_in: ConcludeExperimentRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -377,7 +377,7 @@ async def conclude_experiment(
 async def assign_user(
     key: str,
     assignment_in: UserAssignmentRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -415,7 +415,7 @@ async def assign_user(
 async def get_user_assignment(
     key: str,
     user_id: str,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -451,7 +451,7 @@ async def get_user_assignment(
 async def track_metric(
     key: str,
     metric_in: MetricTrackRequest,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -493,7 +493,7 @@ async def track_metric(
 async def get_variant_metrics(
     key: str,
     variant_key: str,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -519,7 +519,7 @@ async def get_variant_metrics(
 @router.get("/{key}/results", response_model=ExperimentResultsResponse)
 async def get_experiment_results(
     key: str,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
@@ -565,7 +565,7 @@ async def get_experiment_results(
 @router.get("/{key}/events", response_model=ExperimentLifecycleListResponse)
 async def get_lifecycle_events(
     key: str,
-    db: AsyncSession = Depends(get_async_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
     """
