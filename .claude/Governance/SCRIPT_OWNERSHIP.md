@@ -64,6 +64,14 @@ This document maps all executable scripts in the repository to their owning agen
 |--------|-------------|-------------|---------|-------------------|
 | `.claude/scripts/ccw-validation-gate.sh` | CI_LIAISON | COORD_OPS | CCW (Claude Code Work) validation gate after burns | Every ~20 CCW tasks, before PR |
 
+### Validation Scripts (G4 Domain)
+
+| Script | Owner Agent | Coordinator | Purpose | Trigger Condition |
+|--------|-------------|-------------|---------|-------------------|
+| `scripts/validate-agent-hierarchy.sh` | G4_SCRIPT_KIDDY | G4_CONTEXT_MANAGER | Validate agent specs match HIERARCHY.md reporting structure | Pre-commit, after agent spec changes |
+
+**Note:** `validate-agent-hierarchy.sh` is bash 3.2+ compatible (uses case statements, not associative arrays). Works on macOS default bash.
+
 ---
 
 ## Detailed Script Documentation

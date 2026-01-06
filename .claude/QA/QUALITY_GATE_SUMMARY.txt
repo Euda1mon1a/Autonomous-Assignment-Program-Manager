@@ -1,0 +1,112 @@
+QUALITY GATE SPECIFICATION - 16 GUI BUGS
+================================================================================
+
+EXECUTIVE SUMMARY
+- 16 bugs split: 3 P0 (critical), 7 P1 (feature-critical), 6 P2 (polish)
+- Verification: ~10 new automated tests + 2-3 hours manual UAT
+- 3 bugs flagged hard-to-verify (CSS sticky, mobile interactions, design acceptance)
+
+================================================================================
+ACCEPTANCE CRITERIA BY SEVERITY
+
+P0 CRITICAL (Auto + Manual - Blocks Release)
+─────────────────────────────────────────────
+1. Block 0 Fudge Factor
+   ✓ Dates render correctly (no off-by-one errors)
+   ✓ Date boundaries (fiscal year) don't shift
+   ✗ Automated: Jest with date boundary cases
+   ✗ Manual: UI calendar vs backend /blocks endpoint alignment
+
+2. Conflicts API 404
+   ✓ /api/v1/conflicts returns 200 (not 404)
+   ✓ Empty conflict list shows "No conflicts" (not error)
+   ✓ Error boundary doesn't crash on 404
+   ✗ Automated: Mock 200/404 responses; test error handling
+   ✗ Manual: Navigate to conflicts page, verify no 404 toast
+
+3. Swap Permissions
+   ✓ Residents can swap their own assignments only
+   ✓ Coordinators can approve/reject all swaps
+   ✓ UI disables button (grayed, tooltip) if unauthorized
+   ✓ API returns 403 for unauthorized attempts
+   ✗ Automated: Test with resident/coordinator/admin roles
+   ✗ Manual: Cross-resident swap attempt should fail
+
+P1 FEATURE-CRITICAL (Auto + Manual)
+────────────────────────────────────
+4. Month/Week Views Empty
+   ✗ Automated: Mock hooks; verify grid renders
+   ✗ Manual: Toggle views; verify content appears
+
+5. Call Roster Empty
+   ✗ Automated: Mock empty assignments; verify "No data" message
+   ✗ Manual: Check call-roster page displays
+
+6. Import Table Missing
+   ✗ Automated: Render preview with CSV mock; verify table DOM
+   ✗ Manual: Upload test CSV; verify table renders
+
+7. CSV Export Fails
+   ✗ Automated: Mock blob download; verify filename/content-type
+   ✗ Manual: Click export; verify file downloads correctly
+
+(8-12 are P2 polish bugs with similar acceptance criteria)
+
+================================================================================
+HARD-TO-VERIFY FIXES (Flag for Special Attention)
+
+#8  Sticky Header     → CSS-only (needs visual regression testing)
+#9  Nav Dropdowns     → Mobile interactions (device testing required)
+#10 Manifest Redesign → Visual design (needs design review)
+
+================================================================================
+TESTING FRAMEWORK
+
+Tools: Jest + React Testing Library
+Pattern: jest.mock('@/lib/hooks') for API hooks
+Helpers: render(), screen.getByTestId(), fireEvent.click()
+Dates: Use localDate(year, month, day) to avoid timezone issues
+
+================================================================================
+VERIFICATION BATCH STRATEGY
+
+Batch 1: Blocks 0, Conflicts API, Swap Permissions
+         → Smoke tests required (3-4 hours CI time)
+
+Batch 2: Month/Week/Call, Import, CSV Export
+         → Integration tests (2-3 hours CI time)
+
+Batch 3: Sticky, Nav, Manifest, Clickable, PGY Filter
+         → Manual UX verification (2-3 hours human time)
+
+================================================================================
+QUALITY GATES
+
+CI-Level Gates:
+  ✓ All Jest tests pass (npm test)
+  ✓ No console errors in test runs
+  ✓ No visual regressions (Playwright/Chromatic)
+  ✓ Coverage >80% on modified files
+
+Manual Gates:
+  ✓ P0 bugs verified against acceptance criteria
+  ✓ No new accessibility regressions
+  ✓ Mobile responsiveness checked (3 breakpoints)
+  ✓ Product owner sign-off on design changes
+
+================================================================================
+DELIVERABLES
+
+✓ QUALITY_GATE_SPEC.md        (detailed criteria, 12 bugs × 3 categories)
+✓ QUALITY_GATE_SUMMARY.txt    (this file, exec summary)
+✓ Test files to create/enhance (10 files listed in spec)
+✓ Acceptance criteria checklists (per bug)
+✓ Visual regression test list  (3 CSS-related bugs)
+
+ESTIMATED EFFORT
+- Dev: 16-20 hours (code fixes + tests)
+- QA: 3-4 hours (manual verification)
+- Design review: 1 hour (manifest redesign)
+- Total: ~20-25 hours for full batch
+
+================================================================================
