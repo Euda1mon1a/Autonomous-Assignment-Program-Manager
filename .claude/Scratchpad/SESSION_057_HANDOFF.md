@@ -66,12 +66,54 @@ Updated stale entries to reflect completed work:
 
 ---
 
-## Pending Work
+## MCP Context Tax Audit - FINDINGS
 
-### MCP Context Tax Audit (Deferred)
-- 75k tokens (37.5%) for MCP tools
-- User confirmed subagents DO use MCP
-- Audit deferred to future session
+### Usage This Session
+| Actor | MCP Calls |
+|-------|-----------|
+| ORCHESTRATOR | 7 (rag_health, rag_search) |
+| Subagents (4 spawned) | 0 |
+| **Total** | **7** |
+
+### The Problem
+- **75k tokens (37.5%)** loaded for 77 MCP tools
+- Only 7 calls made, all by ORCHESTRATOR
+- Subagents used file tools (Read, Write, Grep) instead
+- Resilience/exotic tools never called during development
+
+### Proposed Solution: MCP Armory
+
+**Concept:** Stash crisis-response tools in a separate MCP config, keep only dev tools active.
+
+```
+MCP-DEV (always loaded, ~15k tokens):
+├── rag_search, rag_context, rag_health, rag_ingest
+├── validate_schedule_tool, validate_schedule_by_id_tool
+├── detect_conflicts_tool
+└── start_background_task_tool, get_task_status_tool
+
+MCP-ARMORY (load on-demand for crisis):
+├── Resilience (circuit breakers, defense levels, contingency)
+├── Burnout/Fatigue (Rt calculation, FRMS, creep-fatigue)
+├── Exotic (Hopfield, stigmergy, entropy, phase transitions)
+├── Deployment (promote, rollback, smoke tests)
+└── Benchmarking (solver comparison, ablation)
+```
+
+### Implementation Path
+1. Split `mcp-server/src/scheduler_mcp/tools.py` into modules
+2. Create two MCP server configs in `claude_desktop_config.json`
+3. Default: MCP-DEV only
+4. Crisis mode: `/armory load resilience` skill to activate
+
+### Why This Matters
+- **Development:** 15k tokens instead of 75k (60k saved = 30% of context)
+- **Crisis:** Full toolkit available when needed
+- **Subagents:** Won't be confused by 77 tools they don't use
+
+---
+
+## Pending Work
 
 ### Manual Testing Needed for #651
 - [ ] Navigate to /admin/users
