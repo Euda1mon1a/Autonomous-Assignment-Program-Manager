@@ -46,9 +46,9 @@
 ## Priority Fix Order
 
 ### P0 - Blockers
-1. Conflicts API 404 (mismatch between dashboard count and conflicts page)
-2. Swap permission error for admin
-3. Block date calculations (recurring - Block 0 fudge)
+1. **Block 0 fudge factor** - WITHOUT THIS, ALL ROTATION DATES ARE WRONG. Recurring regression. See `docs/architecture/BLOCK_ZERO_FUDGE.md`
+2. Conflicts API 404 (mismatch between dashboard count and conflicts page)
+3. Swap permission error for admin
 
 ### P1 - Core Functionality
 4. Month/Week view data population
