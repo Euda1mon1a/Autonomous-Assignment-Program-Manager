@@ -84,30 +84,47 @@ class TestHelperFunctions:
         assert color == COLORS["default"]
 
     def test_calculate_block_dates_block_1(self):
-        """Test block date calculation for first block."""
+        """Test block date calculation for first block uses Thursday-Wednesday alignment.
+
+        AY 2024-2025: July 1, 2024 is Monday, first Thursday is July 4.
+        Block 1: July 4 (Thu) - July 31 (Wed), 28 days
+        """
         academic_year_start = date(2024, 7, 1)
         start, end = calculate_block_dates(1, academic_year_start)
 
-        assert start == date(2024, 7, 1)
-        assert end == date(2024, 7, 28)
+        # First Thursday on or after July 1, 2024 is July 4
+        assert start == date(2024, 7, 4)
+        assert end == date(2024, 7, 31)
+        assert start.weekday() == 3  # Thursday
+        assert end.weekday() == 2  # Wednesday
         assert (end - start).days == 27  # 28 days total (0-27)
 
     def test_calculate_block_dates_block_2(self):
-        """Test block date calculation for second block."""
+        """Test block date calculation for second block uses Thursday-Wednesday alignment.
+
+        AY 2024-2025: Block 2 starts 28 days after Block 1 start.
+        Block 2: Aug 1 (Thu) - Aug 28 (Wed), 28 days
+        """
         academic_year_start = date(2024, 7, 1)
         start, end = calculate_block_dates(2, academic_year_start)
 
-        assert start == date(2024, 7, 29)
-        assert end == date(2024, 8, 25)
+        assert start == date(2024, 8, 1)
+        assert end == date(2024, 8, 28)
+        assert start.weekday() == 3  # Thursday
+        assert end.weekday() == 2  # Wednesday
 
     def test_calculate_block_dates_block_13(self):
-        """Test block date calculation for last block of year."""
+        """Test block date calculation for last block of year.
+
+        Block 13 ends on June 30 (academic year end), variable length.
+        """
         academic_year_start = date(2024, 7, 1)
         start, end = calculate_block_dates(13, academic_year_start)
 
-        # Block 13 starts after 12 * 28 = 336 days
-        expected_start = date(2024, 7, 1) + timedelta(days=12 * 28)
-        assert start == expected_start
+        # Block 13 ends on June 30 of next year
+        assert end == date(2025, 6, 30)
+        # Block 13 starts on a Thursday
+        assert start.weekday() == 3  # Thursday
 
     def test_calculate_block_dates_consistency(self):
         """Test that consecutive blocks don't overlap."""

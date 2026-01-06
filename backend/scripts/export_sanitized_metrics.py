@@ -43,17 +43,46 @@ def calculate_block_dates(block_number: int, academic_year: int = 2026) -> tuple
     """
     Calculate start/end dates for a block number.
 
-    Academic year starts July 1, each block is 28 days (4 weeks).
+    Uses Thursday-Wednesday aligned academic blocks:
+    - Block 0: July 1 through day before first Thursday (orientation)
+    - Blocks 1-12: 28 days each, Thursday start, Wednesday end
+    - Block 13: Starts Thursday, ends June 30 (variable length)
+
+    Args:
+        block_number: Block number (0-13)
+        academic_year: The ending year of academic year (e.g., 2026 for AY 2025-2026)
+
+    Returns:
+        Tuple of (block_start, block_end)
     """
-    from datetime import timedelta
+    try:
+        from app.utils.academic_blocks import get_block_dates as get_block_dates_util
 
-    # Academic year starts July 1
-    year_start = date(academic_year - 1, 7, 1)  # e.g., 2025-07-01 for AY 2025-2026
+        # Note: academic_year param here is the END year, utility expects START year
+        block = get_block_dates_util(block_number, academic_year - 1)
+        return block.start_date, block.end_date
+    except ImportError:
+        # Fallback for standalone script execution without full app context
+        from datetime import timedelta
 
-    block_start = year_start + timedelta(days=(block_number - 1) * 28)
-    block_end = block_start + timedelta(days=27)
+        # Use the centralized logic inline as fallback
+        THURSDAY = 3
+        july_1 = date(academic_year - 1, 7, 1)
+        june_30 = date(academic_year, 6, 30)
 
-    return block_start, block_end
+        days_until_thursday = (THURSDAY - july_1.weekday()) % 7
+        first_thursday = july_1 + timedelta(days=days_until_thursday)
+
+        if block_number == 0:
+            if first_thursday == july_1:
+                return july_1, july_1 - timedelta(days=1)
+            return july_1, first_thursday - timedelta(days=1)
+        elif block_number == 13:
+            block_12_end = first_thursday + timedelta(days=(12 * 28) - 1)
+            return block_12_end + timedelta(days=1), june_30
+        else:
+            block_start = first_thursday + timedelta(days=(block_number - 1) * 28)
+            return block_start, block_start + timedelta(days=27)
 
 
 def export_schedule_metrics(db, block_number: int = None) -> dict:

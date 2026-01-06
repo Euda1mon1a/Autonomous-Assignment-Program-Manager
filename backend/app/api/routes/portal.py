@@ -78,7 +78,7 @@ router = APIRouter(prefix="/portal", tags=["portal"])
 SWAP_MARKETPLACE_FLAG_KEY = "swap_marketplace_enabled"
 
 
-async def _check_marketplace_access(db: Session, user: User) -> bool:
+def _check_marketplace_access(db: Session, user: User) -> bool:
     """
     Check if the user has access to the swap marketplace.
 
@@ -1261,10 +1261,11 @@ async def get_swap_marketplace(
             total count of entries, and my_postings count
 
     Raises:
-        HTTPException: 403 if current user has no linked faculty profile
+        HTTPException: 403 if current user has no linked faculty profile (non-admin)
         HTTPException: 403 if marketplace access is disabled for user's role
 
     Business Logic:
+        - Admin users can view marketplace without faculty profile (read-only view)
         - Only shows PENDING swaps from other faculty (excludes own requests)
         - Checks compatibility: week not already assigned to viewer
         - Expiration set to 30 days from posted date
@@ -1282,65 +1283,70 @@ async def get_swap_marketplace(
             "Contact an administrator if you believe this is an error.",
         )
 
-    faculty = _get_faculty_for_user(db, current_user)
+    # Try to get faculty profile - admins/coordinators can view without one
+    faculty = _get_faculty_for_user_optional(db, current_user)
 
     # Query open swap requests for marketplace
     # Get all PENDING swaps that are open to the marketplace
     # (either ABSORB type or not yet accepted)
     # Eager load source_faculty to avoid N+1 when building entries
-    open_swaps = (
+    query = (
         db.query(SwapRecord)
         .options(joinedload(SwapRecord.source_faculty))
-        .filter(
-            SwapRecord.status == SwapStatus.PENDING,
-            SwapRecord.source_faculty_id
-            != faculty.id,  # Exclude current user's own requests
-        )
-        .order_by(SwapRecord.requested_at.desc())
-        .all()
+        .filter(SwapRecord.status == SwapStatus.PENDING)
     )
 
-    # Count user's own postings
-    my_postings = (
-        db.query(SwapRecord)
-        .filter(
-            SwapRecord.source_faculty_id == faculty.id,
-            SwapRecord.status == SwapStatus.PENDING,
+    # Exclude current user's own requests if they have a faculty profile
+    if faculty:
+        query = query.filter(SwapRecord.source_faculty_id != faculty.id)
+
+    open_swaps = query.order_by(SwapRecord.requested_at.desc()).all()
+
+    # Count user's own postings (0 if no faculty profile)
+    my_postings = 0
+    if faculty:
+        my_postings = (
+            db.query(SwapRecord)
+            .filter(
+                SwapRecord.source_faculty_id == faculty.id,
+                SwapRecord.status == SwapStatus.PENDING,
+            )
+            .count()
         )
-        .count()
-    )
 
     # Get faculty's current FMIT schedule to check compatibility
-    fmit_template = (
-        db.execute(
-            select(RotationTemplate).where(RotationTemplate.name == "FMIT")
-        )
-    ).scalar_one_or_none()
-
     faculty_scheduled_weeks = set()
-    if fmit_template:
-        # Eager load block to avoid N+1 when accessing block.date
-        assignments = (
-            db.query(Assignment)
-            .join(Block, Assignment.block_id == Block.id)
-            .options(joinedload(Assignment.block))
-            .filter(
-                Assignment.person_id == faculty.id,
-                Assignment.rotation_template_id == fmit_template.id,
+    if faculty:
+        fmit_template = (
+            db.execute(
+                select(RotationTemplate).where(RotationTemplate.name == "FMIT")
             )
-            .all()
-        )
+        ).scalar_one_or_none()
 
-        # Get all weeks this faculty is already scheduled
-        for assignment in assignments:
-            week_start = _get_week_start(assignment.block.date)
-            faculty_scheduled_weeks.add(week_start)
+        if fmit_template:
+            # Eager load block to avoid N+1 when accessing block.date
+            assignments = (
+                db.query(Assignment)
+                .join(Block, Assignment.block_id == Block.id)
+                .options(joinedload(Assignment.block))
+                .filter(
+                    Assignment.person_id == faculty.id,
+                    Assignment.rotation_template_id == fmit_template.id,
+                )
+                .all()
+            )
+
+            # Get all weeks this faculty is already scheduled
+            for assignment in assignments:
+                week_start = _get_week_start(assignment.block.date)
+                faculty_scheduled_weeks.add(week_start)
 
     # Convert to MarketplaceEntry
     entries = []
     for swap in open_swaps:
         # Check if compatible (viewer is not already scheduled that week)
-        is_compatible = swap.source_week not in faculty_scheduled_weeks
+        # If no faculty profile (admin/coordinator viewing), all are compatible
+        is_compatible = faculty is None or swap.source_week not in faculty_scheduled_weeks
 
         # Calculate expiration (e.g., 30 days from posting)
         expires_at = swap.requested_at + timedelta(days=30)
@@ -1400,6 +1406,31 @@ def _get_faculty_for_user(db: Session, user: User) -> Person:
         )
 
     return faculty
+
+
+def _get_faculty_for_user_optional(db: Session, user: User) -> Person | None:
+    """
+    Get the faculty profile linked to a user, or None if not found.
+
+    Unlike _get_faculty_for_user, this does not raise an exception if no
+    faculty profile exists. Used for endpoints where admins/coordinators
+    can view data without being faculty members themselves.
+
+    Args:
+        db: Database session
+        user: Authenticated User object
+
+    Returns:
+        Person: Faculty profile if found, None otherwise
+    """
+    return (
+        db.query(Person)
+        .filter(
+            Person.email == user.email,
+            Person.type == "faculty",
+        )
+        .first()
+    )
 
 
 def _get_week_start(any_date: datetime | date) -> date:

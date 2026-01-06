@@ -38,6 +38,7 @@ from app.resilience.blast_radius import (
 )
 from app.resilience.contingency import ContingencyAnalyzer
 from app.resilience.defense_in_depth import DefenseInDepth, DefenseLevel
+from app.utils.academic_blocks import get_block_number_for_date
 from app.resilience.homeostasis import (
     FeedbackType,
     HomeostasisMonitor,
@@ -227,18 +228,23 @@ def large_faculty_pool(db: Session) -> list[Person]:
 
 @pytest.fixture
 def large_block_set(db: Session) -> list[Block]:
-    """Create a large set of blocks (90 days, AM/PM = 180 blocks)."""
+    """Create a large set of blocks (90 days, AM/PM = 180 blocks).
+
+    Block numbers use Thursday-Wednesday alignment via get_block_number_for_date.
+    """
     blocks = []
     start_date = date.today()
 
     for i in range(90):
         current_date = start_date + timedelta(days=i)
+        # Use Thursday-Wednesday aligned block number calculation
+        block_number, _ = get_block_number_for_date(current_date)
         for time_of_day in ["AM", "PM"]:
             block = Block(
                 id=uuid4(),
                 date=current_date,
                 time_of_day=time_of_day,
-                block_number=1 + (i // 28),
+                block_number=block_number,
                 is_weekend=(current_date.weekday() >= 5),
                 is_holiday=False,
             )

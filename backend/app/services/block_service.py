@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models.block import Block
 from app.repositories.block import BlockRepository
+from app.utils.academic_blocks import get_block_number_for_date
 
 
 class BlockService:
@@ -96,6 +97,9 @@ class BlockService:
         """
         Create a new block.
 
+        Block numbers are calculated automatically using Thursday-Wednesday
+        alignment if not explicitly provided.
+
         Returns dict with:
         - block: The created block
         - error: Error message if creation failed
@@ -111,14 +115,17 @@ class BlockService:
         if is_weekend is None:
             is_weekend = block_date.weekday() >= 5
 
+        # Calculate block_number if not provided
+        if block_number is None:
+            block_number, _ = get_block_number_for_date(block_date)
+
         block_data = {
             "date": block_date,
             "time_of_day": time_of_day,
+            "block_number": block_number,
             "is_weekend": is_weekend,
             "is_holiday": is_holiday,
         }
-        if block_number is not None:
-            block_data["block_number"] = block_number
 
         block = self.block_repo.create(block_data)
         self.block_repo.commit()
@@ -130,30 +137,36 @@ class BlockService:
         self,
         start_date: date,
         end_date: date,
-        base_block_number: int = 1,
+        base_block_number: int | None = None,
     ) -> dict:
         """
         Generate blocks for a date range.
 
         Creates AM and PM blocks for each day (730 blocks per year).
-        Returns dict with:
-        - blocks: List of created blocks
-        - total: Number of blocks created
+        Uses Thursday-Wednesday aligned academic blocks.
+
+        Args:
+            start_date: First date to generate blocks for
+            end_date: Last date to generate blocks for
+            base_block_number: Deprecated, ignored. Block numbers are calculated
+                               automatically using Thursday-Wednesday alignment.
+
+        Returns:
+            dict with:
+            - items: List of created blocks
+            - total: Number of blocks created
         """
-        block_duration_days = 28  # Block number changes every 4 weeks
         blocks_created = []
         current_date = start_date
 
         while current_date <= end_date:
+            # Calculate block number using Thursday-Wednesday alignment
+            current_block, _ = get_block_number_for_date(current_date)
+
             for time_of_day in ["AM", "PM"]:
                 # Skip if block already exists
                 if self.block_repo.exists_for_date_and_time(current_date, time_of_day):
                     continue
-
-                days_from_start = (current_date - start_date).days
-                current_block = base_block_number + (
-                    days_from_start // block_duration_days
-                )
 
                 block_data = {
                     "date": current_date,

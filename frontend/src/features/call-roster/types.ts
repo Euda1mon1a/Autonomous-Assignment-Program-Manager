@@ -40,39 +40,96 @@ export interface CallRosterEntry {
 }
 
 // ============================================================================
-// API Response Types
+// Raw API Response Types
+// These match what the backend actually returns (IDs only, no nested objects)
 // ============================================================================
 
-export interface Assignment {
+/**
+ * Raw assignment from API - contains only IDs, not nested objects.
+ * The hooks perform client-side joins to enrich with person/block/template data.
+ */
+export interface RawAssignment {
   id: string;
   block_id: string;
   person_id: string;
+  rotation_template_id: string | null;
   role: string;
-  rotation_template?: {
-    id: string;
-    name: string;
-    activity_type: string;
-    abbreviation?: string;
-  };
-  person?: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    pgy_level?: number;
-    email?: string;
-    phone?: string;
-    pager?: string;
-  };
-  block?: {
-    id: string;
-    start_date: string;
-    end_date: string;
-  };
-  notes?: string;
+  activity_override: string | null;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface AssignmentsResponse {
-  items: Assignment[];
+export interface RawAssignmentsResponse {
+  items: RawAssignment[];
+  total: number;
+  page?: number;
+  page_size?: number;
+}
+
+/**
+ * Raw block from API
+ */
+export interface RawBlock {
+  id: string;
+  date: string;
+  time_of_day: 'AM' | 'PM';
+  block_number: number;
+  is_weekend: boolean;
+  is_holiday: boolean;
+  holiday_name: string | null;
+}
+
+export interface RawBlocksResponse {
+  items: RawBlock[];
+  total: number;
+}
+
+/**
+ * Raw person from API
+ */
+export interface RawPerson {
+  id: string;
+  name: string;
+  email: string | null;
+  type: 'resident' | 'faculty';
+  pgy_level: number | null;
+  performs_procedures: boolean;
+  specialties: string[] | null;
+  primary_duty: string | null;
+  faculty_role: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RawPeopleResponse {
+  items: RawPerson[];
+  total: number;
+}
+
+/**
+ * Raw rotation template from API
+ */
+export interface RawRotationTemplate {
+  id: string;
+  name: string;
+  activity_type: string;
+  abbreviation: string | null;
+  display_abbreviation: string | null;
+  font_color: string | null;
+  background_color: string | null;
+  clinic_location: string | null;
+  max_residents: number | null;
+  requires_specialty: string | null;
+  requires_procedure_credential: boolean;
+  supervision_required: boolean;
+  max_supervision_ratio: number;
+  created_at: string;
+}
+
+export interface RawRotationTemplatesResponse {
+  items: RawRotationTemplate[];
   total: number;
 }
 
@@ -149,24 +206,25 @@ export function getRoleType(pgyLevel?: number, assignmentRole?: string): RoleTyp
 }
 
 /**
- * Get display name from person object
+ * Get display name from person object.
+ * Uses the 'name' field from RawPerson which contains the full name.
  */
-export function getPersonName(person?: { first_name: string; last_name: string }): string {
+export function getPersonName(person?: RawPerson | null): string {
   if (!person) return 'Unknown';
-  return `${person.first_name} ${person.last_name}`;
+  return person.name;
 }
 
 /**
- * Check if an assignment is an on-call assignment
+ * Check if an assignment is an on-call assignment by looking up the rotation template
  */
-export function isOnCallAssignment(assignment: Assignment): boolean {
-  return assignment.rotation_template?.activity_type === 'on_call';
+export function isOnCallTemplate(template?: RawRotationTemplate | null): boolean {
+  return template?.activity_type === 'on_call';
 }
 
 /**
  * Determine shift type from rotation name or notes
  */
-export function getShiftType(rotationName?: string, notes?: string): 'day' | 'night' | '24hr' {
+export function getShiftType(rotationName?: string | null, notes?: string | null): 'day' | 'night' | '24hr' {
   const text = `${rotationName || ''} ${notes || ''}`.toLowerCase();
 
   if (text.includes('night') || text.includes('overnight')) {

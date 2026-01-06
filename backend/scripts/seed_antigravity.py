@@ -33,9 +33,17 @@ from app.db.session import SessionLocal
 from app.models.absence import Absence
 from app.models.assignment import Assignment
 from app.models.block import Block
+from app.models.call_assignment import CallAssignment
+from app.models.import_staging import (
+    ImportBatch,
+    ImportBatchStatus,
+    ImportStagedAssignment,
+    StagedAssignmentStatus,
+)
 from app.models.person import FacultyRole, Person
 from app.models.rotation_template import RotationTemplate
 from app.models.user import User
+from app.utils.academic_blocks import get_block_number_for_date
 
 fake = Faker()
 Faker.seed(42)  # Reproducible fake data
@@ -46,7 +54,7 @@ class AntigravitySeed:
     """Complete Academic Year seed for GUI testing."""
 
     # Default password for all test users
-    DEFAULT_PASSWORD = "Test123!"
+    DEFAULT_PASSWORD = "admin123"
 
     # User definitions: (username, email, role, full_name)
     USER_DEFINITIONS = [
@@ -247,6 +255,8 @@ class AntigravitySeed:
             "templates": {},  # name -> RotationTemplate
             "assignments": [],
             "absences": [],
+            "call_assignments": [],
+            "import_batches": [],
         }
 
         # Track assigned (block_id, person_id) pairs to prevent duplicates
@@ -268,6 +278,8 @@ class AntigravitySeed:
         self._seed_blocks()
         self._seed_assignments()
         self._seed_absences()
+        self._seed_call_assignments()
+        self._seed_import_history()
 
         self.db.commit()
 
@@ -283,6 +295,16 @@ class AntigravitySeed:
         print("Clearing existing data...")
 
         # Delete in order to respect foreign key constraints
+        # Import staging first (references people/rotations)
+        count += self.db.query(ImportStagedAssignment).delete()
+        print("  Deleted import staged assignments")
+
+        count += self.db.query(ImportBatch).delete()
+        print("  Deleted import batches")
+
+        count += self.db.query(CallAssignment).delete()
+        print("  Deleted call assignments")
+
         count += self.db.query(Assignment).delete()
         print(f"  Deleted {self.db.query(Assignment).count()} assignments")
 
@@ -750,18 +772,250 @@ class AntigravitySeed:
         print(f"  Created {absence_count} absences for {num_with_absences} residents")
         print()
 
+    def _seed_call_assignments(self) -> None:
+        """Create call assignments for residents (overnight, weekend, backup)."""
+        print("Creating call assignments...")
+
+        residents = self.created["residents"]
+        call_count = 0
+
+        # Generate call schedule for 6 months of the AY
+        current_date = self.ay_start
+        end_call_date = self.ay_start + timedelta(days=180)  # First 6 months
+
+        while current_date < end_call_date:
+            is_weekend = current_date.weekday() >= 5
+            is_holiday = any(
+                current_date.month == m and current_date.day == d
+                for m, d, _ in self.FEDERAL_HOLIDAYS
+            )
+
+            # Assign overnight call (weekdays)
+            if not is_weekend:
+                # Rotate through PGY-2 and PGY-3 residents for overnight
+                senior_residents = [r for r in residents if r.pgy_level >= 2]
+                if senior_residents:
+                    day_index = (current_date - self.ay_start).days
+                    assigned = senior_residents[day_index % len(senior_residents)]
+
+                    call = CallAssignment(
+                        id=uuid4(),
+                        date=current_date,
+                        person_id=assigned.id,
+                        call_type="overnight",
+                        is_weekend=False,
+                        is_holiday=is_holiday,
+                    )
+                    self.db.add(call)
+                    self.created["call_assignments"].append(call)
+                    call_count += 1
+
+            # Assign weekend call
+            if is_weekend:
+                # PGY-2/3 for primary, PGY-1 for backup
+                senior_residents = [r for r in residents if r.pgy_level >= 2]
+                junior_residents = [r for r in residents if r.pgy_level == 1]
+
+                week_num = (current_date - self.ay_start).days // 7
+
+                if senior_residents:
+                    primary = senior_residents[week_num % len(senior_residents)]
+                    call = CallAssignment(
+                        id=uuid4(),
+                        date=current_date,
+                        person_id=primary.id,
+                        call_type="weekend",
+                        is_weekend=True,
+                        is_holiday=is_holiday,
+                    )
+                    self.db.add(call)
+                    self.created["call_assignments"].append(call)
+                    call_count += 1
+
+                if junior_residents:
+                    backup = junior_residents[week_num % len(junior_residents)]
+                    call = CallAssignment(
+                        id=uuid4(),
+                        date=current_date,
+                        person_id=backup.id,
+                        call_type="backup",
+                        is_weekend=True,
+                        is_holiday=is_holiday,
+                    )
+                    self.db.add(call)
+                    self.created["call_assignments"].append(call)
+                    call_count += 1
+
+            current_date += timedelta(days=1)
+
+        self.db.flush()
+        print(f"  Created {call_count} call assignments")
+        print()
+
+    def _seed_import_history(self) -> None:
+        """Create import batch history with various statuses for GUI testing."""
+        print("Creating import history...")
+
+        # Get a user for created_by
+        admin_user = next((u for u in self.created["users"] if u.role == "admin"), None)
+        coord_user = next(
+            (u for u in self.created["users"] if u.role == "coordinator"), None
+        )
+
+        batch_configs = [
+            # (filename, status, days_ago, row_count, error_count, notes)
+            (
+                "Block_10_Schedule_2025.xlsx",
+                "applied",
+                30,
+                245,
+                0,
+                "Block 10 initial schedule import",
+            ),
+            (
+                "Block_11_Draft_v1.xlsx",
+                "applied",
+                21,
+                238,
+                2,
+                "Block 11 first draft - 2 conflicts resolved",
+            ),
+            (
+                "Block_11_Final.xlsx",
+                "applied",
+                14,
+                240,
+                0,
+                "Block 11 final schedule",
+            ),
+            (
+                "Block_12_Preliminary.xlsx",
+                "staged",
+                3,
+                242,
+                5,
+                "Block 12 preliminary - needs review",
+            ),
+            (
+                "Vacation_Requests_Jan.xlsx",
+                "applied",
+                7,
+                15,
+                0,
+                "January vacation requests",
+            ),
+            (
+                "TDY_Updates.xlsx",
+                "rejected",
+                5,
+                8,
+                3,
+                "Rejected - duplicate entries",
+            ),
+            (
+                "Block_12_Revised.xlsx",
+                "staged",
+                1,
+                244,
+                1,
+                "Block 12 revised draft",
+            ),
+        ]
+
+        for filename, status_str, days_ago, rows, errors, notes in batch_configs:
+            created_at = date.today() - timedelta(days=days_ago)
+            created_by = admin_user if days_ago > 20 else coord_user
+
+            batch_id = uuid4()
+            # Use raw SQL to bypass SQLAlchemy enum name/value mismatch
+            from sqlalchemy import text
+
+            self.db.execute(
+                text("""
+                    INSERT INTO import_batches
+                    (id, created_at, filename, status, created_by_id, row_count, error_count,
+                     warning_count, notes, target_block, conflict_resolution, rollback_available)
+                    VALUES
+                    (:id, :created_at, :filename, CAST(:status AS importbatchstatus), :created_by_id, :row_count,
+                     :error_count, :warning_count, :notes, :target_block, 'upsert', true)
+                """),
+                {
+                    "id": str(batch_id),
+                    "created_at": created_at,
+                    "filename": filename,
+                    "status": status_str,
+                    "created_by_id": str(created_by.id) if created_by else None,
+                    "row_count": rows,
+                    "error_count": errors,
+                    "warning_count": random.randint(0, 3),
+                    "notes": notes,
+                    "target_block": (10 + (30 - days_ago) // 14),
+                },
+            )
+            self.created["import_batches"].append(batch_id)
+
+            # Add staged assignments for STAGED batches
+            if status_str == "staged":
+                residents_sample = random.sample(
+                    self.created["residents"], min(10, len(self.created["residents"]))
+                )
+                templates_list = list(self.created["templates"].values())
+
+                for i, resident in enumerate(residents_sample):
+                    template = random.choice(templates_list) if templates_list else None
+                    # Use raw SQL to bypass enum issues
+                    self.db.execute(
+                        text("""
+                            INSERT INTO import_staged_assignments
+                            (id, batch_id, row_number, sheet_name, person_name,
+                             assignment_date, slot, rotation_name, matched_person_id,
+                             person_match_confidence, matched_rotation_id,
+                             rotation_match_confidence, status)
+                            VALUES
+                            (:id, :batch_id, :row_number, :sheet_name, :person_name,
+                             :assignment_date, :slot, :rotation_name, :matched_person_id,
+                             :person_match_confidence, :matched_rotation_id,
+                             :rotation_match_confidence, CAST(:status AS stagedassignmentstatus))
+                        """),
+                        {
+                            "id": str(uuid4()),
+                            "batch_id": str(batch_id),
+                            "row_number": i + 2,
+                            "sheet_name": "Schedule",
+                            "person_name": resident.name,
+                            "assignment_date": date.today() + timedelta(days=i),
+                            "slot": "AM" if i % 2 == 0 else "PM",
+                            "rotation_name": template.name if template else "Clinic",
+                            "matched_person_id": str(resident.id),
+                            "person_match_confidence": 95,
+                            "matched_rotation_id": str(template.id)
+                            if template
+                            else None,
+                            "rotation_match_confidence": 90 if template else 0,
+                            "status": "pending",
+                        },
+                    )
+
+        self.db.flush()
+        print(f"  Created {len(self.created['import_batches'])} import batches")
+        print()
+
     def _calculate_block_number(self, block_date: date) -> int:
-        """Calculate academic year block number (1-13) for a given date.
+        """Calculate academic year block number (0-13) for a given date.
+
+        Uses Thursday-Wednesday aligned blocks:
+        - Block 0: July 1 through day before first Thursday (orientation)
+        - Blocks 1-12: 28 days each, Thursday start, Wednesday end
+        - Block 13: Starts Thursday, ends June 30 (variable length)
 
         Args:
             block_date: Date to calculate block number for
 
         Returns:
-            Block number (1-13)
+            Block number (0-13)
         """
-        days_since_start = (block_date - self.ay_start).days
-        block_number = (days_since_start // 28) + 1
-        return min(block_number, 13)
+        block_number, _ = get_block_number_for_date(block_date)
+        return block_number
 
     def _summary(self) -> dict:
         """Generate summary of created entities.
@@ -777,6 +1031,8 @@ class AntigravitySeed:
             "rotation_templates": len(self.created["templates"]),
             "assignments": len(self.created["assignments"]),
             "absences": len(self.created["absences"]),
+            "call_assignments": len(self.created["call_assignments"]),
+            "import_batches": len(self.created["import_batches"]),
             "academic_year": f"{self.year}-{self.year + 1}",
             "date_range": f"{self.ay_start} to {self.ay_end}",
         }
@@ -794,6 +1050,8 @@ class AntigravitySeed:
         print(f"  Rotation Templates: {summary['rotation_templates']}")
         print(f"  Assignments Created: {summary['assignments']}")
         print(f"  Absences Created: {summary['absences']}")
+        print(f"  Call Assignments Created: {summary['call_assignments']}")
+        print(f"  Import Batches Created: {summary['import_batches']}")
         print("=" * 60)
         print()
         print("Test Credentials:")

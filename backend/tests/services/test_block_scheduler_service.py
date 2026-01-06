@@ -18,6 +18,7 @@ from app.models.block_assignment import BlockAssignment
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.services.block_scheduler_service import BlockSchedulerService
+from app.utils.academic_blocks import get_block_dates, get_first_thursday
 
 
 class TestBlockSchedulerService:
@@ -63,9 +64,10 @@ class TestBlockSchedulerService:
     @pytest.fixture
     def residents_with_leave(self, db: Session) -> list[tuple[Person, Absence]]:
         """Create residents with leave during block 5 of 2025."""
-        # Block 5 of 2025 starts July 1 + (5-1)*28 = July 1 + 112 days = Oct 21
-        block_start = date(2025, 10, 21)
-        block_end = block_start + timedelta(days=27)
+        # Block 5 of 2025 uses Thursday-Wednesday alignment
+        block = get_block_dates(5, 2025)
+        block_start = block.start_date
+        block_end = block.end_date
 
         results = []
 
@@ -135,34 +137,42 @@ class TestBlockSchedulerService:
         return residents
 
     # =========================================================================
-    # Block Date Calculation Tests
+    # Block Date Calculation Tests (Thursday-Wednesday aligned)
     # =========================================================================
 
     def test_get_block_dates_block_1(self, service: BlockSchedulerService):
-        """Test date calculation for block 1."""
+        """Test date calculation for block 1 uses Thursday-Wednesday alignment."""
         start, end = service.get_block_dates(1, 2025)
 
-        # Block 1 starts July 1, 2025
-        assert start == date(2025, 7, 1)
-        assert end == date(2025, 7, 28)
+        # Block 1 starts on first Thursday (July 3, 2025)
+        first_thu = get_first_thursday(2025)
+        assert start == first_thu
+        assert start == date(2025, 7, 3)  # July 3, 2025 is Thursday
+        assert end == date(2025, 7, 30)  # Wednesday
         assert (end - start).days == 27  # 28 days inclusive
+        assert start.weekday() == 3  # Thursday
+        assert end.weekday() == 2  # Wednesday
 
     def test_get_block_dates_block_5(self, service: BlockSchedulerService):
-        """Test date calculation for block 5."""
+        """Test date calculation for block 5 uses Thursday-Wednesday alignment."""
         start, end = service.get_block_dates(5, 2025)
 
-        # Block 5 starts July 1 + 4*28 days = July 1 + 112 days
-        expected_start = date(2025, 7, 1) + timedelta(days=112)
+        # Block 5 starts 4 blocks (112 days) after first Thursday
+        first_thu = get_first_thursday(2025)
+        expected_start = first_thu + timedelta(days=4 * 28)
         assert start == expected_start
         assert (end - start).days == 27
+        assert start.weekday() == 3  # Thursday
+        assert end.weekday() == 2  # Wednesday
 
     def test_get_block_dates_block_0_orientation(self, service: BlockSchedulerService):
         """Test date calculation for block 0 (orientation)."""
         start, end = service.get_block_dates(0, 2025)
 
-        # Block 0 is orientation, last week before July 1
-        assert end == date(2025, 6, 30)
-        assert start == date(2025, 6, 24)
+        # Block 0 is orientation: July 1 through day before first Thursday
+        # In 2025, July 1 is Tuesday, first Thursday is July 3
+        assert start == date(2025, 7, 1)
+        assert end == date(2025, 7, 2)  # Wednesday before first Thursday
 
     # =========================================================================
     # Leave Detection Tests

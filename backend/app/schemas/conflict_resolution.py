@@ -1,10 +1,108 @@
 """Schemas for conflict auto-resolution."""
 
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+
+
+# ============================================================================
+# Conflict List Response Schemas (for paginated list endpoint)
+# ============================================================================
+
+
+class ConflictSeverity(str, Enum):
+    """Severity level of a conflict."""
+
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+
+class ConflictType(str, Enum):
+    """Type of schedule conflict."""
+
+    SCHEDULING_OVERLAP = "scheduling_overlap"
+    ACGME_VIOLATION = "acgme_violation"
+    SUPERVISION_MISSING = "supervision_missing"
+    CAPACITY_EXCEEDED = "capacity_exceeded"
+    ABSENCE_CONFLICT = "absence_conflict"
+    QUALIFICATION_MISMATCH = "qualification_mismatch"
+    CONSECUTIVE_DUTY = "consecutive_duty"
+    REST_PERIOD = "rest_period"
+    COVERAGE_GAP = "coverage_gap"
+    # Legacy types from ConflictAlert model
+    LEAVE_FMIT_OVERLAP = "leave_fmit_overlap"
+    BACK_TO_BACK = "back_to_back"
+    EXCESSIVE_ALTERNATING = "excessive_alternating"
+    CALL_CASCADE = "call_cascade"
+    EXTERNAL_COMMITMENT = "external_commitment"
+
+
+class ConflictStatus(str, Enum):
+    """Status of a conflict."""
+
+    UNRESOLVED = "unresolved"
+    PENDING_REVIEW = "pending_review"
+    RESOLVED = "resolved"
+    IGNORED = "ignored"
+    # Legacy statuses from ConflictAlert model
+    NEW = "new"
+    ACKNOWLEDGED = "acknowledged"
+
+
+class ConflictResponse(BaseModel):
+    """Response schema for a single conflict in the list."""
+
+    id: UUID
+    type: str
+    severity: str
+    status: str
+    title: str
+    description: str
+
+    # Affected entities
+    affected_person_ids: list[UUID] = Field(default_factory=list)
+    affected_assignment_ids: list[UUID] = Field(default_factory=list)
+    affected_block_ids: list[UUID] = Field(default_factory=list)
+
+    # Time context
+    conflict_date: date
+    conflict_session: str | None = None  # AM/PM
+
+    # Detection metadata
+    detected_at: datetime
+    detected_by: str = "system"
+    rule_id: str | None = None
+
+    # Resolution info
+    resolved_at: datetime | None = None
+    resolved_by: str | None = None
+    resolution_method: str | None = None
+    resolution_notes: str | None = None
+
+    # Additional context
+    details: dict = Field(default_factory=dict)
+
+    class Config:
+        from_attributes = True
+
+
+class ConflictListResponse(BaseModel):
+    """Paginated response for conflicts list."""
+
+    items: list[ConflictResponse]
+    total: int
+    page: int
+    page_size: int
+    pages: int
+
+
+# ============================================================================
+# Resolution Strategy Schemas
+# ============================================================================
 
 
 class ResolutionStrategyEnum(str, Enum):
