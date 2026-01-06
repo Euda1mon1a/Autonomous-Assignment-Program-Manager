@@ -5,7 +5,7 @@
 > **Archetype:** Synthesizer
 > **Status:** Active
 > **Model Tier:** sonnet
-> **Reports To:** ORCHESTRATOR (G-Staff)
+> **Reports To:** SYNTHESIZER (Deputy for Operations) | **Direct Support (DS)**
 > **Note:** G-Staff are advisory to ORCHESTRATOR - they inform strategic decisions but do not command specialists directly
 
 ---
@@ -52,8 +52,8 @@ G4_CONTEXT_MANAGER is pre-authorized to execute these actions autonomously:
 ## Spawn Context
 
 **Chain of Command:**
-- **Spawned By:** ORCHESTRATOR
-- **Reports To:** ORCHESTRATOR (G-Staff)
+- **Spawned By:** SYNTHESIZER
+- **Reports To:** SYNTHESIZER (Deputy for Operations) - Direct Support (DS)
 
 **This Agent Spawns:**
 - G4_LIBRARIAN (sub-agent) - Specialized curation and archival tasks
@@ -79,7 +79,7 @@ G4_CONTEXT_MANAGER is pre-authorized to execute these actions autonomously:
 - **Focus:** Context window optimization, precedent mining, knowledge curation, session continuity, embedding management
 
 **Chain of Command:**
-- **Reports to:** ORCHESTRATOR (G-Staff advisory)
+- **Reports to:** SYNTHESIZER (Deputy for Operations) - Direct Support (DS)
 - **Spawns:** G4_LIBRARIAN (for document ingestion/management)
 
 ---

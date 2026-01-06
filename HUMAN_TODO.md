@@ -1101,3 +1101,85 @@ async def _request_with_retry(self, method: str, url: str, **kwargs) -> httpx.Re
 ```bash
 docker compose restart mcp-server
 ```
+
+---
+
+## PAI Doctrine Enhancements (2026-01-06)
+
+> Military doctrine patterns to formalize in PAI governance. Review and protocolize.
+
+**Added:** 2026-01-06 (Session: PAI Structure Review)
+**Status:** Awaiting review
+
+### Already Implemented
+- [x] Auftragstaktik (Commander's Intent) - in CLAUDE.md
+- [x] AAR (After Action Review) - session-end skill
+- [x] Chain of Command - identity cards
+- [x] Left/Right Boundaries - CLAUDE.md
+- [x] METT-TC equivalent (Resources Available) - CLAUDE.md
+
+### Proposed Additions
+
+#### 1. OPORD Template for Task() Prompts
+**Priority:** HIGH
+**Value:** Forces completeness when delegating
+
+5-paragraph order format:
+1. **Situation** - Terrain (codebase state), enemy (known issues), friendly (other agents working)
+2. **Mission** - Who, what, when, where, why
+3. **Execution** - Commander's intent, concept of ops, tasks to subordinates
+4. **Sustainment** - Resources available, constraints
+5. **Command & Signal** - Reporting requirements, escalation triggers
+
+**Implementation:** Add OPORD template to CLAUDE.md Agent Spawning section or create `.claude/templates/OPORD.md`
+
+#### 2. PACE Plan for Critical Operations
+**Priority:** MEDIUM
+**Value:** Explicit fallback chains
+
+| Level | Meaning | Example |
+|-------|---------|---------|
+| **P**rimary | First choice | Use MCP tool directly |
+| **A**lternate | If primary fails | Call backend API |
+| **C**ontingency | If alternate fails | Parse files directly |
+| **E**mergency | Last resort | Escalate to human |
+
+**Implementation:** Add PACE thinking to identity cards or create `.claude/Governance/PACE_PATTERNS.md`
+
+#### 3. CRM (Composite Risk Management) for Novel Approaches
+**Priority:** MEDIUM
+**Value:** Formalized risk assessment before risky ops
+
+5-step process:
+1. Identify hazards
+2. Assess hazards (probability × severity)
+3. Develop controls
+4. Implement controls
+5. Supervise and evaluate
+
+**Implementation:** Add CRM checklist to skills that touch production data or security
+
+#### 4. WARNO/FRAGO for Session Lifecycle
+**Priority:** LOW
+**Value:** Structured communication for pivots
+
+- **WARNO (Warning Order):** Prep agents for upcoming complex work
+- **FRAGO (Fragmentary Order):** Mid-session pivots without full re-briefing
+
+**Implementation:** Document patterns in `.claude/Governance/` or integrate into orchestrator protocols
+
+#### 5. IPB (Intelligence Prep of Battlefield) for Codebase Recon
+**Priority:** LOW
+**Value:** Systematic reconnaissance before operations
+
+Already partially covered by:
+- G2_RECON agent
+- search-party skill
+- Explore subagent
+
+**Implementation:** Formalize IPB checklist for complex tasks
+
+### Decision Needed
+- [ ] Review which patterns provide value vs. overhead
+- [ ] Decide implementation location (CLAUDE.md vs separate docs)
+- [ ] Prioritize based on observed failure modes

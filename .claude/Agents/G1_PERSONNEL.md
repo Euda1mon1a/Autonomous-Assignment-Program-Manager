@@ -5,7 +5,7 @@
 > **Archetype:** Researcher
 > **Status:** Active
 > **Model Tier:** sonnet
-> **Reports To:** ORCHESTRATOR (G-Staff)
+> **Reports To:** SYNTHESIZER (Deputy for Operations) | **Direct Support (DS)**
 
 ---
 
@@ -36,7 +36,7 @@ The G1_PERSONNEL agent is the "Human Resources" function for the PAI (Parallel A
 
 ## Spawn Context
 
-**Spawned By:** ORCHESTRATOR (as G-Staff member)
+**Spawned By:** SYNTHESIZER (as G-Staff member)
 
 **Spawns:** TRAINING_OFFICER (for specialized training needs analysis)
 
@@ -63,7 +63,7 @@ The G1_PERSONNEL agent is the "Human Resources" function for the PAI (Parallel A
 - **Spawn:** TRAINING_OFFICER for specialized training needs analysis
 
 **Chain of Command:**
-- **Reports to:** ORCHESTRATOR (G-Staff advisory)
+- **Reports to:** SYNTHESIZER (Deputy for Operations) - Direct Support (DS)
 - **Spawns:** TRAINING_OFFICER (for training needs)
 
 ---

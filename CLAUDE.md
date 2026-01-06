@@ -182,6 +182,42 @@ This project operates on **mission-type orders** (Auftragstaktik), not detailed 
 > RAG: `rag_search('Auftragstaktik doctrine')` for full delegation patterns
 > See: `.claude/Governance/HIERARCHY.md` for command philosophy
 
+### Commander's Intent
+
+**Mission:** Deliver a production-ready military medical residency scheduler that is ACGME-compliant, operationally secure, and institutionally resilient.
+
+**End State:** Program coordinators generate valid schedules autonomously. System handles edge cases gracefully. Audit trails complete.
+
+**Left Boundary (NEVER CROSS):**
+- No OPSEC/PERSEC violations (names, schedules, deployments)
+- No ACGME compliance shortcuts
+- No silent failures (all errors logged/escalated)
+- No security bypasses (auth, rate limiting, input validation)
+
+**Right Boundary (ALWAYS DO):**
+- Tests pass before commit
+- Linters clean
+- Audit trail for schedule changes
+- Graceful degradation over hard failure
+
+### Decision Rights
+
+| Tier | Act Autonomously | Escalate Up |
+|------|------------------|-------------|
+| **Specialist** | Implementation details, test fixes, bug patches | Architecture changes, new dependencies, scope creep |
+| **Coordinator** | Task decomposition, agent selection, retry logic | Blocked >2 attempts, cross-domain impact, unclear requirements |
+| **Deputy** | Strategic pivots within domain, resource allocation | User-facing changes, cross-deputy coordination, policy changes |
+| **ORCHESTRATOR** | 99% delegation, workflow orchestration | Container ops (1%), user preference unclear, boundary violations |
+
+**When in doubt:** Act within boundaries. Escalate if approaching a boundary.
+
+### Resources Available
+
+**Tools:** 34+ MCP tools via `mcp__*` prefix. Key domains: scheduling, validation, resilience, RAG search.
+**Hazards:** Run `rag_search('common pitfalls')` before novel approaches. Known issues: CCW token bugs, import removal, docker volume masking.
+**Agents:** See `.claude/Agents/` for full roster. Spawn based on domain expertise, not availability.
+**Codebase:** `backend/app/` (FastAPI), `frontend/src/` (Next.js), `.claude/` (PAI governance).
+
 ### Core Policy
 
 - Full autonomy for local work
@@ -239,6 +275,26 @@ Before changes, AI MUST:
 - Backend: `ruff check . --fix && ruff format .`
 - Frontend: `npm run lint:fix`
 - CI must pass before merge
+
+### Agent Spawning (MANDATORY)
+
+When spawning ANY PAI agent via Task(), you MUST:
+1. Read `.claude/Identities/[AGENT_NAME].identity.md`
+2. Include it as `## BOOT CONTEXT` at the start of the prompt
+
+```
+Task(
+  prompt="""
+  ## BOOT CONTEXT
+  [contents of identity card]
+
+  ## MISSION
+  [task description]
+  """
+)
+```
+
+**No exceptions.** Identity cards contain chain of command, spawn authority, and standing orders.
 
 ---
 

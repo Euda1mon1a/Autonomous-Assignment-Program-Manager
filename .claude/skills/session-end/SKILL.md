@@ -1,6 +1,6 @@
 ---
 name: session-end
-description: Mandatory session close-out with IG audit, AAR, and optional HISTORIAN. Enforces clean session handoff.
+description: Mandatory session close-out with IG audit, AAR, HISTORIAN, and RELEASE_MANAGER. Enforces clean session handoff.
 model_tier: sonnet
 parallel_hints:
   can_parallel_with: []
@@ -39,23 +39,41 @@ escalation_triggers:
 - [ ] CHANGELOG updated if features added
 - [ ] TODOs resolved or documented in HUMAN_TODO.md
 
-### 5. Governance (if enabled)
+### 5. Mandatory Governance Agents (ALWAYS INVOKED)
 
-**Invoke DELEGATION_AUDITOR (IG):**
+Regardless of governance_enabled setting, these agents are ALWAYS invoked at session end:
+
+| Agent | Purpose | Cannot Skip |
+|-------|---------|-------------|
+| DELEGATION_AUDITOR (IG) | Audit spawn counts, chain violations, bypasses | ✓ |
+| COORD_AAR | After-action review, lessons learned | ✓ |
+| HISTORIAN | Session record for continuity | ✓ |
+| RELEASE_MANAGER | Version status, release readiness | ✓ |
+
+**Note:** Use `/session-end --force` only in true emergencies. Skipping these agents loses institutional memory.
+
+**DELEGATION_AUDITOR (IG):**
 - Spawn count for session
 - Chain-of-command violations
 - Bypass justifications
 
-**Invoke COORD_AAR (After Action Review):**
+**COORD_AAR (After Action Review):**
 - What went well
 - What could improve
 - Patterns discovered
 - Lessons learned
 
-**Invoke HISTORIAN (if significant session):**
+**HISTORIAN:**
 - Major features completed
 - Architectural decisions
 - Notable incidents
+- Session continuity
+
+**RELEASE_MANAGER:**
+- Current version status
+- Uncommitted changes check
+- Release readiness assessment
+- Next release steps
 
 ### 4. Knowledge Preservation (G-Staff Integration)
 
@@ -73,13 +91,6 @@ escalation_triggers:
 - Archive session transcripts
 - Catalog new skills/agents created
 - Update knowledge graph relationships
-
-## Toggle
-
-If `governance_enabled: false` in config.json:
-- Checklist still shown
-- IG/AAR/HISTORIAN invocation optional
-- No blocking
 
 ## Quick Exit (Emergency)
 
@@ -124,8 +135,14 @@ Skips all checks. Logs bypass.
 ### Lessons Learned
 - [item]
 
-## HISTORIAN Entry (if significant)
+## HISTORIAN Entry
 [Summary for session history]
+
+## Release Status (RELEASE_MANAGER)
+- Current Version: [version]
+- Uncommitted Changes: [yes/no]
+- Release Readiness: [ready/blocked/needs-review]
+- Next Steps: [recommendations]
 
 ## Knowledge Preservation (G-Staff)
 - G4_CONTEXT_MANAGER: [documents indexed for RAG]
@@ -173,26 +190,31 @@ Skips all checks. Logs bypass.
    cat .claude/Governance/config.json
    ```
 
-7. **Generate IG Report** (if governance enabled)
+7. **Generate IG Report** (DELEGATION_AUDITOR)
    - Review session for agent spawns
    - Check for chain-of-command violations
    - Document any bypasses
 
-8. **Conduct AAR** (if governance enabled)
+8. **Conduct AAR** (COORD_AAR)
    - Reflect on session outcomes
    - Identify improvements
    - Capture patterns and lessons
 
-9. **Update HISTORIAN** (if significant session)
+9. **Update HISTORIAN**
    - Write to `.claude/History/sessions/`
    - Include major decisions and outcomes
 
-10. **Knowledge Preservation** (G-Staff)
+10. **Release Status Check** (RELEASE_MANAGER)
+    - Check version status
+    - Verify no blocking issues
+    - Document release readiness
+
+11. **Knowledge Preservation** (G-Staff)
     - Spawn G4_CONTEXT_MANAGER for RAG/vector updates
     - Spawn KNOWLEDGE_CURATOR for pattern synthesis
     - Optionally spawn G4_LIBRARIAN for archival
 
-11. **Final Handoff**
+12. **Final Handoff**
    - Summarize state for next session
    - Note any pending work
    - Verify RAG index updated

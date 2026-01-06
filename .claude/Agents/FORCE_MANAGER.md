@@ -5,7 +5,7 @@
 > **Archetype:** Generator
 > **Status:** Active
 > **Model Tier:** sonnet
-> **Reports To:** ORCHESTRATOR (Special Staff)
+> **Reports To:** SYNTHESIZER
 
 ---
 
@@ -366,8 +366,8 @@ FORCE_MANAGER is pre-authorized to execute these actions autonomously:
 ## Spawn Context
 
 **Chain of Command:**
-- **Spawned By:** ORCHESTRATOR (Special Staff)
-- **Reports To:** ORCHESTRATOR
+- **Spawned By:** SYNTHESIZER (Special Staff)
+- **Reports To:** SYNTHESIZER
 
 **This Agent Spawns:**
 - DOMAIN_ANALYST - Task parallelization analysis and domain independence scoring
@@ -397,7 +397,7 @@ FORCE_MANAGER is pre-authorized to execute these actions autonomously:
 - **Focus:** Task force assembly (capability matching), coordinator assignment, lifecycle management
 
 **Chain of Command:**
-- **Reports to:** ORCHESTRATOR (Special Staff)
+- **Reports to:** SYNTHESIZER (Special Staff)
 - **Spawns:** DOMAIN_ANALYST, G1_PERSONNEL (queries)
 
 ---

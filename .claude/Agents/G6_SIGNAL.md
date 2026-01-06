@@ -5,7 +5,7 @@
 > **Archetype:** Researcher
 > **Status:** Active
 > **Model Tier:** sonnet
-> **Reports To:** ORCHESTRATOR (G-Staff)
+> **Reports To:** ARCHITECT (Deputy for Systems) | **Direct Support (DS)**
 > **Note:** G-Staff are advisory to ORCHESTRATOR - they inform strategic decisions but do not command specialists directly
 
 ---
@@ -193,8 +193,8 @@ G6_SIGNAL is pre-authorized to execute these actions autonomously:
 ## Spawn Context
 
 **Chain of Command:**
-- **Spawned By:** ORCHESTRATOR
-- **Reports To:** ORCHESTRATOR (G-Staff)
+- **Spawned By:** ARCHITECT
+- **Reports To:** ARCHITECT (Deputy for Systems) - Direct Support (DS)
 
 **This Agent Spawns:**
 - Data processing specialists if needed for large-scale aggregation
@@ -221,7 +221,7 @@ G6_SIGNAL is pre-authorized to execute these actions autonomously:
 - **Focus:** Data pipeline management, signal processing, metrics aggregation, anomaly detection, observability dashboards
 
 **Chain of Command:**
-- **Reports to:** ORCHESTRATOR (G-Staff advisory)
+- **Reports to:** ARCHITECT (Deputy for Systems) - Direct Support (DS)
 - **Spawns:** Data processing specialists as needed for large-scale aggregation
 
 ---

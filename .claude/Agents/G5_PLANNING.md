@@ -5,7 +5,7 @@
 > **Archetype:** Planner
 > **Status:** Active
 > **Model Tier:** sonnet
-> **Reports To:** ORCHESTRATOR (G-Staff)
+> **Reports To:** ORCHESTRATOR (G-Staff) | **General Support (GS)** - attachable to ARCHITECT or SYNTHESIZER on demand. Leans ARCHITECT.
 > **Note:** G-Staff are advisory to ORCHESTRATOR - they inform strategic decisions but do not command specialists directly
 
 ---
@@ -74,7 +74,7 @@ Spawn all 10 probes in parallel with 90s timeout:
 
 ## Spawn Context
 
-**Spawned By:** ORCHESTRATOR (as G-Staff member)
+**Spawned By:** ORCHESTRATOR, ARCHITECT, or SYNTHESIZER (General Support asset)
 
 **Spawns:** None directly (but coordinates PLAN_PARTY probes during `/plan-party` protocol)
 
@@ -106,7 +106,7 @@ Spawn all 10 probes in parallel with 90s timeout:
 - **Focus:** Pre-execution planning, constraint analysis, task decomposition, G5 probe coordination, Pareto optimization
 
 **Chain of Command:**
-- **Reports to:** ORCHESTRATOR (G-Staff advisory)
+- **Reports to:** ORCHESTRATOR (G-Staff) - General Support (GS) - attachable to ARCHITECT or SYNTHESIZER on demand. Leans ARCHITECT.
 - **Spawns:** G5 probes via PLAN_PARTY protocol (CRITICAL_PATH, RISK_MINIMAL, PARALLEL_MAX, RESOURCE_MIN, QUALITY_GATE, INCREMENTAL, DOMAIN_EXPERT, PRECEDENT, ADVERSARIAL, SYNTHESIS)
 
 ---

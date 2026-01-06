@@ -97,19 +97,25 @@ ORCHESTRATOR (opus) ─── Supreme Commander
     │   ├── COORD_PLATFORM (sonnet) → DBA, BACKEND_ENGINEER, API_DEVELOPER
     │   ├── COORD_QUALITY (sonnet) → QA_TESTER, CODE_REVIEWER
     │   ├── COORD_ENGINE (sonnet) → SCHEDULER, SWAP_MANAGER, OPTIMIZATION_SPECIALIST
-    │   └── COORD_TOOLING (sonnet) → TOOLSMITH, TOOL_QA, TOOL_REVIEWER
+    │   ├── COORD_TOOLING (sonnet) → TOOLSMITH, TOOL_QA, TOOL_REVIEWER
+    │   ├── G6_SIGNAL (sonnet) ─── Direct Support (DS)
+    │   └── [G2_RECON, G5_PLANNING attachable as General Support]
     │
-    └── SYNTHESIZER (opus) ─── Deputy for Operations
-        ├── COORD_OPS (sonnet) → RELEASE_MANAGER, META_UPDATER, KNOWLEDGE_CURATOR, CI_LIAISON
-        ├── COORD_RESILIENCE (sonnet) → RESILIENCE_ENGINEER, COMPLIANCE_AUDITOR, SECURITY_AUDITOR
-        ├── COORD_FRONTEND (sonnet) → FRONTEND_ENGINEER, UX_SPECIALIST
-        └── COORD_INTEL (sonnet) → (intel specialists)
-
-    G-Staff (Advisory, sonnet) ─── Advisors to ORCHESTRATOR
-        G-1 PERSONNEL, G-2 RECON, G-3 OPERATIONS, G-4 CONTEXT, G-5 PLANNING, G-6 SIGNAL
+    ├── SYNTHESIZER (opus) ─── Deputy for Operations
+    │   ├── COORD_OPS (sonnet) → RELEASE_MANAGER, META_UPDATER, KNOWLEDGE_CURATOR, CI_LIAISON
+    │   ├── COORD_RESILIENCE (sonnet) → RESILIENCE_ENGINEER, COMPLIANCE_AUDITOR, SECURITY_AUDITOR
+    │   ├── COORD_FRONTEND (sonnet) → FRONTEND_ENGINEER, UX_SPECIALIST
+    │   ├── COORD_INTEL (sonnet) → (intel specialists)
+    │   ├── G1_PERSONNEL (sonnet) ─── Direct Support (DS)
+    │   ├── G3_OPERATIONS (sonnet) ─── Direct Support (DS)
+    │   ├── G4_CONTEXT_MANAGER (sonnet) ─── Direct Support (DS)
+    │   └── [G2_RECON, G5_PLANNING attachable as General Support]
+    │
+    ├── G2_RECON (sonnet) ─── General Support (attachable to either Deputy)
+    └── G5_PLANNING (sonnet) ─── General Support (attachable to either Deputy)
 
     Special Staff (Advisory, sonnet) ─── Domain Experts
-        FORCE_MANAGER, DEVCOM_RESEARCH, MEDCOM
+        FORCE_MANAGER → SYNTHESIZER, DEVCOM_RESEARCH → ARCHITECT, MEDCOM → SYNTHESIZER
 
     IG (DELEGATION_AUDITOR) ─── Independent Oversight (sonnet)
     PAO (HISTORIAN) ─── Historical Record (sonnet)
@@ -120,9 +126,11 @@ ORCHESTRATOR (opus) ─── Supreme Commander
 | Tier | Role | Agents |
 |------|------|--------|
 | **Opus** | Strategic decision-makers | ORCHESTRATOR, ARCHITECT, SYNTHESIZER |
-| **Opus** | High-stakes Special Staff | DEVCOM_RESEARCH, MEDCOM, INCIDENT_COMMANDER |
+| **Opus** | High-stakes Special Staff | DEVCOM_RESEARCH, MEDCOM, INCIDENT_COMMANDER *(Reserves - production activation)* |
 | **Sonnet** | Tactical coordinators + advisors | All COORDs, G-Staff, IG, PAO, FORCE_MANAGER |
-| **Haiku** | Execution specialists | All specialists under coordinators, CRASH_RECOVERY_SPECIALIST |
+| **Haiku** | Execution specialists | All specialists under coordinators, CRASH_RECOVERY_SPECIALIST *(Reserves - production activation)* |
+
+> **Reserves Note:** Agents marked *(Reserves - production activation)* are production-ready reserves in `.claude/Reserves/`. They activate based on system maturity triggers, not development phase.
 
 ## Coordinator Standing Orders
 
@@ -161,21 +169,44 @@ These are separate roles. G-3 advises; SYNTHESIZER commands.
 
 ## G-Staff Intel Routing
 
-G-Staff agents are advisory. Their intel SHOULD route through Deputies for strategic interpretation, but CAN go direct to ORCHESTRATOR for urgent matters.
+G-Staff agents report to their assigned Deputy (Direct Support) or ORCHESTRATOR (General Support). Intel routes through chain of command.
 
-| G-Staff | Primary Route | Strategic Interpretation |
-|---------|---------------|-------------------------|
-| G-1 PERSONNEL | → ORCHESTRATOR | Via FORCE_MANAGER (team assembly) |
-| G-2 RECON | → ORCHESTRATOR | Via ARCHITECT (systems) or SYNTHESIZER (ops) |
-| G-3 OPERATIONS | → ORCHESTRATOR | Via SYNTHESIZER (operational conflicts) |
-| G-4 CONTEXT | → ORCHESTRATOR | Direct (context management) |
-| G-5 PLANNING | → ORCHESTRATOR | Via ARCHITECT (strategic planning) |
-| G-6 SIGNAL | → ORCHESTRATOR | Via SYNTHESIZER (data/metrics) |
+| G-Staff | Reports To | Support Type | Notes |
+|---------|------------|--------------|-------|
+| G-1 PERSONNEL | SYNTHESIZER | Direct Support (DS) | Staffing, roster, utilization |
+| G-2 RECON | ORCHESTRATOR | General Support (GS) | Attachable to ARCHITECT or SYNTHESIZER. Leans ARCHITECT. |
+| G-3 OPERATIONS | SYNTHESIZER | Direct Support (DS) | Real-time ops, workflow coordination |
+| G-4 CONTEXT | SYNTHESIZER | Direct Support (DS) | RAG, context management |
+| G-5 PLANNING | ORCHESTRATOR | General Support (GS) | Attachable to ARCHITECT or SYNTHESIZER. Leans ARCHITECT. |
+| G-6 SIGNAL | ARCHITECT | Direct Support (DS) | Metrics, data aggregation |
 
 **Routing Guidance:**
-- **Urgent/Time-Critical**: Direct to ORCHESTRATOR
-- **Strategic/Interpretive**: Route through appropriate Deputy
-- **Cross-Domain**: Both Deputies may be consulted
+- **Direct Support (DS)**: Route through assigned Deputy; escalate to ORCHESTRATOR only if Deputy unavailable
+- **General Support (GS)**: Attachable to either Deputy on demand; defaults to ORCHESTRATOR when not attached
+- **Cross-Domain**: G2/G5 can be attached to either Deputy based on task domain
+
+## Party Skill Decision Guide
+
+Party skills deploy parallel probes for specific G-Staff advisory functions. Use this guide to select the appropriate party:
+
+| Need | Skill | Owner | Probes |
+|------|-------|-------|--------|
+| Codebase exploration / reconnaissance | `/search-party` | G2_RECON | 120 (12 G-2s × 10) |
+| Implementation planning / strategy | `/plan-party` | G5_PLANNING | 10 |
+| Pre-execution readiness validation | `/ops-party` | G3_OPERATIONS | 6 |
+| Post-execution validation / testing | `/qa-party` | COORD_QUALITY | 8+ |
+| Team composition / staffing analysis | `/roster-party` | G1_PERSONNEL | 6 |
+| Historical context gathering | `/context-party` | G4_CONTEXT | 6 |
+| System metrics / data aggregation | `/signal-party` | G6_SIGNAL | 6 |
+| SOF critical mission (user-invoked) | `/sof-party` | USASOC | 7 (18-series) |
+
+**Selection Criteria:**
+- **Before work**: `/search-party` (what exists?), `/context-party` (what did we decide?)
+- **During planning**: `/plan-party` (how to implement?), `/roster-party` (who to assign?)
+- **Before execution**: `/ops-party` (are we ready?)
+- **After execution**: `/qa-party` (did it work?)
+- **Metrics needed**: `/signal-party` (what are the numbers?)
+- **Critical/cross-domain**: `/sof-party` (user authorization required)
 
 ## Script Ownership
 

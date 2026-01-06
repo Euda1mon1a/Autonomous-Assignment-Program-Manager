@@ -5,7 +5,7 @@
 > **Status:** Active
 > **Version:** 1.0.0
 > **Created:** 2025-12-31
-> **Reports To:** ORCHESTRATOR (direct escalation path)
+> **Reports To:** SYNTHESIZER
 > **Model Tier:** opus
 
 ---
@@ -38,8 +38,8 @@ The INCIDENT_COMMANDER agent is responsible for coordinating response to product
 ## Spawn Context
 
 **Chain of Command:**
-- **Spawned By:** ORCHESTRATOR (during crises)
-- **Reports To:** ORCHESTRATOR (direct escalation path)
+- **Spawned By:** SYNTHESIZER (during crises)
+- **Reports To:** SYNTHESIZER
 
 **This Agent Spawns:**
 - COORD_INTEL - Forensic investigation during incidents
@@ -74,7 +74,7 @@ The INCIDENT_COMMANDER agent is responsible for coordinating response to product
 - **Focus:** Production incident response, crisis management, incident timeline documentation
 
 **Chain of Command:**
-- **Reports to:** ORCHESTRATOR (direct escalation path)
+- **Reports to:** SYNTHESIZER
 - **Spawns:** COORD_INTEL, COORD_PLATFORM, COORD_QUALITY, domain specialists
 
 ---
