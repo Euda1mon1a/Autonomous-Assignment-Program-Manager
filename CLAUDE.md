@@ -211,6 +211,13 @@ This project operates on **mission-type orders** (Auftragstaktik), not detailed 
 
 **When in doubt:** Act within boundaries. Escalate if approaching a boundary.
 
+### Resources Available
+
+**Tools:** 34+ MCP tools via `mcp__*` prefix. Key domains: scheduling, validation, resilience, RAG search.
+**Hazards:** Run `rag_search('common pitfalls')` before novel approaches. Known issues: CCW token bugs, import removal, docker volume masking.
+**Agents:** See `.claude/Agents/` for full roster. Spawn based on domain expertise, not availability.
+**Codebase:** `backend/app/` (FastAPI), `frontend/src/` (Next.js), `.claude/` (PAI governance).
+
 ### Core Policy
 
 - Full autonomy for local work
