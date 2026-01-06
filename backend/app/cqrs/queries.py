@@ -546,7 +546,7 @@ class QueryBus:
         # Get handler
         if query_type not in self._handlers:
             error_msg = f"No handler registered for query type: {query_name}"
-            logger.error(error_msg, extra={"query_type": query_name})
+            logger.error(error_msg, query_type=query_name)
             raise ValueError(error_msg)
 
         handler = self._handlers[query_type]
