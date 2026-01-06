@@ -182,6 +182,35 @@ This project operates on **mission-type orders** (Auftragstaktik), not detailed 
 > RAG: `rag_search('Auftragstaktik doctrine')` for full delegation patterns
 > See: `.claude/Governance/HIERARCHY.md` for command philosophy
 
+### Commander's Intent
+
+**Mission:** Deliver a production-ready military medical residency scheduler that is ACGME-compliant, operationally secure, and institutionally resilient.
+
+**End State:** Program coordinators generate valid schedules autonomously. System handles edge cases gracefully. Audit trails complete.
+
+**Left Boundary (NEVER CROSS):**
+- No OPSEC/PERSEC violations (names, schedules, deployments)
+- No ACGME compliance shortcuts
+- No silent failures (all errors logged/escalated)
+- No security bypasses (auth, rate limiting, input validation)
+
+**Right Boundary (ALWAYS DO):**
+- Tests pass before commit
+- Linters clean
+- Audit trail for schedule changes
+- Graceful degradation over hard failure
+
+### Decision Rights
+
+| Tier | Act Autonomously | Escalate Up |
+|------|------------------|-------------|
+| **Specialist** | Implementation details, test fixes, bug patches | Architecture changes, new dependencies, scope creep |
+| **Coordinator** | Task decomposition, agent selection, retry logic | Blocked >2 attempts, cross-domain impact, unclear requirements |
+| **Deputy** | Strategic pivots within domain, resource allocation | User-facing changes, cross-deputy coordination, policy changes |
+| **ORCHESTRATOR** | 99% delegation, workflow orchestration | Container ops (1%), user preference unclear, boundary violations |
+
+**When in doubt:** Act within boundaries. Escalate if approaching a boundary.
+
 ### Core Policy
 
 - Full autonomy for local work
