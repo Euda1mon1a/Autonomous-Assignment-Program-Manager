@@ -59,12 +59,10 @@ class PHIMiddleware(BaseHTTPMiddleware):
 
             logger.info(
                 "PHI_ACCESS_ATTEMPT",
-                extra={
-                    "user": user_id,
-                    "endpoint": request.url.path,
-                    "method": request.method,
-                    "ip": request.client.host if request.client else "unknown",
-                },
+                user=user_id,
+                endpoint=request.url.path,
+                method=request.method,
+                ip=request.client.host if request.client else "unknown",
             )
 
         response = await call_next(request)

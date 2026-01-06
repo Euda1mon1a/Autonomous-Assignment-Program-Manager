@@ -547,7 +547,7 @@ class CommandBus:
         # Get handler
         if command_type not in self._handlers:
             error_msg = f"No handler registered for command type: {command_name}"
-            logger.error(error_msg, extra={"command_type": command_name})
+            logger.error(error_msg, command_type=command_name)
             raise ValueError(error_msg)
 
         handler = self._handlers[command_type]
