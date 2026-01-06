@@ -437,6 +437,39 @@ mcp = FastMCP(
     ),
 )
 
+# =============================================================================
+# Armory Conditional Loading
+# =============================================================================
+# Import armory loader for conditional tool registration
+from .armory.loader import should_load_tool, get_armory_status, ALL_ARMORY_TOOLS
+
+def armory_tool(tool_name: str):
+    """
+    Decorator for armory tools - only registers if domain is enabled.
+
+    Usage:
+        @armory_tool("calculate_schedule_entropy_tool")
+        async def calculate_schedule_entropy_tool(...):
+            ...
+
+    Core tools should continue to use @mcp.tool() directly.
+    """
+    def decorator(func):
+        if should_load_tool(tool_name):
+            return mcp.tool()(func)
+        else:
+            # Return a no-op function that won't be registered
+            logger.debug(f"Armory tool not loaded (domain disabled): {tool_name}")
+            return func
+    return decorator
+
+# Log armory status
+_armory_status = get_armory_status()
+if _armory_status["effective_domains"]:
+    logger.info(f"Armory domains active: {_armory_status['effective_domains']}")
+else:
+    logger.info(f"Armory disabled ({len(ALL_ARMORY_TOOLS)} tools available via ARMORY_DOMAINS env var)")
+
 
 def parse_date_range(date_range: str) -> tuple[date, date]:
     """
@@ -991,7 +1024,7 @@ async def execute_sacrifice_hierarchy_tool(
     return await execute_sacrifice_hierarchy(level_enum, simulate_only)
 
 
-@mcp.tool()
+@armory_tool("analyze_homeostasis_tool")
 async def analyze_homeostasis_tool(
     current_values: dict[str, float],
 ) -> HomeostasisStatusResponse:
@@ -1010,7 +1043,7 @@ async def analyze_homeostasis_tool(
     return await analyze_homeostasis(current_values)
 
 
-@mcp.tool()
+@armory_tool("calculate_blast_radius_tool")
 async def calculate_blast_radius_tool(
     zone_id: str | None = None, check_all_zones: bool = True
 ) -> BlastRadiusAnalysisResponse:
@@ -1031,7 +1064,7 @@ async def calculate_blast_radius_tool(
     return await calculate_blast_radius(request)
 
 
-@mcp.tool()
+@armory_tool("analyze_le_chatelier_tool")
 async def analyze_le_chatelier_tool(
     include_stress_prediction: bool = True,
 ) -> EquilibriumAnalysisResponse:
@@ -1052,7 +1085,7 @@ async def analyze_le_chatelier_tool(
     return await analyze_le_chatelier(request)
 
 
-@mcp.tool()
+@armory_tool("analyze_hub_centrality_tool")
 async def analyze_hub_centrality_tool() -> HubAnalysisResponse:
     """
     Analyze faculty hub centrality and single points of failure.
@@ -1067,7 +1100,7 @@ async def analyze_hub_centrality_tool() -> HubAnalysisResponse:
     return await analyze_hub_centrality()
 
 
-@mcp.tool()
+@armory_tool("assess_cognitive_load_tool")
 async def assess_cognitive_load_tool(
     session_id: str | None = None, include_queue_status: bool = True
 ) -> CognitiveLoadResponse:
@@ -1088,7 +1121,7 @@ async def assess_cognitive_load_tool(
     return await assess_cognitive_load(request)
 
 
-@mcp.tool()
+@armory_tool("get_behavioral_patterns_tool")
 async def get_behavioral_patterns_tool() -> BehavioralPatternsResponse:
     """
     Get behavioral patterns from stigmergy (swarm intelligence).
@@ -1103,7 +1136,7 @@ async def get_behavioral_patterns_tool() -> BehavioralPatternsResponse:
     return await get_behavioral_patterns()
 
 
-@mcp.tool()
+@armory_tool("analyze_stigmergy_tool")
 async def analyze_stigmergy_tool(
     slot_id: str | None = None,
     slot_type: str | None = None,
@@ -1653,7 +1686,7 @@ async def module_usage_analysis_tool(
 # =============================================================================
 
 
-@mcp.tool()
+@armory_tool("calculate_shapley_workload_tool")
 async def calculate_shapley_workload_tool(
     faculty_ids: list[str],
     start_date: str,
@@ -1739,7 +1772,7 @@ async def calculate_shapley_workload_tool(
     }
 
 
-@mcp.tool()
+@armory_tool("detect_critical_slowing_down_tool")
 async def detect_critical_slowing_down_tool(
     utilization_history: list[float],
     coverage_history: list[float] | None = None,
@@ -1890,7 +1923,7 @@ async def detect_critical_slowing_down_tool(
     }
 
 
-@mcp.tool()
+@armory_tool("detect_schedule_changepoints_tool")
 async def detect_schedule_changepoints_tool(
     daily_values: list[float],
     dates: list[str],
@@ -2172,7 +2205,7 @@ async def get_unified_critical_index_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("analyze_schedule_periodicity_tool")
 async def analyze_schedule_periodicity_tool(
     assignments: list[dict] | None = None,
     schedule_id: str | None = None,
@@ -2212,7 +2245,7 @@ async def analyze_schedule_periodicity_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("calculate_recovery_distance_tool")
 async def calculate_recovery_distance_tool(
     start_date: str | None = None,
     end_date: str | None = None,
@@ -2265,7 +2298,7 @@ async def calculate_recovery_distance_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("assess_creep_fatigue_tool")
 async def assess_creep_fatigue_tool(
     include_assessments: bool = True,
     top_n: int = 10,
@@ -2311,7 +2344,7 @@ async def assess_creep_fatigue_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("analyze_transcription_triggers_tool")
 async def analyze_transcription_triggers_tool(
     include_tf_details: bool = True,
     include_constraint_status: bool = True,
@@ -2364,7 +2397,7 @@ async def analyze_transcription_triggers_tool(
 # =============================================================================
 
 
-@mcp.tool()
+@armory_tool("calculate_burnout_rt_tool")
 async def calculate_burnout_rt_tool(
     burned_out_provider_ids: list[str],
     time_window_days: int = 28,
@@ -2418,7 +2451,7 @@ async def calculate_burnout_rt_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("simulate_burnout_spread_tool")
 async def simulate_burnout_spread_tool(
     initial_infected_ids: list[str],
     infection_rate: float = 0.05,
@@ -2481,7 +2514,7 @@ async def simulate_burnout_spread_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("simulate_burnout_contagion_tool")
 async def simulate_burnout_contagion_tool(
     provider_burnout_scores: dict[str, float],
     infection_rate: float = 0.05,
@@ -2769,7 +2802,7 @@ async def override_circuit_breaker_tool(
 # =============================================================================
 
 
-@mcp.tool()
+@armory_tool("optimize_erlang_coverage_tool")
 async def optimize_erlang_coverage_tool(
     specialty: str,
     arrival_rate: float,
@@ -2830,7 +2863,7 @@ async def optimize_erlang_coverage_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("calculate_erlang_metrics_tool")
 async def calculate_erlang_metrics_tool(
     arrival_rate: float,
     service_time_minutes: float,
@@ -2878,7 +2911,7 @@ async def calculate_erlang_metrics_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("calculate_process_capability_tool")
 async def calculate_process_capability_tool(
     data: list[float],
     lower_spec_limit: float,
@@ -2939,7 +2972,7 @@ async def calculate_process_capability_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("calculate_equity_metrics_tool")
 async def calculate_equity_metrics_tool(
     provider_hours: dict[str, float],
     intensity_weights: dict[str, float] | None = None,
@@ -2992,7 +3025,7 @@ async def calculate_equity_metrics_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("generate_lorenz_curve_tool")
 async def generate_lorenz_curve_tool(
     values: list[float],
 ) -> LorenzCurveResponse:
@@ -3034,7 +3067,7 @@ async def generate_lorenz_curve_tool(
 # =============================================================================
 
 
-@mcp.tool()
+@armory_tool("assess_immune_response_tool")
 async def assess_immune_response_tool(
     include_detectors: bool = True,
     include_recent_anomalies: bool = True,
@@ -3087,7 +3120,7 @@ async def assess_immune_response_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("check_memory_cells_tool")
 async def check_memory_cells_tool(
     include_inactive: bool = False,
     max_patterns: int = 20,
@@ -3138,7 +3171,7 @@ async def check_memory_cells_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("analyze_antibody_response_tool")
 async def analyze_antibody_response_tool(
     schedule_state: dict[str, Any] | None = None,
     include_all: bool = True,
@@ -3208,7 +3241,7 @@ async def analyze_antibody_response_tool(
 # =============================================================================
 
 
-@mcp.tool()
+@armory_tool("calculate_schedule_entropy_tool")
 async def calculate_schedule_entropy_tool(
     start_date: str | None = None,
     end_date: str | None = None,
@@ -3264,7 +3297,7 @@ async def calculate_schedule_entropy_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("get_entropy_monitor_state_tool")
 async def get_entropy_monitor_state_tool(
     history_window: int = 100,
 ) -> EntropyMonitorStateResponse:
@@ -3300,7 +3333,7 @@ async def get_entropy_monitor_state_tool(
     return await get_entropy_monitor_state(history_window=history_window)
 
 
-@mcp.tool()
+@armory_tool("analyze_phase_transitions_tool")
 async def analyze_phase_transitions_tool(
     metrics: dict[str, list[float]] | None = None,
     window_size: int = 50,
@@ -3360,7 +3393,7 @@ async def analyze_phase_transitions_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("optimize_free_energy_tool")
 async def optimize_free_energy_tool(
     schedule_id: str | None = None,
     target_temperature: float = 1.0,
@@ -3407,7 +3440,7 @@ async def optimize_free_energy_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("calculate_time_crystal_objective_tool")
 async def calculate_time_crystal_objective_tool(
     current_assignments: list[dict],
     proposed_assignments: list[dict],
@@ -3467,7 +3500,7 @@ async def calculate_time_crystal_objective_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("analyze_energy_landscape_tool")
 async def analyze_energy_landscape_tool(
     schedule_id: str | None = None,
 ) -> EnergyLandscapeResponse:
@@ -3505,7 +3538,7 @@ async def analyze_energy_landscape_tool(
 # =============================================================================
 
 
-@mcp.tool()
+@armory_tool("calculate_hopfield_energy_tool")
 async def calculate_hopfield_energy_tool(
     start_date: str | None = None,
     end_date: str | None = None,
@@ -3564,7 +3597,7 @@ async def calculate_hopfield_energy_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("find_nearby_attractors_tool")
 async def find_nearby_attractors_tool(
     max_distance: int = 10,
     start_date: str | None = None,
@@ -3620,7 +3653,7 @@ async def find_nearby_attractors_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("measure_basin_depth_tool")
 async def measure_basin_depth_tool(
     attractor_id: str | None = None,
     num_perturbations: int = 100,
@@ -3678,7 +3711,7 @@ async def measure_basin_depth_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("detect_spurious_attractors_tool")
 async def detect_spurious_attractors_tool(
     search_radius: int = 20,
     min_basin_size: int = 10,
@@ -3755,7 +3788,7 @@ async def detect_spurious_attractors_tool(
 # =============================================================================
 
 
-@mcp.tool()
+@armory_tool("detect_burnout_precursors_tool")
 async def detect_burnout_precursors_tool(
     resident_id: str,
     signal_type: str,
@@ -3797,7 +3830,7 @@ async def detect_burnout_precursors_tool(
     return await detect_burnout_precursors(request)
 
 
-@mcp.tool()
+@armory_tool("predict_burnout_magnitude_tool")
 async def predict_burnout_magnitude_tool(
     resident_id: str,
     signals: dict[str, list[float]],
@@ -3828,7 +3861,7 @@ async def predict_burnout_magnitude_tool(
     return await predict_burnout_magnitude(request)
 
 
-@mcp.tool()
+@armory_tool("run_spc_analysis_tool")
 async def run_spc_analysis_tool(
     resident_id: str,
     weekly_hours: list[float],
@@ -3858,7 +3891,7 @@ async def run_spc_analysis_tool(
     return await run_spc_analysis(request)
 
 
-@mcp.tool()
+@armory_tool("calculate_workload_process_capability_tool")
 async def calculate_workload_process_capability_tool(
     weekly_hours: list[float],
     lower_spec_limit: float = 40.0,
@@ -3885,7 +3918,7 @@ async def calculate_workload_process_capability_tool(
     return await calculate_spc_process_capability(request)
 
 
-@mcp.tool()
+@armory_tool("calculate_fire_danger_index_tool")
 async def calculate_fire_danger_index_tool(
     resident_id: str,
     recent_hours: float,
@@ -3918,7 +3951,7 @@ async def calculate_fire_danger_index_tool(
     return await calculate_fire_danger_index(request)
 
 
-@mcp.tool()
+@armory_tool("calculate_batch_fire_danger_tool")
 async def calculate_batch_fire_danger_tool(
     residents: list[dict[str, Any]],
 ) -> BatchFireDangerResponse:
@@ -3993,7 +4026,7 @@ async def run_frms_assessment_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("get_checkpoint_status_tool")
 async def get_checkpoint_status_tool(
     schedule_id: str | None = None,
 ) -> CheckpointStatusResponse:
@@ -4025,7 +4058,7 @@ async def get_checkpoint_status_tool(
     return await get_checkpoint_status(schedule_id=schedule_id)
 
 
-@mcp.tool()
+@armory_tool("get_time_crystal_health_tool")
 async def get_time_crystal_health_tool() -> TimeCrystalHealthResponse:
     """
     Get overall health of time crystal scheduling components.
@@ -4057,7 +4090,7 @@ async def get_time_crystal_health_tool() -> TimeCrystalHealthResponse:
     return await get_time_crystal_health()
 
 
-@mcp.tool()
+@armory_tool("get_fatigue_score_tool")
 async def get_fatigue_score_tool(
     hours_awake: float,
     hours_worked_24h: float,
@@ -4101,7 +4134,7 @@ async def get_fatigue_score_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("analyze_sleep_debt_tool")
 async def analyze_sleep_debt_tool(
     sleep_hours_per_day: list[float],
     baseline_sleep_need: float = 7.5,
@@ -4134,7 +4167,7 @@ async def analyze_sleep_debt_tool(
     )
 
 
-@mcp.tool()
+@armory_tool("evaluate_fatigue_hazard_tool")
 async def evaluate_fatigue_hazard_tool(
     alertness: float | None = None,
     sleep_debt: float | None = None,

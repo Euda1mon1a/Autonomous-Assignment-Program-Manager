@@ -1,3 +1,8 @@
+---
+name: hierarchy
+description: Display PAI agent hierarchy and command structure
+---
+
 # Agent Hierarchy
 
 > **Purpose:** Display the PAI agent organizational structure

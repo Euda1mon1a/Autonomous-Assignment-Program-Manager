@@ -1,3 +1,8 @@
+---
+name: parties
+description: Reference for parallel agent deployment protocols (search-party, qa-party, plan-party)
+---
+
 # Party Protocols
 
 > **Purpose:** Display the PAI party protocol structures
