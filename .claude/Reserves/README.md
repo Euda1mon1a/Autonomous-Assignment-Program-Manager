@@ -1,4 +1,4 @@
-# PAI Armory - Production-Ready Reserves
+# PAI Reserves - Production-Ready Agent Reserves
 
 > **Purpose:** Agents defined but not active during development phase
 > **Status:** Reserved for production activation
@@ -7,6 +7,8 @@
 ## Philosophy
 
 These are NOT "ghost agents" or unused code. They are **strategic reserves** designed for production operations that aren't needed during development.
+
+> **Note:** MCP tool reserves are in `mcp-server/src/scheduler_mcp/armory/` (separate from agent reserves).
 
 ## Activation Triggers
 
@@ -42,7 +44,7 @@ Activate for specific needs:
 ## Activation Process
 
 1. Identify activation trigger met
-2. Move agent spec from `Armory/[phase]/` to `.claude/Agents/`
+2. Move agent spec from `Reserves/[phase]/` to `.claude/Agents/`
 3. Update HIERARCHY.md with new agent
 4. Update relevant Coordinator to include in spawn list
 5. Test agent in isolation before production use

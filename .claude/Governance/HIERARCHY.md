@@ -126,11 +126,11 @@ ORCHESTRATOR (opus) ─── Supreme Commander
 | Tier | Role | Agents |
 |------|------|--------|
 | **Opus** | Strategic decision-makers | ORCHESTRATOR, ARCHITECT, SYNTHESIZER |
-| **Opus** | High-stakes Special Staff | DEVCOM_RESEARCH, MEDCOM, INCIDENT_COMMANDER *(Armory - production activation)* |
+| **Opus** | High-stakes Special Staff | DEVCOM_RESEARCH, MEDCOM, INCIDENT_COMMANDER *(Reserves - production activation)* |
 | **Sonnet** | Tactical coordinators + advisors | All COORDs, G-Staff, IG, PAO, FORCE_MANAGER |
-| **Haiku** | Execution specialists | All specialists under coordinators, CRASH_RECOVERY_SPECIALIST *(Armory - production activation)* |
+| **Haiku** | Execution specialists | All specialists under coordinators, CRASH_RECOVERY_SPECIALIST *(Reserves - production activation)* |
 
-> **Armory Note:** Agents marked *(Armory - production activation)* are production-ready reserves in `.claude/Armory/`. They activate based on system maturity triggers, not development phase.
+> **Reserves Note:** Agents marked *(Reserves - production activation)* are production-ready reserves in `.claude/Reserves/`. They activate based on system maturity triggers, not development phase.
 
 ## Coordinator Standing Orders
 
