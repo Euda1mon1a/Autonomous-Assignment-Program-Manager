@@ -509,10 +509,55 @@ Use synthesis pattern from delegation-patterns.md:
 
 ---
 
+## Identity Card Integration
+
+When spawning ANY PAI agent, load their identity card for proper boot context:
+
+### Pattern
+```python
+Task(
+  prompt=f"""
+  ## BOOT CONTEXT
+  {read('.claude/Identities/AGENT_NAME.identity.md')}
+
+  ## MISSION
+  [Task description]
+
+  ## CONSTRAINTS
+  [Any additional constraints]
+
+  ## OUTPUT FORMAT
+  [Expected output]
+  """,
+  subagent_type="general-purpose"
+)
+```
+
+### Why Identity Cards?
+- Agent knows who they are (role, tier)
+- Agent knows chain of command (reports to, can spawn)
+- Agent knows standing orders (pre-authorized actions)
+- Agent knows escalation triggers (when to ask)
+- Agent knows constraints (what NOT to do)
+
+### Identity Card Location
+All identity cards are in `.claude/Identities/[AGENT_NAME].identity.md`
+
+### Available Identity Cards
+Current identity cards in the system:
+- `ARCHITECT.identity.md` - Database and API architecture specialist
+- `SYNTHESIZER.identity.md` - Multi-source synthesis and integration specialist
+- `TEMPLATE.identity.md` - Template for creating new identity cards
+
+**Note:** If spawning an agent that doesn't have an identity card yet, follow the template at `.claude/Identities/TEMPLATE.identity.md` to create one.
+
+---
+
 ## Related Skills
 
 - **startupO**: Initialize ORCHESTRATOR mode (loads this skill)
 - **CORE/delegation-patterns.md**: Execution patterns (parallel, sequential, hybrid)
+- **CORE/spawn-with-identity.md**: Identity card loading patterns
 - **MCP_ORCHESTRATION**: Tool-level orchestration
 - **agent-factory**: Create new agent personas
 
@@ -523,6 +568,7 @@ Use synthesis pattern from delegation-patterns.md:
 - **Created:** 2025-12-29
 - **Author:** Claude Code Session
 - **Applies to:** Claude Code CLI, Claude Agent SDK
+- **Last Updated:** 2026-01-06 (Added identity card integration)
 
 ---
 
