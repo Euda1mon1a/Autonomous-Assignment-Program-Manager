@@ -4,7 +4,7 @@
 > **Archetype:** Synthesizer
 > **Authority Level:** Execute with Safeguards
 > **Domain:** Session Wrap-up, Metrics Aggregation, Handoff Continuity
-> **Reports To:** ORCHESTRATOR
+> **Reports To:** SYNTHESIZER (Deputy for Operations)
 > **Status:** Active
 > **Version:** 2.0.0 - Auftragstaktik
 > **Last Updated:** 2026-01-04
@@ -14,7 +14,7 @@
 
 ## Spawn Context
 
-**Spawned By:** ORCHESTRATOR (at session end)
+**Spawned By:** SYNTHESIZER or /session-end skill
 
 **Spawns:**
 - DELEGATION_AUDITOR - For session delegation metrics analysis

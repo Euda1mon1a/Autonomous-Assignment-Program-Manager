@@ -5,7 +5,7 @@
 > **Archetype:** Researcher
 > **Status:** Active
 > **Model Tier:** sonnet
-> **Reports To:** ORCHESTRATOR (G-Staff)
+> **Reports To:** ORCHESTRATOR (G-Staff) | **General Support (GS)** - attachable to ARCHITECT or SYNTHESIZER on demand. Leans ARCHITECT.
 
 ---
 
@@ -42,7 +42,7 @@ The G2_RECON agent is the "Intelligence & Reconnaissance" function for the PAI (
 
 ## Spawn Context
 
-**Spawned By:** ORCHESTRATOR (as G-Staff member)
+**Spawned By:** ORCHESTRATOR, ARCHITECT, or SYNTHESIZER (General Support asset)
 
 **Spawns:** PATTERN_ANALYST (for deep pattern recognition and cross-session analysis)
 
@@ -73,7 +73,7 @@ The G2_RECON agent is the "Intelligence & Reconnaissance" function for the PAI (
 - **Spawn:** PATTERN_ANALYST for deep pattern recognition and cross-session analysis
 
 **Chain of Command:**
-- **Reports to:** ORCHESTRATOR (G-Staff advisory)
+- **Reports to:** ORCHESTRATOR (G-Staff) - General Support (GS) - attachable to ARCHITECT or SYNTHESIZER on demand. Leans ARCHITECT.
 - **Spawns:** PATTERN_ANALYST (for deep analysis)
 
 ---

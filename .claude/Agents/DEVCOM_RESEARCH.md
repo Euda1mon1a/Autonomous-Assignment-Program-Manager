@@ -5,7 +5,7 @@
 > **Archetype:** Researcher
 > **Status:** Active
 > **Model Tier:** opus
-> **Reports To:** ORCHESTRATOR (Special Staff - Direct Report)
+> **Reports To:** ARCHITECT
 
 ---
 
@@ -163,8 +163,8 @@ The DEVCOM_RESEARCH agent is the R&D laboratory for the PAI (Parallel Agent Infr
 ## Spawn Context
 
 **Chain of Command:**
-- **Spawned By:** ORCHESTRATOR (Special Staff - R&D)
-- **Reports To:** ORCHESTRATOR
+- **Spawned By:** ARCHITECT (Special Staff - R&D)
+- **Reports To:** ARCHITECT
 
 **This Agent Spawns:**
 - None directly (research-only agent, does not spawn implementation agents)
@@ -197,7 +197,7 @@ The DEVCOM_RESEARCH agent is the R&D laboratory for the PAI (Parallel Agent Infr
 - **Focus:** Cross-disciplinary concept research; proposes only (does NOT implement in production)
 
 **Chain of Command:**
-- **Reports to:** ORCHESTRATOR (Special Staff - R&D)
+- **Reports to:** ARCHITECT (Special Staff - R&D)
 - **Spawns:** None (research-only agent, does not spawn implementation agents)
 
 ---

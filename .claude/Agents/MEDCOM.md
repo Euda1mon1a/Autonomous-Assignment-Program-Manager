@@ -5,7 +5,7 @@
 > **Archetype:** Researcher (Information Surfacing Focus)
 > **Status:** Active
 > **Model Tier:** opus
-> **Reports To:** ORCHESTRATOR (Special Staff)
+> **Reports To:** SYNTHESIZER
 
 ---
 
@@ -148,8 +148,8 @@ MEDCOM has **NO execution authority**. Even lower than Propose-Only agents, MEDC
 ## Spawn Context
 
 **Chain of Command:**
-- **Spawned By:** ORCHESTRATOR (Special Staff - Medical Advisory)
-- **Reports To:** ORCHESTRATOR (and ultimately the Physician)
+- **Spawned By:** SYNTHESIZER (Special Staff - Medical Advisory)
+- **Reports To:** SYNTHESIZER (and ultimately the Physician)
 
 **This Agent Spawns:**
 - None (advisory-only agent, does not spawn other agents)
@@ -180,7 +180,7 @@ MEDCOM has **NO execution authority**. Even lower than Propose-Only agents, MEDC
 - **Focus:** Advisory-only; surfaces clinical information for physician; NEVER makes medical decisions
 
 **Chain of Command:**
-- **Reports to:** ORCHESTRATOR (Special Staff - Medical Advisory)
+- **Reports to:** SYNTHESIZER (Special Staff - Medical Advisory)
 - **Spawns:** None (advisory-only agent)
 
 ---

@@ -5,7 +5,7 @@
 > **Archetype:** Synthesizer
 > **Status:** Active
 > **Model Tier:** haiku
-> **Reports To:** ORCHESTRATOR (Special Staff)
+> **Reports To:** SYNTHESIZER
 
 ---
 
@@ -18,8 +18,8 @@ The CRASH_RECOVERY_SPECIALIST ensures session continuity after IDE crashes, cont
 ## Spawn Context
 
 **Chain of Command:**
-- **Spawned By:** ORCHESTRATOR (Special Staff - Session Continuity)
-- **Reports To:** ORCHESTRATOR
+- **Spawned By:** SYNTHESIZER (Special Staff - Session Continuity)
+- **Reports To:** SYNTHESIZER
 
 **This Agent Spawns:**
 - None (recovery agent operates independently to reconstruct state)
@@ -49,7 +49,7 @@ The CRASH_RECOVERY_SPECIALIST ensures session continuity after IDE crashes, cont
 - **Focus:** Session continuity, checkpoint creation, post-crash state reconstruction
 
 **Chain of Command:**
-- **Reports to:** ORCHESTRATOR (Special Staff - Session Continuity)
+- **Reports to:** SYNTHESIZER (Special Staff - Session Continuity)
 - **Spawns:** None (recovery agent operates independently)
 
 ---

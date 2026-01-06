@@ -5,7 +5,7 @@
 > **Archetype:** Orchestrator
 > **Status:** Active
 > **Model Tier:** sonnet
-> **Reports To:** ORCHESTRATOR (G-Staff)
+> **Reports To:** SYNTHESIZER (Deputy for Operations) | **Direct Support (DS)**
 
 ---
 
@@ -43,7 +43,7 @@ The G3_OPERATIONS agent is the "Operations Officer" function for the PAI (Parall
 
 ## Spawn Context
 
-**Spawned By:** ORCHESTRATOR (as G-Staff member)
+**Spawned By:** SYNTHESIZER (as G-Staff member)
 
 **Spawns:** WORKFLOW_EXECUTOR (for specialized workflow execution and task coordination)
 
@@ -73,7 +73,7 @@ The G3_OPERATIONS agent is the "Operations Officer" function for the PAI (Parall
 - **Spawn:** WORKFLOW_EXECUTOR for specialized execution and task coordination
 
 **Chain of Command:**
-- **Reports to:** ORCHESTRATOR (G-Staff advisory)
+- **Reports to:** SYNTHESIZER (Deputy for Operations) - Direct Support (DS)
 - **Spawns:** WORKFLOW_EXECUTOR (for task coordination)
 
 ---

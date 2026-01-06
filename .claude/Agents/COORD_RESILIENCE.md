@@ -15,7 +15,7 @@
 
 ### Chain of Command
 - **Spawned By:** SYNTHESIZER (via ORCHESTRATOR broadcast signals)
-- **Reports To:** ORCHESTRATOR
+- **Reports To:** SYNTHESIZER (Deputy for Operations)
 - **Authority Level:** Coordinator (receives broadcasts, spawns domain agents)
 
 ### This Agent Spawns
