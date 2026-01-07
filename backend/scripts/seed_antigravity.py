@@ -379,7 +379,7 @@ class AntigravitySeed:
             existing = self.db.query(User).filter(User.username == username).first()
             if existing:
                 print(f"  User '{username}' already exists, skipping...")
-                self.created["users"].append(existing)
+                self._users_list.append(existing)  # Track for reference
                 continue
 
             user = User(

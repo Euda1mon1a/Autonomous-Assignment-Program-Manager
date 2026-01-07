@@ -50,7 +50,10 @@ class CallAssignmentController:
             call_type=call_type,
         )
         return CallAssignmentListResponse(
-            items=result["items"],
+            items=[
+                CallAssignmentResponse.model_validate(item)
+                for item in result["items"]
+            ],
             total=result["total"],
             skip=skip,
             limit=limit,

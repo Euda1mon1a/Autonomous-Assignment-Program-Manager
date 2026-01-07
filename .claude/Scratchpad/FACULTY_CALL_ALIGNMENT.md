@@ -1,67 +1,58 @@
 # Faculty Call Alignment
 
-**Branch:** `feat/faculty-call-alignment` | **Date:** 2026-01-07
+**Branch:** `session/067-antigravity-faculty-call` | **Date:** 2026-01-07
 
-## Dev Mode (REQUIRED)
+## Dev Environment (CRITICAL)
 
-**Always start stack with dev config:**
+**USE THIS COMMAND:**
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker-compose -f docker-compose.local.yml up -d --build
 ```
 
-| Service | Dev Mode | Hot Reload |
-|---------|----------|------------|
-| Backend | ✓ Volume mount | ✓ Yes |
-| Frontend | Prod mode | Rebuild needed |
-| MCP | ✓ Volume mount | ✓ Yes (port 8081) |
+| Service | Hot Reload | Notes |
+|---------|------------|-------|
+| Backend | ✓ Yes | Volume mount + uvicorn --reload |
+| Frontend | ✓ Yes | Volume mount + npm run dev |
+| MCP | ✓ Yes | Port 8080 |
 
-**Frontend changes:** `docker compose build frontend && docker compose up -d frontend`
-
-Without dev config, ALL code is baked into images → every change needs rebuild.
-
-## Restore
-
-```bash
-git checkout feat/faculty-call-alignment
-docker exec residency-scheduler-backend python -m scripts.seed_antigravity --clear
-```
+**DO NOT USE:** `docker-compose.yml + docker-compose.dev.yml` (broken frontend)
 
 ## Call Types
 
-| Type | When | Seeded |
-|------|------|--------|
-| `sunday` | Sunday night | 25 |
-| `weekday` | Mon-Thu night | 101 |
-| `holiday` | Federal holidays | 3 |
-| `backup` | Fri-Sat | 52 |
+| Type | When | Count (full AY) |
+|------|------|-----------------|
+| `sunday` | Sunday | 52 |
+| `weekday` | Mon-Thu | 206 |
+| `holiday` | Federal holidays | 4 |
+| `backup` | Fri-Sat | 103 |
 
-**Post-call:** PCAT AM + DO PM (templates exist, manual assignment)
+**Total:** 365 assignments | **Jan 2026:** 31 assignments
 
 ## Files Changed
 
-- `backend/app/models/call_assignment.py` - CHECK constraint, column is `date`
-- `backend/app/schemas/call_assignment.py` - CallType enum, `call_date` with `alias="date"`
-- `backend/scripts/seed_antigravity.py` - PCAT/DO + faculty call seeding
-- `frontend/src/types/faculty-call.ts` - Removed `senior`
-- `frontend/src/features/call-roster/index.ts` - Fixed export
+- `backend/app/controllers/call_assignment_controller.py` - Added `model_validate()` to fix API crash
+- `backend/app/schemas/call_assignment.py` - `call_date` aliased to `date`
+- `frontend/src/app/admin/faculty-call/page.tsx` - Null safety in transform
 
-**Schema/Model Mapping:** Model uses `date`, API uses `call_date` (aliased)
+## Quick Reference
 
-## Verify
+| Task | Command |
+|------|---------|
+| Start dev | `docker-compose -f docker-compose.local.yml up -d` |
+| View logs | `docker-compose -f docker-compose.local.yml logs -f backend` |
+| Rebuild | `docker-compose -f docker-compose.local.yml up -d --build` |
+| Check staleness | `./scripts/diagnose-container-staleness.sh` |
 
+## DB Constraint
+
+If call_type errors, update constraint:
 ```sql
-SELECT call_type, COUNT(*) FROM call_assignments GROUP BY call_type;
-SELECT abbreviation FROM rotation_templates WHERE abbreviation IN ('PCAT','DO');
+ALTER TABLE call_assignments DROP CONSTRAINT check_call_type;
+ALTER TABLE call_assignments ADD CONSTRAINT check_call_type
+  CHECK (call_type IN ('sunday', 'weekday', 'holiday', 'backup'));
 ```
 
 ## URLs
 
-- `/admin/faculty-call` - Faculty call management
-- `/admin/rotation-templates` - Verify PCAT/DO
-- API: `/api/v1/call-assignments`
-
-## Notes
-
-- Resident call = Night Float rotation (not call_assignments table)
-- Faculty call = call_assignments table
-- Docker issue: If frontend breaks after antigravity, run `docker compose build --no-cache frontend`
+- `/admin/faculty-call` - Faculty call management (31 Jan assignments)
+- `/admin/templates` - PCAT/DO templates

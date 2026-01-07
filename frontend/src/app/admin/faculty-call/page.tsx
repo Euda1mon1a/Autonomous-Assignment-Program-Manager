@@ -93,8 +93,15 @@ function mapCallType(apiCallType: string, isWeekend: boolean): CallType {
 
 /**
  * Transforms API response to UI-friendly format
+ * Returns null if required fields are missing (defensive against bad data)
  */
-function transformApiAssignment(apiAssignment: ApiCallAssignment): CallAssignment {
+function transformApiAssignment(apiAssignment: ApiCallAssignment): CallAssignment | null {
+  // Defensive: skip assignments with missing call_date
+  if (!apiAssignment.call_date) {
+    console.warn('Skipping assignment with missing call_date:', apiAssignment.id);
+    return null;
+  }
+
   const dayOfWeek = getDayOfWeek(apiAssignment.call_date);
   const callType = mapCallType(
     apiAssignment.call_type,
@@ -195,8 +202,10 @@ export default function FacultyCallAdminPage() {
   const assignments = useMemo(() => {
     if (!apiData?.items) return [];
 
-    // Transform API data to UI format
-    let transformed = apiData.items.map(transformApiAssignment);
+    // Transform API data to UI format, filtering out any null results
+    let transformed = apiData.items
+      .map(transformApiAssignment)
+      .filter((a): a is CallAssignment => a !== null);
 
     // Client-side search filter
     if (debouncedSearch) {
