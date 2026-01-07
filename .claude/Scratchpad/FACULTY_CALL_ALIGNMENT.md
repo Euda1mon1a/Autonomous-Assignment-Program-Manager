@@ -1,4 +1,4 @@
-# Faculty Call & Schedule Fixes - Session 067
+# Session 067 - Schedule UX Redesign
 
 **Branch:** `session/067-antigravity-faculty-call` | **Date:** 2026-01-07
 
@@ -70,15 +70,71 @@ User reported Mon-Wed only showing.
 
 User can click "Render Anyway" or "Switch to Block View".
 
-## TODO
+---
 
-- [ ] Date picker typing quirk in CreateCallAssignmentModal (year shows last digit only when typing)
-  - Either make read-only with calendar-only, or use custom date picker component
+## CURRENT WORK: Schedule View UX Redesign
 
-- [ ] Annual view UX improvement
-  - Users intuit "Res." on Week view = filter to residents only, not switch to 365-day view
-  - Options: rename buttons ("Res. Year"), add tooltips, add actual filters, or move to separate page
-  - Consider: Individual annual schedule view (My Schedule year view) might be the useful use case
+**Plan:** `/Users/aaronmontgomery/.claude/plans/merry-hatching-torvalds.md`
+
+### Overview
+
+Reorganize schedule views into Block Views and Calendar Views:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ [Block Views]                │  [Calendar Views]        │
+│ ┌────┬────────┬──────┐       │  ┌─────┬──────┬───────┐  │
+│ │ AY │ Block  │ Week │       │  │ Day │ Week │ Month │  │
+│ └────┴────────┴──────┘       │  └─────┴──────┴───────┘  │
+└─────────────────────────────────────────────────────────┘
+```
+
+### New Components Needed
+
+1. **BlockAnnualView.tsx** (NEW)
+   - 14 columns: Block 0-13
+   - Rows: Residents only, grouped by PGY
+   - Cells: Rotation abbreviation + color
+   - Block 0: Warning banner for orientation period
+   - Click block → navigate to Block view
+
+2. **PersonFilter.tsx** - Enhance for multi-select
+   - Current: Single-select (exists but not wired up)
+   - Needed: Multi-select to compare schedules (e.g., SM resident + SM faculty)
+
+3. **ViewToggle.tsx** - Reorganize
+   - Remove Res./Fac. from visible (keep as URL param hidden)
+   - Add block-annual view type
+   - Group: Block Views | Calendar Views
+
+### Key User Decisions
+
+- Block AY: **Residents only** (faculty don't have block rotations)
+- Block Week: Default to **current week** within selected block
+- Res/Fac views: **Keep as hidden** (URL param access only)
+- Block 0: **Must be visible** with warning banner
+
+### API for Block Assignments
+
+Endpoint: `/block-scheduler/assignments` (block_scheduler.py)
+- Uses `BlockAssignmentResponse` schema
+- Fields: block_number, academic_year, resident_id, rotation_template_id
+
+### Progress
+
+- [x] Explored current views and data models
+- [x] Plan approved
+- [ ] Create BlockAnnualView.tsx
+- [ ] Modify ViewToggle.tsx
+- [ ] Update schedule/page.tsx
+- [ ] Enhance PersonFilter for multi-select
+- [ ] Add Block 0 warning
+
+---
+
+## TODO (backlog)
+
+- [ ] Date picker typing quirk in CreateCallAssignmentModal
 
 ## Test Credentials
 
