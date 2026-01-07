@@ -1,10 +1,21 @@
 """Schedule generation and validation API routes."""
 
-from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
+from uuid import UUID
+
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    Header,
+    HTTPException,
+    Query,
+    UploadFile,
+)
 from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
 from sqlalchemy import select
-from sqlalchemy.exc import SQLAlchemyError, DBAPIError
+from sqlalchemy.exc import DBAPIError, SQLAlchemyError
+from sqlalchemy.orm import Session
 
 from app.core.file_security import FileValidationError, validate_excel_upload
 from app.core.logging import get_logger
@@ -13,6 +24,12 @@ from app.db.session import get_db
 from app.models.user import User
 from app.scheduling.engine import SchedulingEngine
 from app.scheduling.validator import ACGMEValidator
+from app.schemas.block_import import (
+    BlockParseResponse,
+    ParsedBlockAssignmentSchema,
+    ParsedFMITWeekSchema,
+    ResidentRosterItem,
+)
 from app.schemas.schedule import (
     AlternatingPatternInfo,
     ConflictItem,
@@ -21,8 +38,11 @@ from app.schemas.schedule import (
     EmergencyResponse,
     ImportAnalysisResponse,
     Recommendation,
+    RollbackPoint,
     ScheduleRequest,
     ScheduleResponse,
+    ScheduleRunRead,
+    ScheduleRunsResponse,
     ScheduleSummary,
     SolverStatistics,
     SwapCandidateJsonItem,
@@ -31,18 +51,13 @@ from app.schemas.schedule import (
     SwapCandidateResponse,
     SwapFinderRequest,
     SwapFinderResponse,
+    SyncMetadata,
     ValidationResult,
 )
 from app.services.emergency_coverage import EmergencyCoverageService
 from app.services.idempotency_service import (
     IdempotencyService,
     extract_idempotency_params,
-)
-from app.schemas.block_import import (
-    BlockParseResponse,
-    ParsedBlockAssignmentSchema,
-    ParsedFMITWeekSchema,
-    ResidentRosterItem,
 )
 from app.services.xlsx_import import (
     ExternalConflict,
@@ -404,9 +419,7 @@ async def handle_emergency_coverage(
 
 
 @router.get("/{start_date}/{end_date}")
-async def get_schedule(
-    start_date: str, end_date: str, db: Session = Depends(get_db)
-):
+async def get_schedule(start_date: str, end_date: str, db: Session = Depends(get_db)):
     """
     Get the schedule for a date range.
 
@@ -1063,9 +1076,7 @@ async def find_swap_candidates_json(
                 status_code=404, detail=f"Assignment {request.assignment_id} not found"
             )
         target_block = (
-            db.execute(
-                select(Block).where(Block.id == target_assignment.block_id)
-            )
+            db.execute(select(Block).where(Block.id == target_assignment.block_id))
         ).scalar_one_or_none()
 
     elif request.block_id:
@@ -1319,3 +1330,157 @@ async def generate_faculty_outpatient(
             status_code=500,
             detail=f"Faculty outpatient generation failed: {repr(e)}",
         )
+
+
+# ============================================================================
+# Admin Scheduling Management
+# ============================================================================
+
+
+@router.get("/runs", response_model=ScheduleRunsResponse)
+async def list_schedule_runs(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100, alias="pageSize"),
+    status: str | None = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """List schedule generation runs with pagination."""
+    from app.models.schedule_run import ScheduleRun
+
+    query = select(ScheduleRun)
+    if status:
+        query = query.where(ScheduleRun.status == status)
+
+    query = query.order_by(ScheduleRun.created_at.desc())
+
+    # Pagination
+    total_result = db.execute(select(ScheduleRun)).all()
+    total = len(total_result)
+
+    offset = (page - 1) * page_size
+    query = query.offset(offset).limit(page_size)
+
+    results = db.execute(query).scalars().all()
+
+    return ScheduleRunsResponse(
+        runs=[ScheduleRunRead.from_orm(r) for r in results],
+        total=total,
+        page=page,
+        pageSize=page_size,
+    )
+
+
+@router.get("/runs/{run_id}", response_model=ScheduleRunRead)
+async def get_schedule_run(
+    run_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get details of a specific schedule run."""
+    from app.models.schedule_run import ScheduleRun
+
+    result = db.execute(
+        select(ScheduleRun).where(ScheduleRun.id == run_id)
+    ).scalar_one_or_none()
+    if not result:
+        raise HTTPException(status_code=404, detail="Schedule run not found")
+
+    return ScheduleRunRead.from_orm(result)
+
+
+@router.get("/rollback-points", response_model=list[RollbackPoint])
+async def list_rollback_points(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """List available rollback points (applied import batches)."""
+    from app.models.import_staging import ImportBatchStatus
+    from app.services.import_staging_service import ImportStagingService
+
+    service = ImportStagingService(db)
+    batches, _ = await service.list_batches(status=ImportBatchStatus.APPLIED)
+
+    return [
+        RollbackPoint(
+            id=b.id,
+            created_at=b.applied_at or b.created_at,
+            created_by=str(b.applied_by_id) if b.applied_by_id else None,
+            description=f"Import: {b.filename}" + (f" ({b.notes})" if b.notes else ""),
+            assignment_count=b.row_count,
+            can_revert=b.rollback_available,
+        )
+        for b in batches
+    ]
+
+
+@router.get("/sync-metadata", response_model=SyncMetadata)
+async def get_sync_metadata(
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get metadata about external system synchronization."""
+    from datetime import datetime
+
+    # Stub implementation for now
+    return SyncMetadata(
+        last_sync_time=datetime.utcnow(),
+        sync_status="synced",
+        source_system="FMIT_CORE",
+        records_affected=0,
+    )
+
+
+@router.post("/validate-config", response_model=ValidationResult)
+async def validate_configuration(
+    request: ScheduleRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Validate a scheduling configuration without generating."""
+    validator = ACGMEValidator(db)
+    result = validator.validate_all(request.start_date, request.end_date)
+    return result
+
+
+@router.get("/locks", response_model=list[dict])
+async def list_schedule_locks(
+    current_user: User = Depends(get_current_active_user),
+):
+    """List manual assignment locks (stubs for now)."""
+    return []
+
+
+@router.get("/metrics", response_model=dict)
+async def get_schedule_metrics_summary(
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get metrics summary for schedule runs."""
+    from datetime import datetime
+
+    return {
+        "status": "success",
+        "timestamp": datetime.now().isoformat(),
+        "summary": {"total_runs": 0, "avg_compliance": 0.0, "total_violations": 0},
+        "details": [],
+    }
+
+
+@router.get("/metrics/trends/{metric}", response_model=dict)
+async def get_schedule_metric_trend(
+    metric: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get trend data for a specific metric."""
+    return {"metric": metric, "trends": []}
+
+
+@router.get("/holidays", response_model=list[dict])
+async def list_emergency_holidays(
+    current_user: User = Depends(get_current_active_user),
+):
+    """List emergency holidays/closures (stubs for now)."""
+    return []

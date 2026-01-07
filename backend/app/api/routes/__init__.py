@@ -19,6 +19,7 @@ from app.api.routes import (
     changelog,
     conflict_resolution,
     conflicts,
+    constraints,
     credentials,
     daily_manifest,
     db_admin,
@@ -34,8 +35,8 @@ from app.api.routes import (
     fmit_timeline,
     game_theory,
     health,
-    import_staging,
     impersonation,
+    import_staging,
     imports,
     jobs,
     leave,
@@ -48,6 +49,7 @@ from app.api.routes import (
     portal,
     procedures,
     qubo_templates,
+    queue,
     quota,
     rag,
     rate_limit,
@@ -108,6 +110,13 @@ api_router.include_router(
 api_router.include_router(batch.router, prefix="/batch", tags=["batch"])
 api_router.include_router(absences.router, prefix="/absences", tags=["absences"])
 api_router.include_router(schedule.router, prefix="/schedule", tags=["schedule"])
+# Aliases for frontend hardcoded paths
+api_router.include_router(
+    constraints.router, prefix="/schedule/constraints", tags=["schedule"]
+)
+api_router.include_router(metrics.router, prefix="/schedule/metrics", tags=["schedule"])
+api_router.include_router(queue.router, prefix="/schedule/queue", tags=["schedule"])
+
 api_router.include_router(settings.router, prefix="/settings", tags=["settings"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(
@@ -137,6 +146,9 @@ api_router.include_router(
     scheduler_ops.router, prefix="/scheduler", tags=["scheduler-ops"]
 )
 api_router.include_router(procedures.router, prefix="/procedures", tags=["procedures"])
+api_router.include_router(
+    constraints.router, prefix="/constraints", tags=["constraints"]
+)
 api_router.include_router(
     credentials.router, prefix="/credentials", tags=["credentials"]
 )
@@ -188,6 +200,7 @@ api_router.include_router(
 api_router.include_router(role_views.router, prefix="/views", tags=["role-views"])
 api_router.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
 api_router.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
+api_router.include_router(queue.router, prefix="/queue", tags=["queue"])
 api_router.include_router(upload.router, prefix="/uploads", tags=["upload"])
 api_router.include_router(imports.router, prefix="/imports", tags=["imports"])
 api_router.include_router(

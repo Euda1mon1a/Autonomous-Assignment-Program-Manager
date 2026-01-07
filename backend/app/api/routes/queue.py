@@ -57,6 +57,15 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+@router.get("", response_model=dict)
+async def get_queue_status(
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get overall queue status and statistics."""
+    manager = QueueManager()
+    return manager.get_stats()
+
+
 # ============================================================================
 # Task Submission Endpoints
 # ============================================================================

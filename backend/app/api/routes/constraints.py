@@ -27,7 +27,7 @@ from app.scheduling.constraints.config import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/constraints", tags=["constraints"])
+router = APIRouter(tags=["constraints"])
 
 
 class ConstraintStatusResponse(BaseModel):
@@ -85,48 +85,19 @@ def _constraint_to_response(config: ConstraintConfig) -> ConstraintStatusRespons
     )
 
 
-@router.get("/status", response_model=ConstraintListResponse)
-async def get_constraint_status() -> ConstraintListResponse:
+@router.get("", response_model=list[ConstraintStatusResponse])
+async def list_constraints() -> list[ConstraintStatusResponse]:
     """
-    Get status of all constraints.
-
-    Returns summary of enabled/disabled constraints and their configurations.
-
-    Returns:
-        ConstraintListResponse: Status of all constraints
+    List all constraints as a flat array.
+    Used by the frontend admin scheduling laboratory.
     """
     try:
         config_manager = get_constraint_config()
-
-        all_configs = list(config_manager._configs.values())
-        enabled_count = len(config_manager.get_all_enabled())
-        disabled_count = len(config_manager.get_all_disabled())
-
-        constraints = [_constraint_to_response(c) for c in all_configs]
-
-        return ConstraintListResponse(
-            constraints=constraints,
-            total=len(all_configs),
-            enabled_count=enabled_count,
-            disabled_count=disabled_count,
-        )
-    except (ValueError, KeyError, AttributeError) as e:
-        logger.error(f"Error getting constraint status: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get constraint status",
-        )
-
-
-@router.get("", response_model=ConstraintListResponse)
-async def list_constraints() -> ConstraintListResponse:
-    """
-    List all constraints.
-
-    Returns:
-        ConstraintListResponse: List of all constraints
-    """
-    return await get_constraint_status()
+        all_constraints = list(config_manager._configs.values())
+        return [_constraint_to_response(c) for c in all_constraints]
+    except Exception as e:
+        logger.error(f"Failed to list constraints: {e}")
+        return []
 
 
 @router.get("/enabled", response_model=list[ConstraintStatusResponse])

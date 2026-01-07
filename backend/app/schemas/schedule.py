@@ -1,8 +1,8 @@
 """Schedule-related schemas."""
 
-from datetime import date
+from datetime import date, datetime
 from enum import Enum
-from typing import Literal
+from typing import Any, Dict, List, Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -347,3 +347,105 @@ class SwapCandidateJsonResponse(BaseModel):
     total_candidates: int
     top_candidate_id: str | None = None
     message: str = ""
+
+
+# Admin Scheduling Management Schemas
+
+
+class ScheduleMetrics(BaseModel):
+    """Schema for schedule metrics (RunResult in frontend)."""
+
+    run_id: str = Field(alias="runId")
+    status: str
+    coverage_percent: float = Field(default=0.0, alias="coveragePercent")
+    acgme_violations: int = Field(default=0, alias="acgmeViolations")
+    fairness_score: float = Field(default=0.0, alias="fairnessScore")
+    swap_churn: float = Field(default=0.0, alias="swapChurn")
+    runtime_seconds: float = Field(default=0.0, alias="runtimeSeconds")
+    stability: float = Field(default=0.0, alias="stability")
+    blocks_assigned: int = Field(default=0, alias="blocksAssigned")
+    total_blocks: int = Field(default=0, alias="totalBlocks")
+    timestamp: datetime
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
+
+
+class ScheduleRunRead(BaseModel):
+    """Schema for reading schedule run history (RunLogEntry in frontend)."""
+
+    id: UUID
+    run_id: str | None = Field(default=None, alias="runId")
+    algorithm: SchedulingAlgorithm
+    timestamp: datetime
+    status: str
+    configuration: dict = Field(default_factory=dict)
+    result: ScheduleMetrics | None = None
+    notes: str | None = None
+    tags: list[str] = Field(default_factory=list)
+
+    @classmethod
+    def from_orm(cls, obj: Any) -> "ScheduleRunRead":
+        """Custom from_orm to handle field mapping from model."""
+        # Use getattr safely as different model versions might exist
+        metrics = ScheduleMetrics(
+            runId=str(getattr(obj, "run_id", obj.id)),
+            status=getattr(obj, "status", "unknown"),
+            coveragePercent=getattr(obj, "coverage_percent", 0.0),
+            acgmeViolations=getattr(obj, "acgme_violations", 0),
+            blocksAssigned=getattr(obj, "total_blocks_assigned", 0),
+            totalBlocks=getattr(obj, "total_blocks", 0),
+            runtimeSeconds=getattr(obj, "runtime_seconds", 0.0),
+            timestamp=getattr(obj, "created_at", datetime.now()),
+        )
+
+        return cls(
+            id=getattr(obj, "id", obj.id),
+            runId=str(getattr(obj, "run_id", obj.id)),
+            algorithm=getattr(obj, "algorithm", "hybrid"),
+            timestamp=getattr(obj, "created_at", datetime.now()),
+            status=getattr(obj, "status", "unknown"),
+            configuration=getattr(obj, "config_json", {}),
+            result=metrics,
+            notes=getattr(obj, "notes", None),
+            tags=getattr(obj, "tags", []),
+        )
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
+
+
+class ScheduleRunsResponse(BaseModel):
+    """Response schema for schedule run history list."""
+
+    runs: list[ScheduleRunRead]
+    total: int
+    page: int
+    page_size: int = Field(alias="pageSize")
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
+
+
+class RollbackPoint(BaseModel):
+    """Schema for schedule rollback points."""
+
+    id: UUID
+    created_at: datetime
+    created_by: str | None = None
+    description: str
+    run_id: UUID | None = None
+    assignment_count: int
+    can_revert: bool = True
+
+
+class SyncMetadata(BaseModel):
+    """Schema for external system sync metadata."""
+
+    last_sync_time: datetime | None = None
+    sync_status: str  # 'synced', 'pending', 'error'
+    source_system: str
+    records_affected: int = 0
