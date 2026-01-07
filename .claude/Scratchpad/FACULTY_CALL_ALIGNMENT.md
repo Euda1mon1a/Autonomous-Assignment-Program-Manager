@@ -1,88 +1,68 @@
-# Faculty Call & Call Roster Alignment
+# Faculty Call & Schedule Fixes - Session 067
 
 **Branch:** `session/067-antigravity-faculty-call` | **Date:** 2026-01-07
 
-## Status: WORKING ✅
+## Status: COMMITTED ✅
 
-`/call-roster` now displays faculty call assignments correctly.
+Commit `15a62aa4` pushed to remote.
 
-## Restore This State
+## All Fixes Applied
 
-```bash
-git checkout session/067-antigravity-faculty-call
-docker-compose -f docker-compose.local.yml up -d --build
-```
+### Backend Fixes
 
-## All Fixes Applied This Session
-
-### Backend Schema Fixes
 | File | Fix |
 |------|-----|
-| `backend/app/schemas/block.py` | `block_number` limit 13 → 14 (DB has block 14 for June) |
+| `backend/app/schemas/block.py` | `block_number` limit 13→14 (DB has block 14 for June) |
 | `backend/app/schemas/absence.py` | `deployment_orders: bool` → `bool \| None` |
-| `backend/app/schemas/rotation_template.py` | Added `academic`, `clinical`, `leave` to valid types |
-| `backend/app/schemas/call_assignment.py` | `call_date` aliased to `date` |
-
-### Backend Controller Fixes (model_validate)
-| File | Methods Fixed |
-|------|---------------|
-| `assignment_controller.py` | `list_assignments` |
-| `block_controller.py` | `list_blocks`, `get_blocks_by_date_range` |
-| `person_controller.py` | `list_people`, `list_residents`, `list_faculty` |
-| `call_assignment_controller.py` | `get_call_assignments_by_person`, `get_call_assignments_by_date` |
-| `credential_controller.py` | 3 methods |
-| `procedure_controller.py` | `list_procedures` |
-| `certification_controller.py` | 2 methods |
+| `backend/app/auth/permissions/decorators.py` | **MAJOR** - Rewrote `require_role` from decorator to FastAPI dependency (was causing "func query param required" 422 error) |
+| `backend/app/services/call_assignment_service.py` | Added `selectinload(CallAssignment.person)` after create to fix async greenlet error |
+| `backend/app/controllers/*.py` | Added `model_validate()` to 9 controllers (13 methods) for ORM→Pydantic conversion |
 
 ### Frontend Fixes
+
 | File | Fix |
 |------|-----|
-| `frontend/src/features/call-roster/hooks.ts` | **REWROTE** - Now uses `/call-assignments` endpoint instead of `/assignments?activity_type=on_call`. Also fixed `page_size: 1000` → `500` (backend max) |
-| `frontend/src/app/admin/faculty-call/page.tsx` | Null safety in transform |
+| `frontend/src/features/call-roster/hooks.ts` | **REWROTE** - Use `/call-assignments` endpoint instead of `/assignments?activity_type=on_call` |
+| `frontend/src/types/call-assignment.ts` | `call_date`→`date` for response types (backend uses alias) |
+| `frontend/src/app/admin/faculty-call/page.tsx` | Fixed transform function + wired up create modal |
+| `frontend/src/components/admin/CreateCallAssignmentModal.tsx` | **NEW** - Modal with date picker, faculty dropdown, call type selector |
 
-### Other
-| File | Fix |
-|------|-----|
-| `backend/scripts/seed_antigravity.py` | Fixed `.append()` bug on int counter |
+## Key Debugging Patterns
 
-## Key Debugging Patterns Learned
+### "func query param required" (422)
+**Cause:** `require_role` was a decorator being used as `Depends(require_role([...]))` - FastAPI tried to inject `func` parameter
+**Fix:** Rewrote `require_role` to return a dependency function, not a decorator
 
-### "Objects are not valid as a React child" with `{type, loc, msg, input, ctx}`
-**Cause:** Pydantic validation error object being rendered instead of data
-**Debug:** Check backend logs for `ValidationError` or test endpoint with curl
-**Fixes:**
-1. Controller missing `model_validate()` on ORM objects
-2. Schema field type too strict (e.g., `bool` when DB has `NULL` → use `bool | None`)
-3. Schema constraint too strict (e.g., `le=13` when DB has 14)
+### "MissingGreenlet" async error
+**Cause:** SQLAlchemy lazy loading `person` relationship outside async context
+**Fix:** Re-query with `selectinload()` after create/update
 
-### 422 Unprocessable Entity
-**Cause:** Request validation failure
-**Debug:** Check response body for `detail` with `loc` field showing which param failed
-**Example:** `page_size=1000` when backend only allows `le=500`
+### "Objects are not valid as React child"
+**Cause:** Pydantic validation error object being rendered
+**Fix:** Check controller has `model_validate()`, schema constraints match DB
 
-## Data (call_assignments table)
+## Working URLs
 
-| Type | Count | Jan 2026 |
-|------|-------|----------|
-| sunday | 52 | 4 |
-| weekday | 206 | 17 |
-| holiday | 4 | 1 |
-| backup | 103 | 9 |
-| **Total** | **365** | **31** |
+- `/call-roster` ✅ - Faculty call calendar
+- `/admin/faculty-call` ✅ - Faculty call management with create
+- `/schedule` (week view) - Diagnosed, code correct, may need browser hard refresh
 
-## URLs
+## Schedule Week View Issue
 
-- `/call-roster` - ✅ WORKING - Shows faculty call calendar
-- `/admin/faculty-call` - Faculty call management
-- `/admin/templates` - PCAT/DO templates
+User reported Mon-Wed only showing. Diagnosis:
+- Container code matches source ✅
+- `weekStartsOn: 1` correctly set in WeekView.tsx:92 ✅
+- `Array.from({ length: 7 })` correct ✅
+- `grid-cols-8` correct ✅
+
+**Likely cause:** Browser cache. Try Cmd+Shift+R hard refresh.
+
+## TODO
+
+- [ ] Date picker typing quirk in CreateCallAssignmentModal (year shows last digit only when typing)
+  - Either make read-only with calendar-only, or use custom date picker component
 
 ## Test Credentials
 
 - Username: `admin`
 - Password: `admin123`
-
-## Next Steps (if continuing)
-
-1. Commit all changes
-2. Test other pages that might have similar `model_validate()` issues
-3. Consider adding pagination to call-roster if >500 assignments needed
