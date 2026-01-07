@@ -486,7 +486,7 @@ mcp-server:
   "mcpServers": {
     "residency-scheduler": {
       "url": "http://localhost:8080",
-      "transport": "http"
+      "type": "http"
     }
   }
 }

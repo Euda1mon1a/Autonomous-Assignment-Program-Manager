@@ -30,7 +30,7 @@ Defines the MCP server configuration with HTTP transport:
   "mcpServers": {
     "residency-scheduler": {
       "url": "http://127.0.0.1:8080/mcp",
-      "transport": "http"
+      "type": "http"
     }
   }
 }

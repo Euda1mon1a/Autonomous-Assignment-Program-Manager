@@ -94,7 +94,7 @@ ports:
   "mcpServers": {
     "residency-scheduler": {
       "url": "http://127.0.0.1:8080/mcp",
-      "transport": "http"
+      "type": "http"
     }
   }
 }
@@ -111,7 +111,7 @@ ports:
   "mcpServers": {
     "residency-scheduler": {
       "url": "http://127.0.0.1:8080/mcp",
-      "transport": "http"
+      "type": "http"
     }
   }
 }
@@ -126,7 +126,7 @@ Each developer connects to shared HTTP endpoint:
   "mcpServers": {
     "residency-scheduler": {
       "url": "http://dev-server.internal:8080/mcp",
-      "transport": "http",
+      "type": "http",
       "headers": {
         "Authorization": "Bearer ${MCP_API_KEY}"
       }
@@ -144,7 +144,7 @@ Use HTTPS with authentication:
   "mcpServers": {
     "residency-scheduler": {
       "url": "https://mcp.residency-scheduler.internal/mcp",
-      "transport": "http",
+      "type": "http",
       "headers": {
         "Authorization": "Bearer ${MCP_API_KEY}"
       }
