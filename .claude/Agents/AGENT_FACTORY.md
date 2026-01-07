@@ -1458,10 +1458,49 @@ class AgentMetrics:
 
 ---
 
-## XII. VERSION HISTORY
+## XII. SHELL SCRIPT COMPATIBILITY
+
+### Bash Version Compatibility
+
+**CRITICAL:** macOS ships bash 3.2 (GPLv2). Bash 4.0+ features are NOT available by default.
+
+| Feature | Bash Version | macOS Default | Recommendation |
+|---------|--------------|---------------|----------------|
+| Associative arrays (`declare -A`) | 4.0+ | ❌ NO | Use `case` statements |
+| `${!array[@]}` iteration | 4.0+ | ❌ NO | Use explicit list |
+| `((i++))` arithmetic | 3.0+ | ✅ YES | Safe to use |
+| `[[ ]]` conditionals | 3.0+ | ✅ YES | Safe to use |
+| `$(( ))` arithmetic | 3.0+ | ✅ YES | Safe to use |
+
+**Pattern for bash 3.2 compatibility:**
+```bash
+# WRONG (bash 4.0+ only):
+declare -A REPORTS
+REPORTS["G1"]="SYNTHESIZER"
+for key in "${!REPORTS[@]}"; do ...
+
+# RIGHT (bash 3.2 compatible):
+get_report() {
+    case "$1" in
+        G1) echo "SYNTHESIZER" ;;
+        G2) echo "ORCHESTRATOR" ;;
+    esac
+}
+AGENTS="G1 G2"
+for agent in $AGENTS; do
+    result=$(get_report "$agent")
+done
+```
+
+**Reference:** Session 063 fixed `validate-agent-hierarchy.sh` for bash 3.2 compatibility.
+
+---
+
+## XIII. VERSION HISTORY
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.2.0 | 2026-01-06 | Added Section XII: Shell script bash 3.2 compatibility guidance |
 | 1.1.0 | 2026-01-04 | Added Section I.A Auftragstaktik doctrine reference |
 | 1.0.0 | 2025-12-26 | Initial AGENT_FACTORY specification |
 

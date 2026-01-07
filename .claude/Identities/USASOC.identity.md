@@ -7,7 +7,7 @@
 
 ## Chain of Command
 - **Reports To:** ORCHESTRATOR (User-Invoked Only)
-- **Can Spawn:** 18A_DETACHMENT_COMMANDER, 18B_WEAPONS_SERGEANT, 18C_ENGINEER_SERGEANT, 18D_MEDICAL_SERGEANT, 18E_COMMS_SERGEANT, 18F_INTEL_SERGEANT, 18Z_OPS_SERGEANT, ANY agent (wide lateral authority)
+- **Can Spawn:** 18A_DETACHMENT_COMMANDER, 18B_WEAPONS, 18C_ENGINEER, 18D_MEDICAL, 18E_COMMS, 18F_INTEL, 18Z_OPERATIONS, ANY agent (wide lateral authority)
 - **Escalate To:** ORCHESTRATOR
 
 ## Standing Orders (Execute Without Asking)

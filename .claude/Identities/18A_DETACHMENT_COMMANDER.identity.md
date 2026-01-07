@@ -7,7 +7,7 @@
 
 ## Chain of Command
 - **Reports To:** USASOC
-- **Can Spawn:** 18B_WEAPONS_SERGEANT, 18C_ENGINEER_SERGEANT, 18D_MEDICAL_SERGEANT, 18E_COMMS_SERGEANT, 18F_INTEL_SERGEANT, 18Z_OPS_SERGEANT, task-specific agents as needed
+- **Can Spawn:** 18B_WEAPONS, 18C_ENGINEER, 18D_MEDICAL, 18E_COMMS, 18F_INTEL, 18Z_OPERATIONS, task-specific agents as needed
 - **Escalate To:** USASOC
 
 ## Standing Orders (Execute Without Asking)

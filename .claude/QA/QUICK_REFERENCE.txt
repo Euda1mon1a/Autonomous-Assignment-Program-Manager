@@ -1,0 +1,230 @@
+QUALITY GATE QUICK REFERENCE - 16 GUI BUGS
+========================================
+
+BUG ID | SEVERITY | COMPONENT              | TEST TYPE          | STATUS
+-------|----------|------------------------|--------------------|---------
+1      | P0       | ScheduleCalendar       | Auto (Jest)        | Design complete
+2      | P0       | ConflictsList API      | Auto (Jest) + Curl | Design complete
+3      | P0       | SwapRequestForm        | Auto (Jest)        | Design complete
+4      | P1       | MonthView/WeekView     | Auto (Jest)        | Design complete
+5      | P1       | CallRoster             | Auto (Jest)        | Design complete
+6      | P1       | ImportPreview          | Auto (Jest)        | Design complete
+7      | P1       | ExcelExportButton      | Auto (Jest)        | Design complete
+8      | P2       | ScheduleCalendar CSS   | Visual (Playwright)| FLAG: CSS-only
+9      | P2       | MobileNav              | Auto (Jest)        | Design complete
+10     | P2       | DailyManifest          | Auto (Jest)        | FLAG: Design review needed
+11     | P2       | PersonalScheduleCard   | Auto (Jest)        | Design complete
+12     | P2       | PGY Filter             | Auto (Jest)        | Design complete
+
+========================================
+ACCEPTANCE CRITERIA BY BUG
+========================================
+
+1. BLOCK 0 FUDGE FACTOR
+   ✓ Dates render without off-by-one errors
+   ✓ Date picker returns YYYY-MM-DD format
+   ✓ Fiscal year boundaries don't shift
+
+2. CONFLICTS API 404
+   ✓ Endpoint /api/v1/conflicts returns 200
+   ✓ Empty list shows "No conflicts" (not error)
+   ✓ Error boundary catches 404 gracefully
+
+3. SWAP PERMISSIONS
+   ✓ Residents: own swaps only (others disabled)
+   ✓ Coordinators: all swaps enabled
+   ✓ UI shows tooltip for disabled state
+   ✓ API rejects with 403 if unauthorized
+
+4. MONTH/WEEK VIEWS EMPTY
+   ✓ Views render calendar grid (not blank)
+   ✓ Data populates or shows empty state
+   ✓ Prev/Next navigation works
+
+5. CALL ROSTER EMPTY
+   ✓ Fetches with role='on_call' filter
+   ✓ Shows contact info (name, phone, email)
+   ✓ Empty -> "No call assignments" message
+
+6. IMPORT TABLE MISSING
+   ✓ CSV preview renders as <table>
+   ✓ Column headers map correctly
+   ✓ Row count matches uploaded file
+
+7. CSV EXPORT FAILS
+   ✓ Export generates valid CSV file
+   ✓ Filename: schedule_YYYY-MM-DD.csv
+   ✓ Content: headers + data rows
+
+8. STICKY HEADER
+   ✓ Date header stays visible when scrolling
+   ✓ Background opaque
+   ✓ No z-index conflicts
+   → VISUAL REGRESSION TEST REQUIRED
+
+9. NAV DROPDOWNS
+   ✓ Opens on click (not hover)
+   ✓ Closes when clicking outside
+   ✓ Chevron icon rotates
+   ✓ Links in dropdown clickable
+
+10. MANIFEST REDESIGN
+    ✓ New layout renders
+    ✓ Staffing summary visible
+    ✓ Responsive on mobile
+    → DESIGN REVIEW REQUIRED
+
+11. PEOPLE CARD CLICKABLE
+    ✓ Click navigates to /people/{id}
+    ✓ Cursor pointer on hover
+    ✓ Correct person ID passed
+
+12. PGY FILTER
+    ✓ Dropdown shows PGY 1, 2, 3, All
+    ✓ Filter updates roster
+    ✓ State persists in URL/localStorage
+
+========================================
+TEST FILES TO CREATE OR ENHANCE
+========================================
+
+CREATE (New):
+  frontend/__tests__/components/schedule/ScheduleCalendar.test.tsx
+  frontend/__tests__/components/schedule/MonthView.test.tsx
+  frontend/__tests__/components/schedule/PersonalScheduleCard.test.tsx
+  frontend/__tests__/components/MobileNav.test.tsx
+  frontend/__tests__/features/import-export/ImportPreview.test.tsx
+  frontend/__tests__/features/daily-manifest/DailyManifest.test.tsx
+
+ENHANCE (Existing):
+  frontend/__tests__/features/conflicts/ConflictsList.test.tsx
+  frontend/__tests__/features/swap-marketplace/SwapRequestForm.test.tsx
+  frontend/__tests__/features/call-roster/CallRoster.test.tsx
+  frontend/__tests__/components/ExcelExportButton.test.tsx
+
+========================================
+TESTING PATTERNS
+========================================
+
+Mock Hooks Pattern:
+  jest.mock('@/lib/hooks', () => ({
+    useAssignments: jest.fn(),
+    usePeople: jest.fn(),
+  }))
+  const { useAssignments, usePeople } = require('@/lib/hooks')
+
+Date Testing Pattern:
+  function localDate(year, month, day) {
+    return new Date(year, month - 1, day)
+  }
+
+Render Pattern:
+  import { render, screen, waitFor } from '@/test-utils'
+  const { getByTestId, getByText } = render(<Component />)
+
+Async Testing Pattern:
+  await waitFor(() => {
+    expect(screen.getByText('Loaded')).toBeInTheDocument()
+  })
+
+========================================
+CI/CD GATES
+========================================
+
+Before Merge:
+  [ ] npm test passes (all tests)
+  [ ] npm run lint:fix (no lint errors)
+  [ ] npm run build succeeds
+  [ ] No console errors during test run
+  [ ] Coverage >80% on modified files
+
+Visual Regression:
+  [ ] Screenshots captured in Playwright
+  [ ] Compared against main branch
+  [ ] No unexpected visual changes
+
+Manual Verification:
+  [ ] Product owner approves P2 design changes
+  [ ] QA verifies P0/P1 acceptance criteria
+  [ ] No new accessibility regressions
+
+========================================
+HARD-TO-VERIFY FLAGS
+========================================
+
+Bug #8 (Sticky Header)
+  Requires: Visual regression testing (Playwright/Chromatic)
+  Why: CSS-only, can't test with Jest alone
+  Action: Add to CI visual test suite
+
+Bug #9 (Nav Dropdowns)
+  Requires: Mobile viewport testing
+  Why: Mobile interactions need device or responsive framework
+  Action: Use Jest with mobile viewport mock OR device testing
+
+Bug #10 (Manifest Redesign)
+  Requires: Design review + visual approval
+  Why: Subjective visual design, not automated
+  Action: Get product owner sign-off in PR comments
+
+========================================
+VERIFICATION BATCHES
+========================================
+
+Batch 1 (Critical - 4 hours CI):
+  Bugs: 1, 2, 3 (P0 blocking)
+  Tests: 3 new + 2 enhanced
+  Gate: All tests pass + manual UAT
+
+Batch 2 (Features - 3 hours CI):
+  Bugs: 4, 5, 6, 7 (P1 completeness)
+  Tests: 4 new + 3 enhanced
+  Gate: All tests pass + integration verified
+
+Batch 3 (Polish - 2-3 hours manual):
+  Bugs: 8, 9, 10, 11, 12 (P2 polish)
+  Tests: 3 new (8 manual, 10 design review)
+  Gate: Visual regression + manual UX + design approval
+
+========================================
+COMMANDS
+========================================
+
+Run Tests:
+  npm test (all)
+  npm test -- CallRoster (pattern match)
+  npm test -- --coverage (with coverage)
+  npm test -- --watch (watch mode)
+
+Check Code Quality:
+  npm run lint:fix (auto-fix lint errors)
+  npm run type-check (TypeScript check)
+  npm run build (build check)
+
+Visual Regression (if implemented):
+  npm run test:visual (Playwright screenshots)
+  npm run test:visual -- --update (update baseline)
+
+========================================
+ESCALATION PATHS
+========================================
+
+Test Fails:
+  1. Read error message
+  2. Check mock data matches expectations
+  3. Verify data-testid values in component
+  4. Use console.log(hook.mock.calls) to debug
+  5. Ask for help if stuck >15 mins
+
+Visual Issues:
+  1. Check CSS is applied (browser DevTools)
+  2. Compare to design mockup
+  3. Check responsive breakpoints
+  4. Flag for design review if subjective
+
+API Issues:
+  1. curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/v1/{endpoint}
+  2. Check backend logs: docker-compose logs backend
+  3. Verify response format matches frontend expectations
+
+========================================
