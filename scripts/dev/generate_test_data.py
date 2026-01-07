@@ -63,12 +63,13 @@ def generate_people(
             last_name = random.choice(LAST_NAMES)
 
             person = Person(
-                email=f"pgy{pgy}_{i+1:02d}@residency.test",
+                email=f"pgy{pgy}_{i+1:02d}@test.example.com",
                 first_name=first_name,
                 last_name=last_name,
                 role="RESIDENT",
                 pgy_level=pgy,
                 is_active=True,
+                performs_procedures=False,
             )
             db.add(person)
             residents.append(person)
@@ -86,12 +87,13 @@ def generate_people(
         last_name = random.choice(LAST_NAMES)
 
         person = Person(
-            email=f"faculty_{role.value}_{i+1:02d}@residency.test",
+            email=f"faculty_{role.value}_{i+1:02d}@test.example.com",
             first_name=first_name,
             last_name=last_name,
             role="FACULTY",
             faculty_role=role.value,
             is_active=True,
+            performs_procedures=(i % 3 == 0),  # Every 3rd faculty performs procedures
         )
         db.add(person)
         faculty.append(person)

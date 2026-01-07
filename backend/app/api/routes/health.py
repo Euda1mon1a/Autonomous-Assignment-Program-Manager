@@ -27,6 +27,16 @@ health_aggregator = HealthAggregator(
 )
 
 
+@router.get("/")
+async def health_root() -> dict[str, Any]:
+    """
+    Root health check endpoint.
+
+    Returns the overall health status of the application.
+    """
+    return await liveness_probe()
+
+
 @router.get("/live")
 async def liveness_probe() -> dict[str, Any]:
     """

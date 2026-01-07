@@ -21,8 +21,14 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["metrics"])
 
 
+@router.get("", response_model=dict[str, Any])
+async def get_metrics_root() -> dict[str, Any]:
+    """Base metrics endpoint for dashboard summary."""
+    return await metrics_summary()
+
+
 @router.get(
-    "/metrics/health",
+    "/health",
     summary="Metrics Health Check",
     description="Check if metrics collection is enabled and functioning",
 )
@@ -75,7 +81,7 @@ async def metrics_health() -> dict[str, Any]:
 
 
 @router.get(
-    "/metrics/info",
+    "/info",
     summary="Metrics Information",
     description="Get information about available metrics and their descriptions",
 )
@@ -265,7 +271,7 @@ async def metrics_info() -> dict[str, Any]:
 
 
 @router.get(
-    "/metrics/export",
+    "/export",
     summary="Export Metrics (Prometheus Format)",
     description="Export all metrics in Prometheus text format",
     response_class=PlainTextResponse,
@@ -309,7 +315,7 @@ async def export_metrics(request: Request) -> Response:
 
 
 @router.get(
-    "/metrics/summary",
+    "/summary",
     summary="Metrics Summary",
     description="Get high-level summary of current metrics",
 )
@@ -372,7 +378,7 @@ async def metrics_summary() -> dict[str, Any]:
 
 
 @router.post(
-    "/metrics/reset",
+    "/reset",
     summary="Reset Metrics (Development Only)",
     description="Reset all metric counters (only available in debug mode)",
 )
