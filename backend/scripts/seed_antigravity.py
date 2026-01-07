@@ -257,13 +257,18 @@ class AntigravitySeed:
         (12, 25, "Christmas Day"),
     ]
 
-    def __init__(self, db: Session, year: int = 2025):
+    def __init__(self, db: Session, year: int | None = None):
         """Initialize seeder.
 
         Args:
             db: Database session
-            year: Academic year start year (e.g., 2025 for AY 2025-2026)
+            year: Academic year start year (e.g., 2025 for AY 2025-2026).
+                  Defaults to current academic year based on today's date.
         """
+        # Default to current academic year (July-June)
+        if year is None:
+            today = date.today()
+            year = today.year if today.month >= 7 else today.year - 1
         self.db = db
         self.year = year
         self.ay_start = date(year, 7, 1)  # July 1
@@ -824,9 +829,9 @@ class AntigravitySeed:
 
         call_count = 0
 
-        # Generate faculty call schedule for 6 months of the AY
+        # Generate faculty call schedule for full academic year
         current_date = self.ay_start
-        end_call_date = self.ay_start + timedelta(days=180)  # First 6 months
+        end_call_date = self.ay_end
 
         # Pre-compute holidays
         holidays = set()
