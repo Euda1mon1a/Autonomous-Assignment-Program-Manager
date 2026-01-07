@@ -240,7 +240,15 @@ class CallAssignmentService:
         await self.db.flush()
         if commit:
             await self.db.commit()
-        await self.db.refresh(call_assignment)
+
+        # Re-query with eager load to get person relationship
+        stmt = (
+            select(CallAssignment)
+            .options(selectinload(CallAssignment.person))
+            .where(CallAssignment.id == call_assignment.id)
+        )
+        result = await self.db.execute(stmt)
+        call_assignment = result.scalar_one()
 
         logger.info(
             f"Created call assignment {call_assignment.id} for person {person.name} "

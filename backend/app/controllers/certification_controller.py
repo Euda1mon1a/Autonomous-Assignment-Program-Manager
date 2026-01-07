@@ -42,7 +42,11 @@ class CertificationController:
         """List all certification types."""
         result = self.service.list_certification_types(active_only=active_only)
         return CertificationTypeListResponse(
-            items=result["items"], total=result["total"]
+            items=[
+                CertificationTypeResponse.model_validate(item)
+                for item in result["items"]
+            ],
+            total=result["total"],
         )
 
     def get_certification_type(self, cert_type_id: UUID) -> CertificationTypeResponse:
@@ -112,7 +116,11 @@ class CertificationController:
             include_expired=include_expired,
         )
         return PersonCertificationListResponse(
-            items=result["items"], total=result["total"]
+            items=[
+                PersonCertificationResponse.model_validate(item)
+                for item in result["items"]
+            ],
+            total=result["total"],
         )
 
     def get_person_certification(self, cert_id: UUID) -> PersonCertificationResponse:

@@ -134,7 +134,9 @@ class CallAssignmentController:
             end_date=end_date,
         )
         return CallAssignmentListResponse(
-            items=assignments,
+            items=[
+                CallAssignmentResponse.model_validate(item) for item in assignments
+            ],
             total=len(assignments),
         )
 
@@ -147,7 +149,9 @@ class CallAssignmentController:
             end_date=on_date,
         )
         return CallAssignmentListResponse(
-            items=assignments,
+            items=[
+                CallAssignmentResponse.model_validate(item) for item in assignments
+            ],
             total=len(assignments),
         )
 

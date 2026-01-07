@@ -35,7 +35,12 @@ class ProcedureController:
             is_active=is_active,
             complexity_level=complexity_level,
         )
-        return ProcedureListResponse(items=result["items"], total=result["total"])
+        return ProcedureListResponse(
+            items=[
+                ProcedureResponse.model_validate(item) for item in result["items"]
+            ],
+            total=result["total"],
+        )
 
     def get_procedure(self, procedure_id: UUID) -> ProcedureResponse:
         """Get a single procedure by ID."""

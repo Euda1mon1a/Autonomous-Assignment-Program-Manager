@@ -286,62 +286,63 @@ def require_all_permissions(
     return decorator
 
 
-def require_role(*roles: str, allow_admin: bool = True):
+def require_role(roles: list[str] | str, allow_admin: bool = True):
     """
-    Decorator to require specific roles.
+    Create a FastAPI dependency that checks user roles.
 
-    Simpler alternative to permission checking when you just need to check roles.
+    Can be used in route dependencies for role-based access control.
 
     Usage:
-        @router.get("/admin-only")
-        @require_role("admin")
-        async def admin_only(current_user: User = Depends(get_current_active_user)):
+        # As a route dependency
+        @router.post(
+            "/admin-only",
+            dependencies=[Depends(require_role(["ADMIN"]))]
+        )
+        async def admin_only(...):
             ...
 
-        @router.get("/staff-area")
-        @require_role("coordinator", "faculty", allow_admin=True)
-        async def staff_area(current_user: User = Depends(get_current_active_user)):
+        # Or with multiple roles
+        @router.post(
+            "/staff-area",
+            dependencies=[Depends(require_role(["COORDINATOR", "FACULTY"]))]
+        )
+        async def staff_area(...):
             ...
 
     Args:
-        *roles: Variable number of role names
-        allow_admin: Whether to allow admin role (default: True)
+        roles: List of allowed role names (or single role string)
+        allow_admin: Whether to allow ADMIN role regardless (default: True)
 
     Returns:
-        Decorator function
+        Dependency function that checks roles
     """
+    # Normalize roles to a set
+    if isinstance(roles, str):
+        role_set = {roles.upper()}
+    else:
+        role_set = {r.upper() for r in roles}
 
-    def decorator(func: Callable) -> Callable:
-        @wraps(func)
-        async def wrapper(*args, **kwargs) -> Any:
-            # Get current user from kwargs
-            current_user = kwargs.get("current_user")
-            if current_user is None:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Authentication required",
-                )
+    if allow_admin:
+        role_set.add("ADMIN")
 
-            # Check if user has required role
-            allowed_roles = set(roles)
-            if allow_admin:
-                allowed_roles.add("admin")
+    async def role_checker(
+        current_user: User = Depends(get_current_active_user),
+    ) -> User:
+        """Check if current user has required role."""
+        user_role = current_user.role.upper() if current_user.role else ""
 
-            if current_user.role not in allowed_roles:
-                logger.warning(
-                    f"Role check failed for user {current_user.username} "
-                    f"(role: {current_user.role}). Required: {allowed_roles}"
-                )
-                raise PermissionDenied(
-                    detail=f"Requires role: {' or '.join(allowed_roles)}"
-                )
+        if user_role not in role_set:
+            logger.warning(
+                f"Role check failed for user {current_user.username} "
+                f"(role: {current_user.role}). Required: {role_set}"
+            )
+            raise PermissionDenied(
+                detail=f"Requires role: {' or '.join(sorted(role_set))}"
+            )
 
-            # Call the actual route handler
-            return await func(*args, **kwargs)
+        return current_user
 
-        return wrapper
-
-    return decorator
+    return role_checker
 
 
 # Convenience dependencies for common permission checks

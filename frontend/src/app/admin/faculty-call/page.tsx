@@ -25,6 +25,7 @@ import {
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { CallAssignmentTable } from '@/components/admin/CallAssignmentTable';
 import { CallBulkActionsToolbar } from '@/components/admin/CallBulkActionsToolbar';
+import { CreateCallAssignmentModal } from '@/components/admin/CreateCallAssignmentModal';
 import { PCATPreviewModal, createPCATPreviewData } from '@/components/admin/PCATPreviewModal';
 import { EquityPreviewPanel } from '@/components/admin/EquityPreviewPanel';
 import { useFaculty } from '@/hooks/usePeople';
@@ -96,13 +97,13 @@ function mapCallType(apiCallType: string, isWeekend: boolean): CallType {
  * Returns null if required fields are missing (defensive against bad data)
  */
 function transformApiAssignment(apiAssignment: ApiCallAssignment): CallAssignment | null {
-  // Defensive: skip assignments with missing call_date
-  if (!apiAssignment.call_date) {
-    console.warn('Skipping assignment with missing call_date:', apiAssignment.id);
+  // Defensive: skip assignments with missing date
+  if (!apiAssignment.date) {
+    console.warn('Skipping assignment with missing date:', apiAssignment.id);
     return null;
   }
 
-  const dayOfWeek = getDayOfWeek(apiAssignment.call_date);
+  const dayOfWeek = getDayOfWeek(apiAssignment.date);
   const callType = mapCallType(
     apiAssignment.call_type,
     apiAssignment.is_weekend
@@ -110,7 +111,7 @@ function transformApiAssignment(apiAssignment: ApiCallAssignment): CallAssignmen
 
   return {
     id: apiAssignment.id,
-    date: apiAssignment.call_date,
+    date: apiAssignment.date,
     day_of_week: dayOfWeek,
     person_id: apiAssignment.person_id,
     person_name: apiAssignment.person?.name || 'Unknown',
@@ -166,6 +167,7 @@ export default function FacultyCallAdminPage() {
   const [pendingAction, setPendingAction] = useState<CallBulkActionType | null>(null);
 
   // Modal states for Phase 3 & 4
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPCATPreview, setShowPCATPreview] = useState(false);
   const [showEquityPreview, setShowEquityPreview] = useState(false);
   const [pendingReassignPersonId, setPendingReassignPersonId] = useState<string | null>(null);
@@ -475,6 +477,7 @@ export default function FacultyCallAdminPage() {
                 <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
               <button
+                onClick={() => setShowCreateModal(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white rounded-lg font-medium transition-all"
               >
                 <Plus className="w-4 h-4" />
@@ -649,6 +652,12 @@ export default function FacultyCallAdminPage() {
         isPending={isPending}
         pendingAction={pendingAction}
         availablePeople={availableFaculty}
+      />
+
+      {/* Create Call Assignment Modal */}
+      <CreateCallAssignmentModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
       />
 
       {/* PCAT Preview Modal (Phase 3) */}
