@@ -118,15 +118,15 @@ export default function SchedulePage() {
   const endDateStr = format(viewDateRange.end, 'yyyy-MM-dd')
 
   const { data: blocksData } = useQuery<ListResponse<Block>>({
-    queryKey: ['blocks', startDateStr, endDateStr],
-    queryFn: () => get<ListResponse<Block>>(`/blocks?start_date=${startDateStr}&end_date=${endDateStr}`),
+    queryKey: ['blocks', startDateStr, endDateStr, 'pagesize500'],
+    queryFn: () => get<ListResponse<Block>>(`/blocks?start_date=${startDateStr}&end_date=${endDateStr}&page_size=500`),
     staleTime: 5 * 60 * 1000,
     enabled: currentView !== 'block', // Only fetch for non-block views (block view has its own fetching)
   })
 
   const { data: assignmentsData } = useQuery<ListResponse<Assignment>>({
-    queryKey: ['assignments', startDateStr, endDateStr],
-    queryFn: () => get<ListResponse<Assignment>>(`/assignments?start_date=${startDateStr}&end_date=${endDateStr}`),
+    queryKey: ['assignments', startDateStr, endDateStr, 'pagesize500'],
+    queryFn: () => get<ListResponse<Assignment>>(`/assignments?start_date=${startDateStr}&end_date=${endDateStr}&page_size=500`),
     staleTime: 60 * 1000,
     enabled: currentView !== 'block',
   })

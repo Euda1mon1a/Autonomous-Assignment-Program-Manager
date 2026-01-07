@@ -110,6 +110,8 @@ export function FacultyInpatientWeeksView({
   const [zoomLevel, setZoomLevel] = useState<'compact' | 'normal'>('compact')
   const [showAllActivities, setShowAllActivities] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  // Performance safeguard - require explicit confirmation before rendering many cells
+  const [renderConfirmed, setRenderConfirmed] = useState(false)
 
   // Calculate date range for academic year
   const { startDate, endDate } = useMemo(
@@ -297,6 +299,42 @@ export function FacultyInpatientWeeksView({
     return (
       <div className="p-4">
         <ErrorAlert message={error instanceof Error ? error.message : 'Failed to load schedule data'} />
+      </div>
+    )
+  }
+
+  // Performance safeguard - calculate cell count and require confirmation for large renders
+  const facultyCount = facultyMembers.length
+  const totalCells = allDays.length * 2 * facultyCount // days * AM/PM * faculty
+  const CELL_THRESHOLD = 5000
+
+  if (!renderConfirmed && totalCells > CELL_THRESHOLD) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 p-8 text-center">
+        <div className="text-amber-600 text-lg font-semibold mb-2">Large Dataset Warning</div>
+        <p className="text-gray-600 mb-4">
+          This view would render <strong>{totalCells.toLocaleString()}</strong> cells
+          ({facultyCount} faculty × {allDays.length} days × 2 half-days).
+          <br />
+          This may cause your browser to slow down or freeze.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setRenderConfirmed(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Render Anyway
+          </button>
+          <button
+            onClick={() => {
+              localStorage.setItem('schedule-view-preference', 'block')
+              window.location.href = '/schedule?view=block'
+            }}
+            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+          >
+            Switch to Block View
+          </button>
+        </div>
       </div>
     )
   }

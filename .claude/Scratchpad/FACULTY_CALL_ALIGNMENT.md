@@ -47,20 +47,38 @@ Commit `15a62aa4` pushed to remote.
 - `/admin/faculty-call` ✅ - Faculty call management with create
 - `/schedule` (week view) - Diagnosed, code correct, may need browser hard refresh
 
-## Schedule Week View Issue
+## Schedule Week View Issue - FIXED ✅
 
-User reported Mon-Wed only showing. Diagnosis:
-- Container code matches source ✅
-- `weekStartsOn: 1` correctly set in WeekView.tsx:92 ✅
-- `Array.from({ length: 7 })` correct ✅
-- `grid-cols-8` correct ✅
+User reported Mon-Wed only showing.
 
-**Likely cause:** Browser cache. Try Cmd+Shift+R hard refresh.
+**Root Cause:** API pagination - default `page_size=100` only returned first 100 of 272 assignments for the week. Days with assignments outside the first 100 showed empty.
+
+**Fix:** Changed `frontend/src/app/schedule/page.tsx` to use `page_size=500` (backend max) for both blocks and assignments queries.
+
+```typescript
+// Before: /assignments?start_date=...&end_date=... (default 100)
+// After:  /assignments?start_date=...&end_date=...&page_size=500
+```
+
+## Annual View Freeze Fix
+
+**Problem:** Res./Fac. buttons in ViewToggle switch to annual views that render 21,900+ cells (30 residents × 365 days × 2 AM/PM), causing browser freeze.
+
+**Fix:** Added performance safeguard to both views:
+- `ResidentAcademicYearView.tsx` - Shows warning if >5000 cells
+- `FacultyInpatientWeeksView.tsx` - Shows warning if >5000 cells
+
+User can click "Render Anyway" or "Switch to Block View".
 
 ## TODO
 
 - [ ] Date picker typing quirk in CreateCallAssignmentModal (year shows last digit only when typing)
   - Either make read-only with calendar-only, or use custom date picker component
+
+- [ ] Annual view UX improvement
+  - Users intuit "Res." on Week view = filter to residents only, not switch to 365-day view
+  - Options: rename buttons ("Res. Year"), add tooltips, add actual filters, or move to separate page
+  - Consider: Individual annual schedule view (My Schedule year view) might be the useful use case
 
 ## Test Credentials
 
