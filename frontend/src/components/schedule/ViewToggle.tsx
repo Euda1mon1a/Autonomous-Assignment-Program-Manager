@@ -54,10 +54,10 @@ const viewOptions: {
     group: 'block-views',
   },
   {
-    value: 'day',
-    label: 'Day',
-    shortLabel: 'Day',
-    icon: <Calendar className="w-4 h-4" aria-hidden="true" />,
+    value: 'month',
+    label: 'Month',
+    shortLabel: 'Month',
+    icon: <CalendarDays className="w-4 h-4" aria-hidden="true" />,
     group: 'calendar-views',
   },
   {
@@ -68,10 +68,10 @@ const viewOptions: {
     group: 'calendar-views',
   },
   {
-    value: 'month',
-    label: 'Month',
-    shortLabel: 'Month',
-    icon: <CalendarDays className="w-4 h-4" aria-hidden="true" />,
+    value: 'day',
+    label: 'Day',
+    shortLabel: 'Day',
+    icon: <Calendar className="w-4 h-4" aria-hidden="true" />,
     group: 'calendar-views',
   },
   // Hidden views - accessible via URL param only (e.g., ?view=resident-year)
