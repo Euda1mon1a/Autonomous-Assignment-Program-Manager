@@ -2,6 +2,15 @@
 
 **Branch:** `feat/faculty-call-alignment` | **Date:** 2026-01-07
 
+## Dev Mode (REQUIRED)
+
+**Always start stack with dev config for hot reload:**
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+```
+
+Without `-f docker-compose.dev.yml`, code is baked into images and every change requires rebuild.
+
 ## Restore
 
 ```bash
@@ -22,11 +31,13 @@ docker exec residency-scheduler-backend python -m scripts.seed_antigravity --cle
 
 ## Files Changed
 
-- `backend/app/models/call_assignment.py` - CHECK constraint
-- `backend/app/schemas/call_assignment.py` - CallType enum
+- `backend/app/models/call_assignment.py` - CHECK constraint, column is `date`
+- `backend/app/schemas/call_assignment.py` - CallType enum, `call_date` with `alias="date"`
 - `backend/scripts/seed_antigravity.py` - PCAT/DO + faculty call seeding
 - `frontend/src/types/faculty-call.ts` - Removed `senior`
 - `frontend/src/features/call-roster/index.ts` - Fixed export
+
+**Schema/Model Mapping:** Model uses `date`, API uses `call_date` (aliased)
 
 ## Verify
 

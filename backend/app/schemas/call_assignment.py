@@ -101,14 +101,14 @@ class CallAssignmentResponse(BaseModel):
     """Schema for call assignment response."""
 
     id: UUID
-    call_date: date = Field(..., description="Date of the call assignment")
+    call_date: date = Field(..., alias="date", description="Date of the call assignment")
     person_id: UUID
     call_type: str
     is_weekend: bool
     is_holiday: bool
     person: PersonBrief | None = None
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 class CallAssignmentListResponse(BaseModel):
