@@ -9,10 +9,18 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class CallType(str, Enum):
-    """Types of call assignments."""
+    """Types of call assignments.
 
-    OVERNIGHT = "overnight"
-    WEEKEND = "weekend"
+    Faculty call types aligned with frontend expectations:
+    - sunday: Sunday overnight call (higher burden, tracked for equity)
+    - weekday: Mon-Thu overnight call
+    - holiday: Federal holiday call
+    - backup: Backup/second call coverage
+    """
+
+    SUNDAY = "sunday"
+    WEEKDAY = "weekday"
+    HOLIDAY = "holiday"
     BACKUP = "backup"
 
 
@@ -22,8 +30,8 @@ class CallAssignmentBase(BaseModel):
     call_date: date = Field(..., description="Date of the call assignment")
     person_id: UUID = Field(..., description="Faculty member assigned to call")
     call_type: str = Field(
-        default="overnight",
-        description="Type of call: overnight, weekend, or backup",
+        default="weekday",
+        description="Type of call: sunday, weekday, holiday, or backup",
     )
     is_weekend: bool = Field(
         default=False, description="Whether this is a weekend call"
@@ -36,8 +44,9 @@ class CallAssignmentBase(BaseModel):
     @classmethod
     def validate_call_type(cls, v: str) -> str:
         """Validate call_type is one of the valid types."""
-        if v not in ("overnight", "weekend", "backup"):
-            raise ValueError("call_type must be 'overnight', 'weekend', or 'backup'")
+        valid_types = ("sunday", "weekday", "holiday", "backup")
+        if v not in valid_types:
+            raise ValueError(f"call_type must be one of: {', '.join(valid_types)}")
         return v
 
 
@@ -60,8 +69,9 @@ class CallAssignmentUpdate(BaseModel):
     @classmethod
     def validate_call_type(cls, v: str | None) -> str | None:
         """Validate call_type is one of the valid types."""
-        if v is not None and v not in ("overnight", "weekend", "backup"):
-            raise ValueError("call_type must be 'overnight', 'weekend', or 'backup'")
+        valid_types = ("sunday", "weekday", "holiday", "backup")
+        if v is not None and v not in valid_types:
+            raise ValueError(f"call_type must be one of: {', '.join(valid_types)}")
         return v
 
     @field_validator("call_date")

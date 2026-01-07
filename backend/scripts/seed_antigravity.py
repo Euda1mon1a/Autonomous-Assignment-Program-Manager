@@ -224,6 +224,29 @@ class AntigravitySeed:
             "bg-blue-100",
         ),
         ("Off", "off", "OFF", "OFF", None, False, True, "text-gray-500", "bg-white"),
+        # Post-call templates for faculty
+        (
+            "Post-Call AM",
+            "recovery",
+            "PCAT",
+            "PCAT",
+            None,
+            False,
+            True,
+            "text-gray-800",
+            "bg-yellow-200",
+        ),
+        (
+            "Day Off",
+            "off",
+            "DO",
+            "DO",
+            None,
+            False,
+            True,
+            "text-gray-600",
+            "bg-gray-200",
+        ),
     ]
 
     # Federal holidays (month, day, name)
@@ -278,7 +301,8 @@ class AntigravitySeed:
         self._seed_blocks()
         self._seed_assignments()
         self._seed_absences()
-        self._seed_call_assignments()
+        self._seed_call_assignments()  # Resident call (kept for reference)
+        self._seed_faculty_call_assignments()  # Faculty call
         self._seed_import_history()
 
         self.db.commit()
@@ -773,83 +797,110 @@ class AntigravitySeed:
         print()
 
     def _seed_call_assignments(self) -> None:
-        """Create call assignments for residents (overnight, weekend, backup)."""
-        print("Creating call assignments...")
+        """Create call assignments for residents.
 
-        residents = self.created["residents"]
+        NOTE: Resident call is separate from faculty call and uses Night Float
+        rotation assignments rather than call_assignments table. Skipping for now
+        to focus on faculty call workflow.
+        """
+        print("Skipping resident call assignments (using Night Float rotation instead)")
+        print()
+
+    def _seed_faculty_call_assignments(self) -> None:
+        """Create faculty call assignments (sunday, weekday, holiday, backup)."""
+        print("Creating faculty call assignments...")
+
+        faculty = self.created["faculty"]
+        if not faculty:
+            print("  No faculty found, skipping...")
+            return
+
         call_count = 0
 
-        # Generate call schedule for 6 months of the AY
+        # Generate faculty call schedule for 6 months of the AY
         current_date = self.ay_start
         end_call_date = self.ay_start + timedelta(days=180)  # First 6 months
 
+        # Pre-compute holidays
+        holidays = set()
+        for month, day, _ in self.FEDERAL_HOLIDAYS:
+            holidays.add((self.year, month, day))
+            holidays.add((self.year + 1, month, day))
+
         while current_date < end_call_date:
-            is_weekend = current_date.weekday() >= 5
-            is_holiday = any(
-                current_date.month == m and current_date.day == d
-                for m, d, _ in self.FEDERAL_HOLIDAYS
-            )
+            day_of_week = current_date.weekday()  # 0=Mon, 6=Sun
+            is_holiday = (
+                current_date.year,
+                current_date.month,
+                current_date.day,
+            ) in holidays
 
-            # Assign overnight call (weekdays)
-            if not is_weekend:
-                # Rotate through PGY-2 and PGY-3 residents for overnight
-                senior_residents = [r for r in residents if r.pgy_level >= 2]
-                if senior_residents:
-                    day_index = (current_date - self.ay_start).days
-                    assigned = senior_residents[day_index % len(senior_residents)]
+            day_index = (current_date - self.ay_start).days
 
-                    call = CallAssignment(
-                        id=uuid4(),
-                        date=current_date,
-                        person_id=assigned.id,
-                        call_type="overnight",
-                        is_weekend=False,
-                        is_holiday=is_holiday,
-                    )
-                    self.db.add(call)
-                    self.created["call_assignments"].append(call)
-                    call_count += 1
+            # Sunday call (day_of_week == 6)
+            if day_of_week == 6:
+                assigned = faculty[day_index % len(faculty)]
+                call = CallAssignment(
+                    id=uuid4(),
+                    date=current_date,
+                    person_id=assigned.id,
+                    call_type="sunday",
+                    is_weekend=True,
+                    is_holiday=is_holiday,
+                )
+                self.db.add(call)
+                self.created["call_assignments"].append(call)
+                call_count += 1
 
-            # Assign weekend call
-            if is_weekend:
-                # PGY-2/3 for primary, PGY-1 for backup
-                senior_residents = [r for r in residents if r.pgy_level >= 2]
-                junior_residents = [r for r in residents if r.pgy_level == 1]
+            # Weekday call (Mon-Thu, day_of_week 0-3)
+            elif day_of_week in (0, 1, 2, 3) and not is_holiday:
+                assigned = faculty[day_index % len(faculty)]
+                call = CallAssignment(
+                    id=uuid4(),
+                    date=current_date,
+                    person_id=assigned.id,
+                    call_type="weekday",
+                    is_weekend=False,
+                    is_holiday=False,
+                )
+                self.db.add(call)
+                self.created["call_assignments"].append(call)
+                call_count += 1
 
-                week_num = (current_date - self.ay_start).days // 7
+            # Holiday call
+            if is_holiday:
+                assigned = faculty[(day_index + 1) % len(faculty)]
+                call = CallAssignment(
+                    id=uuid4(),
+                    date=current_date,
+                    person_id=assigned.id,
+                    call_type="holiday",
+                    is_weekend=day_of_week >= 5,
+                    is_holiday=True,
+                )
+                self.db.add(call)
+                self.created["call_assignments"].append(call)
+                call_count += 1
 
-                if senior_residents:
-                    primary = senior_residents[week_num % len(senior_residents)]
-                    call = CallAssignment(
-                        id=uuid4(),
-                        date=current_date,
-                        person_id=primary.id,
-                        call_type="weekend",
-                        is_weekend=True,
-                        is_holiday=is_holiday,
-                    )
-                    self.db.add(call)
-                    self.created["call_assignments"].append(call)
-                    call_count += 1
-
-                if junior_residents:
-                    backup = junior_residents[week_num % len(junior_residents)]
-                    call = CallAssignment(
-                        id=uuid4(),
-                        date=current_date,
-                        person_id=backup.id,
-                        call_type="backup",
-                        is_weekend=True,
-                        is_holiday=is_holiday,
-                    )
-                    self.db.add(call)
-                    self.created["call_assignments"].append(call)
-                    call_count += 1
+            # Backup call (Fridays and Saturdays)
+            if day_of_week in (4, 5):  # Friday, Saturday
+                assigned = faculty[(day_index + 2) % len(faculty)]
+                call = CallAssignment(
+                    id=uuid4(),
+                    date=current_date,
+                    person_id=assigned.id,
+                    call_type="backup",
+                    is_weekend=day_of_week == 5,
+                    is_holiday=is_holiday,
+                )
+                self.db.add(call)
+                self.created["call_assignments"].append(call)
+                call_count += 1
 
             current_date += timedelta(days=1)
 
         self.db.flush()
-        print(f"  Created {call_count} call assignments")
+        print(f"  Created {call_count} faculty call assignments")
         print()
 
     def _seed_import_history(self) -> None:

@@ -16,8 +16,7 @@ export type CallType =
   | 'sunday'
   | 'weekday'
   | 'holiday'
-  | 'backup'
-  | 'senior';
+  | 'backup';
 
 /**
  * Post-call availability status
@@ -188,7 +187,6 @@ export const CALL_TYPE_CONFIGS: CallTypeConfig[] = [
   { type: 'weekday', label: 'Weekday Call', color: 'text-emerald-400', bgColor: 'bg-emerald-500/20' },
   { type: 'holiday', label: 'Holiday Call', color: 'text-amber-400', bgColor: 'bg-amber-500/20' },
   { type: 'backup', label: 'Backup Call', color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
-  { type: 'senior', label: 'Senior Call', color: 'text-cyan-400', bgColor: 'bg-cyan-500/20' },
 ];
 
 export function getCallTypeConfig(type: CallType): CallTypeConfig {
