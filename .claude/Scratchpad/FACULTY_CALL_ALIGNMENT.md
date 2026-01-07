@@ -4,12 +4,20 @@
 
 ## Dev Mode (REQUIRED)
 
-**Always start stack with dev config for hot reload:**
+**Always start stack with dev config:**
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 ```
 
-Without `-f docker-compose.dev.yml`, code is baked into images and every change requires rebuild.
+| Service | Dev Mode | Hot Reload |
+|---------|----------|------------|
+| Backend | ✓ Volume mount | ✓ Yes |
+| Frontend | Prod mode | Rebuild needed |
+| MCP | ✓ Volume mount | ✓ Yes (port 8081) |
+
+**Frontend changes:** `docker compose build frontend && docker compose up -d frontend`
+
+Without dev config, ALL code is baked into images → every change needs rebuild.
 
 ## Restore
 
