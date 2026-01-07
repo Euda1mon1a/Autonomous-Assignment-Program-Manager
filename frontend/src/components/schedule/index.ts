@@ -50,6 +50,9 @@ export type { MultiSelectPersonFilterProps } from './MultiSelectPersonFilter'
 // Block Annual View for academic year overview
 export { BlockAnnualView } from './BlockAnnualView'
 
+// Block Week View for viewing a week within a block
+export { BlockWeekView } from './BlockWeekView'
+
 // Personal schedule card for viewing single person's schedule
 export { PersonalScheduleCard } from './PersonalScheduleCard'
 export type {

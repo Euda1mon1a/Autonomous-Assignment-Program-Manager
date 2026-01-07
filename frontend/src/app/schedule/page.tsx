@@ -11,6 +11,7 @@ import { MonthView } from '@/components/schedule/MonthView'
 import { WeekView } from '@/components/schedule/WeekView'
 import { DayView } from '@/components/schedule/DayView'
 import { BlockAnnualView } from '@/components/schedule/BlockAnnualView'
+import { BlockWeekView } from '@/components/schedule/BlockWeekView'
 import { MultiSelectPersonFilter } from '@/components/schedule/MultiSelectPersonFilter'
 import { ResidentAcademicYearView, FacultyInpatientWeeksView } from '@/components/schedule/drag'
 import { get } from '@/lib/api'
@@ -234,8 +235,8 @@ export default function SchedulePage() {
                   </p>
                 </div>
 
-                {/* Person Filter - show for block-annual and block views */}
-                {['block-annual', 'block'].includes(currentView) && (
+                {/* Person Filter - show for block-annual, block, and block-week views */}
+                {['block-annual', 'block', 'block-week'].includes(currentView) && (
                   <MultiSelectPersonFilter
                     selectedPersonIds={selectedPersonIds}
                     onSelectionChange={setSelectedPersonIds}
@@ -280,8 +281,8 @@ export default function SchedulePage() {
               )}
             </div>
 
-            {/* Navigation row - only for block view */}
-            {currentView === 'block' && (
+            {/* Navigation row - for block and block-week views */}
+            {['block', 'block-week'].includes(currentView) && (
               <BlockNavigation
                 startDate={dateRange.start}
                 endDate={dateRange.end}
@@ -318,6 +319,20 @@ export default function SchedulePage() {
               personFilter={selectedPersonIds}
             />
           )}
+          {currentView === 'block-week' && (
+            <BlockWeekView
+              blockStartDate={dateRange.start}
+              blockEndDate={dateRange.end}
+              blockNumber={
+                blockRanges?.find(
+                  (r) =>
+                    r.start_date === format(dateRange.start, 'yyyy-MM-dd') &&
+                    r.end_date === format(dateRange.end, 'yyyy-MM-dd')
+                )?.block_number ?? null
+              }
+              personFilter={selectedPersonIds}
+            />
+          )}
           {currentView === 'month' && (
             <MonthView
               currentDate={currentDate}
@@ -349,8 +364,8 @@ export default function SchedulePage() {
           )}
         </div>
 
-        {/* Footer - only show for standard views, annual views have their own */}
-        {!['block-annual', 'resident-year', 'faculty-inpatient'].includes(currentView) && (
+        {/* Footer - only show for standard views, block-week and annual views have their own */}
+        {!['block-annual', 'block-week', 'resident-year', 'faculty-inpatient'].includes(currentView) && (
           <div className="flex-shrink-0 bg-white border-t border-gray-200 px-4 py-2">
             <div className="flex items-center justify-between text-xs text-gray-500">
               <span>

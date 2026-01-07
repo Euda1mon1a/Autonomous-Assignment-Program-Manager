@@ -7,6 +7,7 @@ import { Calendar, CalendarDays, LayoutGrid, Columns, Users, GraduationCap, Cale
 export type ScheduleView =
   | 'block-annual'
   | 'block'
+  | 'block-week'
   | 'day'
   | 'week'
   | 'month'
@@ -43,6 +44,13 @@ const viewOptions: {
     label: 'Block',
     shortLabel: 'Block',
     icon: <LayoutGrid className="w-4 h-4" aria-hidden="true" />,
+    group: 'block-views',
+  },
+  {
+    value: 'block-week',
+    label: 'Block Week',
+    shortLabel: 'Week',
+    icon: <Columns className="w-4 h-4" aria-hidden="true" />,
     group: 'block-views',
   },
   {
@@ -191,6 +199,7 @@ function isValidView(view: string): view is ScheduleView {
   return [
     'block-annual',
     'block',
+    'block-week',
     'day',
     'week',
     'month',
