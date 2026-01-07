@@ -1,5 +1,5 @@
 # RAG Status Report
-**Generated:** 2026-01-06 | **Report Type:** Quarterly Health Assessment | **Status:** HEALTHY
+**Generated:** 2026-01-06 | **Updated:** 2026-01-07 | **Report Type:** Quarterly Health Assessment | **Status:** HEALTHY
 
 ---
 
@@ -7,7 +7,9 @@
 
 The Retrieval Augmented Generation (RAG) system is a searchable knowledge base that captures institutional knowledge about how this program works. Think of it as an intelligent filing system: when an AI agent needs to answer a question about scheduling rules, ACGME compliance, how swaps work, or how decisions are made, it queries RAG to pull relevant documents rather than making things up.
 
-**Current Status:** The knowledge base is **healthy and well-populated** with 148 documents across 12 subject areas. It contains the core institutional knowledge needed to run the scheduler, including ACGME compliance rules, scheduling policies, how swaps and conflicts are handled, and organizational procedures. All documents are properly indexed and searchable.
+**Current Status:** The knowledge base is **healthy and well-populated** with **182 documents** across **13 subject areas**. It contains the core institutional knowledge needed to run the scheduler, including ACGME compliance rules, scheduling policies, how swaps and conflicts are handled, organizational procedures, **and PAI governance documentation**. All documents are properly indexed and searchable.
+
+**Recent Update (2026-01-07):** Ingested +34 documents including governance docs, protocols (SEARCH_PARTY, PLAN_PARTY, CONTEXT_PARTY), agent identity cards (12 key agents), and architectural decisions.
 
 ---
 
@@ -67,7 +69,7 @@ The knowledge base is organized into these subject areas:
 
 ---
 
-### 4. **Resilience Concepts** (13 documents)
+### 4. **Resilience Concepts** (15 documents)
 **What:** Patterns from other critical industries (nuclear safety, aviation, power grids) adapted for scheduling.
 - Defense-in-depth: Multiple layers of protection
 - Contingency analysis: What if a key faculty member is sick?
@@ -101,7 +103,7 @@ The knowledge base is organized into these subject areas:
 
 ---
 
-### 6. **Agent Specifications** (13 documents)
+### 6. **Agent Specifications** (25 documents)
 **What:** Detailed identity cards for each AI agent in the system.
 - Role and responsibilities
 - Standing orders (what they can do without asking)
@@ -215,15 +217,37 @@ The knowledge base is organized into these subject areas:
 
 ---
 
+### 13. **AI Patterns & Protocols** (20 documents) - NEW
+**What:** Multi-agent orchestration patterns and parallel execution protocols.
+- **Auftragstaktik Doctrine:** Mission-type orders vs. detailed command
+- **SEARCH_PARTY Protocol:** 120-probe parallel reconnaissance
+- **PLAN_PARTY Protocol:** 10-strategy parallel planning
+- **CONTEXT_PARTY Protocol:** 6-probe historical context gathering
+- **Signal Propagation:** Inter-agent coordination patterns
+- **Approval Matrix:** Who can do what without asking
+- **Spawn Chains:** Who can spawn whom
+
+**Why It Matters:** This program uses sophisticated multi-agent coordination. These patterns explain how agents work together without stepping on each other.
+
+**Example Queries:**
+- "What is Auftragstaktik?"
+- "How does search-party work?"
+- "Who can spawn the SCHEDULER agent?"
+- "What's the 99/1 rule for ORCHESTRATOR?"
+
+---
+
 ## Coverage Assessment
 
 ### Well-Covered Areas (Confident)
 ✅ **ACGME Compliance** - Comprehensive coverage of federal rules
 ✅ **Swap Procedures** - Full lifecycle documented
 ✅ **Delegation Model** - Extensive patterns documented
-✅ **AI Agent Roles** - All agents documented
+✅ **AI Agent Roles** - All key agents documented (25 docs)
 ✅ **Resilience Patterns** - Good coverage of failure scenarios
 ✅ **Military Requirements** - OPSEC/PERSEC and reporting covered
+✅ **Multi-Agent Protocols** - SEARCH_PARTY, PLAN_PARTY, CONTEXT_PARTY documented (NEW)
+✅ **Governance Framework** - Approval matrix, spawn chains, hierarchy documented (NEW)
 
 ### Good Coverage (Generally Sufficient)
 ✓ **Scheduling Policies** - Core policies documented
@@ -273,9 +297,27 @@ The knowledge base is organized into these subject areas:
 A lightweight, efficient semantic search model. Converts text to 384-dimensional vectors, enabling "fuzzy" searches that understand meaning rather than just keyword matching.
 
 **Vector Index Status:** Ready
-All 148 documents are indexed and searchable. Index is in memory, searchable in <100ms.
+All 182 documents are indexed and searchable. Index is in memory, searchable in <100ms.
 
 **Index Health:** No issues detected. All documents properly vectorized.
+
+**Document Distribution:**
+| Category | Count |
+|----------|-------|
+| delegation_patterns | 37 |
+| agent_spec | 25 |
+| ai_patterns | 20 |
+| exotic_concepts | 19 |
+| user_guide_faq | 16 |
+| resilience_concepts | 15 |
+| session_learnings | 11 |
+| military_specific | 10 |
+| scheduling_policy | 9 |
+| swap_system | 8 |
+| acgme_rules | 7 |
+| session_protocols | 3 |
+| README | 2 |
+| **Total** | **182** |
 
 ---
 
@@ -309,7 +351,13 @@ All 148 documents are indexed and searchable. Index is in memory, searchable in 
 
 ## Summary
 
-The RAG system is **functioning well** and contains the institutional knowledge needed to run the scheduler effectively. The knowledge base emphasizes decision-making procedures, compliance rules, and system resilience—reflecting the program's priorities.
+The RAG system is **functioning well** and contains the institutional knowledge needed to run the scheduler effectively. The knowledge base emphasizes decision-making procedures, compliance rules, system resilience, and **multi-agent orchestration**—reflecting the program's priorities.
+
+**2026-01-07 Update:** Major ingestion added governance documentation, multi-agent protocols, and key identity cards. The system now understands:
+- How agents coordinate (Auftragstaktik, spawn chains)
+- Parallel probe protocols (SEARCH_PARTY, PLAN_PARTY, CONTEXT_PARTY)
+- Who does what (12 key agent identity cards)
+- Architectural decisions (ADRs 001-011)
 
 **Recommendations:** Focus on adding troubleshooting guides and capturing lessons learned from ongoing sessions. These will make the system more immediately useful for operators facing novel problems.
 
@@ -318,4 +366,5 @@ For questions about specific topics, query RAG directly. For implementation deta
 ---
 
 *Historian Report | Residency Scheduler Project*
-*RAG System Version: 1.0 (healthy, 148 docs, 12 categories)*
+*RAG System Version: 1.1 (healthy, 182 docs, 13 categories)*
+*Last Updated: 2026-01-07*
