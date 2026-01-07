@@ -10,6 +10,8 @@ import { ViewToggle, useScheduleView } from '@/components/schedule/ViewToggle'
 import { MonthView } from '@/components/schedule/MonthView'
 import { WeekView } from '@/components/schedule/WeekView'
 import { DayView } from '@/components/schedule/DayView'
+import { BlockAnnualView } from '@/components/schedule/BlockAnnualView'
+import { MultiSelectPersonFilter } from '@/components/schedule/MultiSelectPersonFilter'
 import { ResidentAcademicYearView, FacultyInpatientWeeksView } from '@/components/schedule/drag'
 import { get } from '@/lib/api'
 import { usePeople, useRotationTemplates, useBlockRanges, ListResponse } from '@/lib/hooks'
@@ -57,6 +59,9 @@ export default function SchedulePage() {
 
   // Current date for Day/Week/Month views
   const [currentDate, setCurrentDate] = useState(() => new Date())
+
+  // Person filter for comparing schedules (multi-select)
+  const [selectedPersonIds, setSelectedPersonIds] = useState<Set<string>>(new Set())
 
   // Fetch block ranges from API to get actual block boundaries
   const { data: blockRanges } = useBlockRanges()
@@ -221,11 +226,23 @@ export default function SchedulePage() {
           <div className="max-w-full px-4 py-4">
             {/* Title row */}
             <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Schedule</h1>
-                <p className="text-sm text-gray-600 mt-1">
-                  View and manage rotation assignments
-                </p>
+              <div className="flex items-center gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Schedule</h1>
+                  <p className="text-sm text-gray-600 mt-1">
+                    View and manage rotation assignments
+                  </p>
+                </div>
+
+                {/* Person Filter - show for block-annual and block views */}
+                {['block-annual', 'block'].includes(currentView) && (
+                  <MultiSelectPersonFilter
+                    selectedPersonIds={selectedPersonIds}
+                    onSelectionChange={setSelectedPersonIds}
+                    residentsOnly={currentView === 'block-annual'}
+                    emptyLabel={currentView === 'block-annual' ? 'All Residents' : 'All People'}
+                  />
+                )}
               </div>
 
               {/* View Toggle */}
@@ -276,8 +293,30 @@ export default function SchedulePage() {
 
         {/* Schedule content */}
         <div className="flex-1 overflow-auto p-4">
+          {currentView === 'block-annual' && (
+            <BlockAnnualView
+              personFilter={selectedPersonIds}
+              onBlockClick={(blockNumber) => {
+                // Navigate to block view for the clicked block
+                if (blockRanges) {
+                  const range = blockRanges.find((r) => r.block_number === blockNumber)
+                  if (range) {
+                    setDateRange({
+                      start: parseISO(range.start_date),
+                      end: parseISO(range.end_date),
+                    })
+                    setCurrentView('block')
+                  }
+                }
+              }}
+            />
+          )}
           {currentView === 'block' && (
-            <ScheduleGrid startDate={dateRange.start} endDate={dateRange.end} />
+            <ScheduleGrid
+              startDate={dateRange.start}
+              endDate={dateRange.end}
+              personFilter={selectedPersonIds}
+            />
           )}
           {currentView === 'month' && (
             <MonthView
@@ -311,7 +350,7 @@ export default function SchedulePage() {
         </div>
 
         {/* Footer - only show for standard views, annual views have their own */}
-        {!['resident-year', 'faculty-inpatient'].includes(currentView) && (
+        {!['block-annual', 'resident-year', 'faculty-inpatient'].includes(currentView) && (
           <div className="flex-shrink-0 bg-white border-t border-gray-200 px-4 py-2">
             <div className="flex items-center justify-between text-xs text-gray-500">
               <span>

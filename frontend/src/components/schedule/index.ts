@@ -43,6 +43,13 @@ export type {
 export { PersonFilter } from './PersonFilter'
 export type { PersonFilterProps } from './PersonFilter'
 
+// Multi-select person filter for comparing multiple schedules
+export { MultiSelectPersonFilter } from './MultiSelectPersonFilter'
+export type { MultiSelectPersonFilterProps } from './MultiSelectPersonFilter'
+
+// Block Annual View for academic year overview
+export { BlockAnnualView } from './BlockAnnualView'
+
 // Personal schedule card for viewing single person's schedule
 export { PersonalScheduleCard } from './PersonalScheduleCard'
 export type {

@@ -124,11 +124,12 @@ Endpoint: `/block-scheduler/assignments` (block_scheduler.py)
 
 - [x] Explored current views and data models
 - [x] Plan approved
-- [ ] Create BlockAnnualView.tsx
-- [ ] Modify ViewToggle.tsx
-- [ ] Update schedule/page.tsx
-- [ ] Enhance PersonFilter for multi-select
-- [ ] Add Block 0 warning
+- [x] Create BlockAnnualView.tsx - 14-column block view with rotation colors
+- [x] Modify ViewToggle.tsx - Reorganized into Block/Calendar groups, hidden Res/Fac views
+- [x] Update schedule/page.tsx - Wired BlockAnnualView + person filter
+- [x] Create MultiSelectPersonFilter.tsx - Multi-select for comparing schedules
+- [x] Add Block 0 warning to BlockNavigation.tsx
+- [ ] Block-week mode (deferred - optional enhancement)
 
 ---
 

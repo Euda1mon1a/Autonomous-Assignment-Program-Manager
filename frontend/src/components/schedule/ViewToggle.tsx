@@ -2,9 +2,16 @@
 
 import React, { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Calendar, CalendarDays, LayoutGrid, Columns, Users, GraduationCap } from 'lucide-react'
+import { Calendar, CalendarDays, LayoutGrid, Columns, Users, GraduationCap, CalendarClock } from 'lucide-react'
 
-export type ScheduleView = 'day' | 'week' | 'month' | 'block' | 'resident-year' | 'faculty-inpatient'
+export type ScheduleView =
+  | 'block-annual'
+  | 'block'
+  | 'day'
+  | 'week'
+  | 'month'
+  | 'resident-year'
+  | 'faculty-inpatient'
 
 export interface ViewToggleProps {
   currentView: ScheduleView
@@ -13,13 +20,67 @@ export interface ViewToggleProps {
 
 const VIEW_STORAGE_KEY = 'schedule-view-preference'
 
-const viewOptions: { value: ScheduleView; label: string; shortLabel: string; icon: React.ReactNode; group?: string }[] = [
-  { value: 'day', label: 'Day', shortLabel: 'Day', icon: <Calendar className="w-4 h-4" aria-hidden="true" /> },
-  { value: 'week', label: 'Week', shortLabel: 'Week', icon: <Columns className="w-4 h-4" aria-hidden="true" /> },
-  { value: 'month', label: 'Month', shortLabel: 'Month', icon: <CalendarDays className="w-4 h-4" aria-hidden="true" /> },
-  { value: 'block', label: 'Block', shortLabel: 'Block', icon: <LayoutGrid className="w-4 h-4" aria-hidden="true" /> },
-  { value: 'resident-year', label: 'Resident Year', shortLabel: 'Res.', icon: <GraduationCap className="w-4 h-4" aria-hidden="true" />, group: 'annual' },
-  { value: 'faculty-inpatient', label: 'Faculty Inpatient', shortLabel: 'Fac.', icon: <Users className="w-4 h-4" aria-hidden="true" />, group: 'annual' },
+// View options organized by group
+// - 'block-views': Block-oriented views (AY overview, Block detail)
+// - 'calendar-views': Date-oriented views (Day, Week, Month)
+// - 'hidden': Available via URL param only (resident-year, faculty-inpatient)
+const viewOptions: {
+  value: ScheduleView
+  label: string
+  shortLabel: string
+  icon: React.ReactNode
+  group: 'block-views' | 'calendar-views' | 'hidden'
+}[] = [
+  {
+    value: 'block-annual',
+    label: 'Academic Year',
+    shortLabel: 'AY',
+    icon: <CalendarClock className="w-4 h-4" aria-hidden="true" />,
+    group: 'block-views',
+  },
+  {
+    value: 'block',
+    label: 'Block',
+    shortLabel: 'Block',
+    icon: <LayoutGrid className="w-4 h-4" aria-hidden="true" />,
+    group: 'block-views',
+  },
+  {
+    value: 'day',
+    label: 'Day',
+    shortLabel: 'Day',
+    icon: <Calendar className="w-4 h-4" aria-hidden="true" />,
+    group: 'calendar-views',
+  },
+  {
+    value: 'week',
+    label: 'Week',
+    shortLabel: 'Week',
+    icon: <Columns className="w-4 h-4" aria-hidden="true" />,
+    group: 'calendar-views',
+  },
+  {
+    value: 'month',
+    label: 'Month',
+    shortLabel: 'Month',
+    icon: <CalendarDays className="w-4 h-4" aria-hidden="true" />,
+    group: 'calendar-views',
+  },
+  // Hidden views - accessible via URL param only (e.g., ?view=resident-year)
+  {
+    value: 'resident-year',
+    label: 'Resident Year',
+    shortLabel: 'Res.',
+    icon: <GraduationCap className="w-4 h-4" aria-hidden="true" />,
+    group: 'hidden',
+  },
+  {
+    value: 'faculty-inpatient',
+    label: 'Faculty Inpatient',
+    shortLabel: 'Fac.',
+    icon: <Users className="w-4 h-4" aria-hidden="true" />,
+    group: 'hidden',
+  },
 ]
 
 export function ViewToggle({ currentView, onChange }: ViewToggleProps) {
@@ -52,14 +113,22 @@ export function ViewToggle({ currentView, onChange }: ViewToggleProps) {
   }
 
   // Group options for visual separation
-  const standardViews = viewOptions.filter(o => !o.group)
-  const annualViews = viewOptions.filter(o => o.group === 'annual')
+  const blockViews = viewOptions.filter((o) => o.group === 'block-views')
+  const calendarViews = viewOptions.filter((o) => o.group === 'calendar-views')
+  // Hidden views not rendered but still valid for URL params
 
   return (
     <div className="inline-flex items-center gap-1" role="toolbar" aria-label="Schedule view options">
-      {/* Standard views */}
-      <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1" role="group" aria-label="Standard views">
-        {standardViews.map((option) => (
+      {/* Block Views */}
+      <div
+        className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1"
+        role="group"
+        aria-label="Block views"
+      >
+        <span className="hidden md:inline text-xs text-gray-400 font-medium px-2 py-1.5 self-center">
+          Block
+        </span>
+        {blockViews.map((option) => (
           <button
             key={option.value}
             onClick={() => handleViewChange(option.value)}
@@ -84,9 +153,16 @@ export function ViewToggle({ currentView, onChange }: ViewToggleProps) {
       {/* Separator */}
       <div className="w-px h-6 bg-gray-300 mx-1" aria-hidden="true" />
 
-      {/* Annual drag views */}
-      <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1" role="group" aria-label="Annual views with drag-and-drop">
-        {annualViews.map((option) => (
+      {/* Calendar Views */}
+      <div
+        className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1"
+        role="group"
+        aria-label="Calendar views"
+      >
+        <span className="hidden md:inline text-xs text-gray-400 font-medium px-2 py-1.5 self-center">
+          Calendar
+        </span>
+        {calendarViews.map((option) => (
           <button
             key={option.value}
             onClick={() => handleViewChange(option.value)}
@@ -100,10 +176,10 @@ export function ViewToggle({ currentView, onChange }: ViewToggleProps) {
               }
             `}
             aria-pressed={currentView === option.value}
-            aria-label={`Switch to ${option.label} view with drag-and-drop`}
+            aria-label={`Switch to ${option.label} view`}
           >
             {option.icon}
-            <span className="hidden lg:inline">{option.shortLabel}</span>
+            <span className="hidden sm:inline">{option.shortLabel}</span>
           </button>
         ))}
       </div>
@@ -112,7 +188,15 @@ export function ViewToggle({ currentView, onChange }: ViewToggleProps) {
 }
 
 function isValidView(view: string): view is ScheduleView {
-  return ['day', 'week', 'month', 'block', 'resident-year', 'faculty-inpatient'].includes(view)
+  return [
+    'block-annual',
+    'block',
+    'day',
+    'week',
+    'month',
+    'resident-year',
+    'faculty-inpatient',
+  ].includes(view)
 }
 
 // Hook for managing view state with localStorage and URL sync
