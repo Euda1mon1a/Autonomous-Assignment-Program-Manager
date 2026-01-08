@@ -143,7 +143,7 @@ export function usePeople(
   options?: Omit<UseQueryOptions<ListResponse<Person>, ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const params = new URLSearchParams()
-  if (filters?.role) params.set('role', filters.role)
+  if (filters?.role) params.set('type', filters.role)
   if (filters?.pgy_level !== undefined) params.set('pgy_level', String(filters.pgy_level))
   const queryString = params.toString()
 

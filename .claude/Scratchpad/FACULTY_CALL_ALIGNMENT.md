@@ -1,143 +1,85 @@
-# Session 067 - Schedule UX Redesign
+# Session 068-069 - Admin UI Improvements
 
-**Branch:** `session/067-antigravity-faculty-call` | **Date:** 2026-01-07
-
-## Status: COMMITTED ✅
-
-Commit `15a62aa4` pushed to remote.
-
-## All Fixes Applied
-
-### Backend Fixes
-
-| File | Fix |
-|------|-----|
-| `backend/app/schemas/block.py` | `block_number` limit 13→14 (DB has block 14 for June) |
-| `backend/app/schemas/absence.py` | `deployment_orders: bool` → `bool \| None` |
-| `backend/app/auth/permissions/decorators.py` | **MAJOR** - Rewrote `require_role` from decorator to FastAPI dependency (was causing "func query param required" 422 error) |
-| `backend/app/services/call_assignment_service.py` | Added `selectinload(CallAssignment.person)` after create to fix async greenlet error |
-| `backend/app/controllers/*.py` | Added `model_validate()` to 9 controllers (13 methods) for ORM→Pydantic conversion |
-
-### Frontend Fixes
-
-| File | Fix |
-|------|-----|
-| `frontend/src/features/call-roster/hooks.ts` | **REWROTE** - Use `/call-assignments` endpoint instead of `/assignments?activity_type=on_call` |
-| `frontend/src/types/call-assignment.ts` | `call_date`→`date` for response types (backend uses alias) |
-| `frontend/src/app/admin/faculty-call/page.tsx` | Fixed transform function + wired up create modal |
-| `frontend/src/components/admin/CreateCallAssignmentModal.tsx` | **NEW** - Modal with date picker, faculty dropdown, call type selector |
-
-## Key Debugging Patterns
-
-### "func query param required" (422)
-**Cause:** `require_role` was a decorator being used as `Depends(require_role([...]))` - FastAPI tried to inject `func` parameter
-**Fix:** Rewrote `require_role` to return a dependency function, not a decorator
-
-### "MissingGreenlet" async error
-**Cause:** SQLAlchemy lazy loading `person` relationship outside async context
-**Fix:** Re-query with `selectinload()` after create/update
-
-### "Objects are not valid as React child"
-**Cause:** Pydantic validation error object being rendered
-**Fix:** Check controller has `model_validate()`, schema constraints match DB
-
-## Working URLs
-
-- `/call-roster` ✅ - Faculty call calendar
-- `/admin/faculty-call` ✅ - Faculty call management with create
-- `/schedule` (week view) - Diagnosed, code correct, may need browser hard refresh
-
-## Schedule Week View Issue - FIXED ✅
-
-User reported Mon-Wed only showing.
-
-**Root Cause:** API pagination - default `page_size=100` only returned first 100 of 272 assignments for the week. Days with assignments outside the first 100 showed empty.
-
-**Fix:** Changed `frontend/src/app/schedule/page.tsx` to use `page_size=500` (backend max) for both blocks and assignments queries.
-
-```typescript
-// Before: /assignments?start_date=...&end_date=... (default 100)
-// After:  /assignments?start_date=...&end_date=...&page_size=500
-```
-
-## Annual View Freeze Fix
-
-**Problem:** Res./Fac. buttons in ViewToggle switch to annual views that render 21,900+ cells (30 residents × 365 days × 2 AM/PM), causing browser freeze.
-
-**Fix:** Added performance safeguard to both views:
-- `ResidentAcademicYearView.tsx` - Shows warning if >5000 cells
-- `FacultyInpatientWeeksView.tsx` - Shows warning if >5000 cells
-
-User can click "Render Anyway" or "Switch to Block View".
+**Branch:** `main` | **Date:** 2026-01-07
 
 ---
 
-## CURRENT WORK: Schedule View UX Redesign
+## COMPLETED THIS SESSION ✅
 
-**Plan:** `/Users/aaronmontgomery/.claude/plans/merry-hatching-torvalds.md`
+### 1. Real Personnel Data Restored
+- Restored backup `backups/data/residency_scheduler_20260101_104047.sql.gz`
+- Used test container (pgvector/pgvector:pg15) → ran migrations → swapped to dev
+- **29 people** with real names now in DB (Aaron Montgomery, Zach Bevis, etc.)
+- **60 rotation templates** (C-AM, FMIT, NF-*, PR-*, etc.)
+- Alembic at: `20260105_add_import_staged_absences`
 
-### Overview
-
-Reorganize schedule views into Block Views and Calendar Views:
-
-```
-┌─────────────────────────────────────────────────────────┐
-│ [Block Views]                │  [Calendar Views]        │
-│ ┌────┬────────┬──────┐       │  ┌─────┬──────┬───────┐  │
-│ │ AY │ Block  │ Week │       │  │ Day │ Week │ Month │  │
-│ └────┴────────┴──────┘       │  └─────┴──────┴───────┘  │
-└─────────────────────────────────────────────────────────┘
+### 2. Immaculate Backup Created
+**Name:** `immaculate_real_personnel_20260107` (2.5G)
+```bash
+./scripts/stack-backup.sh restore immaculate_real_personnel_20260107
 ```
 
-### New Components Needed
+### 3. RAG Updated
+- Personnel roster ingested (29 names)
+- Rotation templates ingested (60 templates)
+- Backup reference added
 
-1. **BlockAnnualView.tsx** (NEW)
-   - 14 columns: Block 0-13
-   - Rows: Residents only, grouped by PGY
-   - Cells: Rotation abbreviation + color
-   - Block 0: Warning banner for orientation period
-   - Click block → navigate to Block view
-
-2. **PersonFilter.tsx** - Enhance for multi-select
-   - Current: Single-select (exists but not wired up)
-   - Needed: Multi-select to compare schedules (e.g., SM resident + SM faculty)
-
-3. **ViewToggle.tsx** - Reorganize
-   - Remove Res./Fac. from visible (keep as URL param hidden)
-   - Add block-annual view type
-   - Group: Block Views | Calendar Views
-
-### Key User Decisions
-
-- Block AY: **Residents only** (faculty don't have block rotations)
-- Block Week: Default to **current week** within selected block
-- Res/Fac views: **Keep as hidden** (URL param access only)
-- Block 0: **Must be visible** with warning banner
-
-### API for Block Assignments
-
-Endpoint: `/block-scheduler/assignments` (block_scheduler.py)
-- Uses `BlockAssignmentResponse` schema
-- Fields: block_number, academic_year, resident_id, rotation_template_id
-
-### Progress
-
-- [x] Explored current views and data models
-- [x] Plan approved
-- [x] Create BlockAnnualView.tsx - 14-column block view with rotation colors
-- [x] Modify ViewToggle.tsx - Reorganized into Block/Calendar groups, hidden Res/Fac views
-- [x] Update schedule/page.tsx - Wired BlockAnnualView + person filter
-- [x] Create MultiSelectPersonFilter.tsx - Multi-select for comparing schedules
-- [x] Add Block 0 warning to BlockNavigation.tsx
-- [x] Create BlockWeekView.tsx - Week view within block boundaries
+### 4. People Toggle Bug Fixed ✅
+**File:** `frontend/src/hooks/usePeople.ts:146`
+- Changed `params.set('role', ...)` → `params.set('type', ...)`
+- Backend expects `?type=resident`, frontend was sending `?role=resident`
 
 ---
 
-## TODO (backlog)
+## IN PROGRESS - Admin UI Plan
 
-- [ ] Date picker typing quirk in CreateCallAssignmentModal
+**Plan file:** `.claude/plans/merry-hatching-torvalds.md`
+
+### Execution Order (remaining):
+1. ~~Fix people toggle~~ ✅ DONE
+2. Auto-save: queued edits + backup endpoint
+3. Week-by-week pattern editing (add week_number to weekly_patterns)
+4. Half-block rotation support (add block_duration to rotation_templates)
+5. Admin people bulk edit page
+6. Procedure credentialing matrix
+7. Rename pages (templates→activities/rotations)
+8. Navigation cleanup
+
+### Key Domain Concepts
+```
+Block = 28 days (4 weeks) = 56 half-days
+Rotation = Template assigned to a Block
+Half-day activity = AM or PM slot within a week (14 slots/week)
+Week-by-week = Some rotations vary pattern each week (W1≠W2)
+Half-block = 14-day rotation (electives, splits)
+```
+
+### Existing Implementation Found
+- `WeeklyGridEditor.tsx` - 7×2 grid editor exists
+- `weekly_pattern.py` - Model exists
+- `useWeeklyPattern.ts` - Hooks exist
+- Docs: `docs/planning/ROTATION_TEMPLATE_GUI_PLAN.md`
+
+### New Features Needed
+1. **Week tabs** - Week 1/2/3/4 selector in grid editor
+2. **Half-block** - Duration selector (full/half/quarter)
+3. **Bulk operations** - Backup before bulk, copy patterns
+
+---
+
+## Key Files Reference
+
+| Purpose | Path |
+|---------|------|
+| People hook (FIXED) | `frontend/src/hooks/usePeople.ts` |
+| Weekly grid editor | `frontend/src/components/WeeklyGridEditor.tsx` |
+| Weekly pattern model | `backend/app/models/weekly_pattern.py` |
+| Rotation template model | `backend/app/models/rotation_template.py` |
+| Admin templates page | `frontend/src/app/admin/templates/page.tsx` |
+| Plan file | `.claude/plans/merry-hatching-torvalds.md` |
+
+---
 
 ## Test Credentials
-
 - Username: `admin`
 - Password: `admin123`
