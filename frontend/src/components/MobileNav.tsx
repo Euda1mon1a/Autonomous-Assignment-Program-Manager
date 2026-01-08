@@ -21,6 +21,9 @@ import {
   FileUp,
   ClipboardList,
   Beaker,
+  UserCog,
+  Award,
+  LayoutTemplate,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -40,11 +43,14 @@ const navItems: NavItem[] = [
   { href: '/daily-manifest', label: 'Daily Manifest', icon: ClipboardList },
   { href: '/heatmap', label: 'Heatmap', icon: BarChart3 },
   { href: '/conflicts', label: 'Conflicts', icon: AlertTriangle },
-  { href: '/templates', label: 'Templates', icon: FileText },
+  { href: '/activities', label: 'Activities', icon: FileText },
   { href: '/absences', label: 'Absences', icon: CalendarOff },
   { href: '/import-export', label: 'Import/Export', icon: FileUp },
   { href: '/help', label: 'Help', icon: HelpCircle },
   { href: '/admin/scheduling', label: 'Lab', icon: Beaker, adminOnly: true },
+  { href: '/admin/people', label: 'People Admin', icon: UserCog, adminOnly: true },
+  { href: '/admin/credentials', label: 'Credentials', icon: Award, adminOnly: true },
+  { href: '/admin/rotations', label: 'Rotations', icon: LayoutTemplate, adminOnly: true },
   { href: '/settings', label: 'Settings', icon: Settings, adminOnly: true },
 ]
 
