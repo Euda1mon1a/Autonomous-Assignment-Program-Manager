@@ -1,10 +1,66 @@
-# Session 068-072 - Admin UI + Solver Analysis
+# Session 068-073 - Solver + Import System
 
 **Branch:** `session/067-antigravity-faculty-call` | **Date:** 2026-01-07/08
 
 ---
 
-## COMPLETED ✅
+## SESSION 073 COMPLETED ✅
+
+### PRs Created
+- **PR #662** (merged) - Sessions 067-072: Admin UI, Faculty Call, Schedule Views
+- **PR #663** (merged) - Rotation templates documentation
+- **PR #664** (pending) - Greedy solver call generation + import script
+
+### Key Accomplishments
+1. **Greedy solver now generates faculty call** - 20 call assignments verified
+2. **7 new rotation templates created**: FMC, POCUS, SURG-EXP, GYN-CLIN, KAPI-LD, NF-ENDO, NEURO-NF
+3. **Block 10 data imported**: 17 residents with rotation assignments
+4. **Import script created**: `backend/scripts/import_block_assignments.py`
+5. **Full year CSV prepared**: `full_year_assignments.csv` (17 residents × 13 blocks = 221 rows)
+
+### Backup Updated
+- Location: `~/backups/scheduler-20260107/`
+- Contents: `repo.bundle`, `db.sql.gz`, `rag_documents.sql`, `block_assignments.sql.gz`
+
+---
+
+## SESSION 074 COMPLETED ✅
+
+### Full Year Import - DONE
+
+**File:** `full_year_assignments.csv`
+- 17 residents (PGY1: 6, PGY2: 6, PGY3: 5)
+- 13 blocks (Jul 2025 - Jun 2026)
+- 221 assignments imported
+
+### 17 New Rotation Templates Created
+| Abbrev | Name | Type |
+|--------|------|------|
+| CARDIO | Cardiology | outpatient |
+| DERM | Dermatology | outpatient |
+| ELEC | Elective | outpatient |
+| EM | Emergency Medicine | inpatient |
+| FAC-DEV | Faculty Development | education |
+| GERI | Geriatrics | outpatient |
+| IM | Internal Medicine Ward | inpatient |
+| JAPAN | Japan Off-Site Rotation | off |
+| MILITARY | Military Duty | off |
+| MSK-SEL | Musculoskeletal Selective | outpatient |
+| PEDS-CLIN | Pediatrics Clinic | outpatient |
+| PEDS-EM | Pediatric Emergency Medicine | inpatient |
+| PEDS-SUB | Pediatrics Subspecialty | outpatient |
+| PROC | Procedures | procedures |
+| PSYCH | Psychiatry | inpatient |
+| SEL-MED | Medical Selective | outpatient |
+| TAMC-LD | TAMC Labor & Delivery | inpatient |
+
+### GUI Import Lessons Documented
+- See: `docs/planning/GUI_IMPORT_LESSONS.md`
+- Key insights for Admin UI import feature
+
+---
+
+## PREVIOUS SESSION COMPLETED ✅
 
 ### Session 068-070
 1. Real Personnel Data Restored (29 people, 60 templates)
