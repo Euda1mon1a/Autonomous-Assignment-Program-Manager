@@ -79,8 +79,11 @@ export default function SchedulePage() {
   const canManageAssignments = isAdmin || isCoordinator
 
   // WebSocket for live updates - invalidate queries when schedule changes
+  // NOTE: autoConnect disabled until token-based WebSocket auth is implemented
+  // The backend requires JWT token in query param, but frontend doesn't expose access_token
   const queryClient = useQueryClient()
   const { connectionState, reconnectAttempts } = useScheduleWebSocket(undefined, {
+    autoConnect: false, // Disabled - shows "Offline" instead of endless "Reconnecting"
     onMessage: (event) => {
       if (event.event_type === 'schedule_updated' || event.event_type === 'assignment_changed') {
         // Invalidate all schedule-related queries to trigger refetch

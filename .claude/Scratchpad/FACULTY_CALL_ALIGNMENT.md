@@ -1,83 +1,63 @@
 # Session 079 Handoff
 
-**Branch:** `session/075-continued-work` | **Date:** 2026-01-07
+**Branch:** `session/075-continued-work` | **Date:** 2026-01-08
 **Base:** `main @ 1f44e533`
 
 ---
 
-## PREVIOUS: Block Import/Export GUI - COMPLETE
-Commits: `9365e679`, `b8cc6beb`
+## COMPLETE THIS SESSION
 
-## PREVIOUS: Bulk Absence Grid Editor - COMPLETE
-Commit: `d9ce90ee`
+### 1. WebSocket Live Updates
+- `10e61c28` - Initial schedule page wiring
+- `49dafbeb` - Full expansion to all routes + status indicator
+- Broadcasts added to: absences.py, swap.py, assignments.py, block_scheduler.py
+- WebSocketStatus component shows connection state
 
-## PREVIOUS: WebSocket Live Updates - COMPLETE
-Commit: TBD (this session)
-
----
-
-## CURRENT: WebSocket Wiring - COMPLETE
-
-### What Was Done
-1. **Frontend wiring** - Added `useScheduleWebSocket` hook to `/schedule` page
-   - Imports `useQueryClient` from TanStack Query
-   - On `schedule_updated` or `assignment_changed` events, invalidates:
-     - `blocks`, `assignments`, `block-assignments` queries
-   - File: `frontend/src/app/schedule/page.tsx`
-
-2. **Backend wiring** - Added broadcast calls to block scheduler routes
-   - `schedule_block` (POST /schedule) - broadcasts after non-dry-run save
-   - `create_assignment` (POST /assignments) - broadcasts on create
-   - `update_assignment` (PUT /assignments/:id) - broadcasts on update
-   - `delete_assignment` (DELETE /assignments/:id) - broadcasts on delete
-   - File: `backend/app/api/routes/block_scheduler.py`
-
-### Verification
-- Frontend lint: PASS
-- Backend lint: PASS
-- Docker imports: PASS
-- Stack health: GREEN (all 8 containers healthy)
-
-### How It Works
-```
-User makes schedule change → Backend saves → Backend broadcasts WebSocket event
-                                          ↓
-Frontend receives event → Invalidates queries → TanStack Query refetches → UI updates
-```
-
-### Testing Instructions
-1. Open schedule page in two browser tabs
-2. Make a change in tab A (create/update/delete assignment)
-3. Tab B should automatically refresh its data
+### 2. Bug Fixes (this commit)
+- **WebSocket stuck reconnecting**: Disabled autoConnect (shows "Offline")
+  - Root cause: Backend requires JWT token in query param, frontend doesn't expose it
+  - TODO: Implement proper WebSocket auth with token refresh
+- **Admin People button**: Wired up AddPersonModal
+  - Added import, state, onClick handler, modal render
 
 ---
 
-## Stack Status
-- **DB Backup:** `~/backups/scheduler_db_pre_websocket.sql.gz` (779K)
-- **Containers:** 8/8 healthy
+## FILES MODIFIED THIS SESSION
+
+| File | Change |
+|------|--------|
+| `backend/app/api/routes/absences.py` | +4 WebSocket broadcasts |
+| `backend/app/api/routes/swap.py` | +2 WebSocket broadcasts |
+| `backend/app/api/routes/assignments.py` | +4 WebSocket broadcasts |
+| `backend/app/api/routes/block_scheduler.py` | +4 WebSocket broadcasts |
+| `frontend/src/components/ui/WebSocketStatus.tsx` | NEW - connection indicator |
+| `frontend/src/app/schedule/page.tsx` | WebSocket hook + status indicator |
+| `frontend/src/app/admin/people/page.tsx` | Fixed Add Person button |
 
 ---
 
-## Test Credentials
+## KNOWN ISSUES / TECH DEBT
+
+### WebSocket Auth (FUTURE)
+- Backend `/api/v1/ws` requires JWT token as query param
+- Frontend uses httpOnly cookies, doesn't expose access_token to JS
+- Options:
+  1. Add non-httpOnly token for WebSocket
+  2. Backend: accept cookie-based auth for WS upgrade
+  3. Token refresh endpoint that returns token to JS
+- For now: autoConnect=false, shows "Offline"
+
+---
+
+## TEST CREDENTIALS
 - Username: `admin`
 - Password: `admin123`
 
 ---
 
-## Key Files Modified This Session
-
-| File | Change |
-|------|--------|
-| `frontend/src/app/schedule/page.tsx` | Added WebSocket hook + query invalidation |
-| `backend/app/api/routes/block_scheduler.py` | Added broadcast calls to CRUD operations |
-
----
-
-## NEXT: Potential Tasks
-- Add WebSocket broadcasts to other routes (assignments.py, absences, etc.)
-- Add connection status indicator to UI
-- Add swap operations broadcasting
-- Expand to absence management page
+## STACK STATUS
+- Containers: 8/8 healthy
+- DB Backup: `~/backups/scheduler_db_pre_websocket.sql.gz`
 
 ---
 
@@ -88,8 +68,3 @@ Frontend receives event → Invalidates queries → TanStack Query refetches →
 - Affected: BLOCK_10_SUMMARY.md, AIRTABLE_EXPORT_SUMMARY.md, etc.
 - Requires: `git filter-repo` + force push to main
 - Tracked in: `docs/TODO_INVENTORY.md` (Critical section)
-
----
-
-## Plan File Location
-`~/.claude/plans/merry-hatching-torvalds.md` - Full implementation plan with all details

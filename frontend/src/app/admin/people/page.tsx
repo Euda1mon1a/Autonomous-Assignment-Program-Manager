@@ -21,6 +21,7 @@ import {
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { PeopleTable } from '@/components/admin/PeopleTable';
 import { PeopleBulkActionsToolbar } from '@/components/admin/PeopleBulkActionsToolbar';
+import { AddPersonModal } from '@/components/AddPersonModal';
 import {
   usePeople,
   useBulkDeletePeople,
@@ -76,6 +77,7 @@ export default function AdminPeoplePage() {
   });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [pendingAction, setPendingAction] = useState<BulkActionType | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   // Debounce search input for better performance
   const debouncedSearch = useDebounce(filters.search, 300);
@@ -287,6 +289,7 @@ export default function AdminPeoplePage() {
                 <RefreshCw className={`w-5 h-5 ${peopleLoading ? 'animate-spin' : ''}`} />
               </button>
               <button
+                onClick={() => setShowAddModal(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg font-medium transition-all"
               >
                 <Plus className="w-4 h-4" />
@@ -428,6 +431,12 @@ export default function AdminPeoplePage() {
         onBulkUpdateType={handleBulkUpdateType}
         isPending={isPending}
         pendingAction={pendingAction}
+      />
+
+      {/* Add Person Modal */}
+      <AddPersonModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
       />
     </div>
   );
