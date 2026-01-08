@@ -17,6 +17,8 @@ import {
   Calendar,
   Settings,
   Clock,
+  Database,
+  Sliders,
 } from 'lucide-react';
 import type {
   RotationTemplate,
@@ -54,6 +56,10 @@ export interface TemplateTableProps {
   onEditPreferences?: (template: RotationTemplate) => void;
   /** Callback to edit weekly requirements */
   onEditWeeklyRequirements?: (template: RotationTemplate) => void;
+  /** Callback to edit half-day requirements */
+  onEditHalfdayRequirements?: (template: RotationTemplate) => void;
+  /** Callback to open unified rotation editor */
+  onEditUnified?: (template: RotationTemplate) => void;
   /** Callback to delete single template */
   onDelete?: (template: RotationTemplate) => void;
   /** Whether table is in loading state */
@@ -173,6 +179,8 @@ export function TemplateTable({
   onEditPatterns,
   onEditPreferences,
   onEditWeeklyRequirements,
+  onEditHalfdayRequirements,
+  onEditUnified,
   onDelete,
   isLoading = false,
   enableInlineEdit = false,
@@ -532,6 +540,24 @@ export function TemplateTable({
                           title="Edit weekly requirements"
                         >
                           <Clock className="w-4 h-4" />
+                        </button>
+                      )}
+                      {onEditHalfdayRequirements && (
+                        <button
+                          onClick={() => onEditHalfdayRequirements(template)}
+                          className="p-1.5 text-slate-400 hover:text-emerald-400 transition-colors"
+                          title="Edit half-day requirements"
+                        >
+                          <Database className="w-4 h-4" />
+                        </button>
+                      )}
+                      {onEditUnified && (
+                        <button
+                          onClick={() => onEditUnified(template)}
+                          className="p-1.5 text-slate-400 hover:text-amber-400 transition-colors"
+                          title="Edit rotation (unified editor)"
+                        >
+                          <Sliders className="w-4 h-4" />
                         </button>
                       )}
                       {onDelete && (

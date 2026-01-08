@@ -39,7 +39,8 @@ class WeeklyPattern(Base):
     Attributes:
         day_of_week: 0=Sunday, 1=Monday, ..., 6=Saturday
         time_of_day: "AM" or "PM"
-        activity_type: The activity assigned (fm_clinic, specialty, etc.)
+        activity_type: DEPRECATED - Legacy string field (fm_clinic, specialty, etc.)
+        activity_id: FK to Activity table (new normalized reference)
         is_protected: True for slots that cannot be changed (e.g., Wed AM conference)
 
     SQLAlchemy Relationships:
@@ -47,6 +48,10 @@ class WeeklyPattern(Base):
             (via rotation_template_id FK).
             Back-populates RotationTemplate.weekly_patterns.
             FK ondelete=CASCADE. The template this slot belongs to.
+
+        activity: Many-to-one to Activity (via activity_id FK).
+            No back-populates. FK ondelete=RESTRICT.
+            The activity assigned to this slot.
 
         linked_template: Many-to-one to RotationTemplate
             (via linked_template_id FK).
@@ -87,11 +92,21 @@ class WeeklyPattern(Base):
         comment="Week 1-4 within the block. NULL = same pattern all weeks",
     )
 
-    # Activity assigned to this slot
+    # Activity assigned to this slot (legacy string field - being deprecated)
     activity_type = Column(
         String(50),
         nullable=False,
-        comment="fm_clinic, specialty, elective, conference, inpatient, call, procedure, off",
+        comment="DEPRECATED: Use activity_id. Legacy: fm_clinic, specialty, elective, conference, inpatient, call, procedure, off",
+    )
+
+    # Foreign key to Activity table (new normalized relationship)
+    # Initially nullable for migration, will be made NOT NULL after backfill
+    activity_id = Column(
+        GUID(),
+        ForeignKey("activities.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+        comment="FK to activities table - the activity assigned to this slot",
     )
 
     # Optional: link to a specific sub-rotation template for this slot
@@ -135,6 +150,9 @@ class WeeklyPattern(Base):
         "RotationTemplate",
         foreign_keys=[linked_template_id],
     )
+
+    # Relationship to Activity (normalized reference)
+    activity = relationship("Activity")
 
     # Unique constraint: one slot per day/time/week per template
     # Week number is included to allow week-specific patterns (NULL = all weeks)

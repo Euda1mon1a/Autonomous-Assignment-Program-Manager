@@ -248,6 +248,19 @@ export {
 } from "./useWeeklyPattern";
 
 // ============================================================================
+// Half-Day Requirements Hooks
+// ============================================================================
+export {
+  halfDayRequirementsQueryKeys,
+  useHalfDayRequirements,
+  useUpdateHalfDayRequirements,
+  calculateTotalHalfdays,
+  isRequirementsBalanced,
+  DEFAULT_HALFDAY_REQUIREMENTS,
+  type HalfDayRequirementsUpdateRequest,
+} from "./useHalfDayRequirements";
+
+// ============================================================================
 // WebSocket Hooks
 // ============================================================================
 export {

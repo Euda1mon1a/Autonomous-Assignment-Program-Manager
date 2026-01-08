@@ -27,6 +27,9 @@ import {
   Clock,
   Save,
   Database,
+  Sliders,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { TemplateTable } from '@/components/admin/TemplateTable';
@@ -35,6 +38,7 @@ import { PreferenceEditor } from '@/components/admin/PreferenceEditor';
 import { WeeklyGridEditor, WeeklyGridEditorSkeleton } from '@/components/scheduling/WeeklyGridEditor';
 import { ArchivedTemplatesDrawer } from '@/components/admin/ArchivedTemplatesDrawer';
 import { WeeklyRequirementsEditor } from '@/components/admin/WeeklyRequirementsEditor';
+import { HalfDayRequirementsEditor } from '@/components/HalfDayRequirementsEditor';
 import { BulkWeeklyPatternModal } from '@/components/admin/BulkWeeklyPatternModal';
 import {
   useAdminTemplates,
@@ -47,6 +51,10 @@ import {
   useInlineUpdateTemplate,
 } from '@/hooks/useAdminTemplates';
 import { useWeeklyPattern, useUpdateWeeklyPattern, useAvailableTemplates } from '@/hooks/useWeeklyPattern';
+import { useHalfDayRequirements, useUpdateHalfDayRequirements } from '@/hooks/useHalfDayRequirements';
+import { useActivities, useActivityRequirements, useReplaceActivityRequirements } from '@/hooks/useActivities';
+import { RotationEditor } from '@/components/RotationEditor';
+import type { ActivityRequirementCreateRequest } from '@/types/activity';
 import { useDebounce, useDebouncedCallback } from '@/hooks/useDebounce';
 import { useCreateSnapshot } from '@/hooks/useBackup';
 import { useKeyboardShortcuts, getShortcutDisplay } from '@/hooks/useKeyboardShortcuts';
@@ -68,7 +76,7 @@ import { ACTIVITY_TYPE_CONFIGS, TEMPLATE_CATEGORY_CONFIGS, TemplateCategory } fr
 // Types
 // ============================================================================
 
-type EditorMode = 'none' | 'patterns' | 'preferences' | 'weekly-requirements';
+type EditorMode = 'none' | 'patterns' | 'preferences' | 'weekly-requirements' | 'halfday-requirements' | 'unified-editor';
 
 // ============================================================================
 // Main Page Component
@@ -85,9 +93,10 @@ export default function AdminTemplatesPage() {
   // State
   const [filters, setFilters] = useState<TemplateFilters>({
     activity_type: '',
-    template_category: '',
+    template_category: 'rotation', // Default to showing only rotations
     search: '',
   });
+  const [showAllCategories, setShowAllCategories] = useState(false);
   const [sort, setSort] = useState<TemplateSort>({
     field: 'name',
     direction: 'asc',
@@ -137,12 +146,38 @@ export default function AdminTemplatesPage() {
     enabled: !!editingTemplate && editorMode === 'preferences',
   });
 
+  // Half-day requirements query
+  const {
+    data: halfdayData,
+    isLoading: halfdayLoading,
+  } = useHalfDayRequirements(editingTemplate?.id || '', {
+    enabled: !!editingTemplate && editorMode === 'halfday-requirements',
+  });
+
+  // Activities for unified editor
+  const {
+    data: activitiesData,
+    isLoading: activitiesLoading,
+  } = useActivities('', {
+    enabled: editorMode === 'unified-editor',
+  });
+
+  // Activity requirements for unified editor
+  const {
+    data: activityRequirementsData,
+    isLoading: activityRequirementsLoading,
+  } = useActivityRequirements(editingTemplate?.id || '', {
+    enabled: !!editingTemplate && editorMode === 'unified-editor',
+  });
+
   // Mutations
   const deleteTemplate = useDeleteTemplate();
   const bulkDelete = useBulkDeleteTemplates();
   const bulkUpdate = useBulkUpdateTemplates();
   const updatePattern = useUpdateWeeklyPattern();
+  const updateHalfday = useUpdateHalfDayRequirements();
   const replacePreferences = useReplaceTemplatePreferences();
+  const replaceActivityRequirements = useReplaceActivityRequirements();
   const bulkRestore = useBulkRestoreTemplates();
   const inlineUpdate = useInlineUpdateTemplate();
   const createSnapshot = useCreateSnapshot();
@@ -231,8 +266,8 @@ export default function AdminTemplatesPage() {
       filtered = filtered.filter((t) => t.activity_type === filters.activity_type);
     }
 
-    // Category filter
-    if (filters.template_category) {
+    // Category filter - always apply unless showAllCategories is enabled
+    if (filters.template_category && !showAllCategories) {
       filtered = filtered.filter((t) => t.template_category === filters.template_category);
     }
 
@@ -400,6 +435,58 @@ export default function AdminTemplatesPage() {
     setEditingTemplate(template);
     setEditorMode('weekly-requirements');
   }, []);
+
+  const handleEditHalfdayRequirements = useCallback((template: RotationTemplate) => {
+    setEditingTemplate(template);
+    setEditorMode('halfday-requirements');
+  }, []);
+
+  const handleEditUnified = useCallback((template: RotationTemplate) => {
+    setEditingTemplate(template);
+    setEditorMode('unified-editor');
+  }, []);
+
+  const handleActivityRequirementsSave = useCallback(
+    (requirements: ActivityRequirementCreateRequest[]) => {
+      if (!editingTemplate) return;
+      replaceActivityRequirements.mutate(
+        {
+          templateId: editingTemplate.id,
+          requirements,
+        },
+        {
+          onSuccess: () => {
+            toast.success('Activity requirements saved');
+          },
+          onError: (error) => {
+            toast.error(error);
+          },
+        }
+      );
+    },
+    [editingTemplate, replaceActivityRequirements, toast]
+  );
+
+  const handleHalfdaySave = useCallback(
+    (data: import('@/types/admin-templates').HalfDayRequirementCreate) => {
+      if (!editingTemplate) return;
+      updateHalfday.mutate(
+        {
+          templateId: editingTemplate.id,
+          requirements: data,
+        },
+        {
+          onSuccess: () => {
+            toast.success('Half-day requirements saved');
+          },
+          onError: (error) => {
+            toast.error(error);
+          },
+        }
+      );
+    },
+    [editingTemplate, updateHalfday, toast]
+  );
 
   const handleCloseEditor = useCallback(() => {
     setEditingTemplate(null);
@@ -669,7 +756,8 @@ export default function AdminTemplatesPage() {
                   template_category: e.target.value as TemplateCategory | '',
                 }))
               }
-              className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+              disabled={showAllCategories}
+              className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50"
             >
               <option value="">All Categories</option>
               {TEMPLATE_CATEGORY_CONFIGS.map((config) => (
@@ -679,6 +767,21 @@ export default function AdminTemplatesPage() {
               ))}
             </select>
           </div>
+
+          {/* Show All Categories Toggle */}
+          <button
+            type="button"
+            onClick={() => setShowAllCategories(!showAllCategories)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              showAllCategories
+                ? 'bg-violet-500/20 border border-violet-500/50 text-violet-400'
+                : 'bg-slate-800/50 border border-slate-700 text-slate-400 hover:text-white'
+            }`}
+            title={showAllCategories ? 'Hide slot-level activities' : 'Show all (including activities)'}
+          >
+            {showAllCategories ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            {showAllCategories ? 'Showing All' : 'Rotations Only'}
+          </button>
 
           {/* Stats */}
           <div className="flex-1" />
@@ -706,6 +809,8 @@ export default function AdminTemplatesPage() {
             onEditPatterns={handleEditPatterns}
             onEditPreferences={handleEditPreferences}
             onEditWeeklyRequirements={handleEditWeeklyRequirements}
+            onEditHalfdayRequirements={handleEditHalfdayRequirements}
+            onEditUnified={handleEditUnified}
             enableInlineEdit={true}
             onInlineUpdate={handleInlineUpdate}
             inlineUpdatingId={inlineUpdatingId}
@@ -830,6 +935,84 @@ export default function AdminTemplatesPage() {
                 onSave={handleWeeklyRequirementsSave}
                 onClose={handleCloseEditor}
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Half-Day Requirements Editor Modal */}
+      {editorMode === 'halfday-requirements' && editingTemplate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-slate-700 bg-slate-800">
+              <div className="flex items-center gap-3">
+                <Database className="w-5 h-5 text-emerald-400" />
+                <div>
+                  <h2 className="text-lg font-semibold text-white">Half-Day Requirements</h2>
+                  <p className="text-sm text-slate-400">{editingTemplate.name}</p>
+                </div>
+              </div>
+              <button
+                onClick={handleCloseEditor}
+                className="p-2 text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <HalfDayRequirementsEditor
+                requirements={halfdayData ?? null}
+                isLoading={halfdayLoading}
+                isSaving={updateHalfday.isPending}
+                onSave={handleHalfdaySave}
+                onCancel={handleCloseEditor}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unified Rotation Editor Modal */}
+      {editorMode === 'unified-editor' && editingTemplate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-slate-700 bg-slate-800">
+              <div className="flex items-center gap-3">
+                <Sliders className="w-5 h-5 text-violet-400" />
+                <div>
+                  <h2 className="text-lg font-semibold text-white">Edit Rotation</h2>
+                  <p className="text-sm text-slate-400">{editingTemplate.name}</p>
+                </div>
+              </div>
+              <button
+                onClick={handleCloseEditor}
+                className="p-2 text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              {(patternLoading || activitiesLoading || activityRequirementsLoading) ? (
+                <div className="flex items-center justify-center h-64">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                </div>
+              ) : (
+                <RotationEditor
+                  templateId={editingTemplate.id}
+                  pattern={patternData?.pattern || { slots: [] }}
+                  activities={activitiesData?.activities || []}
+                  requirements={activityRequirementsData || []}
+                  isLoading={false}
+                  isSaving={updatePattern.isPending || replaceActivityRequirements.isPending}
+                  readOnly={false}
+                  onPatternChange={handlePatternChange}
+                  onRequirementsChange={handleActivityRequirementsSave}
+                  onSave={handleCloseEditor}
+                  onCancel={handleCloseEditor}
+                />
+              )}
             </div>
           </div>
         </div>

@@ -95,6 +95,13 @@ from .faculty_role import FacultyRoleClinicConstraint, SMFacultyClinicConstraint
 # Sports Medicine constraints
 from .sports_medicine import SMResidentFacultyAlignmentConstraint
 
+# Protected slot and half-day requirement constraints
+from .protected_slot import ProtectedSlotConstraint
+from .halfday_requirement import HalfDayRequirementConstraint, WeekendWorkConstraint
+
+# Activity requirement constraint (dynamic per-activity)
+from .activity_requirement import ActivityRequirementConstraint
+
 logger = logging.getLogger(__name__)
 
 
@@ -361,6 +368,22 @@ class ConstraintManager:
         manager.disable("FMITMandatoryCall")
         manager.disable("FMITResidentClinicDay")
 
+        # Weekend work constraint (enabled by default - uses template.includes_weekend_work)
+        manager.add(WeekendWorkConstraint())
+
+        # Protected slot constraint (disabled by default - needs weekly_patterns data)
+        manager.add(ProtectedSlotConstraint())
+        manager.disable("ProtectedSlot")
+
+        # Half-day requirement constraint (disabled by default - needs halfday_requirements data)
+        manager.add(HalfDayRequirementConstraint(weight=50.0))
+        manager.disable("HalfDayRequirement")
+
+        # Activity requirement constraint (disabled by default - needs activity_requirements data)
+        # This is the newer, more flexible version that uses RotationActivityRequirement
+        manager.add(ActivityRequirementConstraint(weight=50.0))
+        manager.disable("ActivityRequirement")
+
         # Soft constraints (optimization)
         manager.add(CoverageConstraint(weight=1000.0))
         manager.add(EquityConstraint(weight=10.0))
@@ -459,6 +482,21 @@ class ConstraintManager:
         manager.disable("FMITWeekBlocking")
         manager.disable("FMITMandatoryCall")
         manager.disable("FMITResidentClinicDay")
+
+        # Weekend work constraint (enabled by default)
+        manager.add(WeekendWorkConstraint())
+
+        # Protected slot constraint (disabled by default - needs data)
+        manager.add(ProtectedSlotConstraint())
+        manager.disable("ProtectedSlot")
+
+        # Half-day requirement constraint (disabled by default - needs data)
+        manager.add(HalfDayRequirementConstraint(weight=50.0))
+        manager.disable("HalfDayRequirement")
+
+        # Activity requirement constraint (disabled by default - needs data)
+        manager.add(ActivityRequirementConstraint(weight=50.0))
+        manager.disable("ActivityRequirement")
 
         # Soft constraints (optimization)
         manager.add(CoverageConstraint(weight=1000.0))

@@ -36,10 +36,12 @@ from app.schemas.schedule import (
 logger = get_logger(__name__)
 
 from app.models.absence import Absence
+from app.models.activity import Activity
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.call_assignment import CallAssignment
 from app.models.person import FacultyRole, Person
+from app.models.rotation_activity_requirement import RotationActivityRequirement
 from app.models.rotation_template import RotationTemplate
 from app.models.schedule_run import ScheduleRun
 from app.resilience.service import ResilienceConfig, ResilienceService
@@ -520,6 +522,11 @@ class SchedulingEngine:
         # Get call-eligible faculty (excludes adjuncts)
         call_eligible = self._get_call_eligible_faculty(faculty)
 
+        # Load activities and activity requirements for templates
+        activities = self._load_activities()
+        template_ids = [t.id for t in templates]
+        activity_requirements = self._load_activity_requirements(template_ids)
+
         # Build base context
         context = SchedulingContext(
             residents=residents,
@@ -531,7 +538,17 @@ class SchedulingEngine:
             end_date=self.end_date,
             existing_assignments=existing_assignments or [],
             call_eligible_faculty=call_eligible,
+            activities=activities,
+            activity_requirements=activity_requirements,
         )
+
+        # Enable activity requirement constraint if we have data
+        if activity_requirements and self.constraint_manager:
+            self.constraint_manager.enable("ActivityRequirement")
+            logger.debug(
+                f"Loaded {len(activity_requirements)} activity requirements for "
+                f"{len(template_ids)} templates"
+            )
 
         # Populate resilience data if available and requested
         if include_resilience and self.resilience:
@@ -1265,6 +1282,61 @@ class SchedulingEngine:
                 Block.date <= self.end_date,
                 RotationTemplate.activity_type == "education",
             )
+            .all()
+        )
+
+    def _load_activities(self) -> list[Activity]:
+        """
+        Load all non-archived activities from the database.
+
+        Activities are slot-level events (FM Clinic, LEC, Specialty) that can
+        be assigned to half-day slots. They are used by the
+        ActivityRequirementConstraint to enforce per-activity distribution
+        targets within rotation blocks.
+
+        Returns:
+            List of Activity objects ordered by display_order.
+        """
+        return (
+            self.db.query(Activity)
+            .filter(Activity.is_archived == False)  # noqa: E712
+            .order_by(Activity.display_order)
+            .all()
+        )
+
+    def _load_activity_requirements(
+        self, template_ids: list[UUID]
+    ) -> list[RotationActivityRequirement]:
+        """
+        Load activity requirements for the given rotation templates.
+
+        Activity requirements define per-activity halfday targets (min/max/target)
+        for rotation templates. They are used by the ActivityRequirementConstraint
+        to guide the solver toward proper activity distribution.
+
+        This is the dynamic replacement for the fixed-field approach in
+        RotationHalfDayRequirement.
+
+        Args:
+            template_ids: List of RotationTemplate IDs to load requirements for.
+
+        Returns:
+            List of RotationActivityRequirement objects with activity relationship
+            eagerly loaded.
+
+        Example:
+            >>> template_ids = [neurology_id, sports_med_id]
+            >>> requirements = self._load_activity_requirements(template_ids)
+            >>> for req in requirements:
+            ...     print(f"{req.activity.name}: {req.target_halfdays} half-days")
+        """
+        if not template_ids:
+            return []
+
+        return (
+            self.db.query(RotationActivityRequirement)
+            .filter(RotationActivityRequirement.rotation_template_id.in_(template_ids))
+            .options(selectinload(RotationActivityRequirement.activity))
             .all()
         )
 

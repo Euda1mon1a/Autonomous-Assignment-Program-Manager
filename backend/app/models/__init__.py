@@ -1,6 +1,7 @@
 """Database models."""
 
 from app.models.absence import Absence
+from app.models.activity import Activity, ActivityCategory
 from app.models.activity_log import ActivityActionType, ActivityLog
 from app.models.agent_memory import AgentEmbedding, ModelTier, TaskHistory
 from app.models.assignment import Assignment
@@ -109,6 +110,7 @@ from app.models.rotation_enums import (
     TimeOfDay,
 )
 from app.models.resident_weekly_requirement import ResidentWeeklyRequirement
+from app.models.rotation_activity_requirement import RotationActivityRequirement
 from app.models.rotation_halfday_requirement import RotationHalfDayRequirement
 from app.models.rotation_preference import PREFERENCE_DEFAULTS, RotationPreference
 from app.models.rotation_template import RotationTemplate
@@ -140,6 +142,9 @@ from app.webhooks.models import (
 )
 
 __all__ = [
+    # Activity models (slot-level)
+    "Activity",
+    "ActivityCategory",
     # Activity Log models
     "ActivityLog",
     "ActivityActionType",
@@ -150,6 +155,7 @@ __all__ = [
     "AssignmentReason",
     "RotationTemplate",
     "RotationHalfDayRequirement",
+    "RotationActivityRequirement",
     "ResidentWeeklyRequirement",
     "WeeklyPattern",
     "RotationPreference",

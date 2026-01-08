@@ -41,12 +41,21 @@ from app.schemas.rotation_template import (
     TemplateExportData,
 )
 from app.schemas.rotation_template_gui import (
+    BatchPatternUpdateRequest,
+    BatchPatternUpdateResponse,
+    HalfDayRequirementCreate,
+    HalfDayRequirementResponse,
     RotationPreferenceCreate,
     RotationPreferenceResponse,
     WeeklyGridUpdate,
     WeeklyPatternResponse,
 )
+from app.schemas.activity import (
+    ActivityRequirementCreate,
+    ActivityRequirementResponse,
+)
 from app.services.rotation_template_service import RotationTemplateService
+from app.services.activity_service import ActivityService
 
 router = APIRouter()
 
@@ -511,65 +520,83 @@ async def batch_restore_rotation_templates(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.put("/batch/patterns", response_model=BatchTemplateResponse)
-async def batch_apply_patterns(
-    request: dict,
+@router.put("/batch/patterns", response_model=BatchPatternUpdateResponse)
+async def batch_update_patterns(
+    request: BatchPatternUpdateRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Apply the same weekly pattern to multiple templates atomically.
+    """Bulk update weekly patterns across multiple templates.
 
-    Useful for bulk operations like applying a standard clinic pattern
-    to all clinic templates.
+    Supports two modes:
+    - **overlay**: Only modifies specified slots, leaves others unchanged.
+      Use this to add/change specific slots (e.g., "Add Academics to Wed PM").
+    - **replace**: Replaces entire pattern with the provided slots.
+      Use this to set a complete new pattern.
+
+    Week targeting allows applying changes to specific weeks (1-4) or all weeks.
 
     Features:
-    - Apply patterns to up to 100 templates at once
+    - Update patterns on up to 100 templates at once
     - Dry-run mode for validation without updating
+    - Week-specific targeting
     - Atomic operation (all or nothing)
-    - Pattern validation before application
 
     Args:
-        request: Dict with:
-            - template_ids: List of template UUIDs
-            - patterns: List of WeeklyPatternCreate
+        request: BatchPatternUpdateRequest with:
+            - template_ids: List of template UUIDs to update
+            - mode: "overlay" or "replace"
+            - slots: List of BatchPatternSlot to apply
+            - week_numbers: Optional list of weeks (1-4) to target
             - dry_run: Optional boolean (default False)
         db: Database session
         current_user: Current authenticated user
 
     Returns:
-        BatchTemplateResponse with operation results
+        BatchPatternUpdateResponse with operation results
 
     Raises:
         HTTPException: 400 if validation fails or templates not found
-    """
-    from app.schemas.rotation_template_gui import WeeklyPatternCreate
 
+    Example (Overlay - add Academics to Wed PM for weeks 1-3):
+        ```json
+        {
+          "template_ids": ["uuid1", "uuid2", "uuid3"],
+          "mode": "overlay",
+          "slots": [
+            {"day_of_week": 3, "time_of_day": "PM", "linked_template_id": "academics-uuid"}
+          ],
+          "week_numbers": [1, 2, 3],
+          "dry_run": false
+        }
+        ```
+    """
     service = RotationTemplateService(db)
 
     try:
-        # Parse request
-        template_ids = [UUID(tid) for tid in request.get("template_ids", [])]
-        patterns_data = request.get("patterns", [])
-        dry_run = request.get("dry_run", False)
-
-        # Convert patterns to Pydantic models
-        patterns = [WeeklyPatternCreate(**p) for p in patterns_data]
-
-        result = await service.batch_apply_patterns(template_ids, patterns, dry_run)
+        result = await service.batch_update_weekly_patterns(
+            template_ids=request.template_ids,
+            mode=request.mode,
+            slots=[slot.model_dump() for slot in request.slots],
+            week_numbers=request.week_numbers,
+            dry_run=request.dry_run,
+        )
 
         # If any failed, return 400
         if result["failed"] > 0:
             raise HTTPException(
                 status_code=400,
                 detail={
-                    "message": "Batch apply patterns operation failed",
+                    "message": "Batch pattern update operation failed",
                     "failed": result["failed"],
                     "results": result["results"],
                 },
             )
 
-        await service.commit()
-        return BatchTemplateResponse(**result)
+        if not request.dry_run:
+            await service.commit()
+
+        return BatchPatternUpdateResponse(**result, dry_run=request.dry_run)
 
     except HTTPException:
         await service.rollback()
@@ -931,6 +958,95 @@ async def replace_weekly_patterns(
 
 
 # =============================================================================
+# Half-Day Requirement Endpoints
+# =============================================================================
+
+
+@router.get(
+    "/{template_id}/halfday-requirements",
+    response_model=HalfDayRequirementResponse | None,
+)
+async def get_halfday_requirements(
+    template_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get half-day requirements for a rotation template.
+
+    Returns the activity distribution requirements that the solver uses to
+    determine how many half-days should be allocated to each activity type
+    (FM clinic, specialty, academics, elective).
+
+    Args:
+        template_id: UUID of the rotation template
+
+    Returns:
+        HalfDayRequirementResponse or null if not configured
+
+    Raises:
+        404: Template not found
+    """
+    service = RotationTemplateService(db)
+
+    # Verify template exists
+    template = await service.get_template_by_id(template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="Rotation template not found")
+
+    requirements = await service.get_halfday_requirements(template_id)
+    return requirements
+
+
+@router.put(
+    "/{template_id}/halfday-requirements",
+    response_model=HalfDayRequirementResponse,
+)
+async def upsert_halfday_requirements(
+    template_id: UUID,
+    requirements: HalfDayRequirementCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Create or update half-day requirements for a rotation template.
+
+    This endpoint creates new requirements if none exist, or updates existing ones.
+    The requirements define how many half-days should be allocated to each
+    activity type per 4-week block.
+
+    Example: Neurology Elective might have:
+    - fm_clinic_halfdays: 4
+    - specialty_halfdays: 5
+    - academics_halfdays: 1
+    - Total: 10 half-days per block
+
+    Args:
+        template_id: UUID of the rotation template
+        requirements: HalfDayRequirementCreate with distribution settings
+
+    Returns:
+        HalfDayRequirementResponse with created/updated requirements
+
+    Raises:
+        404: Template not found
+        400: Validation error
+    """
+    service = RotationTemplateService(db)
+
+    # Verify template exists
+    template = await service.get_template_by_id(template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="Rotation template not found")
+
+    try:
+        result = await service.upsert_halfday_requirements(template_id, requirements)
+        await service.commit()
+        return result
+    except ValueError as e:
+        await service.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# =============================================================================
 # Rotation Preference Endpoints
 # =============================================================================
 
@@ -1013,3 +1129,168 @@ async def replace_rotation_preferences(
     except ValueError as e:
         await service.rollback()
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# =============================================================================
+# Activity Requirement Endpoints (Dynamic per-activity requirements)
+# =============================================================================
+
+
+@router.get(
+    "/{template_id}/activity-requirements",
+    response_model=list[ActivityRequirementResponse],
+)
+async def get_activity_requirements(
+    template_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get all activity requirements for a rotation template.
+
+    Activity requirements define how many half-days of each activity
+    should be scheduled per block. Includes soft constraints like
+    priority, min/max, preferred days, etc.
+
+    Args:
+        template_id: UUID of the rotation template
+
+    Returns:
+        List of ActivityRequirementResponse with activity details
+
+    Raises:
+        404: Template not found
+    """
+    activity_service = ActivityService(db)
+    template_service = RotationTemplateService(db)
+
+    # Verify template exists
+    template = await template_service.get_template_by_id(template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="Rotation template not found")
+
+    requirements = await activity_service.list_requirements_for_template(template_id)
+    return [ActivityRequirementResponse.model_validate(r) for r in requirements]
+
+
+@router.put(
+    "/{template_id}/activity-requirements",
+    response_model=list[ActivityRequirementResponse],
+)
+async def replace_activity_requirements(
+    template_id: UUID,
+    requirements: list[ActivityRequirementCreate],
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Atomically replace all activity requirements for a rotation template.
+
+    This endpoint performs an atomic replacement:
+    1. Deletes all existing requirements for the template
+    2. Creates new requirements from the provided list
+    3. Returns the newly created requirements
+
+    Each requirement specifies:
+    - activity_id: Which activity (FM Clinic, Specialty, LEC, etc.)
+    - min_halfdays: Minimum half-days required
+    - max_halfdays: Maximum half-days allowed
+    - target_halfdays: Preferred count (for soft optimization)
+    - applicable_weeks: [1,2,3,4] or null for all weeks
+    - priority: 0-100 (higher = more important)
+    - prefer_full_days, preferred_days, avoid_days: Scheduling preferences
+
+    Args:
+        template_id: UUID of the rotation template
+        requirements: List of ActivityRequirementCreate
+
+    Returns:
+        List of newly created ActivityRequirementResponse
+
+    Raises:
+        404: Template not found
+        400: Validation error (invalid activity, etc.)
+    """
+    activity_service = ActivityService(db)
+
+    try:
+        new_requirements = await activity_service.update_requirements_bulk(
+            template_id, requirements
+        )
+        db.commit()
+        return [ActivityRequirementResponse.model_validate(r) for r in new_requirements]
+    except ValueError as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post(
+    "/{template_id}/activity-requirements",
+    response_model=ActivityRequirementResponse,
+    status_code=201,
+)
+async def add_activity_requirement(
+    template_id: UUID,
+    requirement: ActivityRequirementCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Add a single activity requirement to a rotation template.
+
+    Use this to add a new activity requirement without replacing all existing ones.
+
+    Args:
+        template_id: UUID of the rotation template
+        requirement: ActivityRequirementCreate data
+
+    Returns:
+        Created ActivityRequirementResponse
+
+    Raises:
+        404: Template or activity not found
+        400: Duplicate requirement or validation error
+    """
+    activity_service = ActivityService(db)
+
+    try:
+        new_requirement = await activity_service.create_requirement(
+            template_id, requirement
+        )
+        db.commit()
+        return ActivityRequirementResponse.model_validate(new_requirement)
+    except ValueError as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.delete(
+    "/{template_id}/activity-requirements/{requirement_id}",
+    status_code=204,
+)
+async def delete_activity_requirement(
+    template_id: UUID,
+    requirement_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Delete a single activity requirement.
+
+    Args:
+        template_id: UUID of the rotation template (for validation)
+        requirement_id: UUID of the requirement to delete
+
+    Raises:
+        404: Requirement not found
+    """
+    activity_service = ActivityService(db)
+
+    # Verify requirement exists and belongs to this template
+    requirement = await activity_service.get_requirement_by_id(requirement_id)
+    if not requirement:
+        raise HTTPException(status_code=404, detail="Activity requirement not found")
+    if requirement.rotation_template_id != template_id:
+        raise HTTPException(
+            status_code=404,
+            detail="Activity requirement not found for this template",
+        )
+
+    await activity_service.delete_requirement(requirement_id)
+    db.commit()

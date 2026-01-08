@@ -76,6 +76,16 @@ class RotationTemplate(Base):
         comment="True for half-block rotations (14 days instead of 28)",
     )
 
+    # Weekend work configuration
+    # True = rotation includes weekend assignments (Night Float, FMIT, etc.)
+    # False = weekends are automatically off (most outpatient rotations)
+    includes_weekend_work = Column(
+        Boolean,
+        default=False,
+        nullable=False,
+        comment="True if rotation includes weekend assignments",
+    )
+
     # Archive fields (soft delete)
     is_archived = Column(Boolean, default=False, nullable=False, index=True)
     archived_at = Column(DateTime, nullable=True)
@@ -110,6 +120,12 @@ class RotationTemplate(Base):
         back_populates="rotation_template",
         uselist=False,  # One-to-one relationship
         cascade="all, delete-orphan",
+    )
+    activity_requirements = relationship(
+        "RotationActivityRequirement",
+        back_populates="rotation_template",
+        cascade="all, delete-orphan",
+        order_by="RotationActivityRequirement.priority.desc()",
     )
 
     def __repr__(self):

@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from app.api.routes import (
     absences,
     academic_blocks,
+    activities,
     admin_block_assignments,
     admin_users,
     analytics,
@@ -94,6 +95,9 @@ api_router.include_router(
 )
 api_router.include_router(
     rotation_templates.router, prefix="/rotation-templates", tags=["rotation-templates"]
+)
+api_router.include_router(
+    activities.router, prefix="/activities", tags=["activities"]
 )
 api_router.include_router(
     resident_weekly_requirements.router,
