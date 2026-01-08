@@ -3,7 +3,7 @@
 Generated: 2026-01-02
 
 ## Critical (Blocking)
-- None identified
+- **PERSEC: Remove PII from git history** - Main branch history contains resident names in deleted files (BLOCK_10_SUMMARY.md, AIRTABLE_EXPORT_SUMMARY.md, etc.). Requires `git filter-repo` and force push to main. All collaborators must re-clone after. Files removed from HEAD but still in history.
 
 ## High Priority (This Week)
 - **Activity logging implementation** (`backend/app/api/routes/admin_users.py:77`) - Admin activity logging is currently a no-op placeholder; essential for audit trail compliance
