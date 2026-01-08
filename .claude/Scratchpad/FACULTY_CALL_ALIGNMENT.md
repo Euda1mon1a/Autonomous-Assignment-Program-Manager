@@ -1,29 +1,30 @@
-# Session 076 Handoff
+# Session 077 Handoff
 
-**Branch:** `session/075-continued-work` | **Date:** 2026-01-08
-**Base:** `main @ 97356688` (PR #664 merged)
+**Branch:** `session/075-continued-work` | **Date:** 2026-01-07
+**Base:** `main @ 1f44e533`
 
 ---
 
-## SESSION 076 PROGRESS - Block Import/Export GUI
+## SESSION 077 PROGRESS - Block Import/Export GUI COMPLETE
 
-### Completed Files (Backend)
+### Completed Files (Backend - Import)
 1. `backend/app/schemas/block_assignment_import.py` - All import/export schemas
 2. `backend/app/services/block_assignment_import_service.py` - Import service with fuzzy matching
-3. `backend/app/api/routes/admin_block_assignments.py` - API routes (preview, import, quick-create)
+3. `backend/app/api/routes/admin_block_assignments.py` - API routes (preview, import, quick-create, export)
 4. `backend/app/api/routes/__init__.py` - Registered new router
 
-### Completed Files (Frontend)
-5. `frontend/src/types/block-assignment-import.ts` - TypeScript types
-6. `frontend/src/api/block-assignment-import.ts` - API client
-7. `frontend/src/hooks/useBlockAssignmentImport.ts` - React hook
-8. `frontend/src/components/admin/BlockAssignmentImportModal.tsx` - Multi-step wizard modal
+### Completed Files (Backend - Export)
+5. `backend/app/services/block_assignment_export_service.py` - Export service (CSV + Excel)
 
-### Remaining Tasks
-- [ ] **Backend Export Service** - `backend/app/services/block_assignment_export_service.py`
-- [ ] **Export Endpoints** - Add to admin_block_assignments.py routes
-- [ ] **Export Modal** - `frontend/src/components/admin/BlockAssignmentExportModal.tsx`
-- [ ] **Admin Page Integration** - Add import/export buttons to block assignments admin page
+### Completed Files (Frontend)
+6. `frontend/src/types/block-assignment-import.ts` - TypeScript types
+7. `frontend/src/api/block-assignment-import.ts` - API client
+8. `frontend/src/hooks/useBlockAssignmentImport.ts` - React hook
+9. `frontend/src/components/admin/BlockAssignmentImportModal.tsx` - Multi-step wizard modal
+10. `frontend/src/components/admin/BlockAssignmentExportModal.tsx` - Export options modal
+11. `frontend/src/app/schedule/page.tsx` - Import/Export buttons (admin/coordinator only)
+
+### ALL TASKS COMPLETE ✅
 
 ### API Endpoints Created
 ```

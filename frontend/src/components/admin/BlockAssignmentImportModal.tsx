@@ -15,7 +15,6 @@
  */
 import React, { useState, useCallback, useRef } from 'react';
 import {
-  X,
   Upload,
   Download,
   FileSpreadsheet,
@@ -31,7 +30,6 @@ import { Modal } from '@/components/Modal';
 import { Button } from '@/components/ui/Button';
 import { useBlockAssignmentImport } from '@/hooks/useBlockAssignmentImport';
 import {
-  MatchStatus,
   DuplicateAction,
   MATCH_STATUS_COLORS,
   MATCH_STATUS_LABELS,

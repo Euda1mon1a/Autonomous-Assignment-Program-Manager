@@ -2,7 +2,7 @@
  * Block Assignment Import/Export API Client
  */
 import { api } from "@/lib/api";
-import { get, post } from "@/lib/api";
+import { post } from "@/lib/api";
 import type {
   BlockAssignmentPreviewResponse,
   BlockAssignmentImportRequest,
