@@ -8,28 +8,86 @@
 ## PREVIOUS: Block Import/Export GUI - COMPLETE ✅
 Commits: `9365e679`, `b8cc6beb`
 
+## PREVIOUS: Bulk Absence Grid Editor - COMPLETE ✅
+Commit: `d9ce90ee`
+
 ---
 
-## CURRENT: Bulk Absence Grid Editor - COMPLETE ✅
+## CURRENT: WebSocket Live Updates
+
+### Pre-Work Backup
+- **DB Backup:** `~/backups/scheduler_db_pre_websocket.sql.gz` (779K)
+- **Stack Status:** GREEN (all 8 containers healthy)
+- **Branch Pushed:** `session/075-continued-work` @ `d9ce90ee`
 
 ### Goal
-Add Grid view to absences page for editing multiple people's absences at once.
+Wire existing WebSocket infrastructure to enable live updates on schedule page.
+
+### Status
+| Layer | Built | Wired |
+|-------|-------|-------|
+| Backend WebSocket endpoint | ✅ | ✅ |
+| Backend broadcast functions | ✅ | ❌ Not called |
+| Frontend useWebSocket hook | ✅ (771 lines) | ❌ Not used |
 
 ### Plan Location
 `~/.claude/plans/merry-hatching-torvalds.md`
 
-### Completed
-1. ✅ `frontend/src/components/absence/AbsenceBar.tsx` - Absence visualization
-2. ✅ `frontend/src/components/absence/AbsenceGridRow.tsx` - Person row with date cells
-3. ✅ `frontend/src/components/absence/AbsenceGrid.tsx` - Main grid component
-4. ✅ `frontend/src/app/absences/page.tsx` - Grid view mode integrated
-5. ✅ `frontend/src/components/AddAbsenceModal.tsx` - Date prefill props
-6. ✅ Person type filter (residents/faculty/all) toggle
-7. ✅ Polish: colors, weekend shading, today highlight
+### RAG
+WebSocket analysis ingested: `ai_patterns` doc type, 2 chunks
 
-### Key Patterns
-- Follow ScheduleGrid.tsx layout (people × dates)
-- Click empty cell → AddAbsenceModal with person/date prefilled
+### Key Files
+- `frontend/src/hooks/useWebSocket.ts` - Complete hook (unused)
+- `backend/app/websocket/manager.py` - Broadcast functions (uncalled)
+- `backend/app/websocket/events.py` - 6 event types defined
+- `frontend/src/app/schedule/page.tsx` - Target for hook integration
+
+---
+
+## Completed This Session
+1. ✅ Bulk Absence Grid Editor (commit `d9ce90ee`)
+2. ✅ WebSocket infrastructure analysis
+3. ✅ RAG ingestion of WebSocket analysis
+4. ✅ Pre-WebSocket database backup
+
+---
+
+## NEXT SESSION: WebSocket Wiring
+
+### Phase 1: Frontend (Small Lift ~20 lines)
+```tsx
+// Add to frontend/src/app/schedule/page.tsx
+import { useScheduleWebSocket } from '@/hooks/useWebSocket';
+
+const { isConnected } = useScheduleWebSocket(scheduleId, {
+  onMessage: (event) => {
+    if (event.event_type === 'schedule_updated') {
+      queryClient.invalidateQueries(['schedule']);
+    }
+  }
+});
+```
+
+### Phase 2: Backend (Medium Lift ~10 lines per service)
+```python
+# Add to backend/app/scheduling/engine.py after generation
+from app.websocket.manager import broadcast_schedule_updated
+
+await broadcast_schedule_updated(
+    schedule_id=None,
+    update_type="generated",
+    affected_blocks_count=len(assignments),
+    message="Schedule generated"
+)
+```
+
+### Risk: NONE - Additive feature, pages work without WebSocket
+
+---
+
+## Test Credentials
+- Username: `admin`
+- Password: `admin123`
 - Click absence bar → Edit modal
 - Reuse BlockNavigation for date range
 
