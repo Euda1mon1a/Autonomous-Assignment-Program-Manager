@@ -63,17 +63,38 @@
 
 ---
 
-## REMAINING TASKS
+## REMAINING TASKS (Session 070 Continuation)
 
-### Execution Order (remaining):
+**Plan file:** `.claude/plans/merry-hatching-torvalds.md`
+
+### Execution Order:
 1. ~~Fix people toggle~~ ✅
 2. ~~Auto-save: queued edits + backup endpoint~~ ✅
 3. ~~Week-by-week pattern editing~~ ✅
 4. ~~Half-block rotation support~~ ✅
-5. Admin people bulk edit page
+5. **Admin people bulk edit page** ← IN PROGRESS
 6. Procedure credentialing matrix
-7. Rename pages (templates→activities/rotations)
+7. Rename pages (templates→activities/rotations) - Frontend-only
 8. Navigation cleanup
+
+### Phase 1: Admin People Bulk Edit - Implementation Status
+
+**Backend:** 100% ready
+- `POST /people/batch` - Batch create
+- `PUT /people/batch` - Batch update
+- `DELETE /people/batch` - Batch delete
+
+**Frontend (to create):**
+1. `frontend/src/hooks/usePeople.ts` - Add batch hooks (follow useAdminTemplates.ts:193-260 pattern)
+2. `frontend/src/app/admin/people/page.tsx` - New admin page (copy admin/templates/page.tsx structure)
+3. `frontend/src/components/admin/PeopleTable.tsx` - Table with selection
+4. `frontend/src/components/admin/PeopleBulkActionsToolbar.tsx` - Bulk action toolbar
+
+### Reference Files
+- Pattern to follow: `frontend/src/hooks/useAdminTemplates.ts:193-260` (batch mutations)
+- Page structure: `frontend/src/app/admin/templates/page.tsx` (dark theme admin page)
+- Table component: `frontend/src/components/admin/TemplateTable.tsx`
+- Toolbar component: `frontend/src/components/admin/BulkActionsToolbar.tsx`
 
 ### Key Domain Concepts
 ```
