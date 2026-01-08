@@ -14,6 +14,9 @@ import type {
   AbsenceCreate,
   AbsenceUpdate,
   AbsenceType,
+  AwayFromProgramSummary,
+  AllResidentsAwayStatus,
+  AwayFromProgramCheck,
 } from '@/types/api'
 
 // ============================================================================
@@ -804,6 +807,181 @@ export function useAbsenceDelete() {
       // May affect leave balances
       queryClient.invalidateQueries({ queryKey: absenceQueryKeys.balances() })
     },
+  })
+}
+
+// ============================================================================
+// Away-From-Program Compliance Hooks
+// ============================================================================
+
+/**
+ * Query key factory for away-from-program compliance queries.
+ */
+export const awayComplianceQueryKeys = {
+  all: () => ['away-compliance'] as const,
+  dashboard: (academicYear?: number) => [...awayComplianceQueryKeys.all(), 'dashboard', academicYear] as const,
+  summary: (personId: string, academicYear?: number) =>
+    [...awayComplianceQueryKeys.all(), 'summary', personId, academicYear] as const,
+  check: (personId: string, additionalDays?: number, academicYear?: number) =>
+    [...awayComplianceQueryKeys.all(), 'check', personId, additionalDays, academicYear] as const,
+}
+
+/**
+ * Fetches away-from-program compliance dashboard for all residents.
+ *
+ * This hook retrieves the compliance status for all residents, showing
+ * days used toward the 28-day away-from-program limit per academic year.
+ * Residents exceeding 28 days must extend their training.
+ *
+ * Threshold status:
+ * - `ok`: 0-20 days used
+ * - `warning`: 21-27 days used (approaching limit)
+ * - `critical`: 28 days used (at limit)
+ * - `exceeded`: 29+ days used (training extension required)
+ *
+ * @param academicYear - Academic year start (e.g., 2025 for July 2025 - June 2026)
+ * @param options - Optional React Query configuration options
+ * @returns Query result containing:
+ *   - `data`: Dashboard with all residents' compliance status
+ *   - `isLoading`: Whether the fetch is in progress
+ *   - `error`: Any error that occurred
+ *
+ * @example
+ * ```tsx
+ * function ComplianceDashboard() {
+ *   const { data, isLoading } = useAwayComplianceDashboard();
+ *
+ *   if (isLoading) return <Spinner />;
+ *
+ *   return (
+ *     <div>
+ *       <h2>Away-From-Program Compliance ({data.academic_year})</h2>
+ *       <StatusSummary counts={data.summary.by_status} />
+ *       <ResidentTable residents={data.residents} />
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+export function useAwayComplianceDashboard(
+  academicYear?: number,
+  options?: Omit<UseQueryOptions<AllResidentsAwayStatus, ApiError>, 'queryKey' | 'queryFn'>
+) {
+  const params = academicYear ? `?academic_year=${academicYear}` : ''
+
+  return useQuery<AllResidentsAwayStatus, ApiError>({
+    queryKey: awayComplianceQueryKeys.dashboard(academicYear),
+    queryFn: () => get<AllResidentsAwayStatus>(`/absences/compliance/away-from-program${params}`),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    ...options,
+  })
+}
+
+/**
+ * Fetches away-from-program summary for a specific resident.
+ *
+ * This hook retrieves detailed away-from-program tracking for a single
+ * resident, including days used, days remaining, threshold status, and
+ * a list of contributing absences.
+ *
+ * @param personId - UUID of the resident
+ * @param academicYear - Optional academic year start
+ * @param options - Optional React Query configuration options
+ * @returns Query result containing:
+ *   - `data`: Summary with days used, remaining, and absences
+ *   - `isLoading`: Whether the fetch is in progress
+ *   - `error`: Any error that occurred
+ *
+ * @example
+ * ```tsx
+ * function ResidentAwayStatus({ residentId }: Props) {
+ *   const { data, isLoading } = useAwayFromProgramSummary(residentId);
+ *
+ *   if (isLoading) return <Spinner />;
+ *
+ *   return (
+ *     <ProgressBar
+ *       current={data.days_used}
+ *       max={data.max_days}
+ *       status={data.threshold_status}
+ *     />
+ *   );
+ * }
+ * ```
+ */
+export function useAwayFromProgramSummary(
+  personId: string,
+  academicYear?: number,
+  options?: Omit<UseQueryOptions<AwayFromProgramSummary, ApiError>, 'queryKey' | 'queryFn'>
+) {
+  const params = academicYear ? `?academic_year=${academicYear}` : ''
+
+  return useQuery<AwayFromProgramSummary, ApiError>({
+    queryKey: awayComplianceQueryKeys.summary(personId, academicYear),
+    queryFn: () => get<AwayFromProgramSummary>(`/absences/residents/${personId}/away-from-program${params}`),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    enabled: !!personId,
+    ...options,
+  })
+}
+
+/**
+ * Checks away-from-program threshold before creating a new absence.
+ *
+ * This hook previews what the threshold status would be after adding
+ * additional days. Useful for warning users before they create an
+ * absence that would push them over the limit.
+ *
+ * @param personId - UUID of the resident
+ * @param additionalDays - Days to add for preview
+ * @param academicYear - Optional academic year start
+ * @param options - Optional React Query configuration options
+ * @returns Query result containing:
+ *   - `data`: Check result with current/projected days and status
+ *   - `isLoading`: Whether the check is in progress
+ *   - `error`: Any error that occurred
+ *
+ * @example
+ * ```tsx
+ * function AbsenceWarning({ residentId, newAbsenceDays }: Props) {
+ *   const { data } = useAwayThresholdCheck(residentId, newAbsenceDays);
+ *
+ *   if (data?.threshold_status === 'exceeded') {
+ *     return (
+ *       <Alert type="error">
+ *         This absence would exceed the 28-day limit!
+ *         Training extension will be required.
+ *       </Alert>
+ *     );
+ *   }
+ *
+ *   return null;
+ * }
+ * ```
+ */
+export function useAwayThresholdCheck(
+  personId: string,
+  additionalDays: number = 0,
+  academicYear?: number,
+  options?: Omit<UseQueryOptions<AwayFromProgramCheck, ApiError>, 'queryKey' | 'queryFn'>
+) {
+  const params = new URLSearchParams()
+  if (additionalDays) params.set('additional_days', additionalDays.toString())
+  if (academicYear) params.set('academic_year', academicYear.toString())
+  const queryString = params.toString()
+
+  return useQuery<AwayFromProgramCheck, ApiError>({
+    queryKey: awayComplianceQueryKeys.check(personId, additionalDays, academicYear),
+    queryFn: () =>
+      get<AwayFromProgramCheck>(
+        `/absences/residents/${personId}/away-from-program/check${queryString ? `?${queryString}` : ''}`
+      ),
+    staleTime: 2 * 60 * 1000, // 2 minutes (shorter since this is preview)
+    gcTime: 10 * 60 * 1000,
+    enabled: !!personId,
+    ...options,
   })
 }
 

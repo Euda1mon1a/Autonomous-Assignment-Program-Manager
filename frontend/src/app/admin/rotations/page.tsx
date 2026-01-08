@@ -35,6 +35,7 @@ import { PreferenceEditor } from '@/components/admin/PreferenceEditor';
 import { WeeklyGridEditor, WeeklyGridEditorSkeleton } from '@/components/scheduling/WeeklyGridEditor';
 import { ArchivedTemplatesDrawer } from '@/components/admin/ArchivedTemplatesDrawer';
 import { WeeklyRequirementsEditor } from '@/components/admin/WeeklyRequirementsEditor';
+import { BulkWeeklyPatternModal } from '@/components/admin/BulkWeeklyPatternModal';
 import {
   useAdminTemplates,
   useDeleteTemplate,
@@ -61,7 +62,7 @@ import type {
   TemplateUpdateRequest,
 } from '@/types/admin-templates';
 import type { WeeklyPatternGrid } from '@/types/weekly-pattern';
-import { ACTIVITY_TYPE_CONFIGS } from '@/types/admin-templates';
+import { ACTIVITY_TYPE_CONFIGS, TEMPLATE_CATEGORY_CONFIGS, TemplateCategory } from '@/types/admin-templates';
 
 // ============================================================================
 // Types
@@ -84,6 +85,7 @@ export default function AdminTemplatesPage() {
   // State
   const [filters, setFilters] = useState<TemplateFilters>({
     activity_type: '',
+    template_category: '',
     search: '',
   });
   const [sort, setSort] = useState<TemplateSort>({
@@ -95,6 +97,7 @@ export default function AdminTemplatesPage() {
   const [editingTemplate, setEditingTemplate] = useState<RotationTemplate | null>(null);
   const [pendingAction, setPendingAction] = useState<BulkActionType | null>(null);
   const [showArchivedDrawer, setShowArchivedDrawer] = useState(false);
+  const [showBulkPatternModal, setShowBulkPatternModal] = useState(false);
 
   // Debounce search input for better performance
   const debouncedSearch = useDebounce(filters.search, 300);
@@ -223,6 +226,16 @@ export default function AdminTemplatesPage() {
       );
     }
 
+    // Activity type filter
+    if (filters.activity_type) {
+      filtered = filtered.filter((t) => t.activity_type === filters.activity_type);
+    }
+
+    // Category filter
+    if (filters.template_category) {
+      filtered = filtered.filter((t) => t.template_category === filters.template_category);
+    }
+
     // Sort
     filtered.sort((a, b) => {
       let comparison = 0;
@@ -241,7 +254,7 @@ export default function AdminTemplatesPage() {
     });
 
     return filtered;
-  }, [templatesData?.items, debouncedSearch, sort]);
+  }, [templatesData?.items, debouncedSearch, filters, sort]);
 
   // Archived templates - filter from the includeArchived query
   const archivedTemplates = useMemo(() => {
@@ -358,6 +371,20 @@ export default function AdminTemplatesPage() {
     },
     [selectedIds, bulkUpdate, toast]
   );
+
+  const handleBulkEditPatterns = useCallback(() => {
+    setShowBulkPatternModal(true);
+  }, []);
+
+  const handleBulkPatternModalClose = useCallback(() => {
+    setShowBulkPatternModal(false);
+  }, []);
+
+  const handleBulkPatternComplete = useCallback(() => {
+    toast.success('Patterns updated successfully');
+    setSelectedIds([]);
+    refetchTemplates();
+  }, [toast, refetchTemplates]);
 
   const handleEditPatterns = useCallback((template: RotationTemplate) => {
     setEditingTemplate(template);
@@ -632,6 +659,27 @@ export default function AdminTemplatesPage() {
             </select>
           </div>
 
+          {/* Category Filter */}
+          <div className="flex items-center gap-2">
+            <select
+              value={filters.template_category}
+              onChange={(e) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  template_category: e.target.value as TemplateCategory | '',
+                }))
+              }
+              className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+            >
+              <option value="">All Categories</option>
+              {TEMPLATE_CATEGORY_CONFIGS.map((config) => (
+                <option key={config.value} value={config.value}>
+                  {config.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Stats */}
           <div className="flex-1" />
           <div className="text-sm text-slate-400">
@@ -673,6 +721,7 @@ export default function AdminTemplatesPage() {
         onBulkUpdateActivityType={handleBulkUpdateActivityType}
         onBulkUpdateSupervision={handleBulkUpdateSupervision}
         onBulkUpdateMaxResidents={handleBulkUpdateMaxResidents}
+        onBulkEditPatterns={handleBulkEditPatterns}
         isPending={isPending}
         pendingAction={pendingAction}
       />
@@ -794,6 +843,14 @@ export default function AdminTemplatesPage() {
         onClose={() => setShowArchivedDrawer(false)}
         onRestore={handleRestoreTemplates}
         isRestoring={bulkRestore.isPending}
+      />
+
+      {/* Bulk Weekly Pattern Modal */}
+      <BulkWeeklyPatternModal
+        isOpen={showBulkPatternModal}
+        selectedTemplates={templates.filter((t) => selectedIds.includes(t.id))}
+        onClose={handleBulkPatternModalClose}
+        onComplete={handleBulkPatternComplete}
       />
     </div>
   );

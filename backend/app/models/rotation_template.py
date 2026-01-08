@@ -32,7 +32,20 @@ class RotationTemplate(Base):
     )  # e.g., "PGY-1 Clinic", "FMIT", "Sports Medicine"
     activity_type = Column(
         String(255), nullable=False
-    )  # "clinic", "inpatient", "outpatient", "procedure", "procedures", "conference", "education", "absence", "off", "recovery"
+    )  # "clinic", "inpatient", "outpatient", "procedure", "procedures", "conference", "education", "lecture", "absence", "off", "recovery"
+
+    # Template category for UI grouping and filtering
+    # - rotation: Clinical work (clinic, inpatient, outpatient, procedure)
+    # - time_off: ACGME-protected rest (off, recovery)
+    # - absence: Days away from program (absence activity type)
+    # - educational: Structured learning (conference, education, lecture)
+    template_category = Column(
+        String(20),
+        nullable=False,
+        default="rotation",
+        index=True,
+    )
+
     abbreviation = Column(String(10))  # For Excel export: "C", "FMIT", "LEC"
     display_abbreviation = Column(String(20))  # User-facing code for schedule grid
     font_color = Column(String(50))  # Tailwind color class for text

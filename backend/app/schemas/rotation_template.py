@@ -1,16 +1,41 @@
 """Rotation template schemas."""
 
 from datetime import datetime
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+class TemplateCategory(str, Enum):
+    """
+    Template categories for UI grouping and filtering.
+
+    - rotation: Clinical work (clinic, inpatient, outpatient, procedure)
+    - time_off: ACGME-protected rest (off, recovery) - does NOT count toward away-from-program
+    - absence: Days away from program (absence activity type) - counts toward 28-day limit
+    - educational: Structured learning (conference, education, lecture)
+    """
+
+    ROTATION = "rotation"
+    TIME_OFF = "time_off"
+    ABSENCE = "absence"
+    EDUCATIONAL = "educational"
+
+
+# Valid categories as tuple for validation
+VALID_TEMPLATE_CATEGORIES = tuple(c.value for c in TemplateCategory)
 
 
 class RotationTemplateBase(BaseModel):
     """Base rotation template schema."""
 
     name: str
-    activity_type: str  # 'clinic', 'inpatient', 'procedure', 'conference'
+    activity_type: str  # 'clinic', 'inpatient', 'procedure', 'conference', 'lecture', etc.
+    template_category: str = Field(
+        default="rotation",
+        description="Category for UI grouping: rotation, time_off, absence, educational",
+    )
     abbreviation: str | None = None
     display_abbreviation: str | None = None  # User-facing code for schedule grid
     font_color: str | None = None
@@ -38,7 +63,7 @@ class RotationTemplateBase(BaseModel):
         # - clinic/outpatient: Clinic sessions and outpatient rotations
         # - inpatient: Hospital ward rotations (FMIT, wards)
         # - procedure/procedures: Procedural rotations
-        # - conference/education: Educational activities, didactics
+        # - conference/education/lecture: Educational activities, didactics
         # - absence: Leave, vacation, sick time
         # - off: Days off, recovery days
         # - recovery: Post-call recovery
@@ -49,6 +74,7 @@ class RotationTemplateBase(BaseModel):
             "procedures",
             "conference",
             "education",
+            "lecture",
             "outpatient",
             "absence",
             "off",
@@ -78,6 +104,14 @@ class RotationTemplateBase(BaseModel):
             raise ValueError("max_supervision_ratio must be between 1 and 10")
         return v
 
+    @field_validator("template_category")
+    @classmethod
+    def validate_template_category(cls, v: str) -> str:
+        """Validate template_category is one of the valid categories."""
+        if v not in VALID_TEMPLATE_CATEGORIES:
+            raise ValueError(f"template_category must be one of {VALID_TEMPLATE_CATEGORIES}")
+        return v
+
 
 class RotationTemplateCreate(RotationTemplateBase):
     """Schema for creating a rotation template."""
@@ -90,6 +124,7 @@ class RotationTemplateUpdate(BaseModel):
 
     name: str | None = None
     activity_type: str | None = None
+    template_category: str | None = None
     abbreviation: str | None = None
     display_abbreviation: str | None = None  # User-facing code for schedule grid
     font_color: str | None = None
@@ -121,6 +156,7 @@ class RotationTemplateUpdate(BaseModel):
                 "procedures",
                 "conference",
                 "education",
+                "lecture",
                 "outpatient",
                 "absence",
                 "off",
@@ -132,6 +168,14 @@ class RotationTemplateUpdate(BaseModel):
             )
             if v not in valid_types:
                 raise ValueError(f"activity_type must be one of {valid_types}")
+        return v
+
+    @field_validator("template_category")
+    @classmethod
+    def validate_template_category(cls, v: str | None) -> str | None:
+        """Validate template_category is one of the valid categories."""
+        if v is not None and v not in VALID_TEMPLATE_CATEGORIES:
+            raise ValueError(f"template_category must be one of {VALID_TEMPLATE_CATEGORIES}")
         return v
 
     @field_validator("max_residents")

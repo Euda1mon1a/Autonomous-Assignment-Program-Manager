@@ -57,6 +57,7 @@ export function AddAbsenceModal({
   const [deploymentOrders, setDeploymentOrders] = useState(false);
   const [tdyLocation, setTdyLocation] = useState('');
   const [notes, setNotes] = useState('');
+  const [isAwayFromProgram, setIsAwayFromProgram] = useState(true);
   const [errors, setErrors] = useState<FormErrors>({});
 
   const { data: peopleData, isLoading: isPeopleLoading } = usePeople();
@@ -129,6 +130,7 @@ export function AddAbsenceModal({
       absence_type: absenceType,
       start_date: startDate,
       end_date: endDate,
+      is_away_from_program: isAwayFromProgram,
       ...(absenceType === AbsenceType.DEPLOYMENT && { deployment_orders: deploymentOrders }),
       ...(absenceType === AbsenceType.TDY && tdyLocation && { tdy_location: tdyLocation }),
       ...(notes && { notes }),
@@ -137,7 +139,7 @@ export function AddAbsenceModal({
     try {
       await createAbsence.mutateAsync(absenceData);
       handleClose();
-    } catch (err) {
+    } catch (_err) {
       setErrors({ general: 'Failed to create absence. Please try again.' });
     }
   };
@@ -150,6 +152,7 @@ export function AddAbsenceModal({
     setDeploymentOrders(false);
     setTdyLocation('');
     setNotes('');
+    setIsAwayFromProgram(true);
     setErrors({});
     onClose();
   };
@@ -218,6 +221,19 @@ export function AddAbsenceModal({
             placeholder="Enter TDY location"
           />
         )}
+
+        <div className="flex items-center gap-2 pt-2">
+          <input
+            type="checkbox"
+            id="isAwayFromProgram"
+            checked={isAwayFromProgram}
+            onChange={(e) => setIsAwayFromProgram(e.target.checked)}
+            className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+          />
+          <label htmlFor="isAwayFromProgram" className="text-sm text-gray-700">
+            Counts toward away-from-program (28 days/year for residents)
+          </label>
+        </div>
 
         <TextArea
           label="Notes"

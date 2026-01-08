@@ -16,10 +16,73 @@ export type ActivityType =
   | 'procedures'
   | 'conference'
   | 'education'
+  | 'lecture'
   | 'outpatient'
   | 'absence'
   | 'off'
   | 'recovery';
+
+/**
+ * Template category for UI grouping and filtering.
+ *
+ * - rotation: Clinical work (clinic, inpatient, outpatient, procedure)
+ * - time_off: ACGME-protected rest (off, recovery) - does NOT count toward away-from-program
+ * - absence: Days away from program (absence activity type) - counts toward 28-day limit
+ * - educational: Structured learning (conference, education, lecture)
+ */
+export type TemplateCategory = 'rotation' | 'time_off' | 'absence' | 'educational';
+
+export interface TemplateCategoryConfig {
+  value: TemplateCategory;
+  label: string;
+  description: string;
+  icon: string;
+  activityTypes: ActivityType[];
+}
+
+export const TEMPLATE_CATEGORY_CONFIGS: TemplateCategoryConfig[] = [
+  {
+    value: 'rotation',
+    label: 'Clinical Rotations',
+    description: 'Assignable clinical work',
+    icon: 'Stethoscope',
+    activityTypes: ['clinic', 'inpatient', 'outpatient', 'procedure', 'procedures'],
+  },
+  {
+    value: 'time_off',
+    label: 'Time Off',
+    description: 'ACGME-protected rest (does NOT count toward away-from-program)',
+    icon: 'Moon',
+    activityTypes: ['off', 'recovery'],
+  },
+  {
+    value: 'absence',
+    label: 'Absences',
+    description: 'Days away from program (counts toward 28-day limit)',
+    icon: 'CalendarX',
+    activityTypes: ['absence'],
+  },
+  {
+    value: 'educational',
+    label: 'Educational',
+    description: 'Structured learning activities',
+    icon: 'GraduationCap',
+    activityTypes: ['conference', 'education', 'lecture'],
+  },
+];
+
+export function getTemplateCategoryConfig(category: TemplateCategory): TemplateCategoryConfig {
+  return TEMPLATE_CATEGORY_CONFIGS.find((c) => c.value === category) || TEMPLATE_CATEGORY_CONFIGS[0];
+}
+
+export function getCategoryForActivityType(activityType: ActivityType): TemplateCategory {
+  for (const config of TEMPLATE_CATEGORY_CONFIGS) {
+    if (config.activityTypes.includes(activityType)) {
+      return config.value;
+    }
+  }
+  return 'rotation'; // Default
+}
 
 export type PatternType = 'regular' | 'split' | 'mirrored' | 'alternating';
 export type SettingType = 'inpatient' | 'outpatient';
@@ -28,6 +91,7 @@ export interface RotationTemplate {
   id: string;
   name: string;
   activity_type: ActivityType;
+  template_category: TemplateCategory;
   abbreviation: string | null;
   display_abbreviation: string | null;
   font_color: string | null;
@@ -224,6 +288,7 @@ export type SortDirection = 'asc' | 'desc';
 
 export interface TemplateFilters {
   activity_type: ActivityType | '';
+  template_category: TemplateCategory | '';
   search: string;
 }
 
@@ -394,6 +459,7 @@ export interface TemplateExportResponse {
 export interface TemplateCreateRequest {
   name: string;
   activity_type: ActivityType;
+  template_category?: TemplateCategory;
   abbreviation?: string | null;
   display_abbreviation?: string | null;
   font_color?: string | null;
@@ -410,6 +476,7 @@ export interface TemplateCreateRequest {
 export interface TemplateUpdateRequest {
   name?: string;
   activity_type?: ActivityType;
+  template_category?: TemplateCategory;
   abbreviation?: string | null;
   display_abbreviation?: string | null;
   font_color?: string | null;
@@ -441,6 +508,7 @@ export const ACTIVITY_TYPE_CONFIGS: ActivityTypeConfig[] = [
   { type: 'procedures', label: 'Procedures', color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
   { type: 'conference', label: 'Conference', color: 'text-amber-400', bgColor: 'bg-amber-500/20' },
   { type: 'education', label: 'Education', color: 'text-cyan-400', bgColor: 'bg-cyan-500/20' },
+  { type: 'lecture', label: 'Lecture (LEC)', color: 'text-fuchsia-400', bgColor: 'bg-fuchsia-500/20' },
   { type: 'outpatient', label: 'Outpatient', color: 'text-green-400', bgColor: 'bg-green-500/20' },
   { type: 'absence', label: 'Absence', color: 'text-red-400', bgColor: 'bg-red-500/20' },
   { type: 'off', label: 'Off', color: 'text-slate-400', bgColor: 'bg-slate-500/20' },
