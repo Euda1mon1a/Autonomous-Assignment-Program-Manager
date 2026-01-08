@@ -16,7 +16,7 @@ class BlockBase(BaseModel):
         ..., description="Time of day: AM or PM", pattern="^(AM|PM)$"
     )
     block_number: int = Field(
-        ..., ge=0, le=13, description="Academic block number (0-13)"
+        ..., ge=0, le=14, description="Academic block number (0-14)"
     )
     is_weekend: bool = Field(False, description="Whether this block falls on a weekend")
     is_holiday: bool = Field(False, description="Whether this block is a holiday")
@@ -44,8 +44,8 @@ class BlockBase(BaseModel):
     @classmethod
     def validate_block_number(cls, v: int) -> int:
         """Validate block_number is within valid range."""
-        if v < 0 or v > 13:
-            raise ValueError("block_number must be between 0 and 13")
+        if v < 0 or v > 14:
+            raise ValueError("block_number must be between 0 and 14")
         return v
 
 

@@ -50,7 +50,8 @@ class CallAssignment(Base):
     __table_args__ = (
         UniqueConstraint("date", "person_id", "call_type", name="unique_call_per_day"),
         CheckConstraint(
-            "call_type IN ('overnight', 'weekend', 'backup')", name="check_call_type"
+            "call_type IN ('sunday', 'weekday', 'holiday', 'backup')",
+            name="check_call_type",
         ),
     )
 

@@ -46,7 +46,7 @@ A complete GUI interaction review was performed across 5 phases covering the ent
 | `/admin/users`      | **Functional** | User management UI loads with filters and "Add User" action.                     |
 | `/admin/procedures` | **Functional** | Procedure catalog loads (empty state verified) with "New Procedure" action.      |
 | `/admin/health`     | **Functional** | System dashboard is live: API, DB, and Redis healthy. Celery warning noted.      |
-| `/templates`        | **Functional** | Public template gallery loads with cards for Rotations (e.g. Sports Med, Botox). |
+| `/activities`       | **Functional** | Public template gallery loads with cards for Rotations (e.g. Sports Med, Botox). |
 | `/help`             | **Functional** | Quick reference guide loads correctly.                                           |
 
 ## Recommendations

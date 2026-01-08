@@ -10,6 +10,7 @@ from app.api.routes import (
     assignments,
     audit,
     auth,
+    backup,
     batch,
     block_scheduler,
     blocks,
@@ -160,6 +161,7 @@ api_router.include_router(calendar.router, prefix="/calendar", tags=["calendar"]
 api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
 api_router.include_router(analytics.router, tags=["analytics"])
 api_router.include_router(db_admin.router, tags=["db-admin"])
+api_router.include_router(backup.router, tags=["backup"])
 api_router.include_router(
     visualization.router, prefix="/visualization", tags=["visualization"]
 )

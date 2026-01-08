@@ -53,6 +53,10 @@ class RotationTemplateBase(BaseModel):
             "absence",
             "off",
             "recovery",
+            # Legacy/alternate names
+            "academic",
+            "clinical",
+            "leave",
         )
         if v not in valid_types:
             raise ValueError(f"activity_type must be one of {valid_types}")
@@ -121,6 +125,10 @@ class RotationTemplateUpdate(BaseModel):
                 "absence",
                 "off",
                 "recovery",
+                # Legacy/alternate names
+                "academic",
+                "clinical",
+                "leave",
             )
             if v not in valid_types:
                 raise ValueError(f"activity_type must be one of {valid_types}")

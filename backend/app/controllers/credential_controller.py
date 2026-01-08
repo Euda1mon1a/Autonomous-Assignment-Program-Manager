@@ -45,7 +45,12 @@ class CredentialController:
             status=status_filter,
             include_expired=include_expired,
         )
-        return CredentialListResponse(items=result["items"], total=result["total"])
+        return CredentialListResponse(
+            items=[
+                CredentialResponse.model_validate(item) for item in result["items"]
+            ],
+            total=result["total"],
+        )
 
     def list_credentials_for_procedure(
         self,
@@ -59,7 +64,12 @@ class CredentialController:
             status=status_filter,
             include_expired=include_expired,
         )
-        return CredentialListResponse(items=result["items"], total=result["total"])
+        return CredentialListResponse(
+            items=[
+                CredentialResponse.model_validate(item) for item in result["items"]
+            ],
+            total=result["total"],
+        )
 
     def get_qualified_faculty(self, procedure_id: UUID) -> QualifiedFacultyResponse:
         """Get all faculty qualified to supervise a procedure."""
@@ -185,7 +195,12 @@ class CredentialController:
     def list_expiring_credentials(self, days: int = 30) -> CredentialListResponse:
         """List credentials expiring soon."""
         result = self.service.list_expiring_credentials(days=days)
-        return CredentialListResponse(items=result["items"], total=result["total"])
+        return CredentialListResponse(
+            items=[
+                CredentialResponse.model_validate(item) for item in result["items"]
+            ],
+            total=result["total"],
+        )
 
     def get_faculty_summary(self, person_id: UUID) -> FacultyCredentialSummary:
         """Get a summary of a faculty member's credentials."""

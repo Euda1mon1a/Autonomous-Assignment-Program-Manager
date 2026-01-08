@@ -507,7 +507,7 @@
 - [ ] `/daily-manifest` - 2 hours
 - [ ] `/import-export` - 2 hours
 - [ ] `/absences` - 2 hours
-- [ ] `/templates` - 2 hours
+- [ ] `/activities` - 2 hours
 
 **Lower-Priority Pages:**
 - [ ] `/heatmap` - 2 hours

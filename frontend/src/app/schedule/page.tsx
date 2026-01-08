@@ -10,6 +10,9 @@ import { ViewToggle, useScheduleView } from '@/components/schedule/ViewToggle'
 import { MonthView } from '@/components/schedule/MonthView'
 import { WeekView } from '@/components/schedule/WeekView'
 import { DayView } from '@/components/schedule/DayView'
+import { BlockAnnualView } from '@/components/schedule/BlockAnnualView'
+import { BlockWeekView } from '@/components/schedule/BlockWeekView'
+import { MultiSelectPersonFilter } from '@/components/schedule/MultiSelectPersonFilter'
 import { ResidentAcademicYearView, FacultyInpatientWeeksView } from '@/components/schedule/drag'
 import { get } from '@/lib/api'
 import { usePeople, useRotationTemplates, useBlockRanges, ListResponse } from '@/lib/hooks'
@@ -57,6 +60,9 @@ export default function SchedulePage() {
 
   // Current date for Day/Week/Month views
   const [currentDate, setCurrentDate] = useState(() => new Date())
+
+  // Person filter for comparing schedules (multi-select)
+  const [selectedPersonIds, setSelectedPersonIds] = useState<Set<string>>(new Set())
 
   // Fetch block ranges from API to get actual block boundaries
   const { data: blockRanges } = useBlockRanges()
@@ -118,15 +124,15 @@ export default function SchedulePage() {
   const endDateStr = format(viewDateRange.end, 'yyyy-MM-dd')
 
   const { data: blocksData } = useQuery<ListResponse<Block>>({
-    queryKey: ['blocks', startDateStr, endDateStr],
-    queryFn: () => get<ListResponse<Block>>(`/blocks?start_date=${startDateStr}&end_date=${endDateStr}`),
+    queryKey: ['blocks', startDateStr, endDateStr, 'pagesize500'],
+    queryFn: () => get<ListResponse<Block>>(`/blocks?start_date=${startDateStr}&end_date=${endDateStr}&page_size=500`),
     staleTime: 5 * 60 * 1000,
     enabled: currentView !== 'block', // Only fetch for non-block views (block view has its own fetching)
   })
 
   const { data: assignmentsData } = useQuery<ListResponse<Assignment>>({
-    queryKey: ['assignments', startDateStr, endDateStr],
-    queryFn: () => get<ListResponse<Assignment>>(`/assignments?start_date=${startDateStr}&end_date=${endDateStr}`),
+    queryKey: ['assignments', startDateStr, endDateStr, 'pagesize500'],
+    queryFn: () => get<ListResponse<Assignment>>(`/assignments?start_date=${startDateStr}&end_date=${endDateStr}&page_size=500`),
     staleTime: 60 * 1000,
     enabled: currentView !== 'block',
   })
@@ -221,11 +227,23 @@ export default function SchedulePage() {
           <div className="max-w-full px-4 py-4">
             {/* Title row */}
             <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Schedule</h1>
-                <p className="text-sm text-gray-600 mt-1">
-                  View and manage rotation assignments
-                </p>
+              <div className="flex items-center gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Schedule</h1>
+                  <p className="text-sm text-gray-600 mt-1">
+                    View and manage rotation assignments
+                  </p>
+                </div>
+
+                {/* Person Filter - show for block-annual, block, and block-week views */}
+                {['block-annual', 'block', 'block-week'].includes(currentView) && (
+                  <MultiSelectPersonFilter
+                    selectedPersonIds={selectedPersonIds}
+                    onSelectionChange={setSelectedPersonIds}
+                    residentsOnly={currentView === 'block-annual'}
+                    emptyLabel={currentView === 'block-annual' ? 'All Residents' : 'All People'}
+                  />
+                )}
               </div>
 
               {/* View Toggle */}
@@ -263,8 +281,8 @@ export default function SchedulePage() {
               )}
             </div>
 
-            {/* Navigation row - only for block view */}
-            {currentView === 'block' && (
+            {/* Navigation row - for block and block-week views */}
+            {['block', 'block-week'].includes(currentView) && (
               <BlockNavigation
                 startDate={dateRange.start}
                 endDate={dateRange.end}
@@ -276,8 +294,44 @@ export default function SchedulePage() {
 
         {/* Schedule content */}
         <div className="flex-1 overflow-auto p-4">
+          {currentView === 'block-annual' && (
+            <BlockAnnualView
+              personFilter={selectedPersonIds}
+              onBlockClick={(blockNumber) => {
+                // Navigate to block view for the clicked block
+                if (blockRanges) {
+                  const range = blockRanges.find((r) => r.block_number === blockNumber)
+                  if (range) {
+                    setDateRange({
+                      start: parseISO(range.start_date),
+                      end: parseISO(range.end_date),
+                    })
+                    setCurrentView('block')
+                  }
+                }
+              }}
+            />
+          )}
           {currentView === 'block' && (
-            <ScheduleGrid startDate={dateRange.start} endDate={dateRange.end} />
+            <ScheduleGrid
+              startDate={dateRange.start}
+              endDate={dateRange.end}
+              personFilter={selectedPersonIds}
+            />
+          )}
+          {currentView === 'block-week' && (
+            <BlockWeekView
+              blockStartDate={dateRange.start}
+              blockEndDate={dateRange.end}
+              blockNumber={
+                blockRanges?.find(
+                  (r) =>
+                    r.start_date === format(dateRange.start, 'yyyy-MM-dd') &&
+                    r.end_date === format(dateRange.end, 'yyyy-MM-dd')
+                )?.block_number ?? null
+              }
+              personFilter={selectedPersonIds}
+            />
           )}
           {currentView === 'month' && (
             <MonthView
@@ -310,8 +364,8 @@ export default function SchedulePage() {
           )}
         </div>
 
-        {/* Footer - only show for standard views, annual views have their own */}
-        {!['resident-year', 'faculty-inpatient'].includes(currentView) && (
+        {/* Footer - only show for standard views, block-week and annual views have their own */}
+        {!['block-annual', 'block-week', 'resident-year', 'faculty-inpatient'].includes(currentView) && (
           <div className="flex-shrink-0 bg-white border-t border-gray-200 px-4 py-2">
             <div className="flex items-center justify-between text-xs text-gray-500">
               <span>

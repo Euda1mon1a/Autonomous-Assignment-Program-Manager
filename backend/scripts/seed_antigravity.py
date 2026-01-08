@@ -224,6 +224,29 @@ class AntigravitySeed:
             "bg-blue-100",
         ),
         ("Off", "off", "OFF", "OFF", None, False, True, "text-gray-500", "bg-white"),
+        # Post-call templates for faculty
+        (
+            "Post-Call AM",
+            "recovery",
+            "PCAT",
+            "PCAT",
+            None,
+            False,
+            True,
+            "text-gray-800",
+            "bg-yellow-200",
+        ),
+        (
+            "Day Off",
+            "off",
+            "DO",
+            "DO",
+            None,
+            False,
+            True,
+            "text-gray-600",
+            "bg-gray-200",
+        ),
     ]
 
     # Federal holidays (month, day, name)
@@ -234,30 +257,42 @@ class AntigravitySeed:
         (12, 25, "Christmas Day"),
     ]
 
-    def __init__(self, db: Session, year: int = 2025):
+    def __init__(self, db: Session, year: int | None = None):
         """Initialize seeder.
 
         Args:
             db: Database session
-            year: Academic year start year (e.g., 2025 for AY 2025-2026)
+            year: Academic year start year (e.g., 2025 for AY 2025-2026).
+                  Defaults to current academic year based on today's date.
         """
+        # Default to current academic year (July-June)
+        if year is None:
+            today = date.today()
+            year = today.year if today.month >= 7 else today.year - 1
         self.db = db
         self.year = year
         self.ay_start = date(year, 7, 1)  # July 1
         self.ay_end = date(year + 1, 6, 30)  # June 30 next year
 
-        # Track created entities
+        # Track created entities count
         self.created = {
-            "users": [],
-            "residents": [],
-            "faculty": [],
-            "blocks": [],
-            "templates": {},  # name -> RotationTemplate
-            "assignments": [],
-            "absences": [],
-            "call_assignments": [],
-            "import_batches": [],
+            "users": 0,
+            "residents": 0,
+            "faculty": 0,
+            "blocks": 0,
+            "templates": {},  # name -> RotationTemplate (used during run)
+            "assignments": 0,
+            "absences": 0,
+            "call_assignments": 0,
+            "import_batches": 0,
         }
+
+        # Temporary lists for referencing during the run
+        self._users_list = []
+        self._residents_list = []
+        self._faculty_list = []
+        self._blocks_list = []
+        self._import_batches_list = []
 
         # Track assigned (block_id, person_id) pairs to prevent duplicates
         self._assigned_pairs: set[tuple] = set()
@@ -278,7 +313,8 @@ class AntigravitySeed:
         self._seed_blocks()
         self._seed_assignments()
         self._seed_absences()
-        self._seed_call_assignments()
+        self._seed_call_assignments()  # Resident call (kept for reference)
+        self._seed_faculty_call_assignments()  # Faculty call
         self._seed_import_history()
 
         self.db.commit()
@@ -316,9 +352,7 @@ class AntigravitySeed:
 
         count += (
             self.db.query(RotationTemplate)
-            .filter(
-                RotationTemplate.is_archived == False  # noqa: E712
-            )
+            .filter(RotationTemplate.is_archived == False)  # noqa: E712
             .delete(synchronize_session="fetch")
         )
         print("  Deleted rotation templates")
@@ -345,7 +379,7 @@ class AntigravitySeed:
             existing = self.db.query(User).filter(User.username == username).first()
             if existing:
                 print(f"  User '{username}' already exists, skipping...")
-                self.created["users"].append(existing)
+                self._users_list.append(existing)  # Track for reference
                 continue
 
             user = User(
@@ -357,11 +391,12 @@ class AntigravitySeed:
                 is_active=True,
             )
             self.db.add(user)
-            self.created["users"].append(user)
+            self._users_list.append(user)
+            self.created["users"] += 1
             print(f"  Created: {username} ({role})")
 
         self.db.flush()
-        print(f"  Total users: {len(self.created['users'])}")
+        print(f"  Total users: {self.created['users']}")
         print()
 
     def _seed_people(self) -> None:
@@ -388,7 +423,8 @@ class AntigravitySeed:
                     target_clinical_blocks=target_blocks,
                 )
                 self.db.add(resident)
-                self.created["residents"].append(resident)
+                self._residents_list.append(resident)
+                self.created["residents"] += 1
 
             print(f"  Created 15 PGY-{pgy_level} residents")
 
@@ -456,13 +492,12 @@ class AntigravitySeed:
                 primary_duty=title,
             )
             self.db.add(faculty)
-            self.created["faculty"].append(faculty)
+            self._faculty_list.append(faculty)
+            self.created["faculty"] += 1
 
-        print(f"  Created {len(self.created['faculty'])} faculty members")
+        print(f"  Created {self.created['faculty']} faculty members")
         self.db.flush()
-        print(
-            f"  Total people: {len(self.created['residents']) + len(self.created['faculty'])}"
-        )
+        print(f"  Total people: {self.created['residents'] + self.created['faculty']}")
         print()
 
     def _seed_rotation_templates(self) -> None:
@@ -553,7 +588,8 @@ class AntigravitySeed:
                     holiday_name=holiday_name,
                 )
                 self.db.add(block)
-                self.created["blocks"].append(block)
+                self._blocks_list.append(block)
+                self.created["blocks"] += 1
                 block_count += 1
 
             current_date += timedelta(days=1)
@@ -568,7 +604,7 @@ class AntigravitySeed:
 
         # Group blocks by week for assignment patterns
         blocks_by_week = {}
-        for block in self.created["blocks"]:
+        for block in self._blocks_list:
             week_num = (block.date - self.ay_start).days // 7
             if week_num not in blocks_by_week:
                 blocks_by_week[week_num] = []
@@ -582,8 +618,8 @@ class AntigravitySeed:
         sm_template = self.created["templates"].get("Sports Medicine")
         proc_template = self.created["templates"].get("Procedures")
 
-        residents = self.created["residents"]
-        faculty = self.created["faculty"]
+        residents = self._residents_list
+        faculty = self._faculty_list
 
         # Assign each resident to rotations across the year
         assignment_count = 0
@@ -647,7 +683,7 @@ class AntigravitySeed:
         if conf_template:
             friday_am_blocks = [
                 b
-                for b in self.created["blocks"]
+                for b in self._blocks_list
                 if b.date.weekday() == 4 and b.time_of_day == "AM" and not b.is_holiday
             ]
             for block in friday_am_blocks[:20]:  # First 20 Fridays
@@ -656,6 +692,7 @@ class AntigravitySeed:
                     assignment_count += 1
 
         self.db.flush()
+        self.created["assignments"] = assignment_count
         print(f"  Created {assignment_count} assignments")
         print()
 
@@ -696,14 +733,13 @@ class AntigravitySeed:
             score=random.uniform(0.7, 1.0),
         )
         self.db.add(assignment)
-        self.created["assignments"].append(assignment)
         return assignment
 
     def _seed_absences(self) -> None:
         """Create realistic absences (5-10% of residents)."""
         print("Creating absences...")
 
-        residents = self.created["residents"]
+        residents = self._residents_list
         num_with_absences = int(len(residents) * 0.08)  # ~8%
 
         absence_types_weights = [
@@ -765,91 +801,115 @@ class AntigravitySeed:
                     notes=f"Seeded {absence_type} absence",
                 )
                 self.db.add(absence)
-                self.created["absences"].append(absence)
                 absence_count += 1
 
         self.db.flush()
+        self.created["absences"] = absence_count
         print(f"  Created {absence_count} absences for {num_with_absences} residents")
         print()
 
     def _seed_call_assignments(self) -> None:
-        """Create call assignments for residents (overnight, weekend, backup)."""
-        print("Creating call assignments...")
+        """Create call assignments for residents.
 
-        residents = self.created["residents"]
+        NOTE: Resident call is separate from faculty call and uses Night Float
+        rotation assignments rather than call_assignments table. Skipping for now
+        to focus on faculty call workflow.
+        """
+        print("Skipping resident call assignments (using Night Float rotation instead)")
+        print()
+
+    def _seed_faculty_call_assignments(self) -> None:
+        """Create faculty call assignments (sunday, weekday, holiday, backup)."""
+        print("Creating faculty call assignments...")
+
+        faculty = self._faculty_list
+        if not faculty:
+            print("  No faculty found, skipping...")
+            return
+
         call_count = 0
 
-        # Generate call schedule for 6 months of the AY
+        # Generate faculty call schedule for full academic year
         current_date = self.ay_start
-        end_call_date = self.ay_start + timedelta(days=180)  # First 6 months
+        end_call_date = self.ay_end
+
+        # Pre-compute holidays
+        holidays = set()
+        for month, day, _ in self.FEDERAL_HOLIDAYS:
+            holidays.add((self.year, month, day))
+            holidays.add((self.year + 1, month, day))
 
         while current_date < end_call_date:
-            is_weekend = current_date.weekday() >= 5
-            is_holiday = any(
-                current_date.month == m and current_date.day == d
-                for m, d, _ in self.FEDERAL_HOLIDAYS
-            )
+            day_of_week = current_date.weekday()  # 0=Mon, 6=Sun
+            is_holiday = (
+                current_date.year,
+                current_date.month,
+                current_date.day,
+            ) in holidays
 
-            # Assign overnight call (weekdays)
-            if not is_weekend:
-                # Rotate through PGY-2 and PGY-3 residents for overnight
-                senior_residents = [r for r in residents if r.pgy_level >= 2]
-                if senior_residents:
-                    day_index = (current_date - self.ay_start).days
-                    assigned = senior_residents[day_index % len(senior_residents)]
+            day_index = (current_date - self.ay_start).days
 
-                    call = CallAssignment(
-                        id=uuid4(),
-                        date=current_date,
-                        person_id=assigned.id,
-                        call_type="overnight",
-                        is_weekend=False,
-                        is_holiday=is_holiday,
-                    )
-                    self.db.add(call)
-                    self.created["call_assignments"].append(call)
-                    call_count += 1
+            # Sunday call (day_of_week == 6)
+            if day_of_week == 6:
+                assigned = faculty[day_index % len(faculty)]
+                call = CallAssignment(
+                    id=uuid4(),
+                    date=current_date,
+                    person_id=assigned.id,
+                    call_type="sunday",
+                    is_weekend=True,
+                    is_holiday=is_holiday,
+                )
+                self.db.add(call)
+                call_count += 1
 
-            # Assign weekend call
-            if is_weekend:
-                # PGY-2/3 for primary, PGY-1 for backup
-                senior_residents = [r for r in residents if r.pgy_level >= 2]
-                junior_residents = [r for r in residents if r.pgy_level == 1]
+            # Weekday call (Mon-Thu, day_of_week 0-3)
+            elif day_of_week in (0, 1, 2, 3) and not is_holiday:
+                assigned = faculty[day_index % len(faculty)]
+                call = CallAssignment(
+                    id=uuid4(),
+                    date=current_date,
+                    person_id=assigned.id,
+                    call_type="weekday",
+                    is_weekend=False,
+                    is_holiday=False,
+                )
+                self.db.add(call)
+                call_count += 1
 
-                week_num = (current_date - self.ay_start).days // 7
+            # Holiday call
+            if is_holiday:
+                assigned = faculty[(day_index + 1) % len(faculty)]
+                call = CallAssignment(
+                    id=uuid4(),
+                    date=current_date,
+                    person_id=assigned.id,
+                    call_type="holiday",
+                    is_weekend=day_of_week >= 5,
+                    is_holiday=True,
+                )
+                self.db.add(call)
+                call_count += 1
 
-                if senior_residents:
-                    primary = senior_residents[week_num % len(senior_residents)]
-                    call = CallAssignment(
-                        id=uuid4(),
-                        date=current_date,
-                        person_id=primary.id,
-                        call_type="weekend",
-                        is_weekend=True,
-                        is_holiday=is_holiday,
-                    )
-                    self.db.add(call)
-                    self.created["call_assignments"].append(call)
-                    call_count += 1
-
-                if junior_residents:
-                    backup = junior_residents[week_num % len(junior_residents)]
-                    call = CallAssignment(
-                        id=uuid4(),
-                        date=current_date,
-                        person_id=backup.id,
-                        call_type="backup",
-                        is_weekend=True,
-                        is_holiday=is_holiday,
-                    )
-                    self.db.add(call)
-                    self.created["call_assignments"].append(call)
-                    call_count += 1
+            # Backup call (Fridays and Saturdays)
+            if day_of_week in (4, 5):  # Friday, Saturday
+                assigned = faculty[(day_index + 2) % len(faculty)]
+                call = CallAssignment(
+                    id=uuid4(),
+                    date=current_date,
+                    person_id=assigned.id,
+                    call_type="backup",
+                    is_weekend=day_of_week == 5,
+                    is_holiday=is_holiday,
+                )
+                self.db.add(call)
+                call_count += 1
 
             current_date += timedelta(days=1)
 
         self.db.flush()
-        print(f"  Created {call_count} call assignments")
+        self.created["call_assignments"] = call_count
+        print(f"  Created {call_count} faculty call assignments")
         print()
 
     def _seed_import_history(self) -> None:
@@ -857,9 +917,9 @@ class AntigravitySeed:
         print("Creating import history...")
 
         # Get a user for created_by
-        admin_user = next((u for u in self.created["users"] if u.role == "admin"), None)
+        admin_user = next((u for u in self._users_list if u.role == "admin"), None)
         coord_user = next(
-            (u for u in self.created["users"] if u.role == "coordinator"), None
+            (u for u in self._users_list if u.role == "coordinator"), None
         )
 
         batch_configs = [
@@ -931,14 +991,16 @@ class AntigravitySeed:
             from sqlalchemy import text
 
             self.db.execute(
-                text("""
+                text(
+                    """
                     INSERT INTO import_batches
                     (id, created_at, filename, status, created_by_id, row_count, error_count,
                      warning_count, notes, target_block, conflict_resolution, rollback_available)
                     VALUES
                     (:id, :created_at, :filename, CAST(:status AS importbatchstatus), :created_by_id, :row_count,
                      :error_count, :warning_count, :notes, :target_block, 'upsert', true)
-                """),
+                """
+                ),
                 {
                     "id": str(batch_id),
                     "created_at": created_at,
@@ -952,12 +1014,12 @@ class AntigravitySeed:
                     "target_block": (10 + (30 - days_ago) // 14),
                 },
             )
-            self.created["import_batches"].append(batch_id)
+            self.created["import_batches"] += 1
 
             # Add staged assignments for STAGED batches
             if status_str == "staged":
                 residents_sample = random.sample(
-                    self.created["residents"], min(10, len(self.created["residents"]))
+                    self._residents_list, min(10, len(self._residents_list))
                 )
                 templates_list = list(self.created["templates"].values())
 
@@ -965,7 +1027,8 @@ class AntigravitySeed:
                     template = random.choice(templates_list) if templates_list else None
                     # Use raw SQL to bypass enum issues
                     self.db.execute(
-                        text("""
+                        text(
+                            """
                             INSERT INTO import_staged_assignments
                             (id, batch_id, row_number, sheet_name, person_name,
                              assignment_date, slot, rotation_name, matched_person_id,
@@ -976,7 +1039,8 @@ class AntigravitySeed:
                              :assignment_date, :slot, :rotation_name, :matched_person_id,
                              :person_match_confidence, :matched_rotation_id,
                              :rotation_match_confidence, CAST(:status AS stagedassignmentstatus))
-                        """),
+                        """
+                        ),
                         {
                             "id": str(uuid4()),
                             "batch_id": str(batch_id),
@@ -988,16 +1052,16 @@ class AntigravitySeed:
                             "rotation_name": template.name if template else "Clinic",
                             "matched_person_id": str(resident.id),
                             "person_match_confidence": 95,
-                            "matched_rotation_id": str(template.id)
-                            if template
-                            else None,
+                            "matched_rotation_id": (
+                                str(template.id) if template else None
+                            ),
                             "rotation_match_confidence": 90 if template else 0,
                             "status": "pending",
                         },
                     )
 
         self.db.flush()
-        print(f"  Created {len(self.created['import_batches'])} import batches")
+        print(f"  Created {self.created['import_batches']} import batches")
         print()
 
     def _calculate_block_number(self, block_date: date) -> int:
@@ -1024,15 +1088,15 @@ class AntigravitySeed:
             dict: Summary statistics
         """
         summary = {
-            "users": len(self.created["users"]),
-            "residents": len(self.created["residents"]),
-            "faculty": len(self.created["faculty"]),
-            "blocks": len(self.created["blocks"]),
+            "users": self.created["users"],
+            "residents": self.created["residents"],
+            "faculty": self.created["faculty"],
+            "blocks": self.created["blocks"],
             "rotation_templates": len(self.created["templates"]),
-            "assignments": len(self.created["assignments"]),
-            "absences": len(self.created["absences"]),
-            "call_assignments": len(self.created["call_assignments"]),
-            "import_batches": len(self.created["import_batches"]),
+            "assignments": self.created["assignments"],
+            "absences": self.created["absences"],
+            "call_assignments": self.created["call_assignments"],
+            "import_batches": self.created["import_batches"],
             "academic_year": f"{self.year}-{self.year + 1}",
             "date_range": f"{self.ay_start} to {self.ay_end}",
         }

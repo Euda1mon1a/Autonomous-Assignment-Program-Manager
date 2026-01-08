@@ -2,62 +2,41 @@
 
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { Calendar, Clock, Users, RefreshCw, AlertCircle, Search, CalendarX, Info } from 'lucide-react';
-import { LocationCard } from './LocationCard';
-import { useDailyManifest } from './hooks';
+import { Calendar, RefreshCw, AlertCircle, Search, CalendarX, Info } from 'lucide-react';
+import { SituationalAwareness } from './SituationalAwareness';
+import { ClinicCoverageTable } from './ClinicCoverageTable';
+import { useDailyManifestV2 } from './hooks';
 
-// ============================================================================
-// Component
-// ============================================================================
-
+/**
+ * Daily Manifest - V2 Redesign
+ *
+ * Designed for nursing staff and front desk to quickly see:
+ * - WHO is NOT in clinic (FMIT, nights, remote)
+ * - Who the ATTENDING is for AM/PM
+ * - WHO is IN clinic (by location, both AM and PM)
+ *
+ * Key changes from V1:
+ * - No AM/PM toggle - shows both
+ * - Situational awareness at top
+ * - Table layout for clinic coverage
+ */
 export function DailyManifest() {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [timeOfDay, setTimeOfDay] = useState<'AM' | 'PM' | 'ALL'>('AM');
   const [searchQuery, setSearchQuery] = useState('');
 
   const dateString = format(selectedDate, 'yyyy-MM-dd');
 
-  const { data, isLoading, isError, error, refetch, isFetching } = useDailyManifest(
-    dateString,
-    timeOfDay
-  );
-
-  // Filter locations based on search query
-  const filteredLocations = data?.locations.filter((location) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      location.clinic_location.toLowerCase().includes(query) ||
-      location.time_slots.AM?.some((a) =>
-        a.person.name.toLowerCase().includes(query)
-      ) ||
-      location.time_slots.PM?.some((a) =>
-        a.person.name.toLowerCase().includes(query)
-      )
-    );
-  });
-
-  // Compute summary from locations (backend returns per-location summaries)
-  const summary = data?.locations.reduce(
-    (acc, loc) => ({
-      total_locations: acc.total_locations + 1,
-      total_staff: acc.total_staff + (loc.staffing_summary?.total || 0),
-      total_residents: acc.total_residents + (loc.staffing_summary?.residents || 0),
-      total_faculty: acc.total_faculty + (loc.staffing_summary?.faculty || 0),
-    }),
-    { total_locations: 0, total_staff: 0, total_residents: 0, total_faculty: 0 }
-  );
+  const { data, isLoading, isError, error, refetch, isFetching } =
+    useDailyManifestV2(dateString);
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Daily Manifest
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">FM Clinic Manifest</h1>
           <p className="text-gray-600">
-            Where is everyone NOW - Real-time location and assignment tracking
+            Who&apos;s in clinic today - For nursing staff and front desk
           </p>
         </div>
 
@@ -68,12 +47,14 @@ export function DailyManifest() {
             className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Refresh"
           >
-            <RefreshCw className={`w-5 h-5 text-gray-600 ${isFetching ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`w-5 h-5 text-gray-600 ${isFetching ? 'animate-spin' : ''}`}
+            />
           </button>
         </div>
       </div>
 
-      {/* Controls */}
+      {/* Controls - simplified: just date and search */}
       <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
         <div className="flex flex-wrap items-center gap-4">
           {/* Date Picker */}
@@ -85,20 +66,12 @@ export function DailyManifest() {
               onChange={(e) => setSelectedDate(new Date(e.target.value))}
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
-          </div>
-
-          {/* Time of Day Selector */}
-          <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-gray-500" />
-            <select
-              value={timeOfDay}
-              onChange={(e) => setTimeOfDay(e.target.value as 'AM' | 'PM' | 'ALL')}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            <button
+              onClick={() => setSelectedDate(new Date())}
+              className="px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
             >
-              <option value="AM">Morning (AM)</option>
-              <option value="PM">Afternoon (PM)</option>
-              <option value="ALL">All Day</option>
-            </select>
+              Today
+            </button>
           </div>
 
           {/* Search */}
@@ -114,69 +87,15 @@ export function DailyManifest() {
               />
             </div>
           </div>
+
+          {/* Last updated */}
+          {data?.generated_at && (
+            <div className="text-xs text-gray-500 ml-auto">
+              Updated: {format(new Date(data.generated_at), 'h:mm a')}
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Summary Stats */}
-      {summary && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Calendar className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Locations</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {summary.total_locations}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Users className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Total Staff</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {summary.total_staff}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Users className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Residents</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {summary.total_residents}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-100 rounded-lg">
-                <Users className="w-5 h-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Faculty</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {summary.total_faculty}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Loading State */}
       {isLoading && (
@@ -201,8 +120,8 @@ export function DailyManifest() {
                 {error?.status === 404
                   ? 'The manifest service is temporarily unavailable. Please try again later.'
                   : error?.status === 0
-                  ? 'Unable to connect to the server. Please check your network connection.'
-                  : error?.message || 'An unexpected error occurred. Please try again.'}
+                    ? 'Unable to connect to the server. Please check your network connection.'
+                    : error?.message || 'An unexpected error occurred. Please try again.'}
               </p>
             </div>
             <button
@@ -215,98 +134,68 @@ export function DailyManifest() {
         </div>
       )}
 
-      {/* Location Cards Grid */}
-      {!isLoading && !isError && filteredLocations && (
+      {/* Main Content */}
+      {!isLoading && !isError && data && (
         <>
-          {filteredLocations.length > 0 ? (
-            <>
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Locations ({filteredLocations.length})
-                </h2>
-                {data?.generated_at && (
-                  <p className="text-xs text-gray-500">
-                    Last updated: {format(new Date(data.generated_at), 'MMM d, yyyy h:mm a')}
-                  </p>
-                )}
-              </div>
+          {/* Situational Awareness - WHO is NOT in clinic */}
+          <SituationalAwareness
+            data={data.situational_awareness}
+            attending={data.attending}
+          />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredLocations.map((location, idx) => (
-                  <LocationCard
-                    key={`${location.clinic_location}-${idx}`}
-                    location={location}
-                    timeOfDay={timeOfDay}
-                  />
-                ))}
-              </div>
-            </>
+          {/* FM Clinic Coverage Header */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">
+              FM Clinic Coverage
+              {data.clinic_coverage.length > 0 && (
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  ({data.clinic_coverage.length} staff)
+                </span>
+              )}
+            </h2>
+          </div>
+
+          {/* Clinic Coverage Table */}
+          {data.clinic_coverage.length > 0 ? (
+            <ClinicCoverageTable
+              locations={data.clinic_coverage}
+              searchQuery={searchQuery}
+            />
           ) : (
             <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-              {searchQuery ? (
-                <>
-                  <Search className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">
-                    No results found
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    No locations or staff match &quot;{searchQuery}&quot;
-                  </p>
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition-colors"
-                  >
-                    Clear Search
-                  </button>
-                </>
-              ) : (
-                <>
-                  <CalendarX className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No Schedule Data for {format(selectedDate, 'MMMM d, yyyy')}
-                  </h3>
-                  <p className="text-gray-600 max-w-md mx-auto mb-4">
-                    {timeOfDay === 'ALL'
-                      ? 'There are no staff assignments scheduled for this date.'
-                      : `There are no staff assignments scheduled for this ${timeOfDay === 'AM' ? 'morning' : 'afternoon'}.`}
-                  </p>
+              <CalendarX className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No Schedule Data for {format(selectedDate, 'MMMM d, yyyy')}
+              </h3>
+              <p className="text-gray-600 max-w-md mx-auto mb-4">
+                There are no staff assignments scheduled for this date.
+              </p>
 
-                  {/* Info box with helpful guidance */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-lg mx-auto text-left">
-                    <div className="flex items-start gap-3">
-                      <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <h4 className="text-sm font-semibold text-blue-900 mb-1">
-                          What you can do:
-                        </h4>
-                        <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-                          <li>Try selecting a different date when schedules are available</li>
-                          <li>Check both AM and PM sessions using the time selector</li>
-                          <li>Contact your program coordinator if you expected to see assignments</li>
-                        </ul>
-                      </div>
-                    </div>
+              {/* Info box with helpful guidance */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-lg mx-auto text-left">
+                <div className="flex items-start gap-3">
+                  <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-semibold text-blue-900 mb-1">
+                      What you can do:
+                    </h4>
+                    <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                      <li>Try selecting a different date when schedules are available</li>
+                      <li>Contact your program coordinator if you expected to see assignments</li>
+                    </ul>
                   </div>
+                </div>
+              </div>
 
-                  {/* Quick actions */}
-                  <div className="mt-4 flex items-center justify-center gap-3">
-                    <button
-                      onClick={() => setSelectedDate(new Date())}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
-                    >
-                      Go to Today
-                    </button>
-                    {timeOfDay !== 'ALL' && (
-                      <button
-                        onClick={() => setTimeOfDay('ALL')}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition-colors"
-                      >
-                        View All Day
-                      </button>
-                    )}
-                  </div>
-                </>
-              )}
+              {/* Quick actions */}
+              <div className="mt-4 flex items-center justify-center gap-3">
+                <button
+                  onClick={() => setSelectedDate(new Date())}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
+                >
+                  Go to Today
+                </button>
+              </div>
             </div>
           )}
         </>

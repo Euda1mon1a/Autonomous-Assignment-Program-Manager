@@ -19,7 +19,7 @@ export interface PersonBrief {
 
 export interface CallAssignment {
   id: string;
-  call_date: string;
+  date: string;
   person_id: string;
   call_type: CallType;
   is_weekend: boolean;
@@ -39,17 +39,17 @@ export interface CallAssignmentListResponse {
 // ============================================================================
 
 export interface CallAssignmentCreate {
-  call_date: string;
+  call_date: string;  // Backend expects call_date for create
   person_id: string;
-  call_type?: CallType;
+  call_type?: string;  // Backend accepts: sunday, weekday, holiday, backup
   is_weekend?: boolean;
   is_holiday?: boolean;
 }
 
 export interface CallAssignmentUpdate {
-  call_date?: string;
+  call_date?: string;  // Backend expects call_date for update
   person_id?: string;
-  call_type?: CallType;
+  call_type?: string;
   is_weekend?: boolean;
   is_holiday?: boolean;
 }

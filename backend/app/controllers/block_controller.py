@@ -32,7 +32,10 @@ class BlockController:
             end_date=end_date,
             block_number=block_number,
         )
-        return BlockListResponse(items=result["items"], total=result["total"])
+        return BlockListResponse(
+            items=[BlockResponse.model_validate(item) for item in result["items"]],
+            total=result["total"],
+        )
 
     def get_block(self, block_id: UUID) -> BlockResponse:
         """Get a single block by ID."""
@@ -74,7 +77,10 @@ class BlockController:
             end_date=end_date,
             base_block_number=base_block_number,
         )
-        return BlockListResponse(items=result["items"], total=result["total"])
+        return BlockListResponse(
+            items=[BlockResponse.model_validate(item) for item in result["items"]],
+            total=result["total"],
+        )
 
     def delete_block(self, block_id: UUID) -> None:
         """Delete a block."""

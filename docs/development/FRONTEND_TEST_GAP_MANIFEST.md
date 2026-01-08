@@ -302,7 +302,7 @@ The frontend exhibits **severe test coverage gaps** with only 35% of source file
 - `/my-schedule` - Personal schedule
 - `/people` - Personnel management
 - `/settings` - User settings
-- `/templates` - Rotation templates
+- `/activities` - Rotation templates
 - + more
 
 **Type:** Integration tests (routes + features)

@@ -91,7 +91,10 @@ async def list_rotation_templates(
     query = query.order_by(RotationTemplate.name)
     result = db.execute(query)
     templates = list(result.scalars().all())
-    return RotationTemplateListResponse(items=templates, total=len(templates))
+    return RotationTemplateListResponse(
+        items=[RotationTemplateResponse.model_validate(t) for t in templates],
+        total=len(templates),
+    )
 
 
 @router.post("", response_model=RotationTemplateResponse, status_code=201)

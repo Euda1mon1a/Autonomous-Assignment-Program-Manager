@@ -10,7 +10,59 @@ import type {
   Person,
   PersonCreate,
   PersonUpdate,
+  UUID,
 } from '@/types/api'
+
+// ============================================================================
+// Batch Operation Types
+// ============================================================================
+
+/**
+ * Single person update in a batch operation
+ */
+export interface BatchPersonUpdateItem {
+  person_id: UUID
+  updates: PersonUpdate
+}
+
+/**
+ * Request for batch update operation - atomic all-or-nothing
+ */
+export interface BatchPersonUpdateRequest {
+  people: BatchPersonUpdateItem[]
+  dry_run?: boolean
+}
+
+/**
+ * Request for batch delete operation - atomic all-or-nothing
+ */
+export interface BatchPersonDeleteRequest {
+  person_ids: UUID[]
+  dry_run?: boolean
+}
+
+/**
+ * Result for a single operation in a batch
+ */
+export interface BatchOperationResult {
+  index: number
+  person_id: UUID | null
+  success: boolean
+  error: string | null
+}
+
+/**
+ * Response from batch operations
+ */
+export interface BatchPersonResponse {
+  operation_type: 'delete' | 'update' | 'create'
+  total: number
+  succeeded: number
+  failed: number
+  results: BatchOperationResult[]
+  dry_run: boolean
+  created_ids?: UUID[] | null
+}
 
 // ============================================================================
 // Types
@@ -143,7 +195,7 @@ export function usePeople(
   options?: Omit<UseQueryOptions<ListResponse<Person>, ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const params = new URLSearchParams()
-  if (filters?.role) params.set('role', filters.role)
+  if (filters?.role) params.set('type', filters.role)
   if (filters?.pgy_level !== undefined) params.set('pgy_level', String(filters.pgy_level))
   const queryString = params.toString()
 
@@ -609,5 +661,148 @@ export function useCertifications(
     gcTime: 30 * 60 * 1000, // 30 minutes
     enabled: !!personId,
     ...options,
+  })
+}
+
+// ============================================================================
+// Batch Operations
+// ============================================================================
+
+/**
+ * Deletes multiple people atomically using batch endpoint.
+ * All succeed or all fail - no partial deletions.
+ *
+ * @returns Mutation object containing:
+ *   - `mutate`: Function to delete multiple people by IDs
+ *   - `mutateAsync`: Async version returning a Promise
+ *   - `isPending`: Whether deletion is in progress
+ *   - `isSuccess`: Whether deletion completed successfully
+ *   - `isError`: Whether an error occurred
+ *   - `error`: Any error that occurred
+ *   - `data`: BatchPersonResponse with operation results
+ *
+ * @example
+ * ```tsx
+ * function BulkDeleteButton({ selectedIds }: Props) {
+ *   const { mutate, isPending } = useBulkDeletePeople();
+ *
+ *   const handleDelete = () => {
+ *     if (confirm(`Delete ${selectedIds.length} people? This cannot be undone.`)) {
+ *       mutate(selectedIds, {
+ *         onSuccess: (result) => {
+ *           toast.success(`Deleted ${result.succeeded} people`);
+ *         },
+ *         onError: (error) => {
+ *           toast.error(`Batch delete failed: ${error.message}`);
+ *         },
+ *       });
+ *     }
+ *   };
+ *
+ *   return (
+ *     <Button onClick={handleDelete} loading={isPending} variant="danger">
+ *       Delete Selected ({selectedIds.length})
+ *     </Button>
+ *   );
+ * }
+ * ```
+ */
+export function useBulkDeletePeople() {
+  const queryClient = useQueryClient()
+
+  return useMutation<BatchPersonResponse, ApiError, string[]>({
+    mutationFn: async (personIds) => {
+      const request: BatchPersonDeleteRequest = {
+        person_ids: personIds,
+        dry_run: false,
+      }
+      // Use fetch with DELETE + body (axios del doesn't support body)
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+      const response = await fetch(`${apiBaseUrl}/people/batch`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(request),
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw { status: response.status, message: error.detail?.message || 'Batch delete failed', ...error }
+      }
+      return response.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['people'] })
+      queryClient.invalidateQueries({ queryKey: ['residents'] })
+      queryClient.invalidateQueries({ queryKey: ['faculty'] })
+    },
+  })
+}
+
+/**
+ * Updates multiple people atomically using batch endpoint.
+ * All succeed or all fail - no partial updates.
+ * All people receive the same update values.
+ *
+ * @returns Mutation object containing:
+ *   - `mutate`: Function to update multiple people
+ *   - `mutateAsync`: Async version returning a Promise
+ *   - `isPending`: Whether update is in progress
+ *   - `isSuccess`: Whether update completed successfully
+ *   - `isError`: Whether an error occurred
+ *   - `error`: Any error that occurred
+ *   - `data`: BatchPersonResponse with operation results
+ *
+ * @example
+ * ```tsx
+ * function BulkUpdatePGYLevel({ selectedIds }: Props) {
+ *   const { mutate, isPending } = useBulkUpdatePeople();
+ *
+ *   const handleUpdatePGY = (newLevel: number) => {
+ *     mutate(
+ *       { personIds: selectedIds, updates: { pgy_level: newLevel } },
+ *       {
+ *         onSuccess: (result) => {
+ *           toast.success(`Updated ${result.succeeded} people to PGY-${newLevel}`);
+ *         },
+ *       }
+ *     );
+ *   };
+ *
+ *   return (
+ *     <Select onChange={(e) => handleUpdatePGY(Number(e.target.value))}>
+ *       <option>Set PGY Level...</option>
+ *       {[1, 2, 3, 4, 5].map(level => (
+ *         <option key={level} value={level}>PGY-{level}</option>
+ *       ))}
+ *     </Select>
+ *   );
+ * }
+ * ```
+ */
+export function useBulkUpdatePeople() {
+  const queryClient = useQueryClient()
+
+  return useMutation<
+    BatchPersonResponse,
+    ApiError,
+    { personIds: string[]; updates: PersonUpdate }
+  >({
+    mutationFn: async ({ personIds, updates }) => {
+      const request: BatchPersonUpdateRequest = {
+        people: personIds.map((id) => ({
+          person_id: id,
+          updates,
+        })),
+        dry_run: false,
+      }
+      return put<BatchPersonResponse>('/people/batch', request)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['people'] })
+      queryClient.invalidateQueries({ queryKey: ['residents'] })
+      queryClient.invalidateQueries({ queryKey: ['faculty'] })
+    },
   })
 }

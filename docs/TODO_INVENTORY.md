@@ -17,6 +17,7 @@ Generated: 2026-01-02
 ## Low Priority (Future Work)
 - **Database loading for schedule comparisons** (`mcp-server/src/scheduler_mcp/time_crystal_tools.py:281, 417`) - Time crystal tools use empty schedules when schedule IDs provided without direct assignments
 - **Activity log table creation** (`backend/app/api/routes/admin_users.py:596`) - Endpoint returns empty response pending table creation
+- **Full templates→activities rename** - Frontend routes renamed (`/templates`→`/activities`, `/admin/templates`→`/admin/rotations`) but backend API (`/rotation-templates`), type names (`RotationTemplate`), hooks (`useAdminTemplates`), and feature folder (`features/templates/`) unchanged. Future cleanup to align naming across entire stack.
 
 ## Deferred (Intentionally Pending)
 - None identified

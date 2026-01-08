@@ -28,7 +28,10 @@ class PersonController:
     ) -> PersonListResponse:
         """List people with optional filters."""
         result = self.service.list_people(type=type, pgy_level=pgy_level)
-        return PersonListResponse(items=result["items"], total=result["total"])
+        return PersonListResponse(
+            items=[PersonResponse.model_validate(item) for item in result["items"]],
+            total=result["total"],
+        )
 
     def list_residents(
         self,
@@ -36,7 +39,10 @@ class PersonController:
     ) -> PersonListResponse:
         """List all residents with optional PGY filter."""
         result = self.service.list_residents(pgy_level=pgy_level)
-        return PersonListResponse(items=result["items"], total=result["total"])
+        return PersonListResponse(
+            items=[PersonResponse.model_validate(item) for item in result["items"]],
+            total=result["total"],
+        )
 
     def list_faculty(
         self,
@@ -44,7 +50,10 @@ class PersonController:
     ) -> PersonListResponse:
         """List all faculty with optional specialty filter."""
         result = self.service.list_faculty(specialty=specialty)
-        return PersonListResponse(items=result["items"], total=result["total"])
+        return PersonListResponse(
+            items=[PersonResponse.model_validate(item) for item in result["items"]],
+            total=result["total"],
+        )
 
     def get_person(self, person_id: UUID) -> PersonResponse:
         """Get a single person by ID."""

@@ -26,26 +26,22 @@ services:
       DEBUG: "true"
       CORS_ORIGINS: '["http://localhost:3000", "http://127.0.0.1:3000"]'
 
-  # Frontend with hot reload
-  frontend:
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
-    command: npm run dev
-    environment:
-      NODE_ENV: development
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+  # Frontend: NO DEV OVERRIDE
+  # The production Dockerfile uses multi-stage build without node_modules.
+  # Hot reload would require a separate dev Dockerfile or local npm install.
+  # For now, frontend runs in production mode - rebuild on changes:
+  #   docker compose build frontend && docker compose up -d frontend
 
   # MCP Server with hot reload and HTTP transport for testing
+  # NOTE: Using port 8081 to avoid conflict with Claude Code MCP on 8080
   mcp-server:
     volumes:
       - ./mcp-server/src:/app/src
       - ./mcp-server/tests:/app/tests
     # HTTP transport for testing with curl/httpie
-    command: python -m scheduler_mcp.server --host 0.0.0.0 --port 8080 --log-level DEBUG
+    command: python -m scheduler_mcp.server --host 0.0.0.0 --port 8081 --log-level DEBUG
     ports:
-      - "8080:8080"
+      - "8081:8081"
     environment:
       LOG_LEVEL: DEBUG
       # Relaxed resource limits for development

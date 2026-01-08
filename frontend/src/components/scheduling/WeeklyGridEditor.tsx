@@ -1,18 +1,20 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import type {
   WeeklyPatternGrid,
   WeeklyPatternSlot,
   DayOfWeek,
   WeeklyPatternTimeOfDay,
   RotationTemplateRef,
+  WeekNumber,
 } from '@/types/weekly-pattern';
 import {
   DAY_ABBREVIATIONS,
   getSlot,
   updateSlot,
   ensureCompletePattern,
+  hasWeekSpecificPatterns,
 } from '@/types/weekly-pattern';
 
 // ============================================================================
@@ -90,6 +92,65 @@ function GridCell({
     >
       {label}
     </button>
+  );
+}
+
+/**
+ * Week tabs for switching between weeks in week-specific mode
+ */
+function WeekTabs({
+  selectedWeek,
+  onWeekChange,
+  samePatternAllWeeks,
+  onToggleSamePattern,
+}: {
+  selectedWeek: WeekNumber;
+  onWeekChange: (week: WeekNumber) => void;
+  samePatternAllWeeks: boolean;
+  onToggleSamePattern: () => void;
+}) {
+  const weeks: Array<{ value: WeekNumber; label: string }> = [
+    { value: null, label: 'All Weeks' },
+    { value: 1, label: 'Week 1' },
+    { value: 2, label: 'Week 2' },
+    { value: 3, label: 'Week 3' },
+    { value: 4, label: 'Week 4' },
+  ];
+
+  return (
+    <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+      <div className="flex items-center gap-1">
+        {weeks.map((week) => (
+          <button
+            key={week.value ?? 'all'}
+            type="button"
+            onClick={() => onWeekChange(week.value)}
+            disabled={samePatternAllWeeks && week.value !== null}
+            className={`
+              px-3 py-1.5 text-sm font-medium rounded-md transition-colors
+              ${selectedWeek === week.value
+                ? 'bg-blue-100 text-blue-700'
+                : samePatternAllWeeks && week.value !== null
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }
+            `}
+          >
+            {week.label}
+          </button>
+        ))}
+      </div>
+
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={samePatternAllWeeks}
+          onChange={onToggleSamePattern}
+          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        />
+        <span className="text-gray-600">Same pattern all weeks</span>
+      </label>
+    </div>
   );
 }
 
@@ -198,6 +259,36 @@ export function WeeklyGridEditor({
     timeOfDay: WeeklyPatternTimeOfDay;
   } | null>(null);
 
+  // Week-by-week editing state
+  const [selectedWeek, setSelectedWeek] = useState<WeekNumber>(null);
+  const [samePatternAllWeeks, setSamePatternAllWeeks] = useState(
+    () => pattern.samePatternAllWeeks ?? !hasWeekSpecificPatterns(pattern)
+  );
+
+  // Handle toggle of same pattern mode
+  const handleToggleSamePattern = useCallback(() => {
+    setSamePatternAllWeeks((prev) => {
+      const newValue = !prev;
+      if (newValue) {
+        // Switching to same pattern - select "All Weeks"
+        setSelectedWeek(null);
+      }
+      return newValue;
+    });
+  }, []);
+
+  // Filter slots for current week view
+  const visibleSlots = useMemo(() => {
+    if (samePatternAllWeeks || selectedWeek === null) {
+      // Show slots without week number (or all slots if no week-specific exist)
+      return completePattern.slots.filter(
+        (slot) => slot.weekNumber === null || slot.weekNumber === undefined
+      );
+    }
+    // Show slots for selected week
+    return completePattern.slots.filter((slot) => slot.weekNumber === selectedWeek);
+  }, [completePattern.slots, samePatternAllWeeks, selectedWeek]);
+
   // Get template info by ID
   const getTemplateById = useCallback(
     (id: string | null): RotationTemplateRef | null => {
@@ -263,6 +354,14 @@ export function WeeklyGridEditor({
           Click a cell to assign a rotation template
         </p>
       </div>
+
+      {/* Week Tabs */}
+      <WeekTabs
+        selectedWeek={selectedWeek}
+        onWeekChange={setSelectedWeek}
+        samePatternAllWeeks={samePatternAllWeeks}
+        onToggleSamePattern={handleToggleSamePattern}
+      />
 
       {/* Grid Table */}
       <div className="overflow-x-auto">

@@ -2,8 +2,8 @@
 
 import { useMemo } from 'react'
 import { format, addDays, subDays, parseISO } from 'date-fns'
+import { AlertTriangle } from 'lucide-react'
 import { useBlocks, useBlockRanges } from '@/hooks'
-import type { BlockRange } from '@/hooks'
 
 interface BlockNavigationProps {
   startDate: Date
@@ -226,6 +226,22 @@ export function BlockNavigation({
       <div className="text-sm text-gray-600 ml-auto hidden lg:block">
         {format(startDate, 'MMM d, yyyy')} - {format(endDate, 'MMM d, yyyy')}
       </div>
+
+      {/* Block 0 Warning Banner */}
+      {currentBlockNumber === 0 && !isFallbackMode && (
+        <div className="w-full mt-3 bg-amber-50 border-l-4 border-amber-400 p-3 text-sm rounded-r">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <strong className="text-amber-800">Block 0 (Orientation Period):</strong>
+              <span className="text-amber-700 ml-1">
+                Variable-length period at the start of the academic year. Duration computed for
+                scheduling efficiency. Assignments during this period may differ from standard blocks.
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

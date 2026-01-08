@@ -10,6 +10,7 @@ from app.core.error_codes import ErrorCode, get_error_code_from_message
 from app.models.user import User
 from app.schemas.assignment import (
     AssignmentCreate,
+    AssignmentListResponse,
     AssignmentResponse,
     AssignmentUpdate,
     AssignmentWithWarnings,
@@ -32,7 +33,7 @@ class AssignmentController:
         activity_type: str | None = None,
         page: int = 1,
         page_size: int = 100,
-    ) -> dict:
+    ) -> AssignmentListResponse:
         """List assignments with optional filters and database-level pagination.
 
         Args:
@@ -45,7 +46,7 @@ class AssignmentController:
             page_size: Number of items per page
 
         Returns:
-            Dict with items, total count, page, and page_size
+            AssignmentListResponse with items, total count, page, and page_size
         """
         # Calculate offset for database-level pagination
         offset = (page - 1) * page_size
@@ -60,12 +61,14 @@ class AssignmentController:
             limit=page_size,
         )
 
-        return {
-            "items": result["items"],
-            "total": result["total"],
-            "page": page,
-            "page_size": page_size,
-        }
+        return AssignmentListResponse(
+            items=[
+                AssignmentResponse.model_validate(item) for item in result["items"]
+            ],
+            total=result["total"],
+            page=page,
+            page_size=page_size,
+        )
 
     def get_assignment(self, assignment_id: UUID) -> AssignmentResponse:
         """Get a single assignment by ID."""

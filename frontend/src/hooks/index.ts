@@ -293,6 +293,22 @@ export {
 } from "./useDebounce";
 
 // ============================================================================
+// Backup Hooks
+// ============================================================================
+export {
+  backupQueryKeys,
+  useSnapshots,
+  useCreateSnapshot,
+  useRestoreSnapshot,
+  useWithBackup,
+  type SnapshotRequest,
+  type SnapshotResponse,
+  type SnapshotListResponse,
+  type RestoreRequest,
+  type RestoreResponse,
+} from "./useBackup";
+
+// ============================================================================
 // Impersonation Hooks
 // ============================================================================
 export {

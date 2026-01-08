@@ -38,6 +38,8 @@ export interface RotationTemplate {
   requires_procedure_credential: boolean;
   supervision_required: boolean;
   max_supervision_ratio: number | null;
+  /** True for half-block rotations (14 days instead of 28) */
+  is_block_half_rotation?: boolean;
   created_at: string;
   is_archived?: boolean;
   archived_at?: string | null;
@@ -402,6 +404,7 @@ export interface TemplateCreateRequest {
   requires_procedure_credential?: boolean;
   supervision_required?: boolean;
   max_supervision_ratio?: number | null;
+  is_block_half_rotation?: boolean;
 }
 
 export interface TemplateUpdateRequest {
@@ -417,6 +420,7 @@ export interface TemplateUpdateRequest {
   requires_procedure_credential?: boolean;
   supervision_required?: boolean;
   max_supervision_ratio?: number | null;
+  is_block_half_rotation?: boolean;
 }
 
 // ============================================================================

@@ -11,7 +11,7 @@
  * - Keyboard shortcuts for power users
  * - Debounced search for better performance
  */
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   LayoutGrid,
   Plus,
@@ -25,6 +25,8 @@ import {
   Keyboard,
   Archive,
   Clock,
+  Save,
+  Database,
 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { TemplateTable } from '@/components/admin/TemplateTable';
@@ -41,9 +43,11 @@ import {
   useTemplatePreferences,
   useReplaceTemplatePreferences,
   useBulkRestoreTemplates,
+  useInlineUpdateTemplate,
 } from '@/hooks/useAdminTemplates';
 import { useWeeklyPattern, useUpdateWeeklyPattern, useAvailableTemplates } from '@/hooks/useWeeklyPattern';
-import { useDebounce } from '@/hooks/useDebounce';
+import { useDebounce, useDebouncedCallback } from '@/hooks/useDebounce';
+import { useCreateSnapshot } from '@/hooks/useBackup';
 import { useKeyboardShortcuts, getShortcutDisplay } from '@/hooks/useKeyboardShortcuts';
 import { useToast } from '@/contexts/ToastContext';
 import type {
@@ -54,6 +58,7 @@ import type {
   TemplateSort,
   BulkActionType,
   RotationPreferenceCreate,
+  TemplateUpdateRequest,
 } from '@/types/admin-templates';
 import type { WeeklyPatternGrid } from '@/types/weekly-pattern';
 import { ACTIVITY_TYPE_CONFIGS } from '@/types/admin-templates';
@@ -136,6 +141,70 @@ export default function AdminTemplatesPage() {
   const updatePattern = useUpdateWeeklyPattern();
   const replacePreferences = useReplaceTemplatePreferences();
   const bulkRestore = useBulkRestoreTemplates();
+  const inlineUpdate = useInlineUpdateTemplate();
+  const createSnapshot = useCreateSnapshot();
+
+  // Edit queue for auto-save
+  const [editQueue, setEditQueue] = useState<Map<string, Partial<TemplateUpdateRequest>>>(new Map());
+  const [inlineUpdatingId, setInlineUpdatingId] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Flush edit queue (debounced)
+  const flushEditQueue = useCallback(async () => {
+    if (editQueue.size === 0) return;
+
+    const entries = Array.from(editQueue.entries());
+    setEditQueue(new Map()); // Clear queue immediately
+    setHasUnsavedChanges(false);
+
+    for (const [templateId, updates] of entries) {
+      setInlineUpdatingId(templateId);
+      try {
+        await inlineUpdate.mutateAsync({
+          templateId,
+          field: Object.keys(updates)[0],
+          value: Object.values(updates)[0],
+        });
+      } catch (error) {
+        toast.error(`Failed to save changes: ${error}`);
+        // Re-queue on failure
+        setEditQueue((prev) => new Map(prev).set(templateId, updates));
+        setHasUnsavedChanges(true);
+      } finally {
+        setInlineUpdatingId(null);
+      }
+    }
+  }, [editQueue, inlineUpdate, toast]);
+
+  // Debounced flush - auto-save after 1.5s of no changes
+  const { debouncedCallback: debouncedFlush, flush: flushNow } = useDebouncedCallback(
+    flushEditQueue,
+    1500
+  );
+
+  // Queue an inline edit (auto-saves via debounce)
+  const handleInlineUpdate = useCallback(
+    async (templateId: string, updates: TemplateUpdateRequest) => {
+      setEditQueue((prev) => {
+        const newQueue = new Map(prev);
+        const existing = newQueue.get(templateId) || {};
+        newQueue.set(templateId, { ...existing, ...updates });
+        return newQueue;
+      });
+      setHasUnsavedChanges(true);
+      debouncedFlush();
+    },
+    [debouncedFlush]
+  );
+
+  // Flush on unmount or page navigation
+  useEffect(() => {
+    return () => {
+      if (editQueue.size > 0) {
+        flushNow();
+      }
+    };
+  }, [editQueue.size, flushNow]);
 
   // Derived data - uses debounced search for better performance
   const templates = useMemo(() => {
@@ -216,6 +285,13 @@ export default function AdminTemplatesPage() {
   const handleBulkDelete = useCallback(async () => {
     setPendingAction('delete');
     try {
+      // Create backup snapshot before bulk delete
+      await createSnapshot.mutateAsync({
+        table: 'rotation_templates',
+        reason: `Bulk delete of ${selectedIds.length} template(s)`,
+      });
+      toast.info('Backup created');
+
       await bulkDelete.mutateAsync(selectedIds);
       toast.success(`${selectedIds.length} template(s) deleted`);
       setSelectedIds([]);
@@ -224,7 +300,7 @@ export default function AdminTemplatesPage() {
     } finally {
       setPendingAction(null);
     }
-  }, [selectedIds, bulkDelete, toast]);
+  }, [selectedIds, bulkDelete, createSnapshot, toast]);
 
   const handleBulkUpdateActivityType = useCallback(
     async (activityType: ActivityType) => {
@@ -426,6 +502,22 @@ export default function AdminTemplatesPage() {
 
             {/* Actions */}
             <div className="flex items-center gap-3">
+              {/* Unsaved changes indicator */}
+              {hasUnsavedChanges && (
+                <button
+                  onClick={flushNow}
+                  disabled={inlineUpdate.isPending}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 border border-amber-500/50 text-amber-400 rounded-lg text-sm font-medium hover:bg-amber-500/30 transition-colors disabled:opacity-50"
+                  title="Save pending changes"
+                >
+                  {inlineUpdate.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  {editQueue.size} unsaved
+                </button>
+              )}
               <button
                 onClick={() => setShowShortcutsHint((prev) => !prev)}
                 className="p-2 text-slate-400 hover:text-white transition-colors"
@@ -566,6 +658,9 @@ export default function AdminTemplatesPage() {
             onEditPatterns={handleEditPatterns}
             onEditPreferences={handleEditPreferences}
             onEditWeeklyRequirements={handleEditWeeklyRequirements}
+            enableInlineEdit={true}
+            onInlineUpdate={handleInlineUpdate}
+            inlineUpdatingId={inlineUpdatingId}
           />
         )}
       </main>

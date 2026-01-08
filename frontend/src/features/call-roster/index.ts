@@ -88,6 +88,6 @@ export {
   SHIFT_LABELS,
   getRoleType,
   getPersonName,
-  isOnCallAssignment,
+  isOnCallTemplate,
   getShiftType,
 } from './types';

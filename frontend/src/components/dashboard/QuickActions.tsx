@@ -85,12 +85,12 @@ export function QuickActions() {
         </Link>
 
         <Link
-          href="/templates"
+          href="/activities"
           className="flex flex-col items-center justify-center p-4 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors group"
-          aria-label="Go to schedule templates page"
+          aria-label="Go to activities page"
         >
           <FileText className="w-6 h-6 text-amber-600 mb-2 group-hover:scale-110 transition-transform" aria-hidden="true" />
-          <span className="text-sm font-medium text-amber-800">View Templates</span>
+          <span className="text-sm font-medium text-amber-800">View Activities</span>
         </Link>
       </div>
 

@@ -50,7 +50,10 @@ class CallAssignmentController:
             call_type=call_type,
         )
         return CallAssignmentListResponse(
-            items=result["items"],
+            items=[
+                CallAssignmentResponse.model_validate(item)
+                for item in result["items"]
+            ],
             total=result["total"],
             skip=skip,
             limit=limit,
@@ -131,7 +134,9 @@ class CallAssignmentController:
             end_date=end_date,
         )
         return CallAssignmentListResponse(
-            items=assignments,
+            items=[
+                CallAssignmentResponse.model_validate(item) for item in assignments
+            ],
             total=len(assignments),
         )
 
@@ -144,7 +149,9 @@ class CallAssignmentController:
             end_date=on_date,
         )
         return CallAssignmentListResponse(
-            items=assignments,
+            items=[
+                CallAssignmentResponse.model_validate(item) for item in assignments
+            ],
             total=len(assignments),
         )
 

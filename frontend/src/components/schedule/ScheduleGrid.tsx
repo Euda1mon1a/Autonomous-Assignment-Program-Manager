@@ -29,6 +29,8 @@ import { EmptyState } from '@/components/EmptyState'
 interface ScheduleGridProps {
   startDate: Date
   endDate: Date
+  /** Optional set of person IDs to filter to. If empty/undefined, shows all people. */
+  personFilter?: Set<string>
 }
 
 interface ProcessedAssignment {
@@ -147,7 +149,7 @@ function useAssignmentsForRange(startDate: string, endDate: string) {
  * Main schedule grid component
  * Shows all people (grouped by PGY level) with their assignments for each day
  */
-export function ScheduleGrid({ startDate, endDate }: ScheduleGridProps) {
+export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridProps) {
   const startDateStr = format(startDate, 'yyyy-MM-dd')
   const endDateStr = format(endDate, 'yyyy-MM-dd')
 
@@ -226,9 +228,15 @@ export function ScheduleGrid({ startDate, endDate }: ScheduleGridProps) {
     return lookup
   }, [assignmentsData, blockMap, templateMap])
 
-  // Group people by PGY level
+  // Group people by PGY level (with optional filtering)
   const personGroups = useMemo((): PersonGroup[] => {
     if (!peopleData?.items) return []
+
+    // Apply person filter if provided and non-empty
+    const hasFilter = personFilter && personFilter.size > 0
+    const people = hasFilter
+      ? peopleData.items.filter((p) => personFilter.has(p.id))
+      : peopleData.items
 
     const pgy1: Person[] = []
     const pgy2: Person[] = []
@@ -236,7 +244,7 @@ export function ScheduleGrid({ startDate, endDate }: ScheduleGridProps) {
     const pgyOther: Person[] = []
     const faculty: Person[] = []
 
-    peopleData.items.forEach((person) => {
+    people.forEach((person) => {
       if (person.type === 'faculty') {
         faculty.push(person)
       } else if (person.pgy_level === PGY_LEVEL_1) {
@@ -266,7 +274,7 @@ export function ScheduleGrid({ startDate, endDate }: ScheduleGridProps) {
     if (faculty.length > 0) groups.push({ label: 'Faculty', people: faculty })
 
     return groups
-  }, [peopleData])
+  }, [peopleData, personFilter])
 
   // Loading state
   const isLoading = blocksLoading || assignmentsLoading || peopleLoading || templatesLoading
