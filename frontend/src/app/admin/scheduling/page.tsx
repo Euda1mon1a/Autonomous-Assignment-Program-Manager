@@ -1096,6 +1096,38 @@ function HistoryPanel({
     return true;
   });
 
+  const handleExportHistory = () => {
+    if (!filteredRuns.length) return;
+
+    // Create CSV content
+    const headers = ['Run ID', 'Timestamp', 'Algorithm', 'Status', 'Coverage %', 'Violations', 'Duration (ms)'];
+    const rows = filteredRuns.map((run) => [
+      run.id,
+      new Date(run.timestamp).toISOString(),
+      run.algorithm,
+      run.status,
+      run.coverage?.toFixed(2) ?? 'N/A',
+      run.violations ?? 0,
+      run.duration ?? 'N/A',
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
+    ].join('\n');
+
+    // Download as file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `scheduling-history-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       {/* Filters & Actions */}
@@ -1139,7 +1171,9 @@ function HistoryPanel({
         </button>
 
         <button
-          className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg text-sm font-medium transition-all"
+          onClick={handleExportHistory}
+          disabled={!filteredRuns.length}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Download className="w-4 h-4" />
           Export

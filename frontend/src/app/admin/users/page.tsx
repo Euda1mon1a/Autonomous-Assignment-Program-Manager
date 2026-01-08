@@ -697,6 +697,34 @@ function ActivityPanel() {
     pageSize: 20,
   });
 
+  const handleExportActivity = () => {
+    if (!data?.items.length) return;
+
+    // Create CSV content
+    const headers = ['Timestamp', 'Action', 'User ID'];
+    const rows = data.items.map((activity) => [
+      new Date(activity.timestamp).toISOString(),
+      activity.action,
+      activity.userId,
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
+    ].join('\n');
+
+    // Download as file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `user-activity-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center p-12">
@@ -721,7 +749,11 @@ function ActivityPanel() {
           <h2 className="text-lg font-semibold text-white">Recent Activity</h2>
           <p className="text-sm text-slate-400">User management activity log</p>
         </div>
-        <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-300 hover:text-white border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors">
+        <button
+          onClick={handleExportActivity}
+          disabled={!data?.items.length}
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-300 hover:text-white border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           <Download className="w-4 h-4" />
           Export
         </button>

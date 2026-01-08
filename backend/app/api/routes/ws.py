@@ -19,7 +19,11 @@ async def get_websocket_user(
     websocket: WebSocket, token: str | None = Query(None), db=Depends(get_db)
 ) -> User | None:
     """
-    Authenticate WebSocket connection via token query parameter.
+    Authenticate WebSocket connection via token query parameter or cookie.
+
+    Supports two authentication methods:
+    1. Token in query parameter: ws://server/api/v1/ws?token=<JWT>
+    2. Token in httpOnly cookie: access_token cookie (fallback)
 
     Args:
         websocket: WebSocket connection
@@ -29,8 +33,19 @@ async def get_websocket_user(
     Returns:
         User if authenticated, None otherwise
     """
+    # Try query parameter first
     if not token:
-        logger.warning("WebSocket connection attempt without token")
+        # Fallback: try to extract from cookies header
+        cookies_header = websocket.headers.get("cookie", "")
+        for cookie in cookies_header.split(";"):
+            cookie = cookie.strip()
+            if cookie.startswith("access_token="):
+                token = cookie.split("=", 1)[1]
+                logger.debug("WebSocket auth: token extracted from cookie")
+                break
+
+    if not token:
+        logger.warning("WebSocket connection attempt without token (no query param or cookie)")
         return None
 
     token_data = verify_token(token, db)

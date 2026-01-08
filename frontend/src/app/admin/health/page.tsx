@@ -746,7 +746,13 @@ function MetricsPanel({ health }: { health: SystemHealthSummary }) {
 // Alerts Panel
 // ============================================================================
 
-function AlertsPanel({ health }: { health: SystemHealthSummary }) {
+function AlertsPanel({
+  health,
+  onAcknowledge,
+}: {
+  health: SystemHealthSummary;
+  onAcknowledge: (alertId: string) => void;
+}) {
   const [filter, setFilter] = useState<'all' | 'active' | 'acknowledged'>('all');
 
   const filteredAlerts = health.activeAlerts.filter((alert) => {
@@ -812,7 +818,10 @@ function AlertsPanel({ health }: { health: SystemHealthSummary }) {
                     {alert.status}
                   </span>
                   {alert.status === 'active' && (
-                    <button className="px-3 py-1 text-xs font-medium bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors">
+                    <button
+                      onClick={() => onAcknowledge(alert.id)}
+                      className="px-3 py-1 text-xs font-medium bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+                    >
                       Acknowledge
                     </button>
                   )}
@@ -832,7 +841,7 @@ function AlertsPanel({ health }: { health: SystemHealthSummary }) {
 
 export default function AdminHealthPage() {
   const [activeTab, setActiveTab] = useState<HealthDashboardTab>('overview');
-  const [health] = useState<SystemHealthSummary>(MOCK_HEALTH);
+  const [health, setHealth] = useState<SystemHealthSummary>(MOCK_HEALTH);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date());
 
@@ -842,6 +851,22 @@ export default function AdminHealthPage() {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setLastRefresh(new Date());
     setIsRefreshing(false);
+  };
+
+  const handleAcknowledgeAlert = (alertId: string) => {
+    setHealth((prev) => ({
+      ...prev,
+      activeAlerts: prev.activeAlerts.map((alert) =>
+        alert.id === alertId
+          ? {
+              ...alert,
+              status: 'acknowledged' as const,
+              acknowledgedAt: new Date().toISOString(),
+              acknowledgedBy: 'Current User', // TODO: Get from auth context
+            }
+          : alert
+      ),
+    }));
   };
 
   // Auto-refresh every 30 seconds
@@ -920,7 +945,7 @@ export default function AdminHealthPage() {
         {activeTab === 'overview' && <OverviewPanel health={health} />}
         {activeTab === 'services' && <ServicesPanel health={health} />}
         {activeTab === 'metrics' && <MetricsPanel health={health} />}
-        {activeTab === 'alerts' && <AlertsPanel health={health} />}
+        {activeTab === 'alerts' && <AlertsPanel health={health} onAcknowledge={handleAcknowledgeAlert} />}
       </main>
     </div>
   );
