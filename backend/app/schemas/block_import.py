@@ -93,7 +93,7 @@ class BlockParseResponse(BaseModel):
                     ],
                     "R2": [
                         {
-                            "name": "Connolly, Laura",
+                            "name": "Smith, Jane",
                             "template": "R2",
                             "role": "PGY 3",
                             "row": 19,

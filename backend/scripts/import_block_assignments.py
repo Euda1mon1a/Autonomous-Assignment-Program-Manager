@@ -10,14 +10,14 @@ Usage:
 
 CSV Format:
     block_number,rotation_abbrev,resident_name
-    10,HILO,Connolly
-    10,FMC,Mayell
-    11,FMIT,Petrie
+    10,HILO,Smith
+    10,FMC,Jones
+    11,FMIT,Williams
 
 Or with full names:
     block_number,rotation_abbrev,resident_name
-    10,HILO,"Connolly, Laura"
-    10,FMC,"Mayell, Cameron"
+    10,HILO,"Smith, Jane"
+    10,FMC,"Jones, John"
 """
 import argparse
 import csv
