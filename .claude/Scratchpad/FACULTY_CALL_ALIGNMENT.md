@@ -1,6 +1,6 @@
-# Session 068-071 - Admin UI Improvements
+# Session 068-072 - Admin UI + Solver Analysis
 
-**Branch:** `main` | **Date:** 2026-01-07
+**Branch:** `session/067-antigravity-faculty-call` | **Date:** 2026-01-07/08
 
 ---
 
@@ -115,3 +115,84 @@ Plan file: `.claude/plans/merry-hatching-torvalds.md`
 **Without this data, solver assigns anyone to anything.**
 
 **Note:** 5 min testing → longer schedule, but solver ran in seconds (efficient once constraints defined)
+
+---
+
+## Session 072 - Handoff Notes
+
+### Commits Made
+1. `b353d414` - feat(admin): Add bulk people editing and credential matrix pages
+2. `8b76ae53` - fix(backend): Add settings export to config.py + admin docs
+
+### Backend Fix Applied
+- **Issue:** Backend crash - `ImportError: cannot import name 'settings'`
+- **Fix:** Added `settings = get_settings()` to `backend/app/core/config.py:553`
+- **Result:** Backend healthy, auth working
+
+### Backup Created
+- Location: `~/backups/scheduler-20260107/`
+- Contents: `repo.bundle` (21MB), `db.sql.gz` (725KB), `.env.backup`
+
+### GUI Testing (Comet)
+- All pages tested and working ✅
+- Admin dark panels working ✅
+- Schedule generation working (greedy: 20 assignments, 0 violations)
+
+### Key Solver Findings
+
+**Faculty Call Generation:**
+| Solver | Generates Call? |
+|--------|-----------------|
+| Greedy | ❌ NO |
+| CP-SAT | ✅ YES |
+| PuLP | ✅ YES |
+| Hybrid | ✅ YES |
+
+**Empty Constraint Tables (Critical Gap):**
+- `block_assignments` - 0 rows (resident → rotation per block)
+- `rotation_halfday_requirements` - 0 rows (half-days per rotation)
+- `rotation_preferences` - 0 rows
+- `resident_weekly_requirements` - 0 rows
+- `call_assignments` - 0 rows
+
+**User provided Block 10 sample data:**
+```
+Hilo        R3 PGY3  Connolly, Laura
+NF/MS:Endo  R3 PGY3  Hernandez, Christian
+FMC         R3 PGY3  Mayell, Cameron
+FMIT 2      R3 PGY3  Petrie, William
+NEURO/NF    R3 PGY3  You, Jae
+FMIT 2      R2 PGY2  Cataquiz, Felipe
+SM          R2 PGY2  Cook, Scott
+POCUS       R2 PGY2  Gigon, Alaine
+L&D NF      R2 PGY2  Headid, Ronald
+Surg Exp    R2 PGY2  Maher, Nicholas
+Gyn Clinic  R2 PGY2  Thomas, Devin
+FMC         R1 PGY1  Sawyer, Tessa
+Peds Ward   R1 PGY1  Wilhelm, Clara
+Kapi L&D    R1 PGY1  Travis, Colin
+Peds NF     R1 PGY1  Byrnes, Katherine
+PROC        R1 PGY1  Sloss, Meleighe
+IM          R1 PGY1  Monsivais, Joshua
+```
+
+### Next Steps (Priority Order)
+1. **Add call to greedy solver** OR investigate CP-SAT failures
+2. **Populate `block_assignments`** with resident rotation data
+3. **Create import script** for rotation data from user's format
+4. **Add `rotation_halfday_requirements`** to constrain solver
+
+### Scheduler Order of Operations (Summary)
+```
+1. Load preserved (FMIT, NF, absences, off-site)
+2. Build availability matrix
+3. Load residents, faculty, templates
+4. Run solver (greedy/cp_sat/pulp/hybrid)
+5. Delete old, create new assignments
+6. Assign faculty supervision
+7. Validate ACGME, commit
+```
+
+### Branch Status
+- `session/067-antigravity-faculty-call` - 5 commits ahead of origin
+- Ready to push or continue work
