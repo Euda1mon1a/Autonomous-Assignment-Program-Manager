@@ -16,6 +16,9 @@ export * from './chat';
 // Re-export weekly pattern types
 export * from './weekly-pattern';
 
+// Re-export block assignment import types
+export * from './block-assignment-import';
+
 // Import specific types for use in view-specific interfaces
 import {
   UUID,

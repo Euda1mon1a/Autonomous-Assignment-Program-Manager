@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from app.api.routes import (
     absences,
     academic_blocks,
+    admin_block_assignments,
     admin_users,
     analytics,
     assignments,
@@ -126,6 +127,11 @@ api_router.include_router(
 api_router.include_router(oauth2.router, prefix="/oauth2", tags=["oauth2"])
 api_router.include_router(
     admin_users.router, prefix="/admin/users", tags=["admin-users"]
+)
+api_router.include_router(
+    admin_block_assignments.router,
+    prefix="/admin/block-assignments",
+    tags=["admin-block-assignments"],
 )
 api_router.include_router(me_dashboard.router, prefix="/me", tags=["dashboard"])
 api_router.include_router(export.router, prefix="/export", tags=["export"])
