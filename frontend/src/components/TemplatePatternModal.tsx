@@ -225,6 +225,7 @@ export function TemplatePatternModal({
               onCancel={handleCancel}
               showSelector={true}
               readOnly={false}
+              showWeekTabs={true}
             />
           )}
         </div>

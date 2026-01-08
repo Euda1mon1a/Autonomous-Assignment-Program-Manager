@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Loader2,
   ChevronDown,
+  Calendar,
 } from 'lucide-react';
 import type {
   ActivityType,
@@ -38,6 +39,8 @@ export interface BulkActionsToolbarProps {
   onBulkUpdateSupervision: (required: boolean) => void;
   /** Callback for bulk max residents update */
   onBulkUpdateMaxResidents: (maxResidents: number) => void;
+  /** Callback for bulk pattern editing */
+  onBulkEditPatterns?: () => void;
   /** Whether any bulk action is pending */
   isPending?: boolean;
   /** Current action being performed */
@@ -154,6 +157,7 @@ export function BulkActionsToolbar({
   onBulkUpdateActivityType,
   onBulkUpdateSupervision,
   onBulkUpdateMaxResidents,
+  onBulkEditPatterns,
   isPending = false,
   pendingAction = null,
 }: BulkActionsToolbarProps) {
@@ -260,6 +264,17 @@ export function BulkActionsToolbar({
             <Edit2 className="w-4 h-4" />
             Max Residents
           </button>
+
+          {/* Edit Patterns button */}
+          {onBulkEditPatterns && (
+            <button
+              onClick={onBulkEditPatterns}
+              className="flex items-center gap-1.5 px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              <Calendar className="w-4 h-4" />
+              Edit Patterns
+            </button>
+          )}
 
           <div className="w-px h-8 bg-slate-700" />
 

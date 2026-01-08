@@ -54,6 +54,8 @@ export type { ArchivedTemplatesDrawerProps } from './ArchivedTemplatesDrawer';
 export { BulkPatternModal } from './BulkPatternModal';
 export type { BulkPatternModalProps, SchedulePattern } from './BulkPatternModal';
 
+export { BulkWeeklyPatternModal } from './BulkWeeklyPatternModal';
+
 export { BulkPreferenceModal } from './BulkPreferenceModal';
 export type { BulkPreferenceModalProps } from './BulkPreferenceModal';
 

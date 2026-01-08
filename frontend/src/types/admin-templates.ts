@@ -104,6 +104,8 @@ export interface RotationTemplate {
   max_supervision_ratio: number | null;
   /** True for half-block rotations (14 days instead of 28) */
   is_block_half_rotation?: boolean;
+  /** True if rotation includes weekend work (Night Float, FMIT, etc.) */
+  includes_weekend_work?: boolean;
   created_at: string;
   is_archived?: boolean;
   archived_at?: string | null;
@@ -147,6 +149,47 @@ export interface RotationPreferenceCreate {
   config_json?: Record<string, unknown>;
   is_active?: boolean;
   description?: string | null;
+}
+
+// ============================================================================
+// Half-Day Requirement Types
+// ============================================================================
+
+/**
+ * Half-day activity distribution requirements for a rotation template.
+ * Defines how many half-days should be allocated to each activity type per block.
+ */
+export interface HalfDayRequirement {
+  id: string;
+  rotation_template_id: string;
+  /** Number of FM clinic half-days per block (default: 4) */
+  fm_clinic_halfdays: number;
+  /** Number of specialty half-days per block (default: 5) */
+  specialty_halfdays: number;
+  /** Name of the specialty (e.g., "Neurology", "Dermatology") */
+  specialty_name: string | null;
+  /** Number of academic/lecture half-days per block (default: 1) */
+  academics_halfdays: number;
+  /** Number of elective/buffer half-days per block (default: 0) */
+  elective_halfdays: number;
+  /** Minimum consecutive specialty days to batch together */
+  min_consecutive_specialty: number;
+  /** Prefer FM + specialty on same day when possible */
+  prefer_combined_clinic_days: boolean;
+  /** Calculated total half-days */
+  total_halfdays: number;
+  /** True if total equals standard block (10 half-days) */
+  is_balanced: boolean;
+}
+
+export interface HalfDayRequirementCreate {
+  fm_clinic_halfdays?: number;
+  specialty_halfdays?: number;
+  specialty_name?: string | null;
+  academics_halfdays?: number;
+  elective_halfdays?: number;
+  min_consecutive_specialty?: number;
+  prefer_combined_clinic_days?: boolean;
 }
 
 // ============================================================================

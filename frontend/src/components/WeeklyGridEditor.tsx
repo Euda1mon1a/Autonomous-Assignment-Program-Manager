@@ -12,15 +12,16 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
-import { Loader2, Lock, X } from 'lucide-react';
+import { Loader2, Lock, X, FileText } from 'lucide-react';
 import type {
   WeeklyPatternGrid,
   WeeklyPatternSlot,
   DayOfWeek,
   WeeklyPatternTimeOfDay,
   RotationTemplateRef,
+  WeekNumber,
 } from '@/types/weekly-pattern';
-import { DAY_ABBREVIATIONS, updateSlot } from '@/types/weekly-pattern';
+import { DAY_ABBREVIATIONS, DAY_NAMES, updateSlot, toggleSlotProtected, updateSlotDetails, getSlot, hasWeekSpecificPatterns } from '@/types/weekly-pattern';
 
 // ============================================================================
 // Types
@@ -47,6 +48,8 @@ interface WeeklyGridEditorProps {
   showSelector?: boolean;
   /** Read-only mode */
   readOnly?: boolean;
+  /** Whether to show week tabs for week-specific patterns */
+  showWeekTabs?: boolean;
 }
 
 interface SlotCellProps {
@@ -57,6 +60,7 @@ interface SlotCellProps {
   readOnly?: boolean;
   onClick: () => void;
   onClear: () => void;
+  onToggleProtected: () => void;
 }
 
 // ============================================================================
@@ -108,28 +112,48 @@ function SlotCell({
   readOnly = false,
   onClick,
   onClear,
+  onToggleProtected,
 }: SlotCellProps) {
   const bgColor = template?.backgroundColor ?? 'bg-gray-50';
   const textColor = template?.fontColor ?? 'text-gray-400';
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (readOnly) return;
+    // Shift+click toggles protection
+    if (e.shiftKey) {
+      onToggleProtected();
+      return;
+    }
+    // Normal click for slot selection (if not protected)
+    if (!isProtected) {
+      onClick();
+    }
+  };
 
   return (
     <div
       className={`
         relative h-12 border rounded cursor-pointer transition-all
         ${isSelected ? 'ring-2 ring-blue-500' : ''}
-        ${isProtected ? 'cursor-not-allowed opacity-75' : ''}
+        ${isProtected ? 'border-amber-400 bg-amber-50/50' : ''}
         ${readOnly ? 'cursor-default' : 'hover:shadow-md'}
         ${bgColor}
       `}
-      onClick={isProtected || readOnly ? undefined : onClick}
+      onClick={handleClick}
       role="button"
-      tabIndex={isProtected || readOnly ? -1 : 0}
+      tabIndex={readOnly ? -1 : 0}
       aria-label={`${DAY_ABBREVIATIONS[slot.dayOfWeek]} ${slot.timeOfDay}: ${
         template?.name ?? 'Empty'
-      }`}
+      }${isProtected ? ' (protected)' : ''}`}
+      title={readOnly ? undefined : 'Shift+click to toggle protection'}
       onKeyDown={(e) => {
+        if (readOnly) return;
         if (e.key === 'Enter' || e.key === ' ') {
-          if (!isProtected && !readOnly) onClick();
+          if (e.shiftKey) {
+            onToggleProtected();
+          } else if (!isProtected) {
+            onClick();
+          }
         }
       }}
     >
@@ -146,7 +170,12 @@ function SlotCell({
 
       {/* Protected indicator */}
       {isProtected && (
-        <Lock className="absolute top-0.5 right-0.5 w-3 h-3 text-gray-400" />
+        <Lock className="absolute top-0.5 right-0.5 w-3 h-3 text-amber-500" />
+      )}
+
+      {/* Notes indicator */}
+      {slot.notes && (
+        <FileText className="absolute bottom-0.5 right-0.5 w-3 h-3 text-blue-400" />
       )}
 
       {/* Clear button (only on hover if has template) */}
@@ -164,6 +193,152 @@ function SlotCell({
           <X className="w-3 h-3" />
         </button>
       )}
+    </div>
+  );
+}
+
+/** Activity type options for slot override */
+const ACTIVITY_TYPE_OPTIONS = [
+  { value: '', label: 'Use template default' },
+  { value: 'fm_clinic', label: 'FM Clinic' },
+  { value: 'specialty', label: 'Specialty Clinic' },
+  { value: 'inpatient', label: 'Inpatient' },
+  { value: 'conference', label: 'Conference' },
+  { value: 'procedure', label: 'Procedure' },
+  { value: 'elective', label: 'Elective' },
+  { value: 'call', label: 'Call' },
+  { value: 'off', label: 'Off' },
+];
+
+/**
+ * Slot details panel for editing notes and activity type.
+ */
+function SlotDetailsPanel({
+  slot,
+  dayOfWeek,
+  timeOfDay,
+  templateName,
+  onUpdateDetails,
+  onClose,
+}: {
+  slot: WeeklyPatternSlot;
+  dayOfWeek: DayOfWeek;
+  timeOfDay: WeeklyPatternTimeOfDay;
+  templateName: string;
+  onUpdateDetails: (updates: { notes?: string | null; activityType?: string | null }) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="p-3 border rounded-lg bg-slate-50 space-y-3">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-medium text-slate-700">
+          {DAY_NAMES[dayOfWeek]} {timeOfDay} - {templateName || 'Empty slot'}
+        </h4>
+        <button
+          onClick={onClose}
+          className="p-1 hover:bg-slate-200 rounded"
+          aria-label="Close details"
+        >
+          <X className="w-4 h-4 text-slate-500" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {/* Activity Type Override */}
+        <div>
+          <label className="block text-xs font-medium text-slate-600 mb-1">
+            Activity Type Override
+          </label>
+          <select
+            value={slot.activityType || ''}
+            onChange={(e) => onUpdateDetails({ activityType: e.target.value || null })}
+            className="w-full text-sm border rounded px-2 py-1.5 focus:ring-blue-500 focus:border-blue-500"
+          >
+            {ACTIVITY_TYPE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Notes */}
+        <div>
+          <label className="block text-xs font-medium text-slate-600 mb-1">
+            Notes
+          </label>
+          <input
+            type="text"
+            value={slot.notes || ''}
+            onChange={(e) => onUpdateDetails({ notes: e.target.value || null })}
+            placeholder="e.g., Building B, Room 201"
+            className="w-full text-sm border rounded px-2 py-1.5 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+      </div>
+
+      <p className="text-xs text-slate-500">
+        Shift+click slot to toggle protection • Click another slot to edit it
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Week tabs for switching between weeks in week-specific mode.
+ */
+function WeekTabs({
+  selectedWeek,
+  onWeekChange,
+  samePatternAllWeeks,
+  onToggleSamePattern,
+}: {
+  selectedWeek: WeekNumber;
+  onWeekChange: (week: WeekNumber) => void;
+  samePatternAllWeeks: boolean;
+  onToggleSamePattern: () => void;
+}) {
+  const weeks: Array<{ value: WeekNumber; label: string }> = [
+    { value: null, label: 'All Weeks' },
+    { value: 1, label: 'Week 1' },
+    { value: 2, label: 'Week 2' },
+    { value: 3, label: 'Week 3' },
+    { value: 4, label: 'Week 4' },
+  ];
+
+  return (
+    <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200">
+      <div className="flex items-center gap-1">
+        {weeks.map((week) => (
+          <button
+            key={week.value ?? 'all'}
+            type="button"
+            onClick={() => onWeekChange(week.value)}
+            disabled={samePatternAllWeeks && week.value !== null}
+            className={`
+              px-2 py-1 text-xs font-medium rounded transition-colors
+              ${selectedWeek === week.value
+                ? 'bg-blue-100 text-blue-700'
+                : samePatternAllWeeks && week.value !== null
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }
+            `}
+          >
+            {week.label}
+          </button>
+        ))}
+      </div>
+
+      <label className="flex items-center gap-2 text-xs">
+        <input
+          type="checkbox"
+          checked={samePatternAllWeeks}
+          onChange={onToggleSamePattern}
+          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+        />
+        <span className="text-gray-600">Same all weeks</span>
+      </label>
     </div>
   );
 }
@@ -227,6 +402,7 @@ export function WeeklyGridEditor({
   onCancel,
   showSelector = true,
   readOnly = false,
+  showWeekTabs = false,
 }: WeeklyGridEditorProps) {
   // Selected slot for editing
   const [selectedSlot, setSelectedSlot] = useState<{
@@ -238,6 +414,26 @@ export function WeeklyGridEditor({
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
     null
   );
+
+  // Week-specific pattern state
+  const [selectedWeek, setSelectedWeek] = useState<WeekNumber>(null);
+  const [samePatternAllWeeks, setSamePatternAllWeeks] = useState(
+    () => pattern.samePatternAllWeeks ?? !hasWeekSpecificPatterns(pattern)
+  );
+
+  // Handle toggle of same pattern mode
+  const handleToggleSamePattern = useCallback(() => {
+    setSamePatternAllWeeks((prev) => {
+      const newValue = !prev;
+      if (newValue) {
+        // Switching to same pattern - select "All Weeks"
+        setSelectedWeek(null);
+      }
+      // Update the pattern to reflect the change
+      onChange({ ...pattern, samePatternAllWeeks: newValue });
+      return newValue;
+    });
+  }, [pattern, onChange]);
 
   // Track if there are unsaved changes
   const hasChanges = useMemo(() => {
@@ -270,6 +466,24 @@ export function WeeklyGridEditor({
   const handleClearSlot = useCallback(
     (day: DayOfWeek, time: WeeklyPatternTimeOfDay) => {
       const newPattern = updateSlot(pattern, day, time, null);
+      onChange(newPattern);
+    },
+    [pattern, onChange]
+  );
+
+  // Handle toggling protected status
+  const handleToggleProtected = useCallback(
+    (day: DayOfWeek, time: WeeklyPatternTimeOfDay) => {
+      const newPattern = toggleSlotProtected(pattern, day, time);
+      onChange(newPattern);
+    },
+    [pattern, onChange]
+  );
+
+  // Handle updating slot details (notes, activity type)
+  const handleUpdateSlotDetails = useCallback(
+    (day: DayOfWeek, time: WeeklyPatternTimeOfDay, updates: { notes?: string | null; activityType?: string | null }) => {
+      const newPattern = updateSlotDetails(pattern, day, time, updates);
       onChange(newPattern);
     },
     [pattern, onChange]
@@ -314,6 +528,16 @@ export function WeeklyGridEditor({
         />
       )}
 
+      {/* Week Tabs */}
+      {showWeekTabs && !readOnly && (
+        <WeekTabs
+          selectedWeek={selectedWeek}
+          onWeekChange={setSelectedWeek}
+          samePatternAllWeeks={samePatternAllWeeks}
+          onToggleSamePattern={handleToggleSamePattern}
+        />
+      )}
+
       {/* Grid */}
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
@@ -353,9 +577,11 @@ export function WeeklyGridEditor({
                         slot={slot}
                         template={template}
                         isSelected={isSelected}
+                        isProtected={slot.isProtected}
                         readOnly={readOnly}
                         onClick={() => handleSlotClick(day, time)}
                         onClear={() => handleClearSlot(day, time)}
+                        onToggleProtected={() => handleToggleProtected(day, time)}
                       />
                     </td>
                   );
@@ -365,6 +591,26 @@ export function WeeklyGridEditor({
           </tbody>
         </table>
       </div>
+
+      {/* Slot Details Panel - shown when slot is selected */}
+      {selectedSlot && !readOnly && (() => {
+        const selectedSlotData = getSlot(pattern, selectedSlot.day, selectedSlot.time);
+        const selectedTemplate = selectedSlotData
+          ? findTemplate(templates, selectedSlotData.rotationTemplateId)
+          : null;
+        return selectedSlotData ? (
+          <SlotDetailsPanel
+            slot={selectedSlotData}
+            dayOfWeek={selectedSlot.day}
+            timeOfDay={selectedSlot.time}
+            templateName={selectedTemplate?.name || ''}
+            onUpdateDetails={(updates) =>
+              handleUpdateSlotDetails(selectedSlot.day, selectedSlot.time, updates)
+            }
+            onClose={() => setSelectedSlot(null)}
+          />
+        ) : null;
+      })()}
 
       {/* Action Buttons */}
       {!readOnly && (onSave || onCancel) && (
