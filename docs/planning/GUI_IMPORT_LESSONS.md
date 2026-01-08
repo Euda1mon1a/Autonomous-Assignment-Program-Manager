@@ -16,7 +16,7 @@ Successfully imported 221 block assignments (17 residents × 13 blocks) for AY 2
 - **UTF-8 encoding**: Special characters in names need proper encoding
 
 ### Resident Name Matching
-- **Fuzzy matching by last name works well**: "Sawyer" matches "Tessa Sawyer"
+- **Fuzzy matching by last name works well**: "Smith" matches "Jane Smith"
 - **Gotcha**: Multiple residents with same last name would conflict
 - **GUI should**: Show matched full name for user verification
 
