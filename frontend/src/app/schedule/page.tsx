@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { startOfWeek, addDays, format, startOfMonth, endOfMonth, eachDayOfInterval, parseISO } from 'date-fns'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Upload, Download } from 'lucide-react'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { BlockNavigation } from '@/components/schedule/BlockNavigation'
@@ -20,6 +20,7 @@ import { BlockAssignmentExportModal } from '@/components/admin/BlockAssignmentEx
 import { get } from '@/lib/api'
 import { usePeople, useRotationTemplates, useBlockRanges, ListResponse } from '@/lib/hooks'
 import { useRole } from '@/hooks/useAuth'
+import { useScheduleWebSocket } from '@/hooks/useWebSocket'
 import type { Assignment, Block, RotationTemplate } from '@/types/api'
 
 /**
@@ -75,6 +76,19 @@ export default function SchedulePage() {
   // Role check for admin/coordinator features
   const { isAdmin, isCoordinator } = useRole()
   const canManageAssignments = isAdmin || isCoordinator
+
+  // WebSocket for live updates - invalidate queries when schedule changes
+  const queryClient = useQueryClient()
+  useScheduleWebSocket(undefined, {
+    onMessage: (event) => {
+      if (event.event_type === 'schedule_updated' || event.event_type === 'assignment_changed') {
+        // Invalidate all schedule-related queries to trigger refetch
+        queryClient.invalidateQueries({ queryKey: ['blocks'] })
+        queryClient.invalidateQueries({ queryKey: ['assignments'] })
+        queryClient.invalidateQueries({ queryKey: ['block-assignments'] })
+      }
+    },
+  })
 
   // Fetch block ranges from API to get actual block boundaries
   const { data: blockRanges } = useBlockRanges()
