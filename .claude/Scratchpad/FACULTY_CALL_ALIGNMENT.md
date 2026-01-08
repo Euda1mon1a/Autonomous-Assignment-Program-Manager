@@ -70,3 +70,48 @@ Plan file: `.claude/plans/merry-hatching-torvalds.md`
 ## Test Credentials
 - Username: `admin`
 - Password: `admin123`
+
+---
+
+## Solver Improvement Notes (Session 072)
+
+**Testing Results:**
+| Algorithm | Status | Blocks | Violations | Runtime |
+|-----------|--------|--------|------------|---------|
+| greedy | success | 20 | 0 | 0.10s |
+| cp_sat | failed/partial | 0-32 | 57 | 0.18-1.72s |
+| hybrid | partial | 232 | 32 | 2.39s |
+
+**Issues Identified:**
+1. **Rotation template constraints not enforced** - Solver doesn't factor in:
+   - `max_residents` (all NULL in DB)
+   - `requires_specialty` (all NULL)
+   - `requires_procedure_credential` (all false)
+   - PGY level eligibility (not in schema)
+
+2. **Missing constraint data** - Templates need populated:
+   - Max residents per template per block
+   - Specialty/credential requirements
+   - PGY level restrictions
+
+3. **Solver progression** - Greedy fast but limited; Hybrid best coverage but violations
+
+**TODO:** Add template constraints as solver constraints, not just assignment targets
+
+**Critical Finding - Empty Constraint Tables:**
+| Table | Purpose | Rows |
+|-------|---------|------|
+| `rotation_halfday_requirements` | FM clinic/specialty/academics per rotation | 0 |
+| `block_assignments` | Resident → Rotation per block | 0 |
+| `rotation_preferences` | Additional constraints | 0 |
+| `resident_weekly_requirements` | Weekly limits | 0 |
+
+**Schema exists but needs data population:**
+- `rotation_halfday_requirements.fm_clinic_halfdays` - how many FM clinic half-days
+- `rotation_halfday_requirements.specialty_halfdays` - how many specialty half-days
+- `rotation_halfday_requirements.specialty_name` - which specialty (Sports Med, OB, etc.)
+- `block_assignments` - links resident to rotation for each block
+
+**Without this data, solver assigns anyone to anything.**
+
+**Note:** 5 min testing → longer schedule, but solver ran in seconds (efficient once constraints defined)

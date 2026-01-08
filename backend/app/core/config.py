@@ -546,3 +546,8 @@ def get_shadow_config():
         health_check_interval=settings.SHADOW_HEALTH_CHECK_INTERVAL,
         metrics_retention_hours=settings.SHADOW_METRICS_RETENTION_HOURS,
     )
+
+
+# Module-level settings instance for backward compatibility
+# Prefer get_settings() for new code to ensure proper caching
+settings = get_settings()
