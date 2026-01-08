@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = "20260107_add_week_num"
+revision = "20260107_add_week_num_weekly_patterns"
 down_revision = "20260105_add_import_staged_absences"
 branch_labels = None
 depends_on = None

@@ -37,7 +37,7 @@ def upgrade() -> None:
     op.execute("""
         UPDATE absences a
         SET is_away_from_program = CASE
-            WHEN p.role = 'faculty' THEN FALSE
+            WHEN p.type = 'faculty' THEN FALSE
             ELSE TRUE
         END
         FROM people p
