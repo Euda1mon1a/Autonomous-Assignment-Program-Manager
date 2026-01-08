@@ -211,25 +211,26 @@ Plan file: `.claude/plans/merry-hatching-torvalds.md`
 - `resident_weekly_requirements` - 0 rows
 - `call_assignments` - 0 rows
 
-**User provided Block 10 sample data:**
+**Block 10 sample data format (names redacted):**
 ```
-Hilo        R3 PGY3  Connolly, Laura
-NF/MS:Endo  R3 PGY3  Hernandez, Christian
-FMC         R3 PGY3  Mayell, Cameron
-FMIT 2      R3 PGY3  Petrie, William
-NEURO/NF    R3 PGY3  You, Jae
-FMIT 2      R2 PGY2  Cataquiz, Felipe
-SM          R2 PGY2  Cook, Scott
-POCUS       R2 PGY2  Gigon, Alaine
-L&D NF      R2 PGY2  Headid, Ronald
-Surg Exp    R2 PGY2  Maher, Nicholas
-Gyn Clinic  R2 PGY2  Thomas, Devin
-FMC         R1 PGY1  Sawyer, Tessa
-Peds Ward   R1 PGY1  Wilhelm, Clara
-Kapi L&D    R1 PGY1  Travis, Colin
-Peds NF     R1 PGY1  Byrnes, Katherine
-PROC        R1 PGY1  Sloss, Meleighe
-IM          R1 PGY1  Monsivais, Joshua
+Rotation    Level    Resident
+Hilo        R3 PGY3  [Resident_01]
+NF/MS:Endo  R3 PGY3  [Resident_02]
+FMC         R3 PGY3  [Resident_03]
+FMIT 2      R3 PGY3  [Resident_04]
+NEURO/NF    R3 PGY3  [Resident_05]
+FMIT 2      R2 PGY2  [Resident_06]
+SM          R2 PGY2  [Resident_07]
+POCUS       R2 PGY2  [Resident_08]
+L&D NF      R2 PGY2  [Resident_09]
+Surg Exp    R2 PGY2  [Resident_10]
+Gyn Clinic  R2 PGY2  [Resident_11]
+FMC         R1 PGY1  [Resident_12]
+Peds Ward   R1 PGY1  [Resident_13]
+Kapi L&D    R1 PGY1  [Resident_14]
+Peds NF     R1 PGY1  [Resident_15]
+PROC        R1 PGY1  [Resident_16]
+IM          R1 PGY1  [Resident_17]
 ```
 
 ### Next Steps (Priority Order)
