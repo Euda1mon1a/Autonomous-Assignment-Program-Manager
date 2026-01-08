@@ -54,6 +54,15 @@ class RotationTemplate(Base):
     supervision_required = Column(Boolean, default=True)
     max_supervision_ratio = Column(Integer, default=4)  # 1 faculty : N residents
 
+    # Block duration settings
+    # is_block_half_rotation: True = 14 days (2 weeks), False = 28 days (4 weeks)
+    is_block_half_rotation = Column(
+        Boolean,
+        default=False,
+        nullable=False,
+        comment="True for half-block rotations (14 days instead of 28)",
+    )
+
     # Archive fields (soft delete)
     is_archived = Column(Boolean, default=False, nullable=False, index=True)
     archived_at = Column(DateTime, nullable=True)

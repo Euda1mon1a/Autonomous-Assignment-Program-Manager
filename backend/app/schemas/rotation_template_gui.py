@@ -28,6 +28,12 @@ class WeeklyPatternBase(BaseModel):
         max_length=50,
         description="fm_clinic, specialty, elective, conference, inpatient, call, procedure, off",
     )
+    week_number: int | None = Field(
+        None,
+        ge=1,
+        le=4,
+        description="Week 1-4 within block. NULL = same pattern all weeks",
+    )
     linked_template_id: UUID | None = None
     is_protected: bool = False
     notes: str | None = Field(None, max_length=200)
@@ -43,6 +49,7 @@ class WeeklyPatternUpdate(BaseModel):
     """Schema for updating a weekly pattern slot."""
 
     activity_type: str | None = Field(None, max_length=50)
+    week_number: int | None = Field(None, ge=1, le=4)
     linked_template_id: UUID | None = None
     is_protected: bool | None = None
     notes: str | None = Field(None, max_length=200)
@@ -63,13 +70,19 @@ class WeeklyGridUpdate(BaseModel):
     """Schema for updating the entire 7x2 weekly grid at once.
 
     This replaces all existing patterns with the provided ones.
-    Max 14 patterns (7 days x 2 time periods).
+    Max 14 patterns per week (7 days x 2 time periods).
+    Max 56 patterns total (14 slots × 4 weeks) for week-specific patterns.
     """
 
     patterns: list[WeeklyPatternCreate] = Field(
         ...,
-        max_length=14,
-        description="Up to 14 slots (7 days x 2 time periods)",
+        max_length=56,
+        description="Up to 56 slots (14 per week × 4 weeks)",
+    )
+    # Optional: specify if all weeks should use the same pattern
+    same_pattern_all_weeks: bool = Field(
+        True,
+        description="If true, week_number is ignored and all weeks use same pattern",
     )
 
 

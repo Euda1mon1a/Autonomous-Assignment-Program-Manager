@@ -77,13 +77,21 @@ export const DAY_ABBREVIATIONS: Record<DayOfWeek, string> = {
  * };
  * ```
  */
+/**
+ * Week number within a block (1-4)
+ * null = same pattern applies to all weeks
+ */
+export type WeekNumber = 1 | 2 | 3 | 4 | null;
+
 export interface WeeklyPatternSlot {
-  /** Day of week (0 = Monday, 6 = Sunday) */
+  /** Day of week (0 = Sunday, 6 = Saturday) */
   dayOfWeek: DayOfWeek;
   /** Time of day (AM or PM shift) */
   timeOfDay: WeeklyPatternTimeOfDay;
   /** ID of assigned rotation template, or null if slot is empty */
   rotationTemplateId: UUID | null;
+  /** Week number within block (1-4). null = same pattern all weeks */
+  weekNumber?: WeekNumber;
   /** Activity type for the slot (e.g., 'scheduled', 'off', 'conference') */
   activityType?: string | null;
   /** Whether this slot is protected from automatic changes */
@@ -115,8 +123,10 @@ export interface WeeklyPatternSlot {
  * ```
  */
 export interface WeeklyPatternGrid {
-  /** Array of 14 slots covering Mon-Sun AM/PM */
+  /** Array of slots covering Mon-Sun AM/PM. Up to 56 for week-specific patterns. */
   slots: WeeklyPatternSlot[];
+  /** If true, all weeks use the same pattern (weekNumber is ignored) */
+  samePatternAllWeeks?: boolean;
 }
 
 // ============================================================================
@@ -230,16 +240,45 @@ export function ensureCompletePattern(pattern: WeeklyPatternGrid): WeeklyPattern
  * @param pattern - The weekly pattern grid
  * @param dayOfWeek - Day of week (0-6)
  * @param timeOfDay - Time of day ('AM' or 'PM')
+ * @param weekNumber - Week number (1-4) or null for "all weeks" pattern
  * @returns The matching slot, or undefined if not found
  */
 export function getSlot(
   pattern: WeeklyPatternGrid,
   dayOfWeek: DayOfWeek,
-  timeOfDay: WeeklyPatternTimeOfDay
+  timeOfDay: WeeklyPatternTimeOfDay,
+  weekNumber?: WeekNumber
 ): WeeklyPatternSlot | undefined {
   return pattern.slots.find(
-    (slot) => slot.dayOfWeek === dayOfWeek && slot.timeOfDay === timeOfDay
+    (slot) =>
+      slot.dayOfWeek === dayOfWeek &&
+      slot.timeOfDay === timeOfDay &&
+      (weekNumber === undefined || slot.weekNumber === weekNumber)
   );
+}
+
+/**
+ * Gets all slots for a specific week.
+ *
+ * @param pattern - The weekly pattern grid
+ * @param weekNumber - Week number (1-4) or null for "all weeks" patterns
+ * @returns Array of slots for that week
+ */
+export function getSlotsForWeek(
+  pattern: WeeklyPatternGrid,
+  weekNumber: WeekNumber
+): WeeklyPatternSlot[] {
+  return pattern.slots.filter((slot) => slot.weekNumber === weekNumber);
+}
+
+/**
+ * Checks if a pattern has week-specific variations.
+ *
+ * @param pattern - The weekly pattern grid
+ * @returns True if any slots have a specific weekNumber
+ */
+export function hasWeekSpecificPatterns(pattern: WeeklyPatternGrid): boolean {
+  return pattern.slots.some((slot) => slot.weekNumber !== null && slot.weekNumber !== undefined);
 }
 
 /**

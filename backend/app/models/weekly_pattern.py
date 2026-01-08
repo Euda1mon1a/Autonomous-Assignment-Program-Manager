@@ -79,6 +79,14 @@ class WeeklyPattern(Base):
         comment="AM or PM",
     )
 
+    # Week number within the block (1-4)
+    # NULL means same pattern applies to all weeks
+    week_number = Column(
+        Integer,
+        nullable=True,
+        comment="Week 1-4 within the block. NULL = same pattern all weeks",
+    )
+
     # Activity assigned to this slot
     activity_type = Column(
         String(50),
@@ -128,19 +136,22 @@ class WeeklyPattern(Base):
         foreign_keys=[linked_template_id],
     )
 
-    # Unique constraint: one slot per day/time per template
+    # Unique constraint: one slot per day/time/week per template
+    # Week number is included to allow week-specific patterns (NULL = all weeks)
     __table_args__ = (
         UniqueConstraint(
             "rotation_template_id",
             "day_of_week",
             "time_of_day",
-            name="uq_weekly_pattern_slot",
+            "week_number",
+            name="uq_weekly_pattern_slot_v2",
         ),
     )
 
     def __repr__(self) -> str:
         days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-        return f"<WeeklyPattern {days[self.day_of_week]} {self.time_of_day}: {self.activity_type}>"
+        week_str = f"W{self.week_number}" if self.week_number else "All"
+        return f"<WeeklyPattern {week_str} {days[self.day_of_week]} {self.time_of_day}: {self.activity_type}>"
 
     @property
     def day_name(self) -> str:
