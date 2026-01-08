@@ -1537,6 +1537,55 @@ class GreedySolver(BaseSolver):
             assignment_counts[selected.id] += 1
             template_block_counts[template.id][block.id] += 1
 
+        # ==================================================
+        # GREEDY FACULTY CALL ASSIGNMENT
+        # Assign overnight call to faculty (Sun-Thu nights)
+        # ==================================================
+        call_assignments_result = []
+        call_eligible = getattr(context, "call_eligible_faculty", [])
+
+        if call_eligible:
+            # Track call assignments per faculty for equity
+            call_counts = {fac.id: 0 for fac in call_eligible}
+
+            # Get unique call dates (Sun-Thu nights)
+            call_dates_processed = set()
+            call_blocks = [
+                block
+                for block in context.blocks
+                if block.date.weekday() in (0, 1, 2, 3, 6)  # Mon-Thu, Sun
+            ]
+
+            for block in call_blocks:
+                if block.date in call_dates_processed:
+                    continue
+                call_dates_processed.add(block.date)
+
+                # Find available call-eligible faculty
+                available_faculty = [
+                    fac
+                    for fac in call_eligible
+                    if self._is_available(fac.id, block.id, context)
+                ]
+
+                if not available_faculty:
+                    continue
+
+                # Select faculty with fewest call assignments (greedy equity)
+                selected_faculty = min(
+                    available_faculty, key=lambda f: call_counts[f.id]
+                )
+
+                call_assignments_result.append(
+                    (selected_faculty.id, block.id, "overnight")
+                )
+                call_counts[selected_faculty.id] += 1
+
+            logger.info(
+                f"Greedy assigned {len(call_assignments_result)} overnight call "
+                f"assignments to {len(call_eligible)} eligible faculty"
+            )
+
         runtime = time.time() - start_time
 
         logger.info(f"Greedy found {len(assignments)} assignments in {runtime:.2f}s")
@@ -1567,8 +1616,10 @@ class GreedySolver(BaseSolver):
                 "high_confidence_assignments": high_conf,
                 "medium_confidence_assignments": med_conf,
                 "low_confidence_assignments": low_conf,
+                "call_assignments": len(call_assignments_result),
             },
             explanations=explanations,
+            call_assignments=call_assignments_result,
         )
 
     def _is_available(

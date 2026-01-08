@@ -1,9 +1,67 @@
+# Session 068-073 - Solver + Import System
 # Session 068-072 - Admin UI + Solver Analysis
 
 **Branch:** `session/067-antigravity-faculty-call` | **Date:** 2026-01-07/08
 
 ---
 
+## SESSION 073 COMPLETED ✅
+
+### PRs Created
+- **PR #662** (merged) - Sessions 067-072: Admin UI, Faculty Call, Schedule Views
+- **PR #663** (merged) - Rotation templates documentation
+- **PR #664** (pending) - Greedy solver call generation + import script
+
+### Key Accomplishments
+1. **Greedy solver now generates faculty call** - 20 call assignments verified
+2. **7 new rotation templates created**: FMC, POCUS, SURG-EXP, GYN-CLIN, KAPI-LD, NF-ENDO, NEURO-NF
+3. **Block 10 data imported**: 17 residents with rotation assignments
+4. **Import script created**: `backend/scripts/import_block_assignments.py`
+5. **Full year CSV prepared**: `full_year_assignments.csv` (17 residents × 13 blocks = 221 rows)
+
+### Backup Updated
+- Location: `~/backups/scheduler-20260107/`
+- Contents: `repo.bundle`, `db.sql.gz`, `rag_documents.sql`, `block_assignments.sql.gz`
+
+---
+
+## SESSION 074 COMPLETED ✅
+
+### Full Year Import - DONE
+
+**File:** `full_year_assignments.csv`
+- 17 residents (PGY1: 6, PGY2: 6, PGY3: 5)
+- 13 blocks (Jul 2025 - Jun 2026)
+- 221 assignments imported
+
+### 17 New Rotation Templates Created
+| Abbrev | Name | Type |
+|--------|------|------|
+| CARDIO | Cardiology | outpatient |
+| DERM | Dermatology | outpatient |
+| ELEC | Elective | outpatient |
+| EM | Emergency Medicine | inpatient |
+| FAC-DEV | Faculty Development | education |
+| GERI | Geriatrics | outpatient |
+| IM | Internal Medicine Ward | inpatient |
+| JAPAN | Japan Off-Site Rotation | off |
+| MILITARY | Military Duty | off |
+| MSK-SEL | Musculoskeletal Selective | outpatient |
+| PEDS-CLIN | Pediatrics Clinic | outpatient |
+| PEDS-EM | Pediatric Emergency Medicine | inpatient |
+| PEDS-SUB | Pediatrics Subspecialty | outpatient |
+| PROC | Procedures | procedures |
+| PSYCH | Psychiatry | inpatient |
+| SEL-MED | Medical Selective | outpatient |
+| TAMC-LD | TAMC Labor & Delivery | inpatient |
+
+### GUI Import Lessons Documented
+- See: `docs/planning/GUI_IMPORT_LESSONS.md`
+- Key insights for Admin UI import feature
+
+---
+
+## PREVIOUS SESSION COMPLETED ✅
 ## COMPLETED ✅
 
 ### Session 068-070
@@ -155,25 +213,26 @@ Plan file: `.claude/plans/merry-hatching-torvalds.md`
 - `resident_weekly_requirements` - 0 rows
 - `call_assignments` - 0 rows
 
-**User provided Block 10 sample data:**
+**Block 10 sample data format (names redacted):**
 ```
-Hilo        R3 PGY3  Connolly, Laura
-NF/MS:Endo  R3 PGY3  Hernandez, Christian
-FMC         R3 PGY3  Mayell, Cameron
-FMIT 2      R3 PGY3  Petrie, William
-NEURO/NF    R3 PGY3  You, Jae
-FMIT 2      R2 PGY2  Cataquiz, Felipe
-SM          R2 PGY2  Cook, Scott
-POCUS       R2 PGY2  Gigon, Alaine
-L&D NF      R2 PGY2  Headid, Ronald
-Surg Exp    R2 PGY2  Maher, Nicholas
-Gyn Clinic  R2 PGY2  Thomas, Devin
-FMC         R1 PGY1  Sawyer, Tessa
-Peds Ward   R1 PGY1  Wilhelm, Clara
-Kapi L&D    R1 PGY1  Travis, Colin
-Peds NF     R1 PGY1  Byrnes, Katherine
-PROC        R1 PGY1  Sloss, Meleighe
-IM          R1 PGY1  Monsivais, Joshua
+Rotation    Level    Resident
+Hilo        R3 PGY3  [Resident_01]
+NF/MS:Endo  R3 PGY3  [Resident_02]
+FMC         R3 PGY3  [Resident_03]
+FMIT 2      R3 PGY3  [Resident_04]
+NEURO/NF    R3 PGY3  [Resident_05]
+FMIT 2      R2 PGY2  [Resident_06]
+SM          R2 PGY2  [Resident_07]
+POCUS       R2 PGY2  [Resident_08]
+L&D NF      R2 PGY2  [Resident_09]
+Surg Exp    R2 PGY2  [Resident_10]
+Gyn Clinic  R2 PGY2  [Resident_11]
+FMC         R1 PGY1  [Resident_12]
+Peds Ward   R1 PGY1  [Resident_13]
+Kapi L&D    R1 PGY1  [Resident_14]
+Peds NF     R1 PGY1  [Resident_15]
+PROC        R1 PGY1  [Resident_16]
+IM          R1 PGY1  [Resident_17]
 ```
 
 ### Next Steps (Priority Order)

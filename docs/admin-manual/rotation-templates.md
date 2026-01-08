@@ -134,19 +134,17 @@ When importing schedule data, these abbreviations may be used:
 | NEURO/NF | Half-block | Neurology first half + NF |
 | Kapi L&D | New template | Kapiolani L&D (off-site) |
 
-## Templates Pending Creation
+## Recently Added Templates (Session 073)
 
-The following rotations exist in schedules but need templates:
-
-| Abbreviation | Name | Type | Notes |
-|--------------|------|------|-------|
-| FMC | Family Medicine Clinic | outpatient | Main FM clinic |
-| NF/MS:Endo | NF + Endocrinology Selective | inpatient | Half-block split |
-| NEURO/NF | Neurology + Night Float | inpatient | Half-block split |
-| POCUS | Point of Care Ultrasound | procedures | Ultrasound training |
-| SURG-EXP | Surgical Experience | outpatient | Ophtho/ENT/Urology mix |
-| GYN-CLIN | Gynecology Clinic | outpatient | Off-site GYN clinic |
-| KAPI-LD | Kapiolani Labor & Delivery | off | Off-site L&D |
+| Abbreviation | Display | Name | Type |
+|--------------|---------|------|------|
+| FMC | FMC | Family Medicine Clinic | outpatient |
+| POCUS | POCUS | Point of Care Ultrasound | procedures |
+| SURG-EXP | SURG | Surgical Experience | outpatient |
+| GYN-CLIN | GYN | Gynecology Clinic | outpatient |
+| KAPI-LD | KAP-LD | Kapiolani Labor & Delivery | off |
+| NF-ENDO | NF/ENDO | Night Float + Endocrinology | inpatient (half-block) |
+| NEURO-NF | NEURO/NF | Neurology + Night Float | inpatient (half-block) |
 
 ## Half-Block Rotations
 

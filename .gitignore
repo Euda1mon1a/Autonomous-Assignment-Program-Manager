@@ -137,3 +137,4 @@ backups/
 
 # Full stack backups (contain PHI)
 backups/full_*
+full_year_assignments.csv
