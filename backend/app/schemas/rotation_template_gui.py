@@ -326,3 +326,150 @@ class HalfDaySummary(BaseModel):
                 setattr(summary, activity, getattr(summary, activity) + 1)
             summary.total += 1
         return summary
+
+
+# =============================================================================
+# Half-Day Requirement Schemas
+# =============================================================================
+
+
+class HalfDayRequirementBase(BaseModel):
+    """Base schema for rotation half-day requirements."""
+
+    fm_clinic_halfdays: int = Field(
+        default=4,
+        ge=0,
+        le=14,
+        description="Number of FM clinic half-days per block",
+    )
+    specialty_halfdays: int = Field(
+        default=5,
+        ge=0,
+        le=14,
+        description="Number of specialty half-days per block",
+    )
+    specialty_name: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Name of the specialty (e.g., 'Neurology', 'Dermatology')",
+    )
+    academics_halfdays: int = Field(
+        default=1,
+        ge=0,
+        le=14,
+        description="Number of academic/lecture half-days per block",
+    )
+    elective_halfdays: int = Field(
+        default=0,
+        ge=0,
+        le=14,
+        description="Number of elective/buffer half-days per block",
+    )
+    min_consecutive_specialty: int = Field(
+        default=1,
+        ge=1,
+        le=5,
+        description="Minimum consecutive specialty days to batch together",
+    )
+    prefer_combined_clinic_days: bool = Field(
+        default=True,
+        description="Prefer FM + specialty on same day when possible",
+    )
+
+
+class HalfDayRequirementCreate(HalfDayRequirementBase):
+    """Schema for creating half-day requirements."""
+
+    pass
+
+
+class HalfDayRequirementUpdate(BaseModel):
+    """Schema for updating half-day requirements (all fields optional)."""
+
+    fm_clinic_halfdays: int | None = Field(default=None, ge=0, le=14)
+    specialty_halfdays: int | None = Field(default=None, ge=0, le=14)
+    specialty_name: str | None = None
+    academics_halfdays: int | None = Field(default=None, ge=0, le=14)
+    elective_halfdays: int | None = Field(default=None, ge=0, le=14)
+    min_consecutive_specialty: int | None = Field(default=None, ge=1, le=5)
+    prefer_combined_clinic_days: bool | None = None
+
+
+class HalfDayRequirementResponse(HalfDayRequirementBase):
+    """Response schema for half-day requirements."""
+
+    id: UUID
+    rotation_template_id: UUID
+    total_halfdays: int = Field(description="Calculated total half-days")
+    is_balanced: bool = Field(
+        description="True if total equals standard block (10 half-days)"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# =============================================================================
+# Batch Pattern Update Schemas
+# =============================================================================
+
+
+class BatchPatternSlot(BaseModel):
+    """Single slot definition for batch pattern updates."""
+
+    day_of_week: int = Field(..., ge=0, le=6, description="0=Sunday, 6=Saturday")
+    time_of_day: Literal["AM", "PM"]
+    linked_template_id: UUID | None = Field(
+        None, description="Template to assign to this slot (null to clear)"
+    )
+    activity_type: str | None = Field(
+        None, max_length=50, description="Activity type override (optional)"
+    )
+    is_protected: bool | None = Field(None, description="Protected status (optional)")
+    notes: str | None = Field(None, max_length=200, description="Slot notes (optional)")
+
+
+class BatchPatternUpdateRequest(BaseModel):
+    """Request schema for bulk updating weekly patterns across multiple templates.
+
+    Supports two modes:
+    - overlay: Only modifies specified slots, leaves others unchanged
+    - replace: Replaces entire pattern with the provided slots
+
+    Week selection allows applying patterns to specific weeks (1-4) or all weeks.
+    """
+
+    template_ids: list[UUID] = Field(
+        ..., min_length=1, description="Template IDs to update"
+    )
+    mode: Literal["overlay", "replace"] = Field(
+        "overlay",
+        description="overlay=merge with existing, replace=overwrite all",
+    )
+    slots: list[BatchPatternSlot] = Field(
+        ..., min_length=1, max_length=14, description="Slots to apply (max 14 per week)"
+    )
+    week_numbers: list[int] | None = Field(
+        None,
+        description="Weeks to apply to (1-4). Null = all weeks / same pattern all weeks",
+    )
+    dry_run: bool = Field(False, description="Preview changes without applying")
+
+
+class BatchPatternUpdateResult(BaseModel):
+    """Result for a single template in batch update."""
+
+    template_id: UUID
+    template_name: str
+    success: bool
+    slots_modified: int = 0
+    error: str | None = None
+
+
+class BatchPatternUpdateResponse(BaseModel):
+    """Response for batch pattern update."""
+
+    total_templates: int
+    successful: int
+    failed: int
+    results: list[BatchPatternUpdateResult]
+    dry_run: bool = False
