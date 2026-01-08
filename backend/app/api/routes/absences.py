@@ -22,6 +22,7 @@ from app.schemas.absence import (
     AbsenceResponse,
     AbsenceUpdate,
 )
+from app.websocket.manager import broadcast_schedule_updated
 
 router = APIRouter()
 
@@ -100,7 +101,19 @@ async def create_absence(
 ):
     """Create a new absence. Requires authentication."""
     controller = AbsenceController(db)
-    return controller.create_absence(absence_in)
+    result = controller.create_absence(absence_in)
+
+    # Broadcast WebSocket event
+    await broadcast_schedule_updated(
+        schedule_id=None,
+        academic_year_id=None,
+        user_id=current_user.id,
+        update_type="modified",
+        affected_blocks_count=1,
+        message="Absence created",
+    )
+
+    return result
 
 
 @router.put("/{absence_id}", response_model=AbsenceResponse)
@@ -112,7 +125,19 @@ async def update_absence(
 ):
     """Update an existing absence. Requires authentication."""
     controller = AbsenceController(db)
-    return controller.update_absence(absence_id, absence_in)
+    result = controller.update_absence(absence_id, absence_in)
+
+    # Broadcast WebSocket event
+    await broadcast_schedule_updated(
+        schedule_id=None,
+        academic_year_id=None,
+        user_id=current_user.id,
+        update_type="modified",
+        affected_blocks_count=1,
+        message="Absence updated",
+    )
+
+    return result
 
 
 @router.delete("/{absence_id}", status_code=204)
@@ -124,6 +149,16 @@ async def delete_absence(
     """Delete an absence. Requires authentication."""
     controller = AbsenceController(db)
     await controller.delete_absence(absence_id)
+
+    # Broadcast WebSocket event
+    await broadcast_schedule_updated(
+        schedule_id=None,
+        academic_year_id=None,
+        user_id=current_user.id,
+        update_type="modified",
+        affected_blocks_count=1,
+        message="Absence deleted",
+    )
 
 
 # ============================================================================
@@ -191,4 +226,17 @@ async def apply_bulk_absences(
         Requires authentication.
     """
     controller = AbsenceController(db)
-    return controller.apply_bulk_absences(bulk_data)
+    result = controller.apply_bulk_absences(bulk_data)
+
+    # Broadcast WebSocket event if any absences were created
+    if result.created > 0:
+        await broadcast_schedule_updated(
+            schedule_id=None,
+            academic_year_id=None,
+            user_id=current_user.id,
+            update_type="modified",
+            affected_blocks_count=result.created,
+            message=f"Bulk absences applied: {result.created} created",
+        )
+
+    return result

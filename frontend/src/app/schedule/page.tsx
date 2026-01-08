@@ -21,6 +21,7 @@ import { get } from '@/lib/api'
 import { usePeople, useRotationTemplates, useBlockRanges, ListResponse } from '@/lib/hooks'
 import { useRole } from '@/hooks/useAuth'
 import { useScheduleWebSocket } from '@/hooks/useWebSocket'
+import { WebSocketStatus } from '@/components/ui/WebSocketStatus'
 import type { Assignment, Block, RotationTemplate } from '@/types/api'
 
 /**
@@ -79,7 +80,7 @@ export default function SchedulePage() {
 
   // WebSocket for live updates - invalidate queries when schedule changes
   const queryClient = useQueryClient()
-  useScheduleWebSocket(undefined, {
+  const { connectionState, reconnectAttempts } = useScheduleWebSocket(undefined, {
     onMessage: (event) => {
       if (event.event_type === 'schedule_updated' || event.event_type === 'assignment_changed') {
         // Invalidate all schedule-related queries to trigger refetch
@@ -260,6 +261,12 @@ export default function SchedulePage() {
                     View and manage rotation assignments
                   </p>
                 </div>
+
+                {/* WebSocket connection status */}
+                <WebSocketStatus
+                  connectionState={connectionState}
+                  reconnectAttempts={reconnectAttempts}
+                />
 
                 {/* Person Filter - show for block-annual, block, and block-week views */}
                 {['block-annual', 'block', 'block-week'].includes(currentView) && (

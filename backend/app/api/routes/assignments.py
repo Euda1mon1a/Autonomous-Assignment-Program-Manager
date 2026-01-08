@@ -20,6 +20,7 @@ from app.schemas.assignment import (
     AssignmentUpdate,
     AssignmentWithWarnings,
 )
+from app.websocket.manager import broadcast_schedule_updated
 
 router = APIRouter()
 
@@ -146,7 +147,19 @@ async def create_assignment(
         - 409: Conflict (person already assigned to block)
     """
     controller = AssignmentController(db)
-    return await controller.create_assignment(assignment_in, current_user)
+    result = await controller.create_assignment(assignment_in, current_user)
+
+    # Broadcast WebSocket event
+    await broadcast_schedule_updated(
+        schedule_id=None,
+        academic_year_id=None,
+        user_id=current_user.id,
+        update_type="modified",
+        affected_blocks_count=1,
+        message="Assignment created",
+    )
+
+    return result
 
 
 @router.put("/{assignment_id}", response_model=AssignmentWithWarnings)
@@ -181,7 +194,19 @@ async def update_assignment(
             - 403: Insufficient permissions
     """
     controller = AssignmentController(db)
-    return await controller.update_assignment(assignment_id, assignment_in)
+    result = await controller.update_assignment(assignment_id, assignment_in)
+
+    # Broadcast WebSocket event
+    await broadcast_schedule_updated(
+        schedule_id=None,
+        academic_year_id=None,
+        user_id=current_user.id,
+        update_type="modified",
+        affected_blocks_count=1,
+        message="Assignment updated",
+    )
+
+    return result
 
 
 @router.delete("/{assignment_id}", status_code=204)
@@ -194,6 +219,16 @@ async def delete_assignment(
     controller = AssignmentController(db)
     await controller.delete_assignment(assignment_id)
 
+    # Broadcast WebSocket event
+    await broadcast_schedule_updated(
+        schedule_id=None,
+        academic_year_id=None,
+        user_id=current_user.id,
+        update_type="modified",
+        affected_blocks_count=1,
+        message="Assignment deleted",
+    )
+
 
 @router.delete("", status_code=204)
 async def delete_assignments_bulk(
@@ -205,3 +240,13 @@ async def delete_assignments_bulk(
     """Delete all assignments in a date range. Requires scheduler role (admin or coordinator)."""
     controller = AssignmentController(db)
     await controller.delete_assignments_bulk(start_date, end_date)
+
+    # Broadcast WebSocket event
+    await broadcast_schedule_updated(
+        schedule_id=None,
+        academic_year_id=None,
+        user_id=current_user.id,
+        update_type="modified",
+        affected_blocks_count=0,  # Unknown count for bulk
+        message=f"Bulk assignments deleted: {start_date} to {end_date}",
+    )

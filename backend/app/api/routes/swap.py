@@ -65,6 +65,7 @@ from app.schemas.swap import (
 )
 from app.services.swap_executor import SwapExecutor
 from app.services.swap_validation import SwapValidationService
+from app.websocket.manager import broadcast_schedule_updated, broadcast_swap_approved
 
 router = APIRouter(prefix="/swaps", tags=["swaps"])
 
@@ -140,6 +141,25 @@ async def execute_swap(
         reason=request.reason,
         executed_by_id=current_user.id,
     )
+
+    # Broadcast WebSocket events on successful execution
+    if result.success and result.swap_id:
+        await broadcast_swap_approved(
+            swap_id=result.swap_id,
+            requester_id=request.source_faculty_id,
+            target_person_id=request.target_faculty_id,
+            approved_by=current_user.id,
+            affected_assignments=[],
+            message=f"Swap executed: {request.swap_type.value}",
+        )
+        await broadcast_schedule_updated(
+            schedule_id=None,
+            academic_year_id=None,
+            user_id=current_user.id,
+            update_type="modified",
+            affected_blocks_count=2,
+            message="Schedule swap executed",
+        )
 
     return SwapExecuteResponse(
         success=result.success,
@@ -360,5 +380,15 @@ async def rollback_swap(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=result.message,
         )
+
+    # Broadcast WebSocket event on successful rollback
+    await broadcast_schedule_updated(
+        schedule_id=None,
+        academic_year_id=None,
+        user_id=current_user.id,
+        update_type="modified",
+        affected_blocks_count=2,
+        message="Swap rolled back",
+    )
 
     return {"message": result.message, "success": True}
