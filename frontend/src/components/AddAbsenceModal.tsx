@@ -11,6 +11,10 @@ interface AddAbsenceModalProps {
   isOpen: boolean;
   onClose: () => void;
   preselectedPersonId?: string;
+  /** Pre-fill start date (YYYY-MM-DD format) */
+  preselectedStartDate?: string;
+  /** Pre-fill end date (YYYY-MM-DD format) */
+  preselectedEndDate?: string;
 }
 
 interface FormErrors {
@@ -39,7 +43,13 @@ const absenceTypeOptions = [
   { value: 'tdy', label: 'TDY' },
 ];
 
-export function AddAbsenceModal({ isOpen, onClose, preselectedPersonId }: AddAbsenceModalProps) {
+export function AddAbsenceModal({
+  isOpen,
+  onClose,
+  preselectedPersonId,
+  preselectedStartDate,
+  preselectedEndDate,
+}: AddAbsenceModalProps) {
   const [personId, setPersonId] = useState(preselectedPersonId || '');
   const [absenceType, setAbsenceType] = useState<AbsenceType>(AbsenceType.VACATION);
   const [startDate, setStartDate] = useState('');
@@ -58,6 +68,16 @@ export function AddAbsenceModal({ isOpen, onClose, preselectedPersonId }: AddAbs
       setPersonId(preselectedPersonId);
     }
   }, [preselectedPersonId]);
+
+  // Update dates if preselected changes
+  useEffect(() => {
+    if (preselectedStartDate) {
+      setStartDate(preselectedStartDate);
+    }
+    if (preselectedEndDate) {
+      setEndDate(preselectedEndDate);
+    }
+  }, [preselectedStartDate, preselectedEndDate]);
 
   const personOptions = peopleData?.items?.map((p) => ({
     value: p.id,
@@ -125,8 +145,8 @@ export function AddAbsenceModal({ isOpen, onClose, preselectedPersonId }: AddAbs
   const handleClose = () => {
     setPersonId(preselectedPersonId || '');
     setAbsenceType(AbsenceType.VACATION);
-    setStartDate('');
-    setEndDate('');
+    setStartDate(preselectedStartDate || '');
+    setEndDate(preselectedEndDate || '');
     setDeploymentOrders(false);
     setTdyLocation('');
     setNotes('');

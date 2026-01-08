@@ -1,30 +1,37 @@
-# Session 077 Handoff
+# Session 078 Handoff
 
 **Branch:** `session/075-continued-work` | **Date:** 2026-01-07
 **Base:** `main @ 1f44e533`
 
 ---
 
-## SESSION 077 PROGRESS - Block Import/Export GUI COMPLETE
+## PREVIOUS: Block Import/Export GUI - COMPLETE ✅
+Commits: `9365e679`, `b8cc6beb`
 
-### Completed Files (Backend - Import)
-1. `backend/app/schemas/block_assignment_import.py` - All import/export schemas
-2. `backend/app/services/block_assignment_import_service.py` - Import service with fuzzy matching
-3. `backend/app/api/routes/admin_block_assignments.py` - API routes (preview, import, quick-create, export)
-4. `backend/app/api/routes/__init__.py` - Registered new router
+---
 
-### Completed Files (Backend - Export)
-5. `backend/app/services/block_assignment_export_service.py` - Export service (CSV + Excel)
+## CURRENT: Bulk Absence Grid Editor - COMPLETE ✅
 
-### Completed Files (Frontend)
-6. `frontend/src/types/block-assignment-import.ts` - TypeScript types
-7. `frontend/src/api/block-assignment-import.ts` - API client
-8. `frontend/src/hooks/useBlockAssignmentImport.ts` - React hook
-9. `frontend/src/components/admin/BlockAssignmentImportModal.tsx` - Multi-step wizard modal
-10. `frontend/src/components/admin/BlockAssignmentExportModal.tsx` - Export options modal
-11. `frontend/src/app/schedule/page.tsx` - Import/Export buttons (admin/coordinator only)
+### Goal
+Add Grid view to absences page for editing multiple people's absences at once.
 
-### ALL TASKS COMPLETE ✅
+### Plan Location
+`~/.claude/plans/merry-hatching-torvalds.md`
+
+### Completed
+1. ✅ `frontend/src/components/absence/AbsenceBar.tsx` - Absence visualization
+2. ✅ `frontend/src/components/absence/AbsenceGridRow.tsx` - Person row with date cells
+3. ✅ `frontend/src/components/absence/AbsenceGrid.tsx` - Main grid component
+4. ✅ `frontend/src/app/absences/page.tsx` - Grid view mode integrated
+5. ✅ `frontend/src/components/AddAbsenceModal.tsx` - Date prefill props
+6. ✅ Person type filter (residents/faculty/all) toggle
+7. ✅ Polish: colors, weekend shading, today highlight
+
+### Key Patterns
+- Follow ScheduleGrid.tsx layout (people × dates)
+- Click empty cell → AddAbsenceModal with person/date prefilled
+- Click absence bar → Edit modal
+- Reuse BlockNavigation for date range
 
 ### API Endpoints Created
 ```
