@@ -253,28 +253,28 @@ services:
     command: npm run dev
 
   # ===========================================================================
-  # n8n - Workflow Automation (Optional)
+  # n8n - Workflow Automation (DISABLED - CVE-2026-21858 Ni8mare, re-enable post-deployment)
   # ===========================================================================
-  n8n:
-    image: n8nio/n8n:latest
-    container_name: scheduler-local-n8n
-    restart: unless-stopped
-    ports:
-      - "5679:5678"  # Changed to 5679 to avoid conflict with backend debugpy
-    environment:
-      - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=admin
-      - N8N_BASIC_AUTH_PASSWORD=local_dev_n8n_password
-      - N8N_HOST=localhost
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-      - WEBHOOK_URL=http://localhost:5679
-      - GENERIC_TIMEZONE=America/New_York
-      - N8N_LOG_LEVEL=debug
-    volumes:
-      - n8n_local_data:/home/node/.n8n
-    networks:
-      - app-network
+  # n8n:
+  #   image: n8nio/n8n:1.121.0  # Pin to patched version when re-enabling
+  #   container_name: scheduler-local-n8n
+  #   restart: unless-stopped
+  #   ports:
+  #     - "127.0.0.1:5679:5678"  # Localhost only, port 5679 to avoid debugpy conflict
+  #   environment:
+  #     - N8N_BASIC_AUTH_ACTIVE=true
+  #     - N8N_BASIC_AUTH_USER=admin
+  #     - N8N_BASIC_AUTH_PASSWORD=local_dev_n8n_password
+  #     - N8N_HOST=localhost
+  #     - N8N_PORT=5678
+  #     - N8N_PROTOCOL=http
+  #     - WEBHOOK_URL=http://localhost:5679
+  #     - GENERIC_TIMEZONE=America/New_York
+  #     - N8N_LOG_LEVEL=debug
+  #   volumes:
+  #     - n8n_local_data:/home/node/.n8n
+  #   networks:
+  #     - app-network
 
   # ===========================================================================
   # MCP Server - AI Tool Integration (Claude Code, Agents)

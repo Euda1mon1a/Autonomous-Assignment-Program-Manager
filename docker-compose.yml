@@ -254,35 +254,32 @@ services:
       retries: 3
       start_period: 10s
 
-  # n8n - Workflow Automation
-  n8n:
-    image: n8nio/n8n
-    container_name: residency-scheduler-n8n
-    restart: unless-stopped
-    ports:
-      - "5678:5678"
-    environment:
-      - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=${N8N_USER:-admin}
-      # Default password for local dev; override in .env for production
-      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-localdev_only}
-      - N8N_HOST=${N8N_HOST:-localhost}
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-      - WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://localhost:5678}
-      - GENERIC_TIMEZONE=America/New_York
-    volumes:
-      - n8n_data:/home/node/.n8n
-    # Health check - ensures n8n workflow engine is ready
-    # Checks healthz endpoint for service availability
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
-    networks:
-      - app-network
+  # n8n - Workflow Automation (DISABLED - CVE-2026-21858 Ni8mare, re-enable post-deployment)
+  # n8n:
+  #   image: n8nio/n8n:1.121.0  # Pin to patched version when re-enabling
+  #   container_name: residency-scheduler-n8n
+  #   restart: unless-stopped
+  #   ports:
+  #     - "127.0.0.1:5678:5678"  # Bind to localhost only
+  #   environment:
+  #     - N8N_BASIC_AUTH_ACTIVE=true
+  #     - N8N_BASIC_AUTH_USER=${N8N_USER:-admin}
+  #     - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-localdev_only}
+  #     - N8N_HOST=${N8N_HOST:-localhost}
+  #     - N8N_PORT=5678
+  #     - N8N_PROTOCOL=http
+  #     - WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://localhost:5678}
+  #     - GENERIC_TIMEZONE=America/New_York
+  #   volumes:
+  #     - n8n_data:/home/node/.n8n
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #     start_period: 60s
+  #   networks:
+  #     - app-network
 
 volumes:
   postgres_data:
