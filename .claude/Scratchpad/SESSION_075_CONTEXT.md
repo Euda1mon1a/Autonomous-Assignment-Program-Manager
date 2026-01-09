@@ -414,27 +414,34 @@ Build UI for managing faculty weekly activity templates and week-specific overri
 - ✅ Inline role editing: Works from matrix view
 - ✅ Activity palette: Working, shows activities by role
 - ✅ Faculty roles: All 12 faculty now have roles set in DB
-- 🔧 **3 BUGS TO FIX** (see below)
+- ✅ **3 BUGS FIXED** (commit a95d4d9c) - abbreviations, roles display, save handler
 
-### Remaining Bugs (Ready to Fix)
+### Bugs Fixed (Commit a95d4d9c)
 
-**Bug 1: Activity Abbreviations Wrong**
-- **Symptom:** Cells show "Atte", "Post", "Grad", "Dire" instead of "AT", "PCAT", "GME", "DO"
-- **File:** `FacultyWeeklyEditor.tsx:155`
-- **Fix:** Already uses `displayAbbreviation ?? name.slice(0, 4)` - check API response has displayAbbreviation
+**Bug 1: Activity Abbreviations Wrong** ✅ FIXED
+- **Root Cause:** API returns `display_abbreviation` (snake_case), frontend expected `displayAbbreviation` (camelCase)
+- **Fix:** `FacultyWeeklyEditor.tsx:155` - Added fallback: `(activity as Record<string, unknown>).display_abbreviation ?? activity.displayAbbreviation ?? activity.code?.toUpperCase()`
 
-**Bug 2: Faculty Roles Not Displayed in Matrix**
-- **Symptom:** Shows "Dr. Montgomery" without "(PD)" role badge
-- **File:** `FacultyMatrixView.tsx` - faculty name cell
-- **Fix:** Add role badge: `{FACULTY_ROLE_LABELS[faculty.facultyRole]}`
+**Bug 2: Faculty Roles Not Displayed** ✅ FIXED
+- **Root Cause:** Same snake_case/camelCase mismatch - API returns `faculty_role`, frontend expected `facultyRole`
+- **Fix:** `FacultyMatrixView.tsx` - Added snake_case fallback in multiple places (filter, display, editor state)
 
-**Bug 3: Save Not Working / Modal Not Closing**
-- **Symptom:** Click Save, nothing happens, "Unsaved changes" stays
-- **File:** `FacultyWeeklyEditor.tsx` - handleSave function
-- **Fix:**
-  1. Wrap mutations in try/catch
-  2. Call `onClose?.()` on success
-  3. Show error toast on failure
+**Bug 3: Save Not Working / Modal Not Closing** ✅ FIXED
+- **Root Cause:** `handleSave` had no try/catch and didn't call `onClose?.()` on success
+- **Fix:** `FacultyWeeklyEditor.tsx:533-582` - Wrapped in try/catch, added `onClose?.()` after state reset
+
+**Note:** The real fix should be adding a response transformer in the API hooks to convert snake_case to camelCase. Current fix is a workaround using type assertions.
+
+### Next Steps (After Verification)
+1. **Test full CRUD flow** - Create template, save, verify persistence, refresh page
+2. **Test Week mode** - Create override for specific week
+3. **Phase 6: Constraint Integration** - Register `FacultyWeeklyTemplateConstraint` in solver
+
+### Commits This Session
+- `9ee9f8ae` - feat: Add faculty weekly activity editor (full stack)
+- `44c7741d` - feat: Add inline faculty role editing in matrix view
+- `c011fc7b` - fix: Remove broken join() code in get_permitted_activities
+- `a95d4d9c` - fix: Faculty Weekly Editor UI bugs (abbreviations, roles, save)
 
 ### Faculty Roles Set (2026-01-09)
 ```
