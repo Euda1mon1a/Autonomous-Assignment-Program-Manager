@@ -50,8 +50,8 @@ export function ExpiringCredentialsAlert({
     const info: Credential[] = [];
 
     credentials.forEach((cred) => {
-      if (!cred.expiration_date) return;
-      const days = getDaysUntilExpiration(cred.expiration_date);
+      if (!cred.expirationDate) return;
+      const days = getDaysUntilExpiration(cred.expirationDate);
       const severity = getSeverity(days);
 
       if (severity === 'critical') critical.push(cred);
@@ -102,7 +102,7 @@ export function ExpiringCredentialsAlert({
       {/* List */}
       <div className="divide-y divide-slate-700/50 max-h-[200px] overflow-y-auto">
         {[...grouped.critical, ...grouped.warning, ...grouped.info].slice(0, 10).map((cred) => {
-          const days = getDaysUntilExpiration(cred.expiration_date!);
+          const days = getDaysUntilExpiration(cred.expirationDate!);
           const severity = getSeverity(days);
 
           return (

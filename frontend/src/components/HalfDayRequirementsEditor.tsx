@@ -42,13 +42,13 @@ interface HalfDayRequirementsEditorProps {
 // ============================================================================
 
 const DEFAULT_VALUES: HalfDayRequirementCreate = {
-  fm_clinic_halfdays: 4,
-  specialty_halfdays: 5,
-  specialty_name: null,
-  academics_halfdays: 1,
-  elective_halfdays: 0,
-  min_consecutive_specialty: 1,
-  prefer_combined_clinic_days: true,
+  fmClinicHalfdays: 4,
+  specialtyHalfdays: 5,
+  specialtyName: null,
+  academicsHalfdays: 1,
+  electiveHalfdays: 0,
+  minConsecutiveSpecialty: 1,
+  preferCombinedClinicDays: true,
 };
 
 const TARGET_TOTAL = 10;
@@ -67,26 +67,26 @@ export function HalfDayRequirementsEditor({
 }: HalfDayRequirementsEditorProps) {
   // Initialize form state from requirements or defaults
   const [formData, setFormData] = useState<HalfDayRequirementCreate>(() => ({
-    fm_clinic_halfdays: requirements?.fm_clinic_halfdays ?? DEFAULT_VALUES.fm_clinic_halfdays,
-    specialty_halfdays: requirements?.specialty_halfdays ?? DEFAULT_VALUES.specialty_halfdays,
-    specialty_name: requirements?.specialty_name ?? DEFAULT_VALUES.specialty_name,
-    academics_halfdays: requirements?.academics_halfdays ?? DEFAULT_VALUES.academics_halfdays,
-    elective_halfdays: requirements?.elective_halfdays ?? DEFAULT_VALUES.elective_halfdays,
-    min_consecutive_specialty: requirements?.min_consecutive_specialty ?? DEFAULT_VALUES.min_consecutive_specialty,
-    prefer_combined_clinic_days: requirements?.prefer_combined_clinic_days ?? DEFAULT_VALUES.prefer_combined_clinic_days,
+    fmClinicHalfdays: requirements?.fmClinicHalfdays ?? DEFAULT_VALUES.fmClinicHalfdays,
+    specialtyHalfdays: requirements?.specialtyHalfdays ?? DEFAULT_VALUES.specialtyHalfdays,
+    specialtyName: requirements?.specialtyName ?? DEFAULT_VALUES.specialtyName,
+    academicsHalfdays: requirements?.academicsHalfdays ?? DEFAULT_VALUES.academicsHalfdays,
+    electiveHalfdays: requirements?.electiveHalfdays ?? DEFAULT_VALUES.electiveHalfdays,
+    minConsecutiveSpecialty: requirements?.minConsecutiveSpecialty ?? DEFAULT_VALUES.minConsecutiveSpecialty,
+    preferCombinedClinicDays: requirements?.preferCombinedClinicDays ?? DEFAULT_VALUES.preferCombinedClinicDays,
   }));
 
   // Update form when requirements change
   useEffect(() => {
     if (requirements) {
       setFormData({
-        fm_clinic_halfdays: requirements.fm_clinic_halfdays,
-        specialty_halfdays: requirements.specialty_halfdays,
-        specialty_name: requirements.specialty_name,
-        academics_halfdays: requirements.academics_halfdays,
-        elective_halfdays: requirements.elective_halfdays,
-        min_consecutive_specialty: requirements.min_consecutive_specialty,
-        prefer_combined_clinic_days: requirements.prefer_combined_clinic_days,
+        fmClinicHalfdays: requirements.fmClinicHalfdays,
+        specialtyHalfdays: requirements.specialtyHalfdays,
+        specialtyName: requirements.specialtyName,
+        academicsHalfdays: requirements.academicsHalfdays,
+        electiveHalfdays: requirements.electiveHalfdays,
+        minConsecutiveSpecialty: requirements.minConsecutiveSpecialty,
+        preferCombinedClinicDays: requirements.preferCombinedClinicDays,
       });
     }
   }, [requirements]);
@@ -94,10 +94,10 @@ export function HalfDayRequirementsEditor({
   // Calculate total half-days
   const total = useMemo(() => {
     return (
-      (formData.fm_clinic_halfdays ?? 0) +
-      (formData.specialty_halfdays ?? 0) +
-      (formData.academics_halfdays ?? 0) +
-      (formData.elective_halfdays ?? 0)
+      (formData.fmClinicHalfdays ?? 0) +
+      (formData.specialtyHalfdays ?? 0) +
+      (formData.academicsHalfdays ?? 0) +
+      (formData.electiveHalfdays ?? 0)
     );
   }, [formData]);
 
@@ -138,13 +138,13 @@ export function HalfDayRequirementsEditor({
   const handleReset = useCallback(() => {
     if (requirements) {
       setFormData({
-        fm_clinic_halfdays: requirements.fm_clinic_halfdays,
-        specialty_halfdays: requirements.specialty_halfdays,
-        specialty_name: requirements.specialty_name,
-        academics_halfdays: requirements.academics_halfdays,
-        elective_halfdays: requirements.elective_halfdays,
-        min_consecutive_specialty: requirements.min_consecutive_specialty,
-        prefer_combined_clinic_days: requirements.prefer_combined_clinic_days,
+        fmClinicHalfdays: requirements.fmClinicHalfdays,
+        specialtyHalfdays: requirements.specialtyHalfdays,
+        specialtyName: requirements.specialtyName,
+        academicsHalfdays: requirements.academicsHalfdays,
+        electiveHalfdays: requirements.electiveHalfdays,
+        minConsecutiveSpecialty: requirements.minConsecutiveSpecialty,
+        preferCombinedClinicDays: requirements.preferCombinedClinicDays,
       });
     } else {
       setFormData(DEFAULT_VALUES);
@@ -218,8 +218,8 @@ export function HalfDayRequirementsEditor({
             type="number"
             min={0}
             max={14}
-            value={formData.fm_clinic_halfdays ?? 0}
-            onChange={handleNumberChange('fm_clinic_halfdays')}
+            value={formData.fmClinicHalfdays ?? 0}
+            onChange={handleNumberChange('fmClinicHalfdays')}
             disabled={readOnly || isSaving}
             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md
               bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100
@@ -240,8 +240,8 @@ export function HalfDayRequirementsEditor({
             type="number"
             min={0}
             max={14}
-            value={formData.specialty_halfdays ?? 0}
-            onChange={handleNumberChange('specialty_halfdays')}
+            value={formData.specialtyHalfdays ?? 0}
+            onChange={handleNumberChange('specialtyHalfdays')}
             disabled={readOnly || isSaving}
             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md
               bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100
@@ -257,8 +257,8 @@ export function HalfDayRequirementsEditor({
           </label>
           <input
             type="text"
-            value={formData.specialty_name ?? ''}
-            onChange={handleTextChange('specialty_name')}
+            value={formData.specialtyName ?? ''}
+            onChange={handleTextChange('specialtyName')}
             placeholder="e.g., Neurology, Dermatology"
             disabled={readOnly || isSaving}
             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md
@@ -277,8 +277,8 @@ export function HalfDayRequirementsEditor({
             type="number"
             min={0}
             max={14}
-            value={formData.academics_halfdays ?? 0}
-            onChange={handleNumberChange('academics_halfdays')}
+            value={formData.academicsHalfdays ?? 0}
+            onChange={handleNumberChange('academicsHalfdays')}
             disabled={readOnly || isSaving}
             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md
               bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100
@@ -299,8 +299,8 @@ export function HalfDayRequirementsEditor({
             type="number"
             min={0}
             max={14}
-            value={formData.elective_halfdays ?? 0}
-            onChange={handleNumberChange('elective_halfdays')}
+            value={formData.electiveHalfdays ?? 0}
+            onChange={handleNumberChange('electiveHalfdays')}
             disabled={readOnly || isSaving}
             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md
               bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100
@@ -321,8 +321,8 @@ export function HalfDayRequirementsEditor({
             type="number"
             min={1}
             max={5}
-            value={formData.min_consecutive_specialty ?? 1}
-            onChange={handleNumberChange('min_consecutive_specialty')}
+            value={formData.minConsecutiveSpecialty ?? 1}
+            onChange={handleNumberChange('minConsecutiveSpecialty')}
             disabled={readOnly || isSaving}
             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md
               bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100
@@ -340,8 +340,8 @@ export function HalfDayRequirementsEditor({
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
-            checked={formData.prefer_combined_clinic_days ?? true}
-            onChange={handleCheckboxChange('prefer_combined_clinic_days')}
+            checked={formData.preferCombinedClinicDays ?? true}
+            onChange={handleCheckboxChange('preferCombinedClinicDays')}
             disabled={readOnly || isSaving}
             className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
           />

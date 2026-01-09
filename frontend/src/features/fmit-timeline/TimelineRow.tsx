@@ -36,10 +36,10 @@ export function TimelineRow({
    * Calculate position and width of assignment block
    */
   const getBlockStyle = (assignment: TimelineAssignment) => {
-    const timelineStart = new Date(periods[0].start_date);
-    const timelineEnd = new Date(periods[periods.length - 1].end_date);
-    const assignmentStart = new Date(assignment.start_date);
-    const assignmentEnd = new Date(assignment.end_date);
+    const timelineStart = new Date(periods[0].startDate);
+    const timelineEnd = new Date(periods[periods.length - 1].endDate);
+    const assignmentStart = new Date(assignment.startDate);
+    const assignmentEnd = new Date(assignment.endDate);
 
     // Clamp dates to timeline bounds
     const clampedStart = assignmentStart < timelineStart ? timelineStart : assignmentStart;
@@ -62,14 +62,14 @@ export function TimelineRow({
    * Get color for assignment block
    */
   const getBlockColor = (assignment: TimelineAssignment) => {
-    return ACTIVITY_TYPE_COLORS[assignment.activity_type] || ACTIVITY_TYPE_COLORS.default;
+    return ACTIVITY_TYPE_COLORS[assignment.activityType] || ACTIVITY_TYPE_COLORS.default;
   };
 
   /**
    * Get workload status icon
    */
   const getWorkloadIcon = () => {
-    switch (row.workload_status) {
+    switch (row.workloadStatus) {
       case 'on-track':
         return <CheckCircle className="w-4 h-4" />;
       case 'overloaded':
@@ -90,7 +90,7 @@ export function TimelineRow({
             <User className="w-4 h-4 text-blue-600" />
           </div>
           <div className="flex-1 min-w-0">
-            <h4 className="text-sm font-medium text-gray-900 truncate">{row.faculty_name}</h4>
+            <h4 className="text-sm font-medium text-gray-900 truncate">{row.facultyName}</h4>
             <p className="text-xs text-gray-500 truncate">{row.specialty}</p>
 
             {/* Workload status */}
@@ -98,12 +98,12 @@ export function TimelineRow({
               <div
                 className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
                 style={{
-                  backgroundColor: `${WORKLOAD_STATUS_COLORS[row.workload_status]}20`,
-                  color: WORKLOAD_STATUS_COLORS[row.workload_status],
+                  backgroundColor: `${WORKLOAD_STATUS_COLORS[row.workloadStatus]}20`,
+                  color: WORKLOAD_STATUS_COLORS[row.workloadStatus],
                 }}
               >
                 {getWorkloadIcon()}
-                <span>{WORKLOAD_STATUS_LABELS[row.workload_status]}</span>
+                <span>{WORKLOAD_STATUS_LABELS[row.workloadStatus]}</span>
               </div>
             </div>
 
@@ -111,14 +111,14 @@ export function TimelineRow({
             <div className="mt-1.5">
               <div className="flex items-center justify-between text-xs text-gray-600 mb-0.5">
                 <span>Utilization</span>
-                <span className="font-medium">{row.utilization_percentage}%</span>
+                <span className="font-medium">{row.utilizationPercentage}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-1.5">
                 <div
                   className="h-1.5 rounded-full transition-all"
                   style={{
-                    width: `${Math.min(row.utilization_percentage, 100)}%`,
-                    backgroundColor: WORKLOAD_STATUS_COLORS[row.workload_status],
+                    width: `${Math.min(row.utilizationPercentage, 100)}%`,
+                    backgroundColor: WORKLOAD_STATUS_COLORS[row.workloadStatus],
                   }}
                 />
               </div>
@@ -126,7 +126,7 @@ export function TimelineRow({
 
             {/* Total hours */}
             <p className="text-xs text-gray-500 mt-1">
-              {row.total_hours} hrs total
+              {row.totalHours} hrs total
             </p>
           </div>
         </div>
@@ -140,7 +140,7 @@ export function TimelineRow({
             <div
               key={index}
               className={`flex-1 border-r border-gray-100 ${
-                period.is_current ? 'bg-blue-50/30' : ''
+                period.isCurrent ? 'bg-blue-50/30' : ''
               }`}
             />
           ))}
@@ -185,7 +185,7 @@ export function TimelineRow({
                   {/* Assignment label (only show if wide enough) */}
                   <div className="px-2 py-1 h-full flex items-center justify-center overflow-hidden">
                     <span className="text-xs font-medium text-white truncate group-hover:scale-105 transition-transform">
-                      {assignment.rotation_name}
+                      {assignment.rotationName}
                     </span>
                   </div>
 
@@ -252,20 +252,20 @@ export function AssignmentTooltip({ data }: AssignmentTooltipProps) {
 
         {/* Content */}
         <div className="space-y-1.5">
-          <h5 className="font-semibold text-sm">{assignment.rotation_name}</h5>
-          <p className="text-xs text-gray-300">{assignment.faculty_name}</p>
+          <h5 className="font-semibold text-sm">{assignment.rotationName}</h5>
+          <p className="text-xs text-gray-300">{assignment.facultyName}</p>
 
           <div className="flex items-center gap-4 text-xs pt-1.5 border-t border-gray-700">
             <div>
               <span className="text-gray-400">Start:</span>{' '}
               <span className="text-white">
-                {new Date(assignment.start_date).toLocaleDateString()}
+                {new Date(assignment.startDate).toLocaleDateString()}
               </span>
             </div>
             <div>
               <span className="text-gray-400">End:</span>{' '}
               <span className="text-white">
-                {new Date(assignment.end_date).toLocaleDateString()}
+                {new Date(assignment.endDate).toLocaleDateString()}
               </span>
             </div>
           </div>
@@ -273,7 +273,7 @@ export function AssignmentTooltip({ data }: AssignmentTooltipProps) {
           <div className="flex items-center gap-4 text-xs">
             <div>
               <span className="text-gray-400">Hours/week:</span>{' '}
-              <span className="text-white">{assignment.hours_per_week}</span>
+              <span className="text-white">{assignment.hoursPerWeek}</span>
             </div>
             <div>
               <span className="text-gray-400">Status:</span>{' '}

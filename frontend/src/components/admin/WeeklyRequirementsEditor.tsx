@@ -373,13 +373,13 @@ export function WeeklyRequirementsEditor({
   useEffect(() => {
     if (existingRequirement) {
       setFormData({
-        fm_clinic_min_per_week: existingRequirement.fm_clinic_min_per_week,
-        fm_clinic_max_per_week: existingRequirement.fm_clinic_max_per_week,
-        specialty_min_per_week: existingRequirement.specialty_min_per_week,
-        specialty_max_per_week: existingRequirement.specialty_max_per_week,
-        academics_required: existingRequirement.academics_required,
-        protected_slots: existingRequirement.protectedSlots || {},
-        allowed_clinic_days: existingRequirement.allowed_clinic_days || [1, 2, 3, 4, 5],
+        fmClinicMinPerWeek: existingRequirement.fmClinicMinPerWeek,
+        fmClinicMaxPerWeek: existingRequirement.fmClinicMaxPerWeek,
+        specialtyMinPerWeek: existingRequirement.specialtyMinPerWeek,
+        specialtyMaxPerWeek: existingRequirement.specialtyMaxPerWeek,
+        academicsRequired: existingRequirement.academicsRequired,
+        protectedSlots: existingRequirement.protectedSlots || {},
+        allowedClinicDays: existingRequirement.allowedClinicDays || [1, 2, 3, 4, 5],
       });
       setHasChanges(false);
     }
@@ -420,13 +420,13 @@ export function WeeklyRequirementsEditor({
         templateId,
         existingId: existingRequirement?.id,
         data: {
-          fm_clinic_min_per_week: formData.fm_clinic_min_per_week,
-          fm_clinic_max_per_week: formData.fm_clinic_max_per_week,
-          specialty_min_per_week: formData.specialty_min_per_week,
-          specialty_max_per_week: formData.specialty_max_per_week,
-          academics_required: formData.academics_required,
-          protected_slots: formData.protectedSlots,
-          allowed_clinic_days: formData.allowed_clinic_days,
+          fmClinicMinPerWeek: formData.fmClinicMinPerWeek,
+          fmClinicMaxPerWeek: formData.fmClinicMaxPerWeek,
+          specialtyMinPerWeek: formData.specialtyMinPerWeek,
+          specialtyMaxPerWeek: formData.specialtyMaxPerWeek,
+          academicsRequired: formData.academicsRequired,
+          protectedSlots: formData.protectedSlots,
+          allowedClinicDays: formData.allowedClinicDays,
         },
       });
       setHasChanges(false);
@@ -556,20 +556,20 @@ export function WeeklyRequirementsEditor({
         {/* FM Clinic Half-Days */}
         <MinMaxInput
           label="FM Clinic Half-Days Per Week"
-          minValue={formData.fm_clinic_min_per_week}
-          maxValue={formData.fm_clinic_max_per_week}
-          onMinChange={(value) => updateField('fm_clinic_min_per_week', value)}
-          onMaxChange={(value) => updateField('fm_clinic_max_per_week', value)}
+          minValue={formData.fmClinicMinPerWeek}
+          maxValue={formData.fmClinicMaxPerWeek}
+          onMinChange={(value) => updateField('fmClinicMinPerWeek', value)}
+          onMaxChange={(value) => updateField('fmClinicMaxPerWeek', value)}
           error={errors.fm_clinic}
         />
 
         {/* Specialty Half-Days */}
         <MinMaxInput
           label="Specialty Half-Days Per Week"
-          minValue={formData.specialty_min_per_week}
-          maxValue={formData.specialty_max_per_week}
-          onMinChange={(value) => updateField('specialty_min_per_week', value)}
-          onMaxChange={(value) => updateField('specialty_max_per_week', value)}
+          minValue={formData.specialtyMinPerWeek}
+          maxValue={formData.specialtyMaxPerWeek}
+          onMinChange={(value) => updateField('specialtyMinPerWeek', value)}
+          onMaxChange={(value) => updateField('specialtyMaxPerWeek', value)}
           error={errors.specialty}
         />
       </div>
@@ -586,16 +586,16 @@ export function WeeklyRequirementsEditor({
         </div>
         <button
           type="button"
-          onClick={() => updateField('academics_required', !formData.academics_required)}
+          onClick={() => updateField('academicsRequired', !formData.academicsRequired)}
           className={`
             relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-            ${formData.academics_required ? 'bg-violet-500' : 'bg-slate-600'}
+            ${formData.academicsRequired ? 'bg-violet-500' : 'bg-slate-600'}
           `}
         >
           <span
             className={`
               inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-              ${formData.academics_required ? 'translate-x-6' : 'translate-x-1'}
+              ${formData.academicsRequired ? 'translate-x-6' : 'translate-x-1'}
             `}
           />
         </button>
@@ -605,8 +605,8 @@ export function WeeklyRequirementsEditor({
       <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
         <DayCheckboxGroup
           label="Allowed Clinic Days"
-          selectedDays={formData.allowed_clinic_days}
-          onChange={(days) => updateField('allowed_clinic_days', days)}
+          selectedDays={formData.allowedClinicDays}
+          onChange={(days) => updateField('allowedClinicDays', days)}
         />
         <p className="text-xs text-slate-500 mt-2">
           Days when clinic sessions can be scheduled for residents on this rotation
@@ -617,7 +617,7 @@ export function WeeklyRequirementsEditor({
       <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
         <ProtectedSlotsEditor
           slots={formData.protectedSlots}
-          onChange={(slots) => updateField('protected_slots', slots)}
+          onChange={(slots) => updateField('protectedSlots', slots)}
         />
         <p className="text-xs text-slate-500 mt-2">
           Time slots that are protected for specific activities and cannot be

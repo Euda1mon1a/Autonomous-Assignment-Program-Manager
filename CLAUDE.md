@@ -96,6 +96,13 @@ interface Person {
 
 **Why this matters:** TypeScript types don't affect runtime. If types say `created_at` but axios converts to `createdAt`, code will access `undefined`.
 
+**Enforcement:** ESLint `@typescript-eslint/naming-convention` rule catches violations. Run:
+```bash
+cd frontend && npm run lint
+```
+
+**Skill:** Use `/check-camelcase` to scan for violations.
+
 > RAG: `rag_search('code style examples')` for detailed patterns
 
 ---

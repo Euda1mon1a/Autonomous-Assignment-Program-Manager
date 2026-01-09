@@ -67,14 +67,14 @@ export function BurnoutDashboard({ burnedOutProviderIds = [] }: BurnoutDashboard
 
       <div className="space-y-6 overflow-y-auto pr-2 custom-scrollbar">
         {/* Immediate Actions */}
-        {data.immediate_actions.length > 0 && (
+        {data.immediateActions.length > 0 && (
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-red-400 uppercase tracking-wider flex items-center gap-2">
               <AlertCircle className="w-4 h-4" />
               Immediate Actions Required
             </h4>
             <div className="space-y-2">
-              {data.immediate_actions.map((action, idx) => (
+              {data.immediateActions.map((action, idx) => (
                 <motion.div
                   key={`action-${idx}`}
                   initial={{ x: -10, opacity: 0 }}
@@ -90,14 +90,14 @@ export function BurnoutDashboard({ burnedOutProviderIds = [] }: BurnoutDashboard
         )}
 
         {/* Watch Items */}
-        {data.watch_items.length > 0 && (
+        {data.watchItems.length > 0 && (
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-yellow-400 uppercase tracking-wider flex items-center gap-2">
               <Info className="w-4 h-4" />
               Watch Items
             </h4>
             <div className="space-y-2">
-              {data.watch_items.map((item, idx) => (
+              {data.watchItems.map((item, idx) => (
                 <motion.div
                   key={`watch-${idx}`}
                   initial={{ x: -10, opacity: 0 }}
@@ -113,8 +113,8 @@ export function BurnoutDashboard({ burnedOutProviderIds = [] }: BurnoutDashboard
         )}
 
         {/* Empty State */}
-        {data.immediate_actions.length === 0 &&
-          data.watch_items.length === 0 && (
+        {data.immediateActions.length === 0 &&
+          data.watchItems.length === 0 && (
             <div className="h-40 flex flex-col items-center justify-center text-center p-4 border border-dashed border-slate-700 rounded-lg">
               <CheckCircle className="w-8 h-8 text-green-500 mb-2" />
               <p className="text-slate-300 font-medium">All Clear</p>
@@ -183,8 +183,8 @@ export function BurnoutDashboard({ burnedOutProviderIds = [] }: BurnoutDashboard
                 >
                   Status:{" "}
                   <span className="capitalize">{burnoutData.status}</span>
-                  {burnoutData.secondary_cases > 0 &&
-                    ` (${burnoutData.secondary_cases} secondary cases)`}
+                  {burnoutData.secondaryCases > 0 &&
+                    ` (${burnoutData.secondaryCases} secondary cases)`}
                 </p>
 
                 {/* Interventions */}

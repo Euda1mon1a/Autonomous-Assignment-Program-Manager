@@ -56,9 +56,22 @@ class ConflictAlert(Base):
     faculty_id = Column(PGUUID(as_uuid=True), ForeignKey("people.id"), nullable=False)
 
     # What type of conflict
-    conflict_type = Column(SQLEnum(ConflictType), nullable=False)
+    conflict_type = Column(
+        SQLEnum(
+            ConflictType,
+            values_callable=lambda x: [e.value for e in x],
+            create_type=False,
+        ),
+        nullable=False,
+    )
     severity = Column(
-        SQLEnum(ConflictSeverity), default=ConflictSeverity.WARNING, nullable=False
+        SQLEnum(
+            ConflictSeverity,
+            values_callable=lambda x: [e.value for e in x],
+            create_type=False,
+        ),
+        default=ConflictSeverity.WARNING,
+        nullable=False,
     )
 
     # When is the conflict
@@ -72,7 +85,13 @@ class ConflictAlert(Base):
 
     # Status tracking
     status = Column(
-        SQLEnum(ConflictAlertStatus), default=ConflictAlertStatus.NEW, nullable=False
+        SQLEnum(
+            ConflictAlertStatus,
+            values_callable=lambda x: [e.value for e in x],
+            create_type=False,
+        ),
+        default=ConflictAlertStatus.NEW,
+        nullable=False,
     )
 
     # Description and notes

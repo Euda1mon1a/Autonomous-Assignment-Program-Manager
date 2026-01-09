@@ -6,7 +6,13 @@
 INPUT=$(cat)
 
 # Extract the command being run
-COMMAND=$(echo "$INPUT" | grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/"command"[[:space:]]*:[[:space:]]*"//' | sed 's/"$//' || echo "")
+# Claude Code passes: { "tool_input": { "command": "..." } }
+if command -v jq &> /dev/null; then
+    COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null || echo "")
+else
+    # Fallback: fragile grep parsing
+    COMMAND=$(echo "$INPUT" | grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/"command"[[:space:]]*:[[:space:]]*"//' | sed 's/"$//' || echo "")
+fi
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 LOG_FILE="$PROJECT_ROOT/.antigravity/logs/bash-commands.log"

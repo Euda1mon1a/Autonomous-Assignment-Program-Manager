@@ -237,8 +237,8 @@ export function ConflictCard({
             {conflict.title}
           </p>
           <p className="text-xs text-gray-500 truncate">
-            {format(new Date(conflict.conflict_date), 'MMM d, yyyy')}
-            {conflict.conflict_session && ` - ${conflict.conflict_session}`}
+            {format(new Date(conflict.conflictDate), 'MMM d, yyyy')}
+            {conflict.conflictSession && ` - ${conflict.conflictSession}`}
           </p>
         </div>
 
@@ -303,16 +303,16 @@ export function ConflictCard({
             <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
               <span className="flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
-                {format(new Date(conflict.conflict_date), 'MMM d, yyyy')}
-                {conflict.conflict_session && ` (${conflict.conflict_session})`}
+                {format(new Date(conflict.conflictDate), 'MMM d, yyyy')}
+                {conflict.conflictSession && ` (${conflict.conflictSession})`}
               </span>
               <span className="flex items-center gap-1">
                 <User className="w-3.5 h-3.5" aria-hidden="true" />
-                {conflict.affected_person_ids.length} affected
+                {conflict.affectedPersonIds.length} affected
               </span>
               <span className="flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5" aria-hidden="true" />
-                Detected {format(new Date(conflict.detected_at), 'MMM d, h:mm a')}
+                Detected {format(new Date(conflict.detectedAt), 'MMM d, h:mm a')}
               </span>
             </div>
           </div>
@@ -432,13 +432,13 @@ export function ConflictCard({
         <div className="px-4 pb-4 pt-0 animate-slideDown">
           <div className="border-t border-gray-200/50 pt-4 mt-2">
             {/* Affected assignments */}
-            {conflict.affected_assignment_ids.length > 0 && (
+            {conflict.affectedAssignmentIds.length > 0 && (
               <div className="mb-4">
                 <h4 className="text-sm font-medium text-gray-700 mb-2">
-                  Affected Assignments ({conflict.affected_assignment_ids.length})
+                  Affected Assignments ({conflict.affectedAssignmentIds.length})
                 </h4>
                 <div className="flex flex-wrap gap-2">
-                  {conflict.affected_assignment_ids.map((id) => (
+                  {conflict.affectedAssignmentIds.map((id) => (
                     <span
                       key={id}
                       className="px-2 py-1 bg-white/50 rounded text-xs text-gray-600 font-mono"
@@ -459,21 +459,21 @@ export function ConflictCard({
             </div>
 
             {/* Resolution info (if resolved) */}
-            {conflict.status === 'resolved' && conflict.resolved_at && (
+            {conflict.status === 'resolved' && conflict.resolvedAt && (
               <div className="bg-green-100 rounded-lg p-3">
                 <h4 className="text-sm font-medium text-green-800 mb-1">Resolution</h4>
                 <p className="text-sm text-green-700">
-                  Resolved on {format(new Date(conflict.resolved_at), 'MMM d, yyyy h:mm a')}
-                  {conflict.resolved_by && ` by ${conflict.resolved_by}`}
+                  Resolved on {format(new Date(conflict.resolvedAt), 'MMM d, yyyy h:mm a')}
+                  {conflict.resolvedBy && ` by ${conflict.resolvedBy}`}
                 </p>
-                {conflict.resolution_method && (
+                {conflict.resolutionMethod && (
                   <p className="text-xs text-green-600 mt-1">
-                    Method: {conflict.resolution_method.replace('_', ' ')}
+                    Method: {conflict.resolutionMethod.replace('_', ' ')}
                   </p>
                 )}
-                {conflict.resolution_notes && (
+                {conflict.resolutionNotes && (
                   <p className="text-sm text-green-700 mt-2 italic">
-                    &ldquo;{conflict.resolution_notes}&rdquo;
+                    &ldquo;{conflict.resolutionNotes}&rdquo;
                   </p>
                 )}
               </div>

@@ -22,13 +22,13 @@ export const manifestMockFactories = {
     person: {
       id: 'person-1',
       name: 'Dr. John Smith',
-      pgy_level: 2,
-      role_type: 'resident',
+      pgyLevel: 2,
+      roleType: 'resident',
     },
     role: 'Primary Care',
     activity: 'Outpatient Clinic',
-    assignment_id: 'assign-1',
-    rotation_name: 'Family Medicine',
+    assignmentId: 'assign-1',
+    rotationName: 'Family Medicine',
     ...overrides,
   }),
 
@@ -36,23 +36,23 @@ export const manifestMockFactories = {
    * Create a mock location manifest
    */
   locationManifest: (overrides: Partial<LocationManifest> = {}): LocationManifest => ({
-    clinic_location: 'Main Clinic',
-    time_slots: {
+    clinicLocation: 'Main Clinic',
+    timeSlots: {
       AM: [
         manifestMockFactories.personAssignment({
-          person: { id: 'person-1', name: 'Dr. John Smith', pgy_level: 2, role_type: 'resident' },
+          person: { id: 'person-1', name: 'Dr. John Smith', pgyLevel: 2, roleType: 'resident' },
         }),
         manifestMockFactories.personAssignment({
-          person: { id: 'person-2', name: 'Dr. Jane Doe', pgy_level: 3, role_type: 'resident' },
+          person: { id: 'person-2', name: 'Dr. Jane Doe', pgyLevel: 3, roleType: 'resident' },
         }),
       ],
       PM: [
         manifestMockFactories.personAssignment({
-          person: { id: 'person-3', name: 'Dr. Bob Johnson', role_type: 'faculty' },
+          person: { id: 'person-3', name: 'Dr. Bob Johnson', roleType: 'faculty' },
         }),
       ],
     },
-    staffing_summary: {
+    staffingSummary: {
       total: 3,
       residents: 2,
       faculty: 1,
@@ -70,19 +70,19 @@ export const manifestMockFactories = {
    */
   dailyManifestData: (overrides: Partial<DailyManifestData> = {}): DailyManifestData => ({
     date: '2025-12-21',
-    time_of_day: 'AM',
+    timeOfDay: 'AM',
     locations: [
       manifestMockFactories.locationManifest(),
       manifestMockFactories.locationManifest({
-        clinic_location: 'South Clinic',
-        time_slots: {
+        clinicLocation: 'South Clinic',
+        timeSlots: {
           AM: [
             manifestMockFactories.personAssignment({
-              person: { id: 'person-4', name: 'Dr. Sarah Wilson', pgy_level: 1, role_type: 'resident' },
+              person: { id: 'person-4', name: 'Dr. Sarah Wilson', pgyLevel: 1, roleType: 'resident' },
             }),
           ],
         },
-        staffing_summary: {
+        staffingSummary: {
           total: 1,
           residents: 1,
           faculty: 0,
@@ -90,12 +90,12 @@ export const manifestMockFactories = {
         },
       }),
     ],
-    generated_at: '2025-12-21T10:30:00Z',
+    generatedAt: '2025-12-21T10:30:00Z',
     summary: {
-      total_locations: 2,
-      total_staff: 4,
-      total_residents: 3,
-      total_faculty: 1,
+      totalLocations: 2,
+      totalStaff: 4,
+      totalResidents: 3,
+      totalFaculty: 1,
     },
     ...overrides,
   }),
@@ -117,10 +117,10 @@ export const manifestMockResponses = {
   emptyManifest: manifestMockFactories.dailyManifestData({
     locations: [],
     summary: {
-      total_locations: 0,
-      total_staff: 0,
-      total_residents: 0,
-      total_faculty: 0,
+      totalLocations: 0,
+      totalStaff: 0,
+      totalResidents: 0,
+      totalFaculty: 0,
     },
   }),
 
@@ -130,12 +130,12 @@ export const manifestMockResponses = {
   overCapacityManifest: manifestMockFactories.dailyManifestData({
     locations: [
       manifestMockFactories.locationManifest({
-        clinic_location: 'Busy Clinic',
+        clinicLocation: 'Busy Clinic',
         capacity: {
           current: 6,
           maximum: 5,
         },
-        staffing_summary: {
+        staffingSummary: {
           total: 6,
           residents: 4,
           faculty: 2,
@@ -151,7 +151,7 @@ export const manifestMockResponses = {
   nearCapacityManifest: manifestMockFactories.dailyManifestData({
     locations: [
       manifestMockFactories.locationManifest({
-        clinic_location: 'Almost Full Clinic',
+        clinicLocation: 'Almost Full Clinic',
         capacity: {
           current: 5,
           maximum: 5,
@@ -166,18 +166,18 @@ export const manifestMockResponses = {
   manifestWithFellows: manifestMockFactories.dailyManifestData({
     locations: [
       manifestMockFactories.locationManifest({
-        clinic_location: 'Academic Center',
-        time_slots: {
+        clinicLocation: 'Academic Center',
+        timeSlots: {
           AM: [
             manifestMockFactories.personAssignment({
-              person: { id: 'fellow-1', name: 'Dr. Fellow One', role_type: 'fellow' },
+              person: { id: 'fellow-1', name: 'Dr. Fellow One', roleType: 'fellow' },
             }),
             manifestMockFactories.personAssignment({
-              person: { id: 'fellow-2', name: 'Dr. Fellow Two', role_type: 'fellow' },
+              person: { id: 'fellow-2', name: 'Dr. Fellow Two', roleType: 'fellow' },
             }),
           ],
         },
-        staffing_summary: {
+        staffingSummary: {
           total: 2,
           residents: 0,
           faculty: 0,
@@ -186,10 +186,10 @@ export const manifestMockResponses = {
       }),
     ],
     summary: {
-      total_locations: 1,
-      total_staff: 2,
-      total_residents: 0,
-      total_faculty: 0,
+      totalLocations: 1,
+      totalStaff: 2,
+      totalResidents: 0,
+      totalFaculty: 0,
     },
   }),
 
@@ -199,7 +199,7 @@ export const manifestMockResponses = {
   manifestWithoutCapacity: manifestMockFactories.dailyManifestData({
     locations: [
       manifestMockFactories.locationManifest({
-        clinic_location: 'No Capacity Tracking',
+        clinicLocation: 'No Capacity Tracking',
         capacity: undefined,
       }),
     ],
@@ -209,19 +209,19 @@ export const manifestMockResponses = {
    * Manifest for ALL time period
    */
   allDayManifest: manifestMockFactories.dailyManifestData({
-    time_of_day: 'ALL',
+    timeOfDay: 'ALL',
     locations: [
       manifestMockFactories.locationManifest({
-        clinic_location: 'All Day Clinic',
-        time_slots: {
+        clinicLocation: 'All Day Clinic',
+        timeSlots: {
           AM: [
             manifestMockFactories.personAssignment({
-              person: { id: 'person-1', name: 'Dr. Morning Person', role_type: 'resident' },
+              person: { id: 'person-1', name: 'Dr. Morning Person', roleType: 'resident' },
             }),
           ],
           PM: [
             manifestMockFactories.personAssignment({
-              person: { id: 'person-2', name: 'Dr. Evening Person', role_type: 'resident' },
+              person: { id: 'person-2', name: 'Dr. Evening Person', roleType: 'resident' },
             }),
           ],
         },

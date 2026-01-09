@@ -85,19 +85,19 @@ export function CredentialMatrix({
 }: CredentialMatrixProps) {
   const [selectedCell, setSelectedCell] = useState<CellData | null>(null);
 
-  // Build a lookup map for credentials: key = `${person_id}_${procedure_id}`
+  // Build a lookup map for credentials: key = `${person_id}_${procedureId}`
   const credentialMap = useMemo(() => {
     const map = new Map<string, Credential>();
     credentials.forEach((cred) => {
-      map.set(`${cred.personId}_${cred.procedure_id}`, cred);
+      map.set(`${cred.personId}_${cred.procedureId}`, cred);
     });
     return map;
   }, [credentials]);
 
   // Check if credential is expiring (within 30 days)
   const isExpiring = useCallback((credential: Credential | null): boolean => {
-    if (!credential?.expiration_date) return false;
-    const expirationDate = new Date(credential.expiration_date);
+    if (!credential?.expirationDate) return false;
+    const expirationDate = new Date(credential.expirationDate);
     const thirtyDaysFromNow = new Date();
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
     return expirationDate <= thirtyDaysFromNow && expirationDate > new Date();

@@ -141,7 +141,7 @@ export default function ImportReviewPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Total Rows</span>
-              <span className="text-slate-300">{batch.row_count}</span>
+              <span className="text-slate-300">{batch.rowCount}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Conflicts</span>

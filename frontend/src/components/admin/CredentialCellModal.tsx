@@ -70,10 +70,10 @@ export function CredentialCellModal({
   // Form state
   const [status, setStatus] = useState<CredentialStatus>(credential?.status || 'active');
   const [competencyLevel, setCompetencyLevel] = useState<CompetencyLevel>(
-    credential?.competency_level || 'qualified'
+    credential?.competencyLevel || 'qualified'
   );
   const [expirationDate, setExpirationDate] = useState(
-    credential?.expiration_date?.split('T')[0] || ''
+    credential?.expirationDate?.split('T')[0] || ''
   );
   const [notes, setNotes] = useState(credential?.notes || '');
 
@@ -85,8 +85,8 @@ export function CredentialCellModal({
       // Update existing credential
       const updates: CredentialUpdate = {
         status,
-        competency_level: competencyLevel,
-        expiration_date: expirationDate || null,
+        competencyLevel: competencyLevel,
+        expirationDate: expirationDate || null,
         notes: notes || null,
       };
 
@@ -100,11 +100,11 @@ export function CredentialCellModal({
     } else {
       // Create new credential
       const data: CredentialCreate = {
-        person_id: faculty.id,
-        procedure_id: procedure.id,
+        personId: faculty.id,
+        procedureId: procedure.id,
         status,
-        competency_level: competencyLevel,
-        expiration_date: expirationDate || null,
+        competencyLevel: competencyLevel,
+        expirationDate: expirationDate || null,
         notes: notes || null,
       };
 

@@ -78,28 +78,28 @@ export function ProcedureList({
                 <span
                   className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
                   ${
-                    procedure.complexity_level === "basic"
+                    procedure.complexityLevel === "basic"
                       ? "bg-green-400/10 text-green-400 border border-green-400/20"
                       : ""
                   }
                   ${
-                    procedure.complexity_level === "standard"
+                    procedure.complexityLevel === "standard"
                       ? "bg-blue-400/10 text-blue-400 border border-blue-400/20"
                       : ""
                   }
                   ${
-                    procedure.complexity_level === "advanced"
+                    procedure.complexityLevel === "advanced"
                       ? "bg-orange-400/10 text-orange-400 border border-orange-400/20"
                       : ""
                   }
                   ${
-                    procedure.complexity_level === "complex"
+                    procedure.complexityLevel === "complex"
                       ? "bg-red-400/10 text-red-400 border border-red-400/20"
                       : ""
                   }
                 `}
                 >
-                  {procedure.complexity_level}
+                  {procedure.complexityLevel}
                 </span>
               </td>
               <td className="px-6 py-4 text-slate-300">

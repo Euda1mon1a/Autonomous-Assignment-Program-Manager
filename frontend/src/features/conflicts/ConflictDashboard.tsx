@@ -106,10 +106,10 @@ export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
   }, [refetchConflicts]);
 
   // Stats summary
-  const unresolvedCount = statistics?.by_status?.unresolved || 0;
-  const criticalCount = statistics?.by_severity?.critical || 0;
-  const resolutionRate = statistics?.resolution_rate || 0;
-  const trendingUp = statistics?.trending_up ?? false;
+  const unresolvedCount = statistics?.byStatus?.unresolved || 0;
+  const criticalCount = statistics?.bySeverity?.critical || 0;
+  const resolutionRate = statistics?.resolutionRate || 0;
+  const trendingUp = statistics?.trendingUp ?? false;
 
   return (
     <div className="h-full flex flex-col bg-gray-100 animate-fadeIn">

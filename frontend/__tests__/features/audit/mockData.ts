@@ -59,7 +59,7 @@ export const mockAuditLogs: AuditLogEntry[] = [
     user: mockUsers[0],
     changes: [
       {
-        field: 'assignment_date',
+        field: 'assignmentDate',
         oldValue: null,
         newValue: '2025-12-20',
         displayName: 'Assignment Date',
@@ -90,7 +90,7 @@ export const mockAuditLogs: AuditLogEntry[] = [
     user: mockUsers[1],
     changes: [
       {
-        field: 'pgy_level',
+        field: 'pgyLevel',
         oldValue: 2,
         newValue: 3,
         displayName: 'PGY Level',
@@ -339,7 +339,7 @@ export const mockAuditLogs: AuditLogEntry[] = [
         displayName: 'Type',
       },
       {
-        field: 'pgy_level',
+        field: 'pgyLevel',
         oldValue: null,
         newValue: 1,
         displayName: 'PGY Level',

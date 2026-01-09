@@ -123,7 +123,7 @@ function FmitScheduleTable({ schedule }: FmitScheduleTableProps) {
               <td className="px-4 py-3 text-white">Week {week.weekNumber}</td>
               <td className="px-4 py-3">
                 <span className="font-medium text-white">
-                  {week.faculty_name || <span className="text-slate-300 italic">Unassigned</span>}
+                  {week.facultyName || <span className="text-slate-300 italic">Unassigned</span>}
                 </span>
               </td>
               <td className="px-4 py-3 text-slate-300">
@@ -197,7 +197,7 @@ function ParseResults({ data, onReset }: ParseResultsProps) {
           <div className="text-sm text-slate-400">FMIT Weeks</div>
         </div>
         <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
-          <div className="text-2xl font-bold text-white">{data.total_assignments}</div>
+          <div className="text-2xl font-bold text-white">{data.totalAssignments}</div>
           <div className="text-sm text-slate-400">Assignments</div>
         </div>
       </div>

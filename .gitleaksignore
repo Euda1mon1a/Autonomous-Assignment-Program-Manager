@@ -1,0 +1,34 @@
+# Gitleaks Ignore File
+# See: https://github.com/gitleaks/gitleaks#gitleaksignore
+
+# Test files with mock credentials
+backend/tests/**
+frontend/__tests__/**
+frontend/src/__tests__/**
+mcp-server/tests/**
+agent-adk/tests/**
+load-tests/**
+
+# Documentation with example tokens/passwords
+docs/**
+.claude/**
+
+# Build artifacts
+frontend/.next/**
+node_modules/**
+__pycache__/**
+*.pyc
+.venv/**
+venv/**
+
+# Seed scripts with development-only passwords
+backend/scripts/seed*.py
+
+# Monitoring config examples
+monitoring/**
+
+# Next.js generated files
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json

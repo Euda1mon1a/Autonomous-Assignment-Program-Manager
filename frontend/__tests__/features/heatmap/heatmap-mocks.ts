@@ -42,19 +42,19 @@ export const heatmapMockFactories = {
   }),
 
   heatmapData: (overrides: Partial<HeatmapData> = {}): HeatmapData => ({
-    x_labels: ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05'],
-    y_labels: ['Clinic', 'Inpatient', 'Procedures', 'Conference'],
-    z_values: [
+    xLabels: ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05'],
+    yLabels: ['Clinic', 'Inpatient', 'Procedures', 'Conference'],
+    zValues: [
       [100, 80, 90, 100, 95],
       [90, 100, 85, 90, 100],
       [75, 60, 80, 70, 85],
       [100, 100, 100, 100, 100],
     ],
-    color_scale: heatmapMockFactories.colorScale(),
+    colorScale: heatmapMockFactories.colorScale(),
     annotations: [],
     title: 'Coverage Heatmap',
-    x_axis_label: 'Date',
-    y_axis_label: 'Rotation',
+    xAxisLabel: 'Date',
+    yAxisLabel: 'Rotation',
     ...overrides,
   }),
 
@@ -65,19 +65,19 @@ export const heatmapMockFactories = {
   }),
 
   filters: (overrides: Partial<HeatmapFilters> = {}): HeatmapFilters => ({
-    start_date: '2024-01-01',
-    end_date: '2024-01-31',
-    person_ids: [],
-    rotation_ids: [],
-    include_fmit: true,
-    group_by: 'person',
+    startDate: '2024-01-01',
+    endDate: '2024-01-31',
+    personIds: [],
+    rotationIds: [],
+    includeFmit: true,
+    groupBy: 'person',
     ...overrides,
   }),
 
   coverageMetrics: (overrides: Partial<CoverageMetrics> = {}): CoverageMetrics => ({
-    total_slots: 100,
-    filled_slots: 95,
-    coverage_percentage: 95.0,
+    totalSlots: 100,
+    filledSlots: 95,
+    coveragePercentage: 95.0,
     gaps: [
       {
         date: '2024-01-05',
@@ -90,23 +90,23 @@ export const heatmapMockFactories = {
   }),
 
   workloadMetrics: (overrides: Partial<WorkloadMetrics> = {}): WorkloadMetrics => ({
-    person_id: 'person-1',
-    person_name: 'Dr. John Smith',
-    total_assignments: 20,
-    total_hours: 75.0,
-    blocks_by_rotation: {
+    personId: 'person-1',
+    personName: 'Dr. John Smith',
+    totalAssignments: 20,
+    totalHours: 75.0,
+    blocksByRotation: {
       'Clinic': 8,
       'Inpatient': 12,
     },
-    average_weekly_hours: 37.5,
+    averageWeeklyHours: 37.5,
     ...overrides,
   }),
 
   heatmapResponse: (overrides: Partial<HeatmapResponse> = {}): HeatmapResponse => ({
     heatmap: heatmapMockFactories.heatmapData(),
     metadata: {
-      generated_at: '2024-02-15T10:30:00Z',
-      filters_applied: true,
+      generatedAt: '2024-02-15T10:30:00Z',
+      filtersApplied: true,
     },
     ...overrides,
   }),
@@ -123,8 +123,8 @@ export const heatmapMockFactories = {
     overrides: Partial<WorkloadHeatmapResponse> = {}
   ): WorkloadHeatmapResponse => ({
     heatmap: heatmapMockFactories.heatmapData({
-      y_labels: ['Dr. John Smith', 'Dr. Jane Doe', 'Dr. Bob Wilson'],
-      z_values: [
+      yLabels: ['Dr. John Smith', 'Dr. Jane Doe', 'Dr. Bob Wilson'],
+      zValues: [
         [40, 45, 38, 42, 40],
         [38, 40, 42, 39, 41],
         [42, 43, 41, 40, 39],
@@ -133,10 +133,10 @@ export const heatmapMockFactories = {
     metrics: [
       heatmapMockFactories.workloadMetrics(),
       heatmapMockFactories.workloadMetrics({
-        person_id: 'person-2',
-        person_name: 'Dr. Jane Doe',
-        total_assignments: 18,
-        total_hours: 72.0,
+        personId: 'person-2',
+        personName: 'Dr. Jane Doe',
+        totalAssignments: 18,
+        totalHours: 72.0,
       }),
     ],
     ...overrides,
@@ -147,7 +147,7 @@ export const heatmapMockFactories = {
     width: 1200,
     height: 800,
     title: 'Heatmap Export',
-    include_legend: true,
+    includeLegend: true,
     filters: heatmapMockFactories.filters(),
     ...overrides,
   }),
@@ -183,9 +183,9 @@ export const heatmapMockResponses = {
   workloadHeatmap: heatmapMockFactories.workloadHeatmapResponse(),
   emptyHeatmap: heatmapMockFactories.heatmapResponse({
     heatmap: heatmapMockFactories.heatmapData({
-      x_labels: [],
-      y_labels: [],
-      z_values: [],
+      xLabels: [],
+      yLabels: [],
+      zValues: [],
     }),
   }),
   availableRotations: heatmapMockFactories.availableRotations(),
