@@ -312,6 +312,21 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
+  # PHASE 18: MCP Tool Validation (Session 084 - SCHEDULER Domain)
+  # ============================================================================
+
+  # MCP tool structure and registration validation
+  - repo: local
+    hooks:
+      - id: mcp-tools-validate
+        name: MCP Tool Structure Validation
+        entry: scripts/validate-mcp-tools.sh
+        language: script
+        pass_filenames: false
+        files: ^mcp-server/src/scheduler_mcp/(tools|armory)/.*\.py$
+        stages: [pre-commit]
+
+  # ============================================================================
   # Configuration
   # ============================================================================
 
