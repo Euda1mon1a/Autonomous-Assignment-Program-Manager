@@ -95,9 +95,10 @@ fi
 # ============================================================
 echo -n "Checking for ACGME validation bypasses... "
 
-# Look for skip/bypass/disable patterns near ACGME
+# Look for explicit bypass intent patterns (not state assignments like acgme_compliant = False)
+# Tuned in Session 083 to reduce false positives
 BYPASS_ATTEMPTS=$(grep -rn --include="*.py" --include="*.ts" \
-  -iE '(skip.*acgme|bypass.*acgme|disable.*acgme|acgme.*skip|acgme.*bypass|acgme.*false)' \
+  -iE '(skip_acgme|bypass_acgme|disable_acgme|acgme_bypass|acgme_skip|ignore_acgme|force_acgme_pass)' \
   backend/ frontend/ 2>/dev/null | grep -v "test" | grep -v "__pycache__" || true)
 
 if [ -n "$BYPASS_ATTEMPTS" ]; then

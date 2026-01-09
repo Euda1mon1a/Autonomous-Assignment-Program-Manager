@@ -133,11 +133,27 @@ Consulted all 55 agents (8 advisory domains) to identify hook gaps. Expanded fro
 
 ## Next Session Recommendations
 
-1. **Tune hook patterns** - Reduce false positives in ACGME/resilience hooks
-2. **Fix gitleaks** - Clean tokens from logs, fix .gitleaksignore
+1. ~~**Tune hook patterns** - Reduce false positives in ACGME/resilience hooks~~ **DONE Session 083**
+2. **Fix gitleaks** - Clean tokens from logs, fix .gitleaksignore (deferred - logs not git-tracked)
 3. **Test with real commits** - Run `pre-commit run --all-files` and address failures
 4. **Graduate to blocking** - After tuning, enable exit 1 for P0 hooks
 5. **Document in PATTERNS.md** - Add hook pattern documentation
+
+---
+
+## Session 083 Update (2026-01-09)
+
+**Hook Pattern Tuning Completed:**
+
+| Hook | Check | Old Pattern | New Pattern | Result |
+|------|-------|-------------|-------------|--------|
+| ACGME | Check 4 (bypass) | `acgme.*false` | `skip_acgme\|bypass_acgme\|disable_acgme` | Passes |
+| Resilience | Check 2 (N-1) | `n.?1.*false` | `skip_n1\|bypass_n1\|disable_n1_check` | Passes |
+| Resilience | Check 5 (metrics) | `disable.*burnout` | `skip_burnout_check\|disable_burnout_alert` | Passes |
+
+**Root cause:** Original patterns too broad - caught legitimate state assignments like `acgme_compliant = False` and result fields like `n1_pass=False`.
+
+**Gitleaks status:** Deferred. `.antigravity/logs/bash-commands.log` contains real JWTs but is NOT git-tracked (`.gitignore` lines 72-73 exclude it). Local scan noise only.
 
 ---
 

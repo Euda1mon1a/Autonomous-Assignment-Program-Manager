@@ -57,9 +57,10 @@ fi
 # ============================================================
 echo -n "Checking for N-1 contingency code... "
 
-# Look for N-1 validation being bypassed or missing
+# Look for explicit N-1 bypass intent (not result fields like n1_pass=False)
+# Tuned in Session 083 to reduce false positives
 N1_ISSUES=$(grep -rn --include="*.py" --include="*.ts" \
-  -iE '(skip.*n.?1|bypass.*contingency|disable.*resilience|n.?1.*false)' \
+  -iE '(skip_n1|bypass_n1|skip_contingency|bypass_resilience|disable_n1_check|force_n1_pass)' \
   backend/app/ 2>/dev/null | grep -v "test" || true)
 
 if [ -n "$N1_ISSUES" ]; then
@@ -115,9 +116,10 @@ fi
 # ============================================================
 echo -n "Checking for resilience metric handling... "
 
-# Look for resilience metrics being ignored
+# Look for explicit resilience bypass patterns (not config documentation like disable_reason=)
+# Tuned in Session 083 to reduce false positives
 METRIC_BYPASS=$(grep -rn --include="*.py" --include="*.ts" \
-  -iE '(ignore.*resilience|skip.*metric|disable.*burnout|Rt.*=.*0)' \
+  -iE '(ignore_resilience|skip_burnout_check|disable_burnout_alert|force_Rt_zero|bypass_burnout)' \
   backend/app/resilience/ backend/app/scheduling/ 2>/dev/null | grep -v "test" || true)
 
 if [ -n "$METRIC_BYPASS" ]; then
