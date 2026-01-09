@@ -432,7 +432,9 @@ Build UI for managing faculty weekly activity templates and week-specific overri
 **Bug 4: personId undefined - saves to /faculty/undefined/** ✅ FIXED (47adb15b)
 - **Root Cause:** API returns `person_id`, frontend expected `personId`
 - **Fix:** Added `getPersonId()` helper in FacultyMatrixView.tsx
-- **Result:** Role updates NOW WORK (verified Montgomery, LaBounty)
+- **Result:** Role updates NOW WORK - verified:
+  - Montgomery changed to APD ✅
+  - LaBounty changed to Core ✅
 
 **Bug 5: Activity Override Save - UNIQUE CONSTRAINT ERROR** 🔴 CURRENT BUG
 - **Error:** `duplicate key value violates unique constraint "uq_faculty_weekly_override_slot"`
@@ -468,10 +470,10 @@ API returns snake_case, frontend expects camelCase. Fields affected:
 **Method:** `create_override()` (around line 300-350)
 **Fix:** Change INSERT to UPSERT (INSERT ON CONFLICT DO UPDATE)
 
-### Faculty Roles Set (2026-01-09)
+### Faculty Roles (Current DB State)
 ```
-Aaron Montgomery: pd
-Alex LaBounty: apd
+Aaron Montgomery: apd (changed via UI)
+Alex LaBounty: core (changed via UI)
 Bridget Colgan: oic
 Joe Napierala: dept_chief
 Jimmy Chu: sports_med
