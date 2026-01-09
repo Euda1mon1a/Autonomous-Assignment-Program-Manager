@@ -416,21 +416,39 @@ Build UI for managing faculty weekly activity templates and week-specific overri
 - ✅ Faculty roles: All 12 faculty now have roles set in DB
 - ✅ **3 BUGS FIXED** (commit a95d4d9c) - abbreviations, roles display, save handler
 
-### Bugs Fixed (Commit a95d4d9c)
+### Bugs Fixed
 
-**Bug 1: Activity Abbreviations Wrong** ✅ FIXED
+**Bug 1: Activity Abbreviations Wrong** ✅ FIXED (a95d4d9c)
 - **Root Cause:** API returns `display_abbreviation` (snake_case), frontend expected `displayAbbreviation` (camelCase)
-- **Fix:** `FacultyWeeklyEditor.tsx:155` - Added fallback: `(activity as Record<string, unknown>).display_abbreviation ?? activity.displayAbbreviation ?? activity.code?.toUpperCase()`
+- **Fix:** `FacultyWeeklyEditor.tsx:155` - Added fallback for snake_case
 
-**Bug 2: Faculty Roles Not Displayed** ✅ FIXED
-- **Root Cause:** Same snake_case/camelCase mismatch - API returns `faculty_role`, frontend expected `facultyRole`
-- **Fix:** `FacultyMatrixView.tsx` - Added snake_case fallback in multiple places (filter, display, editor state)
+**Bug 2: Faculty Roles Not Displayed** ✅ FIXED (a95d4d9c)
+- **Root Cause:** API returns `faculty_role`, frontend expected `facultyRole`
+- **Fix:** `FacultyMatrixView.tsx` - Added snake_case fallback
 
-**Bug 3: Save Not Working / Modal Not Closing** ✅ FIXED
-- **Root Cause:** `handleSave` had no try/catch and didn't call `onClose?.()` on success
-- **Fix:** `FacultyWeeklyEditor.tsx:533-582` - Wrapped in try/catch, added `onClose?.()` after state reset
+**Bug 3: Save Handler Missing try/catch** ✅ FIXED (a95d4d9c)
+- **Fix:** Added try/catch and `onClose?.()` call
 
-**Note:** The real fix should be adding a response transformer in the API hooks to convert snake_case to camelCase. Current fix is a workaround using type assertions.
+**Bug 4: personId undefined - saves to /faculty/undefined/** ✅ FIXED (47adb15b)
+- **Root Cause:** API returns `person_id`, frontend expected `personId`
+- **Fix:** Added `getPersonId()` helper in FacultyMatrixView.tsx
+- **Result:** Role updates NOW WORK (verified Montgomery, LaBounty)
+
+**Bug 5: Activity Override Save - UNIQUE CONSTRAINT ERROR** 🔴 CURRENT BUG
+- **Error:** `duplicate key value violates unique constraint "uq_faculty_weekly_override_slot"`
+- **Root Cause:** Backend tries INSERT when should UPSERT (slot already exists)
+- **File:** `backend/app/services/faculty_activity_service.py` - `create_override()` method
+- **Fix Needed:** Use UPSERT (INSERT ON CONFLICT UPDATE) or check existence first
+
+### Snake_case/camelCase Systematic Issue
+API returns snake_case, frontend expects camelCase. Fields affected:
+- `person_id` → `personId`
+- `faculty_role` → `facultyRole`
+- `display_abbreviation` → `displayAbbreviation`
+- `activity_id` → `activityId`
+- `effective_date` → `effectiveDate`
+
+**Long-term fix:** Add response transformer in API hooks to convert snake_case to camelCase.
 
 ### Next Steps (After Verification)
 1. **Test full CRUD flow** - Create template, save, verify persistence, refresh page
@@ -442,6 +460,13 @@ Build UI for managing faculty weekly activity templates and week-specific overri
 - `44c7741d` - feat: Add inline faculty role editing in matrix view
 - `c011fc7b` - fix: Remove broken join() code in get_permitted_activities
 - `a95d4d9c` - fix: Faculty Weekly Editor UI bugs (abbreviations, roles, save)
+- `47adb15b` - fix: Use person_id from API (snake_case fix) - ROLE SAVES WORK NOW
+- `1cb3c8df` - docs: Update scratchpad
+
+### NEXT SESSION: Fix Bug 5
+**File:** `backend/app/services/faculty_activity_service.py`
+**Method:** `create_override()` (around line 300-350)
+**Fix:** Change INSERT to UPSERT (INSERT ON CONFLICT DO UPDATE)
 
 ### Faculty Roles Set (2026-01-09)
 ```
