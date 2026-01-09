@@ -125,8 +125,8 @@ export function ClinicCoverageTable({ locations: people, searchQuery }: ClinicCo
                   {personData.person.name}
                 </div>
                 <div className="text-xs text-gray-500">
-                  {personData.person.pgy_level
-                    ? `PGY-${personData.person.pgy_level}`
+                  {personData.person.pgyLevel
+                    ? `PGY-${personData.person.pgyLevel}`
                     : 'Faculty'}
                 </div>
               </div>
@@ -155,8 +155,8 @@ export function ClinicCoverageTable({ locations: people, searchQuery }: ClinicCo
                   {personData.person.name}
                 </div>
                 <div className="text-xs text-gray-500">
-                  {personData.person.pgy_level
-                    ? `PGY-${personData.person.pgy_level}`
+                  {personData.person.pgyLevel
+                    ? `PGY-${personData.person.pgyLevel}`
                     : 'Faculty'}
                 </div>
               </div>

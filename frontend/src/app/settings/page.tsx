@@ -164,7 +164,7 @@ export default function SettingsPage() {
                 <input
                   type="number"
                   className="input-field w-full"
-                  value={settings.work_hours_per_week}
+                  value={settings.workHoursPerWeek}
                   onChange={(e) =>
                     updateSetting('work_hours_per_week', parseInt(e.target.value) || 80)
                   }
@@ -182,7 +182,7 @@ export default function SettingsPage() {
                 <input
                   type="number"
                   className="input-field w-full"
-                  value={settings.max_consecutive_days}
+                  value={settings.maxConsecutiveDays}
                   onChange={(e) =>
                     updateSetting('max_consecutive_days', parseInt(e.target.value) || 6)
                   }
@@ -200,7 +200,7 @@ export default function SettingsPage() {
                 <input
                   type="number"
                   className="input-field w-full"
-                  value={settings.min_days_off_per_week}
+                  value={settings.minDaysOffPerWeek}
                   onChange={(e) =>
                     updateSetting('min_days_off_per_week', parseInt(e.target.value) || 1)
                   }
@@ -278,7 +278,7 @@ export default function SettingsPage() {
                 </label>
                 <select
                   className="input-field w-full"
-                  value={settings.scheduling_algorithm}
+                  value={settings.schedulingAlgorithm}
                   onChange={(e) =>
                     updateSetting(
                       'scheduling_algorithm',
@@ -302,7 +302,7 @@ export default function SettingsPage() {
                 <input
                   type="number"
                   className="input-field w-full"
-                  value={settings.default_block_duration_hours}
+                  value={settings.defaultBlockDurationHours}
                   onChange={(e) =>
                     updateSetting('default_block_duration_hours', parseInt(e.target.value) || 4)
                   }
@@ -318,7 +318,7 @@ export default function SettingsPage() {
                   <input
                     type="checkbox"
                     className="rounded border-gray-300"
-                    checked={settings.enable_weekend_scheduling}
+                    checked={settings.enableWeekendScheduling}
                     onChange={(e) =>
                       updateSetting('enable_weekend_scheduling', e.target.checked)
                     }
@@ -333,7 +333,7 @@ export default function SettingsPage() {
                   <input
                     type="checkbox"
                     className="rounded border-gray-300"
-                    checked={settings.enable_holiday_scheduling}
+                    checked={settings.enableHolidayScheduling}
                     onChange={(e) =>
                       updateSetting('enable_holiday_scheduling', e.target.checked)
                     }

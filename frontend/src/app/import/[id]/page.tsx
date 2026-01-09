@@ -105,11 +105,11 @@ export default function BatchReviewPage() {
                   {batch.filename}
                 </span>
               </div>
-              {batch.target_start_date && (
+              {batch.targetStartDate && (
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-slate-500" />
                   <span>
-                    {batch.target_start_date} → {batch.target_end_date}
+                    {batch.targetStartDate} → {batch.targetEndDate}
                   </span>
                 </div>
               )}
@@ -147,7 +147,7 @@ export default function BatchReviewPage() {
               New Assignments
             </div>
             <div className="text-2xl font-bold text-green-400 mt-1">
-              {preview.new_count}
+              {preview.newCount}
             </div>
           </div>
           <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
@@ -155,7 +155,7 @@ export default function BatchReviewPage() {
               Updates
             </div>
             <div className="text-2xl font-bold text-blue-400 mt-1">
-              {preview.update_count}
+              {preview.updateCount}
             </div>
           </div>
           <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
@@ -164,12 +164,12 @@ export default function BatchReviewPage() {
             </div>
             <div
               className={`text-2xl font-bold mt-1 ${
-                preview.conflict_count > 0
+                preview.conflictCount > 0
                   ? "text-orange-400"
                   : "text-slate-400"
               }`}
             >
-              {preview.conflict_count}
+              {preview.conflictCount}
             </div>
           </div>
           <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
@@ -178,18 +178,18 @@ export default function BatchReviewPage() {
             </div>
             <div
               className={`text-2xl font-bold mt-1 ${
-                preview.acgme_violations.length > 0
+                preview.acgmeViolations.length > 0
                   ? "text-red-400"
                   : "text-slate-400"
               }`}
             >
-              {preview.acgme_violations.length}
+              {preview.acgmeViolations.length}
             </div>
           </div>
         </div>
 
         {/* ACGME Warnings */}
-        {preview.acgme_violations.length > 0 && (
+        {preview.acgmeViolations.length > 0 && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-start gap-4">
             <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5" />
             <div>
@@ -197,7 +197,7 @@ export default function BatchReviewPage() {
                 ACGME Compliance Warnings
               </h3>
               <ul className="mt-2 space-y-1">
-                {preview.acgme_violations.map((v, i) => (
+                {preview.acgmeViolations.map((v, i) => (
                   <li key={i} className="text-red-300 text-sm">
                     • {v}
                   </li>
@@ -211,7 +211,7 @@ export default function BatchReviewPage() {
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-white">Change Preview</h2>
           <BatchDiffViewer
-            assignments={preview.staged_assignments}
+            assignments={preview.stagedAssignments}
             conflicts={preview.conflicts}
             isLoading={false}
           />

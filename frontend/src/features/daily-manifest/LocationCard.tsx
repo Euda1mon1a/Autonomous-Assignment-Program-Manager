@@ -55,7 +55,7 @@ function getPGYBadgeColor(pgyLevel?: number): string {
 
 function PersonAssignmentItem({ assignment }: { assignment: PersonAssignment }) {
   const roleTypeColor = getRoleTypeColor(assignment.person.role_type);
-  const pgyBadgeColor = getPGYBadgeColor(assignment.person.pgy_level);
+  const pgyBadgeColor = getPGYBadgeColor(assignment.person.pgyLevel);
 
   return (
     <div className={`flex items-start gap-3 p-3 rounded-lg border ${roleTypeColor}`}>
@@ -66,9 +66,9 @@ function PersonAssignmentItem({ assignment }: { assignment: PersonAssignment }) 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap mb-1">
           <h4 className="font-medium text-sm">{assignment.person.name}</h4>
-          {assignment.person.pgy_level && (
+          {assignment.person.pgyLevel && (
             <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${pgyBadgeColor}`}>
-              PGY-{assignment.person.pgy_level}
+              PGY-{assignment.person.pgyLevel}
             </span>
           )}
         </div>

@@ -117,10 +117,10 @@ function FmitScheduleTable({ schedule }: FmitScheduleTableProps) {
         <tbody>
           {schedule.map((week) => (
             <tr
-              key={`${week.blockNumber}-${week.week_number}`}
+              key={`${week.blockNumber}-${week.weekNumber}`}
               className="border-b border-slate-800 hover:bg-slate-800/50"
             >
-              <td className="px-4 py-3 text-white">Week {week.week_number}</td>
+              <td className="px-4 py-3 text-white">Week {week.weekNumber}</td>
               <td className="px-4 py-3">
                 <span className="font-medium text-white">
                   {week.faculty_name || <span className="text-slate-500 italic">Unassigned</span>}
@@ -132,7 +132,7 @@ function FmitScheduleTable({ schedule }: FmitScheduleTableProps) {
                   : <span className="text-slate-500">-</span>}
               </td>
               <td className="px-4 py-3">
-                {week.is_holiday_call ? (
+                {week.isHolidayCall ? (
                   <span className="text-xs px-2 py-1 bg-amber-500/20 text-amber-400 rounded">
                     Holiday
                   </span>
@@ -189,11 +189,11 @@ function ParseResults({ data, onReset }: ParseResultsProps) {
           <div className="text-sm text-slate-400">Block Number</div>
         </div>
         <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
-          <div className="text-2xl font-bold text-white">{data.total_residents}</div>
+          <div className="text-2xl font-bold text-white">{data.totalResidents}</div>
           <div className="text-sm text-slate-400">Residents</div>
         </div>
         <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
-          <div className="text-2xl font-bold text-white">{data.fmit_schedule.length}</div>
+          <div className="text-2xl font-bold text-white">{data.fmitSchedule.length}</div>
           <div className="text-sm text-slate-400">FMIT Weeks</div>
         </div>
         <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
@@ -238,7 +238,7 @@ function ParseResults({ data, onReset }: ParseResultsProps) {
           >
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              Roster ({data.total_residents})
+              Roster ({data.totalResidents})
             </div>
           </button>
           <button
@@ -261,13 +261,13 @@ function ParseResults({ data, onReset }: ParseResultsProps) {
       <div className="min-h-[300px]">
         {activeTab === 'fmit' && (
           <div className="bg-slate-800/30 border border-slate-700 rounded-lg overflow-hidden">
-            <FmitScheduleTable schedule={data.fmit_schedule} />
+            <FmitScheduleTable schedule={data.fmitSchedule} />
           </div>
         )}
 
         {activeTab === 'roster' && (
           <div className="space-y-4">
-            {Object.entries(data.residents_by_template).map(([template, residents]) => (
+            {Object.entries(data.residentsByTemplate).map(([template, residents]) => (
               <RosterSection
                 key={template}
                 title={template}
@@ -275,7 +275,7 @@ function ParseResults({ data, onReset }: ParseResultsProps) {
                 defaultExpanded={template === 'R1'}
               />
             ))}
-            {Object.keys(data.residents_by_template).length === 0 && (
+            {Object.keys(data.residentsByTemplate).length === 0 && (
               <div className="text-center py-8 text-slate-400">
                 No residents found in this block
               </div>
@@ -342,7 +342,7 @@ export default function FmitImportPage() {
   const { parseBlock, isLoading, data, error, reset } = useFmitImport({
     onSuccess: (result) => {
       toast.success(
-        `Parsed Block ${result.blockNumber}: ${result.total_residents} residents, ${result.fmit_schedule.length} FMIT weeks`
+        `Parsed Block ${result.blockNumber}: ${result.totalResidents} residents, ${result.fmitSchedule.length} FMIT weeks`
       );
     },
     onError: (err) => {

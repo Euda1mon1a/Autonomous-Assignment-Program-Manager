@@ -132,7 +132,7 @@ export default function ImportPage() {
               variant="outline"
               size="sm"
               onClick={() => setPage((p) => p + 1)}
-              disabled={!batchesData.has_next || isBatchesLoading}
+              disabled={!batchesData.hasNext || isBatchesLoading}
             >
               Next
             </Button>

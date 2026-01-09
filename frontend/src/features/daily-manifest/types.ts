@@ -13,13 +13,13 @@ export interface PersonAssignment {
   person: {
     id: string;
     name: string;
-    pgy_level?: number;
-    role_type?: 'resident' | 'faculty' | 'fellow';
+    pgyLevel?: number;
+    roleType?: 'resident' | 'faculty' | 'fellow';
   };
   role: string;
   activity: string;
-  assignment_id?: string;
-  rotation_name?: string;
+  assignmentId?: string;
+  rotationName?: string;
 }
 
 // ============================================================================
@@ -27,12 +27,12 @@ export interface PersonAssignment {
 // ============================================================================
 
 export interface LocationManifest {
-  clinic_location: string;
-  time_slots: {
+  clinicLocation: string;
+  timeSlots: {
     AM?: PersonAssignment[];
     PM?: PersonAssignment[];
   };
-  staffing_summary: {
+  staffingSummary: {
     total: number;
     residents: number;
     faculty: number;
@@ -52,7 +52,7 @@ export interface DailyManifestData {
   date: string;
   time_of_day: 'AM' | 'PM' | 'ALL' | null;
   locations: LocationManifest[];
-  generated_at: string;
+  generatedAt: string;
   // Summary is computed client-side from locations, not returned by backend
   summary?: {
     total_locations: number;
@@ -68,7 +68,7 @@ export interface DailyManifestData {
 
 export interface ManifestFilters {
   location?: string;
-  role_type?: 'resident' | 'faculty' | 'fellow' | 'all';
+  roleType?: 'resident' | 'faculty' | 'fellow' | 'all';
   search?: string;
 }
 
@@ -98,7 +98,7 @@ export interface ScheduleDateRange {
 export interface PersonSummary {
   id: string;
   name: string;
-  pgy_level: number | null;
+  pgyLevel: number | null;
 }
 
 /**
@@ -114,7 +114,7 @@ export interface FMITSection {
  */
 export interface NightCallInfo {
   person: PersonSummary;
-  call_type: string;
+  callType: string;
 }
 
 /**
@@ -165,16 +165,16 @@ export interface LocationManifestV2 {
  */
 export interface AbsenceInfo {
   person: PersonSummary;
-  absence_type: string;  // vacation, sick, deployment, etc.
+  absenceType: string;  // vacation, sick, deployment, etc.
 }
 
 /**
  * Situational awareness - who is NOT in clinic
  */
 export interface SituationalAwareness {
-  fmit_team: FMITSection;
-  night_rotation: NightCallInfo[];
-  remote_assignments: RemoteAssignment[];
+  fmitTeam: FMITSection;
+  nightRotation: NightCallInfo[];
+  remoteAssignments: RemoteAssignment[];
   absences: AbsenceInfo[];  // NEW: People with absences
 }
 
@@ -201,8 +201,8 @@ export interface PersonClinicCoverage {
  */
 export interface DailyManifestDataV2 {
   date: string;
-  situational_awareness: SituationalAwareness;
+  situationalAwareness: SituationalAwareness;
   attending: AttendingInfo;
-  clinic_coverage: PersonClinicCoverage[];  // Changed from LocationManifestV2[]
-  generated_at: string;
+  clinicCoverage: PersonClinicCoverage[];  // Changed from LocationManifestV2[]
+  generatedAt: string;
 }

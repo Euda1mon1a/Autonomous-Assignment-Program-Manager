@@ -114,16 +114,16 @@ function ValidationWarnings({
           {warning}
         </div>
       ))}
-      {result.back_to_back_conflict && (
+      {result.backToBackConflict && (
         <div className="flex items-start gap-2 text-sm text-amber-400 mt-1">
           <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
           Creates back-to-back FMIT blocks
         </div>
       )}
-      {result.external_conflict && (
+      {result.externalConflict && (
         <div className="flex items-start gap-2 text-sm text-amber-400 mt-1">
           <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-          External conflict: {result.external_conflict}
+          External conflict: {result.externalConflict}
         </div>
       )}
     </div>
@@ -197,7 +197,7 @@ function ExecuteSwapPanel() {
       {
         onSuccess: (result) => {
           if (result.success) {
-            toast.success(`Swap executed successfully (ID: ${result.swap_id})`);
+            toast.success(`Swap executed successfully (ID: ${result.swapId})`);
             // Reset form
             setSourceFacultyId('');
             setTargetFacultyId('');
@@ -713,14 +713,14 @@ function RecentActivitySidebar() {
   }, [swapHistory, showAll]);
 
   const canRollback = (swap: SwapRequest) => {
-    if (!swap.executed_at) return false;
+    if (!swap.executedAt) return false;
     const hoursAgo =
-      (Date.now() - new Date(swap.executed_at).getTime()) / (1000 * 60 * 60);
+      (Date.now() - new Date(swap.executedAt).getTime()) / (1000 * 60 * 60);
     return hoursAgo < 24;
   };
 
   const handleRollback = (swap: SwapRequest) => {
-    if (!confirm(`Rollback swap between ${swap.source_faculty_name} and ${swap.target_faculty_name}?`)) {
+    if (!confirm(`Rollback swap between ${swap.sourceFacultyName} and ${swap.targetFacultyName}?`)) {
       return;
     }
 
@@ -759,12 +759,12 @@ function RecentActivitySidebar() {
               <div className="flex justify-between items-start">
                 <div>
                   <div className="text-slate-300">
-                    {swap.source_faculty_name} ↔ {swap.target_faculty_name}
+                    {swap.sourceFacultyName} ↔ {swap.targetFacultyName}
                   </div>
                   <div className="text-slate-300 mt-1">
-                    {swap.swap_type === SwapType.ONE_TO_ONE ? 'One-to-One' : 'Absorb'}
-                    {swap.executed_at && (
-                      <> • {format(new Date(swap.executed_at), 'MMM d, h:mm a')}</>
+                    {swap.swapType === SwapType.ONE_TO_ONE ? 'One-to-One' : 'Absorb'}
+                    {swap.executedAt && (
+                      <> • {format(new Date(swap.executedAt), 'MMM d, h:mm a')}</>
                     )}
                   </div>
                 </div>

@@ -134,8 +134,8 @@ export default function ImportReviewPage() {
             <div className="flex justify-between">
               <span className="text-slate-500">Target Range</span>
               <span className="text-slate-300">
-                {batch.target_start_date
-                  ? `${batch.target_start_date} → ${batch.target_end_date}`
+                {batch.targetStartDate
+                  ? `${batch.targetStartDate} → ${batch.targetEndDate}`
                   : "N/A"}
               </span>
             </div>
@@ -147,10 +147,10 @@ export default function ImportReviewPage() {
               <span className="text-slate-500">Conflicts</span>
               <span
                 className={`font-medium ${
-                  preview?.conflict_count ? "text-orange-400" : "text-green-400"
+                  preview?.conflictCount ? "text-orange-400" : "text-green-400"
                 }`}
               >
-                {preview?.conflict_count || 0}
+                {preview?.conflictCount || 0}
               </span>
             </div>
           </div>
@@ -184,23 +184,23 @@ export default function ImportReviewPage() {
               Proposed Changes
             </h2>
             <div className="text-sm text-slate-400">
-              Showing {preview?.staged_assignments.length || 0} records
+              Showing {preview?.stagedAssignments.length || 0} records
             </div>
           </div>
 
-          {preview?.conflict_count && preview.conflict_count > 0 ? (
+          {preview?.conflictCount && preview.conflictCount > 0 ? (
             <Alert
               variant="warning"
               className="bg-orange-900/20 border-orange-900/50 text-orange-200"
               title="Conflicts Detected"
             >
-              This import contains {preview.conflict_count} conflicts that will
+              This import contains {preview.conflictCount} conflicts that will
               overwrite existing data. Please review carefully.
             </Alert>
           ) : null}
 
           <BatchDiffViewer
-            assignments={preview?.staged_assignments || []}
+            assignments={preview?.stagedAssignments || []}
             conflicts={preview?.conflicts || []}
             isLoading={isPreviewLoading}
           />

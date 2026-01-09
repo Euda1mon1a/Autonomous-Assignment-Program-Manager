@@ -35,7 +35,7 @@ const ABSENCE_LABELS: Record<string, string> = {
  * Plus attending at-a-glance banner.
  */
 export function SituationalAwareness({ data, attending }: SituationalAwarenessProps) {
-  const { fmit_team, night_rotation, remote_assignments, absences = [] } = data;
+  const { fmitTeam, nightRotation, remoteAssignments, absences = [] } = data;
 
   // Check if we have any situational awareness data to show
   const hasFMIT = fmit_team.attending || fmit_team.residents.length > 0;
@@ -107,7 +107,7 @@ export function SituationalAwareness({ data, attending }: SituationalAwarenessPr
                 {fmit_team.residents.map((resident) => (
                   <div key={resident.id} className="flex items-center gap-2">
                     <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-xs font-medium">
-                      PGY-{resident.pgy_level}
+                      PGY-{resident.pgyLevel}
                     </span>
                     <span className="text-amber-900">{resident.name}</span>
                   </div>
@@ -128,11 +128,11 @@ export function SituationalAwareness({ data, attending }: SituationalAwarenessPr
                 {night_rotation.map((call) => (
                   <div key={`night-${call.person.id}`} className="flex items-center gap-2">
                     <span className="px-2 py-0.5 bg-purple-200 text-purple-800 rounded text-xs font-medium">
-                      {call.call_type === 'night_float' ? 'NF' : 'Nights'}
+                      {call.callType === 'nightFloat' ? 'NF' : 'Nights'}
                     </span>
                     <span className="text-purple-900">{call.person.name}</span>
                     <span className="text-purple-600 text-xs">
-                      ({call.person.pgy_level ? `PGY-${call.person.pgy_level}` : 'Faculty'})
+                      ({call.person.pgyLevel ? `PGY-${call.person.pgyLevel}` : 'Faculty'})
                     </span>
                   </div>
                 ))}
@@ -154,11 +154,11 @@ export function SituationalAwareness({ data, attending }: SituationalAwarenessPr
                 {absences.map((absence) => (
                   <div key={`absence-${absence.person.id}`} className="flex items-center gap-2">
                     <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-medium">
-                      {ABSENCE_LABELS[absence.absence_type] || absence.absence_type.toUpperCase()}
+                      {ABSENCE_LABELS[absence.absenceType] || absence.absenceType.toUpperCase()}
                     </span>
                     <span className="text-purple-900">{absence.person.name}</span>
                     <span className="text-purple-600 text-xs">
-                      ({absence.person.pgy_level ? `PGY-${absence.person.pgy_level}` : 'Faculty'})
+                      ({absence.person.pgyLevel ? `PGY-${absence.person.pgyLevel}` : 'Faculty'})
                     </span>
                   </div>
                 ))}

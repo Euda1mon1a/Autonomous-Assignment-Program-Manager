@@ -83,7 +83,7 @@ export default function SchedulePage() {
   const queryClient = useQueryClient()
   const { connectionState, reconnectAttempts } = useScheduleWebSocket(undefined, {
     onMessage: (event) => {
-      if (event.event_type === 'schedule_updated' || event.event_type === 'assignment_changed') {
+      if (event.eventType === 'schedule_updated' || event.eventType === 'assignment_changed') {
         // Invalidate all schedule-related queries to trigger refetch
         queryClient.invalidateQueries({ queryKey: ['blocks'] })
         queryClient.invalidateQueries({ queryKey: ['assignments'] })

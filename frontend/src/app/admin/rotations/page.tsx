@@ -92,8 +92,8 @@ export default function AdminTemplatesPage() {
 
   // State
   const [filters, setFilters] = useState<TemplateFilters>({
-    activity_type: '',
-    template_category: 'rotation', // Default to showing only rotations
+    activityType: '',
+    templateCategory: 'rotation', // Default to showing only rotations
     search: '',
   });
   const [showAllCategories, setShowAllCategories] = useState(false);
@@ -267,8 +267,8 @@ export default function AdminTemplatesPage() {
     }
 
     // Category filter - always apply unless showAllCategories is enabled
-    if (filters.template_category && !showAllCategories) {
-      filtered = filtered.filter((t) => t.template_category === filters.template_category);
+    if (filters.templateCategory && !showAllCategories) {
+      filtered = filtered.filter((t) => t.templateCategory === filters.templateCategory);
     }
 
     // Sort
@@ -356,7 +356,7 @@ export default function AdminTemplatesPage() {
       try {
         await bulkUpdate.mutateAsync({
           templateIds: selectedIds,
-          updates: { activity_type: activityType },
+          updates: { activityType: activityType },
         });
         toast.success(`${selectedIds.length} template(s) updated`);
         setSelectedIds([]);
@@ -733,7 +733,7 @@ export default function AdminTemplatesPage() {
             <select
               value={filters.activityType}
               onChange={(e) =>
-                setFilters((prev) => ({ ...prev, activity_type: e.target.value as ActivityType | '' }))
+                setFilters((prev) => ({ ...prev, activityType: e.target.value as ActivityType | '' }))
               }
               className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
             >
@@ -749,11 +749,11 @@ export default function AdminTemplatesPage() {
           {/* Category Filter */}
           <div className="flex items-center gap-2">
             <select
-              value={filters.template_category}
+              value={filters.templateCategory}
               onChange={(e) =>
                 setFilters((prev) => ({
                   ...prev,
-                  template_category: e.target.value as TemplateCategory | '',
+                  templateCategory: e.target.value as TemplateCategory | '',
                 }))
               }
               disabled={showAllCategories}
