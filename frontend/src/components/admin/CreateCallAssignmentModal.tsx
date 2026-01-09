@@ -74,7 +74,7 @@ export function CreateCallAssignmentModal({
     }
 
     if (!personId) {
-      newErrors.person_id = 'Faculty member is required';
+      newErrors.personId = 'Faculty member is required';
     }
 
     setErrors(newErrors);
@@ -154,7 +154,7 @@ export function CreateCallAssignmentModal({
             onChange={(e) => setPersonId(e.target.value)}
             disabled={facultyLoading}
             className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
-              errors.person_id ? 'border-red-500' : 'border-gray-300'
+              errors.personId ? 'border-red-500' : 'border-gray-300'
             }`}
           >
             <option value="">
@@ -163,12 +163,12 @@ export function CreateCallAssignmentModal({
             {faculty.map((person) => (
               <option key={person.id} value={person.id}>
                 {person.name}
-                {person.faculty_role ? ` (${person.faculty_role})` : ''}
+                {person.facultyRole ? ` (${person.facultyRole})` : ''}
               </option>
             ))}
           </select>
-          {errors.person_id && (
-            <p className="mt-1 text-sm text-red-600">{errors.person_id}</p>
+          {errors.personId && (
+            <p className="mt-1 text-sm text-red-600">{errors.personId}</p>
           )}
         </div>
 

@@ -261,9 +261,9 @@ function ExecuteSwapPanel() {
               >
                 <option value="">Select week...</option>
                 {blockRanges?.map((block) => (
-                  <option key={block.block_number} value={block.start_date}>
-                    Block {block.block_number}: {format(parseISO(block.start_date), 'MMM d')} -{' '}
-                    {format(parseISO(block.end_date), 'MMM d')}
+                  <option key={block.blockNumber} value={block.startDate}>
+                    Block {block.blockNumber}: {format(parseISO(block.startDate), 'MMM d')} -{' '}
+                    {format(parseISO(block.endDate), 'MMM d')}
                   </option>
                 ))}
               </select>
@@ -313,9 +313,9 @@ function ExecuteSwapPanel() {
                 >
                   <option value="">Select week...</option>
                   {blockRanges?.map((block) => (
-                    <option key={block.block_number} value={block.start_date}>
-                      Block {block.block_number}: {format(parseISO(block.start_date), 'MMM d')} -{' '}
-                      {format(parseISO(block.end_date), 'MMM d')}
+                    <option key={block.blockNumber} value={block.startDate}>
+                      Block {block.blockNumber}: {format(parseISO(block.startDate), 'MMM d')} -{' '}
+                      {format(parseISO(block.endDate), 'MMM d')}
                     </option>
                   ))}
                 </select>
@@ -438,7 +438,7 @@ function DirectAssignmentPanel() {
   // Get block date range
   const selectedBlockRange = useMemo(() => {
     if (!selectedBlock || !blockRanges) return null;
-    return blockRanges.find((b) => b.block_number === Number(selectedBlock));
+    return blockRanges.find((b) => b.blockNumber === Number(selectedBlock));
   }, [selectedBlock, blockRanges]);
 
   // Fetch assignments for selected faculty/block
@@ -446,8 +446,8 @@ function DirectAssignmentPanel() {
     selectedBlockRange
       ? {
           person_id: selectedFacultyId,
-          start_date: selectedBlockRange.start_date,
-          end_date: selectedBlockRange.end_date,
+          start_date: selectedBlockRange.startDate,
+          end_date: selectedBlockRange.endDate,
         }
       : undefined,
     {
@@ -555,9 +555,9 @@ function DirectAssignmentPanel() {
           >
             <option value="">Select block...</option>
             {blockRanges?.map((block) => (
-              <option key={block.block_number} value={block.block_number}>
-                Block {block.block_number}: {format(parseISO(block.start_date), 'MMM d')} -{' '}
-                {format(parseISO(block.end_date), 'MMM d')}
+              <option key={block.blockNumber} value={block.blockNumber}>
+                Block {block.blockNumber}: {format(parseISO(block.startDate), 'MMM d')} -{' '}
+                {format(parseISO(block.endDate), 'MMM d')}
               </option>
             ))}
           </select>
@@ -610,9 +610,9 @@ function DirectAssignmentPanel() {
                     >
                       <td className="py-2 px-4 text-slate-300">{assignment.role}</td>
                       <td className="py-2 px-4 text-slate-300">
-                        {assignment.activity_override || 'Default'}
+                        {assignment.activityOverride || 'Default'}
                       </td>
-                      <td className="py-2 px-4 text-slate-400">{assignment.block_id}</td>
+                      <td className="py-2 px-4 text-slate-400">{assignment.blockId}</td>
                       <td className="py-2 px-4">
                         {!isRemoved && (
                           <button

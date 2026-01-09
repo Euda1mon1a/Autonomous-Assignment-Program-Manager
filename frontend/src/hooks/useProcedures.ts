@@ -277,7 +277,7 @@ export function useProcedures(
   const params = new URLSearchParams();
   if (filters?.specialty) params.set('specialty', filters.specialty);
   if (filters?.category) params.set('category', filters.category);
-  if (filters?.is_active !== undefined) params.set('is_active', String(filters.is_active));
+  if (filters?.isActive !== undefined) params.set('is_active', String(filters.isActive));
   if (filters?.complexity_level) params.set('complexity_level', filters.complexity_level);
   const queryString = params.toString();
 
@@ -372,8 +372,8 @@ export function useCredentials(
   let endpoint = '/credentials';
   const params = new URLSearchParams();
 
-  if (filters?.person_id) {
-    endpoint = `/credentials/by-person/${filters.person_id}`;
+  if (filters?.personId) {
+    endpoint = `/credentials/by-person/${filters.personId}`;
   } else if (filters?.procedure_id) {
     endpoint = `/credentials/by-procedure/${filters.procedure_id}`;
   }
@@ -628,10 +628,10 @@ export function useCreateCredential(): UseMutationResult<Credential, ApiError, C
     mutationFn: (data) => post<Credential>('/credentials', data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: credentialKeys.all });
-      queryClient.invalidateQueries({ queryKey: credentialKeys.byPerson(data.person_id) });
+      queryClient.invalidateQueries({ queryKey: credentialKeys.byPerson(data.personId) });
       queryClient.invalidateQueries({ queryKey: credentialKeys.byProcedure(data.procedure_id) });
       queryClient.invalidateQueries({ queryKey: credentialKeys.qualified(data.procedure_id) });
-      queryClient.invalidateQueries({ queryKey: credentialKeys.summary(data.person_id) });
+      queryClient.invalidateQueries({ queryKey: credentialKeys.summary(data.personId) });
     },
   });
 }
@@ -681,10 +681,10 @@ export function useUpdateCredential(): UseMutationResult<Credential, ApiError, {
     onSuccess: (data, { id }) => {
       queryClient.invalidateQueries({ queryKey: credentialKeys.all });
       queryClient.invalidateQueries({ queryKey: credentialKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: credentialKeys.byPerson(data.person_id) });
+      queryClient.invalidateQueries({ queryKey: credentialKeys.byPerson(data.personId) });
       queryClient.invalidateQueries({ queryKey: credentialKeys.byProcedure(data.procedure_id) });
       queryClient.invalidateQueries({ queryKey: credentialKeys.qualified(data.procedure_id) });
-      queryClient.invalidateQueries({ queryKey: credentialKeys.summary(data.person_id) });
+      queryClient.invalidateQueries({ queryKey: credentialKeys.summary(data.personId) });
     },
   });
 }

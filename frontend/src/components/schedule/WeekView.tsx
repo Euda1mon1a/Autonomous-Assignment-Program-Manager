@@ -126,8 +126,8 @@ export function WeekView({
 
     // Sort by PGY level then name
     return peopleArray.sort((a, b) => {
-      const aLevel = a[1].pgy_level || 99
-      const bLevel = b[1].pgy_level || 99
+      const aLevel = a[1].pgyLevel || 99
+      const bLevel = b[1].pgyLevel || 99
       if (aLevel !== bLevel) return aLevel - bLevel
       return a[1].name.localeCompare(b[1].name)
     })
@@ -315,7 +315,7 @@ export function WeekView({
                     {person.name}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {person.type === 'resident' ? `PGY-${person.pgy_level}` : 'Faculty'}
+                    {person.type === 'resident' ? `PGY-${person.pgyLevel}` : 'Faculty'}
                   </div>
                 </div>
 

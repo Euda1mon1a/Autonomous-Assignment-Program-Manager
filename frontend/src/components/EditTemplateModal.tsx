@@ -107,16 +107,16 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
   useEffect(() => {
     if (template) {
       setName(template.name);
-      setActivityType(template.activity_type);
+      setActivityType(template.activityType);
       setAbbreviation(template.abbreviation || '');
-      setFontColor(template.font_color || '');
-      setBackgroundColor(template.background_color || '');
-      setClinicLocation(template.clinic_location || '');
-      setMaxResidents(template.max_residents?.toString() || '');
-      setRequiresSpecialty(template.requires_specialty || '');
-      setRequiresProcedureCredential(template.requires_procedure_credential);
-      setSupervisionRequired(template.supervision_required);
-      setMaxSupervisionRatio(template.max_supervision_ratio.toString());
+      setFontColor(template.fontColor || '');
+      setBackgroundColor(template.backgroundColor || '');
+      setClinicLocation(template.clinicLocation || '');
+      setMaxResidents(template.maxResidents?.toString() || '');
+      setRequiresSpecialty(template.requiresSpecialty || '');
+      setRequiresProcedureCredential(template.requiresProcedureCredential);
+      setSupervisionRequired(template.supervisionRequired);
+      setMaxSupervisionRatio(template.maxSupervisionRatio.toString());
       setIsBlockHalfRotation(template.is_block_half_rotation || false);
     }
   }, [template]);
@@ -129,12 +129,12 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
     }
 
     if (!activityType) {
-      newErrors.activity_type = 'Activity type is required';
+      newErrors.activityType = 'Activity type is required';
     }
 
     const ratio = parseInt(maxSupervisionRatio);
     if (isNaN(ratio) || ratio < 1 || ratio > 10) {
-      newErrors.max_supervision_ratio = 'Supervision ratio must be between 1 and 10';
+      newErrors.maxSupervisionRatio = 'Supervision ratio must be between 1 and 10';
     }
 
     setErrors(newErrors);
@@ -218,7 +218,7 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
             value={activityType}
             onChange={(e) => setActivityType(e.target.value)}
             options={activityTypeOptions}
-            error={errors.activity_type}
+            error={errors.activityType}
           />
 
           <Input
@@ -313,7 +313,7 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
             type="number"
             value={maxSupervisionRatio}
             onChange={(e) => setMaxSupervisionRatio(e.target.value)}
-            error={errors.max_supervision_ratio}
+            error={errors.maxSupervisionRatio}
             min="1"
             max="10"
           />

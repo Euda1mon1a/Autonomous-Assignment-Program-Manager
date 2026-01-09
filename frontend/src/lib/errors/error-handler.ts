@@ -93,7 +93,7 @@ class GlobalErrorHandler {
 
     const logData = {
       error: error instanceof Error ? error.message : error.detail,
-      errorCode: isRFC7807Error(error) ? error.error_code : 'UNKNOWN',
+      errorCode: isRFC7807Error(error) ? error.errorCode : 'UNKNOWN',
       status: isRFC7807Error(error) ? error.status : undefined,
       context,
       timestamp: new Date().toISOString(),
@@ -164,10 +164,10 @@ class GlobalErrorHandler {
     }
 
     return (
-      error.error_code === ErrorCode.TOKEN_EXPIRED ||
-      error.error_code === ErrorCode.INVALID_TOKEN ||
-      error.error_code === ErrorCode.TOKEN_REVOKED ||
-      error.error_code === ErrorCode.UNAUTHORIZED
+      error.errorCode === ErrorCode.TOKEN_EXPIRED ||
+      error.errorCode === ErrorCode.INVALID_TOKEN ||
+      error.errorCode === ErrorCode.TOKEN_REVOKED ||
+      error.errorCode === ErrorCode.UNAUTHORIZED
     )
   }
 
@@ -187,7 +187,7 @@ class GlobalErrorHandler {
       ErrorCode.DATABASE_CONNECTION_ERROR,
     ]
 
-    return retryableErrors.includes(error.error_code)
+    return retryableErrors.includes(error.errorCode)
   }
 
   /**

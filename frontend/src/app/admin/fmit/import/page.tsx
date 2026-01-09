@@ -117,7 +117,7 @@ function FmitScheduleTable({ schedule }: FmitScheduleTableProps) {
         <tbody>
           {schedule.map((week) => (
             <tr
-              key={`${week.block_number}-${week.week_number}`}
+              key={`${week.blockNumber}-${week.week_number}`}
               className="border-b border-slate-800 hover:bg-slate-800/50"
             >
               <td className="px-4 py-3 text-white">Week {week.week_number}</td>
@@ -127,8 +127,8 @@ function FmitScheduleTable({ schedule }: FmitScheduleTableProps) {
                 </span>
               </td>
               <td className="px-4 py-3 text-slate-300">
-                {week.start_date && week.end_date
-                  ? `${week.start_date} - ${week.end_date}`
+                {week.startDate && week.endDate
+                  ? `${week.startDate} - ${week.endDate}`
                   : <span className="text-slate-500">-</span>}
               </td>
               <td className="px-4 py-3">
@@ -185,7 +185,7 @@ function ParseResults({ data, onReset }: ParseResultsProps) {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
-          <div className="text-2xl font-bold text-white">{data.block_number}</div>
+          <div className="text-2xl font-bold text-white">{data.blockNumber}</div>
           <div className="text-sm text-slate-400">Block Number</div>
         </div>
         <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
@@ -203,11 +203,11 @@ function ParseResults({ data, onReset }: ParseResultsProps) {
       </div>
 
       {/* Block Date Range */}
-      {(data.start_date || data.end_date) && (
+      {(data.startDate || data.endDate) && (
         <div className="flex items-center gap-2 text-slate-300">
           <Calendar className="w-4 h-4 text-slate-400" />
           <span>
-            Block {data.block_number}: {data.start_date || '?'} - {data.end_date || '?'}
+            Block {data.blockNumber}: {data.startDate || '?'} - {data.endDate || '?'}
           </span>
         </div>
       )}
@@ -342,7 +342,7 @@ export default function FmitImportPage() {
   const { parseBlock, isLoading, data, error, reset } = useFmitImport({
     onSuccess: (result) => {
       toast.success(
-        `Parsed Block ${result.block_number}: ${result.total_residents} residents, ${result.fmit_schedule.length} FMIT weeks`
+        `Parsed Block ${result.blockNumber}: ${result.total_residents} residents, ${result.fmit_schedule.length} FMIT weeks`
       );
     },
     onError: (err) => {

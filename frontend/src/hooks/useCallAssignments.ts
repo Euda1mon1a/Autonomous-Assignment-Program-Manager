@@ -74,9 +74,9 @@ export function useCallAssignments(
     queryKey: callAssignmentQueryKeys.list(filters),
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (filters?.start_date) params.append('start_date', filters.start_date);
-      if (filters?.end_date) params.append('end_date', filters.end_date);
-      if (filters?.person_id) params.append('person_id', filters.person_id);
+      if (filters?.startDate) params.append('start_date', filters.startDate);
+      if (filters?.endDate) params.append('end_date', filters.endDate);
+      if (filters?.personId) params.append('person_id', filters.personId);
       if (filters?.call_type) params.append('call_type', filters.call_type);
       if (filters?.skip !== undefined) params.append('skip', String(filters.skip));
       if (filters?.limit !== undefined) params.append('limit', String(filters.limit));
@@ -389,7 +389,7 @@ export function useEquityPreviewQuery(
         request
       );
     },
-    enabled: !!request.start_date && !!request.end_date,
+    enabled: !!request.startDate && !!request.endDate,
     staleTime: 30 * 1000, // 30 seconds - shorter since preview is dynamic
     ...options,
   });

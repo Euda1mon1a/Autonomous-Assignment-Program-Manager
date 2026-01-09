@@ -74,14 +74,14 @@ interface TemplatePreviewCardProps {
 }
 
 function TemplatePreviewCard({ template, newName }: TemplatePreviewCardProps) {
-  const config = getActivityTypeConfig(template.activity_type as ActivityType);
+  const config = getActivityTypeConfig(template.activityType as ActivityType);
 
   return (
     <div className="flex items-center gap-3 p-3 bg-slate-900/50 rounded-lg">
-      {template.background_color && (
+      {template.backgroundColor && (
         <span
           className="w-4 h-4 rounded flex-shrink-0"
-          style={{ backgroundColor: template.background_color }}
+          style={{ backgroundColor: template.backgroundColor }}
         />
       )}
       <div className="flex-1 min-w-0">
@@ -172,23 +172,23 @@ export function DuplicateTemplateModal({
     const newTemplates: TemplateCreateRequest[] = templates.map((t) => {
       const base: TemplateCreateRequest = {
         name: generateNewName(t.name),
-        activity_type: config.overrideActivityType || t.activity_type,
+        activity_type: config.overrideActivityType || t.activityType,
         abbreviation: t.abbreviation,
-        display_abbreviation: t.display_abbreviation,
-        font_color: t.font_color,
-        background_color: t.background_color,
-        clinic_location: t.clinic_location,
+        display_abbreviation: t.displayAbbreviation,
+        font_color: t.fontColor,
+        background_color: t.backgroundColor,
+        clinic_location: t.clinicLocation,
         max_residents:
           config.overrideMaxResidents !== null
             ? config.overrideMaxResidents
-            : t.max_residents,
-        requires_specialty: t.requires_specialty,
-        requires_procedure_credential: t.requires_procedure_credential,
+            : t.maxResidents,
+        requires_specialty: t.requiresSpecialty,
+        requires_procedure_credential: t.requiresProcedureCredential,
         supervision_required:
           config.overrideSupervision !== null
             ? config.overrideSupervision
-            : t.supervision_required,
-        max_supervision_ratio: t.max_supervision_ratio,
+            : t.supervisionRequired,
+        max_supervision_ratio: t.maxSupervisionRatio,
       };
 
       return base;

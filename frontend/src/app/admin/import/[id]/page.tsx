@@ -128,7 +128,7 @@ export default function ImportReviewPage() {
             <div className="flex justify-between">
               <span className="text-slate-500">Created</span>
               <span className="text-slate-300">
-                {format(new Date(batch.created_at), "MMM d, yyyy HH:mm")}
+                {format(new Date(batch.createdAt), "MMM d, yyyy HH:mm")}
               </span>
             </div>
             <div className="flex justify-between">

@@ -358,10 +358,10 @@ export function TemplateTable({
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2">
-                      {template.background_color && (
+                      {template.backgroundColor && (
                         <span
                           className="w-3 h-3 rounded"
-                          style={{ backgroundColor: template.background_color }}
+                          style={{ backgroundColor: template.backgroundColor }}
                         />
                       )}
                       {enableInlineEdit && onInlineUpdate ? (
@@ -386,7 +386,7 @@ export function TemplateTable({
                   <td className="py-3 px-4">
                     {enableInlineEdit && onInlineUpdate ? (
                       <EditableCell
-                        value={template.activity_type}
+                        value={template.activityType}
                         type="select"
                         options={activityTypeOptions}
                         onSave={(value) =>
@@ -396,20 +396,20 @@ export function TemplateTable({
                         ariaLabel={`Edit activity type for ${template.name}`}
                         renderDisplay={() => (
                           <ActivityTypeBadge
-                            activityType={template.activity_type as ActivityType}
+                            activityType={template.activityType as ActivityType}
                           />
                         )}
                       />
                     ) : (
                       <ActivityTypeBadge
-                        activityType={template.activity_type as ActivityType}
+                        activityType={template.activityType as ActivityType}
                       />
                     )}
                   </td>
                   <td className="py-3 px-4 text-slate-300">
                     {enableInlineEdit && onInlineUpdate ? (
                       <EditableCell
-                        value={template.display_abbreviation || template.abbreviation}
+                        value={template.displayAbbreviation || template.abbreviation}
                         type="text"
                         placeholder="Abbrev"
                         onSave={(value) =>
@@ -419,13 +419,13 @@ export function TemplateTable({
                         ariaLabel={`Edit abbreviation for ${template.name}`}
                       />
                     ) : (
-                      template.display_abbreviation || template.abbreviation || '-'
+                      template.displayAbbreviation || template.abbreviation || '-'
                     )}
                   </td>
                   <td className="py-3 px-4 text-slate-300">
                     {enableInlineEdit && onInlineUpdate ? (
                       <EditableCell
-                        value={template.max_residents}
+                        value={template.maxResidents}
                         type="number"
                         min={1}
                         max={50}
@@ -437,13 +437,13 @@ export function TemplateTable({
                         ariaLabel={`Edit max residents for ${template.name}`}
                       />
                     ) : (
-                      template.max_residents ?? '-'
+                      template.maxResidents ?? '-'
                     )}
                   </td>
                   <td className="py-3 px-4">
                     {enableInlineEdit && onInlineUpdate ? (
                       <EditableCell
-                        value={template.supervision_required ? 'true' : 'false'}
+                        value={template.supervisionRequired ? 'true' : 'false'}
                         type="select"
                         options={[
                           { value: 'true', label: 'Required' },
@@ -455,14 +455,14 @@ export function TemplateTable({
                         isSaving={inlineUpdatingId === template.id && editingField?.field === 'supervision_required'}
                         ariaLabel={`Edit supervision for ${template.name}`}
                         renderDisplay={() =>
-                          template.supervision_required ? (
+                          template.supervisionRequired ? (
                             <span className="text-emerald-400">Required</span>
                           ) : (
                             <span className="text-slate-500">Not Required</span>
                           )
                         }
                       />
-                    ) : template.supervision_required ? (
+                    ) : template.supervisionRequired ? (
                       <span className="text-emerald-400">Required</span>
                     ) : (
                       <span className="text-slate-500">Not Required</span>
@@ -472,7 +472,7 @@ export function TemplateTable({
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
                         <ColorPickerCell
-                          value={template.background_color}
+                          value={template.backgroundColor}
                           onSave={(value) =>
                             handleInlineUpdate(template.id, 'background_color', value)
                           }
@@ -481,7 +481,7 @@ export function TemplateTable({
                           disabled={!onInlineUpdate}
                         />
                         <ColorPickerCell
-                          value={template.font_color}
+                          value={template.fontColor}
                           onSave={(value) =>
                             handleInlineUpdate(template.id, 'font_color', value)
                           }
@@ -493,7 +493,7 @@ export function TemplateTable({
                     </td>
                   )}
                   <td className="py-3 px-4 text-slate-400">
-                    {new Date(template.created_at).toLocaleDateString()}
+                    {new Date(template.createdAt).toLocaleDateString()}
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center justify-end gap-1">

@@ -31,21 +31,21 @@ export enum ExportFormat {
 // ============================================================================
 
 export interface BlockAssignmentPreviewItem {
-  row_number: number;
-  block_number: number;
-  rotation_input: string;
-  resident_display: string; // Anonymized
+  rowNumber: number;
+  blockNumber: number;
+  rotationInput: string;
+  residentDisplay: string; // Anonymized
 
-  match_status: MatchStatus;
-  matched_rotation_id?: string;
-  matched_rotation_name?: string;
-  rotation_confidence: number;
-  matched_resident_id?: string;
-  resident_confidence: number;
+  matchStatus: MatchStatus;
+  matchedRotationId?: string;
+  matchedRotationName?: string;
+  rotationConfidence: number;
+  matchedResidentId?: string;
+  residentConfidence: number;
 
-  is_duplicate: boolean;
-  existing_assignment_id?: string;
-  duplicate_action: DuplicateAction;
+  isDuplicate: boolean;
+  existingAssignmentId?: string;
+  duplicateAction: DuplicateAction;
 
   errors: string[];
   warnings: string[];
@@ -54,24 +54,24 @@ export interface BlockAssignmentPreviewItem {
 export interface UnknownRotationItem {
   abbreviation: string;
   occurrences: number;
-  suggested_name?: string;
+  suggestedName?: string;
 }
 
 export interface BlockAssignmentPreviewResponse {
-  preview_id: string;
-  academic_year: number;
-  format_detected: ImportFormat;
+  previewId: string;
+  academicYear: number;
+  formatDetected: ImportFormat;
 
   items: BlockAssignmentPreviewItem[];
 
-  total_rows: number;
-  matched_count: number;
-  unknown_rotation_count: number;
-  unknown_resident_count: number;
-  duplicate_count: number;
-  invalid_count: number;
+  totalRows: number;
+  matchedCount: number;
+  unknownRotationCount: number;
+  unknownResidentCount: number;
+  duplicateCount: number;
+  invalidCount: number;
 
-  unknown_rotations: UnknownRotationItem[];
+  unknownRotations: UnknownRotationItem[];
   warnings: string[];
 }
 
@@ -80,29 +80,29 @@ export interface BlockAssignmentPreviewResponse {
 // ============================================================================
 
 export interface BlockAssignmentImportRequest {
-  preview_id: string;
-  academic_year: number;
-  skip_duplicates?: boolean;
-  update_duplicates?: boolean;
-  import_unmatched?: boolean;
-  row_overrides?: Record<number, DuplicateAction>;
+  previewId: string;
+  academicYear: number;
+  skipDuplicates?: boolean;
+  updateDuplicates?: boolean;
+  importUnmatched?: boolean;
+  rowOverrides?: Record<number, DuplicateAction>;
 }
 
 export interface BlockAssignmentImportResult {
   success: boolean;
-  academic_year: number;
+  academicYear: number;
 
-  total_rows: number;
-  imported_count: number;
-  updated_count: number;
-  skipped_count: number;
-  failed_count: number;
+  totalRows: number;
+  importedCount: number;
+  updatedCount: number;
+  skippedCount: number;
+  failedCount: number;
 
-  failed_rows: number[];
-  error_messages: string[];
+  failedRows: number[];
+  errorMessages: string[];
 
-  started_at: string;
-  completed_at: string;
+  startedAt: string;
+  completedAt: string;
 }
 
 // ============================================================================
@@ -112,15 +112,15 @@ export interface BlockAssignmentImportResult {
 export interface QuickTemplateCreateRequest {
   abbreviation: string;
   name: string;
-  activity_type: string;
-  leave_eligible: boolean;
+  activityType: string;
+  leaveEligible: boolean;
 }
 
 export interface QuickTemplateCreateResponse {
   id: string;
   abbreviation: string;
   name: string;
-  activity_type: string;
+  activityType: string;
 }
 
 // ============================================================================
@@ -129,23 +129,23 @@ export interface QuickTemplateCreateResponse {
 
 export interface BlockAssignmentExportRequest {
   format: ExportFormat;
-  academic_year: number;
-  block_numbers?: number[];
-  rotation_ids?: string[];
-  resident_ids?: string[];
-  include_pgy_level?: boolean;
-  include_leave_status?: boolean;
-  group_by?: "block" | "resident" | "rotation";
+  academicYear: number;
+  blockNumbers?: number[];
+  rotationIds?: string[];
+  residentIds?: string[];
+  includePgyLevel?: boolean;
+  includeLeaveStatus?: boolean;
+  groupBy?: "block" | "resident" | "rotation";
 }
 
 export interface BlockAssignmentExportResult {
   success: boolean;
   format: ExportFormat;
   filename: string;
-  row_count: number;
-  download_url?: string;
+  rowCount: number;
+  downloadUrl?: string;
   data?: string; // Base64 for small exports
-  generated_at: string;
+  generatedAt: string;
 }
 
 // ============================================================================
@@ -154,10 +154,10 @@ export interface BlockAssignmentExportResult {
 
 export interface BlockAssignmentUploadRequest {
   content: string;
-  academic_year?: number;
+  academicYear?: number;
   format?: ImportFormat;
-  block_number?: number;
-  rotation_id?: string;
+  blockNumber?: number;
+  rotationId?: string;
 }
 
 // ============================================================================

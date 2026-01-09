@@ -112,8 +112,8 @@ export default function AdminPeoplePage() {
     }
 
     // PGY level filter (client-side for now)
-    if (filters.pgy_level !== '') {
-      filtered = filtered.filter((p) => p.pgy_level === filters.pgy_level);
+    if (filters.pgyLevel !== '') {
+      filtered = filtered.filter((p) => p.pgyLevel === filters.pgyLevel);
     }
 
     // Sort
@@ -127,7 +127,7 @@ export default function AdminPeoplePage() {
           comparison = (a.type || '').localeCompare(b.type || '');
           break;
         case 'pgy_level':
-          comparison = (a.pgy_level || 0) - (b.pgy_level || 0);
+          comparison = (a.pgyLevel || 0) - (b.pgyLevel || 0);
           break;
         case 'email':
           comparison = (a.email || '').localeCompare(b.email || '');
@@ -137,7 +137,7 @@ export default function AdminPeoplePage() {
     });
 
     return filtered;
-  }, [peopleData?.items, debouncedSearch, filters.pgy_level, sort]);
+  }, [peopleData?.items, debouncedSearch, filters.pgyLevel, sort]);
 
   // Handlers
   const handleSortChange = useCallback((field: SortField) => {
@@ -380,7 +380,7 @@ export default function AdminPeoplePage() {
           {/* PGY Level Filter (only show for residents) */}
           {(filters.type === '' || filters.type === 'resident') && (
             <select
-              value={filters.pgy_level}
+              value={filters.pgyLevel}
               onChange={(e) =>
                 setFilters((prev) => ({
                   ...prev,

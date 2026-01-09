@@ -44,9 +44,9 @@ export function MultiSelectPersonFilter({
     const faculty: Person[] = []
 
     people.forEach((person) => {
-      if (person.type === 'resident' && person.pgy_level !== null) {
-        const existing = residents.get(person.pgy_level) ?? []
-        residents.set(person.pgy_level, [...existing, person])
+      if (person.type === 'resident' && person.pgyLevel !== null) {
+        const existing = residents.get(person.pgyLevel) ?? []
+        residents.set(person.pgyLevel, [...existing, person])
       } else if (person.type === 'faculty' && !residentsOnly) {
         faculty.push(person)
       }
@@ -373,9 +373,9 @@ function CheckboxItem({ person, isSelected, onToggle, indent = false }: Checkbox
         <div className={`font-medium truncate ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}>
           {person.name}
         </div>
-        {person.type === 'faculty' && person.faculty_role && (
+        {person.type === 'faculty' && person.facultyRole && (
           <div className="text-xs text-gray-500 truncate capitalize">
-            {person.faculty_role.replace('_', ' ')}
+            {person.facultyRole.replace('_', ' ')}
           </div>
         )}
       </div>

@@ -82,7 +82,7 @@ export function AddAbsenceModal({
 
   const personOptions = peopleData?.items?.map((p) => ({
     value: p.id,
-    label: `${p.name} (${p.type === 'resident' ? `PGY-${p.pgy_level}` : 'Faculty'})`,
+    label: `${p.name} (${p.type === 'resident' ? `PGY-${p.pgyLevel}` : 'Faculty'})`,
   })) || [];
 
   const validateForm = (): boolean => {
@@ -91,26 +91,26 @@ export function AddAbsenceModal({
     // Validate person is selected
     const personError = validateRequired(personId, 'Person');
     if (personError) {
-      newErrors.person_id = 'Please select a person';
+      newErrors.personId = 'Please select a person';
     }
 
     // Validate start date is selected
     const startDateError = validateRequired(startDate, 'Start date');
     if (startDateError) {
-      newErrors.start_date = startDateError;
+      newErrors.startDate = startDateError;
     }
 
     // Validate end date is selected
     const endDateError = validateRequired(endDate, 'End date');
     if (endDateError) {
-      newErrors.end_date = endDateError;
+      newErrors.endDate = endDateError;
     }
 
     // Validate date range (end date >= start date)
     if (startDate && endDate) {
       const dateRangeError = validateDateRange(startDate, endDate);
       if (dateRangeError) {
-        newErrors.end_date = dateRangeError;
+        newErrors.endDate = dateRangeError;
       }
     }
 
@@ -171,7 +171,7 @@ export function AddAbsenceModal({
           value={personId}
           onChange={(e) => setPersonId(e.target.value)}
           options={[{ value: '', label: isPeopleLoading ? 'Loading...' : 'Select a person' }, ...personOptions]}
-          error={errors.person_id}
+          error={errors.personId}
           disabled={isPeopleLoading || !!preselectedPersonId}
         />
 
@@ -180,7 +180,7 @@ export function AddAbsenceModal({
           value={absenceType}
           onChange={(e) => setAbsenceType(e.target.value as AbsenceType)}
           options={absenceTypeOptions}
-          error={errors.absence_type}
+          error={errors.absenceType}
         />
 
         <div className="grid grid-cols-2 gap-4">
@@ -188,13 +188,13 @@ export function AddAbsenceModal({
             label="Start Date"
             value={startDate}
             onChange={setStartDate}
-            error={errors.start_date}
+            error={errors.startDate}
           />
           <DatePicker
             label="End Date"
             value={endDate}
             onChange={setEndDate}
-            error={errors.end_date}
+            error={errors.endDate}
           />
         </div>
 

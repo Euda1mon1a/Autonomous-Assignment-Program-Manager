@@ -106,14 +106,14 @@ function transformApiAssignment(apiAssignment: ApiCallAssignment): CallAssignmen
   const dayOfWeek = getDayOfWeek(apiAssignment.date);
   const callType = mapCallType(
     apiAssignment.call_type,
-    apiAssignment.is_weekend
+    apiAssignment.isWeekend
   );
 
   return {
     id: apiAssignment.id,
     date: apiAssignment.date,
     day_of_week: dayOfWeek,
-    person_id: apiAssignment.person_id,
+    person_id: apiAssignment.personId,
     person_name: apiAssignment.person?.name || 'Unknown',
     call_type: callType,
     // Note: post_call_status is not in API response, default to available
@@ -187,9 +187,9 @@ export default function FacultyCallAdminPage() {
     error,
     refetch,
   } = useCallAssignments({
-    start_date: filters.start_date,
-    end_date: filters.end_date,
-    person_id: filters.person_id || undefined,
+    start_date: filters.startDate,
+    end_date: filters.endDate,
+    person_id: filters.personId || undefined,
     // Note: API call_type is different from UI call_type, skip for now
   });
 
@@ -214,7 +214,7 @@ export default function FacultyCallAdminPage() {
       const searchLower = debouncedSearch.toLowerCase();
       transformed = transformed.filter(
         (a) =>
-          a.person_name.toLowerCase().includes(searchLower) ||
+          a.personName.toLowerCase().includes(searchLower) ||
           a.call_type.toLowerCase().includes(searchLower)
       );
     }
@@ -232,7 +232,7 @@ export default function FacultyCallAdminPage() {
           comparison = a.date.localeCompare(b.date);
           break;
         case 'person_name':
-          comparison = a.person_name.localeCompare(b.person_name);
+          comparison = a.personName.localeCompare(b.personName);
           break;
         case 'call_type':
           comparison = a.call_type.localeCompare(b.call_type);
@@ -283,7 +283,7 @@ export default function FacultyCallAdminPage() {
 
   const handleDeleteSingle = useCallback(
     async (assignment: CallAssignment) => {
-      if (confirm(`Delete call assignment for ${assignment.person_name} on ${assignment.date}?`)) {
+      if (confirm(`Delete call assignment for ${assignment.personName} on ${assignment.date}?`)) {
         try {
           await deleteAssignmentMutation.mutateAsync(assignment.id);
           toast.success('Call assignment deleted');
@@ -319,8 +319,8 @@ export default function FacultyCallAdminPage() {
       // Fetch equity preview
       try {
         await equityPreviewMutation.mutateAsync({
-          start_date: filters.start_date,
-          end_date: filters.end_date,
+          start_date: filters.startDate,
+          end_date: filters.endDate,
           simulated_changes: selectedIds.map((assignmentId) => ({
             assignment_id: assignmentId,
             new_person_id: personId,
@@ -332,7 +332,7 @@ export default function FacultyCallAdminPage() {
         setPendingReassignPersonId(null);
       }
     },
-    [selectedIds, filters.start_date, filters.end_date, equityPreviewMutation, toast]
+    [selectedIds, filters.startDate, filters.endDate, equityPreviewMutation, toast]
   );
 
   // Execute the actual reassignment after preview confirmation
@@ -533,14 +533,14 @@ export default function FacultyCallAdminPage() {
             <Calendar className="w-4 h-4 text-slate-400" />
             <input
               type="date"
-              value={filters.start_date}
+              value={filters.startDate}
               onChange={(e) => setFilters((prev) => ({ ...prev, start_date: e.target.value }))}
               className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900"
             />
             <span className="text-slate-400">to</span>
             <input
               type="date"
-              value={filters.end_date}
+              value={filters.endDate}
               onChange={(e) => setFilters((prev) => ({ ...prev, end_date: e.target.value }))}
               className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900"
             />
@@ -550,7 +550,7 @@ export default function FacultyCallAdminPage() {
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-slate-400" />
             <select
-              value={filters.person_id}
+              value={filters.personId}
               onChange={(e) => setFilters((prev) => ({ ...prev, person_id: e.target.value }))}
               className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900"
             >

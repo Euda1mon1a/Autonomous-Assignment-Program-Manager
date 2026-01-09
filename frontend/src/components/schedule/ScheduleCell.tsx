@@ -156,7 +156,7 @@ export function ScheduleCell({
     .join('\n')
 
   // Prefer display_abbreviation (short codes like C, FMIT) over abbreviation (may include time suffix like C-AM)
-  const displayCode = assignment.display_abbreviation || assignment.abbreviation
+  const displayCode = assignment.displayAbbreviation || assignment.abbreviation
 
   return (
     <td className={baseStyles}>

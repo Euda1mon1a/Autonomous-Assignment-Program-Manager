@@ -58,14 +58,14 @@ const absenceTypeAbbreviations: Record<string, string> = {
 };
 
 export function AbsenceBar({ absence, isFirst, isLast, onClick }: AbsenceBarProps) {
-  const colors = absenceTypeColors[absence.absence_type] || absenceTypeColors.personal;
-  const abbreviation = absenceTypeAbbreviations[absence.absence_type] || absence.absence_type.substring(0, 3).toUpperCase();
+  const colors = absenceTypeColors[absence.absenceType] || absenceTypeColors.personal;
+  const abbreviation = absenceTypeAbbreviations[absence.absenceType] || absence.absenceType.substring(0, 3).toUpperCase();
 
   // Build tooltip text
   const tooltipText = useMemo(() => {
-    const type = absence.absence_type.replace('_', ' ');
-    const start = new Date(absence.start_date).toLocaleDateString();
-    const end = new Date(absence.end_date).toLocaleDateString();
+    const type = absence.absenceType.replace('_', ' ');
+    const start = new Date(absence.startDate).toLocaleDateString();
+    const end = new Date(absence.endDate).toLocaleDateString();
     const notes = absence.notes ? `\n${absence.notes}` : '';
     return `${type}\n${start} - ${end}${notes}`;
   }, [absence]);

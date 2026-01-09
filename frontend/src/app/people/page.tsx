@@ -220,7 +220,7 @@ function PersonCard({
         <div>
           <h3 className="font-semibold text-gray-900">{person.name}</h3>
           <p className="text-sm text-gray-500">
-            {isResident ? `PGY-${person.pgy_level} Resident` : 'Faculty'}
+            {isResident ? `PGY-${person.pgyLevel} Resident` : 'Faculty'}
             {person.specialties && person.specialties.length > 0 && (
               <span className="ml-2">
                 ({person.specialties.join(', ')})

@@ -469,14 +469,14 @@ export function FacultyMatrixView({
 
   // Helper to get personId from either snake_case or camelCase API response
   const getPersonId = (faculty: FacultyMatrixRow): string => {
-    return (faculty as Record<string, unknown>).person_id as string ?? faculty.personId;
+    return (faculty as Record<string, unknown>).personId as string ?? faculty.personId;
   };
 
   // Filter faculty by selected roles
   const filteredFaculty = useMemo(() => {
     if (!data?.faculty) return [];
     return data.faculty.filter((f) => {
-      const role = (f as Record<string, unknown>).faculty_role ?? f.facultyRole;
+      const role = (f as Record<string, unknown>).facultyRole ?? f.facultyRole;
       if (!role) return selectedRoles.length === FACULTY_ROLES.length;
       return selectedRoles.includes(role as FacultyRole);
     });
@@ -489,7 +489,7 @@ export function FacultyMatrixView({
         isOpen: true,
         personId: getPersonId(faculty),
         personName: faculty.name,
-        facultyRole: ((faculty as Record<string, unknown>).faculty_role ?? faculty.facultyRole) as FacultyRole | null,
+        facultyRole: ((faculty as Record<string, unknown>).facultyRole ?? faculty.facultyRole) as FacultyRole | null,
       });
       onFacultySelect?.(getPersonId(faculty));
     },
@@ -619,7 +619,7 @@ export function FacultyMatrixView({
                             <InlineRoleEditor
                               personId={facultyId}
                               personName={faculty.name}
-                              currentRole={((faculty as Record<string, unknown>).faculty_role ?? faculty.facultyRole) as FacultyRole | null}
+                              currentRole={((faculty as Record<string, unknown>).facultyRole ?? faculty.facultyRole) as FacultyRole | null}
                               onSave={(role) => handleRoleSave(facultyId, role)}
                               onCancel={() => setEditingRoleFor(null)}
                               isSaving={updatePerson.isPending}
@@ -633,9 +633,9 @@ export function FacultyMatrixView({
                                 <div className="text-sm font-medium text-white group-hover:text-cyan-400 transition-colors">
                                   Dr. {lastName}
                                 </div>
-                                {((faculty as Record<string, unknown>).faculty_role ?? faculty.facultyRole) && (
+                                {((faculty as Record<string, unknown>).facultyRole ?? faculty.facultyRole) && (
                                   <div className="text-xs text-slate-500">
-                                    {FACULTY_ROLE_LABELS[((faculty as Record<string, unknown>).faculty_role ?? faculty.facultyRole) as FacultyRole]}
+                                    {FACULTY_ROLE_LABELS[((faculty as Record<string, unknown>).facultyRole ?? faculty.facultyRole) as FacultyRole]}
                                   </div>
                                 )}
                               </button>

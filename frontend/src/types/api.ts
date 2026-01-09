@@ -172,19 +172,19 @@ export interface Person {
   /** Type of person (resident or faculty) */
   type: PersonType;
   /** Post-graduate year level (for residents only) */
-  pgy_level: number | null;
+  pgyLevel: number | null;
   /** Whether the person is credentialed to perform procedures */
-  performs_procedures: boolean;
+  performsProcedures: boolean;
   /** List of medical specialties */
   specialties: string[] | null;
   /** Primary duty assignment */
-  primary_duty: string | null;
+  primaryDuty: string | null;
   /** Faculty role (for faculty only) */
-  faculty_role: FacultyRole | null;
+  facultyRole: FacultyRole | null;
   /** Timestamp when the record was created */
-  created_at: DateTimeString;
+  createdAt: DateTimeString;
   /** Timestamp when the record was last updated */
-  updated_at: DateTimeString;
+  updatedAt: DateTimeString;
 }
 
 /**
@@ -198,15 +198,15 @@ export interface PersonCreate {
   /** Type of person (resident or faculty) */
   type: PersonType;
   /** Post-graduate year level (for residents only) */
-  pgy_level?: number;
+  pgyLevel?: number;
   /** Whether the person is credentialed to perform procedures */
-  performs_procedures?: boolean;
+  performsProcedures?: boolean;
   /** List of medical specialties */
   specialties?: string[];
   /** Primary duty assignment */
-  primary_duty?: string;
+  primaryDuty?: string;
   /** Faculty role (for faculty only) */
-  faculty_role?: FacultyRole;
+  facultyRole?: FacultyRole;
 }
 
 /**
@@ -220,15 +220,15 @@ export interface PersonUpdate {
   /** Type of person (resident or faculty) */
   type?: PersonType;
   /** Post-graduate year level (for residents only) */
-  pgy_level?: number;
+  pgyLevel?: number;
   /** Whether the person is credentialed to perform procedures */
-  performs_procedures?: boolean;
+  performsProcedures?: boolean;
   /** List of medical specialties */
   specialties?: string[];
   /** Primary duty assignment */
-  primary_duty?: string;
+  primaryDuty?: string;
   /** Faculty role (for faculty only) */
-  faculty_role?: FacultyRole;
+  facultyRole?: FacultyRole;
 }
 
 // ============================================================================
@@ -244,15 +244,15 @@ export interface Block {
   /** Date of the block */
   date: DateString;
   /** Time period (AM or PM) */
-  time_of_day: TimeOfDay;
+  timeOfDay: TimeOfDay;
   /** Sequential block number */
-  block_number: number;
+  blockNumber: number;
   /** Whether this block falls on a weekend */
-  is_weekend: boolean;
+  isWeekend: boolean;
   /** Whether this block falls on a holiday */
-  is_holiday: boolean;
+  isHoliday: boolean;
   /** Name of the holiday if applicable */
-  holiday_name: string | null;
+  holidayName: string | null;
 }
 
 /**
@@ -262,15 +262,15 @@ export interface BlockCreate {
   /** Date of the block */
   date: DateString;
   /** Time period (AM or PM) */
-  time_of_day: TimeOfDay;
+  timeOfDay: TimeOfDay;
   /** Sequential block number */
-  block_number: number;
+  blockNumber: number;
   /** Whether this block falls on a weekend */
-  is_weekend?: boolean;
+  isWeekend?: boolean;
   /** Whether this block falls on a holiday */
-  is_holiday?: boolean;
+  isHoliday?: boolean;
   /** Name of the holiday if applicable */
-  holiday_name?: string;
+  holidayName?: string;
 }
 
 /**
@@ -280,15 +280,15 @@ export interface BlockUpdate {
   /** Date of the block */
   date?: DateString;
   /** Time period (AM or PM) */
-  time_of_day?: TimeOfDay;
+  timeOfDay?: TimeOfDay;
   /** Sequential block number */
-  block_number?: number;
+  blockNumber?: number;
   /** Whether this block falls on a weekend */
-  is_weekend?: boolean;
+  isWeekend?: boolean;
   /** Whether this block falls on a holiday */
-  is_holiday?: boolean;
+  isHoliday?: boolean;
   /** Name of the holiday if applicable */
-  holiday_name?: string;
+  holidayName?: string;
 }
 
 // ============================================================================
@@ -302,23 +302,23 @@ export interface Assignment {
   /** Unique identifier */
   id: UUID;
   /** ID of the block this assignment belongs to */
-  block_id: UUID;
+  blockId: UUID;
   /** ID of the person assigned */
-  person_id: UUID;
+  personId: UUID;
   /** ID of the rotation template being used (if applicable) */
-  rotation_template_id: UUID | null;
+  rotationTemplateId: UUID | null;
   /** Role of the person in this assignment */
   role: AssignmentRole;
   /** Custom activity description overriding the rotation template */
-  activity_override: string | null;
+  activityOverride: string | null;
   /** Additional notes about this assignment */
   notes: string | null;
   /** ID of the user who created this assignment */
-  created_by: UUID | null;
+  createdBy: UUID | null;
   /** Timestamp when the assignment was created */
-  created_at: DateTimeString;
+  createdAt: DateTimeString;
   /** Timestamp when the assignment was last updated */
-  updated_at: DateTimeString;
+  updatedAt: DateTimeString;
 }
 
 /**
@@ -326,19 +326,19 @@ export interface Assignment {
  */
 export interface AssignmentCreate {
   /** ID of the block this assignment belongs to */
-  block_id: UUID;
+  blockId: UUID;
   /** ID of the person to assign */
-  person_id: UUID;
+  personId: UUID;
   /** ID of the rotation template to use (optional) */
-  rotation_template_id?: UUID;
+  rotationTemplateId?: UUID;
   /** Role of the person in this assignment */
   role: AssignmentRole;
   /** Custom activity description overriding the rotation template */
-  activity_override?: string;
+  activityOverride?: string;
   /** Additional notes about this assignment */
   notes?: string;
   /** ID of the user creating this assignment */
-  created_by?: UUID;
+  createdBy?: UUID;
 }
 
 /**
@@ -346,15 +346,15 @@ export interface AssignmentCreate {
  */
 export interface AssignmentUpdate {
   /** ID of the block this assignment belongs to */
-  block_id?: UUID;
+  blockId?: UUID;
   /** ID of the person assigned */
-  person_id?: UUID;
+  personId?: UUID;
   /** ID of the rotation template being used */
-  rotation_template_id?: UUID;
+  rotationTemplateId?: UUID;
   /** Role of the person in this assignment */
   role?: AssignmentRole;
   /** Custom activity description overriding the rotation template */
-  activity_override?: string;
+  activityOverride?: string;
   /** Additional notes about this assignment */
   notes?: string;
 }
@@ -370,25 +370,25 @@ export interface Absence {
   /** Unique identifier */
   id: UUID;
   /** ID of the person who will be absent */
-  person_id: UUID;
+  personId: UUID;
   /** Start date of the absence */
-  start_date: DateString;
+  startDate: DateString;
   /** End date of the absence */
-  end_date: DateString;
+  endDate: DateString;
   /** Type of absence */
-  absence_type: AbsenceType;
+  absenceType: AbsenceType;
   /** Whether this absence counts toward away-from-program limit (28 days/year for residents) */
-  is_away_from_program: boolean;
+  isAwayFromProgram: boolean;
   /** Whether the absence is due to deployment orders (military) */
-  deployment_orders: boolean;
+  deploymentOrders: boolean;
   /** Location of TDY (temporary duty) if applicable */
-  tdy_location: string | null;
+  tdyLocation: string | null;
   /** Replacement activity to be scheduled during absence */
-  replacement_activity: string | null;
+  replacementActivity: string | null;
   /** Additional notes about the absence */
   notes: string | null;
   /** Timestamp when the absence was created */
-  created_at: DateTimeString;
+  createdAt: DateTimeString;
 }
 
 /**
@@ -396,21 +396,21 @@ export interface Absence {
  */
 export interface AbsenceCreate {
   /** ID of the person who will be absent */
-  person_id: UUID;
+  personId: UUID;
   /** Start date of the absence */
-  start_date: DateString;
+  startDate: DateString;
   /** End date of the absence */
-  end_date: DateString;
+  endDate: DateString;
   /** Type of absence */
-  absence_type: AbsenceType;
+  absenceType: AbsenceType;
   /** Whether this counts toward away-from-program limit (default: true for residents, false for faculty) */
-  is_away_from_program?: boolean;
+  isAwayFromProgram?: boolean;
   /** Whether the absence is due to deployment orders (military) */
-  deployment_orders?: boolean;
+  deploymentOrders?: boolean;
   /** Location of TDY (temporary duty) if applicable */
-  tdy_location?: string;
+  tdyLocation?: string;
   /** Replacement activity to be scheduled during absence */
-  replacement_activity?: string;
+  replacementActivity?: string;
   /** Additional notes about the absence */
   notes?: string;
 }
@@ -420,19 +420,19 @@ export interface AbsenceCreate {
  */
 export interface AbsenceUpdate {
   /** Start date of the absence */
-  start_date?: DateString;
+  startDate?: DateString;
   /** End date of the absence */
-  end_date?: DateString;
+  endDate?: DateString;
   /** Type of absence */
-  absence_type?: AbsenceType;
+  absenceType?: AbsenceType;
   /** Whether this counts toward away-from-program limit */
-  is_away_from_program?: boolean;
+  isAwayFromProgram?: boolean;
   /** Whether the absence is due to deployment orders (military) */
-  deployment_orders?: boolean;
+  deploymentOrders?: boolean;
   /** Location of TDY (temporary duty) if applicable */
-  tdy_location?: string;
+  tdyLocation?: string;
   /** Replacement activity to be scheduled during absence */
-  replacement_activity?: string;
+  replacementActivity?: string;
   /** Additional notes about the absence */
   notes?: string;
 }
@@ -451,9 +451,9 @@ export type ThresholdStatus = 'ok' | 'warning' | 'critical' | 'exceeded';
  */
 export interface AwayAbsenceDetail {
   id: string;
-  start_date: string;
-  end_date: string;
-  absence_type: string;
+  startDate: string;
+  endDate: string;
+  absenceType: string;
   /** Days counted toward away-from-program */
   days: number;
 }
@@ -465,19 +465,19 @@ export interface AwayAbsenceDetail {
  * must extend their training.
  */
 export interface AwayFromProgramSummary {
-  person_id: string;
+  personId: string;
   /** Academic year (e.g., '2025-2026') */
-  academic_year: string;
+  academicYear: string;
   /** Total days away from program this year */
-  days_used: number;
+  daysUsed: number;
   /** Days remaining before limit (min 0) */
-  days_remaining: number;
+  daysRemaining: number;
   /** Current status: ok, warning (21+), critical (28), exceeded */
-  threshold_status: ThresholdStatus;
+  thresholdStatus: ThresholdStatus;
   /** Maximum allowed days per year */
-  max_days: number;
+  maxDays: number;
   /** Warning threshold (75%) */
-  warning_days: number;
+  warningDays: number;
   /** Absences contributing to count */
   absences: AwayAbsenceDetail[];
 }
@@ -487,24 +487,24 @@ export interface AwayFromProgramSummary {
  */
 export interface AwayFromProgramCheck {
   /** Current days used */
-  current_days: number;
+  currentDays: number;
   /** Days if new absence is added */
-  projected_days: number;
-  threshold_status: ThresholdStatus;
-  days_remaining: number;
-  max_days: number;
-  warning_days: number;
+  projectedDays: number;
+  thresholdStatus: ThresholdStatus;
+  daysRemaining: number;
+  maxDays: number;
+  warningDays: number;
 }
 
 /**
  * Away-from-program status for all residents (compliance dashboard)
  */
 export interface AllResidentsAwayStatus {
-  academic_year: string;
+  academicYear: string;
   residents: AwayFromProgramSummary[];
   summary: {
-    total_residents: number;
-    by_status: Record<ThresholdStatus, number>;
+    totalResidents: number;
+    byStatus: Record<ThresholdStatus, number>;
   };
 }
 
@@ -521,29 +521,29 @@ export interface RotationTemplate {
   /** Full name of the rotation */
   name: string;
   /** Type/category of the activity */
-  activity_type: string;
+  activityType: string;
   /** Short abbreviation for display in schedules */
   abbreviation: string | null;
   /** User-facing abbreviation code for schedule grid (preferred over abbreviation) */
-  display_abbreviation: string | null;
+  displayAbbreviation: string | null;
   /** Tailwind color class for text */
-  font_color: string | null;
+  fontColor: string | null;
   /** Tailwind color class for background */
-  background_color: string | null;
+  backgroundColor: string | null;
   /** Physical location of the clinic/rotation */
-  clinic_location: string | null;
+  clinicLocation: string | null;
   /** Maximum number of residents that can be assigned simultaneously */
-  max_residents: number | null;
+  maxResidents: number | null;
   /** Required specialty for this rotation (if any) */
-  requires_specialty: string | null;
+  requiresSpecialty: string | null;
   /** Whether the rotation requires procedure credentials */
-  requires_procedure_credential: boolean;
+  requiresProcedureCredential: boolean;
   /** Whether faculty supervision is required */
-  supervision_required: boolean;
+  supervisionRequired: boolean;
   /** Maximum ratio of residents to supervisors (e.g., 3 means 3:1) */
-  max_supervision_ratio: number;
+  maxSupervisionRatio: number;
   /** Timestamp when the template was created */
-  created_at: DateTimeString;
+  createdAt: DateTimeString;
 }
 
 /**
@@ -553,27 +553,27 @@ export interface RotationTemplateCreate {
   /** Full name of the rotation */
   name: string;
   /** Type/category of the activity */
-  activity_type: string;
+  activityType: string;
   /** Short abbreviation for display in schedules */
   abbreviation?: string;
   /** User-facing abbreviation code for schedule grid (preferred over abbreviation) */
-  display_abbreviation?: string;
+  displayAbbreviation?: string;
   /** Tailwind color class for text */
-  font_color?: string;
+  fontColor?: string;
   /** Tailwind color class for background */
-  background_color?: string;
+  backgroundColor?: string;
   /** Physical location of the clinic/rotation */
-  clinic_location?: string;
+  clinicLocation?: string;
   /** Maximum number of residents that can be assigned simultaneously */
-  max_residents?: number;
+  maxResidents?: number;
   /** Required specialty for this rotation (if any) */
-  requires_specialty?: string;
+  requiresSpecialty?: string;
   /** Whether the rotation requires procedure credentials */
-  requires_procedure_credential?: boolean;
+  requiresProcedureCredential?: boolean;
   /** Whether faculty supervision is required */
-  supervision_required?: boolean;
+  supervisionRequired?: boolean;
   /** Maximum ratio of residents to supervisors (e.g., 3 means 3:1) */
-  max_supervision_ratio?: number;
+  maxSupervisionRatio?: number;
 }
 
 /**
@@ -583,27 +583,27 @@ export interface RotationTemplateUpdate {
   /** Full name of the rotation */
   name?: string;
   /** Type/category of the activity */
-  activity_type?: string;
+  activityType?: string;
   /** Short abbreviation for display in schedules */
   abbreviation?: string;
   /** User-facing abbreviation code for schedule grid (preferred over abbreviation) */
-  display_abbreviation?: string;
+  displayAbbreviation?: string;
   /** Tailwind color class for text */
-  font_color?: string;
+  fontColor?: string;
   /** Tailwind color class for background */
-  background_color?: string;
+  backgroundColor?: string;
   /** Physical location of the clinic/rotation */
-  clinic_location?: string;
+  clinicLocation?: string;
   /** Maximum number of residents that can be assigned simultaneously */
-  max_residents?: number;
+  maxResidents?: number;
   /** Required specialty for this rotation (if any) */
-  requires_specialty?: string;
+  requiresSpecialty?: string;
   /** Whether the rotation requires procedure credentials */
-  requires_procedure_credential?: boolean;
+  requiresProcedureCredential?: boolean;
   /** Whether faculty supervision is required */
-  supervision_required?: boolean;
+  supervisionRequired?: boolean;
   /** Maximum ratio of residents to supervisors (e.g., 3 means 3:1) */
-  max_supervision_ratio?: number;
+  maxSupervisionRatio?: number;
 }
 
 // ============================================================================
@@ -618,23 +618,23 @@ export interface ScheduleRun {
   /** Unique identifier */
   id: UUID;
   /** Start date of the scheduling period */
-  start_date: DateString;
+  startDate: DateString;
   /** End date of the scheduling period */
-  end_date: DateString;
+  endDate: DateString;
   /** Algorithm used for schedule generation */
   algorithm: SchedulingAlgorithm;
   /** Status of the schedule generation */
   status: ScheduleStatus;
   /** Number of blocks successfully assigned */
-  total_blocks_assigned: number | null;
+  totalBlocksAssigned: number | null;
   /** Number of ACGME violations detected */
-  acgme_violations: number;
+  acgmeViolations: number;
   /** Runtime of the algorithm in seconds */
-  runtime_seconds: number | null;
+  runtimeSeconds: number | null;
   /** Configuration parameters used for this run */
-  config_json: ScheduleConfig | null;
+  configJson: ScheduleConfig | null;
   /** Timestamp when the run was created */
-  created_at: DateTimeString;
+  createdAt: DateTimeString;
 }
 
 // ============================================================================
@@ -650,11 +650,11 @@ export interface Violation {
   /** Severity level of the violation */
   severity: ViolationSeverity;
   /** ID of the person involved in the violation (if applicable) */
-  person_id: UUID | null;
+  personId: UUID | null;
   /** Name of the person involved in the violation (if applicable) */
-  person_name: string | null;
+  personName: string | null;
   /** ID of the block where the violation occurred (if applicable) */
-  block_id: UUID | null;
+  blockId: UUID | null;
   /** Human-readable description of the violation */
   message: string;
   /** Additional structured details about the violation */
@@ -666,13 +666,13 @@ export interface Violation {
  */
 export interface ViolationDetails {
   /** Current value that caused the violation */
-  current_value?: number | string;
+  currentValue?: number | string;
   /** Maximum allowed value */
-  max_allowed?: number | string;
+  maxAllowed?: number | string;
   /** Minimum required value */
-  min_required?: number | string;
+  minRequired?: number | string;
   /** Date range affected by the violation */
-  date_range?: {
+  dateRange?: {
     start: DateString;
     end: DateString;
   };
@@ -687,11 +687,11 @@ export interface ValidationResult {
   /** Whether the schedule is valid (no critical violations) */
   valid: boolean;
   /** Total number of violations detected */
-  total_violations: number;
+  totalViolations: number;
   /** List of all violations found */
   violations: Violation[];
   /** Percentage of blocks with assignments (0-1) */
-  coverage_rate: number;
+  coverageRate: number;
   /** Additional statistical information about the schedule */
   statistics: ValidationStatistics | null;
 }
@@ -701,15 +701,15 @@ export interface ValidationResult {
  */
 export interface ValidationStatistics {
   /** Total number of blocks in the schedule */
-  total_blocks?: number;
+  totalBlocks?: number;
   /** Number of blocks with assignments */
-  assigned_blocks?: number;
+  assignedBlocks?: number;
   /** Number of residents in the schedule */
-  total_residents?: number;
+  totalResidents?: number;
   /** Average assignments per resident */
-  avg_assignments_per_resident?: number;
+  avgAssignmentsPerResident?: number;
   /** Violations grouped by severity */
-  violations_by_severity?: {
+  violationsBySeverity?: {
     [K in ViolationSeverity]?: number;
   };
   /** Additional statistics */
@@ -725,11 +725,11 @@ export interface ValidationStatistics {
  */
 export interface SolverStatistics {
   /** Total number of blocks in the scheduling period */
-  total_blocks: number | null;
+  totalBlocks: number | null;
   /** Total number of residents being scheduled */
-  total_residents: number | null;
+  totalResidents: number | null;
   /** Percentage of blocks successfully assigned (0-1) */
-  coverage_rate: number | null;
+  coverageRate: number | null;
   /** Number of search tree branches explored (CP-SAT specific) */
   branches: number | null;
   /** Number of conflicts encountered during solving (CP-SAT specific) */
@@ -745,15 +745,15 @@ export interface SolverStatistics {
  */
 export interface ScheduleConfig {
   /** Maximum number of consecutive days a resident can work */
-  max_consecutive_days?: number;
+  maxConsecutiveDays?: number;
   /** Minimum hours of rest between shifts */
-  min_rest_hours?: number;
+  minRestHours?: number;
   /** Whether to enforce strict ACGME compliance */
-  strict_acgme_compliance?: boolean;
+  strictAcgmeCompliance?: boolean;
   /** Weight for coverage optimization (0-1) */
-  coverage_weight?: number;
+  coverageWeight?: number;
   /** Weight for fairness optimization (0-1) */
-  fairness_weight?: number;
+  fairnessWeight?: number;
   /** Additional algorithm-specific parameters */
   [key: string]: unknown;
 }
@@ -767,17 +767,17 @@ export interface ScheduleConfig {
  */
 export interface ScheduleRequest {
   /** Start date of the scheduling period */
-  start_date: DateString;
+  startDate: DateString;
   /** End date of the scheduling period */
-  end_date: DateString;
+  endDate: DateString;
   /** Filter to include only specific PGY levels */
-  pgy_levels?: number[];
+  pgyLevels?: number[];
   /** Filter to include only specific rotation templates */
-  rotation_template_ids?: UUID[];
+  rotationTemplateIds?: UUID[];
   /** Scheduling algorithm to use */
   algorithm: SchedulingAlgorithm;
   /** Maximum time allowed for schedule generation (in seconds) */
-  timeout_seconds?: number;
+  timeoutSeconds?: number;
   /** Optional configuration parameters */
   config?: ScheduleConfig;
 }
@@ -791,15 +791,15 @@ export interface ScheduleResponse {
   /** Human-readable message about the result */
   message: string;
   /** Number of blocks successfully assigned */
-  total_blocks_assigned: number;
+  totalBlocksAssigned: number;
   /** Total number of blocks in the period */
-  total_blocks: number;
+  totalBlocks: number;
   /** Validation results for the generated schedule */
   validation: ValidationResult;
   /** ID of the schedule run record */
-  run_id: UUID | null;
+  runId: UUID | null;
   /** Statistics from the solver */
-  solver_stats: SolverStatistics | null;
+  solverStats: SolverStatistics | null;
 }
 
 // ============================================================================
@@ -818,7 +818,7 @@ export interface PaginatedResponse<T> {
   /** Current page number (1-indexed) */
   page: number;
   /** Number of items per page */
-  page_size: number;
+  pageSize: number;
   /** Total number of pages */
   pages: number;
 }
@@ -838,7 +838,7 @@ export interface ApiError {
   /** Detailed error information (if available) */
   detail?: string | Record<string, unknown>;
   /** Error code for programmatic handling */
-  error_code?: string;
+  errorCode?: string;
 }
 
 // ============================================================================

@@ -138,7 +138,7 @@ function RotationSubmenu({
               <span
                 className="w-2 h-2 rounded-full flex-shrink-0"
                 style={{
-                  backgroundColor: getActivityColor(rotation.activity_type),
+                  backgroundColor: getActivityColor(rotation.activityType),
                 }}
               />
               <span className="truncate">
@@ -171,7 +171,7 @@ function RotationSubmenu({
               <span
                 className="w-2 h-2 rounded-full flex-shrink-0"
                 style={{
-                  backgroundColor: getActivityColor(rotation.activity_type),
+                  backgroundColor: getActivityColor(rotation.activityType),
                 }}
               />
               <span className="truncate">

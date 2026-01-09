@@ -24,7 +24,7 @@ export const USER_ROLE_LABELS: Record<UserRole, string> = {
   coordinator: "Coordinator",
   faculty: "Faculty",
   resident: "Resident",
-  clinical_staff: "Clinical Staff",
+  clinicalStaff: "Clinical Staff",
   rn: "Registered Nurse",
   lpn: "Licensed Practical Nurse",
   msa: "Medical Support Assistant",
@@ -35,7 +35,7 @@ export const USER_ROLE_COLORS: Record<UserRole, string> = {
   coordinator: "bg-purple-100 text-purple-800",
   faculty: "bg-blue-100 text-blue-800",
   resident: "bg-green-100 text-green-800",
-  clinical_staff: "bg-yellow-100 text-yellow-800",
+  clinicalStaff: "bg-yellow-100 text-yellow-800",
   rn: "bg-teal-100 text-teal-800",
   lpn: "bg-cyan-100 text-cyan-800",
   msa: "bg-gray-100 text-gray-800",
@@ -186,17 +186,17 @@ export interface AdminUserApiResponse {
   id: string;
   username: string;
   email: string;
-  first_name: string | null;
-  last_name: string | null;
+  firstName: string | null;
+  lastName: string | null;
   role: string;
-  is_active: boolean;
-  is_locked: boolean;
-  lock_reason: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  last_login: string | null;
-  invite_sent_at: string | null;
-  invite_accepted_at: string | null;
+  isActive: boolean;
+  isLocked: boolean;
+  lockReason: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  lastLogin: string | null;
+  inviteSentAt: string | null;
+  inviteAcceptedAt: string | null;
 }
 
 export interface UserActivityLog {

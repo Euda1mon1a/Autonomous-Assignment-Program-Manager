@@ -43,8 +43,8 @@ export function AbsenceList({ absences, people, onEdit, onDelete }: AbsenceListP
   // Sort absences by start date (upcoming first)
   const sortedAbsences = useMemo(() => {
     return [...absences].sort((a, b) => {
-      const dateA = new Date(a.start_date)
-      const dateB = new Date(b.start_date)
+      const dateA = new Date(a.startDate)
+      const dateB = new Date(b.startDate)
       return dateA.getTime() - dateB.getTime()
     })
   }, [absences])
@@ -88,8 +88,8 @@ export function AbsenceList({ absences, people, onEdit, onDelete }: AbsenceListP
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {sortedAbsences.map((absence) => {
-              const person = personMap.get(absence.person_id)
-              const colorClass = typeColors[absence.absence_type] || typeColors.personal
+              const person = personMap.get(absence.personId)
+              const colorClass = typeColors[absence.absenceType] || typeColors.personal
 
               return (
                 <tr key={absence.id} className="hover:bg-gray-50">
@@ -99,7 +99,7 @@ export function AbsenceList({ absences, people, onEdit, onDelete }: AbsenceListP
                     </div>
                     <div className="text-xs text-gray-500">
                       {person?.type === 'resident'
-                        ? `PGY-${person.pgy_level}`
+                        ? `PGY-${person.pgyLevel}`
                         : person?.type === 'faculty'
                         ? 'Faculty'
                         : ''}
@@ -109,20 +109,20 @@ export function AbsenceList({ absences, people, onEdit, onDelete }: AbsenceListP
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${colorClass}`}
                     >
-                      {absence.absence_type.replace('_', ' ')}
+                      {absence.absenceType.replace('_', ' ')}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {format(new Date(absence.start_date), 'MMM d, yyyy')}
+                    {format(new Date(absence.startDate), 'MMM d, yyyy')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {format(new Date(absence.end_date), 'MMM d, yyyy')}
+                    {format(new Date(absence.endDate), 'MMM d, yyyy')}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
                     {absence.notes || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
-                    {absence.is_away_from_program ? (
+                    {absence.isAwayFromProgram ? (
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
                         Yes
                       </span>

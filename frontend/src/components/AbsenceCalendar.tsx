@@ -92,18 +92,18 @@ const AbsenceDayCell = React.memo(function AbsenceDayCell({
       {/* Absences for this day */}
       <div className="space-y-1">
         {dayAbsences.slice(0, 3).map((absence) => {
-          const person = personMap.get(absence.person_id)
-          const colors = typeColors[absence.absence_type] || typeColors.personal
+          const person = personMap.get(absence.personId)
+          const colors = typeColors[absence.absenceType] || typeColors.personal
 
           return (
             <button
               key={absence.id}
               onClick={() => onAbsenceClick(absence)}
               className={`w-full text-left px-1 py-0.5 text-xs rounded border-l-2 truncate ${colors.bg} ${colors.border} ${colors.text} hover:opacity-80 transition-opacity`}
-              title={`${person?.name || 'Unknown'} - ${absence.absence_type}`}
+              title={`${person?.name || 'Unknown'} - ${absence.absenceType}`}
             >
               {person ? getInitials(person.name) : '??'}{' '}
-              <span className="capitalize">{absence.absence_type.replace('_', ' ')}</span>
+              <span className="capitalize">{absence.absenceType.replace('_', ' ')}</span>
             </button>
           )
         })}
@@ -143,8 +143,8 @@ export function AbsenceCalendar({ absences, people, onAbsenceClick }: AbsenceCal
     const map = new Map<string, Absence[]>()
 
     absences.forEach((absence) => {
-      const startDate = new Date(absence.start_date)
-      const endDate = new Date(absence.end_date)
+      const startDate = new Date(absence.startDate)
+      const endDate = new Date(absence.endDate)
 
       // Add absence to each day in its range
       days.forEach((day) => {

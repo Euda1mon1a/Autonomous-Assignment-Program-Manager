@@ -185,15 +185,15 @@ export interface WeeklyPatternResponse {
  */
 export interface BatchPatternSlot {
   /** Day of week (0=Sunday, 6=Saturday) */
-  day_of_week: DayOfWeek;
+  dayOfWeek: DayOfWeek;
   /** Time of day (AM or PM) */
-  time_of_day: WeeklyPatternTimeOfDay;
+  timeOfDay: WeeklyPatternTimeOfDay;
   /** Template ID to assign to this slot (null to clear) */
-  linked_template_id?: UUID | null;
+  linkedTemplateId?: UUID | null;
   /** Activity type override */
-  activity_type?: string | null;
+  activityType?: string | null;
   /** Protected status */
-  is_protected?: boolean;
+  isProtected?: boolean;
   /** Slot notes */
   notes?: string | null;
 }
@@ -203,15 +203,15 @@ export interface BatchPatternSlot {
  */
 export interface BatchPatternUpdateRequest {
   /** Template IDs to update */
-  template_ids: UUID[];
+  templateIds: UUID[];
   /** Update mode: overlay (merge with existing) or replace (overwrite all) */
   mode: 'overlay' | 'replace';
   /** Slots to apply (max 14 per week) */
   slots: BatchPatternSlot[];
   /** Weeks to apply to (1-4). null = all weeks */
-  week_numbers?: number[] | null;
+  weekNumbers?: number[] | null;
   /** Preview changes without applying */
-  dry_run?: boolean;
+  dryRun?: boolean;
 }
 
 /**
@@ -219,13 +219,13 @@ export interface BatchPatternUpdateRequest {
  */
 export interface BatchPatternUpdateResult {
   /** Template ID */
-  template_id: UUID;
+  templateId: UUID;
   /** Template name */
-  template_name: string;
+  templateName: string;
   /** Whether update succeeded */
   success: boolean;
   /** Number of slots modified */
-  slots_modified: number;
+  slotsModified: number;
   /** Error message if failed */
   error?: string | null;
 }
@@ -235,7 +235,7 @@ export interface BatchPatternUpdateResult {
  */
 export interface BatchPatternUpdateResponse {
   /** Total templates processed */
-  total_templates: number;
+  totalTemplates: number;
   /** Number of successful updates */
   successful: number;
   /** Number of failed updates */
@@ -243,7 +243,7 @@ export interface BatchPatternUpdateResponse {
   /** Individual results per template */
   results: BatchPatternUpdateResult[];
   /** Whether this was a dry run */
-  dry_run: boolean;
+  dryRun: boolean;
 }
 
 // ============================================================================

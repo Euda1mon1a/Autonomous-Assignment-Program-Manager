@@ -271,17 +271,17 @@ export function useTogglePreference(templateId: string) {
 
       // Toggle the specified preference
       const updatedPreferences = currentPreferences.map((p) =>
-        p.preference_type === preferenceType
-          ? { ...p, is_active: !p.is_active }
+        p.preferenceType === preferenceType
+          ? { ...p, is_active: !p.isActive }
           : p
       );
 
       // Convert to create format and save
       const createPayload = updatedPreferences.map((p) => ({
-        preference_type: p.preference_type,
+        preference_type: p.preferenceType,
         weight: p.weight,
-        config_json: p.config_json,
-        is_active: p.is_active,
+        config_json: p.configJson,
+        is_active: p.isActive,
         description: p.description,
       }));
 
@@ -324,15 +324,15 @@ export function useUpdatePreferenceWeight(templateId: string) {
 
       // Update the specified preference's weight
       const updatedPreferences = currentPreferences.map((p) =>
-        p.preference_type === preferenceType ? { ...p, weight } : p
+        p.preferenceType === preferenceType ? { ...p, weight } : p
       );
 
       // Convert to create format and save
       const createPayload = updatedPreferences.map((p) => ({
-        preference_type: p.preference_type,
+        preference_type: p.preferenceType,
         weight: p.weight,
-        config_json: p.config_json,
-        is_active: p.is_active,
+        config_json: p.configJson,
+        is_active: p.isActive,
         description: p.description,
       }));
 

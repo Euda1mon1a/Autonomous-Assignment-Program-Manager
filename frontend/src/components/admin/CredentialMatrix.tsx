@@ -89,7 +89,7 @@ export function CredentialMatrix({
   const credentialMap = useMemo(() => {
     const map = new Map<string, Credential>();
     credentials.forEach((cred) => {
-      map.set(`${cred.person_id}_${cred.procedure_id}`, cred);
+      map.set(`${cred.personId}_${cred.procedure_id}`, cred);
     });
     return map;
   }, [credentials]);

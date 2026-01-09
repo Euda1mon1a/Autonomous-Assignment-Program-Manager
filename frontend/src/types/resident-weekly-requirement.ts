@@ -50,25 +50,25 @@ export interface ResidentWeeklyRequirement {
   /** Unique identifier */
   id: string;
   /** Associated rotation template ID */
-  rotation_template_id: string;
+  rotationTemplateId: string;
   /** Minimum FM clinic half-days per week (0-14) */
-  fm_clinic_min_per_week: number;
+  fmClinicMinPerWeek: number;
   /** Maximum FM clinic half-days per week (0-14) */
-  fm_clinic_max_per_week: number;
+  fmClinicMaxPerWeek: number;
   /** Minimum specialty half-days per week */
-  specialty_min_per_week: number;
+  specialtyMinPerWeek: number;
   /** Maximum specialty half-days per week */
-  specialty_max_per_week: number;
+  specialtyMaxPerWeek: number;
   /** Whether Wednesday AM academics are required */
-  academics_required: boolean;
+  academicsRequired: boolean;
   /** Protected time slots mapped to activity type */
-  protected_slots: ProtectedSlots;
+  protectedSlots: ProtectedSlots;
   /** Days of week when clinic sessions are allowed (0=Sun, 1=Mon, ..., 6=Sat) */
-  allowed_clinic_days: DayOfWeek[];
+  allowedClinicDays: DayOfWeek[];
   /** Creation timestamp */
-  created_at?: string;
+  createdAt?: string;
   /** Last update timestamp */
-  updated_at?: string;
+  updatedAt?: string;
 }
 
 // ============================================================================
@@ -79,27 +79,27 @@ export interface ResidentWeeklyRequirement {
  * Request to create a new weekly requirement
  */
 export interface ResidentWeeklyRequirementCreate {
-  rotation_template_id: string;
-  fm_clinic_min_per_week: number;
-  fm_clinic_max_per_week: number;
-  specialty_min_per_week: number;
-  specialty_max_per_week: number;
-  academics_required?: boolean;
-  protected_slots?: ProtectedSlots;
-  allowed_clinic_days?: DayOfWeek[];
+  rotationTemplateId: string;
+  fmClinicMinPerWeek: number;
+  fmClinicMaxPerWeek: number;
+  specialtyMinPerWeek: number;
+  specialtyMaxPerWeek: number;
+  academicsRequired?: boolean;
+  protectedSlots?: ProtectedSlots;
+  allowedClinicDays?: DayOfWeek[];
 }
 
 /**
  * Request to update an existing weekly requirement
  */
 export interface ResidentWeeklyRequirementUpdate {
-  fm_clinic_min_per_week?: number;
-  fm_clinic_max_per_week?: number;
-  specialty_min_per_week?: number;
-  specialty_max_per_week?: number;
-  academics_required?: boolean;
-  protected_slots?: ProtectedSlots;
-  allowed_clinic_days?: DayOfWeek[];
+  fmClinicMinPerWeek?: number;
+  fmClinicMaxPerWeek?: number;
+  specialtyMinPerWeek?: number;
+  specialtyMaxPerWeek?: number;
+  academicsRequired?: boolean;
+  protectedSlots?: ProtectedSlots;
+  allowedClinicDays?: DayOfWeek[];
 }
 
 // ============================================================================
@@ -110,20 +110,20 @@ export interface ResidentWeeklyRequirementUpdate {
  * Form state for editing weekly requirements
  */
 export interface WeeklyRequirementFormData {
-  fm_clinic_min_per_week: number;
-  fm_clinic_max_per_week: number;
-  specialty_min_per_week: number;
-  specialty_max_per_week: number;
-  academics_required: boolean;
-  protected_slots: ProtectedSlots;
-  allowed_clinic_days: DayOfWeek[];
+  fmClinicMinPerWeek: number;
+  fmClinicMaxPerWeek: number;
+  specialtyMinPerWeek: number;
+  specialtyMaxPerWeek: number;
+  academicsRequired: boolean;
+  protectedSlots: ProtectedSlots;
+  allowedClinicDays: DayOfWeek[];
 }
 
 /**
  * Validation errors for the form
  */
 export interface WeeklyRequirementFormErrors {
-  fm_clinic?: string;
+  fmClinic?: string;
   specialty?: string;
   general?: string;
 }
@@ -162,20 +162,20 @@ export const DAY_OF_WEEK_FULL_LABELS: Record<DayOfWeek, string> = {
  * Time slot display labels
  */
 export const TIME_SLOT_LABELS: Record<TimeSlot, string> = {
-  mon_am: 'Mon AM',
-  mon_pm: 'Mon PM',
-  tue_am: 'Tue AM',
-  tue_pm: 'Tue PM',
-  wed_am: 'Wed AM',
-  wed_pm: 'Wed PM',
-  thu_am: 'Thu AM',
-  thu_pm: 'Thu PM',
-  fri_am: 'Fri AM',
-  fri_pm: 'Fri PM',
-  sat_am: 'Sat AM',
-  sat_pm: 'Sat PM',
-  sun_am: 'Sun AM',
-  sun_pm: 'Sun PM',
+  monAm: 'Mon AM',
+  monPm: 'Mon PM',
+  tueAm: 'Tue AM',
+  tuePm: 'Tue PM',
+  wedAm: 'Wed AM',
+  wedPm: 'Wed PM',
+  thuAm: 'Thu AM',
+  thuPm: 'Thu PM',
+  friAm: 'Fri AM',
+  friPm: 'Fri PM',
+  satAm: 'Sat AM',
+  satPm: 'Sat PM',
+  sunAm: 'Sun AM',
+  sunPm: 'Sun PM',
 };
 
 /**
@@ -246,13 +246,13 @@ export const TIME_SLOTS: TimeSlot[] = [
  * Default values for a new weekly requirement
  */
 export const DEFAULT_WEEKLY_REQUIREMENT: WeeklyRequirementFormData = {
-  fm_clinic_min_per_week: 0,
-  fm_clinic_max_per_week: 4,
-  specialty_min_per_week: 0,
-  specialty_max_per_week: 4,
-  academics_required: true,
-  protected_slots: { wed_am: 'conference' },
-  allowed_clinic_days: [1, 2, 3, 4, 5], // Mon-Fri
+  fmClinicMinPerWeek: 0,
+  fmClinicMaxPerWeek: 4,
+  specialtyMinPerWeek: 0,
+  specialtyMaxPerWeek: 4,
+  academicsRequired: true,
+  protectedSlots: { wedAm: 'conference' },
+  allowedClinicDays: [1, 2, 3, 4, 5], // Mon-Fri
 };
 
 // ============================================================================

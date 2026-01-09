@@ -14,16 +14,16 @@ export type CallType = 'overnight' | 'weekend' | 'backup';
 export interface PersonBrief {
   id: string;
   name: string;
-  faculty_role: string | null;
+  facultyRole: string | null;
 }
 
 export interface CallAssignment {
   id: string;
   date: string;
-  person_id: string;
-  call_type: CallType;
-  is_weekend: boolean;
-  is_holiday: boolean;
+  personId: string;
+  callType: CallType;
+  isWeekend: boolean;
+  isHoliday: boolean;
   person: PersonBrief | null;
 }
 
@@ -39,24 +39,24 @@ export interface CallAssignmentListResponse {
 // ============================================================================
 
 export interface CallAssignmentCreate {
-  call_date: string;  // Backend expects call_date for create
-  person_id: string;
-  call_type?: string;  // Backend accepts: sunday, weekday, holiday, backup
-  is_weekend?: boolean;
-  is_holiday?: boolean;
+  callDate: string;  // Backend expects call_date for create
+  personId: string;
+  callType?: string;  // Backend accepts: sunday, weekday, holiday, backup
+  isWeekend?: boolean;
+  isHoliday?: boolean;
 }
 
 export interface CallAssignmentUpdate {
-  call_date?: string;  // Backend expects call_date for update
-  person_id?: string;
-  call_type?: string;
-  is_weekend?: boolean;
-  is_holiday?: boolean;
+  callDate?: string;  // Backend expects call_date for update
+  personId?: string;
+  callType?: string;
+  isWeekend?: boolean;
+  isHoliday?: boolean;
 }
 
 export interface BulkCallAssignmentCreate {
   assignments: CallAssignmentCreate[];
-  replace_existing?: boolean;
+  replaceExisting?: boolean;
 }
 
 export interface BulkCallAssignmentResponse {
@@ -69,11 +69,11 @@ export interface BulkCallAssignmentResponse {
 // ============================================================================
 
 export interface BulkCallAssignmentUpdateInput {
-  person_id?: string;
+  personId?: string;
 }
 
 export interface BulkCallAssignmentUpdateRequest {
-  assignment_ids: string[];
+  assignmentIds: string[];
   updates: BulkCallAssignmentUpdateInput;
 }
 
@@ -88,25 +88,25 @@ export interface BulkCallAssignmentUpdateResponse {
 // ============================================================================
 
 export interface PCATGenerationRequest {
-  assignment_ids: string[];
+  assignmentIds: string[];
 }
 
 export interface PCATAssignmentResult {
-  call_assignment_id: string;
-  call_date: string;
-  person_id: string;
-  person_name: string | null;
-  pcat_created: boolean;
-  do_created: boolean;
-  pcat_assignment_id: string | null;
-  do_assignment_id: string | null;
+  callAssignmentId: string;
+  callDate: string;
+  personId: string;
+  personName: string | null;
+  pcatCreated: boolean;
+  doCreated: boolean;
+  pcatAssignmentId: string | null;
+  doAssignmentId: string | null;
   error: string | null;
 }
 
 export interface PCATGenerationResponse {
   processed: number;
-  pcat_created: number;
-  do_created: number;
+  pcatCreated: number;
+  doCreated: number;
   errors: string[];
   results: PCATAssignmentResult[];
 }
@@ -116,11 +116,11 @@ export interface PCATGenerationResponse {
 // ============================================================================
 
 export interface CallCoverageReport {
-  start_date: string;
-  end_date: string;
-  total_expected_nights: number;
-  covered_nights: number;
-  coverage_percentage: number;
+  startDate: string;
+  endDate: string;
+  totalExpectedNights: number;
+  coveredNights: number;
+  coveragePercentage: number;
   gaps: string[];
 }
 
@@ -132,20 +132,20 @@ export interface CallStats {
 }
 
 export interface FacultyCallDistribution {
-  person_id: string;
+  personId: string;
   name: string;
-  sunday_calls: number;
-  weekday_calls: number;
-  total_calls: number;
+  sundayCalls: number;
+  weekdayCalls: number;
+  totalCalls: number;
 }
 
 export interface CallEquityReport {
-  start_date: string;
-  end_date: string;
-  faculty_count: number;
-  total_overnight_calls: number;
-  sunday_call_stats: CallStats;
-  weekday_call_stats: CallStats;
+  startDate: string;
+  endDate: string;
+  facultyCount: number;
+  totalOvernightCalls: number;
+  sundayCallStats: CallStats;
+  weekdayCallStats: CallStats;
   distribution: FacultyCallDistribution[];
 }
 
@@ -154,38 +154,38 @@ export interface CallEquityReport {
 // ============================================================================
 
 export interface SimulatedChange {
-  assignment_id?: string;
-  call_date?: string;
-  old_person_id?: string;
-  new_person_id: string;
-  call_type?: CallType;
+  assignmentId?: string;
+  callDate?: string;
+  oldPersonId?: string;
+  newPersonId: string;
+  callType?: CallType;
 }
 
 export interface EquityPreviewRequest {
-  start_date: string;
-  end_date: string;
-  simulated_changes?: SimulatedChange[];
+  startDate: string;
+  endDate: string;
+  simulatedChanges?: SimulatedChange[];
 }
 
 export interface FacultyEquityDetail {
-  person_id: string;
+  personId: string;
   name: string;
-  current_sunday_calls: number;
-  current_weekday_calls: number;
-  current_total_calls: number;
-  projected_sunday_calls: number;
-  projected_weekday_calls: number;
-  projected_total_calls: number;
+  currentSundayCalls: number;
+  currentWeekdayCalls: number;
+  currentTotalCalls: number;
+  projectedSundayCalls: number;
+  projectedWeekdayCalls: number;
+  projectedTotalCalls: number;
   delta: number;
 }
 
 export interface EquityPreviewResponse {
-  start_date: string;
-  end_date: string;
-  current_equity: CallEquityReport;
-  projected_equity: CallEquityReport;
-  faculty_details: FacultyEquityDetail[];
-  improvement_score: number;
+  startDate: string;
+  endDate: string;
+  currentEquity: CallEquityReport;
+  projectedEquity: CallEquityReport;
+  facultyDetails: FacultyEquityDetail[];
+  improvementScore: number;
 }
 
 // ============================================================================
@@ -193,10 +193,10 @@ export interface EquityPreviewResponse {
 // ============================================================================
 
 export interface CallAssignmentFilters {
-  start_date?: string;
-  end_date?: string;
-  person_id?: string;
-  call_type?: CallType;
+  startDate?: string;
+  endDate?: string;
+  personId?: string;
+  callType?: CallType;
   skip?: number;
   limit?: number;
 }

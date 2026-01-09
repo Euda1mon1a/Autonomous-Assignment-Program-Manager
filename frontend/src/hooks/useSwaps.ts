@@ -297,11 +297,11 @@ export function useSwapList(
   if (filters?.target_faculty_id) {
     params.set("target_faculty_id", filters.target_faculty_id);
   }
-  if (filters?.start_date) {
-    params.set("start_date", filters.start_date);
+  if (filters?.startDate) {
+    params.set("start_date", filters.startDate);
   }
-  if (filters?.end_date) {
-    params.set("end_date", filters.end_date);
+  if (filters?.endDate) {
+    params.set("end_date", filters.endDate);
   }
 
   const queryString = params.toString();

@@ -115,7 +115,7 @@ export function useBlockAssignmentImport(): UseBlockAssignmentImportReturn {
 
       return executeBlockAssignmentImport({
         preview_id: preview.preview_id,
-        academic_year: preview.academic_year,
+        academic_year: preview.academicYear,
         skip_duplicates: !updateDuplicates,
         update_duplicates: updateDuplicates,
         row_overrides: duplicateActions,

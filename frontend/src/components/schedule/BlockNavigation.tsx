@@ -50,7 +50,7 @@ export function BlockNavigation({
   const currentBlockNumber = useMemo(() => {
     if (!blocksData?.items?.length) return null
     // Get unique block numbers from the fetched blocks
-    const blockNumbers = [...new Set(blocksData.items.map((b) => b.block_number))]
+    const blockNumbers = [...new Set(blocksData.items.map((b) => b.blockNumber))]
     // If we're viewing a single block, return that number
     // If multiple blocks are in view, return the first one (start of range)
     return blockNumbers[0] ?? null
@@ -68,14 +68,14 @@ export function BlockNavigation({
     }
 
     // Find the block range that matches our current block number
-    const currentIdx = blockRanges.findIndex((r) => r.block_number === currentBlockNumber)
+    const currentIdx = blockRanges.findIndex((r) => r.blockNumber === currentBlockNumber)
     const current = currentIdx >= 0 ? blockRanges[currentIdx] : null
     const previous = currentIdx > 0 ? blockRanges[currentIdx - 1] : null
     const next = currentIdx >= 0 && currentIdx < blockRanges.length - 1 ? blockRanges[currentIdx + 1] : null
 
     // Find the block that contains today's date
     const today = format(new Date(), 'yyyy-MM-dd')
-    const todayBlock = blockRanges.find((r) => r.start_date <= today && r.end_date >= today)
+    const todayBlock = blockRanges.find((r) => r.startDate <= today && r.endDate >= today)
 
     return {
       currentBlockRange: current,
@@ -88,8 +88,8 @@ export function BlockNavigation({
   // Navigate to previous block using actual block boundaries from API
   const handlePreviousBlock = () => {
     if (previousBlockRange) {
-      const newStart = parseISO(previousBlockRange.start_date)
-      const newEnd = parseISO(previousBlockRange.end_date)
+      const newStart = parseISO(previousBlockRange.startDate)
+      const newEnd = parseISO(previousBlockRange.endDate)
       onDateRangeChange(newStart, newEnd)
     } else {
       // Fallback: move back 28 days if no previous block data
@@ -102,8 +102,8 @@ export function BlockNavigation({
   // Navigate to next block using actual block boundaries from API
   const handleNextBlock = () => {
     if (nextBlockRange) {
-      const newStart = parseISO(nextBlockRange.start_date)
-      const newEnd = parseISO(nextBlockRange.end_date)
+      const newStart = parseISO(nextBlockRange.startDate)
+      const newEnd = parseISO(nextBlockRange.endDate)
       onDateRangeChange(newStart, newEnd)
     } else {
       // Fallback: move forward 28 days if no next block data
@@ -116,8 +116,8 @@ export function BlockNavigation({
   // Jump to today's block using actual block boundaries from API
   const handleToday = () => {
     if (todayBlockRange) {
-      const newStart = parseISO(todayBlockRange.start_date)
-      const newEnd = parseISO(todayBlockRange.end_date)
+      const newStart = parseISO(todayBlockRange.startDate)
+      const newEnd = parseISO(todayBlockRange.endDate)
       onDateRangeChange(newStart, newEnd)
     } else {
       // Fallback: use today's date as start

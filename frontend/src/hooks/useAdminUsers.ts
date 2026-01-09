@@ -105,7 +105,7 @@ function transformApiUser(apiUser: AdminUserApiResponse): User {
   let status: UserStatus;
   if (apiUser.is_locked) {
     status = "locked";
-  } else if (!apiUser.is_active) {
+  } else if (!apiUser.isActive) {
     status = "inactive";
   } else if (apiUser.invite_sent_at && !apiUser.invite_accepted_at) {
     status = "pending";
@@ -121,8 +121,8 @@ function transformApiUser(apiUser: AdminUserApiResponse): User {
     role: apiUser.role as UserRole,
     status,
     lastLogin: apiUser.last_login || undefined,
-    createdAt: apiUser.created_at || new Date().toISOString(),
-    updatedAt: apiUser.updated_at || new Date().toISOString(),
+    createdAt: apiUser.createdAt || new Date().toISOString(),
+    updatedAt: apiUser.updatedAt || new Date().toISOString(),
     mfaEnabled: false, // Not provided by API, default to false
     failedLoginAttempts: 0, // Not provided by API, default to 0
     lockedUntil: undefined,
@@ -303,7 +303,7 @@ export function useUpdateUser() {
       if (data.role !== undefined) apiPayload.role = data.role;
       if (data.status !== undefined) {
         // Map status to is_active
-        apiPayload.is_active = data.status === "active";
+        apiPayload.isActive = data.status === "active";
       }
 
       const response = await patch<AdminUserApiResponse>(

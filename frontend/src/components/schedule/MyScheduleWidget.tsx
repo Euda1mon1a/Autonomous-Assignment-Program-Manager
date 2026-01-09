@@ -83,8 +83,8 @@ export function MyScheduleWidget() {
     templatesData?.items?.forEach((t) => {
       map.set(t.id, {
         name: t.name,
-        abbreviation: t.display_abbreviation || t.abbreviation || t.name.substring(0, 3).toUpperCase(),
-        activity_type: t.activity_type,
+        abbreviation: t.displayAbbreviation || t.abbreviation || t.name.substring(0, 3).toUpperCase(),
+        activity_type: t.activityType,
       })
     })
     return map
@@ -102,13 +102,13 @@ export function MyScheduleWidget() {
 
     const assignments = assignmentsData.items
       .map((assignment) => {
-        const template = assignment.rotation_template_id
-          ? templateMap.get(assignment.rotation_template_id)
+        const template = assignment.rotationTemplateId
+          ? templateMap.get(assignment.rotationTemplateId)
           : null
 
         // Extract date from block_id if possible, or use created_at as fallback
         // In production, the API should return block data with date/time_of_day
-        const dateStr = assignment.created_at.split('T')[0]
+        const dateStr = assignment.createdAt.split('T')[0]
         const dateObj = parseISO(dateStr)
 
         return {
@@ -116,7 +116,7 @@ export function MyScheduleWidget() {
           date: dateStr,
           dateObj,
           time_of_day: 'AM' as const, // Default - would come from block data
-          activity: assignment.activity_override || template?.activity_type || 'Assignment',
+          activity: assignment.activityOverride || template?.activityType || 'Assignment',
           abbreviation: template?.abbreviation || 'ASN',
         }
       })
@@ -215,7 +215,7 @@ export function MyScheduleWidget() {
                     >
                       {assignment.abbreviation}
                     </span>
-                    <span className="text-xs text-gray-500">{assignment.time_of_day}</span>
+                    <span className="text-xs text-gray-500">{assignment.timeOfDay}</span>
                   </div>
                   <div className="text-sm text-gray-700 mt-0.5 truncate">
                     {assignment.activity}

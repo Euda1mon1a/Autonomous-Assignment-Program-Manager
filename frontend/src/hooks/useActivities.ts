@@ -162,12 +162,12 @@ export function useUpdateActivity() {
       const payload: Record<string, unknown> = {};
       if (data.name !== undefined) payload.name = data.name;
       if (data.code !== undefined) payload.code = data.code;
-      if (data.displayAbbreviation !== undefined) payload.display_abbreviation = data.displayAbbreviation;
+      if (data.displayAbbreviation !== undefined) payload.displayAbbreviation = data.displayAbbreviation;
       if (data.activityCategory !== undefined) payload.activity_category = data.activityCategory;
-      if (data.fontColor !== undefined) payload.font_color = data.fontColor;
-      if (data.backgroundColor !== undefined) payload.background_color = data.backgroundColor;
+      if (data.fontColor !== undefined) payload.fontColor = data.fontColor;
+      if (data.backgroundColor !== undefined) payload.backgroundColor = data.backgroundColor;
       if (data.requiresSupervision !== undefined) payload.requires_supervision = data.requiresSupervision;
-      if (data.isProtected !== undefined) payload.is_protected = data.isProtected;
+      if (data.isProtected !== undefined) payload.isProtected = data.isProtected;
       if (data.countsTowardClinicalHours !== undefined) payload.counts_toward_clinical_hours = data.countsTowardClinicalHours;
       if (data.displayOrder !== undefined) payload.display_order = data.displayOrder;
       return put<Activity>(`/activities/${activityId}`, payload);

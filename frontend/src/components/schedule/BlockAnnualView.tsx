@@ -115,7 +115,7 @@ export function BlockAnnualView({
       .filter((p: Person) => p.type === 'resident')
       .sort((a: Person, b: Person) => {
         // Sort by PGY level (ascending), then by name
-        const pgyDiff = (a.pgy_level ?? 99) - (b.pgy_level ?? 99)
+        const pgyDiff = (a.pgyLevel ?? 99) - (b.pgyLevel ?? 99)
         if (pgyDiff !== 0) return pgyDiff
         return a.name.localeCompare(b.name)
       })
@@ -178,9 +178,9 @@ export function BlockAnnualView({
   const blockDates = useMemo(() => {
     const dates = new Map<number, { start: string; end: string }>()
     blockRanges?.forEach((range) => {
-      dates.set(range.block_number, {
-        start: range.start_date,
-        end: range.end_date,
+      dates.set(range.blockNumber, {
+        start: range.startDate,
+        end: range.endDate,
       })
     })
     return dates
@@ -194,7 +194,7 @@ export function BlockAnnualView({
   const residentsByPgy = useMemo(() => {
     const groups = new Map<number, Person[]>()
     filteredResidents.forEach((r: Person) => {
-      const pgy = r.pgy_level ?? 0
+      const pgy = r.pgyLevel ?? 0
       if (!groups.has(pgy)) groups.set(pgy, [])
       groups.get(pgy)!.push(r)
     })
@@ -214,16 +214,16 @@ export function BlockAnnualView({
     }
 
     // Get rotation info
-    const template = assignment.rotation_template_id
-      ? templateMap.get(assignment.rotation_template_id)
+    const template = assignment.rotationTemplateId
+      ? templateMap.get(assignment.rotationTemplateId)
       : null
     const abbreviation =
-      template?.display_abbreviation ||
+      template?.displayAbbreviation ||
       template?.abbreviation ||
       template?.name?.substring(0, 4) ||
       assignment.rotation_template?.name?.substring(0, 4) ||
       '???'
-    const activityType = template?.activity_type || assignment.rotation_template?.activity_type
+    const activityType = template?.activityType || assignment.rotation_template?.activityType
     const colors = getActivityColor(activityType)
 
     // Show leave indicator

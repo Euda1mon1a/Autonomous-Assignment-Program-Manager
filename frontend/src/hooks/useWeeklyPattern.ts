@@ -69,15 +69,15 @@ function convertBackendToGrid(
   // Map backend patterns to frontend slots
   for (const bp of backendPatterns) {
     // Find the slot index: day * 2 + (PM ? 1 : 0)
-    const slotIndex = bp.day_of_week * 2 + (bp.time_of_day === 'PM' ? 1 : 0);
+    const slotIndex = bp.dayOfWeek * 2 + (bp.timeOfDay === 'PM' ? 1 : 0);
     if (slotIndex >= 0 && slotIndex < 14) {
       pattern.slots[slotIndex] = {
-        dayOfWeek: bp.day_of_week as DayOfWeek,
-        timeOfDay: bp.time_of_day as WeeklyPatternTimeOfDay,
-        rotationTemplateId: bp.linked_template_id,
+        dayOfWeek: bp.dayOfWeek as DayOfWeek,
+        timeOfDay: bp.timeOfDay as WeeklyPatternTimeOfDay,
+        rotationTemplateId: bp.linkedTemplateId,
         // Preserve activity_type for slots without linked_template_id
-        activityType: bp.activity_type,
-        isProtected: bp.is_protected,
+        activityType: bp.activityType,
+        isProtected: bp.isProtected,
         notes: bp.notes,
       };
     }
@@ -86,8 +86,8 @@ function convertBackendToGrid(
   // Find the latest updated_at
   const updatedAt = backendPatterns.length > 0
     ? backendPatterns.reduce((latest, p) =>
-        p.updated_at > latest ? p.updated_at : latest,
-        backendPatterns[0].updated_at
+        p.updatedAt > latest ? p.updatedAt : latest,
+        backendPatterns[0].updatedAt
       )
     : new Date().toISOString();
 
@@ -305,9 +305,9 @@ export function useAvailableTemplates(
       return response.items.map((t) => ({
         id: t.id,
         name: t.name,
-        displayAbbreviation: t.display_abbreviation || t.abbreviation,
-        backgroundColor: t.background_color,
-        fontColor: t.font_color,
+        displayAbbreviation: t.displayAbbreviation || t.abbreviation,
+        backgroundColor: t.backgroundColor,
+        fontColor: t.fontColor,
       }));
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
@@ -366,7 +366,7 @@ export function useBulkUpdateWeeklyPatterns() {
     },
     onSuccess: (data, variables) => {
       // Invalidate patterns for all affected templates
-      for (const templateId of variables.template_ids) {
+      for (const templateId of variables.templateIds) {
         queryClient.invalidateQueries({
           queryKey: weeklyPatternQueryKeys.pattern(templateId),
         });

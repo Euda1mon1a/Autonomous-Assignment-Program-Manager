@@ -153,7 +153,7 @@ export function createPCATPreviewData(
       id: assignment.id,
       callDate: assignment.date,
       dayOfWeek,
-      personName: assignment.person_name,
+      personName: assignment.personName,
       willCreatePCAT: isEligible,
       willCreateDO: isEligible,
       nextDayDate,

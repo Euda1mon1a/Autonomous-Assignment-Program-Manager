@@ -58,9 +58,9 @@ export function EditPersonModal({ isOpen, onClose, person }: EditPersonModalProp
       setName(person.name);
       setEmail(person.email || '');
       setType(person.type);
-      setPgyLevel(person.pgy_level?.toString() || '1');
-      setFacultyRole(person.faculty_role || FacultyRole.CORE);
-      setPerformsProcedures(person.performs_procedures);
+      setPgyLevel(person.pgyLevel?.toString() || '1');
+      setFacultyRole(person.facultyRole || FacultyRole.CORE);
+      setPerformsProcedures(person.performsProcedures);
       setSpecialties(person.specialties?.join(', ') || '');
     }
   }, [person]);
@@ -79,7 +79,7 @@ export function EditPersonModal({ isOpen, onClose, person }: EditPersonModalProp
     if (type === PersonType.RESIDENT) {
       const pgyNum = parseInt(pgyLevel);
       if (isNaN(pgyNum) || pgyNum < 1 || pgyNum > 3) {
-        newErrors.pgy_level = 'PGY level must be between 1 and 3';
+        newErrors.pgyLevel = 'PGY level must be between 1 and 3';
       }
     }
 
@@ -159,7 +159,7 @@ export function EditPersonModal({ isOpen, onClose, person }: EditPersonModalProp
             value={pgyLevel}
             onChange={(e) => setPgyLevel(e.target.value)}
             options={pgyOptions}
-            error={errors.pgy_level}
+            error={errors.pgyLevel}
           />
         )}
 

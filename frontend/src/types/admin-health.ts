@@ -202,7 +202,7 @@ export interface SystemHealthSummary {
 export interface HealthCheckResponse {
   status: ServiceStatus;
   timestamp: string;
-  duration_ms: number;
+  durationMs: number;
   checks: {
     name: string;
     status: ServiceStatus;

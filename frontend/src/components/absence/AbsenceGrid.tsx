@@ -98,9 +98,9 @@ export function AbsenceGrid({
     const faculty = filteredPeople.filter((p) => p.type === 'faculty');
 
     // Sort residents by PGY level
-    const pgy1 = residents.filter((p) => p.pgy_level === 1).sort((a, b) => a.name.localeCompare(b.name));
-    const pgy2 = residents.filter((p) => p.pgy_level === 2).sort((a, b) => a.name.localeCompare(b.name));
-    const pgy3 = residents.filter((p) => p.pgy_level === 3).sort((a, b) => a.name.localeCompare(b.name));
+    const pgy1 = residents.filter((p) => p.pgyLevel === 1).sort((a, b) => a.name.localeCompare(b.name));
+    const pgy2 = residents.filter((p) => p.pgyLevel === 2).sort((a, b) => a.name.localeCompare(b.name));
+    const pgy3 = residents.filter((p) => p.pgyLevel === 3).sort((a, b) => a.name.localeCompare(b.name));
 
     // Sort faculty alphabetically
     const sortedFaculty = faculty.sort((a, b) => a.name.localeCompare(b.name));
@@ -122,9 +122,9 @@ export function AbsenceGrid({
     const map = new Map<string, Absence[]>();
 
     absencesData?.items?.forEach((absence) => {
-      const existing = map.get(absence.person_id) || [];
+      const existing = map.get(absence.personId) || [];
       existing.push(absence);
-      map.set(absence.person_id, existing);
+      map.set(absence.personId, existing);
     });
 
     return map;
@@ -135,10 +135,10 @@ export function AbsenceGrid({
     const lookup = new Map<string, Map<string, Absence[]>>();
 
     absencesData?.items?.forEach((absence) => {
-      const personMap = lookup.get(absence.person_id) || new Map<string, Absence[]>();
+      const personMap = lookup.get(absence.personId) || new Map<string, Absence[]>();
 
-      const absenceStart = parseISO(absence.start_date);
-      const absenceEnd = parseISO(absence.end_date);
+      const absenceStart = parseISO(absence.startDate);
+      const absenceEnd = parseISO(absence.endDate);
 
       dates.forEach((date) => {
         if (date >= absenceStart && date <= absenceEnd) {
@@ -149,7 +149,7 @@ export function AbsenceGrid({
         }
       });
 
-      lookup.set(absence.person_id, personMap);
+      lookup.set(absence.personId, personMap);
     });
 
     return lookup;

@@ -402,7 +402,7 @@ export function BlockAssignmentImportModal({
               {preview.items.slice(0, 50).map((item) => (
                 <tr key={item.row_number} className="border-t">
                   <td className="px-3 py-2">{item.row_number}</td>
-                  <td className="px-3 py-2">{item.block_number}</td>
+                  <td className="px-3 py-2">{item.blockNumber}</td>
                   <td className="px-3 py-2">
                     <span className="font-mono">{item.rotation_input}</span>
                     {item.matched_rotation_name && (

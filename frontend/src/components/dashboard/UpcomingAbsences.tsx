@@ -81,8 +81,11 @@ export function UpcomingAbsences() {
     if (!absences?.items || !people?.items) return []
 
     const upcomingAbsences = absences.items.filter((absence) => {
-      const startDate = parseISO(absence.start_date)
-      const endDate = parseISO(absence.end_date)
+      // Guard against missing dates
+      if (!absence.startDate || !absence.endDate) return false
+
+      const startDate = parseISO(absence.startDate)
+      const endDate = parseISO(absence.endDate)
 
       return (
         isWithinInterval(today, { start: startDate, end: endDate }) ||
@@ -94,8 +97,8 @@ export function UpcomingAbsences() {
     // Calculate concurrent absences for each date
     const dateAbsenceCounts = new Map<string, number>()
     upcomingAbsences.forEach((absence) => {
-      const start = parseISO(absence.start_date)
-      const end = parseISO(absence.end_date)
+      const start = parseISO(absence.startDate)
+      const end = parseISO(absence.endDate)
       let current = start
 
       while (current <= end && current <= nextWeek) {
@@ -109,9 +112,9 @@ export function UpcomingAbsences() {
 
     return upcomingAbsences
       .map((absence) => {
-        const person = people.items?.find((p) => p.id === absence.person_id)
-        const startDate = parseISO(absence.start_date)
-        const endDate = parseISO(absence.end_date)
+        const person = people.items?.find((p) => p.id === absence.personId)
+        const startDate = parseISO(absence.startDate)
+        const endDate = parseISO(absence.endDate)
         const days = differenceInDays(endDate, startDate) + 1
 
         // Find max concurrent absences during this person's absence
@@ -139,12 +142,12 @@ export function UpcomingAbsences() {
 
         return {
           id: absence.id,
-          person_id: absence.person_id,
+          person_id: absence.personId,
           person_name: person?.name ?? 'Unknown',
           person_role: person?.type,
-          absence_type: absence.absence_type,
-          start_date: absence.start_date,
-          end_date: absence.end_date,
+          absence_type: absence.absenceType,
+          start_date: absence.startDate,
+          end_date: absence.endDate,
           days,
           impact,
           concurrent_count: maxConcurrent,
@@ -156,7 +159,7 @@ export function UpcomingAbsences() {
         if (impactOrder[a.impact] !== impactOrder[b.impact]) {
           return impactOrder[a.impact] - impactOrder[b.impact]
         }
-        return a.start_date.localeCompare(b.start_date)
+        return a.startDate.localeCompare(b.startDate)
       })
       .slice(0, 5)
   }, [absences, people, today, nextWeek])
@@ -231,7 +234,7 @@ export function UpcomingAbsences() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium text-gray-900 truncate">
-                      {absence.person_name}
+                      {absence.personName}
                     </p>
                     {/* Impact indicator */}
                     {(absence.impact === 'critical' || absence.impact === 'high') && (
@@ -245,8 +248,8 @@ export function UpcomingAbsences() {
                     )}
                   </div>
                   <p className="text-xs text-gray-500">
-                    {format(parseISO(absence.start_date), 'MMM d')} -{' '}
-                    {format(parseISO(absence.end_date), 'MMM d')}
+                    {format(parseISO(absence.startDate), 'MMM d')} -{' '}
+                    {format(parseISO(absence.endDate), 'MMM d')}
                     <span className="text-gray-400"> • {absence.days}d</span>
                     {absence.concurrent_count > 1 && (
                       <span className="text-amber-600">
@@ -257,11 +260,11 @@ export function UpcomingAbsences() {
                 </div>
                 <span
                   className={`flex-shrink-0 px-2 py-0.5 rounded text-xs font-medium ${
-                    absenceTypeBadgeColors[absence.absence_type] ?? 'bg-gray-100 text-gray-800'
+                    absenceTypeBadgeColors[absence.absenceType] ?? 'bg-gray-100 text-gray-800'
                   }`}
-                  aria-label={`Absence type: ${absenceTypeLabels[absence.absence_type] ?? absence.absence_type}`}
+                  aria-label={`Absence type: ${absenceTypeLabels[absence.absenceType] ?? absence.absenceType}`}
                 >
-                  {absenceTypeLabels[absence.absence_type] ?? absence.absence_type}
+                  {absenceTypeLabels[absence.absenceType] ?? absence.absenceType}
                 </span>
               </div>
             ))}

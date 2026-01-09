@@ -33,17 +33,17 @@ export interface ResidentRosterItem {
  */
 export interface ParsedFMITWeek {
   /** Block number (1-13) */
-  block_number: number;
+  blockNumber: number;
   /** Week within block (1-4) */
-  week_number: number;
+  weekNumber: number;
   /** Week start date (ISO format) */
-  start_date: string | null;
+  startDate: string | null;
   /** Week end date (ISO format) */
-  end_date: string | null;
+  endDate: string | null;
   /** Assigned faculty name */
-  faculty_name: string;
+  facultyName: string;
   /** True if holiday call week */
-  is_holiday_call: boolean;
+  isHolidayCall: boolean;
 }
 
 // ============================================================================
@@ -55,7 +55,7 @@ export interface ParsedFMITWeek {
  */
 export interface ParsedBlockAssignment {
   /** Person name */
-  person_name: string;
+  personName: string;
   /** Assignment date (ISO format) */
   date: string;
   /** Rotation template */
@@ -63,11 +63,11 @@ export interface ParsedBlockAssignment {
   /** Person role/PGY level */
   role: string;
   /** AM slot value */
-  slot_am: string | null;
+  slotAm: string | null;
   /** PM slot value */
-  slot_pm: string | null;
+  slotPm: string | null;
   /** Source row in spreadsheet */
-  row_idx: number;
+  rowIdx: number;
   /** Name match confidence */
   confidence: number;
 }
@@ -83,17 +83,17 @@ export interface BlockParseResponse {
   /** True if parsing succeeded without errors */
   success: boolean;
   /** Block number parsed */
-  block_number: number;
+  blockNumber: number;
   /** Block start date (ISO format) */
-  start_date: string | null;
+  startDate: string | null;
   /** Block end date (ISO format) */
-  end_date: string | null;
+  endDate: string | null;
   /** All parsed residents */
   residents: ResidentRosterItem[];
   /** Residents grouped by template */
-  residents_by_template: Record<string, ResidentRosterItem[]>;
+  residentsByTemplate: Record<string, ResidentRosterItem[]>;
   /** FMIT weekly assignments */
-  fmit_schedule: ParsedFMITWeek[];
+  fmitSchedule: ParsedFMITWeek[];
   /** Daily assignments (AM/PM slots) */
   assignments: ParsedBlockAssignment[];
   /** Parsing warnings (low confidence matches) */
@@ -101,9 +101,9 @@ export interface BlockParseResponse {
   /** Parsing errors */
   errors: string[];
   /** Total resident count */
-  total_residents: number;
+  totalResidents: number;
   /** Total assignment count */
-  total_assignments: number;
+  totalAssignments: number;
 }
 
 // ============================================================================

@@ -26,8 +26,8 @@ export const FACULTY_ROLE_LABELS: Record<FacultyRole, string> = {
   pd: 'Program Director',
   apd: 'Associate Program Director',
   oic: 'Officer in Charge',
-  dept_chief: 'Department Chief',
-  sports_med: 'Sports Medicine',
+  deptChief: 'Department Chief',
+  sportsMed: 'Sports Medicine',
   core: 'Core Faculty',
   adjunct: 'Adjunct Faculty',
 };

@@ -48,21 +48,21 @@ export interface CallAssignment {
   /** Date of the call assignment */
   date: string;
   /** Day of the week */
-  day_of_week: DayOfWeek;
+  dayOfWeek: DayOfWeek;
   /** ID of the assigned person */
-  person_id: string;
+  personId: string;
   /** Name of the assigned person */
-  person_name: string;
+  personName: string;
   /** Type of call */
-  call_type: CallType;
+  callType: CallType;
   /** Post-call status */
-  post_call_status: PostCallStatus;
+  postCallStatus: PostCallStatus;
   /** Additional notes */
   notes: string | null;
   /** When this assignment was created */
-  created_at: string;
+  createdAt: string;
   /** When this assignment was last updated */
-  updated_at: string;
+  updatedAt: string;
 }
 
 /**
@@ -81,10 +81,10 @@ export type CallSortField = 'date' | 'person_name' | 'call_type';
 export type SortDirection = 'asc' | 'desc';
 
 export interface CallFilters {
-  start_date: string;
-  end_date: string;
-  person_id: string;
-  call_type: CallType | '';
+  startDate: string;
+  endDate: string;
+  personId: string;
+  callType: CallType | '';
   search: string;
 }
 
@@ -147,16 +147,16 @@ export const CALL_BULK_ACTIONS: CallBulkActionConfig[] = [
 // ============================================================================
 
 export interface BulkCallDeleteRequest {
-  assignment_ids: string[];
+  assignmentIds: string[];
 }
 
 export interface BulkCallReassignRequest {
-  assignment_ids: string[];
-  new_person_id: string;
+  assignmentIds: string[];
+  newPersonId: string;
 }
 
 export interface BulkCallPCATRequest {
-  assignment_ids: string[];
+  assignmentIds: string[];
   apply: boolean;
 }
 

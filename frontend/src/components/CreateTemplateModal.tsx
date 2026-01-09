@@ -96,12 +96,12 @@ export function CreateTemplateModal({ isOpen, onClose }: CreateTemplateModalProp
     }
 
     if (!activityType) {
-      newErrors.activity_type = 'Activity type is required';
+      newErrors.activityType = 'Activity type is required';
     }
 
     const ratio = parseInt(maxSupervisionRatio);
     if (isNaN(ratio) || ratio < 1 || ratio > 10) {
-      newErrors.max_supervision_ratio = 'Supervision ratio must be between 1 and 10';
+      newErrors.maxSupervisionRatio = 'Supervision ratio must be between 1 and 10';
     }
 
     setErrors(newErrors);
@@ -179,7 +179,7 @@ export function CreateTemplateModal({ isOpen, onClose }: CreateTemplateModalProp
             value={activityType}
             onChange={(e) => setActivityType(e.target.value)}
             options={activityTypeOptions}
-            error={errors.activity_type}
+            error={errors.activityType}
           />
 
           <Input
@@ -274,7 +274,7 @@ export function CreateTemplateModal({ isOpen, onClose }: CreateTemplateModalProp
             type="number"
             value={maxSupervisionRatio}
             onChange={(e) => setMaxSupervisionRatio(e.target.value)}
-            error={errors.max_supervision_ratio}
+            error={errors.maxSupervisionRatio}
             min="1"
             max="10"
           />

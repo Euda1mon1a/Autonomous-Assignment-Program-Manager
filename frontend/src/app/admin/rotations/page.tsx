@@ -116,7 +116,7 @@ export default function AdminTemplatesPage() {
     data: templatesData,
     isLoading: templatesLoading,
     refetch: refetchTemplates,
-  } = useAdminTemplates(filters.activity_type as ActivityType | '');
+  } = useAdminTemplates(filters.activityType as ActivityType | '');
 
   // Archived templates query (only fetch when drawer is open)
   const {
@@ -257,13 +257,13 @@ export default function AdminTemplatesPage() {
         (t) =>
           t.name.toLowerCase().includes(searchLower) ||
           t.abbreviation?.toLowerCase().includes(searchLower) ||
-          t.display_abbreviation?.toLowerCase().includes(searchLower)
+          t.displayAbbreviation?.toLowerCase().includes(searchLower)
       );
     }
 
     // Activity type filter
-    if (filters.activity_type) {
-      filtered = filtered.filter((t) => t.activity_type === filters.activity_type);
+    if (filters.activityType) {
+      filtered = filtered.filter((t) => t.activityType === filters.activityType);
     }
 
     // Category filter - always apply unless showAllCategories is enabled
@@ -279,10 +279,10 @@ export default function AdminTemplatesPage() {
           comparison = a.name.localeCompare(b.name);
           break;
         case 'activity_type':
-          comparison = a.activity_type.localeCompare(b.activity_type);
+          comparison = a.activityType.localeCompare(b.activityType);
           break;
         case 'created_at':
-          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           break;
       }
       return sort.direction === 'asc' ? comparison : -comparison;
@@ -731,7 +731,7 @@ export default function AdminTemplatesPage() {
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-slate-400" />
             <select
-              value={filters.activity_type}
+              value={filters.activityType}
               onChange={(e) =>
                 setFilters((prev) => ({ ...prev, activity_type: e.target.value as ActivityType | '' }))
               }

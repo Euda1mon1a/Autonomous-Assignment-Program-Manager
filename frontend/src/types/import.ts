@@ -37,39 +37,39 @@ export interface ImportBatchCounts {
 
 export interface ImportBatchResponse {
   id: string; // UUID
-  created_at: string; // ISO Date
-  created_by_id?: string;
+  createdAt: string; // ISO Date
+  createdById?: string;
   filename?: string;
-  file_hash?: string;
-  file_size_bytes?: number;
+  fileHash?: string;
+  fileSizeBytes?: number;
   status: ImportBatchStatus;
-  conflict_resolution: ConflictResolutionMode;
-  target_block?: number;
-  target_start_date?: string;
-  target_end_date?: string;
+  conflictResolution: ConflictResolutionMode;
+  targetBlock?: number;
+  targetStartDate?: string;
+  targetEndDate?: string;
   notes?: string;
-  row_count?: number;
-  error_count: number;
-  warning_count: number;
-  applied_at?: string;
-  applied_by_id?: string;
-  rollback_available: boolean;
-  rollback_expires_at?: string;
-  rolled_back_at?: string;
-  rolled_back_by_id?: string;
+  rowCount?: number;
+  errorCount: number;
+  warningCount: number;
+  appliedAt?: string;
+  appliedById?: string;
+  rollbackAvailable: boolean;
+  rollbackExpiresAt?: string;
+  rolledBackAt?: string;
+  rolledBackById?: string;
   counts: ImportBatchCounts;
 }
 
 export interface ImportBatchListItem {
   id: string;
-  created_at: string;
+  createdAt: string;
   filename?: string;
   status: ImportBatchStatus;
-  target_block?: number;
-  target_start_date?: string;
-  target_end_date?: string;
-  row_count?: number;
-  error_count: number;
+  targetBlock?: number;
+  targetStartDate?: string;
+  targetEndDate?: string;
+  rowCount?: number;
+  errorCount: number;
   counts: ImportBatchCounts;
 }
 
@@ -77,86 +77,86 @@ export interface ImportBatchListResponse {
   items: ImportBatchListItem[];
   total: number;
   page: number;
-  page_size: number;
-  has_next: boolean;
-  has_previous: boolean;
+  pageSize: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
 }
 
 export interface StagedAssignmentResponse {
   id: string;
-  batch_id: string;
-  row_number?: number;
-  sheet_name?: string;
-  person_name: string;
-  assignment_date: string; // YYYY-MM-DD
+  batchId: string;
+  rowNumber?: number;
+  sheetName?: string;
+  personName: string;
+  assignmentDate: string; // YYYY-MM-DD
   slot?: string;
-  rotation_name?: string;
-  raw_cell_value?: string;
+  rotationName?: string;
+  rawCellValue?: string;
 
-  matched_person_id?: string;
-  matched_person_name?: string;
-  person_match_confidence?: number;
+  matchedPersonId?: string;
+  matchedPersonName?: string;
+  personMatchConfidence?: number;
 
-  matched_rotation_id?: string;
-  matched_rotation_name?: string;
-  rotation_match_confidence?: number;
+  matchedRotationId?: string;
+  matchedRotationName?: string;
+  rotationMatchConfidence?: number;
 
-  conflict_type?: "none" | "duplicate" | "overwrite";
-  existing_assignment_id?: string;
+  conflictType?: "none" | "duplicate" | "overwrite";
+  existingAssignmentId?: string;
 
   status: StagedAssignmentStatus;
 
-  validation_errors?: any[]; // Simplified for now
-  validation_warnings?: any[]; // Simplified for now
+  validationErrors?: any[]; // Simplified for now
+  validationWarnings?: any[]; // Simplified for now
 
-  created_assignment_id?: string;
+  createdAssignmentId?: string;
 }
 
 export interface ImportConflictDetail {
-  staged_assignment_id: string;
-  existing_assignment_id: string;
-  person_name: string;
-  assignment_date: string;
+  stagedAssignmentId: string;
+  existingAssignmentId: string;
+  personName: string;
+  assignmentDate: string;
   slot?: string;
-  staged_rotation?: string;
-  existing_rotation?: string;
-  conflict_type: "duplicate" | "overwrite";
+  stagedRotation?: string;
+  existingRotation?: string;
+  conflictType: "duplicate" | "overwrite";
 }
 
 export interface ImportPreviewResponse {
-  batch_id: string;
-  new_count: number;
-  update_count: number;
-  conflict_count: number;
-  skip_count: number;
-  acgme_violations: string[];
-  staged_assignments: StagedAssignmentResponse[];
+  batchId: string;
+  newCount: number;
+  updateCount: number;
+  conflictCount: number;
+  skipCount: number;
+  acgmeViolations: string[];
+  stagedAssignments: StagedAssignmentResponse[];
   conflicts: ImportConflictDetail[];
-  total_staged: number;
+  totalStaged: number;
   page: number;
-  page_size: number;
+  pageSize: number;
 }
 
 export interface ImportApplyResponse {
-  batch_id: string;
+  batchId: string;
   status: ImportBatchStatus;
-  applied_count: number;
-  skipped_count: number;
-  error_count: number;
-  started_at: string;
-  completed_at?: string;
+  appliedCount: number;
+  skippedCount: number;
+  errorCount: number;
+  startedAt: string;
+  completedAt?: string;
   errors: any[];
-  acgme_warnings: string[];
-  rollback_available: boolean;
-  rollback_expires_at?: string;
-  dry_run: boolean;
+  acgmeWarnings: string[];
+  rollbackAvailable: boolean;
+  rollbackExpiresAt?: string;
+  dryRun: boolean;
 }
 
 export interface ImportRollbackResponse {
-  batch_id: string;
+  batchId: string;
   status: ImportBatchStatus;
-  rolled_back_count: number;
-  failed_count: number;
-  rolled_back_at: string;
+  rolledBackCount: number;
+  failedCount: number;
+  rolledBackAt: string;
   errors: string[];
 }

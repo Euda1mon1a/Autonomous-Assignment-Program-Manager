@@ -67,7 +67,7 @@ function ArchivedTemplateRow({
   onDelete,
   isRestoring = false,
 }: ArchivedTemplateRowProps) {
-  const config = getActivityTypeConfig(template.activity_type as ActivityType);
+  const config = getActivityTypeConfig(template.activityType as ActivityType);
 
   return (
     <div
@@ -87,10 +87,10 @@ function ArchivedTemplateRow({
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          {template.background_color && (
+          {template.backgroundColor && (
             <span
               className="w-3 h-3 rounded flex-shrink-0"
-              style={{ backgroundColor: template.background_color }}
+              style={{ backgroundColor: template.backgroundColor }}
             />
           )}
           <span className="text-white font-medium truncate">{template.name}</span>
@@ -99,7 +99,7 @@ function ArchivedTemplateRow({
           <span className={`text-xs ${config.color}`}>{config.label}</span>
           <span className="text-xs text-slate-500">•</span>
           <span className="text-xs text-slate-400">
-            Archived {new Date(template.created_at).toLocaleDateString()}
+            Archived {new Date(template.createdAt).toLocaleDateString()}
           </span>
         </div>
       </div>
@@ -156,7 +156,7 @@ export function ArchivedTemplatesDrawer({
   const filteredTemplates = templates.filter(
     (t) =>
       t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.activity_type.toLowerCase().includes(searchQuery.toLowerCase())
+      t.activityType.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleToggleSelect = useCallback((id: string) => {

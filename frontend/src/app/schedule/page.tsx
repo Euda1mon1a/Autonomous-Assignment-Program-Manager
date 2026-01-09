@@ -118,14 +118,14 @@ export default function SchedulePage() {
     if (blockRanges?.length && !hasInitializedFromApi.current) {
       const today = format(new Date(), 'yyyy-MM-dd')
       const todayBlock = blockRanges.find(
-        (range) => range.start_date <= today && range.end_date >= today
+        (range) => range.startDate <= today && range.endDate >= today
       )
 
       if (todayBlock) {
         hasInitializedFromApi.current = true
         setDateRange({
-          start: parseISO(todayBlock.start_date),
-          end: parseISO(todayBlock.end_date),
+          start: parseISO(todayBlock.startDate),
+          end: parseISO(todayBlock.endDate),
         })
       }
     }
@@ -194,14 +194,14 @@ export default function SchedulePage() {
 
     // Populate assignments
     assignmentsData.items.forEach((assignment) => {
-      const block = blockMap.get(assignment.block_id)
+      const block = blockMap.get(assignment.blockId)
       if (!block) return
 
-      const person = personMap.get(assignment.person_id)
+      const person = personMap.get(assignment.personId)
       if (!person) return
 
-      const template = assignment.rotation_template_id
-        ? templateMap.get(assignment.rotation_template_id)
+      const template = assignment.rotationTemplateId
+        ? templateMap.get(assignment.rotationTemplateId)
         : null
 
       const viewAssignment: ViewAssignment = {
@@ -210,13 +210,13 @@ export default function SchedulePage() {
           id: person.id,
           name: person.name,
           type: person.type,
-          pgy_level: person.pgy_level,
+          pgy_level: person.pgyLevel,
         },
         role: assignment.role || 'primary',
-        activity: template?.activity_type || 'default',
+        activity: template?.activityType || 'default',
         abbreviation:
-          assignment.activity_override ||
-          template?.display_abbreviation ||
+          assignment.activityOverride ||
+          template?.displayAbbreviation ||
           template?.abbreviation ||
           template?.name?.substring(0, 3).toUpperCase() ||
           '???',
@@ -224,7 +224,7 @@ export default function SchedulePage() {
 
       const dateStr = block.date
       if (schedule[dateStr]) {
-        schedule[dateStr][block.time_of_day as 'AM' | 'PM'].push(viewAssignment)
+        schedule[dateStr][block.timeOfDay as 'AM' | 'PM'].push(viewAssignment)
       }
     })
 
@@ -354,11 +354,11 @@ export default function SchedulePage() {
               onBlockClick={(blockNumber) => {
                 // Navigate to block view for the clicked block
                 if (blockRanges) {
-                  const range = blockRanges.find((r) => r.block_number === blockNumber)
+                  const range = blockRanges.find((r) => r.blockNumber === blockNumber)
                   if (range) {
                     setDateRange({
-                      start: parseISO(range.start_date),
-                      end: parseISO(range.end_date),
+                      start: parseISO(range.startDate),
+                      end: parseISO(range.endDate),
                     })
                     setCurrentView('block')
                   }
@@ -380,9 +380,9 @@ export default function SchedulePage() {
               blockNumber={
                 blockRanges?.find(
                   (r) =>
-                    r.start_date === format(dateRange.start, 'yyyy-MM-dd') &&
-                    r.end_date === format(dateRange.end, 'yyyy-MM-dd')
-                )?.block_number ?? null
+                    r.startDate === format(dateRange.start, 'yyyy-MM-dd') &&
+                    r.endDate === format(dateRange.end, 'yyyy-MM-dd')
+                )?.blockNumber ?? null
               }
               personFilter={selectedPersonIds}
             />

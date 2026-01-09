@@ -83,7 +83,7 @@ export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
     if (type === PersonType.RESIDENT) {
       const pgyError = validatePgyLevel(pgyLevel);
       if (pgyError) {
-        newErrors.pgy_level = pgyError;
+        newErrors.pgyLevel = pgyError;
       }
     }
 
@@ -173,7 +173,7 @@ export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
             value={pgyLevel}
             onChange={(e) => setPgyLevel(e.target.value)}
             options={pgyOptions}
-            error={errors.pgy_level}
+            error={errors.pgyLevel}
           />
         )}
 

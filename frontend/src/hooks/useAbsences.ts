@@ -280,10 +280,10 @@ export function useAbsenceList(
   options?: Omit<UseQueryOptions<ListResponse<Absence>, ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const params = new URLSearchParams()
-  if (filters?.person_id) params.set('person_id', filters.person_id)
-  if (filters?.start_date) params.set('start_date', filters.start_date)
-  if (filters?.end_date) params.set('end_date', filters.end_date)
-  if (filters?.absence_type) params.set('absence_type', filters.absence_type.toString())
+  if (filters?.personId) params.set('person_id', filters.personId)
+  if (filters?.startDate) params.set('start_date', filters.startDate)
+  if (filters?.endDate) params.set('end_date', filters.endDate)
+  if (filters?.absenceType) params.set('absence_type', filters.absenceType.toString())
   const queryString = params.toString()
 
   return useQuery<ListResponse<Absence>, ApiError>({
@@ -363,8 +363,8 @@ export function useAbsences(
  *     <Calendar
  *       entries={data.entries}
  *       conflicts={data.conflict_count}
- *       startDate={data.start_date}
- *       endDate={data.end_date}
+ *       startDate={data.startDate}
+ *       endDate={data.endDate}
  *     />
  *   );
  * }
@@ -410,8 +410,8 @@ export function useLeaveCalendar(
  *
  *   if (isLoading) return <Spinner />;
  *
- *   const deployments = data.items.filter(a => a.absence_type === 'deployment');
- *   const tdyAssignments = data.items.filter(a => a.absence_type === 'tdy');
+ *   const deployments = data.items.filter(a => a.absenceType === 'deployment');
+ *   const tdyAssignments = data.items.filter(a => a.absenceType === 'tdy');
  *
  *   return (
  *     <div>
@@ -445,10 +445,10 @@ export function useMilitaryLeave(
       return {
         ...response,
         items: response.items.filter(
-          absence => absence.absence_type === 'deployment' || absence.absence_type === 'tdy'
+          absence => absence.absenceType === 'deployment' || absence.absenceType === 'tdy'
         ),
         total: response.items.filter(
-          absence => absence.absence_type === 'deployment' || absence.absence_type === 'tdy'
+          absence => absence.absenceType === 'deployment' || absence.absenceType === 'tdy'
         ).length,
       }
     },
@@ -855,7 +855,7 @@ export const awayComplianceQueryKeys = {
  *
  *   return (
  *     <div>
- *       <h2>Away-From-Program Compliance ({data.academic_year})</h2>
+ *       <h2>Away-From-Program Compliance ({data.academicYear})</h2>
  *       <StatusSummary counts={data.summary.by_status} />
  *       <ResidentTable residents={data.residents} />
  *     </div>

@@ -319,7 +319,7 @@ export function CallAssignmentTable({
                     <RowCheckbox
                       checked={isSelected}
                       onChange={() => handleSelectRow(assignment.id)}
-                      ariaLabel={`Select ${assignment.person_name} on ${assignment.date}`}
+                      ariaLabel={`Select ${assignment.personName} on ${assignment.date}`}
                     />
                   </td>
                   <td className="py-3 px-4">
@@ -332,11 +332,11 @@ export function CallAssignmentTable({
                     </span>
                   </td>
                   <td className="py-3 px-4 text-slate-300">
-                    {assignment.day_of_week}
+                    {assignment.dayOfWeek}
                   </td>
                   <td className="py-3 px-4">
                     <span className="text-white font-medium">
-                      {assignment.person_name}
+                      {assignment.personName}
                     </span>
                   </td>
                   <td className="py-3 px-4">

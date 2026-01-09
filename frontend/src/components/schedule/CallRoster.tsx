@@ -39,7 +39,7 @@ function getSeniorityColor(person: Person): { bg: string; text: string; border: 
   }
 
   if (person.type === 'resident') {
-    const pgyLevel = person.pgy_level || 1
+    const pgyLevel = person.pgyLevel || 1
 
     if (pgyLevel === 1) {
       // Intern - Green
@@ -72,7 +72,7 @@ function getRoleLabel(person: Person): string {
   }
 
   if (person.type === 'resident') {
-    const pgyLevel = person.pgy_level || 1
+    const pgyLevel = person.pgyLevel || 1
 
     if (pgyLevel === 1) {
       return 'Intern'
@@ -115,8 +115,8 @@ export function CallRoster({ startDate, endDate, showOnlyOnCall = true }: CallRo
     templatesData?.items?.forEach((template) => {
       map.set(template.id, {
         name: template.name,
-        abbreviation: template.display_abbreviation || template.abbreviation || template.name.substring(0, 3).toUpperCase(),
-        activity_type: template.activity_type,
+        abbreviation: template.displayAbbreviation || template.abbreviation || template.name.substring(0, 3).toUpperCase(),
+        activity_type: template.activityType,
       })
     })
     return map
@@ -130,18 +130,18 @@ export function CallRoster({ startDate, endDate, showOnlyOnCall = true }: CallRo
 
     const assignments = assignmentsData.items
       .map((assignment): OnCallAssignment | null => {
-        const person = peopleMap.get(assignment.person_id)
+        const person = peopleMap.get(assignment.personId)
         if (!person) return null
 
-        const template = assignment.rotation_template_id
-          ? templateMap.get(assignment.rotation_template_id)
+        const template = assignment.rotationTemplateId
+          ? templateMap.get(assignment.rotationTemplateId)
           : null
 
-        const activity = assignment.activity_override || template?.activity_type || 'Assignment'
+        const activity = assignment.activityOverride || template?.activityType || 'Assignment'
 
         // For now, use created_at as a proxy for date
         // In production, this would come from block data
-        const dateStr = assignment.created_at.split('T')[0]
+        const dateStr = assignment.createdAt.split('T')[0]
         const dateObj = parseISO(dateStr)
 
         // Filter by date range
@@ -178,8 +178,8 @@ export function CallRoster({ startDate, endDate, showOnlyOnCall = true }: CallRo
         if (dateCompare !== 0) return dateCompare
 
         // Then by seniority (faculty > senior > intern)
-        const aOrder = a.person.type === 'faculty' ? 0 : (a.person.pgy_level || 1)
-        const bOrder = b.person.type === 'faculty' ? 0 : (b.person.pgy_level || 1)
+        const aOrder = a.person.type === 'faculty' ? 0 : (a.person.pgyLevel || 1)
+        const bOrder = b.person.type === 'faculty' ? 0 : (b.person.pgyLevel || 1)
         return aOrder - bOrder
       })
 

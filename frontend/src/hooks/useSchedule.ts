@@ -600,9 +600,9 @@ export function useAssignments(
   >
 ) {
   const params = new URLSearchParams();
-  if (filters?.start_date) params.set("start_date", filters.start_date);
-  if (filters?.end_date) params.set("end_date", filters.end_date);
-  if (filters?.person_id) params.set("person_id", filters.person_id);
+  if (filters?.startDate) params.set("start_date", filters.startDate);
+  if (filters?.endDate) params.set("end_date", filters.endDate);
+  if (filters?.personId) params.set("person_id", filters.personId);
   if (filters?.role) params.set("role", filters.role);
   const queryString = params.toString();
 
