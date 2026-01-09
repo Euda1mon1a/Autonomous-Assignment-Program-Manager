@@ -201,7 +201,7 @@ function ResidentRow({
   isExpanded,
   onToggle,
 }: ResidentRowProps) {
-  const config = STATUS_CONFIG[summary.threshold_status];
+  const config = STATUS_CONFIG[summary.thresholdStatus];
 
   return (
     <>
@@ -229,34 +229,34 @@ function ResidentRow({
         <td className="px-4 py-3 whitespace-nowrap">
           <div className="w-32">
             <AwayComplianceProgressBar
-              daysUsed={summary.days_used}
-              maxDays={summary.max_days}
-              warningDays={summary.warning_days}
-              status={summary.threshold_status}
+              daysUsed={summary.daysUsed}
+              maxDays={summary.maxDays}
+              warningDays={summary.warningDays}
+              status={summary.thresholdStatus}
             />
           </div>
         </td>
         <td className="px-4 py-3 whitespace-nowrap text-center">
           <span className={`text-lg font-semibold ${config.color}`}>
-            {summary.days_used}
+            {summary.daysUsed}
           </span>
-          <span className="text-slate-300"> / {summary.max_days}</span>
+          <span className="text-slate-300"> / {summary.maxDays}</span>
         </td>
         <td className="px-4 py-3 whitespace-nowrap text-center">
           <span
             className={`text-sm ${
-              summary.days_remaining <= 0
+              summary.daysRemaining <= 0
                 ? 'text-red-400'
-                : summary.days_remaining <= 7
+                : summary.daysRemaining <= 7
                   ? 'text-yellow-400'
                   : 'text-slate-300'
             }`}
           >
-            {summary.days_remaining}
+            {summary.daysRemaining}
           </span>
         </td>
         <td className="px-4 py-3 whitespace-nowrap">
-          <StatusBadge status={summary.threshold_status} size="sm" />
+          <StatusBadge status={summary.thresholdStatus} size="sm" />
         </td>
         <td className="px-4 py-3 whitespace-nowrap text-right">
           <button
@@ -335,7 +335,7 @@ export default function ComplianceDashboardPage() {
 
     // Apply status filter
     if (statusFilter) {
-      filtered = filtered.filter((r) => r.threshold_status === statusFilter);
+      filtered = filtered.filter((r) => r.thresholdStatus === statusFilter);
     }
 
     // Sort
@@ -348,7 +348,7 @@ export default function ComplianceDashboardPage() {
           comparison = nameA.localeCompare(nameB);
           break;
         case 'days_used':
-          comparison = a.days_used - b.days_used;
+          comparison = a.daysUsed - b.daysUsed;
           break;
         case 'status':
           // Sort by severity: exceeded > critical > warning > ok
@@ -358,7 +358,7 @@ export default function ComplianceDashboardPage() {
             warning: 2,
             ok: 1,
           };
-          comparison = statusOrder[a.threshold_status] - statusOrder[b.threshold_status];
+          comparison = statusOrder[a.thresholdStatus] - statusOrder[b.thresholdStatus];
           break;
       }
       return sortDirection === 'asc' ? comparison : -comparison;
@@ -439,28 +439,28 @@ export default function ComplianceDashboardPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <SummaryCard
               title="Total Residents"
-              value={data?.summary?.total_residents || 0}
+              value={data?.summary?.totalResidents || 0}
               icon={Users}
               color="text-slate-300"
               bgColor="bg-slate-800/50"
             />
             <SummaryCard
               title="OK"
-              value={data?.summary?.by_status?.ok || 0}
+              value={data?.summary?.byStatus?.ok || 0}
               icon={CheckCircle2}
               color="text-green-400"
               bgColor="bg-green-500/10"
             />
             <SummaryCard
               title="Warning"
-              value={data?.summary?.by_status?.warning || 0}
+              value={data?.summary?.byStatus?.warning || 0}
               icon={AlertTriangle}
               color="text-yellow-400"
               bgColor="bg-yellow-500/10"
             />
             <SummaryCard
               title="Critical / Exceeded"
-              value={(data?.summary?.by_status?.critical || 0) + (data?.summary?.by_status?.exceeded || 0)}
+              value={(data?.summary?.byStatus?.critical || 0) + (data?.summary?.byStatus?.exceeded || 0)}
               icon={AlertCircle}
               color="text-red-400"
               bgColor="bg-red-500/10"

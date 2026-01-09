@@ -105,7 +105,7 @@ function transformApiAssignment(apiAssignment: ApiCallAssignment): CallAssignmen
 
   const dayOfWeek = getDayOfWeek(apiAssignment.date);
   const callType = mapCallType(
-    apiAssignment.call_type,
+    apiAssignment.callType,
     apiAssignment.isWeekend
   );
 
@@ -215,13 +215,13 @@ export default function FacultyCallAdminPage() {
       transformed = transformed.filter(
         (a) =>
           a.personName.toLowerCase().includes(searchLower) ||
-          a.call_type.toLowerCase().includes(searchLower)
+          a.callType.toLowerCase().includes(searchLower)
       );
     }
 
     // Client-side call type filter (since API types differ)
-    if (filters.call_type) {
-      transformed = transformed.filter((a) => a.call_type === filters.call_type);
+    if (filters.callType) {
+      transformed = transformed.filter((a) => a.callType === filters.callType);
     }
 
     // Sort
@@ -235,14 +235,14 @@ export default function FacultyCallAdminPage() {
           comparison = a.personName.localeCompare(b.personName);
           break;
         case 'call_type':
-          comparison = a.call_type.localeCompare(b.call_type);
+          comparison = a.callType.localeCompare(b.callType);
           break;
       }
       return sort.direction === 'asc' ? comparison : -comparison;
     });
 
     return transformed;
-  }, [apiData?.items, debouncedSearch, filters.call_type, sort]);
+  }, [apiData?.items, debouncedSearch, filters.callType, sort]);
 
   // PCAT Preview data computation
   const pcatPreviewData = useMemo(() => {
@@ -374,9 +374,9 @@ export default function FacultyCallAdminPage() {
         assignment_ids: selectedIds,
       });
       if (result.errors.length > 0) {
-        toast.warning(`Processed ${result.processed} assignments. PCAT: ${result.pcat_created}, DO: ${result.do_created}. ${result.errors.length} errors.`);
+        toast.warning(`Processed ${result.processed} assignments. PCAT: ${result.pcatCreated}, DO: ${result.doCreated}. ${result.errors.length} errors.`);
       } else {
-        toast.success(`PCAT/DO assignments created: ${result.pcat_created} PCAT, ${result.do_created} DO`);
+        toast.success(`PCAT/DO assignments created: ${result.pcatCreated} PCAT, ${result.doCreated} DO`);
       }
       setSelectedIds([]);
       setShowPCATPreview(false);
@@ -565,7 +565,7 @@ export default function FacultyCallAdminPage() {
 
           {/* Call Type Filter */}
           <select
-            value={filters.call_type}
+            value={filters.callType}
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, call_type: e.target.value as CallType | '' }))
             }

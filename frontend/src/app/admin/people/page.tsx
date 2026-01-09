@@ -42,7 +42,7 @@ type SortDirection = 'asc' | 'desc';
 
 interface PeopleFilters {
   type: PersonType | '';
-  pgy_level: number | '';
+  pgyLevel: number | '';
   search: string;
 }
 
@@ -68,7 +68,7 @@ export default function AdminPeoplePage() {
   // State
   const [filters, setFilters] = useState<PeopleFilters>({
     type: '',
-    pgy_level: '',
+    pgyLevel: '',
     search: '',
   });
   const [sort, setSort] = useState<PeopleSort>({
@@ -384,7 +384,7 @@ export default function AdminPeoplePage() {
               onChange={(e) =>
                 setFilters((prev) => ({
                   ...prev,
-                  pgy_level: e.target.value ? Number(e.target.value) : '',
+                  pgyLevel: e.target.value ? Number(e.target.value) : '',
                 }))
               }
               className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900"

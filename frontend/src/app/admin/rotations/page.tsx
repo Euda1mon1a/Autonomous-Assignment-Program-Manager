@@ -295,7 +295,7 @@ export default function AdminTemplatesPage() {
   const archivedTemplates = useMemo(() => {
     if (!archivedTemplatesData?.items) return [];
     // Filter for only archived templates from the full list
-    return archivedTemplatesData.items.filter((t) => t.is_archived === true);
+    return archivedTemplatesData.items.filter((t) => t.isArchived === true);
   }, [archivedTemplatesData?.items]);
 
   // Handlers
