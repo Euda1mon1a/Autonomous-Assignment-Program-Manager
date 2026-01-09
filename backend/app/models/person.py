@@ -135,6 +135,18 @@ class Person(Base):
     certifications = relationship(
         "PersonCertification", back_populates="person", cascade="all, delete-orphan"
     )
+    faculty_weekly_templates = relationship(
+        "FacultyWeeklyTemplate",
+        back_populates="person",
+        cascade="all, delete-orphan",
+        foreign_keys="[FacultyWeeklyTemplate.person_id]",
+    )
+    faculty_weekly_overrides = relationship(
+        "FacultyWeeklyOverride",
+        back_populates="person",
+        cascade="all, delete-orphan",
+        foreign_keys="[FacultyWeeklyOverride.person_id]",
+    )
 
     __table_args__ = (
         CheckConstraint("type IN ('resident', 'faculty')", name="check_person_type"),

@@ -147,6 +147,9 @@ from .halfday_requirement import (
     WeekendWorkConstraint,
 )
 
+# Faculty weekly template constraint
+from .faculty_weekly_template import FacultyWeeklyTemplateConstraint
+
 # Activity requirement constraint (dynamic per-activity)
 from .activity_requirement import ActivityRequirementConstraint
 
@@ -246,6 +249,8 @@ __all__ = [
     "ProtectedSlotConstraint",
     "HalfDayRequirementConstraint",
     "WeekendWorkConstraint",
+    # Faculty weekly template constraint
+    "FacultyWeeklyTemplateConstraint",
     # Activity requirement constraint
     "ActivityRequirementConstraint",
     # Manager

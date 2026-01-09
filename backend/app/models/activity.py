@@ -145,6 +145,12 @@ class Activity(Base):
         nullable=False,
         comment="True if activity counts toward ACGME clinical hour limits",
     )
+    provides_supervision = Column(
+        Boolean,
+        default=False,
+        nullable=False,
+        comment="True for supervision activities (AT, PCAT, DO) that count toward supervision ratios",
+    )
 
     # UI ordering
     display_order = Column(
@@ -194,3 +200,8 @@ class Activity(Base):
     def is_time_off(self) -> bool:
         """Check if this is a time-off activity."""
         return self.activity_category == ActivityCategory.TIME_OFF.value
+
+    @property
+    def is_supervision(self) -> bool:
+        """Check if this is a supervision activity (AT, PCAT, DO)."""
+        return self.provides_supervision

@@ -7,6 +7,7 @@ from app.api.routes import (
     academic_blocks,
     activities,
     admin_block_assignments,
+    faculty_activities,
     admin_users,
     analytics,
     assignments,
@@ -98,6 +99,9 @@ api_router.include_router(
 )
 api_router.include_router(
     activities.router, prefix="/activities", tags=["activities"]
+)
+api_router.include_router(
+    faculty_activities.router, tags=["faculty-activities"]
 )
 api_router.include_router(
     resident_weekly_requirements.router,

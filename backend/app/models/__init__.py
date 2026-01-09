@@ -34,6 +34,8 @@ from app.models.export_job import (
     ExportTemplate,
 )
 from app.models.faculty_preference import FacultyPreference
+from app.models.faculty_weekly_template import FacultyWeeklyTemplate
+from app.models.faculty_weekly_override import FacultyWeeklyOverride
 from app.models.feature_flag import (
     FeatureFlag,
     FeatureFlagAudit,
@@ -224,6 +226,9 @@ __all__ = [
     "ConflictType",
     # Faculty Preference model
     "FacultyPreference",
+    # Faculty Weekly Activity models
+    "FacultyWeeklyTemplate",
+    "FacultyWeeklyOverride",
     # Tier 1 Resilience models
     "ResilienceHealthCheck",
     "ResilienceEvent",
