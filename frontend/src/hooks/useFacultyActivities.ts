@@ -124,11 +124,12 @@ export function useUpdateFacultyTemplate() {
     { personId: string } & FacultyTemplateUpdateRequest
   >({
     mutationFn: async ({ personId, ...request }) => {
+      // Note: camelCase to snake_case conversion is automatic via API interceptor
       return put<FacultyTemplateResponse>(
         `/faculty/${personId}/weekly-template`,
         {
           slots: request.slots,
-          clear_existing: request.clearExisting ?? false,
+          clearExisting: request.clearExisting ?? false,
         }
       );
     },

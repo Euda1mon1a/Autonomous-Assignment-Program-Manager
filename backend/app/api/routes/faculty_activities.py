@@ -207,7 +207,7 @@ async def create_template_slot(
     )
 
     await db.commit()
-    await db.refresh(template)
+    await db.refresh(template, ["activity"])  # Eagerly load activity relationship
 
     return FacultyTemplateSlotResponse(
         id=template.id,
@@ -327,7 +327,7 @@ async def create_faculty_override(
     )
 
     await db.commit()
-    await db.refresh(result)
+    await db.refresh(result, ["activity"])  # Eagerly load activity relationship
 
     return FacultyOverrideResponse(
         id=result.id,

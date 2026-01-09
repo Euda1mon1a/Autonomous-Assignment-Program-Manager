@@ -89,6 +89,15 @@ function getWeekEnd(weekStart: string): string {
   return addDays(weekStart, 6);
 }
 
+/** Normalize any date to the Monday of its week */
+function normalizeToMonday(dateStr: string): string {
+  const date = new Date(dateStr);
+  const day = date.getDay();
+  const diff = day === 0 ? -6 : 1 - day; // Sunday -> prev Monday, else back to Monday
+  date.setDate(date.getDate() + diff);
+  return date.toISOString().split('T')[0];
+}
+
 // ============================================================================
 // Sub-components
 // ============================================================================
@@ -430,7 +439,9 @@ export function FacultyMatrixView({
   onFacultySelect,
 }: FacultyMatrixViewProps) {
   // State
-  const [weekStart, setWeekStart] = useState(initialWeekStart ?? getCurrentWeekStart());
+  const [weekStart, setWeekStart] = useState(
+    normalizeToMonday(initialWeekStart ?? getCurrentWeekStart())
+  );
   const [includeAdjunct, setIncludeAdjunct] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<FacultyRole[]>([...FACULTY_ROLES]);
   const [editorState, setEditorState] = useState<{
@@ -509,7 +520,9 @@ export function FacultyMatrixView({
   // Get slots for the current week
   const getWeekSlots = (faculty: FacultyMatrixRow): EffectiveSlot[] => {
     const week = faculty.weeks.find((w) => w.weekStart === weekStart);
-    return week?.slots ?? [];
+    if (week) return week.slots;
+    // Fallback: use first week if exact match fails (handles timezone edge cases)
+    return faculty.weeks[0]?.slots ?? [];
   };
 
   return (
@@ -521,7 +534,7 @@ export function FacultyMatrixView({
             <Users className="w-5 h-5 text-cyan-500" />
             Faculty Activities
           </h2>
-          <WeekNavigator weekStart={weekStart} onWeekChange={setWeekStart} />
+          <WeekNavigator weekStart={weekStart} onWeekChange={(w) => setWeekStart(normalizeToMonday(w))} />
         </div>
 
         <div className="flex items-center gap-3">

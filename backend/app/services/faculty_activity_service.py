@@ -676,13 +676,9 @@ class FacultyActivityService:
             }
 
             for week_start in weeks:
-                # Determine week number within block (simplified: just use week of month)
-                week_number = ((week_start.day - 1) // 7) + 1
-                if week_number > 4:
-                    week_number = 4
-
+                # Use week_number=None to get all-weeks templates + date-specific overrides
                 effective = await self.get_effective_week(
-                    faculty.id, week_start, week_number
+                    faculty.id, week_start, week_number=None
                 )
 
                 faculty_data["weeks"].append({
