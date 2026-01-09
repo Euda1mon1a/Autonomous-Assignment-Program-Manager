@@ -15,14 +15,15 @@ repos:
         stages: [pre-commit]
 
   # Secret detection - prevent accidentally committing credentials
+  # Uses --no-git to scan files only (not git history which has many false positives from docs/tests)
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.18.2
     hooks:
       - id: gitleaks
         name: Gitleaks - Detect secrets
-        entry: gitleaks detect --verbose --source git --log-level info
+        entry: gitleaks detect --no-git --verbose --log-level info
         language: golang
-        stages: [pre-commit, commit-msg]
+        stages: [pre-commit]
         pass_filenames: false
 
   # ============================================================================
@@ -110,7 +111,7 @@ repos:
       # Trim trailing whitespace
       - id: trailing-whitespace
         name: Trim trailing whitespace
-        args: [--markdown-template]
+        args: [--markdown-linebreak-ext=md]
         stages: [pre-commit]
 
   # ============================================================================
