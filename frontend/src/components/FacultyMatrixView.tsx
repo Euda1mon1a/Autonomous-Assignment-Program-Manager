@@ -456,6 +456,11 @@ export function FacultyMatrixView({
   // Mutations
   const updatePerson = useUpdatePerson();
 
+  // Helper to get personId from either snake_case or camelCase API response
+  const getPersonId = (faculty: FacultyMatrixRow): string => {
+    return (faculty as Record<string, unknown>).person_id as string ?? faculty.personId;
+  };
+
   // Filter faculty by selected roles
   const filteredFaculty = useMemo(() => {
     if (!data?.faculty) return [];
@@ -471,11 +476,11 @@ export function FacultyMatrixView({
     (faculty: FacultyMatrixRow) => {
       setEditorState({
         isOpen: true,
-        personId: faculty.personId,
+        personId: getPersonId(faculty),
         personName: faculty.name,
         facultyRole: ((faculty as Record<string, unknown>).faculty_role ?? faculty.facultyRole) as FacultyRole | null,
       });
-      onFacultySelect?.(faculty.personId);
+      onFacultySelect?.(getPersonId(faculty));
     },
     [onFacultySelect]
   );
@@ -588,20 +593,21 @@ export function FacultyMatrixView({
                   filteredFaculty.map((faculty) => {
                     const slots = getWeekSlots(faculty);
                     const lastName = faculty.name.split(' ').pop();
-                    const isEditingRole = editingRoleFor === faculty.personId;
+                    const facultyId = getPersonId(faculty);
+                    const isEditingRole = editingRoleFor === facultyId;
 
                     return (
                       <tr
-                        key={faculty.personId}
+                        key={facultyId}
                         className="border-b border-slate-800 hover:bg-slate-800/50 transition-colors"
                       >
                         <td className="p-2 sticky left-0 bg-slate-900 z-10">
                           {isEditingRole ? (
                             <InlineRoleEditor
-                              personId={faculty.personId}
+                              personId={facultyId}
                               personName={faculty.name}
                               currentRole={((faculty as Record<string, unknown>).faculty_role ?? faculty.facultyRole) as FacultyRole | null}
-                              onSave={(role) => handleRoleSave(faculty.personId, role)}
+                              onSave={(role) => handleRoleSave(facultyId, role)}
                               onCancel={() => setEditingRoleFor(null)}
                               isSaving={updatePerson.isPending}
                             />
@@ -623,7 +629,7 @@ export function FacultyMatrixView({
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setEditingRoleFor(faculty.personId);
+                                  setEditingRoleFor(facultyId);
                                 }}
                                 className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-cyan-400 transition-all"
                                 title="Edit role"
