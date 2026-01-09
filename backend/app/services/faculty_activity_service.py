@@ -524,7 +524,7 @@ class FacultyActivityService:
                        a.activity_category, a.font_color, a.background_color,
                        a.requires_supervision, a.is_protected,
                        a.counts_toward_clinical_hours, a.provides_supervision,
-                       a.display_order, a.is_archived
+                       a.display_order, a.is_archived, a.created_at, a.updated_at
                 FROM activities a
                 JOIN faculty_activity_permissions fap ON fap.activity_id = a.id
                 WHERE fap.faculty_role = :role AND a.is_archived = false
@@ -549,6 +549,8 @@ class FacultyActivityService:
                 provides_supervision=row.provides_supervision,
                 display_order=row.display_order,
                 is_archived=row.is_archived,
+                created_at=row.created_at,
+                updated_at=row.updated_at,
             )
             activities.append(activity)
 
@@ -574,7 +576,7 @@ class FacultyActivityService:
                        a.activity_category, a.font_color, a.background_color,
                        a.requires_supervision, a.is_protected,
                        a.counts_toward_clinical_hours, a.provides_supervision,
-                       a.display_order, a.is_archived
+                       a.display_order, a.is_archived, a.created_at, a.updated_at
                 FROM activities a
                 JOIN faculty_activity_permissions fap ON fap.activity_id = a.id
                 WHERE fap.faculty_role = :role
@@ -600,6 +602,8 @@ class FacultyActivityService:
                 provides_supervision=row.provides_supervision,
                 display_order=row.display_order,
                 is_archived=row.is_archived,
+                created_at=row.created_at,
+                updated_at=row.updated_at,
             )
             activities.append(activity)
 

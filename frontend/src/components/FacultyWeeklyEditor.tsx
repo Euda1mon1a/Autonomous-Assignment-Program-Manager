@@ -152,7 +152,7 @@ function SlotCell({
       <div className={`flex items-center justify-center h-full ${activity ? textColor : 'text-slate-500'}`}>
         {activity ? (
           <span className="text-xs font-medium truncate px-1">
-            {activity.displayAbbreviation ?? activity.name.slice(0, 4)}
+            {(activity as Record<string, unknown>).display_abbreviation as string ?? activity.displayAbbreviation ?? activity.code?.toUpperCase() ?? activity.name.slice(0, 4)}
           </span>
         ) : (
           <span className="text-xs text-slate-500">-</span>
@@ -531,49 +531,55 @@ export function FacultyWeeklyEditor({
   );
 
   const handleSave = useCallback(async () => {
-    if (mode === 'template') {
-      // Build slots array from local changes
-      const slotsToUpdate: FacultyTemplateSlotRequest[] = [];
-      localSlots.forEach((changes, key) => {
-        const [day, time] = key.split('_');
-        slotsToUpdate.push({
-          dayOfWeek: parseInt(day) as DayOfWeek,
-          timeOfDay: time as TimeOfDay,
-          activityId: changes.activityId,
-          isLocked: changes.isLocked ?? false,
-          priority: changes.priority ?? 50,
-          notes: changes.notes,
-        });
-      });
-
-      if (slotsToUpdate.length > 0) {
-        await updateTemplate.mutateAsync({
-          personId,
-          slots: slotsToUpdate,
-          clearExisting: false,
-        });
-      }
-    } else {
-      // Create overrides for each changed slot
-      for (const [key, changes] of localSlots.entries()) {
-        const [day, time] = key.split('_');
-        await createOverride.mutateAsync({
-          personId,
-          override: {
-            effectiveDate: weekStart,
+    try {
+      if (mode === 'template') {
+        // Build slots array from local changes
+        const slotsToUpdate: FacultyTemplateSlotRequest[] = [];
+        localSlots.forEach((changes, key) => {
+          const [day, time] = key.split('_');
+          slotsToUpdate.push({
             dayOfWeek: parseInt(day) as DayOfWeek,
             timeOfDay: time as TimeOfDay,
             activityId: changes.activityId,
             isLocked: changes.isLocked ?? false,
-            overrideReason: changes.notes,
-          },
+            priority: changes.priority ?? 50,
+            notes: changes.notes,
+          });
         });
-      }
-    }
 
-    setLocalSlots(new Map());
-    setHasUnsavedChanges(false);
-  }, [mode, personId, weekStart, localSlots, updateTemplate, createOverride]);
+        if (slotsToUpdate.length > 0) {
+          await updateTemplate.mutateAsync({
+            personId,
+            slots: slotsToUpdate,
+            clearExisting: false,
+          });
+        }
+      } else {
+        // Create overrides for each changed slot
+        for (const [key, changes] of localSlots.entries()) {
+          const [day, time] = key.split('_');
+          await createOverride.mutateAsync({
+            personId,
+            override: {
+              effectiveDate: weekStart,
+              dayOfWeek: parseInt(day) as DayOfWeek,
+              timeOfDay: time as TimeOfDay,
+              activityId: changes.activityId,
+              isLocked: changes.isLocked ?? false,
+              overrideReason: changes.notes,
+            },
+          });
+        }
+      }
+
+      setLocalSlots(new Map());
+      setHasUnsavedChanges(false);
+      onClose?.(); // Close modal on success
+    } catch (err) {
+      console.error('Failed to save:', err);
+      // Error will be shown by TanStack Query error handling
+    }
+  }, [mode, personId, weekStart, localSlots, updateTemplate, createOverride, onClose]);
 
   const handleCancel = useCallback(() => {
     setLocalSlots(new Map());

@@ -14,7 +14,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { Loader2, ChevronLeft, ChevronRight, Filter, Users, X, Edit2, Check } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, Filter, Users, X, Edit2, Check, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useFacultyMatrix } from '@/hooks/useFacultyActivities';
 import { useUpdatePerson } from '@/hooks/usePeople';
 import type {
@@ -31,6 +31,7 @@ import {
 } from '@/types/faculty-activity';
 import type { Activity } from '@/types/activity';
 import { FacultyWeeklyEditor } from './FacultyWeeklyEditor';
+import { showErrorToast } from '@/lib/errors/error-toast';
 
 // ============================================================================
 // Types
@@ -459,8 +460,9 @@ export function FacultyMatrixView({
   const filteredFaculty = useMemo(() => {
     if (!data?.faculty) return [];
     return data.faculty.filter((f) => {
-      if (!f.facultyRole) return selectedRoles.length === FACULTY_ROLES.length;
-      return selectedRoles.includes(f.facultyRole);
+      const role = (f as Record<string, unknown>).faculty_role ?? f.facultyRole;
+      if (!role) return selectedRoles.length === FACULTY_ROLES.length;
+      return selectedRoles.includes(role as FacultyRole);
     });
   }, [data?.faculty, selectedRoles]);
 
@@ -471,7 +473,7 @@ export function FacultyMatrixView({
         isOpen: true,
         personId: faculty.personId,
         personName: faculty.name,
-        facultyRole: faculty.facultyRole,
+        facultyRole: ((faculty as Record<string, unknown>).faculty_role ?? faculty.facultyRole) as FacultyRole | null,
       });
       onFacultySelect?.(faculty.personId);
     },
@@ -493,6 +495,7 @@ export function FacultyMatrixView({
         refetch(); // Refresh the matrix data
       } catch (err) {
         console.error('Failed to update role:', err);
+        showErrorToast(err);
       }
     },
     [updatePerson, refetch]
@@ -597,7 +600,7 @@ export function FacultyMatrixView({
                             <InlineRoleEditor
                               personId={faculty.personId}
                               personName={faculty.name}
-                              currentRole={faculty.facultyRole}
+                              currentRole={((faculty as Record<string, unknown>).faculty_role ?? faculty.facultyRole) as FacultyRole | null}
                               onSave={(role) => handleRoleSave(faculty.personId, role)}
                               onCancel={() => setEditingRoleFor(null)}
                               isSaving={updatePerson.isPending}
@@ -611,9 +614,9 @@ export function FacultyMatrixView({
                                 <div className="text-sm font-medium text-white group-hover:text-cyan-400 transition-colors">
                                   Dr. {lastName}
                                 </div>
-                                {faculty.facultyRole && (
+                                {((faculty as Record<string, unknown>).faculty_role ?? faculty.facultyRole) && (
                                   <div className="text-xs text-slate-500">
-                                    {FACULTY_ROLE_LABELS[faculty.facultyRole]}
+                                    {FACULTY_ROLE_LABELS[((faculty as Record<string, unknown>).faculty_role ?? faculty.facultyRole) as FacultyRole]}
                                   </div>
                                 )}
                               </button>
