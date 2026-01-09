@@ -374,6 +374,7 @@ class FacultyActivityService:
         existing = await self.get_override(person_id, week_start, day_of_week, time_of_day)
         if existing:
             await self._delete(existing)
+            await self._flush()
 
         # Create new override
         override = FacultyWeeklyOverride(
