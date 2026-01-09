@@ -155,6 +155,18 @@ Consulted all 55 agents (8 advisory domains) to identify hook gaps. Expanded fro
 
 **Gitleaks status:** Deferred. `.antigravity/logs/bash-commands.log` contains real JWTs but is NOT git-tracked (`.gitignore` lines 72-73 exclude it). Local scan noise only.
 
+**Graduated to Blocking Mode:**
+
+| Hook | Status | Exit Code |
+|------|--------|-----------|
+| ACGME Compliance (Phase 12) | **BLOCKING** | exit 1 on violations |
+| Resilience N-1/N-2 (Phase 13) | **BLOCKING** | exit 1 on violations |
+| Swap Safety (Phase 14) | Warning | exit 0 |
+| Schedule Integrity (Phase 15) | Warning | exit 0 |
+| Documentation (Phase 16) | Warning | exit 0 |
+
+Additional tuning required to exclude docstrings and resilience framework code from Check 1 (SPOF) and Check 6 (supervision).
+
 ---
 
 ## Architecture Achieved
