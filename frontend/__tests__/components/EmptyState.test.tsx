@@ -30,7 +30,7 @@ describe('EmptyState', () => {
   describe('Custom Icon', () => {
     it('should render custom icon', () => {
       const CustomIcon = () => <div data-testid="custom-icon">Custom</div>
-      render(<EmptyState title="Empty" icon={<CustomIcon />} />)
+      render(<EmptyState title="Empty" icon={CustomIcon} />)
       expect(screen.getByTestId('custom-icon')).toBeInTheDocument()
     })
   })
@@ -41,43 +41,38 @@ describe('EmptyState', () => {
       render(
         <EmptyState
           title="No items"
-          actionLabel="Add Item"
-          onAction={handleClick}
+          action={{ label: "Add Item", onClick: handleClick }}
         />
       )
       expect(screen.getByRole('button', { name: /add item/i })).toBeInTheDocument()
     })
 
-    it('should call onAction when button clicked', async () => {
+    it('should call onClick when button clicked', async () => {
       const handleClick = jest.fn()
       render(
         <EmptyState
           title="No items"
-          actionLabel="Add Item"
-          onAction={handleClick}
+          action={{ label: "Add Item", onClick: handleClick }}
         />
       )
       await userEvent.click(screen.getByRole('button', { name: /add item/i }))
       expect(handleClick).toHaveBeenCalledTimes(1)
     })
 
-    it('should not render button without action handler', () => {
-      render(<EmptyState title="Empty" actionLabel="Click" />)
+    it('should not render button without action', () => {
+      render(<EmptyState title="Empty" />)
       expect(screen.queryByRole('button')).not.toBeInTheDocument()
     })
   })
 
-  describe('Styling Variants', () => {
-    it('should apply custom className', () => {
-      const { container } = render(
-        <EmptyState title="Empty" className="custom-class" />
+  describe('Children Support', () => {
+    it('should render children when provided', () => {
+      render(
+        <EmptyState title="Empty">
+          <div data-testid="custom-child">Custom content</div>
+        </EmptyState>
       )
-      expect(container.firstChild).toHaveClass('custom-class')
-    })
-
-    it('should render compact variant', () => {
-      const { container } = render(<EmptyState title="Empty" variant="compact" />)
-      expect(container.firstChild).toHaveClass('compact')
+      expect(screen.getByTestId('custom-child')).toBeInTheDocument()
     })
   })
 })

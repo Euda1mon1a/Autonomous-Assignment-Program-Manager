@@ -30,11 +30,6 @@ function createWrapper() {
         retry: false,
       },
     },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
-    },
   })
 
   return function Wrapper({ children }: { children: React.ReactNode }) {
@@ -57,6 +52,8 @@ describe('EditPersonModal', () => {
     pgy_level: 2,
     performs_procedures: true,
     specialties: ['Cardiology', 'Internal Medicine'],
+    primary_duty: null,
+    faculty_role: null,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
   }

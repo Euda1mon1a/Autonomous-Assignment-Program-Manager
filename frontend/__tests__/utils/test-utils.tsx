@@ -1,9 +1,10 @@
 import React, { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { PersonType, AbsenceType, AssignmentRole } from '@/types/api'
 
 /**
  * Create a fresh QueryClient for testing
- * Disables retries and logging for deterministic tests
+ * Disables retries for deterministic tests
  */
 export function createTestQueryClient() {
   return new QueryClient({
@@ -17,11 +18,6 @@ export function createTestQueryClient() {
       mutations: {
         retry: false,
       },
-    },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
     },
   })
 }
@@ -43,13 +39,14 @@ export function createWrapper() {
 
 /**
  * Mock data factories
+ * Uses proper enum values to satisfy TypeScript type checking
  */
 export const mockFactories = {
   person: (overrides = {}) => ({
     id: 'person-1',
     name: 'Dr. John Smith',
     email: 'john.smith@hospital.org',
-    type: 'resident' as const,
+    type: PersonType.RESIDENT,
     pgy_level: 2,
     performs_procedures: true,
     specialties: ['Internal Medicine'],
@@ -65,7 +62,7 @@ export const mockFactories = {
     person_id: 'person-1',
     start_date: '2024-02-01',
     end_date: '2024-02-07',
-    absence_type: 'vacation' as const,
+    absence_type: AbsenceType.VACATION,
     deployment_orders: false,
     tdy_location: null,
     replacement_activity: null,
@@ -99,7 +96,7 @@ export const mockFactories = {
     block_id: 'block-1',
     person_id: 'person-1',
     rotation_template_id: 'template-1',
-    role: 'primary' as const,
+    role: AssignmentRole.PRIMARY,
     activity_override: null,
     notes: null,
     created_by: null,
