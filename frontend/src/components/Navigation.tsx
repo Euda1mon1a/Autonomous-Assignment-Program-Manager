@@ -110,6 +110,12 @@ const navItems: NavItem[] = [
     icon: LayoutTemplate,
     adminOnly: true,
   },
+  {
+    href: "/admin/faculty-activities",
+    label: "Faculty Templates",
+    icon: CalendarDays,
+    adminOnly: true,
+  },
   { href: "/admin/users", label: "Users", icon: Shield, adminOnly: true },
   { href: "/admin/audit", label: "Audit", icon: FileText, adminOnly: true },
   { href: "/admin/health", label: "Health", icon: Activity, adminOnly: true },
