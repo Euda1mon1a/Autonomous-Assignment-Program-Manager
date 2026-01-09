@@ -87,7 +87,7 @@ function SlotCell({ day, time, selection, template, onClick }: SlotCellProps) {
 
   // Determine colors and label based on selection type
   let bgColor = 'bg-slate-800';
-  let textColor = 'text-slate-500';
+  let textColor = 'text-slate-300';
   let label = '-';
 
   if (isSelected) {
@@ -509,7 +509,7 @@ export function BulkWeeklyPatternModal({
                     Linked Templates
                   </button>
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-300">
                   {selectorMode === 'activities'
                     ? 'Set what activity happens in a slot (Clinic, Conference, etc.)'
                     : 'Link slot to another rotation template'
@@ -596,9 +596,9 @@ export function BulkWeeklyPatternModal({
                 <div className="bg-slate-900 rounded-lg p-4">
                   {/* Header row */}
                   <div className="grid grid-cols-8 gap-1 mb-2">
-                    <div className="text-xs text-slate-500 text-center"></div>
+                    <div className="text-xs text-slate-300 text-center"></div>
                     {DAYS.map((day) => (
-                      <div key={day} className="text-xs text-slate-400 text-center font-medium">
+                      <div key={day} className="text-xs text-slate-300 text-center font-medium">
                         {DAY_ABBREVIATIONS[day]}
                       </div>
                     ))}
@@ -607,7 +607,7 @@ export function BulkWeeklyPatternModal({
                   {/* Time rows */}
                   {TIMES.map((time) => (
                     <div key={time} className="grid grid-cols-8 gap-1 mb-1">
-                      <div className="text-xs text-slate-500 text-center self-center">{time}</div>
+                      <div className="text-xs text-slate-300 text-center self-center">{time}</div>
                       {DAYS.map((day) => {
                         const selection = getSelection(day, time);
                         const template = selection?.templateId

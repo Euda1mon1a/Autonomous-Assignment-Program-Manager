@@ -431,11 +431,11 @@ export function PreferenceEditor({
       <div className="space-y-3">
         {editablePreferences.length === 0 ? (
           <div className="p-8 text-center bg-slate-800/30 border border-slate-700 border-dashed rounded-lg">
-            <Settings className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-400 mb-4">
+            <Settings className="w-10 h-10 text-slate-400 mx-auto mb-3" />
+            <p className="text-slate-300 mb-4">
               No preferences configured yet
             </p>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-300">
               Add preferences to customize how this rotation is scheduled
             </p>
           </div>
@@ -473,7 +473,7 @@ export function PreferenceEditor({
                   <div className="text-sm font-medium text-white truncate">
                     {typeDef.label}
                   </div>
-                  <div className="text-xs text-slate-500 truncate">
+                  <div className="text-xs text-slate-300 truncate">
                     {typeDef.description}
                   </div>
                 </div>
