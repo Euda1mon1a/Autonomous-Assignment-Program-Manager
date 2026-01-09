@@ -214,23 +214,23 @@ function OverviewTab({ summary }: { summary: GameTheorySummary | undefined }) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Strategies"
-          value={summary.total_strategies}
+          value={summary.totalStrategies}
           subtitle="Configuration strategies"
         />
         <StatCard
           title="Tournaments"
-          value={summary.completed_tournaments}
-          subtitle={`of ${summary.total_tournaments} total`}
+          value={summary.completedTournaments}
+          subtitle={`of ${summary.totalTournaments} total`}
         />
         <StatCard
           title="Evolutions"
-          value={summary.completed_evolutions}
-          subtitle={`of ${summary.total_evolutions} total`}
+          value={summary.completedEvolutions}
+          subtitle={`of ${summary.totalEvolutions} total`}
         />
         <StatCard
           title="Best Strategy"
-          value={summary.best_performing_strategy || 'N/A'}
-          subtitle={summary.best_strategy_score ? `Score: ${summary.best_strategy_score.toFixed(2)}` : ''}
+          value={summary.bestPerformingStrategy || 'N/A'}
+          subtitle={summary.bestStrategyScore ? `Score: ${summary.bestStrategyScore.toFixed(2)}` : ''}
         />
       </div>
 
@@ -240,9 +240,9 @@ function OverviewTab({ summary }: { summary: GameTheorySummary | undefined }) {
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
             Recent Tournaments
           </h3>
-          {summary.recent_tournaments?.length > 0 ? (
+          {summary.recentTournaments?.length > 0 ? (
             <ul className="space-y-3">
-              {summary.recent_tournaments.map((t) => (
+              {summary.recentTournaments.map((t) => (
                 <li key={t.id} className="flex items-center justify-between">
                   <span className="text-sm text-gray-700 dark:text-gray-300">{t.name}</span>
                   <span
@@ -263,9 +263,9 @@ function OverviewTab({ summary }: { summary: GameTheorySummary | undefined }) {
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
             Recent Evolutions
           </h3>
-          {summary.recent_evolutions?.length > 0 ? (
+          {summary.recentEvolutions?.length > 0 ? (
             <ul className="space-y-3">
-              {summary.recent_evolutions.map((e) => (
+              {summary.recentEvolutions.map((e) => (
                 <li key={e.id} className="flex items-center justify-between">
                   <span className="text-sm text-gray-700 dark:text-gray-300">{e.name}</span>
                   <span
@@ -479,7 +479,7 @@ function EvolutionTab({
               <div>
                 <h4 className="font-medium text-gray-900 dark:text-white">{evolution.name}</h4>
                 <p className="text-sm text-gray-500">
-                  {evolution.generations_completed} generations | Winner: {evolution.winner_strategy_name || 'TBD'}
+                  {evolution.generationsCompleted} generations | Winner: {evolution.winnerStrategyName || 'TBD'}
                 </p>
               </div>
               <span
@@ -545,11 +545,11 @@ function AnalysisTab({
               min="0.5"
               max="1"
               step="0.05"
-              value={config.utilization_target}
+              value={config.utilizationTarget}
               onChange={(e) => setConfig({ ...config, utilization_target: parseFloat(e.target.value) })}
               className="w-full"
             />
-            <span className="text-sm text-gray-500">{(config.utilization_target * 100).toFixed(0)}%</span>
+            <span className="text-sm text-gray-500">{(config.utilizationTarget * 100).toFixed(0)}%</span>
           </div>
 
           <div>
@@ -557,7 +557,7 @@ function AnalysisTab({
               Defense Activation Threshold
             </label>
             <select
-              value={config.defense_activation_threshold}
+              value={config.defenseActivationThreshold}
               onChange={(e) => setConfig({ ...config, defense_activation_threshold: parseInt(e.target.value) })}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
             >
@@ -572,7 +572,7 @@ function AnalysisTab({
               Sacrifice Willingness
             </label>
             <select
-              value={config.sacrifice_willingness}
+              value={config.sacrificeWillingness}
               onChange={(e) => setConfig({ ...config, sacrifice_willingness: e.target.value as 'low' | 'medium' | 'high' })}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
             >
@@ -585,7 +585,7 @@ function AnalysisTab({
           <div className="flex items-center">
             <input
               type="checkbox"
-              checked={config.cross_zone_borrowing}
+              checked={config.crossZoneBorrowing}
               onChange={(e) => setConfig({ ...config, cross_zone_borrowing: e.target.checked })}
               className="mr-2"
             />
@@ -608,26 +608,26 @@ function AnalysisTab({
       {result && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            Analysis Results: {result.config_name}
+            Analysis Results: {result.configName}
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <p className="text-sm text-gray-500 dark:text-gray-400">Average Score</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {result.average_score.toFixed(2)}
+                {result.averageScore.toFixed(2)}
               </p>
             </div>
             <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <p className="text-sm text-gray-500 dark:text-gray-400">Cooperation Rate</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {(result.cooperation_rate * 100).toFixed(0)}%
+                {(result.cooperationRate * 100).toFixed(0)}%
               </p>
             </div>
             <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <p className="text-sm text-gray-500 dark:text-gray-400">Classification</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white capitalize">
-                {STRATEGY_LABELS[result.strategy_classification as keyof typeof STRATEGY_LABELS] || result.strategy_classification}
+                {STRATEGY_LABELS[result.strategyClassification as keyof typeof STRATEGY_LABELS] || result.strategyClassification}
               </p>
             </div>
           </div>
@@ -644,7 +644,7 @@ function AnalysisTab({
               Performance vs Standard Opponents
             </h4>
             <div className="space-y-2">
-              {Object.entries(result.matchup_results).map(([opponent, data]: [string, { score: number; outcome: string }]) => (
+              {Object.entries(result.matchupResults).map(([opponent, data]: [string, { score: number; outcome: string }]) => (
                 <div
                   key={opponent}
                   className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded"

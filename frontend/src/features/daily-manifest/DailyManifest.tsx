@@ -89,9 +89,9 @@ export function DailyManifest() {
           </div>
 
           {/* Last updated */}
-          {data?.generated_at && (
+          {data?.generatedAt && (
             <div className="text-xs text-gray-500 ml-auto">
-              Updated: {format(new Date(data.generated_at), 'h:mm a')}
+              Updated: {format(new Date(data.generatedAt), 'h:mm a')}
             </div>
           )}
         </div>
@@ -139,7 +139,7 @@ export function DailyManifest() {
         <>
           {/* Situational Awareness - WHO is NOT in clinic */}
           <SituationalAwareness
-            data={data.situational_awareness}
+            data={data.situationalAwareness}
             attending={data.attending}
           />
 
@@ -147,18 +147,18 @@ export function DailyManifest() {
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">
               FM Clinic Coverage
-              {data.clinic_coverage.length > 0 && (
+              {data.clinicCoverage.length > 0 && (
                 <span className="ml-2 text-sm font-normal text-gray-500">
-                  ({data.clinic_coverage.length} staff)
+                  ({data.clinicCoverage.length} staff)
                 </span>
               )}
             </h2>
           </div>
 
           {/* Clinic Coverage Table */}
-          {data.clinic_coverage.length > 0 ? (
+          {data.clinicCoverage.length > 0 ? (
             <ClinicCoverageTable
-              locations={data.clinic_coverage}
+              locations={data.clinicCoverage}
               searchQuery={searchQuery}
             />
           ) : (

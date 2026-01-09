@@ -234,7 +234,7 @@ function StatCard({ label, value, icon: Icon, trend }: { label: string; value: n
     <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-4">
       <div className="flex items-center justify-between">
         <div className="p-2 bg-slate-700/50 rounded-lg">
-          <Icon className="w-5 h-5 text-slate-400" />
+          <Icon className="w-5 h-5 text-slate-300" />
         </div>
         {trend && (
           <span className={trend === 'up' ? 'text-red-400' : 'text-green-400'}>
@@ -244,7 +244,7 @@ function StatCard({ label, value, icon: Icon, trend }: { label: string; value: n
       </div>
       <div className="mt-3">
         <div className="text-2xl font-bold text-white">{value}</div>
-        <div className="text-sm text-slate-400">{label}</div>
+        <div className="text-sm text-slate-300">{label}</div>
       </div>
     </div>
   );
@@ -268,7 +268,7 @@ function EntryDetail({ entry, onClose }: EntryDetailProps) {
           onClick={onClose}
           className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
         >
-          <XCircle className="w-5 h-5 text-slate-400" />
+          <XCircle className="w-5 h-5 text-slate-300" />
         </button>
       </div>
 
@@ -285,7 +285,7 @@ function EntryDetail({ entry, onClose }: EntryDetailProps) {
 
         {/* Timestamp */}
         <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1">Timestamp</label>
+          <label className="block text-xs font-medium text-slate-300 mb-1">Timestamp</label>
           <div className="text-sm text-white">
             {new Date(entry.timestamp).toLocaleString('en-US', {
               weekday: 'long',
@@ -302,11 +302,11 @@ function EntryDetail({ entry, onClose }: EntryDetailProps) {
         {/* Category & Action */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Category</label>
+            <label className="block text-xs font-medium text-slate-300 mb-1">Category</label>
             <CategoryBadge category={entry.category} />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Action</label>
+            <label className="block text-xs font-medium text-slate-300 mb-1">Action</label>
             <div className="text-sm text-white">{entry.action.replace(/_/g, ' ')}</div>
           </div>
         </div>
@@ -314,7 +314,7 @@ function EntryDetail({ entry, onClose }: EntryDetailProps) {
         {/* User Info */}
         {entry.userName ? (
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">User</label>
+            <label className="block text-xs font-medium text-slate-300 mb-1">User</label>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xs font-medium">
                 {entry.userName.split(' ').map((n: string) => n[0]).join('')}
@@ -322,7 +322,7 @@ function EntryDetail({ entry, onClose }: EntryDetailProps) {
               <div>
                 <div className="text-sm text-white">{entry.userName}</div>
                 {entry.userId ? (
-                  <div className="text-xs text-slate-400">{entry.userId}</div>
+                  <div className="text-xs text-slate-300">{entry.userId}</div>
                 ) : null}
               </div>
             </div>
@@ -332,13 +332,13 @@ function EntryDetail({ entry, onClose }: EntryDetailProps) {
         {/* Target */}
         {entry.targetType ? (
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Target</label>
+            <label className="block text-xs font-medium text-slate-300 mb-1">Target</label>
             <div className="text-sm text-white">
               {entry.targetType}
               {entry.targetName ? `: ${entry.targetName}` : null}
             </div>
             {entry.targetId ? (
-              <div className="text-xs text-slate-400 mt-0.5">{entry.targetId}</div>
+              <div className="text-xs text-slate-300 mt-0.5">{entry.targetId}</div>
             ) : null}
           </div>
         ) : null}
@@ -346,7 +346,7 @@ function EntryDetail({ entry, onClose }: EntryDetailProps) {
         {/* IP Address */}
         {entry.ipAddress ? (
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">IP Address</label>
+            <label className="block text-xs font-medium text-slate-300 mb-1">IP Address</label>
             <div className="text-sm text-white font-mono">{entry.ipAddress}</div>
           </div>
         ) : null}
@@ -354,7 +354,7 @@ function EntryDetail({ entry, onClose }: EntryDetailProps) {
         {/* Error Message */}
         {entry.errorMessage ? (
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Error Message</label>
+            <label className="block text-xs font-medium text-slate-300 mb-1">Error Message</label>
             <div className="p-3 bg-red-900/30 border border-red-800/50 rounded-lg text-sm text-red-200">
               {entry.errorMessage}
             </div>
@@ -364,11 +364,11 @@ function EntryDetail({ entry, onClose }: EntryDetailProps) {
         {/* Old/New Values */}
         {(entry.oldValue !== undefined || entry.newValue !== undefined) ? (
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-2">Changes</label>
+            <label className="block text-xs font-medium text-slate-300 mb-2">Changes</label>
             <div className="grid grid-cols-2 gap-3">
               {entry.oldValue !== undefined ? (
                 <div>
-                  <div className="text-xs text-slate-500 mb-1">Before</div>
+                  <div className="text-xs text-slate-300 mb-1">Before</div>
                   <pre className="p-2 bg-slate-900 rounded-lg text-xs text-slate-300 overflow-x-auto">
                     {JSON.stringify(entry.oldValue, null, 2)}
                   </pre>
@@ -376,7 +376,7 @@ function EntryDetail({ entry, onClose }: EntryDetailProps) {
               ) : null}
               {entry.newValue !== undefined ? (
                 <div>
-                  <div className="text-xs text-slate-500 mb-1">After</div>
+                  <div className="text-xs text-slate-300 mb-1">After</div>
                   <pre className="p-2 bg-slate-900 rounded-lg text-xs text-slate-300 overflow-x-auto">
                     {JSON.stringify(entry.newValue, null, 2)}
                   </pre>
@@ -389,7 +389,7 @@ function EntryDetail({ entry, onClose }: EntryDetailProps) {
         {/* Additional Details */}
         {entry.details && Object.keys(entry.details).length > 0 ? (
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-2">Additional Details</label>
+            <label className="block text-xs font-medium text-slate-300 mb-2">Additional Details</label>
             <pre className="p-3 bg-slate-900 rounded-lg text-xs text-slate-300 overflow-x-auto">
               {JSON.stringify(entry.details, null, 2)}
             </pre>
@@ -445,7 +445,7 @@ function StatsOverview({ stats }: { stats: AuditStats }) {
               <div key={category}>
                 <div className="flex items-center justify-between text-sm mb-1">
                   <span className="text-slate-300">{AUDIT_CATEGORY_LABELS[category as AuditCategory]}</span>
-                  <span className="text-slate-400">{count} ({percentage.toFixed(1)}%)</span>
+                  <span className="text-slate-300">{count} ({percentage.toFixed(1)}%)</span>
                 </div>
                 <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
                   <div
@@ -471,7 +471,7 @@ function StatsOverview({ stats }: { stats: AuditStats }) {
                 </span>
                 <span className="text-sm text-slate-200">{item.action.replace(/_/g, ' ')}</span>
               </div>
-              <span className="text-sm text-slate-400">{item.count}</span>
+              <span className="text-sm text-slate-300">{item.count}</span>
             </div>
           ))}
         </div>
@@ -528,7 +528,7 @@ export default function AdminAuditPage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">Audit Logs</h1>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-300">
                   System activity and security events
                 </p>
               </div>
@@ -541,7 +541,7 @@ export default function AdminAuditPage() {
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                   viewMode === 'list'
                     ? 'bg-violet-600 text-white'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-slate-300 hover:text-white'
                 }`}
               >
                 <List className="w-4 h-4" />
@@ -552,7 +552,7 @@ export default function AdminAuditPage() {
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                   viewMode === 'stats'
                     ? 'bg-violet-600 text-white'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-slate-300 hover:text-white'
                 }`}
               >
                 <BarChart3 className="w-4 h-4" />
@@ -574,7 +574,7 @@ export default function AdminAuditPage() {
               <div className="flex flex-1 gap-3 w-full sm:w-auto">
                 {/* Search */}
                 <div className="relative flex-1 sm:max-w-xs">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
                   <input
                     type="text"
                     placeholder="Search logs..."
@@ -620,7 +620,7 @@ export default function AdminAuditPage() {
             {showFilters && (
               <div className="flex gap-4 p-4 bg-slate-800/50 border border-slate-700/50 rounded-lg">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Category</label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">Category</label>
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value as AuditCategory | 'all')}
@@ -633,7 +633,7 @@ export default function AdminAuditPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Severity</label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">Severity</label>
                   <select
                     value={severityFilter}
                     onChange={(e) => setSeverityFilter(e.target.value as AuditSeverity | 'all')}
@@ -647,13 +647,13 @@ export default function AdminAuditPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Date Range</label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">Date Range</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="date"
                       className="px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                     />
-                    <span className="text-slate-400">to</span>
+                    <span className="text-slate-300">to</span>
                     <input
                       type="date"
                       className="px-3 py-1.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -668,25 +668,25 @@ export default function AdminAuditPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-700/50">
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Time
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Severity
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Category
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Action
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                       User
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Target
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Status
                     </th>
                   </tr>
@@ -698,7 +698,7 @@ export default function AdminAuditPage() {
                       onClick={() => setSelectedEntry(entry)}
                       className="border-b border-slate-700/50 hover:bg-slate-700/30 cursor-pointer transition-colors"
                     >
-                      <td className="px-4 py-3 text-sm text-slate-400">
+                      <td className="px-4 py-3 text-sm text-slate-300">
                         <div className="flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5" />
                           {new Date(entry.timestamp).toLocaleTimeString('en-US', {
@@ -706,7 +706,7 @@ export default function AdminAuditPage() {
                             minute: '2-digit',
                           })}
                         </div>
-                        <div className="text-xs text-slate-500">
+                        <div className="text-xs text-slate-300">
                           {new Date(entry.timestamp).toLocaleDateString()}
                         </div>
                       </td>
@@ -722,7 +722,7 @@ export default function AdminAuditPage() {
                       <td className="px-4 py-3 text-sm text-slate-300">
                         {entry.userName || '-'}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-400">
+                      <td className="px-4 py-3 text-sm text-slate-300">
                         {entry.targetName || entry.targetType || '-'}
                       </td>
                       <td className="px-4 py-3">
@@ -741,7 +741,7 @@ export default function AdminAuditPage() {
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between text-sm text-slate-400">
+            <div className="flex items-center justify-between text-sm text-slate-300">
               <span>Showing {filteredEntries.length} entries</span>
               <div className="flex gap-2">
                 <button className="px-3 py-1.5 border border-slate-700 rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50" disabled>

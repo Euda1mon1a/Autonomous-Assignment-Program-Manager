@@ -114,16 +114,16 @@ function ValidationWarnings({
           {warning}
         </div>
       ))}
-      {result.back_to_back_conflict && (
+      {result.backToBackConflict && (
         <div className="flex items-start gap-2 text-sm text-amber-400 mt-1">
           <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
           Creates back-to-back FMIT blocks
         </div>
       )}
-      {result.external_conflict && (
+      {result.externalConflict && (
         <div className="flex items-start gap-2 text-sm text-amber-400 mt-1">
           <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-          External conflict: {result.external_conflict}
+          External conflict: {result.externalConflict}
         </div>
       )}
     </div>
@@ -197,7 +197,7 @@ function ExecuteSwapPanel() {
       {
         onSuccess: (result) => {
           if (result.success) {
-            toast.success(`Swap executed successfully (ID: ${result.swap_id})`);
+            toast.success(`Swap executed successfully (ID: ${result.swapId})`);
             // Reset form
             setSourceFacultyId('');
             setTargetFacultyId('');
@@ -237,7 +237,7 @@ function ExecuteSwapPanel() {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Select Faculty</label>
+              <label className="block text-xs text-slate-300 mb-1">Select Faculty</label>
               <select
                 value={sourceFacultyId}
                 onChange={(e) => setSourceFacultyId(e.target.value)}
@@ -253,7 +253,7 @@ function ExecuteSwapPanel() {
             </div>
 
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Week (Block Start)</label>
+              <label className="block text-xs text-slate-300 mb-1">Week (Block Start)</label>
               <select
                 value={sourceWeek}
                 onChange={(e) => setSourceWeek(e.target.value)}
@@ -270,7 +270,7 @@ function ExecuteSwapPanel() {
             </div>
 
             {sourceFaculty && (
-              <div className="text-xs text-slate-400 bg-slate-800 rounded p-2">
+              <div className="text-xs text-slate-300 bg-slate-800 rounded p-2">
                 Selected: <span className="text-white">{sourceFaculty.name}</span>
               </div>
             )}
@@ -286,7 +286,7 @@ function ExecuteSwapPanel() {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Select Faculty</label>
+              <label className="block text-xs text-slate-300 mb-1">Select Faculty</label>
               <select
                 value={targetFacultyId}
                 onChange={(e) => setTargetFacultyId(e.target.value)}
@@ -305,7 +305,7 @@ function ExecuteSwapPanel() {
 
             {swapType === SwapType.ONE_TO_ONE && (
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Week (Block Start)</label>
+                <label className="block text-xs text-slate-300 mb-1">Week (Block Start)</label>
                 <select
                   value={targetWeek}
                   onChange={(e) => setTargetWeek(e.target.value)}
@@ -323,7 +323,7 @@ function ExecuteSwapPanel() {
             )}
 
             {targetFaculty && (
-              <div className="text-xs text-slate-400 bg-slate-800 rounded p-2">
+              <div className="text-xs text-slate-300 bg-slate-800 rounded p-2">
                 Selected: <span className="text-white">{targetFaculty.name}</span>
               </div>
             )}
@@ -356,7 +356,7 @@ function ExecuteSwapPanel() {
                 <span className="text-sm text-slate-300">Absorb</span>
               </label>
             </div>
-            <p className="text-xs text-slate-500 mt-2">
+            <p className="text-xs text-slate-300 mt-2">
               {swapType === SwapType.ONE_TO_ONE
                 ? 'Both faculty trade their weeks bidirectionally'
                 : 'Target absorbs source\'s week (no return assignment)'}
@@ -525,7 +525,7 @@ function DirectAssignmentPanel() {
       {/* Selection */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-800/50 border border-slate-700 rounded-xl p-4">
         <div>
-          <label className="block text-xs text-slate-400 mb-1">Select Faculty</label>
+          <label className="block text-xs text-slate-300 mb-1">Select Faculty</label>
           <select
             value={selectedFacultyId}
             onChange={(e) => {
@@ -544,7 +544,7 @@ function DirectAssignmentPanel() {
         </div>
 
         <div>
-          <label className="block text-xs text-slate-400 mb-1">Select Block</label>
+          <label className="block text-xs text-slate-300 mb-1">Select Block</label>
           <select
             value={selectedBlock}
             onChange={(e) => {
@@ -572,7 +572,7 @@ function DirectAssignmentPanel() {
               <Calendar className="w-4 h-4" />
               Current Assignments
             </h3>
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-slate-300">
               {assignments.length} assignment(s)
             </span>
           </div>
@@ -582,16 +582,16 @@ function DirectAssignmentPanel() {
               <LoadingSpinner />
             </div>
           ) : assignments.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">
+            <div className="text-center py-8 text-slate-300">
               No assignments found for this faculty/block combination
             </div>
           ) : (
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-800">
-                  <th className="text-left py-2 px-4 text-slate-400 font-medium">Role</th>
-                  <th className="text-left py-2 px-4 text-slate-400 font-medium">Activity</th>
-                  <th className="text-left py-2 px-4 text-slate-400 font-medium">Block</th>
+                  <th className="text-left py-2 px-4 text-slate-300 font-medium">Role</th>
+                  <th className="text-left py-2 px-4 text-slate-300 font-medium">Activity</th>
+                  <th className="text-left py-2 px-4 text-slate-300 font-medium">Block</th>
                   <th className="w-20 py-2 px-4"></th>
                 </tr>
               </thead>
@@ -612,7 +612,7 @@ function DirectAssignmentPanel() {
                       <td className="py-2 px-4 text-slate-300">
                         {assignment.activityOverride || 'Default'}
                       </td>
-                      <td className="py-2 px-4 text-slate-400">{assignment.blockId}</td>
+                      <td className="py-2 px-4 text-slate-300">{assignment.blockId}</td>
                       <td className="py-2 px-4">
                         {!isRemoved && (
                           <button
@@ -658,7 +658,7 @@ function DirectAssignmentPanel() {
                 </span>
                 <button
                   onClick={() => handleUndoChange(change.id)}
-                  className="text-xs text-slate-400 hover:text-white transition-colors"
+                  className="text-xs text-slate-300 hover:text-white transition-colors"
                 >
                   Undo
                 </button>
@@ -713,14 +713,14 @@ function RecentActivitySidebar() {
   }, [swapHistory, showAll]);
 
   const canRollback = (swap: SwapRequest) => {
-    if (!swap.executed_at) return false;
+    if (!swap.executedAt) return false;
     const hoursAgo =
-      (Date.now() - new Date(swap.executed_at).getTime()) / (1000 * 60 * 60);
+      (Date.now() - new Date(swap.executedAt).getTime()) / (1000 * 60 * 60);
     return hoursAgo < 24;
   };
 
   const handleRollback = (swap: SwapRequest) => {
-    if (!confirm(`Rollback swap between ${swap.source_faculty_name} and ${swap.target_faculty_name}?`)) {
+    if (!confirm(`Rollback swap between ${swap.sourceFacultyName} and ${swap.targetFacultyName}?`)) {
       return;
     }
 
@@ -749,7 +749,7 @@ function RecentActivitySidebar() {
           <LoadingSpinner />
         </div>
       ) : recentSwaps.length === 0 ? (
-        <div className="text-center py-6 text-slate-500 text-sm">
+        <div className="text-center py-6 text-slate-300 text-sm">
           No recent swaps
         </div>
       ) : (
@@ -759,12 +759,12 @@ function RecentActivitySidebar() {
               <div className="flex justify-between items-start">
                 <div>
                   <div className="text-slate-300">
-                    {swap.source_faculty_name} ↔ {swap.target_faculty_name}
+                    {swap.sourceFacultyName} ↔ {swap.targetFacultyName}
                   </div>
-                  <div className="text-slate-500 mt-1">
-                    {swap.swap_type === SwapType.ONE_TO_ONE ? 'One-to-One' : 'Absorb'}
-                    {swap.executed_at && (
-                      <> • {format(new Date(swap.executed_at), 'MMM d, h:mm a')}</>
+                  <div className="text-slate-300 mt-1">
+                    {swap.swapType === SwapType.ONE_TO_ONE ? 'One-to-One' : 'Absorb'}
+                    {swap.executedAt && (
+                      <> • {format(new Date(swap.executedAt), 'MMM d, h:mm a')}</>
                     )}
                   </div>
                 </div>
@@ -815,7 +815,7 @@ export default function AdminSwapsPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-white">Force Swap</h1>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-slate-300">
                 Execute schedule changes and direct assignment edits
               </p>
             </div>
@@ -828,7 +828,7 @@ export default function AdminSwapsPage() {
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
                 activeTab === 'execute'
                   ? 'bg-violet-600 text-white'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
               }`}
             >
               <ArrowLeftRight className="w-4 h-4" />
@@ -839,7 +839,7 @@ export default function AdminSwapsPage() {
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
                 activeTab === 'direct'
                   ? 'bg-violet-600 text-white'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
               }`}
             >
               <Pencil className="w-4 h-4" />

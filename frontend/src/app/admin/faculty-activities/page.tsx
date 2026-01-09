@@ -67,7 +67,7 @@ export default function AdminFacultyActivitiesPage() {
                 <h1 className="text-xl font-bold text-white">
                   Faculty Activity Templates
                 </h1>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-300">
                   Manage weekly activity patterns and overrides
                 </p>
               </div>
@@ -77,7 +77,7 @@ export default function AdminFacultyActivitiesPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={handleRefresh}
-                className="p-2 text-slate-400 hover:text-white transition-colors"
+                className="p-2 text-slate-300 hover:text-white transition-colors"
                 title="Refresh data"
               >
                 <RefreshCw className="w-5 h-5" />
@@ -93,7 +93,7 @@ export default function AdminFacultyActivitiesPage() {
           <Info className="w-5 h-5 text-cyan-400 mt-0.5 flex-shrink-0" />
           <div className="text-sm text-slate-300">
             <p className="font-medium text-white mb-1">How to use this page:</p>
-            <ul className="list-disc list-inside space-y-1 text-slate-400">
+            <ul className="list-disc list-inside space-y-1 text-slate-300">
               <li>Click any cell in the matrix to open the faculty editor</li>
               <li><strong>Template mode:</strong> Edit the default weekly pattern (applies every week)</li>
               <li><strong>Week mode:</strong> Create overrides for specific weeks</li>
@@ -130,41 +130,41 @@ export default function AdminFacultyActivitiesPage() {
       {/* Activity Legend Info */}
       <footer className="max-w-7xl mx-auto px-4 py-6 border-t border-slate-800">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="flex items-center gap-2 text-sm text-slate-400">
+          <div className="flex items-center gap-2 text-sm text-slate-300">
             <div className="w-4 h-4 bg-blue-500 rounded" />
             <span>AT - Attending Time (Supervision)</span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-slate-400">
+          <div className="flex items-center gap-2 text-sm text-slate-300">
             <div className="w-4 h-4 bg-green-500 rounded" />
             <span>FM Clinic - Family Medicine</span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-slate-400">
+          <div className="flex items-center gap-2 text-sm text-slate-300">
             <div className="w-4 h-4 bg-purple-500 rounded" />
             <span>GME - Graduate Medical Ed</span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-slate-400">
+          <div className="flex items-center gap-2 text-sm text-slate-300">
             <div className="w-4 h-4 bg-indigo-500 rounded" />
             <span>DFM - Dept Family Medicine</span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-slate-400">
+          <div className="flex items-center gap-2 text-sm text-slate-300">
             <div className="w-4 h-4 bg-amber-500 rounded" />
             <span>PCAT - Post-Call Attending (Supervision)</span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-slate-400">
+          <div className="flex items-center gap-2 text-sm text-slate-300">
             <div className="w-4 h-4 bg-teal-500 rounded" />
             <span>DO - Direct Observation (Supervision)</span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-slate-400">
+          <div className="flex items-center gap-2 text-sm text-slate-300">
             <div className="w-4 h-4 bg-emerald-500 rounded" />
             <span>SM Clinic - Sports Medicine</span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-slate-400">
+          <div className="flex items-center gap-2 text-sm text-slate-300">
             <div className="w-4 h-4 border border-amber-400 rounded" />
             <span>Locked slot (HARD constraint)</span>
           </div>
         </div>
 
-        <div className="mt-4 text-xs text-slate-500">
+        <div className="mt-4 text-xs text-slate-300">
           <p>
             <strong>Role permissions:</strong> PD (GME only), APD (GME + FM Clinic), OIC (DFM + GME + FM Clinic),
             Dept Chief (DFM + FM Clinic), Sports Med (SM Clinic), Core (GME + FM Clinic)

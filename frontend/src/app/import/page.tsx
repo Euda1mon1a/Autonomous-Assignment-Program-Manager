@@ -26,7 +26,7 @@ export default function ImportPage() {
 
       const result = await stageImportMutation.mutateAsync(formData);
       // Redirect to review page immediately
-      router.push(`/import/${result.batch_id}`);
+      router.push(`/import/${result.batchId}`);
     } catch (error) {
       console.error("Failed to stage file:", error);
       alert("Failed to upload file. Please try again.");

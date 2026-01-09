@@ -210,9 +210,9 @@ function EmptyState({
 }) {
   return (
     <div className="text-center py-12 px-4 border border-dashed border-slate-700 rounded-lg">
-      <Users className="w-12 h-12 text-slate-500 mx-auto mb-4" />
+      <Users className="w-12 h-12 text-slate-300 mx-auto mb-4" />
       <h3 className="text-lg font-medium text-slate-200 mb-2">{title}</h3>
-      <p className="text-slate-400 mb-6 max-w-md mx-auto">{description}</p>
+      <p className="text-slate-300 mb-6 max-w-md mx-auto">{description}</p>
       {action}
     </div>
   );
@@ -253,7 +253,7 @@ function ConfirmDialog({
       />
       <div className="relative bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
         <h2 className="text-lg font-semibold text-white mb-2">{title}</h2>
-        <p className="text-slate-400 mb-6">{message}</p>
+        <p className="text-slate-300 mb-6">{message}</p>
         <div className="flex justify-end gap-3">
           <button
             type="button"
@@ -345,7 +345,7 @@ function UserRow({
             <div className="font-medium text-slate-200">
               {user.firstName} {user.lastName}
             </div>
-            <div className="text-sm text-slate-400">{user.email}</div>
+            <div className="text-sm text-slate-300">{user.email}</div>
           </div>
         </div>
       </td>
@@ -355,7 +355,7 @@ function UserRow({
       <td className="px-4 py-3">
         <StatusBadge status={user.status} />
       </td>
-      <td className="px-4 py-3 text-sm text-slate-400">
+      <td className="px-4 py-3 text-sm text-slate-300">
         {formatDate(user.lastLogin)}
       </td>
       <td className="px-4 py-3">
@@ -365,7 +365,7 @@ function UserRow({
               <Shield className="w-4 h-4" />
             </span>
           ) : (
-            <span className="text-slate-500" title="MFA Disabled">
+            <span className="text-slate-300" title="MFA Disabled">
               <Shield className="w-4 h-4" />
             </span>
           )}
@@ -377,7 +377,7 @@ function UserRow({
             onClick={() => setShowMenu(!showMenu)}
             className="p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
           >
-            <MoreVertical className="w-4 h-4 text-slate-400" />
+            <MoreVertical className="w-4 h-4 text-slate-300" />
           </button>
           {showMenu && (
             <>
@@ -630,7 +630,7 @@ function RolesPanel() {
           <h2 className="text-lg font-semibold text-white">
             Roles & Permissions
           </h2>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-slate-300">
             View role definitions and their permissions
           </p>
         </div>
@@ -652,14 +652,14 @@ function RolesPanel() {
             >
               <div className="flex items-center gap-3">
                 <RoleBadge role={roleConfig.role} />
-                <span className="text-sm text-slate-400">
+                <span className="text-sm text-slate-300">
                   {roleConfig.description}
                 </span>
               </div>
               {expandedRole === roleConfig.role ? (
-                <ChevronUp className="w-5 h-5 text-slate-400" />
+                <ChevronUp className="w-5 h-5 text-slate-300" />
               ) : (
-                <ChevronDown className="w-5 h-5 text-slate-400" />
+                <ChevronDown className="w-5 h-5 text-slate-300" />
               )}
             </button>
             {expandedRole === roleConfig.role && (
@@ -747,7 +747,7 @@ function ActivityPanel() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-lg font-semibold text-white">Recent Activity</h2>
-          <p className="text-sm text-slate-400">User management activity log</p>
+          <p className="text-sm text-slate-300">User management activity log</p>
         </div>
         <button
           onClick={handleExportActivity}
@@ -763,16 +763,16 @@ function ActivityPanel() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-700/50">
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                 Time
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                 Action
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                 User
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                 Target
               </th>
             </tr>
@@ -783,7 +783,7 @@ function ActivityPanel() {
                 key={activity.id}
                 className="border-b border-slate-700/50 last:border-0 hover:bg-slate-800/20"
               >
-                <td className="px-4 py-3 text-sm text-slate-400">
+                <td className="px-4 py-3 text-sm text-slate-300">
                   {new Date(activity.timestamp).toLocaleString()}
                 </td>
                 <td className="px-4 py-3 text-sm text-slate-200">
@@ -795,7 +795,7 @@ function ActivityPanel() {
                 <td className="px-4 py-3 text-sm text-slate-300">
                   {activity.userId}
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-400">-</td>
+                <td className="px-4 py-3 text-sm text-slate-300">-</td>
               </tr>
             ))}
           </tbody>
@@ -808,17 +808,17 @@ function ActivityPanel() {
           <button
             disabled={page === 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="flex items-center gap-1 text-sm text-slate-400 hover:text-white disabled:opacity-50"
+            className="flex items-center gap-1 text-sm text-slate-300 hover:text-white disabled:opacity-50"
           >
             <ArrowLeft className="w-4 h-4" /> Previous
           </button>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-300">
             Page {page} of {data.totalPages}
           </span>
           <button
             disabled={page === data.totalPages}
             onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
-            className="flex items-center gap-1 text-sm text-slate-400 hover:text-white disabled:opacity-50"
+            className="flex items-center gap-1 text-sm text-slate-300 hover:text-white disabled:opacity-50"
           >
             Next <ArrowRight className="w-4 h-4" />
           </button>
@@ -1104,7 +1104,7 @@ export default function AdminUsersPage() {
                 <h1 className="text-xl font-bold text-white">
                   User Management
                 </h1>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-300">
                   Manage users, roles, and permissions
                 </p>
               </div>
@@ -1132,7 +1132,7 @@ export default function AdminUsersPage() {
                   className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === tab.id
                       ? "border-violet-500 text-violet-400"
-                      : "border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-700"
+                      : "border-transparent text-slate-300 hover:text-slate-300 hover:border-slate-700"
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -1152,7 +1152,7 @@ export default function AdminUsersPage() {
             <div className="flex items-center justify-between gap-4 p-4 bg-slate-800/50 border border-slate-700/50 rounded-xl">
               <div className="flex items-center gap-4 flex-1">
                 <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
                   <input
                     type="text"
                     value={searchQuery}
@@ -1193,7 +1193,7 @@ export default function AdminUsersPage() {
               </div>
               <button
                 onClick={() => refetch()}
-                className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+                className="p-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
                 title="Refresh List"
               >
                 <RefreshCw
@@ -1235,7 +1235,7 @@ export default function AdminUsersPage() {
               <div className="overflow-x-auto max-h-[calc(100vh-350px)]">
                 <table className="w-full text-left border-collapse">
                   <thead className="sticky top-0 z-10">
-                    <tr className="bg-slate-900/50 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700/50">
+                    <tr className="bg-slate-900/50 text-slate-300 text-xs uppercase tracking-wider border-b border-slate-700/50">
                       <th className="px-4 py-3 w-10">
                         <input
                           type="checkbox"
@@ -1260,14 +1260,14 @@ export default function AdminUsersPage() {
                       <tr>
                         <td colSpan={7}>
                           <div className="p-8 flex justify-center">
-                            <Loader2 className="animate-spin text-slate-400" />
+                            <Loader2 className="animate-spin text-slate-300" />
                           </div>
                         </td>
                       </tr>
                     ) : filteredUsers.length === 0 ? (
                       <tr>
                         <td colSpan={7}>
-                          <div className="p-8 text-center text-slate-500">
+                          <div className="p-8 text-center text-slate-300">
                             No users found
                           </div>
                         </td>
@@ -1293,7 +1293,7 @@ export default function AdminUsersPage() {
               </div>
             </div>
             {/* Pagination Summary */}
-            <div className="text-xs text-slate-500 text-right px-2">
+            <div className="text-xs text-slate-300 text-right px-2">
               Showing {filteredUsers.length} of {totalUsers} users
             </div>
           </div>

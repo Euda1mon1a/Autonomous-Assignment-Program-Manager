@@ -101,13 +101,13 @@ export const adminUsersQueryKeys = {
  * Handles snake_case to camelCase conversion and status derivation.
  */
 function transformApiUser(apiUser: AdminUserApiResponse): User {
-  // Derive status from is_active and is_locked flags
+  // Derive status from isActive and isLocked flags (camelCase from axios interceptor)
   let status: UserStatus;
-  if (apiUser.is_locked) {
+  if (apiUser.isLocked) {
     status = "locked";
   } else if (!apiUser.isActive) {
     status = "inactive";
-  } else if (apiUser.invite_sent_at && !apiUser.invite_accepted_at) {
+  } else if (apiUser.inviteSentAt && !apiUser.inviteAcceptedAt) {
     status = "pending";
   } else {
     status = "active";
@@ -116,11 +116,11 @@ function transformApiUser(apiUser: AdminUserApiResponse): User {
   return {
     id: apiUser.id,
     email: apiUser.email,
-    firstName: apiUser.first_name || "",
-    lastName: apiUser.last_name || "",
+    firstName: apiUser.firstName || "",
+    lastName: apiUser.lastName || "",
     role: apiUser.role as UserRole,
     status,
-    lastLogin: apiUser.last_login || undefined,
+    lastLogin: apiUser.lastLogin || undefined,
     createdAt: apiUser.createdAt || new Date().toISOString(),
     updatedAt: apiUser.updatedAt || new Date().toISOString(),
     mfaEnabled: false, // Not provided by API, default to false

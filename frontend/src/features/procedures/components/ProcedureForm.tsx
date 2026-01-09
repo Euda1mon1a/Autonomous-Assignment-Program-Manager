@@ -32,11 +32,11 @@ export function ProcedureForm({
     description: "",
     category: "",
     specialty: "",
-    complexity_level: "standard",
-    supervision_ratio: 1,
-    min_pgy_level: 1,
-    requires_certification: false,
-    is_active: true,
+    complexityLevel: "standard",
+    supervisionRatio: 1,
+    minPgyLevel: 1,
+    requiresCertification: false,
+    isActive: true,
   });
 
   useEffect(() => {
@@ -46,11 +46,11 @@ export function ProcedureForm({
         description: initialData.description || "",
         category: initialData.category || "",
         specialty: initialData.specialty || "",
-        complexity_level: initialData.complexity_level,
-        supervision_ratio: initialData.supervision_ratio,
-        min_pgy_level: initialData.min_pgy_level,
-        requires_certification: initialData.requires_certification,
-        is_active: initialData.is_active,
+        complexityLevel: initialData.complexityLevel,
+        supervisionRatio: initialData.supervisionRatio,
+        minPgyLevel: initialData.minPgyLevel,
+        requiresCertification: initialData.requiresCertification,
+        isActive: initialData.isActive,
       });
     }
   }, [initialData]);
@@ -143,11 +143,11 @@ export function ProcedureForm({
                 Complexity
               </label>
               <select
-                value={formData.complexity_level}
+                value={formData.complexityLevel}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    complexity_level: e.target.value as
+                    complexityLevel: e.target.value as
                       | "basic"
                       | "standard"
                       | "advanced"
@@ -172,11 +172,11 @@ export function ProcedureForm({
                 type="number"
                 min={0}
                 step={0.1}
-                value={formData.supervision_ratio}
+                value={formData.supervisionRatio}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    supervision_ratio: parseFloat(e.target.value),
+                    supervisionRatio: parseFloat(e.target.value),
                   })
                 }
                 className="w-full bg-slate-800 border-slate-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
@@ -193,11 +193,11 @@ export function ProcedureForm({
                 type="number"
                 min={1}
                 max={5}
-                value={formData.min_pgy_level}
+                value={formData.minPgyLevel}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    min_pgy_level: parseInt(e.target.value),
+                    minPgyLevel: parseInt(e.target.value),
                   })
                 }
                 className="w-full bg-slate-800 border-slate-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
@@ -207,18 +207,18 @@ export function ProcedureForm({
             <div className="flex items-center space-x-2 pt-8">
               <input
                 type="checkbox"
-                id="requires_certification"
-                checked={formData.requires_certification}
+                id="requiresCertification"
+                checked={formData.requiresCertification}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    requires_certification: e.target.checked,
+                    requiresCertification: e.target.checked,
                   })
                 }
                 className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900"
               />
               <label
-                htmlFor="requires_certification"
+                htmlFor="requiresCertification"
                 className="text-sm text-slate-300"
               >
                 Requires Certification
