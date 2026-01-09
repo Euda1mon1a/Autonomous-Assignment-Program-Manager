@@ -60,9 +60,9 @@ export function FMITTimeline({
     error: timelineError,
   } = useFMITTimeline({
     ...filters,
-    start_date: dateRange.start,
-    end_date: dateRange.end,
-    view_mode: viewMode,
+    startDate: dateRange.start,
+    endDate: dateRange.end,
+    viewMode: viewMode,
   });
 
   const { data: metrics, isLoading: isMetricsLoading } = useTimelineMetrics(dateRange);
@@ -152,7 +152,7 @@ export function FMITTimeline({
   }
 
   // Empty state
-  if (!timelineData?.timeline?.faculty_rows || timelineData.timeline.faculty_rows.length === 0) {
+  if (!timelineData?.timeline?.facultyRows || timelineData.timeline.facultyRows.length === 0) {
     return (
       <div className="space-y-4">
         <TimelineControls
@@ -210,37 +210,37 @@ export function FMITTimeline({
           <MetricCard
             icon={<Users className="w-4 h-4" />}
             label="Total Faculty"
-            value={metrics.total_faculty}
+            value={metrics.totalFaculty}
             color="blue"
           />
           <MetricCard
             icon={<Calendar className="w-4 h-4" />}
             label="Assignments"
-            value={metrics.total_assignments}
+            value={metrics.totalAssignments}
             color="purple"
           />
           <MetricCard
             icon={<TrendingUp className="w-4 h-4" />}
             label="Avg Utilization"
-            value={`${metrics.average_utilization}%`}
+            value={`${metrics.averageUtilization}%`}
             color="green"
           />
           <MetricCard
             icon={<AlertCircle className="w-4 h-4" />}
             label="Overloaded"
-            value={metrics.overloaded_faculty}
+            value={metrics.overloadedFaculty}
             color="red"
           />
           <MetricCard
             icon={<Clock className="w-4 h-4" />}
             label="Underutilized"
-            value={metrics.underutilized_faculty}
+            value={metrics.underutilizedFaculty}
             color="yellow"
           />
           <MetricCard
             icon={<Clock className="w-4 h-4" />}
             label="Total Hours"
-            value={metrics.total_hours_scheduled}
+            value={metrics.totalHoursScheduled}
             color="cyan"
           />
         </div>
@@ -258,7 +258,7 @@ export function FMITTimeline({
             <div className="w-64 flex-shrink-0 p-3 border-r border-gray-200 bg-gray-100 sticky left-0 z-30">
               <h3 className="text-sm font-semibold text-gray-900">Faculty</h3>
               <p className="text-xs text-gray-500 mt-0.5">
-                {timelineData.timeline.faculty_rows.length} members
+                {timelineData.timeline.facultyRows.length} members
               </p>
             </div>
 
@@ -268,12 +268,12 @@ export function FMITTimeline({
                 <div
                   key={index}
                   className={`flex-1 p-3 border-r border-gray-200 text-center ${
-                    period.is_current ? 'bg-blue-100' : 'bg-gray-50'
+                    period.isCurrent ? 'bg-blue-100' : 'bg-gray-50'
                   }`}
                 >
                   <div className="text-xs font-medium text-gray-900">{period.label}</div>
                   <div className="text-xs text-gray-500 mt-0.5">
-                    {new Date(period.start_date).toLocaleDateString('en-US', {
+                    {new Date(period.startDate).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
                     })}
@@ -285,9 +285,9 @@ export function FMITTimeline({
 
           {/* Faculty rows */}
           <div>
-            {timelineData.timeline.faculty_rows.map((row) => (
+            {timelineData.timeline.facultyRows.map((row) => (
               <TimelineRow
-                key={row.faculty_id}
+                key={row.facultyId}
                 row={row}
                 periods={timePeriods}
                 onAssignmentHover={setHoveredAssignment}

@@ -19,11 +19,11 @@ export function UtilizationChart() {
   // Fetch detailed utilization threshold analysis when we have faculty/block data
   const { data: thresholdData } = useUtilizationThreshold(
     {
-      available_faculty: data?.utilization?.safe_capacity ?? 0,
-      required_blocks: data?.utilization?.current_demand ?? 0,
+      available_faculty: data?.utilization?.safeCapacity ?? 0,
+      required_blocks: data?.utilization?.currentDemand ?? 0,
     },
     {
-      enabled: !!data && data.utilization.safe_capacity > 0,
+      enabled: !!data && data.utilization.safeCapacity > 0,
     }
   );
 
@@ -78,7 +78,7 @@ export function UtilizationChart() {
             <div className="flex justify-between text-sm mb-2">
               <span className="text-slate-300">Total Utilization</span>
               <span className="font-mono text-white">
-                {(data.utilization.utilization_rate * 100).toFixed(1)}%
+                {(data.utilization.utilizationRate * 100).toFixed(1)}%
               </span>
             </div>
             <div className="h-4 bg-slate-800 rounded-full overflow-hidden">
@@ -86,17 +86,17 @@ export function UtilizationChart() {
                 initial={{ width: 0 }}
                 animate={{
                   width: `${Math.min(
-                    data.utilization.utilization_rate * 100,
+                    data.utilization.utilizationRate * 100,
                     100
                   )}%`,
                 }}
                 transition={{ duration: 1, ease: "easeOut" }}
                 className={`h-full rounded-full ${
-                  data.utilization.utilization_rate > 0.9
+                  data.utilization.utilizationRate > 0.9
                     ? "bg-red-500"
-                    : data.utilization.utilization_rate > 0.8
+                    : data.utilization.utilizationRate > 0.8
                     ? "bg-orange-500"
-                    : data.utilization.utilization_rate > 0.7
+                    : data.utilization.utilizationRate > 0.7
                     ? "bg-yellow-500"
                     : "bg-green-500"
                 }`}
@@ -109,7 +109,7 @@ export function UtilizationChart() {
             <div className="flex justify-between text-sm mb-2">
               <span className="text-slate-300">Safety Buffer</span>
               <span className="font-mono text-white">
-                {data.utilization.buffer_remaining.toFixed(1)} FTE
+                {data.utilization.bufferRemaining.toFixed(1)} FTE
               </span>
             </div>
             <div className="h-4 bg-slate-800 rounded-full overflow-hidden">
@@ -117,7 +117,7 @@ export function UtilizationChart() {
                 initial={{ width: 0 }}
                 animate={{
                   width: `${Math.min(
-                    (data.utilization.buffer_remaining / 5) * 100,
+                    (data.utilization.bufferRemaining / 5) * 100,
                     100
                   )}%`,
                 }} // Normalized assumption: 5 FTE max buffer visual
@@ -134,7 +134,7 @@ export function UtilizationChart() {
                 Demand
               </div>
               <div className="text-xl font-bold text-white">
-                {data.utilization.current_demand}
+                {data.utilization.currentDemand}
               </div>
               <div className="text-xs text-slate-400">Assignments</div>
             </div>
@@ -143,7 +143,7 @@ export function UtilizationChart() {
                 Safe Capacity
               </div>
               <div className="text-xl font-bold text-green-400">
-                {data.utilization.safe_capacity}
+                {data.utilization.safeCapacity}
               </div>
               <div className="text-xs text-slate-400">Assignments</div>
             </div>
@@ -152,7 +152,7 @@ export function UtilizationChart() {
                 Wait Time
               </div>
               <div className="text-xl font-bold text-blue-400">
-                {data.utilization.wait_time_multiplier.toFixed(1)}x
+                {data.utilization.waitTimeMultiplier.toFixed(1)}x
               </div>
               <div className="text-xs text-slate-400">Multiplier</div>
             </div>

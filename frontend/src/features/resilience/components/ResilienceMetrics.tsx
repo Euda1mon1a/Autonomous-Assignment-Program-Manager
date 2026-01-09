@@ -89,39 +89,39 @@ export function ResilienceMetrics() {
   const metrics = [
     {
       label: "System Health",
-      value: data.overall_status.toUpperCase(),
+      value: data.overallStatus.toUpperCase(),
       icon: Activity,
-      color: getStatusColor(data.overall_status),
-      subtext: `Defense: ${data.defense_level}`,
+      color: getStatusColor(data.overallStatus),
+      subtext: `Defense: ${data.defenseLevel}`,
     },
     {
       label: "Utilization",
-      value: `${(data.utilization.utilization_rate * 100).toFixed(1)}%`,
+      value: `${(data.utilization.utilizationRate * 100).toFixed(1)}%`,
       icon: Users,
       color: `bg-slate-800 border-slate-700 ${getUtilizationColor(
         data.utilization.level
       )}`,
-      subtext: `Capacity: ${data.utilization.current_demand} / ${data.utilization.safe_capacity}`,
+      subtext: `Capacity: ${data.utilization.currentDemand} / ${data.utilization.safeCapacity}`,
     },
     {
       label: "N-1 Compliance",
-      value: data.n1_pass ? "PASS" : "FAIL",
+      value: data.n1Pass ? "PASS" : "FAIL",
       icon: Shield,
-      color: data.n1_pass
+      color: data.n1Pass
         ? "text-green-400 bg-green-400/10 border-green-400/20"
         : "text-red-400 bg-red-400/10 border-red-400/20",
-      subtext: data.n2_pass ? "N-2 Also Passing" : "N-2 Failing",
+      subtext: data.n2Pass ? "N-2 Also Passing" : "N-2 Failing",
     },
     {
       label: "Active Fallbacks",
-      value: data.active_fallbacks.length.toString(),
+      value: data.activeFallbacks.length.toString(),
       icon: AlertTriangle,
       color:
-        data.active_fallbacks.length === 0
+        data.activeFallbacks.length === 0
           ? "text-blue-400 bg-blue-400/10 border-blue-400/20"
           : "text-orange-400 bg-orange-400/10 border-orange-400/20",
       subtext:
-        data.active_fallbacks.length > 0
+        data.activeFallbacks.length > 0
           ? "Contingencies Active"
           : "Normal Operations",
     },

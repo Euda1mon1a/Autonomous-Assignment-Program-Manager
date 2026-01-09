@@ -6,6 +6,7 @@
  */
 
 import { useMutation } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 import type {
   BlockParseRequest,
   BlockParseResponse,
@@ -17,6 +18,9 @@ import type {
 
 /**
  * Upload and parse a block schedule Excel file
+ *
+ * Uses axios client (via api) to ensure response keys are converted
+ * from snake_case to camelCase automatically.
  *
  * @param file - Excel file to upload
  * @param options - Parse options including block number
@@ -36,25 +40,18 @@ async function parseBlockSchedule(
 
   formData.append('include_fmit', String(options.includeFmit ?? true));
 
-  const apiBase =
-    process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+  // Use axios client to get automatic snake_case → camelCase conversion
+  const response = await api.post<BlockParseResponse>(
+    '/schedule/import/block',
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
 
-  const response = await fetch(`${apiBase}/schedule/import/block`, {
-    method: 'POST',
-    body: formData,
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({
-      detail: 'Unknown error occurred',
-    }));
-    throw new Error(
-      errorData.detail || `Upload failed with status ${response.status}`
-    );
-  }
-
-  return response.json();
+  return response.data;
 }
 
 // ============================================================================

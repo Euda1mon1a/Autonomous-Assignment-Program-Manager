@@ -300,7 +300,11 @@ class ImportStagedAbsence(Base):
 
     # Overlap detection with existing absences
     overlap_type = Column(
-        Enum(OverlapType),
+        Enum(
+            OverlapType,
+            values_callable=lambda x: [e.value for e in x],
+            create_type=False,
+        ),
         nullable=False,
         default=OverlapType.NONE,
     )

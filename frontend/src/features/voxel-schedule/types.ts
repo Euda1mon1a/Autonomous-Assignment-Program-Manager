@@ -9,14 +9,14 @@ export interface VoxelPosition {
 }
 
 export interface VoxelIdentity {
-  assignment_id: string | null;
-  person_id: string | null;
-  person_name: string | null;
-  block_id: string | null;
-  block_date: string | null;
-  block_time_of_day: string | null;
-  activity_name: string | null;
-  activity_type: string | null;
+  assignmentId: string | null;
+  personId: string | null;
+  personName: string | null;
+  blockId: string | null;
+  blockDate: string | null;
+  blockTimeOfDay: string | null;
+  activityName: string | null;
+  activityType: string | null;
 }
 
 export interface VoxelVisual {
@@ -27,10 +27,10 @@ export interface VoxelVisual {
 }
 
 export interface VoxelState {
-  is_occupied: boolean;
-  is_conflict: boolean;
-  is_violation: boolean;
-  violation_details: string[];
+  isOccupied: boolean;
+  isConflict: boolean;
+  isViolation: boolean;
+  violationDetails: string[];
 }
 
 export interface VoxelMetadata {
@@ -48,28 +48,28 @@ export interface Voxel {
 }
 
 export interface VoxelGridDimensions {
-  x_size: number;
-  y_size: number;
-  z_size: number;
-  x_labels: string[];
-  y_labels: string[];
-  z_labels: string[];
+  xSize: number;
+  ySize: number;
+  zSize: number;
+  xLabels: string[];
+  yLabels: string[];
+  zLabels: string[];
 }
 
 export interface VoxelGridStatistics {
-  total_assignments: number;
-  total_conflicts: number;
-  total_violations: number;
-  coverage_percentage: number;
+  totalAssignments: number;
+  totalConflicts: number;
+  totalViolations: number;
+  coveragePercentage: number;
 }
 
 export interface VoxelGridData {
   dimensions: VoxelGridDimensions;
   voxels: Voxel[];
   statistics: VoxelGridStatistics;
-  date_range: {
-    start_date: string | null;
-    end_date: string | null;
+  dateRange: {
+    startDate: string | null;
+    endDate: string | null;
   };
   error?: string;
 }
@@ -110,7 +110,7 @@ export interface VoxelConflict {
  */
 export interface CoverageGap {
   x: number;
-  time_label: string;
-  coverage_count: number;
+  timeLabel: string;
+  coverageCount: number;
   severity: "critical" | "warning";
 }

@@ -97,8 +97,8 @@ export function useBlockAssignmentImport(): UseBlockAssignmentImportReturn {
       // Initialize duplicate actions
       const initialActions: Record<number, DuplicateAction> = {};
       data.items.forEach((item) => {
-        if (item.is_duplicate) {
-          initialActions[item.row_number] = DuplicateAction.SKIP;
+        if (item.isDuplicate) {
+          initialActions[item.rowNumber] = DuplicateAction.SKIP;
         }
       });
       setDuplicateActions(initialActions);
@@ -114,11 +114,11 @@ export function useBlockAssignmentImport(): UseBlockAssignmentImportReturn {
       if (!preview) throw new Error("No preview data");
 
       return executeBlockAssignmentImport({
-        preview_id: preview.preview_id,
-        academic_year: preview.academicYear,
-        skip_duplicates: !updateDuplicates,
-        update_duplicates: updateDuplicates,
-        row_overrides: duplicateActions,
+        previewId: preview.previewId,
+        academicYear: preview.academicYear,
+        skipDuplicates: !updateDuplicates,
+        updateDuplicates: updateDuplicates,
+        rowOverrides: duplicateActions,
       });
     },
     onSuccess: (data) => {
@@ -177,8 +177,8 @@ export function useBlockAssignmentImport(): UseBlockAssignmentImportReturn {
 
       const newActions: Record<number, DuplicateAction> = {};
       preview.items.forEach((item) => {
-        if (item.is_duplicate) {
-          newActions[item.row_number] = action;
+        if (item.isDuplicate) {
+          newActions[item.rowNumber] = action;
         }
       });
       setDuplicateActions(newActions);
@@ -224,18 +224,18 @@ export function useBlockAssignmentImport(): UseBlockAssignmentImportReturn {
   }, [step, reset]);
 
   // Computed values
-  const matchedCount = preview?.matched_count ?? 0;
+  const matchedCount = preview?.matchedCount ?? 0;
   const errorCount =
-    (preview?.unknown_rotation_count ?? 0) +
-    (preview?.unknown_resident_count ?? 0) +
-    (preview?.invalid_count ?? 0);
+    (preview?.unknownRotationCount ?? 0) +
+    (preview?.unknownResidentCount ?? 0) +
+    (preview?.invalidCount ?? 0);
 
   const canImport =
     preview !== null &&
     matchedCount > 0 &&
-    preview.unknown_rotation_count === 0 &&
-    preview.unknown_resident_count === 0 &&
-    preview.invalid_count === 0;
+    preview.unknownRotationCount === 0 &&
+    preview.unknownResidentCount === 0 &&
+    preview.invalidCount === 0;
 
   return {
     // State

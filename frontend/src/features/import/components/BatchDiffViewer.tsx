@@ -20,7 +20,7 @@ export function BatchDiffViewer({
   // Create a quick lookup for conflicts by staged ID
   const conflictMap = useMemo(() => {
     const map = new Map<string, ImportConflictDetail>();
-    conflicts.forEach((c) => map.set(c.staged_assignment_id, c));
+    conflicts.forEach((c) => map.set(c.stagedAssignmentId, c));
     return map;
   }, [conflicts]);
 
@@ -47,8 +47,8 @@ export function BatchDiffViewer({
           <tbody className="divide-y divide-slate-800">
             {assignments.map((assignment) => {
               const conflict = conflictMap.get(assignment.id);
-              const isOverwrite = conflict?.conflict_type === "overwrite";
-              const isDuplicate = conflict?.conflict_type === "duplicate";
+              const isOverwrite = conflict?.conflictType === "overwrite";
+              const isDuplicate = conflict?.conflictType === "duplicate";
               const isNew = !conflict;
 
               return (
@@ -70,21 +70,21 @@ export function BatchDiffViewer({
                   `}
                 >
                   <td className="px-4 py-3 text-slate-500 text-xs font-mono">
-                    {assignment.row_number}
+                    {assignment.rowNumber}
                   </td>
                   <td className="px-4 py-3 font-medium text-white">
-                    {assignment.person_name}
-                    {assignment.matched_person_name &&
-                      assignment.matched_person_name !==
-                        assignment.person_name && (
+                    {assignment.personName}
+                    {assignment.matchedPersonName &&
+                      assignment.matchedPersonName !==
+                        assignment.personName && (
                         <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                           <ArrowRight className="w-3 h-3" />
-                          Matched: {assignment.matched_person_name}
+                          Matched: {assignment.matchedPersonName}
                         </div>
                       )}
                   </td>
                   <td className="px-4 py-3 text-slate-300">
-                    {assignment.assignment_date}
+                    {assignment.assignmentDate}
                     {assignment.slot && (
                       <span className="ml-2 text-xs bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">
                         {assignment.slot}
@@ -93,19 +93,19 @@ export function BatchDiffViewer({
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      {isOverwrite && conflict?.existing_rotation ? (
+                      {isOverwrite && conflict?.existingRotation ? (
                         <>
                           <span className="text-red-400 line-through decoration-red-500/50">
-                            {conflict.existing_rotation}
+                            {conflict.existingRotation}
                           </span>
                           <ArrowRight className="w-4 h-4 text-slate-600" />
                           <span className="text-green-400 font-medium">
-                            {assignment.rotation_name}
+                            {assignment.rotationName}
                           </span>
                         </>
                       ) : (
                         <span className="text-green-400 font-medium">
-                          {assignment.rotation_name}
+                          {assignment.rotationName}
                         </span>
                       )}
                     </div>

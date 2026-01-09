@@ -27,13 +27,13 @@ export interface Procedure {
   description: string | null;
   category: string | null;
   specialty: string | null;
-  supervision_ratio: number;
-  requires_certification: boolean;
-  complexity_level: ComplexityLevel;
-  min_pgy_level: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  supervisionRatio: number;
+  requiresCertification: boolean;
+  complexityLevel: ComplexityLevel;
+  minPgyLevel: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
@@ -41,20 +41,20 @@ export interface Procedure {
  */
 export interface Credential {
   id: string;
-  person_id: string;
-  procedure_id: string;
+  personId: string;
+  procedureId: string;
   status: ProcedureStatus;
-  competency_level: CompetencyLevel;
-  issued_date: string | null;
-  expiration_date: string | null;
-  last_verified_date: string | null;
-  max_concurrent_residents: number | null;
-  max_per_week: number | null;
-  max_per_academic_year: number | null;
+  competencyLevel: CompetencyLevel;
+  issuedDate: string | null;
+  expirationDate: string | null;
+  lastVerifiedDate: string | null;
+  maxConcurrentResidents: number | null;
+  maxPerWeek: number | null;
+  maxPerAcademicYear: number | null;
   notes: string | null;
-  is_valid: boolean;
-  created_at: string;
-  updated_at: string;
+  isValid: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
@@ -89,11 +89,11 @@ export interface CredentialWithPerson extends Credential {
  * Faculty credential summary
  */
 export interface FacultyCredentialSummary {
-  person_id: string;
-  person_name: string;
-  total_credentials: number;
-  active_credentials: number;
-  expiring_soon: number;
+  personId: string;
+  personName: string;
+  totalCredentials: number;
+  activeCredentials: number;
+  expiringSoon: number;
   procedures: Array<{
     id: string;
     name: string;
@@ -112,32 +112,32 @@ export const procedureMockFactories = {
     description: 'Diagnostic and therapeutic colonoscopy procedure',
     category: 'surgical',
     specialty: 'Gastroenterology',
-    supervision_ratio: 1,
-    requires_certification: true,
-    complexity_level: 'standard',
-    min_pgy_level: 2,
-    is_active: true,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    supervisionRatio: 1,
+    requiresCertification: true,
+    complexityLevel: 'standard',
+    minPgyLevel: 2,
+    isActive: true,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
     ...overrides,
   }),
 
   credential: (overrides: Partial<Credential> = {}): Credential => ({
     id: 'cred-1',
-    person_id: 'person-1',
-    procedure_id: 'proc-1',
+    personId: 'person-1',
+    procedureId: 'proc-1',
     status: 'active',
-    competency_level: 'qualified',
-    issued_date: '2024-01-01',
-    expiration_date: '2025-01-01',
-    last_verified_date: '2024-06-01',
-    max_concurrent_residents: 2,
-    max_per_week: 10,
-    max_per_academic_year: 200,
+    competencyLevel: 'qualified',
+    issuedDate: '2024-01-01',
+    expirationDate: '2025-01-01',
+    lastVerifiedDate: '2024-06-01',
+    maxConcurrentResidents: 2,
+    maxPerWeek: 10,
+    maxPerAcademicYear: 200,
     notes: null,
-    is_valid: true,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    isValid: true,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
     ...overrides,
   }),
 
@@ -163,11 +163,11 @@ export const procedureMockFactories = {
   }),
 
   facultySummary: (overrides: Partial<FacultyCredentialSummary> = {}): FacultyCredentialSummary => ({
-    person_id: 'person-1',
-    person_name: 'Dr. John Smith',
-    total_credentials: 5,
-    active_credentials: 4,
-    expiring_soon: 1,
+    personId: 'person-1',
+    personName: 'Dr. John Smith',
+    totalCredentials: 5,
+    activeCredentials: 4,
+    expiringSoon: 1,
     procedures: [
       { id: 'proc-1', name: 'Colonoscopy', specialty: 'Gastroenterology', category: 'surgical' },
       { id: 'proc-2', name: 'Upper Endoscopy', specialty: 'Gastroenterology', category: 'surgical' },
@@ -181,8 +181,8 @@ export const procedureMockFactories = {
     ...procedureMockFactories.credential(),
     id: 'cred-expired',
     status: 'expired',
-    expiration_date: '2023-01-01',
-    is_valid: false,
+    expirationDate: '2023-01-01',
+    isValid: false,
     ...overrides,
   }),
 
@@ -190,7 +190,7 @@ export const procedureMockFactories = {
     ...procedureMockFactories.credential(),
     id: 'cred-suspended',
     status: 'suspended',
-    is_valid: false,
+    isValid: false,
     notes: 'Suspended pending recertification review',
     ...overrides,
   }),
@@ -199,9 +199,9 @@ export const procedureMockFactories = {
     ...procedureMockFactories.credential(),
     id: 'cred-pending',
     status: 'pending',
-    issued_date: null,
-    expiration_date: null,
-    is_valid: false,
+    issuedDate: null,
+    expirationDate: null,
+    isValid: false,
     notes: 'Awaiting certification completion',
     ...overrides,
   }),
@@ -212,7 +212,7 @@ export const procedureMockFactories = {
     return {
       ...procedureMockFactories.credential(),
       id: 'cred-expiring',
-      expiration_date: expirationDate.toISOString().split('T')[0],
+      expirationDate: expirationDate.toISOString().split('T')[0],
       ...overrides,
     };
   },
@@ -229,23 +229,23 @@ export const procedureMockResponses = {
         id: 'proc-2',
         name: 'Upper Endoscopy',
         description: 'Diagnostic and therapeutic upper GI endoscopy',
-        complexity_level: 'standard',
+        complexityLevel: 'standard',
       }),
       procedureMockFactories.procedure({
         id: 'proc-3',
         name: 'Joint Injection',
         specialty: 'Sports Medicine',
         category: 'office',
-        complexity_level: 'basic',
-        min_pgy_level: 1,
+        complexityLevel: 'basic',
+        minPgyLevel: 1,
       }),
       procedureMockFactories.procedure({
         id: 'proc-4',
         name: 'Arthroscopic Surgery',
         specialty: 'Orthopedics',
         category: 'surgical',
-        complexity_level: 'advanced',
-        min_pgy_level: 3,
+        complexityLevel: 'advanced',
+        minPgyLevel: 3,
       }),
     ],
     total: 4,
@@ -256,8 +256,8 @@ export const procedureMockResponses = {
       procedureMockFactories.credential(),
       procedureMockFactories.credential({
         id: 'cred-2',
-        procedure_id: 'proc-2',
-        competency_level: 'expert',
+        procedureId: 'proc-2',
+        competencyLevel: 'expert',
       }),
       procedureMockFactories.expiredCredential(),
     ],
@@ -269,8 +269,8 @@ export const procedureMockResponses = {
       procedureMockFactories.credentialWithProcedure(),
       procedureMockFactories.credentialWithProcedure({
         id: 'cred-2',
-        procedure_id: 'proc-2',
-        competency_level: 'expert',
+        procedureId: 'proc-2',
+        competencyLevel: 'expert',
         procedure: {
           id: 'proc-2',
           name: 'Upper Endoscopy',
@@ -285,22 +285,22 @@ export const procedureMockResponses = {
   facultyCredentialsList: [
     procedureMockFactories.facultySummary(),
     procedureMockFactories.facultySummary({
-      person_id: 'person-2',
-      person_name: 'Dr. Jane Doe',
-      total_credentials: 3,
-      active_credentials: 3,
-      expiring_soon: 0,
+      personId: 'person-2',
+      personName: 'Dr. Jane Doe',
+      totalCredentials: 3,
+      activeCredentials: 3,
+      expiringSoon: 0,
       procedures: [
         { id: 'proc-3', name: 'Joint Injection', specialty: 'Sports Medicine', category: 'office' },
         { id: 'proc-4', name: 'Arthroscopic Surgery', specialty: 'Orthopedics', category: 'surgical' },
       ],
     }),
     procedureMockFactories.facultySummary({
-      person_id: 'person-3',
-      person_name: 'Dr. Mike Wilson',
-      total_credentials: 2,
-      active_credentials: 1,
-      expiring_soon: 1,
+      personId: 'person-3',
+      personName: 'Dr. Mike Wilson',
+      totalCredentials: 2,
+      activeCredentials: 1,
+      expiringSoon: 1,
       procedures: [
         { id: 'proc-1', name: 'Colonoscopy', specialty: 'Gastroenterology', category: 'surgical' },
       ],
@@ -308,9 +308,9 @@ export const procedureMockResponses = {
   ],
 
   qualifiedFaculty: {
-    procedure_id: 'proc-1',
-    procedure_name: 'Colonoscopy',
-    qualified_faculty: [
+    procedureId: 'proc-1',
+    procedureName: 'Colonoscopy',
+    qualifiedFaculty: [
       { id: 'person-1', name: 'Dr. John Smith', type: 'faculty' },
       { id: 'person-3', name: 'Dr. Mike Wilson', type: 'faculty' },
     ],

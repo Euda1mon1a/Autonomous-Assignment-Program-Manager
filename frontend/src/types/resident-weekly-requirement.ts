@@ -282,18 +282,18 @@ export function validateWeeklyRequirement(
   const errors: WeeklyRequirementFormErrors = {};
 
   // FM Clinic validation
-  if (!validateHalfDayRange(data.fm_clinic_min_per_week) ||
-      !validateHalfDayRange(data.fm_clinic_max_per_week)) {
-    errors.fm_clinic = 'FM clinic values must be between 0 and 14';
-  } else if (!validateMinMax(data.fm_clinic_min_per_week, data.fm_clinic_max_per_week)) {
-    errors.fm_clinic = 'FM clinic minimum cannot exceed maximum';
+  if (!validateHalfDayRange(data.fmClinicMinPerWeek) ||
+      !validateHalfDayRange(data.fmClinicMaxPerWeek)) {
+    errors.fmClinic = 'FM clinic values must be between 0 and 14';
+  } else if (!validateMinMax(data.fmClinicMinPerWeek, data.fmClinicMaxPerWeek)) {
+    errors.fmClinic = 'FM clinic minimum cannot exceed maximum';
   }
 
   // Specialty validation
-  if (!validateHalfDayRange(data.specialty_min_per_week) ||
-      !validateHalfDayRange(data.specialty_max_per_week)) {
+  if (!validateHalfDayRange(data.specialtyMinPerWeek) ||
+      !validateHalfDayRange(data.specialtyMaxPerWeek)) {
     errors.specialty = 'Specialty values must be between 0 and 14';
-  } else if (!validateMinMax(data.specialty_min_per_week, data.specialty_max_per_week)) {
+  } else if (!validateMinMax(data.specialtyMinPerWeek, data.specialtyMaxPerWeek)) {
     errors.specialty = 'Specialty minimum cannot exceed maximum';
   }
 

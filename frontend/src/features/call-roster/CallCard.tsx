@@ -60,9 +60,9 @@ export function CallCard({
             <span className="font-semibold text-gray-900">
               {assignment.person.name}
             </span>
-            {assignment.person.pgy_level && (
+            {assignment.person.pgyLevel && (
               <span className="text-xs text-gray-500">
-                PGY-{assignment.person.pgy_level}
+                PGY-{assignment.person.pgyLevel}
               </span>
             )}
           </div>
@@ -99,10 +99,10 @@ export function CallCard({
           )}
 
           {/* Rotation Name */}
-          {assignment.rotation_name && (
+          {assignment.rotationName && (
             <div className="text-sm">
               <span className="font-medium text-gray-700">Rotation:</span>{' '}
-              <span className="text-gray-600">{assignment.rotation_name}</span>
+              <span className="text-gray-600">{assignment.rotationName}</span>
             </div>
           )}
 
@@ -140,8 +140,8 @@ export function CallCardCompact({ assignment }: { assignment: CallAssignment }) 
         }`}
       >
         <div className="font-medium truncate">{assignment.person.name}</div>
-        {assignment.person.pgy_level && (
-          <div className="text-xs opacity-75">PGY-{assignment.person.pgy_level}</div>
+        {assignment.person.pgyLevel && (
+          <div className="text-xs opacity-75">PGY-{assignment.person.pgyLevel}</div>
         )}
       </div>
 
@@ -149,13 +149,13 @@ export function CallCardCompact({ assignment }: { assignment: CallAssignment }) 
       {showTooltip && (
         <div className="absolute z-50 left-0 top-full mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg p-3 space-y-2">
           <div className="font-semibold">{assignment.person.name}</div>
-          {assignment.person.pgy_level && (
+          {assignment.person.pgyLevel && (
             <div className="text-sm text-gray-600">
-              PGY-{assignment.person.pgy_level} • {assignment.person.role}
+              PGY-{assignment.person.pgyLevel} • {assignment.person.role}
             </div>
           )}
-          {assignment.rotation_name && (
-            <div className="text-sm text-gray-600">{assignment.rotation_name}</div>
+          {assignment.rotationName && (
+            <div className="text-sm text-gray-600">{assignment.rotationName}</div>
           )}
           <div className="pt-2 border-t border-gray-200">
             <ContactInfo person={assignment.person} showLabel={false} compact={true} />
@@ -191,8 +191,8 @@ export function CallListItem({ assignment, showDate }: { assignment: CallAssignm
 
       <div className="flex-1">
         <div className="font-medium text-gray-900">{assignment.person.name}</div>
-        {assignment.person.pgy_level && (
-          <div className="text-sm text-gray-500">PGY-{assignment.person.pgy_level}</div>
+        {assignment.person.pgyLevel && (
+          <div className="text-sm text-gray-500">PGY-{assignment.person.pgyLevel}</div>
         )}
       </div>
 

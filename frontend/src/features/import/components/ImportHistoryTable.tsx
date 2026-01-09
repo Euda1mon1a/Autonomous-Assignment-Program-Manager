@@ -98,16 +98,16 @@ export function ImportHistoryTable({
               className="hover:bg-slate-800/30 transition-colors"
             >
               <td className="px-6 py-4 whitespace-nowrap text-slate-300">
-                {format(new Date(batch.created_at), "MMM d, yyyy HH:mm")}
+                {format(new Date(batch.createdAt), "MMM d, yyyy HH:mm")}
               </td>
               <td className="px-6 py-4 whitespace-nowrap font-medium text-white flex items-center gap-2">
                 <FileText className="w-4 h-4 text-slate-500" />
                 {batch.filename || "Untitled Batch"}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-slate-400">
-                {batch.target_start_date ? (
+                {batch.targetStartDate ? (
                   <span>
-                    {batch.target_start_date} → {batch.target_end_date}
+                    {batch.targetStartDate} → {batch.targetEndDate}
                   </span>
                 ) : (
                   <span className="text-slate-600 italic">No date range</span>
@@ -123,7 +123,7 @@ export function ImportHistoryTable({
                   </span>
                   <span className="text-slate-600">|</span>
                   <span className="text-red-400" title="Failed">
-                    {batch.counts.failed + batch.error_count}
+                    {batch.counts.failed + batch.errorCount}
                   </span>
                 </div>
               </td>

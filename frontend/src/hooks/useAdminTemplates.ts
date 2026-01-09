@@ -196,25 +196,11 @@ export function useBulkDeleteTemplates() {
   return useMutation<BatchTemplateResponse, ApiError, string[]>({
     mutationFn: async (templateIds) => {
       const request: BatchTemplateDeleteRequest = {
-        template_ids: templateIds,
-        dry_run: false,
+        templateIds: templateIds,
+        dryRun: false,
       };
-      // Use fetch with DELETE + body (axios del doesn't support body)
-      // Use the same API base URL as other endpoints
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-      const response = await fetch(`${apiBaseUrl}/rotation-templates/batch`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(request),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw { status: response.status, message: error.detail?.message || 'Batch delete failed', ...error };
-      }
-      return response.json();
+      // Use axios del with data - axios converts camelCase to snake_case automatically
+      return del<BatchTemplateResponse>('/rotation-templates/batch', { data: request });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({

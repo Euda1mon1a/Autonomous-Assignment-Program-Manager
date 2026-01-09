@@ -29,11 +29,11 @@ interface VoxelPosition {
 interface VoxelIdentity {
   assignment_id: string | null;
   person_id: string | null;
-  person_name: string | null;
+  personName: string | null;
   block_id: string | null;
-  block_date: string | null;
-  block_time_of_day: string | null;
-  activity_name: string | null;
+  blockDate: string | null;
+  blockTimeOfDay: string | null;
+  activityName: string | null;
   activity_type: string | null;
 }
 
@@ -46,8 +46,8 @@ interface VoxelVisual {
 
 interface VoxelState {
   is_occupied: boolean;
-  is_conflict: boolean;
-  is_violation: boolean;
+  isConflict: boolean;
+  isViolation: boolean;
   violation_details: string[];
 }
 
@@ -69,16 +69,16 @@ interface VoxelGridDimensions {
   x_size: number;
   y_size: number;
   z_size: number;
-  x_labels: string[];
-  y_labels: string[];
-  z_labels: string[];
+  xLabels: string[];
+  yLabels: string[];
+  zLabels: string[];
 }
 
 interface VoxelGridStatistics {
-  total_assignments: number;
-  total_conflicts: number;
+  totalAssignments: number;
+  totalConflicts: number;
   total_violations: number;
-  coverage_percentage: number;
+  coveragePercentage: number;
 }
 
 interface VoxelGridData {
@@ -277,7 +277,7 @@ export function VoxelScheduleView({
   const displayVoxels = useMemo(() => {
     if (!data?.voxels) return [];
     if (showConflictsOnly) {
-      return data.voxels.filter((v) => v.state.is_conflict || v.state.is_violation);
+      return data.voxels.filter((v) => v.state.isConflict || v.state.isViolation);
     }
     return data.voxels;
   }, [data?.voxels, showConflictsOnly]);
@@ -430,7 +430,7 @@ export function VoxelScheduleView({
         voxel.position.z,
         voxel.visual.color,
         voxel.visual.opacity,
-        voxel.state.is_conflict,
+        voxel.state.isConflict,
         isHovered,
         offsetX,
         offsetY
@@ -442,29 +442,29 @@ export function VoxelScheduleView({
     ctx.font = "12px monospace";
 
     // X-axis labels (time)
-    const xLabelCount = Math.min(data.dimensions.x_labels.length, 10);
-    const xStep = Math.ceil(data.dimensions.x_labels.length / xLabelCount);
-    for (let i = 0; i < data.dimensions.x_labels.length; i += xStep) {
+    const xLabelCount = Math.min(data.dimensions.xLabels.length, 10);
+    const xStep = Math.ceil(data.dimensions.xLabels.length / xLabelCount);
+    for (let i = 0; i < data.dimensions.xLabels.length; i += xStep) {
       const pos = isoProject(i, y_size + 1, 0, offsetX, offsetY);
       ctx.save();
       ctx.translate(pos.screenX, pos.screenY);
       ctx.rotate(-Math.PI / 6);
-      ctx.fillText(data.dimensions.x_labels[i]?.slice(5) || "", 0, 0);
+      ctx.fillText(data.dimensions.xLabels[i]?.slice(5) || "", 0, 0);
       ctx.restore();
     }
 
     // Y-axis labels (people)
-    const yLabelCount = Math.min(data.dimensions.y_labels.length, 10);
-    const yStep = Math.ceil(data.dimensions.y_labels.length / yLabelCount);
-    for (let i = 0; i < data.dimensions.y_labels.length; i += yStep) {
+    const yLabelCount = Math.min(data.dimensions.yLabels.length, 10);
+    const yStep = Math.ceil(data.dimensions.yLabels.length / yLabelCount);
+    for (let i = 0; i < data.dimensions.yLabels.length; i += yStep) {
       const pos = isoProject(-1, i, 0, offsetX, offsetY);
-      ctx.fillText(data.dimensions.y_labels[i]?.slice(0, 10) || "", pos.screenX - 80, pos.screenY);
+      ctx.fillText(data.dimensions.yLabels[i]?.slice(0, 10) || "", pos.screenX - 80, pos.screenY);
     }
 
     // Z-axis labels (activity types)
-    for (let i = 0; i < data.dimensions.z_labels.length; i++) {
+    for (let i = 0; i < data.dimensions.zLabels.length; i++) {
       const pos = isoProject(-1, y_size, i, offsetX, offsetY);
-      ctx.fillText(data.dimensions.z_labels[i] || "", pos.screenX - 80, pos.screenY);
+      ctx.fillText(data.dimensions.zLabels[i] || "", pos.screenX - 80, pos.screenY);
     }
 
     ctx.restore();
@@ -515,9 +515,9 @@ export function VoxelScheduleView({
         </div>
         {data && (
           <div className="mt-4 pt-4 border-t border-gray-600">
-            <p>Assignments: {data.statistics.total_assignments}</p>
-            <p>Conflicts: {data.statistics.total_conflicts}</p>
-            <p>Coverage: {data.statistics.coverage_percentage.toFixed(1)}%</p>
+            <p>Assignments: {data.statistics.totalAssignments}</p>
+            <p>Conflicts: {data.statistics.totalConflicts}</p>
+            <p>Coverage: {data.statistics.coveragePercentage.toFixed(1)}%</p>
           </div>
         )}
       </div>
@@ -555,12 +555,12 @@ export function VoxelScheduleView({
           className="absolute z-20 bg-gray-800 text-white p-3 rounded-lg shadow-lg text-sm pointer-events-none"
           style={{ top: "50%", left: "50%" }}
         >
-          <div className="font-bold">{hoveredVoxel.identity.person_name}</div>
-          <div className="text-gray-300">{hoveredVoxel.identity.activity_name}</div>
+          <div className="font-bold">{hoveredVoxel.identity.personName}</div>
+          <div className="text-gray-300">{hoveredVoxel.identity.activityName}</div>
           <div className="text-gray-400">
-            {hoveredVoxel.identity.block_date} {hoveredVoxel.identity.block_time_of_day}
+            {hoveredVoxel.identity.blockDate} {hoveredVoxel.identity.blockTimeOfDay}
           </div>
-          {hoveredVoxel.state.is_conflict && (
+          {hoveredVoxel.state.isConflict && (
             <div className="text-red-400 mt-1">CONFLICT</div>
           )}
         </div>

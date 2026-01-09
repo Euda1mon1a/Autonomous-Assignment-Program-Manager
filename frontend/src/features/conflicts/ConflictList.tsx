@@ -75,7 +75,7 @@ const STATUS_OPTIONS: { value: ConflictStatus; label: string }[] = [
 const SORT_OPTIONS: { value: ConflictSortField; label: string }[] = [
   { value: 'severity', label: 'Severity' },
   { value: 'date', label: 'Conflict Date' },
-  { value: 'detected_at', label: 'Detection Date' },
+  { value: 'detectedAt', label: 'Detection Date' },
   { value: 'type', label: 'Type' },
   { value: 'status', label: 'Status' },
 ];
@@ -244,7 +244,7 @@ export function ConflictList({
     if (filters.types?.length) count++;
     if (filters.severities?.length) count++;
     if (filters.statuses?.length) count++;
-    if (filters.date_range) count++;
+    if (filters.dateRange) count++;
     if (searchQuery) count++;
     return count;
   }, [filters, searchQuery]);
@@ -366,11 +366,11 @@ export function ConflictList({
                 <div className="flex items-center gap-2">
                   <input
                     type="date"
-                    value={filters.date_range?.start || ''}
+                    value={filters.dateRange?.start || ''}
                     onChange={(e) =>
-                      handleFilterChange('date_range', {
+                      handleFilterChange('dateRange', {
                         start: e.target.value,
-                        end: filters.date_range?.end || '',
+                        end: filters.dateRange?.end || '',
                       })
                     }
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -378,10 +378,10 @@ export function ConflictList({
                   <span className="text-gray-500">to</span>
                   <input
                     type="date"
-                    value={filters.date_range?.end || ''}
+                    value={filters.dateRange?.end || ''}
                     onChange={(e) =>
-                      handleFilterChange('date_range', {
-                        start: filters.date_range?.start || '',
+                      handleFilterChange('dateRange', {
+                        start: filters.dateRange?.start || '',
                         end: e.target.value,
                       })
                     }

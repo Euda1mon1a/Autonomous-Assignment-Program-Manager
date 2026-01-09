@@ -26,12 +26,12 @@ export function ResilienceHub() {
   // Auto-enable emergency visual mode if system status is CRITICAL or EMERGENCY
   useEffect(() => {
     if (
-      data?.overall_status === OverallStatus.CRITICAL ||
-      data?.overall_status === OverallStatus.EMERGENCY
+      data?.overallStatus === OverallStatus.CRITICAL ||
+      data?.overallStatus === OverallStatus.EMERGENCY
     ) {
       setEmergencyMode(true);
     }
-  }, [data?.overall_status]);
+  }, [data?.overallStatus]);
 
   return (
     <div

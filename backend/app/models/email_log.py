@@ -65,7 +65,14 @@ class EmailLog(Base):
 
     # Delivery tracking
     status = Column(
-        Enum(EmailStatus), default=EmailStatus.QUEUED, nullable=False, index=True
+        Enum(
+            EmailStatus,
+            values_callable=lambda x: [e.value for e in x],
+            create_type=False,
+        ),
+        default=EmailStatus.QUEUED,
+        nullable=False,
+        index=True,
     )
     error_message = Column(Text, nullable=True)
     sent_at = Column(DateTime, nullable=True)

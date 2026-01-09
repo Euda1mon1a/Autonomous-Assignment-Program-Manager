@@ -168,8 +168,8 @@ export function BlockAssignmentImportModal({
     const request: QuickTemplateCreateRequest = {
       abbreviation: templateAbbrev,
       name: templateName,
-      activity_type: templateType,
-      leave_eligible: templateLeaveEligible,
+      activityType: templateType,
+      leaveEligible: templateLeaveEligible,
     };
     await createTemplate(request);
     setTemplateDialogOpen(false);
@@ -295,45 +295,45 @@ export function BlockAssignmentImportModal({
         {/* Summary */}
         <div className="grid grid-cols-5 gap-2 text-sm">
           <div className="p-2 bg-gray-100 rounded text-center">
-            <div className="font-semibold">{preview.total_rows}</div>
+            <div className="font-semibold">{preview.totalRows}</div>
             <div className="text-gray-600">Total</div>
           </div>
           <div className="p-2 bg-green-100 rounded text-center">
-            <div className="font-semibold text-green-700">{preview.matched_count}</div>
+            <div className="font-semibold text-green-700">{preview.matchedCount}</div>
             <div className="text-green-600">Matched</div>
           </div>
           <div className="p-2 bg-yellow-100 rounded text-center">
-            <div className="font-semibold text-yellow-700">{preview.unknown_rotation_count}</div>
+            <div className="font-semibold text-yellow-700">{preview.unknownRotationCount}</div>
             <div className="text-yellow-600">Unknown Rot.</div>
           </div>
           <div className="p-2 bg-red-100 rounded text-center">
-            <div className="font-semibold text-red-700">{preview.unknown_resident_count}</div>
+            <div className="font-semibold text-red-700">{preview.unknownResidentCount}</div>
             <div className="text-red-600">Unknown Res.</div>
           </div>
           <div className="p-2 bg-gray-200 rounded text-center">
-            <div className="font-semibold text-gray-700">{preview.duplicate_count}</div>
+            <div className="font-semibold text-gray-700">{preview.duplicateCount}</div>
             <div className="text-gray-600">Duplicates</div>
           </div>
         </div>
 
         {/* Unknown Rotations - Quick Create */}
-        {preview.unknown_rotations.length > 0 && (
+        {preview.unknownRotations.length > 0 && (
           <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
             <h4 className="font-medium text-yellow-800 mb-2 flex items-center">
               <AlertTriangle className="w-4 h-4 mr-2" />
-              Unknown Rotations ({preview.unknown_rotations.length})
+              Unknown Rotations ({preview.unknownRotations.length})
             </h4>
             <div className="space-y-2">
-              {preview.unknown_rotations.map((item) => (
+              {preview.unknownRotations.map((item) => (
                 <div
                   key={item.abbreviation}
                   className="flex items-center justify-between text-sm"
                 >
                   <span>
                     <strong>{item.abbreviation}</strong> ({item.occurrences} rows)
-                    {item.suggested_name && (
+                    {item.suggestedName && (
                       <span className="text-gray-500 ml-2">
-                        Suggested: {item.suggested_name}
+                        Suggested: {item.suggestedName}
                       </span>
                     )}
                   </span>
@@ -352,7 +352,7 @@ export function BlockAssignmentImportModal({
         )}
 
         {/* Duplicate Actions */}
-        {preview.duplicate_count > 0 && (
+        {preview.duplicateCount > 0 && (
           <div className="p-3 bg-gray-50 border border-gray-200 rounded-md">
             <h4 className="font-medium text-gray-800 mb-2">
               Duplicate Handling
@@ -400,27 +400,27 @@ export function BlockAssignmentImportModal({
             </thead>
             <tbody>
               {preview.items.slice(0, 50).map((item) => (
-                <tr key={item.row_number} className="border-t">
-                  <td className="px-3 py-2">{item.row_number}</td>
+                <tr key={item.rowNumber} className="border-t">
+                  <td className="px-3 py-2">{item.rowNumber}</td>
                   <td className="px-3 py-2">{item.blockNumber}</td>
                   <td className="px-3 py-2">
-                    <span className="font-mono">{item.rotation_input}</span>
-                    {item.matched_rotation_name && (
+                    <span className="font-mono">{item.rotationInput}</span>
+                    {item.matchedRotationName && (
                       <span className="text-gray-500 ml-1">
-                        ({item.matched_rotation_name})
+                        ({item.matchedRotationName})
                       </span>
                     )}
                   </td>
                   <td className="px-3 py-2 font-mono">
-                    {item.resident_display}
+                    {item.residentDisplay}
                   </td>
                   <td className="px-3 py-2">
                     <span
                       className={`inline-block px-2 py-0.5 rounded text-xs ${
-                        MATCH_STATUS_COLORS[item.match_status]
+                        MATCH_STATUS_COLORS[item.matchStatus]
                       }`}
                     >
-                      {MATCH_STATUS_LABELS[item.match_status]}
+                      {MATCH_STATUS_LABELS[item.matchStatus]}
                     </span>
                   </td>
                 </tr>
@@ -487,35 +487,35 @@ export function BlockAssignmentImportModal({
         <div className="grid grid-cols-4 gap-2 text-sm">
           <div className="p-3 bg-green-100 rounded text-center">
             <div className="text-2xl font-bold text-green-700">
-              {result.imported_count}
+              {result.importedCount}
             </div>
             <div className="text-green-600">Imported</div>
           </div>
           <div className="p-3 bg-blue-100 rounded text-center">
             <div className="text-2xl font-bold text-blue-700">
-              {result.updated_count}
+              {result.updatedCount}
             </div>
             <div className="text-blue-600">Updated</div>
           </div>
           <div className="p-3 bg-gray-100 rounded text-center">
             <div className="text-2xl font-bold text-gray-700">
-              {result.skipped_count}
+              {result.skippedCount}
             </div>
             <div className="text-gray-600">Skipped</div>
           </div>
           <div className="p-3 bg-red-100 rounded text-center">
             <div className="text-2xl font-bold text-red-700">
-              {result.failed_count}
+              {result.failedCount}
             </div>
             <div className="text-red-600">Failed</div>
           </div>
         </div>
 
-        {result.error_messages.length > 0 && (
+        {result.errorMessages.length > 0 && (
           <div className="p-3 bg-red-50 border border-red-200 rounded-md">
             <h4 className="font-medium text-red-800 mb-2">Errors</h4>
             <ul className="list-disc list-inside text-sm text-red-700">
-              {result.error_messages.map((msg, idx) => (
+              {result.errorMessages.map((msg, idx) => (
                 <li key={idx}>{msg}</li>
               ))}
             </ul>

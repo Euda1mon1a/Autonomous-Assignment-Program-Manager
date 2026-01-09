@@ -50,8 +50,23 @@ class SwapRecord(Base):
         PGUUID(as_uuid=True), ForeignKey("people.id"), nullable=False
     )
     target_week = Column(Date, nullable=True)
-    swap_type = Column(SQLEnum(SwapType), nullable=False)
-    status = Column(SQLEnum(SwapStatus), default=SwapStatus.PENDING, nullable=False)
+    swap_type = Column(
+        SQLEnum(
+            SwapType,
+            values_callable=lambda x: [e.value for e in x],
+            create_type=False,
+        ),
+        nullable=False,
+    )
+    status = Column(
+        SQLEnum(
+            SwapStatus,
+            values_callable=lambda x: [e.value for e in x],
+            create_type=False,
+        ),
+        default=SwapStatus.PENDING,
+        nullable=False,
+    )
     requested_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     requested_by_id = Column(
         PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True

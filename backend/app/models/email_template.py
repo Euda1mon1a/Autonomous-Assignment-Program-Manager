@@ -40,7 +40,15 @@ class EmailTemplate(Base):
 
     # Template identification
     name = Column(String(100), unique=True, nullable=False, index=True)
-    template_type = Column(Enum(EmailTemplateType), nullable=False, index=True)
+    template_type = Column(
+        Enum(
+            EmailTemplateType,
+            values_callable=lambda x: [e.value for e in x],
+            create_type=False,
+        ),
+        nullable=False,
+        index=True,
+    )
 
     # Template content (supports Jinja2 variable substitution)
     subject_template = Column(String(500), nullable=False)

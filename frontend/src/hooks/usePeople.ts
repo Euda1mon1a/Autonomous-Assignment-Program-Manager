@@ -21,7 +21,7 @@ import type {
  * Single person update in a batch operation
  */
 export interface BatchPersonUpdateItem {
-  person_id: UUID
+  personId: UUID
   updates: PersonUpdate
 }
 
@@ -30,15 +30,15 @@ export interface BatchPersonUpdateItem {
  */
 export interface BatchPersonUpdateRequest {
   people: BatchPersonUpdateItem[]
-  dry_run?: boolean
+  dryRun?: boolean
 }
 
 /**
  * Request for batch delete operation - atomic all-or-nothing
  */
 export interface BatchPersonDeleteRequest {
-  person_ids: UUID[]
-  dry_run?: boolean
+  personIds: UUID[]
+  dryRun?: boolean
 }
 
 /**
@@ -46,7 +46,7 @@ export interface BatchPersonDeleteRequest {
  */
 export interface BatchOperationResult {
   index: number
-  person_id: UUID | null
+  personId: UUID | null
   success: boolean
   error: string | null
 }
@@ -55,13 +55,13 @@ export interface BatchOperationResult {
  * Response from batch operations
  */
 export interface BatchPersonResponse {
-  operation_type: 'delete' | 'update' | 'create'
+  operationType: 'delete' | 'update' | 'create'
   total: number
   succeeded: number
   failed: number
   results: BatchOperationResult[]
-  dry_run: boolean
-  created_ids?: UUID[] | null
+  dryRun: boolean
+  createdIds?: UUID[] | null
 }
 
 // ============================================================================
@@ -713,24 +713,11 @@ export function useBulkDeletePeople() {
   return useMutation<BatchPersonResponse, ApiError, string[]>({
     mutationFn: async (personIds) => {
       const request: BatchPersonDeleteRequest = {
-        person_ids: personIds,
-        dry_run: false,
+        personIds: personIds,
+        dryRun: false,
       }
-      // Use fetch with DELETE + body (axios del doesn't support body)
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
-      const response = await fetch(`${apiBaseUrl}/people/batch`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(request),
-      })
-      if (!response.ok) {
-        const error = await response.json()
-        throw { status: response.status, message: error.detail?.message || 'Batch delete failed', ...error }
-      }
-      return response.json()
+      // Use axios del with data - axios converts camelCase to snake_case automatically
+      return del<BatchPersonResponse>('/people/batch', { data: request })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['people'] })
