@@ -123,13 +123,13 @@ function FmitScheduleTable({ schedule }: FmitScheduleTableProps) {
               <td className="px-4 py-3 text-white">Week {week.weekNumber}</td>
               <td className="px-4 py-3">
                 <span className="font-medium text-white">
-                  {week.faculty_name || <span className="text-slate-500 italic">Unassigned</span>}
+                  {week.faculty_name || <span className="text-slate-300 italic">Unassigned</span>}
                 </span>
               </td>
               <td className="px-4 py-3 text-slate-300">
                 {week.startDate && week.endDate
                   ? `${week.startDate} - ${week.endDate}`
-                  : <span className="text-slate-500">-</span>}
+                  : <span className="text-slate-300">-</span>}
               </td>
               <td className="px-4 py-3">
                 {week.isHolidayCall ? (
@@ -137,7 +137,7 @@ function FmitScheduleTable({ schedule }: FmitScheduleTableProps) {
                     Holiday
                   </span>
                 ) : (
-                  <span className="text-slate-500">-</span>
+                  <span className="text-slate-300">-</span>
                 )}
               </td>
             </tr>
@@ -565,10 +565,10 @@ export default function FmitImportPage() {
                       dragActive ? 'text-blue-400' : 'text-slate-500'
                     }`}
                   />
-                  <p className="text-lg font-medium text-slate-300 mb-2">
+                  <p className="text-lg font-medium text-slate-200 mb-2">
                     Drag and drop your Excel file here
                   </p>
-                  <p className="text-sm text-slate-500 mb-4">or click to browse</p>
+                  <p className="text-sm text-slate-300 mb-4">or click to browse</p>
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors"
@@ -576,7 +576,7 @@ export default function FmitImportPage() {
                   >
                     Select File
                   </button>
-                  <p className="text-xs text-slate-500 mt-4">
+                  <p className="text-xs text-slate-300 mt-4">
                     Supported formats: .xlsx, .xls (max 10MB)
                   </p>
                 </>
@@ -615,8 +615,8 @@ export default function FmitImportPage() {
 
           {/* Info Box */}
           <div className="p-4 bg-slate-800/30 border border-slate-700 rounded-lg">
-            <h3 className="font-medium text-slate-300 mb-2">About FMIT Import</h3>
-            <ul className="text-sm text-slate-400 space-y-1">
+            <h3 className="font-medium text-slate-200 mb-2">About FMIT Import</h3>
+            <ul className="text-sm text-slate-300 space-y-1">
               <li>
                 - Parses block schedules from Excel files with anchor-based fuzzy-tolerant parsing
               </li>

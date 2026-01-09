@@ -118,7 +118,7 @@ function WeekTabs({
   ];
 
   return (
-    <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+    <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200 dark:border-slate-700">
       <div className="flex items-center gap-1">
         {weeks.map((week) => (
           <button
@@ -129,10 +129,10 @@ function WeekTabs({
             className={`
               px-3 py-1.5 text-sm font-medium rounded-md transition-colors
               ${selectedWeek === week.value
-                ? 'bg-blue-100 text-blue-700'
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
                 : samePatternAllWeeks && week.value !== null
-                  ? 'text-gray-300 cursor-not-allowed'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'text-gray-300 dark:text-slate-600 cursor-not-allowed'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700'
               }
             `}
           >
@@ -146,9 +146,9 @@ function WeekTabs({
           type="checkbox"
           checked={samePatternAllWeeks}
           onChange={onToggleSamePattern}
-          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          className="rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 dark:bg-slate-700"
         />
-        <span className="text-gray-600">Same pattern all weeks</span>
+        <span className="text-gray-600 dark:text-slate-300">Same pattern all weeks</span>
       </label>
     </div>
   );
@@ -347,10 +347,10 @@ export function WeeklyGridEditor({
     <div className={`relative ${className}`}>
       {/* Grid Header */}
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
           Weekly Pattern
         </h3>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-600 dark:text-slate-300">
           Click a cell to assign a rotation template
         </p>
       </div>
@@ -368,13 +368,13 @@ export function WeeklyGridEditor({
         <table className="w-full border-collapse">
           <thead>
             <tr>
-              <th className="w-16 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="w-16 px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase tracking-wider">
                 Time
               </th>
               {days.map((day) => (
                 <th
                   key={day}
-                  className="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-2 py-2 text-center text-xs font-medium text-gray-600 dark:text-slate-300 uppercase tracking-wider"
                 >
                   {DAY_ABBREVIATIONS[day]}
                 </th>
@@ -384,7 +384,7 @@ export function WeeklyGridEditor({
           <tbody>
             {times.map((time) => (
               <tr key={time}>
-                <td className="px-2 py-2 text-sm font-medium text-gray-700">
+                <td className="px-2 py-2 text-sm font-medium text-gray-700 dark:text-slate-300">
                   {time}
                 </td>
                 {days.map((day) => {
@@ -427,8 +427,8 @@ export function WeeklyGridEditor({
 
       {/* Legend */}
       {availableTemplates.length > 0 && (
-        <div className="mt-6 pt-4 border-t border-gray-200">
-          <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-slate-700">
+          <div className="text-xs font-medium text-gray-600 dark:text-slate-300 uppercase tracking-wider mb-2">
             Legend
           </div>
           <div className="flex flex-wrap gap-3">
@@ -440,7 +440,7 @@ export function WeeklyGridEditor({
                 <span
                   className={`w-3 h-3 rounded ${template.backgroundColor || 'bg-gray-200'}`}
                 />
-                <span className="text-gray-600">
+                <span className="text-gray-700 dark:text-slate-300">
                   {template.displayAbbreviation}: {template.name}
                 </span>
               </div>

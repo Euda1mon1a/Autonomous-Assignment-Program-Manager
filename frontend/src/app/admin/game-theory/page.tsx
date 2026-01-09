@@ -117,7 +117,7 @@ export default function GameTheoryPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Game Theory Analysis
           </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
             Axelrod&apos;s Prisoner&apos;s Dilemma simulations for testing configurations
           </p>
         </div>
@@ -142,7 +142,7 @@ export default function GameTheoryPage() {
               className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
                 activeTab === tab
                   ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                  : 'border-transparent text-gray-600 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-200'
               }`}
             >
               {tab}
@@ -255,7 +255,7 @@ function OverviewTab({ summary }: { summary: GameTheorySummary | undefined }) {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-gray-500">No tournaments yet</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300">No tournaments yet</p>
           )}
         </div>
 
@@ -278,7 +278,7 @@ function OverviewTab({ summary }: { summary: GameTheorySummary | undefined }) {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-gray-500">No evolutions yet</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300">No evolutions yet</p>
           )}
         </div>
       </div>
@@ -317,7 +317,7 @@ function StrategiesTab({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-600 dark:text-gray-300">
           {strategies.length} strategies | {selectedStrategies.length} selected
         </p>
       </div>
@@ -336,7 +336,7 @@ function StrategiesTab({
 
       {strategies.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-500">No strategies yet. Click &quot;Create Default Strategies&quot; to get started.</p>
+          <p className="text-gray-600 dark:text-gray-300">No strategies yet. Click &quot;Create Default Strategies&quot; to get started.</p>
         </div>
       )}
     </div>
@@ -369,7 +369,7 @@ function TournamentsTab({
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
           Create New Tournament
         </h3>
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
           Select strategies below, then click &quot;Run Tournament&quot; to start a round-robin competition.
         </p>
         <div className="flex flex-wrap gap-2 mb-4">
@@ -405,7 +405,7 @@ function TournamentsTab({
           <TournamentCard key={tournament.id} tournament={tournament} />
         ))}
         {tournaments.length === 0 && (
-          <p className="text-gray-500 text-center py-8">No tournaments yet</p>
+          <p className="text-gray-600 dark:text-gray-300 text-center py-8">No tournaments yet</p>
         )}
       </div>
     </div>
@@ -438,7 +438,7 @@ function EvolutionTab({
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
           Create Evolutionary Simulation
         </h3>
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
           Select strategies to compete in a Moran process. Weak strategies go extinct, strong ones dominate.
         </p>
         <div className="flex flex-wrap gap-2 mb-4">
@@ -478,7 +478,7 @@ function EvolutionTab({
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-medium text-gray-900 dark:text-white">{evolution.name}</h4>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   {evolution.generationsCompleted} generations | Winner: {evolution.winnerStrategyName || 'TBD'}
                 </p>
               </div>
@@ -497,7 +497,7 @@ function EvolutionTab({
           </div>
         ))}
         {evolutions.length === 0 && (
-          <p className="text-gray-500 text-center py-8">No evolutions yet</p>
+          <p className="text-gray-600 dark:text-gray-300 text-center py-8">No evolutions yet</p>
         )}
       </div>
     </div>
@@ -531,7 +531,7 @@ function AnalysisTab({
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
           Analyze Configuration
         </h3>
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
           Test how your current resilience configuration would perform in game-theoretic terms.
         </p>
 
@@ -613,19 +613,19 @@ function AnalysisTab({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <p className="text-sm text-gray-500 dark:text-gray-400">Average Score</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Average Score</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {result.averageScore.toFixed(2)}
               </p>
             </div>
             <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <p className="text-sm text-gray-500 dark:text-gray-400">Cooperation Rate</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Cooperation Rate</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {(result.cooperationRate * 100).toFixed(0)}%
               </p>
             </div>
             <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <p className="text-sm text-gray-500 dark:text-gray-400">Classification</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Classification</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white capitalize">
                 {STRATEGY_LABELS[result.strategyClassification as keyof typeof STRATEGY_LABELS] || result.strategyClassification}
               </p>
@@ -683,9 +683,9 @@ function AnalysisTab({
 function StatCard({ title, value, subtitle }: { title: string; value: string | number; subtitle?: string }): React.ReactElement {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
+      <p className="text-sm font-medium text-gray-600 dark:text-gray-300">{title}</p>
       <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
-      {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{subtitle}</p>}
+      {subtitle && <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{subtitle}</p>}
     </div>
   );
 }

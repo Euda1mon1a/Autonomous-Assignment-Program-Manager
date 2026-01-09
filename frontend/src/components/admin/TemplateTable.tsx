@@ -97,14 +97,14 @@ function SortHeader({ label, field, currentSort, onSort }: SortHeaderProps) {
           className={`w-3 h-3 -mb-1 ${
             isActive && currentSort.direction === 'asc'
               ? 'text-violet-400'
-              : 'text-slate-600'
+              : 'text-slate-400'
           }`}
         />
         <ChevronDown
           className={`w-3 h-3 ${
             isActive && currentSort.direction === 'desc'
               ? 'text-violet-400'
-              : 'text-slate-600'
+              : 'text-slate-400'
           }`}
         />
       </span>
@@ -458,14 +458,14 @@ export function TemplateTable({
                           template.supervisionRequired ? (
                             <span className="text-emerald-400">Required</span>
                           ) : (
-                            <span className="text-slate-500">Not Required</span>
+                            <span className="text-slate-300">Not Required</span>
                           )
                         }
                       />
                     ) : template.supervisionRequired ? (
                       <span className="text-emerald-400">Required</span>
                     ) : (
-                      <span className="text-slate-500">Not Required</span>
+                      <span className="text-slate-300">Not Required</span>
                     )}
                   </td>
                   {enableInlineEdit && (
