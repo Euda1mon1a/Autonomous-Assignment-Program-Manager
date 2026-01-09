@@ -17,6 +17,7 @@ Configured in `~/.claude/settings.json`. These intercept Claude Code tool calls.
 | Hook | Event | File | Purpose |
 |------|-------|------|---------|
 | pre-bash-validate | PreToolUse:Bash | `pre-bash-validate.sh` | Block dangerous commands |
+| pre-bash-dev-check | PreToolUse:Bash | `pre-bash-dev-check.sh` | Warn about non-dev configs (hot reload) |
 | stop-verify | Stop | `stop-verify.sh` | Warn about uncommitted changes |
 
 ### Available Scripts (Not Auto-Triggered)
@@ -137,3 +138,31 @@ ls -la .git/hooks/pre-commit .git/hooks/commit-msg
 
 ### PII scan catching test data
 The PII scanner catches mock SSNs like `123-45-6789` in test files. This is intentional - review and allowlist if the test data is legitimate.
+
+---
+
+## Dev Environment Hook (Session 082)
+
+The `pre-bash-dev-check.sh` hook warns about commands that bypass hot reload:
+
+### What It Catches
+
+| Pattern | Warning |
+|---------|---------|
+| `docker-compose up` without `-f *.dev.yml` | Suggests dev config |
+| `docker-compose build` | Reminds about volume mounts |
+| `npm run build` in frontend | Suggests `npm run dev` |
+| `uvicorn` without `--reload` | Adds reload flag |
+| `next start` | Suggests `npm run dev` |
+| `docker exec ... pytest` | Suggests local pytest |
+| `docker exec ... alembic` | Suggests local alembic |
+
+### Testing
+
+```bash
+# Should warn about missing dev config
+echo '{"tool_input": {"command": "docker-compose up"}}' | ./.claude/hooks/pre-bash-dev-check.sh
+
+# Should pass silently (dev config present)
+echo '{"tool_input": {"command": "docker-compose -f docker-compose.dev.yml up"}}' | ./.claude/hooks/pre-bash-dev-check.sh
+```
