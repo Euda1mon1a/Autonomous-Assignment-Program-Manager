@@ -297,6 +297,21 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
+  # PHASE 17: Constraint Registration (Session 083 - SCHEDULER Domain)
+  # ============================================================================
+
+  # Constraint registration validation - catches "implemented but not registered" bugs
+  - repo: local
+    hooks:
+      - id: constraint-registration
+        name: Constraint Registration Validation
+        entry: scripts/validate-constraint-registration.sh
+        language: script
+        pass_filenames: false
+        files: ^backend/app/scheduling/constraints/
+        stages: [pre-commit]
+
+  # ============================================================================
   # Configuration
   # ============================================================================
 

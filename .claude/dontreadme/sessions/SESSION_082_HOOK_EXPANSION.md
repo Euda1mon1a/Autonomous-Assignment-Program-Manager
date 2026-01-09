@@ -167,6 +167,12 @@ Consulted all 55 agents (8 advisory domains) to identify hook gaps. Expanded fro
 
 Additional tuning required to exclude docstrings and resilience framework code from Check 1 (SPOF) and Check 6 (supervision).
 
+**Phase 17 Added (Constraint Registration):**
+- `scripts/validate-constraint-registration.sh` - catches "implemented but not registered" bugs
+- Validates `__all__` completeness
+- Checks manager registration
+- Warns about undocumented disabled constraints
+
 ---
 
 ## Architecture Achieved
