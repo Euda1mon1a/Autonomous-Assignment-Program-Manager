@@ -478,7 +478,7 @@ function EvolutionTab({
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-medium text-gray-900 dark:text-white">{evolution.name}</h4>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   {evolution.generationsCompleted} generations | Winner: {evolution.winnerStrategyName || 'TBD'}
                 </p>
               </div>
