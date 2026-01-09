@@ -1,4 +1,4 @@
-# Session 082-083: Comprehensive Hook Expansion & Tuning
+# Session 082-084: Comprehensive Hook Expansion & Tuning
 
 **Dates:** 2026-01-09
 **Branch:** main (direct commits)
@@ -11,9 +11,11 @@
 
 **Session 083:** Tuned hook patterns to eliminate false positives. Graduated ACGME/resilience to blocking mode. Added Phase 17 (constraint registration). Documented all disabled constraints.
 
+**Session 084:** Added Phase 18 (MCP tool validation) for core tools (~34) and armory (~50). Validates BaseTool inheritance, input patterns, error handling, registration, and test coverage.
+
 ---
 
-## Hook Ecosystem - Final State (17 Phases)
+## Hook Ecosystem - Final State (18 Phases)
 
 ### Claude Code Hooks (4 total)
 | Hook | Event | Domain | Status |
@@ -43,6 +45,7 @@
 | **15** | **schedule-integrity** | **Scheduling** | Warning | ✅ Working |
 | **16** | **docs-check** | **Documentation** | Warning | ✅ Working |
 | **17** | **constraint-registration** | **Scheduling** | Warning | ✅ NEW Session 083 |
+| **18** | **mcp-tools-validate** | **MCP Tools** | Warning | ✅ NEW Session 084 |
 
 ---
 
@@ -90,7 +93,7 @@ Added explanatory comments above each `manager.disable()` call in `backend/app/s
 
 ---
 
-## Session 083 Commits (on main, need push)
+## Session 083-084 Commits (on main, need push)
 
 | Commit | Description |
 |--------|-------------|
@@ -99,22 +102,24 @@ Added explanatory comments above each `manager.disable()` call in `backend/app/s
 | `e4d6b35f` | Scratchpad update |
 | `e6c2d7c9` | Phase 17 constraint registration hook |
 | `4131f50a` | Disabled constraint comments |
+| `cd65a928` | Session 083 scratchpad documentation |
+| `d035cf5e` | Phase 18 MCP tool validation hook |
 
 ---
 
 ## Remaining Roadmap
 
-### Completed (Session 082-083)
+### Completed (Session 082-084)
 - ~~Tune ACGME hook patterns~~ ✅
 - ~~Tune resilience hook patterns~~ ✅
 - ~~Graduate hooks to blocking~~ ✅
 - ~~Add constraint registration hook~~ ✅
+- ~~MCP tool validation hook~~ ✅
 
 ### P1 - High (Next Up)
-- **MCP tool validation hook** - Validate MCP tool inputs/outputs
+- **Test coverage threshold hook** - Block commits below coverage threshold
 
 ### P2 - Medium
-- Test coverage threshold hook
 - Bundle size monitoring
 - API contract validation
 
@@ -132,7 +137,7 @@ Added explanatory comments above each `manager.disable()` call in `backend/app/s
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    HOOK ECOSYSTEM (17 Phases)               │
+│                    HOOK ECOSYSTEM (18 Phases)               │
 ├─────────────────────────────────────────────────────────────┤
 │ LAYER 1: Claude Code (Real-time AI guardrails)              │
 │   PreToolUse:Bash → Security + Dev Experience               │
@@ -141,13 +146,14 @@ Added explanatory comments above each `manager.disable()` call in `backend/app/s
 ├─────────────────────────────────────────────────────────────┤
 │ LAYER 2: Git Pre-Commit (Commit-time validation)            │
 │   Phases 1-11 → Code Quality                                │
-│   Phases 12-17 → Business Logic                             │
+│   Phases 12-18 → Business Logic                             │
 │     12: ACGME Compliance (BLOCKING)                         │
 │     13: Resilience N-1/N-2 (BLOCKING)                       │
 │     14: Swap Safety (warning)                               │
 │     15: Schedule Integrity (warning)                        │
 │     16: Documentation (warning)                             │
 │     17: Constraint Registration (warning)                   │
+│     18: MCP Tool Validation (warning)                       │
 ├─────────────────────────────────────────────────────────────┤
 │ LAYER 3: Guidance Documents (Human workflow)                │
 │   post-compliance-audit.md                                  │
@@ -161,15 +167,16 @@ Added explanatory comments above each `manager.disable()` call in `backend/app/s
 
 ## Handoff Notes
 
-Session 082-083 established a comprehensive hook ecosystem:
+Session 082-084 established a comprehensive hook ecosystem:
 
 1. **Code Quality** (Phases 1-11) - Standard linting, type checking, security scanning
-2. **Business Logic** (Phases 12-17) - ACGME, resilience, scheduling, constraints
+2. **Business Logic** (Phases 12-18) - ACGME, resilience, scheduling, constraints, MCP tools
 3. **Two hooks now block commits** - ACGME and Resilience (after pattern tuning)
 4. **Constraint registration** prevents "implemented but not registered" bugs
+5. **MCP tool validation** catches BaseTool structure issues in 84 tools (34 core + 50 armory)
 
 **Key insight:** The gap between "good code" and "good schedules" is now monitored. Hooks catch both code quality issues AND domain-specific violations.
 
-**To push:** `git push origin main` (5 commits pending)
+**To push:** `git push origin main` (7 commits pending)
 
 o7
