@@ -17,6 +17,33 @@ const eslintConfig = [
       "@typescript-eslint/no-explicit-any": "warn",
       "react/no-unescaped-entities": "off",
       "prefer-const": "warn",
+      // CRITICAL: Enforce camelCase for API response types
+      // The axios interceptor converts snake_case → camelCase, so TypeScript
+      // interfaces MUST use camelCase or runtime access returns undefined.
+      // See: Session 079, 080 which fixed 180+ violations across 41 files.
+      "@typescript-eslint/naming-convention": [
+        "warn",
+        {
+          selector: "typeProperty",
+          format: ["camelCase"],
+          leadingUnderscore: "allow",
+          // Allow UPPER_CASE for constants in types
+          filter: {
+            regex: "^[A-Z][A-Z0-9_]*$",
+            match: false,
+          },
+        },
+        {
+          selector: "objectLiteralProperty",
+          format: ["camelCase"],
+          leadingUnderscore: "allow",
+          // Allow snake_case in specific contexts (API query params, etc.)
+          filter: {
+            regex: "^(Content-Type|Authorization|X-|_).*$",
+            match: false,
+          },
+        },
+      ],
     },
   },
   {

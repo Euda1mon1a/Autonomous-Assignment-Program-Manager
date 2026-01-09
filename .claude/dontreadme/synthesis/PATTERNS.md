@@ -251,6 +251,35 @@ class Assignment(Base):
 
 ## Frontend Patterns
 
+### API Response Type Pattern (CRITICAL)
+
+**Rule:** All TypeScript interfaces for API responses MUST use camelCase.
+
+**Why:** The axios interceptor in `frontend/src/lib/api.ts` converts snake_case → camelCase. If types use snake_case, runtime property access returns `undefined`.
+
+**Enforcement:**
+- ESLint `@typescript-eslint/naming-convention` rule
+- Skill: `/check-camelcase`
+
+**Example:**
+```typescript
+// ✓ CORRECT - matches axios-converted response
+interface Person {
+  personId: string;
+  pgyLevel: number;
+  createdAt: string;
+}
+
+// ✗ WRONG - will cause undefined at runtime
+interface Person {
+  person_id: string;  // actual key is personId
+  pgy_level: number;  // actual key is pgyLevel
+  created_at: string; // actual key is createdAt
+}
+```
+
+**Session History:** Session 079, 080 fixed 180+ violations across 41 files.
+
 ### TanStack Query for Server State
 
 **Pattern:** Use TanStack Query for all API calls
