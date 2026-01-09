@@ -116,7 +116,7 @@ services:
       RATE_LIMIT_ENABLED: "false"
     ports:
       - "8000:8000"  # FastAPI server
-      - "5678:5678"  # Optional: debugpy remote debugging (if configured)
+      # - "5678:5678"  # Disabled: conflicts with n8n port in base compose
     volumes:
       # Mount source code for hot reload
       - ./backend:/app
@@ -253,28 +253,28 @@ services:
     command: npm run dev
 
   # ===========================================================================
-  # n8n - Workflow Automation (Optional)
+  # n8n - Workflow Automation (DISABLED - CVE-2026-21858 Ni8mare, re-enable post-deployment)
   # ===========================================================================
-  n8n:
-    image: n8nio/n8n:latest
-    container_name: scheduler-local-n8n
-    restart: unless-stopped
-    ports:
-      - "5679:5678"  # Changed to 5679 to avoid conflict with backend debugpy
-    environment:
-      - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=admin
-      - N8N_BASIC_AUTH_PASSWORD=local_dev_n8n_password
-      - N8N_HOST=localhost
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-      - WEBHOOK_URL=http://localhost:5679
-      - GENERIC_TIMEZONE=America/New_York
-      - N8N_LOG_LEVEL=debug
-    volumes:
-      - n8n_local_data:/home/node/.n8n
-    networks:
-      - app-network
+  # n8n:
+  #   image: n8nio/n8n:1.121.0  # Pin to patched version when re-enabling
+  #   container_name: scheduler-local-n8n
+  #   restart: unless-stopped
+  #   ports:
+  #     - "127.0.0.1:5679:5678"  # Localhost only, port 5679 to avoid debugpy conflict
+  #   environment:
+  #     - N8N_BASIC_AUTH_ACTIVE=true
+  #     - N8N_BASIC_AUTH_USER=admin
+  #     - N8N_BASIC_AUTH_PASSWORD=local_dev_n8n_password
+  #     - N8N_HOST=localhost
+  #     - N8N_PORT=5678
+  #     - N8N_PROTOCOL=http
+  #     - WEBHOOK_URL=http://localhost:5679
+  #     - GENERIC_TIMEZONE=America/New_York
+  #     - N8N_LOG_LEVEL=debug
+  #   volumes:
+  #     - n8n_local_data:/home/node/.n8n
+  #   networks:
+  #     - app-network
 
   # ===========================================================================
   # MCP Server - AI Tool Integration (Claude Code, Agents)
@@ -294,7 +294,7 @@ services:
       # Transport mode - use streamable-http for Claude Code and agents
       MCP_TRANSPORT: streamable-http
       MCP_HOST: "0.0.0.0"
-      MCP_PORT: "8080"
+      MCP_PORT: "8081"
 
       # API Integration - connects to FastAPI backend
       API_BASE_URL: http://backend:8000
@@ -308,11 +308,12 @@ services:
       # Logging
       LOG_LEVEL: DEBUG
     ports:
-      - "8080:8080"  # MCP HTTP transport for Claude Code
+      - "8081:8081"  # MCP HTTP transport for Claude Code (8080 used by Claude Code)
+    entrypoint: ["python", "-m", "scheduler_mcp.server", "--host", "0.0.0.0", "--port", "8081"]
     networks:
       - app-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8080/health || exit 1"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:8081/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

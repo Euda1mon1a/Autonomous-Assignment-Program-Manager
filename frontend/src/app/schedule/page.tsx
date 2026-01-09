@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { startOfWeek, addDays, format, startOfMonth, endOfMonth, eachDayOfInterval, parseISO } from 'date-fns'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Upload, Download } from 'lucide-react'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { BlockNavigation } from '@/components/schedule/BlockNavigation'
 import { ScheduleGrid } from '@/components/schedule/ScheduleGrid'
@@ -14,8 +15,13 @@ import { BlockAnnualView } from '@/components/schedule/BlockAnnualView'
 import { BlockWeekView } from '@/components/schedule/BlockWeekView'
 import { MultiSelectPersonFilter } from '@/components/schedule/MultiSelectPersonFilter'
 import { ResidentAcademicYearView, FacultyInpatientWeeksView } from '@/components/schedule/drag'
+import { BlockAssignmentImportModal } from '@/components/admin/BlockAssignmentImportModal'
+import { BlockAssignmentExportModal } from '@/components/admin/BlockAssignmentExportModal'
 import { get } from '@/lib/api'
 import { usePeople, useRotationTemplates, useBlockRanges, ListResponse } from '@/lib/hooks'
+import { useRole } from '@/hooks/useAuth'
+import { useScheduleWebSocket } from '@/hooks/useWebSocket'
+import { WebSocketStatus } from '@/components/ui/WebSocketStatus'
 import type { Assignment, Block, RotationTemplate } from '@/types/api'
 
 /**
@@ -63,6 +69,28 @@ export default function SchedulePage() {
 
   // Person filter for comparing schedules (multi-select)
   const [selectedPersonIds, setSelectedPersonIds] = useState<Set<string>>(new Set())
+
+  // Import/Export modal state
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [showExportModal, setShowExportModal] = useState(false)
+
+  // Role check for admin/coordinator features
+  const { isAdmin, isCoordinator } = useRole()
+  const canManageAssignments = isAdmin || isCoordinator
+
+  // WebSocket for live updates - invalidate queries when schedule changes
+  // Backend now supports both token query param AND httpOnly cookie auth
+  const queryClient = useQueryClient()
+  const { connectionState, reconnectAttempts } = useScheduleWebSocket(undefined, {
+    onMessage: (event) => {
+      if (event.event_type === 'schedule_updated' || event.event_type === 'assignment_changed') {
+        // Invalidate all schedule-related queries to trigger refetch
+        queryClient.invalidateQueries({ queryKey: ['blocks'] })
+        queryClient.invalidateQueries({ queryKey: ['assignments'] })
+        queryClient.invalidateQueries({ queryKey: ['block-assignments'] })
+      }
+    },
+  })
 
   // Fetch block ranges from API to get actual block boundaries
   const { data: blockRanges } = useBlockRanges()
@@ -235,6 +263,12 @@ export default function SchedulePage() {
                   </p>
                 </div>
 
+                {/* WebSocket connection status */}
+                <WebSocketStatus
+                  connectionState={connectionState}
+                  reconnectAttempts={reconnectAttempts}
+                />
+
                 {/* Person Filter - show for block-annual, block, and block-week views */}
                 {['block-annual', 'block', 'block-week'].includes(currentView) && (
                   <MultiSelectPersonFilter
@@ -243,6 +277,26 @@ export default function SchedulePage() {
                     residentsOnly={currentView === 'block-annual'}
                     emptyLabel={currentView === 'block-annual' ? 'All Residents' : 'All People'}
                   />
+                )}
+
+                {/* Import/Export buttons - admin/coordinator only, block views only */}
+                {canManageAssignments && ['block-annual', 'block', 'block-week'].includes(currentView) && (
+                  <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-300">
+                    <button
+                      onClick={() => setShowImportModal(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Import
+                    </button>
+                    <button
+                      onClick={() => setShowExportModal(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      Export
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -385,6 +439,16 @@ export default function SchedulePage() {
           </div>
         )}
       </div>
+
+      {/* Import/Export Modals */}
+      <BlockAssignmentImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+      />
+      <BlockAssignmentExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+      />
     </ProtectedRoute>
   )
 }

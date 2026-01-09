@@ -21,7 +21,11 @@ from app.schemas.absence import (
     AbsenceListResponse,
     AbsenceResponse,
     AbsenceUpdate,
+    AwayFromProgramSummary,
+    AwayFromProgramCheck,
+    AllResidentsAwayStatus,
 )
+from app.websocket.manager import broadcast_schedule_updated
 
 router = APIRouter()
 
@@ -100,7 +104,19 @@ async def create_absence(
 ):
     """Create a new absence. Requires authentication."""
     controller = AbsenceController(db)
-    return controller.create_absence(absence_in)
+    result = controller.create_absence(absence_in)
+
+    # Broadcast WebSocket event
+    await broadcast_schedule_updated(
+        schedule_id=None,
+        academic_year_id=None,
+        user_id=current_user.id,
+        update_type="modified",
+        affected_blocks_count=1,
+        message="Absence created",
+    )
+
+    return result
 
 
 @router.put("/{absence_id}", response_model=AbsenceResponse)
@@ -112,7 +128,19 @@ async def update_absence(
 ):
     """Update an existing absence. Requires authentication."""
     controller = AbsenceController(db)
-    return controller.update_absence(absence_id, absence_in)
+    result = controller.update_absence(absence_id, absence_in)
+
+    # Broadcast WebSocket event
+    await broadcast_schedule_updated(
+        schedule_id=None,
+        academic_year_id=None,
+        user_id=current_user.id,
+        update_type="modified",
+        affected_blocks_count=1,
+        message="Absence updated",
+    )
+
+    return result
 
 
 @router.delete("/{absence_id}", status_code=204)
@@ -124,6 +152,16 @@ async def delete_absence(
     """Delete an absence. Requires authentication."""
     controller = AbsenceController(db)
     await controller.delete_absence(absence_id)
+
+    # Broadcast WebSocket event
+    await broadcast_schedule_updated(
+        schedule_id=None,
+        academic_year_id=None,
+        user_id=current_user.id,
+        update_type="modified",
+        affected_blocks_count=1,
+        message="Absence deleted",
+    )
 
 
 # ============================================================================
@@ -191,4 +229,116 @@ async def apply_bulk_absences(
         Requires authentication.
     """
     controller = AbsenceController(db)
-    return controller.apply_bulk_absences(bulk_data)
+    result = controller.apply_bulk_absences(bulk_data)
+
+    # Broadcast WebSocket event if any absences were created
+    if result.created > 0:
+        await broadcast_schedule_updated(
+            schedule_id=None,
+            academic_year_id=None,
+            user_id=current_user.id,
+            update_type="modified",
+            affected_blocks_count=result.created,
+            message=f"Bulk absences applied: {result.created} created",
+        )
+
+    return result
+
+
+# ============================================================================
+# Away-From-Program Tracking Endpoints
+# ============================================================================
+
+
+@router.get(
+    "/residents/{person_id}/away-from-program",
+    response_model=AwayFromProgramSummary,
+    summary="Get away-from-program summary for a resident",
+    description="Returns days used, remaining, threshold status, and contributing absences.",
+)
+async def get_away_from_program_summary(
+    person_id: UUID,
+    academic_year: int | None = Query(
+        None,
+        description="Academic year start (e.g., 2025 for 2025-2026). Defaults to current.",
+    ),
+    response: Response = None,
+    db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get away-from-program summary for a specific resident.
+
+    Residents who exceed 28 days away from program per academic year
+    must extend their training. This endpoint tracks progress toward that limit.
+
+    Security:
+        Requires authentication.
+
+    PHI/OPSEC Warning:
+        This endpoint returns absence data which may contain sensitive information.
+    """
+    if response:
+        response.headers["X-Contains-PHI"] = "true"
+
+    controller = AbsenceController(db)
+    return controller.get_away_from_program_summary(
+        person_id=person_id, academic_year=academic_year
+    )
+
+
+@router.get(
+    "/residents/{person_id}/away-from-program/check",
+    response_model=AwayFromProgramCheck,
+    summary="Check threshold before adding absence",
+    description="Preview what happens to threshold if additional days are added.",
+)
+async def check_away_threshold(
+    person_id: UUID,
+    additional_days: int = Query(
+        0, ge=0, description="Number of days to add (for new absence preview)"
+    ),
+    academic_year: int | None = Query(None, description="Academic year start"),
+    db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Check away-from-program threshold before creating an absence.
+
+    Use this endpoint before creating an absence to see if it would
+    trigger warning/critical/exceeded thresholds.
+    """
+    controller = AbsenceController(db)
+    return controller.check_away_threshold(
+        person_id=person_id,
+        additional_days=additional_days,
+        academic_year=academic_year,
+    )
+
+
+@router.get(
+    "/compliance/away-from-program",
+    response_model=AllResidentsAwayStatus,
+    summary="Get away-from-program status for all residents",
+    description="Compliance dashboard: all residents' away-from-program status.",
+)
+async def get_all_residents_away_status(
+    academic_year: int | None = Query(None, description="Academic year start"),
+    response: Response = None,
+    db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get away-from-program status for all residents (compliance dashboard).
+
+    Returns summary of all residents' away-from-program days, with counts
+    by threshold status (ok, warning, critical, exceeded).
+
+    Security:
+        Requires authentication.
+
+    PHI/OPSEC Warning:
+        This endpoint returns absence data for all residents.
+    """
+    if response:
+        response.headers["X-Contains-PHI"] = "true"
+
+    controller = AbsenceController(db)
+    return controller.get_all_residents_away_status(academic_year=academic_year)

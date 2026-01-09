@@ -406,3 +406,209 @@ class AbsenceService:
             ):
                 return idx
         return None
+
+    # =========================================================================
+    # Away-From-Program Tracking
+    # =========================================================================
+
+    # Constants for away-from-program threshold
+    AWAY_FROM_PROGRAM_MAX_DAYS = 28  # Days per academic year before training extension
+    AWAY_FROM_PROGRAM_WARNING_DAYS = 21  # 75% threshold for warning
+
+    def get_academic_year_bounds(self, target_date: date | None = None) -> tuple[date, date]:
+        """Get the academic year start and end dates.
+
+        Academic year runs July 1 - June 30.
+
+        Args:
+            target_date: Date to determine academic year for. Defaults to today.
+
+        Returns:
+            Tuple of (start_date, end_date) for the academic year.
+        """
+        if target_date is None:
+            target_date = date.today()
+
+        # Academic year starts July 1
+        if target_date.month >= 7:
+            # We're in the second half of calendar year, so academic year started this July
+            start = date(target_date.year, 7, 1)
+            end = date(target_date.year + 1, 6, 30)
+        else:
+            # We're in the first half of calendar year, so academic year started last July
+            start = date(target_date.year - 1, 7, 1)
+            end = date(target_date.year, 6, 30)
+
+        return start, end
+
+    def get_academic_year_label(self, target_date: date | None = None) -> str:
+        """Get the academic year label (e.g., '2025-2026').
+
+        Args:
+            target_date: Date to determine academic year for. Defaults to today.
+
+        Returns:
+            Academic year label string.
+        """
+        start, end = self.get_academic_year_bounds(target_date)
+        return f"{start.year}-{end.year}"
+
+    def get_away_from_program_days(
+        self,
+        person_id: UUID,
+        academic_year_start: date | None = None,
+        exclude_absence_id: UUID | None = None,
+    ) -> int:
+        """Calculate total away-from-program days for a person in an academic year.
+
+        Only counts absences where is_away_from_program=True.
+        Handles partial overlaps with academic year boundaries.
+
+        Args:
+            person_id: UUID of the person.
+            academic_year_start: Start of academic year. Defaults to current year.
+            exclude_absence_id: Optional absence ID to exclude (for edit scenarios).
+
+        Returns:
+            Total days away from program in the academic year.
+        """
+        if academic_year_start is None:
+            academic_year_start, _ = self.get_academic_year_bounds()
+
+        # Get academic year end
+        academic_year_end = date(academic_year_start.year + 1, 6, 30)
+
+        # Get all absences for this person that overlap with the academic year
+        absences = self.absence_repo.list_with_filters(
+            person_id=person_id,
+            start_date=academic_year_start,
+            end_date=academic_year_end,
+        )
+
+        total_days = 0
+        for absence in absences:
+            # Skip if not marked as away-from-program
+            if not absence.is_away_from_program:
+                continue
+
+            # Skip if this is the excluded absence (for edit scenarios)
+            if exclude_absence_id and absence.id == exclude_absence_id:
+                continue
+
+            # Calculate days within academic year bounds
+            effective_start = max(absence.start_date, academic_year_start)
+            effective_end = min(absence.end_date, academic_year_end)
+
+            # Add 1 because both dates are inclusive
+            days = (effective_end - effective_start).days + 1
+            if days > 0:
+                total_days += days
+
+        return total_days
+
+    def check_away_threshold(
+        self,
+        person_id: UUID,
+        additional_days: int = 0,
+        academic_year_start: date | None = None,
+    ) -> dict:
+        """Check away-from-program threshold status.
+
+        Args:
+            person_id: UUID of the person.
+            additional_days: Days to add (for checking before creating new absence).
+            academic_year_start: Start of academic year. Defaults to current year.
+
+        Returns:
+            Dictionary with:
+            - current_days: Current away-from-program days
+            - projected_days: Days after adding additional_days
+            - threshold_status: 'ok', 'warning', 'critical', or 'exceeded'
+            - days_remaining: Days remaining before limit
+            - max_days: Maximum allowed days (28)
+            - warning_days: Warning threshold (21)
+        """
+        current_days = self.get_away_from_program_days(
+            person_id=person_id,
+            academic_year_start=academic_year_start,
+        )
+
+        projected_days = current_days + additional_days
+
+        # Determine status
+        if projected_days > self.AWAY_FROM_PROGRAM_MAX_DAYS:
+            status = "exceeded"
+        elif projected_days >= self.AWAY_FROM_PROGRAM_MAX_DAYS:
+            status = "critical"
+        elif projected_days >= self.AWAY_FROM_PROGRAM_WARNING_DAYS:
+            status = "warning"
+        else:
+            status = "ok"
+
+        return {
+            "current_days": current_days,
+            "projected_days": projected_days,
+            "threshold_status": status,
+            "days_remaining": max(0, self.AWAY_FROM_PROGRAM_MAX_DAYS - current_days),
+            "max_days": self.AWAY_FROM_PROGRAM_MAX_DAYS,
+            "warning_days": self.AWAY_FROM_PROGRAM_WARNING_DAYS,
+        }
+
+    def get_away_from_program_summary(
+        self,
+        person_id: UUID,
+        academic_year_start: date | None = None,
+    ) -> dict:
+        """Get full away-from-program summary for a person.
+
+        Args:
+            person_id: UUID of the person.
+            academic_year_start: Start of academic year. Defaults to current year.
+
+        Returns:
+            Dictionary with full summary including absences.
+        """
+        if academic_year_start is None:
+            academic_year_start, _ = self.get_academic_year_bounds()
+
+        academic_year_end = date(academic_year_start.year + 1, 6, 30)
+
+        # Get threshold info
+        threshold_info = self.check_away_threshold(
+            person_id=person_id,
+            academic_year_start=academic_year_start,
+        )
+
+        # Get absences that contribute to away-from-program
+        absences = self.absence_repo.list_with_filters(
+            person_id=person_id,
+            start_date=academic_year_start,
+            end_date=academic_year_end,
+        )
+
+        contributing_absences = [
+            {
+                "id": str(a.id),
+                "start_date": a.start_date.isoformat(),
+                "end_date": a.end_date.isoformat(),
+                "absence_type": a.absence_type,
+                "days": (
+                    min(a.end_date, academic_year_end)
+                    - max(a.start_date, academic_year_start)
+                ).days
+                + 1,
+            }
+            for a in absences
+            if a.is_away_from_program
+        ]
+
+        return {
+            "person_id": str(person_id),
+            "academic_year": self.get_academic_year_label(academic_year_start),
+            "days_used": threshold_info["current_days"],
+            "days_remaining": threshold_info["days_remaining"],
+            "threshold_status": threshold_info["threshold_status"],
+            "max_days": threshold_info["max_days"],
+            "warning_days": threshold_info["warning_days"],
+            "absences": contributing_absences,
+        }

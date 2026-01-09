@@ -22,6 +22,7 @@ from app.schemas.block_assignment import (
     BlockScheduleResponse,
     BlockSchedulerDashboard,
 )
+from app.websocket.manager import broadcast_schedule_updated
 
 router = APIRouter()
 
@@ -70,14 +71,27 @@ def get_dashboard(
     - `include_all_residents=False`: Only schedule residents with leave
     """,
 )
-def schedule_block(
+async def schedule_block(
     request: BlockScheduleRequest,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Schedule residents for a block."""
     controller = BlockSchedulerController(db)
-    return controller.schedule_block(request, created_by=current_user.email)
+    result = controller.schedule_block(request, created_by=current_user.email)
+
+    # Broadcast WebSocket event if assignments were saved (not dry run)
+    if not request.dry_run and result.assignments:
+        await broadcast_schedule_updated(
+            schedule_id=None,
+            academic_year_id=None,
+            user_id=current_user.id,
+            update_type="generated",
+            affected_blocks_count=len(result.assignments),
+            message=f"Block {request.block_number} scheduled with {len(result.assignments)} assignments",
+        )
+
+    return result
 
 
 @router.get(
@@ -118,7 +132,19 @@ async def create_assignment(
         assignment_in.created_by = current_user.email
 
     controller = BlockSchedulerController(db)
-    return await controller.create_assignment(assignment_in)
+    result = controller.create_assignment(assignment_in)
+
+    # Broadcast WebSocket event
+    await broadcast_schedule_updated(
+        schedule_id=None,
+        academic_year_id=None,
+        user_id=current_user.id,
+        update_type="modified",
+        affected_blocks_count=1,
+        message=f"Block assignment created for block {assignment_in.block_number}",
+    )
+
+    return result
 
 
 @router.put(
@@ -134,7 +160,19 @@ async def update_assignment(
 ):
     """Update a block assignment."""
     controller = BlockSchedulerController(db)
-    return await controller.update_assignment(assignment_id, assignment_in)
+    result = controller.update_assignment(assignment_id, assignment_in)
+
+    # Broadcast WebSocket event
+    await broadcast_schedule_updated(
+        schedule_id=None,
+        academic_year_id=None,
+        user_id=current_user.id,
+        update_type="modified",
+        affected_blocks_count=1,
+        message="Block assignment updated",
+    )
+
+    return result
 
 
 @router.delete(
@@ -149,4 +187,14 @@ async def delete_assignment(
 ):
     """Delete a block assignment."""
     controller = BlockSchedulerController(db)
-    await controller.delete_assignment(assignment_id)
+    controller.delete_assignment(assignment_id)
+
+    # Broadcast WebSocket event
+    await broadcast_schedule_updated(
+        schedule_id=None,
+        academic_year_id=None,
+        user_id=current_user.id,
+        update_type="modified",
+        affected_blocks_count=1,
+        message="Block assignment deleted",
+    )

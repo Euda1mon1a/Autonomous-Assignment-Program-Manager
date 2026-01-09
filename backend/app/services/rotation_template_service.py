@@ -16,10 +16,13 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, selectinload
 
+from app.models.rotation_halfday_requirement import RotationHalfDayRequirement
 from app.models.rotation_preference import RotationPreference
 from app.models.rotation_template import RotationTemplate
 from app.models.weekly_pattern import WeeklyPattern
 from app.schemas.rotation_template_gui import (
+    HalfDayRequirementCreate,
+    HalfDayRequirementResponse,
     RotationPreferenceCreate,
     RotationPreferenceResponse,
     RotationPreferenceUpdate,
@@ -233,6 +236,88 @@ class RotationTemplateService:
                 raise ValueError(
                     f"Invalid time_of_day: {pattern.time_of_day}. Must be 'AM' or 'PM'."
                 )
+
+    # =========================================================================
+    # Half-Day Requirement Operations
+    # =========================================================================
+
+    async def get_halfday_requirements(
+        self, template_id: UUID
+    ) -> RotationHalfDayRequirement | None:
+        """Get half-day requirements for a rotation template.
+
+        Args:
+            template_id: UUID of the rotation template
+
+        Returns:
+            RotationHalfDayRequirement instance or None if not configured
+        """
+        result = await self._execute(
+            select(RotationHalfDayRequirement).where(
+                RotationHalfDayRequirement.rotation_template_id == template_id
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def upsert_halfday_requirements(
+        self, template_id: UUID, data: HalfDayRequirementCreate
+    ) -> RotationHalfDayRequirement:
+        """Create or update half-day requirements for a template.
+
+        If requirements already exist for this template, update them.
+        Otherwise, create new requirements.
+
+        Args:
+            template_id: UUID of the rotation template
+            data: HalfDayRequirementCreate schema with requirement values
+
+        Returns:
+            Created or updated RotationHalfDayRequirement instance
+
+        Raises:
+            ValueError: If template not found
+        """
+        # Verify template exists
+        template = await self.get_template_by_id(template_id)
+        if not template:
+            raise ValueError(f"Template with ID {template_id} not found")
+
+        # Check if requirements already exist
+        existing = await self.get_halfday_requirements(template_id)
+
+        now = datetime.utcnow()
+
+        if existing:
+            # Update existing requirements
+            existing.fm_clinic_halfdays = data.fm_clinic_halfdays
+            existing.specialty_halfdays = data.specialty_halfdays
+            existing.specialty_name = data.specialty_name
+            existing.academics_halfdays = data.academics_halfdays
+            existing.elective_halfdays = data.elective_halfdays
+            existing.min_consecutive_specialty = data.min_consecutive_specialty
+            existing.prefer_combined_clinic_days = data.prefer_combined_clinic_days
+            existing.updated_at = now
+            await self._flush()
+            await self._refresh(existing)
+            return existing
+        else:
+            # Create new requirements
+            requirements = RotationHalfDayRequirement(
+                rotation_template_id=template_id,
+                fm_clinic_halfdays=data.fm_clinic_halfdays,
+                specialty_halfdays=data.specialty_halfdays,
+                specialty_name=data.specialty_name,
+                academics_halfdays=data.academics_halfdays,
+                elective_halfdays=data.elective_halfdays,
+                min_consecutive_specialty=data.min_consecutive_specialty,
+                prefer_combined_clinic_days=data.prefer_combined_clinic_days,
+                created_at=now,
+                updated_at=now,
+            )
+            self.db.add(requirements)
+            await self._flush()
+            await self._refresh(requirements)
+            return requirements
 
     # =========================================================================
     # Rotation Preference Operations
@@ -1228,3 +1313,189 @@ class RotationTemplateService:
             "results": results,
             "dry_run": dry_run,
         }
+
+    async def batch_update_weekly_patterns(
+        self,
+        template_ids: list[UUID],
+        mode: str,
+        slots: list[dict],
+        week_numbers: list[int] | None = None,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """Bulk update weekly patterns across multiple templates.
+
+        Supports two modes:
+        - overlay: Only modifies specified slots, leaves others unchanged
+        - replace: Replaces entire pattern with the provided slots
+
+        Args:
+            template_ids: List of template UUIDs to update
+            mode: "overlay" or "replace"
+            slots: List of slot dictionaries with day_of_week, time_of_day, etc.
+            week_numbers: List of weeks to target (1-4). None = all weeks
+            dry_run: If True, validate without applying changes
+
+        Returns:
+            Dict with operation results including success/failure per template
+        """
+        results = []
+        templates_found = []
+
+        # Phase 1: Validate all templates exist
+        for template_id in template_ids:
+            template = await self.get_template_by_id(template_id)
+            if not template:
+                results.append({
+                    "template_id": template_id,
+                    "template_name": "Unknown",
+                    "success": False,
+                    "slots_modified": 0,
+                    "error": f"Template with ID {template_id} not found",
+                })
+            else:
+                templates_found.append(template)
+                results.append({
+                    "template_id": template_id,
+                    "template_name": template.name,
+                    "success": True,
+                    "slots_modified": 0,
+                    "error": None,
+                })
+
+        # Check for failures in validation
+        failed_count = sum(1 for r in results if not r["success"])
+        if failed_count > 0:
+            return {
+                "total_templates": len(template_ids),
+                "successful": 0,
+                "failed": failed_count,
+                "results": results,
+            }
+
+        # Phase 2: Apply pattern updates (if not dry run)
+        if not dry_run:
+            for idx, template in enumerate(templates_found):
+                try:
+                    slots_modified = await self._apply_pattern_update(
+                        template_id=template.id,
+                        mode=mode,
+                        slots=slots,
+                        week_numbers=week_numbers,
+                    )
+                    results[idx]["slots_modified"] = slots_modified
+                except Exception as e:
+                    results[idx]["success"] = False
+                    results[idx]["error"] = str(e)
+
+        # Recalculate success/failure counts
+        successful = sum(1 for r in results if r["success"])
+        failed = sum(1 for r in results if not r["success"])
+
+        return {
+            "total_templates": len(template_ids),
+            "successful": successful,
+            "failed": failed,
+            "results": results,
+        }
+
+    async def _apply_pattern_update(
+        self,
+        template_id: UUID,
+        mode: str,
+        slots: list[dict],
+        week_numbers: list[int] | None = None,
+    ) -> int:
+        """Apply pattern update to a single template.
+
+        Args:
+            template_id: Template UUID
+            mode: "overlay" or "replace"
+            slots: Slot updates to apply
+            week_numbers: Target weeks (None = all weeks)
+
+        Returns:
+            Number of slots modified
+        """
+        slots_modified = 0
+
+        if mode == "replace":
+            # Delete existing patterns (for target weeks or all)
+            if week_numbers:
+                for week in week_numbers:
+                    stmt = delete(WeeklyPattern).where(
+                        WeeklyPattern.rotation_template_id == template_id,
+                        WeeklyPattern.week_number == week,
+                    )
+                    await self._execute(stmt)
+            else:
+                stmt = delete(WeeklyPattern).where(
+                    WeeklyPattern.rotation_template_id == template_id
+                )
+                await self._execute(stmt)
+
+        # Apply each slot
+        for slot_data in slots:
+            day_of_week = slot_data["day_of_week"]
+            time_of_day = slot_data["time_of_day"]
+            linked_template_id = slot_data.get("linked_template_id")
+            activity_type = slot_data.get("activity_type", "scheduled")
+            is_protected = slot_data.get("is_protected")
+            notes = slot_data.get("notes")
+
+            # Determine which weeks to apply to
+            target_weeks = week_numbers if week_numbers else [None]
+
+            for week_num in target_weeks:
+                if mode == "overlay":
+                    # Find existing pattern for this slot/week
+                    stmt = select(WeeklyPattern).where(
+                        WeeklyPattern.rotation_template_id == template_id,
+                        WeeklyPattern.day_of_week == day_of_week,
+                        WeeklyPattern.time_of_day == time_of_day,
+                        WeeklyPattern.week_number == week_num,
+                    )
+                    result = await self._execute(stmt)
+                    existing = result.scalar_one_or_none()
+
+                    if existing:
+                        # Update existing pattern
+                        if linked_template_id is not None:
+                            existing.linked_template_id = linked_template_id
+                        if activity_type:
+                            existing.activity_type = activity_type
+                        if is_protected is not None:
+                            existing.is_protected = is_protected
+                        if notes is not None:
+                            existing.notes = notes
+                        slots_modified += 1
+                    else:
+                        # Create new pattern
+                        new_pattern = WeeklyPattern(
+                            rotation_template_id=template_id,
+                            day_of_week=day_of_week,
+                            time_of_day=time_of_day,
+                            week_number=week_num,
+                            linked_template_id=linked_template_id,
+                            activity_type=activity_type or "scheduled",
+                            is_protected=is_protected or False,
+                            notes=notes,
+                        )
+                        self.db.add(new_pattern)
+                        slots_modified += 1
+                else:
+                    # Replace mode - create new patterns
+                    new_pattern = WeeklyPattern(
+                        rotation_template_id=template_id,
+                        day_of_week=day_of_week,
+                        time_of_day=time_of_day,
+                        week_number=week_num,
+                        linked_template_id=linked_template_id,
+                        activity_type=activity_type or "scheduled",
+                        is_protected=is_protected or False,
+                        notes=notes,
+                    )
+                    self.db.add(new_pattern)
+                    slots_modified += 1
+
+        await self._flush()
+        return slots_modified

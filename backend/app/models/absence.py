@@ -78,6 +78,13 @@ class Absence(Base):
     # False = partial absence, should be tracked but doesn't prevent assignment (single day, appointment)
     is_blocking = Column(Boolean, default=False)
 
+    # Away-from-program tracking for training extension threshold
+    # Residents who exceed 28 days away from program per academic year must extend training
+    # - Residents: defaults to True for all absence types (all time away counts)
+    # - Faculty: always False (faculty don't have away-from-program tracking)
+    # Note: Away rotations (Hilo, Okinawa, Kapiolani) are rotation templates, not absences
+    is_away_from_program = Column(Boolean, nullable=False, default=True)
+
     # Return date tracking for admin workflow
     # When admin enters emergency absence, exact return date is often unknown
     # This flags the absence for follow-up to confirm actual return date

@@ -1,10 +1,14 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Input, Select } from '@/components/forms';
 import { useUpdateTemplate } from '@/lib/hooks';
+import { useHalfDayRequirements, useUpdateHalfDayRequirements } from '@/hooks/useHalfDayRequirements';
+import { HalfDayRequirementsEditor } from '@/components/HalfDayRequirementsEditor';
 import type { RotationTemplate, RotationTemplateUpdate } from '@/types/api';
+import type { HalfDayRequirementCreate } from '@/types/admin-templates';
 
 interface EditTemplateModalProps {
   isOpen: boolean;
@@ -84,9 +88,20 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
   const [requiresProcedureCredential, setRequiresProcedureCredential] = useState(false);
   const [supervisionRequired, setSupervisionRequired] = useState(true);
   const [maxSupervisionRatio, setMaxSupervisionRatio] = useState('4');
+  const [isBlockHalfRotation, setIsBlockHalfRotation] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [showRequirements, setShowRequirements] = useState(false);
 
   const updateTemplate = useUpdateTemplate();
+
+  // Half-day requirements hooks
+  const {
+    data: requirements,
+    isLoading: requirementsLoading,
+  } = useHalfDayRequirements(template?.id ?? '', {
+    enabled: !!template?.id && showRequirements,
+  });
+  const updateRequirements = useUpdateHalfDayRequirements();
 
   // Pre-populate form when template changes
   useEffect(() => {
@@ -102,6 +117,7 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
       setRequiresProcedureCredential(template.requires_procedure_credential);
       setSupervisionRequired(template.supervision_required);
       setMaxSupervisionRatio(template.max_supervision_ratio.toString());
+      setIsBlockHalfRotation(template.is_block_half_rotation || false);
     }
   }, [template]);
 
@@ -144,6 +160,7 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
       requires_procedure_credential: requiresProcedureCredential,
       supervision_required: supervisionRequired,
       max_supervision_ratio: parseInt(maxSupervisionRatio),
+      is_block_half_rotation: isBlockHalfRotation,
     };
 
     try {
@@ -156,7 +173,23 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
 
   const handleClose = () => {
     setErrors({});
+    setShowRequirements(false);
     onClose();
+  };
+
+  const handleSaveRequirements = (data: HalfDayRequirementCreate) => {
+    if (!template) return;
+    updateRequirements.mutate(
+      { templateId: template.id, requirements: data },
+      {
+        onSuccess: () => {
+          // Requirements saved successfully - can show a toast if desired
+        },
+        onError: (error) => {
+          setErrors({ general: `Failed to save requirements: ${error.message}` });
+        },
+      }
+    );
   };
 
   if (!template) return null;
@@ -319,6 +352,48 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
               Requires procedure credential
             </label>
           </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="editIsBlockHalfRotation"
+              checked={isBlockHalfRotation}
+              onChange={(e) => setIsBlockHalfRotation(e.target.checked)}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="editIsBlockHalfRotation" className="text-sm text-gray-700">
+              Half-block rotation (14 days instead of 28)
+            </label>
+          </div>
+        </div>
+
+        {/* Collapsible Activity Requirements Section */}
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowRequirements(!showRequirements)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+          >
+            <span className="text-sm font-medium text-gray-700">
+              Activity Requirements (Half-Days per Block)
+            </span>
+            {showRequirements ? (
+              <ChevronUp className="w-5 h-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            )}
+          </button>
+          {showRequirements && (
+            <div className="p-4 border-t border-gray-200">
+              <HalfDayRequirementsEditor
+                requirements={requirements ?? null}
+                isLoading={requirementsLoading}
+                isSaving={updateRequirements.isPending}
+                onSave={handleSaveRequirements}
+                readOnly={false}
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-3 pt-4">

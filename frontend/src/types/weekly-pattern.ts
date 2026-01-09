@@ -177,6 +177,76 @@ export interface WeeklyPatternResponse {
 }
 
 // ============================================================================
+// Bulk Pattern Update Types
+// ============================================================================
+
+/**
+ * Single slot definition for batch pattern updates.
+ */
+export interface BatchPatternSlot {
+  /** Day of week (0=Sunday, 6=Saturday) */
+  day_of_week: DayOfWeek;
+  /** Time of day (AM or PM) */
+  time_of_day: WeeklyPatternTimeOfDay;
+  /** Template ID to assign to this slot (null to clear) */
+  linked_template_id?: UUID | null;
+  /** Activity type override */
+  activity_type?: string | null;
+  /** Protected status */
+  is_protected?: boolean;
+  /** Slot notes */
+  notes?: string | null;
+}
+
+/**
+ * Request schema for bulk updating weekly patterns across multiple templates.
+ */
+export interface BatchPatternUpdateRequest {
+  /** Template IDs to update */
+  template_ids: UUID[];
+  /** Update mode: overlay (merge with existing) or replace (overwrite all) */
+  mode: 'overlay' | 'replace';
+  /** Slots to apply (max 14 per week) */
+  slots: BatchPatternSlot[];
+  /** Weeks to apply to (1-4). null = all weeks */
+  week_numbers?: number[] | null;
+  /** Preview changes without applying */
+  dry_run?: boolean;
+}
+
+/**
+ * Result for a single template in batch update.
+ */
+export interface BatchPatternUpdateResult {
+  /** Template ID */
+  template_id: UUID;
+  /** Template name */
+  template_name: string;
+  /** Whether update succeeded */
+  success: boolean;
+  /** Number of slots modified */
+  slots_modified: number;
+  /** Error message if failed */
+  error?: string | null;
+}
+
+/**
+ * Response from batch pattern update API.
+ */
+export interface BatchPatternUpdateResponse {
+  /** Total templates processed */
+  total_templates: number;
+  /** Number of successful updates */
+  successful: number;
+  /** Number of failed updates */
+  failed: number;
+  /** Individual results per template */
+  results: BatchPatternUpdateResult[];
+  /** Whether this was a dry run */
+  dry_run: boolean;
+}
+
+// ============================================================================
 // Utility Functions
 // ============================================================================
 
@@ -300,6 +370,54 @@ export function updateSlot(
     slots: pattern.slots.map((slot) =>
       slot.dayOfWeek === dayOfWeek && slot.timeOfDay === timeOfDay
         ? { ...slot, rotationTemplateId }
+        : slot
+    ),
+  };
+}
+
+/**
+ * Toggles the protected status of a specific slot in a pattern grid (immutably).
+ *
+ * @param pattern - The current weekly pattern grid
+ * @param dayOfWeek - Day of week to update (0-6)
+ * @param timeOfDay - Time of day to update ('AM' or 'PM')
+ * @returns A new WeeklyPatternGrid with the toggled slot protection
+ */
+export function toggleSlotProtected(
+  pattern: WeeklyPatternGrid,
+  dayOfWeek: DayOfWeek,
+  timeOfDay: WeeklyPatternTimeOfDay
+): WeeklyPatternGrid {
+  return {
+    ...pattern,
+    slots: pattern.slots.map((slot) =>
+      slot.dayOfWeek === dayOfWeek && slot.timeOfDay === timeOfDay
+        ? { ...slot, isProtected: !slot.isProtected }
+        : slot
+    ),
+  };
+}
+
+/**
+ * Updates slot details (notes, activity type) immutably.
+ *
+ * @param pattern - The current weekly pattern grid
+ * @param dayOfWeek - Day of week to update (0-6)
+ * @param timeOfDay - Time of day to update ('AM' or 'PM')
+ * @param updates - Partial slot updates (notes, activityType)
+ * @returns A new WeeklyPatternGrid with the updated slot
+ */
+export function updateSlotDetails(
+  pattern: WeeklyPatternGrid,
+  dayOfWeek: DayOfWeek,
+  timeOfDay: WeeklyPatternTimeOfDay,
+  updates: { notes?: string | null; activityType?: string | null }
+): WeeklyPatternGrid {
+  return {
+    ...pattern,
+    slots: pattern.slots.map((slot) =>
+      slot.dayOfWeek === dayOfWeek && slot.timeOfDay === timeOfDay
+        ? { ...slot, ...updates }
         : slot
     ),
   };

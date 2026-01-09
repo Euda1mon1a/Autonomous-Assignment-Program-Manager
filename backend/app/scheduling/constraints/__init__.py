@@ -140,6 +140,19 @@ from .resident_weekly_clinic import (
     ResidentWeeklyClinicConstraint,
 )
 
+# Protected slot and half-day requirement constraints
+from .protected_slot import ProtectedSlotConstraint
+from .halfday_requirement import (
+    HalfDayRequirementConstraint,
+    WeekendWorkConstraint,
+)
+
+# Faculty weekly template constraint
+from .faculty_weekly_template import FacultyWeeklyTemplateConstraint
+
+# Activity requirement constraint (dynamic per-activity)
+from .activity_requirement import ActivityRequirementConstraint
+
 # Sports Medicine coordination constraints
 from .sports_medicine import SMResidentFacultyAlignmentConstraint
 
@@ -232,6 +245,14 @@ __all__ = [
     "ResidentWeeklyClinicConstraint",
     "ResidentAcademicTimeConstraint",
     "ResidentClinicDayPreferenceConstraint",
+    # Protected slot and half-day requirement constraints
+    "ProtectedSlotConstraint",
+    "HalfDayRequirementConstraint",
+    "WeekendWorkConstraint",
+    # Faculty weekly template constraint
+    "FacultyWeeklyTemplateConstraint",
+    # Activity requirement constraint
+    "ActivityRequirementConstraint",
     # Manager
     "ConstraintManager",
 ]

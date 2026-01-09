@@ -83,6 +83,7 @@ export function CreateTemplateModal({ isOpen, onClose }: CreateTemplateModalProp
   const [requiresProcedureCredential, setRequiresProcedureCredential] = useState(false);
   const [supervisionRequired, setSupervisionRequired] = useState(true);
   const [maxSupervisionRatio, setMaxSupervisionRatio] = useState('4');
+  const [isBlockHalfRotation, setIsBlockHalfRotation] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
   const createTemplate = useCreateTemplate();
@@ -126,6 +127,7 @@ export function CreateTemplateModal({ isOpen, onClose }: CreateTemplateModalProp
       requires_procedure_credential: requiresProcedureCredential,
       supervision_required: supervisionRequired,
       max_supervision_ratio: parseInt(maxSupervisionRatio),
+      is_block_half_rotation: isBlockHalfRotation,
     };
 
     try {
@@ -148,6 +150,7 @@ export function CreateTemplateModal({ isOpen, onClose }: CreateTemplateModalProp
     setRequiresProcedureCredential(false);
     setSupervisionRequired(true);
     setMaxSupervisionRatio('4');
+    setIsBlockHalfRotation(false);
     setErrors({});
     onClose();
   };
@@ -308,6 +311,19 @@ export function CreateTemplateModal({ isOpen, onClose }: CreateTemplateModalProp
             />
             <label htmlFor="requiresProcedureCredential" className="text-sm text-gray-700">
               Requires procedure credential
+            </label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="isBlockHalfRotation"
+              checked={isBlockHalfRotation}
+              onChange={(e) => setIsBlockHalfRotation(e.target.checked)}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="isBlockHalfRotation" className="text-sm text-gray-700">
+              Half-block rotation (14 days instead of 28)
             </label>
           </div>
         </div>

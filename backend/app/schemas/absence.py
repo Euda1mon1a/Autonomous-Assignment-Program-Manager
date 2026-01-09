@@ -96,11 +96,20 @@ class AbsenceCreate(AbsenceBase):
     - Set return_date_tentative=True when exact return is unknown
     - created_by_id tracks which admin entered the absence
     - end_date defaults should be start_date + 10 days for Hawaii (UI handles this)
+
+    Away-from-program tracking:
+    - Residents: defaults to True (all absence time counts toward 28-day limit)
+    - Faculty: should always be False (no away-from-program tracking)
+    - Admin can override if needed
     """
 
     is_blocking: bool | None = None  # Auto-determined if not set
     return_date_tentative: bool = False
     created_by_id: UUID | None = None
+    is_away_from_program: bool = Field(
+        default=True,
+        description="Whether this absence counts toward away-from-program limit (28 days/year for residents)",
+    )
 
 
 class AbsenceUpdate(BaseModel):
@@ -112,6 +121,9 @@ class AbsenceUpdate(BaseModel):
     is_blocking: bool | None = Field(None, description="Whether absence is blocking")
     return_date_tentative: bool | None = Field(
         None, description="Whether return date is tentative"
+    )
+    is_away_from_program: bool | None = Field(
+        None, description="Whether this counts toward away-from-program limit"
     )
     deployment_orders: bool | None = Field(
         None, description="Whether deployment orders exist"
@@ -154,6 +166,9 @@ class AbsenceResponse(AbsenceBase):
     id: UUID
     is_blocking: bool | None
     return_date_tentative: bool
+    is_away_from_program: bool = Field(
+        description="Whether this counts toward away-from-program limit (28 days/year)"
+    )
     created_by_id: UUID | None
     created_at: datetime
 
@@ -224,4 +239,71 @@ class AbsenceBulkApply(BaseModel):
     skipped: int = Field(0, description="Number of absences skipped (e.g., duplicates)")
     errors: list[AbsenceValidationError] = Field(
         default_factory=list, description="Errors encountered during apply"
+    )
+
+
+# ============================================================================
+# Away-From-Program Tracking Schemas
+# ============================================================================
+
+
+class ThresholdStatus(str, Enum):
+    """Threshold status for away-from-program tracking."""
+
+    OK = "ok"
+    WARNING = "warning"
+    CRITICAL = "critical"
+    EXCEEDED = "exceeded"
+
+
+class AwayAbsenceDetail(BaseModel):
+    """Detail of an absence contributing to away-from-program count."""
+
+    id: str
+    start_date: str
+    end_date: str
+    absence_type: str
+    days: int = Field(..., description="Days counted toward away-from-program")
+
+
+class AwayFromProgramSummary(BaseModel):
+    """Summary of a resident's away-from-program status.
+
+    Used to track progress toward the 28-day annual limit.
+    Exceeding this limit requires training extension.
+    """
+
+    person_id: str
+    academic_year: str = Field(..., description="Academic year (e.g., '2025-2026')")
+    days_used: int = Field(..., description="Total days away from program this year")
+    days_remaining: int = Field(..., description="Days remaining before limit (max 0)")
+    threshold_status: ThresholdStatus = Field(
+        ..., description="Current status: ok, warning, critical, exceeded"
+    )
+    max_days: int = Field(default=28, description="Maximum allowed days per year")
+    warning_days: int = Field(default=21, description="Warning threshold (75%)")
+    absences: list[AwayAbsenceDetail] = Field(
+        default_factory=list, description="Absences contributing to count"
+    )
+
+
+class AwayFromProgramCheck(BaseModel):
+    """Response for threshold check (before creating new absence)."""
+
+    current_days: int = Field(..., description="Current days used")
+    projected_days: int = Field(..., description="Days if new absence is added")
+    threshold_status: ThresholdStatus
+    days_remaining: int
+    max_days: int = 28
+    warning_days: int = 21
+
+
+class AllResidentsAwayStatus(BaseModel):
+    """Away-from-program status for all residents (compliance dashboard)."""
+
+    academic_year: str
+    residents: list[AwayFromProgramSummary]
+    summary: dict = Field(
+        default_factory=dict,
+        description="Summary: counts by status (ok, warning, critical, exceeded)",
     )

@@ -16,10 +16,73 @@ export type ActivityType =
   | 'procedures'
   | 'conference'
   | 'education'
+  | 'lecture'
   | 'outpatient'
   | 'absence'
   | 'off'
   | 'recovery';
+
+/**
+ * Template category for UI grouping and filtering.
+ *
+ * - rotation: Clinical work (clinic, inpatient, outpatient, procedure)
+ * - time_off: ACGME-protected rest (off, recovery) - does NOT count toward away-from-program
+ * - absence: Days away from program (absence activity type) - counts toward 28-day limit
+ * - educational: Structured learning (conference, education, lecture)
+ */
+export type TemplateCategory = 'rotation' | 'time_off' | 'absence' | 'educational';
+
+export interface TemplateCategoryConfig {
+  value: TemplateCategory;
+  label: string;
+  description: string;
+  icon: string;
+  activityTypes: ActivityType[];
+}
+
+export const TEMPLATE_CATEGORY_CONFIGS: TemplateCategoryConfig[] = [
+  {
+    value: 'rotation',
+    label: 'Clinical Rotations',
+    description: 'Assignable clinical work',
+    icon: 'Stethoscope',
+    activityTypes: ['clinic', 'inpatient', 'outpatient', 'procedure', 'procedures'],
+  },
+  {
+    value: 'time_off',
+    label: 'Time Off',
+    description: 'ACGME-protected rest (does NOT count toward away-from-program)',
+    icon: 'Moon',
+    activityTypes: ['off', 'recovery'],
+  },
+  {
+    value: 'absence',
+    label: 'Absences',
+    description: 'Days away from program (counts toward 28-day limit)',
+    icon: 'CalendarX',
+    activityTypes: ['absence'],
+  },
+  {
+    value: 'educational',
+    label: 'Educational',
+    description: 'Structured learning activities',
+    icon: 'GraduationCap',
+    activityTypes: ['conference', 'education', 'lecture'],
+  },
+];
+
+export function getTemplateCategoryConfig(category: TemplateCategory): TemplateCategoryConfig {
+  return TEMPLATE_CATEGORY_CONFIGS.find((c) => c.value === category) || TEMPLATE_CATEGORY_CONFIGS[0];
+}
+
+export function getCategoryForActivityType(activityType: ActivityType): TemplateCategory {
+  for (const config of TEMPLATE_CATEGORY_CONFIGS) {
+    if (config.activityTypes.includes(activityType)) {
+      return config.value;
+    }
+  }
+  return 'rotation'; // Default
+}
 
 export type PatternType = 'regular' | 'split' | 'mirrored' | 'alternating';
 export type SettingType = 'inpatient' | 'outpatient';
@@ -28,6 +91,7 @@ export interface RotationTemplate {
   id: string;
   name: string;
   activity_type: ActivityType;
+  template_category: TemplateCategory;
   abbreviation: string | null;
   display_abbreviation: string | null;
   font_color: string | null;
@@ -40,6 +104,8 @@ export interface RotationTemplate {
   max_supervision_ratio: number | null;
   /** True for half-block rotations (14 days instead of 28) */
   is_block_half_rotation?: boolean;
+  /** True if rotation includes weekend work (Night Float, FMIT, etc.) */
+  includes_weekend_work?: boolean;
   created_at: string;
   is_archived?: boolean;
   archived_at?: string | null;
@@ -83,6 +149,47 @@ export interface RotationPreferenceCreate {
   config_json?: Record<string, unknown>;
   is_active?: boolean;
   description?: string | null;
+}
+
+// ============================================================================
+// Half-Day Requirement Types
+// ============================================================================
+
+/**
+ * Half-day activity distribution requirements for a rotation template.
+ * Defines how many half-days should be allocated to each activity type per block.
+ */
+export interface HalfDayRequirement {
+  id: string;
+  rotation_template_id: string;
+  /** Number of FM clinic half-days per block (default: 4) */
+  fm_clinic_halfdays: number;
+  /** Number of specialty half-days per block (default: 5) */
+  specialty_halfdays: number;
+  /** Name of the specialty (e.g., "Neurology", "Dermatology") */
+  specialty_name: string | null;
+  /** Number of academic/lecture half-days per block (default: 1) */
+  academics_halfdays: number;
+  /** Number of elective/buffer half-days per block (default: 0) */
+  elective_halfdays: number;
+  /** Minimum consecutive specialty days to batch together */
+  min_consecutive_specialty: number;
+  /** Prefer FM + specialty on same day when possible */
+  prefer_combined_clinic_days: boolean;
+  /** Calculated total half-days */
+  total_halfdays: number;
+  /** True if total equals standard block (10 half-days) */
+  is_balanced: boolean;
+}
+
+export interface HalfDayRequirementCreate {
+  fm_clinic_halfdays?: number;
+  specialty_halfdays?: number;
+  specialty_name?: string | null;
+  academics_halfdays?: number;
+  elective_halfdays?: number;
+  min_consecutive_specialty?: number;
+  prefer_combined_clinic_days?: boolean;
 }
 
 // ============================================================================
@@ -224,6 +331,7 @@ export type SortDirection = 'asc' | 'desc';
 
 export interface TemplateFilters {
   activity_type: ActivityType | '';
+  template_category: TemplateCategory | '';
   search: string;
 }
 
@@ -394,6 +502,7 @@ export interface TemplateExportResponse {
 export interface TemplateCreateRequest {
   name: string;
   activity_type: ActivityType;
+  template_category?: TemplateCategory;
   abbreviation?: string | null;
   display_abbreviation?: string | null;
   font_color?: string | null;
@@ -410,6 +519,7 @@ export interface TemplateCreateRequest {
 export interface TemplateUpdateRequest {
   name?: string;
   activity_type?: ActivityType;
+  template_category?: TemplateCategory;
   abbreviation?: string | null;
   display_abbreviation?: string | null;
   font_color?: string | null;
@@ -441,6 +551,7 @@ export const ACTIVITY_TYPE_CONFIGS: ActivityTypeConfig[] = [
   { type: 'procedures', label: 'Procedures', color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
   { type: 'conference', label: 'Conference', color: 'text-amber-400', bgColor: 'bg-amber-500/20' },
   { type: 'education', label: 'Education', color: 'text-cyan-400', bgColor: 'bg-cyan-500/20' },
+  { type: 'lecture', label: 'Lecture (LEC)', color: 'text-fuchsia-400', bgColor: 'bg-fuchsia-500/20' },
   { type: 'outpatient', label: 'Outpatient', color: 'text-green-400', bgColor: 'bg-green-500/20' },
   { type: 'absence', label: 'Absence', color: 'text-red-400', bgColor: 'bg-red-500/20' },
   { type: 'off', label: 'Off', color: 'text-slate-400', bgColor: 'bg-slate-500/20' },

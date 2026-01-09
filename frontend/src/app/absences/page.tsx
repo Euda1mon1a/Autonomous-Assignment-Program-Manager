@@ -1,12 +1,15 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Plus, Calendar, List, RefreshCw, Upload } from 'lucide-react'
+import { Plus, Calendar, List, RefreshCw, Upload, Grid } from 'lucide-react'
+import { format, addDays } from 'date-fns'
 import { useAbsences, usePeople, useDeleteAbsence, useUpdateAbsence } from '@/lib/hooks'
 import { CardSkeleton } from '@/components/skeletons'
 import { AddAbsenceModal } from '@/components/AddAbsenceModal'
 import { AbsenceCalendar } from '@/components/AbsenceCalendar'
 import { AbsenceList } from '@/components/AbsenceList'
+import { AbsenceGrid, type PersonTypeFilter } from '@/components/absence/AbsenceGrid'
+import { BlockNavigation } from '@/components/schedule/BlockNavigation'
 import { Modal } from '@/components/Modal'
 import { Select, DatePicker, TextArea } from '@/components/forms'
 import { ExportButton } from '@/components/ExportButton'
@@ -23,7 +26,7 @@ const absenceExportColumns = [
   { key: 'notes', header: 'Notes' },
 ]
 
-type ViewMode = 'calendar' | 'list'
+type ViewMode = 'calendar' | 'list' | 'grid'
 type AbsenceTypeFilter = 'all' | 'vacation' | 'sick' | 'conference' | 'personal' | 'medical' | 'deployment' | 'tdy' | 'family_emergency' | 'bereavement' | 'emergency_leave' | 'convalescent' | 'maternity_paternity'
 
 const absenceTypeOptions = [
@@ -44,6 +47,12 @@ const absenceTypeOptions = [
   { value: 'tdy', label: 'TDY' },
 ]
 
+// Get initial date range (today + 27 days for a block period)
+function getInitialDateRange() {
+  const today = new Date()
+  return { start: today, end: addDays(today, 27) }
+}
+
 export default function AbsencesPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('calendar')
   const [typeFilter, setTypeFilter] = useState<AbsenceTypeFilter>('all')
@@ -51,6 +60,12 @@ export default function AbsencesPage() {
   const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false)
   const [editingAbsence, setEditingAbsence] = useState<Absence | null>(null)
   const [absenceToDelete, setAbsenceToDelete] = useState<Absence | null>(null)
+
+  // Grid view state
+  const [gridDateRange, setGridDateRange] = useState(getInitialDateRange)
+  const [personTypeFilter, setPersonTypeFilter] = useState<PersonTypeFilter>('all')
+  const [preselectedPersonId, setPreselectedPersonId] = useState<string | undefined>()
+  const [preselectedDate, setPreselectedDate] = useState<string | undefined>()
 
   // Edit form state
   const [editStartDate, setEditStartDate] = useState('')
@@ -187,22 +202,71 @@ export default function AbsencesPage() {
             <List className="w-4 h-4" />
             List
           </button>
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              viewMode === 'grid'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <Grid className="w-4 h-4" />
+            Grid
+          </button>
         </div>
 
-        {/* Type Filter */}
-        <select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value as AbsenceTypeFilter)}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="all">All Types</option>
-          <option value="vacation">Vacation</option>
-          <option value="medical">Sick / Medical</option>
-          <option value="conference">Conference</option>
-          <option value="family_emergency">Personal / Family Emergency</option>
-          <option value="deployment">Deployment</option>
-          <option value="tdy">TDY</option>
-        </select>
+        {/* Type Filter (calendar/list only) */}
+        {viewMode !== 'grid' && (
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value as AbsenceTypeFilter)}
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Types</option>
+            <option value="vacation">Vacation</option>
+            <option value="medical">Sick / Medical</option>
+            <option value="conference">Conference</option>
+            <option value="family_emergency">Personal / Family Emergency</option>
+            <option value="deployment">Deployment</option>
+            <option value="tdy">TDY</option>
+          </select>
+        )}
+
+        {/* Person Type Filter (grid only) */}
+        {viewMode === 'grid' && (
+          <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+            <button
+              onClick={() => setPersonTypeFilter('all')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                personTypeFilter === 'all'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setPersonTypeFilter('residents')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                personTypeFilter === 'residents'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Residents
+            </button>
+            <button
+              onClick={() => setPersonTypeFilter('faculty')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                personTypeFilter === 'faculty'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Faculty
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -231,19 +295,45 @@ export default function AbsencesPage() {
           people={people}
           onAbsenceClick={handleEditClick}
         />
-      ) : (
+      ) : viewMode === 'list' ? (
         <AbsenceList
           absences={absences}
           people={people}
           onEdit={handleEditClick}
           onDelete={handleDeleteClick}
         />
+      ) : (
+        <div className="space-y-4">
+          <BlockNavigation
+            startDate={gridDateRange.start}
+            endDate={gridDateRange.end}
+            onDateRangeChange={(start, end) => setGridDateRange({ start, end })}
+          />
+          <AbsenceGrid
+            startDate={gridDateRange.start}
+            endDate={gridDateRange.end}
+            personTypeFilter={personTypeFilter}
+            onAddAbsence={(personId, date) => {
+              setPreselectedPersonId(personId)
+              setPreselectedDate(format(date, 'yyyy-MM-dd'))
+              setIsAddModalOpen(true)
+            }}
+            onEditAbsence={handleEditClick}
+          />
+        </div>
       )}
 
       {/* Add Absence Modal */}
       <AddAbsenceModal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={() => {
+          setIsAddModalOpen(false)
+          setPreselectedPersonId(undefined)
+          setPreselectedDate(undefined)
+        }}
+        preselectedPersonId={preselectedPersonId}
+        preselectedStartDate={preselectedDate}
+        preselectedEndDate={preselectedDate}
       />
 
       {/* Edit Absence Modal */}

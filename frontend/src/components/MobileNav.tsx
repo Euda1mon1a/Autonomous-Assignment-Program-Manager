@@ -8,6 +8,7 @@ import {
   X,
   Calendar,
   CalendarCheck,
+  CalendarDays,
   Users,
   FileText,
   CalendarOff,
@@ -51,6 +52,7 @@ const navItems: NavItem[] = [
   { href: '/admin/people', label: 'People Admin', icon: UserCog, adminOnly: true },
   { href: '/admin/credentials', label: 'Credentials', icon: Award, adminOnly: true },
   { href: '/admin/rotations', label: 'Rotations', icon: LayoutTemplate, adminOnly: true },
+  { href: '/admin/faculty-activities', label: 'Faculty Templates', icon: CalendarDays, adminOnly: true },
   { href: '/settings', label: 'Settings', icon: Settings, adminOnly: true },
 ]
 

@@ -18,6 +18,8 @@ import type {
   WeeklyPatternGrid,
   DayOfWeek,
   WeeklyPatternTimeOfDay,
+  BatchPatternUpdateRequest,
+  BatchPatternUpdateResponse,
 } from '@/types/weekly-pattern';
 import { createEmptyPattern, ensureCompletePattern } from '@/types/weekly-pattern';
 
@@ -311,5 +313,68 @@ export function useAvailableTemplates(
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     ...options,
+  });
+}
+
+/**
+ * Bulk update weekly patterns across multiple rotation templates.
+ *
+ * Supports two modes:
+ * - **overlay**: Merges provided slots with existing patterns
+ * - **replace**: Replaces entire patterns with provided slots
+ *
+ * Can target specific weeks (1-4) or apply to all weeks.
+ *
+ * @returns Mutation object for bulk updating patterns
+ *
+ * @example
+ * ```tsx
+ * function BulkPatternEditor({ selectedTemplates }: Props) {
+ *   const { mutate, isPending } = useBulkUpdateWeeklyPatterns();
+ *
+ *   const handleApply = (slots: BatchPatternSlot[]) => {
+ *     mutate(
+ *       {
+ *         template_ids: selectedTemplates.map(t => t.id),
+ *         mode: 'overlay',
+ *         slots,
+ *         week_numbers: [1, 2, 3], // Apply to weeks 1-3
+ *       },
+ *       {
+ *         onSuccess: (result) => {
+ *           toast.success(`Updated ${result.successful} templates`);
+ *         },
+ *         onError: (error) => toast.error(`Failed: ${error.message}`),
+ *       }
+ *     );
+ *   };
+ *
+ *   return <PatternGrid onApply={handleApply} saving={isPending} />;
+ * }
+ * ```
+ */
+export function useBulkUpdateWeeklyPatterns() {
+  const queryClient = useQueryClient();
+
+  return useMutation<BatchPatternUpdateResponse, ApiError, BatchPatternUpdateRequest>({
+    mutationFn: async (request) => {
+      const response = await put<BatchPatternUpdateResponse>(
+        '/rotation-templates/batch/patterns',
+        request
+      );
+      return response;
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate patterns for all affected templates
+      for (const templateId of variables.template_ids) {
+        queryClient.invalidateQueries({
+          queryKey: weeklyPatternQueryKeys.pattern(templateId),
+        });
+      }
+      // Also invalidate the templates list as patterns affect template display
+      queryClient.invalidateQueries({
+        queryKey: ['rotation-templates'],
+      });
+    },
   });
 }

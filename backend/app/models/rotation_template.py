@@ -32,7 +32,20 @@ class RotationTemplate(Base):
     )  # e.g., "PGY-1 Clinic", "FMIT", "Sports Medicine"
     activity_type = Column(
         String(255), nullable=False
-    )  # "clinic", "inpatient", "outpatient", "procedure", "procedures", "conference", "education", "absence", "off", "recovery"
+    )  # "clinic", "inpatient", "outpatient", "procedure", "procedures", "conference", "education", "lecture", "absence", "off", "recovery"
+
+    # Template category for UI grouping and filtering
+    # - rotation: Clinical work (clinic, inpatient, outpatient, procedure)
+    # - time_off: ACGME-protected rest (off, recovery)
+    # - absence: Days away from program (absence activity type)
+    # - educational: Structured learning (conference, education, lecture)
+    template_category = Column(
+        String(20),
+        nullable=False,
+        default="rotation",
+        index=True,
+    )
+
     abbreviation = Column(String(10))  # For Excel export: "C", "FMIT", "LEC"
     display_abbreviation = Column(String(20))  # User-facing code for schedule grid
     font_color = Column(String(50))  # Tailwind color class for text
@@ -61,6 +74,16 @@ class RotationTemplate(Base):
         default=False,
         nullable=False,
         comment="True for half-block rotations (14 days instead of 28)",
+    )
+
+    # Weekend work configuration
+    # True = rotation includes weekend assignments (Night Float, FMIT, etc.)
+    # False = weekends are automatically off (most outpatient rotations)
+    includes_weekend_work = Column(
+        Boolean,
+        default=False,
+        nullable=False,
+        comment="True if rotation includes weekend assignments",
     )
 
     # Archive fields (soft delete)
@@ -97,6 +120,12 @@ class RotationTemplate(Base):
         back_populates="rotation_template",
         uselist=False,  # One-to-one relationship
         cascade="all, delete-orphan",
+    )
+    activity_requirements = relationship(
+        "RotationActivityRequirement",
+        back_populates="rotation_template",
+        cascade="all, delete-orphan",
+        order_by="RotationActivityRequirement.priority.desc()",
     )
 
     def __repr__(self):

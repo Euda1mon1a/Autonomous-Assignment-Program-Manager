@@ -243,6 +243,24 @@ class SchedulingContext:
     # Target utilization for buffer constraint (default 80%)
     target_utilization: float = 0.80
 
+    # =========================================================================
+    # Activity Requirements Data (for ActivityRequirementConstraint)
+    # =========================================================================
+
+    # List of RotationActivityRequirement objects defining per-activity targets
+    # Populated by engine from database before solving
+    activity_requirements: list = field(default_factory=list)
+
+    # Activity requirements indexed by template ID for fast lookup
+    # Structure: {rotation_template_id: [RotationActivityRequirement, ...]}
+    activity_req_by_template: dict[UUID, list] = field(default_factory=dict)
+
+    # Activity lookup: {activity_id: index} for decision variable mapping
+    activity_idx: dict[UUID, int] = field(default_factory=dict)
+
+    # Activities list (for reference during constraint evaluation)
+    activities: list = field(default_factory=list)
+
     def __post_init__(self: "SchedulingContext") -> None:
         """
         Build lookup dictionaries and indices for fast constraint evaluation.
@@ -256,7 +274,9 @@ class SchedulingContext:
             - faculty_idx: Maps faculty UUID to array index for decision variables
             - block_idx: Maps block UUID to array index for decision variables
             - template_idx: Maps template UUID to array index for decision variables
+            - activity_idx: Maps activity UUID to array index for decision variables
             - blocks_by_date: Groups blocks by date for temporal constraint evaluation
+            - activity_req_by_template: Groups activity requirements by template ID
         """
         self.resident_idx = {r.id: i for i, r in enumerate(self.residents)}
         self.faculty_idx = {f.id: i for i, f in enumerate(self.faculty)}
@@ -266,9 +286,19 @@ class SchedulingContext:
             f.id: i for i, f in enumerate(self.call_eligible_faculty)
         }
 
+        # Build activity index if activities provided
+        self.activity_idx = {a.id: i for i, a in enumerate(self.activities)}
+
         self.blocks_by_date = defaultdict(list)
         for block in self.blocks:
             self.blocks_by_date[block.date].append(block)
+
+        # Build activity requirements by template index if not already set
+        if self.activity_requirements and not self.activity_req_by_template:
+            by_template: dict[UUID, list] = defaultdict(list)
+            for req in self.activity_requirements:
+                by_template[req.rotation_template_id].append(req)
+            self.activity_req_by_template = dict(by_template)
 
     def has_resilience_data(self: "SchedulingContext") -> bool:
         """
@@ -358,3 +388,40 @@ class SchedulingContext:
         """
         faculty_prefs = self.preference_trails.get(faculty_id, {})
         return faculty_prefs.get(slot_type, 0.5)
+
+    def has_activity_requirements(self: "SchedulingContext") -> bool:
+        """
+        Check if activity requirements data has been populated in this context.
+
+        Activity requirements define per-activity halfday targets for rotation
+        templates. If this returns True, the ActivityRequirementConstraint can
+        be activated.
+
+        Returns:
+            bool: True if any activity requirements are present, False otherwise
+
+        Example:
+            >>> if context.has_activity_requirements():
+            ...     constraint_manager.enable("ActivityRequirement")
+        """
+        return bool(self.activity_requirements)
+
+    def get_requirements_for_template(
+        self: "SchedulingContext", template_id: UUID
+    ) -> list:
+        """
+        Get activity requirements for a specific rotation template.
+
+        Args:
+            template_id: UUID of the rotation template
+
+        Returns:
+            list: List of RotationActivityRequirement objects for this template,
+                  or empty list if none defined.
+
+        Example:
+            >>> reqs = context.get_requirements_for_template(neurology_id)
+            >>> for req in reqs:
+            ...     print(f"{req.activity.name}: {req.target_halfdays} half-days")
+        """
+        return self.activity_req_by_template.get(template_id, [])

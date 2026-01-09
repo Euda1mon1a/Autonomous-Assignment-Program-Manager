@@ -685,3 +685,183 @@ export function useAutoMatch() {
     },
   });
 }
+
+// ============================================================================
+// Admin Swap Execution Types
+// ============================================================================
+
+/**
+ * Request for executing a swap (admin force swap)
+ */
+export interface SwapExecuteRequest {
+  source_faculty_id: string;
+  source_week: string; // ISO date
+  target_faculty_id: string;
+  target_week?: string; // ISO date, required for one-to-one
+  swap_type: SwapType;
+  reason?: string;
+}
+
+/**
+ * Result of swap validation
+ */
+export interface SwapValidationResult {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+  back_to_back_conflict: boolean;
+  external_conflict?: string;
+}
+
+/**
+ * Response from swap execution
+ */
+export interface SwapExecuteResponse {
+  success: boolean;
+  swap_id: string | null;
+  message: string;
+  validation: SwapValidationResult;
+}
+
+/**
+ * Request for rolling back a swap
+ */
+export interface SwapRollbackRequest {
+  swap_id: string;
+  reason: string;
+}
+
+/**
+ * Response from swap rollback
+ */
+export interface SwapRollbackResponse {
+  success: boolean;
+  message: string;
+  swap_id: string;
+}
+
+// ============================================================================
+// Admin Swap Mutation Hooks
+// ============================================================================
+
+/**
+ * Validates a swap without executing it (dry run).
+ *
+ * This hook checks if a proposed swap would be valid, returning any errors
+ * or warnings that would prevent or affect the swap.
+ *
+ * @returns Mutation object for validating swaps
+ *
+ * @example
+ * ```tsx
+ * const { mutate: validate, data: validation } = useValidateSwap();
+ *
+ * const handleDryRun = () => {
+ *   validate({
+ *     source_faculty_id: 'uuid',
+ *     source_week: '2024-03-01',
+ *     target_faculty_id: 'uuid',
+ *     swap_type: SwapType.ONE_TO_ONE,
+ *   });
+ * };
+ *
+ * if (validation && !validation.valid) {
+ *   showWarnings(validation.errors);
+ * }
+ * ```
+ */
+export function useValidateSwap() {
+  return useMutation<SwapValidationResult, ApiError, SwapExecuteRequest>({
+    mutationFn: (request) =>
+      post<SwapValidationResult>("/swaps/validate", request),
+  });
+}
+
+/**
+ * Executes a swap between two faculty members.
+ *
+ * This hook performs the actual swap operation, transferring assignments
+ * between faculty members. Should typically be preceded by validation.
+ *
+ * @returns Mutation object for executing swaps
+ *
+ * @example
+ * ```tsx
+ * const { mutate: executeSwap, isPending } = useExecuteSwap();
+ *
+ * const handleExecute = () => {
+ *   executeSwap({
+ *     source_faculty_id: sourceFacultyId,
+ *     source_week: '2024-03-01',
+ *     target_faculty_id: targetFacultyId,
+ *     target_week: '2024-03-08',
+ *     swap_type: SwapType.ONE_TO_ONE,
+ *     reason: 'Admin force swap',
+ *   }, {
+ *     onSuccess: (result) => {
+ *       toast.success(`Swap executed: ${result.swap_id}`);
+ *     },
+ *     onError: (error) => {
+ *       toast.error(`Swap failed: ${error.message}`);
+ *     },
+ *   });
+ * };
+ * ```
+ */
+export function useExecuteSwap() {
+  const queryClient = useQueryClient();
+
+  return useMutation<SwapExecuteResponse, ApiError, SwapExecuteRequest>({
+    mutationFn: (request) =>
+      post<SwapExecuteResponse>("/swaps/execute", request),
+    onSuccess: () => {
+      // Invalidate all related queries
+      queryClient.invalidateQueries({ queryKey: swapQueryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ["schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["blocks"] });
+    },
+  });
+}
+
+/**
+ * Rolls back a previously executed swap.
+ *
+ * This hook reverses a swap that was executed within the rollback window
+ * (typically 24 hours). Requires a reason for audit trail.
+ *
+ * @returns Mutation object for rolling back swaps
+ *
+ * @example
+ * ```tsx
+ * const { mutate: rollback, isPending } = useRollbackSwap();
+ *
+ * const handleRollback = () => {
+ *   rollback({
+ *     swap_id: swapId,
+ *     reason: 'Executed in error',
+ *   }, {
+ *     onSuccess: () => {
+ *       toast.success('Swap rolled back');
+ *     },
+ *   });
+ * };
+ * ```
+ */
+export function useRollbackSwap() {
+  const queryClient = useQueryClient();
+
+  return useMutation<SwapRollbackResponse, ApiError, SwapRollbackRequest>({
+    mutationFn: ({ swap_id, reason }) =>
+      post<SwapRollbackResponse>(`/swaps/${swap_id}/rollback`, { reason }),
+    onSuccess: (data) => {
+      // Invalidate all related queries
+      queryClient.invalidateQueries({
+        queryKey: swapQueryKeys.detail(data.swap_id),
+      });
+      queryClient.invalidateQueries({ queryKey: swapQueryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ["schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["assignments"] });
+    },
+  });
+}

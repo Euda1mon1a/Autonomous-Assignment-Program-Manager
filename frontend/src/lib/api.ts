@@ -13,6 +13,68 @@
  */
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios'
 
+// =============================================================================
+// Case Conversion Utilities
+// =============================================================================
+
+/**
+ * Converts a string from camelCase to snake_case.
+ * Example: "dayOfWeek" -> "day_of_week"
+ */
+function toSnakeCase(str: string): string {
+  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+}
+
+/**
+ * Converts a string from snake_case to camelCase.
+ * Example: "day_of_week" -> "dayOfWeek"
+ */
+function toCamelCase(str: string): string {
+  return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+}
+
+/**
+ * Recursively converts all keys in an object from camelCase to snake_case.
+ * Handles nested objects and arrays.
+ */
+function keysToSnakeCase(obj: unknown): unknown {
+  if (Array.isArray(obj)) {
+    return obj.map(keysToSnakeCase);
+  }
+  if (obj !== null && typeof obj === 'object' && !(obj instanceof Date)) {
+    return Object.fromEntries(
+      Object.entries(obj).map(([key, value]) => [
+        toSnakeCase(key),
+        keysToSnakeCase(value),
+      ])
+    );
+  }
+  return obj;
+}
+
+/**
+ * Recursively converts all keys in an object from snake_case to camelCase.
+ * Handles nested objects and arrays.
+ */
+function keysToCamelCase(obj: unknown): unknown {
+  if (Array.isArray(obj)) {
+    return obj.map(keysToCamelCase);
+  }
+  if (obj !== null && typeof obj === 'object' && !(obj instanceof Date)) {
+    return Object.fromEntries(
+      Object.entries(obj).map(([key, value]) => [
+        toCamelCase(key),
+        keysToCamelCase(value),
+      ])
+    );
+  }
+  return obj;
+}
+
+// =============================================================================
+// API Configuration
+// =============================================================================
+
 // API base URL from environment or default for development
 // Use /api/v1 directly to avoid 307 redirect which causes CORS issues
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
@@ -154,9 +216,13 @@ function createApiClient(): AxiosInstance {
     withCredentials: true,
   })
 
-  // Request interceptor
+  // Request interceptor - convert camelCase to snake_case for API
   client.interceptors.request.use(
     (config) => {
+      // Convert request body keys to snake_case
+      if (config.data && typeof config.data === 'object') {
+        config.data = keysToSnakeCase(config.data);
+      }
       return config
     },
     (error) => {
@@ -164,9 +230,13 @@ function createApiClient(): AxiosInstance {
     }
   )
 
-  // Response interceptor - transform errors and handle token refresh
+  // Response interceptor - convert snake_case to camelCase, transform errors, handle token refresh
   client.interceptors.response.use(
     (response) => {
+      // Convert response data keys to camelCase
+      if (response.data && typeof response.data === 'object') {
+        response.data = keysToCamelCase(response.data);
+      }
       // Issue #5: Handle 207 Multi-Status as a successful response (partial success)
       // This is used for schedule generation that completes but has validation warnings
       return response

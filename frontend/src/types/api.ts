@@ -377,6 +377,8 @@ export interface Absence {
   end_date: DateString;
   /** Type of absence */
   absence_type: AbsenceType;
+  /** Whether this absence counts toward away-from-program limit (28 days/year for residents) */
+  is_away_from_program: boolean;
   /** Whether the absence is due to deployment orders (military) */
   deployment_orders: boolean;
   /** Location of TDY (temporary duty) if applicable */
@@ -401,6 +403,8 @@ export interface AbsenceCreate {
   end_date: DateString;
   /** Type of absence */
   absence_type: AbsenceType;
+  /** Whether this counts toward away-from-program limit (default: true for residents, false for faculty) */
+  is_away_from_program?: boolean;
   /** Whether the absence is due to deployment orders (military) */
   deployment_orders?: boolean;
   /** Location of TDY (temporary duty) if applicable */
@@ -421,6 +425,8 @@ export interface AbsenceUpdate {
   end_date?: DateString;
   /** Type of absence */
   absence_type?: AbsenceType;
+  /** Whether this counts toward away-from-program limit */
+  is_away_from_program?: boolean;
   /** Whether the absence is due to deployment orders (military) */
   deployment_orders?: boolean;
   /** Location of TDY (temporary duty) if applicable */
@@ -429,6 +435,77 @@ export interface AbsenceUpdate {
   replacement_activity?: string;
   /** Additional notes about the absence */
   notes?: string;
+}
+
+// ============================================================================
+// Away-From-Program Tracking Types
+// ============================================================================
+
+/**
+ * Threshold status for away-from-program tracking
+ */
+export type ThresholdStatus = 'ok' | 'warning' | 'critical' | 'exceeded';
+
+/**
+ * Detail of an absence contributing to away-from-program count
+ */
+export interface AwayAbsenceDetail {
+  id: string;
+  start_date: string;
+  end_date: string;
+  absence_type: string;
+  /** Days counted toward away-from-program */
+  days: number;
+}
+
+/**
+ * Summary of a resident's away-from-program status
+ *
+ * Residents who exceed 28 days away from program per academic year
+ * must extend their training.
+ */
+export interface AwayFromProgramSummary {
+  person_id: string;
+  /** Academic year (e.g., '2025-2026') */
+  academic_year: string;
+  /** Total days away from program this year */
+  days_used: number;
+  /** Days remaining before limit (min 0) */
+  days_remaining: number;
+  /** Current status: ok, warning (21+), critical (28), exceeded */
+  threshold_status: ThresholdStatus;
+  /** Maximum allowed days per year */
+  max_days: number;
+  /** Warning threshold (75%) */
+  warning_days: number;
+  /** Absences contributing to count */
+  absences: AwayAbsenceDetail[];
+}
+
+/**
+ * Response for threshold check (before creating new absence)
+ */
+export interface AwayFromProgramCheck {
+  /** Current days used */
+  current_days: number;
+  /** Days if new absence is added */
+  projected_days: number;
+  threshold_status: ThresholdStatus;
+  days_remaining: number;
+  max_days: number;
+  warning_days: number;
+}
+
+/**
+ * Away-from-program status for all residents (compliance dashboard)
+ */
+export interface AllResidentsAwayStatus {
+  academic_year: string;
+  residents: AwayFromProgramSummary[];
+  summary: {
+    total_residents: number;
+    by_status: Record<ThresholdStatus, number>;
+  };
 }
 
 // ============================================================================
