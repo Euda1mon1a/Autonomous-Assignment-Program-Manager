@@ -453,7 +453,7 @@ export default function FacultyCallAdminPage() {
                 <h1 className="text-xl font-bold text-white">
                   Faculty Call Administration
                 </h1>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-300">
                   Manage faculty call schedules and PCAT tracking
                 </p>
               </div>
@@ -463,7 +463,7 @@ export default function FacultyCallAdminPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowShortcutsHint((prev) => !prev)}
-                className="p-2 text-slate-400 hover:text-white transition-colors"
+                className="p-2 text-slate-300 hover:text-white transition-colors"
                 title="Keyboard shortcuts (Shift+?)"
               >
                 <Keyboard className="w-5 h-5" />
@@ -471,7 +471,7 @@ export default function FacultyCallAdminPage() {
               <button
                 onClick={handleRefresh}
                 disabled={isLoading}
-                className="p-2 text-slate-400 hover:text-white transition-colors disabled:opacity-50"
+                className="p-2 text-slate-300 hover:text-white transition-colors disabled:opacity-50"
                 title={`Refresh (${getShortcutDisplay({ key: 'r' })})`}
               >
                 <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
@@ -498,7 +498,7 @@ export default function FacultyCallAdminPage() {
             </h3>
             <button
               onClick={() => setShowShortcutsHint(false)}
-              className="text-slate-400 hover:text-white"
+              className="text-slate-300 hover:text-white"
             >
               <X className="w-4 h-4" />
             </button>
@@ -530,14 +530,14 @@ export default function FacultyCallAdminPage() {
         <div className="flex flex-wrap items-center gap-4 mb-6">
           {/* Date Range */}
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-slate-400" />
+            <Calendar className="w-4 h-4 text-slate-300" />
             <input
               type="date"
               value={filters.startDate}
               onChange={(e) => setFilters((prev) => ({ ...prev, start_date: e.target.value }))}
               className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900"
             />
-            <span className="text-slate-400">to</span>
+            <span className="text-slate-300">to</span>
             <input
               type="date"
               value={filters.endDate}
@@ -548,7 +548,7 @@ export default function FacultyCallAdminPage() {
 
           {/* Person Filter */}
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-slate-400" />
+            <Filter className="w-4 h-4 text-slate-300" />
             <select
               value={filters.personId}
               onChange={(e) => setFilters((prev) => ({ ...prev, person_id: e.target.value }))}
@@ -581,7 +581,7 @@ export default function FacultyCallAdminPage() {
 
           {/* Search */}
           <div className="relative flex-1 min-w-[200px] max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
             <input
               ref={searchInputRef}
               type="text"
@@ -593,7 +593,7 @@ export default function FacultyCallAdminPage() {
             {filters.search && (
               <button
                 onClick={() => setFilters((prev) => ({ ...prev, search: '' }))}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -602,7 +602,7 @@ export default function FacultyCallAdminPage() {
 
           {/* Stats */}
           <div className="flex-1" />
-          <div className="text-sm text-slate-400">
+          <div className="text-sm text-slate-300">
             {assignments.length} assignment{assignments.length !== 1 ? 's' : ''}
           </div>
         </div>
@@ -618,7 +618,7 @@ export default function FacultyCallAdminPage() {
             <h3 className="text-lg font-medium text-white mb-2">
               Failed to load call assignments
             </h3>
-            <p className="text-slate-400 mb-4">
+            <p className="text-slate-300 mb-4">
               {error?.message || 'An unexpected error occurred'}
             </p>
             <button

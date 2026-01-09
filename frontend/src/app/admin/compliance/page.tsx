@@ -123,7 +123,7 @@ function AwayComplianceProgressBar({
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <div className="flex justify-between mt-1 text-xs text-slate-500">
+      <div className="flex justify-between mt-1 text-xs text-slate-300">
         <span>0</span>
         <span className="text-yellow-500">{warningDays}</span>
         <span className="text-red-500">{maxDays}</span>
@@ -173,7 +173,7 @@ function SummaryCard({ title, value, icon: Icon, color, bgColor }: SummaryCardPr
     <div className={`rounded-xl border border-slate-700 ${bgColor} p-4`}>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-slate-400">{title}</p>
+          <p className="text-sm text-slate-300">{title}</p>
           <p className={`text-2xl font-bold ${color}`}>{value}</p>
         </div>
         <Icon className={`w-8 h-8 ${color} opacity-50`} />
@@ -214,14 +214,14 @@ function ResidentRow({
         <td className="px-4 py-3 whitespace-nowrap">
           <div className="flex items-center gap-2">
             {isExpanded ? (
-              <ChevronUp className="w-4 h-4 text-slate-400" />
+              <ChevronUp className="w-4 h-4 text-slate-300" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-slate-400" />
+              <ChevronDown className="w-4 h-4 text-slate-300" />
             )}
             <div>
               <div className="text-sm font-medium text-white">{personName}</div>
               {pgyLevel && (
-                <div className="text-xs text-slate-400">PGY-{pgyLevel}</div>
+                <div className="text-xs text-slate-300">PGY-{pgyLevel}</div>
               )}
             </div>
           </div>
@@ -240,7 +240,7 @@ function ResidentRow({
           <span className={`text-lg font-semibold ${config.color}`}>
             {summary.days_used}
           </span>
-          <span className="text-slate-500"> / {summary.max_days}</span>
+          <span className="text-slate-300"> / {summary.max_days}</span>
         </td>
         <td className="px-4 py-3 whitespace-nowrap text-center">
           <span
@@ -275,22 +275,22 @@ function ResidentRow({
         <tr>
           <td colSpan={6} className="px-4 py-2 bg-slate-800/50">
             <div className="pl-8">
-              <p className="text-xs text-slate-400 mb-2">Contributing Absences:</p>
+              <p className="text-xs text-slate-300 mb-2">Contributing Absences:</p>
               <div className="space-y-1">
                 {summary.absences.map((absence) => (
                   <div
                     key={absence.id}
                     className="flex items-center gap-4 text-xs text-slate-300"
                   >
-                    <CalendarDays className="w-3 h-3 text-slate-500" />
+                    <CalendarDays className="w-3 h-3 text-slate-300" />
                     <span>
                       {new Date(absence.startDate).toLocaleDateString()} -{' '}
                       {new Date(absence.endDate).toLocaleDateString()}
                     </span>
-                    <span className="px-2 py-0.5 bg-slate-700 rounded text-slate-400 capitalize">
+                    <span className="px-2 py-0.5 bg-slate-700 rounded text-slate-300 capitalize">
                       {absence.absenceType.replace('_', ' ')}
                     </span>
-                    <span className="text-slate-500">{absence.days} days</span>
+                    <span className="text-slate-300">{absence.days} days</span>
                   </div>
                 ))}
               </div>
@@ -408,7 +408,7 @@ export default function ComplianceDashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">Away-From-Program Compliance</h1>
-              <p className="text-sm text-slate-400 mt-1">
+              <p className="text-sm text-slate-300 mt-1">
                 {data?.academicYear || 'Loading...'} Academic Year
               </p>
             </div>
@@ -477,7 +477,7 @@ export default function ComplianceDashboardPage() {
                 <strong>28-Day Rule:</strong> Residents who exceed 28 days away from
                 program per academic year (July 1 - June 30) must extend their training.
               </p>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-slate-300 mt-1">
                 Warning threshold at 21 days (75%). All absence types count toward this limit.
               </p>
             </div>
@@ -497,7 +497,7 @@ export default function ComplianceDashboardPage() {
             <option value="critical">Critical</option>
             <option value="exceeded">Exceeded</option>
           </select>
-          <span className="text-sm text-slate-400">
+          <span className="text-sm text-slate-300">
             Showing {sortedResidents.length} resident
             {sortedResidents.length !== 1 ? 's' : ''}
           </span>
@@ -507,7 +507,7 @@ export default function ComplianceDashboardPage() {
         {isLoading ? (
           <div className="bg-slate-800/30 border border-slate-700 rounded-xl">
             <div className="p-8 flex items-center justify-center">
-              <RefreshCw className="w-8 h-8 text-slate-400 animate-spin" />
+              <RefreshCw className="w-8 h-8 text-slate-300 animate-spin" />
             </div>
           </div>
         ) : (
@@ -517,7 +517,7 @@ export default function ComplianceDashboardPage() {
                 <thead className="bg-slate-800/50">
                   <tr>
                     <th
-                      className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer hover:text-white"
+                      className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:text-white"
                       onClick={() => handleSort('name')}
                     >
                       <div className="flex items-center gap-1">
@@ -527,11 +527,11 @@ export default function ComplianceDashboardPage() {
                         )}
                       </div>
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Progress
                     </th>
                     <th
-                      className="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer hover:text-white"
+                      className="px-4 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:text-white"
                       onClick={() => handleSort('days_used')}
                     >
                       <div className="flex items-center justify-center gap-1">
@@ -541,11 +541,11 @@ export default function ComplianceDashboardPage() {
                         )}
                       </div>
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Remaining
                     </th>
                     <th
-                      className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer hover:text-white"
+                      className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:text-white"
                       onClick={() => handleSort('status')}
                     >
                       <div className="flex items-center gap-1">
@@ -555,7 +555,7 @@ export default function ComplianceDashboardPage() {
                         )}
                       </div>
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -563,7 +563,7 @@ export default function ComplianceDashboardPage() {
                 <tbody className="divide-y divide-slate-700/50">
                   {sortedResidents.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-4 py-12 text-center text-slate-400">
+                      <td colSpan={6} className="px-4 py-12 text-center text-slate-300">
                         No residents found matching the selected filter.
                       </td>
                     </tr>

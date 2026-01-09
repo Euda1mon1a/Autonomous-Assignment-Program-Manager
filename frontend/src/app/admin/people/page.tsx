@@ -265,7 +265,7 @@ export default function AdminPeoplePage() {
                 <h1 className="text-xl font-bold text-white">
                   People Management
                 </h1>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-300">
                   Manage residents and faculty
                 </p>
               </div>
@@ -275,7 +275,7 @@ export default function AdminPeoplePage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowShortcutsHint((prev) => !prev)}
-                className="p-2 text-slate-400 hover:text-white transition-colors"
+                className="p-2 text-slate-300 hover:text-white transition-colors"
                 title="Keyboard shortcuts (Shift+?)"
               >
                 <Keyboard className="w-5 h-5" />
@@ -283,7 +283,7 @@ export default function AdminPeoplePage() {
               <button
                 onClick={handleRefresh}
                 disabled={peopleLoading}
-                className="p-2 text-slate-400 hover:text-white transition-colors disabled:opacity-50"
+                className="p-2 text-slate-300 hover:text-white transition-colors disabled:opacity-50"
                 title={`Refresh (${getShortcutDisplay({ key: 'r' })})`}
               >
                 <RefreshCw className={`w-5 h-5 ${peopleLoading ? 'animate-spin' : ''}`} />
@@ -310,7 +310,7 @@ export default function AdminPeoplePage() {
             </h3>
             <button
               onClick={() => setShowShortcutsHint(false)}
-              className="text-slate-400 hover:text-white"
+              className="text-slate-300 hover:text-white"
             >
               <X className="w-4 h-4" />
             </button>
@@ -342,7 +342,7 @@ export default function AdminPeoplePage() {
         <div className="flex flex-wrap items-center gap-4 mb-6">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px] max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
             <input
               ref={searchInputRef}
               type="text"
@@ -354,7 +354,7 @@ export default function AdminPeoplePage() {
             {filters.search && (
               <button
                 onClick={() => setFilters((prev) => ({ ...prev, search: '' }))}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -363,7 +363,7 @@ export default function AdminPeoplePage() {
 
           {/* Type Filter */}
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-slate-400" />
+            <Filter className="w-4 h-4 text-slate-300" />
             <select
               value={filters.type}
               onChange={(e) =>
@@ -398,7 +398,7 @@ export default function AdminPeoplePage() {
 
           {/* Stats */}
           <div className="flex-1" />
-          <div className="text-sm text-slate-400">
+          <div className="text-sm text-slate-300">
             {people.length} {people.length === 1 ? 'person' : 'people'}
             {peopleData?.total && peopleData.total !== people.length && (
               <span> of {peopleData.total}</span>

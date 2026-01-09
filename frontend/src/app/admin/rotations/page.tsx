@@ -608,7 +608,7 @@ export default function AdminTemplatesPage() {
                 <h1 className="text-xl font-bold text-white">
                   Rotation Templates
                 </h1>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-300">
                   Manage rotation template configurations
                 </p>
               </div>
@@ -634,7 +634,7 @@ export default function AdminTemplatesPage() {
               )}
               <button
                 onClick={() => setShowShortcutsHint((prev) => !prev)}
-                className="p-2 text-slate-400 hover:text-white transition-colors"
+                className="p-2 text-slate-300 hover:text-white transition-colors"
                 title="Keyboard shortcuts (Shift+?)"
               >
                 <Keyboard className="w-5 h-5" />
@@ -642,7 +642,7 @@ export default function AdminTemplatesPage() {
               <button
                 onClick={handleRefresh}
                 disabled={templatesLoading}
-                className="p-2 text-slate-400 hover:text-white transition-colors disabled:opacity-50"
+                className="p-2 text-slate-300 hover:text-white transition-colors disabled:opacity-50"
                 title={`Refresh (${getShortcutDisplay({ key: 'r' })})`}
               >
                 <RefreshCw className={`w-5 h-5 ${templatesLoading ? 'animate-spin' : ''}`} />
@@ -676,7 +676,7 @@ export default function AdminTemplatesPage() {
             </h3>
             <button
               onClick={() => setShowShortcutsHint(false)}
-              className="text-slate-400 hover:text-white"
+              className="text-slate-300 hover:text-white"
             >
               <X className="w-4 h-4" />
             </button>
@@ -708,7 +708,7 @@ export default function AdminTemplatesPage() {
         <div className="flex flex-wrap items-center gap-4 mb-6">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px] max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
             <input
               ref={searchInputRef}
               type="text"
@@ -720,7 +720,7 @@ export default function AdminTemplatesPage() {
             {filters.search && (
               <button
                 onClick={() => setFilters((prev) => ({ ...prev, search: '' }))}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -729,7 +729,7 @@ export default function AdminTemplatesPage() {
 
           {/* Activity Type Filter */}
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-slate-400" />
+            <Filter className="w-4 h-4 text-slate-300" />
             <select
               value={filters.activityType}
               onChange={(e) =>
@@ -775,7 +775,7 @@ export default function AdminTemplatesPage() {
             className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
               showAllCategories
                 ? 'bg-violet-500/20 border border-violet-500/50 text-violet-400'
-                : 'bg-slate-800/50 border border-slate-700 text-slate-400 hover:text-white'
+                : 'bg-slate-800/50 border border-slate-700 text-slate-300 hover:text-white'
             }`}
             title={showAllCategories ? 'Hide slot-level activities' : 'Show all (including activities)'}
           >
@@ -785,7 +785,7 @@ export default function AdminTemplatesPage() {
 
           {/* Stats */}
           <div className="flex-1" />
-          <div className="text-sm text-slate-400">
+          <div className="text-sm text-slate-300">
             {templates.length} template{templates.length !== 1 ? 's' : ''}
             {templatesData?.total && templatesData.total !== templates.length && (
               <span> of {templatesData.total}</span>
@@ -840,12 +840,12 @@ export default function AdminTemplatesPage() {
                 <Calendar className="w-5 h-5 text-blue-400" />
                 <div>
                   <h2 className="text-lg font-semibold text-white">Weekly Pattern</h2>
-                  <p className="text-sm text-slate-400">{editingTemplate.name}</p>
+                  <p className="text-sm text-slate-300">{editingTemplate.name}</p>
                 </div>
               </div>
               <button
                 onClick={handleCloseEditor}
-                className="p-2 text-slate-400 hover:text-white transition-colors"
+                className="p-2 text-slate-300 hover:text-white transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -864,7 +864,7 @@ export default function AdminTemplatesPage() {
               )}
 
               {updatePattern.isPending && (
-                <div className="mt-4 flex items-center gap-2 text-sm text-slate-400">
+                <div className="mt-4 flex items-center gap-2 text-sm text-slate-300">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Saving changes...
                 </div>
@@ -883,12 +883,12 @@ export default function AdminTemplatesPage() {
                 <Settings className="w-5 h-5 text-violet-400" />
                 <div>
                   <h2 className="text-lg font-semibold text-white">Preferences</h2>
-                  <p className="text-sm text-slate-400">{editingTemplate.name}</p>
+                  <p className="text-sm text-slate-300">{editingTemplate.name}</p>
                 </div>
               </div>
               <button
                 onClick={handleCloseEditor}
-                className="p-2 text-slate-400 hover:text-white transition-colors"
+                className="p-2 text-slate-300 hover:text-white transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -917,12 +917,12 @@ export default function AdminTemplatesPage() {
                 <Clock className="w-5 h-5 text-cyan-400" />
                 <div>
                   <h2 className="text-lg font-semibold text-white">Weekly Requirements</h2>
-                  <p className="text-sm text-slate-400">{editingTemplate.name}</p>
+                  <p className="text-sm text-slate-300">{editingTemplate.name}</p>
                 </div>
               </div>
               <button
                 onClick={handleCloseEditor}
-                className="p-2 text-slate-400 hover:text-white transition-colors"
+                className="p-2 text-slate-300 hover:text-white transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -949,12 +949,12 @@ export default function AdminTemplatesPage() {
                 <Database className="w-5 h-5 text-emerald-400" />
                 <div>
                   <h2 className="text-lg font-semibold text-white">Half-Day Requirements</h2>
-                  <p className="text-sm text-slate-400">{editingTemplate.name}</p>
+                  <p className="text-sm text-slate-300">{editingTemplate.name}</p>
                 </div>
               </div>
               <button
                 onClick={handleCloseEditor}
-                className="p-2 text-slate-400 hover:text-white transition-colors"
+                className="p-2 text-slate-300 hover:text-white transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -982,12 +982,12 @@ export default function AdminTemplatesPage() {
                 <Sliders className="w-5 h-5 text-violet-400" />
                 <div>
                   <h2 className="text-lg font-semibold text-white">Edit Rotation</h2>
-                  <p className="text-sm text-slate-400">{editingTemplate.name}</p>
+                  <p className="text-sm text-slate-300">{editingTemplate.name}</p>
                 </div>
               </div>
               <button
                 onClick={handleCloseEditor}
-                className="p-2 text-slate-400 hover:text-white transition-colors"
+                className="p-2 text-slate-300 hover:text-white transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>

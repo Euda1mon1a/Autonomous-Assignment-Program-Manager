@@ -177,7 +177,7 @@ export default function AdminSchedulingPage() {
                 <h1 className="text-xl font-bold text-white">
                   Scheduling Laboratory
                 </h1>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-300">
                   Empirical analysis of scheduling algorithms
                 </p>
               </div>
@@ -210,7 +210,7 @@ export default function AdminSchedulingPage() {
                     transition-all duration-200
                     ${isActive
                       ? 'bg-slate-800 text-white border-t border-x border-slate-700'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
                     }
                   `}
                 >
@@ -348,7 +348,7 @@ function StatusBadge({
       case 'error':
         return 'bg-red-500/20 text-red-400 border-red-500/30';
       default:
-        return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
+        return 'bg-slate-500/20 text-slate-300 border-slate-500/30';
     }
   }, [status]);
 
@@ -441,7 +441,7 @@ function ConfigurationPanel({
                 `}
               >
                 <div className="font-medium">{algo.label}</div>
-                <div className="text-xs text-slate-400 mt-1">{algo.description}</div>
+                <div className="text-xs text-slate-300 mt-1">{algo.description}</div>
               </button>
             ))}
           </div>
@@ -571,7 +571,7 @@ function ConfigurationPanel({
               />
             </div>
           </div>
-          <div className="mt-4 flex items-center gap-2 text-sm text-slate-400">
+          <div className="mt-4 flex items-center gap-2 text-sm text-slate-300">
             <Info className="w-4 h-4" />
             <span>730 blocks = 365 days (AM/PM sessions)</span>
           </div>
@@ -657,7 +657,7 @@ function ConfigurationPanel({
                     </li>
                   ))}
                   {validationResult.warnings.length > 3 && (
-                    <li className="text-slate-500">
+                    <li className="text-slate-300">
                       +{validationResult.warnings.length - 3} more...
                     </li>
                   )}
@@ -672,23 +672,23 @@ function ConfigurationPanel({
           <h3 className="text-lg font-semibold text-white mb-4">Configuration Summary</h3>
           <dl className="space-y-3 text-sm">
             <div className="flex justify-between">
-              <dt className="text-slate-400">Algorithm</dt>
+              <dt className="text-slate-300">Algorithm</dt>
               <dd className="text-white font-medium">{configuration.algorithm.toUpperCase()}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-400">Blocks</dt>
+              <dt className="text-slate-300">Blocks</dt>
               <dd className="text-white font-medium">
                 {configuration.blockRange.end - configuration.blockRange.start + 1}
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-400">Constraints</dt>
+              <dt className="text-slate-300">Constraints</dt>
               <dd className="text-white font-medium">
                 {configuration.constraints.filter(c => c.enabled).length} active
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-400">Mode</dt>
+              <dt className="text-slate-300">Mode</dt>
               <dd className={`font-medium ${configuration.dryRun ? 'text-amber-400' : 'text-emerald-400'}`}>
                 {configuration.dryRun ? 'Dry Run' : 'Live'}
               </dd>
@@ -796,7 +796,7 @@ function ExperimentationPanel({
                     `}
                   >
                     <div className="font-medium">{preset.name}</div>
-                    <div className="text-xs text-slate-400 mt-1">
+                    <div className="text-xs text-slate-300 mt-1">
                       {preset.residents}R / {preset.faculty}F
                     </div>
                   </button>
@@ -827,7 +827,7 @@ function ExperimentationPanel({
             <Clock className="w-5 h-5 text-blue-400" />
             Run Queue
           </h3>
-          <span className="text-sm text-slate-400">
+          <span className="text-sm text-slate-300">
             {queue?.currentlyRunning || 0} / {queue?.maxConcurrent || 3} running
           </span>
         </div>
@@ -845,7 +845,7 @@ function ExperimentationPanel({
                   <StatusIndicator status={run.status} />
                   <div>
                     <div className="text-sm font-medium text-white">{run.name}</div>
-                    <div className="text-xs text-slate-400">
+                    <div className="text-xs text-slate-300">
                       {run.configuration.algorithm.toUpperCase()} • {run.status}
                     </div>
                   </div>
@@ -862,7 +862,7 @@ function ExperimentationPanel({
                   {(run.status === 'queued' || run.status === 'running') && (
                     <button
                       onClick={() => onCancelExperiment(run.id)}
-                      className="p-1.5 text-slate-400 hover:text-red-400 transition-colors"
+                      className="p-1.5 text-slate-300 hover:text-red-400 transition-colors"
                     >
                       <XCircle className="w-4 h-4" />
                     </button>
@@ -985,7 +985,7 @@ function MetricsPanel({
               <div className="text-2xl font-bold text-white">
                 {metric.format(metric.value)}
               </div>
-              <div className="text-sm text-slate-400">{metric.label}</div>
+              <div className="text-sm text-slate-300">{metric.label}</div>
             </div>
           );
         })}
@@ -996,13 +996,13 @@ function MetricsPanel({
         <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Coverage Trend</h3>
           <div className="h-64 flex items-center justify-center border border-dashed border-slate-600 rounded-lg">
-            <span className="text-slate-500">Chart placeholder - Coverage over time</span>
+            <span className="text-slate-300">Chart placeholder - Coverage over time</span>
           </div>
         </div>
         <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Algorithm Comparison</h3>
           <div className="h-64 flex items-center justify-center border border-dashed border-slate-600 rounded-lg">
-            <span className="text-slate-500">Chart placeholder - Algorithm performance</span>
+            <span className="text-slate-300">Chart placeholder - Algorithm performance</span>
           </div>
         </div>
       </div>
@@ -1014,18 +1014,18 @@ function MetricsPanel({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-700">
-                <th className="text-left py-3 px-4 text-slate-400 font-medium">Run ID</th>
-                <th className="text-left py-3 px-4 text-slate-400 font-medium">Algorithm</th>
-                <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
-                <th className="text-left py-3 px-4 text-slate-400 font-medium">Coverage</th>
-                <th className="text-left py-3 px-4 text-slate-400 font-medium">Violations</th>
-                <th className="text-left py-3 px-4 text-slate-400 font-medium">Runtime</th>
+                <th className="text-left py-3 px-4 text-slate-300 font-medium">Run ID</th>
+                <th className="text-left py-3 px-4 text-slate-300 font-medium">Algorithm</th>
+                <th className="text-left py-3 px-4 text-slate-300 font-medium">Status</th>
+                <th className="text-left py-3 px-4 text-slate-300 font-medium">Coverage</th>
+                <th className="text-left py-3 px-4 text-slate-300 font-medium">Violations</th>
+                <th className="text-left py-3 px-4 text-slate-300 font-medium">Runtime</th>
               </tr>
             </thead>
             <tbody>
               {runs.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-500">
+                  <td colSpan={6} className="py-8 text-center text-slate-300">
                     No runs recorded yet
                   </td>
                 </tr>
@@ -1188,19 +1188,19 @@ function HistoryPanel({
               {comparisonMode && (
                 <th className="w-12 py-3 px-4"></th>
               )}
-              <th className="text-left py-3 px-4 text-slate-400 font-medium">Run ID</th>
-              <th className="text-left py-3 px-4 text-slate-400 font-medium">Date</th>
-              <th className="text-left py-3 px-4 text-slate-400 font-medium">Algorithm</th>
-              <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
-              <th className="text-left py-3 px-4 text-slate-400 font-medium">Coverage</th>
-              <th className="text-left py-3 px-4 text-slate-400 font-medium">Violations</th>
-              <th className="text-left py-3 px-4 text-slate-400 font-medium">Actions</th>
+              <th className="text-left py-3 px-4 text-slate-300 font-medium">Run ID</th>
+              <th className="text-left py-3 px-4 text-slate-300 font-medium">Date</th>
+              <th className="text-left py-3 px-4 text-slate-300 font-medium">Algorithm</th>
+              <th className="text-left py-3 px-4 text-slate-300 font-medium">Status</th>
+              <th className="text-left py-3 px-4 text-slate-300 font-medium">Coverage</th>
+              <th className="text-left py-3 px-4 text-slate-300 font-medium">Violations</th>
+              <th className="text-left py-3 px-4 text-slate-300 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredRuns.length === 0 ? (
               <tr>
-                <td colSpan={comparisonMode ? 8 : 7} className="py-12 text-center text-slate-500">
+                <td colSpan={comparisonMode ? 8 : 7} className="py-12 text-center text-slate-300">
                   No runs match your filters
                 </td>
               </tr>
@@ -1245,7 +1245,7 @@ function HistoryPanel({
                   </td>
                   <td className="py-3 px-4 text-white">{run.result?.acgmeViolations}</td>
                   <td className="py-3 px-4">
-                    <button className="p-1.5 text-slate-400 hover:text-white transition-colors">
+                    <button className="p-1.5 text-slate-300 hover:text-white transition-colors">
                       <Info className="w-4 h-4" />
                     </button>
                   </td>
@@ -1277,23 +1277,23 @@ function HistoryPanel({
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="bg-slate-800 p-3 rounded-lg">
-                      <div className="text-slate-400">Coverage</div>
+                      <div className="text-slate-300">Coverage</div>
                       <div className="text-white font-medium">
                         {run.result?.coveragePercent?.toFixed(1)}%
                       </div>
                     </div>
                     <div className="bg-slate-800 p-3 rounded-lg">
-                      <div className="text-slate-400">Violations</div>
+                      <div className="text-slate-300">Violations</div>
                       <div className="text-white font-medium">{run.result?.acgmeViolations}</div>
                     </div>
                     <div className="bg-slate-800 p-3 rounded-lg">
-                      <div className="text-slate-400">Runtime</div>
+                      <div className="text-slate-300">Runtime</div>
                       <div className="text-white font-medium">
                         {run.result?.runtimeSeconds?.toFixed(2)}s
                       </div>
                     </div>
                     <div className="bg-slate-800 p-3 rounded-lg">
-                      <div className="text-slate-400">Fairness</div>
+                      <div className="text-slate-300">Fairness</div>
                       <div className="text-white font-medium">
                         {((run.result?.fairnessScore ?? 0) * 100).toFixed(0)}%
                       </div>
@@ -1364,12 +1364,12 @@ function OverridesPanel({
               >
                 <div>
                   <div className="text-sm font-medium text-white">{lock.personName}</div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-300">
                     {lock.rotationName} • {lock.blockDate}
                   </div>
                 </div>
                 <button
-                  className="p-1.5 text-slate-400 hover:text-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-1.5 text-slate-300 hover:text-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => onUnlock(lock.id)}
                   disabled={isUnlocking}
                   aria-label={`Unlock assignment for ${lock.personName}`}
@@ -1399,11 +1399,11 @@ function OverridesPanel({
               >
                 <div>
                   <div className="text-sm font-medium text-white">{holiday.name}</div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-300">
                     {holiday.date} • {holiday.type}
                   </div>
                 </div>
-                <button className="p-1.5 text-slate-400 hover:text-red-400 transition-colors">
+                <button className="p-1.5 text-slate-300 hover:text-red-400 transition-colors">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
@@ -1455,7 +1455,7 @@ function OverridesPanel({
               >
                 <div>
                   <div className="text-sm font-medium text-white">{point.description}</div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-300">
                     {new Date(point.createdAt).toLocaleString()} • {point.assignmentCount} assignments
                   </div>
                 </div>
@@ -1485,7 +1485,7 @@ function OverridesPanel({
         <div className="space-y-4">
           <div className="p-4 bg-slate-800 rounded-lg border border-slate-700">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-slate-400">Last Sync</span>
+              <span className="text-sm text-slate-300">Last Sync</span>
               <StatusBadge status={syncMeta?.syncStatus || 'synced'} />
             </div>
             <div className="text-white font-medium">
@@ -1493,7 +1493,7 @@ function OverridesPanel({
                 ? new Date(syncMeta.lastSyncTime).toLocaleString()
                 : 'Never'}
             </div>
-            <div className="text-xs text-slate-500 mt-1">
+            <div className="text-xs text-slate-300 mt-1">
               Source: {syncMeta?.sourceSystem || 'Unknown'}
             </div>
           </div>
@@ -1577,9 +1577,9 @@ function ConfigSection({
           )}
         </div>
         {expanded ? (
-          <ChevronUp className="w-5 h-5 text-slate-400" />
+          <ChevronUp className="w-5 h-5 text-slate-300" />
         ) : (
-          <ChevronDown className="w-5 h-5 text-slate-400" />
+          <ChevronDown className="w-5 h-5 text-slate-300" />
         )}
       </button>
       {expanded && (
@@ -1627,7 +1627,7 @@ function ConstraintToggle({
             {constraint.category}
           </span>
         </div>
-        <p className="text-xs text-slate-400 mt-1 truncate">{constraint.description}</p>
+        <p className="text-xs text-slate-300 mt-1 truncate">{constraint.description}</p>
       </div>
       <div className={`
         w-8 h-5 rounded-full p-0.5 transition-colors ml-3 flex-shrink-0
@@ -1671,7 +1671,7 @@ function ToggleOption({
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium text-white">{label}</div>
-        <p className="text-xs text-slate-400 mt-0.5">{description}</p>
+        <p className="text-xs text-slate-300 mt-0.5">{description}</p>
       </div>
     </button>
   );
@@ -1693,7 +1693,7 @@ function StatusIndicator({ status }: { status: string }) {
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="py-8 text-center text-slate-500 text-sm">
+    <div className="py-8 text-center text-slate-300 text-sm">
       {message}
     </div>
   );

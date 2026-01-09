@@ -128,9 +128,9 @@ export function Navigation() {
 
   const isAdmin = user?.role === "admin";
 
-  const filteredNavItems = navItems.filter(
-    (item) => !item.adminOnly || (item.adminOnly && isAdmin)
-  );
+  // Split nav items: admin items for black bar, user items for white bar
+  const adminNavItems = navItems.filter((item) => item.adminOnly);
+  const userNavItems = navItems.filter((item) => !item.adminOnly);
 
   return (
     <>
@@ -146,6 +146,38 @@ export function Navigation() {
         Skip to main content
       </a>
 
+      {/* Admin Navigation Bar - shown above user bar when logged in as admin */}
+      {isAdmin && (
+        <nav className="bg-black" aria-label="Admin navigation">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="hidden md:flex items-center h-10 gap-1 overflow-x-auto">
+              {adminNavItems.map((item) => {
+                const isActive = pathname === item.href;
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={isActive ? "page" : undefined}
+                    aria-label={item.label}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-medium transition-colors whitespace-nowrap ${
+                      isActive
+                        ? "bg-gray-700 text-white"
+                        : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </nav>
+      )}
+
+      {/* User Navigation Bar - always shown */}
       <nav className="bg-white shadow-sm" aria-label="Main navigation">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
@@ -175,7 +207,7 @@ export function Navigation() {
 
             {/* Desktop Navigation Links - hidden on mobile */}
             <div className="hidden md:flex items-center gap-1">
-              {filteredNavItems.map((item) => {
+              {userNavItems.map((item) => {
                 const isActive = pathname === item.href;
                 const Icon = item.icon;
 

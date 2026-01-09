@@ -107,7 +107,7 @@ export default function AdminCredentialsPage() {
                 <h1 className="text-xl font-bold text-white">
                   Procedure Credentials
                 </h1>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-300">
                   Manage faculty procedure credentialing
                 </p>
               </div>
@@ -118,7 +118,7 @@ export default function AdminCredentialsPage() {
               <button
                 onClick={handleRefresh}
                 disabled={isLoading}
-                className="p-2 text-slate-400 hover:text-white transition-colors disabled:opacity-50"
+                className="p-2 text-slate-300 hover:text-white transition-colors disabled:opacity-50"
                 title="Refresh"
               >
                 <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
@@ -142,7 +142,7 @@ export default function AdminCredentialsPage() {
         <div className="flex flex-wrap items-center gap-4">
           {/* Specialty Filter */}
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-slate-400" />
+            <Filter className="w-4 h-4 text-slate-300" />
             <select
               value={filters.specialty}
               onChange={(e) =>
@@ -173,7 +173,7 @@ export default function AdminCredentialsPage() {
 
           {/* Stats */}
           <div className="flex-1" />
-          <div className="text-sm text-slate-400">
+          <div className="text-sm text-slate-300">
             {faculty.length} faculty · {procedures.length} procedures · {credentials.length} credentials
           </div>
         </div>

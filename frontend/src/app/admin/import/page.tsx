@@ -73,7 +73,7 @@ export default function ImportPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">Data Import</h1>
-          <p className="text-slate-400">
+          <p className="text-slate-300">
             Upload schedules, people, and absences. Review staged changes before
             applying.
           </p>
@@ -104,7 +104,7 @@ export default function ImportPage() {
             <h3 className="text-lg font-medium text-slate-300">
               No Import History
             </h3>
-            <p className="text-slate-500">Upload a schedule to get started</p>
+            <p className="text-slate-300">Upload a schedule to get started</p>
           </div>
         ) : (
           <ImportHistoryTable
@@ -125,7 +125,7 @@ export default function ImportPage() {
             >
               Previous
             </Button>
-            <span className="flex items-center text-sm text-slate-400">
+            <span className="flex items-center text-sm text-slate-300">
               Page {page}
             </span>
             <Button

@@ -300,15 +300,15 @@ function MetricCard({
     <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-4">
       <div className="flex items-center justify-between mb-2">
         <div className={`p-2 rounded-lg ${status ? SERVICE_STATUS_COLORS[status].replace('text-', 'bg-').replace('-800', '-900/50') : 'bg-slate-700/50'}`}>
-          <Icon className={`w-5 h-5 ${status ? SERVICE_STATUS_COLORS[status].split(' ')[1] : 'text-slate-400'}`} />
+          <Icon className={`w-5 h-5 ${status ? SERVICE_STATUS_COLORS[status].split(' ')[1] : 'text-slate-300'}`} />
         </div>
         {TrendIcon && (
           <TrendIcon className={`w-4 h-4 ${trendColor}`} />
         )}
       </div>
       <div className="text-2xl font-bold text-white">{value}</div>
-      <div className="text-sm text-slate-400">{label}</div>
-      {subValue && <div className="text-xs text-slate-500 mt-1">{subValue}</div>}
+      <div className="text-sm text-slate-300">{label}</div>
+      {subValue && <div className="text-xs text-slate-300 mt-1">{subValue}</div>}
     </div>
   );
 }
@@ -339,7 +339,7 @@ function ProgressBar({
       <div className="flex items-center justify-between text-sm mb-1">
         <span className="text-slate-300">{label}</span>
         {showValue && (
-          <span className="text-slate-400">{percentage.toFixed(1)}%</span>
+          <span className="text-slate-300">{percentage.toFixed(1)}%</span>
         )}
       </div>
       <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
@@ -401,7 +401,7 @@ function OverviewPanel({ health }: { health: SystemHealthSummary }) {
               <StatusIndicator status={service.health.status} />
               <div>
                 <div className="text-sm font-medium text-white">{service.name}</div>
-                <div className="text-xs text-slate-400">
+                <div className="text-xs text-slate-300">
                   {service.health.latencyMs}ms
                 </div>
               </div>
@@ -414,7 +414,7 @@ function OverviewPanel({ health }: { health: SystemHealthSummary }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
           <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-            <Cpu className="w-5 h-5 text-slate-400" />
+            <Cpu className="w-5 h-5 text-slate-300" />
             System Resources
           </h3>
           <div className="space-y-4">
@@ -438,7 +438,7 @@ function OverviewPanel({ health }: { health: SystemHealthSummary }) {
 
         <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
           <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-            <Database className="w-5 h-5 text-slate-400" />
+            <Database className="w-5 h-5 text-slate-300" />
             Database
           </h3>
           <div className="space-y-4">
@@ -453,11 +453,11 @@ function OverviewPanel({ health }: { health: SystemHealthSummary }) {
               label="Disk Usage"
             />
             <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-400">Avg Query Time</span>
+              <span className="text-slate-300">Avg Query Time</span>
               <span className="text-white">{health.database.avgQueryTimeMs}ms</span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-400">Slow Queries (24h)</span>
+              <span className="text-slate-300">Slow Queries (24h)</span>
               <span className={health.database.slowQueries24h > 10 ? 'text-yellow-400' : 'text-white'}>
                 {health.database.slowQueries24h}
               </span>
@@ -524,7 +524,7 @@ function ServicesPanel({ health }: { health: SystemHealthSummary }) {
                 <StatusIndicator status={service.health.status} size="lg" />
                 <div className="text-left">
                   <div className="text-lg font-medium text-white">{service.name}</div>
-                  <div className="text-sm text-slate-400">
+                  <div className="text-sm text-slate-300">
                     {service.type.charAt(0).toUpperCase() + service.type.slice(1)} •{' '}
                     {formatDuration(service.health.latencyMs || 0)} latency •{' '}
                     {service.health.uptime?.toFixed(2)}% uptime
@@ -534,9 +534,9 @@ function ServicesPanel({ health }: { health: SystemHealthSummary }) {
               <div className="flex items-center gap-3">
                 <StatusBadge status={service.health.status} />
                 {expandedService === service.id ? (
-                  <ChevronUp className="w-5 h-5 text-slate-400" />
+                  <ChevronUp className="w-5 h-5 text-slate-300" />
                 ) : (
-                  <ChevronDown className="w-5 h-5 text-slate-400" />
+                  <ChevronDown className="w-5 h-5 text-slate-300" />
                 )}
               </div>
             </button>
@@ -545,19 +545,19 @@ function ServicesPanel({ health }: { health: SystemHealthSummary }) {
               <div className="px-4 pb-4 pt-2 border-t border-slate-700/50">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
-                    <div className="text-xs text-slate-400 mb-1">Status</div>
+                    <div className="text-xs text-slate-300 mb-1">Status</div>
                     <div className="text-sm text-white capitalize">{service.health.status}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-slate-400 mb-1">Latency</div>
+                    <div className="text-xs text-slate-300 mb-1">Latency</div>
                     <div className="text-sm text-white">{formatDuration(service.health.latencyMs || 0)}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-slate-400 mb-1">Uptime</div>
+                    <div className="text-xs text-slate-300 mb-1">Uptime</div>
                     <div className="text-sm text-white">{service.health.uptime?.toFixed(2)}%</div>
                   </div>
                   <div>
-                    <div className="text-xs text-slate-400 mb-1">Last Check</div>
+                    <div className="text-xs text-slate-300 mb-1">Last Check</div>
                     <div className="text-sm text-white">
                       {new Date(service.health.lastCheck).toLocaleTimeString()}
                     </div>
@@ -570,7 +570,7 @@ function ServicesPanel({ health }: { health: SystemHealthSummary }) {
                 )}
                 {service.dependencies && service.dependencies.length > 0 && (
                   <div className="mt-3">
-                    <div className="text-xs text-slate-400 mb-1">Dependencies</div>
+                    <div className="text-xs text-slate-300 mb-1">Dependencies</div>
                     <div className="flex gap-2">
                       {service.dependencies.map((dep) => (
                         <span key={dep} className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded">
@@ -589,7 +589,7 @@ function ServicesPanel({ health }: { health: SystemHealthSummary }) {
       {/* Queue Details */}
       <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
         <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-          <ArrowUpDown className="w-5 h-5 text-slate-400" />
+          <ArrowUpDown className="w-5 h-5 text-slate-300" />
           Task Queues
         </h3>
         <div className="space-y-4">
@@ -597,21 +597,21 @@ function ServicesPanel({ health }: { health: SystemHealthSummary }) {
             <div key={queue.name} className="p-3 bg-slate-700/30 rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium text-white">{queue.name}</span>
-                <span className="text-sm text-slate-400">
+                <span className="text-sm text-slate-300">
                   {queue.completed24h} completed / {queue.failed24h} failed
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
-                  <span className="text-slate-400">Pending:</span>{' '}
+                  <span className="text-slate-300">Pending:</span>{' '}
                   <span className={queue.pending > 50 ? 'text-yellow-400' : 'text-white'}>{queue.pending}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400">Processing:</span>{' '}
+                  <span className="text-slate-300">Processing:</span>{' '}
                   <span className="text-white">{queue.processing}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400">Avg Time:</span>{' '}
+                  <span className="text-slate-300">Avg Time:</span>{' '}
                   <span className="text-white">{formatDuration(queue.avgProcessingTimeMs)}</span>
                 </div>
               </div>
@@ -619,8 +619,8 @@ function ServicesPanel({ health }: { health: SystemHealthSummary }) {
           ))}
         </div>
         <div className="mt-4 flex items-center justify-between text-sm">
-          <span className="text-slate-400">Workers: {health.queue.workers.active}/{health.queue.workers.total} active</span>
-          <span className="text-slate-400">Scheduled Tasks: {health.queue.scheduledTasks}</span>
+          <span className="text-slate-300">Workers: {health.queue.workers.active}/{health.queue.workers.total} active</span>
+          <span className="text-slate-300">Scheduled Tasks: {health.queue.scheduledTasks}</span>
         </div>
       </div>
     </div>
@@ -668,25 +668,25 @@ function MetricsPanel({ health }: { health: SystemHealthSummary }) {
       {/* API Metrics */}
       <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
         <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-          <Zap className="w-5 h-5 text-slate-400" />
+          <Zap className="w-5 h-5 text-slate-300" />
           API Performance
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="p-3 bg-slate-700/30 rounded-lg">
             <div className="text-2xl font-bold text-white">{health.api.requestsPerMinute}</div>
-            <div className="text-sm text-slate-400">Requests/min</div>
+            <div className="text-sm text-slate-300">Requests/min</div>
           </div>
           <div className="p-3 bg-slate-700/30 rounded-lg">
             <div className="text-2xl font-bold text-white">{health.api.avgResponseTimeMs}ms</div>
-            <div className="text-sm text-slate-400">Avg Response</div>
+            <div className="text-sm text-slate-300">Avg Response</div>
           </div>
           <div className="p-3 bg-slate-700/30 rounded-lg">
             <div className="text-2xl font-bold text-white">{(health.api.errorRate * 100).toFixed(2)}%</div>
-            <div className="text-sm text-slate-400">Error Rate</div>
+            <div className="text-sm text-slate-300">Error Rate</div>
           </div>
           <div className="p-3 bg-slate-700/30 rounded-lg">
             <div className="text-2xl font-bold text-white">{health.api.rateLimitedRequests24h}</div>
-            <div className="text-sm text-slate-400">Rate Limited (24h)</div>
+            <div className="text-sm text-slate-300">Rate Limited (24h)</div>
           </div>
         </div>
 
@@ -705,7 +705,7 @@ function MetricsPanel({ health }: { health: SystemHealthSummary }) {
                 </span>
                 <span className="text-sm text-white font-mono">{endpoint.path}</span>
               </div>
-              <div className="text-sm text-slate-400">
+              <div className="text-sm text-slate-300">
                 {endpoint.count} calls • {endpoint.avgTimeMs}ms avg
               </div>
             </div>
@@ -716,25 +716,25 @@ function MetricsPanel({ health }: { health: SystemHealthSummary }) {
       {/* Cache Metrics */}
       <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
         <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-          <Timer className="w-5 h-5 text-slate-400" />
+          <Timer className="w-5 h-5 text-slate-300" />
           Cache Performance
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-3 bg-slate-700/30 rounded-lg">
             <div className="text-2xl font-bold text-white">{(health.cache.hitRate * 100).toFixed(1)}%</div>
-            <div className="text-sm text-slate-400">Hit Rate</div>
+            <div className="text-sm text-slate-300">Hit Rate</div>
           </div>
           <div className="p-3 bg-slate-700/30 rounded-lg">
             <div className="text-2xl font-bold text-white">{formatBytes(health.cache.usedMemoryBytes)}</div>
-            <div className="text-sm text-slate-400">Memory Used</div>
+            <div className="text-sm text-slate-300">Memory Used</div>
           </div>
           <div className="p-3 bg-slate-700/30 rounded-lg">
             <div className="text-2xl font-bold text-white">{health.cache.keyCount.toLocaleString()}</div>
-            <div className="text-sm text-slate-400">Keys</div>
+            <div className="text-sm text-slate-300">Keys</div>
           </div>
           <div className="p-3 bg-slate-700/30 rounded-lg">
             <div className="text-2xl font-bold text-white">{health.cache.evictedKeys24h}</div>
-            <div className="text-sm text-slate-400">Evictions (24h)</div>
+            <div className="text-sm text-slate-300">Evictions (24h)</div>
           </div>
         </div>
       </div>
@@ -771,7 +771,7 @@ function AlertsPanel({
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               filter === f
                 ? 'bg-violet-600 text-white'
-                : 'bg-slate-800 text-slate-400 hover:text-white'
+                : 'bg-slate-800 text-slate-300 hover:text-white'
             }`}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -782,9 +782,9 @@ function AlertsPanel({
       {/* Alert List */}
       {filteredAlerts.length === 0 ? (
         <div className="text-center py-12">
-          <BellOff className="w-12 h-12 text-slate-500 mx-auto mb-4" />
+          <BellOff className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-300 mb-2">No Alerts</h3>
-          <p className="text-slate-400">
+          <p className="text-slate-300">
             {filter === 'all' ? 'All systems operating normally' : `No ${filter} alerts`}
           </p>
         </div>
@@ -892,7 +892,7 @@ export default function AdminHealthPage() {
                   System Health
                   <StatusIndicator status={health.overallStatus} />
                 </h1>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-300">
                   v{health.version} • {health.environment} • Updated {lastRefresh.toLocaleTimeString()}
                 </p>
               </div>
@@ -922,7 +922,7 @@ export default function AdminHealthPage() {
                     transition-all duration-200
                     ${isActive
                       ? 'bg-slate-800 text-white border-t border-x border-slate-700'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
                     }
                   `}
                 >
