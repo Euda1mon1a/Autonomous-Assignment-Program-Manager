@@ -516,26 +516,6 @@ class FacultyActivityService:
         Returns:
             List of Activity objects permitted for this role
         """
-        # Import here to avoid circular dependency
-        from sqlalchemy import Table, MetaData
-
-        # Query the faculty_activity_permissions join table
-        stmt = """
-            SELECT a.*
-            FROM activities a
-            JOIN faculty_activity_permissions fap ON fap.activity_id = a.id
-            WHERE fap.faculty_role = :role AND a.is_archived = false
-            ORDER BY a.display_order, a.name
-        """
-
-        result = await self._execute(
-            select(Activity)
-            .join(
-                # Raw join since we don't have an ORM model for permissions table
-            )
-        )
-
-        # Alternative: use raw SQL
         from sqlalchemy import text
 
         result = await self._execute(
