@@ -107,13 +107,89 @@ else
   echo -e "${GREEN}OK${NC}"
 fi
 
+# ============================================================
+# Enhanced Security Checks (Session 082 - SECURITY_AUDITOR Domain)
+# ============================================================
+
+# Check for hardcoded API keys in code
+echo -n "Checking for hardcoded API keys... "
+API_KEYS=$(grep -rn --include="*.py" --include="*.ts" --include="*.tsx" \
+  -E '(api_key|apikey|API_KEY)\s*=\s*["\x27][a-zA-Z0-9_-]{20,}["\x27]' \
+  --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=venv \
+  --exclude-dir=__pycache__ --exclude-dir=tests --exclude-dir=__tests__ \
+  --exclude-dir=docs \
+  backend/ frontend/src/ 2>/dev/null || true)
+
+if [ -n "$API_KEYS" ]; then
+  echo -e "${RED}FOUND${NC}"
+  echo -e "${RED}ERROR: Hardcoded API keys detected!${NC}"
+  echo "$API_KEYS" | head -5
+  ERRORS=1
+else
+  echo -e "${GREEN}OK${NC}"
+fi
+
+# Check for raw SQL (ORM bypass)
+echo -n "Checking for raw SQL queries... "
+RAW_SQL=$(grep -rn --include="*.py" \
+  -E '(execute\(|text\(|raw_connection|\.raw\().*SELECT|INSERT|UPDATE|DELETE' \
+  --exclude-dir=venv --exclude-dir=__pycache__ \
+  --exclude-dir=tests --exclude-dir=alembic \
+  backend/app/ 2>/dev/null || true)
+
+if [ -n "$RAW_SQL" ]; then
+  echo -e "${YELLOW}WARNING${NC}"
+  echo -e "${YELLOW}Raw SQL detected - verify parameterization:${NC}"
+  echo "$RAW_SQL" | head -5
+  # Warning only - some raw SQL may be intentional
+else
+  echo -e "${GREEN}OK${NC}"
+fi
+
+# Check for sensitive data in log statements
+echo -n "Checking for sensitive data in logs... "
+LOG_SENSITIVE=$(grep -rn --include="*.py" \
+  -iE 'log(ger)?\.(info|debug|warning|error).*\b(password|ssn|token|secret|credential|api_key)\b' \
+  --exclude-dir=venv --exclude-dir=__pycache__ \
+  --exclude-dir=tests \
+  backend/app/ 2>/dev/null || true)
+
+if [ -n "$LOG_SENSITIVE" ]; then
+  echo -e "${YELLOW}WARNING${NC}"
+  echo -e "${YELLOW}Potentially sensitive data in logs:${NC}"
+  echo "$LOG_SENSITIVE" | head -5
+  # Warning only - may be sanitized
+else
+  echo -e "${GREEN}OK${NC}"
+fi
+
+# Check for hardcoded secrets/passwords
+echo -n "Checking for hardcoded secrets... "
+SECRETS=$(grep -rn --include="*.py" --include="*.ts" \
+  -E '(password|secret|token)\s*=\s*["\x27][^"\x27]{8,}["\x27]' \
+  --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=venv \
+  --exclude-dir=__pycache__ --exclude-dir=tests --exclude-dir=__tests__ \
+  --exclude-dir=docs --exclude-dir=.claude \
+  backend/app/ frontend/src/ 2>/dev/null | \
+  grep -viE '(example|test|mock|fake|placeholder|config\.|settings\.|env\.)' || true)
+
+if [ -n "$SECRETS" ]; then
+  echo -e "${YELLOW}WARNING${NC}"
+  echo -e "${YELLOW}Potential hardcoded secrets:${NC}"
+  echo "$SECRETS" | head -5
+  # Warning only - context needed
+else
+  echo -e "${GREEN}OK${NC}"
+fi
+
 # Summary
 echo ""
 if [ $ERRORS -eq 0 ]; then
-  echo -e "${GREEN}PII scan passed!${NC}"
+  echo -e "${GREEN}PII/Security scan passed!${NC}"
   exit 0
 else
-  echo -e "${RED}PII scan failed - please review and fix before committing${NC}"
+  echo -e "${RED}PII/Security scan failed - please review and fix before committing${NC}"
   echo "Reference: docs/security/PII_AUDIT_LOG.md"
+  echo "Advisory: SECURITY_AUDITOR agent for detailed analysis"
   exit 1
 fi

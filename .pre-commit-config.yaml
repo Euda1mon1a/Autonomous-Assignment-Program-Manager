@@ -222,6 +222,81 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
+  # PHASE 12: ACGME Compliance (Session 082 - MEDCOM Domain)
+  # ============================================================================
+
+  # ACGME rule validation for scheduling code
+  - repo: local
+    hooks:
+      - id: acgme-validate
+        name: ACGME Compliance Check
+        entry: scripts/validate-acgme-compliance.sh
+        language: script
+        pass_filenames: false
+        files: ^(backend/app/scheduling/|frontend/src/features/.*schedule)
+        stages: [pre-commit]
+
+  # ============================================================================
+  # PHASE 13: Resilience N-1/N-2 (Session 082 - RESILIENCE_ENGINEER Domain)
+  # ============================================================================
+
+  # Resilience and contingency validation
+  - repo: local
+    hooks:
+      - id: resilience-check
+        name: Resilience N-1/N-2 Validation
+        entry: scripts/validate-resilience-constraints.sh
+        language: script
+        pass_filenames: false
+        files: ^backend/app/(scheduling|resilience)/
+        stages: [pre-commit]
+
+  # ============================================================================
+  # PHASE 14: Swap Safety (Session 082 - SWAP_MANAGER Domain)
+  # ============================================================================
+
+  # Swap operation safety validation
+  - repo: local
+    hooks:
+      - id: swap-validate
+        name: Swap Safety Validation
+        entry: scripts/validate-swap-safety.sh
+        language: script
+        pass_filenames: false
+        files: ^backend/app/(api/routes/swap|services/swap|models/swap)
+        stages: [pre-commit]
+
+  # ============================================================================
+  # PHASE 15: Schedule Integrity (Session 082 - SCHEDULER Domain)
+  # ============================================================================
+
+  # Schedule data integrity validation
+  - repo: local
+    hooks:
+      - id: schedule-integrity
+        name: Schedule Data Integrity
+        entry: scripts/validate-schedule-integrity.sh
+        language: script
+        pass_filenames: false
+        files: ^(backend/app/scheduling/|docs/data/.*schedule)
+        stages: [pre-commit]
+
+  # ============================================================================
+  # PHASE 16: Documentation Completeness (Session 082 - META_UPDATER Domain)
+  # ============================================================================
+
+  # Documentation completeness checks
+  - repo: local
+    hooks:
+      - id: docs-check
+        name: Documentation Completeness
+        entry: scripts/validate-documentation.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+  # ============================================================================
   # Configuration
   # ============================================================================
 
