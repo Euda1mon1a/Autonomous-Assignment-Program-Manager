@@ -30,11 +30,6 @@ function createWrapper() {
         retry: false,
       },
     },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
-    },
   })
 
   return function Wrapper({ children }: { children: React.ReactNode }) {
@@ -54,6 +49,9 @@ describe('EditTemplateModal', () => {
     name: 'Cardiology Clinic',
     activity_type: 'clinic',
     abbreviation: 'CARD',
+    display_abbreviation: 'CARD',
+    font_color: null,
+    background_color: null,
     clinic_location: 'Building A, Room 101',
     max_residents: 4,
     requires_specialty: 'Cardiology',
@@ -61,7 +59,6 @@ describe('EditTemplateModal', () => {
     supervision_required: true,
     max_supervision_ratio: 2,
     created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
   }
 
   const defaultProps = {

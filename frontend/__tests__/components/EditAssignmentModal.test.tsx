@@ -62,11 +62,6 @@ function createWrapper() {
         retry: false,
       },
     },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
-    },
   })
 
   return function Wrapper({ children }: { children: React.ReactNode }) {
@@ -89,7 +84,9 @@ describe('EditAssignmentModal', () => {
     person_id: 'person-1',
     rotation_template_id: 'template-1',
     role: AssignmentRole.PRIMARY,
+    activity_override: null,
     notes: 'Test notes',
+    created_by: null,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
   }

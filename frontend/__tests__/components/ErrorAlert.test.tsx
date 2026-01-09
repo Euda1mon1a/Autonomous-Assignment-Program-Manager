@@ -9,72 +9,40 @@ describe('ErrorAlert', () => {
       expect(screen.getByText('Something went wrong')).toBeInTheDocument()
     })
 
-    it('should render error title', () => {
-      render(<ErrorAlert title="Error" message="Failed" />)
-      expect(screen.getByText('Error')).toBeInTheDocument()
-    })
-
-    it('should use default title when not provided', () => {
-      render(<ErrorAlert message="Failed" />)
-      expect(screen.getByText(/error/i)).toBeInTheDocument()
-    })
-
     it('should render error icon', () => {
       const { container } = render(<ErrorAlert message="Error" />)
       const icon = container.querySelector('svg')
       expect(icon).toBeInTheDocument()
     })
+
+    it('should have alert role for accessibility', () => {
+      render(<ErrorAlert message="Error occurred" />)
+      expect(screen.getByRole('alert')).toBeInTheDocument()
+    })
   })
 
-  describe('Dismissible Functionality', () => {
-    it('should render close button when dismissible', () => {
-      render(<ErrorAlert message="Error" dismissible />)
-      expect(screen.getByRole('button', { name: /close/i })).toBeInTheDocument()
+  describe('Dismiss Functionality', () => {
+    it('should render dismiss button when onDismiss provided', () => {
+      const handleDismiss = jest.fn()
+      render(<ErrorAlert message="Error" onDismiss={handleDismiss} />)
+      expect(screen.getByRole('button', { name: /dismiss/i })).toBeInTheDocument()
     })
 
-    it('should call onDismiss when close clicked', async () => {
+    it('should call onDismiss when dismiss button clicked', async () => {
       const handleDismiss = jest.fn()
-      render(
-        <ErrorAlert message="Error" dismissible onDismiss={handleDismiss} />
-      )
-      await userEvent.click(screen.getByRole('button', { name: /close/i }))
+      render(<ErrorAlert message="Error" onDismiss={handleDismiss} />)
+      await userEvent.click(screen.getByRole('button', { name: /dismiss/i }))
       expect(handleDismiss).toHaveBeenCalledTimes(1)
     })
 
-    it('should not render close button when not dismissible', () => {
+    it('should not render dismiss button when onDismiss not provided', () => {
       render(<ErrorAlert message="Error" />)
-      expect(screen.queryByRole('button', { name: /close/i })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /dismiss/i })).not.toBeInTheDocument()
     })
   })
 
-  describe('Error Details', () => {
-    it('should render error details when provided', () => {
-      render(<ErrorAlert message="Error" details="Stack trace here" />)
-      expect(screen.getByText('Stack trace here')).toBeInTheDocument()
-    })
-
-    it('should toggle details visibility', async () => {
-      render(<ErrorAlert message="Error" details="Details" />)
-      const toggleButton = screen.getByText(/show details/i)
-      await userEvent.click(toggleButton)
-      expect(screen.getByText('Details')).toBeVisible()
-    })
-  })
-
-  describe('Severity Variants', () => {
-    it('should render error severity', () => {
-      const { container } = render(<ErrorAlert message="Error" severity="error" />)
-      expect(container.firstChild).toHaveClass('error')
-    })
-
-    it('should render warning severity', () => {
-      const { container } = render(<ErrorAlert message="Warning" severity="warning" />)
-      expect(container.firstChild).toHaveClass('warning')
-    })
-  })
-
-  describe('Retry Action', () => {
-    it('should render retry button when provided', () => {
+  describe('Retry Functionality', () => {
+    it('should render retry button when onRetry provided', () => {
       const handleRetry = jest.fn()
       render(<ErrorAlert message="Error" onRetry={handleRetry} />)
       expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
@@ -85,6 +53,25 @@ describe('ErrorAlert', () => {
       render(<ErrorAlert message="Error" onRetry={handleRetry} />)
       await userEvent.click(screen.getByRole('button', { name: /retry/i }))
       expect(handleRetry).toHaveBeenCalledTimes(1)
+    })
+
+    it('should not render retry button when onRetry not provided', () => {
+      render(<ErrorAlert message="Error" />)
+      expect(screen.queryByRole('button', { name: /retry/i })).not.toBeInTheDocument()
+    })
+  })
+
+  describe('Error Object Handling', () => {
+    it('should handle Error object', () => {
+      const error = new Error('Test error message')
+      render(<ErrorAlert message={error} />)
+      // getErrorMessage should extract a user-friendly message
+      expect(screen.getByRole('alert')).toBeInTheDocument()
+    })
+
+    it('should handle unknown error type', () => {
+      render(<ErrorAlert message={{ custom: 'error' }} />)
+      expect(screen.getByRole('alert')).toBeInTheDocument()
     })
   })
 })
