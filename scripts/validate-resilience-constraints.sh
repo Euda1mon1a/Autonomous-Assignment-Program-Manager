@@ -38,10 +38,12 @@ echo -e "${CYAN}Running Resilience Constraint Check...${NC}"
 # ============================================================
 echo -n "Checking for single-point-of-failure risks... "
 
-# Look for "only one", "single", "sole" patterns in scheduling
+# Look for SPOF patterns in scheduling code (not the resilience framework itself)
+# Tuned in Session 083: exclude resilience code, metrics fields, docstrings
 SPOF_PATTERNS=$(grep -rn --include="*.py" --include="*.ts" \
   -iE '(only.?one.*available|single.*provider|sole.*coverage|no.*backup|without.*redundancy)' \
-  backend/app/scheduling/ backend/app/resilience/ 2>/dev/null | grep -v "test" | grep -v "__pycache__" || true)
+  backend/app/scheduling/ 2>/dev/null | \
+  grep -v "test" | grep -v "__pycache__" | grep -v '"""' | grep -v "'''" | grep -v ':[ ]*#' | grep -v ':[ ]*- ' | grep -v '\.\.\.' | grep -v 'resilience' | grep -v 'sole_coverage_blocks' || true)
 
 if [ -n "$SPOF_PATTERNS" ]; then
   echo -e "${YELLOW}WARNING${NC}"
@@ -163,6 +165,6 @@ else
   echo ""
   echo "Reference: docs/resilience/N1_N2_CONTINGENCY.md"
   echo "Advisory: RESILIENCE_ENGINEER agent for detailed analysis"
-  # Non-blocking for now (warning mode)
-  exit 0
+  # Blocking mode - graduated Session 083 after pattern tuning
+  exit 1
 fi

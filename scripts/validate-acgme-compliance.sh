@@ -134,10 +134,12 @@ fi
 # ============================================================
 echo -n "Checking for supervision requirements... "
 
-# Look for unsupervised PGY-1 patterns
+# Look for unsupervised PGY-1 patterns in actual code (not docstrings)
+# Tuned in Session 083 to exclude docstring examples
 SUPERVISION_ISSUES=$(grep -rn --include="*.py" --include="*.ts" \
   -iE '(pgy.?1.*unsupervised|intern.*alone|no.*attending)' \
-  backend/app/scheduling/ frontend/src/ 2>/dev/null | grep -v "test" || true)
+  backend/app/scheduling/ frontend/src/ 2>/dev/null | \
+  grep -v "test" | grep -v '"""' | grep -v "'''" | grep -v ':[ ]*#' | grep -v ':[ ]*- ' | grep -v '\.\.\.' || true)
 
 if [ -n "$SUPERVISION_ISSUES" ]; then
   echo -e "${YELLOW}WARNING${NC}"
@@ -161,6 +163,6 @@ else
   echo ""
   echo "Reference: docs/compliance/ACGME_RULES.md"
   echo "Advisory: MEDCOM agent for clinical interpretation"
-  # Non-blocking for now (warning mode)
-  exit 0
+  # Blocking mode - graduated Session 083 after pattern tuning
+  exit 1
 fi
