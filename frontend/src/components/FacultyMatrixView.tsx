@@ -14,8 +14,9 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { Loader2, ChevronLeft, ChevronRight, Filter, Users, X } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, Filter, Users, X, Edit2, Check } from 'lucide-react';
 import { useFacultyMatrix } from '@/hooks/useFacultyActivities';
+import { useUpdatePerson } from '@/hooks/usePeople';
 import type {
   DayOfWeek,
   FacultyRole,
@@ -316,6 +317,69 @@ function ActivityLegend({ faculty }: { faculty: FacultyMatrixRow[] }) {
 }
 
 /**
+ * Inline role editor dropdown.
+ */
+function InlineRoleEditor({
+  personId,
+  personName,
+  currentRole,
+  onSave,
+  onCancel,
+  isSaving,
+}: {
+  personId: string;
+  personName: string;
+  currentRole: FacultyRole | null;
+  onSave: (role: FacultyRole) => void;
+  onCancel: () => void;
+  isSaving: boolean;
+}) {
+  const [selectedRole, setSelectedRole] = useState<FacultyRole>(currentRole ?? 'core');
+  const lastName = personName.split(' ').pop();
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="text-sm font-medium text-white">Dr. {lastName}</div>
+      <div className="flex items-center gap-1">
+        <select
+          value={selectedRole}
+          onChange={(e) => setSelectedRole(e.target.value as FacultyRole)}
+          disabled={isSaving}
+          className="text-xs bg-slate-700 border border-slate-600 rounded px-1.5 py-0.5 text-white focus:ring-cyan-500 focus:border-cyan-500"
+          autoFocus
+        >
+          {FACULTY_ROLES.filter(r => r !== 'adjunct').map((role) => (
+            <option key={role} value={role}>
+              {FACULTY_ROLE_LABELS[role]}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={() => onSave(selectedRole)}
+          disabled={isSaving}
+          className="p-0.5 text-green-400 hover:text-green-300 disabled:opacity-50"
+          title="Save"
+        >
+          {isSaving ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Check className="w-3.5 h-3.5" />
+          )}
+        </button>
+        <button
+          onClick={onCancel}
+          disabled={isSaving}
+          className="p-0.5 text-slate-400 hover:text-white disabled:opacity-50"
+          title="Cancel"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
  * Editor modal wrapper.
  */
 function EditorModal({
@@ -379,13 +443,17 @@ export function FacultyMatrixView({
     personName: '',
     facultyRole: null,
   });
+  const [editingRoleFor, setEditingRoleFor] = useState<string | null>(null);
 
   // Data fetching
-  const { data, isLoading, isError, error } = useFacultyMatrix(
+  const { data, isLoading, isError, error, refetch } = useFacultyMatrix(
     weekStart,
     getWeekEnd(weekStart),
     includeAdjunct
   );
+
+  // Mutations
+  const updatePerson = useUpdatePerson();
 
   // Filter faculty by selected roles
   const filteredFaculty = useMemo(() => {
@@ -413,6 +481,22 @@ export function FacultyMatrixView({
   const closeEditor = useCallback(() => {
     setEditorState((prev) => ({ ...prev, isOpen: false }));
   }, []);
+
+  const handleRoleSave = useCallback(
+    async (personId: string, newRole: FacultyRole) => {
+      try {
+        await updatePerson.mutateAsync({
+          id: personId,
+          data: { faculty_role: newRole },
+        });
+        setEditingRoleFor(null);
+        refetch(); // Refresh the matrix data
+      } catch (err) {
+        console.error('Failed to update role:', err);
+      }
+    },
+    [updatePerson, refetch]
+  );
 
   // Get slots for the current week
   const getWeekSlots = (faculty: FacultyMatrixRow): EffectiveSlot[] => {
@@ -501,6 +585,7 @@ export function FacultyMatrixView({
                   filteredFaculty.map((faculty) => {
                     const slots = getWeekSlots(faculty);
                     const lastName = faculty.name.split(' ').pop();
+                    const isEditingRole = editingRoleFor === faculty.personId;
 
                     return (
                       <tr
@@ -508,19 +593,42 @@ export function FacultyMatrixView({
                         className="border-b border-slate-800 hover:bg-slate-800/50 transition-colors"
                       >
                         <td className="p-2 sticky left-0 bg-slate-900 z-10">
-                          <button
-                            onClick={() => handleCellClick(faculty)}
-                            className="text-left group"
-                          >
-                            <div className="text-sm font-medium text-white group-hover:text-cyan-400 transition-colors">
-                              Dr. {lastName}
+                          {isEditingRole ? (
+                            <InlineRoleEditor
+                              personId={faculty.personId}
+                              personName={faculty.name}
+                              currentRole={faculty.facultyRole}
+                              onSave={(role) => handleRoleSave(faculty.personId, role)}
+                              onCancel={() => setEditingRoleFor(null)}
+                              isSaving={updatePerson.isPending}
+                            />
+                          ) : (
+                            <div className="flex items-center gap-2 group">
+                              <button
+                                onClick={() => handleCellClick(faculty)}
+                                className="text-left flex-1"
+                              >
+                                <div className="text-sm font-medium text-white group-hover:text-cyan-400 transition-colors">
+                                  Dr. {lastName}
+                                </div>
+                                {faculty.facultyRole && (
+                                  <div className="text-xs text-slate-500">
+                                    {FACULTY_ROLE_LABELS[faculty.facultyRole]}
+                                  </div>
+                                )}
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingRoleFor(faculty.personId);
+                                }}
+                                className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-cyan-400 transition-all"
+                                title="Edit role"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
                             </div>
-                            {faculty.facultyRole && (
-                              <div className="text-xs text-slate-500">
-                                {FACULTY_ROLE_LABELS[faculty.facultyRole]}
-                              </div>
-                            )}
-                          </button>
+                          )}
                         </td>
                         {DISPLAY_ORDER.map((day) => (
                           <MatrixCell
