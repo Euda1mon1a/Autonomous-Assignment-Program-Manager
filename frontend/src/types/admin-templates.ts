@@ -26,7 +26,7 @@ export type ActivityType =
  * Template category for UI grouping and filtering.
  *
  * - rotation: Clinical work (clinic, inpatient, outpatient, procedure)
- * - time_off: ACGME-protected rest (off, recovery) - does NOT count toward away-from-program
+ * - timeOff: ACGME-protected rest (off, recovery) - does NOT count toward away-from-program
  * - absence: Days away from program (absence activity type) - counts toward 28-day limit
  * - educational: Structured learning (conference, education, lecture)
  */
@@ -90,26 +90,26 @@ export type SettingType = 'inpatient' | 'outpatient';
 export interface RotationTemplate {
   id: string;
   name: string;
-  activity_type: ActivityType;
-  template_category: TemplateCategory;
+  activityType: ActivityType;
+  templateCategory: TemplateCategory;
   abbreviation: string | null;
-  display_abbreviation: string | null;
-  font_color: string | null;
-  background_color: string | null;
-  clinic_location: string | null;
-  max_residents: number | null;
-  requires_specialty: string | null;
-  requires_procedure_credential: boolean;
-  supervision_required: boolean;
-  max_supervision_ratio: number | null;
+  displayAbbreviation: string | null;
+  fontColor: string | null;
+  backgroundColor: string | null;
+  clinicLocation: string | null;
+  maxResidents: number | null;
+  requiresSpecialty: string | null;
+  requiresProcedureCredential: boolean;
+  supervisionRequired: boolean;
+  maxSupervisionRatio: number | null;
   /** True for half-block rotations (14 days instead of 28) */
-  is_block_half_rotation?: boolean;
+  isBlockHalfRotation?: boolean;
   /** True if rotation includes weekend work (Night Float, FMIT, etc.) */
-  includes_weekend_work?: boolean;
-  created_at: string;
-  is_archived?: boolean;
-  archived_at?: string | null;
-  archived_by?: string | null;
+  includesWeekendWork?: boolean;
+  createdAt: string;
+  isArchived?: boolean;
+  archivedAt?: string | null;
+  archivedBy?: string | null;
 }
 
 export interface RotationTemplateListResponse {
@@ -133,21 +133,21 @@ export type PreferenceWeight = 'low' | 'medium' | 'high' | 'required';
 
 export interface RotationPreference {
   id: string;
-  rotation_template_id: string;
-  preference_type: PreferenceType;
+  rotationTemplateId: string;
+  preferenceType: PreferenceType;
   weight: PreferenceWeight;
-  config_json: Record<string, unknown>;
-  is_active: boolean;
+  configJson: Record<string, unknown>;
+  isActive: boolean;
   description: string | null;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface RotationPreferenceCreate {
-  preference_type: PreferenceType;
+  preferenceType: PreferenceType;
   weight: PreferenceWeight;
-  config_json?: Record<string, unknown>;
-  is_active?: boolean;
+  configJson?: Record<string, unknown>;
+  isActive?: boolean;
   description?: string | null;
 }
 
@@ -161,35 +161,35 @@ export interface RotationPreferenceCreate {
  */
 export interface HalfDayRequirement {
   id: string;
-  rotation_template_id: string;
+  rotationTemplateId: string;
   /** Number of FM clinic half-days per block (default: 4) */
-  fm_clinic_halfdays: number;
+  fmClinicHalfdays: number;
   /** Number of specialty half-days per block (default: 5) */
-  specialty_halfdays: number;
+  specialtyHalfdays: number;
   /** Name of the specialty (e.g., "Neurology", "Dermatology") */
-  specialty_name: string | null;
+  specialtyName: string | null;
   /** Number of academic/lecture half-days per block (default: 1) */
-  academics_halfdays: number;
+  academicsHalfdays: number;
   /** Number of elective/buffer half-days per block (default: 0) */
-  elective_halfdays: number;
+  electiveHalfdays: number;
   /** Minimum consecutive specialty days to batch together */
-  min_consecutive_specialty: number;
+  minConsecutiveSpecialty: number;
   /** Prefer FM + specialty on same day when possible */
-  prefer_combined_clinic_days: boolean;
+  preferCombinedClinicDays: boolean;
   /** Calculated total half-days */
-  total_halfdays: number;
+  totalHalfdays: number;
   /** True if total equals standard block (10 half-days) */
-  is_balanced: boolean;
+  isBalanced: boolean;
 }
 
 export interface HalfDayRequirementCreate {
-  fm_clinic_halfdays?: number;
-  specialty_halfdays?: number;
-  specialty_name?: string | null;
-  academics_halfdays?: number;
-  elective_halfdays?: number;
-  min_consecutive_specialty?: number;
-  prefer_combined_clinic_days?: boolean;
+  fmClinicHalfdays?: number;
+  specialtyHalfdays?: number;
+  specialtyName?: string | null;
+  academicsHalfdays?: number;
+  electiveHalfdays?: number;
+  minConsecutiveSpecialty?: number;
+  preferCombinedClinicDays?: boolean;
 }
 
 // ============================================================================
@@ -330,8 +330,8 @@ export type SortField = 'name' | 'activity_type' | 'created_at';
 export type SortDirection = 'asc' | 'desc';
 
 export interface TemplateFilters {
-  activity_type: ActivityType | '';
-  template_category: TemplateCategory | '';
+  activityType: ActivityType | '';
+  templateCategory: TemplateCategory | '';
   search: string;
 }
 
@@ -360,11 +360,11 @@ export interface AdminTemplatesState {
 // ============================================================================
 
 export interface BulkDeleteRequest {
-  template_ids: string[];
+  templateIds: string[];
 }
 
 export interface BulkUpdateRequest {
-  template_ids: string[];
+  templateIds: string[];
   updates: Partial<Pick<RotationTemplate, 'activity_type' | 'supervision_required' | 'max_residents'>>;
 }
 
@@ -376,15 +376,15 @@ export interface BulkUpdateRequest {
  * Request for batch delete operation - atomic all-or-nothing
  */
 export interface BatchTemplateDeleteRequest {
-  template_ids: string[];
-  dry_run?: boolean;
+  templateIds: string[];
+  dryRun?: boolean;
 }
 
 /**
  * Single template update in a batch operation
  */
 export interface BatchTemplateUpdateItem {
-  template_id: string;
+  templateId: string;
   updates: TemplateUpdateRequest;
 }
 
@@ -393,7 +393,7 @@ export interface BatchTemplateUpdateItem {
  */
 export interface BatchTemplateUpdateRequest {
   templates: BatchTemplateUpdateItem[];
-  dry_run?: boolean;
+  dryRun?: boolean;
 }
 
 /**
@@ -401,7 +401,7 @@ export interface BatchTemplateUpdateRequest {
  */
 export interface BatchOperationResult {
   index: number;
-  template_id: string;
+  templateId: string;
   success: boolean;
   error: string | null;
 }
@@ -410,13 +410,13 @@ export interface BatchOperationResult {
  * Response from batch operations
  */
 export interface BatchTemplateResponse {
-  operation_type: 'delete' | 'update' | 'create' | 'archive' | 'restore';
+  operationType: 'delete' | 'update' | 'create' | 'archive' | 'restore';
   total: number;
   succeeded: number;
   failed: number;
   results: BatchOperationResult[];
-  dry_run: boolean;
-  created_ids?: string[] | null;
+  dryRun: boolean;
+  createdIds?: string[] | null;
 }
 
 /**
@@ -424,30 +424,30 @@ export interface BatchTemplateResponse {
  */
 export interface BatchTemplateCreateRequest {
   templates: TemplateCreateRequest[];
-  dry_run?: boolean;
+  dryRun?: boolean;
 }
 
 /**
  * Request for batch archive operation
  */
 export interface BatchArchiveRequest {
-  template_ids: string[];
-  dry_run?: boolean;
+  templateIds: string[];
+  dryRun?: boolean;
 }
 
 /**
  * Request for batch restore operation
  */
 export interface BatchRestoreRequest {
-  template_ids: string[];
-  dry_run?: boolean;
+  templateIds: string[];
+  dryRun?: boolean;
 }
 
 /**
  * Request for checking conflicts before operations
  */
 export interface ConflictCheckRequest {
-  template_ids: string[];
+  templateIds: string[];
   operation: 'delete' | 'archive' | 'update';
 }
 
@@ -455,9 +455,9 @@ export interface ConflictCheckRequest {
  * Single conflict item
  */
 export interface TemplateConflict {
-  template_id: string;
-  template_name: string;
-  conflict_type: 'has_assignments' | 'name_collision' | 'referenced_by';
+  templateId: string;
+  templateName: string;
+  conflictType: 'has_assignments' | 'name_collision' | 'referenced_by';
   description: string;
   severity: 'warning' | 'error';
   blocking: boolean;
@@ -467,18 +467,18 @@ export interface TemplateConflict {
  * Response from conflict check
  */
 export interface ConflictCheckResponse {
-  has_conflicts: boolean;
+  hasConflicts: boolean;
   conflicts: TemplateConflict[];
-  can_proceed: boolean;
+  canProceed: boolean;
 }
 
 /**
  * Request for template export
  */
 export interface TemplateExportRequest {
-  template_ids: string[];
-  include_patterns?: boolean;
-  include_preferences?: boolean;
+  templateIds: string[];
+  includePatterns?: boolean;
+  includePreferences?: boolean;
 }
 
 /**
@@ -495,42 +495,42 @@ export interface TemplateExportData {
  */
 export interface TemplateExportResponse {
   templates: TemplateExportData[];
-  exported_at: string;
+  exportedAt: string;
   total: number;
 }
 
 export interface TemplateCreateRequest {
   name: string;
-  activity_type: ActivityType;
-  template_category?: TemplateCategory;
+  activityType: ActivityType;
+  templateCategory?: TemplateCategory;
   abbreviation?: string | null;
-  display_abbreviation?: string | null;
-  font_color?: string | null;
-  background_color?: string | null;
-  clinic_location?: string | null;
-  max_residents?: number | null;
-  requires_specialty?: string | null;
-  requires_procedure_credential?: boolean;
-  supervision_required?: boolean;
-  max_supervision_ratio?: number | null;
-  is_block_half_rotation?: boolean;
+  displayAbbreviation?: string | null;
+  fontColor?: string | null;
+  backgroundColor?: string | null;
+  clinicLocation?: string | null;
+  maxResidents?: number | null;
+  requiresSpecialty?: string | null;
+  requiresProcedureCredential?: boolean;
+  supervisionRequired?: boolean;
+  maxSupervisionRatio?: number | null;
+  isBlockHalfRotation?: boolean;
 }
 
 export interface TemplateUpdateRequest {
   name?: string;
-  activity_type?: ActivityType;
-  template_category?: TemplateCategory;
+  activityType?: ActivityType;
+  templateCategory?: TemplateCategory;
   abbreviation?: string | null;
-  display_abbreviation?: string | null;
-  font_color?: string | null;
-  background_color?: string | null;
-  clinic_location?: string | null;
-  max_residents?: number | null;
-  requires_specialty?: string | null;
-  requires_procedure_credential?: boolean;
-  supervision_required?: boolean;
-  max_supervision_ratio?: number | null;
-  is_block_half_rotation?: boolean;
+  displayAbbreviation?: string | null;
+  fontColor?: string | null;
+  backgroundColor?: string | null;
+  clinicLocation?: string | null;
+  maxResidents?: number | null;
+  requiresSpecialty?: string | null;
+  requiresProcedureCredential?: boolean;
+  supervisionRequired?: boolean;
+  maxSupervisionRatio?: number | null;
+  isBlockHalfRotation?: boolean;
 }
 
 // ============================================================================

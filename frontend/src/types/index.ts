@@ -39,9 +39,9 @@ import {
  */
 export interface ScheduleViewResponse {
   /** Start date of the schedule period */
-  start_date: DateString;
+  startDate: DateString;
   /** End date of the schedule period */
-  end_date: DateString;
+  endDate: DateString;
   /** Schedule organized by date, then by time of day (AM/PM) */
   schedule: Record<DateString, {
     /** Assignments for the morning shift */
@@ -50,7 +50,7 @@ export interface ScheduleViewResponse {
     PM: AssignmentDetail[];
   }>;
   /** Total number of assignments in the schedule */
-  total_assignments: number;
+  totalAssignments: number;
 }
 
 /**
@@ -69,7 +69,7 @@ export interface AssignmentDetail {
     /** Type of person (resident or faculty) */
     type: PersonType;
     /** Post-graduate year level (for residents) */
-    pgy_level: number | null;
+    pgyLevel: number | null;
   };
   /** Role in this assignment */
   role: AssignmentRole;
@@ -78,7 +78,7 @@ export interface AssignmentDetail {
   /** Short abbreviation for display (may include time suffix like C-AM) */
   abbreviation: string;
   /** User-facing abbreviation for schedule grid (short codes like C, FMIT) */
-  display_abbreviation?: string;
+  displayAbbreviation?: string;
 }
 
 /**
@@ -94,23 +94,23 @@ export interface PersonWithStats {
   /** Type of person */
   type: PersonType;
   /** Post-graduate year level */
-  pgy_level: number | null;
+  pgyLevel: number | null;
   /** Whether credentialed for procedures */
-  performs_procedures: boolean;
+  performsProcedures: boolean;
   /** Medical specialties */
   specialties: string[] | null;
   /** Primary duty assignment */
-  primary_duty: string | null;
+  primaryDuty: string | null;
   /** Record creation timestamp */
-  created_at: DateTimeString;
+  createdAt: DateTimeString;
   /** Record update timestamp */
-  updated_at: DateTimeString;
+  updatedAt: DateTimeString;
   /** Total number of assignments (computed) */
-  total_assignments?: number;
+  totalAssignments?: number;
   /** Number of upcoming assignments (computed) */
-  upcoming_assignments?: number;
+  upcomingAssignments?: number;
   /** Whether the person has any current absences (computed) */
-  has_current_absence?: boolean;
+  hasCurrentAbsence?: boolean;
 }
 
 /**
@@ -122,17 +122,17 @@ export interface BlockWithAssignments {
   /** Date of the block */
   date: DateString;
   /** Time period */
-  time_of_day: TimeOfDay;
+  timeOfDay: TimeOfDay;
   /** Block number */
-  block_number: number;
+  blockNumber: number;
   /** Whether this is a weekend */
-  is_weekend: boolean;
+  isWeekend: boolean;
   /** Whether this is a holiday */
-  is_holiday: boolean;
+  isHoliday: boolean;
   /** Holiday name if applicable */
-  holiday_name: string | null;
+  holidayName: string | null;
   /** Number of assignments in this block (computed) */
-  assignment_count?: number;
+  assignmentCount?: number;
   /** Whether this block is fully staffed (computed) */
-  is_fully_staffed?: boolean;
+  isFullyStaffed?: boolean;
 }

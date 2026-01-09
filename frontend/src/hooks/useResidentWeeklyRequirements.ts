@@ -148,11 +148,11 @@ export function useCreateResidentWeeklyRequirement() {
         queryKey: weeklyRequirementsQueryKeys.all,
       });
       queryClient.invalidateQueries({
-        queryKey: weeklyRequirementsQueryKeys.byTemplate(data.rotation_template_id),
+        queryKey: weeklyRequirementsQueryKeys.byTemplate(data.rotationTemplateId),
       });
       // Set the data directly in cache
       queryClient.setQueryData(
-        weeklyRequirementsQueryKeys.byTemplate(data.rotation_template_id),
+        weeklyRequirementsQueryKeys.byTemplate(data.rotationTemplateId),
         data
       );
     },
@@ -301,7 +301,7 @@ export function useUpsertResidentWeeklyRequirement() {
         queryKey: weeklyRequirementsQueryKeys.all,
       });
       queryClient.invalidateQueries({
-        queryKey: weeklyRequirementsQueryKeys.byTemplate(data.rotation_template_id),
+        queryKey: weeklyRequirementsQueryKeys.byTemplate(data.rotationTemplateId),
       });
     },
   });

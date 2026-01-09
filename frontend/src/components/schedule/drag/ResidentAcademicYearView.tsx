@@ -137,7 +137,7 @@ export function ResidentAcademicYearView({
   const blockByDateTimeMap = useMemo(() => {
     const map = new Map<string, Block>()
     blocksData?.items?.forEach((block) => {
-      map.set(`${block.date}-${block.time_of_day}`, block)
+      map.set(`${block.date}-${block.timeOfDay}`, block)
     })
     return map
   }, [blocksData])
@@ -155,37 +155,37 @@ export function ResidentAcademicYearView({
     const lookup = new Map<string, Map<string, Map<string, ProcessedAssignment>>>()
 
     assignmentsData?.items?.forEach((assignment) => {
-      const block = blockMap.get(assignment.block_id)
+      const block = blockMap.get(assignment.blockId)
       if (!block) return
 
-      const person = peopleData?.items?.find(p => p.id === assignment.person_id)
-      const template = assignment.rotation_template_id
-        ? templateMap.get(assignment.rotation_template_id)
+      const person = peopleData?.items?.find(p => p.id === assignment.personId)
+      const template = assignment.rotationTemplateId
+        ? templateMap.get(assignment.rotationTemplateId)
         : null
 
       const processed: ProcessedAssignment = {
         id: assignment.id,
         abbreviation:
-          assignment.activity_override ||
-          template?.display_abbreviation ||
+          assignment.activityOverride ||
+          template?.displayAbbreviation ||
           template?.abbreviation ||
           template?.name?.substring(0, 3).toUpperCase() ||
           '???',
-        activityType: template?.activity_type || 'default',
+        activityType: template?.activityType || 'default',
         templateName: template?.name,
         role: assignment.role,
         notes: assignment.notes || undefined,
-        personId: assignment.person_id,
+        personId: assignment.personId,
         personName: person?.name || 'Unknown',
-        blockId: assignment.block_id,
-        rotationTemplateId: assignment.rotation_template_id,
+        blockId: assignment.blockId,
+        rotationTemplateId: assignment.rotationTemplateId,
       }
 
       // Get or create person map
-      if (!lookup.has(assignment.person_id)) {
-        lookup.set(assignment.person_id, new Map())
+      if (!lookup.has(assignment.personId)) {
+        lookup.set(assignment.personId, new Map())
       }
-      const personMap = lookup.get(assignment.person_id)!
+      const personMap = lookup.get(assignment.personId)!
 
       // Get or create date map
       const dateStr = block.date
@@ -195,7 +195,7 @@ export function ResidentAcademicYearView({
       const dateMap = personMap.get(dateStr)!
 
       // Set assignment for time of day
-      dateMap.set(block.time_of_day, processed)
+      dateMap.set(block.timeOfDay, processed)
     })
 
     return lookup
@@ -212,11 +212,11 @@ export function ResidentAcademicYearView({
 
     peopleData.items.forEach((person) => {
       if (person.type === 'resident') {
-        if (person.pgy_level === 1) {
+        if (person.pgyLevel === 1) {
           pgy1.push(person)
-        } else if (person.pgy_level === 2) {
+        } else if (person.pgyLevel === 2) {
           pgy2.push(person)
-        } else if (person.pgy_level === 3) {
+        } else if (person.pgyLevel === 3) {
           pgy3.push(person)
         } else {
           pgyOther.push(person)
@@ -259,8 +259,8 @@ export function ResidentAcademicYearView({
   const getBlockInfo = useCallback((dateStr: string) => {
     const block = blockByDateTimeMap.get(`${dateStr}-AM`)
     return {
-      isHoliday: block?.is_holiday || false,
-      holidayName: block?.holiday_name || undefined,
+      isHoliday: block?.isHoliday || false,
+      holidayName: block?.holidayName || undefined,
     }
   }, [blockByDateTimeMap])
 
@@ -590,7 +590,7 @@ function ResidentYearRow({
             {person.name}
           </span>
           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 w-fit">
-            PGY-{person.pgy_level}
+            PGY-{person.pgyLevel}
           </span>
         </div>
       </td>

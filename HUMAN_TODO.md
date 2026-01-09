@@ -79,6 +79,48 @@ The `/mcp` command shows "not authenticated" even when tools work fine. This is 
 
 ---
 
+## Cleanup / Developer Experience (2026-01-09)
+
+### Seaborn Warning in Backend Logs
+**Priority:** Low
+**Status:** TODO
+
+**Issue:** Every Python command in the backend container logs:
+```
+seaborn not available - enhanced visualization disabled
+```
+
+**Context:**
+- Some analytics code optionally imports seaborn for statistical charts
+- Seaborn is NOT used for frontend heatmaps (those use Plotly.js)
+- The warning is visual noise that clutters logs
+
+**Options:**
+1. **Add seaborn** - `pip install seaborn` (~15MB, pulls matplotlib)
+2. **Silence the warning** - Wrap import in try/except with no log
+3. **Remove the import** - If we're not generating charts, delete it entirely
+
+**Recommendation:** Option 3 (remove) unless we plan to add backend chart generation.
+
+**Files to check:** Grep for `seaborn` in `backend/`
+
+---
+
+### Heatmap Feature - Needs Schedule Data
+**Priority:** Medium (post-first-deployment)
+**Status:** Working but empty
+
+**Context:** Heatmap page at `/heatmap` works correctly but shows "No data available" because there's no schedule data in the database.
+
+**To verify after first schedule generation:**
+1. Navigate to `/heatmap`
+2. Select date range that has assignments
+3. Confirm Plotly.js heatmap renders with data
+
+**No code changes needed** - just needs schedule data.
+
+---
+
 ## Completed (2025-12-25)
 
 ### 1. Block 10 Schedule Generation - COMPLETE ✅

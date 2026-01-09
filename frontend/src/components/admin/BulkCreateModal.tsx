@@ -89,8 +89,8 @@ function TemplateRowForm({
   isOnly,
 }: TemplateRowFormProps) {
   const activityTypeConfig = useMemo(
-    () => ACTIVITY_TYPE_CONFIGS.find((c) => c.type === template.activity_type),
-    [template.activity_type]
+    () => ACTIVITY_TYPE_CONFIGS.find((c) => c.type === template.activityType),
+    [template.activityType]
   );
 
   return (
@@ -174,7 +174,7 @@ function TemplateRowForm({
                 Activity Type *
               </label>
               <select
-                value={template.activity_type}
+                value={template.activityType}
                 onChange={(e) =>
                   onChange(template.id, {
                     activity_type: e.target.value as ActivityType,
@@ -216,7 +216,7 @@ function TemplateRowForm({
               </label>
               <input
                 type="text"
-                value={template.display_abbreviation || ''}
+                value={template.displayAbbreviation || ''}
                 onChange={(e) =>
                   onChange(template.id, {
                     display_abbreviation: e.target.value || null,
@@ -234,7 +234,7 @@ function TemplateRowForm({
               </label>
               <input
                 type="number"
-                value={template.max_residents ?? ''}
+                value={template.maxResidents ?? ''}
                 onChange={(e) =>
                   onChange(template.id, {
                     max_residents: e.target.value ? parseInt(e.target.value) : null,
@@ -254,7 +254,7 @@ function TemplateRowForm({
               </label>
               <input
                 type="text"
-                value={template.clinic_location || ''}
+                value={template.clinicLocation || ''}
                 onChange={(e) =>
                   onChange(template.id, {
                     clinic_location: e.target.value || null,
@@ -272,7 +272,7 @@ function TemplateRowForm({
               </label>
               <input
                 type="text"
-                value={template.requires_specialty || ''}
+                value={template.requiresSpecialty || ''}
                 onChange={(e) =>
                   onChange(template.id, {
                     requires_specialty: e.target.value || null,
@@ -289,7 +289,7 @@ function TemplateRowForm({
             <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
               <input
                 type="checkbox"
-                checked={template.supervision_required}
+                checked={template.supervisionRequired}
                 onChange={(e) =>
                   onChange(template.id, {
                     supervision_required: e.target.checked,
@@ -303,7 +303,7 @@ function TemplateRowForm({
             <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
               <input
                 type="checkbox"
-                checked={template.requires_procedure_credential}
+                checked={template.requiresProcedureCredential}
                 onChange={(e) =>
                   onChange(template.id, {
                     requires_procedure_credential: e.target.checked,
@@ -324,7 +324,7 @@ function TemplateRowForm({
               <div className="flex items-center gap-2">
                 <input
                   type="color"
-                  value={template.background_color || '#6366F1'}
+                  value={template.backgroundColor || '#6366F1'}
                   onChange={(e) =>
                     onChange(template.id, { background_color: e.target.value })
                   }
@@ -332,7 +332,7 @@ function TemplateRowForm({
                 />
                 <input
                   type="text"
-                  value={template.background_color || ''}
+                  value={template.backgroundColor || ''}
                   onChange={(e) =>
                     onChange(template.id, {
                       background_color: e.target.value || null,
@@ -351,7 +351,7 @@ function TemplateRowForm({
               <div className="flex items-center gap-2">
                 <input
                   type="color"
-                  value={template.font_color || '#FFFFFF'}
+                  value={template.fontColor || '#FFFFFF'}
                   onChange={(e) =>
                     onChange(template.id, { font_color: e.target.value })
                   }
@@ -359,7 +359,7 @@ function TemplateRowForm({
                 />
                 <input
                   type="text"
-                  value={template.font_color || ''}
+                  value={template.fontColor || ''}
                   onChange={(e) =>
                     onChange(template.id, {
                       font_color: e.target.value || null,
@@ -471,17 +471,17 @@ export function BulkCreateModal({
     // Convert to TemplateCreateRequest format
     const requests: TemplateCreateRequest[] = templates.map((t) => ({
       name: t.name.trim(),
-      activity_type: t.activity_type,
+      activity_type: t.activityType,
       abbreviation: t.abbreviation || null,
-      display_abbreviation: t.display_abbreviation || null,
-      font_color: t.font_color || null,
-      background_color: t.background_color || null,
-      clinic_location: t.clinic_location || null,
-      max_residents: t.max_residents,
-      requires_specialty: t.requires_specialty || null,
-      requires_procedure_credential: t.requires_procedure_credential,
-      supervision_required: t.supervision_required,
-      max_supervision_ratio: t.max_supervision_ratio,
+      display_abbreviation: t.displayAbbreviation || null,
+      font_color: t.fontColor || null,
+      background_color: t.backgroundColor || null,
+      clinic_location: t.clinicLocation || null,
+      max_residents: t.maxResidents,
+      requires_specialty: t.requiresSpecialty || null,
+      requires_procedure_credential: t.requiresProcedureCredential,
+      supervision_required: t.supervisionRequired,
+      max_supervision_ratio: t.maxSupervisionRatio,
     }));
 
     await onSubmit(requests);

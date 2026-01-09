@@ -87,14 +87,14 @@ export default function AbsencesPage() {
     const peopleMap = new Map(people.map(p => [p.id, p.name]))
     return allAbsences.map(absence => ({
       ...absence,
-      person_name: peopleMap.get(absence.person_id) || 'Unknown',
+      person_name: peopleMap.get(absence.personId) || 'Unknown',
     })) as unknown as Record<string, unknown>[]
   }, [allAbsences, people])
 
   // Filter absences by type
   const absences = typeFilter === 'all'
     ? allAbsences
-    : allAbsences.filter((a) => a.absence_type === typeFilter)
+    : allAbsences.filter((a) => a.absenceType === typeFilter)
 
   const handleDeleteClick = (absence: Absence) => {
     setAbsenceToDelete(absence)
@@ -109,9 +109,9 @@ export default function AbsencesPage() {
 
   const handleEditClick = (absence: Absence) => {
     setEditingAbsence(absence)
-    setEditStartDate(absence.start_date)
-    setEditEndDate(absence.end_date)
-    setEditAbsenceType(absence.absence_type)
+    setEditStartDate(absence.startDate)
+    setEditEndDate(absence.endDate)
+    setEditAbsenceType(absence.absenceType)
     setEditNotes(absence.notes || '')
   }
 
@@ -133,7 +133,7 @@ export default function AbsencesPage() {
         data: {
           start_date: editStartDate,
           end_date: editEndDate,
-          absence_type: editAbsenceType as Absence['absence_type'],
+          absence_type: editAbsenceType as Absence['absenceType'],
           notes: editNotes || undefined,
         },
       })
@@ -346,7 +346,7 @@ export default function AbsencesPage() {
           <div className="text-sm text-gray-600 mb-4">
             Editing absence for:{' '}
             <span className="font-medium">
-              {people.find((p) => p.id === editingAbsence?.person_id)?.name || 'Unknown'}
+              {people.find((p) => p.id === editingAbsence?.personId)?.name || 'Unknown'}
             </span>
           </div>
 

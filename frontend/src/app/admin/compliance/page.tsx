@@ -284,11 +284,11 @@ function ResidentRow({
                   >
                     <CalendarDays className="w-3 h-3 text-slate-500" />
                     <span>
-                      {new Date(absence.start_date).toLocaleDateString()} -{' '}
-                      {new Date(absence.end_date).toLocaleDateString()}
+                      {new Date(absence.startDate).toLocaleDateString()} -{' '}
+                      {new Date(absence.endDate).toLocaleDateString()}
                     </span>
                     <span className="px-2 py-0.5 bg-slate-700 rounded text-slate-400 capitalize">
-                      {absence.absence_type.replace('_', ' ')}
+                      {absence.absenceType.replace('_', ' ')}
                     </span>
                     <span className="text-slate-500">{absence.days} days</span>
                   </div>
@@ -322,7 +322,7 @@ export default function ComplianceDashboardPage() {
   const personMap = useMemo(() => {
     const map = new Map<string, { name: string; pgy_level?: number }>();
     peopleData?.items?.forEach((p) => {
-      map.set(p.id, { name: p.name, pgy_level: p.pgy_level ?? undefined });
+      map.set(p.id, { name: p.name, pgy_level: p.pgyLevel ?? undefined });
     });
     return map;
   }, [peopleData]);
@@ -343,8 +343,8 @@ export default function ComplianceDashboardPage() {
       let comparison = 0;
       switch (sortField) {
         case 'name':
-          const nameA = personMap.get(a.person_id)?.name || '';
-          const nameB = personMap.get(b.person_id)?.name || '';
+          const nameA = personMap.get(a.personId)?.name || '';
+          const nameB = personMap.get(b.personId)?.name || '';
           comparison = nameA.localeCompare(nameB);
           break;
         case 'days_used':
@@ -409,7 +409,7 @@ export default function ComplianceDashboardPage() {
             <div>
               <h1 className="text-2xl font-bold">Away-From-Program Compliance</h1>
               <p className="text-sm text-slate-400 mt-1">
-                {data?.academic_year || 'Loading...'} Academic Year
+                {data?.academicYear || 'Loading...'} Academic Year
               </p>
             </div>
             <button
@@ -569,15 +569,15 @@ export default function ComplianceDashboardPage() {
                     </tr>
                   ) : (
                     sortedResidents.map((summary) => {
-                      const person = personMap.get(summary.person_id);
+                      const person = personMap.get(summary.personId);
                       return (
                         <ResidentRow
-                          key={summary.person_id}
+                          key={summary.personId}
                           summary={summary}
                           personName={person?.name || 'Unknown'}
-                          pgyLevel={person?.pgy_level}
-                          isExpanded={expandedIds.has(summary.person_id)}
-                          onToggle={() => toggleExpanded(summary.person_id)}
+                          pgyLevel={person?.pgyLevel}
+                          isExpanded={expandedIds.has(summary.personId)}
+                          onToggle={() => toggleExpanded(summary.personId)}
                         />
                       );
                     })

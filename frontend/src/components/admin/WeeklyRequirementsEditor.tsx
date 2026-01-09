@@ -378,7 +378,7 @@ export function WeeklyRequirementsEditor({
         specialty_min_per_week: existingRequirement.specialty_min_per_week,
         specialty_max_per_week: existingRequirement.specialty_max_per_week,
         academics_required: existingRequirement.academics_required,
-        protected_slots: existingRequirement.protected_slots || {},
+        protected_slots: existingRequirement.protectedSlots || {},
         allowed_clinic_days: existingRequirement.allowed_clinic_days || [1, 2, 3, 4, 5],
       });
       setHasChanges(false);
@@ -425,7 +425,7 @@ export function WeeklyRequirementsEditor({
           specialty_min_per_week: formData.specialty_min_per_week,
           specialty_max_per_week: formData.specialty_max_per_week,
           academics_required: formData.academics_required,
-          protected_slots: formData.protected_slots,
+          protected_slots: formData.protectedSlots,
           allowed_clinic_days: formData.allowed_clinic_days,
         },
       });
@@ -616,7 +616,7 @@ export function WeeklyRequirementsEditor({
       {/* Protected Slots */}
       <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
         <ProtectedSlotsEditor
-          slots={formData.protected_slots}
+          slots={formData.protectedSlots}
           onChange={(slots) => updateField('protected_slots', slots)}
         />
         <p className="text-xs text-slate-500 mt-2">

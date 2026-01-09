@@ -34,9 +34,9 @@ export function PersonFilter({ selectedPersonId, onSelect }: PersonFilterProps) 
     const faculty: Person[] = []
 
     people.forEach((person) => {
-      if (person.type === 'resident' && person.pgy_level !== null) {
-        const existing = residents.get(person.pgy_level) ?? []
-        residents.set(person.pgy_level, [...existing, person])
+      if (person.type === 'resident' && person.pgyLevel !== null) {
+        const existing = residents.get(person.pgyLevel) ?? []
+        residents.set(person.pgyLevel, [...existing, person])
       } else if (person.type === 'faculty') {
         faculty.push(person)
       }

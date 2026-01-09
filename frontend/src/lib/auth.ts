@@ -32,11 +32,11 @@ export interface User {
   /** User's role determining permissions */
   role: 'admin' | 'coordinator' | 'faculty' | 'resident'
   /** Whether the user account is active */
-  is_active: boolean
+  isActive: boolean
   /** Timestamp when user was created */
-  created_at: string
+  createdAt: string
   /** Timestamp of last profile update (optional) */
-  updated_at?: string
+  updatedAt?: string
 }
 
 /**
@@ -54,9 +54,9 @@ export interface LoginCredentials {
  */
 export interface LoginResponse {
   /** JWT access token (also set as httpOnly cookie) */
-  access_token: string
+  accessToken: string
   /** Token type (typically "bearer") */
-  token_type: string
+  tokenType: string
   /** Authenticated user's profile information */
   user: User
 }
@@ -76,7 +76,7 @@ export interface AuthCheckResponse {
  */
 export interface RefreshTokenRequest {
   /** The refresh token to exchange for a new access token */
-  refresh_token: string
+  refreshToken: string
 }
 
 /**
@@ -84,11 +84,11 @@ export interface RefreshTokenRequest {
  */
 export interface RefreshTokenResponse {
   /** New JWT access token (also set as httpOnly cookie) */
-  access_token: string
+  accessToken: string
   /** New refresh token (if rotation is enabled) */
-  refresh_token: string
+  refreshToken: string
   /** Token type (typically "bearer") */
-  token_type: string
+  tokenType: string
 }
 
 // ============================================================================
@@ -177,7 +177,8 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
   formData.append('password', credentials.password)
 
   // Step 1: Authenticate and get token (set as httpOnly cookie)
-  const tokenResponse = await api.post<RefreshTokenResponse>('/auth/login', formData, {
+  // Convert URLSearchParams to string to ensure body is sent correctly through proxy
+  const tokenResponse = await api.post<RefreshTokenResponse>('/auth/login', formData.toString(), {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
@@ -185,15 +186,15 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
   })
 
   // Step 2: Store refresh token and schedule proactive refresh
-  storeTokens(tokenResponse.data.refresh_token)
+  storeTokens(tokenResponse.data.refreshToken)
 
   // Step 3: Fetch user data using the newly set token
   try {
     const user = await getCurrentUser()
 
     return {
-      access_token: tokenResponse.data.access_token,
-      token_type: tokenResponse.data.token_type,
+      accessToken: tokenResponse.data.accessToken,
+      tokenType: tokenResponse.data.tokenType,
       user,
     }
   } catch (_error) {
@@ -474,11 +475,11 @@ export async function performRefresh(): Promise<RefreshTokenResponse | null> {
   refreshPromise = (async () => {
     try {
       const response = await post<RefreshTokenResponse>('/auth/refresh', {
-        refresh_token: refreshToken,
+        refreshToken: refreshToken,
       })
 
       // Store the new refresh token (may be the same if rotation is disabled)
-      storeTokens(response.refresh_token)
+      storeTokens(response.refreshToken)
 
       return response
     } catch (_error) {

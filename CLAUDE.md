@@ -71,6 +71,31 @@ backend/app/
 **TypeScript:** Strict mode, no `any`, PascalCase components, `use` prefix for hooks.
 **Naming:** Classes=PascalCase, functions=snake_case, constants=UPPER_SNAKE_CASE.
 
+### API Type Naming Convention (CRITICAL)
+
+**Backend uses snake_case, Frontend uses camelCase.** The axios interceptor in `frontend/src/lib/api.ts` automatically converts between them:
+- Response: snake_case → camelCase (for frontend)
+- Request: camelCase → snake_case (for API)
+
+**TypeScript interfaces MUST use camelCase:**
+```typescript
+// ✓ CORRECT
+interface Person {
+  pgyLevel: number;
+  createdAt: string;
+  isActive: boolean;
+}
+
+// ✗ WRONG (will cause undefined at runtime)
+interface Person {
+  pgy_level: number;
+  created_at: string;
+  is_active: boolean;
+}
+```
+
+**Why this matters:** TypeScript types don't affect runtime. If types say `created_at` but axios converts to `createdAt`, code will access `undefined`.
+
 > RAG: `rag_search('code style examples')` for detailed patterns
 
 ---
@@ -210,6 +235,17 @@ This project operates on **mission-type orders** (Auftragstaktik), not detailed 
 | **ORCHESTRATOR** | 99% delegation, workflow orchestration | Container ops (1%), user preference unclear, boundary violations |
 
 **When in doubt:** Act within boundaries. Escalate if approaching a boundary.
+
+### Report Tool/Environment Issues
+
+If a tool fails repeatedly (e.g., `ruff: command not found`), **tell the user** instead of silently working around it. They can often fix it quickly (install locally, add to PATH, etc.). Don't waste cycles on workarounds when a 30-second fix exists.
+
+Examples of things to report:
+- Missing CLI tools (ruff, pytest, etc.)
+- Permission errors
+- Docker containers not running
+- Environment variables not set
+- Repeated test failures with unclear cause
 
 ### Resources Available
 
@@ -367,6 +403,7 @@ YYYYMMDD_short_description
 
 ### Key References
 
+- **`docs/development/BEST_PRACTICES_AND_GOTCHAS.md`** - **READ THIS FIRST** (common bugs, debugging flowcharts)
 - `.claude/dontreadme/synthesis/PATTERNS.md` - Implementation patterns
 - `.claude/dontreadme/synthesis/DECISIONS.md` - Architectural decisions
 - `docs/development/AGENT_SKILLS.md` - AI skills reference

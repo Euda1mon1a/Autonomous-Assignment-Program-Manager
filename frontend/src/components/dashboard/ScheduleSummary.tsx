@@ -25,11 +25,11 @@ export function ScheduleSummary() {
   const scheduledAttendings = new Set<string>()
 
   schedule?.items?.forEach((assignment) => {
-    const person = people?.items?.find((p) => p.id === assignment.person_id)
+    const person = people?.items?.find((p) => p.id === assignment.personId)
     if (person?.type === 'resident') {
-      scheduledResidents.add(assignment.person_id)
+      scheduledResidents.add(assignment.personId)
     } else if (person?.type === 'faculty') {
-      scheduledAttendings.add(assignment.person_id)
+      scheduledAttendings.add(assignment.personId)
     }
   })
 

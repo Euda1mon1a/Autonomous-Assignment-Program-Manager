@@ -53,8 +53,8 @@ export default function PersonSchedulePage() {
     templatesData?.items?.forEach((t) => {
       map.set(t.id, {
         name: t.name,
-        abbreviation: t.display_abbreviation || t.abbreviation || t.name.substring(0, 3).toUpperCase(),
-        activity_type: t.activity_type,
+        abbreviation: t.displayAbbreviation || t.abbreviation || t.name.substring(0, 3).toUpperCase(),
+        activity_type: t.activityType,
       })
     })
     return map
@@ -65,19 +65,19 @@ export default function PersonSchedulePage() {
     if (!assignmentsData?.items) return []
 
     return assignmentsData.items.map((assignment) => {
-      const template = assignment.rotation_template_id
-        ? templateMap.get(assignment.rotation_template_id)
+      const template = assignment.rotationTemplateId
+        ? templateMap.get(assignment.rotationTemplateId)
         : null
 
       // In production, block data would provide date and time_of_day
       // For now, extract from created_at or use block lookup
-      const dateStr = assignment.created_at.split('T')[0]
+      const dateStr = assignment.createdAt.split('T')[0]
 
       return {
         id: assignment.id,
         date: dateStr,
         time_of_day: 'AM' as const, // Would come from block data
-        activity: assignment.activity_override || template?.activity_type || 'Assignment',
+        activity: assignment.activityOverride || template?.activityType || 'Assignment',
         abbreviation: template?.abbreviation || 'ASN',
         role: assignment.role,
         notes: assignment.notes,
@@ -108,7 +108,7 @@ export default function PersonSchedulePage() {
       return [
         format(date, 'yyyy-MM-dd'),
         format(date, 'EEEE'),
-        a.time_of_day,
+        a.timeOfDay,
         a.activity,
         a.role,
         a.notes || '',
@@ -172,7 +172,7 @@ export default function PersonSchedulePage() {
                     <h1 className="text-2xl font-bold text-gray-900">{person.name}</h1>
                     <div className="flex items-center gap-3 mt-1">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        {person.type === 'resident' ? `PGY-${person.pgy_level}` : 'Faculty'}
+                        {person.type === 'resident' ? `PGY-${person.pgyLevel}` : 'Faculty'}
                       </span>
                       {person.email && (
                         <span className="text-sm text-gray-500">{person.email}</span>

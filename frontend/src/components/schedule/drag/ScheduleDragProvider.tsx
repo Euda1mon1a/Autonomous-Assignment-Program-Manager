@@ -162,7 +162,7 @@ export function ScheduleDragProvider({
     const entries = Array.from(blockLookup.entries())
     for (let i = 0; i < entries.length; i++) {
       const [id, block] = entries[i]
-      if (block.date === date && block.time_of_day === timeOfDay) {
+      if (block.date === date && block.timeOfDay === timeOfDay) {
         return id
       }
     }

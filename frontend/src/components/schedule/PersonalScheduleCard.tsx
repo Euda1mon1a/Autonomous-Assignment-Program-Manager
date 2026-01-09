@@ -73,11 +73,11 @@ export function PersonalScheduleCard({
         dayMap.set(assignment.date, {
           date: assignment.date,
           dateObj,
-          am: assignment.time_of_day === 'AM' ? assignment : null,
-          pm: assignment.time_of_day === 'PM' ? assignment : null,
+          am: assignment.timeOfDay === 'AM' ? assignment : null,
+          pm: assignment.timeOfDay === 'PM' ? assignment : null,
         })
       } else {
-        if (assignment.time_of_day === 'AM') {
+        if (assignment.timeOfDay === 'AM') {
           existing.am = assignment
         } else {
           existing.pm = assignment
@@ -112,7 +112,7 @@ export function PersonalScheduleCard({
             <div>
               <h3 className="font-semibold text-gray-900">{person.name}</h3>
               <p className="text-sm text-gray-500">
-                {person.type === 'resident' ? `PGY-${person.pgy_level}` : 'Faculty'}
+                {person.type === 'resident' ? `PGY-${person.pgyLevel}` : 'Faculty'}
               </p>
             </div>
           </div>
@@ -137,7 +137,7 @@ export function PersonalScheduleCard({
             <div>
               <h3 className="font-semibold text-gray-900">{person.name}</h3>
               <p className="text-sm text-gray-500">
-                {person.type === 'resident' ? `PGY-${person.pgy_level}` : 'Faculty'}
+                {person.type === 'resident' ? `PGY-${person.pgyLevel}` : 'Faculty'}
               </p>
             </div>
           </div>

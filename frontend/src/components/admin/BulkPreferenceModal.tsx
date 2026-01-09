@@ -87,24 +87,24 @@ function PreferenceRow({
   availableTypes,
 }: PreferenceRowProps) {
   const typeDef = PREFERENCE_TYPE_DEFINITIONS.find(
-    (d) => d.type === preference.preference_type
+    (d) => d.type === preference.preferenceType
   );
 
   return (
     <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-lg border border-slate-700">
       <div className="flex-1 min-w-0">
         <select
-          value={preference.preference_type}
+          value={preference.preferenceType}
           onChange={(e) =>
             onChange({ preference_type: e.target.value as PreferenceType })
           }
           className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
         >
-          <option value={preference.preference_type}>
-            {typeDef?.label || preference.preference_type}
+          <option value={preference.preferenceType}>
+            {typeDef?.label || preference.preferenceType}
           </option>
           {availableTypes
-            .filter((t) => t !== preference.preference_type)
+            .filter((t) => t !== preference.preferenceType)
             .map((type) => {
               const def = PREFERENCE_TYPE_DEFINITIONS.find((d) => d.type === type);
               return (
@@ -173,7 +173,7 @@ export function BulkPreferenceModal({
 
   // Get available preference types for custom mode
   const availableTypes = useMemo(() => {
-    const usedTypes = customPreferences.map((p) => p.preference_type);
+    const usedTypes = customPreferences.map((p) => p.preferenceType);
     return PREFERENCE_TYPE_DEFINITIONS.map((d) => d.type).filter(
       (t) => !usedTypes.includes(t)
     );
@@ -404,7 +404,7 @@ export function BulkPreferenceModal({
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {sourcePreferences.map((p, i) => {
                       const typeDef = PREFERENCE_TYPE_DEFINITIONS.find(
-                        (d) => d.type === p.preference_type
+                        (d) => d.type === p.preferenceType
                       );
                       const weightOpt = WEIGHT_OPTIONS.find((w) => w.value === p.weight);
                       return (
@@ -413,7 +413,7 @@ export function BulkPreferenceModal({
                           className="flex items-center justify-between p-2 bg-slate-800 rounded border border-slate-700"
                         >
                           <span className="text-sm text-white">
-                            {typeDef?.label || p.preference_type}
+                            {typeDef?.label || p.preferenceType}
                           </span>
                           <span
                             className={`px-2 py-0.5 rounded text-xs font-medium text-white ${weightOpt?.color}`}

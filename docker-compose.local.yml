@@ -230,8 +230,11 @@ services:
     depends_on:
       - backend
     environment:
-      # Backend API URL - use /api/v1 directly to avoid 307 redirect CORS issues
-      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+      # Backend API URL - use relative path for same-origin cookie handling
+      # Next.js rewrites proxy /api/* to backend
+      NEXT_PUBLIC_API_URL: /api/v1
+      # Internal URL for Next.js server-side proxy (Docker network)
+      BACKEND_INTERNAL_URL: http://backend:8000
 
       # Development settings
       NODE_ENV: development

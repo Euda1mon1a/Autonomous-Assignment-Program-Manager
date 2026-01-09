@@ -86,7 +86,7 @@ export default function CompliancePage() {
             {validation?.valid ? 'No Violations' : 'Violations Requiring Attention'}
           </h2>
           <p className="text-sm text-gray-500">
-            Coverage Rate: {validation?.coverage_rate?.toFixed(1) || 0}%
+            Coverage Rate: {validation?.coverageRate?.toFixed(1) || 0}%
           </p>
         </div>
 
@@ -183,8 +183,8 @@ function ViolationRow({ violation }: { violation: Violation }) {
           </span>
         </div>
         <p className="mt-1 text-sm text-gray-600">{violation.message}</p>
-        {violation.person_name && (
-          <p className="text-xs text-gray-500 mt-1">Person: {violation.person_name}</p>
+        {violation.personName && (
+          <p className="text-xs text-gray-500 mt-1">Person: {violation.personName}</p>
         )}
       </div>
     </div>

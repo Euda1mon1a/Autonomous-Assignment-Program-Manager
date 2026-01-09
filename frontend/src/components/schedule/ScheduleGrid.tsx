@@ -186,33 +186,33 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
     const lookup = new Map<string, Map<string, Map<string, ProcessedAssignment>>>()
 
     assignmentsData?.items?.forEach((assignment) => {
-      const block = blockMap.get(assignment.block_id)
+      const block = blockMap.get(assignment.blockId)
       if (!block) return
 
-      const template = assignment.rotation_template_id
-        ? templateMap.get(assignment.rotation_template_id)
+      const template = assignment.rotationTemplateId
+        ? templateMap.get(assignment.rotationTemplateId)
         : null
 
       const processed: ProcessedAssignment = {
         abbreviation:
-          assignment.activity_override ||
-          template?.display_abbreviation ||
+          assignment.activityOverride ||
+          template?.displayAbbreviation ||
           template?.abbreviation ||
           template?.name?.substring(0, ABBREVIATION_LENGTH).toUpperCase() ||
           '???',
-        activityType: template?.activity_type || 'default',
-        fontColor: template?.font_color || undefined,
-        backgroundColor: template?.background_color || undefined,
+        activityType: template?.activityType || 'default',
+        fontColor: template?.fontColor || undefined,
+        backgroundColor: template?.backgroundColor || undefined,
         templateName: template?.name,
         role: assignment.role,
         notes: assignment.notes || undefined,
       }
 
       // Get or create person map
-      if (!lookup.has(assignment.person_id)) {
-        lookup.set(assignment.person_id, new Map())
+      if (!lookup.has(assignment.personId)) {
+        lookup.set(assignment.personId, new Map())
       }
-      const personMap = lookup.get(assignment.person_id)!
+      const personMap = lookup.get(assignment.personId)!
 
       // Get or create date map
       const dateStr = block.date
@@ -222,7 +222,7 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
       const dateMap = personMap.get(dateStr)!
 
       // Set assignment for time of day
-      dateMap.set(block.time_of_day, processed)
+      dateMap.set(block.timeOfDay, processed)
     })
 
     return lookup
@@ -247,11 +247,11 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
     people.forEach((person) => {
       if (person.type === 'faculty') {
         faculty.push(person)
-      } else if (person.pgy_level === PGY_LEVEL_1) {
+      } else if (person.pgyLevel === PGY_LEVEL_1) {
         pgy1.push(person)
-      } else if (person.pgy_level === PGY_LEVEL_2) {
+      } else if (person.pgyLevel === PGY_LEVEL_2) {
         pgy2.push(person)
-      } else if (person.pgy_level === PGY_LEVEL_3) {
+      } else if (person.pgyLevel === PGY_LEVEL_3) {
         pgy3.push(person)
       } else {
         pgyOther.push(person)
@@ -429,10 +429,10 @@ function PersonRow({ person, days, todayStr, getAssignment }: PersonRowProps) {
     }
     return (
       <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-        PGY-{person.pgy_level}
+        PGY-{person.pgyLevel}
       </span>
     )
-  }, [person.type, person.pgy_level])
+  }, [person.type, person.pgyLevel])
 
   return (
     <tr className={`group hover:bg-blue-50/30 transition-colors duration-[${ROW_HOVER_TRANSITION_MS}ms]`} role="row">

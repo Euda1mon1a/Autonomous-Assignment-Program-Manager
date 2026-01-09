@@ -74,7 +74,7 @@ export const blockQueryKeys = {
  *     <ul>
  *       {data.items.map(block => (
  *         <li key={block.id}>
- *           {block.date} {block.time_of_day} - Block {block.block_number}
+ *           {block.date} {block.timeOfDay} - Block {block.blockNumber}
  *         </li>
  *       ))}
  *     </ul>
@@ -89,9 +89,9 @@ export function useBlocks(
   options?: Omit<UseQueryOptions<ListResponse<Block>, ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const params = new URLSearchParams()
-  if (filters?.start_date) params.set('start_date', filters.start_date)
-  if (filters?.end_date) params.set('end_date', filters.end_date)
-  if (filters?.block_number) params.set('block_number', filters.block_number.toString())
+  if (filters?.startDate) params.set('start_date', filters.startDate)
+  if (filters?.endDate) params.set('end_date', filters.endDate)
+  if (filters?.blockNumber) params.set('block_number', filters.blockNumber.toString())
   const queryString = params.toString()
 
   return useQuery<ListResponse<Block>, ApiError>({
@@ -143,8 +143,8 @@ export function useBlocks(
  *   return (
  *     <select>
  *       {blockRanges.map(range => (
- *         <option key={range.block_number} value={range.block_number}>
- *           Block {range.block_number}: {range.start_date} - {range.end_date}
+ *         <option key={range.blockNumber} value={range.blockNumber}>
+ *           Block {range.blockNumber}: {range.startDate} - {range.endDate}
  *         </option>
  *       ))}
  *     </select>
@@ -167,9 +167,9 @@ export function useBlockRanges(
       const blockMap = new Map<number, { minDate: string; maxDate: string }>()
 
       response.items.forEach((block) => {
-        const existing = blockMap.get(block.block_number)
+        const existing = blockMap.get(block.blockNumber)
         if (!existing) {
-          blockMap.set(block.block_number, {
+          blockMap.set(block.blockNumber, {
             minDate: block.date,
             maxDate: block.date,
           })
@@ -190,7 +190,7 @@ export function useBlockRanges(
           start_date: minDate,
           end_date: maxDate,
         }))
-        .sort((a, b) => a.block_number - b.block_number)
+        .sort((a, b) => a.blockNumber - b.blockNumber)
 
       return ranges
     },

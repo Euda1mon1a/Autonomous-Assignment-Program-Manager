@@ -161,7 +161,7 @@ export function getErrorMessage(
     }
 
     // Use mapped message if available
-    const mappedMessage = ERROR_MESSAGES[error.error_code]
+    const mappedMessage = ERROR_MESSAGES[error.errorCode]
     if (mappedMessage) {
       return mappedMessage
     }

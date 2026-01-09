@@ -100,7 +100,7 @@ export function EditAssignmentModal({
   useEffect(() => {
     if (isOpen) {
       if (assignment) {
-        setRotationTemplateId(assignment.rotation_template_id || '');
+        setRotationTemplateId(assignment.rotationTemplateId || '');
         setRole(assignment.role);
         setNotes(assignment.notes || '');
       } else {
@@ -136,11 +136,11 @@ export function EditAssignmentModal({
   const personAbsences = useMemo(() => {
     if (!absencesData?.items) return [];
     return absencesData.items
-      .filter((a) => a.person_id === personId)
+      .filter((a) => a.personId === personId)
       .map((a) => ({
-        startDate: a.start_date,
-        endDate: a.end_date,
-        type: a.absence_type,
+        startDate: a.startDate,
+        endDate: a.endDate,
+        type: a.absenceType,
       }));
   }, [absencesData, personId]);
 
@@ -153,7 +153,7 @@ export function EditAssignmentModal({
         date,
         session: session, // We'd need block info to get the actual session
         rotationName: rotationTemplatesData?.items?.find(
-          (t) => t.id === a.rotation_template_id
+          (t) => t.id === a.rotationTemplateId
         )?.name,
       }));
   }, [existingAssignmentsData, assignment, date, session, rotationTemplatesData]);
@@ -174,7 +174,7 @@ export function EditAssignmentModal({
       date,
       session,
       rotationTemplateId,
-      requiresSupervision: selectedRotation?.supervision_required,
+      requiresSupervision: selectedRotation?.supervisionRequired,
       absences: personAbsences,
       existingAssignments: existingAssignments,
       ...warningContext,

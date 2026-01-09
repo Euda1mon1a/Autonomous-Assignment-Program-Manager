@@ -110,27 +110,27 @@ export function UpcomingAssignmentsPreview({
     const assignments: UpcomingAssignment[] = []
 
     assignmentsData.items
-      .filter((assignment) => assignment.person_id === currentPerson.id)
+      .filter((assignment) => assignment.personId === currentPerson.id)
       .forEach((assignment) => {
-        const block = blockMap.get(assignment.block_id)
+        const block = blockMap.get(assignment.blockId)
         if (!block) return
 
         const blockDate = parseISO(block.date)
         // Only include future/today assignments
         if (blockDate < today && !isToday(blockDate)) return
 
-        const template = assignment.rotation_template_id
-          ? templateMap.get(assignment.rotation_template_id)
+        const template = assignment.rotationTemplateId
+          ? templateMap.get(assignment.rotationTemplateId)
           : null
 
         assignments.push({
           id: assignment.id,
           date: block.date,
-          timeOfDay: block.time_of_day as 'AM' | 'PM',
-          activity: template?.activity_type || 'default',
+          timeOfDay: block.timeOfDay as 'AM' | 'PM',
+          activity: template?.activityType || 'default',
           abbreviation:
-            assignment.activity_override ||
-            template?.display_abbreviation ||
+            assignment.activityOverride ||
+            template?.displayAbbreviation ||
             template?.abbreviation ||
             template?.name?.substring(0, 3).toUpperCase() ||
             '???',

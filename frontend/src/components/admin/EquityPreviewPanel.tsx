@@ -403,7 +403,7 @@ export function EquityPreviewPanel({
                   {sortedFacultyDetails.length > 0 ? (
                     sortedFacultyDetails.map((faculty) => (
                       <FacultyEquityRow
-                        key={faculty.person_id}
+                        key={faculty.personId}
                         faculty={faculty}
                         maxCalls={maxCalls}
                       />

@@ -90,9 +90,9 @@ function PreferenceCard({
   const typeDefinition = useMemo(
     () =>
       PREFERENCE_TYPE_DEFINITIONS.find(
-        (d) => d.type === preference.preference_type
+        (d) => d.type === preference.preferenceType
       ),
-    [preference.preference_type]
+    [preference.preferenceType]
   );
 
   const weightOption = useMemo(
@@ -104,7 +104,7 @@ function PreferenceCard({
     <div
       className={`
         bg-slate-800/50 border rounded-lg overflow-hidden transition-all
-        ${preference.is_active ? 'border-slate-700' : 'border-slate-700/50 opacity-60'}
+        ${preference.isActive ? 'border-slate-700' : 'border-slate-700/50 opacity-60'}
         ${preference.isNew ? 'ring-2 ring-violet-500/50' : ''}
       `}
     >
@@ -124,14 +124,14 @@ function PreferenceCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-white font-medium">
-              {typeDefinition?.label || preference.preference_type}
+              {typeDefinition?.label || preference.preferenceType}
             </span>
             <span
               className={`px-2 py-0.5 rounded text-xs font-medium text-white ${weightOption?.color}`}
             >
               {preference.weight}
             </span>
-            {!preference.is_active && (
+            {!preference.isActive && (
               <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-600 text-slate-300">
                 Inactive
               </span>
@@ -186,16 +186,16 @@ function PreferenceCard({
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-slate-300">Active</label>
             <button
-              onClick={() => onChange({ is_active: !preference.is_active })}
+              onClick={() => onChange({ is_active: !preference.isActive })}
               className={`
                 relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                ${preference.is_active ? 'bg-violet-500' : 'bg-slate-600'}
+                ${preference.isActive ? 'bg-violet-500' : 'bg-slate-600'}
               `}
             >
               <span
                 className={`
                   inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                  ${preference.is_active ? 'translate-x-6' : 'translate-x-1'}
+                  ${preference.isActive ? 'translate-x-6' : 'translate-x-1'}
                 `}
               />
             </button>
@@ -230,7 +230,7 @@ function PreferenceCard({
                     {field.type === 'multiselect' && field.options && (
                       <div className="flex flex-wrap gap-1">
                         {field.options.map((option) => {
-                          const currentValues = (preference.config_json[field.name] as string[]) || [];
+                          const currentValues = (preference.configJson[field.name] as string[]) || [];
                           const isSelected = currentValues.includes(option.value);
 
                           return (
@@ -242,7 +242,7 @@ function PreferenceCard({
                                   : [...currentValues, option.value];
                                 onChange({
                                   config_json: {
-                                    ...preference.config_json,
+                                    ...preference.configJson,
                                     [field.name]: newValues,
                                   },
                                 });
@@ -291,10 +291,10 @@ export function PreferenceEditor({
     () =>
       initialPreferences.map((p) => ({
         id: p.id,
-        preference_type: p.preference_type,
+        preference_type: p.preferenceType,
         weight: p.weight,
-        config_json: p.config_json,
-        is_active: p.is_active,
+        config_json: p.configJson,
+        is_active: p.isActive,
         description: p.description,
         isNew: false,
       }))
@@ -305,7 +305,7 @@ export function PreferenceEditor({
 
   // Get available preference types (not already added)
   const availableTypes = useMemo(() => {
-    const usedTypes = editablePreferences.map((p) => p.preference_type);
+    const usedTypes = editablePreferences.map((p) => p.preferenceType);
     return PREFERENCE_TYPE_DEFINITIONS.filter((d) => !usedTypes.includes(d.type));
   }, [editablePreferences]);
 
@@ -345,10 +345,10 @@ export function PreferenceEditor({
   const handleSave = useCallback(() => {
     const preferencesToSave: RotationPreferenceCreate[] = editablePreferences.map(
       (p) => ({
-        preference_type: p.preference_type,
+        preference_type: p.preferenceType,
         weight: p.weight,
-        config_json: p.config_json,
-        is_active: p.is_active,
+        config_json: p.configJson,
+        is_active: p.isActive,
         description: p.description,
       })
     );

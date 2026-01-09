@@ -62,15 +62,15 @@ export function GenerateScheduleDialog({
     const newErrors: FormErrors = {};
 
     if (!startDate) {
-      newErrors.start_date = 'Start date is required';
+      newErrors.startDate = 'Start date is required';
     }
 
     if (!endDate) {
-      newErrors.end_date = 'End date is required';
+      newErrors.endDate = 'End date is required';
     }
 
     if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-      newErrors.end_date = 'End date must be after start date';
+      newErrors.endDate = 'End date must be after start date';
     }
 
     setErrors(newErrors);
@@ -167,8 +167,8 @@ export function GenerateScheduleDialog({
             <div className="bg-gray-50 rounded-lg p-3">
               <p className="text-sm text-gray-500">Coverage Rate</p>
               <p className="text-2xl font-bold">
-                {result.validation?.coverage_rate
-                  ? `${result.validation.coverage_rate.toFixed(0)}%`
+                {result.validation?.coverageRate
+                  ? `${result.validation.coverageRate.toFixed(0)}%`
                   : '--'}
               </p>
             </div>
@@ -182,8 +182,8 @@ export function GenerateScheduleDialog({
                 {result.solver_stats.total_residents && (
                   <p>Residents: {result.solver_stats.total_residents}</p>
                 )}
-                {result.solver_stats.coverage_rate != null && (
-                  <p>Solver Coverage: {(result.solver_stats.coverage_rate * 100).toFixed(1)}%</p>
+                {result.solver_stats.coverageRate != null && (
+                  <p>Solver Coverage: {(result.solver_stats.coverageRate * 100).toFixed(1)}%</p>
                 )}
                 {result.solver_stats.branches != null && (
                   <p>Branches: {result.solver_stats.branches.toLocaleString()}</p>
@@ -256,13 +256,13 @@ export function GenerateScheduleDialog({
               label="Start Date"
               value={startDate}
               onChange={setStartDate}
-              error={errors.start_date}
+              error={errors.startDate}
             />
             <DatePicker
               label="End Date"
               value={endDate}
               onChange={setEndDate}
-              error={errors.end_date}
+              error={errors.endDate}
             />
           </div>
 

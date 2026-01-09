@@ -196,7 +196,7 @@ export function usePeople(
 ) {
   const params = new URLSearchParams()
   if (filters?.role) params.set('type', filters.role)
-  if (filters?.pgy_level !== undefined) params.set('pgy_level', String(filters.pgy_level))
+  if (filters?.pgyLevel !== undefined) params.set('pgy_level', String(filters.pgyLevel))
   const queryString = params.toString()
 
   return useQuery<ListResponse<Person>, ApiError>({
@@ -283,7 +283,7 @@ export function usePerson(
  *     <Select label="Select Resident" onChange={onSelect}>
  *       {data.items.map(resident => (
  *         <option key={resident.id} value={resident.id}>
- *           {resident.name} (PGY-{resident.pgy_level})
+ *           {resident.name} (PGY-{resident.pgyLevel})
  *         </option>
  *       ))}
  *     </Select>
@@ -487,11 +487,11 @@ export function useCreatePerson() {
  *   const handleAdvance = () => {
  *     mutate({
  *       id: resident.id,
- *       data: { pgy_level: resident.pgy_level + 1 },
+ *       data: { pgy_level: resident.pgyLevel + 1 },
  *     });
  *   };
  *
- *   return <Button onClick={handleAdvance}>Advance to PGY-{resident.pgy_level + 1}</Button>;
+ *   return <Button onClick={handleAdvance}>Advance to PGY-{resident.pgyLevel + 1}</Button>;
  * }
  * ```
  *

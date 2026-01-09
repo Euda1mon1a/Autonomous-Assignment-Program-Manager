@@ -160,7 +160,7 @@ export function FacultyInpatientWeeksView({
   const blockByDateTimeMap = useMemo(() => {
     const map = new Map<string, Block>()
     blocksData?.items?.forEach((block) => {
-      map.set(`${block.date}-${block.time_of_day}`, block)
+      map.set(`${block.date}-${block.timeOfDay}`, block)
     })
     return map
   }, [blocksData])
@@ -178,36 +178,36 @@ export function FacultyInpatientWeeksView({
     const lookup = new Map<string, Map<string, Map<string, ProcessedAssignment>>>()
 
     assignmentsData?.items?.forEach((assignment) => {
-      const block = blockMap.get(assignment.block_id)
+      const block = blockMap.get(assignment.blockId)
       if (!block) return
 
-      const person = peopleData?.items?.find(p => p.id === assignment.person_id)
-      const template = assignment.rotation_template_id
-        ? templateMap.get(assignment.rotation_template_id)
+      const person = peopleData?.items?.find(p => p.id === assignment.personId)
+      const template = assignment.rotationTemplateId
+        ? templateMap.get(assignment.rotationTemplateId)
         : null
 
       const processed: ProcessedAssignment = {
         id: assignment.id,
         abbreviation:
-          assignment.activity_override ||
-          template?.display_abbreviation ||
+          assignment.activityOverride ||
+          template?.displayAbbreviation ||
           template?.abbreviation ||
           template?.name?.substring(0, 3).toUpperCase() ||
           '???',
-        activityType: template?.activity_type || 'default',
+        activityType: template?.activityType || 'default',
         templateName: template?.name,
         role: assignment.role,
         notes: assignment.notes || undefined,
-        personId: assignment.person_id,
+        personId: assignment.personId,
         personName: person?.name || 'Unknown',
-        blockId: assignment.block_id,
-        rotationTemplateId: assignment.rotation_template_id,
+        blockId: assignment.blockId,
+        rotationTemplateId: assignment.rotationTemplateId,
       }
 
-      if (!lookup.has(assignment.person_id)) {
-        lookup.set(assignment.person_id, new Map())
+      if (!lookup.has(assignment.personId)) {
+        lookup.set(assignment.personId, new Map())
       }
-      const personMap = lookup.get(assignment.person_id)!
+      const personMap = lookup.get(assignment.personId)!
 
       const dateStr = block.date
       if (!personMap.has(dateStr)) {
@@ -215,7 +215,7 @@ export function FacultyInpatientWeeksView({
       }
       const dateMap = personMap.get(dateStr)!
 
-      dateMap.set(block.time_of_day, processed)
+      dateMap.set(block.timeOfDay, processed)
     })
 
     return lookup
@@ -253,8 +253,8 @@ export function FacultyInpatientWeeksView({
   const getBlockInfo = useCallback((dateStr: string) => {
     const block = blockByDateTimeMap.get(`${dateStr}-AM`)
     return {
-      isHoliday: block?.is_holiday || false,
-      holidayName: block?.holiday_name || undefined,
+      isHoliday: block?.isHoliday || false,
+      holidayName: block?.holidayName || undefined,
     }
   }, [blockByDateTimeMap])
 

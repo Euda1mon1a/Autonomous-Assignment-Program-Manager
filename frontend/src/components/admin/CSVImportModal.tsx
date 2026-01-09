@@ -147,7 +147,7 @@ function PreviewTable({ templates }: PreviewTableProps) {
                   )}
                 </td>
                 <td className="py-2 px-3 text-white">{template.name || '-'}</td>
-                <td className="py-2 px-3 text-slate-300">{template.activity_type}</td>
+                <td className="py-2 px-3 text-slate-300">{template.activityType}</td>
                 <td className="py-2 px-3 text-slate-300">
                   {template.abbreviation || '-'}
                 </td>

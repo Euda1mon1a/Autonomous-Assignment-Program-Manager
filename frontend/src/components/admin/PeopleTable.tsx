@@ -253,9 +253,9 @@ export function PeopleTable({
                     <TypeBadge type={person.type} />
                   </td>
                   <td className="px-4 py-3 text-slate-300">
-                    {person.type === 'resident' && person.pgy_level ? (
+                    {person.type === 'resident' && person.pgyLevel ? (
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/20 text-emerald-400">
-                        PGY-{person.pgy_level}
+                        PGY-{person.pgyLevel}
                       </span>
                     ) : (
                       <span className="text-slate-500">-</span>

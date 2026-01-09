@@ -157,7 +157,7 @@ function TemplateCard({
     call: 'bg-orange-100 text-orange-800',
   }
 
-  const colorClass = activityColors[template.activity_type] || 'bg-gray-100 text-gray-800'
+  const colorClass = activityColors[template.activityType] || 'bg-gray-100 text-gray-800'
 
   return (
     <div className="card hover:shadow-lg transition-shadow">
@@ -165,7 +165,7 @@ function TemplateCard({
         <div>
           <h3 className="font-semibold text-gray-900">{template.name}</h3>
           <span className={`inline-block px-2 py-1 rounded text-xs mt-1 ${colorClass}`}>
-            {template.activity_type}
+            {template.activityType}
           </span>
         </div>
         {template.abbreviation && (
@@ -176,20 +176,20 @@ function TemplateCard({
       </div>
 
       <div className="space-y-2 text-sm">
-        {template.max_residents && (
+        {template.maxResidents && (
           <div className="flex justify-between">
             <span className="text-gray-500">Max Residents:</span>
-            <span className="font-medium">{template.max_residents}</span>
+            <span className="font-medium">{template.maxResidents}</span>
           </div>
         )}
         <div className="flex justify-between">
           <span className="text-gray-500">Supervision Ratio:</span>
-          <span className="font-medium">1:{template.max_supervision_ratio}</span>
+          <span className="font-medium">1:{template.maxSupervisionRatio}</span>
         </div>
-        {template.requires_specialty && (
+        {template.requiresSpecialty && (
           <div className="flex justify-between">
             <span className="text-gray-500">Requires:</span>
-            <span className="font-medium text-amber-700">{template.requires_specialty}</span>
+            <span className="font-medium text-amber-700">{template.requiresSpecialty}</span>
           </div>
         )}
       </div>

@@ -47,31 +47,31 @@ export type EmergencyCoverageStatus = "success" | "partial" | "failed";
 // ============================================================================
 
 export interface UtilizationMetrics {
-  utilization_rate: number;
+  utilizationRate: number;
   level: UtilizationLevel;
-  buffer_remaining: number;
-  wait_time_multiplier: number;
-  safe_capacity: number;
-  current_demand: number;
-  theoretical_capacity: number;
+  bufferRemaining: number;
+  waitTimeMultiplier: number;
+  safeCapacity: number;
+  currentDemand: number;
+  theoreticalCapacity: number;
 }
 
 export interface RedundancyStatus {
   service: string;
   status: string;
   available: number;
-  minimum_required: number;
+  minimumRequired: number;
   buffer: number;
 }
 
 export interface CentralityScore {
-  faculty_id: string; // UUID
-  faculty_name: string;
-  centrality_score: number;
-  services_covered: number;
-  unique_coverage_slots: number;
-  replacement_difficulty: number;
-  risk_level: string;
+  facultyId: string; // UUID
+  facultyName: string;
+  centralityScore: number;
+  servicesCovered: number;
+  uniqueCoverageSlots: number;
+  replacementDifficulty: number;
+  riskLevel: string;
 }
 
 // ============================================================================
@@ -80,24 +80,24 @@ export interface CentralityScore {
 
 export interface HealthCheckResponse {
   timestamp: string; // ISO date string
-  overall_status: OverallStatus;
+  overallStatus: OverallStatus;
 
   // Component statuses
   utilization: UtilizationMetrics;
-  defense_level: DefenseLevel;
-  redundancy_status: RedundancyStatus[];
-  load_shedding_level: LoadSheddingLevel;
-  active_fallbacks: string[];
-  crisis_mode: boolean;
+  defenseLevel: DefenseLevel;
+  redundancyStatus: RedundancyStatus[];
+  loadSheddingLevel: LoadSheddingLevel;
+  activeFallbacks: string[];
+  crisisMode: boolean;
 
   // Risk indicators
-  n1_pass: boolean;
-  n2_pass: boolean;
-  phase_transition_risk: string;
+  n1Pass: boolean;
+  n2Pass: boolean;
+  phaseTransitionRisk: string;
 
   // Recommendations
-  immediate_actions: string[];
-  watch_items: string[];
+  immediateActions: string[];
+  watchItems: string[];
 }
 
 // ============================================================================
@@ -105,28 +105,28 @@ export interface HealthCheckResponse {
 // ============================================================================
 
 export interface VulnerabilityReportResponse {
-  analyzed_at: string;
-  period_start: string;
-  period_end: string;
+  analyzedAt: string;
+  periodStart: string;
+  periodEnd: string;
 
-  n1_pass: boolean;
-  n2_pass: boolean;
-  phase_transition_risk: string;
+  n1Pass: boolean;
+  n2Pass: boolean;
+  phaseTransitionRisk: string;
 
   // Details are simplified as Record<string, any> or generic object for now
   // unless we need specific typing for the nested vulnerability details
-  n1_vulnerabilities: Array<{
-    faculty_id: string;
-    affected_blocks: number[];
+  n1Vulnerabilities: Array<{
+    facultyId: string;
+    affectedBlocks: number[];
     severity: string;
   }>;
-  n2_fatal_pairs: Array<{
-    faculty1_id: string;
-    faculty2_id: string;
+  n2FatalPairs: Array<{
+    faculty1Id: string;
+    faculty2Id: string;
   }>;
-  most_critical_faculty: CentralityScore[];
+  mostCriticalFaculty: CentralityScore[];
 
-  recommended_actions: string[];
+  recommendedActions: string[];
 }
 
 // ============================================================================
@@ -137,11 +137,11 @@ export interface VulnerabilityReportResponse {
  * Request to find emergency coverage for an absence
  */
 export interface EmergencyCoverageRequest {
-  person_id: string;
-  start_date: string;
-  end_date: string;
+  personId: string;
+  startDate: string;
+  endDate: string;
   reason: string;
-  is_deployment: boolean;
+  isDeployment: boolean;
 }
 
 /**
@@ -149,7 +149,7 @@ export interface EmergencyCoverageRequest {
  */
 export interface CoverageDetail {
   date: string;
-  original_assignment: string;
+  originalAssignment: string;
   replacement?: string;
   status: "replaced" | "gap";
 }
@@ -159,9 +159,9 @@ export interface CoverageDetail {
  */
 export interface EmergencyCoverageResponse {
   status: EmergencyCoverageStatus;
-  replacements_found: number;
-  coverage_gaps: number;
-  requires_manual_review: boolean;
+  replacementsFound: number;
+  coverageGaps: number;
+  requiresManualReview: boolean;
   details: CoverageDetail[];
 }
 
@@ -174,10 +174,10 @@ export interface EmergencyCoverageResponse {
  */
 export interface DefenseLevelResponse {
   level: DefenseLevel;
-  level_number: number;
+  levelNumber: number;
   description: string;
-  recommended_actions: string[];
-  escalation_threshold: number;
+  recommendedActions: string[];
+  escalationThreshold: number;
 }
 
 // ============================================================================
@@ -188,11 +188,11 @@ export interface DefenseLevelResponse {
  * Response from utilization threshold check
  */
 export interface UtilizationThresholdResponse {
-  utilization_rate: number;
+  utilizationRate: number;
   level: UtilizationLevel;
-  above_threshold: boolean;
-  buffer_remaining: number;
-  wait_time_multiplier: number;
+  aboveThreshold: boolean;
+  bufferRemaining: number;
+  waitTimeMultiplier: number;
   message: string;
   recommendations: string[];
 }
@@ -207,9 +207,9 @@ export interface UtilizationThresholdResponse {
 export interface BurnoutRtResponse {
   rt: number;
   status: "declining" | "stable" | "growing" | "crisis";
-  secondary_cases: number;
-  time_window_days: number;
-  confidence_interval?: {
+  secondaryCases: number;
+  timeWindowDays: number;
+  confidenceInterval?: {
     lower: number;
     upper: number;
   };

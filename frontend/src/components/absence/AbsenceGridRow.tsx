@@ -47,8 +47,8 @@ export function AbsenceGridRow({
 
     // For each absence, determine which cells it spans
     allAbsences.forEach((absence) => {
-      const startDate = parseISO(absence.start_date);
-      const endDate = parseISO(absence.end_date);
+      const startDate = parseISO(absence.startDate);
+      const endDate = parseISO(absence.endDate);
 
       dates.forEach((date) => {
         const dateStr = format(date, 'yyyy-MM-dd');
@@ -77,7 +77,7 @@ export function AbsenceGridRow({
             {person.name}
           </span>
           <span className="text-xs text-gray-500">
-            {person.type === 'resident' ? `PGY-${person.pgy_level}` : 'Faculty'}
+            {person.type === 'resident' ? `PGY-${person.pgyLevel}` : 'Faculty'}
           </span>
         </div>
       </td>

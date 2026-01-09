@@ -94,23 +94,23 @@ export default function MySchedulePage() {
     const assignments: ScheduleAssignment[] = []
 
     assignmentsData.items
-      .filter((assignment) => assignment.person_id === currentPerson.id)
+      .filter((assignment) => assignment.personId === currentPerson.id)
       .forEach((assignment) => {
-        const block = blockMap.get(assignment.block_id)
+        const block = blockMap.get(assignment.blockId)
         if (!block) return
 
-        const template = assignment.rotation_template_id
-          ? templateMap.get(assignment.rotation_template_id)
+        const template = assignment.rotationTemplateId
+          ? templateMap.get(assignment.rotationTemplateId)
           : null
 
         assignments.push({
           id: assignment.id,
           date: block.date,
-          time_of_day: block.time_of_day as 'AM' | 'PM',
-          activity: template?.activity_type || 'default',
+          time_of_day: block.timeOfDay as 'AM' | 'PM',
+          activity: template?.activityType || 'default',
           abbreviation:
-            assignment.activity_override ||
-            template?.display_abbreviation ||
+            assignment.activityOverride ||
+            template?.displayAbbreviation ||
             template?.abbreviation ||
             template?.name?.substring(0, 3).toUpperCase() ||
             '???',
@@ -121,7 +121,7 @@ export default function MySchedulePage() {
 
     return assignments.sort((a, b) => {
       if (a.date !== b.date) return a.date.localeCompare(b.date)
-      return a.time_of_day === 'AM' ? -1 : 1
+      return a.timeOfDay === 'AM' ? -1 : 1
     })
   }, [currentPerson, blocksData, assignmentsData, templatesData])
 
@@ -169,7 +169,7 @@ export default function MySchedulePage() {
     const rows = myAssignments.map((a) => [
       a.date,
       format(new Date(a.date), 'EEEE'),
-      a.time_of_day,
+      a.timeOfDay,
       a.activity,
       a.role,
       a.notes || '',
