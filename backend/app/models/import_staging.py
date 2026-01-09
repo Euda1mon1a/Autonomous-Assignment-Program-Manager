@@ -91,12 +91,20 @@ class ImportBatch(Base):
 
     # Status tracking
     status = Column(
-        Enum(ImportBatchStatus),
+        Enum(
+            ImportBatchStatus,
+            values_callable=lambda x: [e.value for e in x],
+            create_type=False,  # Type already exists in DB
+        ),
         nullable=False,
         default=ImportBatchStatus.STAGED,
     )
     conflict_resolution = Column(
-        Enum(ConflictResolutionMode),
+        Enum(
+            ConflictResolutionMode,
+            values_callable=lambda x: [e.value for e in x],
+            create_type=False,  # Type already exists in DB
+        ),
         nullable=False,
         default=ConflictResolutionMode.UPSERT,
     )
@@ -192,7 +200,11 @@ class ImportStagedAssignment(Base):
 
     # Status
     status = Column(
-        Enum(StagedAssignmentStatus),
+        Enum(
+            StagedAssignmentStatus,
+            values_callable=lambda x: [e.value for e in x],
+            create_type=False,  # Type already exists in DB
+        ),
         nullable=False,
         default=StagedAssignmentStatus.PENDING,
     )
@@ -297,7 +309,11 @@ class ImportStagedAbsence(Base):
 
     # Status
     status = Column(
-        Enum(StagedAbsenceStatus),
+        Enum(
+            StagedAbsenceStatus,
+            values_callable=lambda x: [e.value for e in x],
+            create_type=False,  # Type already exists in DB
+        ),
         nullable=False,
         default=StagedAbsenceStatus.PENDING,
     )
