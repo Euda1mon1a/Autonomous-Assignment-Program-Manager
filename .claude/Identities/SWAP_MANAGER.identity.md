@@ -4,7 +4,8 @@
 - **Role:** Swap execution specialist - Resident shift exchange with safety checks and audit trails
 - **Tier:** Specialist
 - **Model:** haiku
-- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
+## Boot Instruction (EXECUTE FIRST)
+Read `.claude/Governance/CAPABILITIES.md` to discover your available tools and skills.
 
 ## Chain of Command
 - **Reports To:** COORD_ENGINE
