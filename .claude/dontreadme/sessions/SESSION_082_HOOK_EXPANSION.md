@@ -13,11 +13,11 @@
 
 **Session 084:** Added Phase 18-21 (MCP tools, test coverage, bundle size, API contract). Four new hooks completing QA/frontend/architect monitoring gaps.
 
-**Session 085:** Added Phase 22 (performance regression detection). Completes P1 roadmap. Human docs at `post-performance-regression.md`.
+**Session 085:** Added Phase 22 (performance regression) and Phase 23 (dependency version guard). Completes P1 roadmap + adds "getting Dependabot'd" protection.
 
 ---
 
-## Hook Ecosystem - Final State (22 Phases)
+## Hook Ecosystem - Final State (23 Phases)
 
 ### Claude Code Hooks (4 total)
 | Hook | Event | Domain | Status |
@@ -27,7 +27,7 @@
 | post-metrics-collect.sh | PostToolUse | Observability | ✅ Working |
 | stop-verify.sh | Stop | Testing | ✅ Working |
 
-### Git Pre-Commit Hooks (18 phases)
+### Git Pre-Commit Hooks (19 phases)
 | Phase | Hook | Domain | Mode | Status |
 |-------|------|--------|------|--------|
 | 1 | pii-scan | Security | Blocking | ✅ Enhanced |
@@ -52,6 +52,7 @@
 | **20** | **bundle-size** | **Frontend** | Warning | ✅ NEW Session 084 |
 | **21** | **api-contract** | **Architect** | Warning | ✅ NEW Session 084 |
 | **22** | **performance-regression** | **QA** | Warning | ✅ NEW Session 085 |
+| **23** | **dependency-versions** | **Architect** | **BLOCKING** | ✅ NEW Session 085 |
 
 ---
 
@@ -133,13 +134,9 @@ Added explanatory comments above each `manager.disable()` call in `backend/app/s
 - ~~API contract validation~~ ✅
 - ~~**Performance regression hook**~~ ✅ Session 085
 
-### P2 - Medium (Next Up)
-- Dependency security scanning (npm/pip audit)
-
-### P3 - Low
-- Docker image scanning
-
-### Deferred
+### Deferred to CI (Not Pre-Commit)
+- Dependency security scanning (npm/pip audit) - too slow for commit, Dependabot handles
+- Docker image scanning - CI workflow with Trivy/Snyk
 - **Gitleaks config** - 126 findings are mostly docs/tests examples + local log JWTs (not git-tracked)
 
 ---
@@ -148,7 +145,7 @@ Added explanatory comments above each `manager.disable()` call in `backend/app/s
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    HOOK ECOSYSTEM (22 Phases)               │
+│                    HOOK ECOSYSTEM (23 Phases)               │
 ├─────────────────────────────────────────────────────────────┤
 │ LAYER 1: Claude Code (Real-time AI guardrails)              │
 │   PreToolUse:Bash → Security + Dev Experience               │
@@ -157,7 +154,7 @@ Added explanatory comments above each `manager.disable()` call in `backend/app/s
 ├─────────────────────────────────────────────────────────────┤
 │ LAYER 2: Git Pre-Commit (Commit-time validation)            │
 │   Phases 1-11 → Code Quality                                │
-│   Phases 12-22 → Business Logic                             │
+│   Phases 12-23 → Business Logic                             │
 │     12: ACGME Compliance (BLOCKING)                         │
 │     13: Resilience N-1/N-2 (BLOCKING)                       │
 │     14: Swap Safety (warning)                               │
@@ -169,6 +166,7 @@ Added explanatory comments above each `manager.disable()` call in `backend/app/s
 │     20: Bundle Size Monitor (warning)                       │
 │     21: API Contract (warning)                              │
 │     22: Performance Regression (warning)                    │
+│     23: Dependency Versions (BLOCKING)                      │
 ├─────────────────────────────────────────────────────────────┤
 │ LAYER 3: Guidance Documents (Human workflow)                │
 │   post-compliance-audit.md                                  │
@@ -187,21 +185,27 @@ Added explanatory comments above each `manager.disable()` call in `backend/app/s
 Session 082-085 established a comprehensive hook ecosystem:
 
 1. **Code Quality** (Phases 1-11) - Standard linting, type checking, security scanning
-2. **Business Logic** (Phases 12-22) - ACGME, resilience, scheduling, constraints, MCP tools, test coverage, bundle size, API contract, performance
-3. **Two hooks now block commits** - ACGME and Resilience (after pattern tuning)
+2. **Business Logic** (Phases 12-23) - ACGME, resilience, scheduling, constraints, MCP tools, test coverage, bundle size, API contract, performance, dependencies
+3. **Four hooks now block commits:**
+   - ACGME Compliance (Phase 12)
+   - Resilience N-1/N-2 (Phase 13)
+   - Dependency Versions (Phase 23) - blocks critical dep changes without `DEP_ALLOW=1`
 4. **Constraint registration** prevents "implemented but not registered" bugs
 5. **MCP tool validation** catches BaseTool structure issues in 84 tools (34 core + 50 armory)
 6. **Test coverage** checks for test files and reminds to run tests (`COVERAGE_FULL=1`)
 7. **Bundle size** monitors dependencies and warns about large packages (`BUNDLE_FULL=1`)
 8. **API contract** catches backend/frontend type drift (`API_CONTRACT_FULL=1`)
 9. **Performance regression** detects slow tests and patterns (`PERF_FULL=1`)
+10. **Dependency version guard** blocks critical dep changes (FastAPI, SQLAlchemy, Next.js, React, etc.)
 
 **Key insight:** The gap between "good code" and "good schedules" is now monitored. Hooks catch both code quality issues AND domain-specific violations.
 
+**"Getting Dependabot'd" protection:** Phase 23 blocks changes to critical dependencies (FastAPI, SQLAlchemy, Pydantic, Next.js, React, etc.) unless `DEP_ALLOW=1` is set. Learned from past incidents (Python 3.14, Tailwind v4).
+
 **Human docs:** `post-test-coverage.md` and `post-performance-regression.md` explain thresholds, commands, and conventions.
 
-**P1 Complete:** All high-priority hooks implemented. Next: P2 (dependency security scanning).
+**Hook work complete.** 23 phases covering all identified gaps. P2/P3 (security scanning) deferred to CI.
 
-**To push:** `git push origin main` (16+ commits pending)
+**To push:** `git push origin main` (17+ commits pending)
 
 o7
