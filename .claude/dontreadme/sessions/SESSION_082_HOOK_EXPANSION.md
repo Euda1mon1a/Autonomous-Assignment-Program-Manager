@@ -11,11 +11,11 @@
 
 **Session 083:** Tuned hook patterns to eliminate false positives. Graduated ACGME/resilience to blocking mode. Added Phase 17 (constraint registration). Documented all disabled constraints.
 
-**Session 084:** Added Phase 18 (MCP tool validation), Phase 19 (test coverage), and Phase 20 (bundle size). Three new hooks completing the QA/frontend monitoring gaps.
+**Session 084:** Added Phase 18-21 (MCP tools, test coverage, bundle size, API contract). Four new hooks completing QA/frontend/architect monitoring gaps.
 
 ---
 
-## Hook Ecosystem - Final State (20 Phases)
+## Hook Ecosystem - Final State (21 Phases)
 
 ### Claude Code Hooks (4 total)
 | Hook | Event | Domain | Status |
@@ -48,6 +48,7 @@
 | **18** | **mcp-tools-validate** | **MCP Tools** | Warning | ✅ NEW Session 084 |
 | **19** | **test-coverage** | **QA** | Warning | ✅ NEW Session 084 |
 | **20** | **bundle-size** | **Frontend** | Warning | ✅ NEW Session 084 |
+| **21** | **api-contract** | **Architect** | Warning | ✅ NEW Session 084 |
 
 ---
 
@@ -110,6 +111,8 @@ Added explanatory comments above each `manager.disable()` call in `backend/app/s
 | `7a7bf69f` | Phase 19 test coverage hook + docs |
 | `334c016d` | Session 084 scratchpad (Phase 19) |
 | `07f474fb` | Phase 20 bundle size monitoring hook |
+| `46802ba2` | Session 084 scratchpad (Phase 20) |
+| `3d1b510f` | Phase 21 API contract validation hook |
 
 ---
 
@@ -123,16 +126,15 @@ Added explanatory comments above each `manager.disable()` call in `backend/app/s
 - ~~MCP tool validation hook~~ ✅
 - ~~Test coverage hook~~ ✅
 - ~~Bundle size monitoring~~ ✅
+- ~~API contract validation~~ ✅
 
 ### P1 - High (Next Up)
-- **API contract validation** - Validate OpenAPI spec matches implementation
+- **Performance regression hook** - Detect slow tests/builds
 
 ### P2 - Medium
-- (moved to P1)
+- Dependency security scanning (npm/pip audit)
 
 ### P3 - Low
-- Performance regression hook
-- Dependency security scanning (npm/pip audit)
 - Docker image scanning
 
 ### Deferred
@@ -144,7 +146,7 @@ Added explanatory comments above each `manager.disable()` call in `backend/app/s
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    HOOK ECOSYSTEM (20 Phases)               │
+│                    HOOK ECOSYSTEM (21 Phases)               │
 ├─────────────────────────────────────────────────────────────┤
 │ LAYER 1: Claude Code (Real-time AI guardrails)              │
 │   PreToolUse:Bash → Security + Dev Experience               │
@@ -153,7 +155,7 @@ Added explanatory comments above each `manager.disable()` call in `backend/app/s
 ├─────────────────────────────────────────────────────────────┤
 │ LAYER 2: Git Pre-Commit (Commit-time validation)            │
 │   Phases 1-11 → Code Quality                                │
-│   Phases 12-20 → Business Logic                             │
+│   Phases 12-21 → Business Logic                             │
 │     12: ACGME Compliance (BLOCKING)                         │
 │     13: Resilience N-1/N-2 (BLOCKING)                       │
 │     14: Swap Safety (warning)                               │
@@ -163,6 +165,7 @@ Added explanatory comments above each `manager.disable()` call in `backend/app/s
 │     18: MCP Tool Validation (warning)                       │
 │     19: Test Coverage (warning)                             │
 │     20: Bundle Size Monitor (warning)                       │
+│     21: API Contract (warning)                              │
 ├─────────────────────────────────────────────────────────────┤
 │ LAYER 3: Guidance Documents (Human workflow)                │
 │   post-compliance-audit.md                                  │
@@ -180,17 +183,18 @@ Added explanatory comments above each `manager.disable()` call in `backend/app/s
 Session 082-084 established a comprehensive hook ecosystem:
 
 1. **Code Quality** (Phases 1-11) - Standard linting, type checking, security scanning
-2. **Business Logic** (Phases 12-20) - ACGME, resilience, scheduling, constraints, MCP tools, test coverage, bundle size
+2. **Business Logic** (Phases 12-21) - ACGME, resilience, scheduling, constraints, MCP tools, test coverage, bundle size, API contract
 3. **Two hooks now block commits** - ACGME and Resilience (after pattern tuning)
 4. **Constraint registration** prevents "implemented but not registered" bugs
 5. **MCP tool validation** catches BaseTool structure issues in 84 tools (34 core + 50 armory)
-6. **Test coverage** checks for test files and reminds developers to run tests (`COVERAGE_FULL=1` for thorough)
-7. **Bundle size** monitors dependency changes and warns about large packages (`BUNDLE_FULL=1` for build check)
+6. **Test coverage** checks for test files and reminds to run tests (`COVERAGE_FULL=1`)
+7. **Bundle size** monitors dependencies and warns about large packages (`BUNDLE_FULL=1`)
+8. **API contract** catches backend/frontend type drift (`API_CONTRACT_FULL=1`)
 
 **Key insight:** The gap between "good code" and "good schedules" is now monitored. Hooks catch both code quality issues AND domain-specific violations.
 
 **Human docs:** `post-test-coverage.md` explains thresholds, commands, and conventions.
 
-**To push:** `git push origin main` (12 commits pending)
+**To push:** `git push origin main` (14 commits pending)
 
 o7
