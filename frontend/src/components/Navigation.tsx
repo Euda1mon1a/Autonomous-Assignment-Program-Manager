@@ -86,6 +86,12 @@ const navItems: NavItem[] = [
     adminOnly: true,
   },
   {
+    href: "/admin/block-import",
+    label: "Block Import",
+    icon: FileUp,
+    adminOnly: true,
+  },
+  {
     href: "/admin/procedures",
     label: "Procedures",
     icon: Stethoscope,

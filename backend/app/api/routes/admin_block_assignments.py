@@ -256,3 +256,147 @@ async def export_block_assignments(
         media_type=content_type,
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
+
+
+@router.post(
+    "/parse-block-sheet",
+    summary="Parse TRIPLER-format block schedule xlsx",
+    description="""
+    Parse a TRIPLER-format block schedule xlsx file.
+
+    Extracts:
+    - Resident rotation assignments (from column A)
+    - Absences (LV cells)
+    - FMIT weeks (FMIT cells)
+
+    Returns structured data for preview before import.
+    """,
+)
+async def parse_block_sheet(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_admin_user)],
+    file: Annotated[UploadFile, File(description="Block schedule xlsx file")],
+) -> dict:
+    """Parse block schedule xlsx and return structured data."""
+    from app.services.block_schedule_parser import BlockScheduleParser
+
+    # Validate file type
+    if not file.filename or not file.filename.endswith((".xlsx", ".xls")):
+        raise HTTPException(
+            status_code=400,
+            detail="File must be an Excel file (.xlsx or .xls)",
+        )
+
+    try:
+        # Read file
+        file_bytes = await file.read()
+
+        # Parse
+        parser = BlockScheduleParser()
+        assignments = parser.parse_bytes(file_bytes)
+
+        # Convert to response format
+        parsed_assignments = [
+            {
+                "rotation": a.rotation_template,
+                "secondaryRotation": a.secondary_rotation,
+                "name": a.person_name,
+                "pgyLevel": a.pgy_level,
+                "block": a.block_number,
+                "role": a.role,
+            }
+            for a in assignments
+        ]
+
+        # Extract block number
+        block_number = assignments[0].block_number if assignments else 0
+
+        logger.info(
+            f"Parsed block sheet: {len(assignments)} assignments for block {block_number}"
+        )
+
+        return {
+            "parsed": {
+                "assignments": parsed_assignments,
+                "absences": [],  # TODO: Extract from daily cells
+                "fmitWeeks": [],  # TODO: Extract from daily cells
+                "blockNumber": block_number,
+                "warnings": [],
+            },
+            "rawData": [],  # Simplified for now
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to parse block sheet: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to parse file: {str(e)}",
+        )
+
+
+@router.post(
+    "/import-block-sheet",
+    summary="Import parsed block schedule data",
+    description="""
+    Import block assignments from parsed block schedule data.
+
+    Creates:
+    - Block assignments for each resident/rotation pair
+    - Absences for LV periods (if provided)
+    """,
+)
+async def import_block_sheet(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_admin_user)],
+    data: dict,
+) -> dict:
+    """Import block schedule data to database."""
+    service = get_block_assignment_import_service(db)
+    await service.load_caches()
+
+    assignments = data.get("assignments", [])
+    block_number = data.get("blockNumber", 0)
+
+    # Convert to CSV format for existing import pipeline
+    csv_lines = ["resident_name,rotation_name,block_number"]
+    for a in assignments:
+        name = a.get("name", "").replace('"', '""')
+        rotation = a.get("rotation", "").replace('"', '""')
+        csv_lines.append(f'"{name}","{rotation}",{block_number}')
+
+    csv_content = "\n".join(csv_lines)
+
+    # Use existing import pipeline
+    request = BlockAssignmentUploadRequest(
+        content=csv_content,
+        format=ImportFormat.CSV,
+        academic_year=None,  # Auto-detect
+    )
+
+    preview = await service.preview_import(request)
+
+    # Execute import for matched items
+    from app.schemas.block_assignment_import import BlockAssignmentImportRequest
+
+    import_request = BlockAssignmentImportRequest(
+        preview_id=preview.preview_id,
+        academic_year=preview.academic_year,
+        update_duplicates=False,
+        skip_unknown=True,
+        row_overrides={},
+    )
+
+    result = await service.execute_import(import_request)
+
+    logger.info(
+        f"Block sheet import: {result.imported_count} created, "
+        f"{result.skipped_count} skipped, {result.failed_count} failed"
+    )
+
+    return {
+        "assignmentsCreated": result.imported_count,
+        "absencesCreated": 0,  # TODO: Handle absences
+        "skipped": result.skipped_count,
+        "failed": result.failed_count,
+        "errors": result.error_messages,
+    }

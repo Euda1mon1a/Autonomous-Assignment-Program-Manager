@@ -177,24 +177,11 @@ if [ "${PERF_FULL:-0}" = "1" ]; then
     cd "$BACKEND_DIR"
 
     # Run pytest with durations, capture output
-<<<<<<< HEAD
-<<<<<<< HEAD
     # Note: Disable set -e to capture actual exit code (|| true would lose it)
     set +e
     PYTEST_OUTPUT=$(pytest tests/ -m "not slow and not integration" --durations=10 -q 2>&1)
     PYTEST_EXIT=$?
     set -e
-=======
-    PYTEST_OUTPUT=$(pytest tests/ -m "not slow and not integration" --durations=10 -q 2>&1 || true)
-    PYTEST_EXIT=$?
->>>>>>> 8c73b89e (feat(hooks): Add Phase 22 performance regression detection (Session 085))
-=======
-    # Note: Disable set -e to capture actual exit code (|| true would lose it)
-    set +e
-    PYTEST_OUTPUT=$(pytest tests/ -m "not slow and not integration" --durations=10 -q 2>&1)
-    PYTEST_EXIT=$?
-    set -e
->>>>>>> 144ce1ab (fix(hooks): Preserve pytest exit status in PERF_FULL mode)
 
     if [ $PYTEST_EXIT -eq 0 ] || [ $PYTEST_EXIT -eq 5 ]; then
         # Exit 5 means no tests collected (not an error)
@@ -230,24 +217,11 @@ if [ "${PERF_FULL:-0}" = "1" ]; then
         echo -n "Running performance tests... "
         cd "$BACKEND_DIR"
 
-<<<<<<< HEAD
-<<<<<<< HEAD
         # Note: Disable set -e to capture actual exit code (|| true would lose it)
         set +e
         PERF_OUTPUT=$(pytest tests/performance/ -v --durations=0 -q 2>&1)
         PERF_EXIT=$?
         set -e
-=======
-        PERF_OUTPUT=$(pytest tests/performance/ -v --durations=0 -q 2>&1 || true)
-        PERF_EXIT=$?
->>>>>>> 8c73b89e (feat(hooks): Add Phase 22 performance regression detection (Session 085))
-=======
-        # Note: Disable set -e to capture actual exit code (|| true would lose it)
-        set +e
-        PERF_OUTPUT=$(pytest tests/performance/ -v --durations=0 -q 2>&1)
-        PERF_EXIT=$?
-        set -e
->>>>>>> 144ce1ab (fix(hooks): Preserve pytest exit status in PERF_FULL mode)
 
         if [ $PERF_EXIT -eq 0 ]; then
             echo -e "${GREEN}OK${NC}"

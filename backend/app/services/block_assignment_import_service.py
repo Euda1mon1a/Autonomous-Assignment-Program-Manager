@@ -640,6 +640,62 @@ class BlockAssignmentImportService:
 
         return template
 
+    async def preview_block_sheet_import(
+        self, file_bytes: bytes, academic_year: int | None = None
+    ) -> BlockAssignmentPreviewResponse:
+        """
+        Generate import preview from TRIPLER-format block schedule xlsx.
+
+        This method parses the native TRIPLER xlsx format and converts it
+        to the format expected by the standard import pipeline.
+
+        Args:
+            file_bytes: Excel file as bytes
+            academic_year: Optional academic year override
+
+        Returns:
+            Preview response with items and summary
+        """
+        from app.services.block_schedule_parser import BlockScheduleParser
+
+        # Parse the xlsx file
+        parser = BlockScheduleParser()
+        assignments = parser.parse_bytes(file_bytes)
+
+        if not assignments:
+            return BlockAssignmentPreviewResponse(
+                preview_id="",
+                items=[],
+                total_rows=0,
+                matched_count=0,
+                unknown_rotation_count=0,
+                unknown_resident_count=0,
+                duplicate_count=0,
+                invalid_count=0,
+                unknown_rotations=[],
+                academic_year=academic_year or self._calculate_academic_year(),
+                warnings=["No resident assignments found in file"],
+            )
+
+        # Convert to CSV format for the standard pipeline
+        csv_lines = ["resident_name,rotation_name,block_number"]
+        for a in assignments:
+            # Escape commas in names
+            name = a.person_name.replace('"', '""')
+            rotation = a.rotation_template.replace('"', '""')
+            csv_lines.append(f'"{name}","{rotation}",{a.block_number}')
+
+        csv_content = "\n".join(csv_lines)
+
+        # Use the standard preview pipeline
+        request = BlockAssignmentUploadRequest(
+            content=csv_content,
+            format=ImportFormat.CSV,
+            academic_year=academic_year,
+        )
+
+        return await self.preview_import(request)
+
 
 # Factory function for dependency injection
 def get_block_assignment_import_service(
