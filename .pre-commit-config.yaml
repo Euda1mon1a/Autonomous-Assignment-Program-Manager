@@ -342,6 +342,21 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
+  # PHASE 20: Bundle Size Monitoring (Session 084 - FRONTEND Domain)
+  # ============================================================================
+
+  # Dependency monitoring and bundle size awareness
+  - repo: local
+    hooks:
+      - id: bundle-size
+        name: Bundle Size Monitor
+        entry: scripts/validate-bundle-size.sh
+        language: script
+        pass_filenames: false
+        files: ^frontend/package\.json$
+        stages: [pre-commit]
+
+  # ============================================================================
   # Configuration
   # ============================================================================
 
