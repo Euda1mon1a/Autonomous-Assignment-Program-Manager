@@ -505,7 +505,8 @@ export function FacultyMatrixView({
       try {
         await updatePerson.mutateAsync({
           id: personId,
-          data: { facultyRole: newRole },
+          // Cast to api.ts FacultyRole enum (same runtime values as string union)
+          data: { facultyRole: newRole as unknown as import('@/types/api').FacultyRole },
         });
         setEditingRoleFor(null);
         refetch(); // Refresh the matrix data

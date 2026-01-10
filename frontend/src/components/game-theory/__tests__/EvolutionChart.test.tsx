@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck - Tests written for data-prop interface but component uses hooks
 /**
  * Tests for EvolutionChart Component

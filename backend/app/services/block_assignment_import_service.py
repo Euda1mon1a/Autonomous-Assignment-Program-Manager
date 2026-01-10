@@ -257,6 +257,7 @@ class BlockAssignmentImportService:
                     or row.get("block")
                     or row.get("blk"),
                     "rotation_abbrev": row.get("rotation_abbrev")
+                    or row.get("rotation_name")
                     or row.get("rotation")
                     or row.get("rot"),
                     "resident_name": row.get("resident_name")

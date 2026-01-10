@@ -385,7 +385,7 @@ function PatternGrid({
                   <td key={day} className="p-0.5">
                     <SlotCell
                       slot={slot}
-                      activity={activity}
+                      activity={activity ?? null}
                       isSelected={isSelected}
                       readOnly={readOnly}
                       onClick={() => handleSlotClick(day, time)}

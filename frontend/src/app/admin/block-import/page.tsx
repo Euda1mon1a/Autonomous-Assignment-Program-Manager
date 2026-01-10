@@ -287,7 +287,7 @@ export default function BlockImportPage() {
                     Import complete! Constraints are now in the database.
                   </Alert>
                   <Link href="/admin/scheduling">
-                    <Button className="w-full bg-blue-600 hover:bg-blue-500">
+                    <Button type="button" onClick={() => {}} className="w-full bg-blue-600 hover:bg-blue-500">
                       Go to Scheduling <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </Link>

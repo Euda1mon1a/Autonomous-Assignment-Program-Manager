@@ -21,7 +21,7 @@ repos:
     hooks:
       - id: gitleaks
         name: Gitleaks - Detect secrets
-        entry: gitleaks detect --no-git --verbose --log-level info
+        entry: gitleaks detect --no-git --verbose --config .gitleaks.toml
         language: golang
         stages: [pre-commit]
         pass_filenames: false
