@@ -288,8 +288,8 @@ export function ConflictResolutionSuggestions({
                     <div className="flex items-center gap-4 mt-3">
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs text-gray-500">Impact:</span>
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded ${getImpactColor(suggestion.impact_score)}`}>
-                          {suggestion.impact_score < 30 ? 'Low' : suggestion.impact_score < 60 ? 'Medium' : 'High'}
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded ${getImpactColor(suggestion.impactScore)}`}>
+                          {suggestion.impactScore < 30 ? 'Low' : suggestion.impactScore < 60 ? 'Medium' : 'High'}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">
@@ -336,7 +336,7 @@ export function ConflictResolutionSuggestions({
                     </div>
 
                     {/* Side effects */}
-                    {suggestion.side_effects.length > 0 && (
+                    {suggestion.sideEffects.length > 0 && (
                       <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                         <div className="flex items-start gap-2">
                           <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
@@ -345,7 +345,7 @@ export function ConflictResolutionSuggestions({
                               Potential Side Effects
                             </h5>
                             <ul className="text-sm text-amber-700 space-y-1">
-                              {suggestion.side_effects.map((effect, index) => (
+                              {suggestion.sideEffects.map((effect, index) => (
                                 <li key={index}>&bull; {effect}</li>
                               ))}
                             </ul>
@@ -443,14 +443,14 @@ function ChangeItem({ change }: ChangeItemProps) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm text-gray-900">{change.description}</p>
-        {change.from_person_name && change.to_person_name && (
+        {change.fromPersonName && change.toPersonName && (
           <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
             <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded">
-              {change.from_person_name}
+              {change.fromPersonName}
             </span>
             <ArrowRight className="w-3 h-3" />
             <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded">
-              {change.to_person_name}
+              {change.toPersonName}
             </span>
           </div>
         )}

@@ -17,9 +17,9 @@ import type { ApiError } from '@/lib/api';
 
 export interface RigidityRequest {
   /** Current schedule ID */
-  current_schedule_id?: string | null;
+  current_scheduleId?: string | null;
   /** Proposed schedule ID to compare */
-  proposed_schedule_id?: string | null;
+  proposed_scheduleId?: string | null;
   /** Alternative: provide assignment lists directly */
   current_assignments?: Array<Record<string, string>> | null;
   /** Alternative: provide assignment lists directly */
@@ -28,11 +28,11 @@ export interface RigidityRequest {
 
 export interface RigidityResponse {
   /** Rigidity score (1.0 = no changes, 0.0 = complete overhaul) */
-  rigidity_score: number;
+  rigidityScore: number;
   /** Number of assignments changed */
   changed_assignments: number;
   /** Total assignments compared */
-  total_assignments: number;
+  totalAssignments: number;
   /** Fraction of assignments changed (0.0 - 1.0) */
   change_rate: number;
   /** Faculty with changed assignments */
@@ -83,8 +83,8 @@ export const rigidityScoreQueryKeys = {
  *   if (isLoading) return <Skeleton />;
  *
  *   return (
- *     <div className={getRigidityColor(data.rigidity_score)}>
- *       <span>Rigidity: {data.rigidity_score.toFixed(2)}</span>
+ *     <div className={getRigidityColor(data.rigidityScore)}>
+ *       <span>Rigidity: {data.rigidityScore.toFixed(2)}</span>
  *       <p>{data.stability_grade}</p>
  *       <p>{data.changed_assignments} assignments changed</p>
  *     </div>
@@ -108,9 +108,9 @@ export function useRigidityScore(
       ) {
         // Return default values for empty input
         return {
-          rigidity_score: 1.0,
+          rigidityScore: 1.0,
           changed_assignments: 0,
-          total_assignments: 0,
+          totalAssignments: 0,
           change_rate: 0.0,
           affected_faculty: [],
           churn_analysis: {},

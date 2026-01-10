@@ -30,13 +30,13 @@ describe('CallCard', () => {
     person: {
       id: 'person-1',
       name: 'Dr. John Doe',
-      pgy_level: 2,
+      pgyLevel: 2,
       role: 'senior',
       phone: '555-1234',
       pager: '555-5678',
       email: 'john.doe@example.com',
     },
-    rotation_name: 'Night Call',
+    rotationName: 'Night Call',
     notes: 'Available for consults',
   };
 
@@ -70,7 +70,7 @@ describe('CallCard', () => {
         ...mockAssignment,
         person: {
           ...mockAssignment.person,
-          pgy_level: undefined,
+          pgyLevel: undefined,
         },
       };
 
@@ -166,7 +166,7 @@ describe('CallCard', () => {
     it('should not render rotation when undefined', () => {
       const assignmentNoRotation: CallAssignment = {
         ...mockAssignment,
-        rotation_name: undefined,
+        rotationName: undefined,
       };
 
       render(<CallCard assignment={assignmentNoRotation} defaultExpanded={true} />);
@@ -304,11 +304,11 @@ describe('CallCardCompact', () => {
     person: {
       id: 'person-1',
       name: 'Dr. John Doe',
-      pgy_level: 2,
+      pgyLevel: 2,
       role: 'senior',
       phone: '555-1234',
     },
-    rotation_name: 'Night Call',
+    rotationName: 'Night Call',
   };
 
   it('should render person name', () => {
@@ -328,7 +328,7 @@ describe('CallCardCompact', () => {
       ...mockAssignment,
       person: {
         ...mockAssignment.person,
-        pgy_level: undefined,
+        pgyLevel: undefined,
       },
     };
 
@@ -423,11 +423,11 @@ describe('CallListItem', () => {
     person: {
       id: 'person-1',
       name: 'Dr. John Doe',
-      pgy_level: 2,
+      pgyLevel: 2,
       role: 'senior',
       phone: '555-1234',
     },
-    rotation_name: 'Night Call',
+    rotationName: 'Night Call',
   };
 
   it('should render person name', () => {
@@ -515,7 +515,7 @@ describe('CallListItem', () => {
       ...mockAssignment,
       person: {
         ...mockAssignment.person,
-        pgy_level: undefined,
+        pgyLevel: undefined,
       },
     };
 

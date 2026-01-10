@@ -10,7 +10,7 @@
  * - Loading and readonly states
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+// Converted from vitest to jest
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -64,11 +64,11 @@ describe('WeeklyGridEditor', () => {
     templateId: 'test-template',
     pattern: createEmptyPattern(),
     templates: mockTemplates,
-    onChange: vi.fn(),
+    onChange: jest.fn(),
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   describe('Rendering', () => {
@@ -158,7 +158,7 @@ describe('WeeklyGridEditor', () => {
 
   describe('Interaction', () => {
     it('should call onChange when slot is clicked with selected template', async () => {
-      const onChange = vi.fn();
+      const onChange = jest.fn();
       const user = userEvent.setup();
 
       render(
@@ -196,7 +196,7 @@ describe('WeeklyGridEditor', () => {
     });
 
     it('should update slot when template is selected after slot', async () => {
-      const onChange = vi.fn();
+      const onChange = jest.fn();
       const user = userEvent.setup();
 
       render(
@@ -218,7 +218,7 @@ describe('WeeklyGridEditor', () => {
     });
 
     it('should not allow interaction in readonly mode', async () => {
-      const onChange = vi.fn();
+      const onChange = jest.fn();
       const user = userEvent.setup();
 
       render(
@@ -238,8 +238,8 @@ describe('WeeklyGridEditor', () => {
 
   describe('Save/Cancel Buttons', () => {
     it('should render save and cancel buttons when callbacks provided', () => {
-      const onSave = vi.fn();
-      const onCancel = vi.fn();
+      const onSave = jest.fn();
+      const onCancel = jest.fn();
 
       render(
         <WeeklyGridEditor
@@ -258,7 +258,7 @@ describe('WeeklyGridEditor', () => {
     });
 
     it('should call onSave when save button clicked', async () => {
-      const onSave = vi.fn();
+      const onSave = jest.fn();
       const user = userEvent.setup();
 
       render(
@@ -275,7 +275,7 @@ describe('WeeklyGridEditor', () => {
     });
 
     it('should call onCancel when cancel button clicked', async () => {
-      const onCancel = vi.fn();
+      const onCancel = jest.fn();
       const user = userEvent.setup();
 
       render(
@@ -295,8 +295,8 @@ describe('WeeklyGridEditor', () => {
       render(
         <WeeklyGridEditor
           {...defaultProps}
-          onSave={vi.fn()}
-          onCancel={vi.fn()}
+          onSave={jest.fn()}
+          onCancel={jest.fn()}
           isSaving={true}
         />
       );
@@ -312,7 +312,7 @@ describe('WeeklyGridEditor', () => {
       render(
         <WeeklyGridEditor
           {...defaultProps}
-          onSave={vi.fn()}
+          onSave={jest.fn()}
           isSaving={true}
         />
       );
@@ -324,8 +324,8 @@ describe('WeeklyGridEditor', () => {
       render(
         <WeeklyGridEditor
           {...defaultProps}
-          onSave={vi.fn()}
-          onCancel={vi.fn()}
+          onSave={jest.fn()}
+          onCancel={jest.fn()}
           readOnly={true}
         />
       );
@@ -365,7 +365,7 @@ describe('WeeklyGridEditor', () => {
     });
 
     it('should support keyboard navigation', async () => {
-      const onChange = vi.fn();
+      const onChange = jest.fn();
       const user = userEvent.setup();
 
       render(

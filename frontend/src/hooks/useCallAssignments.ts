@@ -74,10 +74,10 @@ export function useCallAssignments(
     queryKey: callAssignmentQueryKeys.list(filters),
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (filters?.startDate) params.append('start_date', filters.startDate);
-      if (filters?.endDate) params.append('end_date', filters.endDate);
-      if (filters?.personId) params.append('person_id', filters.personId);
-      if (filters?.call_type) params.append('call_type', filters.call_type);
+      if (filters?.startDate) params.append('startDate', filters.startDate);
+      if (filters?.endDate) params.append('endDate', filters.endDate);
+      if (filters?.personId) params.append('personId', filters.personId);
+      if (filters?.callType) params.append('callType', filters.callType);
       if (filters?.skip !== undefined) params.append('skip', String(filters.skip));
       if (filters?.limit !== undefined) params.append('limit', String(filters.limit));
       const queryString = params.toString();
@@ -128,8 +128,8 @@ export function useCallAssignmentsByPerson(
     queryKey: callAssignmentQueryKeys.byPerson(personId, startDate, endDate),
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (startDate) params.append('start_date', startDate);
-      if (endDate) params.append('end_date', endDate);
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
       const queryString = params.toString();
       return get<CallAssignmentListResponse>(
         `/call-assignments/by-person/${personId}${queryString ? `?${queryString}` : ''}`
@@ -310,8 +310,8 @@ export function useCoverageReport(
     queryKey: callAssignmentQueryKeys.coverage(startDate, endDate),
     queryFn: async () => {
       const params = new URLSearchParams({
-        start_date: startDate,
-        end_date: endDate,
+        startDate: startDate,
+        endDate: endDate,
       });
       return get<CallCoverageReport>(
         `/call-assignments/reports/coverage?${params.toString()}`
@@ -338,8 +338,8 @@ export function useEquityReport(
     queryKey: callAssignmentQueryKeys.equity(startDate, endDate),
     queryFn: async () => {
       const params = new URLSearchParams({
-        start_date: startDate,
-        end_date: endDate,
+        startDate: startDate,
+        endDate: endDate,
       });
       return get<CallEquityReport>(
         `/call-assignments/reports/equity?${params.toString()}`
@@ -461,7 +461,7 @@ export function useBulkDeleteCallAssignments() {
 // ============================================================================
 
 /**
- * Clears PCAT status (sets post_call_status back to available).
+ * Clears PCAT status (sets postCallStatus back to available).
  * Since there's no specific endpoint, this uses bulk update with null values.
  */
 export function useClearPCATStatus() {
@@ -479,7 +479,7 @@ export function useClearPCATStatus() {
       return post<BulkCallAssignmentUpdateResponse>(
         '/call-assignments/bulk-update',
         {
-          assignment_ids: assignmentIds,
+          assignmentIds: assignmentIds,
           updates: {
             // Backend would need to support this
           },

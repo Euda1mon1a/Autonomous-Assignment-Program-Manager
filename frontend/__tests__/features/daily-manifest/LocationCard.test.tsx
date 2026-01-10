@@ -93,7 +93,7 @@ describe('LocationCard', () => {
 
     it('should handle location with no AM assignments', () => {
       const location = manifestMockFactories.locationManifest({
-        time_slots: {
+        timeSlots: {
           PM: [manifestMockFactories.personAssignment()],
         },
       });
@@ -105,7 +105,7 @@ describe('LocationCard', () => {
 
     it('should handle location with no PM assignments', () => {
       const location = manifestMockFactories.locationManifest({
-        time_slots: {
+        timeSlots: {
           AM: [manifestMockFactories.personAssignment()],
         },
       });
@@ -350,7 +350,7 @@ describe('LocationCard', () => {
     it('should show empty state when no assignments', async () => {
       const user = userEvent.setup();
       const location = manifestMockFactories.locationManifest({
-        time_slots: { AM: [], PM: [] },
+        timeSlots: { AM: [], PM: [] },
       });
 
       render(<LocationCard location={location} timeOfDay="AM" />);
@@ -424,7 +424,7 @@ describe('LocationCard', () => {
     it('should not show AM section if no AM assignments', async () => {
       const user = userEvent.setup();
       const location = manifestMockFactories.locationManifest({
-        time_slots: {
+        timeSlots: {
           PM: [manifestMockFactories.personAssignment()],
         },
       });
@@ -445,7 +445,7 @@ describe('LocationCard', () => {
     it('should not show PM section if no PM assignments', async () => {
       const user = userEvent.setup();
       const location = manifestMockFactories.locationManifest({
-        time_slots: {
+        timeSlots: {
           AM: [manifestMockFactories.personAssignment()],
         },
       });
@@ -472,10 +472,10 @@ describe('LocationCard', () => {
     it('should apply blue styling for residents', async () => {
       const user = userEvent.setup();
       const location = manifestMockFactories.locationManifest({
-        time_slots: {
+        timeSlots: {
           AM: [
             manifestMockFactories.personAssignment({
-              person: { id: '1', name: 'Resident', role_type: 'resident' },
+              person: { id: '1', name: 'Resident', roleType: 'resident' },
             }),
           ],
         },
@@ -497,10 +497,10 @@ describe('LocationCard', () => {
     it('should apply purple styling for faculty', async () => {
       const user = userEvent.setup();
       const location = manifestMockFactories.locationManifest({
-        time_slots: {
+        timeSlots: {
           AM: [
             manifestMockFactories.personAssignment({
-              person: { id: '1', name: 'Faculty', role_type: 'faculty' },
+              person: { id: '1', name: 'Faculty', roleType: 'faculty' },
             }),
           ],
         },
@@ -522,10 +522,10 @@ describe('LocationCard', () => {
     it('should apply green styling for fellows', async () => {
       const user = userEvent.setup();
       const location = manifestMockFactories.locationManifest({
-        time_slots: {
+        timeSlots: {
           AM: [
             manifestMockFactories.personAssignment({
-              person: { id: '1', name: 'Fellow', role_type: 'fellow' },
+              person: { id: '1', name: 'Fellow', roleType: 'fellow' },
             }),
           ],
         },

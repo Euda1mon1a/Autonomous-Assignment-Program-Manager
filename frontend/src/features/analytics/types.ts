@@ -167,12 +167,12 @@ export interface ImpactAssessment {
  * Change type for what-if analysis
  */
 export type ChangeType =
-  | 'add_shift'
-  | 'remove_shift'
-  | 'swap_shifts'
-  | 'add_constraint'
-  | 'modify_rotation'
-  | 'adjust_staffing';
+  | 'addShift'
+  | 'removeShift'
+  | 'swapShifts'
+  | 'addConstraint'
+  | 'modifyRotation'
+  | 'adjustStaffing';
 
 /**
  * Proposed change for what-if analysis
@@ -345,12 +345,12 @@ export const ALERT_PRIORITY_COLORS: Record<AlertPriority, string> = {
  * Change type labels
  */
 export const CHANGE_TYPE_LABELS: Record<ChangeType, string> = {
-  add_shift: 'Add Shift',
-  remove_shift: 'Remove Shift',
-  swap_shifts: 'Swap Shifts',
-  add_constraint: 'Add Constraint',
-  modify_rotation: 'Modify Rotation',
-  adjust_staffing: 'Adjust Staffing',
+  addShift: 'Add Shift',
+  removeShift: 'Remove Shift',
+  swapShifts: 'Swap Shifts',
+  addConstraint: 'Add Constraint',
+  modifyRotation: 'Modify Rotation',
+  adjustStaffing: 'Adjust Staffing',
 };
 
 /**

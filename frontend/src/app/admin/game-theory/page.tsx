@@ -54,8 +54,8 @@ export default function GameTheoryPage() {
 
     const tournamentData: TournamentCreate = {
       name: `Tournament ${new Date().toLocaleString()}`,
-      strategy_ids: selectedStrategies,
-      turns_per_match: 200,
+      strategyIds: selectedStrategies,
+      turnsPerMatch: 200,
       repetitions: 10,
     };
 
@@ -82,9 +82,9 @@ export default function GameTheoryPage() {
 
     const evolutionData: EvolutionCreate = {
       name: `Evolution ${new Date().toLocaleString()}`,
-      initial_composition: composition,
-      max_generations: 500,
-      mutation_rate: 0.01,
+      initialComposition: composition,
+      maxGenerations: 500,
+      mutationRate: 0.01,
     };
 
     createEvolution.mutate(evolutionData, {
@@ -162,7 +162,7 @@ export default function GameTheoryPage() {
           isLoading={strategiesLoading}
           selectedStrategies={selectedStrategies}
           onToggleSelection={toggleStrategySelection}
-          onValidate={(id) => validateStrategy.mutate({ strategy_id: id })}
+          onValidate={(id) => validateStrategy.mutate({ strategyId: id })}
         />
       )}
 
@@ -514,15 +514,15 @@ function AnalysisTab({
   result?: ConfigAnalysisResult;
 }) {
   const [config, setConfig] = useState<{
-    utilization_target: number;
-    cross_zone_borrowing: boolean;
-    sacrifice_willingness: 'low' | 'medium' | 'high';
-    defense_activation_threshold: number;
+    utilizationTarget: number;
+    crossZoneBorrowing: boolean;
+    sacrificeWillingness: 'low' | 'medium' | 'high';
+    defenseActivationThreshold: number;
   }>({
-    utilization_target: 0.8,
-    cross_zone_borrowing: true,
-    sacrifice_willingness: 'medium',
-    defense_activation_threshold: 3,
+    utilizationTarget: 0.8,
+    crossZoneBorrowing: true,
+    sacrificeWillingness: 'medium',
+    defenseActivationThreshold: 3,
   });
 
   return (
@@ -546,7 +546,7 @@ function AnalysisTab({
               max="1"
               step="0.05"
               value={config.utilizationTarget}
-              onChange={(e) => setConfig({ ...config, utilization_target: parseFloat(e.target.value) })}
+              onChange={(e) => setConfig({ ...config, utilizationTarget: parseFloat(e.target.value) })}
               className="w-full"
             />
             <span className="text-sm text-gray-500">{(config.utilizationTarget * 100).toFixed(0)}%</span>
@@ -558,7 +558,7 @@ function AnalysisTab({
             </label>
             <select
               value={config.defenseActivationThreshold}
-              onChange={(e) => setConfig({ ...config, defense_activation_threshold: parseInt(e.target.value) })}
+              onChange={(e) => setConfig({ ...config, defenseActivationThreshold: parseInt(e.target.value) })}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
             >
               {[1, 2, 3, 4, 5].map((level) => (
@@ -573,7 +573,7 @@ function AnalysisTab({
             </label>
             <select
               value={config.sacrificeWillingness}
-              onChange={(e) => setConfig({ ...config, sacrifice_willingness: e.target.value as 'low' | 'medium' | 'high' })}
+              onChange={(e) => setConfig({ ...config, sacrificeWillingness: e.target.value as 'low' | 'medium' | 'high' })}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
             >
               <option value="low">Low</option>
@@ -586,7 +586,7 @@ function AnalysisTab({
             <input
               type="checkbox"
               checked={config.crossZoneBorrowing}
-              onChange={(e) => setConfig({ ...config, cross_zone_borrowing: e.target.checked })}
+              onChange={(e) => setConfig({ ...config, crossZoneBorrowing: e.target.checked })}
               className="mr-2"
             />
             <label className="text-sm text-gray-700 dark:text-gray-300">

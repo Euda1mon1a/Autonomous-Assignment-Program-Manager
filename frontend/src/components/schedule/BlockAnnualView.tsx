@@ -13,10 +13,10 @@ import type { Person, RotationTemplate } from '@/types/api'
 
 interface BlockAssignmentResponse {
   id: string
-  block_number: number
-  academic_year: number
-  resident_id: string
-  rotation_template_id: string | null
+  blockNumber: number
+  academicYear: number
+  residentId: string
+  rotationTemplateId: string | null
   has_leave: boolean
   leave_days: number
   assignment_reason: string
@@ -24,24 +24,24 @@ interface BlockAssignmentResponse {
   resident: {
     id: string
     name: string
-    pgy_level: number | null
+    pgyLevel: number | null
   } | null
-  rotation_template: {
+  rotationTemplate: {
     id: string
     name: string
-    activity_type: string
+    activityType: string
     leave_eligible: boolean
   } | null
 }
 
 interface BlockSchedulerDashboard {
-  block_number: number
-  academic_year: number
-  block_start_date: string | null
-  block_end_date: string | null
+  blockNumber: number
+  academicYear: number
+  block_startDate: string | null
+  block_endDate: string | null
   current_assignments: BlockAssignmentResponse[]
-  total_residents: number
-  unassigned_residents: number
+  totalResidents: number
+  unassignedResidents: number
 }
 
 interface BlockAnnualViewProps {
@@ -66,7 +66,7 @@ function getCurrentAcademicYear(): number {
 function getActivityColor(activityType: string | undefined): { bg: string; text: string; border: string } {
   switch (activityType) {
     case 'clinic':
-    case 'fm_clinic':
+    case 'fmClinic':
       return { bg: 'bg-blue-50', text: 'text-blue-800', border: 'border-blue-200' }
     case 'inpatient':
       return { bg: 'bg-purple-50', text: 'text-purple-800', border: 'border-purple-200' }
@@ -148,7 +148,7 @@ export function BlockAnnualView({
       queryKey: ['block-scheduler-dashboard', blockNum, academicYear],
       queryFn: () =>
         get<BlockSchedulerDashboard>(
-          `/block-scheduler/dashboard?block_number=${blockNum}&academic_year=${academicYear}`
+          `/block-scheduler/dashboard?blockNumber=${blockNum}&academicYear=${academicYear}`
         ),
       staleTime: 5 * 60 * 1000,
       retry: 1,
@@ -163,10 +163,10 @@ export function BlockAnnualView({
       if (query.data?.current_assignments) {
         const blockNum = blockNumbers[idx]
         query.data.current_assignments.forEach((assignment) => {
-          if (!map.has(assignment.resident_id)) {
-            map.set(assignment.resident_id, new Map())
+          if (!map.has(assignment.residentId)) {
+            map.set(assignment.residentId, new Map())
           }
-          map.get(assignment.resident_id)!.set(blockNum, assignment)
+          map.get(assignment.residentId)!.set(blockNum, assignment)
         })
       }
     })
@@ -221,9 +221,9 @@ export function BlockAnnualView({
       template?.displayAbbreviation ||
       template?.abbreviation ||
       template?.name?.substring(0, 4) ||
-      assignment.rotation_template?.name?.substring(0, 4) ||
+      assignment.rotationTemplate?.name?.substring(0, 4) ||
       '???'
-    const activityType = template?.activityType || assignment.rotation_template?.activityType
+    const activityType = template?.activityType || assignment.rotationTemplate?.activityType
     const colors = getActivityColor(activityType)
 
     // Show leave indicator
@@ -231,7 +231,7 @@ export function BlockAnnualView({
       return (
         <div
           className={`h-full w-full flex items-center justify-center px-1 py-0.5 rounded text-xs font-medium ${colors.bg} ${colors.text} border ${colors.border}`}
-          title={`${assignment.rotation_template?.name || 'Unknown'} (${assignment.leave_days} leave days)`}
+          title={`${assignment.rotationTemplate?.name || 'Unknown'} (${assignment.leave_days} leave days)`}
         >
           <span className="truncate">{abbreviation}</span>
           <span className="ml-0.5 text-amber-500">★</span>
@@ -242,7 +242,7 @@ export function BlockAnnualView({
     return (
       <div
         className={`h-full w-full flex items-center justify-center px-1 py-0.5 rounded text-xs font-medium ${colors.bg} ${colors.text} border ${colors.border}`}
-        title={template?.name || assignment.rotation_template?.name || 'Unknown Rotation'}
+        title={template?.name || assignment.rotationTemplate?.name || 'Unknown Rotation'}
       >
         <span className="truncate">{abbreviation}</span>
       </div>

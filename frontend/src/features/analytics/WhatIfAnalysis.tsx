@@ -47,12 +47,12 @@ function ChangeTypeSelector({
   onChange: (type: ChangeType) => void;
 }) {
   const changeTypes: ChangeType[] = [
-    'add_shift',
-    'remove_shift',
-    'swap_shifts',
-    'add_constraint',
-    'modify_rotation',
-    'adjust_staffing',
+    'addShift',
+    'removeShift',
+    'swapShifts',
+    'addConstraint',
+    'modifyRotation',
+    'adjustStaffing',
   ];
 
   return (
@@ -142,7 +142,7 @@ function ChangeEditor({
                   // console.error('Invalid JSON in parameters:', error);
                 }
               }}
-              placeholder='{"resident_id": "123", "date": "2024-01-15"}'
+              placeholder='{"residentId": "123", "date": "2024-01-15"}'
               rows={3}
               aria-label="Change parameters in JSON format"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -430,7 +430,7 @@ export function WhatIfAnalysis({ baseVersionId, className = '' }: WhatIfAnalysis
     setChanges(prev => [
       ...prev,
       {
-        type: 'add_shift',
+        type: 'addShift',
         description: '',
         parameters: {},
       },

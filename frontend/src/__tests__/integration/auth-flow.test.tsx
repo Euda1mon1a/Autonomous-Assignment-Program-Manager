@@ -8,6 +8,7 @@
 import { render, screen, waitFor } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { AxiosRequestConfig } from 'axios'
 import * as api from '@/lib/api'
 
 // Mock the API module
@@ -54,13 +55,13 @@ interface User {
   email: string;
   name: string;
   role: 'coordinator' | 'admin' | 'resident' | 'faculty';
-  person_id: string;
+  personId: string;
   requires_password_change?: boolean;
 }
 
 interface AuthResponse {
-  access_token: string;
-  token_type: string;
+  accessToken: string;
+  tokenType: string;
   expires_in: number;
   user: User;
   remember_token?: string;
@@ -71,7 +72,7 @@ interface AuthResponse {
 }
 
 interface RefreshTokenResponse {
-  access_token: string;
+  accessToken: string;
 }
 
 interface ApiError {
@@ -94,12 +95,12 @@ const mockUser: User = {
   email: 'test@hospital.org',
   name: 'Dr. Test User',
   role: 'coordinator' as const,
-  person_id: 'person-1',
+  personId: 'person-1',
 }
 
 const mockAuthResponse: AuthResponse = {
-  access_token: 'mock-jwt-token',
-  token_type: 'bearer',
+  accessToken: 'mock-jwt-token',
+  tokenType: 'bearer',
   expires_in: 3600,
   user: mockUser,
 }
@@ -110,7 +111,7 @@ function setupApiMock(options: {
   user?: User | 'error'
   refresh?: RefreshTokenResponse | 'error'
 } = {}): void {
-  mockedApi.post.mockImplementation((url: string, data?: unknown, config?: ApiConfig): Promise<unknown> => {
+  mockedApi.post.mockImplementation((url: string): Promise<unknown> => {
     if (url.includes('/auth/login')) {
       if (options.login === 'error') {
         return Promise.reject({ message: 'Invalid credentials', status: 401 })
@@ -121,7 +122,7 @@ function setupApiMock(options: {
       if (options.refresh === 'error') {
         return Promise.reject({ message: 'Token expired', status: 401 })
       }
-      return Promise.resolve(options.refresh ?? { access_token: 'new-token' })
+      return Promise.resolve(options.refresh ?? { accessToken: 'new-token' })
     }
     if (url.includes('/auth/logout')) {
       return Promise.resolve({ success: true })
@@ -132,7 +133,7 @@ function setupApiMock(options: {
     return Promise.reject({ message: 'Unknown endpoint', status: 404 })
   })
 
-  mockedApi.get.mockImplementation((url: string) => {
+  mockedApi.get.mockImplementation((url: string): Promise<unknown> => {
     if (url.includes('/auth/me')) {
       if (options.user === 'error') {
         return Promise.reject({ message: 'Unauthorized', status: 401 })
@@ -142,8 +143,8 @@ function setupApiMock(options: {
     return Promise.reject({ message: 'Unknown endpoint', status: 404 })
   })
 
-  // Mock delete method
-  mockedApi.delete = jest.fn().mockResolvedValue({ success: true })
+  // Mock del method (delete operations)
+  mockedApi.del.mockResolvedValue(undefined)
 }
 
 describe('Authentication Flow - Integration Tests', () => {
@@ -159,12 +160,12 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should successfully login with valid credentials', async () => {
       setupApiMock()
 
-      const result = await mockedApi.post('/api/auth/login', {
+      const result: any = await mockedApi.post('/api/auth/login', {
         email: 'test@hospital.org',
         password: 'password123',
       })
 
-      expect(result.access_token).toBeDefined()
+      expect(result.accessToken).toBeDefined()
       expect(result.user.email).toBe('test@hospital.org')
     })
 
@@ -185,12 +186,12 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should store JWT token on successful login', async () => {
       setupApiMock()
 
-      const result = await mockedApi.post('/api/auth/login', {
+      const result: any = await mockedApi.post('/api/auth/login', {
         email: 'test@hospital.org',
         password: 'password123',
       })
 
-      expect(result.access_token).toBe('mock-jwt-token')
+      expect(result.accessToken).toBe('mock-jwt-token')
     })
 
     it('should redirect to dashboard after login', async () => {
@@ -239,7 +240,7 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should successfully logout', async () => {
       setupApiMock()
 
-      const result = await mockedApi.post('/api/auth/logout', {})
+      const result: any = await mockedApi.post('/api/auth/logout', {})
       expect(result.success).toBe(true)
     })
 
@@ -264,7 +265,7 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should invalidate session on server', async () => {
       setupApiMock()
 
-      const result = await mockedApi.post('/api/auth/logout', {})
+      const result: any = await mockedApi.post('/api/auth/logout', {})
       expect(result.success).toBe(true)
     })
   })
@@ -303,7 +304,7 @@ describe('Authentication Flow - Integration Tests', () => {
         show_warning: true,
       })
 
-      const result = await mockedApi.get('/api/auth/me')
+      const result: any = await mockedApi.get('/api/auth/me')
       expect(result.show_warning).toBe(true)
     })
 
@@ -312,10 +313,10 @@ describe('Authentication Flow - Integration Tests', () => {
 
       mockedApi.post.mockResolvedValueOnce({
         session_extended: true,
-        new_expires_at: '2024-01-29T01:00:00Z',
+        new_expiresAt: '2024-01-29T01:00:00Z',
       })
 
-      const result = await mockedApi.post('/api/auth/extend-session', {})
+      const result: any = await mockedApi.post('/api/auth/extend-session', {})
       expect(result.session_extended).toBe(true)
     })
   })
@@ -324,8 +325,8 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should refresh access token', async () => {
       setupApiMock()
 
-      const result = await mockedApi.post('/api/auth/refresh', {})
-      expect(result.access_token).toBe('new-token')
+      const result: any = await mockedApi.post('/api/auth/refresh', {})
+      expect(result.accessToken).toBe('new-token')
     })
 
     it('should handle refresh token expiration', async () => {
@@ -367,7 +368,7 @@ describe('Authentication Flow - Integration Tests', () => {
 
       // Retry original request - setup mock will handle this
       setupApiMock()
-      const result = await mockedApi.get('/api/auth/me')
+      const result: any = await mockedApi.get('/api/auth/me')
       expect(result).toBeDefined()
     })
   })
@@ -376,7 +377,7 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should initiate password reset', async () => {
       setupApiMock()
 
-      const result = await mockedApi.post('/api/auth/password-reset', {
+      const result: any = await mockedApi.post('/api/auth/password-reset', {
         email: 'test@hospital.org',
       })
 
@@ -389,10 +390,10 @@ describe('Authentication Flow - Integration Tests', () => {
       mockedApi.post.mockResolvedValueOnce({
         success: true,
         email_sent: true,
-        reset_token_expires_in: 3600,
+        reset_tokenExpires_in: 3600,
       })
 
-      const result = await mockedApi.post('/api/auth/password-reset', {
+      const result: any = await mockedApi.post('/api/auth/password-reset', {
         email: 'test@hospital.org',
       })
 
@@ -407,7 +408,7 @@ describe('Authentication Flow - Integration Tests', () => {
         user_email: 'test@hospital.org',
       })
 
-      const result = await mockedApi.post('/api/auth/validate-reset-token', {
+      const result: any = await mockedApi.post('/api/auth/validate-reset-token', {
         token: 'reset-token-123',
       })
 
@@ -422,9 +423,9 @@ describe('Authentication Flow - Integration Tests', () => {
         password_changed: true,
       })
 
-      const result = await mockedApi.post('/api/auth/reset-password', {
+      const result: any = await mockedApi.post('/api/auth/reset-password', {
         token: 'reset-token-123',
-        new_password: 'NewSecurePassword123!',
+        newPassword: 'NewSecurePassword123!',
       })
 
       expect(result.password_changed).toBe(true)
@@ -460,7 +461,7 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should allow coordinator access to admin pages', async () => {
       setupApiMock()
 
-      const user = await mockedApi.get('/api/auth/me')
+      const user: any = await mockedApi.get('/api/auth/me')
       expect(user.role).toBe('coordinator')
 
       // Coordinator can access admin pages
@@ -471,7 +472,7 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should restrict resident access to admin pages', async () => {
       setupApiMock({ user: { ...mockUser, role: 'resident' } })
 
-      const user = await mockedApi.get('/api/auth/me')
+      const user: any = await mockedApi.get('/api/auth/me')
       expect(user.role).toBe('resident')
 
       // Resident cannot access admin pages
@@ -482,7 +483,7 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should show role-specific menu items', async () => {
       setupApiMock()
 
-      const user = await mockedApi.get('/api/auth/me')
+      const user: any = await mockedApi.get('/api/auth/me')
 
       const menuItems = {
         coordinator: ['dashboard', 'schedule', 'people', 'admin', 'compliance'],
@@ -497,7 +498,7 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should redirect unauthorized users', async () => {
       setupApiMock({ user: { ...mockUser, role: 'resident' } })
 
-      const user = await mockedApi.get('/api/auth/me')
+      const user: any = await mockedApi.get('/api/auth/me')
 
       if (!['coordinator', 'admin'].includes(user.role)) {
         // Would trigger redirect in real implementation
@@ -553,7 +554,7 @@ describe('Authentication Flow - Integration Tests', () => {
         mfa_method: 'totp',
       })
 
-      const result = await mockedApi.post('/api/auth/login', {
+      const result: any = await mockedApi.post('/api/auth/login', {
         email: 'admin@hospital.org',
         password: 'password123',
       })
@@ -565,12 +566,12 @@ describe('Authentication Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.post.mockResolvedValueOnce({
-        access_token: 'mock-jwt-token',
+        accessToken: 'mock-jwt-token',
         mfa_verified: true,
       })
 
-      const result = await mockedApi.post('/api/auth/verify-mfa', {
-        session_id: 'session-123',
+      const result: any = await mockedApi.post('/api/auth/verify-mfa', {
+        sessionId: 'session-123',
         code: '123456',
       })
 
@@ -587,7 +588,7 @@ describe('Authentication Flow - Integration Tests', () => {
 
       await expect(
         mockedApi.post('/api/auth/verify-mfa', {
-          session_id: 'session-123',
+          sessionId: 'session-123',
           code: 'wrong',
         })
       ).rejects.toMatchObject({
@@ -605,7 +606,7 @@ describe('Authentication Flow - Integration Tests', () => {
         requires_password_change: true,
       })
 
-      const user = await mockedApi.get('/api/auth/me')
+      const user: any = await mockedApi.get('/api/auth/me')
       expect(user.requires_password_change).toBe(true)
     })
 
@@ -659,7 +660,7 @@ describe('Authentication Flow - Integration Tests', () => {
         ],
       })
 
-      const result = await mockedApi.get('/api/auth/security-log')
+      const result: any = await mockedApi.get('/api/auth/security-log')
       expect(result.events).toHaveLength(2)
     })
   })
@@ -675,20 +676,18 @@ describe('Authentication Flow - Integration Tests', () => {
         ],
       })
 
-      const result = await mockedApi.get('/api/auth/sessions')
+      const result: any = await mockedApi.get('/api/auth/sessions')
       expect(result.sessions).toHaveLength(2)
     })
 
     it('should revoke individual session', async () => {
       setupApiMock()
 
-      mockedApi.delete.mockResolvedValueOnce({
-        session_id: 'session-2',
-        revoked: true,
-      })
+      // Use del function since that's what the api module exports
+      mockedApi.del.mockResolvedValueOnce(undefined)
 
-      const result = await mockedApi.delete('/api/auth/sessions/session-2')
-      expect(result.revoked).toBe(true)
+      await mockedApi.del('/api/auth/sessions/session-2')
+      expect(mockedApi.del).toHaveBeenCalledWith('/api/auth/sessions/session-2')
     })
 
     it('should revoke all other sessions', async () => {
@@ -698,7 +697,7 @@ describe('Authentication Flow - Integration Tests', () => {
         revoked_count: 3,
       })
 
-      const result = await mockedApi.post('/api/auth/revoke-all-sessions', {})
+      const result: any = await mockedApi.post('/api/auth/revoke-all-sessions', {})
       expect(result.revoked_count).toBe(3)
     })
   })
@@ -713,7 +712,7 @@ describe('Authentication Flow - Integration Tests', () => {
         expires_in: 2592000, // 30 days
       })
 
-      const result = await mockedApi.post('/api/auth/login', {
+      const result: any = await mockedApi.post('/api/auth/login', {
         email: 'test@hospital.org',
         password: 'password123',
         remember_me: true,
@@ -735,15 +734,15 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should authenticate with API key', async () => {
       setupApiMock()
 
-      mockedApi.get.mockImplementation((url: string, config?: ApiConfig): Promise<unknown> => {
-        const headers = config?.headers
+      mockedApi.get.mockImplementation((url: string, config?: AxiosRequestConfig): Promise<unknown> => {
+        const headers = config?.headers as Record<string, string> | undefined
         if (headers?.['X-API-Key'] === 'valid-api-key') {
           return Promise.resolve(mockUser)
         }
         return Promise.reject({ status: 401 })
       })
 
-      const result = await mockedApi.get('/api/auth/me', {
+      const result: unknown = await mockedApi.get('/api/auth/me', {
         headers: { 'X-API-Key': 'valid-api-key' },
       })
 
@@ -777,7 +776,7 @@ describe('Authentication Flow - Integration Tests', () => {
         state: 'random-state-token',
       })
 
-      const result = await mockedApi.get('/api/auth/sso/initiate')
+      const result: any = await mockedApi.get('/api/auth/sso/initiate')
       expect(result.sso_url).toContain('sso.provider.com')
     })
 
@@ -789,12 +788,12 @@ describe('Authentication Flow - Integration Tests', () => {
         sso_provider: 'microsoft',
       })
 
-      const result = await mockedApi.post('/api/auth/sso/callback', {
+      const result: any = await mockedApi.post('/api/auth/sso/callback', {
         code: 'auth-code',
         state: 'random-state-token',
       })
 
-      expect(result.access_token).toBeDefined()
+      expect(result.accessToken).toBeDefined()
     })
   })
 
@@ -811,7 +810,7 @@ describe('Authentication Flow - Integration Tests', () => {
         ],
       })
 
-      const result = await mockedApi.get('/api/auth/permissions')
+      const result: any = await mockedApi.get('/api/auth/permissions')
       expect(result.permissions).toContain('admin:access')
     })
 
@@ -822,7 +821,7 @@ describe('Authentication Flow - Integration Tests', () => {
         permissions: ['schedule:read'],
       })
 
-      const result = await mockedApi.get('/api/auth/permissions')
+      const result: any = await mockedApi.get('/api/auth/permissions')
       const canWrite = result.permissions.includes('schedule:write')
       expect(canWrite).toBe(false)
     })
@@ -853,10 +852,10 @@ describe('Authentication Flow - Integration Tests', () => {
 
       mockedApi.post.mockResolvedValueOnce({
         valid: true,
-        user_id: 'user-1',
+        userId: 'user-1',
       })
 
-      const result = await mockedApi.post('/api/auth/verify-token', {
+      const result: any = await mockedApi.post('/api/auth/verify-token', {
         token: 'jwt-token',
       })
 
@@ -877,8 +876,8 @@ describe('Authentication Flow - Integration Tests', () => {
         },
       })
 
-      const result = await mockedApi.post('/api/auth/impersonate', {
-        user_id: 'user-2',
+      const result: any = await mockedApi.post('/api/auth/impersonate', {
+        userId: 'user-2',
       })
 
       expect(result.impersonated_user.role).toBe('resident')
@@ -891,7 +890,7 @@ describe('Authentication Flow - Integration Tests', () => {
         restored_user: mockUser,
       })
 
-      const result = await mockedApi.post('/api/auth/end-impersonation', {})
+      const result: any = await mockedApi.post('/api/auth/end-impersonation', {})
       expect(result.restored_user.role).toBe('coordinator')
     })
   })
@@ -906,7 +905,7 @@ describe('Authentication Flow - Integration Tests', () => {
         feedback: [],
       })
 
-      const result = await mockedApi.post('/api/auth/check-password-strength', {
+      const result: any = await mockedApi.post('/api/auth/check-password-strength', {
         password: 'V3ryStr0ng!Pass@2024',
       })
 
@@ -937,13 +936,13 @@ describe('Authentication Flow - Integration Tests', () => {
 
       mockedApi.get.mockResolvedValueOnce({
         events: [
-          { event: 'login_success', user_id: 'user-1', timestamp: '2024-01-29T00:00:00Z' },
+          { event: 'login_success', userId: 'user-1', timestamp: '2024-01-29T00:00:00Z' },
           { event: 'login_failed', email: 'wrong@example.com', timestamp: '2024-01-29T00:01:00Z' },
-          { event: 'logout', user_id: 'user-1', timestamp: '2024-01-29T01:00:00Z' },
+          { event: 'logout', userId: 'user-1', timestamp: '2024-01-29T01:00:00Z' },
         ],
       })
 
-      const result = await mockedApi.get('/api/auth/audit-log')
+      const result: any = await mockedApi.get('/api/auth/audit-log')
       expect(result.events).toHaveLength(3)
     })
 
@@ -960,7 +959,7 @@ describe('Authentication Flow - Integration Tests', () => {
         ],
       })
 
-      const result = await mockedApi.get('/api/auth/audit-log')
+      const result: any = await mockedApi.get('/api/auth/audit-log')
       expect(result.events[0].ip_address).toBeDefined()
     })
   })
@@ -971,8 +970,8 @@ describe('Authentication Flow - Integration Tests', () => {
 
       const csrfToken = 'csrf-token-123'
 
-      mockedApi.post.mockImplementation((url: string, data: unknown, config?: ApiConfig): Promise<unknown> => {
-        const headers = config?.headers
+      mockedApi.post.mockImplementation((url: string, data?: unknown, config?: AxiosRequestConfig): Promise<unknown> => {
+        const headers = config?.headers as Record<string, string> | undefined
         if (headers?.['X-CSRF-Token'] === csrfToken) {
           return Promise.resolve({ success: true })
         }
@@ -981,7 +980,7 @@ describe('Authentication Flow - Integration Tests', () => {
 
       const result = await mockedApi.post('/api/auth/login', {}, {
         headers: { 'X-CSRF-Token': csrfToken },
-      })
+      }) as { success: boolean }
 
       expect(result.success).toBe(true)
     })
@@ -1011,7 +1010,7 @@ describe('Authentication Flow - Integration Tests', () => {
         registered: true,
       })
 
-      const result = await mockedApi.post('/api/auth/register-biometric', {
+      const result: any = await mockedApi.post('/api/auth/register-biometric', {
         public_key: 'biometric-public-key',
       })
 
@@ -1026,12 +1025,12 @@ describe('Authentication Flow - Integration Tests', () => {
         auth_method: 'biometric',
       })
 
-      const result = await mockedApi.post('/api/auth/biometric-login', {
+      const result: any = await mockedApi.post('/api/auth/biometric-login', {
         credential_id: 'biometric-credential-1',
         signature: 'biometric-signature',
       })
 
-      expect(result.access_token).toBeDefined()
+      expect(result.accessToken).toBeDefined()
     })
   })
 })

@@ -31,13 +31,14 @@ const mockUser: User = {
   username: 'testuser',
   email: 'test@example.com',
   role: 'admin',
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
+  isActive: true,
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T00:00:00Z',
 };
 
 const mockLoginResponse: LoginResponse = {
-  access_token: 'mock-token',
-  token_type: 'bearer',
+  accessToken: 'mock-token',
+  tokenType: 'bearer',
   user: mockUser,
 };
 
@@ -192,7 +193,7 @@ describe('useAuth', () => {
   });
 
   it('hasPermission returns false for invalid permissions', async () => {
-    const facultyUser = { ...mockUser, role: 'faculty' };
+    const facultyUser: User = { ...mockUser, role: 'faculty' };
     mockedAuthLib.getCurrentUser.mockResolvedValueOnce(facultyUser);
 
     const { result } = renderHook(() => useAuth(), {
@@ -225,7 +226,7 @@ describe('useAuth', () => {
 
   it('refreshToken triggers token refresh', async () => {
     mockedAuthLib.getCurrentUser.mockResolvedValueOnce(mockUser);
-    mockedAuthLib.performRefresh.mockResolvedValueOnce(true);
+    mockedAuthLib.performRefresh.mockResolvedValueOnce({ accessToken: 'new-token', refreshToken: 'new-refresh', tokenType: 'bearer' });
 
     const { result } = renderHook(() => useAuth(), {
       wrapper: createWrapper(),
@@ -365,7 +366,7 @@ describe('usePermissions', () => {
   });
 
   it('returns limited permissions for resident role', async () => {
-    const residentUser = { ...mockUser, role: 'resident' };
+    const residentUser: User = { ...mockUser, role: 'resident' };
     mockedAuthLib.getCurrentUser.mockResolvedValueOnce(residentUser);
 
     const { result } = renderHook(() => usePermissions(), {
@@ -402,7 +403,7 @@ describe('useRole', () => {
   });
 
   it('provides convenience booleans for each role', async () => {
-    const facultyUser = { ...mockUser, role: 'faculty' };
+    const facultyUser: User = { ...mockUser, role: 'faculty' };
     mockedAuthLib.getCurrentUser.mockResolvedValueOnce(facultyUser);
 
     const { result } = renderHook(() => useRole(), {

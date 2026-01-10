@@ -305,7 +305,10 @@ describe('BulkImportModal', () => {
 
       // Template should be created and downloaded
       expect(mockCreateObjectURL).toHaveBeenCalled();
-      const blob = mockCreateObjectURL.mock.calls[0][0] as Blob;
+      const calls = mockCreateObjectURL.mock.calls as unknown[][];
+      const blobArg = calls[0]?.[0];
+      expect(blobArg).toBeInstanceOf(Blob);
+      const blob = blobArg as Blob;
       const text = await blob.text();
       expect(text).toContain('name,email,type');
     });

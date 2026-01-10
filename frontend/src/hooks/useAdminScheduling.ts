@@ -61,8 +61,8 @@ export function useScheduleRuns(filters?: RunLogFilters) {
       const params = new URLSearchParams();
       if (filters?.runId) params.set('run_id', filters.runId);
       if (filters?.algorithms?.length) params.set('algorithms', filters.algorithms.join(','));
-      if (filters?.dateRange?.start) params.set('start_date', filters.dateRange.start);
-      if (filters?.dateRange?.end) params.set('end_date', filters.dateRange.end);
+      if (filters?.dateRange?.start) params.set('startDate', filters.dateRange.start);
+      if (filters?.dateRange?.end) params.set('endDate', filters.dateRange.end);
       if (filters?.status?.length) params.set('status', filters.status.join(','));
       if (filters?.tags?.length) params.set('tags', filters.tags.join(','));
 
@@ -129,11 +129,11 @@ export function useGenerateScheduleRun() {
 
   return useMutation<RunResult, ApiError, RunConfiguration>({
     mutationFn: (config) => post<RunResult>('/schedule/generate', {
-      start_date: getBlockStartDate(config.blockRange.start, config.academicYear),
-      end_date: getBlockEndDate(config.blockRange.end, config.academicYear),
+      startDate: getBlockStartDate(config.blockRange.start, config.academicYear),
+      endDate: getBlockEndDate(config.blockRange.end, config.academicYear),
       algorithm: config.algorithm,
       timeout_seconds: config.timeoutSeconds,
-      dry_run: config.dryRun,
+      dryRun: config.dryRun,
       preserve_fmit: config.preserveFMIT,
       nf_post_call: config.nfPostCallEnabled,
       constraint_ids: config.constraints.filter(c => c.enabled).map(c => c.id),
@@ -215,8 +215,8 @@ export function useScheduleMetrics(dateRange?: { start: string; end: string }) {
     queryKey: adminSchedulingKeys.metrics(dateRange),
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (dateRange?.start) params.set('start_date', dateRange.start);
-      if (dateRange?.end) params.set('end_date', dateRange.end);
+      if (dateRange?.start) params.set('startDate', dateRange.start);
+      if (dateRange?.end) params.set('endDate', dateRange.end);
       const queryString = params.toString();
       return get<RunResult>(`/schedule/metrics${queryString ? `?${queryString}` : ''}`);
     },
@@ -352,7 +352,7 @@ export function useRevertToRollbackPoint() {
   return useMutation<{ assignmentsReverted: number }, ApiError, RevertRequest>({
     mutationFn: (request) => post<{ assignmentsReverted: number }>(`/schedule/rollback-points/${request.rollbackPointId}/revert`, {
       reason: request.reason,
-      dry_run: request.dryRun,
+      dryRun: request.dryRun,
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-scheduling'] });

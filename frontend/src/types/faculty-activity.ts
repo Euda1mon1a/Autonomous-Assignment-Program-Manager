@@ -17,7 +17,7 @@ import type { Activity } from './activity';
 /**
  * Faculty role types with specific scheduling constraints.
  */
-export type FacultyRole = 'pd' | 'apd' | 'oic' | 'dept_chief' | 'sports_med' | 'core' | 'adjunct';
+export type FacultyRole = 'pd' | 'apd' | 'oic' | 'deptChief' | 'sportsMed' | 'core' | 'adjunct';
 
 /**
  * Human-readable labels for faculty roles.
@@ -39,8 +39,8 @@ export const FACULTY_ROLES: FacultyRole[] = [
   'pd',
   'apd',
   'oic',
-  'dept_chief',
-  'sports_med',
+  'deptChief',
+  'sportsMed',
   'core',
   'adjunct',
 ];

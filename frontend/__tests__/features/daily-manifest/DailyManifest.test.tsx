@@ -24,7 +24,7 @@ jest.mock('@/features/daily-manifest/hooks', () => ({
 jest.mock('@/features/daily-manifest/LocationCard', () => ({
   LocationCard: ({ location, timeOfDay }: any) => (
     <div data-testid="location-card">
-      {location.clinic_location} - {timeOfDay}
+      {location.clinicLocation} - {timeOfDay}
     </div>
   ),
 }));

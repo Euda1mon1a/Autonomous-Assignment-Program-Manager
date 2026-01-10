@@ -147,42 +147,42 @@ global.WebSocket = MockWebSocket as any
 // ============================================================================
 
 const mockConnectionAckEvent: ConnectionAckEvent = {
-  event_type: 'connection_ack',
+  eventType: 'connection_ack',
   timestamp: '2024-01-01T12:00:00Z',
-  user_id: 'user-123',
+  userId: 'user-123',
   message: 'Connected successfully',
 }
 
 const mockScheduleUpdatedEvent: ScheduleUpdatedEvent = {
-  event_type: 'schedule_updated',
+  eventType: 'schedule_updated',
   timestamp: '2024-01-01T12:00:00Z',
-  schedule_id: 'schedule-123',
-  academic_year_id: 'ay-2024',
-  user_id: 'user-123',
+  scheduleId: 'schedule-123',
+  academicYear_id: 'ay-2024',
+  userId: 'user-123',
   update_type: 'modified',
   affected_blocks_count: 5,
   message: 'Schedule updated successfully',
 }
 
 const mockAssignmentChangedEvent: AssignmentChangedEvent = {
-  event_type: 'assignment_changed',
+  eventType: 'assignment_changed',
   timestamp: '2024-01-01T12:00:00Z',
-  assignment_id: 'assignment-123',
-  person_id: 'person-123',
-  block_id: 'block-123',
-  rotation_template_id: 'rotation-123',
+  assignmentId: 'assignment-123',
+  personId: 'person-123',
+  blockId: 'block-123',
+  rotationTemplateId: 'rotation-123',
   change_type: 'created',
   changed_by: 'user-123',
   message: 'Assignment created',
 }
 
 const mockPingEvent = {
-  event_type: 'ping' as const,
+  eventType: 'ping' as const,
   timestamp: '2024-01-01T12:00:00Z',
 }
 
 const mockPongEvent = {
-  event_type: 'pong' as const,
+  eventType: 'pong' as const,
   timestamp: '2024-01-01T12:00:00Z',
 }
 
@@ -470,7 +470,7 @@ describe('useWebSocket', () => {
       consoleErrorSpy.mockRestore()
     })
 
-    it('should handle messages without event_type', async () => {
+    it('should handle messages without eventType', async () => {
       const onMessage = jest.fn()
       const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation()
 
@@ -544,14 +544,14 @@ describe('useWebSocket', () => {
       })
 
       act(() => {
-        result.current.send({ action: 'subscribe_schedule', schedule_id: 'schedule-123' })
+        result.current.send({ action: 'subscribe_schedule', scheduleId: 'schedule-123' })
       })
 
       const lastMessage = MockWebSocket.getLastMessage()
       expect(lastMessage).toBeDefined()
       expect(JSON.parse(lastMessage!)).toEqual({
         action: 'subscribe_schedule',
-        schedule_id: 'schedule-123',
+        scheduleId: 'schedule-123',
       })
     })
 
@@ -576,7 +576,7 @@ describe('useWebSocket', () => {
   describe('Reconnection Logic', () => {
     it('should reconnect automatically on disconnect', async () => {
       const { result } = renderHook(() =>
-        useWebSocket({ reconnectInterval: 1000, maxReconnectAttempts: 3 })
+        useWebSocket({ reconnectInterval: 1000, reconnectAttempts: 3 })
       )
 
       act(() => {
@@ -628,7 +628,7 @@ describe('useWebSocket', () => {
         useWebSocket({
           reconnectInterval: 1000,
           maxReconnectInterval: 30000,
-          maxReconnectAttempts: 5,
+          reconnectAttempts: 5,
         })
       )
 
@@ -696,7 +696,7 @@ describe('useWebSocket', () => {
       const { result } = renderHook(() =>
         useWebSocket({
           reconnectInterval: 100,
-          maxReconnectAttempts: 2,
+          reconnectAttempts: 2,
           onDisconnect,
         })
       )
@@ -939,7 +939,7 @@ describe('useWebSocket', () => {
       const lastMessage = MockWebSocket.getLastMessage()
       expect(JSON.parse(lastMessage!)).toEqual({
         action: 'subscribe_schedule',
-        schedule_id: 'schedule-123',
+        scheduleId: 'schedule-123',
       })
     })
 
@@ -961,7 +961,7 @@ describe('useWebSocket', () => {
       const lastMessage = MockWebSocket.getLastMessage()
       expect(JSON.parse(lastMessage!)).toEqual({
         action: 'unsubscribe_schedule',
-        schedule_id: 'schedule-123',
+        scheduleId: 'schedule-123',
       })
     })
 
@@ -983,7 +983,7 @@ describe('useWebSocket', () => {
       const lastMessage = MockWebSocket.getLastMessage()
       expect(JSON.parse(lastMessage!)).toEqual({
         action: 'subscribe_person',
-        person_id: 'person-123',
+        personId: 'person-123',
       })
     })
 
@@ -1005,7 +1005,7 @@ describe('useWebSocket', () => {
       const lastMessage = MockWebSocket.getLastMessage()
       expect(JSON.parse(lastMessage!)).toEqual({
         action: 'unsubscribe_person',
-        person_id: 'person-123',
+        personId: 'person-123',
       })
     })
   })
@@ -1124,7 +1124,7 @@ describe('useScheduleWebSocket', () => {
     const sentMessages = MockWebSocket.sentMessages.map((msg) => JSON.parse(msg))
     expect(sentMessages).toContainEqual({
       action: 'subscribe_schedule',
-      schedule_id: scheduleId,
+      scheduleId: scheduleId,
     })
   })
 
@@ -1159,11 +1159,11 @@ describe('useScheduleWebSocket', () => {
 
     expect(newMessages).toContainEqual({
       action: 'unsubscribe_schedule',
-      schedule_id: 'schedule-1',
+      scheduleId: 'schedule-1',
     })
     expect(newMessages).toContainEqual({
       action: 'subscribe_schedule',
-      schedule_id: 'schedule-2',
+      scheduleId: 'schedule-2',
     })
   })
 
@@ -1243,7 +1243,7 @@ describe('useScheduleWebSocket', () => {
     )
     expect(sentMessagesAfterConnect).toContainEqual({
       action: 'subscribe_schedule',
-      schedule_id: scheduleId,
+      scheduleId: scheduleId,
     })
   })
 })
@@ -1276,7 +1276,7 @@ describe('usePersonWebSocket', () => {
     const sentMessages = MockWebSocket.sentMessages.map((msg) => JSON.parse(msg))
     expect(sentMessages).toContainEqual({
       action: 'subscribe_person',
-      person_id: personId,
+      personId: personId,
     })
   })
 
@@ -1311,11 +1311,11 @@ describe('usePersonWebSocket', () => {
 
     expect(newMessages).toContainEqual({
       action: 'unsubscribe_person',
-      person_id: 'person-1',
+      personId: 'person-1',
     })
     expect(newMessages).toContainEqual({
       action: 'subscribe_person',
-      person_id: 'person-2',
+      personId: 'person-2',
     })
   })
 

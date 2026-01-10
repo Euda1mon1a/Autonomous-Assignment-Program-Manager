@@ -102,7 +102,7 @@ export interface VoxelScheduleViewProps {
 export interface VoxelConflict {
   position: VoxelPosition;
   voxels: Voxel[];
-  type: "double_booking" | "supervision_gap" | "acgme_violation";
+  type: "double_booking" | "supervision_gap" | "acgmeViolation";
 }
 
 /**

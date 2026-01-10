@@ -96,7 +96,7 @@ function PreferenceRow({
         <select
           value={preference.preferenceType}
           onChange={(e) =>
-            onChange({ preference_type: e.target.value as PreferenceType })
+            onChange({ preferenceType: e.target.value as PreferenceType })
           }
           className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
         >
@@ -205,9 +205,9 @@ export function BulkPreferenceModal({
 
     const newPref: EditablePreference = {
       _id: `pref-${Date.now()}`,
-      preference_type: availableTypes[0],
+      preferenceType: availableTypes[0],
       weight: 'medium',
-      is_active: true,
+      isActive: true,
     };
     setCustomPreferences((prev) => [...prev, newPref]);
   }, [availableTypes]);

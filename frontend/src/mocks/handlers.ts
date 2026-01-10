@@ -19,78 +19,78 @@ export const mockPeople = [
     name: 'Dr. John Smith',
     email: 'john.smith@hospital.org',
     type: 'resident' as const,
-    pgy_level: 2,
-    performs_procedures: true,
+    pgyLevel: 2,
+    performsProcedures: true,
     specialties: ['Internal Medicine'],
-    primary_duty: null,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    primaryDuty: null,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
   },
   {
     id: 'person-2',
     name: 'Dr. Jane Doe',
     email: 'jane.doe@hospital.org',
     type: 'resident' as const,
-    pgy_level: 1,
-    performs_procedures: false,
+    pgyLevel: 1,
+    performsProcedures: false,
     specialties: ['Internal Medicine'],
-    primary_duty: null,
-    created_at: '2024-01-02T00:00:00Z',
-    updated_at: '2024-01-02T00:00:00Z',
+    primaryDuty: null,
+    createdAt: '2024-01-02T00:00:00Z',
+    updatedAt: '2024-01-02T00:00:00Z',
   },
   {
     id: 'person-3',
     name: 'Dr. Robert Faculty',
     email: 'robert.faculty@hospital.org',
     type: 'faculty' as const,
-    pgy_level: null,
-    performs_procedures: true,
+    pgyLevel: null,
+    performsProcedures: true,
     specialties: ['Cardiology', 'Internal Medicine'],
-    primary_duty: 'Attending Physician',
-    created_at: '2024-01-03T00:00:00Z',
-    updated_at: '2024-01-03T00:00:00Z',
+    primaryDuty: 'Attending Physician',
+    createdAt: '2024-01-03T00:00:00Z',
+    updatedAt: '2024-01-03T00:00:00Z',
   },
 ]
 
 export const mockAbsences = [
   {
     id: 'absence-1',
-    person_id: 'person-1',
-    start_date: '2024-02-01',
-    end_date: '2024-02-07',
-    absence_type: 'vacation' as const,
-    deployment_orders: false,
-    tdy_location: null,
-    replacement_activity: null,
+    personId: 'person-1',
+    startDate: '2024-02-01',
+    endDate: '2024-02-07',
+    absenceType: 'vacation' as const,
+    deploymentOrders: false,
+    tdyLocation: null,
+    replacementActivity: null,
     notes: 'Annual vacation',
-    created_at: '2024-01-15T00:00:00Z',
+    createdAt: '2024-01-15T00:00:00Z',
   },
   {
     id: 'absence-2',
-    person_id: 'person-2',
-    start_date: '2024-03-01',
-    end_date: '2024-03-15',
-    absence_type: 'conference' as const,
-    deployment_orders: false,
-    tdy_location: null,
-    replacement_activity: null,
+    personId: 'person-2',
+    startDate: '2024-03-01',
+    endDate: '2024-03-15',
+    absenceType: 'conference' as const,
+    deploymentOrders: false,
+    tdyLocation: null,
+    replacementActivity: null,
     notes: 'Medical conference',
-    created_at: '2024-02-01T00:00:00Z',
+    createdAt: '2024-02-01T00:00:00Z',
   },
 ]
 
 export const mockAssignments = [
   {
     id: 'assignment-1',
-    block_id: 'block-1',
-    person_id: 'person-1',
-    rotation_template_id: 'template-1',
+    blockId: 'block-1',
+    personId: 'person-1',
+    rotationTemplateId: 'template-1',
     role: 'primary' as const,
-    activity_override: null,
+    activityOverride: null,
     notes: null,
-    created_by: null,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    createdBy: null,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
   },
 ]
 
@@ -98,38 +98,38 @@ export const mockRotationTemplates = [
   {
     id: 'template-1',
     name: 'Inpatient Medicine',
-    activity_type: 'inpatient',
+    activityType: 'inpatient',
     abbreviation: 'IM',
-    clinic_location: null,
-    max_residents: 4,
-    requires_specialty: null,
-    requires_procedure_credential: false,
-    supervision_required: true,
-    max_supervision_ratio: 4,
-    created_at: '2024-01-01T00:00:00Z',
+    clinicLocation: null,
+    maxResidents: 4,
+    requiresSpecialty: null,
+    requiresProcedureCredential: false,
+    supervisionRequired: true,
+    maxSupervisionRatio: 4,
+    createdAt: '2024-01-01T00:00:00Z',
   },
   {
     id: 'template-2',
     name: 'Outpatient Clinic',
-    activity_type: 'outpatient',
+    activityType: 'outpatient',
     abbreviation: 'OC',
-    clinic_location: 'Building A, Room 101',
-    max_residents: 2,
-    requires_specialty: null,
-    requires_procedure_credential: false,
-    supervision_required: true,
-    max_supervision_ratio: 2,
-    created_at: '2024-01-01T00:00:00Z',
+    clinicLocation: 'Building A, Room 101',
+    maxResidents: 2,
+    requiresSpecialty: null,
+    requiresProcedureCredential: false,
+    supervisionRequired: true,
+    maxSupervisionRatio: 2,
+    createdAt: '2024-01-01T00:00:00Z',
   },
 ]
 
 export const mockValidation = {
   valid: true,
-  total_violations: 0,
+  totalViolations: 0,
   violations: [],
-  coverage_rate: 100,
+  coverageRate: 100,
   statistics: {
-    total_blocks: 100,
+    totalBlocks: 100,
     assigned_blocks: 100,
     unassigned_blocks: 0,
   },
@@ -144,7 +144,7 @@ export const handlers = [
   http.get(`${API_BASE_URL}/people`, ({ request }) => {
     const url = new URL(request.url)
     const role = url.searchParams.get('role')
-    const pgyLevel = url.searchParams.get('pgy_level')
+    const pgyLevel = url.searchParams.get('pgyLevel')
 
     let filteredPeople = [...mockPeople]
 
@@ -154,7 +154,7 @@ export const handlers = [
 
     if (pgyLevel) {
       filteredPeople = filteredPeople.filter(
-        (p) => p.pgy_level === parseInt(pgyLevel, 10)
+        (p) => p.pgyLevel === parseInt(pgyLevel, 10)
       )
     }
 
@@ -166,13 +166,13 @@ export const handlers = [
 
   http.get(`${API_BASE_URL}/people/residents`, ({ request }) => {
     const url = new URL(request.url)
-    const pgyLevel = url.searchParams.get('pgy_level')
+    const pgyLevel = url.searchParams.get('pgyLevel')
 
     let residents = mockPeople.filter((p) => p.type === 'resident')
 
     if (pgyLevel) {
       residents = residents.filter(
-        (p) => p.pgy_level === parseInt(pgyLevel, 10)
+        (p) => p.pgyLevel === parseInt(pgyLevel, 10)
       )
     }
 
@@ -224,7 +224,7 @@ export const handlers = [
       )
     }
 
-    if (body.type === 'resident' && !body.pgy_level) {
+    if (body.type === 'resident' && !body.pgyLevel) {
       return HttpResponse.json(
         { detail: 'PGY level is required for residents' },
         { status: 400 }
@@ -236,12 +236,12 @@ export const handlers = [
       name: body.name as string,
       email: (body.email as string) || null,
       type: (body.type as 'resident' | 'faculty') || 'resident',
-      pgy_level: (body.pgy_level as number) || null,
-      performs_procedures: (body.performs_procedures as boolean) || false,
+      pgyLevel: (body.pgyLevel as number) || null,
+      performsProcedures: (body.performsProcedures as boolean) || false,
       specialties: (body.specialties as string[]) || null,
-      primary_duty: (body.primary_duty as string) || null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      primaryDuty: (body.primaryDuty as string) || null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     }
 
     return HttpResponse.json(newPerson, { status: 201 })
@@ -261,7 +261,7 @@ export const handlers = [
     const updatedPerson = {
       ...person,
       ...body,
-      updated_at: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     }
 
     return HttpResponse.json(updatedPerson)
@@ -283,13 +283,13 @@ export const handlers = [
   // Absences endpoints
   http.get(`${API_BASE_URL}/absences`, ({ request }) => {
     const url = new URL(request.url)
-    const personId = url.searchParams.get('person_id')
+    const personId = url.searchParams.get('personId')
 
     let filteredAbsences = [...mockAbsences]
 
     if (personId) {
       filteredAbsences = filteredAbsences.filter(
-        (a) => a.person_id === personId
+        (a) => a.personId === personId
       )
     }
 
@@ -316,14 +316,14 @@ export const handlers = [
     const body = await request.json() as Record<string, unknown>
 
     // Validate required fields
-    if (!body.person_id) {
+    if (!body.personId) {
       return HttpResponse.json(
         { detail: 'Person ID is required' },
         { status: 400 }
       )
     }
 
-    if (!body.start_date || !body.end_date) {
+    if (!body.startDate || !body.endDate) {
       return HttpResponse.json(
         { detail: 'Start and end dates are required' },
         { status: 400 }
@@ -331,7 +331,7 @@ export const handlers = [
     }
 
     // Check date order
-    if (new Date(body.start_date as string) > new Date(body.end_date as string)) {
+    if (new Date(body.startDate as string) > new Date(body.endDate as string)) {
       return HttpResponse.json(
         { detail: 'End date must be after start date' },
         { status: 400 }
@@ -340,15 +340,15 @@ export const handlers = [
 
     const newAbsence = {
       id: `absence-${Date.now()}`,
-      person_id: body.person_id as string,
-      start_date: body.start_date as string,
-      end_date: body.end_date as string,
-      absence_type: (body.absence_type as string) || 'vacation',
-      deployment_orders: (body.deployment_orders as boolean) || false,
-      tdy_location: (body.tdy_location as string) || null,
-      replacement_activity: (body.replacement_activity as string) || null,
+      personId: body.personId as string,
+      startDate: body.startDate as string,
+      endDate: body.endDate as string,
+      absenceType: (body.absenceType as string) || 'vacation',
+      deploymentOrders: (body.deploymentOrders as boolean) || false,
+      tdyLocation: (body.tdyLocation as string) || null,
+      replacementActivity: (body.replacementActivity as string) || null,
       notes: (body.notes as string) || null,
-      created_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     }
 
     return HttpResponse.json(newAbsence, { status: 201 })
@@ -389,15 +389,15 @@ export const handlers = [
   // Assignments endpoints
   http.get(`${API_BASE_URL}/assignments`, ({ request }) => {
     const url = new URL(request.url)
-    const personId = url.searchParams.get('person_id')
-    const startDate = url.searchParams.get('start_date')
-    const endDate = url.searchParams.get('end_date')
+    const personId = url.searchParams.get('personId')
+    const startDate = url.searchParams.get('startDate')
+    const endDate = url.searchParams.get('endDate')
 
     let filteredAssignments = [...mockAssignments]
 
     if (personId) {
       filteredAssignments = filteredAssignments.filter(
-        (a) => a.person_id === personId
+        (a) => a.personId === personId
       )
     }
 
@@ -412,7 +412,7 @@ export const handlers = [
   http.post(`${API_BASE_URL}/assignments`, async ({ request }) => {
     const body = await request.json() as Record<string, unknown>
 
-    if (!body.block_id || !body.person_id) {
+    if (!body.blockId || !body.personId) {
       return HttpResponse.json(
         { detail: 'Block ID and Person ID are required' },
         { status: 400 }
@@ -421,15 +421,15 @@ export const handlers = [
 
     const newAssignment = {
       id: `assignment-${Date.now()}`,
-      block_id: body.block_id as string,
-      person_id: body.person_id as string,
-      rotation_template_id: (body.rotation_template_id as string) || null,
+      blockId: body.blockId as string,
+      personId: body.personId as string,
+      rotationTemplateId: (body.rotationTemplateId as string) || null,
       role: (body.role as string) || 'primary',
-      activity_override: (body.activity_override as string) || null,
+      activityOverride: (body.activityOverride as string) || null,
       notes: (body.notes as string) || null,
-      created_by: (body.created_by as string) || null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      createdBy: (body.createdBy as string) || null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     }
 
     return HttpResponse.json(newAssignment, { status: 201 })
@@ -472,7 +472,7 @@ export const handlers = [
   http.post(`${API_BASE_URL}/rotation-templates`, async ({ request }) => {
     const body = await request.json() as Record<string, unknown>
 
-    if (!body.name || !body.activity_type) {
+    if (!body.name || !body.activityType) {
       return HttpResponse.json(
         { detail: 'Name and activity type are required' },
         { status: 400 }
@@ -482,15 +482,15 @@ export const handlers = [
     const newTemplate = {
       id: `template-${Date.now()}`,
       name: body.name as string,
-      activity_type: body.activity_type as string,
+      activityType: body.activityType as string,
       abbreviation: (body.abbreviation as string) || null,
-      clinic_location: (body.clinic_location as string) || null,
-      max_residents: (body.max_residents as number) || null,
-      requires_specialty: (body.requires_specialty as string) || null,
-      requires_procedure_credential: (body.requires_procedure_credential as boolean) || false,
-      supervision_required: (body.supervision_required as boolean) || true,
-      max_supervision_ratio: (body.max_supervision_ratio as number) || 4,
-      created_at: new Date().toISOString(),
+      clinicLocation: (body.clinicLocation as string) || null,
+      maxResidents: (body.maxResidents as number) || null,
+      requiresSpecialty: (body.requiresSpecialty as string) || null,
+      requiresProcedureCredential: (body.requiresProcedureCredential as boolean) || false,
+      supervisionRequired: (body.supervisionRequired as boolean) || true,
+      maxSupervisionRatio: (body.maxSupervisionRatio as number) || 4,
+      createdAt: new Date().toISOString(),
     }
 
     return HttpResponse.json(newTemplate, { status: 201 })
@@ -543,27 +543,27 @@ export const handlers = [
     const mockPatterns = [
       {
         id: `pattern-${params.id}-1`,
-        rotation_template_id: params.id,
-        day_of_week: 1, // Monday
-        time_of_day: 'AM',
-        activity_type: 'fm_clinic',
-        linked_template_id: 'template-2',
-        is_protected: false,
+        rotationTemplateId: params.id,
+        dayOfWeek: 1, // Monday
+        timeOfDay: 'AM',
+        activityType: 'fmClinic',
+        linkedTemplateId: 'template-2',
+        isProtected: false,
         notes: null,
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z',
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
       },
       {
         id: `pattern-${params.id}-2`,
-        rotation_template_id: params.id,
-        day_of_week: 1, // Monday
-        time_of_day: 'PM',
-        activity_type: 'fm_clinic',
-        linked_template_id: 'template-2',
-        is_protected: false,
+        rotationTemplateId: params.id,
+        dayOfWeek: 1, // Monday
+        timeOfDay: 'PM',
+        activityType: 'fmClinic',
+        linkedTemplateId: 'template-2',
+        isProtected: false,
         notes: null,
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z',
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
       },
     ]
 
@@ -586,15 +586,15 @@ export const handlers = [
     // Return the created patterns
     const createdPatterns = body.patterns.map((p, index) => ({
       id: `pattern-${params.id}-${index}`,
-      rotation_template_id: params.id,
-      day_of_week: p.day_of_week,
-      time_of_day: p.time_of_day,
-      activity_type: p.activity_type,
-      linked_template_id: p.linked_template_id,
-      is_protected: p.is_protected || false,
+      rotationTemplateId: params.id,
+      dayOfWeek: p.dayOfWeek,
+      timeOfDay: p.timeOfDay,
+      activityType: p.activityType,
+      linkedTemplateId: p.linkedTemplateId,
+      isProtected: p.isProtected || false,
       notes: p.notes || null,
-      created_at: now,
-      updated_at: now,
+      createdAt: now,
+      updatedAt: now,
     }))
 
     return HttpResponse.json(createdPatterns)
@@ -615,14 +615,14 @@ export const handlers = [
     const mockPreferences = [
       {
         id: `pref-${params.id}-1`,
-        rotation_template_id: params.id,
-        preference_type: 'full_day_grouping',
+        rotationTemplateId: params.id,
+        preferenceType: 'full_day_grouping',
         weight: 'medium',
-        config_json: {},
-        is_active: true,
+        configJson: {},
+        isActive: true,
         description: 'Prefer full days when possible',
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z',
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
       },
     ]
 
@@ -645,14 +645,14 @@ export const handlers = [
     // Return the created preferences
     const createdPreferences = body.map((p, index) => ({
       id: `pref-${params.id}-${index}`,
-      rotation_template_id: params.id,
-      preference_type: p.preference_type,
+      rotationTemplateId: params.id,
+      preferenceType: p.preferenceType,
       weight: p.weight || 'medium',
-      config_json: p.config_json || {},
-      is_active: p.is_active !== undefined ? p.is_active : true,
+      configJson: p.configJson || {},
+      isActive: p.isActive !== undefined ? p.isActive : true,
       description: p.description || null,
-      created_at: now,
-      updated_at: now,
+      createdAt: now,
+      updatedAt: now,
     }))
 
     return HttpResponse.json(createdPreferences)
@@ -662,7 +662,7 @@ export const handlers = [
   http.post(`${API_BASE_URL}/schedule/generate`, async ({ request }) => {
     const body = await request.json() as Record<string, unknown>
 
-    if (!body.start_date || !body.end_date) {
+    if (!body.startDate || !body.endDate) {
       return HttpResponse.json(
         { detail: 'Start and end dates are required' },
         { status: 400 }
@@ -672,8 +672,8 @@ export const handlers = [
     return HttpResponse.json({
       status: 'success',
       message: 'Schedule generated successfully',
-      total_blocks_assigned: 100,
-      total_blocks: 100,
+      totalBlocks_assigned: 100,
+      totalBlocks: 100,
       validation: mockValidation,
       run_id: `run-${Date.now()}`,
     })
@@ -681,8 +681,8 @@ export const handlers = [
 
   http.get(`${API_BASE_URL}/schedule/validate`, ({ request }) => {
     const url = new URL(request.url)
-    const startDate = url.searchParams.get('start_date')
-    const endDate = url.searchParams.get('end_date')
+    const startDate = url.searchParams.get('startDate')
+    const endDate = url.searchParams.get('endDate')
 
     if (!startDate || !endDate) {
       return HttpResponse.json(

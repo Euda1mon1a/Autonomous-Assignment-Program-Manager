@@ -56,7 +56,7 @@ function useBlocks(startDate: string, endDate: string) {
   return useQuery<ListResponse<Block>>({
     queryKey: ['blocks', startDate, endDate],
     queryFn: () =>
-      get<ListResponse<Block>>(`/blocks?start_date=${startDate}&end_date=${endDate}`),
+      get<ListResponse<Block>>(`/blocks?startDate=${startDate}&endDate=${endDate}`),
     staleTime: BLOCKS_STALE_TIME_MS,
     gcTime: BLOCKS_GC_TIME_MS,
   })
@@ -85,7 +85,7 @@ function useAssignmentsForRange(startDate: string, endDate: string) {
     queryKey: ['assignments', startDate, endDate, 'page', 1],
     queryFn: () =>
       get<ListResponse<Assignment>>(
-        `/assignments?start_date=${startDate}&end_date=${endDate}&page=1&page_size=${ASSIGNMENTS_PAGE_SIZE}`
+        `/assignments?startDate=${startDate}&endDate=${endDate}&page=1&pageSize=${ASSIGNMENTS_PAGE_SIZE}`
       ),
     staleTime: ASSIGNMENTS_STALE_TIME_MS,
     gcTime: ASSIGNMENTS_GC_TIME_MS,
@@ -106,7 +106,7 @@ function useAssignmentsForRange(startDate: string, endDate: string) {
       queryKey: ['assignments', startDate, endDate, 'page', i + 2],
       queryFn: () =>
         get<ListResponse<Assignment>>(
-          `/assignments?start_date=${startDate}&end_date=${endDate}&page=${i + 2}&page_size=${ASSIGNMENTS_PAGE_SIZE}`
+          `/assignments?startDate=${startDate}&endDate=${endDate}&page=${i + 2}&pageSize=${ASSIGNMENTS_PAGE_SIZE}`
         ),
       staleTime: ASSIGNMENTS_STALE_TIME_MS,
       gcTime: ASSIGNMENTS_GC_TIME_MS,

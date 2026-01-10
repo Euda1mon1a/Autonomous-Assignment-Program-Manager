@@ -54,7 +54,7 @@ function getPGYBadgeColor(pgyLevel?: number): string {
 // ============================================================================
 
 function PersonAssignmentItem({ assignment }: { assignment: PersonAssignment }) {
-  const roleTypeColor = getRoleTypeColor(assignment.person.role_type);
+  const roleTypeColor = getRoleTypeColor(assignment.person.roleType);
   const pgyBadgeColor = getPGYBadgeColor(assignment.person.pgyLevel);
 
   return (
@@ -82,9 +82,9 @@ function PersonAssignmentItem({ assignment }: { assignment: PersonAssignment }) 
             <Clock className="w-3 h-3" />
             <span className="font-medium">Activity:</span> {assignment.activity}
           </p>
-          {assignment.rotation_name && (
+          {assignment.rotationName && (
             <p className="text-xs opacity-75">
-              Rotation: {assignment.rotation_name}
+              Rotation: {assignment.rotationName}
             </p>
           )}
         </div>
@@ -101,8 +101,8 @@ export function LocationCard({ location, timeOfDay }: LocationCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const assignments = timeOfDay === 'ALL'
-    ? [...(location.time_slots.AM || []), ...(location.time_slots.PM || [])]
-    : location.time_slots[timeOfDay] || [];
+    ? [...(location.timeSlots.AM || []), ...(location.timeSlots.PM || [])]
+    : location.timeSlots[timeOfDay] || [];
 
   const hasCapacity = location.capacity !== undefined;
   const isNearCapacity = hasCapacity &&
@@ -125,14 +125,14 @@ export function LocationCard({ location, timeOfDay }: LocationCardProps) {
 
             <div className="flex-1 min-w-0">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {location.clinic_location}
+                {location.clinicLocation}
               </h3>
 
               <StaffingSummary
-                total={location.staffing_summary.total}
-                residents={location.staffing_summary.residents}
-                faculty={location.staffing_summary.faculty}
-                fellows={location.staffing_summary.fellows}
+                total={location.staffingSummary.total}
+                residents={location.staffingSummary.residents}
+                faculty={location.staffingSummary.faculty}
+                fellows={location.staffingSummary.fellows}
                 compact
               />
 
@@ -188,36 +188,36 @@ export function LocationCard({ location, timeOfDay }: LocationCardProps) {
         <div className="px-4 pb-4 pt-0 border-t border-gray-100">
           <div className="pt-4">
             <StaffingSummary
-              total={location.staffing_summary.total}
-              residents={location.staffing_summary.residents}
-              faculty={location.staffing_summary.faculty}
-              fellows={location.staffing_summary.fellows}
+              total={location.staffingSummary.total}
+              residents={location.staffingSummary.residents}
+              faculty={location.staffingSummary.faculty}
+              fellows={location.staffingSummary.fellows}
             />
 
             {timeOfDay === 'ALL' ? (
               <div className="mt-4 space-y-4">
-                {location.time_slots.AM && location.time_slots.AM.length > 0 && (
+                {location.timeSlots.AM && location.timeSlots.AM.length > 0 && (
                   <div>
                     <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                       <Clock className="w-4 h-4" />
                       Morning (AM)
                     </h4>
                     <div className="space-y-2">
-                      {location.time_slots.AM.map((assignment, idx) => (
+                      {location.timeSlots.AM.map((assignment, idx) => (
                         <PersonAssignmentItem key={`am-${idx}`} assignment={assignment} />
                       ))}
                     </div>
                   </div>
                 )}
 
-                {location.time_slots.PM && location.time_slots.PM.length > 0 && (
+                {location.timeSlots.PM && location.timeSlots.PM.length > 0 && (
                   <div>
                     <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                       <Clock className="w-4 h-4" />
                       Afternoon (PM)
                     </h4>
                     <div className="space-y-2">
-                      {location.time_slots.PM.map((assignment, idx) => (
+                      {location.timeSlots.PM.map((assignment, idx) => (
                         <PersonAssignmentItem key={`pm-${idx}`} assignment={assignment} />
                       ))}
                     </div>

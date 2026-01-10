@@ -14,6 +14,7 @@ import {
   useCertifications,
 } from '@/lib/hooks'
 import { createWrapper, mockFactories, mockResponses } from '../utils/test-utils'
+import { PersonType } from '@/types/api'
 import * as api from '@/lib/api'
 
 // Mock the api module
@@ -51,7 +52,7 @@ describe('usePeople', () => {
 
   it('should filter by role', async () => {
     mockedApi.get.mockResolvedValueOnce({
-      items: [mockFactories.person({ type: 'resident' })],
+      items: [mockFactories.person({ type: PersonType.RESIDENT })],
       total: 1,
     })
 
@@ -69,12 +70,12 @@ describe('usePeople', () => {
 
   it('should filter by PGY level', async () => {
     mockedApi.get.mockResolvedValueOnce({
-      items: [mockFactories.person({ pgy_level: 2 })],
+      items: [mockFactories.person({ pgyLevel: 2 })],
       total: 1,
     })
 
     const { result } = renderHook(
-      () => usePeople({ pgy_level: 2 }),
+      () => usePeople({ pgyLevel: 2 }),
       { wrapper: createWrapper() }
     )
 
@@ -82,7 +83,7 @@ describe('usePeople', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/people?pgy_level=2')
+    expect(mockedApi.get).toHaveBeenCalledWith('/people?pgyLevel=2')
   })
 
   it('should handle API errors', async () => {
@@ -182,7 +183,7 @@ describe('useResidents', () => {
 
   it('should filter by PGY level', async () => {
     mockedApi.get.mockResolvedValueOnce({
-      items: [mockFactories.person({ pgy_level: 1 })],
+      items: [mockFactories.person({ pgyLevel: 1 })],
       total: 1,
     })
 
@@ -195,7 +196,7 @@ describe('useResidents', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/people/residents?pgy_level=1')
+    expect(mockedApi.get).toHaveBeenCalledWith('/people/residents?pgyLevel=1')
   })
 })
 
@@ -206,7 +207,7 @@ describe('useFaculty', () => {
 
   it('should fetch all faculty', async () => {
     const facultyResponse = {
-      items: [mockFactories.person({ type: 'faculty', pgy_level: null })],
+      items: [mockFactories.person({ type: PersonType.FACULTY, pgyLevel: null })],
       total: 1,
     }
     mockedApi.get.mockResolvedValueOnce(facultyResponse)
@@ -225,7 +226,7 @@ describe('useFaculty', () => {
 
   it('should filter by specialty', async () => {
     mockedApi.get.mockResolvedValueOnce({
-      items: [mockFactories.person({ type: 'faculty', specialties: ['Cardiology'] })],
+      items: [mockFactories.person({ type: PersonType.FACULTY, specialties: ['Cardiology'] })],
       total: 1,
     })
 
@@ -259,8 +260,8 @@ describe('useCreatePerson', () => {
     await act(async () => {
       result.current.mutate({
         name: 'Dr. John Smith',
-        type: 'resident',
-        pgy_level: 2,
+        type: PersonType.RESIDENT,
+        pgyLevel: 2,
       })
     })
 
@@ -270,8 +271,8 @@ describe('useCreatePerson', () => {
 
     expect(mockedApi.post).toHaveBeenCalledWith('/people', {
       name: 'Dr. John Smith',
-      type: 'resident',
-      pgy_level: 2,
+      type: PersonType.RESIDENT,
+      pgyLevel: 2,
     })
     expect(result.current.data).toEqual(newPerson)
   })
@@ -288,7 +289,7 @@ describe('useCreatePerson', () => {
     await act(async () => {
       result.current.mutate({
         name: 'Dr. John Smith',
-        type: 'resident',
+        type: PersonType.RESIDENT,
       })
     })
 
@@ -428,18 +429,18 @@ describe('useCertifications', () => {
 
   const mockCertification = {
     id: 'cert-1',
-    person_id: 'person-1',
-    certification_type_id: 'type-1',
+    personId: 'person-1',
+    certificationType_id: 'type-1',
     certification_number: 'BLS-12345',
     issued_date: '2024-01-01',
-    expiration_date: '2026-01-01',
+    expirationDate: '2026-01-01',
     status: 'current' as const,
-    days_until_expiration: 730,
-    is_expired: false,
-    is_expiring_soon: false,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
-    certification_type: {
+    daysUntilExpiration: 730,
+    isExpired: false,
+    isExpiringSoon: false,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+    certificationType: {
       id: 'type-1',
       name: 'BLS',
       full_name: 'Basic Life Support',
@@ -449,19 +450,19 @@ describe('useCertifications', () => {
   const mockExpiringSoonCertification = {
     ...mockCertification,
     id: 'cert-2',
-    expiration_date: '2024-03-01',
-    status: 'expiring_soon' as const,
-    days_until_expiration: 45,
-    is_expiring_soon: true,
+    expirationDate: '2024-03-01',
+    status: 'expiringSoon' as const,
+    daysUntilExpiration: 45,
+    isExpiringSoon: true,
   }
 
   const mockExpiredCertification = {
     ...mockCertification,
     id: 'cert-3',
-    expiration_date: '2023-12-31',
+    expirationDate: '2023-12-31',
     status: 'expired' as const,
-    days_until_expiration: -30,
-    is_expired: true,
+    daysUntilExpiration: -30,
+    isExpired: true,
   }
 
   it('should fetch certifications for a person', async () => {
@@ -553,8 +554,8 @@ describe('useCertifications', () => {
 
     const certs = result.current.data?.items || []
     const current = certs.filter(c => c.status === 'current')
-    const expiring = certs.filter(c => c.is_expiring_soon)
-    const expired = certs.filter(c => c.is_expired)
+    const expiring = certs.filter(c => c.isExpiringSoon)
+    const expired = certs.filter(c => c.isExpired)
 
     expect(current).toHaveLength(1)
     expect(expiring).toHaveLength(1)
@@ -585,12 +586,12 @@ describe('usePeople - Additional Edge Cases', () => {
 
   it('should handle multiple filters simultaneously', async () => {
     mockedApi.get.mockResolvedValueOnce({
-      items: [mockFactories.person({ type: 'resident', pgy_level: 2 })],
+      items: [mockFactories.person({ type: PersonType.RESIDENT, pgyLevel: 2 })],
       total: 1,
     })
 
     const { result } = renderHook(
-      () => usePeople({ role: 'resident', pgy_level: 2 }),
+      () => usePeople({ role: 'resident', pgyLevel: 2 }),
       { wrapper: createWrapper() }
     )
 
@@ -598,7 +599,7 @@ describe('usePeople - Additional Edge Cases', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/people?role=resident&pgy_level=2')
+    expect(mockedApi.get).toHaveBeenCalledWith('/people?role=resident&pgyLevel=2')
   })
 
   it('should handle network errors', async () => {
@@ -625,8 +626,8 @@ describe('useCreatePerson - Additional Validation', () => {
 
   it('should create a faculty member without PGY level', async () => {
     const newFaculty = mockFactories.person({
-      type: 'faculty',
-      pgy_level: null,
+      type: PersonType.FACULTY,
+      pgyLevel: null,
       specialties: ['Cardiology'],
     })
     mockedApi.post.mockResolvedValueOnce(newFaculty)
@@ -639,9 +640,9 @@ describe('useCreatePerson - Additional Validation', () => {
     await act(async () => {
       result.current.mutate({
         name: 'Dr. Jane Faculty',
-        type: 'faculty',
+        type: PersonType.FACULTY,
         specialties: ['Cardiology'],
-        performs_procedures: true,
+        performsProcedures: true,
       })
     })
 
@@ -668,7 +669,7 @@ describe('useCreatePerson - Additional Validation', () => {
     await act(async () => {
       result.current.mutate({
         name: 'Dr. Duplicate',
-        type: 'resident',
+        type: PersonType.RESIDENT,
         email: 'existing@example.com',
       })
     })
@@ -687,7 +688,7 @@ describe('useUpdatePerson - PGY Level Advancement', () => {
   })
 
   it('should advance resident to next PGY level', async () => {
-    const advancedResident = mockFactories.person({ pgy_level: 3 })
+    const advancedResident = mockFactories.person({ pgyLevel: 3 })
     mockedApi.put.mockResolvedValueOnce(advancedResident)
 
     const { result } = renderHook(
@@ -698,7 +699,7 @@ describe('useUpdatePerson - PGY Level Advancement', () => {
     await act(async () => {
       result.current.mutate({
         id: 'resident-1',
-        data: { pgy_level: 3 },
+        data: { pgyLevel: 3 },
       })
     })
 
@@ -706,7 +707,7 @@ describe('useUpdatePerson - PGY Level Advancement', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(result.current.data?.pgy_level).toBe(3)
+    expect(result.current.data?.pgyLevel).toBe(3)
   })
 
   it('should handle partial updates', async () => {
@@ -766,7 +767,7 @@ describe('useFaculty - Specialty Filtering', () => {
   it('should properly encode specialty parameter', async () => {
     const specialtyWithSpaces = 'Sports Medicine'
     mockedApi.get.mockResolvedValueOnce({
-      items: [mockFactories.person({ type: 'faculty', specialties: [specialtyWithSpaces] })],
+      items: [mockFactories.person({ type: PersonType.FACULTY, specialties: [specialtyWithSpaces] })],
       total: 1,
     })
 

@@ -67,19 +67,19 @@ interface ImpersonationStatusApiResponse {
     id: string;
     username: string;
     email: string;
-    first_name: string;
-    last_name: string;
+    firstName: string;
+    lastName: string;
     role: string;
   } | null;
   original_user: {
     id: string;
     username: string;
     email: string;
-    first_name: string;
-    last_name: string;
+    firstName: string;
+    lastName: string;
     role: string;
   } | null;
-  session_expires_at: string | null;
+  session_expiresAt: string | null;
 }
 
 /**
@@ -92,19 +92,19 @@ interface StartImpersonationApiResponse {
     id: string;
     username: string;
     email: string;
-    first_name: string;
-    last_name: string;
+    firstName: string;
+    lastName: string;
     role: string;
   };
   original_user: {
     id: string;
     username: string;
     email: string;
-    first_name: string;
-    last_name: string;
+    firstName: string;
+    lastName: string;
     role: string;
   };
-  session_expires_at: string;
+  session_expiresAt: string;
   message: string;
 }
 
@@ -118,8 +118,8 @@ interface EndImpersonationApiResponse {
     id: string;
     username: string;
     email: string;
-    first_name: string;
-    last_name: string;
+    firstName: string;
+    lastName: string;
     role: string;
   };
 }
@@ -183,8 +183,8 @@ function transformApiUser(
     id: string;
     username: string;
     email: string;
-    first_name: string;
-    last_name: string;
+    firstName: string;
+    lastName: string;
     role: string;
   } | null
 ): ImpersonatedUser | null {
@@ -193,8 +193,8 @@ function transformApiUser(
     id: apiUser.id,
     username: apiUser.username,
     email: apiUser.email,
-    firstName: apiUser.first_name,
-    lastName: apiUser.last_name,
+    firstName: apiUser.firstName,
+    lastName: apiUser.lastName,
     role: apiUser.role,
   };
 }
@@ -223,7 +223,7 @@ async function fetchImpersonationStatus(): Promise<ImpersonationStatusResponse> 
     isImpersonating: response.is_impersonating,
     targetUser: transformApiUser(response.target_user),
     originalUser: transformApiUser(response.original_user),
-    sessionExpiresAt: response.session_expires_at,
+    sessionExpiresAt: response.session_expiresAt,
   };
 }
 
@@ -236,7 +236,7 @@ async function startImpersonation(
   const response = await post<StartImpersonationApiResponse>(
     "/auth/impersonate",
     {
-      target_user_id: targetUserId,
+      target_userId: targetUserId,
     }
   );
 
@@ -248,7 +248,7 @@ async function startImpersonation(
     impersonationToken: response.impersonation_token,
     targetUser: transformApiUser(response.target_user)!,
     originalUser: transformApiUser(response.original_user)!,
-    sessionExpiresAt: response.session_expires_at,
+    sessionExpiresAt: response.session_expiresAt,
     message: response.message,
   };
 }

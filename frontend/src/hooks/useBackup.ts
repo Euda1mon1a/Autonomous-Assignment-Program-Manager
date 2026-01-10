@@ -22,8 +22,8 @@ export interface SnapshotResponse {
   table: string;
   row_count: number;
   file_path: string;
-  created_at: string;
-  created_by: string;
+  createdAt: string;
+  createdBy: string;
   reason: string;
 }
 
@@ -34,14 +34,14 @@ export interface SnapshotListResponse {
 
 export interface RestoreRequest {
   snapshot_id: string;
-  dry_run?: boolean;
+  dryRun?: boolean;
 }
 
 export interface RestoreResponse {
   snapshot_id: string;
   table: string;
   rows_restored: number;
-  dry_run: boolean;
+  dryRun: boolean;
   message: string;
 }
 
@@ -84,7 +84,7 @@ export function useSnapshots(table?: string, enabled = false) {
  *
  * // Before bulk delete
  * await createSnapshot.mutateAsync({
- *   table: 'rotation_templates',
+ *   table: 'rotationTemplates',
  *   reason: 'Before bulk delete of 5 templates'
  * });
  * ```
@@ -113,14 +113,14 @@ export function useCreateSnapshot() {
  *
  * // Preview restore (dry run)
  * const preview = await restoreSnapshot.mutateAsync({
- *   snapshot_id: 'rotation_templates_20260107_120000',
- *   dry_run: true
+ *   snapshot_id: 'rotationTemplates_20260107_120000',
+ *   dryRun: true
  * });
  *
  * // Actually restore
  * await restoreSnapshot.mutateAsync({
- *   snapshot_id: 'rotation_templates_20260107_120000',
- *   dry_run: false
+ *   snapshot_id: 'rotationTemplates_20260107_120000',
+ *   dryRun: false
  * });
  * ```
  */
@@ -148,7 +148,7 @@ export function useRestoreSnapshot() {
  *
  * const handleBulkDelete = async (ids: string[]) => {
  *   await execute(
- *     { table: 'rotation_templates', reason: `Delete ${ids.length} templates` },
+ *     { table: 'rotationTemplates', reason: `Delete ${ids.length} templates` },
  *     async () => {
  *       await bulkDelete.mutateAsync(ids);
  *     }

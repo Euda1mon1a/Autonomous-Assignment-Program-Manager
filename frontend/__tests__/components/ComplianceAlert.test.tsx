@@ -101,7 +101,7 @@ describe('ComplianceAlert', () => {
       ;(useValidateSchedule as jest.Mock).mockReturnValue({
         data: {
           valid: true,
-          total_violations: 0,
+          totalViolations: 0,
           violations: [],
         },
         isLoading: false,
@@ -118,7 +118,7 @@ describe('ComplianceAlert', () => {
       ;(useValidateSchedule as jest.Mock).mockReturnValue({
         data: {
           valid: true,
-          total_violations: 0,
+          totalViolations: 0,
           violations: [],
         },
         isLoading: false,
@@ -136,7 +136,7 @@ describe('ComplianceAlert', () => {
       ;(useValidateSchedule as jest.Mock).mockReturnValue({
         data: {
           valid: true,
-          total_violations: 0,
+          totalViolations: 0,
           violations: [],
         },
         isLoading: false,
@@ -156,7 +156,7 @@ describe('ComplianceAlert', () => {
       ;(useValidateSchedule as jest.Mock).mockReturnValue({
         data: {
           valid: false,
-          total_violations: 5,
+          totalViolations: 5,
           violations: [
             { message: 'Violation 1', severity: 'critical' },
             { message: 'Violation 2', severity: 'warning' },
@@ -177,7 +177,7 @@ describe('ComplianceAlert', () => {
       ;(useValidateSchedule as jest.Mock).mockReturnValue({
         data: {
           valid: false,
-          total_violations: 1,
+          totalViolations: 1,
           violations: [{ message: 'Single violation', severity: 'critical' }],
         },
         isLoading: false,
@@ -194,7 +194,7 @@ describe('ComplianceAlert', () => {
       ;(useValidateSchedule as jest.Mock).mockReturnValue({
         data: {
           valid: false,
-          total_violations: 3,
+          totalViolations: 3,
           violations: [],
         },
         isLoading: false,
@@ -212,7 +212,7 @@ describe('ComplianceAlert', () => {
       ;(useValidateSchedule as jest.Mock).mockReturnValue({
         data: {
           valid: false,
-          total_violations: 5,
+          totalViolations: 5,
           violations: [
             { message: 'First violation message', severity: 'critical' },
             { message: 'Second violation message', severity: 'warning' },
@@ -236,7 +236,7 @@ describe('ComplianceAlert', () => {
       ;(useValidateSchedule as jest.Mock).mockReturnValue({
         data: {
           valid: false,
-          total_violations: 5,
+          totalViolations: 5,
           violations: [
             { message: 'Violation 1', severity: 'critical' },
             { message: 'Violation 2', severity: 'warning' },
@@ -258,7 +258,7 @@ describe('ComplianceAlert', () => {
       ;(useValidateSchedule as jest.Mock).mockReturnValue({
         data: {
           valid: false,
-          total_violations: 2,
+          totalViolations: 2,
           violations: [
             { message: 'Violation 1', severity: 'critical' },
             { message: 'Violation 2', severity: 'warning' },
@@ -277,7 +277,7 @@ describe('ComplianceAlert', () => {
       ;(useValidateSchedule as jest.Mock).mockReturnValue({
         data: {
           valid: false,
-          total_violations: 2,
+          totalViolations: 2,
           violations: [
             { message: 'Violation 1', severity: 'critical' },
             { message: 'Violation 2', severity: 'warning' },
@@ -300,7 +300,7 @@ describe('ComplianceAlert', () => {
       ;(useValidateSchedule as jest.Mock).mockReturnValue({
         data: {
           valid: true,
-          total_violations: 0,
+          totalViolations: 0,
           violations: [],
         },
         isLoading: false,
@@ -318,7 +318,7 @@ describe('ComplianceAlert', () => {
       ;(useValidateSchedule as jest.Mock).mockReturnValue({
         data: {
           valid: false,
-          total_violations: 3,
+          totalViolations: 3,
           violations: [],
         },
         isLoading: false,
@@ -337,7 +337,7 @@ describe('ComplianceAlert', () => {
       ;(useValidateSchedule as jest.Mock).mockReturnValue({
         data: {
           valid: true,
-          total_violations: 0,
+          totalViolations: 0,
           violations: [],
         },
         isLoading: false,
@@ -369,7 +369,7 @@ describe('ComplianceAlert', () => {
     it('should call useValidateSchedule with current month date range', () => {
       const mockUseValidateSchedule = useValidateSchedule as jest.Mock
       mockUseValidateSchedule.mockReturnValue({
-        data: { valid: true, total_violations: 0, violations: [] },
+        data: { valid: true, totalViolations: 0, violations: [] },
         isLoading: false,
         isError: false,
       })

@@ -34,8 +34,8 @@ export function BlockNavigation({
   // Fetch blocks for the current date range to get the block number
   // Error handling: On 401, blocksData will be undefined and we fall back to date-based nav
   const { data: blocksData, isLoading: blocksLoading, error: blocksError } = useBlocks({
-    start_date: startDateStr,
-    end_date: endDateStr,
+    startDate: startDateStr,
+    endDate: endDateStr,
   })
 
   // Fetch all block ranges for navigation (to find prev/next blocks and "This Block")
@@ -46,7 +46,7 @@ export function BlockNavigation({
   const isFallbackMode = Boolean(blocksError || rangesError)
 
   // Get the block number from the fetched blocks
-  // All blocks in the range should have the same block_number (or we take the first one)
+  // All blocks in the range should have the same blockNumber (or we take the first one)
   const currentBlockNumber = useMemo(() => {
     if (!blocksData?.items?.length) return null
     // Get unique block numbers from the fetched blocks

@@ -8,7 +8,7 @@ interface Person {
   id: string
   name: string
   type: string
-  pgy_level: number | null
+  pgyLevel: number | null
 }
 
 interface Assignment {

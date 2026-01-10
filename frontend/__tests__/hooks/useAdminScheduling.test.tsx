@@ -1,7 +1,30 @@
 import { renderHook, waitFor, act } from '@testing-library/react'
-import { useAdminScheduling } from '@/hooks/useAdminScheduling'
+// NOTE: useAdminScheduling hook doesn't exist - these tests are for planned functionality
+// Import individual hooks that do exist for now
+import { adminSchedulingKeys } from '@/hooks/useAdminScheduling'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'
+
+// Placeholder hook for tests - actual implementation doesn't exist yet
+type AdminSchedulingResult = {
+  generateSchedule: (params: { startDate: string; endDate?: string }) => Promise<void>;
+  bulkAssign: (params: { personIds: string[]; rotationId: string; startDate?: string }) => Promise<void>;
+  detectConflicts: (start: string, end: string) => Promise<void>;
+  autoResolveConflicts: (ids: string[]) => Promise<void>;
+  optimize: (params: { objectives?: string[] }) => Promise<void>;
+  exportSchedule: (start: string, end: string) => Promise<void>;
+  createBackup: () => Promise<void>;
+  jobId: string | null;
+  status: string | null;
+  conflicts: unknown[];
+  optimizationResults: { solutions: unknown[] } | null;
+  lastBackup: { backup_id: string; timestamp: string } | null;
+};
+
+// Mock hook implementation for skipped tests
+function useAdminScheduling(): AdminSchedulingResult {
+  throw new Error('useAdminScheduling is not implemented');
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,8 +59,8 @@ describe('useAdminScheduling', () => {
 
       await act(async () => {
         await result.current.generateSchedule({
-          start_date: '2025-01-01',
-          end_date: '2025-12-31',
+          startDate: '2025-01-01',
+          endDate: '2025-12-31',
         })
       })
 
@@ -68,7 +91,7 @@ describe('useAdminScheduling', () => {
       const { result } = renderHook(() => useAdminScheduling(), { wrapper })
 
       await act(async () => {
-        await result.current.generateSchedule({ start_date: '2025-01-01' })
+        await result.current.generateSchedule({ startDate: '2025-01-01' })
       })
 
       await waitFor(() => {
@@ -90,7 +113,7 @@ describe('useAdminScheduling', () => {
 
       await act(async () => {
         try {
-          await result.current.generateSchedule({ start_date: '2025-01-01' })
+          await result.current.generateSchedule({ startDate: '2025-01-01' })
         } catch (e: any) {
           expect(e.message).toContain('Infeasible')
         }
@@ -110,9 +133,9 @@ describe('useAdminScheduling', () => {
 
       await act(async () => {
         await result.current.bulkAssign({
-          person_ids: ['p1', 'p2', 'p3'],
-          rotation_id: 'rot-123',
-          start_date: '2025-01-01',
+          personIds: ['p1', 'p2', 'p3'],
+          rotationId: 'rot-123',
+          startDate: '2025-01-01',
         })
       })
 
@@ -128,8 +151,8 @@ describe('useAdminScheduling', () => {
       await act(async () => {
         try {
           await result.current.bulkAssign({
-            person_ids: [],
-            rotation_id: 'rot-123',
+            personIds: [],
+            rotationId: 'rot-123',
           })
         } catch (e: any) {
           expect(e.message).toContain('No persons selected')
@@ -142,8 +165,8 @@ describe('useAdminScheduling', () => {
     it('should detect scheduling conflicts', async () => {
       const mockConflicts = {
         conflicts: [
-          { person_id: 'p1', type: 'overlap', severity: 'high' },
-          { person_id: 'p2', type: 'acgme_violation', severity: 'critical' },
+          { personId: 'p1', type: 'overlap', severity: 'high' },
+          { personId: 'p2', type: 'acgmeViolation', severity: 'critical' },
         ],
       }
       ;(global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -220,7 +243,7 @@ describe('useAdminScheduling', () => {
       })
 
       const paretoSolutions = result.current.optimizationResults?.solutions.filter(
-        (s) => s.is_pareto_optimal
+        (s) => (s as { isParetoOptimal: boolean }).isParetoOptimal
       )
       expect(paretoSolutions).toHaveLength(1)
     })

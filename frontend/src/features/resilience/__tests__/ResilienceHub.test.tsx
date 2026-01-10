@@ -29,16 +29,16 @@ describe("ResilienceHub", () => {
   const mockHealthData = {
     timestamp: new Date().toISOString(),
     overall_status: OverallStatus.HEALTHY,
-    defense_level: "CONTROL",
+    defenseLevel: "CONTROL",
     utilization: {
-      utilization_rate: 0.5,
+      utilizationRate: 0.5,
       level: UtilizationLevel.GREEN,
       current_demand: 50,
       safe_capacity: 100,
     },
     active_fallbacks: [],
-    n1_pass: true,
-    n2_pass: true,
+    n1Pass: true,
+    n2Pass: true,
     immediate_actions: [],
     watch_items: [],
   };

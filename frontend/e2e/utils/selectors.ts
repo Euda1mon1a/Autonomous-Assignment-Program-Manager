@@ -76,9 +76,9 @@ export const selectors = {
 
   // Assignment form
   assignment: {
-    personSelect: 'select[name="person_id"]',
-    blockSelect: 'select[name="block_id"]',
-    rotationSelect: 'select[name="rotation_id"]',
+    personSelect: 'select[name="personId"]',
+    blockSelect: 'select[name="blockId"]',
+    rotationSelect: 'select[name="rotationId"]',
     statusSelect: 'select[name="status"]',
     notesTextarea: 'textarea[name="notes"]',
     submitButton: 'button[type="submit"]',
@@ -105,9 +105,9 @@ export const selectors = {
 
   // Swap form
   swapForm: {
-    swapType: 'select[name="swap_type"]',
-    requestorAssignment: 'select[name="requestor_assignment_id"]',
-    targetAssignment: 'select[name="target_assignment_id"]',
+    swapType: 'select[name="swapType"]',
+    requestorAssignment: 'select[name="requestor_assignmentId"]',
+    targetAssignment: 'select[name="target_assignmentId"]',
     reason: 'textarea[name="reason"]',
     submitButton: 'button[type="submit"]',
     cancelButton: 'button:has-text("Cancel")',
@@ -153,8 +153,8 @@ export const selectors = {
     saveSettings: 'button:has-text("Save Settings")',
     changePassword: '[data-testid="change-password"]',
     oldPassword: 'input[name="old_password"]',
-    newPassword: 'input[name="new_password"]',
-    confirmPassword: 'input[name="confirm_password"]',
+    newPassword: 'input[name="newPassword"]',
+    confirmPassword: 'input[name="confirmPassword"]',
   },
 
   // Table components

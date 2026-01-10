@@ -26,16 +26,16 @@ const mockedApi = api as jest.Mocked<typeof api>
 
 // Mock settings data matching actual backend schema
 const mockSettings = {
-  scheduling_algorithm: 'greedy' as const,
-  work_hours_per_week: 80,
-  max_consecutive_days: 6,
-  min_days_off_per_week: 1,
-  pgy1_supervision_ratio: '1:2',
-  pgy2_supervision_ratio: '1:4',
-  pgy3_supervision_ratio: '1:4',
-  enable_weekend_scheduling: true,
-  enable_holiday_scheduling: false,
-  default_block_duration_hours: 4,
+  schedulingAlgorithm: 'greedy' as const,
+  workHoursPerWeek: 80,
+  maxConsecutiveDays: 6,
+  minDaysOffPerWeek: 1,
+  pgy1_supervisionRatio: '1:2',
+  pgy2_supervisionRatio: '1:4',
+  pgy3_supervisionRatio: '1:4',
+  enableWeekendScheduling: true,
+  enableHolidayScheduling: false,
+  defaultBlockDurationHours: 4,
 }
 
 // Create a fresh QueryClient for each test
@@ -431,9 +431,9 @@ describe('SettingsPage', () => {
       })
 
       const algorithmSelect = findSelectByLabelText(container, /default algorithm/i)!
-      await user.selectOptions(algorithmSelect, 'cp_sat')
+      await user.selectOptions(algorithmSelect, 'cpSat')
 
-      expect(algorithmSelect.value).toBe('cp_sat')
+      expect(algorithmSelect.value).toBe('cpSat')
     })
 
     it('should toggle weekend scheduling checkbox', async () => {
@@ -523,7 +523,7 @@ describe('SettingsPage', () => {
         expect(mockedApi.post).toHaveBeenCalledWith(
           '/settings',
           expect.objectContaining({
-            work_hours_per_week: 75,
+            workHoursPerWeek: 75,
           })
         )
       })

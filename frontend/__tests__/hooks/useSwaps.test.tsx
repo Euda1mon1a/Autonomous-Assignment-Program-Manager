@@ -30,11 +30,6 @@ function createWrapper() {
       queries: { retry: false },
       mutations: { retry: false },
     },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
-    },
   })
 
   return ({ children }: { children: React.ReactNode }) => (
@@ -74,12 +69,12 @@ describe('useSwapRequest', () => {
     it('should fetch swap request successfully', async () => {
       const mockSwap = {
         id: 'swap-123',
-        source_faculty_id: 'faculty-1',
-        source_faculty_name: 'Dr. Smith',
-        source_week: '2024-01-01',
-        swap_type: SwapType.ONE_TO_ONE,
+        sourceFacultyId: 'faculty-1',
+        sourceFacultyName: 'Dr. Smith',
+        sourceWeek: '2024-01-01',
+        swapType: SwapType.ONE_TO_ONE,
         status: SwapStatus.PENDING,
-        requested_at: '2024-01-01T10:00:00Z',
+        requestedAt: '2024-01-01T10:00:00Z',
       }
 
       mockedApi.get.mockResolvedValue(mockSwap)
@@ -99,15 +94,15 @@ describe('useSwapRequest', () => {
     it('should fetch swap with target faculty', async () => {
       const mockSwap = {
         id: 'swap-123',
-        source_faculty_id: 'faculty-1',
-        source_faculty_name: 'Dr. Smith',
-        source_week: '2024-01-01',
-        target_faculty_id: 'faculty-2',
-        target_faculty_name: 'Dr. Jones',
-        target_week: '2024-01-08',
-        swap_type: SwapType.ONE_TO_ONE,
+        sourceFacultyId: 'faculty-1',
+        sourceFacultyName: 'Dr. Smith',
+        sourceWeek: '2024-01-01',
+        targetFacultyId: 'faculty-2',
+        targetFacultyName: 'Dr. Jones',
+        targetWeek: '2024-01-08',
+        swapType: SwapType.ONE_TO_ONE,
         status: SwapStatus.APPROVED,
-        requested_at: '2024-01-01T10:00:00Z',
+        requestedAt: '2024-01-01T10:00:00Z',
         approved_at: '2024-01-02T10:00:00Z',
       }
 
@@ -121,7 +116,7 @@ describe('useSwapRequest', () => {
         expect(result.current.isSuccess).toBe(true)
       })
 
-      expect(result.current.data?.target_faculty_id).toBe('faculty-2')
+      expect(result.current.data?.targetFacultyId).toBe('faculty-2')
       expect(result.current.data?.status).toBe(SwapStatus.APPROVED)
     })
   })
@@ -177,7 +172,7 @@ describe('useSwapRequest', () => {
       act(() => {
         resolvePromise!({
           id: 'swap-123',
-          source_faculty_id: 'faculty-1',
+          sourceFacultyId: 'faculty-1',
           status: SwapStatus.PENDING,
         })
       })
@@ -192,12 +187,12 @@ describe('useSwapRequest', () => {
     it('should handle absorb swap type', async () => {
       const mockSwap = {
         id: 'swap-123',
-        source_faculty_id: 'faculty-1',
-        source_faculty_name: 'Dr. Smith',
-        source_week: '2024-01-01',
-        swap_type: SwapType.ABSORB,
+        sourceFacultyId: 'faculty-1',
+        sourceFacultyName: 'Dr. Smith',
+        sourceWeek: '2024-01-01',
+        swapType: SwapType.ABSORB,
         status: SwapStatus.PENDING,
-        requested_at: '2024-01-01T10:00:00Z',
+        requestedAt: '2024-01-01T10:00:00Z',
       }
 
       mockedApi.get.mockResolvedValue(mockSwap)
@@ -210,8 +205,8 @@ describe('useSwapRequest', () => {
         expect(result.current.isSuccess).toBe(true)
       })
 
-      expect(result.current.data?.swap_type).toBe(SwapType.ABSORB)
-      expect(result.current.data?.target_faculty_id).toBeUndefined()
+      expect(result.current.data?.swapType).toBe(SwapType.ABSORB)
+      expect(result.current.data?.targetFacultyId).toBeUndefined()
     })
   })
 })
@@ -227,15 +222,15 @@ describe('useSwapList', () => {
         items: [
           {
             id: 'swap-1',
-            source_faculty_id: 'faculty-1',
+            sourceFacultyId: 'faculty-1',
             status: SwapStatus.PENDING,
-            swap_type: SwapType.ONE_TO_ONE,
+            swapType: SwapType.ONE_TO_ONE,
           },
           {
             id: 'swap-2',
-            source_faculty_id: 'faculty-2',
+            sourceFacultyId: 'faculty-2',
             status: SwapStatus.APPROVED,
-            swap_type: SwapType.ABSORB,
+            swapType: SwapType.ABSORB,
           },
         ],
         total: 2,
@@ -283,7 +278,7 @@ describe('useSwapList', () => {
       const { result } = renderHook(
         () =>
           useSwapList({
-            swap_type: [SwapType.ONE_TO_ONE],
+            swapType: [SwapType.ONE_TO_ONE],
           }),
         {
           wrapper: createWrapper(),
@@ -295,7 +290,7 @@ describe('useSwapList', () => {
       })
 
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('swap_type=one_to_one')
+        expect.stringContaining('swapType=oneToOne')
       )
     })
 
@@ -305,8 +300,8 @@ describe('useSwapList', () => {
       const { result } = renderHook(
         () =>
           useSwapList({
-            start_date: '2024-01-01',
-            end_date: '2024-01-31',
+            startDate: '2024-01-01',
+            endDate: '2024-01-31',
           }),
         {
           wrapper: createWrapper(),
@@ -318,7 +313,7 @@ describe('useSwapList', () => {
       })
 
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('start_date=2024-01-01')
+        expect.stringContaining('startDate=2024-01-01')
       )
     })
 
@@ -328,7 +323,7 @@ describe('useSwapList', () => {
       const { result } = renderHook(
         () =>
           useSwapList({
-            source_faculty_id: 'faculty-1',
+            sourceFacultyId: 'faculty-1',
           }),
         {
           wrapper: createWrapper(),
@@ -340,7 +335,7 @@ describe('useSwapList', () => {
       })
 
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('source_faculty_id=faculty-1')
+        expect.stringContaining('sourceFacultyId=faculty-1')
       )
     })
   })
@@ -390,8 +385,8 @@ describe('useSwapCandidates', () => {
       const mockCandidates = {
         items: [
           {
-            faculty_id: 'faculty-2',
-            faculty_name: 'Dr. Jones',
+            facultyId: 'faculty-2',
+            facultyName: 'Dr. Jones',
             available_weeks: ['2024-01-08', '2024-01-15'],
             compatibility_score: 0.85,
             constraints_met: true,
@@ -415,7 +410,7 @@ describe('useSwapCandidates', () => {
 
       expect(result.current.data).toEqual(mockCandidates)
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('source_faculty_id=faculty-1')
+        expect.stringContaining('sourceFacultyId=faculty-1')
       )
     })
 
@@ -458,7 +453,7 @@ describe('useSwapCreate', () => {
     it('should create one-to-one swap', async () => {
       const mockResponse = {
         success: true,
-        request_id: 'swap-123',
+        requestId: 'swap-123',
         message: 'Swap request created',
       }
 
@@ -470,11 +465,11 @@ describe('useSwapCreate', () => {
 
       act(() => {
         result.current.mutate({
-          source_faculty_id: 'faculty-1',
-          source_week: '2024-01-01',
-          target_faculty_id: 'faculty-2',
-          target_week: '2024-01-08',
-          swap_type: SwapType.ONE_TO_ONE,
+          sourceFacultyId: 'faculty-1',
+          sourceWeek: '2024-01-01',
+          targetFacultyId: 'faculty-2',
+          targetWeek: '2024-01-08',
+          swapType: SwapType.ONE_TO_ONE,
         })
       })
 
@@ -488,9 +483,9 @@ describe('useSwapCreate', () => {
     it('should create absorb swap with auto-match', async () => {
       const mockResponse = {
         success: true,
-        request_id: 'swap-123',
+        requestId: 'swap-123',
         message: 'Swap request created',
-        candidates_notified: 5,
+        candidatesNotified: 5,
       }
 
       mockedApi.post.mockResolvedValue(mockResponse)
@@ -501,9 +496,9 @@ describe('useSwapCreate', () => {
 
       act(() => {
         result.current.mutate({
-          source_faculty_id: 'faculty-1',
-          source_week: '2024-01-01',
-          swap_type: SwapType.ABSORB,
+          sourceFacultyId: 'faculty-1',
+          sourceWeek: '2024-01-01',
+          swapType: SwapType.ABSORB,
           auto_match: true,
         })
       })
@@ -512,7 +507,7 @@ describe('useSwapCreate', () => {
         expect(result.current.isSuccess).toBe(true)
       })
 
-      expect(result.current.data?.candidates_notified).toBe(5)
+      expect(result.current.data?.candidatesNotified).toBe(5)
     })
   })
 
@@ -527,9 +522,9 @@ describe('useSwapCreate', () => {
 
       act(() => {
         result.current.mutate({
-          source_faculty_id: 'faculty-1',
-          source_week: '2024-01-01',
-          swap_type: SwapType.ONE_TO_ONE,
+          sourceFacultyId: 'faculty-1',
+          sourceWeek: '2024-01-01',
+          swapType: SwapType.ONE_TO_ONE,
         })
       })
 
@@ -550,9 +545,9 @@ describe('useSwapCreate', () => {
 
       act(() => {
         result.current.mutate({
-          source_faculty_id: 'faculty-1',
-          source_week: '2024-01-01',
-          swap_type: SwapType.ABSORB,
+          sourceFacultyId: 'faculty-1',
+          sourceWeek: '2024-01-01',
+          swapType: SwapType.ABSORB,
         })
       })
 
@@ -579,9 +574,9 @@ describe('useSwapCreate', () => {
 
       act(() => {
         result.current.mutate({
-          source_faculty_id: 'faculty-1',
-          source_week: '2024-01-01',
-          swap_type: SwapType.ABSORB,
+          sourceFacultyId: 'faculty-1',
+          sourceWeek: '2024-01-01',
+          swapType: SwapType.ABSORB,
         })
       })
 
@@ -590,7 +585,7 @@ describe('useSwapCreate', () => {
       act(() => {
         resolvePromise!({
           success: true,
-          request_id: 'swap-123',
+          requestId: 'swap-123',
           message: 'Created',
         })
       })
@@ -612,7 +607,7 @@ describe('useSwapApprove', () => {
       const mockResponse = {
         success: true,
         message: 'Swap approved',
-        swap_id: 'swap-123',
+        swapId: 'swap-123',
       }
 
       mockedApi.post.mockResolvedValue(mockResponse)
@@ -623,7 +618,7 @@ describe('useSwapApprove', () => {
 
       act(() => {
         result.current.mutate({
-          swap_id: 'swap-123',
+          swapId: 'swap-123',
           notes: 'Approved - coverage confirmed',
         })
       })
@@ -647,7 +642,7 @@ describe('useSwapApprove', () => {
 
       act(() => {
         result.current.mutate({
-          swap_id: 'swap-123',
+          swapId: 'swap-123',
         })
       })
 
@@ -670,7 +665,7 @@ describe('useSwapReject', () => {
       const mockResponse = {
         success: true,
         message: 'Swap rejected',
-        swap_id: 'swap-123',
+        swapId: 'swap-123',
       }
 
       mockedApi.post.mockResolvedValue(mockResponse)
@@ -681,7 +676,7 @@ describe('useSwapReject', () => {
 
       act(() => {
         result.current.mutate({
-          swap_id: 'swap-123',
+          swapId: 'swap-123',
           reason: 'Coverage not available',
           notes: 'Rejected due to staffing constraints',
         })
@@ -706,7 +701,7 @@ describe('useSwapReject', () => {
 
       act(() => {
         result.current.mutate({
-          swap_id: 'swap-123',
+          swapId: 'swap-123',
           reason: 'Invalid',
         })
       })
@@ -731,8 +726,8 @@ describe('useAutoMatch', () => {
         success: true,
         candidates: [
           {
-            faculty_id: 'faculty-2',
-            faculty_name: 'Dr. Jones',
+            facultyId: 'faculty-2',
+            facultyName: 'Dr. Jones',
             available_weeks: ['2024-01-08'],
             compatibility_score: 0.9,
             constraints_met: true,
@@ -750,10 +745,10 @@ describe('useAutoMatch', () => {
 
       act(() => {
         result.current.mutate({
-          source_faculty_id: 'faculty-1',
-          source_week: '2024-01-01',
+          sourceFacultyId: 'faculty-1',
+          sourceWeek: '2024-01-01',
           max_candidates: 10,
-          prefer_one_to_one: true,
+          prefer_oneToOne: true,
         })
       })
 
@@ -781,8 +776,8 @@ describe('useAutoMatch', () => {
 
       act(() => {
         result.current.mutate({
-          source_faculty_id: 'faculty-1',
-          source_week: '2024-01-01',
+          sourceFacultyId: 'faculty-1',
+          sourceWeek: '2024-01-01',
         })
       })
 
@@ -805,8 +800,8 @@ describe('useAutoMatch', () => {
 
       act(() => {
         result.current.mutate({
-          source_faculty_id: 'faculty-1',
-          source_week: '2024-01-01',
+          sourceFacultyId: 'faculty-1',
+          sourceWeek: '2024-01-01',
         })
       })
 
@@ -823,8 +818,8 @@ describe('useAutoMatch', () => {
       const mockResponse = {
         success: true,
         candidates: Array.from({ length: 50 }, (_, i) => ({
-          faculty_id: `faculty-${i}`,
-          faculty_name: `Dr. ${i}`,
+          facultyId: `faculty-${i}`,
+          facultyName: `Dr. ${i}`,
           available_weeks: ['2024-01-08'],
           compatibility_score: 0.8,
           constraints_met: true,
@@ -841,8 +836,8 @@ describe('useAutoMatch', () => {
 
       act(() => {
         result.current.mutate({
-          source_faculty_id: 'faculty-1',
-          source_week: '2024-01-01',
+          sourceFacultyId: 'faculty-1',
+          sourceWeek: '2024-01-01',
           max_candidates: 100,
         })
       })

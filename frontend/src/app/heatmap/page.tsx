@@ -7,18 +7,18 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 // Default empty heatmap data to avoid undefined errors
 const EMPTY_HEATMAP_DATA: HeatmapData = {
-  x_labels: [],
-  y_labels: [],
-  z_values: [],
+  xLabels: [],
+  yLabels: [],
+  zValues: [],
 }
 
 export default function HeatmapPage() {
   const defaultDateRange = getDefaultDateRange()
   const [dateRange, setDateRange] = useState<DateRange>(defaultDateRange)
   const [filters, setFilters] = useState<HeatmapFilters>({
-    start_date: defaultDateRange.start,
-    end_date: defaultDateRange.end,
-    group_by: 'person',
+    startDate: defaultDateRange.start,
+    endDate: defaultDateRange.end,
+    groupBy: 'person',
   })
   // const [_viewMode, setViewMode] = useState<HeatmapViewMode>('coverage')
 
@@ -30,8 +30,8 @@ export default function HeatmapPage() {
     setDateRange(newDateRange)
     setFilters(prev => ({
       ...prev,
-      start_date: newDateRange.start,
-      end_date: newDateRange.end,
+      startDate: newDateRange.start,
+      endDate: newDateRange.end,
     }))
   }
 

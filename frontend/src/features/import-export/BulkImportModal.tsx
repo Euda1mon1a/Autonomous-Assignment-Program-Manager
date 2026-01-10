@@ -167,10 +167,10 @@ export function BulkImportModal({
   const handleDownloadTemplate = useCallback(() => {
     // Generate sample CSV template based on data type
     const templates: Record<ImportDataType, string> = {
-      people: 'name,email,type,pgy_level,performs_procedures,specialties,primary_duty\nJohn Doe,john.doe@example.com,resident,2,true,"cardiology",Outpatient\nJane Smith,jane.smith@example.com,faculty,,false,"internal medicine",Attending',
-      assignments: 'date,time_of_day,person_name,rotation_name,role,activity_override,notes\n2025-01-15,AM,John Doe,Clinic,primary,,\n2025-01-15,PM,Jane Smith,Procedures,supervising,,',
-      absences: 'person_name,start_date,end_date,absence_type,deployment_orders,tdy_location,notes\nJohn Doe,2025-01-20,2025-01-24,vacation,false,,Annual leave\nJane Smith,2025-02-01,2025-02-15,deployment,true,Fort Bragg,Military deployment',
-      schedules: 'date,time_of_day,person_name,rotation_name,role,activity_override\n2025-01-15,AM,John Doe,Morning Clinic,primary,\n2025-01-15,AM,Jane Smith,Morning Clinic,supervising,',
+      people: 'name,email,type,pgyLevel,performsProcedures,specialties,primaryDuty\nJohn Doe,john.doe@example.com,resident,2,true,"cardiology",Outpatient\nJane Smith,jane.smith@example.com,faculty,,false,"internal medicine",Attending',
+      assignments: 'date,timeOfDay,personName,rotationName,role,activityOverride,notes\n2025-01-15,AM,John Doe,Clinic,primary,,\n2025-01-15,PM,Jane Smith,Procedures,supervising,,',
+      absences: 'personName,startDate,endDate,absenceType,deploymentOrders,tdyLocation,notes\nJohn Doe,2025-01-20,2025-01-24,vacation,false,,Annual leave\nJane Smith,2025-02-01,2025-02-15,deployment,true,Fort Bragg,Military deployment',
+      schedules: 'date,timeOfDay,personName,rotationName,role,activityOverride\n2025-01-15,AM,John Doe,Morning Clinic,primary,\n2025-01-15,AM,Jane Smith,Morning Clinic,supervising,',
     };
 
     const content = templates[dataType];

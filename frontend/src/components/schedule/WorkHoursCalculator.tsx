@@ -15,7 +15,7 @@ interface WorkHoursCalculatorProps {
   /** Scheduled assignments in the current period */
   assignments: Array<{
     date: string
-    time_of_day: 'AM' | 'PM'
+    timeOfDay: 'AM' | 'PM'
     activity: string
   }>
   /** Hours per half-day block (default: 4 for AM/PM) */

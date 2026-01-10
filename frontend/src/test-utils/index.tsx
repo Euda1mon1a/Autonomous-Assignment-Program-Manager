@@ -115,62 +115,62 @@ export interface MockPerson {
   email: string;
   role: string;
   type: string;
-  pgy_level?: number;
-  created_at: string;
-  updated_at: string;
+  pgyLevel?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MockRotationTemplate {
   id: string;
   name: string;
   abbreviation: string;
-  activity_type: string;
-  background_color: string;
-  font_color: string;
-  created_at: string;
-  updated_at: string;
+  activityType: string;
+  backgroundColor: string;
+  fontColor: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MockBlock {
   id: string;
   date: string;
-  time_of_day: string;
-  created_at: string;
-  updated_at: string;
+  timeOfDay: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MockAssignment {
   id: string;
-  person_id: string;
-  block_id: string;
-  rotation_template_id: string;
+  personId: string;
+  blockId: string;
+  rotationTemplateId: string;
   role: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MockSwapRequest {
   id: string;
   requester_id: string;
   target_id: string;
-  requester_block_id: string;
-  target_block_id: string;
+  requester_blockId: string;
+  target_blockId: string;
   status: string;
-  swap_type: string;
+  swapType: string;
   reason: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MockAbsence {
   id: string;
-  person_id: string;
-  start_date: string;
-  end_date: string;
+  personId: string;
+  startDate: string;
+  endDate: string;
   reason: string;
   status: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MockPaginatedResponse<T> {
@@ -190,9 +190,9 @@ export const mockData = {
     email: 'test@example.com',
     role: 'RESIDENT',
     type: 'resident',
-    pgy_level: 1,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    pgyLevel: 1,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
     ...overrides,
   }),
 
@@ -203,11 +203,11 @@ export const mockData = {
     id: 'template-1',
     name: 'Inpatient Medicine',
     abbreviation: 'IM',
-    activity_type: 'inpatient',
-    background_color: '#e0e7ff',
-    font_color: '#4338ca',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    activityType: 'inpatient',
+    backgroundColor: '#e0e7ff',
+    fontColor: '#4338ca',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
     ...overrides,
   }),
 
@@ -217,9 +217,9 @@ export const mockData = {
   block: (overrides?: Partial<MockBlock>): MockBlock => ({
     id: 'block-1',
     date: '2024-01-01',
-    time_of_day: 'AM',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    timeOfDay: 'AM',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
     ...overrides,
   }),
 
@@ -228,12 +228,12 @@ export const mockData = {
    */
   assignment: (overrides?: Partial<MockAssignment>): MockAssignment => ({
     id: 'assignment-1',
-    person_id: 'person-1',
-    block_id: 'block-1',
-    rotation_template_id: 'template-1',
+    personId: 'person-1',
+    blockId: 'block-1',
+    rotationTemplateId: 'template-1',
     role: 'primary',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
     ...overrides,
   }),
 
@@ -244,13 +244,13 @@ export const mockData = {
     id: 'swap-1',
     requester_id: 'person-1',
     target_id: 'person-2',
-    requester_block_id: 'block-1',
-    target_block_id: 'block-2',
+    requester_blockId: 'block-1',
+    target_blockId: 'block-2',
     status: 'pending',
-    swap_type: 'one_to_one',
+    swapType: 'oneToOne',
     reason: 'Test swap request',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
     ...overrides,
   }),
 
@@ -259,13 +259,13 @@ export const mockData = {
    */
   absence: (overrides?: Partial<MockAbsence>): MockAbsence => ({
     id: 'absence-1',
-    person_id: 'person-1',
-    start_date: '2024-01-01',
-    end_date: '2024-01-01',
+    personId: 'person-1',
+    startDate: '2024-01-01',
+    endDate: '2024-01-01',
     reason: 'Vacation',
     status: 'approved',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
     ...overrides,
   }),
 

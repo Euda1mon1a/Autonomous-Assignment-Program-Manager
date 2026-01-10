@@ -27,17 +27,17 @@ describe('AbsenceCalendar', () => {
   const mockAbsences: Absence[] = [
     mockFactories.absence({
       id: 'absence-1',
-      person_id: 'person-1',
-      start_date: midMonthStr,
-      end_date: midMonthStr,
-      absence_type: 'vacation',
+      personId: 'person-1',
+      startDate: midMonthStr,
+      endDate: midMonthStr,
+      absenceType: 'vacation',
     }),
     mockFactories.absence({
       id: 'absence-2',
-      person_id: 'person-2',
-      start_date: midMonthStr,
-      end_date: midMonthStr,
-      absence_type: 'deployment',
+      personId: 'person-2',
+      startDate: midMonthStr,
+      endDate: midMonthStr,
+      absenceType: 'deployment',
     }),
   ]
 
@@ -399,7 +399,7 @@ describe('AbsenceCalendar', () => {
         />
       )
 
-      // Legend shows absence types (maternity_paternity is in the first 6 and displayed with underscore replaced)
+      // Legend shows absence types (maternityPaternity is in the first 6 and displayed with underscore replaced)
       expect(screen.getByText('maternity paternity')).toBeInTheDocument()
     })
 

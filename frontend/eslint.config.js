@@ -17,6 +17,10 @@ const eslintConfig = [
       "@typescript-eslint/no-explicit-any": "warn",
       "react/no-unescaped-entities": "off",
       "prefer-const": "warn",
+      // Phase 24: Prevent unclickable buttons (Session 086)
+      // jsx-a11y rules help catch interactive elements without proper handlers
+      "jsx-a11y/interactive-supports-focus": "warn",
+      "jsx-a11y/click-events-have-key-events": "warn",
       // CRITICAL: Enforce camelCase for API response types
       // The axios interceptor converts snake_case → camelCase, so TypeScript
       // interfaces MUST use camelCase or runtime access returns undefined.

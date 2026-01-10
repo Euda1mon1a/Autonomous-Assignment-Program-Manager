@@ -242,7 +242,7 @@ export function useValidateStrategy() {
   return useMutation<ValidationResult, ApiError, ValidationRequest>({
     mutationFn: (data) => post<ValidationResult>(`${BASE_URL}/validate`, data),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['game-theory', 'strategies', data.strategy_id] });
+      queryClient.invalidateQueries({ queryKey: ['game-theory', 'strategies', data.strategyId] });
     },
   });
 }

@@ -130,10 +130,10 @@ describe('useCreateTemplate', () => {
     await act(async () => {
       result.current.mutate({
         name: 'Inpatient Medicine',
-        activity_type: 'inpatient',
+        activityType: 'inpatient',
         abbreviation: 'IM',
-        supervision_required: true,
-        max_supervision_ratio: 4,
+        supervisionRequired: true,
+        maxSupervisionRatio: 4,
       })
     })
 
@@ -143,10 +143,10 @@ describe('useCreateTemplate', () => {
 
     expect(mockedApi.post).toHaveBeenCalledWith('/rotation-templates', {
       name: 'Inpatient Medicine',
-      activity_type: 'inpatient',
+      activityType: 'inpatient',
       abbreviation: 'IM',
-      supervision_required: true,
-      max_supervision_ratio: 4,
+      supervisionRequired: true,
+      maxSupervisionRatio: 4,
     })
     expect(result.current.data).toEqual(newTemplate)
   })
@@ -154,7 +154,7 @@ describe('useCreateTemplate', () => {
   it('should create template requiring procedure credential', async () => {
     const procedureTemplate = mockFactories.rotationTemplate({
       name: 'Interventional Cardiology',
-      requires_procedure_credential: true,
+      requiresProcedureCredential: true,
     })
     mockedApi.post.mockResolvedValueOnce(procedureTemplate)
 
@@ -166,8 +166,8 @@ describe('useCreateTemplate', () => {
     await act(async () => {
       result.current.mutate({
         name: 'Interventional Cardiology',
-        activity_type: 'procedure',
-        requires_procedure_credential: true,
+        activityType: 'procedure',
+        requiresProcedureCredential: true,
       })
     })
 
@@ -176,7 +176,7 @@ describe('useCreateTemplate', () => {
     })
 
     expect(mockedApi.post).toHaveBeenCalledWith('/rotation-templates', expect.objectContaining({
-      requires_procedure_credential: true,
+      requiresProcedureCredential: true,
     }))
   })
 
@@ -192,7 +192,7 @@ describe('useCreateTemplate', () => {
     await act(async () => {
       result.current.mutate({
         name: 'Duplicate Template',
-        activity_type: 'inpatient',
+        activityType: 'inpatient',
       })
     })
 
@@ -234,7 +234,7 @@ describe('useUpdateTemplate', () => {
   })
 
   it('should update supervision ratio', async () => {
-    const updatedTemplate = mockFactories.rotationTemplate({ max_supervision_ratio: 2 })
+    const updatedTemplate = mockFactories.rotationTemplate({ maxSupervisionRatio: 2 })
     mockedApi.put.mockResolvedValueOnce(updatedTemplate)
 
     const { result } = renderHook(
@@ -245,7 +245,7 @@ describe('useUpdateTemplate', () => {
     await act(async () => {
       result.current.mutate({
         id: 'template-1',
-        data: { max_supervision_ratio: 2 },
+        data: { maxSupervisionRatio: 2 },
       })
     })
 
@@ -253,7 +253,7 @@ describe('useUpdateTemplate', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(result.current.data?.max_supervision_ratio).toBe(2)
+    expect(result.current.data?.maxSupervisionRatio).toBe(2)
   })
 
   it('should handle not found errors', async () => {

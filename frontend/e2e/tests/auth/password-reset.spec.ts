@@ -105,8 +105,8 @@ test.describe('Password Reset', () => {
     await page.goto(`/reset-password?token=${mockToken}`);
 
     // Fill new password
-    await page.fill('input[name="new_password"]', 'NewPassword123!');
-    await page.fill('input[name="confirm_password"]', 'NewPassword123!');
+    await page.fill('input[name="newPassword"]', 'NewPassword123!');
+    await page.fill('input[name="confirmPassword"]', 'NewPassword123!');
     await page.click('button[type="submit"]');
 
     // Should redirect to login with success message
@@ -121,8 +121,8 @@ test.describe('Password Reset', () => {
     await page.goto(`/reset-password?token=${mockToken}`);
 
     // Try weak password
-    await page.fill('input[name="new_password"]', 'weak');
-    await page.fill('input[name="confirm_password"]', 'weak');
+    await page.fill('input[name="newPassword"]', 'weak');
+    await page.fill('input[name="confirmPassword"]', 'weak');
     await page.click('button[type="submit"]');
 
     // Should show validation error
@@ -134,8 +134,8 @@ test.describe('Password Reset', () => {
     const mockToken = 'test-reset-token-123';
     await page.goto(`/reset-password?token=${mockToken}`);
 
-    await page.fill('input[name="new_password"]', 'NewPassword123!');
-    await page.fill('input[name="confirm_password"]', 'DifferentPassword123!');
+    await page.fill('input[name="newPassword"]', 'NewPassword123!');
+    await page.fill('input[name="confirmPassword"]', 'DifferentPassword123!');
     await page.click('button[type="submit"]');
 
     // Should show mismatch error
@@ -148,8 +148,8 @@ test.describe('Password Reset', () => {
     const expiredToken = 'expired-token-123';
     await page.goto(`/reset-password?token=${expiredToken}`);
 
-    await page.fill('input[name="new_password"]', 'NewPassword123!');
-    await page.fill('input[name="confirm_password"]', 'NewPassword123!');
+    await page.fill('input[name="newPassword"]', 'NewPassword123!');
+    await page.fill('input[name="confirmPassword"]', 'NewPassword123!');
     await page.click('button[type="submit"]');
 
     // Should show token expired error
@@ -161,8 +161,8 @@ test.describe('Password Reset', () => {
     const invalidToken = 'invalid-token';
     await page.goto(`/reset-password?token=${invalidToken}`);
 
-    await page.fill('input[name="new_password"]', 'NewPassword123!');
-    await page.fill('input[name="confirm_password"]', 'NewPassword123!');
+    await page.fill('input[name="newPassword"]', 'NewPassword123!');
+    await page.fill('input[name="confirmPassword"]', 'NewPassword123!');
     await page.click('button[type="submit"]');
 
     // Should show invalid token error
@@ -175,14 +175,14 @@ test.describe('Password Reset', () => {
 
     // Use token first time
     await page.goto(`/reset-password?token=${usedToken}`);
-    await page.fill('input[name="new_password"]', 'NewPassword123!');
-    await page.fill('input[name="confirm_password"]', 'NewPassword123!');
+    await page.fill('input[name="newPassword"]', 'NewPassword123!');
+    await page.fill('input[name="confirmPassword"]', 'NewPassword123!');
     await page.click('button[type="submit"]');
 
     // Try to use same token again
     await page.goto(`/reset-password?token=${usedToken}`);
-    await page.fill('input[name="new_password"]', 'AnotherPassword123!');
-    await page.fill('input[name="confirm_password"]', 'AnotherPassword123!');
+    await page.fill('input[name="newPassword"]', 'AnotherPassword123!');
+    await page.fill('input[name="confirmPassword"]', 'AnotherPassword123!');
     await page.click('button[type="submit"]');
 
     // Should show token already used error
@@ -224,7 +224,7 @@ test.describe('Password Reset', () => {
     const mockToken = 'test-reset-token-123';
     await page.goto(`/reset-password?token=${mockToken}`);
 
-    const passwordInput = page.locator('input[name="new_password"]');
+    const passwordInput = page.locator('input[name="newPassword"]');
     const strengthIndicator = page.locator('[data-testid="password-strength"]');
 
     if (await strengthIndicator.isVisible()) {
@@ -242,7 +242,7 @@ test.describe('Password Reset', () => {
     const mockToken = 'test-reset-token-123';
     await page.goto(`/reset-password?token=${mockToken}`);
 
-    const passwordInput = page.locator('input[name="new_password"]');
+    const passwordInput = page.locator('input[name="newPassword"]');
     const toggleButton = page.locator('[data-testid="toggle-password"]');
 
     if (await toggleButton.isVisible()) {
@@ -285,8 +285,8 @@ test.describe('Password Reset - Security', () => {
 
     for (const token of tokens) {
       await page.goto(`/reset-password?token=${token}`);
-      await page.fill('input[name="new_password"]', 'Password123!');
-      await page.fill('input[name="confirm_password"]', 'Password123!');
+      await page.fill('input[name="newPassword"]', 'Password123!');
+      await page.fill('input[name="confirmPassword"]', 'Password123!');
       await page.click('button[type="submit"]');
 
       // Error message should be generic

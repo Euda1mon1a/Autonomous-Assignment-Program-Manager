@@ -31,31 +31,31 @@ export interface ListResponse<T> {
 }
 
 export interface AssignmentFilters {
-  start_date?: string;
-  end_date?: string;
-  person_id?: string;
+  startDate?: string;
+  endDate?: string;
+  personId?: string;
   role?: string;
 }
 
 export interface ScheduleGenerateRequest {
-  start_date: string;
-  end_date: string;
-  pgy_levels?: number[];
-  rotation_template_ids?: string[];
-  algorithm?: "greedy" | "cp_sat" | "pulp" | "hybrid";
+  startDate: string;
+  endDate: string;
+  pgyLevels?: number[];
+  rotationTemplateIds?: string[];
+  algorithm?: "greedy" | "cpSat" | "pulp" | "hybrid";
   timeout_seconds?: number;
 }
 
 export interface ScheduleGenerateResponse {
   status: "success" | "partial" | "failed";
   message: string;
-  total_blocks_assigned: number;
-  total_blocks: number;
+  totalBlocks_assigned: number;
+  totalBlocks: number;
   validation: ValidationResult;
   run_id?: string;
-  solver_stats?: {
-    total_residents?: number;
-    coverage_rate?: number;
+  solverStats?: {
+    totalResidents?: number;
+    coverageRate?: number;
     solve_time?: number;
     iterations?: number;
     branches?: number;
@@ -140,7 +140,7 @@ export function useSchedule(
     queryKey: ["schedule", startIso, endIso],
     queryFn: () =>
       get<ListResponse<Assignment>>(
-        `/assignments?start_date=${startDateStr}&end_date=${endDateStr}`
+        `/assignments?startDate=${startDateStr}&endDate=${endDateStr}`
       ),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
@@ -173,15 +173,15 @@ export function useSchedule(
  *
  *   const handleGenerate = () => {
  *     mutate({
- *       start_date: '2024-07-01',
- *       end_date: '2024-06-30',
- *       pgy_levels: [1, 2, 3],
+ *       startDate: '2024-07-01',
+ *       endDate: '2024-06-30',
+ *       pgyLevels: [1, 2, 3],
  *       algorithm: 'hybrid',
  *       timeout_seconds: 300,
  *     }, {
  *       onSuccess: (result) => {
  *         if (result.status === 'success') {
- *           toast.success(`Generated ${result.total_blocks_assigned} assignments`);
+ *           toast.success(`Generated ${result.totalBlocks_assigned} assignments`);
  *         } else {
  *           toast.warning('Partial schedule generated - review needed');
  *         }
@@ -192,7 +192,7 @@ export function useSchedule(
  *   return (
  *     <div>
  *       <GenerateButton onClick={handleGenerate} loading={isPending} />
- *       {data && <GenerationStats stats={data.solver_stats} />}
+ *       {data && <GenerationStats stats={data.solverStats} />}
  *     </div>
  *   );
  * }
@@ -271,7 +271,7 @@ export function useValidateSchedule(
     queryKey: scheduleQueryKeys.validation(startDate, endDate),
     queryFn: () =>
       get<ValidationResult>(
-        `/schedule/validate?start_date=${startDate}&end_date=${endDate}`
+        `/schedule/validate?startDate=${startDate}&endDate=${endDate}`
       ),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
@@ -572,9 +572,9 @@ export function useDeleteTemplate() {
  * ```tsx
  * function ResidentSchedule({ residentId }: Props) {
  *   const { data, isLoading } = useAssignments({
- *     person_id: residentId,
- *     start_date: '2024-07-01',
- *     end_date: '2024-12-31',
+ *     personId: residentId,
+ *     startDate: '2024-07-01',
+ *     endDate: '2024-12-31',
  *     role: 'resident',
  *   });
  *
@@ -600,9 +600,9 @@ export function useAssignments(
   >
 ) {
   const params = new URLSearchParams();
-  if (filters?.startDate) params.set("start_date", filters.startDate);
-  if (filters?.endDate) params.set("end_date", filters.endDate);
-  if (filters?.personId) params.set("person_id", filters.personId);
+  if (filters?.startDate) params.set("startDate", filters.startDate);
+  if (filters?.endDate) params.set("endDate", filters.endDate);
+  if (filters?.personId) params.set("personId", filters.personId);
   if (filters?.role) params.set("role", filters.role);
   const queryString = params.toString();
 
@@ -642,10 +642,10 @@ export function useAssignments(
  *
  *   const handleAssign = (personId: string) => {
  *     mutate({
- *       person_id: personId,
- *       rotation_id: rotation.id,
- *       start_date: date,
- *       end_date: addWeeks(date, rotation.duration_weeks),
+ *       personId: personId,
+ *       rotationId: rotation.id,
+ *       startDate: date,
+ *       endDate: addWeeks(date, rotation.duration_weeks),
  *     }, {
  *       onSuccess: () => {
  *         toast.success('Assignment created');

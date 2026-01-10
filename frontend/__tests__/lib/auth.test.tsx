@@ -34,9 +34,9 @@ const mockedApi = api as jest.Mocked<typeof api>
 // ============================================================================
 
 const mockRefreshResponse = {
-  access_token: 'new-access-token-123',
-  refresh_token: 'new-refresh-token-456',
-  token_type: 'bearer',
+  accessToken: 'new-access-token-123',
+  refreshToken: 'new-refresh-token-456',
+  tokenType: 'bearer',
 }
 
 // ============================================================================

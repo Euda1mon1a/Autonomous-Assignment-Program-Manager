@@ -97,7 +97,7 @@ export function ManualOverrideModal({
       setReason('');
       setJustification('');
       setExpiresAt('');
-      setIsAcgmeRelated(conflict.type === 'acgme_violation');
+      setIsAcgmeRelated(conflict.type === 'acgmeViolation');
       setAcgmeExceptionType('');
       setSupervisorRequired(conflict.severity === 'critical');
       setSupervisorApproved(false);
@@ -144,15 +144,15 @@ export function ManualOverrideModal({
     if (!conflict || !isValid()) return;
 
     const override: ManualOverride = {
-      conflict_id: conflict.id,
-      override_type: overrideType,
+      conflictId: conflict.id,
+      overrideType: overrideType,
       reason,
       justification,
-      expires_at: overrideType === 'temporary' ? expiresAt : undefined,
-      is_acgme_related: isAcgmeRelated,
+      expiresAt: overrideType === 'temporary' ? expiresAt : undefined,
+      isAcgmeRelated: isAcgmeRelated,
       acgme_exception_type: isAcgmeRelated ? acgmeExceptionType : undefined,
-      supervisor_approval_required: supervisorRequired,
-      supervisor_approved: supervisorApproved,
+      supervisorApprovalRequired: supervisorRequired,
+      supervisorApproved: supervisorApproved,
       supervisor_id: supervisorApproved ? supervisorId || undefined : undefined,
     };
 
@@ -172,7 +172,7 @@ export function ManualOverrideModal({
   if (!isOpen || !conflict) return null;
 
   const isCritical = conflict.severity === 'critical';
-  const isAcgmeViolation = conflict.type === 'acgme_violation';
+  const isAcgmeViolation = conflict.type === 'acgmeViolation';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center animate-fadeIn">
@@ -249,12 +249,12 @@ export function ManualOverrideModal({
               <div className="flex items-center gap-4 text-xs text-gray-500">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5" />
-                  {format(new Date(conflict.conflict_date), 'MMMM d, yyyy')}
-                  {conflict.conflict_session && ` (${conflict.conflict_session})`}
+                  {format(new Date(conflict.conflictDate), 'MMMM d, yyyy')}
+                  {conflict.conflictSession && ` (${conflict.conflictSession})`}
                 </span>
                 <span className="flex items-center gap-1">
                   <User className="w-3.5 h-3.5" />
-                  {conflict.affected_person_ids.length} affected
+                  {conflict.affectedPersonIds.length} affected
                 </span>
               </div>
             </div>

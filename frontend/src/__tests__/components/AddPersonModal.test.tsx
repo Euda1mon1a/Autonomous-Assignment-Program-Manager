@@ -184,12 +184,12 @@ describe('AddPersonModal', () => {
         name: 'Dr. New Resident',
         email: null,
         type: 'resident' as const,
-        pgy_level: 1,
-        performs_procedures: false,
+        pgyLevel: 1,
+        performsProcedures: false,
         specialties: null,
-        primary_duty: null,
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z',
+        primaryDuty: null,
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
       })
 
       renderWithProviders(

@@ -115,11 +115,11 @@ export function useCellActions(options: UseCellActionsOptions = {}): UseCellActi
       }
       // Create an assignment with "off" as activity override
       await createMutation.mutateAsync({
-        block_id: blockId,
-        person_id: personId,
+        blockId: blockId,
+        personId: personId,
         role: AssignmentRole.PRIMARY,
-        activity_override: 'OFF',
-        created_by: user?.id,
+        activityOverride: 'OFF',
+        createdBy: user?.id,
       });
     },
     [canEdit, createMutation, user]

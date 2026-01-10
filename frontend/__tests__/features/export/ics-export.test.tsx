@@ -183,7 +183,7 @@ describe('CalendarExportButton', () => {
 
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
-          expect.stringContaining('start_date=2024-01-01&end_date=2024-06-30')
+          expect.stringContaining('startDate=2024-01-01&endDate=2024-06-30')
         )
       })
     })
@@ -316,7 +316,7 @@ describe('CalendarExportButton', () => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              person_id: 'person-123',
+              personId: 'person-123',
               expires_days: null,
             }),
           })
@@ -552,7 +552,7 @@ describe('SimpleCalendarExportButton', () => {
 
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
-          expect.stringContaining('start_date=2024-01-01&end_date=2024-06-30')
+          expect.stringContaining('startDate=2024-01-01&endDate=2024-06-30')
         )
       })
     })
@@ -574,7 +574,7 @@ describe('SimpleCalendarExportButton', () => {
 
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
-          expect.stringMatching(/start_date=.*&end_date=.*/)
+          expect.stringMatching(/startDate=.*&endDate=.*/)
         )
       })
     })

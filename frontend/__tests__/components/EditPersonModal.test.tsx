@@ -49,13 +49,13 @@ describe('EditPersonModal', () => {
     name: 'Dr. John Smith',
     email: 'john.smith@example.com',
     type: PersonType.RESIDENT,
-    pgy_level: 2,
-    performs_procedures: true,
+    pgyLevel: 2,
+    performsProcedures: true,
     specialties: ['Cardiology', 'Internal Medicine'],
-    primary_duty: null,
-    faculty_role: null,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    primaryDuty: null,
+    facultyRole: null,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
   }
 
   const defaultProps = {
@@ -192,7 +192,7 @@ describe('EditPersonModal', () => {
 
     it('should show PGY level when switching back to resident', async () => {
       const user = userEvent.setup()
-      const facultyPerson = { ...mockPerson, type: PersonType.FACULTY, pgy_level: null }
+      const facultyPerson = { ...mockPerson, type: PersonType.FACULTY, pgyLevel: null }
 
       render(
         <EditPersonModal {...defaultProps} person={facultyPerson} />,
@@ -345,7 +345,7 @@ describe('EditPersonModal', () => {
           data: expect.objectContaining({
             name: 'Dr. Jane Doe',
             type: PersonType.RESIDENT,
-            pgy_level: 2,
+            pgyLevel: 2,
           }),
         })
       })

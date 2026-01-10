@@ -312,11 +312,11 @@ describe('CreateTemplateModal', () => {
       await waitFor(() => {
         expect(mockMutateAsync).toHaveBeenCalledWith({
           name: 'Cardiology Clinic',
-          activity_type: 'clinic',
+          activityType: 'clinic',
           abbreviation: 'CARD',
-          requires_procedure_credential: false,
-          supervision_required: true,
-          max_supervision_ratio: 4,
+          requiresProcedureCredential: false,
+          supervisionRequired: true,
+          maxSupervisionRatio: 4,
         })
       })
     })
@@ -392,14 +392,14 @@ describe('CreateTemplateModal', () => {
       await waitFor(() => {
         expect(mockMutateAsync).toHaveBeenCalledWith({
           name: 'Advanced Procedures',
-          activity_type: 'clinic',
+          activityType: 'clinic',
           abbreviation: 'ADV',
-          clinic_location: 'Building A, Room 101',
-          max_residents: 3,
-          requires_specialty: 'Cardiology',
-          requires_procedure_credential: true,
-          supervision_required: true,
-          max_supervision_ratio: 4,
+          clinicLocation: 'Building A, Room 101',
+          maxResidents: 3,
+          requiresSpecialty: 'Cardiology',
+          requiresProcedureCredential: true,
+          supervisionRequired: true,
+          maxSupervisionRatio: 4,
         })
       })
     })

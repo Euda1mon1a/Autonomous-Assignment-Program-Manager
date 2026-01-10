@@ -8,41 +8,67 @@ import { render, screen, fireEvent } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { AbsenceList } from '../AbsenceList';
 import { mockData } from '@/test-utils';
-import type { Absence, Person } from '@/types/api';
+import { AbsenceType, PersonType, type Absence, type Person } from '@/types/api';
 
 describe('AbsenceList', () => {
   const mockOnEdit = jest.fn();
   const mockOnDelete = jest.fn();
 
   const mockPeople: Person[] = [
-    mockData.person({ id: 'person-1', name: 'Dr. John Smith', type: 'resident', pgy_level: 2 }),
-    mockData.person({ id: 'person-2', name: 'Dr. Jane Doe', type: 'faculty' }),
+    {
+      id: 'person-1',
+      name: 'Dr. John Smith',
+      email: 'john.smith@example.com',
+      type: PersonType.RESIDENT,
+      pgyLevel: 2,
+      performsProcedures: true,
+      specialties: ['Internal Medicine'],
+      primaryDuty: null,
+      facultyRole: null,
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+    },
+    {
+      id: 'person-2',
+      name: 'Dr. Jane Doe',
+      email: 'jane.doe@example.com',
+      type: PersonType.FACULTY,
+      pgyLevel: null,
+      performsProcedures: true,
+      specialties: ['Cardiology'],
+      primaryDuty: null,
+      facultyRole: null,
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+    },
   ];
 
   const mockAbsences: Absence[] = [
     {
       id: 'absence-1',
-      person_id: 'person-1',
-      start_date: '2024-01-15',
-      end_date: '2024-01-17',
-      absence_type: 'vacation',
-      deployment_orders: false,
-      tdy_location: null,
-      replacement_activity: null,
+      personId: 'person-1',
+      startDate: '2024-01-15',
+      endDate: '2024-01-17',
+      absenceType: AbsenceType.VACATION,
+      deploymentOrders: false,
+      tdyLocation: null,
+      replacementActivity: null,
       notes: 'Winter break',
-      created_at: '2024-01-01T00:00:00Z',
+      isAwayFromProgram: true,
+      createdAt: '2024-01-01T00:00:00Z',
     },
     {
       id: 'absence-2',
-      person_id: 'person-2',
-      start_date: '2024-01-20',
-      end_date: '2024-01-22',
-      absence_type: 'conference',
-      deployment_orders: false,
-      tdy_location: null,
-      replacement_activity: null,
+      personId: 'person-2',
+      startDate: '2024-01-20',
+      endDate: '2024-01-22',
+      absenceType: AbsenceType.CONFERENCE,
+      deploymentOrders: false,
+      tdyLocation: null,
+      replacementActivity: null,
       notes: null,
-      created_at: '2024-01-01T00:00:00Z',
+      isAwayFromProgram: true,
+      createdAt: '2024-01-01T00:00:00Z',
     },
   ];
 
@@ -189,27 +215,29 @@ describe('AbsenceList', () => {
       const unsortedAbsences: Absence[] = [
         {
           id: 'absence-3',
-          person_id: 'person-1',
-          start_date: '2024-02-01',
-          end_date: '2024-02-01',
-          absence_type: 'vacation',
-          deployment_orders: false,
-          tdy_location: null,
-          replacement_activity: null,
+          personId: 'person-1',
+          startDate: '2024-02-01',
+          endDate: '2024-02-01',
+          absenceType: AbsenceType.VACATION,
+          deploymentOrders: false,
+          tdyLocation: null,
+          replacementActivity: null,
           notes: null,
-          created_at: '2024-01-01T00:00:00Z',
+          isAwayFromProgram: true,
+          createdAt: '2024-01-01T00:00:00Z',
         },
         {
           id: 'absence-1',
-          person_id: 'person-1',
-          start_date: '2024-01-15',
-          end_date: '2024-01-15',
-          absence_type: 'vacation',
-          deployment_orders: false,
-          tdy_location: null,
-          replacement_activity: null,
+          personId: 'person-1',
+          startDate: '2024-01-15',
+          endDate: '2024-01-15',
+          absenceType: AbsenceType.VACATION,
+          deploymentOrders: false,
+          tdyLocation: null,
+          replacementActivity: null,
           notes: null,
-          created_at: '2024-01-01T00:00:00Z',
+          isAwayFromProgram: true,
+          createdAt: '2024-01-01T00:00:00Z',
         },
       ];
 
@@ -313,15 +341,16 @@ describe('AbsenceList', () => {
       const orphanAbsence: Absence[] = [
         {
           id: 'absence-orphan',
-          person_id: 'non-existent',
-          start_date: '2024-01-15',
-          end_date: '2024-01-15',
-          absence_type: 'vacation',
-          deployment_orders: false,
-          tdy_location: null,
-          replacement_activity: null,
+          personId: 'non-existent',
+          startDate: '2024-01-15',
+          endDate: '2024-01-15',
+          absenceType: AbsenceType.VACATION,
+          deploymentOrders: false,
+          tdyLocation: null,
+          replacementActivity: null,
           notes: null,
-          created_at: '2024-01-01T00:00:00Z',
+          isAwayFromProgram: true,
+          createdAt: '2024-01-01T00:00:00Z',
         },
       ];
 
@@ -339,10 +368,10 @@ describe('AbsenceList', () => {
 
     it('handles all absence types with correct colors', () => {
       const allTypesAbsences: Absence[] = [
-        { ...mockAbsences[0], id: '1', absence_type: 'vacation' },
-        { ...mockAbsences[0], id: '2', absence_type: 'sick' },
-        { ...mockAbsences[0], id: '3', absence_type: 'deployment' },
-        { ...mockAbsences[0], id: '4', absence_type: 'conference' },
+        { ...mockAbsences[0], id: '1', absenceType: AbsenceType.VACATION },
+        { ...mockAbsences[0], id: '2', absenceType: AbsenceType.SICK },
+        { ...mockAbsences[0], id: '3', absenceType: AbsenceType.DEPLOYMENT },
+        { ...mockAbsences[0], id: '4', absenceType: AbsenceType.CONFERENCE },
       ];
 
       render(

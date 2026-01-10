@@ -9,7 +9,7 @@
 // Algorithm & Configuration Types
 // ============================================================================
 
-export type Algorithm = 'greedy' | 'cp_sat' | 'pulp' | 'hybrid';
+export type Algorithm = 'greedy' | 'cpSat' | 'pulp' | 'hybrid';
 
 export interface ConstraintConfig {
   id: string;

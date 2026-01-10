@@ -132,7 +132,7 @@ test.describe('Login Page', () => {
 
       // Verify session persists (check cookies)
       const cookies = await page.context().cookies();
-      const sessionCookie = cookies.find((c) => c.name === 'session' || c.name === 'access_token');
+      const sessionCookie = cookies.find((c) => c.name === 'session' || c.name === 'accessToken');
       expect(sessionCookie).toBeDefined();
     }
   });

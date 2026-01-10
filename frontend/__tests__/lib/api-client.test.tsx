@@ -61,7 +61,9 @@ jest.mock('@/lib/auth', () => ({
 // Now import the api module (after mocks are set up)
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const apiModule = require('@/lib/api')
-const { api, get, post, put, patch, del } = apiModule
+const { api, post, put, patch, del } = apiModule
+// Type the get function to preserve generic parameter
+const get = apiModule.get as <T>(url: string, config?: unknown) => Promise<T>
 
 describe('API Client', () => {
   beforeEach(() => {
@@ -186,7 +188,7 @@ describe('API Client', () => {
   describe('PUT Requests', () => {
     it('should make PUT request with JSON body', async () => {
       const requestData = { id: '1', name: 'Updated' }
-      const responseData = { ...requestData, updated_at: '2024-01-01' }
+      const responseData = { ...requestData, updatedAt: '2024-01-01' }
       mockAxiosInstance.put.mockResolvedValueOnce({ data: responseData })
 
       const result = await put('/users/1', requestData)

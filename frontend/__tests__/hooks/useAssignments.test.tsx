@@ -10,6 +10,7 @@ import {
   useDeleteAssignment,
   useEmergencyCoverage,
 } from '@/lib/hooks'
+import { AssignmentRole } from '@/types/api'
 import { createWrapper, mockFactories, mockResponses } from '../utils/test-utils'
 import * as api from '@/lib/api'
 
@@ -50,7 +51,7 @@ describe('useAssignments', () => {
     mockedApi.get.mockResolvedValueOnce(mockResponses.listAssignments)
 
     const { result } = renderHook(
-      () => useAssignments({ start_date: '2024-02-01', end_date: '2024-02-28' }),
+      () => useAssignments({ startDate: '2024-02-01', endDate: '2024-02-28' }),
       { wrapper: createWrapper() }
     )
 
@@ -58,14 +59,14 @@ describe('useAssignments', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/assignments?start_date=2024-02-01&end_date=2024-02-28')
+    expect(mockedApi.get).toHaveBeenCalledWith('/assignments?startDate=2024-02-01&endDate=2024-02-28')
   })
 
   it('should filter by person ID', async () => {
     mockedApi.get.mockResolvedValueOnce(mockResponses.listAssignments)
 
     const { result } = renderHook(
-      () => useAssignments({ person_id: 'person-1' }),
+      () => useAssignments({ personId: 'person-1' }),
       { wrapper: createWrapper() }
     )
 
@@ -73,14 +74,14 @@ describe('useAssignments', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/assignments?person_id=person-1')
+    expect(mockedApi.get).toHaveBeenCalledWith('/assignments?personId=person-1')
   })
 
   it('should filter by role', async () => {
     mockedApi.get.mockResolvedValueOnce(mockResponses.listAssignments)
 
     const { result } = renderHook(
-      () => useAssignments({ role: 'supervising' }),
+      () => useAssignments({ role: AssignmentRole.SUPERVISING }),
       { wrapper: createWrapper() }
     )
 
@@ -124,10 +125,10 @@ describe('useCreateAssignment', () => {
 
     await act(async () => {
       result.current.mutate({
-        block_id: 'block-1',
-        person_id: 'person-1',
-        role: 'primary',
-        rotation_template_id: 'template-1',
+        blockId: 'block-1',
+        personId: 'person-1',
+        role: AssignmentRole.PRIMARY,
+        rotationTemplateId: 'template-1',
       })
     })
 
@@ -136,17 +137,17 @@ describe('useCreateAssignment', () => {
     })
 
     expect(mockedApi.post).toHaveBeenCalledWith('/assignments', {
-      block_id: 'block-1',
-      person_id: 'person-1',
-      role: 'primary',
-      rotation_template_id: 'template-1',
+      blockId: 'block-1',
+      personId: 'person-1',
+      role: AssignmentRole.PRIMARY,
+      rotationTemplateId: 'template-1',
     })
     expect(result.current.data).toEqual(newAssignment)
   })
 
   it('should create assignment with activity override', async () => {
     const overrideAssignment = mockFactories.assignment({
-      activity_override: 'Special Coverage',
+      activityOverride: 'Special Coverage',
     })
     mockedApi.post.mockResolvedValueOnce(overrideAssignment)
 
@@ -157,10 +158,10 @@ describe('useCreateAssignment', () => {
 
     await act(async () => {
       result.current.mutate({
-        block_id: 'block-1',
-        person_id: 'person-1',
-        role: 'backup',
-        activity_override: 'Special Coverage',
+        blockId: 'block-1',
+        personId: 'person-1',
+        role: AssignmentRole.BACKUP,
+        activityOverride: 'Special Coverage',
         notes: 'Emergency backup for Dr. Smith',
       })
     })
@@ -170,7 +171,7 @@ describe('useCreateAssignment', () => {
     })
 
     expect(mockedApi.post).toHaveBeenCalledWith('/assignments', expect.objectContaining({
-      activity_override: 'Special Coverage',
+      activityOverride: 'Special Coverage',
     }))
   })
 
@@ -185,9 +186,9 @@ describe('useCreateAssignment', () => {
 
     await act(async () => {
       result.current.mutate({
-        block_id: 'block-1',
-        person_id: 'person-1',
-        role: 'primary',
+        blockId: 'block-1',
+        personId: 'person-1',
+        role: AssignmentRole.PRIMARY,
       })
     })
 
@@ -205,7 +206,7 @@ describe('useUpdateAssignment', () => {
   })
 
   it('should update an existing assignment', async () => {
-    const updatedAssignment = mockFactories.assignment({ role: 'supervising' })
+    const updatedAssignment = mockFactories.assignment({ role: AssignmentRole.SUPERVISING })
     mockedApi.put.mockResolvedValueOnce(updatedAssignment)
 
     const { result } = renderHook(
@@ -216,7 +217,7 @@ describe('useUpdateAssignment', () => {
     await act(async () => {
       result.current.mutate({
         id: 'assignment-1',
-        data: { role: 'supervising' },
+        data: { role: AssignmentRole.SUPERVISING },
       })
     })
 
@@ -224,7 +225,7 @@ describe('useUpdateAssignment', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(mockedApi.put).toHaveBeenCalledWith('/assignments/assignment-1', { role: 'supervising' })
+    expect(mockedApi.put).toHaveBeenCalledWith('/assignments/assignment-1', { role: AssignmentRole.SUPERVISING })
     expect(result.current.data?.role).toBe('supervising')
   })
 
@@ -263,7 +264,7 @@ describe('useUpdateAssignment', () => {
     await act(async () => {
       result.current.mutate({
         id: 'non-existent',
-        data: { role: 'backup' },
+        data: { role: AssignmentRole.BACKUP },
       })
     })
 
@@ -328,13 +329,13 @@ describe('useEmergencyCoverage', () => {
   it('should handle emergency coverage request', async () => {
     const mockResponse = {
       status: 'success',
-      replacements_found: 5,
-      coverage_gaps: 0,
-      requires_manual_review: false,
+      replacementsFound: 5,
+      coverageGaps: 0,
+      requiresManualReview: false,
       details: [
         {
           date: '2024-02-01',
-          original_assignment: 'Inpatient Medicine',
+          originalAssignment: 'Inpatient Medicine',
           replacement: 'Dr. Jane Doe',
           status: 'covered',
         },
@@ -349,10 +350,11 @@ describe('useEmergencyCoverage', () => {
 
     await act(async () => {
       result.current.mutate({
-        person_id: 'person-1',
-        start_date: '2024-02-01',
-        end_date: '2024-02-07',
+        personId: 'person-1',
+        startDate: '2024-02-01',
+        endDate: '2024-02-07',
         reason: 'Family emergency',
+        isDeployment: false,
       })
     })
 
@@ -361,21 +363,22 @@ describe('useEmergencyCoverage', () => {
     })
 
     expect(mockedApi.post).toHaveBeenCalledWith('/schedule/emergency-coverage', {
-      person_id: 'person-1',
-      start_date: '2024-02-01',
-      end_date: '2024-02-07',
+      personId: 'person-1',
+      startDate: '2024-02-01',
+      endDate: '2024-02-07',
       reason: 'Family emergency',
+      isDeployment: false,
     })
     expect(result.current.data?.status).toBe('success')
-    expect(result.current.data?.replacements_found).toBe(5)
+    expect(result.current.data?.replacementsFound).toBe(5)
   })
 
   it('should handle deployment emergency', async () => {
     const mockResponse = {
       status: 'partial',
-      replacements_found: 8,
-      coverage_gaps: 2,
-      requires_manual_review: true,
+      replacementsFound: 8,
+      coverageGaps: 2,
+      requiresManualReview: true,
       details: [],
     }
     mockedApi.post.mockResolvedValueOnce(mockResponse)
@@ -387,11 +390,11 @@ describe('useEmergencyCoverage', () => {
 
     await act(async () => {
       result.current.mutate({
-        person_id: 'person-1',
-        start_date: '2024-03-01',
-        end_date: '2024-06-30',
+        personId: 'person-1',
+        startDate: '2024-03-01',
+        endDate: '2024-06-30',
         reason: 'Military deployment',
-        is_deployment: true,
+        isDeployment: true,
       })
     })
 
@@ -400,9 +403,9 @@ describe('useEmergencyCoverage', () => {
     })
 
     expect(mockedApi.post).toHaveBeenCalledWith('/schedule/emergency-coverage', expect.objectContaining({
-      is_deployment: true,
+      isDeployment: true,
     }))
-    expect(result.current.data?.requires_manual_review).toBe(true)
+    expect(result.current.data?.requiresManualReview).toBe(true)
   })
 
   it('should handle coverage failure', async () => {
@@ -416,10 +419,11 @@ describe('useEmergencyCoverage', () => {
 
     await act(async () => {
       result.current.mutate({
-        person_id: 'person-1',
-        start_date: '2024-02-01',
-        end_date: '2024-02-07',
+        personId: 'person-1',
+        startDate: '2024-02-01',
+        endDate: '2024-02-07',
         reason: 'Medical leave',
+        isDeployment: false,
       })
     })
 

@@ -8,40 +8,67 @@ import { render, screen, fireEvent, waitFor } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { AbsenceCalendar } from '../AbsenceCalendar';
 import { mockData } from '@/test-utils';
+import { PersonType, AbsenceType } from '@/types/api';
 import type { Absence, Person } from '@/types/api';
 
 describe('AbsenceCalendar', () => {
   const mockOnAbsenceClick = jest.fn();
 
   const mockPeople: Person[] = [
-    mockData.person({ id: 'person-1', name: 'Dr. John Smith' }),
-    mockData.person({ id: 'person-2', name: 'Dr. Jane Doe' }),
+    {
+      id: 'person-1',
+      name: 'Dr. John Smith',
+      email: 'john@hospital.org',
+      type: PersonType.RESIDENT,
+      pgyLevel: 2,
+      performsProcedures: true,
+      specialties: ['Internal Medicine'],
+      primaryDuty: null,
+      facultyRole: null,
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+    },
+    {
+      id: 'person-2',
+      name: 'Dr. Jane Doe',
+      email: 'jane@hospital.org',
+      type: PersonType.RESIDENT,
+      pgyLevel: 3,
+      performsProcedures: true,
+      specialties: ['Internal Medicine'],
+      primaryDuty: null,
+      facultyRole: null,
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+    },
   ];
 
   const mockAbsences: Absence[] = [
     {
       id: 'absence-1',
-      person_id: 'person-1',
-      start_date: '2024-01-15',
-      end_date: '2024-01-17',
-      absence_type: 'vacation',
-      deployment_orders: false,
-      tdy_location: null,
-      replacement_activity: null,
+      personId: 'person-1',
+      startDate: '2024-01-15',
+      endDate: '2024-01-17',
+      absenceType: AbsenceType.VACATION,
+      isAwayFromProgram: true,
+      deploymentOrders: false,
+      tdyLocation: null,
+      replacementActivity: null,
       notes: null,
-      created_at: '2024-01-01T00:00:00Z',
+      createdAt: '2024-01-01T00:00:00Z',
     },
     {
       id: 'absence-2',
-      person_id: 'person-2',
-      start_date: '2024-01-20',
-      end_date: '2024-01-22',
-      absence_type: 'conference',
-      deployment_orders: false,
-      tdy_location: null,
-      replacement_activity: null,
+      personId: 'person-2',
+      startDate: '2024-01-20',
+      endDate: '2024-01-22',
+      absenceType: AbsenceType.CONFERENCE,
+      isAwayFromProgram: true,
+      deploymentOrders: false,
+      tdyLocation: null,
+      replacementActivity: null,
       notes: null,
-      created_at: '2024-01-01T00:00:00Z',
+      createdAt: '2024-01-01T00:00:00Z',
     },
   ];
 
@@ -230,15 +257,16 @@ describe('AbsenceCalendar', () => {
       const multiDayAbsence: Absence[] = [
         {
           id: 'absence-3',
-          person_id: 'person-1',
-          start_date: '2024-01-15',
-          end_date: '2024-01-20', // 6 days
-          absence_type: 'vacation',
-          deployment_orders: false,
-          tdy_location: null,
-          replacement_activity: null,
+          personId: 'person-1',
+          startDate: '2024-01-15',
+          endDate: '2024-01-20', // 6 days
+          absenceType: AbsenceType.VACATION,
+          isAwayFromProgram: true,
+          deploymentOrders: false,
+          tdyLocation: null,
+          replacementActivity: null,
           notes: null,
-          created_at: '2024-01-01T00:00:00Z',
+          createdAt: '2024-01-01T00:00:00Z',
         },
       ];
 
@@ -258,24 +286,33 @@ describe('AbsenceCalendar', () => {
 
   describe('Overflow Handling', () => {
     it('shows "+X more" when more than 3 absences on one day', () => {
-      const manyAbsences: Absence[] = [
-        ...Array.from({ length: 5 }, (_, i) => ({
-          id: `absence-${i}`,
-          person_id: `person-${i}`,
-          start_date: '2024-01-15',
-          end_date: '2024-01-15',
-          absence_type: 'vacation' as const,
-          deployment_orders: false,
-          tdy_location: null,
-          replacement_activity: null,
-          notes: null,
-          created_at: '2024-01-01T00:00:00Z',
-        })),
-      ];
+      const manyAbsences: Absence[] = Array.from({ length: 5 }, (_, i) => ({
+        id: `absence-${i}`,
+        personId: `person-${i}`,
+        startDate: '2024-01-15',
+        endDate: '2024-01-15',
+        absenceType: AbsenceType.VACATION,
+        isAwayFromProgram: true,
+        deploymentOrders: false,
+        tdyLocation: null,
+        replacementActivity: null,
+        notes: null,
+        createdAt: '2024-01-01T00:00:00Z',
+      }));
 
-      const manyPeople = Array.from({ length: 5 }, (_, i) =>
-        mockData.person({ id: `person-${i}`, name: `Person ${i}` })
-      );
+      const manyPeople: Person[] = Array.from({ length: 5 }, (_, i) => ({
+        id: `person-${i}`,
+        name: `Person ${i}`,
+        email: `person${i}@hospital.org`,
+        type: PersonType.RESIDENT,
+        pgyLevel: 1,
+        performsProcedures: false,
+        specialties: ['Internal Medicine'],
+        primaryDuty: null,
+        facultyRole: null,
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
+      }));
 
       render(
         <AbsenceCalendar
@@ -319,15 +356,16 @@ describe('AbsenceCalendar', () => {
       const orphanAbsence: Absence[] = [
         {
           id: 'absence-orphan',
-          person_id: 'non-existent-person',
-          start_date: '2024-01-15',
-          end_date: '2024-01-15',
-          absence_type: 'vacation',
-          deployment_orders: false,
-          tdy_location: null,
-          replacement_activity: null,
+          personId: 'non-existent-person',
+          startDate: '2024-01-15',
+          endDate: '2024-01-15',
+          absenceType: AbsenceType.VACATION,
+          isAwayFromProgram: true,
+          deploymentOrders: false,
+          tdyLocation: null,
+          replacementActivity: null,
           notes: null,
-          created_at: '2024-01-01T00:00:00Z',
+          createdAt: '2024-01-01T00:00:00Z',
         },
       ];
 

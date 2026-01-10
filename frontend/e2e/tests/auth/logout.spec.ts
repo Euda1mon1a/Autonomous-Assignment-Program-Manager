@@ -74,7 +74,7 @@ test.describe('Logout Functionality', () => {
     // Get cookies before logout
     const cookiesBefore = await adminPage.context().cookies();
     const hasAuthCookie = cookiesBefore.some(
-      (c) => c.name === 'access_token' || c.name === 'session'
+      (c) => c.name === 'accessToken' || c.name === 'session'
     );
     expect(hasAuthCookie).toBeTruthy();
 
@@ -86,7 +86,7 @@ test.describe('Logout Functionality', () => {
     // Get cookies after logout
     const cookiesAfter = await adminPage.context().cookies();
     const stillHasAuthCookie = cookiesAfter.some(
-      (c) => c.name === 'access_token' || c.name === 'session'
+      (c) => c.name === 'accessToken' || c.name === 'session'
     );
     expect(stillHasAuthCookie).toBeFalsy();
   });
@@ -106,7 +106,7 @@ test.describe('Logout Functionality', () => {
 
     // Local storage should be cleared (or user-specific data cleared)
     const localStorageValue = await adminPage.evaluate(() => {
-      return localStorage.getItem('access_token') || localStorage.getItem('user');
+      return localStorage.getItem('accessToken') || localStorage.getItem('user');
     });
     expect(localStorageValue).toBeNull();
   });

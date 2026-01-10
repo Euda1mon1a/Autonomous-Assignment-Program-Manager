@@ -15,7 +15,7 @@ describe('ConflictHighlight', () => {
     },
     {
       id: 'conflict-2',
-      type: 'acgme_violation',
+      type: 'acgmeViolation',
       severity: 'warning',
       message: 'PGY-1 resident exceeds 80-hour work limit',
       affectedPersons: ['Dr. Jones'],

@@ -49,7 +49,7 @@ test.describe('Authentication', () => {
 
       // Security: Verify httpOnly cookie is set (not accessible via JavaScript)
       const cookies = await page.context().cookies();
-      const authCookie = cookies.find(c => c.name === 'access_token');
+      const authCookie = cookies.find(c => c.name === 'accessToken');
       expect(authCookie).toBeTruthy();
       expect(authCookie?.httpOnly).toBe(true);
     });
@@ -68,7 +68,7 @@ test.describe('Authentication', () => {
 
       // Security: Verify no auth cookie was set
       const cookies = await page.context().cookies();
-      const authCookie = cookies.find(c => c.name === 'access_token');
+      const authCookie = cookies.find(c => c.name === 'accessToken');
       expect(authCookie).toBeFalsy();
     });
 
@@ -155,7 +155,7 @@ test.describe('Authentication', () => {
 
       // Security: Verify httpOnly cookie exists
       let cookies = await page.context().cookies();
-      let authCookie = cookies.find(c => c.name === 'access_token');
+      let authCookie = cookies.find(c => c.name === 'accessToken');
       expect(authCookie).toBeTruthy();
 
       // Click on user menu to open dropdown
@@ -172,7 +172,7 @@ test.describe('Authentication', () => {
 
       // Security: Verify auth cookie is cleared
       cookies = await page.context().cookies();
-      authCookie = cookies.find(c => c.name === 'access_token');
+      authCookie = cookies.find(c => c.name === 'accessToken');
       expect(authCookie).toBeFalsy();
     });
 
@@ -228,7 +228,7 @@ test.describe('Authentication', () => {
 
       // Security: Verify httpOnly cookie persists across refresh
       const cookies = await page.context().cookies();
-      const authCookie = cookies.find(c => c.name === 'access_token');
+      const authCookie = cookies.find(c => c.name === 'accessToken');
       expect(authCookie).toBeTruthy();
       expect(authCookie?.httpOnly).toBe(true);
     });
@@ -247,7 +247,7 @@ test.describe('Authentication', () => {
 
       // Security: Verify httpOnly cookie persists across navigation
       const cookies = await page.context().cookies();
-      const authCookie = cookies.find(c => c.name === 'access_token');
+      const authCookie = cookies.find(c => c.name === 'accessToken');
       expect(authCookie).toBeTruthy();
       expect(authCookie?.httpOnly).toBe(true);
     });
@@ -255,7 +255,7 @@ test.describe('Authentication', () => {
     test('should handle invalid token gracefully', async ({ page }) => {
       // Security: Set an invalid httpOnly cookie
       await page.context().addCookies([{
-        name: 'access_token',
+        name: 'accessToken',
         value: 'Bearer invalid-token-12345',
         domain: 'localhost',
         path: '/',
@@ -530,13 +530,13 @@ test.describe('Authentication', () => {
 
       // Security: Verify auth token is NOT accessible via JavaScript (httpOnly protection)
       const tokenFromJS = await page.evaluate(() => {
-        return document.cookie.split(';').find(c => c.trim().startsWith('access_token='));
+        return document.cookie.split(';').find(c => c.trim().startsWith('accessToken='));
       });
       expect(tokenFromJS).toBeFalsy(); // httpOnly cookies are not accessible via JavaScript
 
       // But verify the cookie exists at the browser level
       const cookies = await page.context().cookies();
-      const authCookie = cookies.find(c => c.name === 'access_token');
+      const authCookie = cookies.find(c => c.name === 'accessToken');
       expect(authCookie).toBeTruthy();
       expect(authCookie?.httpOnly).toBe(true);
     });

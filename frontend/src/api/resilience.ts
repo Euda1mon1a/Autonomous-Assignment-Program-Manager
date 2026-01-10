@@ -42,13 +42,13 @@ export async function fetchSystemHealth(
  * @returns Vulnerability report with critical faculty and recommendations
  */
 export async function fetchVulnerabilityReport(params?: {
-  start_date?: string;
-  end_date?: string;
+  startDate?: string;
+  endDate?: string;
   include_n2?: boolean;
 }): Promise<VulnerabilityReportResponse> {
   const queryParams = new URLSearchParams();
-  if (params?.start_date) queryParams.set("start_date", params.start_date);
-  if (params?.end_date) queryParams.set("end_date", params.end_date);
+  if (params?.startDate) queryParams.set("startDate", params.startDate);
+  if (params?.endDate) queryParams.set("endDate", params.endDate);
   if (params?.include_n2 !== undefined)
     queryParams.set("include_n2", String(params.include_n2));
 

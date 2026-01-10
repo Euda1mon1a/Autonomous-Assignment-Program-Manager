@@ -32,32 +32,32 @@ export class DatabaseHelper {
         email: 'admin@test.mil',
         password: 'TestPassword123!',
         role: 'ADMIN',
-        first_name: 'Admin',
-        last_name: 'User',
+        firstName: 'Admin',
+        lastName: 'User',
         id: 'test-admin-001',
       },
       {
         email: 'coordinator@test.mil',
         password: 'TestPassword123!',
         role: 'COORDINATOR',
-        first_name: 'Coordinator',
-        last_name: 'User',
+        firstName: 'Coordinator',
+        lastName: 'User',
         id: 'test-coord-001',
       },
       {
         email: 'faculty@test.mil',
         password: 'TestPassword123!',
         role: 'FACULTY',
-        first_name: 'Faculty',
-        last_name: 'Member',
+        firstName: 'Faculty',
+        lastName: 'Member',
         id: 'test-faculty-001',
       },
       {
         email: 'resident@test.mil',
         password: 'TestPassword123!',
         role: 'RESIDENT',
-        first_name: 'PGY2',
-        last_name: 'Resident',
+        firstName: 'PGY2',
+        lastName: 'Resident',
         id: 'test-resident-001',
       },
     ];
@@ -91,11 +91,11 @@ export class DatabaseHelper {
       const pgyLevel = (i % 3) + 1; // PGY1, PGY2, PGY3
       const resident = {
         id: `test-resident-${String(i).padStart(3, '0')}`,
-        first_name: `PGY${pgyLevel}`,
-        last_name: `Resident${i}`,
+        firstName: `PGY${pgyLevel}`,
+        lastName: `Resident${i}`,
         email: `resident${i}@test.mil`,
         role: 'RESIDENT',
-        pgy_level: pgyLevel,
+        pgyLevel: pgyLevel,
         specialty: 'Family Medicine',
         status: 'ACTIVE',
       };
@@ -123,8 +123,8 @@ export class DatabaseHelper {
     for (let i = 1; i <= count; i++) {
       const facultyMember = {
         id: `test-faculty-${String(i).padStart(3, '0')}`,
-        first_name: `Faculty`,
-        last_name: `Member${i}`,
+        firstName: `Faculty`,
+        lastName: `Member${i}`,
         email: `faculty${i}@test.mil`,
         role: 'FACULTY',
         specialty: 'Family Medicine',
@@ -266,9 +266,9 @@ export class DatabaseHelper {
 
     for (let i = 0; i < Math.min(residentIds.length, blockIds.length); i++) {
       const assignment = {
-        person_id: residentIds[i % residentIds.length],
-        block_id: blockIds[i],
-        rotation_id: rotationIds[i % rotationIds.length],
+        personId: residentIds[i % residentIds.length],
+        blockId: blockIds[i],
+        rotationId: rotationIds[i % rotationIds.length],
         status: 'CONFIRMED',
       };
 

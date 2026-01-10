@@ -23,8 +23,8 @@ describe('ExportButton', () => {
   ];
 
   const mockColumns = [
-    { key: 'name', label: 'Name' },
-    { key: 'email', label: 'Email' },
+    { key: 'name', header: 'Name' },
+    { key: 'email', header: 'Email' },
   ];
 
   beforeEach(() => {

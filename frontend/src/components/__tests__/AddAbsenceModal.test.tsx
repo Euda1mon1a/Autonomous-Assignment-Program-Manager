@@ -23,31 +23,30 @@ jest.mock('@/contexts/ToastContext', () => ({
 
 describe('AddAbsenceModal', () => {
   const mockOnClose = jest.fn();
-  const mockOnSuccess = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('renders when isOpen is true', () => {
-    render(<AddAbsenceModal isOpen={true} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+    render(<AddAbsenceModal isOpen={true} onClose={mockOnClose} />);
     expect(screen.getByText(/add absence/i)).toBeInTheDocument();
   });
 
   it('does not render when isOpen is false', () => {
-    render(<AddAbsenceModal isOpen={false} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+    render(<AddAbsenceModal isOpen={false} onClose={mockOnClose} />);
     expect(screen.queryByText(/add absence/i)).not.toBeInTheDocument();
   });
 
   it('calls onClose when cancel button clicked', () => {
-    render(<AddAbsenceModal isOpen={true} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+    render(<AddAbsenceModal isOpen={true} onClose={mockOnClose} />);
     const cancelButton = screen.getByText(/cancel/i);
     fireEvent.click(cancelButton);
     expect(mockOnClose).toHaveBeenCalled();
   });
 
   it('has form inputs for absence details', () => {
-    render(<AddAbsenceModal isOpen={true} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+    render(<AddAbsenceModal isOpen={true} onClose={mockOnClose} />);
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 });

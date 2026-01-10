@@ -16,10 +16,10 @@ const absenceTypeBadgeColors: Record<string, string> = {
   sick: 'bg-red-100 text-red-800',
   medical: 'bg-red-100 text-red-800',
   convalescent: 'bg-red-200 text-red-900',
-  maternity_paternity: 'bg-pink-100 text-pink-800',
+  maternityPaternity: 'bg-pink-100 text-pink-800',
   // Emergency (blocking - Hawaii reality)
-  family_emergency: 'bg-orange-100 text-orange-800',
-  emergency_leave: 'bg-orange-200 text-orange-900',
+  familyEmergency: 'bg-orange-100 text-orange-800',
+  emergencyLeave: 'bg-orange-200 text-orange-900',
   bereavement: 'bg-gray-200 text-gray-800',
   // Military
   deployment: 'bg-purple-100 text-purple-800',
@@ -34,10 +34,10 @@ const absenceTypeLabels: Record<string, string> = {
   sick: 'Sick',
   medical: 'Medical',
   convalescent: 'Convalescent',
-  maternity_paternity: 'Parental Leave',
+  maternityPaternity: 'Parental Leave',
   // Emergency (blocking - Hawaii reality)
-  family_emergency: 'Family Emergency',
-  emergency_leave: 'Emergency',
+  familyEmergency: 'Family Emergency',
+  emergencyLeave: 'Emergency',
   bereavement: 'Bereavement',
   // Military
   deployment: 'Deployment',
@@ -56,15 +56,15 @@ const impactColors: Record<ImpactLevel, string> = {
 
 interface AbsenceWithImpact {
   id: string
-  person_id: string
-  person_name: string
+  personId: string
+  personName: string
   person_role?: string
-  absence_type: string
-  start_date: string
-  end_date: string
+  absenceType: string
+  startDate: string
+  endDate: string
   days: number
   impact: ImpactLevel
-  concurrent_count: number
+  concurrentCount: number
 }
 
 export function UpcomingAbsences() {
@@ -142,15 +142,15 @@ export function UpcomingAbsences() {
 
         return {
           id: absence.id,
-          person_id: absence.personId,
-          person_name: person?.name ?? 'Unknown',
+          personId: absence.personId,
+          personName: person?.name ?? 'Unknown',
           person_role: person?.type,
-          absence_type: absence.absenceType,
-          start_date: absence.startDate,
-          end_date: absence.endDate,
+          absenceType: absence.absenceType,
+          startDate: absence.startDate,
+          endDate: absence.endDate,
           days,
           impact,
-          concurrent_count: maxConcurrent,
+          concurrentCount: maxConcurrent,
         }
       })
       .sort((a, b) => {
@@ -241,7 +241,7 @@ export function UpcomingAbsences() {
                       <span
                         className={`flex-shrink-0 px-1.5 py-0.5 rounded text-xs font-medium border ${impactColors[absence.impact]}`}
                         role="status"
-                        aria-label={`${absence.impact} impact: ${absence.concurrent_count} concurrent absences`}
+                        aria-label={`${absence.impact} impact: ${absence.concurrentCount} concurrent absences`}
                       >
                         {absence.impact === 'critical' ? 'Critical' : 'High'}
                       </span>
@@ -251,9 +251,9 @@ export function UpcomingAbsences() {
                     {format(parseISO(absence.startDate), 'MMM d')} -{' '}
                     {format(parseISO(absence.endDate), 'MMM d')}
                     <span className="text-gray-400"> • {absence.days}d</span>
-                    {absence.concurrent_count > 1 && (
+                    {absence.concurrentCount > 1 && (
                       <span className="text-amber-600">
-                        {' '}• <Users className="w-3 h-3 inline" aria-hidden="true" /> {absence.concurrent_count} out
+                        {' '}• <Users className="w-3 h-3 inline" aria-hidden="true" /> {absence.concurrentCount} out
                       </span>
                     )}
                   </p>

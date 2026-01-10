@@ -9,7 +9,7 @@ import { post } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface SwapRequestData {
-  assignment_id: string
+  assignmentId: string
   reason?: string
   preferred_dates?: string[]
 }
@@ -71,7 +71,7 @@ export function QuickSwapButton({
     (e: React.FormEvent) => {
       e.preventDefault()
       swapMutation.mutate({
-        assignment_id: assignmentId,
+        assignmentId: assignmentId,
         reason: reason || undefined,
       })
     },

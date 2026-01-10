@@ -101,13 +101,13 @@ const CredentialingUI: React.FC = () => {
         </div>
         <div className="bg-white rounded-lg shadow p-4" data-testid="stat-active-credentials">
           <div className="text-2xl font-bold text-green-600">
-            {facultyList.reduce((sum: number, f: FacultyCredentialSummary) => sum + f.active_credentials, 0)}
+            {facultyList.reduce((sum: number, f: FacultyCredentialSummary) => sum + f.activeCredentials, 0)}
           </div>
           <div className="text-gray-600">Active Credentials</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4" data-testid="stat-expiring-soon">
           <div className="text-2xl font-bold text-yellow-600">
-            {facultyList.reduce((sum: number, f: FacultyCredentialSummary) => sum + f.expiring_soon, 0)}
+            {facultyList.reduce((sum: number, f: FacultyCredentialSummary) => sum + f.expiringSoon, 0)}
           </div>
           <div className="text-gray-600">Expiring Soon</div>
         </div>
@@ -153,27 +153,27 @@ const CredentialingUI: React.FC = () => {
         <div className="space-y-4" data-testid="faculty-list">
           {facultyList.map((faculty: FacultyCredentialSummary) => (
             <div
-              key={faculty.person_id}
+              key={faculty.personId}
               className="bg-white rounded-lg shadow p-4"
-              data-testid={`faculty-card-${faculty.person_id}`}
+              data-testid={`faculty-card-${faculty.personId}`}
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="font-semibold text-gray-900">{faculty.person_name}</h3>
+                  <h3 className="font-semibold text-gray-900">{faculty.personName}</h3>
                   <div className="flex space-x-4 mt-1 text-sm">
                     <span className="text-gray-600">
-                      {faculty.active_credentials} / {faculty.total_credentials} Active
+                      {faculty.activeCredentials} / {faculty.totalCredentials} Active
                     </span>
-                    {faculty.expiring_soon > 0 && (
+                    {faculty.expiringSoon > 0 && (
                       <span className="text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded">
-                        {faculty.expiring_soon} Expiring Soon
+                        {faculty.expiringSoon} Expiring Soon
                       </span>
                     )}
                   </div>
                 </div>
                 <button
                   className="text-blue-600 hover:text-blue-800"
-                  aria-label={`View credentials for ${faculty.person_name}`}
+                  aria-label={`View credentials for ${faculty.personName}`}
                 >
                   View Details
                 </button>
@@ -204,11 +204,6 @@ function createWrapper() {
     defaultOptions: {
       queries: { retry: false },
       mutations: { retry: false },
-    },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
     },
   });
 
@@ -607,8 +602,8 @@ describe('Credentialing UI', () => {
       (hooks.useFacultyCredentials as jest.Mock).mockReturnValue({
         data: [
           procedureMockFactories.facultySummary({
-            active_credentials: 1,
-            total_credentials: 1,
+            activeCredentials: 1,
+            totalCredentials: 1,
           }),
         ],
         isLoading: false,
@@ -625,8 +620,8 @@ describe('Credentialing UI', () => {
       (hooks.useFacultyCredentials as jest.Mock).mockReturnValue({
         data: [
           procedureMockFactories.facultySummary({
-            active_credentials: 2,
-            total_credentials: 5,
+            activeCredentials: 2,
+            totalCredentials: 5,
           }),
         ],
         isLoading: false,
@@ -643,7 +638,7 @@ describe('Credentialing UI', () => {
       (hooks.useFacultyCredentials as jest.Mock).mockReturnValue({
         data: [
           procedureMockFactories.facultySummary({
-            expiring_soon: 3,
+            expiringSoon: 3,
           }),
         ],
         isLoading: false,
@@ -794,9 +789,9 @@ describe('Credentialing UI', () => {
       (hooks.useFacultyCredentials as jest.Mock).mockReturnValue({
         data: [
           procedureMockFactories.facultySummary({
-            total_credentials: 0,
-            active_credentials: 0,
-            expiring_soon: 0,
+            totalCredentials: 0,
+            activeCredentials: 0,
+            expiringSoon: 0,
             procedures: [],
           }),
         ],

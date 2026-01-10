@@ -12,8 +12,8 @@ import { useMutation } from "@tanstack/react-query";
 import { Download, FileSpreadsheet, FileText, Loader2 } from "lucide-react";
 import { Modal } from "@/components/Modal";
 import { exportBlockAssignments, downloadBlob } from "@/api/block-assignment-import";
-import type {
-  BlockAssignmentExportRequest,
+import {
+  type BlockAssignmentExportRequest,
   ExportFormat,
 } from "@/types/block-assignment-import";
 
@@ -47,7 +47,7 @@ export function BlockAssignmentExportModal({
   const [academicYear, setAcademicYear] = useState<number>(
     defaultAcademicYear ?? getCurrentAcademicYear()
   );
-  const [format, setFormat] = useState<ExportFormat>("csv");
+  const [format, setFormat] = useState<ExportFormat>(ExportFormat.CSV);
   const [includePgyLevel, setIncludePgyLevel] = useState(true);
   const [includeLeaveStatus, setIncludeLeaveStatus] = useState(false);
   const [blockNumbers, setBlockNumbers] = useState<string>("");
@@ -57,9 +57,9 @@ export function BlockAssignmentExportModal({
     mutationFn: async () => {
       const request: BlockAssignmentExportRequest = {
         format,
-        academic_year: academicYear,
-        include_pgy_level: includePgyLevel,
-        include_leave_status: includeLeaveStatus,
+        academicYear: academicYear,
+        includePgyLevel: includePgyLevel,
+        includeLeaveStatus: includeLeaveStatus,
       };
 
       // Parse block numbers if provided
@@ -69,7 +69,7 @@ export function BlockAssignmentExportModal({
           .map((b) => parseInt(b.trim(), 10))
           .filter((b) => !isNaN(b) && b >= 0 && b <= 13);
         if (blocks.length > 0) {
-          request.block_numbers = blocks;
+          request.blockNumbers = blocks;
         }
       }
 
@@ -143,7 +143,7 @@ export function BlockAssignmentExportModal({
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() => setFormat("csv")}
+              onClick={() => setFormat(ExportFormat.CSV)}
               className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
                 format === "csv"
                   ? "border-blue-500 bg-blue-50 text-blue-700"
@@ -155,7 +155,7 @@ export function BlockAssignmentExportModal({
             </button>
             <button
               type="button"
-              onClick={() => setFormat("xlsx")}
+              onClick={() => setFormat(ExportFormat.XLSX)}
               className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
                 format === "xlsx"
                   ? "border-green-500 bg-green-50 text-green-700"

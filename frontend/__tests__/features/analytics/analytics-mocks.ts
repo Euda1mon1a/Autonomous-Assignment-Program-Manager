@@ -201,10 +201,10 @@ export const analyticsMockFactories = {
   }),
 
   proposedChange: (overrides: Partial<ProposedChange> = {}): ProposedChange => ({
-    type: 'add_shift',
+    type: 'addShift',
     description: 'Add extra night shift coverage',
     parameters: {
-      resident_id: 'resident-123',
+      residentId: 'resident-123',
       date: '2024-02-15',
       shift_type: 'night',
     },

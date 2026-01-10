@@ -22,15 +22,15 @@ const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>
 
 describe('PDF Export Functionality', () => {
   const mockData = [
-    { id: '1', name: 'John Doe', role: 'Resident', pgy_level: 2 },
-    { id: '2', name: 'Jane Smith', role: 'Faculty', pgy_level: null },
-    { id: '3', name: 'Bob Johnson', role: 'Resident', pgy_level: 1 },
+    { id: '1', name: 'John Doe', role: 'Resident', pgyLevel: 2 },
+    { id: '2', name: 'Jane Smith', role: 'Faculty', pgyLevel: null },
+    { id: '3', name: 'Bob Johnson', role: 'Resident', pgyLevel: 1 },
   ]
 
   const mockColumns = [
     { key: 'name', header: 'Name' },
     { key: 'role', header: 'Role' },
-    { key: 'pgy_level', header: 'PGY Level' },
+    { key: 'pgyLevel', header: 'PGY Level' },
   ]
 
   beforeEach(() => {

@@ -54,9 +54,9 @@ export enum FacultyRole {
   /** Officer in Charge: 2/week */
   OIC = 'oic',
   /** Department Chief: 1/week, prefers Wed call */
-  DEPT_CHIEF = 'dept_chief',
+  DEPT_CHIEF = 'deptChief',
   /** Sports Medicine: 0 regular clinic, 4 SM clinic/week */
-  SPORTS_MED = 'sports_med',
+  SPORTS_MED = 'sportsMed',
   /** Core Faculty: max 4/week */
   CORE = 'core',
   /** Adjunct Faculty: not auto-scheduled, can be pre-loaded to FMIT */
@@ -98,7 +98,7 @@ export enum AbsenceType {
   /** Medical leave */
   MEDICAL = 'medical',
   /** Family emergency leave */
-  FAMILY_EMERGENCY = 'family_emergency',
+  FAMILY_EMERGENCY = 'familyEmergency',
   /** Conference attendance */
   CONFERENCE = 'conference',
   /** Sick leave */
@@ -106,11 +106,11 @@ export enum AbsenceType {
   /** Bereavement leave */
   BEREAVEMENT = 'bereavement',
   /** Emergency leave */
-  EMERGENCY_LEAVE = 'emergency_leave',
+  EMERGENCY_LEAVE = 'emergencyLeave',
   /** Convalescent leave */
   CONVALESCENT = 'convalescent',
   /** Maternity or paternity leave */
-  MATERNITY_PATERNITY = 'maternity_paternity',
+  MATERNITY_PATERNITY = 'maternityPaternity',
   /** Personal leave */
   PERSONAL = 'personal'
 }
@@ -136,7 +136,7 @@ export enum SchedulingAlgorithm {
   /** Greedy algorithm - fast but may not find optimal solution */
   GREEDY = 'greedy',
   /** Google OR-Tools CP-SAT solver - optimal but slower */
-  CP_SAT = 'cp_sat',
+  CP_SAT = 'cpSat',
   /** PuLP linear programming solver */
   PULP = 'pulp',
   /** Hybrid approach combining multiple algorithms */

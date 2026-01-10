@@ -19,25 +19,25 @@ import type { RotationPreference } from '@/types/admin-templates';
 const mockPreferences: RotationPreference[] = [
   {
     id: '1',
-    rotation_template_id: 'template-1',
-    preference_type: 'full_day_grouping',
+    rotationTemplateId: 'template-1',
+    preferenceType: 'full_day_grouping',
     weight: 'medium',
-    config_json: {},
-    is_active: true,
+    configJson: {},
+    isActive: true,
     description: 'Group AM and PM together',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
   },
   {
     id: '2',
-    rotation_template_id: 'template-1',
-    preference_type: 'avoid_friday_pm',
+    rotationTemplateId: 'template-1',
+    preferenceType: 'avoid_friday_pm',
     weight: 'high',
-    config_json: {},
-    is_active: true,
+    configJson: {},
+    isActive: true,
     description: null,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
   },
 ];
 
@@ -213,7 +213,7 @@ describe('PreferenceEditor', () => {
     it('shows inactive badge for inactive preferences', () => {
       const inactivePreference: RotationPreference = {
         ...mockPreferences[0],
-        is_active: false,
+        isActive: false,
       };
       render(
         <PreferenceEditor

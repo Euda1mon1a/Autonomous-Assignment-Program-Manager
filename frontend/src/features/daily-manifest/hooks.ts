@@ -33,10 +33,10 @@ export function useDailyManifest(
   timeOfDay: 'AM' | 'PM' | 'ALL' = 'AM',
   options?: Omit<UseQueryOptions<DailyManifestData, ApiError>, 'queryKey' | 'queryFn'>
 ) {
-  // Only include time_of_day param for AM/PM, omit for ALL (backend returns all if not specified)
+  // Only include timeOfDay param for AM/PM, omit for ALL (backend returns all if not specified)
   const params = new URLSearchParams({ date });
   if (timeOfDay !== 'ALL') {
-    params.set('time_of_day', timeOfDay);
+    params.set('timeOfDay', timeOfDay);
   }
   return useQuery<DailyManifestData, ApiError>({
     queryKey: manifestQueryKeys.byDate(date, timeOfDay),
@@ -67,8 +67,8 @@ export function useTodayManifest(
  * Fetch the date range where schedule data is available
  * Uses the blocks endpoint to determine min/max dates
  *
- * Note: The /blocks API returns items sorted ascending by date, time_of_day.
- * It only supports start_date, end_date, and block_number query params.
+ * Note: The /blocks API returns items sorted ascending by date, timeOfDay.
+ * It only supports startDate, endDate, and blockNumber query params.
  */
 export function useScheduleDateRange(
   options?: Omit<UseQueryOptions<ScheduleDateRange, ApiError>, 'queryKey' | 'queryFn'>
@@ -81,7 +81,7 @@ export function useScheduleDateRange(
 
       // If no blocks exist, return null range
       if (!response.items || response.items.length === 0) {
-        return { start_date: null, end_date: null, has_data: false };
+        return { startDate: null, endDate: null, hasData: false };
       }
 
       // First item is earliest (ascending order), last item is latest
@@ -89,9 +89,9 @@ export function useScheduleDateRange(
       const endDate = response.items[response.items.length - 1]?.date || null;
 
       return {
-        start_date: startDate,
-        end_date: endDate,
-        has_data: !!(startDate && endDate),
+        startDate: startDate,
+        endDate: endDate,
+        hasData: !!(startDate && endDate),
       };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes - date range changes infrequently

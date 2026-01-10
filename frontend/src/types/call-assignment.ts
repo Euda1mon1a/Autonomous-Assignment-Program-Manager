@@ -39,7 +39,7 @@ export interface CallAssignmentListResponse {
 // ============================================================================
 
 export interface CallAssignmentCreate {
-  callDate: string;  // Backend expects call_date for create
+  callDate: string;  // Backend expects callDate for create
   personId: string;
   callType?: string;  // Backend accepts: sunday, weekday, holiday, backup
   isWeekend?: boolean;
@@ -47,7 +47,7 @@ export interface CallAssignmentCreate {
 }
 
 export interface CallAssignmentUpdate {
-  callDate?: string;  // Backend expects call_date for update
+  callDate?: string;  // Backend expects callDate for update
   personId?: string;
   callType?: string;
   isWeekend?: boolean;

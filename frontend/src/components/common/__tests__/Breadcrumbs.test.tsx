@@ -79,8 +79,8 @@ describe('Breadcrumbs', () => {
 
   describe('Icons', () => {
     it('renders home icon for first item', () => {
-      render(<Breadcrumbs items={mockItems} showHomeIcon={true} />);
-      const { container } = render(<Breadcrumbs items={mockItems} showHomeIcon={true} />);
+      render(<Breadcrumbs items={mockItems} showHome={true} />);
+      const { container } = render(<Breadcrumbs items={mockItems} showHome={true} />);
       expect(container.querySelector('svg')).toBeInTheDocument();
     });
   });

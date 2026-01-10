@@ -2,7 +2,7 @@
  * FMIT Week Detection Tests
  *
  * Tests for verifying that FMIT week conflict detection works correctly,
- * including red conflict alert display when has_conflict=true and proper
+ * including red conflict alert display when hasConflict=true and proper
  * mocking of schedule context state.
  */
 
@@ -34,11 +34,6 @@ function createTestQueryClient() {
       mutations: {
         retry: false,
       },
-    },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
     },
   });
 }
@@ -187,7 +182,7 @@ describe('FMIT Week Detection', () => {
   // ==========================================================================
 
   describe('Red Conflict Alert Display', () => {
-    it('should display "(Has Conflict)" text when week has_conflict=true', () => {
+    it('should display "(Has Conflict)" text when week hasConflict=true', () => {
       setupDefaultMocks({ weeks: fmitMockFactories.fmitWeeksWithConflicts() });
 
       render(<SwapRequestForm />, { wrapper: createWrapper() });
@@ -197,7 +192,7 @@ describe('FMIT Week Detection', () => {
       expect(conflictTexts.length).toBeGreaterThan(0);
     });
 
-    it('should display conflict indicator for each week with has_conflict=true', () => {
+    it('should display conflict indicator for each week with hasConflict=true', () => {
       setupDefaultMocks({ weeks: fmitMockFactories.fmitWeeksWithConflicts() });
 
       render(<SwapRequestForm />, { wrapper: createWrapper() });
@@ -209,7 +204,7 @@ describe('FMIT Week Detection', () => {
       expect(conflictIndicators.length).toBe(2);
     });
 
-    it('should NOT display conflict indicator when week has_conflict=false', () => {
+    it('should NOT display conflict indicator when week hasConflict=false', () => {
       setupDefaultMocks({ weeks: fmitMockFactories.fmitWeeksNoConflicts() });
 
       render(<SwapRequestForm />, { wrapper: createWrapper() });

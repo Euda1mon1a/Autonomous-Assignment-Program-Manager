@@ -16,8 +16,8 @@ interface StrategyCardProps {
 }
 
 export function StrategyCard({ strategy, isSelected, onToggle, onValidate }: StrategyCardProps) {
-  const color = STRATEGY_COLORS[strategy.strategy_type] || '#6b7280';
-  const label = STRATEGY_LABELS[strategy.strategy_type] || strategy.strategy_type;
+  const color = STRATEGY_COLORS[strategy.strategyType] || '#6b7280';
+  const label = STRATEGY_LABELS[strategy.strategyType] || strategy.strategyType;
 
   return (
     <div
@@ -66,36 +66,36 @@ export function StrategyCard({ strategy, isSelected, onToggle, onValidate }: Str
         <div>
           <span className="text-gray-500 dark:text-gray-400">Utilization:</span>
           <span className="ml-1 font-medium text-gray-700 dark:text-gray-300">
-            {(strategy.utilization_target * 100).toFixed(0)}%
+            {(strategy.utilizationTarget * 100).toFixed(0)}%
           </span>
         </div>
         <div>
           <span className="text-gray-500 dark:text-gray-400">Cross-zone:</span>
           <span className="ml-1 font-medium text-gray-700 dark:text-gray-300">
-            {strategy.cross_zone_borrowing ? 'Yes' : 'No'}
+            {strategy.crossZoneBorrowing ? 'Yes' : 'No'}
           </span>
         </div>
         <div>
           <span className="text-gray-500 dark:text-gray-400">Sacrifice:</span>
           <span className="ml-1 font-medium text-gray-700 dark:text-gray-300 capitalize">
-            {strategy.sacrifice_willingness}
+            {strategy.sacrificeWillingness}
           </span>
         </div>
         <div>
           <span className="text-gray-500 dark:text-gray-400">Defense Lvl:</span>
           <span className="ml-1 font-medium text-gray-700 dark:text-gray-300">
-            {strategy.defense_activation_threshold}
+            {strategy.defenseActivationThreshold}
           </span>
         </div>
       </div>
 
       {/* Stats */}
-      {strategy.tournaments_participated > 0 && (
+      {strategy.tournamentsParticipated > 0 && (
         <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-gray-700">
-          <span>{strategy.tournaments_participated} tournaments</span>
-          <span>{strategy.total_wins} wins</span>
-          {strategy.average_score !== null && (
-            <span>Avg: {strategy.average_score.toFixed(2)}</span>
+          <span>{strategy.tournamentsParticipated} tournaments</span>
+          <span>{strategy.totalWins} wins</span>
+          {strategy.averageScore !== null && (
+            <span>Avg: {strategy.averageScore.toFixed(2)}</span>
           )}
         </div>
       )}

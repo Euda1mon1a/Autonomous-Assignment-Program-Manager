@@ -15,7 +15,7 @@ interface AddPersonModalProps {
 interface FormErrors {
   name?: string;
   email?: string;
-  pgy_level?: string;
+  pgyLevel?: string;
   general?: string;
 }
 
@@ -102,9 +102,9 @@ export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
       name: name.trim(),
       type,
       ...(email && { email: email.trim() }),
-      ...(type === PersonType.RESIDENT && { pgy_level: parseInt(pgyLevel) }),
-      ...(type === PersonType.FACULTY && { faculty_role: facultyRole }),
-      performs_procedures: performsProcedures,
+      ...(type === PersonType.RESIDENT && { pgyLevel: parseInt(pgyLevel) }),
+      ...(type === PersonType.FACULTY && { facultyRole: facultyRole }),
+      performsProcedures: performsProcedures,
       ...(specialties && { specialties: specialties.split(',').map(s => s.trim()).filter(Boolean) }),
     };
 

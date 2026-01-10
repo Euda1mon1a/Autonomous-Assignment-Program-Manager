@@ -453,7 +453,7 @@ describe('ConflictList', () => {
   describe('Empty States', () => {
     it('should show empty state when no conflicts', () => {
       mockedUseConflicts.mockReturnValue({
-        data: { items: [], total: 0, page: 1, page_size: 20, pages: 0 },
+        data: { items: [], total: 0, page: 1, pageSize: 20, pages: 0 },
         isLoading: false,
         isError: false,
         error: null,
@@ -469,7 +469,7 @@ describe('ConflictList', () => {
       const user = userEvent.setup();
 
       mockedUseConflicts.mockReturnValue({
-        data: { items: [], total: 0, page: 1, page_size: 20, pages: 0 },
+        data: { items: [], total: 0, page: 1, pageSize: 20, pages: 0 },
         isLoading: false,
         isError: false,
         error: null,

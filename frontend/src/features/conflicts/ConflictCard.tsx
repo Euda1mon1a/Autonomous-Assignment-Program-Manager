@@ -100,7 +100,7 @@ function getSeverityIcon(severity: ConflictSeverity) {
 function getTypeLabel(type: ConflictType): string {
   const labels: Record<ConflictType, string> = {
     scheduling_overlap: 'Scheduling Overlap',
-    acgme_violation: 'ACGME Violation',
+    acgmeViolation: 'ACGME Violation',
     supervision_missing: 'Missing Supervision',
     capacity_exceeded: 'Capacity Exceeded',
     absence_conflict: 'Absence Conflict',
@@ -116,7 +116,7 @@ function getTypeIcon(type: ConflictType) {
   switch (type) {
     case 'scheduling_overlap':
       return Calendar;
-    case 'acgme_violation':
+    case 'acgmeViolation':
       return Shield;
     case 'supervision_missing':
       return User;

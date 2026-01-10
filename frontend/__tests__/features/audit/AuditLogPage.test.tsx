@@ -40,11 +40,6 @@ function createWrapper() {
         retry: false,
       },
     },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
-    },
   });
 
   return function Wrapper({ children }: { children: React.ReactNode }) {

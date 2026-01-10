@@ -7,6 +7,7 @@
 import { render, screen, waitFor } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { AbsenceCalendar } from '@/components/AbsenceCalendar'
+import { PersonType, AbsenceType } from '@/types/api'
 import type { Absence, Person } from '@/types/api'
 
 // Mock data
@@ -15,64 +16,69 @@ const mockPeople: Person[] = [
     id: 'person-1',
     name: 'Dr. Alice Smith',
     email: 'alice@hospital.org',
-    type: 'resident',
-    pgy_level: 1,
-    performs_procedures: true,
+    type: PersonType.RESIDENT,
+    pgyLevel: 1,
+    performsProcedures: true,
     specialties: ['Internal Medicine'],
-    primary_duty: null,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    primaryDuty: null,
+    facultyRole: null,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
   },
   {
     id: 'person-2',
     name: 'Dr. Bob Jones',
     email: 'bob@hospital.org',
-    type: 'resident',
-    pgy_level: 2,
-    performs_procedures: false,
+    type: PersonType.RESIDENT,
+    pgyLevel: 2,
+    performsProcedures: false,
     specialties: ['Internal Medicine'],
-    primary_duty: null,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    primaryDuty: null,
+    facultyRole: null,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
   },
 ]
 
 const mockAbsences: Absence[] = [
   {
     id: 'absence-1',
-    person_id: 'person-1',
-    start_date: '2024-01-15',
-    end_date: '2024-01-17',
-    absence_type: 'vacation',
-    deployment_orders: false,
-    tdy_location: null,
-    replacement_activity: null,
+    personId: 'person-1',
+    startDate: '2024-01-15',
+    endDate: '2024-01-17',
+    absenceType: AbsenceType.VACATION,
+    isAwayFromProgram: true,
+    deploymentOrders: false,
+    tdyLocation: null,
+    replacementActivity: null,
     notes: 'Winter vacation',
-    created_at: '2024-01-01T00:00:00Z',
+    createdAt: '2024-01-01T00:00:00Z',
   },
   {
     id: 'absence-2',
-    person_id: 'person-2',
-    start_date: '2024-01-10',
-    end_date: '2024-01-12',
-    absence_type: 'conference',
-    deployment_orders: false,
-    tdy_location: 'Chicago, IL',
-    replacement_activity: null,
+    personId: 'person-2',
+    startDate: '2024-01-10',
+    endDate: '2024-01-12',
+    absenceType: AbsenceType.CONFERENCE,
+    isAwayFromProgram: true,
+    deploymentOrders: false,
+    tdyLocation: 'Chicago, IL',
+    replacementActivity: null,
     notes: 'Medical conference',
-    created_at: '2024-01-01T00:00:00Z',
+    createdAt: '2024-01-01T00:00:00Z',
   },
   {
     id: 'absence-3',
-    person_id: 'person-1',
-    start_date: '2024-01-20',
-    end_date: '2024-01-20',
-    absence_type: 'sick',
-    deployment_orders: false,
-    tdy_location: null,
-    replacement_activity: null,
+    personId: 'person-1',
+    startDate: '2024-01-20',
+    endDate: '2024-01-20',
+    absenceType: AbsenceType.SICK,
+    isAwayFromProgram: false,
+    deploymentOrders: false,
+    tdyLocation: null,
+    replacementActivity: null,
     notes: null,
-    created_at: '2024-01-20T00:00:00Z',
+    createdAt: '2024-01-20T00:00:00Z',
   },
 ]
 
@@ -250,20 +256,20 @@ describe('BlockCalendar (AbsenceCalendar)', () => {
         {
           ...mockAbsences[0],
           id: 'absence-multi-1',
-          start_date: '2024-01-15',
-          end_date: '2024-01-15',
+          startDate: '2024-01-15',
+          endDate: '2024-01-15',
         },
         {
           ...mockAbsences[1],
           id: 'absence-multi-2',
-          start_date: '2024-01-15',
-          end_date: '2024-01-15',
+          startDate: '2024-01-15',
+          endDate: '2024-01-15',
         },
         {
           ...mockAbsences[2],
           id: 'absence-multi-3',
-          start_date: '2024-01-15',
-          end_date: '2024-01-15',
+          startDate: '2024-01-15',
+          endDate: '2024-01-15',
         },
       ]
 
@@ -284,15 +290,15 @@ describe('BlockCalendar (AbsenceCalendar)', () => {
       // Create absences on a middle day of the month to avoid timezone edge cases
       // Using a range to ensure the absence appears on the calendar day
       const manyAbsences: Absence[] = [
-        { ...mockAbsences[0], id: 'abs-1', start_date: '2024-01-10', end_date: '2024-01-12' },
-        { ...mockAbsences[1], id: 'abs-2', start_date: '2024-01-10', end_date: '2024-01-12' },
-        { ...mockAbsences[2], id: 'abs-3', start_date: '2024-01-10', end_date: '2024-01-12' },
+        { ...mockAbsences[0], id: 'abs-1', startDate: '2024-01-10', endDate: '2024-01-12' },
+        { ...mockAbsences[1], id: 'abs-2', startDate: '2024-01-10', endDate: '2024-01-12' },
+        { ...mockAbsences[2], id: 'abs-3', startDate: '2024-01-10', endDate: '2024-01-12' },
         {
           ...mockAbsences[0],
           id: 'abs-4',
-          start_date: '2024-01-10',
-          end_date: '2024-01-12',
-          absence_type: 'personal',
+          startDate: '2024-01-10',
+          endDate: '2024-01-12',
+          absenceType: AbsenceType.PERSONAL,
         },
       ]
 
@@ -314,15 +320,16 @@ describe('BlockCalendar (AbsenceCalendar)', () => {
       const multiDayAbsence: Absence[] = [
         {
           id: 'absence-span',
-          person_id: 'person-1',
-          start_date: '2024-01-15',
-          end_date: '2024-01-20',
-          absence_type: 'vacation',
-          deployment_orders: false,
-          tdy_location: null,
-          replacement_activity: null,
+          personId: 'person-1',
+          startDate: '2024-01-15',
+          endDate: '2024-01-20',
+          absenceType: AbsenceType.VACATION,
+          isAwayFromProgram: true,
+          deploymentOrders: false,
+          tdyLocation: null,
+          replacementActivity: null,
           notes: 'Extended vacation',
-          created_at: '2024-01-01T00:00:00Z',
+          createdAt: '2024-01-01T00:00:00Z',
         },
       ]
 
@@ -359,7 +366,7 @@ describe('BlockCalendar (AbsenceCalendar)', () => {
         expect(mockOnAbsenceClick).toHaveBeenCalledTimes(1)
         expect(mockOnAbsenceClick).toHaveBeenCalledWith(
           expect.objectContaining({
-            absence_type: 'vacation',
+            absenceType: 'vacation',
           })
         )
       }
@@ -386,8 +393,8 @@ describe('BlockCalendar (AbsenceCalendar)', () => {
         expect(mockOnAbsenceClick).toHaveBeenCalledWith(
           expect.objectContaining({
             id: 'absence-2',
-            absence_type: 'conference',
-            person_id: 'person-2',
+            absenceType: 'conference',
+            personId: 'person-2',
           })
         )
       }
@@ -425,9 +432,9 @@ describe('BlockCalendar (AbsenceCalendar)', () => {
   describe('Absence Type Colors', () => {
     it('should apply different colors for different absence types', () => {
       const differentTypes: Absence[] = [
-        { ...mockAbsences[0], id: 'a1', absence_type: 'vacation' },
-        { ...mockAbsences[0], id: 'a2', absence_type: 'sick', start_date: '2024-01-16', end_date: '2024-01-16' },
-        { ...mockAbsences[0], id: 'a3', absence_type: 'conference', start_date: '2024-01-17', end_date: '2024-01-17' },
+        { ...mockAbsences[0], id: 'a1', absenceType: AbsenceType.VACATION },
+        { ...mockAbsences[0], id: 'a2', absenceType: AbsenceType.SICK, startDate: '2024-01-16', endDate: '2024-01-16' },
+        { ...mockAbsences[0], id: 'a3', absenceType: AbsenceType.CONFERENCE, startDate: '2024-01-17', endDate: '2024-01-17' },
       ]
 
       const { container } = render(

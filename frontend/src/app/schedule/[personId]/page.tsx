@@ -36,7 +36,7 @@ export default function PersonSchedulePage() {
     data: assignmentsData,
     isLoading: assignmentsLoading
   } = useAssignments(
-    { person_id: personId, start_date: startDateStr, end_date: endDateStr },
+    { personId: personId, startDate: startDateStr, endDate: endDateStr },
     { enabled: !!personId }
   )
 
@@ -49,12 +49,12 @@ export default function PersonSchedulePage() {
 
   // Build rotation template lookup
   const templateMap = useMemo(() => {
-    const map = new Map<string, { name: string; abbreviation: string; activity_type: string }>()
+    const map = new Map<string, { name: string; abbreviation: string; activityType: string }>()
     templatesData?.items?.forEach((t) => {
       map.set(t.id, {
         name: t.name,
         abbreviation: t.displayAbbreviation || t.abbreviation || t.name.substring(0, 3).toUpperCase(),
-        activity_type: t.activityType,
+        activityType: t.activityType,
       })
     })
     return map
@@ -69,14 +69,14 @@ export default function PersonSchedulePage() {
         ? templateMap.get(assignment.rotationTemplateId)
         : null
 
-      // In production, block data would provide date and time_of_day
-      // For now, extract from created_at or use block lookup
+      // In production, block data would provide date and timeOfDay
+      // For now, extract from createdAt or use block lookup
       const dateStr = assignment.createdAt.split('T')[0]
 
       return {
         id: assignment.id,
         date: dateStr,
-        time_of_day: 'AM' as const, // Would come from block data
+        timeOfDay: 'AM' as const, // Would come from block data
         activity: assignment.activityOverride || template?.activityType || 'Assignment',
         abbreviation: template?.abbreviation || 'ASN',
         role: assignment.role,

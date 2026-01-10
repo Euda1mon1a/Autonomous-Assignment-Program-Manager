@@ -26,7 +26,7 @@ export async function previewBlockAssignmentImport(
   const formData = new FormData();
   formData.append("csv_content", csvContent);
   if (academicYear) {
-    formData.append("academic_year", academicYear.toString());
+    formData.append("academicYear", academicYear.toString());
   }
 
   const response = await api.post<BlockAssignmentPreviewResponse>(
@@ -51,7 +51,7 @@ export async function previewBlockAssignmentImportFile(
   const formData = new FormData();
   formData.append("file", file);
   if (academicYear) {
-    formData.append("academic_year", academicYear.toString());
+    formData.append("academicYear", academicYear.toString());
   }
 
   const response = await api.post<BlockAssignmentPreviewResponse>(

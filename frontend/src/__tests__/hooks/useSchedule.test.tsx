@@ -19,38 +19,38 @@ const mockedApi = api as jest.Mocked<typeof api>
 const mockAssignments = [
   {
     id: 'assignment-1',
-    block_id: 'block-1',
-    person_id: 'person-1',
-    rotation_template_id: 'template-1',
+    blockId: 'block-1',
+    personId: 'person-1',
+    rotationTemplateId: 'template-1',
     role: 'primary' as const,
-    activity_override: null,
+    activityOverride: null,
     notes: null,
-    created_by: 'admin-1',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    createdBy: 'admin-1',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
   },
   {
     id: 'assignment-2',
-    block_id: 'block-2',
-    person_id: 'person-2',
-    rotation_template_id: 'template-2',
+    blockId: 'block-2',
+    personId: 'person-2',
+    rotationTemplateId: 'template-2',
     role: 'supervising' as const,
-    activity_override: null,
+    activityOverride: null,
     notes: 'Supervising rotation',
-    created_by: 'admin-1',
-    created_at: '2024-01-02T00:00:00Z',
-    updated_at: '2024-01-02T00:00:00Z',
+    createdBy: 'admin-1',
+    createdAt: '2024-01-02T00:00:00Z',
+    updatedAt: '2024-01-02T00:00:00Z',
   },
 ]
 
 // Mock validation result
 const mockValidationResult = {
   valid: true,
-  total_violations: 0,
+  totalViolations: 0,
   violations: [],
-  coverage_rate: 0.95,
+  coverageRate: 0.95,
   statistics: {
-    total_blocks: 100,
+    totalBlocks: 100,
     assigned_blocks: 95,
   },
 }
@@ -115,7 +115,7 @@ describe('useSchedule', () => {
     expect(result.current.data?.items).toHaveLength(mockAssignments.length)
     expect(result.current.data?.total).toBe(mockAssignments.length)
     expect(result.current.data?.items[0].role).toBe('primary')
-    expect(mockedApi.get).toHaveBeenCalledWith('/assignments?start_date=2024-01-01&end_date=2024-01-31')
+    expect(mockedApi.get).toHaveBeenCalledWith('/assignments?startDate=2024-01-01&endDate=2024-01-31')
   })
 
   it('should show loading state while fetching', async () => {
@@ -182,8 +182,8 @@ describe('useSchedule', () => {
     const firstAssignment = result.current.data?.items[0]
     expect(firstAssignment).toMatchObject({
       id: expect.any(String),
-      block_id: expect.any(String),
-      person_id: expect.any(String),
+      blockId: expect.any(String),
+      personId: expect.any(String),
       role: expect.any(String),
     })
   })
@@ -220,14 +220,14 @@ describe('useGenerateSchedule', () => {
     const generateResponse = {
       status: 'success' as const,
       message: 'Schedule generated successfully',
-      total_blocks_assigned: 95,
-      total_blocks: 100,
+      totalBlocks_assigned: 95,
+      totalBlocks: 100,
       validation: mockValidationResult,
       run_id: 'run-123',
-      solver_stats: {
-        total_blocks: 100,
-        total_residents: 10,
-        coverage_rate: 0.95,
+      solverStats: {
+        totalBlocks: 100,
+        totalResidents: 10,
+        coverageRate: 0.95,
         solve_time: 5.2,
         iterations: 150,
         branches: null,
@@ -243,10 +243,10 @@ describe('useGenerateSchedule', () => {
 
     // Execute mutation
     result.current.mutate({
-      start_date: '2024-01-01',
-      end_date: '2024-01-31',
+      startDate: '2024-01-01',
+      endDate: '2024-01-31',
       algorithm: 'greedy',
-      pgy_levels: [1, 2, 3],
+      pgyLevels: [1, 2, 3],
     })
 
     // Wait for mutation to complete
@@ -256,12 +256,12 @@ describe('useGenerateSchedule', () => {
 
     // Check response
     expect(result.current.data?.status).toBe('success')
-    expect(result.current.data?.total_blocks_assigned).toBe(95)
-    expect(result.current.data?.total_blocks).toBe(100)
+    expect(result.current.data?.totalBlocks_assigned).toBe(95)
+    expect(result.current.data?.totalBlocks).toBe(100)
     expect(result.current.data?.run_id).toBe('run-123')
     expect(mockedApi.post).toHaveBeenCalledWith('/schedule/generate', expect.objectContaining({
-      start_date: '2024-01-01',
-      end_date: '2024-01-31',
+      startDate: '2024-01-01',
+      endDate: '2024-01-31',
       algorithm: 'greedy',
     }))
   })
@@ -270,17 +270,17 @@ describe('useGenerateSchedule', () => {
     const generateResponse = {
       status: 'partial' as const,
       message: 'Schedule partially generated',
-      total_blocks_assigned: 70,
-      total_blocks: 100,
+      totalBlocks_assigned: 70,
+      totalBlocks: 100,
       validation: {
         valid: false,
-        total_violations: 5,
+        totalViolations: 5,
         violations: [],
-        coverage_rate: 0.7,
+        coverageRate: 0.7,
         statistics: null,
       },
       run_id: 'run-124',
-      solver_stats: null,
+      solverStats: null,
     }
 
     mockedApi.post.mockResolvedValueOnce(generateResponse)
@@ -290,9 +290,9 @@ describe('useGenerateSchedule', () => {
     })
 
     result.current.mutate({
-      start_date: '2024-01-01',
-      end_date: '2024-01-31',
-      algorithm: 'cp_sat',
+      startDate: '2024-01-01',
+      endDate: '2024-01-31',
+      algorithm: 'cpSat',
       timeout_seconds: 60,
     })
 
@@ -301,7 +301,7 @@ describe('useGenerateSchedule', () => {
     })
 
     expect(result.current.data?.status).toBe('partial')
-    expect(result.current.data?.total_blocks_assigned).toBe(70)
+    expect(result.current.data?.totalBlocks_assigned).toBe(70)
   })
 
   it('should handle API error during generation', async () => {
@@ -313,8 +313,8 @@ describe('useGenerateSchedule', () => {
     })
 
     result.current.mutate({
-      start_date: '2024-01-01',
-      end_date: '2024-01-31',
+      startDate: '2024-01-01',
+      endDate: '2024-01-31',
       algorithm: 'greedy',
     })
 
@@ -329,11 +329,11 @@ describe('useGenerateSchedule', () => {
     const generateResponse = {
       status: 'success' as const,
       message: 'Schedule generated with CP-SAT',
-      total_blocks_assigned: 98,
-      total_blocks: 100,
+      totalBlocks_assigned: 98,
+      totalBlocks: 100,
       validation: mockValidationResult,
       run_id: 'run-125',
-      solver_stats: null,
+      solverStats: null,
     }
 
     mockedApi.post.mockResolvedValueOnce(generateResponse)
@@ -343,10 +343,10 @@ describe('useGenerateSchedule', () => {
     })
 
     result.current.mutate({
-      start_date: '2024-01-01',
-      end_date: '2024-01-31',
-      algorithm: 'cp_sat',
-      rotation_template_ids: ['template-1', 'template-2'],
+      startDate: '2024-01-01',
+      endDate: '2024-01-31',
+      algorithm: 'cpSat',
+      rotationTemplateIds: ['template-1', 'template-2'],
     })
 
     await waitFor(() => {
@@ -354,8 +354,8 @@ describe('useGenerateSchedule', () => {
     })
 
     expect(mockedApi.post).toHaveBeenCalledWith('/schedule/generate', expect.objectContaining({
-      algorithm: 'cp_sat',
-      rotation_template_ids: ['template-1', 'template-2'],
+      algorithm: 'cpSat',
+      rotationTemplateIds: ['template-1', 'template-2'],
     }))
   })
 })
@@ -383,37 +383,37 @@ describe('useValidateSchedule', () => {
 
     // Check validation result
     expect(result.current.data?.valid).toBe(true)
-    expect(result.current.data?.total_violations).toBe(0)
-    expect(result.current.data?.coverage_rate).toBe(0.95)
-    expect(mockedApi.get).toHaveBeenCalledWith('/schedule/validate?start_date=2024-01-01&end_date=2024-01-31')
+    expect(result.current.data?.totalViolations).toBe(0)
+    expect(result.current.data?.coverageRate).toBe(0.95)
+    expect(mockedApi.get).toHaveBeenCalledWith('/schedule/validate?startDate=2024-01-01&endDate=2024-01-31')
   })
 
   it('should return violations when schedule is invalid', async () => {
     const invalidResult = {
       valid: false,
-      total_violations: 3,
+      totalViolations: 3,
       violations: [
         {
           type: 'ACGME_HOURS',
           severity: 'CRITICAL' as const,
-          person_id: 'person-1',
-          person_name: 'Dr. Smith',
-          block_id: 'block-1',
+          personId: 'person-1',
+          personName: 'Dr. Smith',
+          blockId: 'block-1',
           message: 'Weekly hours exceed 80',
           details: { weekly_hours: 85 },
         },
         {
           type: 'SUPERVISION',
           severity: 'HIGH' as const,
-          person_id: 'person-2',
-          person_name: 'Dr. Jones',
-          block_id: 'block-2',
+          personId: 'person-2',
+          personName: 'Dr. Jones',
+          blockId: 'block-2',
           message: 'Insufficient supervision ratio',
           details: { ratio: 1.5 },
         },
       ],
-      coverage_rate: 0.88,
-      statistics: { total_blocks: 100 },
+      coverageRate: 0.88,
+      statistics: { totalBlocks: 100 },
     }
 
     mockedApi.get.mockResolvedValueOnce(invalidResult)
@@ -428,7 +428,7 @@ describe('useValidateSchedule', () => {
     })
 
     expect(result.current.data?.valid).toBe(false)
-    expect(result.current.data?.total_violations).toBe(3)
+    expect(result.current.data?.totalViolations).toBe(3)
     expect(result.current.data?.violations).toHaveLength(2)
     expect(result.current.data?.violations[0].severity).toBe('CRITICAL')
   })
@@ -453,7 +453,7 @@ describe('useValidateSchedule', () => {
     const validationWithStats = {
       ...mockValidationResult,
       statistics: {
-        total_blocks: 100,
+        totalBlocks: 100,
         assigned_blocks: 95,
         unassigned_blocks: 5,
         coverage_by_pgy: {
@@ -476,6 +476,6 @@ describe('useValidateSchedule', () => {
     })
 
     expect(result.current.data?.statistics).toBeDefined()
-    expect(result.current.data?.statistics?.total_blocks).toBe(100)
+    expect(result.current.data?.statistics?.totalBlocks).toBe(100)
   })
 })

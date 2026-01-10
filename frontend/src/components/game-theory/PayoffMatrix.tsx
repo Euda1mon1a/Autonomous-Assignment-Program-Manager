@@ -18,17 +18,17 @@ export function PayoffMatrix({ tournamentId }: PayoffMatrixProps) {
 
   if (isLoading) return <LoadingSpinner />;
   if (error) return <p className="text-red-500 text-sm">Failed to load results</p>;
-  if (!results?.payoff_matrix) return null;
+  if (!results?.payoffMatrix) return null;
 
-  const strategies = Object.keys(results.payoff_matrix);
+  const strategies = Object.keys(results.payoffMatrix);
   const maxPayoff = Math.max(
     ...strategies.flatMap((s) =>
-      Object.values(results.payoff_matrix[s] || {})
+      Object.values(results.payoffMatrix[s] || {})
     )
   );
   const minPayoff = Math.min(
     ...strategies.flatMap((s) =>
-      Object.values(results.payoff_matrix[s] || {})
+      Object.values(results.payoffMatrix[s] || {})
     )
   );
 
@@ -64,7 +64,7 @@ export function PayoffMatrix({ tournamentId }: PayoffMatrixProps) {
                 {row.length > 20 ? row.slice(0, 20) + '...' : row}
               </td>
               {strategies.map((col) => {
-                const value = results.payoff_matrix[row]?.[col] ?? 0;
+                const value = results.payoffMatrix[row]?.[col] ?? 0;
                 return (
                   <td
                     key={col}

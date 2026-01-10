@@ -86,7 +86,7 @@ export const conflictsMockFactories = {
 
   acgmeViolationConflict: (overrides: Partial<Conflict> = {}): Conflict => ({
     id: 'conflict-3',
-    type: 'acgme_violation',
+    type: 'acgmeViolation',
     severity: 'critical',
     status: 'unresolved',
     title: 'ACGME duty hour violation',
@@ -212,7 +212,7 @@ export const conflictsMockFactories = {
     },
     byType: {
       scheduling_overlap: 5,
-      acgme_violation: 3,
+      acgmeViolation: 3,
       supervision_missing: 2,
       capacity_exceeded: 4,
       absence_conflict: 6,

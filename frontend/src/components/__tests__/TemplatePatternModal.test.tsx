@@ -9,7 +9,7 @@
  * - Integration with WeeklyGridEditor
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+// Converted from vitest to jest
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -28,15 +28,15 @@ const API_BASE = 'http://localhost:8000/api';
 const mockPatterns = [
   {
     id: 'pattern-1',
-    rotation_template_id: 'template-1',
-    day_of_week: 1,
-    time_of_day: 'AM' as const,
-    activity_type: 'fm_clinic',
-    linked_template_id: 'clinic-1',
-    is_protected: false,
+    rotationTemplateId: 'template-1',
+    dayOfWeek: 1,
+    timeOfDay: 'AM' as const,
+    activityType: 'fmClinic',
+    linkedTemplateId: 'clinic-1',
+    isProtected: false,
     notes: null,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
   },
 ];
 
@@ -45,11 +45,11 @@ const mockTemplates = {
     {
       id: 'clinic-1',
       name: 'Clinic',
-      activity_type: 'clinic',
+      activityType: 'clinic',
       abbreviation: 'C',
-      display_abbreviation: 'Clinic',
-      font_color: 'text-blue-800',
-      background_color: 'bg-blue-100',
+      displayAbbreviation: 'Clinic',
+      fontColor: 'text-blue-800',
+      backgroundColor: 'bg-blue-100',
     },
   ],
   total: 1,
@@ -104,14 +104,14 @@ function createWrapper() {
 describe('TemplatePatternModal', () => {
   const defaultProps = {
     isOpen: true,
-    onClose: vi.fn(),
+    onClose: jest.fn(),
     templateId: 'template-1',
     templateName: 'Test Template',
-    onSaved: vi.fn(),
+    onSaved: jest.fn(),
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   describe('Rendering', () => {
@@ -213,7 +213,7 @@ describe('TemplatePatternModal', () => {
 
   describe('Close Behavior', () => {
     it('should call onClose when close button is clicked', async () => {
-      const onClose = vi.fn();
+      const onClose = jest.fn();
       const user = userEvent.setup();
 
       render(
@@ -232,7 +232,7 @@ describe('TemplatePatternModal', () => {
     });
 
     it('should call onClose when backdrop is clicked', async () => {
-      const onClose = vi.fn();
+      const onClose = jest.fn();
       const user = userEvent.setup();
 
       render(
@@ -254,7 +254,7 @@ describe('TemplatePatternModal', () => {
     });
 
     it('should call onClose when Cancel button is clicked', async () => {
-      const onClose = vi.fn();
+      const onClose = jest.fn();
       const user = userEvent.setup();
 
       render(
@@ -277,7 +277,7 @@ describe('TemplatePatternModal', () => {
 
   describe('Save Behavior', () => {
     it('should call onSaved after successful save', async () => {
-      const onSaved = vi.fn();
+      const onSaved = jest.fn();
       const user = userEvent.setup();
 
       render(

@@ -18,7 +18,7 @@ interface OnCallAssignment {
   id: string
   date: string
   dateObj: Date
-  time_of_day: 'AM' | 'PM'
+  timeOfDay: 'AM' | 'PM'
   person: Person
   role: 'primary' | 'supervising' | 'backup'
   activity: string
@@ -92,8 +92,8 @@ export function CallRoster({ startDate, endDate, showOnlyOnCall = true }: CallRo
 
   // Fetch data
   const { data: assignmentsData, isLoading: assignmentsLoading, error: assignmentsError } = useAssignments({
-    start_date: startDateStr,
-    end_date: endDateStr,
+    startDate: startDateStr,
+    endDate: endDateStr,
   })
 
   const { data: peopleData, isLoading: peopleLoading } = usePeople()
@@ -111,12 +111,12 @@ export function CallRoster({ startDate, endDate, showOnlyOnCall = true }: CallRo
   }, [peopleData])
 
   const templateMap = useMemo(() => {
-    const map = new Map<string, { name: string; abbreviation: string; activity_type: string }>()
+    const map = new Map<string, { name: string; abbreviation: string; activityType: string }>()
     templatesData?.items?.forEach((template) => {
       map.set(template.id, {
         name: template.name,
         abbreviation: template.displayAbbreviation || template.abbreviation || template.name.substring(0, 3).toUpperCase(),
-        activity_type: template.activityType,
+        activityType: template.activityType,
       })
     })
     return map
@@ -139,7 +139,7 @@ export function CallRoster({ startDate, endDate, showOnlyOnCall = true }: CallRo
 
         const activity = assignment.activityOverride || template?.activityType || 'Assignment'
 
-        // For now, use created_at as a proxy for date
+        // For now, use createdAt as a proxy for date
         // In production, this would come from block data
         const dateStr = assignment.createdAt.split('T')[0]
         const dateObj = parseISO(dateStr)
@@ -163,7 +163,7 @@ export function CallRoster({ startDate, endDate, showOnlyOnCall = true }: CallRo
           id: assignment.id,
           date: dateStr,
           dateObj,
-          time_of_day: 'AM' as const, // Would come from block data
+          timeOfDay: 'AM' as const, // Would come from block data
           person,
           role: assignment.role,
           activity,

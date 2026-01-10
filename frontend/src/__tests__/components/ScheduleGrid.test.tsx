@@ -21,36 +21,36 @@ const mockPeople = [
     name: 'Dr. Alice PGY1',
     email: 'alice@hospital.org',
     type: 'resident' as const,
-    pgy_level: 1,
-    performs_procedures: true,
+    pgyLevel: 1,
+    performsProcedures: true,
     specialties: ['Internal Medicine'],
-    primary_duty: null,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    primaryDuty: null,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
   },
   {
     id: 'person-2',
     name: 'Dr. Bob PGY2',
     email: 'bob@hospital.org',
     type: 'resident' as const,
-    pgy_level: 2,
-    performs_procedures: true,
+    pgyLevel: 2,
+    performsProcedures: true,
     specialties: ['Internal Medicine'],
-    primary_duty: null,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    primaryDuty: null,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
   },
   {
     id: 'person-3',
     name: 'Dr. Carol Faculty',
     email: 'carol@hospital.org',
     type: 'faculty' as const,
-    pgy_level: null,
-    performs_procedures: true,
+    pgyLevel: null,
+    performsProcedures: true,
     specialties: ['Cardiology'],
-    primary_duty: 'Attending',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    primaryDuty: 'Attending',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
   },
 ]
 
@@ -58,20 +58,20 @@ const mockBlocks = [
   {
     id: 'block-1',
     date: '2024-01-01',
-    time_of_day: 'AM' as const,
-    block_number: 1,
-    is_weekend: false,
-    is_holiday: false,
-    holiday_name: null,
+    timeOfDay: 'AM' as const,
+    blockNumber: 1,
+    isWeekend: false,
+    isHoliday: false,
+    holidayName: null,
   },
   {
     id: 'block-2',
     date: '2024-01-01',
-    time_of_day: 'PM' as const,
-    block_number: 1,
-    is_weekend: false,
-    is_holiday: false,
-    holiday_name: null,
+    timeOfDay: 'PM' as const,
+    blockNumber: 1,
+    isWeekend: false,
+    isHoliday: false,
+    holidayName: null,
   },
 ]
 
@@ -79,30 +79,30 @@ const mockTemplates = [
   {
     id: 'template-1',
     name: 'Cardiology Clinic',
-    activity_type: 'clinic',
+    activityType: 'clinic',
     abbreviation: 'CARD',
-    clinic_location: null,
-    max_residents: 4,
-    requires_specialty: null,
-    requires_procedure_credential: false,
-    supervision_required: true,
-    max_supervision_ratio: 2,
-    created_at: '2024-01-01T00:00:00Z',
+    clinicLocation: null,
+    maxResidents: 4,
+    requiresSpecialty: null,
+    requiresProcedureCredential: false,
+    supervisionRequired: true,
+    maxSupervisionRatio: 2,
+    createdAt: '2024-01-01T00:00:00Z',
   },
 ]
 
 const mockAssignments = [
   {
     id: 'assignment-1',
-    block_id: 'block-1',
-    person_id: 'person-1',
-    rotation_template_id: 'template-1',
+    blockId: 'block-1',
+    personId: 'person-1',
+    rotationTemplateId: 'template-1',
     role: 'primary' as const,
-    activity_override: null,
+    activityOverride: null,
     notes: null,
-    created_by: null,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    createdBy: null,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
   },
 ]
 
@@ -330,10 +330,10 @@ describe('ScheduleGrid', () => {
 
       // The schedule should make API calls with the correct date range
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('start_date=2024-01-01')
+        expect.stringContaining('startDate=2024-01-01')
       )
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('end_date=2024-01-07')
+        expect.stringContaining('endDate=2024-01-07')
       )
     })
 
@@ -350,7 +350,7 @@ describe('ScheduleGrid', () => {
       })
 
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('start_date=2024-01-01')
+        expect.stringContaining('startDate=2024-01-01')
       )
     })
   })
@@ -378,9 +378,9 @@ describe('ScheduleGrid', () => {
   describe('Person Grouping', () => {
     it('should sort people within groups by name', async () => {
       const multiplePGY1 = [
-        { ...mockPeople[0], id: 'p1', name: 'Dr. Zara PGY1', pgy_level: 1 },
-        { ...mockPeople[0], id: 'p2', name: 'Dr. Alice PGY1', pgy_level: 1 },
-        { ...mockPeople[0], id: 'p3', name: 'Dr. Mike PGY1', pgy_level: 1 },
+        { ...mockPeople[0], id: 'p1', name: 'Dr. Zara PGY1', pgyLevel: 1 },
+        { ...mockPeople[0], id: 'p2', name: 'Dr. Alice PGY1', pgyLevel: 1 },
+        { ...mockPeople[0], id: 'p3', name: 'Dr. Mike PGY1', pgyLevel: 1 },
       ]
 
       setupApiMock({ people: multiplePGY1 as typeof mockPeople })

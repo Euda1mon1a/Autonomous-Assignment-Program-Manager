@@ -10,7 +10,7 @@ interface Assignment {
     id: string
     name: string
     type: string
-    pgy_level: number | null
+    pgyLevel: number | null
   }
   role: string
   activity: string
@@ -38,7 +38,7 @@ export function ScheduleCalendar({ weekStart, schedule }: ScheduleCalendarProps)
 
   // Memoize people extraction and sorting
   const people = useMemo(() => {
-    const allPeople = new Map<string, { name: string; type: string; pgy_level: number | null }>()
+    const allPeople = new Map<string, { name: string; type: string; pgyLevel: number | null }>()
 
     Object.values(schedule).forEach((dayData) => {
       ;['AM', 'PM'].forEach((time) => {

@@ -30,7 +30,7 @@ const MCP_CATEGORIES: MCPCategory[] = [
     description: 'Core scheduling tools for ACGME validation, conflict detection, and swap management.',
     tools: [
       {
-        name: 'validate_schedule',
+        name: 'validateSchedule',
         description: 'Validates schedule against ACGME regulations including work hours, supervision, rest periods, and consecutive duty.',
         whenToUse: 'Before finalizing any schedule, after making changes, or to audit compliance.',
         examplePrompt: 'Validate the schedule for January 2025 and show any ACGME violations',
@@ -68,7 +68,7 @@ const MCP_CATEGORIES: MCPCategory[] = [
         examplePrompt: 'Check current utilization levels across all rotations',
       },
       {
-        name: 'get_defense_level',
+        name: 'get_defenseLevel',
         description: 'Returns current defense-in-depth level (GREEN/YELLOW/ORANGE/RED/BLACK) based on coverage rates.',
         whenToUse: 'Dashboard monitoring, status checks, or when escalating concerns.',
         examplePrompt: 'What is our current defense level?',

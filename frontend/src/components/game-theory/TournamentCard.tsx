@@ -34,10 +34,10 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
               {tournament.name}
             </h4>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {tournament.turns_per_match} turns x {tournament.repetitions} reps
-              {tournament.winner_strategy_name && (
+              {tournament.turnsPerMatch} turns x {tournament.repetitions} reps
+              {tournament.winnerStrategyName && (
                 <span className="ml-2 text-green-600 dark:text-green-400">
-                  Winner: {tournament.winner_strategy_name}
+                  Winner: {tournament.winnerStrategyName}
                 </span>
               )}
             </p>
@@ -78,7 +78,7 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
               <div className="space-y-2">
                 {results.rankings.map((ranking) => (
                   <div
-                    key={ranking.strategy_id}
+                    key={ranking.strategyId}
                     className={`flex items-center justify-between p-3 rounded ${
                       ranking.rank === 1
                         ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800'
@@ -100,15 +100,15 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
                         {ranking.rank}
                       </span>
                       <span className="font-medium text-gray-900 dark:text-white">
-                        {ranking.strategy_name}
+                        {ranking.strategyName}
                       </span>
                     </div>
                     <div className="flex items-center gap-4 text-sm">
                       <span className="text-gray-500 dark:text-gray-400">
-                        Score: <span className="font-medium text-gray-700 dark:text-gray-300">{ranking.average_score.toFixed(2)}</span>
+                        Score: <span className="font-medium text-gray-700 dark:text-gray-300">{ranking.averageScore.toFixed(2)}</span>
                       </span>
                       <span className="text-gray-500 dark:text-gray-400">
-                        Coop: <span className="font-medium text-gray-700 dark:text-gray-300">{(ranking.cooperation_rate * 100).toFixed(0)}%</span>
+                        Coop: <span className="font-medium text-gray-700 dark:text-gray-300">{(ranking.cooperationRate * 100).toFixed(0)}%</span>
                       </span>
                     </div>
                   </div>
@@ -139,9 +139,9 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
               <span className="text-sm text-blue-500">Tournament running...</span>
             </div>
           )}
-          {tournament.status === 'failed' && tournament.error_message && (
+          {tournament.status === 'failed' && tournament.errorMessage && (
             <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded text-sm text-red-700 dark:text-red-300">
-              Error: {tournament.error_message}
+              Error: {tournament.errorMessage}
             </div>
           )}
         </div>

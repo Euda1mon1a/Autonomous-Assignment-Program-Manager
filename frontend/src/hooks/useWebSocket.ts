@@ -41,7 +41,7 @@ export type EventType =
  */
 export interface WebSocketEvent<T = unknown> {
   /** Type of the event */
-  event_type: EventType
+  eventType: EventType
   /** ISO 8601 timestamp when event was created */
   timestamp: string
   /** Event-specific payload data */
@@ -54,10 +54,10 @@ export interface WebSocketEvent<T = unknown> {
  * Schedule updated event payload.
  */
 export interface ScheduleUpdatedEvent extends WebSocketEvent {
-  event_type: 'schedule_updated'
-  schedule_id: string | null
-  academic_year_id: string | null
-  user_id: string | null
+  eventType: 'schedule_updated'
+  scheduleId: string | null
+  academicYear_id: string | null
+  userId: string | null
   update_type: 'generated' | 'modified' | 'regenerated'
   affected_blocks_count: number
   message: string
@@ -67,11 +67,11 @@ export interface ScheduleUpdatedEvent extends WebSocketEvent {
  * Assignment changed event payload.
  */
 export interface AssignmentChangedEvent extends WebSocketEvent {
-  event_type: 'assignment_changed'
-  assignment_id: string
-  person_id: string
-  block_id: string
-  rotation_template_id: string | null
+  eventType: 'assignment_changed'
+  assignmentId: string
+  personId: string
+  blockId: string
+  rotationTemplateId: string | null
   change_type: 'created' | 'updated' | 'deleted'
   changed_by: string | null
   message: string
@@ -81,11 +81,11 @@ export interface AssignmentChangedEvent extends WebSocketEvent {
  * Swap requested event payload.
  */
 export interface SwapRequestedEvent extends WebSocketEvent {
-  event_type: 'swap_requested'
-  swap_id: string
+  eventType: 'swap_requested'
+  swapId: string
   requester_id: string
-  target_person_id: string | null
-  swap_type: 'one_to_one' | 'absorb'
+  target_personId: string | null
+  swapType: 'oneToOne' | 'absorb'
   affected_assignments: string[]
   message: string
 }
@@ -94,10 +94,10 @@ export interface SwapRequestedEvent extends WebSocketEvent {
  * Swap approved event payload.
  */
 export interface SwapApprovedEvent extends WebSocketEvent {
-  event_type: 'swap_approved'
-  swap_id: string
+  eventType: 'swap_approved'
+  swapId: string
   requester_id: string
-  target_person_id: string | null
+  target_personId: string | null
   approved_by: string
   affected_assignments: string[]
   message: string
@@ -107,10 +107,10 @@ export interface SwapApprovedEvent extends WebSocketEvent {
  * Conflict detected event payload.
  */
 export interface ConflictDetectedEvent extends WebSocketEvent {
-  event_type: 'conflict_detected'
-  conflict_id: string | null
-  person_id: string
-  conflict_type: 'double_booking' | 'acgme_violation' | 'absence_overlap'
+  eventType: 'conflict_detected'
+  conflictId: string | null
+  personId: string
+  conflict_type: 'double_booking' | 'acgmeViolation' | 'absence_overlap'
   severity: 'low' | 'medium' | 'high' | 'critical'
   affected_blocks: string[]
   message: string
@@ -120,11 +120,11 @@ export interface ConflictDetectedEvent extends WebSocketEvent {
  * Resilience alert event payload.
  */
 export interface ResilienceAlertEvent extends WebSocketEvent {
-  event_type: 'resilience_alert'
-  alert_type: 'utilization_high' | 'n1_failure' | 'n2_failure' | 'defense_level_change'
+  eventType: 'resilience_alert'
+  alert_type: 'utilization_high' | 'n1_failure' | 'n2_failure' | 'defenseLevel_change'
   severity: 'green' | 'yellow' | 'orange' | 'red' | 'black'
   current_utilization: number | null
-  defense_level: string | null
+  defenseLevel: string | null
   affected_persons: string[]
   message: string
   recommendations: string[]
@@ -134,8 +134,8 @@ export interface ResilienceAlertEvent extends WebSocketEvent {
  * Connection acknowledgment event payload.
  */
 export interface ConnectionAckEvent extends WebSocketEvent {
-  event_type: 'connection_ack'
-  user_id: string
+  eventType: 'connection_ack'
+  userId: string
   message: string
 }
 
@@ -167,8 +167,8 @@ export type ClientAction =
  */
 export interface ClientMessage {
   action: ClientAction
-  schedule_id?: string
-  person_id?: string
+  scheduleId?: string
+  personId?: string
 }
 
 /**
@@ -339,7 +339,7 @@ function getWebSocketUrl(apiUrl?: string): string {
 function parseMessage(data: string): AnyWebSocketEvent | null {
   try {
     const parsed = JSON.parse(data) as AnyWebSocketEvent
-    if (!parsed.event_type) {
+    if (!parsed.eventType) {
       // Invalid message format
       return null
     }
@@ -373,7 +373,7 @@ function parseMessage(data: string): AnyWebSocketEvent | null {
  *     unsubscribeFromSchedule
  *   } = useWebSocket({
  *     onMessage: (event) => {
- *       if (event.event_type === 'schedule_updated') {
+ *       if (event.eventType === 'schedule_updated') {
  *         console.log('Schedule updated:', event.message);
  *         // Refetch schedule data
  *       }
@@ -410,7 +410,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
     reconnect = true,
     reconnectInterval = 1000,
     maxReconnectInterval = 30000,
-    reconnectAttempts: maxReconnectAttempts = 10,
+    reconnectAttempts: reconnectAttempts = 10,
     pingInterval = 30000,
     autoConnect = true,
   } = options
@@ -571,7 +571,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
         }
 
         // Handle reconnection
-        if (reconnect && reconnectAttemptsCount < maxReconnectAttempts) {
+        if (reconnect && reconnectAttemptsCount < reconnectAttempts) {
           setConnectionState('reconnecting')
           setReconnectAttemptsCount((prev) => prev + 1)
 
@@ -588,7 +588,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
               connect()
             }
           }, currentReconnectInterval.current + jitter)
-        } else if (reconnectAttemptsCount >= maxReconnectAttempts) {
+        } else if (reconnectAttemptsCount >= reconnectAttempts) {
           setConnectionState('disconnected')
         } else {
           setConnectionState('disconnected')
@@ -604,7 +604,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
     reconnect,
     reconnectInterval,
     maxReconnectInterval,
-    maxReconnectAttempts,
+    reconnectAttempts,
     reconnectAttemptsCount,
     clearTimers,
     startPingInterval,
@@ -625,28 +625,28 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
    * Subscribe to schedule updates.
    */
   const subscribeToSchedule = useCallback((scheduleId: string) => {
-    send({ action: 'subscribe_schedule', schedule_id: scheduleId })
+    send({ action: 'subscribe_schedule', scheduleId: scheduleId })
   }, [send])
 
   /**
    * Unsubscribe from schedule updates.
    */
   const unsubscribeFromSchedule = useCallback((scheduleId: string) => {
-    send({ action: 'unsubscribe_schedule', schedule_id: scheduleId })
+    send({ action: 'unsubscribe_schedule', scheduleId: scheduleId })
   }, [send])
 
   /**
    * Subscribe to person updates.
    */
   const subscribeToPerson = useCallback((personId: string) => {
-    send({ action: 'subscribe_person', person_id: personId })
+    send({ action: 'subscribe_person', personId: personId })
   }, [send])
 
   /**
    * Unsubscribe from person updates.
    */
   const unsubscribeFromPerson = useCallback((personId: string) => {
-    send({ action: 'unsubscribe_person', person_id: personId })
+    send({ action: 'unsubscribe_person', personId: personId })
   }, [send])
 
   // Auto-connect on mount
@@ -698,7 +698,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
  * function ScheduleView({ scheduleId }: { scheduleId: string }) {
  *   const { isConnected, lastMessage } = useScheduleWebSocket(scheduleId, {
  *     onMessage: (event) => {
- *       if (event.event_type === 'schedule_updated') {
+ *       if (event.eventType === 'schedule_updated') {
  *         queryClient.invalidateQueries({ queryKey: ['schedule'] });
  *       }
  *     }
@@ -738,7 +738,7 @@ export function useScheduleWebSocket(
  * function PersonDetail({ personId }: { personId: string }) {
  *   const { isConnected, lastMessage } = usePersonWebSocket(personId, {
  *     onMessage: (event) => {
- *       if (event.event_type === 'assignment_changed') {
+ *       if (event.eventType === 'assignment_changed') {
  *         toast.info('Your schedule has been updated');
  *       }
  *     }

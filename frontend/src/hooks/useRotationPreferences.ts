@@ -43,24 +43,24 @@ export type PreferenceType =
  */
 export interface RotationPreference {
   id: UUID;
-  rotation_template_id: UUID;
-  preference_type: PreferenceType;
+  rotationTemplateId: UUID;
+  preferenceType: PreferenceType;
   weight: PreferenceWeight;
-  config_json: Record<string, unknown>;
-  is_active: boolean;
+  configJson: Record<string, unknown>;
+  isActive: boolean;
   description: string | null;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
  * Request to create a preference.
  */
 export interface RotationPreferenceCreate {
-  preference_type: PreferenceType;
+  preferenceType: PreferenceType;
   weight?: PreferenceWeight;
-  config_json?: Record<string, unknown>;
-  is_active?: boolean;
+  configJson?: Record<string, unknown>;
+  isActive?: boolean;
   description?: string | null;
 }
 
@@ -272,16 +272,16 @@ export function useTogglePreference(templateId: string) {
       // Toggle the specified preference
       const updatedPreferences = currentPreferences.map((p) =>
         p.preferenceType === preferenceType
-          ? { ...p, is_active: !p.isActive }
+          ? { ...p, isActive: !p.isActive }
           : p
       );
 
       // Convert to create format and save
       const createPayload = updatedPreferences.map((p) => ({
-        preference_type: p.preferenceType,
+        preferenceType: p.preferenceType,
         weight: p.weight,
-        config_json: p.configJson,
-        is_active: p.isActive,
+        configJson: p.configJson,
+        isActive: p.isActive,
         description: p.description,
       }));
 
@@ -329,10 +329,10 @@ export function useUpdatePreferenceWeight(templateId: string) {
 
       // Convert to create format and save
       const createPayload = updatedPreferences.map((p) => ({
-        preference_type: p.preferenceType,
+        preferenceType: p.preferenceType,
         weight: p.weight,
-        config_json: p.configJson,
-        is_active: p.isActive,
+        configJson: p.configJson,
+        isActive: p.isActive,
         description: p.description,
       }));
 

@@ -295,18 +295,18 @@ describe('ImportPreview', () => {
     it('should format boolean values', () => {
       const previewWithBoolean: ImportPreviewResult = {
         ...mockPreview,
-        columns: ['name', 'is_active'],
+        columns: ['name', 'isActive'],
         rows: [
           {
             rowNumber: 1,
-            data: { name: 'Test', is_active: true },
+            data: { name: 'Test', isActive: true },
             status: 'valid',
             errors: [],
             warnings: [],
           },
           {
             rowNumber: 2,
-            data: { name: 'Test 2', is_active: false },
+            data: { name: 'Test 2', isActive: false },
             status: 'valid',
             errors: [],
             warnings: [],

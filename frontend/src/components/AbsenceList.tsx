@@ -20,10 +20,10 @@ const typeColors: Record<string, string> = {
   sick: 'bg-red-100 text-red-800',
   medical: 'bg-red-100 text-red-800',
   convalescent: 'bg-red-200 text-red-900',
-  maternity_paternity: 'bg-pink-100 text-pink-800',
+  maternityPaternity: 'bg-pink-100 text-pink-800',
   // Emergency (blocking - Hawaii reality)
-  family_emergency: 'bg-purple-100 text-purple-800',
-  emergency_leave: 'bg-purple-200 text-purple-900',
+  familyEmergency: 'bg-purple-100 text-purple-800',
+  emergencyLeave: 'bg-purple-200 text-purple-900',
   bereavement: 'bg-gray-200 text-gray-800',
   // Military
   deployment: 'bg-orange-100 text-orange-800',
@@ -33,7 +33,7 @@ const typeColors: Record<string, string> = {
 }
 
 export function AbsenceList({ absences, people, onEdit, onDelete }: AbsenceListProps) {
-  // Create a map of person_id to person for quick lookup
+  // Create a map of personId to person for quick lookup
   const personMap = useMemo(() => {
     const map = new Map<string, Person>()
     people.forEach((p) => map.set(p.id, p))

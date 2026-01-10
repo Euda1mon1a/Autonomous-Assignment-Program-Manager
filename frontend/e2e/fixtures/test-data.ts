@@ -35,7 +35,7 @@ export const SAMPLE_PERSON_DATA = {
   resident: {
     name: 'Test Resident',
     type: 'resident',
-    pgy_level: 2,
+    pgyLevel: 2,
     email: 'test.resident@hospital.edu',
     specialties: ['Internal Medicine'],
   },
@@ -48,7 +48,7 @@ export const SAMPLE_PERSON_DATA = {
   pgy1: {
     name: 'PGY1 Test',
     type: 'resident',
-    pgy_level: 1,
+    pgyLevel: 1,
     email: 'pgy1.test@hospital.edu',
     specialties: ['Surgery'],
   },
@@ -61,20 +61,20 @@ export const SAMPLE_PERSON_DATA = {
 export const SAMPLE_ABSENCE_DATA = {
   vacation: {
     type: 'vacation',
-    start_date: '2024-07-01',
-    end_date: '2024-07-07',
+    startDate: '2024-07-01',
+    endDate: '2024-07-07',
     reason: 'Annual Vacation',
   },
   conference: {
     type: 'conference',
-    start_date: '2024-08-15',
-    end_date: '2024-08-17',
+    startDate: '2024-08-15',
+    endDate: '2024-08-17',
     reason: 'Medical Conference',
   },
   sick_leave: {
     type: 'sick_leave',
-    start_date: '2024-09-01',
-    end_date: '2024-09-03',
+    startDate: '2024-09-01',
+    endDate: '2024-09-03',
     reason: 'Medical Leave',
   },
 };

@@ -172,23 +172,23 @@ export function DuplicateTemplateModal({
     const newTemplates: TemplateCreateRequest[] = templates.map((t) => {
       const base: TemplateCreateRequest = {
         name: generateNewName(t.name),
-        activity_type: config.overrideActivityType || t.activityType,
+        activityType: config.overrideActivityType || t.activityType,
         abbreviation: t.abbreviation,
-        display_abbreviation: t.displayAbbreviation,
-        font_color: t.fontColor,
-        background_color: t.backgroundColor,
-        clinic_location: t.clinicLocation,
-        max_residents:
+        displayAbbreviation: t.displayAbbreviation,
+        fontColor: t.fontColor,
+        backgroundColor: t.backgroundColor,
+        clinicLocation: t.clinicLocation,
+        maxResidents:
           config.overrideMaxResidents !== null
             ? config.overrideMaxResidents
             : t.maxResidents,
-        requires_specialty: t.requiresSpecialty,
-        requires_procedure_credential: t.requiresProcedureCredential,
-        supervision_required:
+        requiresSpecialty: t.requiresSpecialty,
+        requiresProcedureCredential: t.requiresProcedureCredential,
+        supervisionRequired:
           config.overrideSupervision !== null
             ? config.overrideSupervision
             : t.supervisionRequired,
-        max_supervision_ratio: t.maxSupervisionRatio,
+        maxSupervisionRatio: t.maxSupervisionRatio,
       };
 
       return base;

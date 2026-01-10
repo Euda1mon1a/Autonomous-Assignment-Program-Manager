@@ -15,14 +15,14 @@ interface GenerateScheduleDialogProps {
 }
 
 interface FormErrors {
-  start_date?: string;
-  end_date?: string;
+  startDate?: string;
+  endDate?: string;
   general?: string;
 }
 
 const algorithmOptions = [
   { value: 'greedy', label: 'Greedy (Fast)', description: 'Quick heuristic, good for initial solutions' },
-  { value: 'cp_sat', label: 'CP-SAT (Optimal)', description: 'OR-Tools constraint solver, guarantees ACGME compliance' },
+  { value: 'cpSat', label: 'CP-SAT (Optimal)', description: 'OR-Tools constraint solver, guarantees ACGME compliance' },
   { value: 'pulp', label: 'PuLP (Large Scale)', description: 'Linear programming, efficient for large problems' },
   { value: 'hybrid', label: 'Hybrid (Best Quality)', description: 'Combines solvers for optimal results' },
 ];
@@ -90,11 +90,11 @@ export function GenerateScheduleDialog({
 
     try {
       await generateSchedule.mutateAsync({
-        start_date: startDate,
-        end_date: endDate,
+        startDate: startDate,
+        endDate: endDate,
         algorithm,
         timeout_seconds: parseFloat(timeout),
-        pgy_levels: pgyLevels,
+        pgyLevels: pgyLevels,
       });
       setShowResults(true);
     } catch (err) {
@@ -162,7 +162,7 @@ export function GenerateScheduleDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-gray-50 rounded-lg p-3">
               <p className="text-sm text-gray-500">Blocks Assigned</p>
-              <p className="text-2xl font-bold">{result.total_blocks_assigned}/{result.total_blocks}</p>
+              <p className="text-2xl font-bold">{result.totalBlocks_assigned}/{result.totalBlocks}</p>
             </div>
             <div className="bg-gray-50 rounded-lg p-3">
               <p className="text-sm text-gray-500">Coverage Rate</p>
@@ -175,21 +175,21 @@ export function GenerateScheduleDialog({
           </div>
 
           {/* Solver Statistics */}
-          {result.solver_stats && (
+          {result.solverStats && (
             <div className="bg-blue-50 rounded-lg p-3 text-sm">
               <p className="font-medium text-blue-800 mb-1">Solver Details</p>
               <div className="grid grid-cols-2 gap-2 text-blue-700">
-                {result.solver_stats.total_residents && (
-                  <p>Residents: {result.solver_stats.total_residents}</p>
+                {result.solverStats.totalResidents && (
+                  <p>Residents: {result.solverStats.totalResidents}</p>
                 )}
-                {result.solver_stats.coverageRate != null && (
-                  <p>Solver Coverage: {(result.solver_stats.coverageRate * 100).toFixed(1)}%</p>
+                {result.solverStats.coverageRate != null && (
+                  <p>Solver Coverage: {(result.solverStats.coverageRate * 100).toFixed(1)}%</p>
                 )}
-                {result.solver_stats.branches != null && (
-                  <p>Branches: {result.solver_stats.branches.toLocaleString()}</p>
+                {result.solverStats.branches != null && (
+                  <p>Branches: {result.solverStats.branches.toLocaleString()}</p>
                 )}
-                {result.solver_stats.conflicts != null && (
-                  <p>Conflicts: {result.solver_stats.conflicts.toLocaleString()}</p>
+                {result.solverStats.conflicts != null && (
+                  <p>Conflicts: {result.solverStats.conflicts.toLocaleString()}</p>
                 )}
               </div>
             </div>
@@ -207,7 +207,7 @@ export function GenerateScheduleDialog({
               ) : (
                 <div>
                   <p className="text-sm text-amber-600 mb-2">
-                    {result.validation.total_violations} violation(s) found
+                    {result.validation.totalViolations} violation(s) found
                   </p>
                   <div className="max-h-32 overflow-y-auto space-y-1">
                     {result.validation.violations?.slice(0, 5).map((v, i) => (

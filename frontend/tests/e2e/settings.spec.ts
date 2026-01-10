@@ -78,8 +78,8 @@ test.describe('Settings', () => {
     // Fill form
     await page.fill('[name="name"]', 'New Rotation');
     await page.fill('[name="abbreviation"]', 'NR');
-    await page.selectOption('[name="activity_type"]', 'outpatient');
-    await page.fill('[name="max_residents"]', '4');
+    await page.selectOption('[name="activityType"]', 'outpatient');
+    await page.fill('[name="maxResidents"]', '4');
 
     // Save
     await page.click('button[type="submit"]');
@@ -95,7 +95,7 @@ test.describe('Settings', () => {
     await page.fill('[name="max_hours_per_week"]', '80');
 
     // Update max consecutive days
-    await page.fill('[name="max_consecutive_days"]', '6');
+    await page.fill('[name="maxConsecutiveDays"]', '6');
 
     // Save
     await page.click('button[type="submit"]');

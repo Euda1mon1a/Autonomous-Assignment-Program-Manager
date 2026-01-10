@@ -67,7 +67,7 @@ interface CandidatesResponse {
  *   import { AutoMatchingCandidates } from '@/features/swap-marketplace';
  *
  * The production component should use types from @/hooks/useSwaps.ts which has
- * snake_case field names (faculty_id, faculty_name, available_weeks, etc.)
+ * snake_case field names (facultyId, facultyName, available_weeks, etc.)
  */
 interface AutoMatchingCandidatesProps {
   weekToMatch: string;
@@ -209,11 +209,6 @@ function createWrapper() {
     defaultOptions: {
       queries: { retry: false },
       mutations: { retry: false },
-    },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
     },
   });
 

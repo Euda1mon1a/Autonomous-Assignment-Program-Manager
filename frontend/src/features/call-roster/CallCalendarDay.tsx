@@ -77,7 +77,7 @@ export function CallCalendarDay({
           >
             <div className="font-medium truncate">{assignment.person.name}</div>
             <div className="text-xs opacity-75">
-              {assignment.person.pgy_level ? `PGY-${assignment.person.pgy_level}` : assignment.person.role}
+              {assignment.person.pgyLevel ? `PGY-${assignment.person.pgyLevel}` : assignment.person.role}
             </div>
           </div>
         ))}
@@ -119,16 +119,16 @@ export function CallCalendarDay({
                   {assignment.person.role.charAt(0).toUpperCase() + assignment.person.role.slice(1)}
                 </span>
                 <span className="font-medium">{assignment.person.name}</span>
-                {assignment.person.pgy_level && (
+                {assignment.person.pgyLevel && (
                   <span className="text-sm text-gray-500">
-                    PGY-{assignment.person.pgy_level}
+                    PGY-{assignment.person.pgyLevel}
                   </span>
                 )}
               </div>
 
-              {assignment.rotation_name && (
+              {assignment.rotationName && (
                 <div className="text-sm text-gray-600">
-                  {assignment.rotation_name}
+                  {assignment.rotationName}
                 </div>
               )}
 

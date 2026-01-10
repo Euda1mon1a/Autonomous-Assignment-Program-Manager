@@ -242,7 +242,7 @@ export function useExportAnalytics() {
         {
           format,
           filters,
-          include_charts: includeCharts,
+          includeCharts: includeCharts,
         },
         {
           responseType: 'blob',

@@ -125,7 +125,7 @@ export function createPCATPreviewData(
   assignments: Array<{
     id: string;
     date: string;
-    person_name: string;
+    personName: string;
   }>
 ): {
   previewAssignments: PCATPreviewAssignment[];

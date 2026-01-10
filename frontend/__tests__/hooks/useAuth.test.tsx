@@ -38,9 +38,9 @@ const mockUser = {
   username: 'testuser',
   email: 'testuser@hospital.org',
   role: 'resident' as const,
-  is_active: true,
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-15T00:00:00Z',
+  isActive: true,
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-15T00:00:00Z',
 }
 
 const mockAdminUser = {
@@ -68,8 +68,8 @@ const mockFacultyUser = {
 }
 
 const mockLoginResponse = {
-  access_token: 'mock-jwt-token',
-  token_type: 'Bearer',
+  accessToken: 'mock-jwt-token',
+  tokenType: 'Bearer',
   user: mockUser,
 }
 
@@ -385,7 +385,7 @@ describe('useLogout', () => {
   })
 
   it('should logout successfully', async () => {
-    mockedAuthApi.logout.mockResolvedValueOnce(undefined)
+    mockedAuthApi.logout.mockResolvedValueOnce(true)
 
     const { result } = renderHook(() => useLogout(), {
       wrapper: createWrapper(),
@@ -423,7 +423,7 @@ describe('useLogout', () => {
   })
 
   it('should clear all cached data on logout', async () => {
-    mockedAuthApi.logout.mockResolvedValueOnce(undefined)
+    mockedAuthApi.logout.mockResolvedValueOnce(true)
     mockedAuthApi.getCurrentUser.mockResolvedValueOnce(mockUser)
 
     const wrapper = createWrapper()
@@ -718,9 +718,9 @@ describe('useAuth token refresh', () => {
   it('should call performRefresh when refreshToken is called', async () => {
     mockedAuthApi.getCurrentUser.mockResolvedValue(mockUser)
     mockedAuthApi.performRefresh.mockResolvedValueOnce({
-      access_token: 'new-access-token',
-      refresh_token: 'new-refresh-token',
-      token_type: 'bearer',
+      accessToken: 'new-access-token',
+      refreshToken: 'new-refresh-token',
+      tokenType: 'bearer',
     })
 
     const { result } = renderHook(() => useAuth(), {
@@ -814,9 +814,9 @@ describe('useAuth token refresh', () => {
   it('should invalidate user query after successful refresh', async () => {
     mockedAuthApi.getCurrentUser.mockResolvedValue(mockUser)
     mockedAuthApi.performRefresh.mockResolvedValueOnce({
-      access_token: 'new-access-token',
-      refresh_token: 'new-refresh-token',
-      token_type: 'bearer',
+      accessToken: 'new-access-token',
+      refreshToken: 'new-refresh-token',
+      tokenType: 'bearer',
     })
 
     const { result } = renderHook(() => useAuth(), {
@@ -848,9 +848,9 @@ describe('useAuth token refresh', () => {
           setTimeout(
             () =>
               resolve({
-                access_token: 'new-token',
-                refresh_token: 'new-refresh',
-                token_type: 'bearer',
+                accessToken: 'new-token',
+                refreshToken: 'new-refresh',
+                tokenType: 'bearer',
               }),
             100
           )

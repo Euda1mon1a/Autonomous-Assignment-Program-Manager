@@ -42,13 +42,13 @@ export const halfDayRequirementsQueryKeys = {
  * Standard block has 10 half-days: 4 FM clinic + 5 specialty + 1 academics.
  */
 export const DEFAULT_HALFDAY_REQUIREMENTS: HalfDayRequirementCreate = {
-  fm_clinic_halfdays: 4,
-  specialty_halfdays: 5,
-  specialty_name: null,
-  academics_halfdays: 1,
-  elective_halfdays: 0,
-  min_consecutive_specialty: 1,
-  prefer_combined_clinic_days: true,
+  fmClinicHalfdays: 4,
+  specialtyHalfdays: 5,
+  specialtyName: null,
+  academicsHalfdays: 1,
+  electiveHalfdays: 0,
+  minConsecutiveSpecialty: 1,
+  preferCombinedClinicDays: true,
 };
 
 // ============================================================================
@@ -166,10 +166,10 @@ export function calculateTotalHalfdays(
   requirements: HalfDayRequirementCreate
 ): number {
   return (
-    (requirements.fm_clinic_halfdays ?? 4) +
-    (requirements.specialty_halfdays ?? 5) +
-    (requirements.academics_halfdays ?? 1) +
-    (requirements.elective_halfdays ?? 0)
+    (requirements.fmClinicHalfdays ?? 4) +
+    (requirements.specialtyHalfdays ?? 5) +
+    (requirements.academicsHalfdays ?? 1) +
+    (requirements.electiveHalfdays ?? 0)
   );
 }
 

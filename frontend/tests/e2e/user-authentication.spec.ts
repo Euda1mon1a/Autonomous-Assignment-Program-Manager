@@ -77,8 +77,8 @@ test.describe('User Authentication', () => {
     await page.goto('/settings/password');
 
     await page.fill('[name="old_password"]', 'testpass123');
-    await page.fill('[name="new_password"]', 'newpass123');
-    await page.fill('[name="confirm_password"]', 'newpass123');
+    await page.fill('[name="newPassword"]', 'newpass123');
+    await page.fill('[name="confirmPassword"]', 'newpass123');
     await page.click('button[type="submit"]');
 
     // Verify success

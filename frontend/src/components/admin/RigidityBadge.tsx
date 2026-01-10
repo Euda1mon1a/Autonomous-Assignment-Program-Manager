@@ -83,12 +83,12 @@ export function RigidityBadge({
   if (!detailed) {
     return (
       <div
-        className={`flex items-center gap-1.5 px-2.5 py-1 bg-slate-800 rounded-lg ${getRigidityColorClass(data.rigidity_score)}`}
+        className={`flex items-center gap-1.5 px-2.5 py-1 bg-slate-800 rounded-lg ${getRigidityColorClass(data.rigidityScore)}`}
       >
         {Icon}
         <span className="text-xs font-medium">Rigidity:</span>
         <span className="text-sm font-semibold">
-          {data.rigidity_score.toFixed(2)}
+          {data.rigidityScore.toFixed(2)}
         </span>
         <span className="text-xs text-slate-400">
           ({data.stability_grade})
@@ -106,11 +106,11 @@ export function RigidityBadge({
           Schedule Rigidity:
         </span>
         <div
-          className={`flex items-center gap-2 ${getRigidityColorClass(data.rigidity_score)}`}
+          className={`flex items-center gap-2 ${getRigidityColorClass(data.rigidityScore)}`}
         >
           {Icon}
           <span className="text-sm font-semibold">
-            {data.rigidity_score.toFixed(2)}
+            {data.rigidityScore.toFixed(2)}
           </span>
           <span
             className={`text-xs px-2 py-0.5 rounded ${
@@ -133,7 +133,7 @@ export function RigidityBadge({
         <div className="px-2 py-1.5 bg-slate-800 rounded">
           <div className="text-slate-500">Changes</div>
           <div className="text-white font-medium">
-            {data.changed_assignments} / {data.total_assignments}
+            {data.changed_assignments} / {data.totalAssignments}
           </div>
         </div>
         <div className="px-2 py-1.5 bg-slate-800 rounded">
@@ -161,20 +161,20 @@ export function RigidityBadge({
       {/* Interpretation */}
       <div
         className={`px-3 py-2 rounded-lg text-xs ${
-          data.rigidity_score >= 0.85
+          data.rigidityScore >= 0.85
             ? 'bg-green-500/10 text-green-400'
-            : data.rigidity_score >= 0.70
+            : data.rigidityScore >= 0.70
             ? 'bg-blue-500/10 text-blue-400'
-            : data.rigidity_score >= 0.50
+            : data.rigidityScore >= 0.50
             ? 'bg-yellow-500/10 text-yellow-400'
             : 'bg-red-500/10 text-red-400'
         }`}
       >
-        {data.rigidity_score >= 0.95 && '🔒 Excellent stability - minimal disruption'}
-        {data.rigidity_score >= 0.85 && data.rigidity_score < 0.95 && '✓ Good stability - acceptable churn'}
-        {data.rigidity_score >= 0.70 && data.rigidity_score < 0.85 && '⚠ Moderate churn - review changes'}
-        {data.rigidity_score >= 0.50 && data.rigidity_score < 0.70 && '⚠⚠ High churn - significant disruption'}
-        {data.rigidity_score < 0.50 && '🔥 Unstable - excessive reshuffling'}
+        {data.rigidityScore >= 0.95 && '🔒 Excellent stability - minimal disruption'}
+        {data.rigidityScore >= 0.85 && data.rigidityScore < 0.95 && '✓ Good stability - acceptable churn'}
+        {data.rigidityScore >= 0.70 && data.rigidityScore < 0.85 && '⚠ Moderate churn - review changes'}
+        {data.rigidityScore >= 0.50 && data.rigidityScore < 0.70 && '⚠⚠ High churn - significant disruption'}
+        {data.rigidityScore < 0.50 && '🔥 Unstable - excessive reshuffling'}
       </div>
     </div>
   );

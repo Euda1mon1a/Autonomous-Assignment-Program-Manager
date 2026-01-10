@@ -32,11 +32,6 @@ function createWrapper() {
       queries: { retry: false },
       mutations: { retry: false },
     },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
-    },
   });
 
   return ({ children }: { children: React.ReactNode }) => (
@@ -54,16 +49,16 @@ describe('Swap Marketplace Hooks', () => {
       const mockData = {
         entries: [
           {
-            request_id: 'swap-1',
-            requesting_faculty_name: 'Dr. Smith',
-            week_available: '2025-01-15',
+            requestId: 'swap-1',
+            requestingFacultyName: 'Dr. Smith',
+            weekAvailable: '2025-01-15',
             reason: 'Conference',
-            posted_at: '2025-01-10T10:00:00Z',
-            is_compatible: true,
+            postedAt: '2025-01-10T10:00:00Z',
+            isCompatible: true,
           },
         ],
         total: 1,
-        my_postings: 0,
+        myPostings: 0,
       };
 
       (api.get as jest.Mock).mockResolvedValue(mockData);
@@ -102,7 +97,7 @@ describe('Swap Marketplace Hooks', () => {
       (api.get as jest.Mock).mockResolvedValue({
         entries: [],
         total: 0,
-        my_postings: 0,
+        myPostings: 0,
       });
 
       renderHook(() => useSwapMarketplace(filters), {
@@ -140,23 +135,23 @@ describe('Swap Marketplace Hooks', () => {
   describe('useMySwapRequests', () => {
     it('should fetch my swaps data successfully', async () => {
       const mockData = {
-        incoming_requests: [
+        incomingRequests: [
           {
             id: 'swap-1',
-            source_faculty_id: 'faculty-1',
-            source_faculty: { name: 'Dr. Smith' },
-            source_week: '2025-01-15',
-            target_faculty_id: 'user-1',
-            target_faculty: { name: 'Dr. Doe' },
-            target_week: '2025-01-22',
-            swap_type: 'one_to_one',
+            sourceFacultyId: 'faculty-1',
+            sourceFaculty: { name: 'Dr. Smith' },
+            sourceWeek: '2025-01-15',
+            targetFacultyId: 'user-1',
+            targetFaculty: { name: 'Dr. Doe' },
+            targetWeek: '2025-01-22',
+            swapType: 'oneToOne',
             status: 'pending',
-            requested_at: '2025-01-10T10:00:00Z',
+            requestedAt: '2025-01-10T10:00:00Z',
             reason: 'Conference',
           },
         ],
-        outgoing_requests: [],
-        recent_swaps: [],
+        outgoingRequests: [],
+        recentSwaps: [],
       };
 
       (api.get as jest.Mock).mockResolvedValue(mockData);
@@ -195,19 +190,19 @@ describe('Swap Marketplace Hooks', () => {
   describe('useFacultyPreferences', () => {
     it('should fetch faculty preferences successfully', async () => {
       const mockPrefs = {
-        faculty_id: 'faculty-1',
-        preferred_weeks: ['2025-01-01'],
-        blocked_weeks: ['2025-12-25'],
-        max_weeks_per_month: 4,
-        max_consecutive_weeks: 2,
-        min_gap_between_weeks: 7,
-        target_weeks_per_year: 48,
-        notify_swap_requests: true,
-        notify_schedule_changes: true,
-        notify_conflict_alerts: true,
-        notify_reminder_days: 7,
+        facultyId: 'faculty-1',
+        preferredWeeks: ['2025-01-01'],
+        blockedWeeks: ['2025-12-25'],
+        maxWeeksPerMonth: 4,
+        maxConsecutiveWeeks: 2,
+        minGapBetweenWeeks: 7,
+        targetWeeks_per_year: 48,
+        notifySwapRequests: true,
+        notifyScheduleChanges: true,
+        notifyConflictAlerts: true,
+        notifyReminderDays: 7,
         notes: 'Prefer weekdays',
-        updated_at: '2025-01-01T00:00:00Z',
+        updatedAt: '2025-01-01T00:00:00Z',
       };
 
       (api.get as jest.Mock).mockResolvedValue(mockPrefs);
@@ -289,9 +284,9 @@ describe('Swap Marketplace Hooks', () => {
     it('should create swap request successfully', async () => {
       const mockResponse = {
         success: true,
-        request_id: 'swap-new',
+        requestId: 'swap-new',
         message: 'Request created',
-        candidates_notified: 5,
+        candidatesNotified: 5,
       };
 
       (api.post as jest.Mock).mockResolvedValue(mockResponse);
@@ -312,10 +307,10 @@ describe('Swap Marketplace Hooks', () => {
       });
 
       expect(api.post).toHaveBeenCalledWith('/portal/my/swaps', {
-        week_to_offload: '2025-01-15',
-        preferred_target_faculty_id: undefined,
+        weekToOffload: '2025-01-15',
+        preferredTargetFacultyId: undefined,
         reason: 'Conference',
-        auto_find_candidates: true,
+        autoFindCandidates: true,
       });
 
       expect(response).toEqual({
@@ -349,9 +344,9 @@ describe('Swap Marketplace Hooks', () => {
     it('should invalidate queries after successful creation', async () => {
       const mockResponse = {
         success: true,
-        request_id: 'swap-new',
+        requestId: 'swap-new',
         message: 'Request created',
-        candidates_notified: 5,
+        candidatesNotified: 5,
       };
 
       (api.post as jest.Mock).mockResolvedValue(mockResponse);

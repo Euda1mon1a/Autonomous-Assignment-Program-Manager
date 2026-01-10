@@ -13,7 +13,7 @@ export type ConflictSeverity = 'critical' | 'high' | 'medium' | 'low';
 
 export type ConflictType =
   | 'scheduling_overlap'     // Double-booked time slot
-  | 'acgme_violation'        // ACGME duty hour violation
+  | 'acgmeViolation'        // ACGME duty hour violation
   | 'supervision_missing'    // Required supervision not present
   | 'capacity_exceeded'      // Rotation capacity exceeded
   | 'absence_conflict'       // Assignment during absence
@@ -46,24 +46,24 @@ export interface Conflict {
   description: string;
 
   // Affected entities
-  affected_person_ids: string[];
-  affected_assignment_ids: string[];
-  affected_block_ids: string[];
+  affectedPersonIds: string[];
+  affectedAssignmentIds: string[];
+  affectedBlockIds: string[];
 
   // Time context
-  conflict_date: string;
-  conflict_session?: 'AM' | 'PM';
+  conflictDate: string;
+  conflictSession?: 'AM' | 'PM';
 
   // Detection metadata
-  detected_at: string;
-  detected_by: 'system' | 'manual' | 'validation';
+  detectedAt: string;
+  detectedBy: 'system' | 'manual' | 'validation';
   rule_id?: string;
 
   // Resolution info
-  resolved_at?: string;
-  resolved_by?: string;
-  resolution_method?: ResolutionMethod;
-  resolution_notes?: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
+  resolutionMethod?: ResolutionMethod;
+  resolutionNotes?: string;
 
   // Additional context
   details: ConflictDetails;
@@ -74,76 +74,76 @@ export interface Conflict {
 // ============================================================================
 
 export interface SchedulingOverlapDetails {
-  person_name: string;
-  person_id: string;
-  first_assignment: {
+  personName: string;
+  personId: string;
+  firstAssignment: {
     id: string;
-    rotation_name: string;
+    rotationName: string;
     location?: string;
   };
-  second_assignment: {
+  secondAssignment: {
     id: string;
-    rotation_name: string;
+    rotationName: string;
     location?: string;
   };
 }
 
 export interface ACGMEViolationDetails {
-  person_name: string;
-  person_id: string;
-  violation_type: string;
-  current_value: number;
-  limit_value: number;
+  personName: string;
+  personId: string;
+  violationType: string;
+  currentValue: number;
+  limitValue: number;
   unit: string;
-  period_start: string;
-  period_end: string;
+  periodStart: string;
+  periodEnd: string;
 }
 
 export interface SupervisionMissingDetails {
-  rotation_name: string;
-  rotation_id: string;
-  assigned_residents: Array<{
+  rotationName: string;
+  rotationId: string;
+  assignedResidents: Array<{
     id: string;
     name: string;
-    pgy_level?: number;
+    pgyLevel?: number;
   }>;
-  required_supervision_ratio: number;
+  required_supervisionRatio: number;
 }
 
 export interface CapacityExceededDetails {
-  rotation_name: string;
-  rotation_id: string;
-  current_count: number;
-  max_capacity: number;
-  assigned_people: Array<{
+  rotationName: string;
+  rotationId: string;
+  currentCount: number;
+  maxCapacity: number;
+  assignedPeople: Array<{
     id: string;
     name: string;
   }>;
 }
 
 export interface AbsenceConflictDetails {
-  person_name: string;
-  person_id: string;
-  absence_type: string;
-  absence_start: string;
-  absence_end: string;
-  assignment_rotation: string;
+  personName: string;
+  personId: string;
+  absenceType: string;
+  absenceStart: string;
+  absenceEnd: string;
+  assignmentRotation: string;
 }
 
 export interface QualificationMismatchDetails {
-  person_name: string;
-  person_id: string;
-  rotation_name: string;
-  required_qualification: string;
-  person_qualifications: string[];
+  personName: string;
+  personId: string;
+  rotationName: string;
+  requiredQualification: string;
+  personQualifications: string[];
 }
 
 export interface CoverageGapDetails {
-  rotation_name: string;
-  rotation_id: string;
-  required_coverage: number;
-  current_coverage: number;
-  gap_type: 'no_coverage' | 'insufficient_coverage';
+  rotationName: string;
+  rotationId: string;
+  requiredCoverage: number;
+  currentCoverage: number;
+  gapType: 'no_coverage' | 'insufficient_coverage';
 }
 
 export type ConflictDetails =
@@ -162,18 +162,18 @@ export type ConflictDetails =
 
 export interface ResolutionSuggestion {
   id: string;
-  conflict_id: string;
+  conflictId: string;
   method: ResolutionMethod;
   title: string;
   description: string;
-  impact_score: number; // 0-100, lower is better
+  impactScore: number; // 0-100, lower is better
   confidence: number;   // 0-100, higher is better
 
   // What would change
   changes: ResolutionChange[];
 
   // Side effects
-  side_effects: string[];
+  sideEffects: string[];
 
   // Whether this is the recommended option
   recommended: boolean;
@@ -181,15 +181,15 @@ export interface ResolutionSuggestion {
 
 export interface ResolutionChange {
   type: 'reassign' | 'remove' | 'add' | 'swap' | 'modify';
-  entity_type: 'assignment' | 'person' | 'block';
-  entity_id: string;
+  entityType: 'assignment' | 'person' | 'block';
+  entityId: string;
   description: string;
 
   // For reassignment
-  from_person_id?: string;
-  from_person_name?: string;
-  to_person_id?: string;
-  to_person_name?: string;
+  fromPersonId?: string;
+  fromPersonName?: string;
+  toPersonId?: string;
+  toPersonName?: string;
 
   // For modification
   field?: string;
@@ -202,19 +202,19 @@ export interface ResolutionChange {
 // ============================================================================
 
 export interface ManualOverride {
-  conflict_id: string;
-  override_type: 'acknowledge' | 'temporary' | 'permanent';
+  conflictId: string;
+  overrideType: 'acknowledge' | 'temporary' | 'permanent';
   reason: string;
   justification: string;
-  expires_at?: string; // For temporary overrides
+  expiresAt?: string; // For temporary overrides
   approved_by?: string;
   approved_at?: string;
 
   // Audit fields for ACGME compliance
-  is_acgme_related: boolean;
+  isAcgmeRelated: boolean;
   acgme_exception_type?: string;
-  supervisor_approval_required: boolean;
-  supervisor_approved: boolean;
+  supervisorApprovalRequired: boolean;
+  supervisorApproved: boolean;
   supervisor_id?: string;
 }
 
@@ -224,11 +224,11 @@ export interface ManualOverride {
 
 export interface ConflictHistoryEntry {
   id: string;
-  conflict_id: string;
+  conflictId: string;
   action: 'detected' | 'updated' | 'resolved' | 'reopened' | 'ignored' | 'overridden';
   timestamp: string;
-  user_id?: string;
-  user_name?: string;
+  userId?: string;
+  userName?: string;
   changes: Record<string, { from: unknown; to: unknown }>;
   notes?: string;
 }
@@ -237,15 +237,15 @@ export interface ConflictPattern {
   id: string;
   type: ConflictType;
   frequency: number;
-  first_occurrence: string;
-  last_occurrence: string;
-  affected_people: Array<{
+  firstOccurrence: string;
+  lastOccurrence: string;
+  affectedPeople: Array<{
     id: string;
     name: string;
-    occurrence_count: number;
+    occurrenceCount: number;
   }>;
-  root_cause?: string;
-  suggested_prevention?: string;
+  rootCause?: string;
+  suggestedPrevention?: string;
 }
 
 // ============================================================================
@@ -253,9 +253,9 @@ export interface ConflictPattern {
 // ============================================================================
 
 export interface BatchResolutionRequest {
-  conflict_ids: string[];
-  resolution_method: ResolutionMethod;
-  apply_suggestion_id?: string;
+  conflictIds: string[];
+  resolutionMethod: ResolutionMethod;
+  apply_suggestionId?: string;
   notes?: string;
 }
 
@@ -264,7 +264,7 @@ export interface BatchResolutionResult {
   successful: number;
   failed: number;
   results: Array<{
-    conflict_id: string;
+    conflictId: string;
     success: boolean;
     message: string;
     resolution?: ResolutionSuggestion;
@@ -279,15 +279,15 @@ export interface ConflictFilters {
   types?: ConflictType[];
   severities?: ConflictSeverity[];
   statuses?: ConflictStatus[];
-  person_ids?: string[];
-  date_range?: {
+  personIds?: string[];
+  dateRange?: {
     start: string;
     end: string;
   };
   search?: string;
 }
 
-export type ConflictSortField = 'severity' | 'date' | 'type' | 'status' | 'detected_at';
+export type ConflictSortField = 'severity' | 'date' | 'type' | 'status' | 'detectedAt';
 export type SortDirection = 'asc' | 'desc';
 
 export interface ConflictSortOptions {
@@ -300,16 +300,16 @@ export interface ConflictSortOptions {
 // ============================================================================
 
 export interface ConflictStatistics {
-  total_conflicts: number;
-  by_severity: Record<ConflictSeverity, number>;
-  by_type: Record<ConflictType, number>;
-  by_status: Record<ConflictStatus, number>;
-  resolution_rate: number;
-  average_resolution_time_hours: number;
-  most_affected_people: Array<{
+  totalConflicts: number;
+  bySeverity: Record<ConflictSeverity, number>;
+  byType: Record<ConflictType, number>;
+  byStatus: Record<ConflictStatus, number>;
+  resolutionRate: number;
+  averageResolutionTimeHours: number;
+  mostAffectedPeople: Array<{
     id: string;
     name: string;
-    conflict_count: number;
+    conflictCount: number;
   }>;
-  trending_up: boolean;
+  trendingUp: boolean;
 }

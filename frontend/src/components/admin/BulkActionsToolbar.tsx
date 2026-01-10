@@ -358,7 +358,7 @@ export function BulkActionsToolbar({
                 disabled={isPending}
                 className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
               >
-                {isPending && pendingAction === 'update_max_residents' && (
+                {isPending && pendingAction === 'update_maxResidents' && (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 )}
                 Apply

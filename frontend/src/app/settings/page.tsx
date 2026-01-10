@@ -7,31 +7,31 @@ import { get, post, ApiError } from '@/lib/api'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 // Backend schema - matches backend/app/schemas/settings.py and SchedulingAlgorithm enum
-// Available algorithms: greedy, cp_sat, pulp, hybrid (NOT min_conflicts - no implementation exists)
+// Available algorithms: greedy, cpSat, pulp, hybrid (NOT min_conflicts - no implementation exists)
 interface Settings {
-  scheduling_algorithm: 'greedy' | 'cp_sat' | 'pulp' | 'hybrid'
-  work_hours_per_week: number
-  max_consecutive_days: number
-  min_days_off_per_week: number
-  pgy1_supervision_ratio: string  // Format: "1:2"
-  pgy2_supervision_ratio: string  // Format: "1:4"
-  pgy3_supervision_ratio: string  // Format: "1:4"
-  enable_weekend_scheduling: boolean
-  enable_holiday_scheduling: boolean
-  default_block_duration_hours: number
+  schedulingAlgorithm: 'greedy' | 'cpSat' | 'pulp' | 'hybrid'
+  workHoursPerWeek: number
+  maxConsecutiveDays: number
+  minDaysOffPerWeek: number
+  pgy1_supervisionRatio: string  // Format: "1:2"
+  pgy2_supervisionRatio: string  // Format: "1:4"
+  pgy3_supervisionRatio: string  // Format: "1:4"
+  enableWeekendScheduling: boolean
+  enableHolidayScheduling: boolean
+  defaultBlockDurationHours: number
 }
 
 const defaultSettings: Settings = {
-  scheduling_algorithm: 'greedy',
-  work_hours_per_week: 80,
-  max_consecutive_days: 6,
-  min_days_off_per_week: 1,
-  pgy1_supervision_ratio: '1:2',
-  pgy2_supervision_ratio: '1:4',
-  pgy3_supervision_ratio: '1:4',
-  enable_weekend_scheduling: true,
-  enable_holiday_scheduling: false,
-  default_block_duration_hours: 4,
+  schedulingAlgorithm: 'greedy',
+  workHoursPerWeek: 80,
+  maxConsecutiveDays: 6,
+  minDaysOffPerWeek: 1,
+  pgy1_supervisionRatio: '1:2',
+  pgy2_supervisionRatio: '1:4',
+  pgy3_supervisionRatio: '1:4',
+  enableWeekendScheduling: true,
+  enableHolidayScheduling: false,
+  defaultBlockDurationHours: 4,
 }
 
 // API hooks for settings
@@ -166,7 +166,7 @@ export default function SettingsPage() {
                   className="input-field w-full"
                   value={settings.workHoursPerWeek}
                   onChange={(e) =>
-                    updateSetting('work_hours_per_week', parseInt(e.target.value) || 80)
+                    updateSetting('workHoursPerWeek', parseInt(e.target.value) || 80)
                   }
                   min={40}
                   max={100}
@@ -184,7 +184,7 @@ export default function SettingsPage() {
                   className="input-field w-full"
                   value={settings.maxConsecutiveDays}
                   onChange={(e) =>
-                    updateSetting('max_consecutive_days', parseInt(e.target.value) || 6)
+                    updateSetting('maxConsecutiveDays', parseInt(e.target.value) || 6)
                   }
                   min={1}
                   max={7}
@@ -202,7 +202,7 @@ export default function SettingsPage() {
                   className="input-field w-full"
                   value={settings.minDaysOffPerWeek}
                   onChange={(e) =>
-                    updateSetting('min_days_off_per_week', parseInt(e.target.value) || 1)
+                    updateSetting('minDaysOffPerWeek', parseInt(e.target.value) || 1)
                   }
                   min={1}
                   max={3}
@@ -224,9 +224,9 @@ export default function SettingsPage() {
                 </label>
                 <select
                   className="input-field w-full"
-                  value={settings.pgy1_supervision_ratio}
+                  value={settings.pgy1_supervisionRatio}
                   onChange={(e) =>
-                    updateSetting('pgy1_supervision_ratio', e.target.value)
+                    updateSetting('pgy1_supervisionRatio', e.target.value)
                   }
                 >
                   <option value="1:1">1:1 (1 faculty per resident)</option>
@@ -239,9 +239,9 @@ export default function SettingsPage() {
                 </label>
                 <select
                   className="input-field w-full"
-                  value={settings.pgy2_supervision_ratio}
+                  value={settings.pgy2_supervisionRatio}
                   onChange={(e) =>
-                    updateSetting('pgy2_supervision_ratio', e.target.value)
+                    updateSetting('pgy2_supervisionRatio', e.target.value)
                   }
                 >
                   <option value="1:2">1:2 (1 faculty per 2 residents)</option>
@@ -255,9 +255,9 @@ export default function SettingsPage() {
                 </label>
                 <select
                   className="input-field w-full"
-                  value={settings.pgy3_supervision_ratio}
+                  value={settings.pgy3_supervisionRatio}
                   onChange={(e) =>
-                    updateSetting('pgy3_supervision_ratio', e.target.value)
+                    updateSetting('pgy3_supervisionRatio', e.target.value)
                   }
                 >
                   <option value="1:2">1:2 (1 faculty per 2 residents)</option>
@@ -281,13 +281,13 @@ export default function SettingsPage() {
                   value={settings.schedulingAlgorithm}
                   onChange={(e) =>
                     updateSetting(
-                      'scheduling_algorithm',
-                      e.target.value as 'greedy' | 'cp_sat' | 'pulp' | 'hybrid'
+                      'schedulingAlgorithm',
+                      e.target.value as 'greedy' | 'cpSat' | 'pulp' | 'hybrid'
                     )
                   }
                 >
                   <option value="greedy">Greedy (Fast)</option>
-                  <option value="cp_sat">CP-SAT (Optimal, OR-Tools)</option>
+                  <option value="cpSat">CP-SAT (Optimal, OR-Tools)</option>
                   <option value="pulp">PuLP (Linear Programming)</option>
                   <option value="hybrid">Hybrid (CP-SAT + PuLP)</option>
                 </select>
@@ -304,7 +304,7 @@ export default function SettingsPage() {
                   className="input-field w-full"
                   value={settings.defaultBlockDurationHours}
                   onChange={(e) =>
-                    updateSetting('default_block_duration_hours', parseInt(e.target.value) || 4)
+                    updateSetting('defaultBlockDurationHours', parseInt(e.target.value) || 4)
                   }
                   min={1}
                   max={12}
@@ -320,7 +320,7 @@ export default function SettingsPage() {
                     className="rounded border-gray-300"
                     checked={settings.enableWeekendScheduling}
                     onChange={(e) =>
-                      updateSetting('enable_weekend_scheduling', e.target.checked)
+                      updateSetting('enableWeekendScheduling', e.target.checked)
                     }
                   />
                   <span className="text-sm font-medium text-gray-700">
@@ -335,7 +335,7 @@ export default function SettingsPage() {
                     className="rounded border-gray-300"
                     checked={settings.enableHolidayScheduling}
                     onChange={(e) =>
-                      updateSetting('enable_holiday_scheduling', e.target.checked)
+                      updateSetting('enableHolidayScheduling', e.target.checked)
                     }
                   />
                   <span className="text-sm font-medium text-gray-700">

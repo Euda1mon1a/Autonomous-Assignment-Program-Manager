@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@/test-utils'
 import { renderHook, act } from '@/test-utils'
 import { QuickAssignMenu, useQuickAssignMenu } from '@/components/schedule/QuickAssignMenu'
+import { AssignmentRole } from '@/types/api'
 
 // Mock the contexts and hooks
 jest.mock('@/contexts/AuthContext', () => ({
@@ -34,19 +35,19 @@ describe('QuickAssignMenu', () => {
         id: 'r1',
         name: 'Clinic',
         abbreviation: 'CL',
-        activity_type: 'clinic',
+        activityType: 'clinic',
       },
       {
         id: 'r2',
         name: 'Inpatient',
         abbreviation: 'IM',
-        activity_type: 'inpatient',
+        activityType: 'inpatient',
       },
       {
         id: 'r3',
         name: 'Call',
         abbreviation: 'CA',
-        activity_type: 'call',
+        activityType: 'call',
       },
     ],
   }
@@ -397,11 +398,15 @@ describe('QuickAssignMenu', () => {
     it('should show "Clear Assignment" when assignment exists', () => {
       const mockAssignment = {
         id: 'a1',
-        person_id: 'p1',
-        block_id: 'b1',
-        role: 'primary',
-        created_at: '2024-01-15T08:00:00Z',
-        updated_at: '2024-01-15T08:00:00Z',
+        personId: 'p1',
+        blockId: 'b1',
+        role: AssignmentRole.PRIMARY,
+        rotationTemplateId: null,
+        activityOverride: null,
+        notes: null,
+        createdBy: null,
+        createdAt: '2024-01-15T08:00:00Z',
+        updatedAt: '2024-01-15T08:00:00Z',
       }
 
       render(
@@ -437,11 +442,15 @@ describe('QuickAssignMenu', () => {
     it('should delete assignment when clicked', async () => {
       const mockAssignment = {
         id: 'a1',
-        person_id: 'p1',
-        block_id: 'b1',
-        role: 'primary',
-        created_at: '2024-01-15T08:00:00Z',
-        updated_at: '2024-01-15T08:00:00Z',
+        personId: 'p1',
+        blockId: 'b1',
+        role: AssignmentRole.PRIMARY,
+        rotationTemplateId: null,
+        activityOverride: null,
+        notes: null,
+        createdBy: null,
+        createdAt: '2024-01-15T08:00:00Z',
+        updatedAt: '2024-01-15T08:00:00Z',
       }
 
       mockDeleteMutation.mutateAsync.mockResolvedValue(undefined)
@@ -473,11 +482,15 @@ describe('QuickAssignMenu', () => {
     it('should show loading state while deleting', () => {
       const mockAssignment = {
         id: 'a1',
-        person_id: 'p1',
-        block_id: 'b1',
-        role: 'primary',
-        created_at: '2024-01-15T08:00:00Z',
-        updated_at: '2024-01-15T08:00:00Z',
+        personId: 'p1',
+        blockId: 'b1',
+        role: AssignmentRole.PRIMARY,
+        rotationTemplateId: null,
+        activityOverride: null,
+        notes: null,
+        createdBy: null,
+        createdAt: '2024-01-15T08:00:00Z',
+        updatedAt: '2024-01-15T08:00:00Z',
       }
 
       useDeleteAssignment.mockReturnValue({
@@ -507,11 +520,15 @@ describe('QuickAssignMenu', () => {
     it('should apply danger styling to Clear Assignment button', () => {
       const mockAssignment = {
         id: 'a1',
-        person_id: 'p1',
-        block_id: 'b1',
-        role: 'primary',
-        created_at: '2024-01-15T08:00:00Z',
-        updated_at: '2024-01-15T08:00:00Z',
+        personId: 'p1',
+        blockId: 'b1',
+        role: AssignmentRole.PRIMARY,
+        rotationTemplateId: null,
+        activityOverride: null,
+        notes: null,
+        createdBy: null,
+        createdAt: '2024-01-15T08:00:00Z',
+        updatedAt: '2024-01-15T08:00:00Z',
       }
 
       render(

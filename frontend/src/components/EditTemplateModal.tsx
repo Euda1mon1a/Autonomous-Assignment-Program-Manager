@@ -18,8 +18,8 @@ interface EditTemplateModalProps {
 
 interface FormErrors {
   name?: string;
-  activity_type?: string;
-  max_supervision_ratio?: string;
+  activityType?: string;
+  maxSupervisionRatio?: string;
   general?: string;
 }
 
@@ -117,7 +117,7 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
       setRequiresProcedureCredential(template.requiresProcedureCredential);
       setSupervisionRequired(template.supervisionRequired);
       setMaxSupervisionRatio(template.maxSupervisionRatio.toString());
-      setIsBlockHalfRotation(template.is_block_half_rotation || false);
+      setIsBlockHalfRotation(template.isBlockHalfRotation || false);
     }
   }, [template]);
 
@@ -150,17 +150,17 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
 
     const templateData: RotationTemplateUpdate = {
       name: name.trim(),
-      activity_type: activityType,
+      activityType: activityType,
       abbreviation: abbreviation.trim() || undefined,
-      font_color: fontColor || undefined,
-      background_color: backgroundColor || undefined,
-      clinic_location: clinicLocation.trim() || undefined,
-      max_residents: maxResidents ? parseInt(maxResidents) : undefined,
-      requires_specialty: requiresSpecialty.trim() || undefined,
-      requires_procedure_credential: requiresProcedureCredential,
-      supervision_required: supervisionRequired,
-      max_supervision_ratio: parseInt(maxSupervisionRatio),
-      is_block_half_rotation: isBlockHalfRotation,
+      fontColor: fontColor || undefined,
+      backgroundColor: backgroundColor || undefined,
+      clinicLocation: clinicLocation.trim() || undefined,
+      maxResidents: maxResidents ? parseInt(maxResidents) : undefined,
+      requiresSpecialty: requiresSpecialty.trim() || undefined,
+      requiresProcedureCredential: requiresProcedureCredential,
+      supervisionRequired: supervisionRequired,
+      maxSupervisionRatio: parseInt(maxSupervisionRatio),
+      isBlockHalfRotation: isBlockHalfRotation,
     };
 
     try {

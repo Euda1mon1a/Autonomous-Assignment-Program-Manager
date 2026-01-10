@@ -81,7 +81,7 @@ export type PersonStatus = 'active' | 'inactive' | 'on_leave'
 /**
  * Certification status types
  */
-export type CertificationStatus = 'current' | 'expiring_soon' | 'expired' | 'pending'
+export type CertificationStatus = 'current' | 'expiringSoon' | 'expired' | 'pending'
 
 /**
  * Certification type for BLS, ACLS, PALS, etc.
@@ -97,21 +97,21 @@ export interface CertificationType {
  */
 export interface PersonCertification {
   id: string
-  person_id: string
-  certification_type_id: string
+  personId: string
+  certificationType_id: string
   certification_number?: string
   issued_date: string
-  expiration_date: string
+  expirationDate: string
   status: CertificationStatus
   verified_by?: string
   verified_date?: string
   document_url?: string
-  days_until_expiration: number
-  is_expired: boolean
-  is_expiring_soon: boolean
-  created_at: string
-  updated_at: string
-  certification_type?: CertificationType
+  daysUntilExpiration: number
+  isExpired: boolean
+  isExpiringSoon: boolean
+  createdAt: string
+  updatedAt: string
+  certificationType?: CertificationType
 }
 
 /**
@@ -127,7 +127,7 @@ export interface ListResponse<T> {
  */
 export interface PeopleFilters {
   role?: string
-  pgy_level?: number
+  pgyLevel?: number
 }
 
 // ============================================================================
@@ -181,7 +181,7 @@ export const peopleQueryKeys = {
  * ```tsx
  * // Filter by PGY level
  * function PGY3Residents() {
- *   const { data } = usePeople({ role: 'resident', pgy_level: 3 });
+ *   const { data } = usePeople({ role: 'resident', pgyLevel: 3 });
  *   return <ResidentList residents={data.items} />;
  * }
  * ```
@@ -196,7 +196,7 @@ export function usePeople(
 ) {
   const params = new URLSearchParams()
   if (filters?.role) params.set('type', filters.role)
-  if (filters?.pgyLevel !== undefined) params.set('pgy_level', String(filters.pgyLevel))
+  if (filters?.pgyLevel !== undefined) params.set('pgyLevel', String(filters.pgyLevel))
   const queryString = params.toString()
 
   return useQuery<ListResponse<Person>, ApiError>({
@@ -307,7 +307,7 @@ export function useResidents(
   pgyLevel?: number,
   options?: Omit<UseQueryOptions<ListResponse<Person>, ApiError>, 'queryKey' | 'queryFn'>
 ) {
-  const params = pgyLevel !== undefined ? `?pgy_level=${pgyLevel}` : ''
+  const params = pgyLevel !== undefined ? `?pgyLevel=${pgyLevel}` : ''
 
   return useQuery<ListResponse<Person>, ApiError>({
     queryKey: peopleQueryKeys.residents(pgyLevel),
@@ -487,7 +487,7 @@ export function useCreatePerson() {
  *   const handleAdvance = () => {
  *     mutate({
  *       id: resident.id,
- *       data: { pgy_level: resident.pgyLevel + 1 },
+ *       data: { pgyLevel: resident.pgyLevel + 1 },
  *     });
  *   };
  *
@@ -603,8 +603,8 @@ export function useDeletePerson() {
  *   if (isLoading) return <CertificationsSkeleton />;
  *   if (error) return <ErrorMessage error={error} />;
  *
- *   const expiringSoon = data.items.filter(cert => cert.is_expiring_soon);
- *   const expired = data.items.filter(cert => cert.is_expired);
+ *   const expiringSoon = data.items.filter(cert => cert.isExpiringSoon);
+ *   const expired = data.items.filter(cert => cert.isExpired);
  *
  *   return (
  *     <div>
@@ -636,10 +636,10 @@ export function useDeletePerson() {
  *       {data?.items.map(cert => (
  *         <Badge
  *           key={cert.id}
- *           variant={cert.is_expired ? 'danger' : cert.is_expiring_soon ? 'warning' : 'success'}
+ *           variant={cert.isExpired ? 'danger' : cert.isExpiringSoon ? 'warning' : 'success'}
  *         >
- *           {cert.certification_type?.name}
- *           {cert.is_expiring_soon && ` (${cert.days_until_expiration}d)`}
+ *           {cert.certificationType?.name}
+ *           {cert.isExpiringSoon && ` (${cert.daysUntilExpiration}d)`}
  *         </Badge>
  *       ))}
  *     </div>
@@ -711,13 +711,13 @@ export function useBulkDeletePeople() {
   const queryClient = useQueryClient()
 
   return useMutation<BatchPersonResponse, ApiError, string[]>({
-    mutationFn: async (personIds) => {
+    mutationFn: async (personIds): Promise<BatchPersonResponse> => {
       const request: BatchPersonDeleteRequest = {
         personIds: personIds,
         dryRun: false,
       }
-      // Use axios del with data - axios converts camelCase to snake_case automatically
-      return del<BatchPersonResponse>('/people/batch', { data: request })
+      // Use post to batch delete endpoint - returns response with counts
+      return post<BatchPersonResponse>('/people/batch/delete', request)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['people'] })
@@ -748,7 +748,7 @@ export function useBulkDeletePeople() {
  *
  *   const handleUpdatePGY = (newLevel: number) => {
  *     mutate(
- *       { personIds: selectedIds, updates: { pgy_level: newLevel } },
+ *       { personIds: selectedIds, updates: { pgyLevel: newLevel } },
  *       {
  *         onSuccess: (result) => {
  *           toast.success(`Updated ${result.succeeded} people to PGY-${newLevel}`);
@@ -779,10 +779,10 @@ export function useBulkUpdatePeople() {
     mutationFn: async ({ personIds, updates }) => {
       const request: BatchPersonUpdateRequest = {
         people: personIds.map((id) => ({
-          person_id: id,
+          personId: id,
           updates,
         })),
-        dry_run: false,
+        dryRun: false,
       }
       return put<BatchPersonResponse>('/people/batch', request)
     },

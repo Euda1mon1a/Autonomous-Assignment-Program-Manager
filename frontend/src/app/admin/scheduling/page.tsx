@@ -71,7 +71,7 @@ import type {
 
 const ALGORITHMS: { value: Algorithm; label: string; description: string }[] = [
   { value: 'greedy', label: 'Greedy', description: 'Fast heuristic, assigns hardest blocks first' },
-  { value: 'cp_sat', label: 'CP-SAT', description: 'Constraint programming, guarantees compliance' },
+  { value: 'cpSat', label: 'CP-SAT', description: 'Constraint programming, guarantees compliance' },
   { value: 'pulp', label: 'PuLP', description: 'Linear programming, fast for large problems' },
   { value: 'hybrid', label: 'Hybrid', description: 'Combines CP-SAT and PuLP for best results' },
 ];

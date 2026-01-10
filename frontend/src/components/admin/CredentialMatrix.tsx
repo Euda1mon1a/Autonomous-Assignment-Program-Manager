@@ -85,7 +85,7 @@ export function CredentialMatrix({
 }: CredentialMatrixProps) {
   const [selectedCell, setSelectedCell] = useState<CellData | null>(null);
 
-  // Build a lookup map for credentials: key = `${person_id}_${procedureId}`
+  // Build a lookup map for credentials: key = `${personId}_${procedureId}`
   const credentialMap = useMemo(() => {
     const map = new Map<string, Credential>();
     credentials.forEach((cred) => {

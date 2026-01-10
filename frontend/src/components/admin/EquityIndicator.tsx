@@ -75,7 +75,7 @@ export function EquityIndicator({
   // Calculate trend if projection available
   const hasTrend = !!projectedEquity && !projectedLoading;
   const giniChange = hasTrend
-    ? projectedEquity.gini_coefficient - currentEquity.gini_coefficient
+    ? projectedEquity.giniCoefficient - currentEquity.giniCoefficient
     : 0;
   const improving = giniChange < 0; // Lower Gini = more equitable
   const worsening = giniChange > 0;
@@ -99,9 +99,9 @@ export function EquityIndicator({
         <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800 rounded-lg">
           <span className="text-xs font-medium text-slate-400">Gini:</span>
           <span
-            className={`text-sm font-semibold ${getGiniColorClass(currentEquity.gini_coefficient)}`}
+            className={`text-sm font-semibold ${getGiniColorClass(currentEquity.giniCoefficient)}`}
           >
-            {currentEquity.gini_coefficient.toFixed(3)}
+            {currentEquity.giniCoefficient.toFixed(3)}
           </span>
         </div>
         {hasTrend && Math.abs(giniChange) > 0.001 && (
@@ -126,9 +126,9 @@ export function EquityIndicator({
         </span>
         <div className="flex items-center gap-2">
           <span
-            className={`text-sm font-semibold ${getGiniColorClass(currentEquity.gini_coefficient)}`}
+            className={`text-sm font-semibold ${getGiniColorClass(currentEquity.giniCoefficient)}`}
           >
-            Gini: {currentEquity.gini_coefficient.toFixed(3)}
+            Gini: {currentEquity.giniCoefficient.toFixed(3)}
           </span>
           <span
             className={`text-xs px-2 py-0.5 rounded ${
@@ -137,7 +137,7 @@ export function EquityIndicator({
                 : 'bg-yellow-500/20 text-yellow-400'
             }`}
           >
-            {getGiniLabel(currentEquity.gini_coefficient)}
+            {getGiniLabel(currentEquity.giniCoefficient)}
           </span>
         </div>
       </div>
@@ -151,9 +151,9 @@ export function EquityIndicator({
             </span>
             <div className="flex items-center gap-2">
               <span
-                className={`text-sm font-semibold ${getGiniColorClass(projectedEquity.gini_coefficient)}`}
+                className={`text-sm font-semibold ${getGiniColorClass(projectedEquity.giniCoefficient)}`}
               >
-                Gini: {projectedEquity.gini_coefficient.toFixed(3)}
+                Gini: {projectedEquity.giniCoefficient.toFixed(3)}
               </span>
               <div className={`flex items-center gap-1 ${trendColor}`}>
                 <TrendIcon className="w-3.5 h-3.5" />

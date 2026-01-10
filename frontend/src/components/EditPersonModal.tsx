@@ -15,7 +15,7 @@ interface EditPersonModalProps {
 interface FormErrors {
   name?: string;
   email?: string;
-  pgy_level?: string;
+  pgyLevel?: string;
   general?: string;
 }
 
@@ -98,9 +98,9 @@ export function EditPersonModal({ isOpen, onClose, person }: EditPersonModalProp
       name: name.trim(),
       type,
       email: email.trim() || undefined,
-      pgy_level: type === PersonType.RESIDENT ? parseInt(pgyLevel) : undefined,
-      faculty_role: type === PersonType.FACULTY ? facultyRole : undefined,
-      performs_procedures: performsProcedures,
+      pgyLevel: type === PersonType.RESIDENT ? parseInt(pgyLevel) : undefined,
+      facultyRole: type === PersonType.FACULTY ? facultyRole : undefined,
+      performsProcedures: performsProcedures,
       specialties: specialties ? specialties.split(',').map(s => s.trim()).filter(Boolean) : undefined,
     };
 

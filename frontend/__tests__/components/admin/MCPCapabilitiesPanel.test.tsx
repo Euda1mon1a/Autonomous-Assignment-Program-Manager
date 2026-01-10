@@ -55,7 +55,7 @@ describe('MCPCapabilitiesPanel', () => {
       render(<MCPCapabilitiesPanel />);
 
       // First category (Scheduling & Compliance) should be expanded
-      expect(screen.getByText('validate_schedule')).toBeInTheDocument();
+      expect(screen.getByText('validateSchedule')).toBeInTheDocument();
       expect(screen.getByText('detect_conflicts')).toBeInTheDocument();
     });
 
@@ -63,7 +63,7 @@ describe('MCPCapabilitiesPanel', () => {
       render(<MCPCapabilitiesPanel compact={true} />);
 
       // No tools should be visible initially
-      expect(screen.queryByText('validate_schedule')).not.toBeInTheDocument();
+      expect(screen.queryByText('validateSchedule')).not.toBeInTheDocument();
     });
 
     it('should display tool count for each category', () => {
@@ -81,20 +81,20 @@ describe('MCPCapabilitiesPanel', () => {
       render(<MCPCapabilitiesPanel compact={true} />);
 
       // Initially collapsed
-      expect(screen.queryByText('validate_schedule')).not.toBeInTheDocument();
+      expect(screen.queryByText('validateSchedule')).not.toBeInTheDocument();
 
       // Click to expand
       const categoryHeader = screen.getByText('Scheduling & Compliance').closest('button');
       await user.click(categoryHeader!);
 
       // Now expanded
-      expect(screen.getByText('validate_schedule')).toBeInTheDocument();
+      expect(screen.getByText('validateSchedule')).toBeInTheDocument();
 
       // Click to collapse
       await user.click(categoryHeader!);
 
       // Now collapsed again
-      expect(screen.queryByText('validate_schedule')).not.toBeInTheDocument();
+      expect(screen.queryByText('validateSchedule')).not.toBeInTheDocument();
     });
 
     it('should show toggle indicator', () => {
@@ -114,7 +114,7 @@ describe('MCPCapabilitiesPanel', () => {
       render(<MCPCapabilitiesPanel />);
 
       // First category is expanded
-      expect(screen.getByText('validate_schedule')).toBeInTheDocument();
+      expect(screen.getByText('validateSchedule')).toBeInTheDocument();
       expect(screen.queryByText('check_utilization_threshold')).not.toBeInTheDocument();
 
       // Click second category
@@ -122,7 +122,7 @@ describe('MCPCapabilitiesPanel', () => {
       await user.click(resilienceHeader!);
 
       // Second category is expanded, first is collapsed
-      expect(screen.queryByText('validate_schedule')).not.toBeInTheDocument();
+      expect(screen.queryByText('validateSchedule')).not.toBeInTheDocument();
       expect(screen.getByText('check_utilization_threshold')).toBeInTheDocument();
     });
   });
@@ -136,7 +136,7 @@ describe('MCPCapabilitiesPanel', () => {
       const schedulingHeader = screen.getByText('Scheduling & Compliance').closest('button');
       await user.click(schedulingHeader!);
 
-      const toolName = screen.getByText('validate_schedule');
+      const toolName = screen.getByText('validateSchedule');
       expect(toolName.tagName).toBe('CODE');
       expect(toolName.className).toContain('mcp-tool-name');
     });
@@ -198,8 +198,8 @@ describe('MCPCapabilitiesPanel', () => {
       const searchInput = screen.getByPlaceholderText('Search tools...');
       await user.type(searchInput, 'validate');
 
-      // Should find validate_schedule and validate_deployment
-      expect(screen.getByText('validate_schedule')).toBeInTheDocument();
+      // Should find validateSchedule and validate_deployment
+      expect(screen.getByText('validateSchedule')).toBeInTheDocument();
       expect(screen.getByText('validate_deployment')).toBeInTheDocument();
 
       // Should not find other tools
@@ -236,7 +236,7 @@ describe('MCPCapabilitiesPanel', () => {
       await user.type(searchInput, 'ACGME');
 
       // Should find tools mentioning ACGME
-      expect(screen.getByText('validate_schedule')).toBeInTheDocument();
+      expect(screen.getByText('validateSchedule')).toBeInTheDocument();
     });
 
     it('should show clear button when search has text', async () => {
@@ -290,7 +290,7 @@ describe('MCPCapabilitiesPanel', () => {
       expect(screen.getByText('Background Tasks')).toBeInTheDocument();
 
       const searchInput = screen.getByPlaceholderText('Search tools...');
-      await user.type(searchInput, 'validate_schedule');
+      await user.type(searchInput, 'validateSchedule');
 
       // Only category with matching tool should be visible
       expect(screen.getByText('Scheduling & Compliance')).toBeInTheDocument();
@@ -432,7 +432,7 @@ describe('MCPCapabilitiesPanel', () => {
       const searchInput = screen.getByPlaceholderText('Search tools...');
       await user.type(searchInput, 'validate');
 
-      // Only 2 validate tools (validate_schedule, validate_deployment)
+      // Only 2 validate tools (validateSchedule, validate_deployment)
       const schedulingCategory = screen.getByText('Scheduling & Compliance').closest('.mcp-category');
       expect(schedulingCategory).toHaveTextContent('1 tool');
 

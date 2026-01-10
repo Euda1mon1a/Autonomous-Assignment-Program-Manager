@@ -112,16 +112,16 @@ function transformApiAssignment(apiAssignment: ApiCallAssignment): CallAssignmen
   return {
     id: apiAssignment.id,
     date: apiAssignment.date,
-    day_of_week: dayOfWeek,
-    person_id: apiAssignment.personId,
-    person_name: apiAssignment.person?.name || 'Unknown',
-    call_type: callType,
-    // Note: post_call_status is not in API response, default to available
+    dayOfWeek: dayOfWeek,
+    personId: apiAssignment.personId,
+    personName: apiAssignment.person?.name || 'Unknown',
+    callType: callType,
+    // Note: postCallStatus is not in API response, default to available
     // This would need backend enhancement to track PCAT status
-    post_call_status: 'available',
+    postCallStatus: 'available',
     notes: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 }
 
@@ -153,10 +153,10 @@ export default function FacultyCallAdminPage() {
 
   // State
   const [filters, setFilters] = useState<CallFilters>({
-    start_date: defaultDates.start,
-    end_date: defaultDates.end,
-    person_id: '',
-    call_type: '',
+    startDate: defaultDates.start,
+    endDate: defaultDates.end,
+    personId: '',
+    callType: '',
     search: '',
   });
   const [sort, setSort] = useState<CallSort>({
@@ -187,10 +187,10 @@ export default function FacultyCallAdminPage() {
     error,
     refetch,
   } = useCallAssignments({
-    start_date: filters.startDate,
-    end_date: filters.endDate,
-    person_id: filters.personId || undefined,
-    // Note: API call_type is different from UI call_type, skip for now
+    startDate: filters.startDate,
+    endDate: filters.endDate,
+    personId: filters.personId || undefined,
+    // Note: API callType is different from UI callType, skip for now
   });
 
   // Mutations
@@ -231,10 +231,10 @@ export default function FacultyCallAdminPage() {
         case 'date':
           comparison = a.date.localeCompare(b.date);
           break;
-        case 'person_name':
+        case 'personName':
           comparison = a.personName.localeCompare(b.personName);
           break;
-        case 'call_type':
+        case 'callType':
           comparison = a.callType.localeCompare(b.callType);
           break;
       }
@@ -319,11 +319,11 @@ export default function FacultyCallAdminPage() {
       // Fetch equity preview
       try {
         await equityPreviewMutation.mutateAsync({
-          start_date: filters.startDate,
-          end_date: filters.endDate,
-          simulated_changes: selectedIds.map((assignmentId) => ({
-            assignment_id: assignmentId,
-            new_person_id: personId,
+          startDate: filters.startDate,
+          endDate: filters.endDate,
+          simulatedChanges: selectedIds.map((assignmentId) => ({
+            assignmentId: assignmentId,
+            newPersonId: personId,
           })),
         });
         setShowEquityPreview(true);
@@ -343,8 +343,8 @@ export default function FacultyCallAdminPage() {
     const person = availableFaculty.find((p) => p.id === pendingReassignPersonId);
     try {
       const result = await bulkUpdateMutation.mutateAsync({
-        assignment_ids: selectedIds,
-        updates: { person_id: pendingReassignPersonId },
+        assignmentIds: selectedIds,
+        updates: { personId: pendingReassignPersonId },
       });
       if (result.errors.length > 0) {
         toast.warning(`Reassigned ${result.updated} assignments. ${result.errors.length} failed.`);
@@ -371,7 +371,7 @@ export default function FacultyCallAdminPage() {
     setPendingAction('apply_pcat');
     try {
       const result = await generatePCATMutation.mutateAsync({
-        assignment_ids: selectedIds,
+        assignmentIds: selectedIds,
       });
       if (result.errors.length > 0) {
         toast.warning(`Processed ${result.processed} assignments. PCAT: ${result.pcatCreated}, DO: ${result.doCreated}. ${result.errors.length} errors.`);
@@ -389,9 +389,9 @@ export default function FacultyCallAdminPage() {
 
   const handleClearPCAT = useCallback(async () => {
     setPendingAction('clear_pcat');
-    // Note: Clear PCAT would need backend support for post_call_status field
+    // Note: Clear PCAT would need backend support for postCallStatus field
     // For now, show a message that this feature requires backend enhancement
-    toast.info('Clear PCAT functionality requires backend enhancement for post_call_status tracking');
+    toast.info('Clear PCAT functionality requires backend enhancement for postCallStatus tracking');
     setPendingAction(null);
   }, [toast]);
 
@@ -534,14 +534,14 @@ export default function FacultyCallAdminPage() {
             <input
               type="date"
               value={filters.startDate}
-              onChange={(e) => setFilters((prev) => ({ ...prev, start_date: e.target.value }))}
+              onChange={(e) => setFilters((prev) => ({ ...prev, startDate: e.target.value }))}
               className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900"
             />
             <span className="text-slate-300">to</span>
             <input
               type="date"
               value={filters.endDate}
-              onChange={(e) => setFilters((prev) => ({ ...prev, end_date: e.target.value }))}
+              onChange={(e) => setFilters((prev) => ({ ...prev, endDate: e.target.value }))}
               className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900"
             />
           </div>
@@ -551,7 +551,7 @@ export default function FacultyCallAdminPage() {
             <Filter className="w-4 h-4 text-slate-300" />
             <select
               value={filters.personId}
-              onChange={(e) => setFilters((prev) => ({ ...prev, person_id: e.target.value }))}
+              onChange={(e) => setFilters((prev) => ({ ...prev, personId: e.target.value }))}
               className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900"
             >
               <option value="">All Faculty</option>
@@ -567,7 +567,7 @@ export default function FacultyCallAdminPage() {
           <select
             value={filters.callType}
             onChange={(e) =>
-              setFilters((prev) => ({ ...prev, call_type: e.target.value as CallType | '' }))
+              setFilters((prev) => ({ ...prev, callType: e.target.value as CallType | '' }))
             }
             className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900"
           >

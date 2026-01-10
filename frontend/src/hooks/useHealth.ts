@@ -13,7 +13,7 @@ import { get } from '@/lib/api'
 
 export interface ServiceHealth {
   status: 'healthy' | 'unhealthy' | 'degraded'
-  latency_ms?: number
+  latencyMs?: number
   message?: string
   last_checked?: string
 }

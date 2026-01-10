@@ -13,8 +13,8 @@ interface CreateTemplateModalProps {
 
 interface FormErrors {
   name?: string;
-  activity_type?: string;
-  max_supervision_ratio?: string;
+  activityType?: string;
+  maxSupervisionRatio?: string;
   general?: string;
 }
 
@@ -117,17 +117,17 @@ export function CreateTemplateModal({ isOpen, onClose }: CreateTemplateModalProp
 
     const templateData: RotationTemplateCreate = {
       name: name.trim(),
-      activity_type: activityType,
+      activityType: activityType,
       ...(abbreviation && { abbreviation: abbreviation.trim() }),
-      ...(fontColor && { font_color: fontColor }),
-      ...(backgroundColor && { background_color: backgroundColor }),
-      ...(clinicLocation && { clinic_location: clinicLocation.trim() }),
-      ...(maxResidents && { max_residents: parseInt(maxResidents) }),
-      ...(requiresSpecialty && { requires_specialty: requiresSpecialty.trim() }),
-      requires_procedure_credential: requiresProcedureCredential,
-      supervision_required: supervisionRequired,
-      max_supervision_ratio: parseInt(maxSupervisionRatio),
-      is_block_half_rotation: isBlockHalfRotation,
+      ...(fontColor && { fontColor: fontColor }),
+      ...(backgroundColor && { backgroundColor: backgroundColor }),
+      ...(clinicLocation && { clinicLocation: clinicLocation.trim() }),
+      ...(maxResidents && { maxResidents: parseInt(maxResidents) }),
+      ...(requiresSpecialty && { requiresSpecialty: requiresSpecialty.trim() }),
+      requiresProcedureCredential: requiresProcedureCredential,
+      supervisionRequired: supervisionRequired,
+      maxSupervisionRatio: parseInt(maxSupervisionRatio),
+      isBlockHalfRotation: isBlockHalfRotation,
     };
 
     try {

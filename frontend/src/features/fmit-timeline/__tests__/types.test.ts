@@ -123,11 +123,11 @@ describe('getWeeksInRange', () => {
     const periods = getWeeksInRange('2026-01-07', '2026-01-31');
 
     // First period should start on Friday 2026-01-02
-    expect(periods[0].start_date).toBe('2026-01-02');
+    expect(periods[0].startDate).toBe('2026-01-02');
 
     // All weeks should start on Friday (use UTC to match implementation)
     for (const period of periods) {
-      const startDate = new Date(period.start_date);
+      const startDate = new Date(period.startDate);
       expect(startDate.getUTCDay()).toBe(5); // Friday
     }
   });
@@ -137,7 +137,7 @@ describe('getWeeksInRange', () => {
 
     // All weeks except possibly the last should end on Thursday (use UTC)
     for (let i = 0; i < periods.length - 1; i++) {
-      const endDate = new Date(periods[i].end_date);
+      const endDate = new Date(periods[i].endDate);
       expect(endDate.getUTCDay()).toBe(4); // Thursday
     }
   });
@@ -146,10 +146,10 @@ describe('getWeeksInRange', () => {
     // 2026-01-02 is a Friday
     const periods = getWeeksInRange('2026-01-02', '2026-01-15');
 
-    expect(periods[0].start_date).toBe('2026-01-02');
-    expect(periods[0].end_date).toBe('2026-01-08');
-    expect(periods[1].start_date).toBe('2026-01-09');
-    expect(periods[1].end_date).toBe('2026-01-15');
+    expect(periods[0].startDate).toBe('2026-01-02');
+    expect(periods[0].endDate).toBe('2026-01-08');
+    expect(periods[1].startDate).toBe('2026-01-09');
+    expect(periods[1].endDate).toBe('2026-01-15');
   });
 
   it('should truncate last week end date if it exceeds range', () => {
@@ -157,7 +157,7 @@ describe('getWeeksInRange', () => {
     const periods = getWeeksInRange('2026-01-02', '2026-01-12');
 
     const lastPeriod = periods[periods.length - 1];
-    expect(lastPeriod.end_date).toBe('2026-01-12');
+    expect(lastPeriod.endDate).toBe('2026-01-12');
   });
 
   it('should have sequential week numbers', () => {
@@ -173,10 +173,10 @@ describe('getWeeksInRange', () => {
     const periods = getWeeksInRange('2026-01-02', '2026-01-29');
 
     expect(periods.length).toBe(4);
-    expect(periods[0].start_date).toBe('2026-01-02');
-    expect(periods[0].end_date).toBe('2026-01-08');
-    expect(periods[3].start_date).toBe('2026-01-23');
-    expect(periods[3].end_date).toBe('2026-01-29');
+    expect(periods[0].startDate).toBe('2026-01-02');
+    expect(periods[0].endDate).toBe('2026-01-08');
+    expect(periods[3].startDate).toBe('2026-01-23');
+    expect(periods[3].endDate).toBe('2026-01-29');
   });
 
   it('should handle single week range', () => {
@@ -184,7 +184,7 @@ describe('getWeeksInRange', () => {
 
     // Should include the FMIT week containing these dates
     expect(periods.length).toBe(1);
-    expect(periods[0].start_date).toBe('2026-01-02');
+    expect(periods[0].startDate).toBe('2026-01-02');
   });
 
   it('should align to previous Friday even when start date is Thursday', () => {
@@ -192,7 +192,7 @@ describe('getWeeksInRange', () => {
     const periods = getWeeksInRange('2026-01-08', '2026-01-22');
 
     // Should start from the Friday of that week (2026-01-02)
-    expect(periods[0].start_date).toBe('2026-01-02');
+    expect(periods[0].startDate).toBe('2026-01-02');
   });
 
   it('should handle start date on Saturday correctly', () => {
@@ -200,8 +200,8 @@ describe('getWeeksInRange', () => {
     const periods = getWeeksInRange('2026-01-03', '2026-01-15');
 
     // Should align to previous Friday (2026-01-02)
-    expect(periods[0].start_date).toBe('2026-01-02');
-    expect(periods[0].end_date).toBe('2026-01-08');
+    expect(periods[0].startDate).toBe('2026-01-02');
+    expect(periods[0].endDate).toBe('2026-01-08');
   });
 
   it('should handle start date on Sunday correctly', () => {
@@ -209,7 +209,7 @@ describe('getWeeksInRange', () => {
     const periods = getWeeksInRange('2026-01-04', '2026-01-15');
 
     // Should align to previous Friday (2026-01-02)
-    expect(periods[0].start_date).toBe('2026-01-02');
-    expect(periods[0].end_date).toBe('2026-01-08');
+    expect(periods[0].startDate).toBe('2026-01-02');
+    expect(periods[0].endDate).toBe('2026-01-08');
   });
 });

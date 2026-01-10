@@ -7,6 +7,8 @@ import React from 'react';
 import { render, screen, fireEvent } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { EditPersonModal } from '../EditPersonModal';
+import { PersonType } from '@/types/api';
+import type { Person } from '@/types/api';
 
 global.fetch = jest.fn();
 
@@ -20,31 +22,37 @@ jest.mock('@/contexts/ToastContext', () => ({
 }));
 
 describe('EditPersonModal', () => {
-  const mockPerson = {
+  const mockPerson: Person = {
     id: '1',
-    username: 'Test User',
+    name: 'Test User',
     email: 'test@example.com',
-    role: 'faculty',
+    type: PersonType.FACULTY,
+    pgyLevel: null,
+    performsProcedures: true,
+    specialties: ['Internal Medicine'],
+    primaryDuty: null,
+    facultyRole: null,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
   };
   const mockOnClose = jest.fn();
-  const mockOnSuccess = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('renders when isOpen is true', () => {
-    render(<EditPersonModal isOpen={true} person={mockPerson} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+    render(<EditPersonModal isOpen={true} person={mockPerson} onClose={mockOnClose} />);
     expect(screen.getByText(/edit person/i)).toBeInTheDocument();
   });
 
   it('does not render when isOpen is false', () => {
-    render(<EditPersonModal isOpen={false} person={mockPerson} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+    render(<EditPersonModal isOpen={false} person={mockPerson} onClose={mockOnClose} />);
     expect(screen.queryByText(/edit person/i)).not.toBeInTheDocument();
   });
 
   it('calls onClose when cancel button clicked', () => {
-    render(<EditPersonModal isOpen={true} person={mockPerson} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+    render(<EditPersonModal isOpen={true} person={mockPerson} onClose={mockOnClose} />);
     const cancelButton = screen.getByText(/cancel/i);
     fireEvent.click(cancelButton);
     expect(mockOnClose).toHaveBeenCalled();

@@ -281,7 +281,7 @@ export function CallAssignmentTable({
               <th className="text-left py-3 px-4 text-slate-400">
                 <SortHeader
                   label="Person"
-                  field="person_name"
+                  field="personName"
                   currentSort={sort}
                   onSort={onSortChange}
                 />
@@ -289,7 +289,7 @@ export function CallAssignmentTable({
               <th className="text-left py-3 px-4 text-slate-400">
                 <SortHeader
                   label="Call Type"
-                  field="call_type"
+                  field="callType"
                   currentSort={sort}
                   onSort={onSortChange}
                 />
@@ -340,10 +340,10 @@ export function CallAssignmentTable({
                     </span>
                   </td>
                   <td className="py-3 px-4">
-                    <CallTypeBadge callType={assignment.call_type} />
+                    <CallTypeBadge callType={assignment.callType} />
                   </td>
                   <td className="py-3 px-4">
-                    <PostCallStatusBadge status={assignment.post_call_status} />
+                    <PostCallStatusBadge status={assignment.postCallStatus} />
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center justify-end gap-1">

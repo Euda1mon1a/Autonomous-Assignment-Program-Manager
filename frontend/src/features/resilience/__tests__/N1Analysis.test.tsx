@@ -9,34 +9,34 @@ jest.mock("@/hooks/useResilience", () => ({
 describe("N1Analysis", () => {
   const mockVulnerabilityData = {
     analyzed_at: new Date().toISOString(),
-    period_start: "2025-01-01",
-    period_end: "2025-01-31",
-    n1_pass: true,
-    n2_pass: true,
-    phase_transition_risk: "low",
+    periodStart: "2025-01-01",
+    periodEnd: "2025-01-31",
+    n1Pass: true,
+    n2Pass: true,
+    phaseTransitionRisk: "low",
     n1_vulnerabilities: [],
     n2_fatal_pairs: [],
-    most_critical_faculty: [
+    mostCriticalFaculty: [
       {
-        faculty_id: "fac-001",
-        faculty_name: "Dr. Smith",
-        centrality_score: 0.85,
+        facultyId: "fac-001",
+        facultyName: "Dr. Smith",
+        centralityScore: 0.85,
         services_covered: 12,
         unique_coverage_slots: 3,
         replacement_difficulty: 0.9,
-        risk_level: "HIGH",
+        riskLevel: "HIGH",
       },
       {
-        faculty_id: "fac-002",
-        faculty_name: "Dr. Jones",
-        centrality_score: 0.72,
+        facultyId: "fac-002",
+        facultyName: "Dr. Jones",
+        centralityScore: 0.72,
         services_covered: 8,
         unique_coverage_slots: 1,
         replacement_difficulty: 0.7,
-        risk_level: "MEDIUM",
+        riskLevel: "MEDIUM",
       },
     ],
-    recommended_actions: [
+    recommendedActions: [
       "Cross-train resident backup for critical rotations",
       "Develop contingency plan for Dr. Smith absence",
     ],
@@ -59,7 +59,7 @@ describe("N1Analysis", () => {
     expect(screen.getByText("Single Point of Failure Detection")).toBeInTheDocument();
   });
 
-  it("displays PASSED status when n1_pass is true", () => {
+  it("displays PASSED status when n1Pass is true", () => {
     (useVulnerabilityReport as jest.Mock).mockReturnValue({
       data: mockVulnerabilityData,
       isLoading: false,
@@ -145,7 +145,7 @@ describe("N1Analysis", () => {
   it("displays resilience optimal when no critical faculty", () => {
     const optimizedData = {
       ...mockVulnerabilityData,
-      most_critical_faculty: [],
+      mostCriticalFaculty: [],
     };
 
     (useVulnerabilityReport as jest.Mock).mockReturnValue({
@@ -160,10 +160,10 @@ describe("N1Analysis", () => {
     expect(screen.getByText("No single points of failure detected.")).toBeInTheDocument();
   });
 
-  it("displays FAILED status when n1_pass is false", () => {
+  it("displays FAILED status when n1Pass is false", () => {
     const failedData = {
       ...mockVulnerabilityData,
-      n1_pass: false,
+      n1Pass: false,
     };
 
     (useVulnerabilityReport as jest.Mock).mockReturnValue({
@@ -180,14 +180,14 @@ describe("N1Analysis", () => {
   it("limits critical faculty display to 3 items", () => {
     const manyFacultyData = {
       ...mockVulnerabilityData,
-      most_critical_faculty: Array.from({ length: 5 }, (_, i) => ({
-        faculty_id: `fac-${i}`,
-        faculty_name: `Dr. Faculty ${i}`,
-        centrality_score: 0.8 - i * 0.1,
+      mostCriticalFaculty: Array.from({ length: 5 }, (_, i) => ({
+        facultyId: `fac-${i}`,
+        facultyName: `Dr. Faculty ${i}`,
+        centralityScore: 0.8 - i * 0.1,
         services_covered: 10,
         unique_coverage_slots: 2,
         replacement_difficulty: 0.8,
-        risk_level: "HIGH",
+        riskLevel: "HIGH",
       })),
     };
 

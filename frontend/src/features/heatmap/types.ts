@@ -36,14 +36,14 @@ export interface HeatmapAnnotation {
  * Core heatmap data structure
  */
 export interface HeatmapData {
-  x_labels: string[];
-  y_labels: string[];
-  z_values: number[][];
-  color_scale?: ColorScale;
+  xLabels: string[];
+  yLabels: string[];
+  zValues: number[][];
+  colorScale?: ColorScale;
   annotations?: HeatmapAnnotation[];
   title?: string;
-  x_axis_label?: string;
-  y_axis_label?: string;
+  xAxisLabel?: string;
+  yAxisLabel?: string;
 }
 
 /**
@@ -62,21 +62,21 @@ export type HeatmapGroupBy = 'person' | 'rotation';
  * Heatmap filters
  */
 export interface HeatmapFilters {
-  start_date?: string;
-  end_date?: string;
-  person_ids?: string[];
-  rotation_ids?: string[];
-  include_fmit?: boolean;
-  group_by?: HeatmapGroupBy;
+  startDate?: string;
+  endDate?: string;
+  personIds?: string[];
+  rotationIds?: string[];
+  includeFmit?: boolean;
+  groupBy?: HeatmapGroupBy;
 }
 
 /**
  * Coverage metrics for heatmap
  */
 export interface CoverageMetrics {
-  total_slots: number;
-  filled_slots: number;
-  coverage_percentage: number;
+  totalSlots: number;
+  filledSlots: number;
+  coveragePercentage: number;
   gaps: Array<{
     date: string;
     rotation: string;
@@ -89,12 +89,12 @@ export interface CoverageMetrics {
  * Workload metrics for heatmap
  */
 export interface WorkloadMetrics {
-  person_id: string;
-  person_name: string;
-  total_assignments: number;
-  total_hours: number;
-  blocks_by_rotation: Record<string, number>;
-  average_weekly_hours: number;
+  personId: string;
+  personName: string;
+  totalAssignments: number;
+  totalHours: number;
+  blocksByRotation: Record<string, number>;
+  averageWeeklyHours: number;
 }
 
 // ============================================================================
@@ -142,7 +142,7 @@ export interface HeatmapExportConfig {
   width?: number;
   height?: number;
   title?: string;
-  include_legend?: boolean;
+  includeLegend?: boolean;
   filters?: HeatmapFilters;
 }
 

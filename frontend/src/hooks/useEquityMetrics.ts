@@ -23,7 +23,7 @@ export interface EquityMetricsRequest {
 
 export interface EquityMetricsResponse {
   /** Gini coefficient (0 = perfect equality, 1 = perfect inequality) */
-  gini_coefficient: number;
+  giniCoefficient: number;
   /** Whether workload distribution is equitable (Gini < 0.15) */
   is_equitable: boolean;
   /** Mean workload across all providers */
@@ -79,7 +79,7 @@ export const equityMetricsQueryKeys = {
  *
  *   return (
  *     <div className={data.is_equitable ? 'text-green-500' : 'text-red-500'}>
- *       <span>Gini: {data.gini_coefficient.toFixed(3)}</span>
+ *       <span>Gini: {data.giniCoefficient.toFixed(3)}</span>
  *       <p>{data.interpretation}</p>
  *     </div>
  *   );
@@ -100,7 +100,7 @@ export function useEquityMetrics(
       if (!providerHours || Object.keys(providerHours).length === 0) {
         // Return default values for empty input
         return {
-          gini_coefficient: 0.0,
+          giniCoefficient: 0.0,
           is_equitable: true,
           mean_workload: 0,
           std_workload: 0,

@@ -7,7 +7,14 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { LoginForm } from '../LoginForm';
-import { localStorageMock } from '@/__tests__/setup';
+
+// Mock localStorage
+const localStorageMock = {
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
+};
 
 // Mock useRouter
 const mockPush = jest.fn();

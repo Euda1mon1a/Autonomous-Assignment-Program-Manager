@@ -17,14 +17,14 @@ import type { CallAssignment, OnCallPerson } from './types';
 interface ApiCallAssignment {
   id: string;
   date: string;
-  person_id: string;
-  call_type: 'sunday' | 'weekday' | 'holiday' | 'backup';
-  is_weekend: boolean;
-  is_holiday: boolean;
+  personId: string;
+  callType: 'sunday' | 'weekday' | 'holiday' | 'backup';
+  isWeekend: boolean;
+  isHoliday: boolean;
   person: {
     id: string;
     name: string;
-    faculty_role: string | null;
+    facultyRole: string | null;
   };
 }
 
@@ -61,8 +61,8 @@ export const callRosterQueryKeys = {
  */
 async function fetchCallAssignments(startDate: string, endDate: string): Promise<ApiCallAssignment[]> {
   const params = new URLSearchParams({
-    start_date: startDate,
-    end_date: endDate,
+    startDate: startDate,
+    endDate: endDate,
   });
   const response = await get<ApiCallAssignmentsResponse>(`/call-assignments?${params}`);
   return response.items;
@@ -80,22 +80,22 @@ function transformToCallAssignment(apiAssignment: ApiCallAssignment): CallAssign
     id: apiAssignment.person.id,
     name: apiAssignment.person.name,
     role: 'attending', // Faculty are always attending
-    pgy_level: undefined,
+    pgyLevel: undefined,
     email: undefined,
     phone: undefined,
     pager: undefined,
   };
 
-  // Map call_type to shift - faculty call is typically day shifts
-  const shift: 'day' | 'night' | '24hr' = apiAssignment.call_type === 'backup' ? 'day' : 'day';
+  // Map callType to shift - faculty call is typically day shifts
+  const shift: 'day' | 'night' | '24hr' = apiAssignment.callType === 'backup' ? 'day' : 'day';
 
   return {
     id: apiAssignment.id,
     date: apiAssignment.date,
     shift,
     person,
-    rotation_name: apiAssignment.call_type, // Show call type as rotation name
-    notes: apiAssignment.is_holiday ? 'Holiday' : undefined,
+    rotationName: apiAssignment.callType, // Show call type as rotation name
+    notes: apiAssignment.isHoliday ? 'Holiday' : undefined,
   };
 }
 
@@ -174,7 +174,7 @@ export function usePersonOnCallAssignments(
     queryFn: async () => {
       const assignments = await fetchCallAssignments(startDate, endDate);
       return assignments
-        .filter(a => a.person_id === personId)
+        .filter(a => a.personId === personId)
         .map(transformToCallAssignment)
         .sort((a, b) => a.date.localeCompare(b.date));
     },

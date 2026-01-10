@@ -40,7 +40,7 @@ export const adminTemplatesQueryKeys = {
   /** All templates */
   all: ['admin-templates'] as const,
   /** Templates list with filters */
-  list: (filters?: { activity_type?: string }) =>
+  list: (filters?: { activityType?: string }) =>
     ['admin-templates', 'list', filters] as const,
   /** Single template by ID */
   detail: (id: string) => ['admin-templates', 'detail', id] as const,
@@ -57,7 +57,7 @@ export const adminTemplatesQueryKeys = {
 // ============================================================================
 
 /**
- * Fetches all rotation templates with optional activity_type filter.
+ * Fetches all rotation templates with optional activityType filter.
  */
 export function useAdminTemplates(
   activityType?: ActivityType | '',
@@ -67,13 +67,13 @@ export function useAdminTemplates(
   > & { includeArchived?: boolean }
 ) {
   const { includeArchived = false, ...queryOptions } = options || {};
-  const filters = activityType ? { activity_type: activityType } : undefined;
+  const filters = activityType ? { activityType: activityType } : undefined;
 
   return useQuery<RotationTemplateListResponse, ApiError>({
     queryKey: adminTemplatesQueryKeys.list(filters),
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (activityType) params.append('activity_type', activityType);
+      if (activityType) params.append('activityType', activityType);
       if (includeArchived) params.append('include_archived', 'true');
       const queryString = params.toString();
       return get<RotationTemplateListResponse>(`/rotation-templates${queryString ? `?${queryString}` : ''}`);
@@ -230,10 +230,10 @@ export function useBulkUpdateTemplates() {
     mutationFn: async ({ templateIds, updates }) => {
       const request: BatchTemplateUpdateRequest = {
         templates: templateIds.map((id) => ({
-          template_id: id,
+          templateId: id,
           updates,
         })),
-        dry_run: false,
+        dryRun: false,
       };
       return put<BatchTemplateResponse>('/rotation-templates/batch', request);
     },
@@ -331,7 +331,7 @@ export function useBulkCreateTemplates() {
     mutationFn: async (templates) => {
       const request: BatchTemplateCreateRequest = {
         templates,
-        dry_run: false,
+        dryRun: false,
       };
       return post<BatchTemplateResponse>('/rotation-templates/batch', request);
     },
@@ -423,8 +423,8 @@ export function useBulkArchiveTemplates() {
   return useMutation<BatchTemplateResponse, ApiError, string[]>({
     mutationFn: async (templateIds) => {
       const request: BatchArchiveRequest = {
-        template_ids: templateIds,
-        dry_run: false,
+        templateIds: templateIds,
+        dryRun: false,
       };
       return put<BatchTemplateResponse>('/rotation-templates/batch/archive', request);
     },
@@ -446,8 +446,8 @@ export function useBulkRestoreTemplates() {
   return useMutation<BatchTemplateResponse, ApiError, string[]>({
     mutationFn: async (templateIds) => {
       const request: BatchRestoreRequest = {
-        template_ids: templateIds,
-        dry_run: false,
+        templateIds: templateIds,
+        dryRun: false,
       };
       return put<BatchTemplateResponse>('/rotation-templates/batch/restore', request);
     },
@@ -479,11 +479,11 @@ export function useInlineUpdateTemplate() {
       const request: BatchTemplateUpdateRequest = {
         templates: [
           {
-            template_id: templateId,
+            templateId: templateId,
             updates: { [field]: value } as TemplateUpdateRequest,
           },
         ],
-        dry_run: false,
+        dryRun: false,
       };
       return put<BatchTemplateResponse>('/rotation-templates/batch', request);
     },

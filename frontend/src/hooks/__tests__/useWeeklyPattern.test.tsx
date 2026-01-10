@@ -13,7 +13,8 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { ReactNode } from "react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+// Jest provides these globals - no import needed
+// import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { createEmptyPattern } from "@/types/weekly-pattern";
 import {
@@ -32,27 +33,27 @@ const API_BASE = "http://localhost:8000/api";
 const mockBackendPatterns = [
   {
     id: "pattern-1",
-    rotation_template_id: "template-1",
-    day_of_week: 1,
-    time_of_day: "AM" as const,
-    activity_type: "fm_clinic",
-    linked_template_id: "linked-1",
-    is_protected: false,
+    rotationTemplateId: "template-1",
+    dayOfWeek: 1,
+    timeOfDay: "AM" as const,
+    activityType: "fmClinic",
+    linkedTemplateId: "linked-1",
+    isProtected: false,
     notes: null,
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z",
   },
   {
     id: "pattern-2",
-    rotation_template_id: "template-1",
-    day_of_week: 1,
-    time_of_day: "PM" as const,
-    activity_type: "specialty",
-    linked_template_id: "linked-2",
-    is_protected: true,
+    rotationTemplateId: "template-1",
+    dayOfWeek: 1,
+    timeOfDay: "PM" as const,
+    activityType: "specialty",
+    linkedTemplateId: "linked-2",
+    isProtected: true,
     notes: "Protected slot",
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z",
   },
 ];
 
@@ -61,20 +62,20 @@ const mockTemplates = {
     {
       id: "template-1",
       name: "Clinic",
-      activity_type: "clinic",
+      activityType: "clinic",
       abbreviation: "C",
-      display_abbreviation: "Clinic",
-      font_color: "text-blue-800",
-      background_color: "bg-blue-100",
+      displayAbbreviation: "Clinic",
+      fontColor: "text-blue-800",
+      backgroundColor: "bg-blue-100",
     },
     {
       id: "template-2",
       name: "Inpatient",
-      activity_type: "inpatient",
+      activityType: "inpatient",
       abbreviation: "IP",
-      display_abbreviation: null,
-      font_color: null,
-      background_color: null,
+      displayAbbreviation: null,
+      fontColor: null,
+      backgroundColor: null,
     },
   ],
   total: 2,
@@ -90,13 +91,13 @@ const server = setupServer(
     async ({ request }) => {
       const body = (await request.json()) as { patterns: unknown[] };
       const now = new Date().toISOString();
-      const created = body.patterns.map(
-        (p: Record<string, unknown>, i: number) => ({
+      const created = (body.patterns as Record<string, unknown>[]).map(
+        (p, i) => ({
           id: `pattern-new-${i}`,
-          rotation_template_id: "template-1",
+          rotationTemplateId: "template-1",
           ...p,
-          created_at: now,
-          updated_at: now,
+          createdAt: now,
+          updatedAt: now,
         })
       );
       return HttpResponse.json(created);

@@ -9,7 +9,7 @@ import type { Person } from '@/types/api'
 export interface ScheduleAssignment {
   id: string
   date: string
-  time_of_day: 'AM' | 'PM'
+  timeOfDay: 'AM' | 'PM'
   activity: string
   abbreviation: string
   role: 'primary' | 'supervising' | 'backup'

@@ -48,7 +48,7 @@ export interface ConflictListResponse {
   items: Conflict[];
   total: number;
   page: number;
-  page_size: number;
+  pageSize: number;
   pages: number;
 }
 
@@ -75,12 +75,12 @@ export function useConflicts(
   if (filters?.statuses?.length) {
     params.set('statuses', filters.statuses.join(','));
   }
-  if (filters?.person_ids?.length) {
-    params.set('person_ids', filters.person_ids.join(','));
+  if (filters?.personIds?.length) {
+    params.set('personIds', filters.personIds.join(','));
   }
-  if (filters?.date_range) {
-    params.set('start_date', filters.date_range.start);
-    params.set('end_date', filters.date_range.end);
+  if (filters?.dateRange) {
+    params.set('startDate', filters.dateRange.start);
+    params.set('endDate', filters.dateRange.end);
   }
   if (filters?.search) {
     params.set('search', filters.search);
@@ -129,7 +129,7 @@ export function useConflictsByPerson(
 ) {
   return useQuery<ConflictListResponse, ApiError>({
     queryKey: conflictQueryKeys.byPerson(personId),
-    queryFn: () => get<ConflictListResponse>(`/conflicts?person_ids=${personId}`),
+    queryFn: () => get<ConflictListResponse>(`/conflicts?personIds=${personId}`),
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     enabled: !!personId,
@@ -147,7 +147,7 @@ export function useConflictsByDate(
   return useQuery<ConflictListResponse, ApiError>({
     queryKey: conflictQueryKeys.byDate(date),
     queryFn: () =>
-      get<ConflictListResponse>(`/conflicts?start_date=${date}&end_date=${date}`),
+      get<ConflictListResponse>(`/conflicts?startDate=${date}&endDate=${date}`),
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     enabled: !!date,
@@ -189,7 +189,7 @@ export function useApplyResolution() {
   >({
     mutationFn: ({ conflictId, suggestionId, notes }) =>
       post<Conflict>(`/conflicts/${conflictId}/resolve`, {
-        suggestion_id: suggestionId,
+        suggestionId: suggestionId,
         notes,
       }),
     onSuccess: (data, { conflictId }) => {
@@ -235,10 +235,10 @@ export function useCreateOverride() {
 
   return useMutation<Conflict, ApiError, ManualOverride>({
     mutationFn: (override) =>
-      post<Conflict>(`/conflicts/${override.conflict_id}/override`, override),
-    onSuccess: (data, { conflict_id }) => {
+      post<Conflict>(`/conflicts/${override.conflictId}/override`, override),
+    onSuccess: (data, { conflictId }) => {
       queryClient.invalidateQueries({ queryKey: conflictQueryKeys.all });
-      queryClient.invalidateQueries({ queryKey: conflictQueryKeys.detail(conflict_id) });
+      queryClient.invalidateQueries({ queryKey: conflictQueryKeys.detail(conflictId) });
       queryClient.invalidateQueries({ queryKey: ['schedule'] });
       queryClient.invalidateQueries({ queryKey: ['validation'] });
     },
@@ -259,8 +259,8 @@ export function useResolveManually() {
       method: ResolutionMethod;
       changes: Array<{
         type: 'reassign' | 'remove' | 'add' | 'modify';
-        entity_type: string;
-        entity_id: string;
+        entityType: string;
+        entityId: string;
         data?: Record<string, unknown>;
       }>;
       notes?: string;
@@ -316,7 +316,7 @@ export function useBatchIgnore() {
   >({
     mutationFn: ({ conflictIds, reason }) =>
       post<{ success: number; failed: number }>('/conflicts/batch-ignore', {
-        conflict_ids: conflictIds,
+        conflictIds: conflictIds,
         reason,
       }),
     onSuccess: () => {
@@ -374,8 +374,8 @@ export function useConflictStatistics(
 ) {
   const params = new URLSearchParams();
   if (dateRange) {
-    params.set('start_date', dateRange.start);
-    params.set('end_date', dateRange.end);
+    params.set('startDate', dateRange.start);
+    params.set('endDate', dateRange.end);
   }
   const queryString = params.toString();
 
@@ -400,11 +400,11 @@ export function useDetectConflicts() {
   const queryClient = useQueryClient();
 
   return useMutation<
-    { detected: number; new_conflicts: number },
+    { detected: number; newConflicts: number },
     ApiError,
-    { start_date: string; end_date: string }
+    { startDate: string; endDate: string }
   >({
-    mutationFn: (params) => post<{ detected: number; new_conflicts: number }>(
+    mutationFn: (params) => post<{ detected: number; newConflicts: number }>(
       '/conflicts/detect',
       params
     ),
@@ -422,9 +422,9 @@ export function useValidateAssignment() {
     { conflicts: Conflict[]; warnings: string[] },
     ApiError,
     {
-      person_id: string;
-      block_id: string;
-      rotation_template_id?: string;
+      personId: string;
+      blockId: string;
+      rotationTemplateId?: string;
       role: string;
     }
   >({

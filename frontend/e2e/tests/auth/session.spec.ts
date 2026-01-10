@@ -47,7 +47,7 @@ test.describe('Session Management', () => {
     // Mock token expiration by manipulating local storage
     await adminPage.evaluate(() => {
       const expiredTime = Date.now() - 1000; // 1 second ago
-      localStorage.setItem('token_expires_at', expiredTime.toString());
+      localStorage.setItem('tokenExpiresAt', expiredTime.toString());
     });
 
     // Make API call that should trigger token refresh
@@ -74,7 +74,7 @@ test.describe('Session Management', () => {
     // Trigger token refresh
     await adminPage.evaluate(() => {
       const expiredTime = Date.now() - 1000;
-      localStorage.setItem('token_expires_at', expiredTime.toString());
+      localStorage.setItem('tokenExpiresAt', expiredTime.toString());
     });
 
     await adminPage.goto('/schedule');
@@ -124,7 +124,7 @@ test.describe('Session Management', () => {
 
     // Get initial token expiration
     const initialExpiration = await adminPage.evaluate(() => {
-      return localStorage.getItem('token_expires_at');
+      return localStorage.getItem('tokenExpiresAt');
     });
 
     // Wait a bit
@@ -135,7 +135,7 @@ test.describe('Session Management', () => {
 
     // Token expiration should be extended
     const newExpiration = await adminPage.evaluate(() => {
-      return localStorage.getItem('token_expires_at');
+      return localStorage.getItem('tokenExpiresAt');
     });
 
     // If token sliding expiration is implemented
@@ -263,7 +263,7 @@ test.describe('Session Management', () => {
     // Trigger token refresh
     await adminPage.evaluate(() => {
       const expiredTime = Date.now() - 1000;
-      localStorage.setItem('token_expires_at', expiredTime.toString());
+      localStorage.setItem('tokenExpiresAt', expiredTime.toString());
     });
 
     await adminPage.reload();
@@ -306,9 +306,9 @@ test.describe('Session Management', () => {
     // Check that sensitive data is cleared
     const hasToken = await adminPage.evaluate(() => {
       return Boolean(
-        localStorage.getItem('access_token') ||
-        localStorage.getItem('refresh_token') ||
-        sessionStorage.getItem('access_token')
+        localStorage.getItem('accessToken') ||
+        localStorage.getItem('refreshToken') ||
+        sessionStorage.getItem('accessToken')
       );
     });
 
@@ -321,7 +321,7 @@ test.describe('Session Management', () => {
     // Trigger multiple token refresh attempts simultaneously
     await adminPage.evaluate(() => {
       const expiredTime = Date.now() - 1000;
-      localStorage.setItem('token_expires_at', expiredTime.toString());
+      localStorage.setItem('tokenExpiresAt', expiredTime.toString());
     });
 
     // Make multiple API calls at once

@@ -277,10 +277,10 @@ export function BulkWeeklyPatternModal({
 
     // Convert selections to BatchPatternSlot format
     const slots: BatchPatternSlot[] = selections.map((s) => ({
-      day_of_week: s.day,
-      time_of_day: s.time,
-      linked_template_id: s.templateId,
-      activity_type: s.activityType || (s.templateId ? 'scheduled' : 'off'),
+      dayOfWeek: s.day,
+      timeOfDay: s.time,
+      linkedTemplateId: s.templateId,
+      activityType: s.activityType || (s.templateId ? 'scheduled' : 'off'),
     }));
 
     const weekLabel = sameAllWeeks
@@ -289,11 +289,11 @@ export function BulkWeeklyPatternModal({
 
     try {
       const result = await bulkUpdate.mutateAsync({
-        template_ids: selectedTemplates.map((t) => t.id),
+        templateIds: selectedTemplates.map((t) => t.id),
         mode,
         slots,
-        week_numbers: sameAllWeeks ? null : selectedWeeks,
-        dry_run: false,
+        weekNumbers: sameAllWeeks ? null : selectedWeeks,
+        dryRun: false,
       });
 
       // Success - stay open for another pass

@@ -152,24 +152,24 @@ export interface PersonImportRow {
   name: string;
   email?: string;
   type: 'resident' | 'faculty';
-  pgy_level?: number;
-  performs_procedures?: boolean;
+  pgyLevel?: number;
+  performsProcedures?: boolean;
   specialties?: string;
-  primary_duty?: string;
+  primaryDuty?: string;
 }
 
 /**
  * Standard column mappings for assignment imports
  */
 export interface AssignmentImportRow {
-  person_name: string;
-  person_id?: string;
+  personName: string;
+  personId?: string;
   date: string;
-  time_of_day: 'AM' | 'PM';
-  rotation_name?: string;
-  rotation_template_id?: string;
+  timeOfDay: 'AM' | 'PM';
+  rotationName?: string;
+  rotationTemplateId?: string;
   role: 'primary' | 'supervising' | 'backup';
-  activity_override?: string;
+  activityOverride?: string;
   notes?: string;
 }
 
@@ -177,14 +177,14 @@ export interface AssignmentImportRow {
  * Standard column mappings for absence imports
  */
 export interface AbsenceImportRow {
-  person_name: string;
-  person_id?: string;
-  start_date: string;
-  end_date: string;
-  absence_type: 'vacation' | 'deployment' | 'tdy' | 'medical' | 'family_emergency' | 'conference';
-  deployment_orders?: boolean;
-  tdy_location?: string;
-  replacement_activity?: string;
+  personName: string;
+  personId?: string;
+  startDate: string;
+  endDate: string;
+  absenceType: 'vacation' | 'deployment' | 'tdy' | 'medical' | 'familyEmergency' | 'conference';
+  deploymentOrders?: boolean;
+  tdyLocation?: string;
+  replacementActivity?: string;
   notes?: string;
 }
 
@@ -193,13 +193,13 @@ export interface AbsenceImportRow {
  */
 export interface ScheduleImportRow {
   date: string;
-  time_of_day: 'AM' | 'PM';
-  person_name: string;
-  person_id?: string;
-  rotation_name?: string;
-  rotation_template_id?: string;
+  timeOfDay: 'AM' | 'PM';
+  personName: string;
+  personId?: string;
+  rotationName?: string;
+  rotationTemplateId?: string;
   role: 'primary' | 'supervising' | 'backup';
-  activity_override?: string;
+  activityOverride?: string;
 }
 
 // ============================================================================

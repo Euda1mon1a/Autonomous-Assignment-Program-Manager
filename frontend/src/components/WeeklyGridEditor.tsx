@@ -200,7 +200,7 @@ function SlotCell({
 /** Activity type options for slot override */
 const ACTIVITY_TYPE_OPTIONS = [
   { value: '', label: 'Use template default' },
-  { value: 'fm_clinic', label: 'FM Clinic' },
+  { value: 'fmClinic', label: 'FM Clinic' },
   { value: 'specialty', label: 'Specialty Clinic' },
   { value: 'inpatient', label: 'Inpatient' },
   { value: 'conference', label: 'Conference' },

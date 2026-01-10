@@ -119,10 +119,10 @@ export interface ErrorResponse {
   status: number
   detail: string
   instance: string
-  error_code: ErrorCode
-  error_id: string
+  errorCode: ErrorCode
+  errorId: string
   timestamp: string
-  request_id?: string
+  requestId?: string
   fingerprint?: string
 }
 
@@ -137,13 +137,13 @@ export interface ValidationErrorResponse extends ErrorResponse {
  * ACGME compliance violation details
  */
 export interface ACGMEViolationDetail {
-  resident_id?: string
-  violation_date?: string
-  period_start?: string
-  period_end?: string
-  actual_hours?: number
-  limit_hours?: number
-  rule_violated?: string
+  residentId?: string
+  violationDate?: string
+  periodStart?: string
+  periodEnd?: string
+  actualHours?: number
+  limitHours?: number
+  ruleViolated?: string
 }
 
 /**
@@ -157,10 +157,10 @@ export interface ACGMEComplianceErrorResponse extends ErrorResponse {
  * Schedule conflict details
  */
 export interface ScheduleConflictDetail {
-  conflicting_assignment_id?: string
-  requested_date?: string
-  person_id?: string
-  conflict_type?: 'time' | 'location' | 'resource'
+  conflictingAssignmentId?: string
+  requestedDate?: string
+  personId?: string
+  conflictType?: 'time' | 'location' | 'resource'
 }
 
 /**
@@ -175,8 +175,8 @@ export interface ScheduleConflictErrorResponse extends ErrorResponse {
  */
 export interface RateLimitErrorResponse extends ErrorResponse {
   limit: number
-  window_seconds: number
-  retry_after: number
+  windowSeconds: number
+  retryAfter: number
 }
 
 /**
@@ -191,7 +191,7 @@ export interface ErrorResponseWithSuggestions extends ErrorResponse {
  */
 export interface MultiErrorResponse {
   errors: ErrorResponse[]
-  total_errors: number
+  totalErrors: number
   timestamp: string
 }
 
@@ -200,8 +200,8 @@ export interface MultiErrorResponse {
  */
 export interface SimpleErrorResponse {
   detail: string
-  status_code: number
-  error_code?: string
+  statusCode: number
+  errorCode?: string
 }
 
 /**
@@ -215,7 +215,7 @@ export function isRFC7807Error(error: unknown): error is ErrorResponse {
     'title' in error &&
     'status' in error &&
     'detail' in error &&
-    'error_code' in error
+    'errorCode' in error
   )
 }
 
@@ -263,9 +263,9 @@ export function isRateLimitError(
   return (
     isRFC7807Error(error) &&
     'limit' in error &&
-    'retry_after' in error &&
+    'retryAfter' in error &&
     typeof error.limit === 'number' &&
-    typeof error.retry_after === 'number'
+    typeof error.retryAfter === 'number'
   )
 }
 

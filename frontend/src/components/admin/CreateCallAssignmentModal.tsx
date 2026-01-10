@@ -19,7 +19,7 @@ interface CreateCallAssignmentModalProps {
 
 interface FormErrors {
   date?: string;
-  person_id?: string;
+  personId?: string;
   general?: string;
 }
 
@@ -90,11 +90,11 @@ export function CreateCallAssignmentModal({
 
     try {
       await createMutation.mutateAsync({
-        call_date: date,
-        person_id: personId,
-        call_type: callType,
-        is_weekend: isWeekend,
-        is_holiday: isHoliday,
+        callDate: date,
+        personId: personId,
+        callType: callType,
+        isWeekend: isWeekend,
+        isHoliday: isHoliday,
       });
       handleClose();
     } catch (err) {

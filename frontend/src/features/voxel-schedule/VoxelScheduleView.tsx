@@ -27,14 +27,14 @@ interface VoxelPosition {
 }
 
 interface VoxelIdentity {
-  assignment_id: string | null;
-  person_id: string | null;
+  assignmentId: string | null;
+  personId: string | null;
   personName: string | null;
-  block_id: string | null;
+  blockId: string | null;
   blockDate: string | null;
   blockTimeOfDay: string | null;
   activityName: string | null;
-  activity_type: string | null;
+  activityType: string | null;
 }
 
 interface VoxelVisual {
@@ -77,7 +77,7 @@ interface VoxelGridDimensions {
 interface VoxelGridStatistics {
   totalAssignments: number;
   totalConflicts: number;
-  total_violations: number;
+  totalViolations: number;
   coveragePercentage: number;
 }
 
@@ -85,9 +85,9 @@ interface VoxelGridData {
   dimensions: VoxelGridDimensions;
   voxels: Voxel[];
   statistics: VoxelGridStatistics;
-  date_range: {
-    start_date: string | null;
-    end_date: string | null;
+  dateRange: {
+    startDate: string | null;
+    endDate: string | null;
   };
   error?: string;
 }
@@ -230,15 +230,15 @@ async function fetchVoxelGrid(
   activityTypes?: string[]
 ): Promise<VoxelGridData> {
   const params = new URLSearchParams();
-  params.append("start_date", format(startDate, "yyyy-MM-dd"));
-  params.append("end_date", format(endDate, "yyyy-MM-dd"));
+  params.append("startDate", format(startDate, "yyyy-MM-dd"));
+  params.append("endDate", format(endDate, "yyyy-MM-dd"));
 
   if (personIds && personIds.length > 0) {
-    personIds.forEach((id) => params.append("person_ids", id));
+    personIds.forEach((id) => params.append("personIds", id));
   }
 
   if (activityTypes && activityTypes.length > 0) {
-    activityTypes.forEach((type) => params.append("activity_types", type));
+    activityTypes.forEach((type) => params.append("activityTypes", type));
   }
 
   const response = await fetch(`/api/visualization/voxel-grid?${params.toString()}`);

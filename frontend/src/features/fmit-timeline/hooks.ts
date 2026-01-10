@@ -20,13 +20,13 @@ interface PersonApiResponse {
   id: string;
   name: string;
   specialties?: string[];
-  primary_duty?: string;
+  primaryDuty?: string;
 }
 
 interface RotationTemplateApiResponse {
   id: string;
   name?: string;
-  activity_type?: string;
+  activityType?: string;
 }
 
 interface ApiListResponse<T> {
@@ -57,26 +57,26 @@ function buildQueryString(filters?: TimelineFilters): string {
 
   const params = new URLSearchParams();
 
-  if (filters.start_date) {
-    params.set('start_date', filters.start_date);
+  if (filters.startDate) {
+    params.set('startDate', filters.startDate);
   }
-  if (filters.end_date) {
-    params.set('end_date', filters.end_date);
+  if (filters.endDate) {
+    params.set('endDate', filters.endDate);
   }
-  if (filters.faculty_ids?.length) {
-    params.set('faculty_ids', filters.faculty_ids.join(','));
+  if (filters.facultyIds?.length) {
+    params.set('facultyIds', filters.facultyIds.join(','));
   }
-  if (filters.rotation_ids?.length) {
-    params.set('rotation_ids', filters.rotation_ids.join(','));
+  if (filters.rotationIds?.length) {
+    params.set('rotationIds', filters.rotationIds.join(','));
   }
   if (filters.specialty) {
     params.set('specialty', filters.specialty);
   }
-  if (filters.workload_status?.length) {
-    params.set('workload_status', filters.workload_status.join(','));
+  if (filters.workloadStatus?.length) {
+    params.set('workloadStatus', filters.workloadStatus.join(','));
   }
-  if (filters.view_mode) {
-    params.set('view_mode', filters.view_mode);
+  if (filters.viewMode) {
+    params.set('viewMode', filters.viewMode);
   }
 
   return params.toString();
@@ -95,9 +95,9 @@ function buildQueryString(filters?: TimelineFilters): string {
  *
  * @example
  * const { data, isLoading } = useFMITTimeline({
- *   start_date: '2024-07-01',
- *   end_date: '2024-12-31',
- *   view_mode: 'monthly'
+ *   startDate: '2024-07-01',
+ *   endDate: '2024-12-31',
+ *   viewMode: 'monthly'
  * });
  */
 export function useFMITTimeline(
@@ -137,10 +137,10 @@ export function useFacultyTimeline(
 ) {
   const params = new URLSearchParams();
   if (dateRange?.start) {
-    params.set('start_date', dateRange.start);
+    params.set('startDate', dateRange.start);
   }
   if (dateRange?.end) {
-    params.set('end_date', dateRange.end);
+    params.set('endDate', dateRange.end);
   }
   const queryString = params.toString();
 
@@ -176,10 +176,10 @@ export function useTimelineMetrics(
 ) {
   const params = new URLSearchParams();
   if (dateRange?.start) {
-    params.set('start_date', dateRange.start);
+    params.set('startDate', dateRange.start);
   }
   if (dateRange?.end) {
-    params.set('end_date', dateRange.end);
+    params.set('endDate', dateRange.end);
   }
   const queryString = params.toString();
 
@@ -218,7 +218,7 @@ export function useAvailableFaculty(
       return items.map((person: PersonApiResponse) => ({
         id: person.id,
         name: person.name,
-        specialty: person.specialties?.[0] || person.primary_duty || 'General',
+        specialty: person.specialties?.[0] || person.primaryDuty || 'General',
       }));
     },
     ...options,
@@ -241,7 +241,7 @@ export function useAvailableRotations(
       const items = Array.isArray(data) ? data : data.items || [];
       return items.map((template: RotationTemplateApiResponse) => ({
         id: template.id,
-        name: template.name || template.activity_type || '',
+        name: template.name || template.activityType || '',
       }));
     },
     ...options,
@@ -253,11 +253,11 @@ export function useAvailableRotations(
  */
 export function useAcademicYears(
   options?: Omit<
-    UseQueryOptions<Array<{ id: string; label: string; start_date: string; end_date: string }>, ApiError>,
+    UseQueryOptions<Array<{ id: string; label: string; startDate: string; endDate: string }>, ApiError>,
     'queryKey' | 'queryFn'
   >
 ) {
-  return useQuery<Array<{ id: string; label: string; start_date: string; end_date: string }>, ApiError>({
+  return useQuery<Array<{ id: string; label: string; startDate: string; endDate: string }>, ApiError>({
     queryKey: ['fmit-timeline', 'academic-years'],
     queryFn: async () => {
       // Generate academic years based on current date
@@ -270,8 +270,8 @@ export function useAcademicYears(
         years.push({
           id: `${year}-${year + 1}`,
           label: `${year}-${year + 1}`,
-          start_date: `${year}-07-01`,
-          end_date: `${year + 1}-06-30`,
+          startDate: `${year}-07-01`,
+          endDate: `${year + 1}-06-30`,
         });
       }
 

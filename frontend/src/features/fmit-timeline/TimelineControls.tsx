@@ -36,7 +36,7 @@ export interface TimelineControlsProps {
   onViewModeChange: (mode: TimelineViewMode) => void;
   availableFaculty?: Array<{ id: string; name: string; specialty: string }>;
   availableRotations?: Array<{ id: string; name: string }>;
-  academicYears?: Array<{ id: string; label: string; start_date: string; end_date: string }>;
+  academicYears?: Array<{ id: string; label: string; startDate: string; endDate: string }>;
   selectedAcademicYear?: string | null;
   onAcademicYearChange?: (yearId: string | null) => void;
   isLoading?: boolean;
@@ -77,58 +77,58 @@ export function TimelineControls({
     if (year) {
       onAcademicYearChange(yearId);
       onDateRangeChange({
-        start: year.start_date,
-        end: year.end_date,
+        start: year.startDate,
+        end: year.endDate,
       });
     }
   };
 
   const handleFacultySelect = (facultyId: string) => {
-    const currentFacultyIds = filters.faculty_ids || [];
+    const currentFacultyIds = filters.facultyIds || [];
     const newFacultyIds = currentFacultyIds.includes(facultyId)
       ? currentFacultyIds.filter((id) => id !== facultyId)
       : [...currentFacultyIds, facultyId];
 
     onFiltersChange({
       ...filters,
-      faculty_ids: newFacultyIds,
+      facultyIds: newFacultyIds,
     });
   };
 
   const handleRotationSelect = (rotationId: string) => {
-    const currentRotationIds = filters.rotation_ids || [];
+    const currentRotationIds = filters.rotationIds || [];
     const newRotationIds = currentRotationIds.includes(rotationId)
       ? currentRotationIds.filter((id) => id !== rotationId)
       : [...currentRotationIds, rotationId];
 
     onFiltersChange({
       ...filters,
-      rotation_ids: newRotationIds,
+      rotationIds: newRotationIds,
     });
   };
 
   const handleWorkloadStatusToggle = (status: WorkloadStatus) => {
-    const currentStatuses = filters.workload_status || [];
+    const currentStatuses = filters.workloadStatus || [];
     const newStatuses = currentStatuses.includes(status)
       ? currentStatuses.filter((s) => s !== status)
       : [...currentStatuses, status];
 
     onFiltersChange({
       ...filters,
-      workload_status: newStatuses.length > 0 ? newStatuses : undefined,
+      workloadStatus: newStatuses.length > 0 ? newStatuses : undefined,
     });
   };
 
   const clearFilters = () => {
     onFiltersChange({
-      view_mode: viewMode,
+      viewMode: viewMode,
     });
   };
 
   const activeFilterCount = [
-    filters.faculty_ids?.length || 0,
-    filters.rotation_ids?.length || 0,
-    filters.workload_status?.length || 0,
+    filters.facultyIds?.length || 0,
+    filters.rotationIds?.length || 0,
+    filters.workloadStatus?.length || 0,
   ].reduce((sum, count) => sum + count, 0);
 
   return (
@@ -234,7 +234,7 @@ export function TimelineControls({
                       key={status}
                       onClick={() => handleWorkloadStatusToggle(status)}
                       className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors border ${
-                        filters.workload_status?.includes(status)
+                        filters.workloadStatus?.includes(status)
                           ? 'bg-blue-600 text-white border-blue-600'
                           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                       }`}
@@ -254,9 +254,9 @@ export function TimelineControls({
                     <Users className="w-4 h-4" />
                     Faculty
                   </label>
-                  {filters.faculty_ids && filters.faculty_ids.length > 0 && (
+                  {filters.facultyIds && filters.facultyIds.length > 0 && (
                     <button
-                      onClick={() => onFiltersChange({ ...filters, faculty_ids: [] })}
+                      onClick={() => onFiltersChange({ ...filters, facultyIds: [] })}
                       className="text-xs text-blue-600 hover:text-blue-700"
                     >
                       Clear
@@ -274,7 +274,7 @@ export function TimelineControls({
                       >
                         <input
                           type="checkbox"
-                          checked={filters.faculty_ids?.includes(faculty.id) || false}
+                          checked={filters.facultyIds?.includes(faculty.id) || false}
                           onChange={() => handleFacultySelect(faculty.id)}
                           className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />
@@ -299,9 +299,9 @@ export function TimelineControls({
                     <RotateCw className="w-4 h-4" />
                     Rotations
                   </label>
-                  {filters.rotation_ids && filters.rotation_ids.length > 0 && (
+                  {filters.rotationIds && filters.rotationIds.length > 0 && (
                     <button
-                      onClick={() => onFiltersChange({ ...filters, rotation_ids: [] })}
+                      onClick={() => onFiltersChange({ ...filters, rotationIds: [] })}
                       className="text-xs text-blue-600 hover:text-blue-700"
                     >
                       Clear
@@ -319,7 +319,7 @@ export function TimelineControls({
                       >
                         <input
                           type="checkbox"
-                          checked={filters.rotation_ids?.includes(rotation.id) || false}
+                          checked={filters.rotationIds?.includes(rotation.id) || false}
                           onChange={() => handleRotationSelect(rotation.id)}
                           className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />

@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'
 import { usePeople, useCreatePerson } from '@/lib/hooks'
 import * as api from '@/lib/api'
+import { PersonType } from '@/types/api'
 
 // Mock data (defined locally to avoid MSW dependency)
 const mockPeople = [
@@ -17,36 +18,36 @@ const mockPeople = [
     name: 'Dr. John Smith',
     email: 'john.smith@hospital.org',
     type: 'resident' as const,
-    pgy_level: 2,
-    performs_procedures: true,
+    pgyLevel: 2,
+    performsProcedures: true,
     specialties: ['Internal Medicine'],
-    primary_duty: null,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    primaryDuty: null,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
   },
   {
     id: 'person-2',
     name: 'Dr. Jane Doe',
     email: 'jane.doe@hospital.org',
     type: 'resident' as const,
-    pgy_level: 1,
-    performs_procedures: false,
+    pgyLevel: 1,
+    performsProcedures: false,
     specialties: ['Internal Medicine'],
-    primary_duty: null,
-    created_at: '2024-01-02T00:00:00Z',
-    updated_at: '2024-01-02T00:00:00Z',
+    primaryDuty: null,
+    createdAt: '2024-01-02T00:00:00Z',
+    updatedAt: '2024-01-02T00:00:00Z',
   },
   {
     id: 'person-3',
     name: 'Dr. Robert Faculty',
     email: 'robert.faculty@hospital.org',
     type: 'faculty' as const,
-    pgy_level: null,
-    performs_procedures: true,
+    pgyLevel: null,
+    performsProcedures: true,
     specialties: ['Cardiology', 'Internal Medicine'],
-    primary_duty: 'Attending Physician',
-    created_at: '2024-01-03T00:00:00Z',
-    updated_at: '2024-01-03T00:00:00Z',
+    primaryDuty: 'Attending Physician',
+    createdAt: '2024-01-03T00:00:00Z',
+    updatedAt: '2024-01-03T00:00:00Z',
   },
 ]
 
@@ -157,14 +158,14 @@ describe('usePeople', () => {
   })
 
   it('should filter by PGY level when provided', async () => {
-    const pgy2Residents = mockPeople.filter(p => p.pgy_level === 2)
+    const pgy2Residents = mockPeople.filter(p => p.pgyLevel === 2)
     mockedApi.get.mockResolvedValueOnce({
       items: pgy2Residents,
       total: pgy2Residents.length,
     })
 
     const { result } = renderHook(
-      () => usePeople({ pgy_level: 2 }),
+      () => usePeople({ pgyLevel: 2 }),
       { wrapper: createWrapper() }
     )
 
@@ -173,8 +174,8 @@ describe('usePeople', () => {
     })
 
     // Only PGY-2 residents should be returned
-    expect(result.current.data?.items.every(p => p.pgy_level === 2)).toBe(true)
-    expect(mockedApi.get).toHaveBeenCalledWith('/people?pgy_level=2')
+    expect(result.current.data?.items.every(p => p.pgyLevel === 2)).toBe(true)
+    expect(mockedApi.get).toHaveBeenCalledWith('/people?pgyLevel=2')
   })
 
   it('should handle API errors gracefully', async () => {
@@ -204,12 +205,12 @@ describe('useCreatePerson', () => {
       name: 'Dr. New Person',
       email: 'new.person@hospital.org',
       type: 'resident' as const,
-      pgy_level: 3,
-      performs_procedures: true,
+      pgyLevel: 3,
+      performsProcedures: true,
       specialties: null,
-      primary_duty: null,
-      created_at: '2024-01-01T00:00:00Z',
-      updated_at: '2024-01-01T00:00:00Z',
+      primaryDuty: null,
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
     }
 
     mockedApi.post.mockResolvedValueOnce(newPerson)
@@ -222,9 +223,9 @@ describe('useCreatePerson', () => {
     result.current.mutate({
       name: 'Dr. New Person',
       email: 'new.person@hospital.org',
-      type: 'resident',
-      pgy_level: 3,
-      performs_procedures: true,
+      type: PersonType.RESIDENT,
+      pgyLevel: 3,
+      performsProcedures: true,
     })
 
     // Wait for mutation to complete
@@ -235,12 +236,12 @@ describe('useCreatePerson', () => {
     // Check response
     expect(result.current.data?.name).toBe('Dr. New Person')
     expect(result.current.data?.type).toBe('resident')
-    expect(result.current.data?.pgy_level).toBe(3)
+    expect(result.current.data?.pgyLevel).toBe(3)
     expect(result.current.data?.id).toBeDefined()
     expect(mockedApi.post).toHaveBeenCalledWith('/people', expect.objectContaining({
       name: 'Dr. New Person',
       type: 'resident',
-      pgy_level: 3,
+      pgyLevel: 3,
     }))
   })
 
@@ -250,12 +251,12 @@ describe('useCreatePerson', () => {
       name: 'Dr. Test',
       email: null,
       type: 'faculty' as const,
-      pgy_level: null,
-      performs_procedures: false,
+      pgyLevel: null,
+      performsProcedures: false,
       specialties: null,
-      primary_duty: null,
-      created_at: '2024-01-01T00:00:00Z',
-      updated_at: '2024-01-01T00:00:00Z',
+      primaryDuty: null,
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
     }
 
     mockedApi.post.mockResolvedValueOnce(newPerson)
@@ -267,7 +268,7 @@ describe('useCreatePerson', () => {
     // Start mutation
     result.current.mutate({
       name: 'Dr. Test',
-      type: 'faculty',
+      type: PersonType.FACULTY,
     })
 
     // Wait for completion
@@ -277,7 +278,7 @@ describe('useCreatePerson', () => {
 
     // Check response
     expect(result.current.data?.type).toBe('faculty')
-    expect(result.current.data?.pgy_level).toBeNull()
+    expect(result.current.data?.pgyLevel).toBeNull()
   })
 
   it('should handle API errors during creation', async () => {
@@ -291,7 +292,7 @@ describe('useCreatePerson', () => {
     // Execute mutation without required fields
     result.current.mutate({
       name: '',
-      type: 'resident',
+      type: PersonType.RESIDENT,
     })
 
     // Wait for error
@@ -310,10 +311,10 @@ describe('useCreatePerson', () => {
       wrapper: createWrapper(),
     })
 
-    // Execute mutation without pgy_level for resident
+    // Execute mutation without pgyLevel for resident
     result.current.mutate({
       name: 'Dr. Missing PGY',
-      type: 'resident',
+      type: PersonType.RESIDENT,
     })
 
     // Wait for error

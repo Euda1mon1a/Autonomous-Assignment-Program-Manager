@@ -11,9 +11,9 @@ describe("ResilienceMetrics", () => {
   const mockHealthData = {
     timestamp: new Date().toISOString(),
     overall_status: OverallStatus.HEALTHY,
-    defense_level: DefenseLevel.PREVENTION as any,
+    defenseLevel: DefenseLevel.PREVENTION as any,
     utilization: {
-      utilization_rate: 0.65,
+      utilizationRate: 0.65,
       level: UtilizationLevel.GREEN,
       buffer_remaining: 3.5,
       wait_time_multiplier: 1.2,
@@ -22,12 +22,12 @@ describe("ResilienceMetrics", () => {
       theoretical_capacity: 100,
     },
     active_fallbacks: [],
-    n1_pass: true,
-    n2_pass: true,
-    phase_transition_risk: "low",
+    n1Pass: true,
+    n2Pass: true,
+    phaseTransitionRisk: "low",
     redundancy_status: [],
     load_shedding_level: "NORMAL" as any,
-    crisis_mode: false,
+    crisisMode: false,
     immediate_actions: [],
     watch_items: [],
   };
@@ -117,7 +117,7 @@ describe("ResilienceMetrics", () => {
   it("handles N-2 failing while N-1 passes", () => {
     const dataWithN2Fail = {
       ...mockHealthData,
-      n2_pass: false,
+      n2Pass: false,
     };
 
     (useSystemHealth as jest.Mock).mockReturnValue({

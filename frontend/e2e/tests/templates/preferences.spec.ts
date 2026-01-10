@@ -129,11 +129,11 @@ test.describe('Template Rotation Preferences', () => {
   });
 
   test.describe('Preference Configuration', () => {
-    test('should support config_json for preference parameters', async ({ page }) => {
+    test('should support configJson for preference parameters', async ({ page }) => {
       // Example config structures for each preference type
       const configExamples = {
         consecutive_specialty: { min_consecutive: 2 },
-        preferred_days: { activity: 'fm_clinic', days: [1, 2, 5] },
+        preferred_days: { activity: 'fmClinic', days: [1, 2, 5] },
         balance_weekly: { max_same_per_day: 1 },
       };
 

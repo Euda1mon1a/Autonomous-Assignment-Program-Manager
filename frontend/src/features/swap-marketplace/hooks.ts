@@ -24,67 +24,67 @@ import type {
 // Backend API response types
 interface SwapRequestApiResponse {
   id: string;
-  source_faculty_id: string;
+  sourceFacultyId: string;
   source_faculty?: { name: string };
-  source_week: string;
-  target_faculty_id?: string;
+  sourceWeek: string;
+  targetFacultyId?: string;
   target_faculty?: { name: string };
-  target_week?: string;
-  swap_type: string;
+  targetWeek?: string;
+  swapType: string;
   status: string;
-  requested_at: string;
-  requested_by_id: string;
+  requestedAt: string;
+  requestedById: string;
   approved_at?: string;
   approved_by_id?: string;
-  executed_at?: string;
+  executedAt?: string;
   executed_by_id?: string;
   reason?: string;
   notes?: string;
 }
 
 interface MarketplaceEntryApiResponse {
-  request_id: string;
-  requesting_faculty_name: string;
-  week_available: string;
+  requestId: string;
+  requestingFacultyName: string;
+  weekAvailable: string;
   reason?: string;
-  posted_at: string;
-  expires_at?: string;
-  is_compatible?: boolean;
+  postedAt: string;
+  expiresAt?: string;
+  isCompatible?: boolean;
 }
 
 interface MarketplaceApiResponse {
   entries: MarketplaceEntryApiResponse[];
   total: number;
-  my_postings: number;
+  myPostings: number;
 }
 
 interface MySwapsApiResponse {
-  incoming_requests: SwapRequestApiResponse[];
-  outgoing_requests: SwapRequestApiResponse[];
-  recent_swaps: SwapRequestApiResponse[];
+  incomingRequests: SwapRequestApiResponse[];
+  outgoingRequests: SwapRequestApiResponse[];
+  recentSwaps: SwapRequestApiResponse[];
 }
 
 interface FacultyPreferenceApiResponse {
-  faculty_id: string;
+  facultyId: string;
   preferred_weeks?: string[];
   blocked_weeks?: string[];
   max_weeks_per_month?: number;
   max_consecutive_weeks?: number;
   min_gap_between_weeks?: number;
-  target_weeks_per_year?: number;
+  targetWeeks_per_year?: number;
   notify_swap_requests?: boolean;
   notify_schedule_changes?: boolean;
   notify_conflict_alerts?: boolean;
   notify_reminder_days?: number;
   notes?: string;
-  updated_at: string;
+  updatedAt: string;
 }
 
 interface CreateSwapApiResponse {
   success: boolean;
-  request_id: string;
+  requestId: string;
   message: string;
-  candidates_notified?: number;
+  candidatesNotified?: number;
 }
 
 interface SwapRespondApiResponse {
@@ -120,24 +120,24 @@ export const swapQueryKeys = {
  * Transform backend swap request to frontend format
  */
 function transformSwapRequest(backendSwap: SwapRequestApiResponse, currentUserId?: string): SwapRequest {
-  const isIncoming = backendSwap.target_faculty_id === currentUserId;
-  const isOutgoing = backendSwap.source_faculty_id === currentUserId;
+  const isIncoming = backendSwap.targetFacultyId === currentUserId;
+  const isOutgoing = backendSwap.sourceFacultyId === currentUserId;
 
   return {
     id: backendSwap.id,
-    sourceFacultyId: backendSwap.source_faculty_id,
+    sourceFacultyId: backendSwap.sourceFacultyId,
     sourceFacultyName: backendSwap.source_faculty?.name || 'Unknown',
-    sourceWeek: backendSwap.source_week,
-    targetFacultyId: backendSwap.target_faculty_id,
+    sourceWeek: backendSwap.sourceWeek,
+    targetFacultyId: backendSwap.targetFacultyId,
     targetFacultyName: backendSwap.target_faculty?.name,
-    targetWeek: backendSwap.target_week,
-    swapType: backendSwap.swap_type as SwapType,
+    targetWeek: backendSwap.targetWeek,
+    swapType: backendSwap.swapType as SwapType,
     status: backendSwap.status as SwapStatus,
-    requestedAt: backendSwap.requested_at,
-    requestedById: backendSwap.requested_by_id,
+    requestedAt: backendSwap.requestedAt,
+    requestedById: backendSwap.requestedById,
     approvedAt: backendSwap.approved_at,
     approvedById: backendSwap.approved_by_id,
-    executedAt: backendSwap.executed_at,
+    executedAt: backendSwap.executedAt,
     executedById: backendSwap.executed_by_id,
     reason: backendSwap.reason,
     notes: backendSwap.notes,
@@ -154,13 +154,13 @@ function transformSwapRequest(backendSwap: SwapRequestApiResponse, currentUserId
  */
 function transformMarketplaceEntry(entry: MarketplaceEntryApiResponse): MarketplaceEntry {
   return {
-    requestId: entry.request_id,
-    requestingFacultyName: entry.requesting_faculty_name,
-    weekAvailable: entry.week_available,
+    requestId: entry.requestId,
+    requestingFacultyName: entry.requestingFacultyName,
+    weekAvailable: entry.weekAvailable,
     reason: entry.reason,
-    postedAt: entry.posted_at,
-    expiresAt: entry.expires_at,
-    isCompatible: entry.is_compatible ?? false,
+    postedAt: entry.postedAt,
+    expiresAt: entry.expiresAt,
+    isCompatible: entry.isCompatible ?? false,
   };
 }
 
@@ -169,19 +169,19 @@ function transformMarketplaceEntry(entry: MarketplaceEntryApiResponse): Marketpl
  */
 function transformFacultyPreference(pref: FacultyPreferenceApiResponse): FacultyPreference {
   return {
-    facultyId: pref.faculty_id,
+    facultyId: pref.facultyId,
     preferredWeeks: pref.preferred_weeks || [],
     blockedWeeks: pref.blocked_weeks || [],
     maxWeeksPerMonth: pref.max_weeks_per_month || 0,
     maxConsecutiveWeeks: pref.max_consecutive_weeks || 0,
     minGapBetweenWeeks: pref.min_gap_between_weeks || 0,
-    targetWeeksPerYear: pref.target_weeks_per_year || 0,
+    targetWeeksPerYear: pref.targetWeeks_per_year || 0,
     notifySwapRequests: pref.notify_swap_requests ?? false,
     notifyScheduleChanges: pref.notify_schedule_changes ?? false,
     notifyConflictAlerts: pref.notify_conflict_alerts ?? false,
     notifyReminderDays: pref.notify_reminder_days || 0,
     notes: pref.notes,
-    updatedAt: pref.updated_at,
+    updatedAt: pref.updatedAt,
   };
 }
 
@@ -203,7 +203,7 @@ export function useSwapMarketplace(
       return {
         entries: response.entries.map(transformMarketplaceEntry),
         total: response.total,
-        myPostings: response.my_postings,
+        myPostings: response.myPostings,
       };
     },
     staleTime: 30 * 1000, // 30 seconds
@@ -227,13 +227,13 @@ export function useMySwapRequests(
       const response = await get<MySwapsApiResponse>('/portal/my/swaps');
 
       return {
-        incomingRequests: response.incoming_requests.map((req: SwapRequestApiResponse) =>
+        incomingRequests: response.incomingRequests.map((req: SwapRequestApiResponse) =>
           transformSwapRequest(req, currentUserId)
         ),
-        outgoingRequests: response.outgoing_requests.map((req: SwapRequestApiResponse) =>
+        outgoingRequests: response.outgoingRequests.map((req: SwapRequestApiResponse) =>
           transformSwapRequest(req, currentUserId)
         ),
-        recentSwaps: response.recent_swaps.map((req: SwapRequestApiResponse) =>
+        recentSwaps: response.recentSwaps.map((req: SwapRequestApiResponse) =>
           transformSwapRequest(req, currentUserId)
         ),
       };
@@ -311,17 +311,17 @@ export function useCreateSwapRequest() {
   return useMutation<CreateSwapResponse, ApiError, CreateSwapRequest>({
     mutationFn: async (request: CreateSwapRequest) => {
       const response = await post<CreateSwapApiResponse>('/portal/my/swaps', {
-        week_to_offload: request.weekToOffload,
-        preferred_target_faculty_id: request.preferredTargetFacultyId,
+        weekToOffload: request.weekToOffload,
+        preferred_targetFacultyId: request.preferredTargetFacultyId,
         reason: request.reason,
-        auto_find_candidates: request.autoFindCandidates ?? true,
+        autoFindCandidates: request.autoFindCandidates ?? true,
       });
 
       return {
         success: response.success,
-        requestId: response.request_id,
+        requestId: response.requestId,
         message: response.message,
-        candidatesNotified: response.candidates_notified ?? 0,
+        candidatesNotified: response.candidatesNotified ?? 0,
       };
     },
     onSuccess: () => {

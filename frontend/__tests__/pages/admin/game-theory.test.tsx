@@ -93,7 +93,7 @@ const mockTournaments = {
 
 const mockEvolutions = {
   simulations: [
-    { id: '1', name: 'Evolution 1', status: 'completed', generations_completed: 500, winner_strategy_name: 'Tit for Tat' },
+    { id: '1', name: 'Evolution 1', status: 'completed', generations_completed: 500, winnerStrategyName: 'Tit for Tat' },
   ],
 };
 
@@ -103,11 +103,6 @@ function createWrapper() {
     defaultOptions: {
       queries: { retry: false },
       mutations: { retry: false },
-    },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
     },
   });
 
@@ -504,8 +499,8 @@ describe('GameTheoryPage', () => {
       const user = userEvent.setup();
       const mockResults = {
         config_name: 'Test Config',
-        average_score: 3.5,
-        cooperation_rate: 0.75,
+        averageScore: 3.5,
+        cooperationRate: 0.75,
         strategy_classification: 'tft',
         recommendation: 'Good configuration',
         matchup_results: {
@@ -532,8 +527,8 @@ describe('GameTheoryPage', () => {
       const user = userEvent.setup();
       const mockResults = {
         config_name: 'Test Config',
-        average_score: 3.5,
-        cooperation_rate: 0.75,
+        averageScore: 3.5,
+        cooperationRate: 0.75,
         strategy_classification: 'tft',
         recommendation: 'Good configuration',
         matchup_results: {

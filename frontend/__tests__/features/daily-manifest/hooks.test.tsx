@@ -30,11 +30,6 @@ function createWrapper() {
         retry: false,
       },
     },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
-    },
   });
 
   return ({ children }: { children: React.ReactNode }) => (
@@ -66,14 +61,14 @@ describe('Daily Manifest Hooks', () => {
 
       expect(result.current.data).toEqual(manifestMockResponses.dailyManifest);
       expect(mockGet).toHaveBeenCalledWith(
-        '/daily-manifest?date=2025-12-21&time_of_day=AM'
+        '/daily-manifest?date=2025-12-21&timeOfDay=AM'
       );
     });
 
     it('should fetch manifest for PM time period', async () => {
       mockGet.mockResolvedValueOnce({
         ...manifestMockResponses.dailyManifest,
-        time_of_day: 'PM',
+        timeOfDay: 'PM',
       });
 
       const { result } = renderHook(
@@ -86,7 +81,7 @@ describe('Daily Manifest Hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(mockGet).toHaveBeenCalledWith(
-        '/daily-manifest?date=2025-12-21&time_of_day=PM'
+        '/daily-manifest?date=2025-12-21&timeOfDay=PM'
       );
     });
 
@@ -102,7 +97,7 @@ describe('Daily Manifest Hooks', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      // For ALL, the hook omits the time_of_day param (backend returns all if not specified)
+      // For ALL, the hook omits the timeOfDay param (backend returns all if not specified)
       expect(mockGet).toHaveBeenCalledWith(
         '/daily-manifest?date=2025-12-21'
       );
@@ -121,7 +116,7 @@ describe('Daily Manifest Hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(mockGet).toHaveBeenCalledWith(
-        '/daily-manifest?date=2025-12-21&time_of_day=AM'
+        '/daily-manifest?date=2025-12-21&timeOfDay=AM'
       );
     });
 
@@ -138,7 +133,7 @@ describe('Daily Manifest Hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(result.current.data?.locations).toHaveLength(0);
-      expect(result.current.data?.summary.total_locations).toBe(0);
+      expect(result.current.data?.summary?.totalLocations).toBe(0);
     });
 
     it('should handle loading state', () => {
@@ -276,7 +271,7 @@ describe('Daily Manifest Hooks', () => {
       // Should use today's date in ISO format
       const today = new Date().toISOString().split('T')[0];
       expect(mockGet).toHaveBeenCalledWith(
-        `/daily-manifest?date=${today}&time_of_day=AM`
+        `/daily-manifest?date=${today}&timeOfDay=AM`
       );
     });
 
@@ -294,14 +289,14 @@ describe('Daily Manifest Hooks', () => {
 
       const today = new Date().toISOString().split('T')[0];
       expect(mockGet).toHaveBeenCalledWith(
-        `/daily-manifest?date=${today}&time_of_day=AM`
+        `/daily-manifest?date=${today}&timeOfDay=AM`
       );
     });
 
     it('should support PM time period', async () => {
       mockGet.mockResolvedValueOnce({
         ...manifestMockResponses.dailyManifest,
-        time_of_day: 'PM',
+        timeOfDay: 'PM',
       });
 
       const { result } = renderHook(
@@ -315,7 +310,7 @@ describe('Daily Manifest Hooks', () => {
 
       const today = new Date().toISOString().split('T')[0];
       expect(mockGet).toHaveBeenCalledWith(
-        `/daily-manifest?date=${today}&time_of_day=PM`
+        `/daily-manifest?date=${today}&timeOfDay=PM`
       );
     });
 
@@ -331,7 +326,7 @@ describe('Daily Manifest Hooks', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      // For ALL, the hook omits the time_of_day param (backend returns all if not specified)
+      // For ALL, the hook omits the timeOfDay param (backend returns all if not specified)
       const today = new Date().toISOString().split('T')[0];
       expect(mockGet).toHaveBeenCalledWith(
         `/daily-manifest?date=${today}`

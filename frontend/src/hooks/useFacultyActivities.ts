@@ -89,7 +89,7 @@ export function useFacultyTemplate(
     queryKey: facultyActivityQueryKeys.template(personId, weekNumber),
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (weekNumber) params.append('week_number', weekNumber.toString());
+      if (weekNumber) params.append('weekNumber', weekNumber.toString());
       const queryString = params.toString();
       return get<FacultyTemplateResponse>(
         `/faculty/${personId}/weekly-template${queryString ? `?${queryString}` : ''}`
@@ -161,11 +161,11 @@ export function useUpsertTemplateSlot() {
       return post<FacultyTemplateSlot>(
         `/faculty/${personId}/weekly-template/slots`,
         {
-          day_of_week: slot.dayOfWeek,
-          time_of_day: slot.timeOfDay,
-          week_number: slot.weekNumber,
+          dayOfWeek: slot.dayOfWeek,
+          timeOfDay: slot.timeOfDay,
+          weekNumber: slot.weekNumber,
           activity_id: slot.activityId,
-          is_locked: slot.isLocked ?? false,
+          isLocked: slot.isLocked ?? false,
           priority: slot.priority ?? 50,
           notes: slot.notes,
         }
@@ -200,9 +200,9 @@ export function useDeleteTemplateSlot() {
   >({
     mutationFn: async ({ personId, dayOfWeek, timeOfDay, weekNumber }) => {
       const params = new URLSearchParams();
-      params.append('day_of_week', dayOfWeek.toString());
-      params.append('time_of_day', timeOfDay);
-      if (weekNumber) params.append('week_number', weekNumber.toString());
+      params.append('dayOfWeek', dayOfWeek.toString());
+      params.append('timeOfDay', timeOfDay);
+      if (weekNumber) params.append('weekNumber', weekNumber.toString());
       await del(`/faculty/${personId}/weekly-template/slots?${params.toString()}`);
     },
     onSuccess: (_, variables) => {
@@ -260,11 +260,11 @@ export function useCreateFacultyOverride() {
         `/faculty/${personId}/weekly-overrides`,
         {
           effective_date: override.effectiveDate,
-          day_of_week: override.dayOfWeek,
-          time_of_day: override.timeOfDay,
+          dayOfWeek: override.dayOfWeek,
+          timeOfDay: override.timeOfDay,
           activity_id: override.activityId,
-          is_locked: override.isLocked ?? false,
-          override_reason: override.overrideReason,
+          isLocked: override.isLocked ?? false,
+          overrideReason: override.overrideReason,
         }
       );
     },
@@ -341,7 +341,7 @@ export function useEffectiveFacultyWeek(
     queryKey: facultyActivityQueryKeys.effectiveWeek(personId, weekStart, weekNumber),
     queryFn: async () => {
       return get<EffectiveWeekResponse>(
-        `/faculty/${personId}/weekly-template/effective?week_start=${weekStart}&week_number=${weekNumber}`
+        `/faculty/${personId}/weekly-template/effective?week_start=${weekStart}&weekNumber=${weekNumber}`
       );
     },
     enabled: !!personId && !!weekStart,
@@ -412,8 +412,8 @@ export function useFacultyMatrix(
     queryKey: facultyActivityQueryKeys.matrixRange(startDate, endDate, includeAdjunct),
     queryFn: async () => {
       const params = new URLSearchParams();
-      params.append('start_date', startDate);
-      params.append('end_date', endDate);
+      params.append('startDate', startDate);
+      params.append('endDate', endDate);
       if (includeAdjunct) params.append('include_adjunct', 'true');
       return get<FacultyMatrixResponse>(`/faculty/activities/matrix?${params.toString()}`);
     },

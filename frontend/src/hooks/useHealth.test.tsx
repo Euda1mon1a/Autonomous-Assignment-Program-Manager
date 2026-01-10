@@ -40,17 +40,17 @@ const mockHealthDetailed = {
   services: {
     database: {
       status: 'healthy' as const,
-      latency_ms: 12,
+      latencyMs: 12,
       message: 'Connected',
     },
     redis: {
       status: 'healthy' as const,
-      latency_ms: 3,
+      latencyMs: 3,
       message: 'Connected',
     },
     celery: {
       status: 'healthy' as const,
-      latency_ms: 5,
+      latencyMs: 5,
       message: 'Active',
     },
   },
@@ -60,7 +60,7 @@ const mockHealthDetailed = {
 
 const mockServiceHealth = {
   status: 'healthy' as const,
-  latency_ms: 12,
+  latencyMs: 12,
   message: 'Connected',
 };
 
@@ -245,7 +245,7 @@ describe('useHealthDetailed', () => {
         ...mockHealthDetailed.services,
         celery: {
           status: 'unhealthy' as const,
-          latency_ms: undefined,
+          latencyMs: undefined,
           message: 'Connection failed',
         },
       },
@@ -284,9 +284,9 @@ describe('useHealthDetailed', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.data?.services.database.latency_ms).toBe(12);
-      expect(result.current.data?.services.redis.latency_ms).toBe(3);
-      expect(result.current.data?.services.celery.latency_ms).toBe(5);
+      expect(result.current.data?.services.database.latencyMs).toBe(12);
+      expect(result.current.data?.services.redis.latencyMs).toBe(3);
+      expect(result.current.data?.services.celery.latencyMs).toBe(5);
     });
   });
 });
@@ -314,7 +314,7 @@ describe('useServiceHealth', () => {
   it('fetches redis health successfully', async () => {
     const redisHealth = {
       ...mockServiceHealth,
-      latency_ms: 3,
+      latencyMs: 3,
     };
     mockedApi.get.mockResolvedValueOnce(redisHealth);
 
@@ -323,7 +323,7 @@ describe('useServiceHealth', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.data?.latency_ms).toBe(3);
+      expect(result.current.data?.latencyMs).toBe(3);
     });
 
     expect(mockedApi.get).toHaveBeenCalledWith('/health/services/redis');
@@ -332,7 +332,7 @@ describe('useServiceHealth', () => {
   it('fetches celery health successfully', async () => {
     const celeryHealth = {
       ...mockServiceHealth,
-      latency_ms: 5,
+      latencyMs: 5,
       message: 'Active',
     };
     mockedApi.get.mockResolvedValueOnce(celeryHealth);

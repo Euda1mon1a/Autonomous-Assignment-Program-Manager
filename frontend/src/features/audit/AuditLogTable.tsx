@@ -82,13 +82,13 @@ function ActionIcon({ action }: { action: AuditActionType }) {
       return <AlertTriangle {...iconProps} />;
     case 'restore':
       return <RotateCcw {...iconProps} />;
-    case 'bulk_import':
+    case 'bulkImport':
       return <Upload {...iconProps} />;
-    case 'bulk_delete':
+    case 'bulkDelete':
       return <Trash2 {...iconProps} />;
-    case 'schedule_generate':
+    case 'scheduleGenerate':
       return <Calendar {...iconProps} />;
-    case 'schedule_validate':
+    case 'scheduleValidate':
       return <CheckCircle {...iconProps} />;
     case 'login':
       return <LogIn {...iconProps} />;
@@ -145,10 +145,10 @@ function ActionBadge({ action }: { action: AuditActionType }) {
     delete: 'bg-red-100 text-red-800',
     override: 'bg-orange-100 text-orange-800',
     restore: 'bg-purple-100 text-purple-800',
-    bulk_import: 'bg-indigo-100 text-indigo-800',
-    bulk_delete: 'bg-red-100 text-red-800',
-    schedule_generate: 'bg-teal-100 text-teal-800',
-    schedule_validate: 'bg-cyan-100 text-cyan-800',
+    bulkImport: 'bg-indigo-100 text-indigo-800',
+    bulkDelete: 'bg-red-100 text-red-800',
+    scheduleGenerate: 'bg-teal-100 text-teal-800',
+    scheduleValidate: 'bg-cyan-100 text-cyan-800',
     login: 'bg-gray-100 text-gray-800',
     logout: 'bg-gray-100 text-gray-800',
     export: 'bg-violet-100 text-violet-800',
