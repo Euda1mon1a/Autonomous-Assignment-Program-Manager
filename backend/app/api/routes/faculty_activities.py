@@ -44,9 +44,7 @@ router = APIRouter()
 # =============================================================================
 
 
-async def get_faculty_or_404(
-    db: AsyncSession, person_id: UUID
-) -> Person:
+async def get_faculty_or_404(db: AsyncSession, person_id: UUID) -> Person:
     """Get a faculty member by ID or raise 404."""
     from sqlalchemy import select
 
@@ -101,7 +99,9 @@ async def get_faculty_template(
                 time_of_day=t.time_of_day,
                 week_number=t.week_number,
                 activity_id=t.activity_id,
-                activity=ActivityResponse.model_validate(t.activity) if t.activity else None,
+                activity=ActivityResponse.model_validate(t.activity)
+                if t.activity
+                else None,
                 is_locked=t.is_locked,
                 priority=t.priority,
                 notes=t.notes,
@@ -167,7 +167,9 @@ async def update_faculty_template(
                 time_of_day=t.time_of_day,
                 week_number=t.week_number,
                 activity_id=t.activity_id,
-                activity=ActivityResponse.model_validate(t.activity) if t.activity else None,
+                activity=ActivityResponse.model_validate(t.activity)
+                if t.activity
+                else None,
                 is_locked=t.is_locked,
                 priority=t.priority,
                 notes=t.notes,
@@ -216,7 +218,9 @@ async def create_template_slot(
         time_of_day=template.time_of_day,
         week_number=template.week_number,
         activity_id=template.activity_id,
-        activity=ActivityResponse.model_validate(template.activity) if template.activity else None,
+        activity=ActivityResponse.model_validate(template.activity)
+        if template.activity
+        else None,
         is_locked=template.is_locked,
         priority=template.priority,
         notes=template.notes,
@@ -283,7 +287,9 @@ async def get_faculty_overrides(
                 day_of_week=o.day_of_week,
                 time_of_day=o.time_of_day,
                 activity_id=o.activity_id,
-                activity=ActivityResponse.model_validate(o.activity) if o.activity else None,
+                activity=ActivityResponse.model_validate(o.activity)
+                if o.activity
+                else None,
                 is_locked=o.is_locked,
                 override_reason=o.override_reason,
                 created_by=o.created_by,
@@ -336,7 +342,9 @@ async def create_faculty_override(
         day_of_week=result.day_of_week,
         time_of_day=result.time_of_day,
         activity_id=result.activity_id,
-        activity=ActivityResponse.model_validate(result.activity) if result.activity else None,
+        activity=ActivityResponse.model_validate(result.activity)
+        if result.activity
+        else None,
         is_locked=result.is_locked,
         override_reason=result.override_reason,
         created_by=result.created_by,
@@ -404,7 +412,9 @@ async def get_effective_week(
                 day_of_week=s["day_of_week"],
                 time_of_day=s["time_of_day"],
                 activity_id=s["activity_id"],
-                activity=ActivityResponse.model_validate(s["activity"]) if s["activity"] else None,
+                activity=ActivityResponse.model_validate(s["activity"])
+                if s["activity"]
+                else None,
                 is_locked=s["is_locked"],
                 priority=s["priority"],
                 source=s["source"],
@@ -425,7 +435,10 @@ async def get_effective_week(
     response_model=PermittedActivitiesResponse,
 )
 async def get_permitted_activities(
-    role: str = Query(..., description="Faculty role (pd, apd, oic, dept_chief, sports_med, core, adjunct)"),
+    role: str = Query(
+        ...,
+        description="Faculty role (pd, apd, oic, dept_chief, sports_med, core, adjunct)",
+    ),
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -500,7 +513,9 @@ async def get_faculty_matrix(
                                 day_of_week=s["day_of_week"],
                                 time_of_day=s["time_of_day"],
                                 activity_id=s["activity_id"],
-                                activity=ActivityResponse.model_validate(s["activity"]) if s["activity"] else None,
+                                activity=ActivityResponse.model_validate(s["activity"])
+                                if s["activity"]
+                                else None,
                                 is_locked=s["is_locked"],
                                 priority=s["priority"],
                                 source=s["source"],

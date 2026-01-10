@@ -415,7 +415,9 @@ class AbsenceService:
     AWAY_FROM_PROGRAM_MAX_DAYS = 28  # Days per academic year before training extension
     AWAY_FROM_PROGRAM_WARNING_DAYS = 21  # 75% threshold for warning
 
-    def get_academic_year_bounds(self, target_date: date | None = None) -> tuple[date, date]:
+    def get_academic_year_bounds(
+        self, target_date: date | None = None
+    ) -> tuple[date, date]:
         """Get the academic year start and end dates.
 
         Academic year runs July 1 - June 30.

@@ -285,10 +285,15 @@ class TestBulkUpdateCallAssignments:
     """Test suite for bulk update call assignments functionality."""
 
     @pytest.mark.asyncio
-    async def test_bulk_update_success(self, async_db, sample_resident_async, sample_faculty_async):
+    async def test_bulk_update_success(
+        self, async_db, sample_resident_async, sample_faculty_async
+    ):
         """Test bulk updating multiple call assignments to new person."""
         service = CallAssignmentService(async_db)
-        from app.schemas.call_assignment import CallAssignmentCreate, BulkCallAssignmentUpdateInput
+        from app.schemas.call_assignment import (
+            CallAssignmentCreate,
+            BulkCallAssignmentUpdateInput,
+        )
 
         # Create call assignments
         call_ids = []
@@ -320,7 +325,10 @@ class TestBulkUpdateCallAssignments:
     async def test_bulk_update_invalid_person(self, async_db, sample_resident_async):
         """Test bulk update with invalid person_id returns error."""
         service = CallAssignmentService(async_db)
-        from app.schemas.call_assignment import CallAssignmentCreate, BulkCallAssignmentUpdateInput
+        from app.schemas.call_assignment import (
+            CallAssignmentCreate,
+            BulkCallAssignmentUpdateInput,
+        )
 
         # Create a call assignment
         create_data = CallAssignmentCreate(
@@ -340,7 +348,9 @@ class TestBulkUpdateCallAssignments:
         assert "not found" in result["errors"][0].lower()
 
     @pytest.mark.asyncio
-    async def test_bulk_update_nonexistent_assignment(self, async_db, sample_faculty_async):
+    async def test_bulk_update_nonexistent_assignment(
+        self, async_db, sample_faculty_async
+    ):
         """Test bulk update with non-existent assignment ID."""
         service = CallAssignmentService(async_db)
         from app.schemas.call_assignment import BulkCallAssignmentUpdateInput
@@ -431,7 +441,9 @@ class TestEquityReportAndPreview:
         assert report.total_overnight_calls == 4
 
     @pytest.mark.asyncio
-    async def test_equity_preview_with_simulated_changes(self, async_db, setup_equity_data):
+    async def test_equity_preview_with_simulated_changes(
+        self, async_db, setup_equity_data
+    ):
         """Test equity preview with simulated reassignment."""
         service = CallAssignmentService(async_db)
         from app.schemas.call_assignment import CallAssignmentCreate, SimulatedChange
@@ -487,7 +499,9 @@ class TestCoverageReport:
         # Should have gaps for any Sun-Thu nights
 
     @pytest.mark.asyncio
-    async def test_coverage_report_partial_coverage(self, async_db, sample_resident_async):
+    async def test_coverage_report_partial_coverage(
+        self, async_db, sample_resident_async
+    ):
         """Test coverage report with partial coverage."""
         service = CallAssignmentService(async_db)
         from app.schemas.call_assignment import CallAssignmentCreate

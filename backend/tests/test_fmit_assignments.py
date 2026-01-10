@@ -337,8 +337,14 @@ class TestBulkCreateFMITAssignments:
             "/api/v1/fmit/assignments/bulk",
             json={
                 "assignments": [
-                    {"faculty_id": str(sample_faculty.id), "week_date": week1.isoformat()},
-                    {"faculty_id": str(second_faculty.id), "week_date": week2.isoformat()},
+                    {
+                        "faculty_id": str(sample_faculty.id),
+                        "week_date": week1.isoformat(),
+                    },
+                    {
+                        "faculty_id": str(second_faculty.id),
+                        "week_date": week2.isoformat(),
+                    },
                 ],
                 "created_by": "bulk_test",
             },
@@ -364,7 +370,10 @@ class TestBulkCreateFMITAssignments:
             "/api/v1/fmit/assignments/bulk",
             json={
                 "assignments": [
-                    {"faculty_id": str(sample_faculty.id), "week_date": week_date.isoformat()},
+                    {
+                        "faculty_id": str(sample_faculty.id),
+                        "week_date": week_date.isoformat(),
+                    },
                 ],
                 "dry_run": True,
             },
@@ -406,8 +415,14 @@ class TestBulkCreateFMITAssignments:
             "/api/v1/fmit/assignments/bulk",
             json={
                 "assignments": [
-                    {"faculty_id": str(sample_faculty.id), "week_date": week_date.isoformat()},
-                    {"faculty_id": str(second_faculty.id), "week_date": week_date.isoformat()},
+                    {
+                        "faculty_id": str(sample_faculty.id),
+                        "week_date": week_date.isoformat(),
+                    },
+                    {
+                        "faculty_id": str(second_faculty.id),
+                        "week_date": week_date.isoformat(),
+                    },
                 ],
                 "skip_conflicts": True,
             },
@@ -468,7 +483,11 @@ class TestYearGridView:
         # Check faculty summaries
         assert len(data["faculty_summaries"]) >= 1
         faculty_summary = next(
-            (f for f in data["faculty_summaries"] if f["faculty_id"] == str(sample_faculty.id)),
+            (
+                f
+                for f in data["faculty_summaries"]
+                if f["faculty_id"] == str(sample_faculty.id)
+            ),
             None,
         )
         assert faculty_summary is not None

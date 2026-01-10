@@ -72,9 +72,7 @@ class ResidentWeeklyRequirementBase(BaseModel):
         """Validate allowed_clinic_days are valid weekday integers."""
         for day in v:
             if day < 0 or day > 4:
-                raise ValueError(
-                    f"Invalid day {day}. Must be 0-4 (Monday=0, Friday=4)"
-                )
+                raise ValueError(f"Invalid day {day}. Must be 0-4 (Monday=0, Friday=4)")
         return sorted(set(v))  # Remove duplicates and sort
 
     @model_validator(mode="after")
@@ -137,7 +135,9 @@ class ResidentWeeklyRequirementUpdate(BaseModel):
 
     @field_validator("protected_slots")
     @classmethod
-    def validate_protected_slots(cls, v: dict[str, str] | None) -> dict[str, str] | None:
+    def validate_protected_slots(
+        cls, v: dict[str, str] | None
+    ) -> dict[str, str] | None:
         """Validate protected_slots keys if provided."""
         if v is None:
             return v

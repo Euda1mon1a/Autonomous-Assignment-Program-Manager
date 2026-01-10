@@ -129,7 +129,9 @@ class BlockAssignmentImportService:
                 anon_parts.append(part[0] + "*" * max(0, len(part) - 1))
         return " ".join(anon_parts) if anon_parts else "****"
 
-    def _match_rotation(self, abbrev: str) -> tuple[uuid.UUID | None, str | None, float]:
+    def _match_rotation(
+        self, abbrev: str
+    ) -> tuple[uuid.UUID | None, str | None, float]:
         """
         Match rotation abbreviation to template.
 
@@ -232,7 +234,8 @@ class BlockAssignmentImportService:
 
         # Filter out comment lines
         lines = [
-            line for line in content.strip().split("\n")
+            line
+            for line in content.strip().split("\n")
             if line.strip() and not line.strip().startswith("#")
         ]
 
@@ -247,12 +250,20 @@ class BlockAssignmentImportService:
             reader.fieldnames = [h.lower().strip() for h in reader.fieldnames]
 
         for row_num, row in enumerate(reader, start=2):  # Header is row 1
-            rows.append({
-                "row_number": row_num,
-                "block_number": row.get("block_number") or row.get("block") or row.get("blk"),
-                "rotation_abbrev": row.get("rotation_abbrev") or row.get("rotation") or row.get("rot"),
-                "resident_name": row.get("resident_name") or row.get("resident") or row.get("name"),
-            })
+            rows.append(
+                {
+                    "row_number": row_num,
+                    "block_number": row.get("block_number")
+                    or row.get("block")
+                    or row.get("blk"),
+                    "rotation_abbrev": row.get("rotation_abbrev")
+                    or row.get("rotation")
+                    or row.get("rot"),
+                    "resident_name": row.get("resident_name")
+                    or row.get("resident")
+                    or row.get("name"),
+                }
+            )
 
         return rows
 
@@ -304,12 +315,16 @@ class BlockAssignmentImportService:
             resident_input = str(row["resident_name"] or "").strip()
 
             # Match rotation
-            rotation_id, rotation_name, rotation_conf = self._match_rotation(rotation_input)
+            rotation_id, rotation_name, rotation_conf = self._match_rotation(
+                rotation_input
+            )
             if not rotation_id:
                 unknown_rotation_counts[rotation_input.upper()] += 1
 
             # Match resident
-            resident_id, resident_name, resident_conf = self._match_resident(resident_input)
+            resident_id, resident_name, resident_conf = self._match_resident(
+                resident_input
+            )
 
             # Check for duplicate
             is_duplicate = False
@@ -333,16 +348,22 @@ class BlockAssignmentImportService:
 
             # Add low confidence warnings
             if rotation_conf > 0 and rotation_conf < 1.0:
-                row_warnings.append(f"Rotation matched with {rotation_conf*100:.0f}% confidence")
+                row_warnings.append(
+                    f"Rotation matched with {rotation_conf * 100:.0f}% confidence"
+                )
             if resident_conf > 0 and resident_conf < 1.0:
-                row_warnings.append(f"Resident matched with {resident_conf*100:.0f}% confidence")
+                row_warnings.append(
+                    f"Resident matched with {resident_conf * 100:.0f}% confidence"
+                )
 
             items.append(
                 BlockAssignmentPreviewItem(
                     row_number=row_num,
                     block_number=block_number,
                     rotation_input=rotation_input,
-                    resident_display=self._anonymize_name(resident_name or resident_input),
+                    resident_display=self._anonymize_name(
+                        resident_name or resident_input
+                    ),
                     match_status=match_status,
                     matched_rotation_id=rotation_id,
                     matched_rotation_name=rotation_name,
@@ -369,9 +390,15 @@ class BlockAssignmentImportService:
 
         # Calculate summary statistics
         matched_count = sum(1 for i in items if i.match_status == MatchStatus.MATCHED)
-        unknown_rotation_count = sum(1 for i in items if i.match_status == MatchStatus.UNKNOWN_ROTATION)
-        unknown_resident_count = sum(1 for i in items if i.match_status == MatchStatus.UNKNOWN_RESIDENT)
-        duplicate_count = sum(1 for i in items if i.match_status == MatchStatus.DUPLICATE)
+        unknown_rotation_count = sum(
+            1 for i in items if i.match_status == MatchStatus.UNKNOWN_ROTATION
+        )
+        unknown_resident_count = sum(
+            1 for i in items if i.match_status == MatchStatus.UNKNOWN_RESIDENT
+        )
+        duplicate_count = sum(
+            1 for i in items if i.match_status == MatchStatus.DUPLICATE
+        )
         invalid_count = sum(1 for i in items if i.match_status == MatchStatus.INVALID)
 
         # Cache preview data for import execution
@@ -379,11 +406,17 @@ class BlockAssignmentImportService:
             {
                 "row_number": item.row_number,
                 "block_number": item.block_number,
-                "rotation_id": str(item.matched_rotation_id) if item.matched_rotation_id else None,
-                "resident_id": str(item.matched_resident_id) if item.matched_resident_id else None,
+                "rotation_id": str(item.matched_rotation_id)
+                if item.matched_rotation_id
+                else None,
+                "resident_id": str(item.matched_resident_id)
+                if item.matched_resident_id
+                else None,
                 "match_status": item.match_status.value,
                 "is_duplicate": item.is_duplicate,
-                "existing_assignment_id": str(item.existing_assignment_id) if item.existing_assignment_id else None,
+                "existing_assignment_id": str(item.existing_assignment_id)
+                if item.existing_assignment_id
+                else None,
             }
             for item in items
         ]
@@ -492,11 +525,15 @@ class BlockAssignmentImportService:
                     try:
                         existing_id = uuid.UUID(row_data["existing_assignment_id"])
                         result = await self.session.execute(
-                            select(BlockAssignment).where(BlockAssignment.id == existing_id)
+                            select(BlockAssignment).where(
+                                BlockAssignment.id == existing_id
+                            )
                         )
                         existing = result.scalar_one_or_none()
                         if existing:
-                            existing.rotation_template_id = uuid.UUID(row_data["rotation_id"])
+                            existing.rotation_template_id = uuid.UUID(
+                                row_data["rotation_id"]
+                            )
                             existing.assignment_reason = "manual"
                             existing.created_by = "gui_import"
                             existing.updated_at = datetime.utcnow()
@@ -605,6 +642,8 @@ class BlockAssignmentImportService:
 
 
 # Factory function for dependency injection
-def get_block_assignment_import_service(session: AsyncSession) -> BlockAssignmentImportService:
+def get_block_assignment_import_service(
+    session: AsyncSession,
+) -> BlockAssignmentImportService:
     """Get BlockAssignmentImportService instance."""
     return BlockAssignmentImportService(session)

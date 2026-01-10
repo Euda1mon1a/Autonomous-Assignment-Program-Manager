@@ -99,8 +99,12 @@ def upgrade() -> None:
             comment="Soft preference 0-100 (higher = more important)",
         ),
         sa.Column("notes", sa.Text(), nullable=True),
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
+        ),
         # Unique constraint: one slot per person/day/time/week
         sa.UniqueConstraint(
             "person_id",
@@ -174,7 +178,9 @@ def upgrade() -> None:
             nullable=True,
             comment="Who created this override",
         ),
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
+        ),
         # Unique constraint: one override per person/date/day/time
         sa.UniqueConstraint(
             "person_id",
@@ -215,7 +221,9 @@ def upgrade() -> None:
             server_default=sa.false(),
             comment="Auto-assign this activity to new templates for this role",
         ),
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
+        ),
         # Unique constraint: one permission per role/activity
         sa.UniqueConstraint(
             "faculty_role",
@@ -403,38 +411,36 @@ def upgrade() -> None:
         {"role": "pd", "activity_id": at_id, "is_default": False},
         {"role": "pd", "activity_id": pcat_id, "is_default": False},
         {"role": "pd", "activity_id": do_id, "is_default": False},
-
         # APD: GME + clinic (2/week)
         {"role": "apd", "activity_id": gme_id, "is_default": True},
         {"role": "apd", "activity_id": at_id, "is_default": False},
         {"role": "apd", "activity_id": pcat_id, "is_default": False},
         {"role": "apd", "activity_id": do_id, "is_default": False},
-
         # OIC: DFM + GME + clinic (2/week)
         {"role": "oic", "activity_id": dfm_id, "is_default": True},
-        {"role": "oic", "activity_id": gme_id, "is_default": False},  # OIC also gets some GME
+        {
+            "role": "oic",
+            "activity_id": gme_id,
+            "is_default": False,
+        },  # OIC also gets some GME
         {"role": "oic", "activity_id": at_id, "is_default": False},
         {"role": "oic", "activity_id": pcat_id, "is_default": False},
         {"role": "oic", "activity_id": do_id, "is_default": False},
-
         # Dept Chief: DFM + clinic (1/week)
         {"role": "dept_chief", "activity_id": dfm_id, "is_default": True},
         {"role": "dept_chief", "activity_id": at_id, "is_default": False},
         {"role": "dept_chief", "activity_id": pcat_id, "is_default": False},
         {"role": "dept_chief", "activity_id": do_id, "is_default": False},
-
         # Sports Med: SM Clinic (4/week), no regular FM
         {"role": "sports_med", "activity_id": sm_clinic_id, "is_default": True},
         {"role": "sports_med", "activity_id": at_id, "is_default": False},
         {"role": "sports_med", "activity_id": pcat_id, "is_default": False},
         {"role": "sports_med", "activity_id": do_id, "is_default": False},
-
         # Core: GME + clinic (up to 4/week)
         {"role": "core", "activity_id": gme_id, "is_default": False},
         {"role": "core", "activity_id": at_id, "is_default": False},
         {"role": "core", "activity_id": pcat_id, "is_default": False},
         {"role": "core", "activity_id": do_id, "is_default": False},
-
         # Adjunct: Not auto-scheduled but can have these activities
         {"role": "adjunct", "activity_id": at_id, "is_default": False},
         {"role": "adjunct", "activity_id": pcat_id, "is_default": False},
@@ -473,15 +479,23 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Drop faculty weekly tables and remove faculty activities."""
     # Drop permissions table
-    op.drop_index("ix_faculty_activity_permissions_role", table_name="faculty_activity_permissions")
+    op.drop_index(
+        "ix_faculty_activity_permissions_role",
+        table_name="faculty_activity_permissions",
+    )
     op.drop_table("faculty_activity_permissions")
 
     # Drop overrides table
-    op.drop_index("ix_faculty_weekly_overrides_effective_date", table_name="faculty_weekly_overrides")
+    op.drop_index(
+        "ix_faculty_weekly_overrides_effective_date",
+        table_name="faculty_weekly_overrides",
+    )
     op.drop_table("faculty_weekly_overrides")
 
     # Drop templates table
-    op.drop_index("ix_faculty_weekly_templates_activity_id", table_name="faculty_weekly_templates")
+    op.drop_index(
+        "ix_faculty_weekly_templates_activity_id", table_name="faculty_weekly_templates"
+    )
     op.drop_table("faculty_weekly_templates")
 
     # Remove faculty activities (be careful not to delete if in use)

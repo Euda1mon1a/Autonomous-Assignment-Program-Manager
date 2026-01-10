@@ -182,8 +182,9 @@ class TestResidentWeeklyRequirementModel:
         assert sample_weekly_requirement.is_slot_protected(0, "AM") is False
 
     def test_rotation_template_relationship(
-        self, sample_weekly_requirement: ResidentWeeklyRequirement,
-        outpatient_template: RotationTemplate
+        self,
+        sample_weekly_requirement: ResidentWeeklyRequirement,
+        outpatient_template: RotationTemplate,
     ):
         """Test relationship to rotation template."""
         assert sample_weekly_requirement.rotation_template is not None
@@ -248,9 +249,7 @@ class TestResidentWeeklyRequirementSchemas:
 
     def test_allowed_clinic_days_validation_valid(self):
         """Test allowed_clinic_days validation with valid days."""
-        schema = ResidentWeeklyRequirementBase(
-            allowed_clinic_days=[0, 1, 2, 3, 4]
-        )
+        schema = ResidentWeeklyRequirementBase(allowed_clinic_days=[0, 1, 2, 3, 4])
         assert schema.allowed_clinic_days == [0, 1, 2, 3, 4]
 
     def test_allowed_clinic_days_validation_invalid(self):
@@ -544,9 +543,7 @@ class TestResidentWeeklyClinicConstraint:
                 "fm_clinic_max_per_week": 4,
             }
         }
-        constraint = ResidentWeeklyClinicConstraint(
-            weekly_requirements=requirements
-        )
+        constraint = ResidentWeeklyClinicConstraint(weekly_requirements=requirements)
 
         req = constraint.get_requirement(template_id)
         assert req is not None

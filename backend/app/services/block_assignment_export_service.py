@@ -141,9 +141,7 @@ class BlockAssignmentExportService:
             ]
 
             if request.include_pgy_level:
-                pgy = (
-                    assignment.resident.pgy_level if assignment.resident else None
-                )
+                pgy = assignment.resident.pgy_level if assignment.resident else None
                 row.append(pgy if pgy else "")
 
             if request.include_leave_status:
@@ -224,9 +222,7 @@ class BlockAssignmentExportService:
 
             if request.include_leave_status:
                 ws.cell(row=row_num, column=col_offset, value=assignment.has_leave)
-                ws.cell(
-                    row=row_num, column=col_offset + 1, value=assignment.leave_days
-                )
+                ws.cell(row=row_num, column=col_offset + 1, value=assignment.leave_days)
 
             # Apply activity type coloring to rotation cell
             if assignment.rotation_template:

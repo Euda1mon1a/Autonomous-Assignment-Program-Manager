@@ -46,9 +46,7 @@ class CredentialController:
             include_expired=include_expired,
         )
         return CredentialListResponse(
-            items=[
-                CredentialResponse.model_validate(item) for item in result["items"]
-            ],
+            items=[CredentialResponse.model_validate(item) for item in result["items"]],
             total=result["total"],
         )
 
@@ -65,9 +63,7 @@ class CredentialController:
             include_expired=include_expired,
         )
         return CredentialListResponse(
-            items=[
-                CredentialResponse.model_validate(item) for item in result["items"]
-            ],
+            items=[CredentialResponse.model_validate(item) for item in result["items"]],
             total=result["total"],
         )
 
@@ -196,9 +192,7 @@ class CredentialController:
         """List credentials expiring soon."""
         result = self.service.list_expiring_credentials(days=days)
         return CredentialListResponse(
-            items=[
-                CredentialResponse.model_validate(item) for item in result["items"]
-            ],
+            items=[CredentialResponse.model_validate(item) for item in result["items"]],
             total=result["total"],
         )
 

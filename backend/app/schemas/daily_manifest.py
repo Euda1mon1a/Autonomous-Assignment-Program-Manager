@@ -108,7 +108,9 @@ class AbsenceInfo(BaseModel):
     """
 
     person: PersonSummary
-    absence_type: str = Field(..., description="Type of absence (vacation, sick, deployment)")
+    absence_type: str = Field(
+        ..., description="Type of absence (vacation, sick, deployment)"
+    )
 
 
 class AttendingInfo(BaseModel):

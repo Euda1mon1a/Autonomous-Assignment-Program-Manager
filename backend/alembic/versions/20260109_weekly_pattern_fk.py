@@ -79,5 +79,7 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Remove activity_id FK from weekly_patterns."""
     op.drop_index("ix_weekly_patterns_activity_id", table_name="weekly_patterns")
-    op.drop_constraint("fk_weekly_patterns_activity_id", "weekly_patterns", type_="foreignkey")
+    op.drop_constraint(
+        "fk_weekly_patterns_activity_id", "weekly_patterns", type_="foreignkey"
+    )
     op.drop_column("weekly_patterns", "activity_id")

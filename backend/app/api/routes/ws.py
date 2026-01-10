@@ -45,7 +45,9 @@ async def get_websocket_user(
                 break
 
     if not token:
-        logger.warning("WebSocket connection attempt without token (no query param or cookie)")
+        logger.warning(
+            "WebSocket connection attempt without token (no query param or cookie)"
+        )
         return None
 
     token_data = verify_token(token, db)

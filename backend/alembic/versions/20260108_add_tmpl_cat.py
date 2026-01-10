@@ -60,5 +60,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index("ix_rotation_templates_template_category", table_name="rotation_templates")
+    op.drop_index(
+        "ix_rotation_templates_template_category", table_name="rotation_templates"
+    )
     op.drop_column("rotation_templates", "template_category")

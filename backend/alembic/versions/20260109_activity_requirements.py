@@ -53,14 +53,20 @@ def upgrade() -> None:
             nullable=False,
         ),
         # Scheduling preferences
-        sa.Column("prefer_full_days", sa.Boolean(), nullable=False, server_default=sa.true()),
+        sa.Column(
+            "prefer_full_days", sa.Boolean(), nullable=False, server_default=sa.true()
+        ),
         sa.Column("preferred_days", postgresql.JSONB(), nullable=True),
         sa.Column("avoid_days", postgresql.JSONB(), nullable=True),
         # Priority for soft constraints
         sa.Column("priority", sa.Integer(), nullable=False, server_default="50"),
         # Timestamps
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
+        ),
         # Unique constraint
         sa.UniqueConstraint(
             "rotation_template_id",
@@ -194,6 +200,10 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Drop rotation_activity_requirements table."""
-    op.drop_index("ix_rotation_activity_req_activity", table_name="rotation_activity_requirements")
-    op.drop_index("ix_rotation_activity_req_template", table_name="rotation_activity_requirements")
+    op.drop_index(
+        "ix_rotation_activity_req_activity", table_name="rotation_activity_requirements"
+    )
+    op.drop_index(
+        "ix_rotation_activity_req_template", table_name="rotation_activity_requirements"
+    )
     op.drop_table("rotation_activity_requirements")

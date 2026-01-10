@@ -16,37 +16,44 @@ Fixes two schema issues:
 SQLAlchemy-Continuum creates version tables with the pattern: {tablename}_version
 So schedule_runs table expects schedule_runs_version.
 """
+
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision: str = '20251222_fix_schema'
-down_revision: Union[str, None] = '20251222_explain'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision: str = "20251222_fix_schema"
+down_revision: str | None = "20251222_explain"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
     """Add freeze columns and fix version table names."""
 
     # 1. Add freeze columns to application_settings
-    op.add_column('application_settings',
-        sa.Column('freeze_horizon_days', sa.Integer(), nullable=False, server_default='7'))
-    op.add_column('application_settings',
-        sa.Column('freeze_scope', sa.String(50), nullable=False, server_default='none'))
+    op.add_column(
+        "application_settings",
+        sa.Column(
+            "freeze_horizon_days", sa.Integer(), nullable=False, server_default="7"
+        ),
+    )
+    op.add_column(
+        "application_settings",
+        sa.Column("freeze_scope", sa.String(50), nullable=False, server_default="none"),
+    )
 
     # Add check constraints for freeze columns
     op.create_check_constraint(
-        'check_freeze_horizon',
-        'application_settings',
-        'freeze_horizon_days >= 0 AND freeze_horizon_days <= 30'
+        "check_freeze_horizon",
+        "application_settings",
+        "freeze_horizon_days >= 0 AND freeze_horizon_days <= 30",
     )
     op.create_check_constraint(
-        'check_freeze_scope',
-        'application_settings',
-        "freeze_scope IN ('none', 'non_emergency_only', 'all_changes_require_override')"
+        "check_freeze_scope",
+        "application_settings",
+        "freeze_scope IN ('none', 'non_emergency_only', 'all_changes_require_override')",
     )
 
     # 2. Rename version tables to match Continuum convention
@@ -66,12 +73,24 @@ def upgrade() -> None:
     """)
 
     # Update indexes to use new table names
-    op.execute('ALTER INDEX IF EXISTS idx_schedule_run_version_transaction RENAME TO idx_schedule_runs_version_transaction')
-    op.execute('ALTER INDEX IF EXISTS idx_schedule_run_version_end_transaction RENAME TO idx_schedule_runs_version_end_transaction')
-    op.execute('ALTER INDEX IF EXISTS idx_schedule_run_version_operation RENAME TO idx_schedule_runs_version_operation')
-    op.execute('ALTER INDEX IF EXISTS idx_assignment_version_transaction RENAME TO idx_assignments_version_transaction')
-    op.execute('ALTER INDEX IF EXISTS idx_assignment_version_end_transaction RENAME TO idx_assignments_version_end_transaction')
-    op.execute('ALTER INDEX IF EXISTS idx_assignment_version_operation RENAME TO idx_assignments_version_operation')
+    op.execute(
+        "ALTER INDEX IF EXISTS idx_schedule_run_version_transaction RENAME TO idx_schedule_runs_version_transaction"
+    )
+    op.execute(
+        "ALTER INDEX IF EXISTS idx_schedule_run_version_end_transaction RENAME TO idx_schedule_runs_version_end_transaction"
+    )
+    op.execute(
+        "ALTER INDEX IF EXISTS idx_schedule_run_version_operation RENAME TO idx_schedule_runs_version_operation"
+    )
+    op.execute(
+        "ALTER INDEX IF EXISTS idx_assignment_version_transaction RENAME TO idx_assignments_version_transaction"
+    )
+    op.execute(
+        "ALTER INDEX IF EXISTS idx_assignment_version_end_transaction RENAME TO idx_assignments_version_end_transaction"
+    )
+    op.execute(
+        "ALTER INDEX IF EXISTS idx_assignment_version_operation RENAME TO idx_assignments_version_operation"
+    )
 
 
 def downgrade() -> None:
@@ -91,17 +110,29 @@ def downgrade() -> None:
     """)
 
     # Restore index names
-    op.execute('ALTER INDEX IF EXISTS idx_schedule_runs_version_transaction RENAME TO idx_schedule_run_version_transaction')
-    op.execute('ALTER INDEX IF EXISTS idx_schedule_runs_version_end_transaction RENAME TO idx_schedule_run_version_end_transaction')
-    op.execute('ALTER INDEX IF EXISTS idx_schedule_runs_version_operation RENAME TO idx_schedule_run_version_operation')
-    op.execute('ALTER INDEX IF EXISTS idx_assignments_version_transaction RENAME TO idx_assignment_version_transaction')
-    op.execute('ALTER INDEX IF EXISTS idx_assignments_version_end_transaction RENAME TO idx_assignment_version_end_transaction')
-    op.execute('ALTER INDEX IF EXISTS idx_assignments_version_operation RENAME TO idx_assignment_version_operation')
+    op.execute(
+        "ALTER INDEX IF EXISTS idx_schedule_runs_version_transaction RENAME TO idx_schedule_run_version_transaction"
+    )
+    op.execute(
+        "ALTER INDEX IF EXISTS idx_schedule_runs_version_end_transaction RENAME TO idx_schedule_run_version_end_transaction"
+    )
+    op.execute(
+        "ALTER INDEX IF EXISTS idx_schedule_runs_version_operation RENAME TO idx_schedule_run_version_operation"
+    )
+    op.execute(
+        "ALTER INDEX IF EXISTS idx_assignments_version_transaction RENAME TO idx_assignment_version_transaction"
+    )
+    op.execute(
+        "ALTER INDEX IF EXISTS idx_assignments_version_end_transaction RENAME TO idx_assignment_version_end_transaction"
+    )
+    op.execute(
+        "ALTER INDEX IF EXISTS idx_assignments_version_operation RENAME TO idx_assignment_version_operation"
+    )
 
     # Drop constraints
-    op.drop_constraint('check_freeze_scope', 'application_settings')
-    op.drop_constraint('check_freeze_horizon', 'application_settings')
+    op.drop_constraint("check_freeze_scope", "application_settings")
+    op.drop_constraint("check_freeze_horizon", "application_settings")
 
     # Drop columns
-    op.drop_column('application_settings', 'freeze_scope')
-    op.drop_column('application_settings', 'freeze_horizon_days')
+    op.drop_column("application_settings", "freeze_scope")
+    op.drop_column("application_settings", "freeze_horizon_days")

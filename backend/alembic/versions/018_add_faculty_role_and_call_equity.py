@@ -12,16 +12,17 @@ Adds faculty role-based scheduling fields to the people table:
 
 See docs/architecture/FACULTY_SCHEDULING_SPECIFICATION.md for details.
 """
+
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision: str = '018'
-down_revision: Union[str, None] = '017'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision: str = "018"
+down_revision: str | None = "017"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -37,40 +38,39 @@ def upgrade() -> None:
     - Core: max 4 clinic/week
     """
     # Add faculty_role column
-    op.add_column(
-        'people',
-        sa.Column('faculty_role', sa.String(50), nullable=True)
-    )
+    op.add_column("people", sa.Column("faculty_role", sa.String(50), nullable=True))
 
     # Add call equity tracking fields
     op.add_column(
-        'people',
-        sa.Column('sunday_call_count', sa.Integer(), server_default='0', nullable=True)
+        "people",
+        sa.Column("sunday_call_count", sa.Integer(), server_default="0", nullable=True),
     )
     op.add_column(
-        'people',
-        sa.Column('weekday_call_count', sa.Integer(), server_default='0', nullable=True)
+        "people",
+        sa.Column(
+            "weekday_call_count", sa.Integer(), server_default="0", nullable=True
+        ),
     )
     op.add_column(
-        'people',
-        sa.Column('fmit_weeks_count', sa.Integer(), server_default='0', nullable=True)
+        "people",
+        sa.Column("fmit_weeks_count", sa.Integer(), server_default="0", nullable=True),
     )
 
     # Add check constraint for valid faculty roles
     op.create_check_constraint(
-        'check_faculty_role',
-        'people',
-        "faculty_role IS NULL OR faculty_role IN ('pd', 'apd', 'oic', 'dept_chief', 'sports_med', 'core')"
+        "check_faculty_role",
+        "people",
+        "faculty_role IS NULL OR faculty_role IN ('pd', 'apd', 'oic', 'dept_chief', 'sports_med', 'core')",
     )
 
 
 def downgrade() -> None:
     """Remove faculty role and call equity fields."""
     # Drop check constraint first
-    op.drop_constraint('check_faculty_role', 'people', type_='check')
+    op.drop_constraint("check_faculty_role", "people", type_="check")
 
     # Drop columns
-    op.drop_column('people', 'fmit_weeks_count')
-    op.drop_column('people', 'weekday_call_count')
-    op.drop_column('people', 'sunday_call_count')
-    op.drop_column('people', 'faculty_role')
+    op.drop_column("people", "fmit_weeks_count")
+    op.drop_column("people", "weekday_call_count")
+    op.drop_column("people", "sunday_call_count")
+    op.drop_column("people", "faculty_role")

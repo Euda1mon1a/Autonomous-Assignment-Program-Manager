@@ -194,7 +194,10 @@ class TestBulkAbsencePreview:
         # First one should be valid, second should be flagged as duplicate
         assert len(data["valid"]) == 1
         assert len(data["errors"]) == 1
-        assert "Duplicate" in data["errors"][0]["message"] or "overlap" in data["errors"][0]["message"].lower()
+        assert (
+            "Duplicate" in data["errors"][0]["message"]
+            or "overlap" in data["errors"][0]["message"].lower()
+        )
 
     def test_preview_detects_conflict_with_existing(
         self,
@@ -231,7 +234,10 @@ class TestBulkAbsencePreview:
         # Should flag conflict with existing absence
         assert len(data["valid"]) == 0
         assert len(data["errors"]) == 1
-        assert "Conflict" in data["errors"][0]["message"] or "existing" in data["errors"][0]["message"].lower()
+        assert (
+            "Conflict" in data["errors"][0]["message"]
+            or "existing" in data["errors"][0]["message"].lower()
+        )
 
     def test_preview_empty_list_rejected(
         self,

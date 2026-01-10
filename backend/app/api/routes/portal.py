@@ -187,9 +187,7 @@ async def get_my_schedule(
 
     # Query actual FMIT weeks from schedule
     fmit_template = (
-        db.execute(
-            select(RotationTemplate).where(RotationTemplate.name == "FMIT")
-        )
+        db.execute(select(RotationTemplate).where(RotationTemplate.name == "FMIT"))
     ).scalar_one_or_none()
 
     fmit_weeks = []
@@ -453,9 +451,7 @@ async def create_swap_request(
     # Implement swap request creation
     # 1. Verify week is assigned to this faculty
     fmit_template = (
-        db.execute(
-            select(RotationTemplate).where(RotationTemplate.name == "FMIT")
-        )
+        db.execute(select(RotationTemplate).where(RotationTemplate.name == "FMIT"))
     ).scalar_one_or_none()
 
     if not fmit_template:
@@ -1025,9 +1021,7 @@ async def get_my_dashboard(
 
     # Get FMIT template
     fmit_template = (
-        db.execute(
-            select(RotationTemplate).where(RotationTemplate.name == "FMIT")
-        )
+        db.execute(select(RotationTemplate).where(RotationTemplate.name == "FMIT"))
     ).scalar_one_or_none()
 
     # Initialize counters
@@ -1318,9 +1312,7 @@ async def get_swap_marketplace(
     faculty_scheduled_weeks = set()
     if faculty:
         fmit_template = (
-            db.execute(
-                select(RotationTemplate).where(RotationTemplate.name == "FMIT")
-            )
+            db.execute(select(RotationTemplate).where(RotationTemplate.name == "FMIT"))
         ).scalar_one_or_none()
 
         if fmit_template:
@@ -1346,7 +1338,9 @@ async def get_swap_marketplace(
     for swap in open_swaps:
         # Check if compatible (viewer is not already scheduled that week)
         # If no faculty profile (admin/coordinator viewing), all are compatible
-        is_compatible = faculty is None or swap.source_week not in faculty_scheduled_weeks
+        is_compatible = (
+            faculty is None or swap.source_week not in faculty_scheduled_weeks
+        )
 
         # Calculate expiration (e.g., 30 days from posting)
         expires_at = swap.requested_at + timedelta(days=30)

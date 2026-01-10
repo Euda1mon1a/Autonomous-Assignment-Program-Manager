@@ -28,8 +28,14 @@ VALID_ACTIVITY_CATEGORIES = tuple(c.value for c in ActivityCategory)
 class ActivityBase(BaseModel):
     """Base activity schema with shared fields."""
 
-    name: str = Field(..., description="Human-readable name (e.g., 'FM Clinic', 'Lecture')")
-    code: str = Field(..., max_length=50, description="Stable identifier for solver (e.g., 'fm_clinic')")
+    name: str = Field(
+        ..., description="Human-readable name (e.g., 'FM Clinic', 'Lecture')"
+    )
+    code: str = Field(
+        ...,
+        max_length=50,
+        description="Stable identifier for solver (e.g., 'fm_clinic')",
+    )
     display_abbreviation: str | None = Field(
         None,
         max_length=20,
@@ -40,10 +46,16 @@ class ActivityBase(BaseModel):
         description="Category: clinical, educational, administrative, time_off",
     )
     font_color: str | None = Field(None, description="Tailwind color class for text")
-    background_color: str | None = Field(None, description="Tailwind color class for background")
-    requires_supervision: bool = Field(True, description="ACGME supervision requirement")
+    background_color: str | None = Field(
+        None, description="Tailwind color class for background"
+    )
+    requires_supervision: bool = Field(
+        True, description="ACGME supervision requirement"
+    )
     is_protected: bool = Field(False, description="True for locked slots (e.g., LEC)")
-    counts_toward_clinical_hours: bool = Field(True, description="ACGME clinical hour limit")
+    counts_toward_clinical_hours: bool = Field(
+        True, description="ACGME clinical hour limit"
+    )
     display_order: int = Field(0, description="Sort order for UI")
 
     @field_validator("name")
@@ -63,7 +75,9 @@ class ActivityBase(BaseModel):
         v = v.strip().lower()
         # Code should be lowercase alphanumeric with underscores
         if not all(c.isalnum() or c == "_" for c in v):
-            raise ValueError("code must be lowercase alphanumeric with underscores only")
+            raise ValueError(
+                "code must be lowercase alphanumeric with underscores only"
+            )
         return v
 
     @field_validator("activity_category")
@@ -71,7 +85,9 @@ class ActivityBase(BaseModel):
     def validate_category(cls, v: str) -> str:
         """Validate activity category."""
         if v not in VALID_ACTIVITY_CATEGORIES:
-            raise ValueError(f"activity_category must be one of: {VALID_ACTIVITY_CATEGORIES}")
+            raise ValueError(
+                f"activity_category must be one of: {VALID_ACTIVITY_CATEGORIES}"
+            )
         return v
 
 
@@ -103,7 +119,9 @@ class ActivityUpdate(BaseModel):
             return v
         v = v.strip().lower()
         if not all(c.isalnum() or c == "_" for c in v):
-            raise ValueError("code must be lowercase alphanumeric with underscores only")
+            raise ValueError(
+                "code must be lowercase alphanumeric with underscores only"
+            )
         return v
 
     @field_validator("activity_category")
@@ -113,7 +131,9 @@ class ActivityUpdate(BaseModel):
         if v is None:
             return v
         if v not in VALID_ACTIVITY_CATEGORIES:
-            raise ValueError(f"activity_category must be one of: {VALID_ACTIVITY_CATEGORIES}")
+            raise ValueError(
+                f"activity_category must be one of: {VALID_ACTIVITY_CATEGORIES}"
+            )
         return v
 
 
@@ -147,7 +167,9 @@ class ActivityRequirementBase(BaseModel):
     activity_id: UUID = Field(..., description="The activity this requirement is for")
     min_halfdays: int = Field(0, ge=0, le=28, description="Minimum half-days required")
     max_halfdays: int = Field(14, ge=0, le=28, description="Maximum half-days allowed")
-    target_halfdays: int | None = Field(None, ge=0, le=28, description="Preferred count")
+    target_halfdays: int | None = Field(
+        None, ge=0, le=28, description="Preferred count"
+    )
     applicable_weeks: list[int] | None = Field(
         None,
         description="Week numbers [1,2,3,4] or null for all weeks",
@@ -161,7 +183,9 @@ class ActivityRequirementBase(BaseModel):
         None,
         description="Days to avoid [0,6 for Sun,Sat]",
     )
-    priority: int = Field(50, ge=0, le=100, description="0-100, higher = more important")
+    priority: int = Field(
+        50, ge=0, le=100, description="0-100, higher = more important"
+    )
 
     @field_validator("applicable_weeks")
     @classmethod

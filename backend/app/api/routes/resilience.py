@@ -1056,9 +1056,7 @@ async def get_mtf_compliance(
 
     # Load data for analysis
     faculty = (
-        (db.execute(select(Person).where(Person.type == "faculty")))
-        .scalars()
-        .all()
+        (db.execute(select(Person).where(Person.type == "faculty"))).scalars().all()
     )
     blocks = (
         (

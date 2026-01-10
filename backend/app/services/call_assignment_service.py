@@ -955,8 +955,12 @@ class CallAssignmentService:
         all_person_ids = set(current_sunday.keys()) | set(current_weekday.keys())
         all_person_ids |= set(projected_sunday.keys()) | set(projected_weekday.keys())
 
-        projected_sunday_values = [projected_sunday.get(pid, 0) for pid in all_person_ids]
-        projected_weekday_values = [projected_weekday.get(pid, 0) for pid in all_person_ids]
+        projected_sunday_values = [
+            projected_sunday.get(pid, 0) for pid in all_person_ids
+        ]
+        projected_weekday_values = [
+            projected_weekday.get(pid, 0) for pid in all_person_ids
+        ]
         projected_total_values = [
             projected_sunday.get(pid, 0) + projected_weekday.get(pid, 0)
             for pid in all_person_ids
@@ -965,13 +969,16 @@ class CallAssignmentService:
         # Build projected distribution
         projected_distribution = []
         for pid in all_person_ids:
-            projected_distribution.append({
-                "person_id": str(pid),
-                "name": names.get(pid, "Unknown"),
-                "sunday_calls": projected_sunday.get(pid, 0),
-                "weekday_calls": projected_weekday.get(pid, 0),
-                "total_calls": projected_sunday.get(pid, 0) + projected_weekday.get(pid, 0),
-            })
+            projected_distribution.append(
+                {
+                    "person_id": str(pid),
+                    "name": names.get(pid, "Unknown"),
+                    "sunday_calls": projected_sunday.get(pid, 0),
+                    "weekday_calls": projected_weekday.get(pid, 0),
+                    "total_calls": projected_sunday.get(pid, 0)
+                    + projected_weekday.get(pid, 0),
+                }
+            )
         projected_distribution.sort(key=lambda x: x["total_calls"], reverse=True)
 
         projected_equity = CallEquityReport(
@@ -1006,7 +1013,9 @@ class CallAssignmentService:
         faculty_details = []
         for pid in all_person_ids:
             current_total = current_sunday.get(pid, 0) + current_weekday.get(pid, 0)
-            projected_total = projected_sunday.get(pid, 0) + projected_weekday.get(pid, 0)
+            projected_total = projected_sunday.get(pid, 0) + projected_weekday.get(
+                pid, 0
+            )
 
             faculty_details.append(
                 FacultyEquityDetail(

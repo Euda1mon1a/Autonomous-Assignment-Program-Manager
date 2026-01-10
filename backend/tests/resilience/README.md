@@ -316,8 +316,8 @@ pytest tests/resilience/test_spc_monitoring.py \
 The test suite cannot run with pytest currently due to a pre-existing SQLAlchemy relationship issue in `conftest.py`:
 
 ```
-AmbiguousForeignKeysError: Could not determine join condition between parent/child 
-tables on relationship Person.absences - there are multiple foreign key paths 
+AmbiguousForeignKeysError: Could not determine join condition between parent/child
+tables on relationship Person.absences - there are multiple foreign key paths
 linking the tables.
 ```
 

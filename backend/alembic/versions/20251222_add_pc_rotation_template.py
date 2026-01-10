@@ -9,6 +9,7 @@ PC (Post-Call) is a mandatory full-day recovery period after Night Float.
 - is_block_half_rotation = false (it's a single day, not a block-half)
 - activity_type = 'recovery'
 """
+
 from typing import Sequence, Union
 import uuid
 
@@ -17,10 +18,10 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '20251222_add_pc_template'
-down_revision: Union[str, None] = '9d38e1388001'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision: str = "20251222_add_pc_template"
+down_revision: str | None = "9d38e1388001"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -49,6 +50,4 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     # Remove PC rotation template
-    op.execute(
-        sa.text("DELETE FROM rotation_templates WHERE abbreviation = 'PC'")
-    )
+    op.execute(sa.text("DELETE FROM rotation_templates WHERE abbreviation = 'PC'"))

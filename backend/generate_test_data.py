@@ -33,15 +33,45 @@ from app.models.rotation import RotationTemplate
 
 
 FIRST_NAMES = [
-    "John", "Jane", "Michael", "Emily", "David", "Sarah",
-    "Robert", "Jennifer", "William", "Jessica", "James", "Ashley",
-    "Christopher", "Amanda", "Daniel", "Melissa", "Matthew", "Stephanie",
+    "John",
+    "Jane",
+    "Michael",
+    "Emily",
+    "David",
+    "Sarah",
+    "Robert",
+    "Jennifer",
+    "William",
+    "Jessica",
+    "James",
+    "Ashley",
+    "Christopher",
+    "Amanda",
+    "Daniel",
+    "Melissa",
+    "Matthew",
+    "Stephanie",
 ]
 
 LAST_NAMES = [
-    "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia",
-    "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez",
-    "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson",
+    "Smith",
+    "Johnson",
+    "Williams",
+    "Brown",
+    "Jones",
+    "Garcia",
+    "Miller",
+    "Davis",
+    "Rodriguez",
+    "Martinez",
+    "Hernandez",
+    "Lopez",
+    "Wilson",
+    "Anderson",
+    "Thomas",
+    "Taylor",
+    "Moore",
+    "Jackson",
 ]
 
 
@@ -49,7 +79,7 @@ def generate_people(
     db,
     num_residents: int = 18,
     num_faculty: int = 10,
-) -> tuple[List[Person], List[Person]]:
+) -> tuple[list[Person], list[Person]]:
     """Generate test people."""
     print(f"\nGenerating {num_residents} residents and {num_faculty} faculty...")
 
@@ -63,7 +93,7 @@ def generate_people(
             last_name = random.choice(LAST_NAMES)
 
             person = Person(
-                email=f"pgy{pgy}_{i+1:02d}@residency.test",
+                email=f"pgy{pgy}_{i + 1:02d}@residency.test",
                 first_name=first_name,
                 last_name=last_name,
                 role="RESIDENT",
@@ -86,7 +116,7 @@ def generate_people(
         last_name = random.choice(LAST_NAMES)
 
         person = Person(
-            email=f"faculty_{role.value}_{i+1:02d}@residency.test",
+            email=f"faculty_{role.value}_{i + 1:02d}@residency.test",
             first_name=first_name,
             last_name=last_name,
             role="FACULTY",
@@ -104,17 +134,33 @@ def generate_people(
     return residents, faculty
 
 
-def generate_rotations(db) -> List[RotationTemplate]:
+def generate_rotations(db) -> list[RotationTemplate]:
     """Generate rotation templates."""
     print("\nGenerating rotation templates...")
 
     rotations_data = [
         {"name": "Clinic", "duration_blocks": 1, "description": "Outpatient clinic"},
         {"name": "Inpatient", "duration_blocks": 1, "description": "Inpatient ward"},
-        {"name": "Procedures", "duration_blocks": 1, "description": "Procedures clinic"},
-        {"name": "Conference", "duration_blocks": 1, "description": "Educational conference"},
-        {"name": "Night Float", "duration_blocks": 4, "description": "Night shift coverage"},
-        {"name": "FMIT", "duration_blocks": 1, "description": "Faculty member in training"},
+        {
+            "name": "Procedures",
+            "duration_blocks": 1,
+            "description": "Procedures clinic",
+        },
+        {
+            "name": "Conference",
+            "duration_blocks": 1,
+            "description": "Educational conference",
+        },
+        {
+            "name": "Night Float",
+            "duration_blocks": 4,
+            "description": "Night shift coverage",
+        },
+        {
+            "name": "FMIT",
+            "duration_blocks": 1,
+            "description": "Faculty member in training",
+        },
         {"name": "Call", "duration_blocks": 1, "description": "On-call duty"},
         {"name": "Vacation", "duration_blocks": 4, "description": "Scheduled time off"},
     ]
@@ -133,11 +179,13 @@ def generate_rotations(db) -> List[RotationTemplate]:
     return rotations
 
 
-def generate_blocks(db, academic_year: int) -> List[Block]:
+def generate_blocks(db, academic_year: int) -> list[Block]:
     """Generate blocks for academic year."""
     from app.models.block import Session
 
-    print(f"\nGenerating blocks for academic year {academic_year}-{academic_year + 1}...")
+    print(
+        f"\nGenerating blocks for academic year {academic_year}-{academic_year + 1}..."
+    )
 
     start_date = date(academic_year, 7, 1)
     end_date = date(academic_year + 1, 6, 30)
@@ -173,9 +221,7 @@ def generate_blocks(db, academic_year: int) -> List[Block]:
 
 def main() -> int:
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Test data generation script"
-    )
+    parser = argparse.ArgumentParser(description="Test data generation script")
     parser.add_argument(
         "--preset",
         choices=["small", "medium", "large"],
@@ -227,7 +273,7 @@ def main() -> int:
         print("=" * 60)
         print("Test Data Generation")
         print("=" * 60)
-        print(f"\nConfiguration:")
+        print("\nConfiguration:")
         print(f"  Residents: {args.residents}")
         print(f"  Faculty: {args.faculty}")
         print(f"  Academic Year: {args.academic_year}-{args.academic_year + 1}")
@@ -270,6 +316,7 @@ def main() -> int:
     except Exception as e:
         print(f"\nError: {e}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         return 1
 

@@ -20,6 +20,7 @@ Indexes:
 - GIN index for JSON metadata queries
 - B-tree index on doc_type for filtering
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -29,73 +30,73 @@ from pgvector.sqlalchemy import Vector
 
 
 # revision identifiers, used by Alembic.
-revision: str = '20251229_rag_documents'
-down_revision: Union[str, None] = 'e46cd3bee350'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision: str = "20251229_rag_documents"
+down_revision: str | None = "e46cd3bee350"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
     """Create rag_documents table for RAG system."""
     # Enable pgvector extension (idempotent - safe to run if already enabled)
-    op.execute('CREATE EXTENSION IF NOT EXISTS vector')
+    op.execute("CREATE EXTENSION IF NOT EXISTS vector")
 
     # Create rag_documents table
     op.create_table(
-        'rag_documents',
+        "rag_documents",
         sa.Column(
-            'id',
+            "id",
             PGUUID(as_uuid=True),
             primary_key=True,
-            server_default=sa.text('gen_random_uuid()'),
-            comment='Unique document chunk identifier',
+            server_default=sa.text("gen_random_uuid()"),
+            comment="Unique document chunk identifier",
         ),
         sa.Column(
-            'content',
+            "content",
             sa.Text(),
             nullable=False,
-            comment='Text content of the document chunk',
+            comment="Text content of the document chunk",
         ),
         sa.Column(
-            'embedding',
+            "embedding",
             Vector(384),
             nullable=False,
-            comment='384-dimensional embedding from sentence-transformers (all-MiniLM-L6-v2)',
+            comment="384-dimensional embedding from sentence-transformers (all-MiniLM-L6-v2)",
         ),
         sa.Column(
-            'doc_type',
+            "doc_type",
             sa.String(100),
             nullable=False,
-            comment='Document type: acgme_rules, scheduling_policy, user_guide, etc.',
+            comment="Document type: acgme_rules, scheduling_policy, user_guide, etc.",
         ),
         sa.Column(
-            'metadata_',
+            "metadata_",
             JSONB,
             nullable=False,
-            server_default='{}',
-            comment='Additional metadata: source_file, page_number, section, author, etc.',
+            server_default="{}",
+            comment="Additional metadata: source_file, page_number, section, author, etc.",
         ),
         sa.Column(
-            'created_at',
+            "created_at",
             sa.DateTime(timezone=True),
             nullable=False,
             server_default=sa.func.now(),
-            comment='Timestamp when chunk was created',
+            comment="Timestamp when chunk was created",
         ),
         sa.Column(
-            'updated_at',
+            "updated_at",
             sa.DateTime(timezone=True),
             nullable=False,
             server_default=sa.func.now(),
-            comment='Timestamp of last update',
+            comment="Timestamp of last update",
         ),
     )
 
     # Create B-tree index on doc_type for filtering
     op.create_index(
-        'ix_rag_documents_doc_type',
-        'rag_documents',
-        ['doc_type'],
+        "ix_rag_documents_doc_type",
+        "rag_documents",
+        ["doc_type"],
     )
 
     # Create GIN index for metadata JSON queries
@@ -161,14 +162,16 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Drop rag_documents table and related objects."""
     # Drop trigger first
-    op.execute('DROP TRIGGER IF EXISTS rag_documents_updated_at_trigger ON rag_documents')
-    op.execute('DROP FUNCTION IF EXISTS update_rag_documents_updated_at()')
+    op.execute(
+        "DROP TRIGGER IF EXISTS rag_documents_updated_at_trigger ON rag_documents"
+    )
+    op.execute("DROP FUNCTION IF EXISTS update_rag_documents_updated_at()")
 
     # Drop indexes (some may be dropped with table, but be explicit)
-    op.execute('DROP INDEX IF EXISTS ix_rag_documents_embedding_ivfflat')
-    op.execute('DROP INDEX IF EXISTS ix_rag_documents_embedding_hnsw')
-    op.execute('DROP INDEX IF EXISTS ix_rag_documents_metadata')
-    op.drop_index('ix_rag_documents_doc_type', 'rag_documents')
+    op.execute("DROP INDEX IF EXISTS ix_rag_documents_embedding_ivfflat")
+    op.execute("DROP INDEX IF EXISTS ix_rag_documents_embedding_hnsw")
+    op.execute("DROP INDEX IF EXISTS ix_rag_documents_metadata")
+    op.drop_index("ix_rag_documents_doc_type", "rag_documents")
 
     # Drop table
-    op.drop_table('rag_documents')
+    op.drop_table("rag_documents")

@@ -19,6 +19,7 @@ Or with full names:
     10,HILO,"Smith, Jane"
     10,FMC,"Jones, John"
 """
+
 import argparse
 import csv
 import sys
@@ -43,7 +44,9 @@ from app.models.rotation_template import RotationTemplate
 class BlockAssignmentImporter:
     """Import block assignments from CSV."""
 
-    def __init__(self, session: AsyncSession, academic_year: int, dry_run: bool = False):
+    def __init__(
+        self, session: AsyncSession, academic_year: int, dry_run: bool = False
+    ):
         self.session = session
         self.academic_year = academic_year
         self.dry_run = dry_run
@@ -145,20 +148,28 @@ class BlockAssignmentImporter:
             "errors": [],
         }
 
-        with open(csv_path, "r") as f:
+        with open(csv_path) as f:
             reader = csv.DictReader(f)
 
             # Normalize header names
             if reader.fieldnames:
                 reader.fieldnames = [h.lower().strip() for h in reader.fieldnames]
 
-            for row_num, row in enumerate(reader, start=2):  # Start at 2 (header is row 1)
+            for row_num, row in enumerate(
+                reader, start=2
+            ):  # Start at 2 (header is row 1)
                 results["total_rows"] += 1
 
                 # Extract fields (handle various column name variations)
-                block_number = int(row.get("block_number") or row.get("block") or row.get("blk"))
-                rotation_abbrev = row.get("rotation_abbrev") or row.get("rotation") or row.get("rot")
-                resident_name = row.get("resident_name") or row.get("resident") or row.get("name")
+                block_number = int(
+                    row.get("block_number") or row.get("block") or row.get("blk")
+                )
+                rotation_abbrev = (
+                    row.get("rotation_abbrev") or row.get("rotation") or row.get("rot")
+                )
+                resident_name = (
+                    row.get("resident_name") or row.get("resident") or row.get("name")
+                )
 
                 if not all([block_number, rotation_abbrev, resident_name]):
                     results["errors"].append(f"Row {row_num}: Missing required field")
@@ -166,7 +177,9 @@ class BlockAssignmentImporter:
 
                 # Validate block number
                 if not (0 <= block_number <= 13):
-                    results["errors"].append(f"Row {row_num}: Invalid block_number {block_number}")
+                    results["errors"].append(
+                        f"Row {row_num}: Invalid block_number {block_number}"
+                    )
                     continue
 
                 # Match rotation
@@ -206,7 +219,9 @@ class BlockAssignmentImporter:
                     self.session.add(assignment)
 
                 results["imported"] += 1
-                print(f"  Import: Block {block_number}, {matched_name} -> {rotation_abbrev}")
+                print(
+                    f"  Import: Block {block_number}, {matched_name} -> {rotation_abbrev}"
+                )
 
         if not self.dry_run:
             await self.session.commit()
@@ -217,8 +232,12 @@ class BlockAssignmentImporter:
 async def main():
     parser = argparse.ArgumentParser(description="Import block assignments from CSV")
     parser.add_argument("--csv", required=True, help="Path to CSV file")
-    parser.add_argument("--year", type=int, required=True, help="Academic year (e.g., 2026)")
-    parser.add_argument("--dry-run", action="store_true", help="Validate without inserting")
+    parser.add_argument(
+        "--year", type=int, required=True, help="Academic year (e.g., 2026)"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Validate without inserting"
+    )
     args = parser.parse_args()
 
     # Check file exists

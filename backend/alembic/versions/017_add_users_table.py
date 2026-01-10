@@ -17,6 +17,7 @@ Supports 8 user roles:
 - msa: Medical Support Assistant
 - resident: Resident physician
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -24,47 +25,51 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '017'
-down_revision: Union[str, None] = '016'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision: str = "017"
+down_revision: str | None = "016"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
     """Create users table."""
 
     op.create_table(
-        'users',
-        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column('username', sa.String(100), unique=True, nullable=False),
-        sa.Column('email', sa.String(255), unique=True, nullable=False),
-        sa.Column('hashed_password', sa.String(255), nullable=False),
-        sa.Column('role', sa.String(50), nullable=False, server_default='coordinator'),
-        sa.Column('is_active', sa.Boolean(), nullable=False, server_default='true'),
-
+        "users",
+        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
+        sa.Column("username", sa.String(100), unique=True, nullable=False),
+        sa.Column("email", sa.String(255), unique=True, nullable=False),
+        sa.Column("hashed_password", sa.String(255), nullable=False),
+        sa.Column("role", sa.String(50), nullable=False, server_default="coordinator"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
         # Timestamps
-        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
-        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
-        sa.Column('last_login', sa.DateTime(), nullable=True),
-
+        sa.Column(
+            "created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column("last_login", sa.DateTime(), nullable=True),
         # Check constraint for valid roles
         sa.CheckConstraint(
             "role IN ('admin', 'coordinator', 'faculty', 'clinical_staff', 'rn', 'lpn', 'msa', 'resident')",
-            name='check_user_role'
+            name="check_user_role",
         ),
     )
 
     # Create indexes
-    op.create_index('ix_users_username', 'users', ['username'])
-    op.create_index('ix_users_email', 'users', ['email'])
+    op.create_index("ix_users_username", "users", ["username"])
+    op.create_index("ix_users_email", "users", ["email"])
 
     # Add FK from email_templates.created_by_id to users.id
     # (column was created in migration 016 without FK)
     op.create_foreign_key(
-        'fk_email_templates_created_by_id',
-        'email_templates', 'users',
-        ['created_by_id'], ['id'],
-        ondelete='SET NULL'
+        "fk_email_templates_created_by_id",
+        "email_templates",
+        "users",
+        ["created_by_id"],
+        ["id"],
+        ondelete="SET NULL",
     )
 
 
@@ -72,11 +77,13 @@ def downgrade() -> None:
     """Drop users table and FK from email_templates."""
 
     # Drop FK from email_templates first (before dropping users table)
-    op.drop_constraint('fk_email_templates_created_by_id', 'email_templates', type_='foreignkey')
+    op.drop_constraint(
+        "fk_email_templates_created_by_id", "email_templates", type_="foreignkey"
+    )
 
     # Drop indexes
-    op.drop_index('ix_users_email', table_name='users')
-    op.drop_index('ix_users_username', table_name='users')
+    op.drop_index("ix_users_email", table_name="users")
+    op.drop_index("ix_users_username", table_name="users")
 
     # Drop table
-    op.drop_table('users')
+    op.drop_table("users")

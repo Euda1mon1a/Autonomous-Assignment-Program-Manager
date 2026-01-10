@@ -189,7 +189,9 @@ class AcademicBlockService:
             List of AcademicBlock objects (blocks 0-13)
         """
         # Extract academic year from start_date (July 1 of that year)
-        academic_year = start_date.year if start_date.month >= 7 else start_date.year - 1
+        academic_year = (
+            start_date.year if start_date.month >= 7 else start_date.year - 1
+        )
 
         # Use the centralized utility for Thursday-Wednesday aligned blocks
         block_dates_list = get_all_block_dates(academic_year)

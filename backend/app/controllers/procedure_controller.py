@@ -36,9 +36,7 @@ class ProcedureController:
             complexity_level=complexity_level,
         )
         return ProcedureListResponse(
-            items=[
-                ProcedureResponse.model_validate(item) for item in result["items"]
-            ],
+            items=[ProcedureResponse.model_validate(item) for item in result["items"]],
             total=result["total"],
         )
 

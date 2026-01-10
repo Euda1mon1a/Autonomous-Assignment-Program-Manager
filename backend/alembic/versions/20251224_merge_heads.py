@@ -8,6 +8,7 @@ This migration merges two parallel migration branches:
 - 20251222_add_pc_template (PC rotation template)
 - 20251222_provenance (schedule_run_id for assignments)
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -15,10 +16,10 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '20251224_merge'
-down_revision: Union[str, tuple, None] = ('20251222_add_pc_template', '20251222_provenance')
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision: str = "20251224_merge"
+down_revision: str | tuple | None = ("20251222_add_pc_template", "20251222_provenance")
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:

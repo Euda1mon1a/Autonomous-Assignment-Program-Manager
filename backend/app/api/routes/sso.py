@@ -129,9 +129,7 @@ async def get_or_create_user(
         username = email.split("@")[0]
 
     # Check if user exists by email
-    user = (
-        db.execute(select(User).where(User.email == email))
-    ).scalar_one_or_none()
+    user = (db.execute(select(User).where(User.email == email))).scalar_one_or_none()
 
     if user:
         # Update last login

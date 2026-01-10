@@ -12,16 +12,17 @@ The schedule_runs_version table was missing these columns, causing errors like:
 
 This migration adds the required _mod columns for all tracked properties.
 """
+
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision: str = '20260101_mod_columns'
-down_revision: Union[str, None] = '8e3f0e0b83c3'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision: str = "20260101_mod_columns"
+down_revision: str | None = "8e3f0e0b83c3"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -30,22 +31,21 @@ def upgrade() -> None:
     # List of columns in schedule_runs that need _mod tracking columns
     # These correspond to the columns in the schedule_runs table (minus 'id' which is the PK)
     mod_columns = [
-        'start_date_mod',
-        'end_date_mod',
-        'algorithm_mod',
-        'status_mod',
-        'total_blocks_assigned_mod',
-        'acgme_violations_mod',
-        'acgme_override_count_mod',
-        'runtime_seconds_mod',
-        'config_json_mod',
-        'created_at_mod',
+        "start_date_mod",
+        "end_date_mod",
+        "algorithm_mod",
+        "status_mod",
+        "total_blocks_assigned_mod",
+        "acgme_violations_mod",
+        "acgme_override_count_mod",
+        "runtime_seconds_mod",
+        "config_json_mod",
+        "created_at_mod",
     ]
 
     for col_name in mod_columns:
         op.add_column(
-            'schedule_runs_version',
-            sa.Column(col_name, sa.Boolean(), nullable=True)
+            "schedule_runs_version", sa.Column(col_name, sa.Boolean(), nullable=True)
         )
 
 
@@ -53,17 +53,17 @@ def downgrade() -> None:
     """Remove _mod columns from schedule_runs_version."""
 
     mod_columns = [
-        'start_date_mod',
-        'end_date_mod',
-        'algorithm_mod',
-        'status_mod',
-        'total_blocks_assigned_mod',
-        'acgme_violations_mod',
-        'acgme_override_count_mod',
-        'runtime_seconds_mod',
-        'config_json_mod',
-        'created_at_mod',
+        "start_date_mod",
+        "end_date_mod",
+        "algorithm_mod",
+        "status_mod",
+        "total_blocks_assigned_mod",
+        "acgme_violations_mod",
+        "acgme_override_count_mod",
+        "runtime_seconds_mod",
+        "config_json_mod",
+        "created_at_mod",
     ]
 
     for col_name in mod_columns:
-        op.drop_column('schedule_runs_version', col_name)
+        op.drop_column("schedule_runs_version", col_name)

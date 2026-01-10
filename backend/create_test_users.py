@@ -12,6 +12,7 @@ from app.models.user import User
 from app.core.security import get_password_hash
 from app.core.config import get_settings
 
+
 def create_test_users():
     settings = get_settings()
     engine = create_engine(settings.DATABASE_URL)
@@ -34,7 +35,7 @@ def create_test_users():
                 role="resident",
                 is_active=True,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             )
             session.add(new_user)
 
@@ -56,12 +57,13 @@ def create_test_users():
                 role="faculty",
                 is_active=True,
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             )
             session.add(new_user)
 
         session.commit()
         print("Created test users.")
+
 
 if __name__ == "__main__":
     create_test_users()
