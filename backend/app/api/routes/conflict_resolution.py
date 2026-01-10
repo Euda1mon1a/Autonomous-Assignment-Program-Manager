@@ -33,14 +33,27 @@ router = APIRouter()
 
 @router.get("/", response_model=ConflictListResponse)
 async def list_conflicts(
-    types: str | None = Query(None, description="Comma-separated conflict types to filter"),
-    severities: str | None = Query(None, description="Comma-separated severities to filter"),
-    statuses: str | None = Query(None, description="Comma-separated statuses to filter"),
-    person_ids: str | None = Query(None, description="Comma-separated person UUIDs to filter"),
-    start_date: date | None = Query(None, description="Filter conflicts from this date"),
+    types: str | None = Query(
+        None, description="Comma-separated conflict types to filter"
+    ),
+    severities: str | None = Query(
+        None, description="Comma-separated severities to filter"
+    ),
+    statuses: str | None = Query(
+        None, description="Comma-separated statuses to filter"
+    ),
+    person_ids: str | None = Query(
+        None, description="Comma-separated person UUIDs to filter"
+    ),
+    start_date: date | None = Query(
+        None, description="Filter conflicts from this date"
+    ),
     end_date: date | None = Query(None, description="Filter conflicts up to this date"),
     search: str | None = Query(None, description="Search in conflict description"),
-    sort_by: str = Query("detected_at", description="Sort field: severity, date, type, status, detected_at"),
+    sort_by: str = Query(
+        "detected_at",
+        description="Sort field: severity, date, type, status, detected_at",
+    ),
     sort_dir: str = Query("desc", description="Sort direction: asc, desc"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
@@ -157,12 +170,20 @@ async def list_conflicts(
         items.append(
             ConflictResponse(
                 id=conflict.id,
-                type=conflict.conflict_type.value if hasattr(conflict.conflict_type, 'value') else str(conflict.conflict_type),
-                severity=conflict.severity.value if hasattr(conflict.severity, 'value') else str(conflict.severity),
-                status=conflict.status.value if hasattr(conflict.status, 'value') else str(conflict.status),
+                type=conflict.conflict_type.value
+                if hasattr(conflict.conflict_type, "value")
+                else str(conflict.conflict_type),
+                severity=conflict.severity.value
+                if hasattr(conflict.severity, "value")
+                else str(conflict.severity),
+                status=conflict.status.value
+                if hasattr(conflict.status, "value")
+                else str(conflict.status),
                 title=_get_conflict_title(conflict),
                 description=conflict.description or "",
-                affected_person_ids=[conflict.faculty_id] if conflict.faculty_id else [],
+                affected_person_ids=[conflict.faculty_id]
+                if conflict.faculty_id
+                else [],
                 affected_assignment_ids=[],
                 affected_block_ids=[],
                 conflict_date=conflict.fmit_week,
@@ -171,7 +192,9 @@ async def list_conflicts(
                 detected_by="system",
                 rule_id=None,
                 resolved_at=conflict.resolved_at,
-                resolved_by=str(conflict.resolved_by_id) if conflict.resolved_by_id else None,
+                resolved_by=str(conflict.resolved_by_id)
+                if conflict.resolved_by_id
+                else None,
                 resolution_method=None,
                 resolution_notes=conflict.resolution_notes,
                 details={
@@ -195,7 +218,11 @@ async def list_conflicts(
 
 def _get_conflict_title(conflict: ConflictAlert) -> str:
     """Generate a human-readable title for a conflict."""
-    conflict_type = conflict.conflict_type.value if hasattr(conflict.conflict_type, 'value') else str(conflict.conflict_type)
+    conflict_type = (
+        conflict.conflict_type.value
+        if hasattr(conflict.conflict_type, "value")
+        else str(conflict.conflict_type)
+    )
 
     type_titles = {
         "leave_fmit_overlap": "Leave/FMIT Overlap",

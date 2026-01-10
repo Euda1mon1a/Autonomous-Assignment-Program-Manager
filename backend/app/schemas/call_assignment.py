@@ -101,7 +101,9 @@ class CallAssignmentResponse(BaseModel):
     """Schema for call assignment response."""
 
     id: UUID
-    call_date: date = Field(..., alias="date", description="Date of the call assignment")
+    call_date: date = Field(
+        ..., alias="date", description="Date of the call assignment"
+    )
     person_id: UUID
     call_type: str
     is_weekend: bool
@@ -256,9 +258,7 @@ class PCATGenerationRequest(BaseModel):
 class PCATAssignmentResult(BaseModel):
     """Schema for a single PCAT/DO assignment result."""
 
-    call_assignment_id: UUID = Field(
-        ..., description="Original call assignment ID"
-    )
+    call_assignment_id: UUID = Field(..., description="Original call assignment ID")
     call_date: date = Field(..., description="Date of the call")
     person_id: UUID = Field(..., description="Person ID")
     person_name: str | None = Field(None, description="Person name")
@@ -271,9 +271,7 @@ class PCATAssignmentResult(BaseModel):
     pcat_assignment_id: UUID | None = Field(
         None, description="Created PCAT assignment ID"
     )
-    do_assignment_id: UUID | None = Field(
-        None, description="Created DO assignment ID"
-    )
+    do_assignment_id: UUID | None = Field(None, description="Created DO assignment ID")
     error: str | None = Field(None, description="Error message if failed")
 
 
@@ -323,12 +321,8 @@ class FacultyEquityDetail(BaseModel):
 
     person_id: UUID = Field(..., description="Faculty person ID")
     name: str = Field(..., description="Faculty name")
-    current_sunday_calls: int = Field(
-        ..., description="Current Sunday call count"
-    )
-    current_weekday_calls: int = Field(
-        ..., description="Current weekday call count"
-    )
+    current_sunday_calls: int = Field(..., description="Current Sunday call count")
+    current_weekday_calls: int = Field(..., description="Current weekday call count")
     current_total_calls: int = Field(..., description="Current total call count")
     projected_sunday_calls: int = Field(
         ..., description="Projected Sunday calls after changes"

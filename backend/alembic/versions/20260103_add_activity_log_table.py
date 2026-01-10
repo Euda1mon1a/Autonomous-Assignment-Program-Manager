@@ -53,15 +53,32 @@ def upgrade() -> None:
     """Create the activity_log table for admin audit trail."""
     op.create_table(
         "activity_log",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "id",
+            UUID(as_uuid=True),
+            primary_key=True,
+            server_default=sa.text("gen_random_uuid()"),
+        ),
+        sa.Column(
+            "user_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("action_type", sa.String(50), nullable=False),
         sa.Column("target_entity", sa.String(100), nullable=True),
         sa.Column("target_id", sa.String(100), nullable=True),
-        sa.Column("details", JSONB, nullable=True, server_default=sa.text("'{}'::jsonb")),
+        sa.Column(
+            "details", JSONB, nullable=True, server_default=sa.text("'{}'::jsonb")
+        ),
         sa.Column("ip_address", sa.String(45), nullable=True),  # IPv6 max length
         sa.Column("user_agent", sa.String(500), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("NOW()")),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("NOW()"),
+        ),
     )
 
     # Index for querying by user
@@ -71,10 +88,14 @@ def upgrade() -> None:
     op.create_index("ix_activity_log_action_type", "activity_log", ["action_type"])
 
     # Composite index for entity lookups
-    op.create_index("ix_activity_log_target", "activity_log", ["target_entity", "target_id"])
+    op.create_index(
+        "ix_activity_log_target", "activity_log", ["target_entity", "target_id"]
+    )
 
     # Index for time-range queries (descending for recent-first)
-    op.create_index("ix_activity_log_created_at", "activity_log", [sa.text("created_at DESC")])
+    op.create_index(
+        "ix_activity_log_created_at", "activity_log", [sa.text("created_at DESC")]
+    )
 
     # Partial index for failed actions (useful for security monitoring)
     op.execute("""

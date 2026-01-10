@@ -322,9 +322,7 @@ class TestImpersonationService:
         )
 
         # End impersonation
-        impersonation_service.end_impersonation(
-            token=start_result.impersonation_token
-        )
+        impersonation_service.end_impersonation(token=start_result.impersonation_token)
 
         # Get status
         status = impersonation_service.get_impersonation_status(
@@ -409,9 +407,7 @@ class TestImpersonationService:
         )
 
         # End impersonation (which blacklists the token)
-        impersonation_service.end_impersonation(
-            token=start_result.impersonation_token
-        )
+        impersonation_service.end_impersonation(token=start_result.impersonation_token)
 
         # Verify blacklisted token
         result = impersonation_service.verify_impersonation_token(
@@ -464,7 +460,8 @@ class TestImpersonationService:
         log_entry = (
             db.query(ActivityLog)
             .filter(
-                ActivityLog.action_type == ActivityActionType.IMPERSONATION_STARTED.value
+                ActivityLog.action_type
+                == ActivityActionType.IMPERSONATION_STARTED.value
             )
             .filter(ActivityLog.user_id == admin_user_for_impersonation.id)
             .order_by(ActivityLog.created_at.desc())

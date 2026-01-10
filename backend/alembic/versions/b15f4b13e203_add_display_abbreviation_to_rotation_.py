@@ -5,6 +5,7 @@ Revises: 20251231_rotation_colors
 Create Date: 2026-01-02 04:25:17.328758
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -12,17 +13,17 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'b15f4b13e203'
-down_revision: Union[str, None] = '20251231_rotation_colors'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision: str = "b15f4b13e203"
+down_revision: str | None = "20251231_rotation_colors"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
     # Add display_abbreviation column
     op.add_column(
-        'rotation_templates',
-        sa.Column('display_abbreviation', sa.String(20), nullable=True)
+        "rotation_templates",
+        sa.Column("display_abbreviation", sa.String(20), nullable=True),
     )
 
     # Populate display_abbreviation based on rotation_abbreviations_revised.csv mappings
@@ -133,4 +134,4 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_column('rotation_templates', 'display_abbreviation')
+    op.drop_column("rotation_templates", "display_abbreviation")

@@ -21,16 +21,17 @@ IMPORTANT: This migration MUST run before any migration with a revision ID
 exceeding 32 characters. It's been inserted in the chain before
 20260105_add_resident_weekly_requirements (which has 41 chars).
 """
+
 from typing import Sequence, Union
 
 from alembic import op
 
 
 # revision identifiers, used by Alembic.
-revision: str = '20260105_ext_ver_col'
-down_revision: Union[str, None] = '20260104_add_archive_fields'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision: str = "20260105_ext_ver_col"
+down_revision: str | None = "20260104_add_archive_fields"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -44,10 +45,7 @@ def upgrade() -> None:
     # 1. Extending VARCHAR is always allowed in PostgreSQL
     # 2. No data is modified, only the constraint
     # 3. Operation is atomic
-    op.execute(
-        "ALTER TABLE alembic_version "
-        "ALTER COLUMN version_num TYPE VARCHAR(128)"
-    )
+    op.execute("ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(128)")
 
 
 def downgrade() -> None:

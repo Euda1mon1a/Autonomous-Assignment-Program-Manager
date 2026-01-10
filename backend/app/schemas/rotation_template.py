@@ -31,7 +31,9 @@ class RotationTemplateBase(BaseModel):
     """Base rotation template schema."""
 
     name: str
-    activity_type: str  # 'clinic', 'inpatient', 'procedure', 'conference', 'lecture', etc.
+    activity_type: (
+        str  # 'clinic', 'inpatient', 'procedure', 'conference', 'lecture', etc.
+    )
     template_category: str = Field(
         default="rotation",
         description="Category for UI grouping: rotation, time_off, absence, educational",
@@ -109,7 +111,9 @@ class RotationTemplateBase(BaseModel):
     def validate_template_category(cls, v: str) -> str:
         """Validate template_category is one of the valid categories."""
         if v not in VALID_TEMPLATE_CATEGORIES:
-            raise ValueError(f"template_category must be one of {VALID_TEMPLATE_CATEGORIES}")
+            raise ValueError(
+                f"template_category must be one of {VALID_TEMPLATE_CATEGORIES}"
+            )
         return v
 
 
@@ -175,7 +179,9 @@ class RotationTemplateUpdate(BaseModel):
     def validate_template_category(cls, v: str | None) -> str | None:
         """Validate template_category is one of the valid categories."""
         if v is not None and v not in VALID_TEMPLATE_CATEGORIES:
-            raise ValueError(f"template_category must be one of {VALID_TEMPLATE_CATEGORIES}")
+            raise ValueError(
+                f"template_category must be one of {VALID_TEMPLATE_CATEGORIES}"
+            )
         return v
 
     @field_validator("max_residents")

@@ -20,6 +20,7 @@ New absence types:
 - convalescent: Post-surgery/injury recovery (auto-blocking)
 - maternity_paternity: Parental leave (auto-blocking)
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -27,10 +28,10 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '015'
-down_revision: Union[str, None] = '014'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision: str = "015"
+down_revision: str | None = "014"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -38,37 +39,44 @@ def upgrade() -> None:
 
     # 1. Add return_date_tentative to absences
     op.add_column(
-        'absences',
-        sa.Column('return_date_tentative', sa.Boolean(), server_default='false', nullable=False)
+        "absences",
+        sa.Column(
+            "return_date_tentative",
+            sa.Boolean(),
+            server_default="false",
+            nullable=False,
+        ),
     )
 
     # 2. Add created_by_id to absences (FK to people - tracks admin who entered it)
     op.add_column(
-        'absences',
-        sa.Column('created_by_id', postgresql.UUID(as_uuid=True), nullable=True)
+        "absences",
+        sa.Column("created_by_id", postgresql.UUID(as_uuid=True), nullable=True),
     )
     op.create_foreign_key(
-        'fk_absence_created_by',
-        'absences',
-        'people',
-        ['created_by_id'],
-        ['id'],
-        ondelete='SET NULL'
+        "fk_absence_created_by",
+        "absences",
+        "people",
+        ["created_by_id"],
+        ["id"],
+        ondelete="SET NULL",
     )
 
     # 3. Add leave_eligible to rotation_templates
     op.add_column(
-        'rotation_templates',
-        sa.Column('leave_eligible', sa.Boolean(), server_default='true', nullable=False)
+        "rotation_templates",
+        sa.Column(
+            "leave_eligible", sa.Boolean(), server_default="true", nullable=False
+        ),
     )
 
     # 4. Drop old absence_type constraint and add expanded one
-    op.drop_constraint('check_absence_type', 'absences', type_='check')
+    op.drop_constraint("check_absence_type", "absences", type_="check")
     op.create_check_constraint(
-        'check_absence_type',
-        'absences',
+        "check_absence_type",
+        "absences",
         "absence_type IN ('vacation', 'deployment', 'tdy', 'medical', 'family_emergency', "
-        "'conference', 'bereavement', 'emergency_leave', 'sick', 'convalescent', 'maternity_paternity')"
+        "'conference', 'bereavement', 'emergency_leave', 'sick', 'convalescent', 'maternity_paternity')",
     )
 
 
@@ -76,19 +84,19 @@ def downgrade() -> None:
     """Remove the added columns and restore original constraint."""
 
     # Remove expanded constraint and restore original
-    op.drop_constraint('check_absence_type', 'absences', type_='check')
+    op.drop_constraint("check_absence_type", "absences", type_="check")
     op.create_check_constraint(
-        'check_absence_type',
-        'absences',
-        "absence_type IN ('vacation', 'deployment', 'tdy', 'medical', 'family_emergency', 'conference')"
+        "check_absence_type",
+        "absences",
+        "absence_type IN ('vacation', 'deployment', 'tdy', 'medical', 'family_emergency', 'conference')",
     )
 
     # Remove leave_eligible from rotation_templates
-    op.drop_column('rotation_templates', 'leave_eligible')
+    op.drop_column("rotation_templates", "leave_eligible")
 
     # Remove created_by_id from absences
-    op.drop_constraint('fk_absence_created_by', 'absences', type_='foreignkey')
-    op.drop_column('absences', 'created_by_id')
+    op.drop_constraint("fk_absence_created_by", "absences", type_="foreignkey")
+    op.drop_column("absences", "created_by_id")
 
     # Remove return_date_tentative from absences
-    op.drop_column('absences', 'return_date_tentative')
+    op.drop_column("absences", "return_date_tentative")

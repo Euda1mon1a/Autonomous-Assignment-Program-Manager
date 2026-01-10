@@ -108,7 +108,11 @@ def calculate_block_dates(
     from app.utils.academic_blocks import get_block_dates as get_block_dates_util
 
     # Extract academic year from start date
-    academic_year = academic_year_start.year if academic_year_start.month >= 7 else academic_year_start.year - 1
+    academic_year = (
+        academic_year_start.year
+        if academic_year_start.month >= 7
+        else academic_year_start.year - 1
+    )
     block = get_block_dates_util(block_number, academic_year)
     return block.start_date, block.end_date
 

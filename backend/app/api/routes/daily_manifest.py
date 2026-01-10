@@ -56,8 +56,8 @@ REMOTE_LOCATIONS = {"Hilo", "Okinawa", "Kapiolani"}
 #   IP = Inpatient, CA = Call -> not in FM clinic
 #   CF = Conference, VA = Vacation, PC = Post-Call -> not patient care
 FM_CLINIC_ABBREVIATIONS = {
-    "CL",     # Clinic (main FM clinic rotation)
-    "PR",     # Procedures
+    "CL",  # Clinic (main FM clinic rotation)
+    "PR",  # Procedures
 }
 
 

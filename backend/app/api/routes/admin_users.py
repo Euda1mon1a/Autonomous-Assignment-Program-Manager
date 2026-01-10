@@ -325,9 +325,7 @@ async def update_user(
         Updated user data
     """
     # Fetch user
-    user = (
-        db.execute(select(User).where(User.id == user_id))
-    ).scalar_one_or_none()
+    user = (db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
 
     if not user:
         raise HTTPException(
@@ -428,9 +426,7 @@ async def delete_user(
         No content (204 status)
     """
     # Fetch user
-    user = (
-        db.execute(select(User).where(User.id == user_id))
-    ).scalar_one_or_none()
+    user = (db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
 
     if not user:
         raise HTTPException(
@@ -478,9 +474,7 @@ async def lock_user_account(
         Updated lock status
     """
     # Fetch user
-    user = (
-        db.execute(select(User).where(User.id == user_id))
-    ).scalar_one_or_none()
+    user = (db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
 
     if not user:
         raise HTTPException(
@@ -587,9 +581,7 @@ async def resend_invite(
         Confirmation of invite sent
     """
     # Fetch user
-    user = (
-        db.execute(select(User).where(User.id == user_id))
-    ).scalar_one_or_none()
+    user = (db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
 
     if not user:
         raise HTTPException(
@@ -734,9 +726,7 @@ async def get_activity_log(
         if log.target_id:
             try:
                 target_user = (
-                    db.execute(
-                        select(User).where(User.id == uuid.UUID(log.target_id))
-                    )
+                    db.execute(select(User).where(User.id == uuid.UUID(log.target_id)))
                 ).scalar_one_or_none()
                 if target_user:
                     target_email = target_user.email
@@ -796,9 +786,7 @@ async def bulk_user_action(
             continue
 
         # Fetch user
-        user = (
-            db.execute(select(User).where(User.id == uid))
-        ).scalar_one_or_none()
+        user = (db.execute(select(User).where(User.id == uid))).scalar_one_or_none()
 
         if not user:
             failed_ids.append(uid)

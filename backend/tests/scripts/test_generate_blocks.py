@@ -5,7 +5,12 @@ Tests the block date calculation logic using Thursday-Wednesday alignment.
 
 from datetime import date, timedelta
 
-from app.utils.academic_blocks import get_block_dates, get_all_block_dates, THURSDAY, WEDNESDAY
+from app.utils.academic_blocks import (
+    get_block_dates,
+    get_all_block_dates,
+    THURSDAY,
+    WEDNESDAY,
+)
 
 
 def calculate_block_dates(
@@ -27,7 +32,11 @@ def calculate_block_dates(
         Tuple of (start_date, end_date)
     """
     # Extract academic year from start date
-    academic_year = academic_year_start.year if academic_year_start.month >= 7 else academic_year_start.year - 1
+    academic_year = (
+        academic_year_start.year
+        if academic_year_start.month >= 7
+        else academic_year_start.year - 1
+    )
     block = get_block_dates(block_number, academic_year)
     return block.start_date, block.end_date
 

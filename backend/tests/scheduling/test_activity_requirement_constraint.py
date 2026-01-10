@@ -187,7 +187,9 @@ def create_activities():
     return [
         MockActivity(name="FM Clinic", code="fm_clinic"),
         MockActivity(name="Specialty", code="specialty"),
-        MockActivity(name="LEC", code="lec", activity_category="educational", is_protected=True),
+        MockActivity(
+            name="LEC", code="lec", activity_category="educational", is_protected=True
+        ),
         MockActivity(name="Day Off", code="off", activity_category="time_off"),
     ]
 

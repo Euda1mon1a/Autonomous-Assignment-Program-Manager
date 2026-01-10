@@ -47,21 +47,41 @@ def upgrade() -> None:
         sa.Column("activity_category", sa.String(20), nullable=False),
         sa.Column("font_color", sa.String(50), nullable=True),
         sa.Column("background_color", sa.String(50), nullable=True),
-        sa.Column("requires_supervision", sa.Boolean(), nullable=False, server_default=sa.true()),
-        sa.Column("is_protected", sa.Boolean(), nullable=False, server_default=sa.false()),
-        sa.Column("counts_toward_clinical_hours", sa.Boolean(), nullable=False, server_default=sa.true()),
+        sa.Column(
+            "requires_supervision",
+            sa.Boolean(),
+            nullable=False,
+            server_default=sa.true(),
+        ),
+        sa.Column(
+            "is_protected", sa.Boolean(), nullable=False, server_default=sa.false()
+        ),
+        sa.Column(
+            "counts_toward_clinical_hours",
+            sa.Boolean(),
+            nullable=False,
+            server_default=sa.true(),
+        ),
         sa.Column("display_order", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("is_archived", sa.Boolean(), nullable=False, server_default=sa.false()),
+        sa.Column(
+            "is_archived", sa.Boolean(), nullable=False, server_default=sa.false()
+        ),
         sa.Column("archived_at", sa.DateTime(), nullable=True),
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
+        ),
         sa.UniqueConstraint("name", name="uq_activity_name"),
         sa.UniqueConstraint("code", name="uq_activity_code"),
     )
 
     # Create indexes
     op.create_index("ix_activities_code", "activities", ["code"])
-    op.create_index("ix_activities_activity_category", "activities", ["activity_category"])
+    op.create_index(
+        "ix_activities_activity_category", "activities", ["activity_category"]
+    )
     op.create_index("ix_activities_is_protected", "activities", ["is_protected"])
     op.create_index("ix_activities_is_archived", "activities", ["is_archived"])
 

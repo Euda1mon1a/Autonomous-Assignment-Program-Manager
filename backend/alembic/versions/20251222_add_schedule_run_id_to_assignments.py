@@ -14,9 +14,9 @@ from sqlalchemy.dialects.postgresql import UUID
 
 # revision identifiers, used by Alembic.
 revision: str = "20251222_provenance"
-down_revision: Union[str, None] = "20251222_fix_schema"
-branch_labels: Union[str, tuple, None] = None
-depends_on: Union[str, tuple, None] = None
+down_revision: str | None = "20251222_fix_schema"
+branch_labels: str | tuple | None = None
+depends_on: str | tuple | None = None
 
 
 def upgrade() -> None:

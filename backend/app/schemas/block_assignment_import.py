@@ -56,7 +56,9 @@ class BlockAssignmentPreviewItem(BaseModel):
 
     # Match results
     match_status: MatchStatus = Field(..., description="Overall match status")
-    matched_rotation_id: UUID | None = Field(None, description="Matched rotation template ID")
+    matched_rotation_id: UUID | None = Field(
+        None, description="Matched rotation template ID"
+    )
     matched_rotation_name: str | None = Field(
         None, description="Matched rotation display name"
     )
@@ -96,7 +98,9 @@ class BlockAssignmentPreviewResponse(BaseModel):
     """Full preview response for import validation."""
 
     preview_id: str = Field(..., description="Unique ID for this preview session")
-    academic_year: int = Field(..., description="Auto-calculated or specified academic year")
+    academic_year: int = Field(
+        ..., description="Auto-calculated or specified academic year"
+    )
     format_detected: ImportFormat = Field(..., description="Detected import format")
 
     # Preview items
@@ -191,9 +195,7 @@ class QuickTemplateCreateRequest(BaseModel):
         "outpatient",
         description="Activity type (clinic, inpatient, procedures, etc.)",
     )
-    leave_eligible: bool = Field(
-        True, description="Whether rotation is leave-eligible"
-    )
+    leave_eligible: bool = Field(True, description="Whether rotation is leave-eligible")
 
     @field_validator("activity_type")
     @classmethod
@@ -245,12 +247,8 @@ class BlockAssignmentExportRequest(BaseModel):
     block_numbers: list[int] | None = Field(
         None, description="Specific blocks to export (None = all)"
     )
-    rotation_ids: list[UUID] | None = Field(
-        None, description="Filter by rotation IDs"
-    )
-    resident_ids: list[UUID] | None = Field(
-        None, description="Filter by resident IDs"
-    )
+    rotation_ids: list[UUID] | None = Field(None, description="Filter by rotation IDs")
+    resident_ids: list[UUID] | None = Field(None, description="Filter by resident IDs")
 
     # Options
     include_pgy_level: bool = Field(True, description="Include PGY level column")

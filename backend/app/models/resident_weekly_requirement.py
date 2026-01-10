@@ -3,7 +3,15 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
@@ -81,12 +89,16 @@ class ResidentWeeklyRequirement(Base):
     allowed_clinic_days = Column(JSONType, default=list, nullable=False)
 
     # Optional descriptive fields
-    specialty_name = Column(String(255), nullable=True)  # e.g., "Neurology", "Dermatology"
+    specialty_name = Column(
+        String(255), nullable=True
+    )  # e.g., "Neurology", "Dermatology"
     description = Column(String(1024), nullable=True)  # Optional notes
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     # Relationships
     rotation_template = relationship(

@@ -62,9 +62,7 @@ class AssignmentController:
         )
 
         return AssignmentListResponse(
-            items=[
-                AssignmentResponse.model_validate(item) for item in result["items"]
-            ],
+            items=[AssignmentResponse.model_validate(item) for item in result["items"]],
             total=result["total"],
             page=page,
             page_size=page_size,

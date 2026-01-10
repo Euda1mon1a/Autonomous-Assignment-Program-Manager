@@ -371,7 +371,9 @@ class FacultyActivityService:
             Created FacultyWeeklyOverride
         """
         # Delete existing override if any
-        existing = await self.get_override(person_id, week_start, day_of_week, time_of_day)
+        existing = await self.get_override(
+            person_id, week_start, day_of_week, time_of_day
+        )
         if existing:
             await self._delete(existing)
             await self._flush()
@@ -637,11 +639,7 @@ class FacultyActivityService:
                     - slots: list of 14 slot dicts
         """
         # Get all faculty members
-        stmt = (
-            select(Person)
-            .where(Person.type == "faculty")
-            .order_by(Person.name)
-        )
+        stmt = select(Person).where(Person.type == "faculty").order_by(Person.name)
 
         if not include_adjunct:
             stmt = stmt.where(
@@ -681,10 +679,12 @@ class FacultyActivityService:
                     faculty.id, week_start, week_number=None
                 )
 
-                faculty_data["weeks"].append({
-                    "week_start": week_start,
-                    "slots": effective,
-                })
+                faculty_data["weeks"].append(
+                    {
+                        "week_start": week_start,
+                        "slots": effective,
+                    }
+                )
 
             matrix.append(faculty_data)
 

@@ -15,6 +15,7 @@ Context:
 This migration inserts Block 0 records for 2025-07-01 and 2025-07-02
 if they don't already exist.
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -22,10 +23,10 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '20251226_block0'
-down_revision: Union[str, None] = '20251225_schema_ver'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision: str = "20251226_block0"
+down_revision: str | None = "20251225_schema_ver"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -71,6 +72,4 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Remove Block 0 orientation records."""
     # Delete all blocks with block_number = 0
-    op.execute(
-        sa.text("DELETE FROM blocks WHERE block_number = 0")
-    )
+    op.execute(sa.text("DELETE FROM blocks WHERE block_number = 0"))

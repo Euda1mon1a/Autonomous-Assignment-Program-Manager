@@ -435,11 +435,15 @@ class FacultyWeeklyTemplateConstraint(SoftConstraint):
                             if expected_activity_id:
                                 act = activity_by_id.get(expected_activity_id)
                                 if act:
-                                    expected_name = getattr(act, "name", str(expected_activity_id))
+                                    expected_name = getattr(
+                                        act, "name", str(expected_activity_id)
+                                    )
                             if actual_activity_id:
                                 act = activity_by_id.get(actual_activity_id)
                                 if act:
-                                    actual_name = getattr(act, "name", str(actual_activity_id))
+                                    actual_name = getattr(
+                                        act, "name", str(actual_activity_id)
+                                    )
 
                             faculty_name = getattr(faculty, "name", str(faculty.id))
                             violations.append(
@@ -464,7 +468,10 @@ class FacultyWeeklyTemplateConstraint(SoftConstraint):
                             )
                     else:
                         # Soft constraint - calculate penalty
-                        if expected_activity_id and actual_activity_id != expected_activity_id:
+                        if (
+                            expected_activity_id
+                            and actual_activity_id != expected_activity_id
+                        ):
                             # Add penalty based on priority
                             deviation_penalty = self.weight * (priority / 100.0)
                             total_penalty += deviation_penalty

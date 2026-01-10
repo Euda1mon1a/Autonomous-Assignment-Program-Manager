@@ -301,8 +301,9 @@ class HalfDayRequirementConstraint(SoftConstraint):
             return
 
         templates_by_activity = self._get_template_ids_by_activity(context)
-        fm_clinic_ids = templates_by_activity.get("outpatient", set()) | \
-                        templates_by_activity.get("clinic", set())
+        fm_clinic_ids = templates_by_activity.get(
+            "outpatient", set()
+        ) | templates_by_activity.get("clinic", set())
 
         # For each rotation template with requirements, create distribution targets
         for template_id, req in self._requirements.items():
@@ -369,8 +370,9 @@ class HalfDayRequirementConstraint(SoftConstraint):
             return
 
         templates_by_activity = self._get_template_ids_by_activity(context)
-        fm_clinic_ids = templates_by_activity.get("outpatient", set()) | \
-                        templates_by_activity.get("clinic", set())
+        fm_clinic_ids = templates_by_activity.get(
+            "outpatient", set()
+        ) | templates_by_activity.get("clinic", set())
 
         penalties = []
 
@@ -423,8 +425,9 @@ class HalfDayRequirementConstraint(SoftConstraint):
         template_by_id = {t.id: t for t in context.templates}
 
         templates_by_activity = self._get_template_ids_by_activity(context)
-        fm_clinic_ids = templates_by_activity.get("outpatient", set()) | \
-                        templates_by_activity.get("clinic", set())
+        fm_clinic_ids = templates_by_activity.get(
+            "outpatient", set()
+        ) | templates_by_activity.get("clinic", set())
 
         # Count assignments by resident and type
         resident_fm_count: dict[UUID, int] = defaultdict(int)

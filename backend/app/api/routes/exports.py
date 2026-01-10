@@ -437,9 +437,7 @@ async def get_export_stats(
     """
     try:
         # Count total jobs
-        total_jobs_result = db.execute(
-            select(func.count()).select_from(ExportJob)
-        )
+        total_jobs_result = db.execute(select(func.count()).select_from(ExportJob))
         total_jobs = total_jobs_result.scalar()
 
         # Count active jobs

@@ -111,9 +111,7 @@ class ActivityService:
         Returns:
             Activity or None if not found
         """
-        result = await self._execute(
-            select(Activity).where(Activity.id == activity_id)
-        )
+        result = await self._execute(select(Activity).where(Activity.id == activity_id))
         return result.scalar_one_or_none()
 
     async def get_activity_by_code(self, code: str) -> Activity | None:
@@ -277,9 +275,9 @@ class ActivityService:
 
         # Check if in use by activity requirements
         result = await self._execute(
-            select(RotationActivityRequirement).where(
-                RotationActivityRequirement.activity_id == activity_id
-            ).limit(1)
+            select(RotationActivityRequirement)
+            .where(RotationActivityRequirement.activity_id == activity_id)
+            .limit(1)
         )
         if result.scalar_one_or_none():
             raise ValueError(

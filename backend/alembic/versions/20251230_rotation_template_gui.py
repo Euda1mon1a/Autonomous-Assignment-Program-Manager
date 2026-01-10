@@ -213,7 +213,9 @@ def downgrade() -> None:
     op.drop_table("weekly_patterns")
 
     # Drop foreign key and columns from rotation_templates
-    op.drop_constraint("fk_rotation_template_paired", "rotation_templates", type_="foreignkey")
+    op.drop_constraint(
+        "fk_rotation_template_paired", "rotation_templates", type_="foreignkey"
+    )
     op.drop_column("rotation_templates", "is_mirror_primary")
     op.drop_column("rotation_templates", "split_day")
     op.drop_column("rotation_templates", "paired_template_id")

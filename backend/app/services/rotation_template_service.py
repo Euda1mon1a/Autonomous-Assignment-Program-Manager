@@ -1345,22 +1345,26 @@ class RotationTemplateService:
         for template_id in template_ids:
             template = await self.get_template_by_id(template_id)
             if not template:
-                results.append({
-                    "template_id": template_id,
-                    "template_name": "Unknown",
-                    "success": False,
-                    "slots_modified": 0,
-                    "error": f"Template with ID {template_id} not found",
-                })
+                results.append(
+                    {
+                        "template_id": template_id,
+                        "template_name": "Unknown",
+                        "success": False,
+                        "slots_modified": 0,
+                        "error": f"Template with ID {template_id} not found",
+                    }
+                )
             else:
                 templates_found.append(template)
-                results.append({
-                    "template_id": template_id,
-                    "template_name": template.name,
-                    "success": True,
-                    "slots_modified": 0,
-                    "error": None,
-                })
+                results.append(
+                    {
+                        "template_id": template_id,
+                        "template_name": template.name,
+                        "success": True,
+                        "slots_modified": 0,
+                        "error": None,
+                    }
+                )
 
         # Check for failures in validation
         failed_count = sum(1 for r in results if not r["success"])

@@ -690,9 +690,7 @@ async def get_rotation_template(
 ):
     """Get a rotation template by ID. Requires authentication."""
     template = (
-        db.execute(
-            select(RotationTemplate).where(RotationTemplate.id == template_id)
-        )
+        db.execute(select(RotationTemplate).where(RotationTemplate.id == template_id))
     ).scalar_one_or_none()
     if not template:
         raise HTTPException(status_code=404, detail="Rotation template not found")
@@ -848,9 +846,7 @@ async def update_rotation_template(
 ):
     """Update an existing rotation template. Requires authentication."""
     template = (
-        db.execute(
-            select(RotationTemplate).where(RotationTemplate.id == template_id)
-        )
+        db.execute(select(RotationTemplate).where(RotationTemplate.id == template_id))
     ).scalar_one_or_none()
     if not template:
         raise HTTPException(status_code=404, detail="Rotation template not found")
@@ -872,9 +868,7 @@ async def delete_rotation_template(
 ):
     """Delete a rotation template. Requires authentication."""
     template = (
-        db.execute(
-            select(RotationTemplate).where(RotationTemplate.id == template_id)
-        )
+        db.execute(select(RotationTemplate).where(RotationTemplate.id == template_id))
     ).scalar_one_or_none()
     if not template:
         raise HTTPException(status_code=404, detail="Rotation template not found")

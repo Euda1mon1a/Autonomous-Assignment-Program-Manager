@@ -83,6 +83,7 @@ class TestOverlapTypeClassification:
         """Test no overlap when new absence is before existing."""
         # Wrap sync session for async compatibility
         from tests.conftest import AsyncSessionWrapper
+
         async_db = AsyncSessionWrapper(db)
 
         service = AbsenceOverlapService(async_db)
@@ -92,6 +93,7 @@ class TestOverlapTypeClassification:
         new_end = date.today() + timedelta(days=5)
 
         import asyncio
+
         result = asyncio.get_event_loop().run_until_complete(
             service.detect_overlaps(
                 person_id=sample_faculty.id,
@@ -115,6 +117,7 @@ class TestOverlapTypeClassification:
     ):
         """Test no overlap when new absence is after existing."""
         from tests.conftest import AsyncSessionWrapper
+
         async_db = AsyncSessionWrapper(db)
 
         service = AbsenceOverlapService(async_db)
@@ -124,6 +127,7 @@ class TestOverlapTypeClassification:
         new_end = date.today() + timedelta(days=25)
 
         import asyncio
+
         result = asyncio.get_event_loop().run_until_complete(
             service.detect_overlaps(
                 person_id=sample_faculty.id,
@@ -146,11 +150,13 @@ class TestOverlapTypeClassification:
     ):
         """Test exact overlap detection (identical dates)."""
         from tests.conftest import AsyncSessionWrapper
+
         async_db = AsyncSessionWrapper(db)
 
         service = AbsenceOverlapService(async_db)
 
         import asyncio
+
         result = asyncio.get_event_loop().run_until_complete(
             service.detect_overlaps(
                 person_id=sample_faculty.id,
@@ -175,6 +181,7 @@ class TestOverlapTypeClassification:
     ):
         """Test contained overlap (new is within existing)."""
         from tests.conftest import AsyncSessionWrapper
+
         async_db = AsyncSessionWrapper(db)
 
         service = AbsenceOverlapService(async_db)
@@ -184,6 +191,7 @@ class TestOverlapTypeClassification:
         new_end = existing_vacation.end_date - timedelta(days=2)
 
         import asyncio
+
         result = asyncio.get_event_loop().run_until_complete(
             service.detect_overlaps(
                 person_id=sample_faculty.id,
@@ -207,6 +215,7 @@ class TestOverlapTypeClassification:
     ):
         """Test contains overlap (new contains existing)."""
         from tests.conftest import AsyncSessionWrapper
+
         async_db = AsyncSessionWrapper(db)
 
         service = AbsenceOverlapService(async_db)
@@ -216,6 +225,7 @@ class TestOverlapTypeClassification:
         new_end = existing_vacation.end_date + timedelta(days=5)
 
         import asyncio
+
         result = asyncio.get_event_loop().run_until_complete(
             service.detect_overlaps(
                 person_id=sample_faculty.id,
@@ -238,6 +248,7 @@ class TestOverlapTypeClassification:
     ):
         """Test partial overlap at start of existing."""
         from tests.conftest import AsyncSessionWrapper
+
         async_db = AsyncSessionWrapper(db)
 
         service = AbsenceOverlapService(async_db)
@@ -247,6 +258,7 @@ class TestOverlapTypeClassification:
         new_end = existing_vacation.start_date + timedelta(days=3)
 
         import asyncio
+
         result = asyncio.get_event_loop().run_until_complete(
             service.detect_overlaps(
                 person_id=sample_faculty.id,
@@ -270,6 +282,7 @@ class TestOverlapTypeClassification:
     ):
         """Test partial overlap at end of existing."""
         from tests.conftest import AsyncSessionWrapper
+
         async_db = AsyncSessionWrapper(db)
 
         service = AbsenceOverlapService(async_db)
@@ -279,6 +292,7 @@ class TestOverlapTypeClassification:
         new_end = existing_vacation.end_date + timedelta(days=5)
 
         import asyncio
+
         result = asyncio.get_event_loop().run_until_complete(
             service.detect_overlaps(
                 person_id=sample_faculty.id,
@@ -306,11 +320,13 @@ class TestSeverityAssessment:
     ):
         """Test that exact duplicates are marked as critical."""
         from tests.conftest import AsyncSessionWrapper
+
         async_db = AsyncSessionWrapper(db)
 
         service = AbsenceOverlapService(async_db)
 
         import asyncio
+
         result = asyncio.get_event_loop().run_until_complete(
             service.detect_overlaps(
                 person_id=sample_faculty.id,
@@ -333,12 +349,14 @@ class TestSeverityAssessment:
     ):
         """Test that overlaps with different types are warnings."""
         from tests.conftest import AsyncSessionWrapper
+
         async_db = AsyncSessionWrapper(db)
 
         service = AbsenceOverlapService(async_db)
 
         # Same dates but different type
         import asyncio
+
         result = asyncio.get_event_loop().run_until_complete(
             service.detect_overlaps(
                 person_id=sample_faculty.id,
@@ -365,11 +383,13 @@ class TestResolutionOptions:
     ):
         """Test resolution options for exact match."""
         from tests.conftest import AsyncSessionWrapper
+
         async_db = AsyncSessionWrapper(db)
 
         service = AbsenceOverlapService(async_db)
 
         import asyncio
+
         result = asyncio.get_event_loop().run_until_complete(
             service.detect_overlaps(
                 person_id=sample_faculty.id,
@@ -393,6 +413,7 @@ class TestResolutionOptions:
     ):
         """Test that partial overlap of same type suggests merge."""
         from tests.conftest import AsyncSessionWrapper
+
         async_db = AsyncSessionWrapper(db)
 
         service = AbsenceOverlapService(async_db)
@@ -402,6 +423,7 @@ class TestResolutionOptions:
         new_end = existing_vacation.end_date + timedelta(days=5)
 
         import asyncio
+
         result = asyncio.get_event_loop().run_until_complete(
             service.detect_overlaps(
                 person_id=sample_faculty.id,
@@ -431,6 +453,7 @@ class TestMultipleOverlaps:
     ):
         """Test detection of multiple overlaps."""
         from tests.conftest import AsyncSessionWrapper
+
         async_db = AsyncSessionWrapper(db)
 
         service = AbsenceOverlapService(async_db)
@@ -440,6 +463,7 @@ class TestMultipleOverlaps:
         new_end = existing_deployment.end_date
 
         import asyncio
+
         result = asyncio.get_event_loop().run_until_complete(
             service.detect_overlaps(
                 person_id=sample_faculty.id,
@@ -467,12 +491,14 @@ class TestExcludeAbsence:
     ):
         """Test excluding self when updating an absence."""
         from tests.conftest import AsyncSessionWrapper
+
         async_db = AsyncSessionWrapper(db)
 
         service = AbsenceOverlapService(async_db)
 
         # When updating, exclude the absence being updated
         import asyncio
+
         result = asyncio.get_event_loop().run_until_complete(
             service.detect_overlaps(
                 person_id=sample_faculty.id,
@@ -500,9 +526,11 @@ class TestConvenienceFunction:
     ):
         """Test the convenience function for overlap checking."""
         from tests.conftest import AsyncSessionWrapper
+
         async_db = AsyncSessionWrapper(db)
 
         import asyncio
+
         result = asyncio.get_event_loop().run_until_complete(
             check_absence_overlaps(
                 db=async_db,
@@ -529,6 +557,7 @@ class TestEdgeCases:
     ):
         """Test single day overlap at boundary."""
         from tests.conftest import AsyncSessionWrapper
+
         async_db = AsyncSessionWrapper(db)
 
         service = AbsenceOverlapService(async_db)
@@ -538,6 +567,7 @@ class TestEdgeCases:
         new_end = existing_vacation.start_date
 
         import asyncio
+
         result = asyncio.get_event_loop().run_until_complete(
             service.detect_overlaps(
                 person_id=sample_faculty.id,
@@ -571,11 +601,13 @@ class TestEdgeCases:
         db.commit()
 
         from tests.conftest import AsyncSessionWrapper
+
         async_db = AsyncSessionWrapper(db)
 
         service = AbsenceOverlapService(async_db)
 
         import asyncio
+
         result = asyncio.get_event_loop().run_until_complete(
             service.detect_overlaps(
                 person_id=sample_faculty.id,
