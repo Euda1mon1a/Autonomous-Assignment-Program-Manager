@@ -424,8 +424,9 @@ export async function patch<T>(url: string, data?: unknown, config?: AxiosReques
  * console.log('Person deleted successfully');
  * ```
  */
-export async function del(url: string, config?: AxiosRequestConfig): Promise<void> {
-  await api.delete(url, config)
+export async function del<T = void>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  const response = await api.delete<T>(url, config)
+  return response.data
 }
 
 // Re-export types

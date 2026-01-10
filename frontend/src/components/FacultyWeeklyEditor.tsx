@@ -152,7 +152,7 @@ function SlotCell({
       <div className={`flex items-center justify-center h-full ${activity ? textColor : 'text-slate-500'}`}>
         {activity ? (
           <span className="text-xs font-medium truncate px-1">
-            {(activity as Record<string, unknown>).displayAbbreviation as string ?? activity.displayAbbreviation ?? activity.code?.toUpperCase() ?? activity.name.slice(0, 4)}
+            {activity.displayAbbreviation ?? activity.code?.toUpperCase() ?? activity.name.slice(0, 4)}
           </span>
         ) : (
           <span className="text-xs text-slate-500">-</span>

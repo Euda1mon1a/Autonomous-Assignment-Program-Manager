@@ -542,6 +542,8 @@ export interface RotationTemplate {
   supervisionRequired: boolean;
   /** Maximum ratio of residents to supervisors (e.g., 3 means 3:1) */
   maxSupervisionRatio: number;
+  /** True for half-block rotations (14 days instead of 28) */
+  isBlockHalfRotation?: boolean;
   /** Timestamp when the template was created */
   createdAt: DateTimeString;
 }
@@ -574,6 +576,8 @@ export interface RotationTemplateCreate {
   supervisionRequired?: boolean;
   /** Maximum ratio of residents to supervisors (e.g., 3 means 3:1) */
   maxSupervisionRatio?: number;
+  /** True for half-block rotations (14 days instead of 28) */
+  isBlockHalfRotation?: boolean;
 }
 
 /**
@@ -604,6 +608,8 @@ export interface RotationTemplateUpdate {
   supervisionRequired?: boolean;
   /** Maximum ratio of residents to supervisors (e.g., 3 means 3:1) */
   maxSupervisionRatio?: number;
+  /** True for half-block rotations (14 days instead of 28) */
+  isBlockHalfRotation?: boolean;
 }
 
 // ============================================================================

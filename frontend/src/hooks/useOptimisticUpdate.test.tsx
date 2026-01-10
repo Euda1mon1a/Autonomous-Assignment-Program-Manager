@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck - Hook generic type arguments changed
 /**
  * Tests for Optimistic Update Hook

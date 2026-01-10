@@ -147,6 +147,12 @@ export interface RunLogEntry {
   result: RunResult;
   notes?: string;
   tags?: string[];
+  /** Coverage percentage achieved (0-100) */
+  coverage?: number;
+  /** Number of constraint violations */
+  violations?: number;
+  /** Duration of the run (e.g., "2m 30s") */
+  duration?: string;
 }
 
 export interface RunLogFilters {

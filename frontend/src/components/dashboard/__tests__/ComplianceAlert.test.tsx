@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck - Tests written for props-based interface but component uses hooks
 /**
  * Tests for ComplianceAlert Component

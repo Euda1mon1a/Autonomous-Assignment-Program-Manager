@@ -15,6 +15,7 @@
  */
 
 import React, { useMemo } from 'react';
+import { Users } from 'lucide-react';
 import { format, eachDayOfInterval, isWeekend, isSameDay, parseISO } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { get } from '@/lib/api';
@@ -168,8 +169,7 @@ export function AbsenceGrid({
   if (absencesError || peopleError) {
     return (
       <ErrorAlert
-        title="Failed to load data"
-        message={(absencesError as Error)?.message || (peopleError as Error)?.message || 'Unknown error'}
+        message={absencesError || peopleError || 'Failed to load data'}
       />
     );
   }
@@ -178,7 +178,7 @@ export function AbsenceGrid({
   if (personGroups.length === 0) {
     return (
       <EmptyState
-        icon="users"
+        icon={Users}
         title="No people found"
         description="Add people to see them in the absence grid."
       />

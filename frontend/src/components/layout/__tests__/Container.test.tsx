@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck - Tests written for size prop interface but component doesn't accept it
 /**
  * Tests for Container Component
