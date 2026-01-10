@@ -346,42 +346,51 @@ class ConstraintManager:
         # Faculty role-based constraints
         manager.add(FacultyRoleClinicConstraint())
 
-        # Overnight call generation (disabled by default - opt-in via factory method)
+        # Overnight call generation - opt-in via factory method
         manager.add(OvernightCallGenerationConstraint())
+        # Disabled: requires explicit opt-in for overnight call workflow
         manager.disable("OvernightCallGeneration")
 
-        # Post-call auto-assignment (disabled by default - opt-in via factory method)
+        # Post-call auto-assignment - opt-in via factory method
         manager.add(PostCallAutoAssignmentConstraint())
+        # Disabled: requires post-call scheduling enabled
         manager.disable("PostCallAutoAssignment")
 
-        # Sports Medicine coordination (disabled by default - enable if SM program exists)
+        # Sports Medicine coordination - requires SM program configuration
         manager.add(SMResidentFacultyAlignmentConstraint())
         manager.add(SMFacultyClinicConstraint())
+        # Disabled: SM constraints need SM program data
         manager.disable("SMResidentFacultyAlignment")
+        # Disabled: SM faculty clinic rules need SM program data
         manager.disable("SMFacultyNoRegularClinic")
 
-        # Additional FMIT constraints (disabled by default - opt-in via factory method)
+        # Additional FMIT constraints - opt-in via factory method
         manager.add(FMITWeekBlockingConstraint())
         manager.add(FMITMandatoryCallConstraint())
         manager.add(FMITResidentClinicDayConstraint())
+        # Disabled: FMIT blocking needs FMIT week configuration
         manager.disable("FMITWeekBlocking")
+        # Disabled: FMIT mandatory call needs FMIT data
         manager.disable("FMITMandatoryCall")
+        # Disabled: FMIT resident clinic day needs FMIT data
         manager.disable("FMITResidentClinicDay")
 
         # Weekend work constraint (enabled by default - uses template.includes_weekend_work)
         manager.add(WeekendWorkConstraint())
 
-        # Protected slot constraint (disabled by default - needs weekly_patterns data)
+        # Protected slot constraint - needs weekly_patterns data
         manager.add(ProtectedSlotConstraint())
+        # Disabled: needs weekly_patterns data from rotation templates
         manager.disable("ProtectedSlot")
 
-        # Half-day requirement constraint (disabled by default - needs halfday_requirements data)
+        # Half-day requirement constraint - needs halfday_requirements data
         manager.add(HalfDayRequirementConstraint(weight=50.0))
+        # Disabled: needs halfday_requirements configuration
         manager.disable("HalfDayRequirement")
 
-        # Activity requirement constraint (disabled by default - needs activity_requirements data)
-        # This is the newer, more flexible version that uses RotationActivityRequirement
+        # Activity requirement constraint - uses RotationActivityRequirement
         manager.add(ActivityRequirementConstraint(weight=50.0))
+        # Disabled: needs activity_requirements from rotation config
         manager.disable("ActivityRequirement")
 
         # Soft constraints (optimization)
@@ -405,9 +414,11 @@ class ConstraintManager:
         manager.add(ZoneBoundaryConstraint(weight=12.0))
         manager.add(PreferenceTrailConstraint(weight=8.0))
         manager.add(N1VulnerabilityConstraint(weight=25.0))
-        # Tier 2 disabled by default - enable with create_resilience_aware(tier=2)
+        # Disabled: Tier 2 zone boundaries - enable with create_resilience_aware(tier=2)
         manager.disable("ZoneBoundary")
+        # Disabled: Tier 2 preference trails - may over-constrain
         manager.disable("PreferenceTrail")
+        # Disabled: Tier 2 N-1 vulnerability - aggressive protection
         manager.disable("N1Vulnerability")
 
         return manager
@@ -461,41 +472,51 @@ class ConstraintManager:
         # Faculty role-based constraints
         manager.add(FacultyRoleClinicConstraint())
 
-        # Overnight call generation (disabled by default)
+        # Overnight call generation - opt-in via factory method
         manager.add(OvernightCallGenerationConstraint())
+        # Disabled: requires explicit opt-in for overnight call workflow
         manager.disable("OvernightCallGeneration")
 
-        # Post-call auto-assignment (disabled by default)
+        # Post-call auto-assignment - opt-in via factory method
         manager.add(PostCallAutoAssignmentConstraint())
+        # Disabled: requires post-call scheduling enabled
         manager.disable("PostCallAutoAssignment")
 
-        # Sports Medicine coordination (disabled by default)
+        # Sports Medicine coordination - requires SM program configuration
         manager.add(SMResidentFacultyAlignmentConstraint())
         manager.add(SMFacultyClinicConstraint())
+        # Disabled: SM constraints need SM program data
         manager.disable("SMResidentFacultyAlignment")
+        # Disabled: SM faculty clinic rules need SM program data
         manager.disable("SMFacultyNoRegularClinic")
 
-        # Additional FMIT constraints (disabled by default)
+        # Additional FMIT constraints - opt-in via factory method
         manager.add(FMITWeekBlockingConstraint())
         manager.add(FMITMandatoryCallConstraint())
         manager.add(FMITResidentClinicDayConstraint())
+        # Disabled: FMIT blocking needs FMIT week configuration
         manager.disable("FMITWeekBlocking")
+        # Disabled: FMIT mandatory call needs FMIT data
         manager.disable("FMITMandatoryCall")
+        # Disabled: FMIT resident clinic day needs FMIT data
         manager.disable("FMITResidentClinicDay")
 
         # Weekend work constraint (enabled by default)
         manager.add(WeekendWorkConstraint())
 
-        # Protected slot constraint (disabled by default - needs data)
+        # Protected slot constraint - needs weekly_patterns data
         manager.add(ProtectedSlotConstraint())
+        # Disabled: needs weekly_patterns data from rotation templates
         manager.disable("ProtectedSlot")
 
-        # Half-day requirement constraint (disabled by default - needs data)
+        # Half-day requirement constraint - needs halfday_requirements data
         manager.add(HalfDayRequirementConstraint(weight=50.0))
+        # Disabled: needs halfday_requirements configuration
         manager.disable("HalfDayRequirement")
 
-        # Activity requirement constraint (disabled by default - needs data)
+        # Activity requirement constraint - uses RotationActivityRequirement
         manager.add(ActivityRequirementConstraint(weight=50.0))
+        # Disabled: needs activity_requirements from rotation config
         manager.disable("ActivityRequirement")
 
         # Soft constraints (optimization)
@@ -525,8 +546,11 @@ class ConstraintManager:
 
         # Only enable Tier 2 if requested
         if tier < 2:
+            # Disabled: Tier 2 zone boundaries - enable with tier=2
             manager.disable("ZoneBoundary")
+            # Disabled: Tier 2 preference trails - may over-constrain
             manager.disable("PreferenceTrail")
+            # Disabled: Tier 2 N-1 vulnerability - aggressive protection
             manager.disable("N1Vulnerability")
 
         return manager

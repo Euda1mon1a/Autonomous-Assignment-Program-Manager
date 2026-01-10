@@ -38,10 +38,12 @@ echo -e "${CYAN}Running Resilience Constraint Check...${NC}"
 # ============================================================
 echo -n "Checking for single-point-of-failure risks... "
 
-# Look for "only one", "single", "sole" patterns in scheduling
+# Look for SPOF patterns in scheduling code (not the resilience framework itself)
+# Tuned in Session 083: exclude resilience code, metrics fields, docstrings
 SPOF_PATTERNS=$(grep -rn --include="*.py" --include="*.ts" \
   -iE '(only.?one.*available|single.*provider|sole.*coverage|no.*backup|without.*redundancy)' \
-  backend/app/scheduling/ backend/app/resilience/ 2>/dev/null | grep -v "test" | grep -v "__pycache__" || true)
+  backend/app/scheduling/ 2>/dev/null | \
+  grep -v "test" | grep -v "__pycache__" | grep -v '"""' | grep -v "'''" | grep -v ':[ ]*#' | grep -v ':[ ]*- ' | grep -v '\.\.\.' | grep -v 'resilience' | grep -v 'sole_coverage_blocks' || true)
 
 if [ -n "$SPOF_PATTERNS" ]; then
   echo -e "${YELLOW}WARNING${NC}"
@@ -57,9 +59,10 @@ fi
 # ============================================================
 echo -n "Checking for N-1 contingency code... "
 
-# Look for N-1 validation being bypassed or missing
+# Look for explicit N-1 bypass intent (not result fields like n1_pass=False)
+# Tuned in Session 083 to reduce false positives
 N1_ISSUES=$(grep -rn --include="*.py" --include="*.ts" \
-  -iE '(skip.*n.?1|bypass.*contingency|disable.*resilience|n.?1.*false)' \
+  -iE '(skip_n1|bypass_n1|skip_contingency|bypass_resilience|disable_n1_check|force_n1_pass)' \
   backend/app/ 2>/dev/null | grep -v "test" || true)
 
 if [ -n "$N1_ISSUES" ]; then
@@ -115,9 +118,10 @@ fi
 # ============================================================
 echo -n "Checking for resilience metric handling... "
 
-# Look for resilience metrics being ignored
+# Look for explicit resilience bypass patterns (not config documentation like disable_reason=)
+# Tuned in Session 083 to reduce false positives
 METRIC_BYPASS=$(grep -rn --include="*.py" --include="*.ts" \
-  -iE '(ignore.*resilience|skip.*metric|disable.*burnout|Rt.*=.*0)' \
+  -iE '(ignore_resilience|skip_burnout_check|disable_burnout_alert|force_Rt_zero|bypass_burnout)' \
   backend/app/resilience/ backend/app/scheduling/ 2>/dev/null | grep -v "test" || true)
 
 if [ -n "$METRIC_BYPASS" ]; then
@@ -161,6 +165,6 @@ else
   echo ""
   echo "Reference: docs/resilience/N1_N2_CONTINGENCY.md"
   echo "Advisory: RESILIENCE_ENGINEER agent for detailed analysis"
-  # Non-blocking for now (warning mode)
-  exit 0
+  # Blocking mode - graduated Session 083 after pattern tuning
+  exit 1
 fi

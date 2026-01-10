@@ -95,9 +95,10 @@ fi
 # ============================================================
 echo -n "Checking for ACGME validation bypasses... "
 
-# Look for skip/bypass/disable patterns near ACGME
+# Look for explicit bypass intent patterns (not state assignments like acgme_compliant = False)
+# Tuned in Session 083 to reduce false positives
 BYPASS_ATTEMPTS=$(grep -rn --include="*.py" --include="*.ts" \
-  -iE '(skip.*acgme|bypass.*acgme|disable.*acgme|acgme.*skip|acgme.*bypass|acgme.*false)' \
+  -iE '(skip_acgme|bypass_acgme|disable_acgme|acgme_bypass|acgme_skip|ignore_acgme|force_acgme_pass)' \
   backend/ frontend/ 2>/dev/null | grep -v "test" | grep -v "__pycache__" || true)
 
 if [ -n "$BYPASS_ATTEMPTS" ]; then
@@ -133,10 +134,12 @@ fi
 # ============================================================
 echo -n "Checking for supervision requirements... "
 
-# Look for unsupervised PGY-1 patterns
+# Look for unsupervised PGY-1 patterns in actual code (not docstrings)
+# Tuned in Session 083 to exclude docstring examples
 SUPERVISION_ISSUES=$(grep -rn --include="*.py" --include="*.ts" \
   -iE '(pgy.?1.*unsupervised|intern.*alone|no.*attending)' \
-  backend/app/scheduling/ frontend/src/ 2>/dev/null | grep -v "test" || true)
+  backend/app/scheduling/ frontend/src/ 2>/dev/null | \
+  grep -v "test" | grep -v '"""' | grep -v "'''" | grep -v ':[ ]*#' | grep -v ':[ ]*- ' | grep -v '\.\.\.' || true)
 
 if [ -n "$SUPERVISION_ISSUES" ]; then
   echo -e "${YELLOW}WARNING${NC}"
@@ -160,6 +163,6 @@ else
   echo ""
   echo "Reference: docs/compliance/ACGME_RULES.md"
   echo "Advisory: MEDCOM agent for clinical interpretation"
-  # Non-blocking for now (warning mode)
-  exit 0
+  # Blocking mode - graduated Session 083 after pattern tuning
+  exit 1
 fi

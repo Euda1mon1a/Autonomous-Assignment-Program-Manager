@@ -297,6 +297,111 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
+  # PHASE 17: Constraint Registration (Session 083 - SCHEDULER Domain)
+  # ============================================================================
+
+  # Constraint registration validation - catches "implemented but not registered" bugs
+  - repo: local
+    hooks:
+      - id: constraint-registration
+        name: Constraint Registration Validation
+        entry: scripts/validate-constraint-registration.sh
+        language: script
+        pass_filenames: false
+        files: ^backend/app/scheduling/constraints/
+        stages: [pre-commit]
+
+  # ============================================================================
+  # PHASE 18: MCP Tool Validation (Session 084 - SCHEDULER Domain)
+  # ============================================================================
+
+  # MCP tool structure and registration validation
+  - repo: local
+    hooks:
+      - id: mcp-tools-validate
+        name: MCP Tool Structure Validation
+        entry: scripts/validate-mcp-tools.sh
+        language: script
+        pass_filenames: false
+        files: ^mcp-server/src/scheduler_mcp/(tools|armory)/.*\.py$
+        stages: [pre-commit]
+
+  # ============================================================================
+  # PHASE 19: Test Coverage Validation (Session 084 - QA Domain)
+  # ============================================================================
+
+  # Test file existence and coverage reminder
+  - repo: local
+    hooks:
+      - id: test-coverage
+        name: Test Coverage Reminder
+        entry: scripts/validate-test-coverage.sh
+        language: script
+        pass_filenames: false
+        files: ^(backend/app/|frontend/src/).*\.(py|ts|tsx)$
+        stages: [pre-commit]
+
+  # ============================================================================
+  # PHASE 20: Bundle Size Monitoring (Session 084 - FRONTEND Domain)
+  # ============================================================================
+
+  # Dependency monitoring and bundle size awareness
+  - repo: local
+    hooks:
+      - id: bundle-size
+        name: Bundle Size Monitor
+        entry: scripts/validate-bundle-size.sh
+        language: script
+        pass_filenames: false
+        files: ^frontend/package\.json$
+        stages: [pre-commit]
+
+  # ============================================================================
+  # PHASE 21: API Contract Validation (Session 084 - ARCHITECT Domain)
+  # ============================================================================
+
+  # Backend/frontend type sync validation
+  - repo: local
+    hooks:
+      - id: api-contract
+        name: API Contract Validation
+        entry: scripts/validate-api-contract.sh
+        language: script
+        pass_filenames: false
+        files: ^(backend/app/schemas/|frontend/src/types/).*\.(py|ts)$
+        stages: [pre-commit]
+
+  # ============================================================================
+  # PHASE 22: Performance Regression (Session 085 - QA Domain)
+  # ============================================================================
+
+  # Performance regression detection
+  - repo: local
+    hooks:
+      - id: performance-regression
+        name: Performance Regression Check
+        entry: scripts/validate-performance-regression.sh
+        language: script
+        pass_filenames: false
+        files: ^backend/(app|tests)/.*\.py$
+        stages: [pre-commit]
+
+  # ============================================================================
+  # PHASE 23: Dependency Version Guard (Session 085 - ARCHITECT Domain)
+  # ============================================================================
+
+  # Dependency version protection - blocks critical dep changes without override
+  - repo: local
+    hooks:
+      - id: dependency-versions
+        name: Dependency Version Guard
+        entry: scripts/validate-dependency-versions.sh
+        language: script
+        pass_filenames: false
+        files: ^(frontend/package\.json|frontend/package-lock\.json|backend/requirements\.txt)$
+        stages: [pre-commit]
+
+  # ============================================================================
   # Configuration
   # ============================================================================
 
