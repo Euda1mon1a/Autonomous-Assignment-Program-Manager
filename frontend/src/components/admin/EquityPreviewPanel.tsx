@@ -101,8 +101,8 @@ function getImprovementLabel(score: number): string {
 function getMaxCalls(details: FacultyEquityDetail[]): number {
   return Math.max(
     ...details.flatMap((d) => [
-      d.current_total_calls,
-      d.projected_total_calls,
+      d.currentTotalCalls,
+      d.projectedTotalCalls,
     ]),
     1
   );
@@ -136,7 +136,7 @@ function FacultyEquityRow({ faculty, maxCalls }: FacultyEquityRowProps) {
             </span>
           )}
           <span className="text-xs text-slate-500">
-            {faculty.current_total_calls} {'->'} {faculty.projected_total_calls}
+            {faculty.currentTotalCalls} {'->'} {faculty.projectedTotalCalls}
           </span>
         </div>
       </div>
@@ -148,17 +148,17 @@ function FacultyEquityRow({ faculty, maxCalls }: FacultyEquityRowProps) {
           <div
             className="h-full bg-blue-500/60 rounded-l"
             style={{
-              width: `${(faculty.current_sunday_calls / maxCalls) * 100}%`,
+              width: `${(faculty.currentSundayCalls / maxCalls) * 100}%`,
             }}
-            title={`Current Sunday: ${faculty.current_sunday_calls}`}
+            title={`Current Sunday: ${faculty.currentSundayCalls}`}
           />
           {/* Weekday calls (current) */}
           <div
             className="h-full bg-emerald-500/60"
             style={{
-              width: `${(faculty.current_weekday_calls / maxCalls) * 100}%`,
+              width: `${(faculty.currentWeekdayCalls / maxCalls) * 100}%`,
             }}
-            title={`Current Weekday: ${faculty.current_weekday_calls}`}
+            title={`Current Weekday: ${faculty.currentWeekdayCalls}`}
           />
         </div>
         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">
@@ -175,17 +175,17 @@ function FacultyEquityRow({ faculty, maxCalls }: FacultyEquityRowProps) {
               hasChange ? 'bg-blue-400' : 'bg-blue-500/60'
             }`}
             style={{
-              width: `${(faculty.projected_sunday_calls / maxCalls) * 100}%`,
+              width: `${(faculty.projectedSundayCalls / maxCalls) * 100}%`,
             }}
-            title={`Projected Sunday: ${faculty.projected_sunday_calls}`}
+            title={`Projected Sunday: ${faculty.projectedSundayCalls}`}
           />
           {/* Weekday calls (projected) */}
           <div
             className={`h-full ${hasChange ? 'bg-emerald-400' : 'bg-emerald-500/60'}`}
             style={{
-              width: `${(faculty.projected_weekday_calls / maxCalls) * 100}%`,
+              width: `${(faculty.projectedWeekdayCalls / maxCalls) * 100}%`,
             }}
-            title={`Projected Weekday: ${faculty.projected_weekday_calls}`}
+            title={`Projected Weekday: ${faculty.projectedWeekdayCalls}`}
           />
         </div>
         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">
@@ -255,11 +255,11 @@ export function EquityPreviewPanel({
 }: EquityPreviewPanelProps) {
   // Sort faculty by absolute delta (most affected first)
   const sortedFacultyDetails = useMemo(() => {
-    if (!previewData?.faculty_details) return [];
-    return [...previewData.faculty_details].sort(
+    if (!previewData?.facultyDetails) return [];
+    return [...previewData.facultyDetails].sort(
       (a, b) => Math.abs(b.delta) - Math.abs(a.delta)
     );
-  }, [previewData?.faculty_details]);
+  }, [previewData?.facultyDetails]);
 
   const maxCalls = useMemo(
     () => getMaxCalls(sortedFacultyDetails),
@@ -334,28 +334,28 @@ export function EquityPreviewPanel({
               {/* Improvement Score Banner */}
               <div
                 className={`flex items-center justify-between p-4 rounded-lg ${getImprovementBgColor(
-                  previewData.improvement_score
+                  previewData.improvementScore
                 )}`}
               >
                 <div className="flex items-center gap-3">
                   <div
                     className={`p-2 rounded-lg bg-slate-800/50 ${getImprovementColor(
-                      previewData.improvement_score
+                      previewData.improvementScore
                     )}`}
                   >
-                    <ImprovementIcon score={previewData.improvement_score} />
+                    <ImprovementIcon score={previewData.improvementScore} />
                   </div>
                   <div>
                     <p
                       className={`text-sm font-medium ${getImprovementColor(
-                        previewData.improvement_score
+                        previewData.improvementScore
                       )}`}
                     >
-                      {getImprovementLabel(previewData.improvement_score)}
+                      {getImprovementLabel(previewData.improvementScore)}
                     </p>
                     <p className="text-xs text-slate-400">
-                      Equity score change: {previewData.improvement_score > 0 ? '+' : ''}
-                      {(previewData.improvement_score * 100).toFixed(1)}%
+                      Equity score change: {previewData.improvementScore > 0 ? '+' : ''}
+                      {(previewData.improvementScore * 100).toFixed(1)}%
                     </p>
                   </div>
                 </div>
@@ -371,13 +371,13 @@ export function EquityPreviewPanel({
               <div className="grid grid-cols-2 gap-4">
                 <StatsSummary
                   label="Sunday Calls"
-                  current={previewData.current_equity.sunday_call_stats as { min: number; max: number; mean: number; stdev: number }}
-                  projected={previewData.projected_equity.sunday_call_stats as { min: number; max: number; mean: number; stdev: number }}
+                  current={previewData.currentEquity.sundayCallStats as { min: number; max: number; mean: number; stdev: number }}
+                  projected={previewData.projectedEquity.sundayCallStats as { min: number; max: number; mean: number; stdev: number }}
                 />
                 <StatsSummary
                   label="Weekday Calls"
-                  current={previewData.current_equity.weekday_call_stats as { min: number; max: number; mean: number; stdev: number }}
-                  projected={previewData.projected_equity.weekday_call_stats as { min: number; max: number; mean: number; stdev: number }}
+                  current={previewData.currentEquity.weekdayCallStats as { min: number; max: number; mean: number; stdev: number }}
+                  projected={previewData.projectedEquity.weekdayCallStats as { min: number; max: number; mean: number; stdev: number }}
                 />
               </div>
 

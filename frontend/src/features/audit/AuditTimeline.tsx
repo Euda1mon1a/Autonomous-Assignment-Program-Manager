@@ -102,13 +102,13 @@ function getActionIcon(action: AuditActionType): React.ReactNode {
       return <AlertTriangle {...iconProps} />;
     case 'restore':
       return <RotateCcw {...iconProps} />;
-    case 'bulk_import':
+    case 'bulkImport':
       return <Upload {...iconProps} />;
-    case 'bulk_delete':
+    case 'bulkDelete':
       return <Trash2 {...iconProps} />;
-    case 'schedule_generate':
+    case 'scheduleGenerate':
       return <Calendar {...iconProps} />;
-    case 'schedule_validate':
+    case 'scheduleValidate':
       return <CheckCircle {...iconProps} />;
     case 'login':
       return <LogIn {...iconProps} />;
@@ -131,16 +131,16 @@ function getActionColors(action: AuditActionType): { bg: string; text: string; b
     case 'update':
       return { bg: 'bg-blue-500', text: 'text-blue-700', border: 'border-blue-500' };
     case 'delete':
-    case 'bulk_delete':
+    case 'bulkDelete':
       return { bg: 'bg-red-500', text: 'text-red-700', border: 'border-red-500' };
     case 'override':
       return { bg: 'bg-orange-500', text: 'text-orange-700', border: 'border-orange-500' };
     case 'restore':
       return { bg: 'bg-purple-500', text: 'text-purple-700', border: 'border-purple-500' };
-    case 'bulk_import':
+    case 'bulkImport':
       return { bg: 'bg-indigo-500', text: 'text-indigo-700', border: 'border-indigo-500' };
-    case 'schedule_generate':
-    case 'schedule_validate':
+    case 'scheduleGenerate':
+    case 'scheduleValidate':
       return { bg: 'bg-teal-500', text: 'text-teal-700', border: 'border-teal-500' };
     case 'login':
     case 'logout':

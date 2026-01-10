@@ -21,24 +21,28 @@ jest.mock('@/contexts/ToastContext', () => ({
 
 describe('HolidayEditModal', () => {
   const mockOnClose = jest.fn();
-  const mockOnSuccess = jest.fn();
+  const mockOnSave = jest.fn();
+  const mockHolidays = [
+    { id: 'new-years', name: "New Year's Day", date: '2024-01-01' },
+    { id: 'christmas', name: 'Christmas Day', date: '2024-12-25' },
+  ];
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('renders when isOpen is true', () => {
-    render(<HolidayEditModal isOpen={true} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+    render(<HolidayEditModal isOpen={true} onClose={mockOnClose} holidays={mockHolidays} onSave={mockOnSave} />);
     expect(screen.getByText(/holiday/i)).toBeInTheDocument();
   });
 
   it('does not render when isOpen is false', () => {
-    render(<HolidayEditModal isOpen={false} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+    render(<HolidayEditModal isOpen={false} onClose={mockOnClose} holidays={mockHolidays} onSave={mockOnSave} />);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('calls onClose when cancel button clicked', () => {
-    render(<HolidayEditModal isOpen={true} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+    render(<HolidayEditModal isOpen={true} onClose={mockOnClose} holidays={mockHolidays} onSave={mockOnSave} />);
     const cancelButton = screen.getByText(/cancel/i);
     fireEvent.click(cancelButton);
     expect(mockOnClose).toHaveBeenCalled();

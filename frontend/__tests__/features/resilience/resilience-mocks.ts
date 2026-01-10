@@ -6,7 +6,7 @@
 export const resilienceMockFactories = {
   healthCheck: (overrides = {}) => ({
     timestamp: '2024-12-19T10:00:00Z',
-    overallStatus: 'green',
+    overallStatus: 'GREEN' as const,
     utilization: {
       utilizationRate: 0.75,
       level: 'optimal',
@@ -46,7 +46,7 @@ export const resilienceMockFactories = {
 
   healthCheckWarning: (overrides = {}) => ({
     timestamp: '2024-12-19T10:00:00Z',
-    overallStatus: 'yellow',
+    overallStatus: 'YELLOW' as const,
     utilization: {
       utilizationRate: 0.85,
       level: 'high',
@@ -79,7 +79,7 @@ export const resilienceMockFactories = {
 
   healthCheckCritical: (overrides = {}) => ({
     timestamp: '2024-12-19T10:00:00Z',
-    overallStatus: 'red',
+    overallStatus: 'RED' as const,
     utilization: {
       utilizationRate: 0.92,
       level: 'critical',

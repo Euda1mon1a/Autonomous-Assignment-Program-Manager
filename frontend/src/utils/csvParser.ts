@@ -27,17 +27,17 @@ export interface CSVParseError {
 
 export interface ColumnMapping {
   name: string | null;
-  activity_type: string | null;
+  activityType: string | null;
   abbreviation: string | null;
-  display_abbreviation: string | null;
-  font_color: string | null;
-  background_color: string | null;
-  clinic_location: string | null;
-  max_residents: string | null;
-  requires_specialty: string | null;
-  requires_procedure_credential: string | null;
-  supervision_required: string | null;
-  max_supervision_ratio: string | null;
+  displayAbbreviation: string | null;
+  fontColor: string | null;
+  backgroundColor: string | null;
+  clinicLocation: string | null;
+  maxResidents: string | null;
+  requiresSpecialty: string | null;
+  requiresProcedureCredential: string | null;
+  supervisionRequired: string | null;
+  maxSupervisionRatio: string | null;
 }
 
 export interface MappedTemplate extends TemplateCreateRequest {
@@ -71,20 +71,20 @@ const VALID_ACTIVITY_TYPES: ActivityType[] = [
 
 export const COLUMN_LABELS: Record<keyof ColumnMapping, string> = {
   name: 'Name',
-  activity_type: 'Activity Type',
+  activityType: 'Activity Type',
   abbreviation: 'Abbreviation',
-  display_abbreviation: 'Display Abbreviation',
-  font_color: 'Font Color',
-  background_color: 'Background Color',
-  clinic_location: 'Clinic Location',
-  max_residents: 'Max Residents',
-  requires_specialty: 'Required Specialty',
-  requires_procedure_credential: 'Requires Procedure Credential',
-  supervision_required: 'Supervision Required',
-  max_supervision_ratio: 'Max Supervision Ratio',
+  displayAbbreviation: 'Display Abbreviation',
+  fontColor: 'Font Color',
+  backgroundColor: 'Background Color',
+  clinicLocation: 'Clinic Location',
+  maxResidents: 'Max Residents',
+  requiresSpecialty: 'Required Specialty',
+  requiresProcedureCredential: 'Requires Procedure Credential',
+  supervisionRequired: 'Supervision Required',
+  maxSupervisionRatio: 'Max Supervision Ratio',
 };
 
-export const REQUIRED_COLUMNS: (keyof ColumnMapping)[] = ['name', 'activity_type'];
+export const REQUIRED_COLUMNS: (keyof ColumnMapping)[] = ['name', 'activityType'];
 
 // ============================================================================
 // Helper Functions
@@ -201,32 +201,32 @@ export function parseCSV(csvContent: string): CSVParseResult {
 export function autoDetectMapping(headers: string[]): ColumnMapping {
   const mapping: ColumnMapping = {
     name: null,
-    activity_type: null,
+    activityType: null,
     abbreviation: null,
-    display_abbreviation: null,
-    font_color: null,
-    background_color: null,
-    clinic_location: null,
-    max_residents: null,
-    requires_specialty: null,
-    requires_procedure_credential: null,
-    supervision_required: null,
-    max_supervision_ratio: null,
+    displayAbbreviation: null,
+    fontColor: null,
+    backgroundColor: null,
+    clinicLocation: null,
+    maxResidents: null,
+    requiresSpecialty: null,
+    requiresProcedureCredential: null,
+    supervisionRequired: null,
+    maxSupervisionRatio: null,
   };
 
   const patterns: Record<keyof ColumnMapping, RegExp[]> = {
     name: [/^name$/i, /template.?name/i, /^template$/i],
-    activity_type: [/activity.?type/i, /^type$/i, /^activity$/i],
+    activityType: [/activity.?type/i, /^type$/i, /^activity$/i],
     abbreviation: [/^abbrev/i, /^abbr$/i],
-    display_abbreviation: [/display.?abbrev/i, /short.?name/i],
-    font_color: [/font.?color/i, /text.?color/i, /foreground/i],
-    background_color: [/background.?color/i, /bg.?color/i, /^color$/i],
-    clinic_location: [/clinic.?location/i, /location/i, /^clinic$/i],
-    max_residents: [/max.?resident/i, /resident.?limit/i, /capacity/i],
-    requires_specialty: [/require.?specialty/i, /specialty/i],
-    requires_procedure_credential: [/procedure.?credential/i, /credential/i],
-    supervision_required: [/supervision/i, /^supervised$/i],
-    max_supervision_ratio: [/supervision.?ratio/i, /ratio/i],
+    displayAbbreviation: [/display.?abbrev/i, /short.?name/i],
+    fontColor: [/font.?color/i, /text.?color/i, /foreground/i],
+    backgroundColor: [/background.?color/i, /bg.?color/i, /^color$/i],
+    clinicLocation: [/clinic.?location/i, /location/i, /^clinic$/i],
+    maxResidents: [/max.?resident/i, /resident.?limit/i, /capacity/i],
+    requiresSpecialty: [/require.?specialty/i, /specialty/i],
+    requiresProcedureCredential: [/procedure.?credential/i, /credential/i],
+    supervisionRequired: [/supervision/i, /^supervised$/i],
+    maxSupervisionRatio: [/supervision.?ratio/i, /ratio/i],
   };
 
   for (const header of headers) {
@@ -277,8 +277,8 @@ export function applyMappingAndValidate(
 
     // Get values from mapping
     const name = mapping.name ? row[mapping.name]?.trim() : '';
-    const activityTypeRaw = mapping.activity_type
-      ? row[mapping.activity_type]?.trim()
+    const activityTypeRaw = mapping.activityType
+      ? row[mapping.activityType]?.trim()
       : '';
 
     // Validate required fields
@@ -296,62 +296,62 @@ export function applyMappingAndValidate(
       ? row[mapping.abbreviation]?.trim() || null
       : null;
 
-    const displayAbbreviation = mapping.display_abbreviation
-      ? row[mapping.display_abbreviation]?.trim() || null
+    const displayAbbreviation = mapping.displayAbbreviation
+      ? row[mapping.displayAbbreviation]?.trim() || null
       : null;
 
-    const fontColor = mapping.font_color
-      ? row[mapping.font_color]?.trim() || null
+    const fontColor = mapping.fontColor
+      ? row[mapping.fontColor]?.trim() || null
       : null;
     if (fontColor && !isValidHexColor(fontColor)) {
       rowErrors.push(`Invalid font color format: "${fontColor}"`);
     }
 
-    const backgroundColor = mapping.background_color
-      ? row[mapping.background_color]?.trim() || null
+    const backgroundColor = mapping.backgroundColor
+      ? row[mapping.backgroundColor]?.trim() || null
       : null;
     if (backgroundColor && !isValidHexColor(backgroundColor)) {
       rowErrors.push(`Invalid background color format: "${backgroundColor}"`);
     }
 
-    const clinicLocation = mapping.clinic_location
-      ? row[mapping.clinic_location]?.trim() || null
+    const clinicLocation = mapping.clinicLocation
+      ? row[mapping.clinicLocation]?.trim() || null
       : null;
 
-    const maxResidents = mapping.max_residents
-      ? parseNumber(row[mapping.max_residents])
+    const maxResidents = mapping.maxResidents
+      ? parseNumber(row[mapping.maxResidents])
       : null;
 
-    const requiresSpecialty = mapping.requires_specialty
-      ? row[mapping.requires_specialty]?.trim() || null
+    const requiresSpecialty = mapping.requiresSpecialty
+      ? row[mapping.requiresSpecialty]?.trim() || null
       : null;
 
-    const requiresProcedureCredential = mapping.requires_procedure_credential
-      ? parseBoolean(row[mapping.requires_procedure_credential])
+    const requiresProcedureCredential = mapping.requiresProcedureCredential
+      ? parseBoolean(row[mapping.requiresProcedureCredential])
       : false;
 
-    const supervisionRequired = mapping.supervision_required
-      ? parseBoolean(row[mapping.supervision_required])
+    const supervisionRequired = mapping.supervisionRequired
+      ? parseBoolean(row[mapping.supervisionRequired])
       : false;
 
-    const maxSupervisionRatio = mapping.max_supervision_ratio
-      ? parseNumber(row[mapping.max_supervision_ratio])
+    const maxSupervisionRatio = mapping.maxSupervisionRatio
+      ? parseNumber(row[mapping.maxSupervisionRatio])
       : null;
 
     const template: MappedTemplate = {
       name,
-      activity_type: activityType || 'clinic',
+      activityType: activityType || 'clinic',
       abbreviation,
-      display_abbreviation: displayAbbreviation,
-      font_color: fontColor && isValidHexColor(fontColor) ? fontColor : null,
-      background_color:
+      displayAbbreviation: displayAbbreviation,
+      fontColor: fontColor && isValidHexColor(fontColor) ? fontColor : null,
+      backgroundColor:
         backgroundColor && isValidHexColor(backgroundColor) ? backgroundColor : null,
-      clinic_location: clinicLocation,
-      max_residents: maxResidents,
-      requires_specialty: requiresSpecialty,
-      requires_procedure_credential: requiresProcedureCredential,
-      supervision_required: supervisionRequired,
-      max_supervision_ratio: maxSupervisionRatio,
+      clinicLocation: clinicLocation,
+      maxResidents: maxResidents,
+      requiresSpecialty: requiresSpecialty,
+      requiresProcedureCredential: requiresProcedureCredential,
+      supervisionRequired: supervisionRequired,
+      maxSupervisionRatio: maxSupervisionRatio,
       _rowIndex: index + 2, // +2 for 1-based + header
       _errors: rowErrors,
     };
@@ -388,14 +388,14 @@ export function toTemplateCreateRequests(
 export function generateSampleCSV(): string {
   const headers = [
     'name',
-    'activity_type',
+    'activityType',
     'abbreviation',
-    'display_abbreviation',
-    'max_residents',
-    'supervision_required',
-    'clinic_location',
-    'background_color',
-    'font_color',
+    'displayAbbreviation',
+    'maxResidents',
+    'supervisionRequired',
+    'clinicLocation',
+    'backgroundColor',
+    'fontColor',
   ];
 
   const rows = [

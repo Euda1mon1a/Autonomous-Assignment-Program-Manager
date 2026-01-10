@@ -123,12 +123,12 @@ export function useCreateActivity() {
       const payload = {
         name: data.name,
         code: data.code,
-        display_abbreviation: data.displayAbbreviation,
+        displayAbbreviation: data.displayAbbreviation,
         activity_category: data.activityCategory,
-        font_color: data.fontColor,
-        background_color: data.backgroundColor,
+        fontColor: data.fontColor,
+        backgroundColor: data.backgroundColor,
         requires_supervision: data.requiresSupervision,
-        is_protected: data.isProtected,
+        isProtected: data.isProtected,
         counts_toward_clinical_hours: data.countsTowardClinicalHours,
         display_order: data.displayOrder,
       };

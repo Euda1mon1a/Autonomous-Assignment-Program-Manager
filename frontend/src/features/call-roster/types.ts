@@ -14,7 +14,7 @@ export type RoleType = 'attending' | 'senior' | 'intern';
 export interface OnCallPerson {
   id: string;
   name: string;
-  pgy_level?: number;
+  pgyLevel?: number;
   role: RoleType;
   phone?: string;
   pager?: string;
@@ -30,7 +30,7 @@ export interface CallAssignment {
   date: string;
   shift: 'day' | 'night' | '24hr';
   person: OnCallPerson;
-  rotation_name?: string;
+  rotationName?: string;
   notes?: string;
 }
 
@@ -50,22 +50,22 @@ export interface CallRosterEntry {
  */
 export interface RawAssignment {
   id: string;
-  block_id: string;
-  person_id: string;
-  rotation_template_id: string | null;
+  blockId: string;
+  personId: string;
+  rotationTemplateId: string | null;
   role: string;
-  activity_override: string | null;
+  activityOverride: string | null;
   notes: string | null;
-  created_by: string | null;
-  created_at: string;
-  updated_at: string;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface RawAssignmentsResponse {
   items: RawAssignment[];
   total: number;
   page?: number;
-  page_size?: number;
+  pageSize?: number;
 }
 
 /**
@@ -74,11 +74,11 @@ export interface RawAssignmentsResponse {
 export interface RawBlock {
   id: string;
   date: string;
-  time_of_day: 'AM' | 'PM';
-  block_number: number;
-  is_weekend: boolean;
-  is_holiday: boolean;
-  holiday_name: string | null;
+  timeOfDay: 'AM' | 'PM';
+  blockNumber: number;
+  isWeekend: boolean;
+  isHoliday: boolean;
+  holidayName: string | null;
 }
 
 export interface RawBlocksResponse {
@@ -94,13 +94,13 @@ export interface RawPerson {
   name: string;
   email: string | null;
   type: 'resident' | 'faculty';
-  pgy_level: number | null;
-  performs_procedures: boolean;
+  pgyLevel: number | null;
+  performsProcedures: boolean;
   specialties: string[] | null;
-  primary_duty: string | null;
-  faculty_role: string | null;
-  created_at: string;
-  updated_at: string;
+  primaryDuty: string | null;
+  facultyRole: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface RawPeopleResponse {
@@ -114,18 +114,18 @@ export interface RawPeopleResponse {
 export interface RawRotationTemplate {
   id: string;
   name: string;
-  activity_type: string;
+  activityType: string;
   abbreviation: string | null;
-  display_abbreviation: string | null;
-  font_color: string | null;
-  background_color: string | null;
-  clinic_location: string | null;
-  max_residents: number | null;
-  requires_specialty: string | null;
-  requires_procedure_credential: boolean;
-  supervision_required: boolean;
-  max_supervision_ratio: number;
-  created_at: string;
+  displayAbbreviation: string | null;
+  fontColor: string | null;
+  backgroundColor: string | null;
+  clinicLocation: string | null;
+  maxResidents: number | null;
+  requiresSpecialty: string | null;
+  requiresProcedureCredential: boolean;
+  supervisionRequired: boolean;
+  maxSupervisionRatio: number;
+  createdAt: string;
 }
 
 export interface RawRotationTemplatesResponse {
@@ -138,8 +138,8 @@ export interface RawRotationTemplatesResponse {
 // ============================================================================
 
 export interface CallRosterFilters {
-  start_date: string;
-  end_date: string;
+  startDate: string;
+  endDate: string;
   role?: RoleType;
 }
 
@@ -218,7 +218,7 @@ export function getPersonName(person?: RawPerson | null): string {
  * Check if an assignment is an on-call assignment by looking up the rotation template
  */
 export function isOnCallTemplate(template?: RawRotationTemplate | null): boolean {
-  return template?.activity_type === 'on_call';
+  return template?.activityType === 'on_call';
 }
 
 /**

@@ -320,9 +320,9 @@ export default function ComplianceDashboardPage() {
 
   // Create person lookup map
   const personMap = useMemo(() => {
-    const map = new Map<string, { name: string; pgy_level?: number }>();
+    const map = new Map<string, { name: string; pgyLevel?: number }>();
     peopleData?.items?.forEach((p) => {
-      map.set(p.id, { name: p.name, pgy_level: p.pgyLevel ?? undefined });
+      map.set(p.id, { name: p.name, pgyLevel: p.pgyLevel ?? undefined });
     });
     return map;
   }, [peopleData]);

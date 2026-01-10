@@ -58,7 +58,7 @@ describe('ConflictCard', () => {
     });
 
     it('should display conflict date', () => {
-      const conflict = conflictsMockFactories.conflict({ conflict_date: '2024-02-15' });
+      const conflict = conflictsMockFactories.conflict({ conflictDate: '2024-02-15' });
 
       render(<ConflictCard conflict={conflict} />, { wrapper: createWrapper() });
 
@@ -67,7 +67,7 @@ describe('ConflictCard', () => {
 
     it('should display affected count', () => {
       const conflict = conflictsMockFactories.conflict({
-        affected_person_ids: ['person-1', 'person-2', 'person-3'],
+        affectedPersonIds: ['person-1', 'person-2', 'person-3'],
       });
 
       render(<ConflictCard conflict={conflict} />, { wrapper: createWrapper() });
@@ -202,7 +202,7 @@ describe('ConflictCard', () => {
     it('should show affected assignments when expanded', async () => {
       const user = userEvent.setup();
       const conflict = conflictsMockFactories.conflict({
-        affected_assignment_ids: ['assignment-1', 'assignment-2'],
+        affectedAssignmentIds: ['assignment-1', 'assignment-2'],
       });
 
       render(<ConflictCard conflict={conflict} />, { wrapper: createWrapper() });
@@ -233,10 +233,10 @@ describe('ConflictCard', () => {
       const user = userEvent.setup();
       const conflict = conflictsMockFactories.conflict({
         status: 'resolved',
-        resolved_at: '2024-02-15T10:00:00Z',
-        resolved_by: 'Admin User',
-        resolution_method: 'manual_reassign',
-        resolution_notes: 'Reassigned to different date',
+        resolvedAt: '2024-02-15T10:00:00Z',
+        resolvedBy: 'Admin User',
+        resolutionMethod: 'manual_reassign',
+        resolutionNotes: 'Reassigned to different date',
       });
 
       render(<ConflictCard conflict={conflict} />, { wrapper: createWrapper() });

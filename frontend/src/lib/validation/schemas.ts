@@ -19,8 +19,8 @@ export const facultyRoleSchema = z.enum([
   "pd",
   "apd",
   "oic",
-  "dept_chief",
-  "sports_med",
+  "deptChief",
+  "sportsMed",
   "core",
   "adjunct",
 ]);
@@ -35,11 +35,11 @@ export const personBaseSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(255),
   type: personTypeSchema,
   email: z.string().email("Invalid email address").optional().nullable(),
-  pgy_level: pgyLevelSchema.optional().nullable(),
-  performs_procedures: z.boolean().default(false),
+  pgyLevel: pgyLevelSchema.optional().nullable(),
+  performsProcedures: z.boolean().default(false),
   specialties: z.array(z.string()).optional().nullable(),
-  primary_duty: z.string().max(255).optional().nullable(),
-  faculty_role: facultyRoleSchema.optional().nullable(),
+  primaryDuty: z.string().max(255).optional().nullable(),
+  facultyRole: facultyRoleSchema.optional().nullable(),
 });
 
 export const personCreateSchema = personBaseSchema;
@@ -48,11 +48,11 @@ export const personUpdateSchema = personBaseSchema.partial();
 
 export const personResponseSchema = personBaseSchema.extend({
   id: z.string().uuid(),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
-  sunday_call_count: z.number().int().default(0),
-  weekday_call_count: z.number().int().default(0),
-  fmit_weeks_count: z.number().int().default(0),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  sundayCallCount: z.number().int().default(0),
+  weekdayCallCount: z.number().int().default(0),
+  fmitWeeksCount: z.number().int().default(0),
 });
 
 // ==================== Assignment Schemas ====================
@@ -60,32 +60,32 @@ export const personResponseSchema = personBaseSchema.extend({
 export const assignmentRoleSchema = z.enum(["primary", "supervising", "backup"]);
 
 export const assignmentBaseSchema = z.object({
-  block_id: z.string().uuid(),
-  person_id: z.string().uuid(),
-  rotation_template_id: z.string().uuid().optional().nullable(),
+  blockId: z.string().uuid(),
+  personId: z.string().uuid(),
+  rotationTemplateId: z.string().uuid().optional().nullable(),
   role: assignmentRoleSchema,
-  activity_override: z.string().max(255).optional().nullable(),
+  activityOverride: z.string().max(255).optional().nullable(),
   notes: z.string().max(1000).optional().nullable(),
-  override_reason: z.string().max(500).optional().nullable(),
+  overrideReason: z.string().max(500).optional().nullable(),
 });
 
 export const assignmentCreateSchema = assignmentBaseSchema.extend({
-  created_by: z.string().optional().nullable(),
+  createdBy: z.string().optional().nullable(),
 });
 
 export const assignmentUpdateSchema = assignmentBaseSchema
   .partial()
   .extend({
-    updated_at: z.string().datetime(),
+    updatedAt: z.string().datetime(),
     acknowledge_override: z.boolean().optional(),
   });
 
 export const assignmentResponseSchema = assignmentBaseSchema.extend({
   id: z.string().uuid(),
-  created_by: z.string().optional().nullable(),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
-  override_acknowledged_at: z.string().datetime().optional().nullable(),
+  createdBy: z.string().optional().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  overrideAcknowledgedAt: z.string().datetime().optional().nullable(),
   confidence: z.number().min(0).max(1).optional().nullable(),
   score: z.number().optional().nullable(),
 });
@@ -101,13 +101,13 @@ export const blockBaseSchema = z.object({
 
 export const blockResponseSchema = blockBaseSchema.extend({
   id: z.string().uuid(),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
 });
 
 // ==================== Swap Schemas ====================
 
-export const swapTypeSchema = z.enum(["one_to_one", "absorb", "multi_way"]);
+export const swapTypeSchema = z.enum(["oneToOne", "absorb", "multi_way"]);
 
 export const swapStatusSchema = z.enum([
   "pending",
@@ -120,50 +120,50 @@ export const swapStatusSchema = z.enum([
 
 export const swapRequestSchema = z.object({
   requester_id: z.string().uuid(),
-  requester_assignment_id: z.string().uuid(),
+  requester_assignmentId: z.string().uuid(),
   target_id: z.string().uuid().optional().nullable(),
-  target_assignment_id: z.string().uuid().optional().nullable(),
-  swap_type: swapTypeSchema,
+  target_assignmentId: z.string().uuid().optional().nullable(),
+  swapType: swapTypeSchema,
   reason: z.string().min(10, "Reason must be at least 10 characters").max(500),
 });
 
 export const swapResponseSchema = swapRequestSchema.extend({
   id: z.string().uuid(),
   status: swapStatusSchema,
-  created_at: z.string().datetime(),
+  createdAt: z.string().datetime(),
   approved_at: z.string().datetime().optional().nullable(),
-  executed_at: z.string().datetime().optional().nullable(),
+  executedAt: z.string().datetime().optional().nullable(),
   approved_by: z.string().optional().nullable(),
 });
 
 // ==================== Filter Schemas ====================
 
 export const dateRangeFilterSchema = z.object({
-  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 export const personFilterSchema = z.object({
   person_type: personTypeSchema.optional(),
-  pgy_level: pgyLevelSchema.optional(),
-  faculty_role: facultyRoleSchema.optional(),
+  pgyLevel: pgyLevelSchema.optional(),
+  facultyRole: facultyRoleSchema.optional(),
   specialties: z.array(z.string()).optional(),
-  performs_procedures: z.boolean().optional(),
+  performsProcedures: z.boolean().optional(),
 });
 
 export const assignmentFilterSchema = z.object({
-  person_id: z.string().uuid().optional(),
-  block_id: z.string().uuid().optional(),
-  rotation_template_id: z.string().uuid().optional(),
+  personId: z.string().uuid().optional(),
+  blockId: z.string().uuid().optional(),
+  rotationTemplateId: z.string().uuid().optional(),
   role: assignmentRoleSchema.optional(),
-  date_range: dateRangeFilterSchema.optional(),
+  dateRange: dateRangeFilterSchema.optional(),
 });
 
 // ==================== Pagination Schemas ====================
 
 export const paginationParamsSchema = z.object({
   page: z.number().int().min(1).default(1),
-  page_size: z.number().int().min(1).max(1000).default(50),
+  pageSize: z.number().int().min(1).max(1000).default(50),
 });
 
 export const sortOrderSchema = z.enum(["asc", "desc"]);

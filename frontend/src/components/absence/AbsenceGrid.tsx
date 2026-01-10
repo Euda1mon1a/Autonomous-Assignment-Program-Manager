@@ -51,7 +51,7 @@ function useAbsencesForRange(startDate: string, endDate: string) {
     queryKey: ['absences', 'range', startDate, endDate],
     queryFn: () =>
       get<ListResponse<Absence>>(
-        `/absences?start_date=${startDate}&end_date=${endDate}&page_size=500`
+        `/absences?startDate=${startDate}&endDate=${endDate}&pageSize=500`
       ),
     staleTime: 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000, // 5 minutes

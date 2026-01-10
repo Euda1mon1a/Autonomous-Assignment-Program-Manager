@@ -189,7 +189,7 @@ describe.skip('ContingencyAnalysis', () => {
     it('should display N-1 fail status with X icon', async () => {
       mockedApi.get.mockResolvedValue({
         ...resilienceMockResponses.contingencyAnalysis,
-        n1_pass: false,
+        n1Pass: false,
       });
 
       render(<ContingencyAnalysis />, { wrapper: createWrapper() });
@@ -475,7 +475,7 @@ describe.skip('ContingencyAnalysis', () => {
     it('should show empty state when no recommendations', async () => {
       mockedApi.get.mockResolvedValue({
         ...resilienceMockResponses.contingencyAnalysis,
-        recommended_actions: [],
+        recommendedActions: [],
       });
 
       render(<ContingencyAnalysis />, { wrapper: createWrapper() });
@@ -525,7 +525,7 @@ describe.skip('ContingencyAnalysis', () => {
 
       await waitFor(() => {
         expect(mockedApi.get).toHaveBeenCalledWith(
-          expect.stringContaining('start_date=2025-01-01')
+          expect.stringContaining('startDate=2025-01-01')
         );
       });
     });

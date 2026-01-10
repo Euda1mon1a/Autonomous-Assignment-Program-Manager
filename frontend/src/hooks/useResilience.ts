@@ -40,8 +40,8 @@ export const resilienceQueryKeys = {
   all: ["resilience"] as const,
   health: () => ["resilience", "health"] as const,
   vulnerability: (params?: {
-    start_date?: string;
-    end_date?: string;
+    startDate?: string;
+    endDate?: string;
     include_n2?: boolean;
   }) => ["resilience", "vulnerability", params] as const,
   defenseLevel: (coverageRate: number) =>
@@ -85,9 +85,9 @@ export const resilienceQueryKeys = {
  *   if (isLoading) return <Spinner />;
  *
  *   return (
- *     <div className={data.crisis_mode ? 'bg-red-900' : 'bg-slate-900'}>
+ *     <div className={data.crisisMode ? 'bg-red-900' : 'bg-slate-900'}>
  *       <StatusBadge status={data.overall_status} />
- *       <DefenseLevel level={data.defense_level} />
+ *       <DefenseLevel level={data.defenseLevel} />
  *       <button onClick={() => refetch()} disabled={isRefetching}>
  *         Refresh
  *       </button>
@@ -141,9 +141,9 @@ export function useSystemHealth(
  *
  *   return (
  *     <div>
- *       <N1StatusBadge pass={data.n1_pass} />
- *       <CriticalFacultyList faculty={data.most_critical_faculty} />
- *       <RecommendationsList actions={data.recommended_actions} />
+ *       <N1StatusBadge pass={data.n1Pass} />
+ *       <CriticalFacultyList faculty={data.mostCriticalFaculty} />
+ *       <RecommendationsList actions={data.recommendedActions} />
  *     </div>
  *   );
  * }
@@ -151,8 +151,8 @@ export function useSystemHealth(
  */
 export function useVulnerabilityReport(
   params?: {
-    start_date?: string;
-    end_date?: string;
+    startDate?: string;
+    endDate?: string;
     include_n2?: boolean;
   },
   options?: Omit<
@@ -210,7 +210,7 @@ export function useDefenseLevel(
     queryFn: async () => {
       const response = await post<DefenseLevelResponse>(
         "/resilience/defense-level",
-        { coverage_rate: coverageRate }
+        { coverageRate: coverageRate }
       );
       return response;
     },
@@ -243,7 +243,7 @@ export function useDefenseLevel(
  *
  *   return (
  *     <Gauge
- *       value={data.utilization_rate * 100}
+ *       value={data.utilizationRate * 100}
  *       max={100}
  *       warning={80}
  *       danger={90}
@@ -386,9 +386,9 @@ export function useBurnoutRt(
  *     mutate(formData, {
  *       onSuccess: (result) => {
  *         if (result.status === 'success') {
- *           toast.success(`Coverage found: ${result.replacements_found} replacements`);
+ *           toast.success(`Coverage found: ${result.replacementsFound} replacements`);
  *         } else if (result.status === 'partial') {
- *           toast.warning(`Partial coverage: ${result.coverage_gaps} gaps need review`);
+ *           toast.warning(`Partial coverage: ${result.coverageGaps} gaps need review`);
  *         } else {
  *           toast.error('Unable to find coverage - manual review required');
  *         }
@@ -403,7 +403,7 @@ export function useBurnoutRt(
  *     <form onSubmit={handleSubmit}>
  *       <DateRangePicker name="dates" />
  *       <TextArea name="reason" placeholder="Reason for absence" />
- *       <Checkbox name="is_deployment" label="Military deployment" />
+ *       <Checkbox name="isDeployment" label="Military deployment" />
  *       <Button type="submit" loading={isPending}>
  *         Find Coverage
  *       </Button>

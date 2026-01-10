@@ -14,7 +14,7 @@ test.describe('Token Refresh', () => {
     // Mock token that's about to expire (30 seconds left)
     await adminPage.evaluate(() => {
       const expiresAt = Date.now() + 30000; // 30 seconds
-      localStorage.setItem('token_expires_at', expiresAt.toString());
+      localStorage.setItem('tokenExpiresAt', expiresAt.toString());
     });
 
     // Make API call that should trigger refresh
@@ -35,8 +35,8 @@ test.describe('Token Refresh', () => {
       route.fulfill({
         status: 200,
         body: JSON.stringify({
-          access_token: 'new-token',
-          token_type: 'bearer',
+          accessToken: 'new-token',
+          tokenType: 'bearer',
         }),
       });
     });
@@ -44,7 +44,7 @@ test.describe('Token Refresh', () => {
     // Trigger token expiration
     await adminPage.evaluate(() => {
       const expiredTime = Date.now() - 1000;
-      localStorage.setItem('token_expires_at', expiredTime.toString());
+      localStorage.setItem('tokenExpiresAt', expiredTime.toString());
     });
 
     // Make multiple concurrent API calls
@@ -72,7 +72,7 @@ test.describe('Token Refresh', () => {
     // Trigger token expiration
     await adminPage.evaluate(() => {
       const expiredTime = Date.now() - 1000;
-      localStorage.setItem('token_expires_at', expiredTime.toString());
+      localStorage.setItem('tokenExpiresAt', expiredTime.toString());
     });
 
     // Try to navigate
@@ -87,20 +87,20 @@ test.describe('Token Refresh', () => {
 
     // Get initial expiration
     const initialExpiration = await adminPage.evaluate(() => {
-      return localStorage.getItem('token_expires_at');
+      return localStorage.getItem('tokenExpiresAt');
     });
 
     // Trigger refresh
     await adminPage.evaluate(() => {
       const expiredTime = Date.now() - 1000;
-      localStorage.setItem('token_expires_at', expiredTime.toString());
+      localStorage.setItem('tokenExpiresAt', expiredTime.toString());
     });
 
     await adminPage.reload();
 
     // Get new expiration
     const newExpiration = await adminPage.evaluate(() => {
-      return localStorage.getItem('token_expires_at');
+      return localStorage.getItem('tokenExpiresAt');
     });
 
     // New expiration should be in the future
@@ -118,8 +118,8 @@ test.describe('Token Refresh', () => {
       route.fulfill({
         status: 200,
         body: JSON.stringify({
-          access_token: 'new-token',
-          token_type: 'bearer',
+          accessToken: 'new-token',
+          tokenType: 'bearer',
         }),
       });
     });
@@ -127,7 +127,7 @@ test.describe('Token Refresh', () => {
     // Trigger expiration
     await adminPage.evaluate(() => {
       const expiredTime = Date.now() - 1000;
-      localStorage.setItem('token_expires_at', expiredTime.toString());
+      localStorage.setItem('tokenExpiresAt', expiredTime.toString());
     });
 
     // Make API calls - should queue during refresh
@@ -161,7 +161,7 @@ test.describe('Token Refresh', () => {
     // Trigger token refresh
     await adminPage.evaluate(() => {
       const expiredTime = Date.now() - 1000;
-      localStorage.setItem('token_expires_at', expiredTime.toString());
+      localStorage.setItem('tokenExpiresAt', expiredTime.toString());
     });
 
     // Make requests
@@ -182,9 +182,9 @@ test.describe('Token Refresh', () => {
       route.fulfill({
         status: 200,
         body: JSON.stringify({
-          access_token: `new-access-token-${refreshCount}`,
-          refresh_token: `new-refresh-token-${refreshCount}`,
-          token_type: 'bearer',
+          accessToken: `new-access-token-${refreshCount}`,
+          refreshToken: `new-refresh-token-${refreshCount}`,
+          tokenType: 'bearer',
         }),
       });
     });
@@ -193,7 +193,7 @@ test.describe('Token Refresh', () => {
     for (let i = 0; i < 3; i++) {
       await adminPage.evaluate(() => {
         const expiredTime = Date.now() - 1000;
-        localStorage.setItem('token_expires_at', expiredTime.toString());
+        localStorage.setItem('tokenExpiresAt', expiredTime.toString());
       });
 
       await adminPage.reload();
@@ -216,7 +216,7 @@ test.describe('Token Refresh', () => {
     // Set token that's still valid (1 hour from now)
     await adminPage.evaluate(() => {
       const expiresAt = Date.now() + 3600000;
-      localStorage.setItem('token_expires_at', expiresAt.toString());
+      localStorage.setItem('tokenExpiresAt', expiresAt.toString());
     });
 
     // Make API calls
@@ -235,8 +235,8 @@ test.describe('Token Refresh', () => {
       route.fulfill({
         status: 200,
         body: JSON.stringify({
-          access_token: 'refreshed-token',
-          token_type: 'bearer',
+          accessToken: 'refreshed-token',
+          tokenType: 'bearer',
         }),
       });
     });
@@ -244,7 +244,7 @@ test.describe('Token Refresh', () => {
     // Set token that expires soon (1 minute)
     await adminPage.evaluate(() => {
       const expiresAt = Date.now() + 60000; // 1 minute
-      localStorage.setItem('token_expires_at', expiresAt.toString());
+      localStorage.setItem('tokenExpiresAt', expiresAt.toString());
     });
 
     // Make API call
@@ -272,7 +272,7 @@ test.describe('Token Refresh', () => {
     // Trigger refresh
     await adminPage.evaluate(() => {
       const expiredTime = Date.now() - 1000;
-      localStorage.setItem('token_expires_at', expiredTime.toString());
+      localStorage.setItem('tokenExpiresAt', expiredTime.toString());
     });
 
     await adminPage.goto('/schedule');
@@ -282,7 +282,7 @@ test.describe('Token Refresh', () => {
 
     // Should have cleared tokens
     const hasToken = await adminPage.evaluate(() => {
-      return Boolean(localStorage.getItem('access_token'));
+      return Boolean(localStorage.getItem('accessToken'));
     });
 
     expect(hasToken).toBe(false);
@@ -300,7 +300,7 @@ test.describe('Refresh Token Security', () => {
 
     // Check cookies
     const cookies = await adminPage.context().cookies();
-    const refreshCookie = cookies.find((c) => c.name === 'refresh_token');
+    const refreshCookie = cookies.find((c) => c.name === 'refreshToken');
 
     if (refreshCookie) {
       // Should be httpOnly for security
@@ -316,9 +316,9 @@ test.describe('Refresh Token Security', () => {
     // Try to access refresh token from JavaScript
     const refreshToken = await adminPage.evaluate(() => {
       return (
-        localStorage.getItem('refresh_token') ||
-        sessionStorage.getItem('refresh_token') ||
-        document.cookie.match(/refresh_token=([^;]+)/)
+        localStorage.getItem('refreshToken') ||
+        sessionStorage.getItem('refreshToken') ||
+        document.cookie.match(/refreshToken=([^;]+)/)
       );
     });
 

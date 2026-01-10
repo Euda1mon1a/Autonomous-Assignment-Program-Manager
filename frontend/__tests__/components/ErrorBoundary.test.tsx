@@ -165,11 +165,11 @@ describe('ErrorBoundary', () => {
     const originalEnv = process.env.NODE_ENV
 
     afterEach(() => {
-      process.env.NODE_ENV = originalEnv
+      Object.defineProperty(process.env, 'NODE_ENV', { value: originalEnv, writable: true })
     })
 
     it('should show technical details in development mode', () => {
-      process.env.NODE_ENV = 'development'
+      Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', writable: true })
       const testError = new Error('Test error message')
 
       render(
@@ -182,7 +182,7 @@ describe('ErrorBoundary', () => {
     })
 
     it('should display error name in technical details', () => {
-      process.env.NODE_ENV = 'development'
+      Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', writable: true })
       const testError = new Error('Test error')
       testError.name = 'CustomError'
 
@@ -199,7 +199,7 @@ describe('ErrorBoundary', () => {
     })
 
     it('should display error message in technical details', () => {
-      process.env.NODE_ENV = 'development'
+      Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', writable: true })
       const testError = new Error('Detailed error message')
 
       render(
@@ -212,7 +212,7 @@ describe('ErrorBoundary', () => {
     })
 
     it('should display stack trace in technical details', () => {
-      process.env.NODE_ENV = 'development'
+      Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', writable: true })
       const testError = new Error('Test error')
 
       render(

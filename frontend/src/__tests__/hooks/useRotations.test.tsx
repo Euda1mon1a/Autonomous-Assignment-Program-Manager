@@ -26,41 +26,41 @@ const mockRotationTemplates = [
   {
     id: 'template-1',
     name: 'Cardiology Clinic',
-    activity_type: 'clinic',
+    activityType: 'clinic',
     abbreviation: 'CARD',
-    clinic_location: 'Building A, Floor 2',
-    max_residents: 4,
-    requires_specialty: 'Cardiology',
-    requires_procedure_credential: true,
-    supervision_required: true,
-    max_supervision_ratio: 2,
-    created_at: '2024-01-01T00:00:00Z',
+    clinicLocation: 'Building A, Floor 2',
+    maxResidents: 4,
+    requiresSpecialty: 'Cardiology',
+    requiresProcedureCredential: true,
+    supervisionRequired: true,
+    maxSupervisionRatio: 2,
+    createdAt: '2024-01-01T00:00:00Z',
   },
   {
     id: 'template-2',
     name: 'Emergency Department',
-    activity_type: 'emergency',
+    activityType: 'emergency',
     abbreviation: 'ED',
-    clinic_location: 'Emergency Wing',
-    max_residents: 6,
-    requires_specialty: null,
-    requires_procedure_credential: false,
-    supervision_required: true,
-    max_supervision_ratio: 3,
-    created_at: '2024-01-02T00:00:00Z',
+    clinicLocation: 'Emergency Wing',
+    maxResidents: 6,
+    requiresSpecialty: null,
+    requiresProcedureCredential: false,
+    supervisionRequired: true,
+    maxSupervisionRatio: 3,
+    createdAt: '2024-01-02T00:00:00Z',
   },
   {
     id: 'template-3',
     name: 'Internal Medicine Ward',
-    activity_type: 'inpatient',
+    activityType: 'inpatient',
     abbreviation: 'IM',
-    clinic_location: null,
-    max_residents: 8,
-    requires_specialty: 'Internal Medicine',
-    requires_procedure_credential: false,
-    supervision_required: true,
-    max_supervision_ratio: 4,
-    created_at: '2024-01-03T00:00:00Z',
+    clinicLocation: null,
+    maxResidents: 8,
+    requiresSpecialty: 'Internal Medicine',
+    requiresProcedureCredential: false,
+    supervisionRequired: true,
+    maxSupervisionRatio: 4,
+    createdAt: '2024-01-03T00:00:00Z',
   },
 ]
 
@@ -161,9 +161,9 @@ describe('useRotationTemplates', () => {
     expect(firstTemplate).toMatchObject({
       id: expect.any(String),
       name: expect.any(String),
-      activity_type: expect.any(String),
-      supervision_required: expect.any(Boolean),
-      max_supervision_ratio: expect.any(Number),
+      activityType: expect.any(String),
+      supervisionRequired: expect.any(Boolean),
+      maxSupervisionRatio: expect.any(Number),
     })
   })
 
@@ -253,15 +253,15 @@ describe('useCreateTemplate', () => {
     const newTemplate = {
       id: 'template-new',
       name: 'Surgery Rotation',
-      activity_type: 'surgical',
+      activityType: 'surgical',
       abbreviation: 'SURG',
-      clinic_location: null,
-      max_residents: 5,
-      requires_specialty: 'Surgery',
-      requires_procedure_credential: true,
-      supervision_required: true,
-      max_supervision_ratio: 2,
-      created_at: '2024-01-04T00:00:00Z',
+      clinicLocation: null,
+      maxResidents: 5,
+      requiresSpecialty: 'Surgery',
+      requiresProcedureCredential: true,
+      supervisionRequired: true,
+      maxSupervisionRatio: 2,
+      createdAt: '2024-01-04T00:00:00Z',
     }
 
     mockedApi.post.mockResolvedValueOnce(newTemplate)
@@ -273,13 +273,13 @@ describe('useCreateTemplate', () => {
     // Execute mutation
     result.current.mutate({
       name: 'Surgery Rotation',
-      activity_type: 'surgical',
+      activityType: 'surgical',
       abbreviation: 'SURG',
-      max_residents: 5,
-      requires_specialty: 'Surgery',
-      requires_procedure_credential: true,
-      supervision_required: true,
-      max_supervision_ratio: 2,
+      maxResidents: 5,
+      requiresSpecialty: 'Surgery',
+      requiresProcedureCredential: true,
+      supervisionRequired: true,
+      maxSupervisionRatio: 2,
     })
 
     // Wait for mutation to complete
@@ -293,7 +293,7 @@ describe('useCreateTemplate', () => {
     expect(result.current.data?.id).toBeDefined()
     expect(mockedApi.post).toHaveBeenCalledWith('/rotation-templates', expect.objectContaining({
       name: 'Surgery Rotation',
-      activity_type: 'surgical',
+      activityType: 'surgical',
     }))
   })
 
@@ -308,7 +308,7 @@ describe('useCreateTemplate', () => {
     // Execute mutation without required fields
     result.current.mutate({
       name: '',
-      activity_type: 'clinic',
+      activityType: 'clinic',
     })
 
     // Wait for error
@@ -323,15 +323,15 @@ describe('useCreateTemplate', () => {
     const minimalTemplate = {
       id: 'template-minimal',
       name: 'Minimal Rotation',
-      activity_type: 'other',
+      activityType: 'other',
       abbreviation: null,
-      clinic_location: null,
-      max_residents: null,
-      requires_specialty: null,
-      requires_procedure_credential: false,
-      supervision_required: false,
-      max_supervision_ratio: 0,
-      created_at: '2024-01-04T00:00:00Z',
+      clinicLocation: null,
+      maxResidents: null,
+      requiresSpecialty: null,
+      requiresProcedureCredential: false,
+      supervisionRequired: false,
+      maxSupervisionRatio: 0,
+      createdAt: '2024-01-04T00:00:00Z',
     }
 
     mockedApi.post.mockResolvedValueOnce(minimalTemplate)
@@ -342,7 +342,7 @@ describe('useCreateTemplate', () => {
 
     result.current.mutate({
       name: 'Minimal Rotation',
-      activity_type: 'other',
+      activityType: 'other',
     })
 
     await waitFor(() => {
@@ -362,7 +362,7 @@ describe('useUpdateTemplate', () => {
     const updatedTemplate = {
       ...mockRotationTemplates[0],
       name: 'Advanced Cardiology Clinic',
-      max_residents: 6,
+      maxResidents: 6,
     }
 
     mockedApi.put.mockResolvedValueOnce(updatedTemplate)
@@ -376,7 +376,7 @@ describe('useUpdateTemplate', () => {
       id: 'template-1',
       data: {
         name: 'Advanced Cardiology Clinic',
-        max_residents: 6,
+        maxResidents: 6,
       },
     })
 
@@ -387,10 +387,10 @@ describe('useUpdateTemplate', () => {
 
     // Check response
     expect(result.current.data?.name).toBe('Advanced Cardiology Clinic')
-    expect(result.current.data?.max_residents).toBe(6)
+    expect(result.current.data?.maxResidents).toBe(6)
     expect(mockedApi.put).toHaveBeenCalledWith('/rotation-templates/template-1', expect.objectContaining({
       name: 'Advanced Cardiology Clinic',
-      max_residents: 6,
+      maxResidents: 6,
     }))
   })
 

@@ -8,7 +8,7 @@ import { renderHook, waitFor } from '@/test-utils'
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
 import { ReactNode } from 'react'
 import * as api from '@/lib/api'
-import type { Block } from '@/types/api'
+import { TimeOfDay, type Block } from '@/types/api'
 import type { ListResponse } from '@/lib/hooks'
 
 // Mock the api module
@@ -21,47 +21,47 @@ const mockBlocks: Block[] = [
   {
     id: 'block-1',
     date: '2024-01-01',
-    time_of_day: 'AM',
-    block_number: 1,
-    is_weekend: false,
-    is_holiday: false,
-    holiday_name: null,
+    timeOfDay: TimeOfDay.AM,
+    blockNumber: 1,
+    isWeekend: false,
+    isHoliday: false,
+    holidayName: null,
   },
   {
     id: 'block-2',
     date: '2024-01-01',
-    time_of_day: 'PM',
-    block_number: 1,
-    is_weekend: false,
-    is_holiday: false,
-    holiday_name: null,
+    timeOfDay: TimeOfDay.PM,
+    blockNumber: 1,
+    isWeekend: false,
+    isHoliday: false,
+    holidayName: null,
   },
   {
     id: 'block-3',
     date: '2024-01-02',
-    time_of_day: 'AM',
-    block_number: 1,
-    is_weekend: false,
-    is_holiday: false,
-    holiday_name: null,
+    timeOfDay: TimeOfDay.AM,
+    blockNumber: 1,
+    isWeekend: false,
+    isHoliday: false,
+    holidayName: null,
   },
   {
     id: 'block-4',
     date: '2024-01-06',
-    time_of_day: 'AM',
-    block_number: 1,
-    is_weekend: true,
-    is_holiday: false,
-    holiday_name: null,
+    timeOfDay: TimeOfDay.AM,
+    blockNumber: 1,
+    isWeekend: true,
+    isHoliday: false,
+    holidayName: null,
   },
   {
     id: 'block-5',
     date: '2024-01-15',
-    time_of_day: 'AM',
-    block_number: 2,
-    is_weekend: false,
-    is_holiday: true,
-    holiday_name: 'Martin Luther King Jr. Day',
+    timeOfDay: TimeOfDay.AM,
+    blockNumber: 2,
+    isWeekend: false,
+    isHoliday: true,
+    holidayName: 'Martin Luther King Jr. Day',
   },
 ]
 
@@ -98,7 +98,7 @@ function useBlocks(startDate: string, endDate: string) {
   return useQuery<ListResponse<Block>>({
     queryKey: ['blocks', startDate, endDate],
     queryFn: () =>
-      api.get<ListResponse<Block>>(`/blocks?start_date=${startDate}&end_date=${endDate}`),
+      api.get<ListResponse<Block>>(`/blocks?startDate=${startDate}&endDate=${endDate}`),
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   })
@@ -133,7 +133,7 @@ describe('useBlocks', () => {
     expect(result.current.data?.items).toHaveLength(mockBlocks.length)
     expect(result.current.data?.total).toBe(mockBlocks.length)
     expect(result.current.data?.items[0].date).toBe('2024-01-01')
-    expect(mockedApi.get).toHaveBeenCalledWith('/blocks?start_date=2024-01-01&end_date=2024-01-31')
+    expect(mockedApi.get).toHaveBeenCalledWith('/blocks?startDate=2024-01-01&endDate=2024-01-31')
   })
 
   it('should show loading state while fetching', async () => {
@@ -176,10 +176,10 @@ describe('useBlocks', () => {
     expect(firstBlock).toMatchObject({
       id: expect.any(String),
       date: expect.any(String),
-      time_of_day: expect.stringMatching(/^(AM|PM)$/),
-      block_number: expect.any(Number),
-      is_weekend: expect.any(Boolean),
-      is_holiday: expect.any(Boolean),
+      timeOfDay: expect.stringMatching(/^(AM|PM)$/),
+      blockNumber: expect.any(Number),
+      isWeekend: expect.any(Boolean),
+      isHoliday: expect.any(Boolean),
     })
   })
 
@@ -216,12 +216,12 @@ describe('useBlocks', () => {
     })
 
     const blocks = result.current.data?.items || []
-    expect(blocks.some(b => b.time_of_day === 'AM')).toBe(true)
-    expect(blocks.some(b => b.time_of_day === 'PM')).toBe(true)
+    expect(blocks.some(b => b.timeOfDay === 'AM')).toBe(true)
+    expect(blocks.some(b => b.timeOfDay === 'PM')).toBe(true)
   })
 
   it('should identify weekend blocks correctly', async () => {
-    const weekendBlocks = mockBlocks.filter(b => b.is_weekend)
+    const weekendBlocks = mockBlocks.filter(b => b.isWeekend)
     mockedApi.get.mockResolvedValueOnce({
       items: weekendBlocks,
       total: weekendBlocks.length,
@@ -237,11 +237,11 @@ describe('useBlocks', () => {
     })
 
     const blocks = result.current.data?.items || []
-    expect(blocks.every(b => b.is_weekend)).toBe(true)
+    expect(blocks.every(b => b.isWeekend)).toBe(true)
   })
 
   it('should identify holiday blocks correctly', async () => {
-    const holidayBlocks = mockBlocks.filter(b => b.is_holiday)
+    const holidayBlocks = mockBlocks.filter(b => b.isHoliday)
     mockedApi.get.mockResolvedValueOnce({
       items: holidayBlocks,
       total: holidayBlocks.length,
@@ -257,8 +257,8 @@ describe('useBlocks', () => {
     })
 
     const blocks = result.current.data?.items || []
-    expect(blocks[0]?.is_holiday).toBe(true)
-    expect(blocks[0]?.holiday_name).toBe('Martin Luther King Jr. Day')
+    expect(blocks[0]?.isHoliday).toBe(true)
+    expect(blocks[0]?.holidayName).toBe('Martin Luther King Jr. Day')
   })
 
   it('should handle empty block results', async () => {
@@ -296,7 +296,7 @@ describe('useBlocks', () => {
       expect(singleDay.current.isSuccess).toBe(true)
     })
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/blocks?start_date=2024-01-01&end_date=2024-01-01')
+    expect(mockedApi.get).toHaveBeenCalledWith('/blocks?startDate=2024-01-01&endDate=2024-01-01')
 
     // Test week range
     jest.clearAllMocks()
@@ -314,13 +314,13 @@ describe('useBlocks', () => {
       expect(weekRange.current.isSuccess).toBe(true)
     })
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/blocks?start_date=2024-01-01&end_date=2024-01-07')
+    expect(mockedApi.get).toHaveBeenCalledWith('/blocks?startDate=2024-01-01&endDate=2024-01-07')
   })
 
   it('should group blocks by block number', async () => {
     const multiBlockData = [
-      ...mockBlocks.filter(b => b.block_number === 1),
-      ...mockBlocks.filter(b => b.block_number === 2),
+      ...mockBlocks.filter(b => b.blockNumber === 1),
+      ...mockBlocks.filter(b => b.blockNumber === 2),
     ]
 
     mockedApi.get.mockResolvedValueOnce({
@@ -338,13 +338,13 @@ describe('useBlocks', () => {
     })
 
     const blocks = result.current.data?.items || []
-    const blockNumbers = Array.from(new Set(blocks.map(b => b.block_number)))
+    const blockNumbers = Array.from(new Set(blocks.map(b => b.blockNumber)))
     expect(blockNumbers).toContain(1)
     expect(blockNumbers).toContain(2)
   })
 
   it('should handle invalid date range error', async () => {
-    const apiError = { message: 'Invalid date range: end_date must be after start_date', status: 400 }
+    const apiError = { message: 'Invalid date range: endDate must be after startDate', status: 400 }
     mockedApi.get.mockRejectedValueOnce(apiError)
 
     const { result } = renderHook(

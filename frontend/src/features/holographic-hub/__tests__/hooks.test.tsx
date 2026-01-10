@@ -344,7 +344,7 @@ describe("useFilteredManifoldPoints", () => {
   it("returns empty array when all filters are off", () => {
     const layerVisibility = Object.fromEntries(
       Object.keys(allLayersVisible).map((k) => [k, false])
-    ) as LayerVisibility;
+    ) as unknown as LayerVisibility;
 
     const { result } = renderHook(() =>
       useFilteredManifoldPoints(

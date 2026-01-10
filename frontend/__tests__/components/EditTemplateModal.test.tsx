@@ -47,18 +47,18 @@ describe('EditTemplateModal', () => {
   const mockTemplate: RotationTemplate = {
     id: 'template-1',
     name: 'Cardiology Clinic',
-    activity_type: 'clinic',
+    activityType: 'clinic',
     abbreviation: 'CARD',
-    display_abbreviation: 'CARD',
-    font_color: null,
-    background_color: null,
-    clinic_location: 'Building A, Room 101',
-    max_residents: 4,
-    requires_specialty: 'Cardiology',
-    requires_procedure_credential: true,
-    supervision_required: true,
-    max_supervision_ratio: 2,
-    created_at: '2024-01-01T00:00:00Z',
+    displayAbbreviation: 'CARD',
+    fontColor: null,
+    backgroundColor: null,
+    clinicLocation: 'Building A, Room 101',
+    maxResidents: 4,
+    requiresSpecialty: 'Cardiology',
+    requiresProcedureCredential: true,
+    supervisionRequired: true,
+    maxSupervisionRatio: 2,
+    createdAt: '2024-01-01T00:00:00Z',
   }
 
   const defaultProps = {
@@ -161,9 +161,9 @@ describe('EditTemplateModal', () => {
       const templateWithNulls: RotationTemplate = {
         ...mockTemplate,
         abbreviation: null,
-        clinic_location: null,
-        max_residents: null,
-        requires_specialty: null,
+        clinicLocation: null,
+        maxResidents: null,
+        requiresSpecialty: null,
       }
 
       render(
@@ -344,7 +344,7 @@ describe('EditTemplateModal', () => {
           id: 'template-1',
           data: expect.objectContaining({
             name: 'Updated Clinic',
-            activity_type: 'clinic',
+            activityType: 'clinic',
             abbreviation: 'CARD',
           }),
         })
@@ -406,7 +406,7 @@ describe('EditTemplateModal', () => {
           id: 'template-1',
           data: expect.objectContaining({
             abbreviation: undefined,
-            clinic_location: undefined,
+            clinicLocation: undefined,
           }),
         })
       })

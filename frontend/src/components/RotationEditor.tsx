@@ -371,7 +371,7 @@ function PatternGrid({
                 const slot = getSlotFromPattern(pattern, day, time, selectedWeek);
                 if (!slot) return <td key={day}></td>;
 
-                // Get activity from slot - try activity_id first, fall back to activity_type
+                // Get activity from slot - try activity_id first, fall back to activityType
                 const activityId = (slot as WeeklyPatternSlot & { activity_id?: string }).activity_id;
                 const activity = activityId
                   ? findActivity(activities, activityId)

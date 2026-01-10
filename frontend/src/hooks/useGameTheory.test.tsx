@@ -31,10 +31,10 @@ const mockStrategy = {
   id: 'strategy-123',
   name: 'Tit for Tat',
   description: 'Cooperate first, then mimic opponent',
-  config: { type: 'tit_for_tat' },
-  is_active: true,
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
+  config: { type: 'titForTat' },
+  isActive: true,
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T00:00:00Z',
 };
 
 const mockTournament = {
@@ -47,8 +47,8 @@ const mockTournament = {
   winner: 'strategy-1',
   started_at: '2024-01-01T00:00:00Z',
   completed_at: '2024-01-01T00:05:00Z',
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:05:00Z',
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T00:05:00Z',
 };
 
 // Create wrapper with QueryClient
@@ -155,7 +155,7 @@ describe('useCreateStrategy', () => {
       result.current.mutate({
         name: 'New Strategy',
         description: 'Test strategy',
-        config: { type: 'custom' },
+        strategyType: 'titForTat',
       });
     });
 
@@ -259,8 +259,8 @@ describe('useCreateTournament', () => {
       result.current.mutate({
         name: 'Test Tournament',
         description: 'Testing configs',
-        strategy_ids: ['strategy-1', 'strategy-2'],
-        rounds: 100,
+        strategyIds: ['strategy-1', 'strategy-2'],
+        turnsPerMatch: 100,
       });
     });
 
@@ -281,7 +281,7 @@ describe('useEvolutions', () => {
       population_size: 100,
       status: 'completed' as const,
       winner: 'strategy-1',
-      created_at: '2024-01-01T00:00:00Z',
+      createdAt: '2024-01-01T00:00:00Z',
     };
 
     const mockResponse = {
@@ -305,7 +305,7 @@ describe('useEvolutions', () => {
 describe('useValidateStrategy', () => {
   it('validates strategy against tit for tat', async () => {
     const mockValidationResult = {
-      strategy_id: 'strategy-123',
+      strategyId: 'strategy-123',
       is_valid: true,
       score: 85,
       cooperations: 90,
@@ -320,8 +320,8 @@ describe('useValidateStrategy', () => {
 
     await act(async () => {
       result.current.mutate({
-        strategy_id: 'strategy-123',
-        rounds: 100,
+        strategyId: 'strategy-123',
+        turns: 100,
       });
     });
 
@@ -350,8 +350,8 @@ describe('useAnalyzeConfig', () => {
 
     await act(async () => {
       result.current.mutate({
-        config: { constraints: [], preferences: [] },
-        rounds: 1000,
+        utilizationTarget: 0.85,
+        crossZoneBorrowing: true,
       });
     });
 

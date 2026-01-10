@@ -198,7 +198,7 @@ class GlobalErrorHandler {
       return null
     }
 
-    return error.retry_after * 1000 // Convert to milliseconds
+    return error.retryAfter * 1000 // Convert to milliseconds
   }
 
   /**

@@ -19,15 +19,15 @@ import { BulkImportModal } from '@/features/import-export/BulkImportModal'
 import type { Absence } from '@/types/api'
 
 const absenceExportColumns = [
-  { key: 'person_name', header: 'Person' },
-  { key: 'absence_type', header: 'Type' },
-  { key: 'start_date', header: 'Start Date' },
-  { key: 'end_date', header: 'End Date' },
+  { key: 'personName', header: 'Person' },
+  { key: 'absenceType', header: 'Type' },
+  { key: 'startDate', header: 'Start Date' },
+  { key: 'endDate', header: 'End Date' },
   { key: 'notes', header: 'Notes' },
 ]
 
 type ViewMode = 'calendar' | 'list' | 'grid'
-type AbsenceTypeFilter = 'all' | 'vacation' | 'sick' | 'conference' | 'personal' | 'medical' | 'deployment' | 'tdy' | 'family_emergency' | 'bereavement' | 'emergency_leave' | 'convalescent' | 'maternity_paternity'
+type AbsenceTypeFilter = 'all' | 'vacation' | 'sick' | 'conference' | 'personal' | 'medical' | 'deployment' | 'tdy' | 'familyEmergency' | 'bereavement' | 'emergencyLeave' | 'convalescent' | 'maternityPaternity'
 
 const absenceTypeOptions = [
   // Planned leave
@@ -37,10 +37,10 @@ const absenceTypeOptions = [
   { value: 'sick', label: 'Sick' },
   { value: 'medical', label: 'Medical Leave' },
   { value: 'convalescent', label: 'Convalescent' },
-  { value: 'maternity_paternity', label: 'Parental Leave' },
+  { value: 'maternityPaternity', label: 'Parental Leave' },
   // Emergency (blocking - Hawaii reality: 7+ days travel)
-  { value: 'family_emergency', label: 'Family Emergency' },
-  { value: 'emergency_leave', label: 'Emergency Leave' },
+  { value: 'familyEmergency', label: 'Family Emergency' },
+  { value: 'emergencyLeave', label: 'Emergency Leave' },
   { value: 'bereavement', label: 'Bereavement' },
   // Military
   { value: 'deployment', label: 'Deployment' },
@@ -87,7 +87,7 @@ export default function AbsencesPage() {
     const peopleMap = new Map(people.map(p => [p.id, p.name]))
     return allAbsences.map(absence => ({
       ...absence,
-      person_name: peopleMap.get(absence.personId) || 'Unknown',
+      personName: peopleMap.get(absence.personId) || 'Unknown',
     })) as unknown as Record<string, unknown>[]
   }, [allAbsences, people])
 
@@ -131,9 +131,9 @@ export default function AbsencesPage() {
       await updateAbsence.mutateAsync({
         id: editingAbsence.id,
         data: {
-          start_date: editStartDate,
-          end_date: editEndDate,
-          absence_type: editAbsenceType as Absence['absenceType'],
+          startDate: editStartDate,
+          endDate: editEndDate,
+          absenceType: editAbsenceType as Absence['absenceType'],
           notes: editNotes || undefined,
         },
       })
@@ -226,7 +226,7 @@ export default function AbsencesPage() {
             <option value="vacation">Vacation</option>
             <option value="medical">Sick / Medical</option>
             <option value="conference">Conference</option>
-            <option value="family_emergency">Personal / Family Emergency</option>
+            <option value="familyEmergency">Personal / Family Emergency</option>
             <option value="deployment">Deployment</option>
             <option value="tdy">TDY</option>
           </select>

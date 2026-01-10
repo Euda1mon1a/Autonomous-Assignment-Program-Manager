@@ -16,8 +16,8 @@ export type AuditEntityType =
   | 'assignment'
   | 'person'
   | 'absence'
-  | 'rotation_template'
-  | 'schedule_run'
+  | 'rotationTemplate'
+  | 'scheduleRun'
   | 'block'
   | 'system';
 
@@ -30,10 +30,10 @@ export type AuditActionType =
   | 'delete'
   | 'override'
   | 'restore'
-  | 'bulk_import'
-  | 'bulk_delete'
-  | 'schedule_generate'
-  | 'schedule_validate'
+  | 'bulkImport'
+  | 'bulkDelete'
+  | 'scheduleGenerate'
+  | 'scheduleValidate'
   | 'login'
   | 'logout'
   | 'export';
@@ -242,8 +242,8 @@ export const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
   assignment: 'Assignment',
   person: 'Person',
   absence: 'Absence',
-  rotation_template: 'Rotation Template',
-  schedule_run: 'Schedule Run',
+  rotationTemplate: 'Rotation Template',
+  scheduleRun: 'Schedule Run',
   block: 'Block',
   system: 'System',
 };
@@ -257,10 +257,10 @@ export const ACTION_TYPE_LABELS: Record<AuditActionType, string> = {
   delete: 'Deleted',
   override: 'Override',
   restore: 'Restored',
-  bulk_import: 'Bulk Import',
-  bulk_delete: 'Bulk Delete',
-  schedule_generate: 'Schedule Generated',
-  schedule_validate: 'Schedule Validated',
+  bulkImport: 'Bulk Import',
+  bulkDelete: 'Bulk Delete',
+  scheduleGenerate: 'Schedule Generated',
+  scheduleValidate: 'Schedule Validated',
   login: 'Login',
   logout: 'Logout',
   export: 'Export',
@@ -284,10 +284,10 @@ export const ACTION_ICONS: Record<AuditActionType, string> = {
   delete: 'Trash2',
   override: 'AlertTriangle',
   restore: 'RotateCcw',
-  bulk_import: 'Upload',
-  bulk_delete: 'Trash',
-  schedule_generate: 'Calendar',
-  schedule_validate: 'CheckCircle',
+  bulkImport: 'Upload',
+  bulkDelete: 'Trash',
+  scheduleGenerate: 'Calendar',
+  scheduleValidate: 'CheckCircle',
   login: 'LogIn',
   logout: 'LogOut',
   export: 'Download',

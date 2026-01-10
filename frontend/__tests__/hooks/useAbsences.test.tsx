@@ -32,11 +32,6 @@ function createWrapper() {
       queries: { retry: false },
       mutations: { retry: false },
     },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
-    },
   })
 
   return ({ children }: { children: React.ReactNode }) => (
@@ -76,11 +71,11 @@ describe('useAbsence', () => {
     it('should fetch absence successfully', async () => {
       const mockAbsence = {
         id: 'absence-123',
-        person_id: 'person-1',
-        person_name: 'Dr. Smith',
-        start_date: '2024-01-01',
-        end_date: '2024-01-07',
-        absence_type: 'vacation',
+        personId: 'person-1',
+        personName: 'Dr. Smith',
+        startDate: '2024-01-01',
+        endDate: '2024-01-07',
+        absenceType: 'vacation',
         reason: 'Family trip',
         status: AbsenceStatus.APPROVED,
       }
@@ -102,12 +97,12 @@ describe('useAbsence', () => {
     it('should fetch absence with deployment orders', async () => {
       const mockAbsence = {
         id: 'absence-123',
-        person_id: 'person-1',
-        person_name: 'Dr. Smith',
-        start_date: '2024-03-01',
-        end_date: '2024-09-01',
-        absence_type: 'deployment',
-        deployment_orders: true,
+        personId: 'person-1',
+        personName: 'Dr. Smith',
+        startDate: '2024-03-01',
+        endDate: '2024-09-01',
+        absenceType: 'deployment',
+        deploymentOrders: true,
         notes: 'Overseas deployment',
         status: AbsenceStatus.APPROVED,
       }
@@ -122,8 +117,8 @@ describe('useAbsence', () => {
         expect(result.current.isSuccess).toBe(true)
       })
 
-      expect(result.current.data?.absence_type).toBe('deployment')
-      expect(result.current.data?.deployment_orders).toBe(true)
+      expect(result.current.data?.absenceType).toBe('deployment')
+      expect(result.current.data?.deploymentOrders).toBe(true)
     })
   })
 
@@ -178,8 +173,8 @@ describe('useAbsence', () => {
       act(() => {
         resolvePromise!({
           id: 'absence-123',
-          person_id: 'person-1',
-          absence_type: 'vacation',
+          personId: 'person-1',
+          absenceType: 'vacation',
         })
       })
 
@@ -193,10 +188,10 @@ describe('useAbsence', () => {
     it('should handle sick leave absence', async () => {
       const mockAbsence = {
         id: 'absence-123',
-        person_id: 'person-1',
-        start_date: '2024-01-01',
-        end_date: '2024-01-03',
-        absence_type: 'sick',
+        personId: 'person-1',
+        startDate: '2024-01-01',
+        endDate: '2024-01-03',
+        absenceType: 'sick',
         status: AbsenceStatus.APPROVED,
       }
 
@@ -210,16 +205,16 @@ describe('useAbsence', () => {
         expect(result.current.isSuccess).toBe(true)
       })
 
-      expect(result.current.data?.absence_type).toBe('sick')
+      expect(result.current.data?.absenceType).toBe('sick')
     })
 
     it('should handle conference absence', async () => {
       const mockAbsence = {
         id: 'absence-123',
-        person_id: 'person-1',
-        start_date: '2024-06-10',
-        end_date: '2024-06-14',
-        absence_type: 'conference',
+        personId: 'person-1',
+        startDate: '2024-06-10',
+        endDate: '2024-06-14',
+        absenceType: 'conference',
         notes: 'National Conference',
         status: AbsenceStatus.APPROVED,
       }
@@ -234,7 +229,7 @@ describe('useAbsence', () => {
         expect(result.current.isSuccess).toBe(true)
       })
 
-      expect(result.current.data?.absence_type).toBe('conference')
+      expect(result.current.data?.absenceType).toBe('conference')
     })
   })
 })
@@ -250,17 +245,17 @@ describe('useAbsenceList', () => {
         items: [
           {
             id: 'absence-1',
-            person_id: 'person-1',
-            absence_type: 'vacation',
-            start_date: '2024-01-01',
-            end_date: '2024-01-07',
+            personId: 'person-1',
+            absenceType: 'vacation',
+            startDate: '2024-01-01',
+            endDate: '2024-01-07',
           },
           {
             id: 'absence-2',
-            person_id: 'person-2',
-            absence_type: 'sick',
-            start_date: '2024-01-15',
-            end_date: '2024-01-17',
+            personId: 'person-2',
+            absenceType: 'sick',
+            startDate: '2024-01-15',
+            endDate: '2024-01-17',
           },
         ],
         total: 2,
@@ -280,11 +275,11 @@ describe('useAbsenceList', () => {
       expect(result.current.data?.items).toHaveLength(2)
     })
 
-    it('should filter by person_id', async () => {
+    it('should filter by personId', async () => {
       mockedApi.get.mockResolvedValue({ items: [], total: 0 })
 
       const { result } = renderHook(
-        () => useAbsenceList({ person_id: 'person-1' }),
+        () => useAbsenceList({ personId: 'person-1' }),
         {
           wrapper: createWrapper(),
         }
@@ -295,7 +290,7 @@ describe('useAbsenceList', () => {
       })
 
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('person_id=person-1')
+        expect.stringContaining('personId=person-1')
       )
     })
 
@@ -305,8 +300,8 @@ describe('useAbsenceList', () => {
       const { result } = renderHook(
         () =>
           useAbsenceList({
-            start_date: '2024-01-01',
-            end_date: '2024-01-31',
+            startDate: '2024-01-01',
+            endDate: '2024-01-31',
           }),
         {
           wrapper: createWrapper(),
@@ -318,10 +313,10 @@ describe('useAbsenceList', () => {
       })
 
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('start_date=2024-01-01')
+        expect.stringContaining('startDate=2024-01-01')
       )
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('end_date=2024-01-31')
+        expect.stringContaining('endDate=2024-01-31')
       )
     })
 
@@ -329,7 +324,7 @@ describe('useAbsenceList', () => {
       mockedApi.get.mockResolvedValue({ items: [], total: 0 })
 
       const { result } = renderHook(
-        () => useAbsenceList({ absence_type: 'vacation' }),
+        () => useAbsenceList({ absenceType: 'vacation' }),
         {
           wrapper: createWrapper(),
         }
@@ -340,7 +335,7 @@ describe('useAbsenceList', () => {
       })
 
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('absence_type=vacation')
+        expect.stringContaining('absenceType=vacation')
       )
     })
   })
@@ -388,20 +383,20 @@ describe('useLeaveCalendar', () => {
   describe('Success Scenarios', () => {
     it('should fetch leave calendar successfully', async () => {
       const mockCalendar = {
-        start_date: '2024-01-01',
-        end_date: '2024-01-31',
+        startDate: '2024-01-01',
+        endDate: '2024-01-31',
         entries: [
           {
-            faculty_id: 'faculty-1',
-            faculty_name: 'Dr. Smith',
+            facultyId: 'faculty-1',
+            facultyName: 'Dr. Smith',
             leave_type: 'vacation',
-            start_date: '2024-01-10',
-            end_date: '2024-01-17',
+            startDate: '2024-01-10',
+            endDate: '2024-01-17',
             is_blocking: true,
             has_fmit_conflict: false,
           },
         ],
-        conflict_count: 0,
+        conflictCount: 0,
       }
 
       mockedApi.get.mockResolvedValue(mockCalendar)
@@ -423,20 +418,20 @@ describe('useLeaveCalendar', () => {
 
     it('should detect FMIT conflicts', async () => {
       const mockCalendar = {
-        start_date: '2024-01-01',
-        end_date: '2024-01-31',
+        startDate: '2024-01-01',
+        endDate: '2024-01-31',
         entries: [
           {
-            faculty_id: 'faculty-1',
-            faculty_name: 'Dr. Smith',
+            facultyId: 'faculty-1',
+            facultyName: 'Dr. Smith',
             leave_type: 'deployment',
-            start_date: '2024-01-15',
-            end_date: '2024-07-15',
+            startDate: '2024-01-15',
+            endDate: '2024-07-15',
             is_blocking: true,
             has_fmit_conflict: true,
           },
         ],
-        conflict_count: 1,
+        conflictCount: 1,
       }
 
       mockedApi.get.mockResolvedValue(mockCalendar)
@@ -452,7 +447,7 @@ describe('useLeaveCalendar', () => {
         expect(result.current.isSuccess).toBe(true)
       })
 
-      expect(result.current.data?.conflict_count).toBe(1)
+      expect(result.current.data?.conflictCount).toBe(1)
       expect(result.current.data?.entries[0].has_fmit_conflict).toBe(true)
     })
   })
@@ -500,24 +495,24 @@ describe('useMilitaryLeave', () => {
         items: [
           {
             id: 'absence-1',
-            person_id: 'person-1',
-            absence_type: 'deployment',
-            start_date: '2024-03-01',
-            end_date: '2024-09-01',
+            personId: 'person-1',
+            absenceType: 'deployment',
+            startDate: '2024-03-01',
+            endDate: '2024-09-01',
           },
           {
             id: 'absence-2',
-            person_id: 'person-1',
-            absence_type: 'tdy',
-            start_date: '2024-10-01',
-            end_date: '2024-10-14',
+            personId: 'person-1',
+            absenceType: 'tdy',
+            startDate: '2024-10-01',
+            endDate: '2024-10-14',
           },
           {
             id: 'absence-3',
-            person_id: 'person-1',
-            absence_type: 'vacation',
-            start_date: '2024-11-01',
-            end_date: '2024-11-07',
+            personId: 'person-1',
+            absenceType: 'vacation',
+            startDate: '2024-11-01',
+            endDate: '2024-11-07',
           },
         ],
         total: 3,
@@ -543,10 +538,10 @@ describe('useMilitaryLeave', () => {
         items: [
           {
             id: 'absence-1',
-            person_id: 'person-1',
-            absence_type: 'vacation',
-            start_date: '2024-01-01',
-            end_date: '2024-01-07',
+            personId: 'person-1',
+            absenceType: 'vacation',
+            startDate: '2024-01-01',
+            endDate: '2024-01-07',
           },
         ],
         total: 1,
@@ -576,8 +571,8 @@ describe('useLeaveBalance', () => {
   describe('Success Scenarios', () => {
     it('should fetch leave balance successfully', async () => {
       const mockBalance = {
-        person_id: 'person-1',
-        person_name: 'Dr. Smith',
+        personId: 'person-1',
+        personName: 'Dr. Smith',
         vacation_days: 10,
         sick_days: 5,
         personal_days: 3,
@@ -618,7 +613,7 @@ describe('useLeaveBalance', () => {
   })
 
   describe('Edge Cases', () => {
-    it('should not fetch when person_id is empty', () => {
+    it('should not fetch when personId is empty', () => {
       const { result } = renderHook(() => useLeaveBalance(''), {
         wrapper: createWrapper(),
       })
@@ -638,10 +633,10 @@ describe('useAbsenceCreate', () => {
     it('should create absence successfully', async () => {
       const mockAbsence = {
         id: 'absence-123',
-        person_id: 'person-1',
-        start_date: '2024-01-01',
-        end_date: '2024-01-07',
-        absence_type: 'vacation',
+        personId: 'person-1',
+        startDate: '2024-01-01',
+        endDate: '2024-01-07',
+        absenceType: 'vacation',
         reason: 'Family trip',
         status: AbsenceStatus.PENDING,
       }
@@ -654,10 +649,10 @@ describe('useAbsenceCreate', () => {
 
       act(() => {
         result.current.mutate({
-          person_id: 'person-1',
-          start_date: '2024-01-01',
-          end_date: '2024-01-07',
-          absence_type: 'vacation',
+          personId: 'person-1',
+          startDate: '2024-01-01',
+          endDate: '2024-01-07',
+          absenceType: 'vacation',
           reason: 'Family trip',
         } as any)
       })
@@ -672,11 +667,11 @@ describe('useAbsenceCreate', () => {
     it('should create deployment absence', async () => {
       const mockAbsence = {
         id: 'absence-123',
-        person_id: 'person-1',
-        start_date: '2024-03-01',
-        end_date: '2024-09-01',
-        absence_type: 'deployment',
-        deployment_orders: true,
+        personId: 'person-1',
+        startDate: '2024-03-01',
+        endDate: '2024-09-01',
+        absenceType: 'deployment',
+        deploymentOrders: true,
         status: AbsenceStatus.APPROVED,
       }
 
@@ -688,11 +683,11 @@ describe('useAbsenceCreate', () => {
 
       act(() => {
         result.current.mutate({
-          person_id: 'person-1',
-          start_date: '2024-03-01',
-          end_date: '2024-09-01',
-          absence_type: 'deployment',
-          deployment_orders: true,
+          personId: 'person-1',
+          startDate: '2024-03-01',
+          endDate: '2024-09-01',
+          absenceType: 'deployment',
+          deploymentOrders: true,
         } as any)
       })
 
@@ -700,7 +695,7 @@ describe('useAbsenceCreate', () => {
         expect(result.current.isSuccess).toBe(true)
       })
 
-      expect(result.current.data?.absence_type).toBe('deployment')
+      expect(result.current.data?.absenceType).toBe('deployment')
     })
   })
 
@@ -715,10 +710,10 @@ describe('useAbsenceCreate', () => {
 
       act(() => {
         result.current.mutate({
-          person_id: 'person-1',
-          start_date: '2024-01-01',
-          end_date: '2024-01-07',
-          absence_type: 'vacation',
+          personId: 'person-1',
+          startDate: '2024-01-01',
+          endDate: '2024-01-07',
+          absenceType: 'vacation',
         } as any)
       })
 
@@ -739,10 +734,10 @@ describe('useAbsenceCreate', () => {
 
       act(() => {
         result.current.mutate({
-          person_id: 'person-1',
-          start_date: '2024-01-07',
-          end_date: '2024-01-01', // Invalid: end before start
-          absence_type: 'vacation',
+          personId: 'person-1',
+          startDate: '2024-01-07',
+          endDate: '2024-01-01', // Invalid: end before start
+          absenceType: 'vacation',
         } as any)
       })
 
@@ -769,10 +764,10 @@ describe('useAbsenceCreate', () => {
 
       act(() => {
         result.current.mutate({
-          person_id: 'person-1',
-          start_date: '2024-01-01',
-          end_date: '2024-01-07',
-          absence_type: 'vacation',
+          personId: 'person-1',
+          startDate: '2024-01-01',
+          endDate: '2024-01-07',
+          absenceType: 'vacation',
         } as any)
       })
 
@@ -781,8 +776,8 @@ describe('useAbsenceCreate', () => {
       act(() => {
         resolvePromise!({
           id: 'absence-123',
-          person_id: 'person-1',
-          absence_type: 'vacation',
+          personId: 'person-1',
+          absenceType: 'vacation',
         })
       })
 
@@ -802,10 +797,10 @@ describe('useAbsenceUpdate', () => {
     it('should update absence successfully', async () => {
       const mockAbsence = {
         id: 'absence-123',
-        person_id: 'person-1',
-        start_date: '2024-01-01',
-        end_date: '2024-01-10', // Extended from 7 to 10 days
-        absence_type: 'vacation',
+        personId: 'person-1',
+        startDate: '2024-01-01',
+        endDate: '2024-01-10', // Extended from 7 to 10 days
+        absenceType: 'vacation',
         reason: 'Extended family trip',
         status: AbsenceStatus.PENDING,
       }
@@ -820,7 +815,7 @@ describe('useAbsenceUpdate', () => {
         result.current.mutate({
           id: 'absence-123',
           data: {
-            end_date: '2024-01-10',
+            endDate: '2024-01-10',
             reason: 'Extended family trip',
           } as any,
         })
@@ -846,7 +841,7 @@ describe('useAbsenceUpdate', () => {
       act(() => {
         result.current.mutate({
           id: 'absence-123',
-          data: { end_date: '2024-01-10' } as any,
+          data: { endDate: '2024-01-10' } as any,
         })
       })
 
@@ -915,11 +910,11 @@ describe('useAbsenceApprove', () => {
     it('should approve absence successfully', async () => {
       const mockAbsence = {
         id: 'absence-123',
-        person_id: 'person-1',
-        start_date: '2024-01-01',
-        end_date: '2024-01-07',
-        absence_type: 'vacation',
-        status: AbsenceStatus.APPROVED,
+        personId: 'person-1',
+        startDate: '2024-01-01',
+        endDate: '2024-01-07',
+        absenceType: 'vacation',
+        approvalStatus: AbsenceStatus.APPROVED,
       }
 
       mockedApi.post.mockResolvedValue(mockAbsence)
@@ -940,17 +935,17 @@ describe('useAbsenceApprove', () => {
         expect(result.current.isSuccess).toBe(true)
       })
 
-      expect(result.current.data?.status).toBe(AbsenceStatus.APPROVED)
+      expect((result.current.data as { approvalStatus?: AbsenceStatus })?.approvalStatus).toBe(AbsenceStatus.APPROVED)
     })
 
     it('should reject absence successfully', async () => {
       const mockAbsence = {
         id: 'absence-123',
-        person_id: 'person-1',
-        start_date: '2024-01-01',
-        end_date: '2024-01-07',
-        absence_type: 'vacation',
-        status: AbsenceStatus.REJECTED,
+        personId: 'person-1',
+        startDate: '2024-01-01',
+        endDate: '2024-01-07',
+        absenceType: 'vacation',
+        approvalStatus: AbsenceStatus.REJECTED,
       }
 
       mockedApi.post.mockResolvedValue(mockAbsence)
@@ -971,7 +966,7 @@ describe('useAbsenceApprove', () => {
         expect(result.current.isSuccess).toBe(true)
       })
 
-      expect(result.current.data?.status).toBe(AbsenceStatus.REJECTED)
+      expect((result.current.data as { approvalStatus?: AbsenceStatus })?.approvalStatus).toBe(AbsenceStatus.REJECTED)
     })
   })
 

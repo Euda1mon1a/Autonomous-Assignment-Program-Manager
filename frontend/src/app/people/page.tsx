@@ -15,7 +15,7 @@ import type { Person } from '@/types/api'
 const peopleExportColumns = [
   { key: 'name', header: 'Name' },
   { key: 'type', header: 'Type' },
-  { key: 'pgy_level', header: 'PGY Level' },
+  { key: 'pgyLevel', header: 'PGY Level' },
   { key: 'email', header: 'Email' },
 ]
 
@@ -32,7 +32,7 @@ export default function PeoplePage() {
       ? undefined
       : {
           ...(roleFilter !== 'all' && { role: roleFilter }),
-          ...(pgyFilter && { pgy_level: pgyFilter }),
+          ...(pgyFilter && { pgyLevel: pgyFilter }),
         }
 
   const { data, isLoading, isError, error, refetch } = usePeople(filters)

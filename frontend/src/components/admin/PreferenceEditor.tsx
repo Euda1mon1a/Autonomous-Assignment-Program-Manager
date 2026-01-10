@@ -49,10 +49,10 @@ export interface PreferenceEditorProps {
 
 interface EditablePreference {
   id: string;
-  preference_type: PreferenceType;
+  preferenceType: PreferenceType;
   weight: PreferenceWeight;
-  config_json: Record<string, unknown>;
-  is_active: boolean;
+  configJson: Record<string, unknown>;
+  isActive: boolean;
   description: string | null;
   isNew?: boolean;
 }
@@ -186,7 +186,7 @@ function PreferenceCard({
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-slate-300">Active</label>
             <button
-              onClick={() => onChange({ is_active: !preference.isActive })}
+              onClick={() => onChange({ isActive: !preference.isActive })}
               className={`
                 relative inline-flex h-6 w-11 items-center rounded-full transition-colors
                 ${preference.isActive ? 'bg-violet-500' : 'bg-slate-600'}
@@ -241,7 +241,7 @@ function PreferenceCard({
                                   ? currentValues.filter((v) => v !== option.value)
                                   : [...currentValues, option.value];
                                 onChange({
-                                  config_json: {
+                                  configJson: {
                                     ...preference.configJson,
                                     [field.name]: newValues,
                                   },
@@ -291,10 +291,10 @@ export function PreferenceEditor({
     () =>
       initialPreferences.map((p) => ({
         id: p.id,
-        preference_type: p.preferenceType,
+        preferenceType: p.preferenceType,
         weight: p.weight,
-        config_json: p.configJson,
-        is_active: p.isActive,
+        configJson: p.configJson,
+        isActive: p.isActive,
         description: p.description,
         isNew: false,
       }))
@@ -315,10 +315,10 @@ export function PreferenceEditor({
       ...prev,
       {
         id: newId,
-        preference_type: type,
+        preferenceType: type,
         weight: 'medium',
-        config_json: {},
-        is_active: true,
+        configJson: {},
+        isActive: true,
         description: null,
         isNew: true,
       },
@@ -345,10 +345,10 @@ export function PreferenceEditor({
   const handleSave = useCallback(() => {
     const preferencesToSave: RotationPreferenceCreate[] = editablePreferences.map(
       (p) => ({
-        preference_type: p.preferenceType,
+        preferenceType: p.preferenceType,
         weight: p.weight,
-        config_json: p.configJson,
-        is_active: p.isActive,
+        configJson: p.configJson,
+        isActive: p.isActive,
         description: p.description,
       })
     );

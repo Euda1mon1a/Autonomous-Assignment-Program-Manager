@@ -39,7 +39,7 @@ test.describe('CSRF Protection', () => {
   test('should reject requests without CSRF token', async ({ adminPage }) => {
     // Try to make POST request without CSRF token
     const response = await adminPage.request.post('/api/v1/assignments', {
-      data: { person_id: 'test', block_id: 'test', rotation_id: 'test' },
+      data: { personId: 'test', blockId: 'test', rotationId: 'test' },
       headers: {
         // Explicitly omit CSRF token
         'x-csrf-token': '',
@@ -85,7 +85,7 @@ test.describe('CSRF Protection', () => {
 
     // Check cookies
     const cookies = await adminPage.context().cookies();
-    const sessionCookie = cookies.find((c) => c.name === 'session' || c.name === 'access_token');
+    const sessionCookie = cookies.find((c) => c.name === 'session' || c.name === 'accessToken');
 
     if (sessionCookie) {
       // Should have SameSite attribute
@@ -99,7 +99,7 @@ test.describe('CSRF Protection', () => {
 
     // Try request with different origin
     const response = await adminPage.request.post('/api/v1/assignments', {
-      data: { person_id: 'test', block_id: 'test', rotation_id: 'test' },
+      data: { personId: 'test', blockId: 'test', rotationId: 'test' },
       headers: {
         origin: 'https://evil-site.com',
       },

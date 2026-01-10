@@ -184,10 +184,10 @@ export function ConflictHistoryTimeline({ conflictId }: ConflictHistoryTimelineP
                   <span className={`font-medium ${colors.text}`}>
                     {getActionLabel(entry.action)}
                   </span>
-                  {entry.user_name && (
+                  {entry.userName && (
                     <span className="text-sm text-gray-500 flex items-center gap-1">
                       <User className="w-3 h-3" />
-                      {entry.user_name}
+                      {entry.userName}
                     </span>
                   )}
                 </div>
@@ -297,7 +297,7 @@ export function ConflictPatternsView({ onPatternSelect }: ConflictPatternsViewPr
         <div className="p-4 bg-green-50 rounded-lg">
           <p className="text-sm text-green-600 font-medium">People Affected</p>
           <p className="text-2xl font-bold text-green-900">
-            {patterns.reduce((acc, p) => acc + p.affected_people.length, 0)}
+            {patterns.reduce((acc, p) => acc + p.affectedPeople.length, 0)}
           </p>
         </div>
       </div>
@@ -389,25 +389,25 @@ function PatternCard({ pattern, onClick }: PatternCardProps) {
               </span>
               <span className="flex items-center gap-1">
                 <User className="w-4 h-4" />
-                {pattern.affected_people.length} people
+                {pattern.affectedPeople.length} people
               </span>
               <span className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
-                Last: {format(new Date(pattern.last_occurrence), 'MMM d')}
+                Last: {format(new Date(pattern.lastOccurrence), 'MMM d')}
               </span>
             </div>
 
-            {pattern.root_cause && (
+            {pattern.rootCause && (
               <div className="mb-3">
                 <p className="text-sm font-medium text-gray-700">Potential Root Cause:</p>
-                <p className="text-sm text-gray-600">{pattern.root_cause}</p>
+                <p className="text-sm text-gray-600">{pattern.rootCause}</p>
               </div>
             )}
 
-            {pattern.suggested_prevention && (
+            {pattern.suggestedPrevention && (
               <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-sm font-medium text-green-800 mb-1">Suggested Prevention:</p>
-                <p className="text-sm text-green-700">{pattern.suggested_prevention}</p>
+                <p className="text-sm text-green-700">{pattern.suggestedPrevention}</p>
               </div>
             )}
           </div>
@@ -432,8 +432,8 @@ function PatternCard({ pattern, onClick }: PatternCardProps) {
           <div className="border-t pt-4">
             <h4 className="text-sm font-medium text-gray-700 mb-3">Most Affected People</h4>
             <div className="space-y-2">
-              {pattern.affected_people
-                .sort((a, b) => b.occurrence_count - a.occurrence_count)
+              {pattern.affectedPeople
+                .sort((a, b) => b.occurrenceCount - a.occurrenceCount)
                 .slice(0, 5)
                 .map((person) => (
                   <div
@@ -447,7 +447,7 @@ function PatternCard({ pattern, onClick }: PatternCardProps) {
                       <span className="text-sm font-medium text-gray-900">{person.name}</span>
                     </div>
                     <span className="text-sm text-gray-500">
-                      {person.occurrence_count} occurrence{person.occurrence_count !== 1 ? 's' : ''}
+                      {person.occurrenceCount} occurrence{person.occurrenceCount !== 1 ? 's' : ''}
                     </span>
                   </div>
                 ))}

@@ -131,13 +131,13 @@ export const mockAuditLogs: AuditLogEntry[] = [
     user: mockUsers[2],
     changes: [
       {
-        field: 'start_date',
+        field: 'startDate',
         oldValue: '2025-12-25',
         newValue: null,
         displayName: 'Start Date',
       },
       {
-        field: 'end_date',
+        field: 'endDate',
         oldValue: '2025-12-27',
         newValue: null,
         displayName: 'End Date',
@@ -148,14 +148,14 @@ export const mockAuditLogs: AuditLogEntry[] = [
   {
     id: 'audit-5',
     timestamp: '2025-12-16T14:00:00Z',
-    entityType: 'schedule_run',
+    entityType: 'scheduleRun',
     entityId: 'schedule-202',
     entityName: 'January 2026 Schedule',
-    action: 'schedule_generate',
+    action: 'scheduleGenerate',
     severity: 'info',
     user: mockUsers[0],
     metadata: {
-      total_assignments: 245,
+      totalAssignments: 245,
       residents_count: 35,
       violations: 0,
       generation_time: '3.2s',
@@ -165,7 +165,7 @@ export const mockAuditLogs: AuditLogEntry[] = [
   {
     id: 'audit-6',
     timestamp: '2025-12-16T13:30:00Z',
-    entityType: 'rotation_template',
+    entityType: 'rotationTemplate',
     entityId: 'template-303',
     entityName: 'ICU Rotation Template',
     action: 'update',
@@ -179,7 +179,7 @@ export const mockAuditLogs: AuditLogEntry[] = [
         displayName: 'Minimum Residents',
       },
       {
-        field: 'max_residents',
+        field: 'maxResidents',
         oldValue: 6,
         newValue: 7,
         displayName: 'Maximum Residents',
@@ -213,7 +213,7 @@ export const mockAuditLogs: AuditLogEntry[] = [
     timestamp: '2025-12-15T17:45:00Z',
     entityType: 'person',
     entityId: 'person-505',
-    action: 'bulk_import',
+    action: 'bulkImport',
     severity: 'info',
     user: mockUsers[3],
     metadata: {
@@ -234,13 +234,13 @@ export const mockAuditLogs: AuditLogEntry[] = [
     user: mockUsers[0],
     changes: [
       {
-        field: 'start_date',
+        field: 'startDate',
         oldValue: null,
         newValue: '2025-12-15',
         displayName: 'Start Date',
       },
       {
-        field: 'end_date',
+        field: 'endDate',
         oldValue: null,
         newValue: '2025-12-28',
         displayName: 'End Date',
@@ -265,7 +265,7 @@ export const mockAuditLogs: AuditLogEntry[] = [
     timestamp: '2025-12-15T10:30:00Z',
     entityType: 'assignment',
     entityId: 'assign-808',
-    action: 'bulk_delete',
+    action: 'bulkDelete',
     severity: 'warning',
     user: mockUsers[0],
     metadata: {
@@ -277,10 +277,10 @@ export const mockAuditLogs: AuditLogEntry[] = [
   {
     id: 'audit-12',
     timestamp: '2025-12-14T16:00:00Z',
-    entityType: 'schedule_run',
+    entityType: 'scheduleRun',
     entityId: 'schedule-909',
     entityName: 'December 2025 Schedule',
-    action: 'schedule_validate',
+    action: 'scheduleValidate',
     severity: 'warning',
     user: mockUsers[0],
     metadata: {
@@ -312,7 +312,7 @@ export const mockAuditLogs: AuditLogEntry[] = [
     metadata: {
       format: 'CSV',
       records: 150,
-      date_range: '2025-11-01 to 2025-12-01',
+      dateRange: '2025-11-01 to 2025-12-01',
     },
     reason: 'Monthly compliance report export',
   },
@@ -373,10 +373,10 @@ export const mockStatistics: AuditStatistics = {
     delete: 12,
     override: 8,
     restore: 3,
-    bulk_import: 5,
-    bulk_delete: 4,
-    schedule_generate: 15,
-    schedule_validate: 15,
+    bulkImport: 5,
+    bulkDelete: 4,
+    scheduleGenerate: 15,
+    scheduleValidate: 15,
     login: 5,
     logout: 2,
     export: 1,
@@ -385,8 +385,8 @@ export const mockStatistics: AuditStatistics = {
     assignment: 60,
     person: 30,
     absence: 20,
-    rotation_template: 15,
-    schedule_run: 20,
+    rotationTemplate: 15,
+    scheduleRun: 20,
     block: 3,
     system: 2,
   },

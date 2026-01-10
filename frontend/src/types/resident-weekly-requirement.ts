@@ -19,13 +19,13 @@ export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
  * Time slot identifiers for protected slots
  */
 export type TimeSlot =
-  | 'mon_am' | 'mon_pm'
-  | 'tue_am' | 'tue_pm'
-  | 'wed_am' | 'wed_pm'
-  | 'thu_am' | 'thu_pm'
-  | 'fri_am' | 'fri_pm'
-  | 'sat_am' | 'sat_pm'
-  | 'sun_am' | 'sun_pm';
+  | 'monAm' | 'monPm'
+  | 'tueAm' | 'tuePm'
+  | 'wedAm' | 'wedPm'
+  | 'thuAm' | 'thuPm'
+  | 'friAm' | 'friPm'
+  | 'satAm' | 'satPm'
+  | 'sunAm' | 'sunPm';
 
 /**
  * Protected slot activity types
@@ -233,13 +233,13 @@ export const PROTECTED_SLOT_TYPES: ProtectedSlotType[] = [
  * All time slots in order
  */
 export const TIME_SLOTS: TimeSlot[] = [
-  'sun_am', 'sun_pm',
-  'mon_am', 'mon_pm',
-  'tue_am', 'tue_pm',
-  'wed_am', 'wed_pm',
-  'thu_am', 'thu_pm',
-  'fri_am', 'fri_pm',
-  'sat_am', 'sat_pm',
+  'sunAm', 'sunPm',
+  'monAm', 'monPm',
+  'tueAm', 'tuePm',
+  'wedAm', 'wedPm',
+  'thuAm', 'thuPm',
+  'friAm', 'friPm',
+  'satAm', 'satPm',
 ];
 
 /**

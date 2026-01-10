@@ -56,13 +56,13 @@ function renderWithProviders(ui: React.ReactElement) {
 // ============================================================================
 
 interface ComplianceStatus {
-  person_id: string;
-  period_start: string;
-  period_end: string;
-  total_hours: number;
+  personId: string;
+  periodStart: string;
+  periodEnd: string;
+  totalHours: number;
   max_hours: number;
   hours_remaining: number;
-  compliance_status: 'green' | 'yellow' | 'red';
+  complianceStatus: 'green' | 'yellow' | 'red';
   violations: string[];
   warnings: string[];
   gauge_color?: string;
@@ -70,26 +70,26 @@ interface ComplianceStatus {
   session_expires_in?: number;
   show_warning?: boolean;
   exemption_applied?: boolean;
-  pgy_level?: number;
+  pgyLevel?: number;
 }
 
 interface ComplianceViolation {
   id: string;
-  person_id: string;
+  personId: string;
   rule: string;
   severity: 'high' | 'medium' | 'low' | 'critical';
   description: string;
-  detected_at: string;
+  detectedAt: string;
   resolved: boolean;
   hours_over?: number;
   requires_immediate_action?: boolean;
 }
 
 interface WorkHours {
-  person_id: string;
+  personId: string;
   week_start: string;
   week_end: string;
-  total_hours: number;
+  totalHours: number;
   clinical_hours: number;
   non_clinical_hours: number;
 }
@@ -103,11 +103,11 @@ interface ComplianceReport {
   report_id: string;
   type: string;
   generated_at?: string;
-  download_url?: string;
+  downloadUrl?: string;
   month?: string;
   format?: string;
   summary?: {
-    total_violations: number;
+    totalViolations: number;
     resolved_violations: number;
     active_violations: number;
   };
@@ -120,13 +120,13 @@ interface ApiError {
 
 // Mock compliance data
 const mockComplianceStatus: ComplianceStatus = {
-  person_id: 'person-1',
-  period_start: '2024-01-01',
-  period_end: '2024-01-28',
-  total_hours: 75,
+  personId: 'person-1',
+  periodStart: '2024-01-01',
+  periodEnd: '2024-01-28',
+  totalHours: 75,
   max_hours: 80,
   hours_remaining: 5,
-  compliance_status: 'green' as const,
+  complianceStatus: 'green' as const,
   violations: [],
   warnings: [],
 }
@@ -134,11 +134,11 @@ const mockComplianceStatus: ComplianceStatus = {
 const mockViolations: ComplianceViolation[] = [
   {
     id: 'violation-1',
-    person_id: 'person-1',
+    personId: 'person-1',
     rule: '80_hour_limit',
     severity: 'high' as const,
     description: 'Exceeded 80-hour weekly limit',
-    detected_at: '2024-01-28T00:00:00Z',
+    detectedAt: '2024-01-28T00:00:00Z',
     resolved: false,
     hours_over: 5,
   },
@@ -146,18 +146,18 @@ const mockViolations: ComplianceViolation[] = [
 
 const mockWorkHours: WorkHours[] = [
   {
-    person_id: 'person-1',
+    personId: 'person-1',
     week_start: '2024-01-01',
     week_end: '2024-01-07',
-    total_hours: 78,
+    totalHours: 78,
     clinical_hours: 70,
     non_clinical_hours: 8,
   },
   {
-    person_id: 'person-1',
+    personId: 'person-1',
     week_start: '2024-01-08',
     week_end: '2024-01-14',
-    total_hours: 75,
+    totalHours: 75,
     clinical_hours: 68,
     non_clinical_hours: 7,
   },
@@ -208,9 +208,9 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
     it('should load compliance dashboard data', async () => {
       setupApiMock()
 
-      const result = await mockedApi.get('/api/compliance/status?person_id=person-1')
-      expect(result.compliance_status).toBe('green')
-      expect(result.total_hours).toBe(75)
+      const result: any = await mockedApi.get('/api/compliance/status?personId=person-1')
+      expect(result.complianceStatus).toBe('green')
+      expect(result.totalHours).toBe(75)
     })
 
     it('should display compliance status for all residents', async () => {
@@ -218,15 +218,15 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
 
       mockedApi.get.mockResolvedValueOnce({
         items: [
-          { person_id: 'person-1', compliance_status: 'green', total_hours: 75 },
-          { person_id: 'person-2', compliance_status: 'yellow', total_hours: 78 },
-          { person_id: 'person-3', compliance_status: 'red', total_hours: 85 },
+          { personId: 'person-1', complianceStatus: 'green', totalHours: 75 },
+          { personId: 'person-2', complianceStatus: 'yellow', totalHours: 78 },
+          { personId: 'person-3', complianceStatus: 'red', totalHours: 85 },
         ],
       })
 
-      const result = await mockedApi.get('/api/compliance/status') as ComplianceListResponse<ComplianceStatus>
+      const result: any = await mockedApi.get('/api/compliance/status') as ComplianceListResponse<ComplianceStatus>
       expect(result.items).toHaveLength(3)
-      expect(result.items.some((s) => s.compliance_status === 'red')).toBe(true)
+      expect(result.items.some((s: { complianceStatus: string }) => s.complianceStatus === 'red')).toBe(true)
     })
 
     it('should group residents by compliance status', async () => {
@@ -234,17 +234,17 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
 
       mockedApi.get.mockResolvedValueOnce({
         items: [
-          { person_id: 'person-1', compliance_status: 'green' },
-          { person_id: 'person-2', compliance_status: 'green' },
-          { person_id: 'person-3', compliance_status: 'yellow' },
-          { person_id: 'person-4', compliance_status: 'red' },
+          { personId: 'person-1', complianceStatus: 'green' },
+          { personId: 'person-2', complianceStatus: 'green' },
+          { personId: 'person-3', complianceStatus: 'yellow' },
+          { personId: 'person-4', complianceStatus: 'red' },
         ],
       })
 
-      const result = await mockedApi.get('/api/compliance/status') as ComplianceListResponse<ComplianceStatus>
-      const green = result.items.filter((s) => s.compliance_status === 'green')
-      const yellow = result.items.filter((s) => s.compliance_status === 'yellow')
-      const red = result.items.filter((s) => s.compliance_status === 'red')
+      const result: any = await mockedApi.get('/api/compliance/status') as ComplianceListResponse<ComplianceStatus>
+      const green = result.items.filter((s: { complianceStatus: string }) => s.complianceStatus === 'green')
+      const yellow = result.items.filter((s: { complianceStatus: string }) => s.complianceStatus === 'yellow')
+      const red = result.items.filter((s: { complianceStatus: string }) => s.complianceStatus === 'red')
 
       expect(green).toHaveLength(2)
       expect(yellow).toHaveLength(1)
@@ -256,23 +256,23 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
     it('should display current weekly hours', async () => {
       setupApiMock()
 
-      const result = await mockedApi.get('/api/compliance/status?person_id=person-1')
-      expect(result.total_hours).toBe(75)
+      const result: any = await mockedApi.get('/api/compliance/status?personId=person-1')
+      expect(result.totalHours).toBe(75)
       expect(result.max_hours).toBe(80)
     })
 
     it('should show hours remaining in week', async () => {
       setupApiMock()
 
-      const result = await mockedApi.get('/api/compliance/status?person_id=person-1')
+      const result: any = await mockedApi.get('/api/compliance/status?personId=person-1')
       expect(result.hours_remaining).toBe(5)
     })
 
     it('should calculate percentage of max hours', async () => {
       setupApiMock()
 
-      const result = await mockedApi.get('/api/compliance/status?person_id=person-1')
-      const percentage = (result.total_hours / result.max_hours) * 100
+      const result: any = await mockedApi.get('/api/compliance/status?personId=person-1')
+      const percentage = (result.totalHours / result.max_hours) * 100
       expect(percentage).toBeCloseTo(93.75, 1)
     })
 
@@ -280,12 +280,12 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.get.mockResolvedValueOnce({
-        total_hours: 85,
+        totalHours: 85,
         max_hours: 80,
         gauge_color: 'red',
       })
 
-      const result = await mockedApi.get('/api/compliance/status?person_id=person-1')
+      const result: any = await mockedApi.get('/api/compliance/status?personId=person-1')
       expect(result.gauge_color).toBe('red')
     })
 
@@ -293,12 +293,12 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.get.mockResolvedValueOnce({
-        total_hours: 78,
+        totalHours: 78,
         max_hours: 80,
         warning: 'Approaching 80-hour limit',
       })
 
-      const result = await mockedApi.get('/api/compliance/status?person_id=person-1')
+      const result: any = await mockedApi.get('/api/compliance/status?personId=person-1')
       expect(result.warning).toBeDefined()
     })
   })
@@ -307,7 +307,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
     it('should display active violations', async () => {
       setupApiMock()
 
-      const result = await mockedApi.get('/api/compliance/violations?resolved=false')
+      const result: any = await mockedApi.get('/api/compliance/violations?resolved=false')
       expect(result.items).toHaveLength(1)
       expect(result.items[0].resolved).toBe(false)
     })
@@ -330,8 +330,8 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
 
       setupApiMock({ violations })
 
-      const result = await mockedApi.get('/api/compliance/violations') as ComplianceListResponse<ComplianceViolation>
-      const highSeverity = result.items.filter((v) => v.severity === 'high')
+      const result: any = await mockedApi.get('/api/compliance/violations') as ComplianceListResponse<ComplianceViolation>
+      const highSeverity = result.items.filter((v: { severity: string }) => v.severity === 'high')
       expect(highSeverity).toHaveLength(1)
     })
 
@@ -344,7 +344,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
 
       setupApiMock({ violations })
 
-      const result = await mockedApi.get('/api/compliance/violations')
+      const result: any = await mockedApi.get('/api/compliance/violations')
       // In real implementation, would be sorted by severity
       expect(result.items).toHaveLength(3)
     })
@@ -358,7 +358,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result = await mockedApi.get('/api/compliance/violations?severity=critical')
+      const result: any = await mockedApi.get('/api/compliance/violations?severity=critical')
       expect(result.items[0].requires_immediate_action).toBe(true)
     })
   })
@@ -371,17 +371,17 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         report_id: 'report-1',
         type: 'weekly',
         generated_at: '2024-01-28T00:00:00Z',
-        download_url: '/api/reports/compliance-weekly-1.pdf',
+        downloadUrl: '/api/reports/compliance-weekly-1.pdf',
       })
 
-      const result = await mockedApi.post('/api/compliance/reports', {
+      const result: any = await mockedApi.post('/api/compliance/reports', {
         type: 'weekly',
-        start_date: '2024-01-01',
-        end_date: '2024-01-07',
+        startDate: '2024-01-01',
+        endDate: '2024-01-07',
       })
 
       expect(result.type).toBe('weekly')
-      expect(result.download_url).toContain('.pdf')
+      expect(result.downloadUrl).toContain('.pdf')
     })
 
     it('should generate monthly compliance report', async () => {
@@ -393,7 +393,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         month: '2024-01',
       })
 
-      const result = await mockedApi.post('/api/compliance/reports', {
+      const result: any = await mockedApi.post('/api/compliance/reports', {
         type: 'monthly',
         month: '2024-01',
       })
@@ -407,25 +407,25 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
       mockedApi.post = jest.fn().mockResolvedValueOnce({
         report_id: 'report-1',
         summary: {
-          total_violations: 5,
+          totalViolations: 5,
           resolved_violations: 3,
           active_violations: 2,
         },
       })
 
-      const result = await mockedApi.post('/api/compliance/reports', {})
-      expect(result.summary.total_violations).toBe(5)
+      const result: any = await mockedApi.post('/api/compliance/reports', {})
+      expect(result.summary.totalViolations).toBe(5)
     })
 
     it('should export report to PDF', async () => {
       setupApiMock()
 
       mockedApi.post = jest.fn().mockResolvedValueOnce({
-        download_url: '/api/reports/compliance-1.pdf',
+        downloadUrl: '/api/reports/compliance-1.pdf',
         format: 'pdf',
       })
 
-      const result = await mockedApi.post('/api/compliance/reports/export', {
+      const result: any = await mockedApi.post('/api/compliance/reports/export', {
         format: 'pdf',
       })
 
@@ -436,11 +436,11 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.post = jest.fn().mockResolvedValueOnce({
-        download_url: '/api/reports/compliance-1.xlsx',
+        downloadUrl: '/api/reports/compliance-1.xlsx',
         format: 'excel',
       })
 
-      const result = await mockedApi.post('/api/compliance/reports/export', {
+      const result: any = await mockedApi.post('/api/compliance/reports/export', {
         format: 'excel',
       })
 
@@ -452,37 +452,37 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
     it('should display compliance history for resident', async () => {
       setupApiMock()
 
-      const result = await mockedApi.get('/api/compliance/work-hours?person_id=person-1')
+      const result: any = await mockedApi.get('/api/compliance/work-hours?personId=person-1')
       expect(result.items).toHaveLength(2)
     })
 
     it('should show weekly hour trends', async () => {
       setupApiMock()
 
-      const result = await mockedApi.get('/api/compliance/work-hours?person_id=person-1') as ComplianceListResponse<WorkHours>
-      const hours = result.items.map((w) => w.total_hours)
+      const result: any = await mockedApi.get('/api/compliance/work-hours?personId=person-1') as ComplianceListResponse<WorkHours>
+      const hours = result.items.map((w: { totalHours: number }) => w.totalHours)
       expect(hours).toEqual([78, 75])
     })
 
     it('should identify patterns of near-violations', async () => {
       const workHours = [
-        { ...mockWorkHours[0], total_hours: 79 },
-        { ...mockWorkHours[0], week_start: '2024-01-08', total_hours: 78 },
-        { ...mockWorkHours[0], week_start: '2024-01-15', total_hours: 79 },
+        { ...mockWorkHours[0], totalHours: 79 },
+        { ...mockWorkHours[0], week_start: '2024-01-08', totalHours: 78 },
+        { ...mockWorkHours[0], week_start: '2024-01-15', totalHours: 79 },
       ]
 
       setupApiMock({ workHours })
 
-      const result = await mockedApi.get('/api/compliance/work-hours?person_id=person-1') as ComplianceListResponse<WorkHours>
-      const nearViolations = result.items.filter((w) => w.total_hours >= 78)
+      const result: any = await mockedApi.get('/api/compliance/work-hours?personId=person-1') as ComplianceListResponse<WorkHours>
+      const nearViolations = result.items.filter((w: { totalHours: number }) => w.totalHours >= 78)
       expect(nearViolations).toHaveLength(3)
     })
 
     it('should calculate average weekly hours', async () => {
       setupApiMock()
 
-      const result = await mockedApi.get('/api/compliance/work-hours?person_id=person-1') as ComplianceListResponse<WorkHours>
-      const total = result.items.reduce((sum, w) => sum + w.total_hours, 0)
+      const result: any = await mockedApi.get('/api/compliance/work-hours?personId=person-1') as ComplianceListResponse<WorkHours>
+      const total = result.items.reduce((sum: number, w: { totalHours: number }) => sum + w.totalHours, 0)
       const average = total / result.items.length
       expect(average).toBeCloseTo(76.5, 1)
     })
@@ -493,12 +493,12 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.get.mockResolvedValueOnce({
-        person_id: 'person-1',
+        personId: 'person-1',
         days_off_count: 1,
         compliant: true,
       })
 
-      const result = await mockedApi.get('/api/compliance/days-off?person_id=person-1')
+      const result: any = await mockedApi.get('/api/compliance/days-off?personId=person-1')
       expect(result.compliant).toBe(true)
       expect(result.days_off_count).toBeGreaterThanOrEqual(1)
     })
@@ -507,13 +507,13 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.get.mockResolvedValueOnce({
-        person_id: 'person-1',
+        personId: 'person-1',
         days_off_count: 0,
         compliant: false,
         violation: '1-in-7 rule violated',
       })
 
-      const result = await mockedApi.get('/api/compliance/days-off?person_id=person-1')
+      const result: any = await mockedApi.get('/api/compliance/days-off?personId=person-1')
       expect(result.compliant).toBe(false)
     })
   })
@@ -523,7 +523,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.get.mockResolvedValueOnce({
-        block_id: 'block-1',
+        blockId: 'block-1',
         residents: 4,
         faculty: 2,
         ratio: 2,
@@ -531,7 +531,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         compliant: true,
       })
 
-      const result = await mockedApi.get('/api/compliance/supervision?block_id=block-1')
+      const result: any = await mockedApi.get('/api/compliance/supervision?blockId=block-1')
       expect(result.compliant).toBe(true)
     })
 
@@ -539,7 +539,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.get.mockResolvedValueOnce({
-        block_id: 'block-1',
+        blockId: 'block-1',
         residents: 6,
         faculty: 1,
         ratio: 6,
@@ -547,7 +547,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         compliant: false,
       })
 
-      const result = await mockedApi.get('/api/compliance/supervision?block_id=block-1')
+      const result: any = await mockedApi.get('/api/compliance/supervision?blockId=block-1')
       expect(result.compliant).toBe(false)
     })
 
@@ -555,7 +555,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.get.mockResolvedValueOnce({
-        block_id: 'block-1',
+        blockId: 'block-1',
         pgy1_count: 2,
         pgy1_faculty: 1,
         pgy1_ratio: 2,
@@ -563,7 +563,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         pgy1_compliant: true,
       })
 
-      const result = await mockedApi.get('/api/compliance/supervision?block_id=block-1&pgy=1')
+      const result: any = await mockedApi.get('/api/compliance/supervision?blockId=block-1&pgy=1')
       expect(result.pgy1_compliant).toBe(true)
     })
   })
@@ -574,12 +574,12 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
 
       // Simulate real-time update
       mockedApi.get.mockResolvedValueOnce({
-        person_id: 'person-1',
+        personId: 'person-1',
         current_hours: 75,
         last_updated: new Date().toISOString(),
       })
 
-      const result = await mockedApi.get('/api/compliance/status/realtime?person_id=person-1')
+      const result: any = await mockedApi.get('/api/compliance/status/realtime?personId=person-1')
       expect(result.current_hours).toBe(75)
     })
 
@@ -591,8 +591,8 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         message: 'Hours exceeded 80-hour limit',
       })
 
-      const result = await mockedApi.post('/api/compliance/check', {
-        person_id: 'person-1',
+      const result: any = await mockedApi.post('/api/compliance/check', {
+        personId: 'person-1',
         hours: 82,
       })
 
@@ -609,8 +609,8 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         recipients: ['person-1', 'coordinator-1'],
       })
 
-      const result = await mockedApi.post('/api/compliance/notify', {
-        person_id: 'person-1',
+      const result: any = await mockedApi.post('/api/compliance/notify', {
+        personId: 'person-1',
         type: 'warning',
         message: 'Approaching 80-hour limit',
       })
@@ -627,7 +627,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         recipients: ['coordinator-1', 'program_director'],
       })
 
-      const result = await mockedApi.post('/api/compliance/escalate', {
+      const result: any = await mockedApi.post('/api/compliance/escalate', {
         violation_id: 'violation-1',
       })
 
@@ -640,13 +640,13 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.get.mockResolvedValueOnce({
-        person_id: 'person-1',
+        personId: 'person-1',
         current_hours: 75,
         projected_hours: 82,
         violation_risk: 'high',
       })
 
-      const result = await mockedApi.get('/api/compliance/forecast?person_id=person-1')
+      const result: any = await mockedApi.get('/api/compliance/forecast?personId=person-1')
       expect(result.violation_risk).toBe('high')
     })
 
@@ -660,7 +660,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result = await mockedApi.get('/api/compliance/recommendations?person_id=person-1')
+      const result: any = await mockedApi.get('/api/compliance/recommendations?personId=person-1')
       expect(result.recommendations).toHaveLength(2)
     })
   })
@@ -672,12 +672,12 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
       mockedApi.patch = jest.fn().mockResolvedValueOnce({
         id: 'violation-1',
         resolved: true,
-        resolved_at: '2024-01-29T00:00:00Z',
-        resolved_by: 'coordinator-1',
+        resolvedAt: '2024-01-29T00:00:00Z',
+        resolvedBy: 'coordinator-1',
       })
 
-      const result = await mockedApi.patch('/api/compliance/violations/violation-1/resolve', {
-        resolution_notes: 'Hours adjusted in schedule',
+      const result: any = await mockedApi.patch('/api/compliance/violations/violation-1/resolve', {
+        resolutionNotes: 'Hours adjusted in schedule',
       })
 
       expect(result.resolved).toBe(true)
@@ -694,7 +694,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result = await mockedApi.get('/api/compliance/violations/violation-1/actions')
+      const result: any = await mockedApi.get('/api/compliance/violations/violation-1/actions')
       expect(result.actions).toHaveLength(2)
     })
   })
@@ -711,7 +711,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result = await mockedApi.get('/api/compliance/trends')
+      const result: any = await mockedApi.get('/api/compliance/trends')
       expect(result.periods).toHaveLength(3)
     })
 
@@ -723,7 +723,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         change_percentage: 3,
       })
 
-      const result = await mockedApi.get('/api/compliance/trends/direction')
+      const result: any = await mockedApi.get('/api/compliance/trends/direction')
       expect(result.trend).toBe('improving')
     })
   })
@@ -734,13 +734,13 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
 
       mockedApi.get.mockResolvedValueOnce({
         items: [
-          { person_id: 'person-1', total_hours: 75, rank: 1 },
-          { person_id: 'person-2', total_hours: 78, rank: 2 },
-          { person_id: 'person-3', total_hours: 82, rank: 3 },
+          { personId: 'person-1', totalHours: 75, rank: 1 },
+          { personId: 'person-2', totalHours: 78, rank: 2 },
+          { personId: 'person-3', totalHours: 82, rank: 3 },
         ],
       })
 
-      const result = await mockedApi.get('/api/compliance/comparison')
+      const result: any = await mockedApi.get('/api/compliance/comparison')
       expect(result.items).toHaveLength(3)
     })
 
@@ -753,7 +753,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         difference: 5,
       })
 
-      const result = await mockedApi.get('/api/compliance/compare-to-average?person_id=person-1')
+      const result: any = await mockedApi.get('/api/compliance/compare-to-average?personId=person-1')
       expect(result.difference).toBe(5)
     })
   })
@@ -773,7 +773,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result = await mockedApi.get('/api/compliance/audit?person_id=person-1')
+      const result: any = await mockedApi.get('/api/compliance/audit?personId=person-1')
       expect(result.items).toHaveLength(1)
     })
 
@@ -787,7 +787,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result = await mockedApi.get('/api/compliance/status-history?person_id=person-1')
+      const result: any = await mockedApi.get('/api/compliance/status-history?personId=person-1')
       expect(result.changes).toHaveLength(2)
     })
   })
@@ -798,14 +798,14 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
 
       mockedApi.post = jest.fn().mockResolvedValueOnce({
         exemption_id: 'exemption-1',
-        person_id: 'person-1',
+        personId: 'person-1',
         rule: '80_hour_limit',
         reason: 'Research project deadline',
         approved_by: 'program_director',
       })
 
-      const result = await mockedApi.post('/api/compliance/exemptions', {
-        person_id: 'person-1',
+      const result: any = await mockedApi.post('/api/compliance/exemptions', {
+        personId: 'person-1',
         rule: '80_hour_limit',
         reason: 'Research project deadline',
       })
@@ -817,15 +817,15 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.get.mockResolvedValueOnce({
-        total_hours: 85,
+        totalHours: 85,
         max_hours: 80,
         exemption_applied: true,
-        compliance_status: 'green',
+        complianceStatus: 'green',
       })
 
-      const result = await mockedApi.get('/api/compliance/status?person_id=person-1')
+      const result: any = await mockedApi.get('/api/compliance/status?personId=person-1')
       expect(result.exemption_applied).toBe(true)
-      expect(result.compliance_status).toBe('green')
+      expect(result.complianceStatus).toBe('green')
     })
   })
 
@@ -835,19 +835,19 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
 
       mockedApi.get.mockResolvedValueOnce({
         items: [
-          { person_id: 'person-1', pgy_level: 1 },
-          { person_id: 'person-2', pgy_level: 1 },
+          { personId: 'person-1', pgyLevel: 1 },
+          { personId: 'person-2', pgyLevel: 1 },
         ],
       })
 
-      const result = await mockedApi.get('/api/compliance/status?pgy_level=1') as ComplianceListResponse<ComplianceStatus>
-      expect(result.items.every((s) => s.pgy_level === 1)).toBe(true)
+      const result: any = await mockedApi.get('/api/compliance/status?pgyLevel=1') as ComplianceListResponse<ComplianceStatus>
+      expect(result.items.every((s: { pgyLevel: number }) => s.pgyLevel === 1)).toBe(true)
     })
 
     it('should filter by date range', async () => {
       setupApiMock()
 
-      const result = await mockedApi.get('/api/compliance/status?start=2024-01-01&end=2024-01-31')
+      const result: any = await mockedApi.get('/api/compliance/status?start=2024-01-01&end=2024-01-31')
       expect(mockedApi.get).toHaveBeenCalledWith(
         expect.stringContaining('start=2024-01-01')
       )
@@ -859,14 +859,14 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.get.mockResolvedValueOnce({
-        total_residents: 10,
+        totalResidents: 10,
         compliant: 8,
         warnings: 1,
         violations: 1,
         compliance_rate: 80,
       })
 
-      const result = await mockedApi.get('/api/compliance/summary')
+      const result: any = await mockedApi.get('/api/compliance/summary')
       expect(result.compliance_rate).toBe(80)
     })
 
@@ -880,7 +880,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result = await mockedApi.get('/api/compliance/top-violations')
+      const result: any = await mockedApi.get('/api/compliance/top-violations')
       expect(result.top_violations).toHaveLength(2)
     })
   })
@@ -890,12 +890,12 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.post = jest.fn().mockResolvedValueOnce({
-        download_url: '/api/exports/compliance.csv',
+        downloadUrl: '/api/exports/compliance.csv',
         format: 'csv',
         rows: 100,
       })
 
-      const result = await mockedApi.post('/api/compliance/export', {
+      const result: any = await mockedApi.post('/api/compliance/export', {
         format: 'csv',
       })
 
@@ -913,7 +913,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         manual_review_required: 1,
       })
 
-      const result = await mockedApi.post('/api/compliance/auto-resolve', {})
+      const result: any = await mockedApi.post('/api/compliance/auto-resolve', {})
       expect(result.auto_resolved).toBe(3)
     })
   })
@@ -923,7 +923,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.get.mockResolvedValueOnce({
-        person_id: 'person-1',
+        personId: 'person-1',
         score: 95,
         factors: {
           hours: 98,
@@ -932,7 +932,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         },
       })
 
-      const result = await mockedApi.get('/api/compliance/score?person_id=person-1')
+      const result: any = await mockedApi.get('/api/compliance/score?personId=person-1')
       expect(result.score).toBe(95)
     })
   })

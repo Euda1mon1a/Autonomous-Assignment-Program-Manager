@@ -52,17 +52,17 @@ interface TemplateRow extends TemplateCreateRequest {
 
 const DEFAULT_TEMPLATE: Omit<TemplateRow, 'id' | 'isExpanded'> = {
   name: '',
-  activity_type: 'clinic',
+  activityType: 'clinic',
   abbreviation: null,
-  display_abbreviation: null,
-  font_color: null,
-  background_color: null,
-  clinic_location: null,
-  max_residents: null,
-  requires_specialty: null,
-  requires_procedure_credential: false,
-  supervision_required: false,
-  max_supervision_ratio: null,
+  displayAbbreviation: null,
+  fontColor: null,
+  backgroundColor: null,
+  clinicLocation: null,
+  maxResidents: null,
+  requiresSpecialty: null,
+  requiresProcedureCredential: false,
+  supervisionRequired: false,
+  maxSupervisionRatio: null,
 };
 
 // ============================================================================
@@ -177,7 +177,7 @@ function TemplateRowForm({
                 value={template.activityType}
                 onChange={(e) =>
                   onChange(template.id, {
-                    activity_type: e.target.value as ActivityType,
+                    activityType: e.target.value as ActivityType,
                   })
                 }
                 className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -219,7 +219,7 @@ function TemplateRowForm({
                 value={template.displayAbbreviation || ''}
                 onChange={(e) =>
                   onChange(template.id, {
-                    display_abbreviation: e.target.value || null,
+                    displayAbbreviation: e.target.value || null,
                   })
                 }
                 placeholder="e.g., Clinic"
@@ -237,7 +237,7 @@ function TemplateRowForm({
                 value={template.maxResidents ?? ''}
                 onChange={(e) =>
                   onChange(template.id, {
-                    max_residents: e.target.value ? parseInt(e.target.value) : null,
+                    maxResidents: e.target.value ? parseInt(e.target.value) : null,
                   })
                 }
                 min={1}
@@ -257,7 +257,7 @@ function TemplateRowForm({
                 value={template.clinicLocation || ''}
                 onChange={(e) =>
                   onChange(template.id, {
-                    clinic_location: e.target.value || null,
+                    clinicLocation: e.target.value || null,
                   })
                 }
                 placeholder="e.g., Building A, Room 101"
@@ -275,7 +275,7 @@ function TemplateRowForm({
                 value={template.requiresSpecialty || ''}
                 onChange={(e) =>
                   onChange(template.id, {
-                    requires_specialty: e.target.value || null,
+                    requiresSpecialty: e.target.value || null,
                   })
                 }
                 placeholder="e.g., Cardiology"
@@ -292,7 +292,7 @@ function TemplateRowForm({
                 checked={template.supervisionRequired}
                 onChange={(e) =>
                   onChange(template.id, {
-                    supervision_required: e.target.checked,
+                    supervisionRequired: e.target.checked,
                   })
                 }
                 className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-violet-500 focus:ring-violet-500 focus:ring-offset-slate-800"
@@ -306,7 +306,7 @@ function TemplateRowForm({
                 checked={template.requiresProcedureCredential}
                 onChange={(e) =>
                   onChange(template.id, {
-                    requires_procedure_credential: e.target.checked,
+                    requiresProcedureCredential: e.target.checked,
                   })
                 }
                 className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-violet-500 focus:ring-violet-500 focus:ring-offset-slate-800"
@@ -326,7 +326,7 @@ function TemplateRowForm({
                   type="color"
                   value={template.backgroundColor || '#6366F1'}
                   onChange={(e) =>
-                    onChange(template.id, { background_color: e.target.value })
+                    onChange(template.id, { backgroundColor: e.target.value })
                   }
                   className="w-8 h-8 rounded cursor-pointer"
                 />
@@ -335,7 +335,7 @@ function TemplateRowForm({
                   value={template.backgroundColor || ''}
                   onChange={(e) =>
                     onChange(template.id, {
-                      background_color: e.target.value || null,
+                      backgroundColor: e.target.value || null,
                     })
                   }
                   placeholder="#RRGGBB"
@@ -353,7 +353,7 @@ function TemplateRowForm({
                   type="color"
                   value={template.fontColor || '#FFFFFF'}
                   onChange={(e) =>
-                    onChange(template.id, { font_color: e.target.value })
+                    onChange(template.id, { fontColor: e.target.value })
                   }
                   className="w-8 h-8 rounded cursor-pointer"
                 />
@@ -362,7 +362,7 @@ function TemplateRowForm({
                   value={template.fontColor || ''}
                   onChange={(e) =>
                     onChange(template.id, {
-                      font_color: e.target.value || null,
+                      fontColor: e.target.value || null,
                     })
                   }
                   placeholder="#RRGGBB"
@@ -471,17 +471,17 @@ export function BulkCreateModal({
     // Convert to TemplateCreateRequest format
     const requests: TemplateCreateRequest[] = templates.map((t) => ({
       name: t.name.trim(),
-      activity_type: t.activityType,
+      activityType: t.activityType,
       abbreviation: t.abbreviation || null,
-      display_abbreviation: t.displayAbbreviation || null,
-      font_color: t.fontColor || null,
-      background_color: t.backgroundColor || null,
-      clinic_location: t.clinicLocation || null,
-      max_residents: t.maxResidents,
-      requires_specialty: t.requiresSpecialty || null,
-      requires_procedure_credential: t.requiresProcedureCredential,
-      supervision_required: t.supervisionRequired,
-      max_supervision_ratio: t.maxSupervisionRatio,
+      displayAbbreviation: t.displayAbbreviation || null,
+      fontColor: t.fontColor || null,
+      backgroundColor: t.backgroundColor || null,
+      clinicLocation: t.clinicLocation || null,
+      maxResidents: t.maxResidents,
+      requiresSpecialty: t.requiresSpecialty || null,
+      requiresProcedureCredential: t.requiresProcedureCredential,
+      supervisionRequired: t.supervisionRequired,
+      maxSupervisionRatio: t.maxSupervisionRatio,
     }));
 
     await onSubmit(requests);

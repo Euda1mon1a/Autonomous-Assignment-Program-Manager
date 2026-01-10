@@ -185,7 +185,7 @@ describe('HeatmapControls', () => {
       await waitFor(() => {
         expect(onFiltersChange).toHaveBeenCalledWith({
           ...mockFilters,
-          group_by: 'rotation',
+          groupBy: 'rotation',
         });
       });
     });
@@ -202,7 +202,7 @@ describe('HeatmapControls', () => {
 
   describe('Include FMIT Control', () => {
     it('should display checked state based on filter', () => {
-      const filtersWithFmit = heatmapMockFactories.filters({ include_fmit: true });
+      const filtersWithFmit = heatmapMockFactories.filters({ includeFmit: true });
       const { container } = render(<HeatmapControls {...defaultProps} filters={filtersWithFmit} />, {
         wrapper: createWrapper(),
       });
@@ -217,9 +217,9 @@ describe('HeatmapControls', () => {
       expect(fmitCheckbox.checked).toBe(true);
     });
 
-    it('should default to true when include_fmit is undefined', () => {
+    it('should default to true when includeFmit is undefined', () => {
       const filtersWithoutFmit = heatmapMockFactories.filters();
-      delete (filtersWithoutFmit as any).include_fmit;
+      delete (filtersWithoutFmit as any).includeFmit;
 
       const { container } = render(<HeatmapControls {...defaultProps} filters={filtersWithoutFmit} />, {
         wrapper: createWrapper(),
@@ -254,7 +254,7 @@ describe('HeatmapControls', () => {
       await waitFor(() => {
         expect(onFiltersChange).toHaveBeenCalledWith({
           ...mockFilters,
-          include_fmit: false,
+          includeFmit: false,
         });
       });
     });
@@ -322,8 +322,8 @@ describe('HeatmapControls', () => {
     it('should show active filter count badge', async () => {
       const user = userEvent.setup();
       const filtersWithSelections = heatmapMockFactories.filters({
-        person_ids: ['person-1', 'person-2'],
-        rotation_ids: ['rotation-1'],
+        personIds: ['person-1', 'person-2'],
+        rotationIds: ['rotation-1'],
       });
 
       render(<HeatmapControls {...defaultProps} filters={filtersWithSelections} />, {
@@ -339,8 +339,8 @@ describe('HeatmapControls', () => {
 
     it('should not show badge when no filters are active', () => {
       const filtersWithNoSelections = heatmapMockFactories.filters({
-        person_ids: [],
-        rotation_ids: [],
+        personIds: [],
+        rotationIds: [],
       });
 
       render(<HeatmapControls {...defaultProps} filters={filtersWithNoSelections} />, {
@@ -402,7 +402,7 @@ describe('HeatmapControls', () => {
       await waitFor(() => {
         expect(onFiltersChange).toHaveBeenCalledWith({
           ...mockFilters,
-          person_ids: ['person-1'],
+          personIds: ['person-1'],
         });
       });
     });
@@ -411,7 +411,7 @@ describe('HeatmapControls', () => {
       const user = userEvent.setup();
       const onFiltersChange = jest.fn();
       const filtersWithPerson = heatmapMockFactories.filters({
-        person_ids: ['person-1'],
+        personIds: ['person-1'],
       });
 
       render(
@@ -438,7 +438,7 @@ describe('HeatmapControls', () => {
       await waitFor(() => {
         expect(onFiltersChange).toHaveBeenCalledWith({
           ...filtersWithPerson,
-          person_ids: [],
+          personIds: [],
         });
       });
     });
@@ -446,7 +446,7 @@ describe('HeatmapControls', () => {
     it('should show clear button when persons are selected', async () => {
       const user = userEvent.setup();
       const filtersWithPerson = heatmapMockFactories.filters({
-        person_ids: ['person-1'],
+        personIds: ['person-1'],
       });
 
       render(<HeatmapControls {...defaultProps} filters={filtersWithPerson} />, {
@@ -466,7 +466,7 @@ describe('HeatmapControls', () => {
       const user = userEvent.setup();
       const onFiltersChange = jest.fn();
       const filtersWithPerson = heatmapMockFactories.filters({
-        person_ids: ['person-1', 'person-2'],
+        personIds: ['person-1', 'person-2'],
       });
 
       render(
@@ -491,7 +491,7 @@ describe('HeatmapControls', () => {
       await waitFor(() => {
         expect(onFiltersChange).toHaveBeenCalledWith({
           ...filtersWithPerson,
-          person_ids: [],
+          personIds: [],
         });
       });
     });
@@ -549,7 +549,7 @@ describe('HeatmapControls', () => {
       await waitFor(() => {
         expect(onFiltersChange).toHaveBeenCalledWith({
           ...mockFilters,
-          rotation_ids: ['rotation-1'],
+          rotationIds: ['rotation-1'],
         });
       });
     });
@@ -558,7 +558,7 @@ describe('HeatmapControls', () => {
       const user = userEvent.setup();
       const onFiltersChange = jest.fn();
       const filtersWithRotation = heatmapMockFactories.filters({
-        rotation_ids: ['rotation-1'],
+        rotationIds: ['rotation-1'],
       });
 
       render(
@@ -585,7 +585,7 @@ describe('HeatmapControls', () => {
       await waitFor(() => {
         expect(onFiltersChange).toHaveBeenCalledWith({
           ...filtersWithRotation,
-          rotation_ids: [],
+          rotationIds: [],
         });
       });
     });
@@ -595,8 +595,8 @@ describe('HeatmapControls', () => {
     it('should show clear all button when filters are active', async () => {
       const user = userEvent.setup();
       const filtersWithSelections = heatmapMockFactories.filters({
-        person_ids: ['person-1'],
-        rotation_ids: ['rotation-1'],
+        personIds: ['person-1'],
+        rotationIds: ['rotation-1'],
       });
 
       render(<HeatmapControls {...defaultProps} filters={filtersWithSelections} />, {
@@ -614,8 +614,8 @@ describe('HeatmapControls', () => {
     it('should not show clear all button when no filters are active', async () => {
       const user = userEvent.setup();
       const filtersWithNoSelections = heatmapMockFactories.filters({
-        person_ids: [],
-        rotation_ids: [],
+        personIds: [],
+        rotationIds: [],
       });
 
       render(<HeatmapControls {...defaultProps} filters={filtersWithNoSelections} />, {
@@ -634,8 +634,8 @@ describe('HeatmapControls', () => {
       const user = userEvent.setup();
       const onFiltersChange = jest.fn();
       const filtersWithSelections = heatmapMockFactories.filters({
-        person_ids: ['person-1'],
-        rotation_ids: ['rotation-1'],
+        personIds: ['person-1'],
+        rotationIds: ['rotation-1'],
       });
 
       render(
@@ -659,8 +659,8 @@ describe('HeatmapControls', () => {
 
       await waitFor(() => {
         expect(onFiltersChange).toHaveBeenCalledWith({
-          group_by: 'person',
-          include_fmit: true,
+          groupBy: 'person',
+          includeFmit: true,
         });
       });
     });

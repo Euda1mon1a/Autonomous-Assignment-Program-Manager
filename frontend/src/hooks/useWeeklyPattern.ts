@@ -42,19 +42,19 @@ export const weeklyPatternQueryKeys = {
 
 /**
  * Backend weekly pattern response structure.
- * Matches backend/app/schemas/rotation_template_gui.py WeeklyPatternResponse
+ * Matches backend/app/schemas/rotationTemplate_gui.py WeeklyPatternResponse
  */
 interface BackendWeeklyPattern {
   id: string;
-  rotation_template_id: string;
-  day_of_week: number;
-  time_of_day: 'AM' | 'PM';
-  activity_type: string;
-  linked_template_id: string | null;
-  is_protected: boolean;
+  rotationTemplateId: string;
+  dayOfWeek: number;
+  timeOfDay: 'AM' | 'PM';
+  activityType: string;
+  linkedTemplateId: string | null;
+  isProtected: boolean;
   notes: string | null;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
@@ -75,7 +75,7 @@ function convertBackendToGrid(
         dayOfWeek: bp.dayOfWeek as DayOfWeek,
         timeOfDay: bp.timeOfDay as WeeklyPatternTimeOfDay,
         rotationTemplateId: bp.linkedTemplateId,
-        // Preserve activity_type for slots without linked_template_id
+        // Preserve activityType for slots without linkedTemplateId
         activityType: bp.activityType,
         isProtected: bp.isProtected,
         notes: bp.notes,
@@ -83,7 +83,7 @@ function convertBackendToGrid(
     }
   }
 
-  // Find the latest updated_at
+  // Find the latest updatedAt
   const updatedAt = backendPatterns.length > 0
     ? backendPatterns.reduce((latest, p) =>
         p.updatedAt > latest ? p.updatedAt : latest,
@@ -104,24 +104,24 @@ function convertBackendToGrid(
 function convertGridToBackend(
   grid: WeeklyPatternGrid
 ): { patterns: Array<{
-  day_of_week: number;
-  time_of_day: 'AM' | 'PM';
-  activity_type: string;
-  linked_template_id: string | null;
-  is_protected: boolean;
+  dayOfWeek: number;
+  timeOfDay: 'AM' | 'PM';
+  activityType: string;
+  linkedTemplateId: string | null;
+  isProtected: boolean;
   notes: string | null;
 }> } {
   const patterns = grid.slots
     // Include slots that have either a linked template OR an activity type
     .filter(slot => slot.rotationTemplateId !== null || slot.activityType)
     .map(slot => ({
-      day_of_week: slot.dayOfWeek,
-      time_of_day: slot.timeOfDay,
-      // Use existing activity_type or default to 'scheduled' for linked templates
-      activity_type: slot.activityType || 'scheduled',
-      linked_template_id: slot.rotationTemplateId,
-      // Preserve existing is_protected and notes values from grid model
-      is_protected: slot.isProtected ?? false,
+      dayOfWeek: slot.dayOfWeek,
+      timeOfDay: slot.timeOfDay,
+      // Use existing activityType or default to 'scheduled' for linked templates
+      activityType: slot.activityType || 'scheduled',
+      linkedTemplateId: slot.rotationTemplateId,
+      // Preserve existing isProtected and notes values from grid model
+      isProtected: slot.isProtected ?? false,
       notes: slot.notes ?? null,
     }));
 
@@ -276,11 +276,11 @@ export function useUpdateWeeklyPattern() {
 interface BackendRotationTemplate {
   id: string;
   name: string;
-  activity_type: string;
+  activityType: string;
   abbreviation: string | null;
-  display_abbreviation: string | null;
-  font_color: string | null;
-  background_color: string | null;
+  displayAbbreviation: string | null;
+  fontColor: string | null;
+  backgroundColor: string | null;
   // ... other fields not needed for pattern editor
 }
 
@@ -335,10 +335,10 @@ export function useAvailableTemplates(
  *   const handleApply = (slots: BatchPatternSlot[]) => {
  *     mutate(
  *       {
- *         template_ids: selectedTemplates.map(t => t.id),
+ *         templateIds: selectedTemplates.map(t => t.id),
  *         mode: 'overlay',
  *         slots,
- *         week_numbers: [1, 2, 3], // Apply to weeks 1-3
+ *         weekNumbers: [1, 2, 3], // Apply to weeks 1-3
  *       },
  *       {
  *         onSuccess: (result) => {

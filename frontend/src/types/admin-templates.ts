@@ -30,7 +30,7 @@ export type ActivityType =
  * - absence: Days away from program (absence activity type) - counts toward 28-day limit
  * - educational: Structured learning (conference, education, lecture)
  */
-export type TemplateCategory = 'rotation' | 'time_off' | 'absence' | 'educational';
+export type TemplateCategory = 'rotation' | 'timeOff' | 'absence' | 'educational';
 
 export interface TemplateCategoryConfig {
   value: TemplateCategory;
@@ -49,7 +49,7 @@ export const TEMPLATE_CATEGORY_CONFIGS: TemplateCategoryConfig[] = [
     activityTypes: ['clinic', 'inpatient', 'outpatient', 'procedure', 'procedures'],
   },
   {
-    value: 'time_off',
+    value: 'timeOff',
     label: 'Time Off',
     description: 'ACGME-protected rest (does NOT count toward away-from-program)',
     icon: 'Moon',
@@ -279,9 +279,9 @@ export const PREFERENCE_TYPE_DEFINITIONS: PreferenceTypeDefinition[] = [
 
 export type BulkActionType =
   | 'delete'
-  | 'update_activity_type'
+  | 'update_activityType'
   | 'update_supervision'
-  | 'update_max_residents';
+  | 'update_maxResidents';
 
 export interface BulkActionConfig {
   type: BulkActionType;
@@ -300,7 +300,7 @@ export const BULK_ACTIONS: BulkActionConfig[] = [
     requiresConfirmation: true,
   },
   {
-    type: 'update_activity_type',
+    type: 'update_activityType',
     label: 'Change Activity Type',
     description: 'Update activity type for selected templates',
     isDangerous: false,
@@ -314,7 +314,7 @@ export const BULK_ACTIONS: BulkActionConfig[] = [
     requiresConfirmation: true,
   },
   {
-    type: 'update_max_residents',
+    type: 'update_maxResidents',
     label: 'Set Max Residents',
     description: 'Update maximum residents for selected templates',
     isDangerous: false,
@@ -326,7 +326,7 @@ export const BULK_ACTIONS: BulkActionConfig[] = [
 // Filter & Sort Types
 // ============================================================================
 
-export type SortField = 'name' | 'activity_type' | 'created_at';
+export type SortField = 'name' | 'activityType' | 'createdAt';
 export type SortDirection = 'asc' | 'desc';
 
 export interface TemplateFilters {
@@ -365,7 +365,7 @@ export interface BulkDeleteRequest {
 
 export interface BulkUpdateRequest {
   templateIds: string[];
-  updates: Partial<Pick<RotationTemplate, 'activity_type' | 'supervision_required' | 'max_residents'>>;
+  updates: Partial<Pick<RotationTemplate, 'activityType' | 'supervisionRequired' | 'maxResidents'>>;
 }
 
 // ============================================================================

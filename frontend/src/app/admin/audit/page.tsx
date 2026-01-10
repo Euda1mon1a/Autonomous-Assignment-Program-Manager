@@ -56,7 +56,7 @@ const MOCK_ENTRIES: AuditEntry[] = [
     id: '2',
     timestamp: '2024-12-23T10:25:00Z',
     category: 'schedule',
-    action: 'schedule_generated',
+    action: 'scheduleGenerated',
     severity: 'info',
     userId: 'user-1',
     userName: 'Admin User',
@@ -189,7 +189,7 @@ const MOCK_STATS: AuditStats = {
   activeUsers24h: 42,
   topActions: [
     { action: 'login', count: 380 },
-    { action: 'schedule_generated', count: 45 },
+    { action: 'scheduleGenerated', count: 45 },
     { action: 'swap_requested', count: 38 },
     { action: 'absence_requested', count: 32 },
     { action: 'assignment_updated', count: 28 },

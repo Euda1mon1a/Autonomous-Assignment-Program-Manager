@@ -49,22 +49,22 @@ const mockVoxelGridData = {
     x_size: 4,
     y_size: 3,
     z_size: 2,
-    x_labels: ["2024-01-15 AM", "2024-01-15 PM", "2024-01-16 AM", "2024-01-16 PM"],
-    y_labels: ["Dr. Smith", "Resident A", "Resident B"],
+    xLabels: ["2024-01-15 AM", "2024-01-15 PM", "2024-01-16 AM", "2024-01-16 PM"],
+    yLabels: ["Dr. Smith", "Resident A", "Resident B"],
     z_labels: ["clinic", "inpatient"],
   },
   voxels: [
     {
       position: { x: 0, y: 0, z: 0 },
       identity: {
-        assignment_id: "a1",
-        person_id: "p1",
-        person_name: "Dr. Smith",
-        block_id: "b1",
+        assignmentId: "a1",
+        personId: "p1",
+        personName: "Dr. Smith",
+        blockId: "b1",
         block_date: "2024-01-15",
-        block_time_of_day: "AM",
+        block_timeOfDay: "AM",
         activity_name: "Morning Clinic",
-        activity_type: "clinic",
+        activityType: "clinic",
       },
       visual: {
         color: "#3B82F6",
@@ -87,14 +87,14 @@ const mockVoxelGridData = {
     {
       position: { x: 0, y: 1, z: 0 },
       identity: {
-        assignment_id: "a2",
-        person_id: "p2",
-        person_name: "Resident A",
-        block_id: "b1",
+        assignmentId: "a2",
+        personId: "p2",
+        personName: "Resident A",
+        blockId: "b1",
         block_date: "2024-01-15",
-        block_time_of_day: "AM",
+        block_timeOfDay: "AM",
         activity_name: "Morning Clinic",
-        activity_type: "clinic",
+        activityType: "clinic",
       },
       visual: {
         color: "#3B82F6",
@@ -116,14 +116,14 @@ const mockVoxelGridData = {
     },
   ],
   statistics: {
-    total_assignments: 2,
-    total_conflicts: 0,
-    total_violations: 0,
-    coverage_percentage: 16.67,
+    totalAssignments: 2,
+    totalConflicts: 0,
+    totalViolations: 0,
+    coveragePercentage: 16.67,
   },
-  date_range: {
-    start_date: "2024-01-15",
-    end_date: "2024-01-16",
+  dateRange: {
+    startDate: "2024-01-15",
+    endDate: "2024-01-16",
   },
 };
 
@@ -251,8 +251,8 @@ describe("VoxelScheduleView", () => {
 
     const fetchUrl = mockFetch.mock.calls[0][0];
     // Check that start and end date params are present (exact date may vary by timezone)
-    expect(fetchUrl).toMatch(/start_date=2024-0[12]-\d{2}/);
-    expect(fetchUrl).toMatch(/end_date=2024-02-\d{2}/);
+    expect(fetchUrl).toMatch(/startDate=2024-0[12]-\d{2}/);
+    expect(fetchUrl).toMatch(/endDate=2024-02-\d{2}/);
   });
 
   it("filters by activity types when provided", async () => {
@@ -270,8 +270,8 @@ describe("VoxelScheduleView", () => {
     });
 
     const fetchUrl = mockFetch.mock.calls[0][0];
-    expect(fetchUrl).toContain("activity_types=clinic");
-    expect(fetchUrl).toContain("activity_types=inpatient");
+    expect(fetchUrl).toContain("activityTypes=clinic");
+    expect(fetchUrl).toContain("activityTypes=inpatient");
   });
 
   it("handles canvas mouse events", async () => {
@@ -354,14 +354,14 @@ describe("VoxelScheduleView", () => {
         {
           position: { x: 1, y: 0, z: 0 },
           identity: {
-            assignment_id: "conflict1",
-            person_id: "p1",
-            person_name: "Dr. Smith",
-            block_id: "b2",
+            assignmentId: "conflict1",
+            personId: "p1",
+            personName: "Dr. Smith",
+            blockId: "b2",
             block_date: "2024-01-15",
-            block_time_of_day: "PM",
+            block_timeOfDay: "PM",
             activity_name: "Conflict Assignment",
-            activity_type: "clinic",
+            activityType: "clinic",
           },
           visual: {
             color: "#FF0000",
@@ -384,7 +384,7 @@ describe("VoxelScheduleView", () => {
       ],
       statistics: {
         ...mockVoxelGridData.statistics,
-        total_conflicts: 1,
+        totalConflicts: 1,
       },
     };
 

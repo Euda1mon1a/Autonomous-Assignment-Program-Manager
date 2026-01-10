@@ -29,15 +29,15 @@ const mockApiUser = {
   id: 'user-123',
   email: 'test@example.com',
   username: 'testuser',
-  first_name: 'Test',
-  last_name: 'User',
+  firstName: 'Test',
+  lastName: 'User',
   role: 'faculty',
-  is_active: true,
-  is_locked: false,
-  lock_reason: null,
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
-  last_login: null,
+  isActive: true,
+  isLocked: false,
+  lockReason: null,
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T00:00:00Z',
+  lastLogin: null,
   invite_sent_at: null,
   invite_accepted_at: null,
 };
@@ -244,8 +244,8 @@ describe('useCreateUser', () => {
     // Hook transforms to snake_case for API
     expect(mockedApi.post).toHaveBeenCalledWith('/admin/users', {
       email: 'new@example.com',
-      first_name: 'New',
-      last_name: 'User',
+      firstName: 'New',
+      lastName: 'User',
       role: 'resident',
       send_invite: true,
     });
@@ -310,7 +310,7 @@ describe('useUpdateUser', () => {
   });
 
   it('transforms firstName/lastName to snake_case', async () => {
-    const updatedApiUser = { ...mockApiUser, first_name: 'Updated', last_name: 'Name' };
+    const updatedApiUser = { ...mockApiUser, firstName: 'Updated', lastName: 'Name' };
     mockedApi.patch.mockResolvedValueOnce(updatedApiUser);
 
     const { result } = renderHook(() => useUpdateUser(), {
@@ -330,8 +330,8 @@ describe('useUpdateUser', () => {
 
     // Verify snake_case sent to API
     expect(mockedApi.patch).toHaveBeenCalledWith('/admin/users/user-123', {
-      first_name: 'Updated',
-      last_name: 'Name',
+      firstName: 'Updated',
+      lastName: 'Name',
     });
   });
 });
@@ -529,9 +529,9 @@ describe('useBulkUserAction', () => {
     // Hook transforms response
     expect(result.current.data?.success).toBe(true);
     expect(result.current.data?.affected).toBe(5);
-    // Backend expects snake_case 'user_ids'
+    // Backend expects snake_case 'userIds'
     expect(mockedApi.post).toHaveBeenCalledWith('/admin/users/bulk', {
-      user_ids: ['user-1', 'user-2', 'user-3', 'user-4', 'user-5'],
+      userIds: ['user-1', 'user-2', 'user-3', 'user-4', 'user-5'],
       action: 'activate',
     });
   });

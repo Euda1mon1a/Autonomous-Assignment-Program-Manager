@@ -483,7 +483,7 @@ describe('Analytics Mutation Hooks', () => {
         {
           format: 'pdf',
           filters: undefined,
-          include_charts: true,
+          includeCharts: true,
         },
         {
           responseType: 'blob',
@@ -516,7 +516,7 @@ describe('Analytics Mutation Hooks', () => {
         {
           format: 'csv',
           filters: undefined,
-          include_charts: false,
+          includeCharts: false,
         },
         {
           responseType: 'blob',

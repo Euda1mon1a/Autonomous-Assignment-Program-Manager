@@ -269,8 +269,8 @@ export function useCreateUser() {
       // Transform camelCase to snake_case for API
       const apiPayload = {
         email: data.email,
-        first_name: data.firstName,
-        last_name: data.lastName,
+        firstName: data.firstName,
+        lastName: data.lastName,
         role: data.role,
         send_invite: data.sendInvite,
       };
@@ -298,11 +298,11 @@ export function useUpdateUser() {
       // Transform camelCase to snake_case for API
       const apiPayload: Record<string, unknown> = {};
       if (data.email !== undefined) apiPayload.email = data.email;
-      if (data.firstName !== undefined) apiPayload.first_name = data.firstName;
-      if (data.lastName !== undefined) apiPayload.last_name = data.lastName;
+      if (data.firstName !== undefined) apiPayload.firstName = data.firstName;
+      if (data.lastName !== undefined) apiPayload.lastName = data.lastName;
       if (data.role !== undefined) apiPayload.role = data.role;
       if (data.status !== undefined) {
-        // Map status to is_active
+        // Map status to isActive
         apiPayload.isActive = data.status === "active";
       }
 
@@ -401,7 +401,7 @@ export function useBulkUserAction() {
     mutationFn: async (request) => {
       // Transform to snake_case for API
       const apiPayload = {
-        user_ids: request.userIds,
+        userIds: request.userIds,
         action: request.action,
       };
 

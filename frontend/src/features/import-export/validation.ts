@@ -23,7 +23,7 @@ import {
 // ============================================================================
 
 const PERSON_TYPES = ['resident', 'faculty'];
-const ABSENCE_TYPES = ['vacation', 'deployment', 'tdy', 'medical', 'family_emergency', 'conference'];
+const ABSENCE_TYPES = ['vacation', 'deployment', 'tdy', 'medical', 'familyEmergency', 'conference'];
 const ASSIGNMENT_ROLES = ['primary', 'supervising', 'backup'];
 const TIME_OF_DAY = ['AM', 'PM'];
 
@@ -52,8 +52,8 @@ export function validatePersonRow(
   if (emailError) errors.push(emailError);
 
   // PGY level validation for residents
-  if (row.type === 'resident' && row.pgy_level !== null && row.pgy_level !== undefined) {
-    const pgyError = validateNumericRange(row.pgy_level, 'pgy_level', 1, 8, rowNumber);
+  if (row.type === 'resident' && row.pgyLevel !== null && row.pgyLevel !== undefined) {
+    const pgyError = validateNumericRange(row.pgyLevel, 'pgyLevel', 1, 8, rowNumber);
     if (pgyError) errors.push(pgyError);
   }
 
@@ -84,26 +84,26 @@ export function validateAssignmentRow(
 ): ImportValidationError[] {
   const errors: ImportValidationError[] = [];
 
-  // Required fields - need either person_name or person_id
-  if (!row.person_name && !row.person_id) {
+  // Required fields - need either personName or personId
+  if (!row.personName && !row.personId) {
     errors.push({
       row: rowNumber,
-      column: 'person_name',
-      value: row.person_name,
-      message: 'Either person_name or person_id is required',
+      column: 'personName',
+      value: row.personName,
+      message: 'Either personName or personId is required',
       severity: 'error',
     });
   }
 
   // Required fields
-  errors.push(...validateRequiredFields(row, ['date', 'time_of_day', 'role'], rowNumber));
+  errors.push(...validateRequiredFields(row, ['date', 'timeOfDay', 'role'], rowNumber));
 
   // Date validation
   const dateError = validateDateFormat(row.date, 'date', rowNumber);
   if (dateError) errors.push(dateError);
 
   // Time of day validation
-  const timeError = validateEnum(row.time_of_day, TIME_OF_DAY, 'time_of_day', rowNumber);
+  const timeError = validateEnum(row.timeOfDay, TIME_OF_DAY, 'timeOfDay', rowNumber);
   if (timeError) errors.push(timeError);
 
   // Role validation
@@ -144,40 +144,40 @@ export function validateAbsenceRow(
   const errors: ImportValidationError[] = [];
 
   // Required person identifier
-  if (!row.person_name && !row.person_id) {
+  if (!row.personName && !row.personId) {
     errors.push({
       row: rowNumber,
-      column: 'person_name',
-      value: row.person_name,
-      message: 'Either person_name or person_id is required',
+      column: 'personName',
+      value: row.personName,
+      message: 'Either personName or personId is required',
       severity: 'error',
     });
   }
 
   // Required fields
-  errors.push(...validateRequiredFields(row, ['start_date', 'end_date', 'absence_type'], rowNumber));
+  errors.push(...validateRequiredFields(row, ['startDate', 'endDate', 'absenceType'], rowNumber));
 
   // Date validation
-  const startDateError = validateDateFormat(row.start_date, 'start_date', rowNumber);
+  const startDateError = validateDateFormat(row.startDate, 'startDate', rowNumber);
   if (startDateError) errors.push(startDateError);
 
-  const endDateError = validateDateFormat(row.end_date, 'end_date', rowNumber);
+  const endDateError = validateDateFormat(row.endDate, 'endDate', rowNumber);
   if (endDateError) errors.push(endDateError);
 
   // Absence type validation
-  const typeError = validateEnum(row.absence_type, ABSENCE_TYPES, 'absence_type', rowNumber);
+  const typeError = validateEnum(row.absenceType, ABSENCE_TYPES, 'absenceType', rowNumber);
   if (typeError) errors.push(typeError);
 
   // Date range validation
-  if (row.start_date && row.end_date) {
-    const startDate = parseDate(String(row.start_date));
-    const endDate = parseDate(String(row.end_date));
+  if (row.startDate && row.endDate) {
+    const startDate = parseDate(String(row.startDate));
+    const endDate = parseDate(String(row.endDate));
 
     if (startDate && endDate && startDate > endDate) {
       errors.push({
         row: rowNumber,
-        column: 'end_date',
-        value: row.end_date,
+        column: 'endDate',
+        value: row.endDate,
         message: 'End date must be on or after start date',
         severity: 'error',
       });
@@ -185,11 +185,11 @@ export function validateAbsenceRow(
   }
 
   // TDY location required for TDY absences
-  if (row.absence_type === 'tdy' && !row.tdy_location) {
+  if (row.absenceType === 'tdy' && !row.tdyLocation) {
     errors.push({
       row: rowNumber,
-      column: 'tdy_location',
-      value: row.tdy_location,
+      column: 'tdyLocation',
+      value: row.tdyLocation,
       message: 'TDY location is required for TDY absences',
       severity: 'warning',
     });
@@ -212,25 +212,25 @@ export function validateScheduleRow(
   const errors: ImportValidationError[] = [];
 
   // Required person identifier
-  if (!row.person_name && !row.person_id) {
+  if (!row.personName && !row.personId) {
     errors.push({
       row: rowNumber,
-      column: 'person_name',
-      value: row.person_name,
-      message: 'Either person_name or person_id is required',
+      column: 'personName',
+      value: row.personName,
+      message: 'Either personName or personId is required',
       severity: 'error',
     });
   }
 
   // Required fields
-  errors.push(...validateRequiredFields(row, ['date', 'time_of_day', 'role'], rowNumber));
+  errors.push(...validateRequiredFields(row, ['date', 'timeOfDay', 'role'], rowNumber));
 
   // Date validation
   const dateError = validateDateFormat(row.date, 'date', rowNumber);
   if (dateError) errors.push(dateError);
 
   // Time of day validation
-  const timeError = validateEnum(row.time_of_day, TIME_OF_DAY, 'time_of_day', rowNumber);
+  const timeError = validateEnum(row.timeOfDay, TIME_OF_DAY, 'timeOfDay', rowNumber);
   if (timeError) errors.push(timeError);
 
   // Role validation
@@ -238,11 +238,11 @@ export function validateScheduleRow(
   if (roleError) errors.push(roleError);
 
   // Rotation or activity required
-  if (!row.rotation_name && !row.rotation_template_id && !row.activity_override) {
+  if (!row.rotationName && !row.rotationTemplateId && !row.activityOverride) {
     errors.push({
       row: rowNumber,
-      column: 'rotation_name',
-      value: row.rotation_name,
+      column: 'rotationName',
+      value: row.rotationName,
       message: 'Rotation name, rotation template ID, or activity override is required',
       severity: 'warning',
     });
@@ -369,9 +369,9 @@ export function findDuplicates(
   // Define unique key generators for each type
   const keyGenerators: Record<ImportDataType, (row: Record<string, unknown>) => string> = {
     people: (row) => String(row.name || '').toLowerCase(),
-    assignments: (row) => `${row.date}-${row.time_of_day}-${row.person_name || row.person_id}`,
-    absences: (row) => `${row.person_name || row.person_id}-${row.start_date}-${row.end_date}`,
-    schedules: (row) => `${row.date}-${row.time_of_day}-${row.person_name || row.person_id}`,
+    assignments: (row) => `${row.date}-${row.timeOfDay}-${row.personName || row.personId}`,
+    absences: (row) => `${row.personName || row.personId}-${row.startDate}-${row.endDate}`,
+    schedules: (row) => `${row.date}-${row.timeOfDay}-${row.personName || row.personId}`,
   };
 
   const generateKey = keyGenerators[dataType];
@@ -414,9 +414,9 @@ export function findOverlappingAbsences(
     const row = data[i];
     if (isEmptyRow(row)) continue;
 
-    const personKey = String(row.person_name || row.person_id);
-    const startDate = parseDate(String(row.start_date));
-    const endDate = parseDate(String(row.end_date));
+    const personKey = String(row.personName || row.personId);
+    const startDate = parseDate(String(row.startDate));
+    const endDate = parseDate(String(row.endDate));
 
     if (!startDate || !endDate) continue;
 
@@ -442,7 +442,7 @@ export function findOverlappingAbsences(
         if (a.start <= b.end && b.start <= a.end) {
           errors.push({
             row: b.row,
-            column: 'date_range',
+            column: 'dateRange',
             value: `${b.start.toISOString().split('T')[0]} to ${b.end.toISOString().split('T')[0]}`,
             message: `Overlapping absence with row ${a.row}`,
             severity: 'warning',

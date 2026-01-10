@@ -15,7 +15,7 @@ import type { UUID } from './api';
 /**
  * Categories for activities to enable filtering and business logic.
  */
-export type ActivityCategory = 'clinical' | 'educational' | 'administrative' | 'time_off';
+export type ActivityCategory = 'clinical' | 'educational' | 'administrative' | 'timeOff';
 
 /**
  * All valid activity categories.
@@ -24,7 +24,7 @@ export const ACTIVITY_CATEGORIES: ActivityCategory[] = [
   'clinical',
   'educational',
   'administrative',
-  'time_off',
+  'timeOff',
 ];
 
 /**
@@ -49,7 +49,7 @@ export const ACTIVITY_CATEGORY_LABELS: Record<ActivityCategory, string> = {
  * const fmClinic: Activity = {
  *   id: 'uuid',
  *   name: 'FM Clinic',
- *   code: 'fm_clinic',
+ *   code: 'fmClinic',
  *   displayAbbreviation: 'C',
  *   activityCategory: 'clinical',
  *   isProtected: false,
@@ -62,11 +62,11 @@ export interface Activity {
   id: UUID;
   /** Human-readable name (e.g., 'FM Clinic', 'Lecture') */
   name: string;
-  /** Stable identifier for solver (e.g., 'fm_clinic') */
+  /** Stable identifier for solver (e.g., 'fmClinic') */
   code: string;
   /** Short code for UI grid (e.g., 'C', 'LEC') */
   displayAbbreviation: string | null;
-  /** Category: clinical, educational, administrative, time_off */
+  /** Category: clinical, educational, administrative, timeOff */
   activityCategory: ActivityCategory;
   /** Tailwind color class for text */
   fontColor: string | null;

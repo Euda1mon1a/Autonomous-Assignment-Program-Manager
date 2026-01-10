@@ -50,7 +50,7 @@ export const validationErrors = {
   doubleBooking: "Person is already assigned to this block",
 
   // Swap validation errors
-  invalidSwapType: "Swap type must be 'one_to_one', 'absorb', or 'multi_way'",
+  invalidSwapType: "Swap type must be 'oneToOne', 'absorb', or 'multi_way'",
   swapReasonRequired: "Swap reason is required",
   swapReasonTooShort: "Swap reason must be at least 10 characters",
   cannotSwapWithSelf: "Cannot swap assignments with yourself",

@@ -105,7 +105,7 @@ describe('AlgorithmComparisonChart', () => {
 
       // Should now show violation counts
       expect(screen.getByText('12')).toBeInTheDocument(); // greedy
-      expect(screen.getByText('2')).toBeInTheDocument(); // cp_sat
+      expect(screen.getByText('2')).toBeInTheDocument(); // cpSat
       expect(screen.getByText('5')).toBeInTheDocument(); // pulp
       expect(screen.getByText('1')).toBeInTheDocument(); // hybrid
     });
@@ -278,7 +278,7 @@ describe('AlgorithmComparisonChart', () => {
           runCount: 1,
         },
         {
-          algorithm: 'cp_sat',
+          algorithm: 'cpSat',
           coverage: 100,
           violations: 0,
           fairness: 0,
@@ -393,7 +393,7 @@ describe('AlgorithmComparisonChart', () => {
           runCount: 1,
         },
         {
-          algorithm: 'cp_sat',
+          algorithm: 'cpSat',
           coverage: 90,
           violations: 0,
           fairness: 0,
@@ -435,7 +435,7 @@ describe('AlgorithmComparisonChart', () => {
 
       // Each algorithm should have its specific color class
       expect(container.querySelector('.bg-orange-500')).toBeInTheDocument(); // greedy
-      expect(container.querySelector('.bg-blue-500')).toBeInTheDocument(); // cp_sat
+      expect(container.querySelector('.bg-blue-500')).toBeInTheDocument(); // cpSat
       expect(container.querySelector('.bg-green-500')).toBeInTheDocument(); // pulp
       expect(container.querySelector('.bg-violet-500')).toBeInTheDocument(); // hybrid
     });

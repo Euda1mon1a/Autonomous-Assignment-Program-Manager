@@ -103,12 +103,12 @@ export async function exportToLegacyXlsx(
   federalHolidays?: string[]
 ): Promise<void> {
   const params = new URLSearchParams({
-    start_date: startDate,
-    end_date: endDate,
+    startDate: startDate,
+    endDate: endDate,
   });
 
   if (blockNumber !== undefined) {
-    params.append('block_number', blockNumber.toString());
+    params.append('blockNumber', blockNumber.toString());
   }
 
   if (federalHolidays && federalHolidays.length > 0) {

@@ -21,7 +21,7 @@ describe('ContactInfo', () => {
     id: 'person-1',
     name: 'Dr. John Doe',
     role: 'senior',
-    pgy_level: 3,
+    pgyLevel: 3,
     phone: '555-1234',
     pager: '555-5678',
     email: 'john.doe@example.com',

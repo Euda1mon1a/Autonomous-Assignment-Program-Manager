@@ -157,11 +157,11 @@ describe('HeatmapView', () => {
   });
 
   describe('Empty Data State', () => {
-    it('should show empty state when z_values is empty', () => {
+    it('should show empty state when zValues is empty', () => {
       const emptyData = heatmapMockFactories.heatmapData({
-        x_labels: [],
-        y_labels: [],
-        z_values: [],
+        xLabels: [],
+        yLabels: [],
+        zValues: [],
       });
 
       render(<HeatmapView data={emptyData} />, { wrapper: createWrapper() });
@@ -176,9 +176,9 @@ describe('HeatmapView', () => {
       expect(screen.getByText('No data available')).toBeInTheDocument();
     });
 
-    it('should show empty state when z_values is undefined', () => {
+    it('should show empty state when zValues is undefined', () => {
       const invalidData = heatmapMockFactories.heatmapData();
-      delete (invalidData as any).z_values;
+      delete (invalidData as any).zValues;
 
       render(<HeatmapView data={invalidData} />, { wrapper: createWrapper() });
 
@@ -195,9 +195,9 @@ describe('HeatmapView', () => {
 
       expect(plotData).toHaveLength(1);
       expect(plotData[0].type).toBe('heatmap');
-      expect(plotData[0].x).toEqual(mockData.x_labels);
-      expect(plotData[0].y).toEqual(mockData.y_labels);
-      expect(plotData[0].z).toEqual(mockData.z_values);
+      expect(plotData[0].x).toEqual(mockData.xLabels);
+      expect(plotData[0].y).toEqual(mockData.yLabels);
+      expect(plotData[0].z).toEqual(mockData.zValues);
     });
 
     it('should use custom color scale when provided', () => {
@@ -209,7 +209,7 @@ describe('HeatmapView', () => {
       };
 
       const dataWithCustomScale = heatmapMockFactories.heatmapData({
-        color_scale: customColorScale,
+        colorScale: customColorScale,
       });
 
       render(<HeatmapView data={dataWithCustomScale} />, { wrapper: createWrapper() });
@@ -223,7 +223,7 @@ describe('HeatmapView', () => {
 
     it('should use default color scale when not provided', () => {
       const dataWithoutScale = heatmapMockFactories.heatmapData();
-      delete dataWithoutScale.color_scale;
+      delete dataWithoutScale.colorScale;
 
       render(<HeatmapView data={dataWithoutScale} />, { wrapper: createWrapper() });
 
@@ -251,8 +251,8 @@ describe('HeatmapView', () => {
 
     it('should include axis labels in layout', () => {
       const dataWithLabels = heatmapMockFactories.heatmapData({
-        x_axis_label: 'X Axis Label',
-        y_axis_label: 'Y Axis Label',
+        xAxisLabel: 'X Axis Label',
+        yAxisLabel: 'Y Axis Label',
       });
 
       render(<HeatmapView data={dataWithLabels} />, { wrapper: createWrapper() });
@@ -422,7 +422,7 @@ describe('HeatmapView', () => {
     it('should show error state when both error and empty data', () => {
       const error = new Error('API Error');
       const emptyData = heatmapMockFactories.heatmapData({
-        z_values: [],
+        zValues: [],
       });
 
       render(<HeatmapView data={emptyData} error={error} />, { wrapper: createWrapper() });

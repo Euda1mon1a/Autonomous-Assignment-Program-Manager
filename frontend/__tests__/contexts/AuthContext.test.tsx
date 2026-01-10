@@ -61,8 +61,8 @@ describe('AuthContext', () => {
     username: 'testuser',
     email: 'test@example.com',
     role: 'admin' as const,
-    is_active: true,
-    created_at: '2024-01-01T00:00:00Z',
+    isActive: true,
+    createdAt: '2024-01-01T00:00:00Z',
   }
 
   beforeEach(() => {
@@ -70,8 +70,8 @@ describe('AuthContext', () => {
     // Default: no existing session
     mockValidateToken.mockResolvedValue(null)
     mockAuthLogin.mockResolvedValue({
-      access_token: 'mock-token',
-      token_type: 'bearer',
+      accessToken: 'mock-token',
+      tokenType: 'bearer',
       user: mockUser,
     })
     mockAuthLogout.mockResolvedValue(true)
@@ -401,8 +401,8 @@ describe('AuthContext', () => {
       // Complete login
       await act(async () => {
         resolveLogin!({
-          access_token: 'mock-token',
-          token_type: 'bearer',
+          accessToken: 'mock-token',
+          tokenType: 'bearer',
           user: mockUser,
         })
       })
@@ -694,8 +694,8 @@ describe('AuthContext', () => {
       // Login again with different user
       const newUser = { ...mockUser, username: 'newuser' }
       mockAuthLogin.mockResolvedValue({
-        access_token: 'new-token',
-        token_type: 'bearer',
+        accessToken: 'new-token',
+        tokenType: 'bearer',
         user: newUser,
       })
 

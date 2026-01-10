@@ -77,9 +77,9 @@ export function EditAssignmentModal({
 
   // Fetch existing assignments for this person to check for conflicts
   const { data: existingAssignmentsData } = useAssignments({
-    person_id: personId,
-    start_date: date,
-    end_date: date,
+    personId: personId,
+    startDate: date,
+    endDate: date,
   });
 
   // Mutations
@@ -231,7 +231,7 @@ export function EditAssignmentModal({
       if (isEditing && assignment) {
         // Update existing assignment
         const updateData: AssignmentUpdate = {
-          rotation_template_id: rotationTemplateId || undefined,
+          rotationTemplateId: rotationTemplateId || undefined,
           role,
           notes: notes || undefined,
         };
@@ -245,12 +245,12 @@ export function EditAssignmentModal({
       } else {
         // Create new assignment
         const createData: AssignmentCreate = {
-          block_id: blockId,
-          person_id: personId,
-          rotation_template_id: rotationTemplateId || undefined,
+          blockId: blockId,
+          personId: personId,
+          rotationTemplateId: rotationTemplateId || undefined,
           role,
           notes: notes || undefined,
-          created_by: user?.id,
+          createdBy: user?.id,
         };
 
         const result = await createAssignment.mutateAsync(createData);

@@ -285,7 +285,7 @@ describe('BulkCreateModal', () => {
       const submittedData = onSubmit.mock.calls[0][0] as TemplateCreateRequest[];
       expect(submittedData).toHaveLength(1);
       expect(submittedData[0].name).toBe('Test Template');
-      expect(submittedData[0].activity_type).toBe('clinic');
+      expect(submittedData[0].activityType).toBe('clinic');
     });
 
     it('should show loading state while submitting', async () => {

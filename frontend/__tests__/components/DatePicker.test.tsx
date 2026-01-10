@@ -216,10 +216,10 @@ describe('DatePicker', () => {
     })
 
     it('should pass through name prop', () => {
-      const { container } = render(<DatePicker label="Start Date" name="start_date" />)
+      const { container } = render(<DatePicker label="Start Date" name="startDate" />)
 
       const input = container.querySelector('input[type="date"]')
-      expect(input).toHaveAttribute('name', 'start_date')
+      expect(input).toHaveAttribute('name', 'startDate')
     })
 
     it('should pass through id prop', () => {
@@ -302,7 +302,7 @@ describe('DatePicker', () => {
 
       const { container } = render(
         <form onSubmit={onSubmit}>
-          <DatePicker label="Start Date" name="start_date" required />
+          <DatePicker label="Start Date" name="startDate" required />
           <button type="submit">Submit</button>
         </form>
       )

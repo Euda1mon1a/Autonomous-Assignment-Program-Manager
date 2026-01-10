@@ -33,7 +33,7 @@ test.describe('Authentication Edge Cases', () => {
     const specialEmails = [
       'user+tag@test.mil',
       'user.name@test.mil',
-      'user_name@test.mil',
+      'userName@test.mil',
       'user-name@test.mil',
     ];
 

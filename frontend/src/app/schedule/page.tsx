@@ -46,7 +46,7 @@ interface ViewAssignment {
     id: string
     name: string
     type: string
-    pgy_level: number | null
+    pgyLevel: number | null
   }
   role: string
   activity: string
@@ -153,14 +153,14 @@ export default function SchedulePage() {
 
   const { data: blocksData } = useQuery<ListResponse<Block>>({
     queryKey: ['blocks', startDateStr, endDateStr, 'pagesize500'],
-    queryFn: () => get<ListResponse<Block>>(`/blocks?start_date=${startDateStr}&end_date=${endDateStr}&page_size=500`),
+    queryFn: () => get<ListResponse<Block>>(`/blocks?startDate=${startDateStr}&endDate=${endDateStr}&pageSize=500`),
     staleTime: 5 * 60 * 1000,
     enabled: currentView !== 'block', // Only fetch for non-block views (block view has its own fetching)
   })
 
   const { data: assignmentsData } = useQuery<ListResponse<Assignment>>({
     queryKey: ['assignments', startDateStr, endDateStr, 'pagesize500'],
-    queryFn: () => get<ListResponse<Assignment>>(`/assignments?start_date=${startDateStr}&end_date=${endDateStr}&page_size=500`),
+    queryFn: () => get<ListResponse<Assignment>>(`/assignments?startDate=${startDateStr}&endDate=${endDateStr}&pageSize=500`),
     staleTime: 60 * 1000,
     enabled: currentView !== 'block',
   })
@@ -210,7 +210,7 @@ export default function SchedulePage() {
           id: person.id,
           name: person.name,
           type: person.type,
-          pgy_level: person.pgyLevel,
+          pgyLevel: person.pgyLevel,
         },
         role: assignment.role || 'primary',
         activity: template?.activityType || 'default',

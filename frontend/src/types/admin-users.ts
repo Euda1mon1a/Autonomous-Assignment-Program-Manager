@@ -14,7 +14,7 @@ export type UserRole =
   | "coordinator"
   | "faculty"
   | "resident"
-  | "clinical_staff"
+  | "clinicalStaff"
   | "rn"
   | "lpn"
   | "msa";

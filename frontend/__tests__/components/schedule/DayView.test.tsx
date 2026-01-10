@@ -11,21 +11,21 @@ describe('DayView', () => {
     id: 'p1',
     name: 'Dr. Smith',
     type: 'resident',
-    pgy_level: 1,
+    pgyLevel: 1,
   }
 
   const mockPerson2 = {
     id: 'p2',
     name: 'Dr. Johnson',
     type: 'resident',
-    pgy_level: 3,
+    pgyLevel: 3,
   }
 
   const mockPerson3 = {
     id: 'p3',
     name: 'Dr. Williams',
     type: 'faculty',
-    pgy_level: null,
+    pgyLevel: null,
   }
 
   const mockSchedule = {

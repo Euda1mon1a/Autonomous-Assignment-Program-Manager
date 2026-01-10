@@ -6,30 +6,36 @@
 import React from 'react';
 import { render, screen } from '@/test-utils';
 import '@testing-library/jest-dom';
-import { AlgorithmComparisonChart } from '../AlgorithmComparisonChart';
+import { AlgorithmComparisonChart, type AlgorithmMetrics } from '../AlgorithmComparisonChart';
 
 describe('AlgorithmComparisonChart', () => {
-  const mockData = [
+  const mockData: AlgorithmMetrics[] = [
     {
-      algorithm: 'Greedy',
-      coverageRate: 95,
-      avgHoursPerWeek: 65,
-      violationCount: 2,
-      executionTime: 1.2,
+      algorithm: 'greedy',
+      coverage: 95,
+      violations: 2,
+      fairness: 85,
+      runtime: 1.2,
+      stability: 88,
+      runCount: 10,
     },
     {
-      algorithm: 'OR-Tools',
-      coverageRate: 98,
-      avgHoursPerWeek: 68,
-      violationCount: 0,
-      executionTime: 5.8,
+      algorithm: 'cpSat',
+      coverage: 98,
+      violations: 0,
+      fairness: 92,
+      runtime: 5.8,
+      stability: 95,
+      runCount: 15,
     },
     {
-      algorithm: 'Genetic',
-      coverageRate: 96,
-      avgHoursPerWeek: 66,
-      violationCount: 1,
-      executionTime: 12.4,
+      algorithm: 'hybrid',
+      coverage: 96,
+      violations: 1,
+      fairness: 89,
+      runtime: 12.4,
+      stability: 90,
+      runCount: 12,
     },
   ];
 
@@ -47,13 +53,13 @@ describe('AlgorithmComparisonChart', () => {
     it('displays all algorithms', () => {
       render(<AlgorithmComparisonChart data={mockData} />);
       expect(screen.getByText(/greedy/i)).toBeInTheDocument();
-      expect(screen.getByText(/or-tools/i)).toBeInTheDocument();
-      expect(screen.getByText(/genetic/i)).toBeInTheDocument();
+      expect(screen.getByText(/cp-sat/i)).toBeInTheDocument();
+      expect(screen.getByText(/hybrid/i)).toBeInTheDocument();
     });
 
     it('shows coverage rate metric', () => {
       render(<AlgorithmComparisonChart data={mockData} />);
-      expect(screen.getByText(/coverage rate/i)).toBeInTheDocument();
+      expect(screen.getByText(/coverage/i)).toBeInTheDocument();
     });
 
     it('shows violation count metric', () => {
@@ -63,7 +69,7 @@ describe('AlgorithmComparisonChart', () => {
 
     it('shows execution time metric', () => {
       render(<AlgorithmComparisonChart data={mockData} />);
-      expect(screen.getByText(/execution time/i)).toBeInTheDocument();
+      expect(screen.getByText(/runtime/i)).toBeInTheDocument();
     });
   });
 
@@ -103,13 +109,15 @@ describe('AlgorithmComparisonChart', () => {
     });
 
     it('handles perfect scores', () => {
-      const perfectData = [
+      const perfectData: AlgorithmMetrics[] = [
         {
-          algorithm: 'Perfect',
-          coverageRate: 100,
-          avgHoursPerWeek: 60,
-          violationCount: 0,
-          executionTime: 1.0,
+          algorithm: 'hybrid',
+          coverage: 100,
+          violations: 0,
+          fairness: 100,
+          runtime: 1.0,
+          stability: 100,
+          runCount: 5,
         },
       ];
       render(<AlgorithmComparisonChart data={perfectData} />);
@@ -117,13 +125,15 @@ describe('AlgorithmComparisonChart', () => {
     });
 
     it('handles algorithms with high violations', () => {
-      const highViolationData = [
+      const highViolationData: AlgorithmMetrics[] = [
         {
-          algorithm: 'Poor',
-          coverageRate: 75,
-          avgHoursPerWeek: 70,
-          violationCount: 15,
-          executionTime: 2.0,
+          algorithm: 'greedy',
+          coverage: 75,
+          violations: 15,
+          fairness: 60,
+          runtime: 2.0,
+          stability: 70,
+          runCount: 3,
         },
       ];
       render(<AlgorithmComparisonChart data={highViolationData} />);

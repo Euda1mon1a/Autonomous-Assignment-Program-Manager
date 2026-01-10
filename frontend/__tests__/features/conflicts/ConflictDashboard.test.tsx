@@ -174,7 +174,7 @@ describe('ConflictDashboard', () => {
 
     it('should show increasing trend when trending up', async () => {
       mockedUseConflictStatistics.mockReturnValue({
-        data: conflictsMockFactories.conflictStatistics({ trending_up: true }),
+        data: conflictsMockFactories.conflictStatistics({ trendingUp: true }),
         isLoading: false,
         isError: false,
         error: null,

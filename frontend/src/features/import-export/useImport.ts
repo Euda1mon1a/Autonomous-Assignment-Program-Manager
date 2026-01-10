@@ -42,8 +42,8 @@ interface BackendXlsxResponse {
   success: boolean;
   rows: Record<string, unknown>[];
   columns: string[];
-  total_rows: number;
-  sheet_name: string;
+  totalRows: number;
+  sheetName: string;
   warnings: string[];
 }
 

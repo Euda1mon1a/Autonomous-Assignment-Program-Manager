@@ -182,8 +182,8 @@ export class AuthMocks {
   async mockLogin(user: any, token: string): Promise<void> {
     await mockAPI(this.page, '**/api/v1/auth/login', {
       body: {
-        access_token: token,
-        token_type: 'bearer',
+        accessToken: token,
+        tokenType: 'bearer',
         user,
       },
     }, 'POST');
@@ -223,8 +223,8 @@ export class AuthMocks {
   async mockRefreshToken(newToken: string): Promise<void> {
     await mockAPI(this.page, '**/api/v1/auth/refresh', {
       body: {
-        access_token: newToken,
-        token_type: 'bearer',
+        accessToken: newToken,
+        tokenType: 'bearer',
       },
     }, 'POST');
   }

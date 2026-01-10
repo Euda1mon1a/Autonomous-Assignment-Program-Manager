@@ -220,9 +220,9 @@ describe('BulkProgressModal', () => {
   describe('Results Display', () => {
     it('should show errors section when results have failures', () => {
       const results = [
-        { index: 0, template_id: '1', success: true, error: null },
-        { index: 1, template_id: '2', success: false, error: 'Template not found' },
-        { index: 2, template_id: '3', success: false, error: 'Permission denied' },
+        { index: 0, templateId: '1', success: true, error: null },
+        { index: 1, templateId: '2', success: false, error: 'Template not found' },
+        { index: 2, templateId: '3', success: false, error: 'Permission denied' },
       ];
 
       render(<BulkProgressModal {...defaultProps} results={results} isComplete />);
@@ -234,8 +234,8 @@ describe('BulkProgressModal', () => {
 
     it('should not show errors section when all successful', () => {
       const results = [
-        { index: 0, template_id: '1', success: true, error: null },
-        { index: 1, template_id: '2', success: true, error: null },
+        { index: 0, templateId: '1', success: true, error: null },
+        { index: 1, templateId: '2', success: true, error: null },
       ];
 
       render(<BulkProgressModal {...defaultProps} results={results} isComplete />);

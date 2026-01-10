@@ -58,7 +58,7 @@ describe("useSystemHealth", () => {
         timestamp: "2025-01-01T00:00:00Z",
         overall_status: "healthy",
         utilization: {
-          utilization_rate: 0.75,
+          utilizationRate: 0.75,
           level: "YELLOW",
           buffer_remaining: 0.05,
           wait_time_multiplier: 1.2,
@@ -66,14 +66,14 @@ describe("useSystemHealth", () => {
           current_demand: 75,
           theoretical_capacity: 120,
         },
-        defense_level: "PREVENTION",
+        defenseLevel: "PREVENTION",
         redundancy_status: [],
         load_shedding_level: "NORMAL",
         active_fallbacks: [],
-        crisis_mode: false,
-        n1_pass: true,
-        n2_pass: true,
-        phase_transition_risk: "low",
+        crisisMode: false,
+        n1Pass: true,
+        n2Pass: true,
+        phaseTransitionRisk: "low",
         immediate_actions: [],
         watch_items: [],
       };
@@ -115,15 +115,15 @@ describe("useSystemHealth", () => {
       mockedFetchSystemHealth.mockResolvedValueOnce({
         timestamp: "2025-01-01T00:00:00Z",
         overall_status: "healthy",
-        defense_level: "PREVENTION",
-        utilization: { utilization_rate: 0.6, level: "GREEN" },
+        defenseLevel: "PREVENTION",
+        utilization: { utilizationRate: 0.6, level: "GREEN" },
         redundancy_status: [],
         load_shedding_level: "NORMAL",
         active_fallbacks: [],
-        crisis_mode: false,
-        n1_pass: true,
-        n2_pass: true,
-        phase_transition_risk: "low",
+        crisisMode: false,
+        n1Pass: true,
+        n2Pass: true,
+        phaseTransitionRisk: "low",
         immediate_actions: [],
         watch_items: [],
       });
@@ -133,22 +133,22 @@ describe("useSystemHealth", () => {
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
-      expect(result.current.data?.defense_level).toBe("PREVENTION");
+      expect(result.current.data?.defenseLevel).toBe("PREVENTION");
     });
 
     it("should report EMERGENCY defense level", async () => {
       mockedFetchSystemHealth.mockResolvedValueOnce({
         timestamp: "2025-01-01T00:00:00Z",
         overall_status: "emergency",
-        defense_level: "EMERGENCY",
-        utilization: { utilization_rate: 0.95, level: "BLACK" },
+        defenseLevel: "EMERGENCY",
+        utilization: { utilizationRate: 0.95, level: "BLACK" },
         redundancy_status: [],
         load_shedding_level: "CRITICAL",
         active_fallbacks: ["fallback-1"],
-        crisis_mode: true,
-        n1_pass: false,
-        n2_pass: false,
-        phase_transition_risk: "critical",
+        crisisMode: true,
+        n1Pass: false,
+        n2Pass: false,
+        phaseTransitionRisk: "critical",
         immediate_actions: ["Activate emergency coverage"],
         watch_items: [],
       });
@@ -158,25 +158,25 @@ describe("useSystemHealth", () => {
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
-      expect(result.current.data?.defense_level).toBe("EMERGENCY");
-      expect(result.current.data?.crisis_mode).toBe(true);
+      expect(result.current.data?.defenseLevel).toBe("EMERGENCY");
+      expect(result.current.data?.crisisMode).toBe(true);
     });
   });
 
   describe("N-1/N-2 Contingency", () => {
-    it("should report n1_pass and n2_pass status", async () => {
+    it("should report n1Pass and n2Pass status", async () => {
       mockedFetchSystemHealth.mockResolvedValueOnce({
         timestamp: "2025-01-01T00:00:00Z",
         overall_status: "healthy",
-        defense_level: "PREVENTION",
-        utilization: { utilization_rate: 0.7, level: "GREEN" },
+        defenseLevel: "PREVENTION",
+        utilization: { utilizationRate: 0.7, level: "GREEN" },
         redundancy_status: [],
         load_shedding_level: "NORMAL",
         active_fallbacks: [],
-        crisis_mode: false,
-        n1_pass: true,
-        n2_pass: true,
-        phase_transition_risk: "low",
+        crisisMode: false,
+        n1Pass: true,
+        n2Pass: true,
+        phaseTransitionRisk: "low",
         immediate_actions: [],
         watch_items: [],
       });
@@ -186,23 +186,23 @@ describe("useSystemHealth", () => {
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
-      expect(result.current.data?.n1_pass).toBe(true);
-      expect(result.current.data?.n2_pass).toBe(true);
+      expect(result.current.data?.n1Pass).toBe(true);
+      expect(result.current.data?.n2Pass).toBe(true);
     });
 
-    it("should report n1_pass failure", async () => {
+    it("should report n1Pass failure", async () => {
       mockedFetchSystemHealth.mockResolvedValueOnce({
         timestamp: "2025-01-01T00:00:00Z",
         overall_status: "warning",
-        defense_level: "CONTROL",
-        utilization: { utilization_rate: 0.85, level: "ORANGE" },
+        defenseLevel: "CONTROL",
+        utilization: { utilizationRate: 0.85, level: "ORANGE" },
         redundancy_status: [],
         load_shedding_level: "YELLOW",
         active_fallbacks: [],
-        crisis_mode: false,
-        n1_pass: false,
-        n2_pass: false,
-        phase_transition_risk: "medium",
+        crisisMode: false,
+        n1Pass: false,
+        n2Pass: false,
+        phaseTransitionRisk: "medium",
         immediate_actions: ["Review coverage gaps"],
         watch_items: ["Faculty utilization high"],
       });
@@ -212,7 +212,7 @@ describe("useSystemHealth", () => {
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
-      expect(result.current.data?.n1_pass).toBe(false);
+      expect(result.current.data?.n1Pass).toBe(false);
     });
   });
 
@@ -221,15 +221,15 @@ describe("useSystemHealth", () => {
       mockedFetchSystemHealth.mockResolvedValue({
         timestamp: "2025-01-01T00:00:00Z",
         overall_status: "healthy",
-        defense_level: "PREVENTION",
-        utilization: { utilization_rate: 0.7, level: "GREEN" },
+        defenseLevel: "PREVENTION",
+        utilization: { utilizationRate: 0.7, level: "GREEN" },
         redundancy_status: [],
         load_shedding_level: "NORMAL",
         active_fallbacks: [],
-        crisis_mode: false,
-        n1_pass: true,
-        n2_pass: true,
-        phase_transition_risk: "low",
+        crisisMode: false,
+        n1Pass: true,
+        n2Pass: true,
+        phaseTransitionRisk: "low",
         immediate_actions: [],
         watch_items: [],
       });
@@ -262,15 +262,15 @@ describe("useVulnerabilityReport", () => {
   it("should fetch vulnerability report", async () => {
     const mockData = {
       analyzed_at: "2025-01-01T00:00:00Z",
-      period_start: "2025-01-01",
-      period_end: "2025-01-31",
-      n1_pass: true,
-      n2_pass: true,
-      phase_transition_risk: "low",
+      periodStart: "2025-01-01",
+      periodEnd: "2025-01-31",
+      n1Pass: true,
+      n2Pass: true,
+      phaseTransitionRisk: "low",
       n1_vulnerabilities: [],
       n2_fatal_pairs: [],
-      most_critical_faculty: [],
-      recommended_actions: [],
+      mostCriticalFaculty: [],
+      recommendedActions: [],
     };
     mockedFetchVulnerabilityReport.mockResolvedValueOnce(mockData);
 
@@ -284,8 +284,8 @@ describe("useVulnerabilityReport", () => {
 
   it("should pass params to fetch function", async () => {
     const params = {
-      start_date: "2025-01-01",
-      end_date: "2025-01-31",
+      startDate: "2025-01-01",
+      endDate: "2025-01-31",
       include_n2: true,
     };
     mockedFetchVulnerabilityReport.mockResolvedValueOnce({});
@@ -314,17 +314,17 @@ describe("useEmergencyCoverage", () => {
 
   it("should request emergency coverage successfully", async () => {
     const mockRequest = {
-      person_id: "person-123",
-      start_date: "2025-01-15",
-      end_date: "2025-01-20",
+      personId: "person-123",
+      startDate: "2025-01-15",
+      endDate: "2025-01-20",
       reason: "Military deployment",
-      is_deployment: true,
+      isDeployment: true,
     };
     const mockResponse = {
       status: "success" as const,
-      replacements_found: 5,
-      coverage_gaps: 0,
-      requires_manual_review: false,
+      replacementsFound: 5,
+      coverageGaps: 0,
+      requiresManualReview: false,
       details: [],
     };
     mockedRequestEmergencyCoverage.mockResolvedValueOnce(mockResponse);
@@ -341,21 +341,21 @@ describe("useEmergencyCoverage", () => {
 
   it("should handle partial coverage status", async () => {
     const mockRequest = {
-      person_id: "person-123",
-      start_date: "2025-01-15",
-      end_date: "2025-01-20",
+      personId: "person-123",
+      startDate: "2025-01-15",
+      endDate: "2025-01-20",
       reason: "Medical emergency",
-      is_deployment: false,
+      isDeployment: false,
     };
     const mockResponse = {
       status: "partial" as const,
-      replacements_found: 3,
-      coverage_gaps: 2,
-      requires_manual_review: true,
+      replacementsFound: 3,
+      coverageGaps: 2,
+      requiresManualReview: true,
       details: [
         {
           date: "2025-01-18",
-          original_assignment: "Morning Shift",
+          originalAssignment: "Morning Shift",
           status: "gap" as const,
         },
       ],
@@ -369,23 +369,23 @@ describe("useEmergencyCoverage", () => {
     const response = await result.current.mutateAsync(mockRequest);
 
     expect(response.status).toBe("partial");
-    expect(response.requires_manual_review).toBe(true);
-    expect(response.coverage_gaps).toBe(2);
+    expect(response.requiresManualReview).toBe(true);
+    expect(response.coverageGaps).toBe(2);
   });
 
   it("should handle failed coverage request", async () => {
     const mockRequest = {
-      person_id: "person-123",
-      start_date: "2025-01-15",
-      end_date: "2025-01-20",
+      personId: "person-123",
+      startDate: "2025-01-15",
+      endDate: "2025-01-20",
       reason: "TDY",
-      is_deployment: false,
+      isDeployment: false,
     };
     const mockResponse = {
       status: "failed" as const,
-      replacements_found: 0,
-      coverage_gaps: 5,
-      requires_manual_review: true,
+      replacementsFound: 0,
+      coverageGaps: 5,
+      requiresManualReview: true,
       details: [],
     };
     mockedRequestEmergencyCoverage.mockResolvedValueOnce(mockResponse);
@@ -397,6 +397,6 @@ describe("useEmergencyCoverage", () => {
     const response = await result.current.mutateAsync(mockRequest);
 
     expect(response.status).toBe("failed");
-    expect(response.coverage_gaps).toBe(5);
+    expect(response.coverageGaps).toBe(5);
   });
 });

@@ -22,11 +22,6 @@ function createWrapper() {
       queries: { retry: false },
       mutations: { retry: false },
     },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
-    },
   });
 
   return function Wrapper({ children }: { children: React.ReactNode }) {
@@ -257,7 +252,7 @@ describe('CalendarSync', () => {
       await waitFor(() => {
         expect(api.post).toHaveBeenCalledWith('/portal/my/calendar-sync', {
           format: 'ics',
-          include_weeks_ahead: 12,
+          includeWeeksAhead: 12,
         });
       });
     });
@@ -547,7 +542,7 @@ describe('CalendarSync', () => {
       await waitFor(() => {
         expect(api.post).toHaveBeenCalledWith('/portal/my/calendar-sync', {
           format: 'ics',
-          include_weeks_ahead: 12,
+          includeWeeksAhead: 12,
         });
       });
     });

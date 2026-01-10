@@ -181,7 +181,7 @@ describe('CalendarExportButton', () => {
 
       await waitFor(() => {
         expect(global.fetch).toHaveBeenCalledWith(
-          expect.stringContaining('start_date=2024-01-01&end_date=2024-12-31')
+          expect.stringContaining('startDate=2024-01-01&endDate=2024-12-31')
         )
       })
     })
@@ -304,7 +304,7 @@ describe('CalendarExportButton', () => {
         expect(global.fetch).toHaveBeenCalledWith('/api/calendar/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ person_id: 'person-1', expires_days: null }),
+          body: JSON.stringify({ personId: 'person-1', expires_days: null }),
         })
       })
 

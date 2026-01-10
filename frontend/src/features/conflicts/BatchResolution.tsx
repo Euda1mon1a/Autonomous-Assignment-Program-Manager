@@ -182,8 +182,8 @@ export function BatchResolution({
         });
       } else {
         const result = await batchResolve.mutateAsync({
-          conflict_ids: Array.from(selectedIds),
-          resolution_method: method,
+          conflictIds: Array.from(selectedIds),
+          resolutionMethod: method,
         });
         setResults(result);
       }
@@ -386,10 +386,10 @@ export function BatchResolution({
                     </p>
                     <div className="flex items-center gap-3 text-xs text-gray-500">
                       <span>{getTypeLabel(conflict.type)}</span>
-                      <span>{format(new Date(conflict.conflict_date), 'MMM d')}</span>
+                      <span>{format(new Date(conflict.conflictDate), 'MMM d')}</span>
                       <span className="flex items-center gap-1">
                         <Users className="w-3 h-3" aria-hidden="true" />
-                        {conflict.affected_person_ids.length}
+                        {conflict.affectedPersonIds.length}
                       </span>
                     </div>
                   </div>
@@ -569,7 +569,7 @@ function BatchResolutionResults({
           <div className="space-y-2">
             {results.results.map((result, index) => (
               <div
-                key={result.conflict_id || index}
+                key={result.conflictId || index}
                 className={`
                   flex items-center gap-3 p-3 rounded-lg border
                   ${result.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}
@@ -586,7 +586,7 @@ function BatchResolutionResults({
                     {result.message}
                   </p>
                   <p className="text-xs text-gray-500 font-mono truncate">
-                    ID: {result.conflict_id}
+                    ID: {result.conflictId}
                   </p>
                 </div>
               </div>

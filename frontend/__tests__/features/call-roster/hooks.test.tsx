@@ -35,28 +35,28 @@ jest.mock('date-fns', () => ({
 function createMockAssignment(overrides = {}) {
   return {
     id: 'assignment-1',
-    block_id: 'block-1',
-    person_id: 'person-1',
+    blockId: 'block-1',
+    personId: 'person-1',
     role: 'resident',
-    rotation_template: {
+    rotationTemplate: {
       id: 'rotation-1',
       name: 'Night Call',
-      activity_type: 'on_call',
+      activityType: 'on_call',
       abbreviation: 'NC',
     },
     person: {
       id: 'person-1',
-      first_name: 'John',
-      last_name: 'Doe',
-      pgy_level: 2,
+      firstName: 'John',
+      lastName: 'Doe',
+      pgyLevel: 2,
       email: 'john.doe@example.com',
       phone: '555-1234',
       pager: '555-5678',
     },
     block: {
       id: 'block-1',
-      start_date: '2025-01-15',
-      end_date: '2025-01-15',
+      startDate: '2025-01-15',
+      endDate: '2025-01-15',
     },
     notes: 'On night call',
     ...overrides,
@@ -96,13 +96,13 @@ describe('Call Roster Hooks', () => {
         person: {
           id: 'person-1',
           name: 'John Doe',
-          pgy_level: 2,
+          pgyLevel: 2,
           role: 'intern', // PGY-2 is < 3, so role is 'intern'
           phone: '555-1234',
           pager: '555-5678',
           email: 'john.doe@example.com',
         },
-        rotation_name: 'Night Call',
+        rotationName: 'Night Call',
         notes: 'On night call',
       });
     });
@@ -116,7 +116,7 @@ describe('Call Roster Hooks', () => {
 
       await waitFor(() => {
         expect(api.get).toHaveBeenCalledWith(
-          '/assignments?start_date=2025-01-01&end_date=2025-01-31&activity_type=on_call'
+          '/assignments?startDate=2025-01-01&endDate=2025-01-31&activityType=on_call'
         );
       });
     });
@@ -127,10 +127,10 @@ describe('Call Roster Hooks', () => {
           createMockAssignment(),
           createMockAssignment({
             id: 'assignment-2',
-            rotation_template: {
+            rotationTemplate: {
               id: 'rotation-2',
               name: 'Clinic',
-              activity_type: 'clinic',
+              activityType: 'clinic',
             },
           }),
         ],
@@ -220,28 +220,28 @@ describe('Call Roster Hooks', () => {
         items: [
           createMockAssignment({
             id: 'day-call',
-            rotation_template: {
+            rotationTemplate: {
               id: 'rotation-1',
               name: 'Day Call',
-              activity_type: 'on_call',
+              activityType: 'on_call',
             },
             notes: '', // Clear notes to avoid "night" from default
           }),
           createMockAssignment({
             id: 'night-call',
-            rotation_template: {
+            rotationTemplate: {
               id: 'rotation-2',
               name: 'Night Call',
-              activity_type: 'on_call',
+              activityType: 'on_call',
             },
             notes: '',
           }),
           createMockAssignment({
             id: '24hr-call',
-            rotation_template: {
+            rotationTemplate: {
               id: 'rotation-3',
               name: '24-hour Call',
-              activity_type: 'on_call',
+              activityType: 'on_call',
             },
             notes: '',
           }),
@@ -275,27 +275,27 @@ describe('Call Roster Hooks', () => {
             id: 'attending',
             person: {
               id: 'person-1',
-              first_name: 'Dr.',
-              last_name: 'Attending',
-              pgy_level: undefined,
+              firstName: 'Dr.',
+              lastName: 'Attending',
+              pgyLevel: undefined,
             },
           }),
           createMockAssignment({
             id: 'intern',
             person: {
               id: 'person-2',
-              first_name: 'Dr.',
-              last_name: 'Intern',
-              pgy_level: 1,
+              firstName: 'Dr.',
+              lastName: 'Intern',
+              pgyLevel: 1,
             },
           }),
           createMockAssignment({
             id: 'senior',
             person: {
               id: 'person-3',
-              first_name: 'Dr.',
-              last_name: 'Senior',
-              pgy_level: 3,
+              firstName: 'Dr.',
+              lastName: 'Senior',
+              pgyLevel: 3,
             },
           }),
         ],
@@ -415,7 +415,7 @@ describe('Call Roster Hooks', () => {
 
       await waitFor(() => {
         expect(api.get).toHaveBeenCalledWith(
-          `/assignments?start_date=${expectedStart}&end_date=${expectedEnd}&activity_type=on_call`
+          `/assignments?startDate=${expectedStart}&endDate=${expectedEnd}&activityType=on_call`
         );
       });
     });
@@ -479,7 +479,7 @@ describe('Call Roster Hooks', () => {
 
       await waitFor(() => {
         expect(api.get).toHaveBeenCalledWith(
-          `/assignments?start_date=${today}&end_date=${today}&activity_type=on_call`
+          `/assignments?startDate=${today}&endDate=${today}&activityType=on_call`
         );
       });
     });
@@ -552,7 +552,7 @@ describe('Call Roster Hooks', () => {
       expect(result.current.data).toHaveLength(1);
     });
 
-    it('should include person_id in query string', async () => {
+    it('should include personId in query string', async () => {
       (api.get as jest.Mock).mockResolvedValue({ items: [], total: 0 });
 
       renderHook(
@@ -565,7 +565,7 @@ describe('Call Roster Hooks', () => {
 
       await waitFor(() => {
         expect(api.get).toHaveBeenCalledWith(
-          '/assignments?start_date=2025-01-15&end_date=2025-01-20&person_id=person-123&activity_type=on_call'
+          '/assignments?startDate=2025-01-15&endDate=2025-01-20&personId=person-123&activityType=on_call'
         );
       });
     });
@@ -647,24 +647,24 @@ describe('Call Roster Hooks', () => {
             id: 'assignment-1',
             block: {
               id: 'block-1',
-              start_date: '2025-01-15',
-              end_date: '2025-01-15',
+              startDate: '2025-01-15',
+              endDate: '2025-01-15',
             },
           }),
           createMockAssignment({
             id: 'assignment-2',
             block: {
               id: 'block-2',
-              start_date: '2025-01-15',
-              end_date: '2025-01-15',
+              startDate: '2025-01-15',
+              endDate: '2025-01-15',
             },
           }),
           createMockAssignment({
             id: 'assignment-3',
             block: {
               id: 'block-3',
-              start_date: '2025-01-16',
-              end_date: '2025-01-16',
+              startDate: '2025-01-16',
+              endDate: '2025-01-16',
             },
           }),
         ],
@@ -912,23 +912,23 @@ describe('Call Roster Hooks', () => {
         items: [
           {
             id: 'assignment-1',
-            block_id: 'block-1',
-            person_id: 'person-1',
+            blockId: 'block-1',
+            personId: 'person-1',
             role: 'resident',
-            rotation_template: {
+            rotationTemplate: {
               id: 'rotation-1',
               name: 'Call',
-              activity_type: 'on_call',
+              activityType: 'on_call',
             },
             person: {
               id: 'person-1',
-              first_name: 'John',
-              last_name: 'Doe',
+              firstName: 'John',
+              lastName: 'Doe',
             },
             block: {
               id: 'block-1',
-              start_date: '2025-01-15',
-              end_date: '2025-01-15',
+              startDate: '2025-01-15',
+              endDate: '2025-01-15',
             },
           },
         ],
@@ -967,10 +967,10 @@ describe('Call Roster Hooks', () => {
         items: [
           createMockAssignment({
             id: 'overnight',
-            rotation_template: {
+            rotationTemplate: {
               id: 'rotation-1',
               name: 'Call',
-              activity_type: 'on_call',
+              activityType: 'on_call',
             },
             notes: 'Overnight shift',
           }),
@@ -998,10 +998,10 @@ describe('Call Roster Hooks', () => {
       const mockResponse = {
         items: [
           createMockAssignment({
-            rotation_template: {
+            rotationTemplate: {
               id: 'rotation-1',
               name: 'Call',
-              activity_type: 'on_call',
+              activityType: 'on_call',
             },
             notes: '',
           }),
@@ -1032,9 +1032,9 @@ describe('Call Roster Hooks', () => {
             role: 'supervising',
             person: {
               id: 'person-1',
-              first_name: 'Dr.',
-              last_name: 'Supervisor',
-              pgy_level: 2,
+              firstName: 'Dr.',
+              lastName: 'Supervisor',
+              pgyLevel: 2,
             },
           }),
         ],

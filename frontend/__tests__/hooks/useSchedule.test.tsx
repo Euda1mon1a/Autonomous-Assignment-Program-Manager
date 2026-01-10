@@ -33,11 +33,6 @@ function createWrapper() {
       queries: { retry: false },
       mutations: { retry: false },
     },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
-    },
   })
 
   return ({ children }: { children: React.ReactNode }) => (
@@ -81,7 +76,7 @@ describe('useSchedule', () => {
       })
 
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('/assignments?start_date=2024-01-01&end_date=2024-01-31')
+        expect.stringContaining('/assignments?startDate=2024-01-01&endDate=2024-01-31')
       )
     })
   })
@@ -92,10 +87,10 @@ describe('useSchedule', () => {
         items: [
           {
             id: 'assignment-1',
-            person_id: 'person-1',
-            rotation_template_id: 'rotation-1',
-            start_date: '2024-01-01',
-            end_date: '2024-01-07',
+            personId: 'person-1',
+            rotationTemplateId: 'rotation-1',
+            startDate: '2024-01-01',
+            endDate: '2024-01-07',
           },
         ],
         total: 1,
@@ -275,7 +270,7 @@ describe('useSchedule', () => {
       })
 
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('start_date=2024-01-01&end_date=2024-12-31')
+        expect.stringContaining('startDate=2024-01-01&endDate=2024-12-31')
       )
     })
 
@@ -323,12 +318,14 @@ describe('useGenerateSchedule', () => {
       const mockResponse = {
         status: 'success' as const,
         message: 'Schedule generated successfully',
-        total_blocks_assigned: 100,
-        total_blocks: 100,
+        totalBlocks_assigned: 100,
+        totalBlocks: 100,
         validation: {
-          is_compliant: true,
+          valid: true,
+          totalViolations: 0,
           violations: [],
-          warnings: [],
+          coverageRate: 1.0,
+          statistics: null,
         },
       }
 
@@ -340,8 +337,8 @@ describe('useGenerateSchedule', () => {
 
       act(() => {
         result.current.mutate({
-          start_date: '2024-01-01',
-          end_date: '2024-12-31',
+          startDate: '2024-01-01',
+          endDate: '2024-12-31',
           algorithm: 'hybrid',
         })
       })
@@ -358,12 +355,14 @@ describe('useGenerateSchedule', () => {
       const mockResponse = {
         status: 'partial' as const,
         message: 'Partial schedule generated',
-        total_blocks_assigned: 80,
-        total_blocks: 100,
+        totalBlocks_assigned: 80,
+        totalBlocks: 100,
         validation: {
-          is_compliant: false,
-          violations: ['Coverage gap in week 10'],
-          warnings: [],
+          valid: false,
+          totalViolations: 1,
+          violations: [{ type: 'coverage', severity: 'HIGH' as const, personId: null, personName: null, blockId: null, message: 'Coverage gap in week 10', details: null }],
+          coverageRate: 0.8,
+          statistics: null,
         },
       }
 
@@ -375,8 +374,8 @@ describe('useGenerateSchedule', () => {
 
       act(() => {
         result.current.mutate({
-          start_date: '2024-01-01',
-          end_date: '2024-12-31',
+          startDate: '2024-01-01',
+          endDate: '2024-12-31',
         })
       })
 
@@ -385,7 +384,7 @@ describe('useGenerateSchedule', () => {
       })
 
       expect(result.current.data?.status).toBe('partial')
-      expect(result.current.data?.total_blocks_assigned).toBe(80)
+      expect(result.current.data?.totalBlocks_assigned).toBe(80)
     })
   })
 
@@ -400,8 +399,8 @@ describe('useGenerateSchedule', () => {
 
       act(() => {
         result.current.mutate({
-          start_date: '2024-01-01',
-          end_date: '2024-12-31',
+          startDate: '2024-01-01',
+          endDate: '2024-12-31',
         })
       })
 
@@ -422,8 +421,8 @@ describe('useGenerateSchedule', () => {
 
       act(() => {
         result.current.mutate({
-          start_date: '2024-01-01',
-          end_date: '2024-12-31',
+          startDate: '2024-01-01',
+          endDate: '2024-12-31',
           timeout_seconds: 60,
         })
       })
@@ -451,8 +450,8 @@ describe('useGenerateSchedule', () => {
 
       act(() => {
         result.current.mutate({
-          start_date: '2024-01-01',
-          end_date: '2024-12-31',
+          startDate: '2024-01-01',
+          endDate: '2024-12-31',
         })
       })
 
@@ -462,9 +461,9 @@ describe('useGenerateSchedule', () => {
         resolvePromise!({
           status: 'success',
           message: 'Done',
-          total_blocks_assigned: 100,
-          total_blocks: 100,
-          validation: { is_compliant: true, violations: [], warnings: [] },
+          totalBlocks_assigned: 100,
+          totalBlocks: 100,
+          validation: { valid: true, totalViolations: 0, violations: [], coverageRate: 1.0, statistics: null },
         })
       })
 
@@ -483,9 +482,11 @@ describe('useValidateSchedule', () => {
   describe('Success Scenarios', () => {
     it('should validate compliant schedule', async () => {
       const mockValidation = {
-        is_compliant: true,
+        valid: true,
+        totalViolations: 0,
         violations: [],
-        warnings: [],
+        coverageRate: 1.0,
+        statistics: null,
       }
 
       mockedApi.get.mockResolvedValue(mockValidation)
@@ -501,15 +502,17 @@ describe('useValidateSchedule', () => {
         expect(result.current.isSuccess).toBe(true)
       })
 
-      expect(result.current.data?.is_compliant).toBe(true)
+      expect(result.current.data?.valid).toBe(true)
       expect(result.current.data?.violations).toHaveLength(0)
     })
 
     it('should detect violations', async () => {
       const mockValidation = {
-        is_compliant: false,
-        violations: ['80-hour rule violated for person-1'],
-        warnings: ['Uneven distribution detected'],
+        valid: false,
+        totalViolations: 1,
+        violations: [{ type: 'hours', severity: 'CRITICAL' as const, personId: 'person-1', personName: 'Dr. Smith', blockId: null, message: '80-hour rule violated', details: null }],
+        coverageRate: 0.95,
+        statistics: null,
       }
 
       mockedApi.get.mockResolvedValue(mockValidation)
@@ -525,9 +528,8 @@ describe('useValidateSchedule', () => {
         expect(result.current.isSuccess).toBe(true)
       })
 
-      expect(result.current.data?.is_compliant).toBe(false)
+      expect(result.current.data?.valid).toBe(false)
       expect(result.current.data?.violations).toHaveLength(1)
-      expect(result.current.data?.warnings).toHaveLength(1)
     })
   })
 
@@ -598,8 +600,8 @@ describe('useAssignments', () => {
         items: [
           {
             id: 'assignment-1',
-            person_id: 'person-1',
-            rotation_template_id: 'rotation-1',
+            personId: 'person-1',
+            rotationTemplateId: 'rotation-1',
           },
         ],
         total: 1,
@@ -610,9 +612,9 @@ describe('useAssignments', () => {
       const { result } = renderHook(
         () =>
           useAssignments({
-            person_id: 'person-1',
-            start_date: '2024-01-01',
-            end_date: '2024-01-31',
+            personId: 'person-1',
+            startDate: '2024-01-01',
+            endDate: '2024-01-31',
           }),
         {
           wrapper: createWrapper(),
@@ -625,7 +627,7 @@ describe('useAssignments', () => {
 
       expect(result.current.data).toEqual(mockAssignments)
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('person_id=person-1')
+        expect.stringContaining('personId=person-1')
       )
     })
   })
@@ -640,10 +642,10 @@ describe('useCreateAssignment', () => {
     it('should create assignment successfully', async () => {
       const mockAssignment = {
         id: 'assignment-1',
-        person_id: 'person-1',
-        rotation_template_id: 'rotation-1',
-        start_date: '2024-01-01',
-        end_date: '2024-01-07',
+        personId: 'person-1',
+        rotationTemplateId: 'rotation-1',
+        startDate: '2024-01-01',
+        endDate: '2024-01-07',
       }
 
       mockedApi.post.mockResolvedValue(mockAssignment)
@@ -654,10 +656,10 @@ describe('useCreateAssignment', () => {
 
       act(() => {
         result.current.mutate({
-          person_id: 'person-1',
-          rotation_id: 'rotation-1',
-          start_date: '2024-01-01',
-          end_date: '2024-01-07',
+          personId: 'person-1',
+          rotationId: 'rotation-1',
+          startDate: '2024-01-01',
+          endDate: '2024-01-07',
         } as any)
       })
 
@@ -680,10 +682,10 @@ describe('useCreateAssignment', () => {
 
       act(() => {
         result.current.mutate({
-          person_id: 'person-1',
-          rotation_id: 'rotation-1',
-          start_date: '2024-01-01',
-          end_date: '2024-01-07',
+          personId: 'person-1',
+          rotationId: 'rotation-1',
+          startDate: '2024-01-01',
+          endDate: '2024-01-07',
         } as any)
       })
 

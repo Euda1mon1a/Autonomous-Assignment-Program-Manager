@@ -31,11 +31,6 @@ function createWrapper() {
       queries: { retry: false },
       mutations: { retry: false },
     },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
-    },
   });
 
   const Wrapper = ({ children }: { children: React.ReactNode }) =>
@@ -87,7 +82,7 @@ describe('My Dashboard Hooks', () => {
 
       await waitFor(() => {
         expect(api.get).toHaveBeenCalledWith(
-          expect.stringContaining('days_ahead=60')
+          expect.stringContaining('daysAhead=60')
         );
       });
     });
@@ -101,7 +96,7 @@ describe('My Dashboard Hooks', () => {
 
       await waitFor(() => {
         expect(api.get).toHaveBeenCalledWith(
-          expect.stringContaining('include_swaps=false')
+          expect.stringContaining('includeSwaps=false')
         );
       });
     });
@@ -115,7 +110,7 @@ describe('My Dashboard Hooks', () => {
 
       await waitFor(() => {
         expect(api.get).toHaveBeenCalledWith(
-          expect.stringContaining('include_absences=false')
+          expect.stringContaining('includeAbsences=false')
         );
       });
     });
@@ -157,7 +152,7 @@ describe('My Dashboard Hooks', () => {
     it('should handle empty upcoming schedule', async () => {
       const emptyResponse = {
         ...mockDashboardApiResponse,
-        upcoming_schedule: [],
+        upcomingSchedule: [],
       };
       (api.get as jest.Mock).mockResolvedValue(emptyResponse);
 
@@ -176,10 +171,10 @@ describe('My Dashboard Hooks', () => {
       const minimalResponse = {
         user: mockDashboardApiResponse.user,
         summary: {
-          next_assignment: null,
-          workload_next_4_weeks: 0,
-          pending_swap_count: 0,
-          upcoming_absences: 0,
+          nextAssignment: null,
+          workloadNext4Weeks: 0,
+          pendingSwapCount: 0,
+          upcomingAbsences: 0,
         },
       };
       (api.get as jest.Mock).mockResolvedValue(minimalResponse);
@@ -222,13 +217,13 @@ describe('My Dashboard Hooks', () => {
     it('should handle assignments without IDs', async () => {
       const responseWithoutIds = {
         ...mockDashboardApiResponse,
-        upcoming_schedule: [
+        upcomingSchedule: [
           {
             date: '2025-02-15',
-            time_of_day: 'AM',
+            timeOfDay: 'AM',
             activity: 'Test Activity',
             location: 'Ward',
-            can_trade: true,
+            canTrade: true,
           },
         ],
       };
@@ -311,7 +306,7 @@ describe('My Dashboard Hooks', () => {
 
       expect(api.post).toHaveBeenCalledWith('/portal/my/calendar-sync', {
         format: 'ics',
-        include_weeks_ahead: 12,
+        includeWeeksAhead: 12,
       });
 
       expect(response).toEqual({
@@ -334,7 +329,7 @@ describe('My Dashboard Hooks', () => {
 
       expect(api.post).toHaveBeenCalledWith('/portal/my/calendar-sync', {
         format: 'google',
-        include_weeks_ahead: 12,
+        includeWeeksAhead: 12,
       });
     });
 

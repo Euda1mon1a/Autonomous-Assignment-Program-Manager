@@ -27,10 +27,10 @@ export type AuditAction =
   | 'logout'
   | 'login_failed'
   | 'password_reset'
-  | 'mfa_enabled'
+  | 'mfaEnabled'
   | 'mfa_disabled'
   // Schedule
-  | 'schedule_generated'
+  | 'scheduleGenerated'
   | 'schedule_approved'
   | 'schedule_rejected'
   | 'assignment_created'

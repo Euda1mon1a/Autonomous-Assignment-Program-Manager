@@ -8,6 +8,7 @@ import {
   addRecentRotation,
   clearRecentRotations,
 } from '@/components/schedule/CellActions'
+import { AssignmentRole } from '@/types/api'
 
 // Mock the context and hooks
 jest.mock('@/contexts/AuthContext', () => ({
@@ -93,9 +94,9 @@ describe('CellActions', () => {
         const { result } = renderHook(() => useCellActions())
 
         const assignmentData = {
-          block_id: 'b1',
-          person_id: 'p1',
-          role: 'primary',
+          blockId: 'b1',
+          personId: 'p1',
+          role: AssignmentRole.PRIMARY,
         }
 
         await act(async () => {
@@ -112,9 +113,9 @@ describe('CellActions', () => {
         const { result } = renderHook(() => useCellActions())
 
         const assignmentData = {
-          block_id: 'b1',
-          person_id: 'p1',
-          role: 'primary',
+          blockId: 'b1',
+          personId: 'p1',
+          role: AssignmentRole.PRIMARY,
         }
 
         await expect(
@@ -206,11 +207,11 @@ describe('CellActions', () => {
         })
 
         expect(mockCreateMutation.mutateAsync).toHaveBeenCalledWith({
-          block_id: 'b1',
-          person_id: 'p1',
+          blockId: 'b1',
+          personId: 'p1',
           role: 'primary',
-          activity_override: 'OFF',
-          created_by: 'u1',
+          activityOverride: 'OFF',
+          createdBy: 'u1',
         })
       })
 

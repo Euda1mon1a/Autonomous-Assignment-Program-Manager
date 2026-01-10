@@ -37,7 +37,7 @@ interface UpcomingAssignment {
   id: string
   date: string
   dateObj: Date
-  time_of_day: 'AM' | 'PM'
+  timeOfDay: 'AM' | 'PM'
   activity: string
   abbreviation: string
 }
@@ -68,9 +68,9 @@ export function MyScheduleWidget() {
   // Fetch assignments for the current person
   const { data: assignmentsData, isLoading: assignmentsLoading } = useAssignments(
     currentPerson ? {
-      person_id: currentPerson.id,
-      start_date: startDateStr,
-      end_date: endDateStr,
+      personId: currentPerson.id,
+      startDate: startDateStr,
+      endDate: endDateStr,
     } : undefined,
     { enabled: !!currentPerson }
   )
@@ -79,12 +79,12 @@ export function MyScheduleWidget() {
 
   // Build rotation template lookup
   const templateMap = useMemo(() => {
-    const map = new Map<string, { name: string; abbreviation: string; activity_type: string }>()
+    const map = new Map<string, { name: string; abbreviation: string; activityType: string }>()
     templatesData?.items?.forEach((t) => {
       map.set(t.id, {
         name: t.name,
         abbreviation: t.displayAbbreviation || t.abbreviation || t.name.substring(0, 3).toUpperCase(),
-        activity_type: t.activityType,
+        activityType: t.activityType,
       })
     })
     return map
@@ -96,7 +96,7 @@ export function MyScheduleWidget() {
 
     const now = startOfDay(new Date())
 
-    // We need block data to get dates - for now assume block_id format includes date
+    // We need block data to get dates - for now assume blockId format includes date
     // In a real implementation, you'd have a blocks endpoint or embedded block data
     // For this component, we'll work with what we have and show a simplified view
 
@@ -106,8 +106,8 @@ export function MyScheduleWidget() {
           ? templateMap.get(assignment.rotationTemplateId)
           : null
 
-        // Extract date from block_id if possible, or use created_at as fallback
-        // In production, the API should return block data with date/time_of_day
+        // Extract date from blockId if possible, or use createdAt as fallback
+        // In production, the API should return block data with date/timeOfDay
         const dateStr = assignment.createdAt.split('T')[0]
         const dateObj = parseISO(dateStr)
 
@@ -115,7 +115,7 @@ export function MyScheduleWidget() {
           id: assignment.id,
           date: dateStr,
           dateObj,
-          time_of_day: 'AM' as const, // Default - would come from block data
+          timeOfDay: 'AM' as const, // Default - would come from block data
           activity: assignment.activityOverride || template?.activityType || 'Assignment',
           abbreviation: template?.abbreviation || 'ASN',
         }

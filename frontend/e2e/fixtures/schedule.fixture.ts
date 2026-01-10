@@ -92,11 +92,11 @@ export class ScheduleHelper {
     for (let i = 1; i <= residentCount; i++) {
       const response = await this.apiContext.post(`${this.baseURL}/api/v1/persons`, {
         data: {
-          first_name: `PGY${(i % 3) + 1}`,
-          last_name: `Resident${i}`,
+          firstName: `PGY${(i % 3) + 1}`,
+          lastName: `Resident${i}`,
           email: `e2e-resident-${i}@test.mil`,
           role: 'RESIDENT',
-          pgy_level: (i % 3) + 1,
+          pgyLevel: (i % 3) + 1,
         },
       });
       if (response.ok()) {
@@ -147,9 +147,9 @@ export class ScheduleHelper {
     for (let i = 0; i < assignmentCount; i++) {
       const response = await this.apiContext.post(`${this.baseURL}/api/v1/assignments`, {
         data: {
-          person_id: residents[i % residents.length],
-          block_id: blocks[i],
-          rotation_id: rotations[i % rotations.length],
+          personId: residents[i % residents.length],
+          blockId: blocks[i],
+          rotationId: rotations[i % rotations.length],
           status: 'CONFIRMED',
         },
       });
@@ -178,11 +178,11 @@ export class ScheduleHelper {
     for (let i = 1; i <= residentCount; i++) {
       const response = await this.apiContext.post(`${this.baseURL}/api/v1/persons`, {
         data: {
-          first_name: `PGY${(i % 3) + 1}`,
-          last_name: `Resident${i}`,
+          firstName: `PGY${(i % 3) + 1}`,
+          lastName: `Resident${i}`,
           email: `e2e-resident-full-${i}@test.mil`,
           role: 'RESIDENT',
-          pgy_level: (i % 3) + 1,
+          pgyLevel: (i % 3) + 1,
         },
       });
       if (response.ok()) residents.push((await response.json()).id);
@@ -192,8 +192,8 @@ export class ScheduleHelper {
     for (let i = 1; i <= 5; i++) {
       const response = await this.apiContext.post(`${this.baseURL}/api/v1/persons`, {
         data: {
-          first_name: 'Faculty',
-          last_name: `Member${i}`,
+          firstName: 'Faculty',
+          lastName: `Member${i}`,
           email: `e2e-faculty-full-${i}@test.mil`,
           role: 'FACULTY',
         },
@@ -237,9 +237,9 @@ export class ScheduleHelper {
     for (let i = 0; i < blocks.length; i++) {
       const response = await this.apiContext.post(`${this.baseURL}/api/v1/assignments`, {
         data: {
-          person_id: residents[i % residents.length],
-          block_id: blocks[i],
-          rotation_id: rotations[i % rotations.length],
+          personId: residents[i % residents.length],
+          blockId: blocks[i],
+          rotationId: rotations[i % rotations.length],
           status: 'CONFIRMED',
         },
       });
@@ -263,11 +263,11 @@ export class ScheduleHelper {
     // Create one resident
     const residentResponse = await this.apiContext.post(`${this.baseURL}/api/v1/persons`, {
       data: {
-        first_name: 'Conflict',
-        last_name: 'Resident',
+        firstName: 'Conflict',
+        lastName: 'Resident',
         email: 'e2e-conflict@test.mil',
         role: 'RESIDENT',
-        pgy_level: 2,
+        pgyLevel: 2,
       },
     });
     const residentId = (await residentResponse.json()).id;
@@ -293,9 +293,9 @@ export class ScheduleHelper {
     // Create two assignments for the same resident/block (conflict!)
     const assignment1Response = await this.apiContext.post(`${this.baseURL}/api/v1/assignments`, {
       data: {
-        person_id: residentId,
-        block_id: blockId,
-        rotation_id: rotation1Id,
+        personId: residentId,
+        blockId: blockId,
+        rotationId: rotation1Id,
         status: 'CONFIRMED',
       },
     });
@@ -304,9 +304,9 @@ export class ScheduleHelper {
     // This should trigger a conflict
     const assignment2Response = await this.apiContext.post(`${this.baseURL}/api/v1/assignments`, {
       data: {
-        person_id: residentId,
-        block_id: blockId,
-        rotation_id: rotation2Id,
+        personId: residentId,
+        blockId: blockId,
+        rotationId: rotation2Id,
         status: 'CONFIRMED',
       },
       headers: {
@@ -332,11 +332,11 @@ export class ScheduleHelper {
     // Create resident
     const residentResponse = await this.apiContext.post(`${this.baseURL}/api/v1/persons`, {
       data: {
-        first_name: 'Overworked',
-        last_name: 'Resident',
+        firstName: 'Overworked',
+        lastName: 'Resident',
         email: 'e2e-overworked@test.mil',
         role: 'RESIDENT',
-        pgy_level: 1,
+        pgyLevel: 1,
       },
     });
     const residentId = (await residentResponse.json()).id;
@@ -377,9 +377,9 @@ export class ScheduleHelper {
       // Assign both blocks to resident
       const amAssignmentResponse = await this.apiContext.post(`${this.baseURL}/api/v1/assignments`, {
         data: {
-          person_id: residentId,
-          block_id: amBlockId,
-          rotation_id: rotationId,
+          personId: residentId,
+          blockId: amBlockId,
+          rotationId: rotationId,
           status: 'CONFIRMED',
         },
       });
@@ -387,9 +387,9 @@ export class ScheduleHelper {
 
       const pmAssignmentResponse = await this.apiContext.post(`${this.baseURL}/api/v1/assignments`, {
         data: {
-          person_id: residentId,
-          block_id: pmBlockId,
-          rotation_id: rotationId,
+          personId: residentId,
+          blockId: pmBlockId,
+          rotationId: rotationId,
           status: 'CONFIRMED',
         },
       });

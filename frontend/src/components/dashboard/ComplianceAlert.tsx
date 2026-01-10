@@ -14,7 +14,7 @@ export function ComplianceAlert() {
 
   const { data: validation, isLoading, isError } = useValidateSchedule(startDate, endDate)
 
-  const violationCount = validation?.total_violations ?? 0
+  const violationCount = validation?.totalViolations ?? 0
   const hasViolations = violationCount > 0
   const isClean = !hasViolations && validation?.valid
   const hasNoData = !validation || validation.valid === undefined

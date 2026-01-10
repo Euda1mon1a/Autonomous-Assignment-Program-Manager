@@ -608,13 +608,13 @@ describe('ProtectedRoute', () => {
       expect(screen.getByText(/access denied/i)).toBeInTheDocument()
     })
 
-    it('should allow clinical_staff role on non-admin routes', () => {
+    it('should allow clinicalStaff role on non-admin routes', () => {
       mockAuthContext.isLoading = false
       mockAuthContext.isAuthenticated = true
       mockAuthContext.user = {
         id: '1',
         username: 'clinicaluser',
-        role: 'clinical_staff',
+        role: 'clinicalStaff',
       }
 
       render(
@@ -626,13 +626,13 @@ describe('ProtectedRoute', () => {
       expect(screen.getByTestId('content')).toBeInTheDocument()
     })
 
-    it('should deny clinical_staff role on admin routes', () => {
+    it('should deny clinicalStaff role on admin routes', () => {
       mockAuthContext.isLoading = false
       mockAuthContext.isAuthenticated = true
       mockAuthContext.user = {
         id: '1',
         username: 'clinicaluser',
-        role: 'clinical_staff',
+        role: 'clinicalStaff',
       }
 
       render(

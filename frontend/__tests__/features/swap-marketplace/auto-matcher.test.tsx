@@ -25,11 +25,6 @@ function createWrapper() {
       queries: { retry: false },
       mutations: { retry: false },
     },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
-    },
   });
 
   return ({ children }: { children: React.ReactNode }) => (
@@ -51,26 +46,26 @@ describe('Auto-Matcher Algorithm', () => {
       const mockData = {
         entries: [
           {
-            request_id: 'swap-1',
-            requesting_faculty_name: 'Dr. Smith',
-            week_available: '2025-01-15',
-            is_compatible: true,
+            requestId: 'swap-1',
+            requestingFacultyName: 'Dr. Smith',
+            weekAvailable: '2025-01-15',
+            isCompatible: true,
           },
           {
-            request_id: 'swap-2',
-            requesting_faculty_name: 'Dr. Jones',
-            week_available: '2025-01-22',
-            is_compatible: false,
+            requestId: 'swap-2',
+            requestingFacultyName: 'Dr. Jones',
+            weekAvailable: '2025-01-22',
+            isCompatible: false,
           },
           {
-            request_id: 'swap-3',
-            requesting_faculty_name: 'Dr. Brown',
-            week_available: '2025-02-01',
-            is_compatible: true,
+            requestId: 'swap-3',
+            requestingFacultyName: 'Dr. Brown',
+            weekAvailable: '2025-02-01',
+            isCompatible: true,
           },
         ],
         total: 3,
-        my_postings: 0,
+        myPostings: 0,
       };
 
       (api.get as jest.Mock).mockResolvedValue(mockData);
@@ -93,20 +88,20 @@ describe('Auto-Matcher Algorithm', () => {
       const mockData = {
         entries: [
           {
-            request_id: 'swap-1',
-            requesting_faculty_name: 'Dr. Smith',
-            week_available: '2025-01-15',
-            is_compatible: false,
+            requestId: 'swap-1',
+            requestingFacultyName: 'Dr. Smith',
+            weekAvailable: '2025-01-15',
+            isCompatible: false,
           },
           {
-            request_id: 'swap-2',
-            requesting_faculty_name: 'Dr. Jones',
-            week_available: '2025-01-22',
-            is_compatible: false,
+            requestId: 'swap-2',
+            requestingFacultyName: 'Dr. Jones',
+            weekAvailable: '2025-01-22',
+            isCompatible: false,
           },
         ],
         total: 2,
-        my_postings: 0,
+        myPostings: 0,
       };
 
       (api.get as jest.Mock).mockResolvedValue(mockData);
@@ -127,20 +122,20 @@ describe('Auto-Matcher Algorithm', () => {
       const mockData = {
         entries: [
           {
-            request_id: 'swap-1',
-            requesting_faculty_name: 'Dr. Smith',
-            week_available: '2025-01-15',
-            is_compatible: true,
+            requestId: 'swap-1',
+            requestingFacultyName: 'Dr. Smith',
+            weekAvailable: '2025-01-15',
+            isCompatible: true,
           },
           {
-            request_id: 'swap-2',
-            requesting_faculty_name: 'Dr. Jones',
-            week_available: '2025-01-22',
-            is_compatible: true,
+            requestId: 'swap-2',
+            requestingFacultyName: 'Dr. Jones',
+            weekAvailable: '2025-01-22',
+            isCompatible: true,
           },
         ],
         total: 2,
-        my_postings: 0,
+        myPostings: 0,
       };
 
       (api.get as jest.Mock).mockResolvedValue(mockData);
@@ -166,9 +161,9 @@ describe('Auto-Matcher Algorithm', () => {
     it('should notify multiple candidates when auto-find is enabled', async () => {
       const mockResponse = {
         success: true,
-        request_id: 'swap-new-1',
+        requestId: 'swap-new-1',
         message: 'Swap request created successfully',
-        candidates_notified: 5,
+        candidatesNotified: 5,
       };
 
       (api.post as jest.Mock).mockResolvedValue(mockResponse);
@@ -190,7 +185,7 @@ describe('Auto-Matcher Algorithm', () => {
       expect(api.post).toHaveBeenCalledWith(
         '/portal/my/swaps',
         expect.objectContaining({
-          auto_find_candidates: true,
+          autoFindCandidates: true,
         })
       );
     });
@@ -198,9 +193,9 @@ describe('Auto-Matcher Algorithm', () => {
     it('should handle zero candidates found', async () => {
       const mockResponse = {
         success: true,
-        request_id: 'swap-new-1',
+        requestId: 'swap-new-1',
         message: 'Swap request created but no compatible candidates found',
-        candidates_notified: 0,
+        candidatesNotified: 0,
       };
 
       (api.post as jest.Mock).mockResolvedValue(mockResponse);
@@ -224,9 +219,9 @@ describe('Auto-Matcher Algorithm', () => {
     it('should handle single candidate found', async () => {
       const mockResponse = {
         success: true,
-        request_id: 'swap-new-1',
+        requestId: 'swap-new-1',
         message: 'Swap request created successfully',
-        candidates_notified: 1,
+        candidatesNotified: 1,
       };
 
       (api.post as jest.Mock).mockResolvedValue(mockResponse);
@@ -250,9 +245,9 @@ describe('Auto-Matcher Algorithm', () => {
     it('should not use auto-find when specific faculty is selected', async () => {
       const mockResponse = {
         success: true,
-        request_id: 'swap-new-1',
+        requestId: 'swap-new-1',
         message: 'Swap request created successfully',
-        candidates_notified: 1,
+        candidatesNotified: 1,
       };
 
       (api.post as jest.Mock).mockResolvedValue(mockResponse);
@@ -274,8 +269,8 @@ describe('Auto-Matcher Algorithm', () => {
       expect(api.post).toHaveBeenCalledWith(
         '/portal/my/swaps',
         expect.objectContaining({
-          auto_find_candidates: false,
-          preferred_target_faculty_id: 'faculty-123',
+          autoFindCandidates: false,
+          preferredTargetFacultyId: 'faculty-123',
         })
       );
     });
@@ -290,20 +285,20 @@ describe('Auto-Matcher Algorithm', () => {
       const mockData = {
         entries: [
           {
-            request_id: 'swap-1',
-            requesting_faculty_name: 'Dr. Incompatible',
-            week_available: '2025-01-15',
-            is_compatible: false,
+            requestId: 'swap-1',
+            requestingFacultyName: 'Dr. Incompatible',
+            weekAvailable: '2025-01-15',
+            isCompatible: false,
           },
           {
-            request_id: 'swap-2',
-            requesting_faculty_name: 'Dr. Compatible',
-            week_available: '2025-01-22',
-            is_compatible: true,
+            requestId: 'swap-2',
+            requestingFacultyName: 'Dr. Compatible',
+            weekAvailable: '2025-01-22',
+            isCompatible: true,
           },
         ],
         total: 2,
-        my_postings: 0,
+        myPostings: 0,
       };
 
       (api.get as jest.Mock).mockResolvedValue(mockData);
@@ -325,24 +320,24 @@ describe('Auto-Matcher Algorithm', () => {
       const mockData = {
         entries: [
           {
-            request_id: 'swap-1',
-            requesting_faculty_name: 'Dr. Smith',
-            week_available: '2025-01-15',
-            posted_at: '2025-01-01T10:00:00Z',
-            expires_at: '2025-01-14T23:59:59Z', // Expires soon
-            is_compatible: true,
+            requestId: 'swap-1',
+            requestingFacultyName: 'Dr. Smith',
+            weekAvailable: '2025-01-15',
+            postedAt: '2025-01-01T10:00:00Z',
+            expiresAt: '2025-01-14T23:59:59Z', // Expires soon
+            isCompatible: true,
           },
           {
-            request_id: 'swap-2',
-            requesting_faculty_name: 'Dr. Jones',
-            week_available: '2025-01-22',
-            posted_at: '2025-01-01T10:00:00Z',
-            expires_at: '2025-01-30T23:59:59Z', // Expires later
-            is_compatible: true,
+            requestId: 'swap-2',
+            requestingFacultyName: 'Dr. Jones',
+            weekAvailable: '2025-01-22',
+            postedAt: '2025-01-01T10:00:00Z',
+            expiresAt: '2025-01-30T23:59:59Z', // Expires later
+            isCompatible: true,
           },
         ],
         total: 2,
-        my_postings: 0,
+        myPostings: 0,
       };
 
       (api.get as jest.Mock).mockResolvedValue(mockData);
@@ -365,15 +360,15 @@ describe('Auto-Matcher Algorithm', () => {
       const mockData = {
         entries: [
           {
-            request_id: 'swap-1',
-            requesting_faculty_name: 'Dr. Smith',
-            week_available: '2025-01-15',
-            posted_at: '2025-01-01T10:00:00Z',
-            is_compatible: true,
+            requestId: 'swap-1',
+            requestingFacultyName: 'Dr. Smith',
+            weekAvailable: '2025-01-15',
+            postedAt: '2025-01-01T10:00:00Z',
+            isCompatible: true,
           },
         ],
         total: 1,
-        my_postings: 0,
+        myPostings: 0,
       };
 
       (api.get as jest.Mock).mockResolvedValue(mockData);
@@ -468,14 +463,14 @@ describe('Auto-Matcher Algorithm', () => {
       const mockData = {
         entries: [
           {
-            request_id: 'swap-1',
-            requesting_faculty_name: 'Dr. Compatible',
-            week_available: '2025-01-15',
-            is_compatible: true,
+            requestId: 'swap-1',
+            requestingFacultyName: 'Dr. Compatible',
+            weekAvailable: '2025-01-15',
+            isCompatible: true,
           },
         ],
         total: 1,
-        my_postings: 0,
+        myPostings: 0,
       };
 
       (api.get as jest.Mock).mockResolvedValue(mockData);
@@ -497,26 +492,26 @@ describe('Auto-Matcher Algorithm', () => {
       const mockData = {
         entries: [
           {
-            request_id: 'swap-1',
-            requesting_faculty_name: 'Dr. Compatible',
-            week_available: '2025-01-15',
-            is_compatible: true,
+            requestId: 'swap-1',
+            requestingFacultyName: 'Dr. Compatible',
+            weekAvailable: '2025-01-15',
+            isCompatible: true,
           },
           {
-            request_id: 'swap-2',
-            requesting_faculty_name: 'Dr. Incompatible',
-            week_available: '2025-01-22',
-            is_compatible: false,
+            requestId: 'swap-2',
+            requestingFacultyName: 'Dr. Incompatible',
+            weekAvailable: '2025-01-22',
+            isCompatible: false,
           },
           {
-            request_id: 'swap-3',
-            requesting_faculty_name: 'Dr. Another Compatible',
-            week_available: '2025-02-01',
-            is_compatible: true,
+            requestId: 'swap-3',
+            requestingFacultyName: 'Dr. Another Compatible',
+            weekAvailable: '2025-02-01',
+            isCompatible: true,
           },
         ],
         total: 3,
-        my_postings: 0,
+        myPostings: 0,
       };
 
       (api.get as jest.Mock).mockResolvedValue(mockData);
@@ -547,9 +542,9 @@ describe('Auto-Matcher Algorithm', () => {
     it('should handle swap request with reason affecting matching', async () => {
       const mockResponse = {
         success: true,
-        request_id: 'swap-new-1',
+        requestId: 'swap-new-1',
         message: 'Swap request created successfully',
-        candidates_notified: 3,
+        candidatesNotified: 3,
       };
 
       (api.post as jest.Mock).mockResolvedValue(mockResponse);
@@ -580,7 +575,7 @@ describe('Auto-Matcher Algorithm', () => {
       const mockData = {
         entries: [],
         total: 0,
-        my_postings: 2,
+        myPostings: 2,
       };
 
       (api.get as jest.Mock).mockResolvedValue(mockData);
@@ -601,7 +596,7 @@ describe('Auto-Matcher Algorithm', () => {
       const mockData = {
         entries: [],
         total: 0,
-        my_postings: 0,
+        myPostings: 0,
       };
 
       (api.get as jest.Mock).mockResolvedValue(mockData);
@@ -672,9 +667,9 @@ describe('Auto-Matcher Algorithm', () => {
     it('should handle large number of candidates efficiently', async () => {
       const mockResponse = {
         success: true,
-        request_id: 'swap-new-1',
+        requestId: 'swap-new-1',
         message: 'Swap request created successfully',
-        candidates_notified: 50,
+        candidatesNotified: 50,
       };
 
       (api.post as jest.Mock).mockResolvedValue(mockResponse);
@@ -697,17 +692,17 @@ describe('Auto-Matcher Algorithm', () => {
 
     it('should handle large marketplace with many entries', async () => {
       const entries = Array.from({ length: 100 }, (_, i) => ({
-        request_id: `swap-${i}`,
-        requesting_faculty_name: `Dr. Faculty ${i}`,
-        week_available: '2025-01-15',
-        posted_at: '2025-01-01T10:00:00Z',
-        is_compatible: i % 2 === 0,
+        requestId: `swap-${i}`,
+        requestingFacultyName: `Dr. Faculty ${i}`,
+        weekAvailable: '2025-01-15',
+        postedAt: '2025-01-01T10:00:00Z',
+        isCompatible: i % 2 === 0,
       }));
 
       const mockData = {
         entries,
         total: 100,
-        my_postings: 2,
+        myPostings: 2,
       };
 
       (api.get as jest.Mock).mockResolvedValue(mockData);

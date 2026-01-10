@@ -37,7 +37,7 @@ import type { PersonUpdate } from '@/types/api';
 // Types
 // ============================================================================
 
-type SortField = 'name' | 'type' | 'pgy_level' | 'email';
+type SortField = 'name' | 'type' | 'pgyLevel' | 'email';
 type SortDirection = 'asc' | 'desc';
 
 interface PeopleFilters {
@@ -126,7 +126,7 @@ export default function AdminPeoplePage() {
         case 'type':
           comparison = (a.type || '').localeCompare(b.type || '');
           break;
-        case 'pgy_level':
+        case 'pgyLevel':
           comparison = (a.pgyLevel || 0) - (b.pgyLevel || 0);
           break;
         case 'email':
@@ -180,7 +180,7 @@ export default function AdminPeoplePage() {
       try {
         await bulkUpdate.mutateAsync({
           personIds: selectedIds,
-          updates: { pgy_level: pgyLevel } as PersonUpdate,
+          updates: { pgyLevel: pgyLevel } as PersonUpdate,
         });
         toast.success(`${selectedIds.length} people updated to PGY-${pgyLevel}`);
         setSelectedIds([]);

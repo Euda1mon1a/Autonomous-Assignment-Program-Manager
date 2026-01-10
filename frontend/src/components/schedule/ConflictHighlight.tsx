@@ -9,7 +9,7 @@ import { Badge } from '../ui/Badge';
 
 export interface Conflict {
   id: string;
-  type: 'overlap' | 'acgme_violation' | 'coverage_gap' | 'credential_missing';
+  type: 'overlap' | 'acgmeViolation' | 'coverage_gap' | 'credential_missing';
   severity: 'critical' | 'warning' | 'info';
   message: string;
   affectedPersons: string[];
@@ -47,7 +47,7 @@ const severityConfig = {
 
 const typeLabels = {
   overlap: 'Schedule Overlap',
-  acgme_violation: 'ACGME Violation',
+  acgmeViolation: 'ACGME Violation',
   coverage_gap: 'Coverage Gap',
   credential_missing: 'Missing Credentials',
 };

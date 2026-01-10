@@ -8,12 +8,12 @@
 export type StrategyType =
   | 'cooperative'
   | 'aggressive'
-  | 'tit_for_tat'
+  | 'titForTat'
   | 'grudger'
   | 'pavlov'
   | 'random'
-  | 'suspicious_tft'
-  | 'forgiving_tft'
+  | 'suspiciousTft'
+  | 'forgivingTft'
   | 'custom';
 
 export type SimulationStatus =

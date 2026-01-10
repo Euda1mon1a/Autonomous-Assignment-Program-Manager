@@ -560,7 +560,7 @@ export function WeeklyRequirementsEditor({
           maxValue={formData.fmClinicMaxPerWeek}
           onMinChange={(value) => updateField('fmClinicMinPerWeek', value)}
           onMaxChange={(value) => updateField('fmClinicMaxPerWeek', value)}
-          error={errors.fm_clinic}
+          error={errors.fmClinic}
         />
 
         {/* Specialty Half-Days */}

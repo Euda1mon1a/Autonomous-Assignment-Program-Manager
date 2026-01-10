@@ -12,9 +12,9 @@ describe("BurnoutDashboard", () => {
   const mockHealthData = {
     timestamp: new Date().toISOString(),
     overall_status: OverallStatus.HEALTHY,
-    defense_level: "PREVENTION" as any,
+    defenseLevel: "PREVENTION" as any,
     utilization: {
-      utilization_rate: 0.5,
+      utilizationRate: 0.5,
       level: UtilizationLevel.GREEN,
       buffer_remaining: 5,
       wait_time_multiplier: 1.0,
@@ -23,12 +23,12 @@ describe("BurnoutDashboard", () => {
       theoretical_capacity: 100,
     },
     active_fallbacks: [],
-    n1_pass: true,
-    n2_pass: true,
-    phase_transition_risk: "low",
+    n1Pass: true,
+    n2Pass: true,
+    phaseTransitionRisk: "low",
     redundancy_status: [],
     load_shedding_level: "NORMAL" as any,
-    crisis_mode: false,
+    crisisMode: false,
     immediate_actions: ["Monitor utilization levels"],
     watch_items: ["Review N-2 coverage"],
   };

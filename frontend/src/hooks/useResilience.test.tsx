@@ -17,28 +17,28 @@ const mockedApi = api as jest.Mocked<typeof api>;
 
 // Test data
 const mockEmergencyCoverageRequest = {
-  person_id: 'person-123',
-  start_date: '2024-01-15',
-  end_date: '2024-01-22',
+  personId: 'person-123',
+  startDate: '2024-01-15',
+  endDate: '2024-01-22',
   reason: 'TDY deployment',
-  is_deployment: true,
+  isDeployment: true,
 };
 
 const mockSuccessResponse = {
   status: 'success' as const,
-  replacements_found: 7,
-  coverage_gaps: 0,
-  requires_manual_review: false,
+  replacementsFound: 7,
+  coverageGaps: 0,
+  requiresManualReview: false,
   details: [
     {
       date: '2024-01-15',
-      original_assignment: 'assignment-1',
+      originalAssignment: 'assignment-1',
       replacement: 'person-456',
       status: 'replaced',
     },
     {
       date: '2024-01-16',
-      original_assignment: 'assignment-2',
+      originalAssignment: 'assignment-2',
       replacement: 'person-789',
       status: 'replaced',
     },
@@ -47,19 +47,19 @@ const mockSuccessResponse = {
 
 const mockPartialResponse = {
   status: 'partial' as const,
-  replacements_found: 5,
-  coverage_gaps: 2,
-  requires_manual_review: true,
+  replacementsFound: 5,
+  coverageGaps: 2,
+  requiresManualReview: true,
   details: [
     {
       date: '2024-01-15',
-      original_assignment: 'assignment-1',
+      originalAssignment: 'assignment-1',
       replacement: 'person-456',
       status: 'replaced',
     },
     {
       date: '2024-01-16',
-      original_assignment: 'assignment-2',
+      originalAssignment: 'assignment-2',
       replacement: undefined,
       status: 'gap',
     },
@@ -68,13 +68,13 @@ const mockPartialResponse = {
 
 const mockFailedResponse = {
   status: 'failed' as const,
-  replacements_found: 0,
-  coverage_gaps: 7,
-  requires_manual_review: true,
+  replacementsFound: 0,
+  coverageGaps: 7,
+  requiresManualReview: true,
   details: [
     {
       date: '2024-01-15',
-      original_assignment: 'assignment-1',
+      originalAssignment: 'assignment-1',
       replacement: undefined,
       status: 'gap',
     },
@@ -117,9 +117,9 @@ describe('useEmergencyCoverage', () => {
 
     expect(result.current.data).toEqual(mockSuccessResponse);
     expect(result.current.data?.status).toBe('success');
-    expect(result.current.data?.replacements_found).toBe(7);
-    expect(result.current.data?.coverage_gaps).toBe(0);
-    expect(result.current.data?.requires_manual_review).toBe(false);
+    expect(result.current.data?.replacementsFound).toBe(7);
+    expect(result.current.data?.coverageGaps).toBe(0);
+    expect(result.current.data?.requiresManualReview).toBe(false);
     expect(mockedApi.post).toHaveBeenCalledWith(
       '/schedule/emergency-coverage',
       mockEmergencyCoverageRequest
@@ -142,8 +142,8 @@ describe('useEmergencyCoverage', () => {
     });
 
     expect(result.current.data?.status).toBe('partial');
-    expect(result.current.data?.coverage_gaps).toBe(2);
-    expect(result.current.data?.requires_manual_review).toBe(true);
+    expect(result.current.data?.coverageGaps).toBe(2);
+    expect(result.current.data?.requiresManualReview).toBe(true);
   });
 
   it('handles failed coverage attempts', async () => {
@@ -162,8 +162,8 @@ describe('useEmergencyCoverage', () => {
     });
 
     expect(result.current.data?.status).toBe('failed');
-    expect(result.current.data?.replacements_found).toBe(0);
-    expect(result.current.data?.requires_manual_review).toBe(true);
+    expect(result.current.data?.replacementsFound).toBe(0);
+    expect(result.current.data?.requiresManualReview).toBe(true);
   });
 
   it('provides detailed replacement information', async () => {
@@ -183,18 +183,18 @@ describe('useEmergencyCoverage', () => {
 
     const firstDetail = result.current.data?.details[0];
     expect(firstDetail?.date).toBe('2024-01-15');
-    expect(firstDetail?.original_assignment).toBe('assignment-1');
+    expect(firstDetail?.originalAssignment).toBe('assignment-1');
     expect(firstDetail?.replacement).toBe('person-456');
     expect(firstDetail?.status).toBe('replaced');
   });
 
   it('handles non-deployment absences', async () => {
     const absenceRequest = {
-      person_id: 'person-123',
-      start_date: '2024-01-15',
-      end_date: '2024-01-17',
+      personId: 'person-123',
+      startDate: '2024-01-15',
+      endDate: '2024-01-17',
       reason: 'Medical emergency',
-      is_deployment: false,
+      isDeployment: false,
     };
 
     mockedApi.post.mockResolvedValueOnce(mockSuccessResponse);
@@ -220,17 +220,17 @@ describe('useEmergencyCoverage', () => {
   it('handles single-day coverage requests', async () => {
     const singleDayRequest = {
       ...mockEmergencyCoverageRequest,
-      start_date: '2024-01-15',
-      end_date: '2024-01-15',
+      startDate: '2024-01-15',
+      endDate: '2024-01-15',
     };
 
     const singleDayResponse = {
       ...mockSuccessResponse,
-      replacements_found: 1,
+      replacementsFound: 1,
       details: [
         {
           date: '2024-01-15',
-          original_assignment: 'assignment-1',
+          originalAssignment: 'assignment-1',
           replacement: 'person-456',
           status: 'replaced',
         },
@@ -248,21 +248,21 @@ describe('useEmergencyCoverage', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.data?.replacements_found).toBe(1);
+      expect(result.current.data?.replacementsFound).toBe(1);
     });
   });
 
   it('handles extended deployment periods', async () => {
     const extendedRequest = {
       ...mockEmergencyCoverageRequest,
-      start_date: '2024-01-01',
-      end_date: '2024-03-31',
+      startDate: '2024-01-01',
+      endDate: '2024-03-31',
       reason: '90-day TDY',
     };
 
     const extendedResponse = {
       ...mockSuccessResponse,
-      replacements_found: 90,
+      replacementsFound: 90,
     };
 
     mockedApi.post.mockResolvedValueOnce(extendedResponse);
@@ -276,7 +276,7 @@ describe('useEmergencyCoverage', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.data?.replacements_found).toBe(90);
+      expect(result.current.data?.replacementsFound).toBe(90);
     });
   });
 
@@ -371,7 +371,7 @@ describe('useEmergencyCoverage', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.data?.requires_manual_review).toBe(true);
+      expect(result.current.data?.requiresManualReview).toBe(true);
     });
 
     // Check that gap details are provided

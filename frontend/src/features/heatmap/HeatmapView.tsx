@@ -47,12 +47,12 @@ export function HeatmapView({
 }: HeatmapViewProps) {
   // Prepare Plotly data configuration
   const plotData = useMemo(() => {
-    if (!data || !data.z_values || data.z_values.length === 0) {
+    if (!data || !data.zValues || data.zValues.length === 0) {
       return [];
     }
 
-    const colorscale = data.color_scale?.colors
-      ? data.color_scale.colors.map((color, index, arr) => [
+    const colorscale = data.colorScale?.colors
+      ? data.colorScale.colors.map((color, index, arr) => [
           index / (arr.length - 1),
           color,
         ])
@@ -65,20 +65,20 @@ export function HeatmapView({
     return [
       {
         type: 'heatmap' as const,
-        x: data.x_labels,
-        y: data.y_labels,
-        z: data.z_values,
+        x: data.xLabels,
+        y: data.yLabels,
+        z: data.zValues,
         colorscale: colorscale,
         colorbar: {
           title: {
-            text: data.color_scale?.labels?.[1] || 'Value',
+            text: data.colorScale?.labels?.[1] || 'Value',
             side: 'right',
           },
-          tickvals: data.color_scale
-            ? [data.color_scale.min, data.color_scale.max]
+          tickvals: data.colorScale
+            ? [data.colorScale.min, data.colorScale.max]
             : undefined,
-          ticktext: data.color_scale?.labels
-            ? [data.color_scale.labels[0], data.color_scale.labels[data.color_scale.labels.length - 1]]
+          ticktext: data.colorScale?.labels
+            ? [data.colorScale.labels[0], data.colorScale.labels[data.colorScale.labels.length - 1]]
             : undefined,
         },
         hovertemplate:
@@ -103,7 +103,7 @@ export function HeatmapView({
       },
       xaxis: {
         title: {
-          text: data?.x_axis_label || '',
+          text: data?.xAxisLabel || '',
           font: {
             size: 12,
             color: '#6b7280',
@@ -115,7 +115,7 @@ export function HeatmapView({
       },
       yaxis: {
         title: {
-          text: data?.y_axis_label || '',
+          text: data?.yAxisLabel || '',
           font: {
             size: 12,
             color: '#6b7280',
@@ -210,7 +210,7 @@ export function HeatmapView({
   }
 
   // Empty data state
-  if (!data || !data.z_values || data.z_values.length === 0) {
+  if (!data || !data.zValues || data.zValues.length === 0) {
     return (
       <div
         className="flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200"

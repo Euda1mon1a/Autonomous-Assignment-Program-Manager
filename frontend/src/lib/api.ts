@@ -19,7 +19,7 @@ import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, InternalAxiosRequ
 
 /**
  * Converts a string from camelCase to snake_case.
- * Example: "dayOfWeek" -> "day_of_week"
+ * Example: "dayOfWeek" -> "dayOfWeek"
  */
 function toSnakeCase(str: string): string {
   return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
@@ -27,7 +27,7 @@ function toSnakeCase(str: string): string {
 
 /**
  * Converts a string from snake_case to camelCase.
- * Example: "day_of_week" -> "dayOfWeek"
+ * Example: "dayOfWeek" -> "dayOfWeek"
  */
 function toCamelCase(str: string): string {
   return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
@@ -242,6 +242,10 @@ function createApiClient(): AxiosInstance {
       return response
     },
     async (error: AxiosError) => {
+      // Convert error response data keys to camelCase (same as success responses)
+      if (error.response?.data && typeof error.response.data === 'object') {
+        error.response.data = keysToCamelCase(error.response.data);
+      }
       const apiError = transformError(error)
       const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 

@@ -53,7 +53,7 @@ export function PhaseTransitionBanner({
   }
 
   // Don't show if normal and hideIfNormal is true
-  if (hideIfNormal && data.overall_severity === 'normal') {
+  if (hideIfNormal && data.overallSeverity === 'normal') {
     return null;
   }
 
@@ -62,18 +62,18 @@ export function PhaseTransitionBanner({
     return null;
   }
 
-  const severityClass = getSeverityColorClass(data.overall_severity);
-  const bgClass = getSeverityBgClass(data.overall_severity);
-  const actionRequired = requiresAction(data.overall_severity);
+  const severityClass = getSeverityColorClass(data.overallSeverity);
+  const bgClass = getSeverityBgClass(data.overallSeverity);
+  const actionRequired = requiresAction(data.overallSeverity);
 
   return (
     <div
       className={`border-l-4 ${bgClass} ${
-        data.overall_severity === 'normal'
+        data.overallSeverity === 'normal'
           ? 'border-green-500'
-          : data.overall_severity === 'elevated'
+          : data.overallSeverity === 'elevated'
           ? 'border-yellow-500'
-          : data.overall_severity === 'high'
+          : data.overallSeverity === 'high'
           ? 'border-orange-500'
           : 'border-red-500'
       } rounded-lg overflow-hidden`}
@@ -87,11 +87,11 @@ export function PhaseTransitionBanner({
           <div>
             <div className="flex items-center gap-2">
               <h3 className={`text-sm font-semibold ${severityClass}`}>
-                {data.overall_severity === 'normal' && 'System Stable'}
-                {data.overall_severity === 'elevated' && 'Elevated Risk'}
-                {data.overall_severity === 'high' && 'High Risk - Phase Transition Warning'}
-                {data.overall_severity === 'critical' && 'CRITICAL - Phase Transition Imminent'}
-                {data.overall_severity === 'imminent' && '🚨 EMERGENCY - Phase Transition Detected'}
+                {data.overallSeverity === 'normal' && 'System Stable'}
+                {data.overallSeverity === 'elevated' && 'Elevated Risk'}
+                {data.overallSeverity === 'high' && 'High Risk - Phase Transition Warning'}
+                {data.overallSeverity === 'critical' && 'CRITICAL - Phase Transition Imminent'}
+                {data.overallSeverity === 'imminent' && '🚨 EMERGENCY - Phase Transition Detected'}
               </h3>
               <span className="text-xs text-slate-400">
                 Confidence: {(data.confidence * 100).toFixed(0)}%

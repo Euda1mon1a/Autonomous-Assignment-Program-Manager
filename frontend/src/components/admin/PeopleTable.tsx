@@ -19,7 +19,7 @@ import type { Person } from '@/types/api';
 // Types
 // ============================================================================
 
-type SortField = 'name' | 'type' | 'pgy_level' | 'email';
+type SortField = 'name' | 'type' | 'pgyLevel' | 'email';
 type SortDirection = 'asc' | 'desc';
 
 export interface PeopleTableProps {
@@ -208,7 +208,7 @@ export function PeopleTable({
               <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">
                 <SortHeader
                   label="PGY Level"
-                  field="pgy_level"
+                  field="pgyLevel"
                   currentSort={sort}
                   onSort={onSortChange}
                 />

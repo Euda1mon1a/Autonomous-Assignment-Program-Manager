@@ -21,8 +21,8 @@ test.describe('Reporting', () => {
     await page.selectOption('[data-testid="report-type-select"]', 'schedule');
 
     // Set date range
-    await page.fill('[name="start_date"]', '2024-01-01');
-    await page.fill('[name="end_date"]', '2024-01-31');
+    await page.fill('[name="startDate"]', '2024-01-01');
+    await page.fill('[name="endDate"]', '2024-01-31');
 
     // Generate report
     await page.click('[data-testid="generate-report-button"]');

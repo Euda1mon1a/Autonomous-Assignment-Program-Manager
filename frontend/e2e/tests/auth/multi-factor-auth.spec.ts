@@ -182,7 +182,7 @@ test.describe('Multi-Factor Authentication', () => {
       await disableMFA.click();
 
       // Should require password confirmation
-      const passwordConfirm = page.locator('input[name="current_password"]');
+      const passwordConfirm = page.locator('input[name="currentPassword"]');
       if (await passwordConfirm.isVisible()) {
         await expect(passwordConfirm).toBeVisible();
       }

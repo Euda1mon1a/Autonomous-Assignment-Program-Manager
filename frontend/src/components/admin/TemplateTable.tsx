@@ -305,7 +305,7 @@ export function TemplateTable({
               <th className="text-left py-3 px-4 text-slate-400">
                 <SortHeader
                   label="Activity Type"
-                  field="activity_type"
+                  field="activityType"
                   currentSort={sort}
                   onSort={onSortChange}
                 />
@@ -327,7 +327,7 @@ export function TemplateTable({
               <th className="text-left py-3 px-4 text-slate-400">
                 <SortHeader
                   label="Created"
-                  field="created_at"
+                  field="createdAt"
                   currentSort={sort}
                   onSort={onSortChange}
                 />
@@ -390,9 +390,9 @@ export function TemplateTable({
                         type="select"
                         options={activityTypeOptions}
                         onSave={(value) =>
-                          handleInlineUpdate(template.id, 'activity_type', value as ActivityType)
+                          handleInlineUpdate(template.id, 'activityType', value as ActivityType)
                         }
-                        isSaving={inlineUpdatingId === template.id && editingField?.field === 'activity_type'}
+                        isSaving={inlineUpdatingId === template.id && editingField?.field === 'activityType'}
                         ariaLabel={`Edit activity type for ${template.name}`}
                         renderDisplay={() => (
                           <ActivityTypeBadge
@@ -413,9 +413,9 @@ export function TemplateTable({
                         type="text"
                         placeholder="Abbrev"
                         onSave={(value) =>
-                          handleInlineUpdate(template.id, 'display_abbreviation', value as string | null)
+                          handleInlineUpdate(template.id, 'displayAbbreviation', value as string | null)
                         }
-                        isSaving={inlineUpdatingId === template.id && editingField?.field === 'display_abbreviation'}
+                        isSaving={inlineUpdatingId === template.id && editingField?.field === 'displayAbbreviation'}
                         ariaLabel={`Edit abbreviation for ${template.name}`}
                       />
                     ) : (
@@ -431,9 +431,9 @@ export function TemplateTable({
                         max={50}
                         placeholder="Max"
                         onSave={(value) =>
-                          handleInlineUpdate(template.id, 'max_residents', value as number | null)
+                          handleInlineUpdate(template.id, 'maxResidents', value as number | null)
                         }
-                        isSaving={inlineUpdatingId === template.id && editingField?.field === 'max_residents'}
+                        isSaving={inlineUpdatingId === template.id && editingField?.field === 'maxResidents'}
                         ariaLabel={`Edit max residents for ${template.name}`}
                       />
                     ) : (
@@ -450,9 +450,9 @@ export function TemplateTable({
                           { value: 'false', label: 'Not Required' },
                         ]}
                         onSave={(value) =>
-                          handleInlineUpdate(template.id, 'supervision_required', value === 'true')
+                          handleInlineUpdate(template.id, 'supervisionRequired', value === 'true')
                         }
-                        isSaving={inlineUpdatingId === template.id && editingField?.field === 'supervision_required'}
+                        isSaving={inlineUpdatingId === template.id && editingField?.field === 'supervisionRequired'}
                         ariaLabel={`Edit supervision for ${template.name}`}
                         renderDisplay={() =>
                           template.supervisionRequired ? (
@@ -474,18 +474,18 @@ export function TemplateTable({
                         <ColorPickerCell
                           value={template.backgroundColor}
                           onSave={(value) =>
-                            handleInlineUpdate(template.id, 'background_color', value)
+                            handleInlineUpdate(template.id, 'backgroundColor', value)
                           }
-                          isSaving={inlineUpdatingId === template.id && editingField?.field === 'background_color'}
+                          isSaving={inlineUpdatingId === template.id && editingField?.field === 'backgroundColor'}
                           ariaLabel={`Background color for ${template.name}`}
                           disabled={!onInlineUpdate}
                         />
                         <ColorPickerCell
                           value={template.fontColor}
                           onSave={(value) =>
-                            handleInlineUpdate(template.id, 'font_color', value)
+                            handleInlineUpdate(template.id, 'fontColor', value)
                           }
-                          isSaving={inlineUpdatingId === template.id && editingField?.field === 'font_color'}
+                          isSaving={inlineUpdatingId === template.id && editingField?.field === 'fontColor'}
                           ariaLabel={`Font color for ${template.name}`}
                           disabled={!onInlineUpdate}
                         />

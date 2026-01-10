@@ -80,15 +80,15 @@ describe('EditAssignmentModal', () => {
 
   const mockAssignment: Assignment = {
     id: 'assignment-1',
-    block_id: 'block-1',
-    person_id: 'person-1',
-    rotation_template_id: 'template-1',
+    blockId: 'block-1',
+    personId: 'person-1',
+    rotationTemplateId: 'template-1',
     role: AssignmentRole.PRIMARY,
-    activity_override: null,
+    activityOverride: null,
     notes: 'Test notes',
-    created_by: null,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    createdBy: null,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
   }
 
   const defaultProps = {

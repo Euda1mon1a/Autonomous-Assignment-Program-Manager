@@ -54,10 +54,10 @@ interface AssignmentChange {
   type: 'add' | 'remove';
   assignmentId?: string;
   data?: {
-    block_id: string;
-    person_id: string;
+    blockId: string;
+    personId: string;
     role: string;
-    activity_override?: string;
+    activityOverride?: string;
   };
   description: string;
 }
@@ -165,11 +165,11 @@ function ExecuteSwapPanel() {
     }
 
     validateMutation.mutate({
-      source_faculty_id: sourceFacultyId,
-      source_week: sourceWeek,
-      target_faculty_id: targetFacultyId,
-      target_week: swapType === SwapType.ONE_TO_ONE ? targetWeek : undefined,
-      swap_type: swapType,
+      sourceFacultyId: sourceFacultyId,
+      sourceWeek: sourceWeek,
+      targetFacultyId: targetFacultyId,
+      targetWeek: swapType === SwapType.ONE_TO_ONE ? targetWeek : undefined,
+      swapType: swapType,
       reason,
     });
   };
@@ -187,11 +187,11 @@ function ExecuteSwapPanel() {
 
     executeMutation.mutate(
       {
-        source_faculty_id: sourceFacultyId,
-        source_week: sourceWeek,
-        target_faculty_id: targetFacultyId,
-        target_week: swapType === SwapType.ONE_TO_ONE ? targetWeek : undefined,
-        swap_type: swapType,
+        sourceFacultyId: sourceFacultyId,
+        sourceWeek: sourceWeek,
+        targetFacultyId: targetFacultyId,
+        targetWeek: swapType === SwapType.ONE_TO_ONE ? targetWeek : undefined,
+        swapType: swapType,
         reason,
       },
       {
@@ -445,9 +445,9 @@ function DirectAssignmentPanel() {
   const { data: assignmentsData, isLoading: assignmentsLoading } = useAssignments(
     selectedBlockRange
       ? {
-          person_id: selectedFacultyId,
-          start_date: selectedBlockRange.startDate,
-          end_date: selectedBlockRange.endDate,
+          personId: selectedFacultyId,
+          startDate: selectedBlockRange.startDate,
+          endDate: selectedBlockRange.endDate,
         }
       : undefined,
     {
@@ -725,7 +725,7 @@ function RecentActivitySidebar() {
     }
 
     rollbackMutation.mutate(
-      { swap_id: swap.id, reason: 'Admin rollback' },
+      { swapId: swap.id, reason: 'Admin rollback' },
       {
         onSuccess: () => {
           toast.success('Swap rolled back successfully');

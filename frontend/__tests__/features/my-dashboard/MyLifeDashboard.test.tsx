@@ -27,11 +27,6 @@ function createWrapper() {
       queries: { retry: false },
       mutations: { retry: false },
     },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
-    },
   });
 
   return function Wrapper({ children }: { children: React.ReactNode }) {
@@ -283,7 +278,7 @@ describe('MyLifeDashboard', () => {
     it('should not render pending swaps section when no swaps', async () => {
       const emptyResponse = {
         ...mockDashboardApiResponse,
-        pending_swaps: [],
+        pendingSwaps: [],
       };
       (api.get as jest.Mock).mockResolvedValue(emptyResponse);
 
@@ -540,7 +535,7 @@ describe('MyLifeDashboard', () => {
 
       await waitFor(() => {
         expect(api.get).toHaveBeenCalledWith(
-          expect.stringContaining('days_ahead=30')
+          expect.stringContaining('daysAhead=30')
         );
       });
     });
@@ -552,14 +547,14 @@ describe('MyLifeDashboard', () => {
       jest.clearAllMocks();
       const emptyResponse = {
         user: mockDashboardApiResponse.user,
-        upcoming_schedule: [],
-        pending_swaps: [],
+        upcomingSchedule: [],
+        pendingSwaps: [],
         absences: [],
         summary: {
-          next_assignment: null,
-          workload_next_4_weeks: 0,
-          pending_swap_count: 0,
-          upcoming_absences: 0,
+          nextAssignment: null,
+          workloadNext4Weeks: 0,
+          pendingSwapCount: 0,
+          upcomingAbsences: 0,
         },
       };
       (api.get as jest.Mock).mockResolvedValue(emptyResponse);
@@ -632,7 +627,7 @@ describe('MyLifeDashboard', () => {
     it('should conditionally render sections based on data', async () => {
       const minimalResponse = {
         ...mockDashboardApiResponse,
-        pending_swaps: [],
+        pendingSwaps: [],
         absences: [],
       };
       (api.get as jest.Mock).mockResolvedValue(minimalResponse);

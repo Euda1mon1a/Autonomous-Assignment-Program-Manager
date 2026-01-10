@@ -19,11 +19,11 @@ export function EvolutionChart({ evolutionId }: EvolutionChartProps) {
 
   if (isLoading) return <LoadingSpinner />;
   if (error) return <p className="text-red-500 text-sm">Failed to load results</p>;
-  if (!results?.population_history?.length) return <p className="text-gray-500 text-sm">No data</p>;
+  if (!results?.populationHistory?.length) return <p className="text-gray-500 text-sm">No data</p>;
 
   // Get all strategy names from the history
   const allStrategies = new Set<string>();
-  results.population_history.forEach((snapshot) => {
+  results.populationHistory.forEach((snapshot) => {
     Object.keys(snapshot.populations).forEach((s) => allStrategies.add(s));
   });
   const strategies = Array.from(allStrategies);
@@ -40,7 +40,7 @@ export function EvolutionChart({ evolutionId }: EvolutionChartProps) {
   const chartHeight = height - padding.top - padding.bottom;
 
   // X scale
-  const maxGen = Math.max(...results.population_history.map((s) => s.generation));
+  const maxGen = Math.max(...results.populationHistory.map((s) => s.generation));
   const xScale = (gen: number) => padding.left + (gen / maxGen) * chartWidth;
 
   // Y scale (0 to 100%)
@@ -54,7 +54,7 @@ export function EvolutionChart({ evolutionId }: EvolutionChartProps) {
       const points: string[] = [];
 
       // Forward pass (top of area)
-      results.population_history.forEach((snapshot, i) => {
+      results.populationHistory.forEach((snapshot, i) => {
         const total = getTotalPop(snapshot.populations);
         let cumulative = 0;
 
@@ -69,8 +69,8 @@ export function EvolutionChart({ evolutionId }: EvolutionChartProps) {
       });
 
       // Backward pass (bottom of area)
-      for (let i = results.population_history.length - 1; i >= 0; i--) {
-        const snapshot = results.population_history[i];
+      for (let i = results.populationHistory.length - 1; i >= 0; i--) {
+        const snapshot = results.populationHistory[i];
         const total = getTotalPop(snapshot.populations);
         let cumulative = 0;
 
@@ -196,11 +196,11 @@ export function EvolutionChart({ evolutionId }: EvolutionChartProps) {
       </div>
 
       {/* Winner announcement */}
-      {results.winner_strategy_name && (
+      {results.winnerStrategyName && (
         <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
           <p className="text-sm text-green-800 dark:text-green-200">
-            <strong>Winner:</strong> {results.winner_strategy_name}
-            {results.is_evolutionarily_stable && ' (Evolutionarily Stable)'}
+            <strong>Winner:</strong> {results.winnerStrategyName}
+            {results.isEvolutionarilyStable && ' (Evolutionarily Stable)'}
           </p>
         </div>
       )}

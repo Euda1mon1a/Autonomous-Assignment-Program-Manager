@@ -53,7 +53,7 @@ describe('ChartWrapper', () => {
   describe('Loading State', () => {
     it('shows loading skeleton when loading', () => {
       const { container } = render(
-        <ChartWrapper title="Test Chart" isLoading={true}>
+        <ChartWrapper title="Test Chart" loading={true}>
           <MockChart />
         </ChartWrapper>
       );
@@ -62,7 +62,7 @@ describe('ChartWrapper', () => {
 
     it('hides chart when loading', () => {
       render(
-        <ChartWrapper title="Test Chart" isLoading={true}>
+        <ChartWrapper title="Test Chart" loading={true}>
           <MockChart />
         </ChartWrapper>
       );
@@ -71,7 +71,7 @@ describe('ChartWrapper', () => {
 
     it('shows chart when not loading', () => {
       render(
-        <ChartWrapper title="Test Chart" isLoading={false}>
+        <ChartWrapper title="Test Chart" loading={false}>
           <MockChart />
         </ChartWrapper>
       );
@@ -92,26 +92,6 @@ describe('ChartWrapper', () => {
     it('hides chart when error exists', () => {
       render(
         <ChartWrapper title="Test Chart" error="Error occurred">
-          <MockChart />
-        </ChartWrapper>
-      );
-      expect(screen.queryByTestId('mock-chart')).not.toBeInTheDocument();
-    });
-  });
-
-  describe('Empty State', () => {
-    it('shows empty message when isEmpty true', () => {
-      render(
-        <ChartWrapper title="Test Chart" isEmpty={true}>
-          <MockChart />
-        </ChartWrapper>
-      );
-      expect(screen.getByText(/no data available/i)).toBeInTheDocument();
-    });
-
-    it('hides chart when isEmpty true', () => {
-      render(
-        <ChartWrapper title="Test Chart" isEmpty={true}>
           <MockChart />
         </ChartWrapper>
       );

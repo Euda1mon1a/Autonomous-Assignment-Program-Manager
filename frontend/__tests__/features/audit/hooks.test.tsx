@@ -43,11 +43,6 @@ function createWrapper() {
         retry: false,
       },
     },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
-    },
   });
 
   return function Wrapper({ children }: { children: React.ReactNode }) {
@@ -97,7 +92,7 @@ describe('Audit Hooks', () => {
         expect.stringContaining('page=2')
       );
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('page_size=25')
+        expect.stringContaining('pageSize=25')
       );
     });
 
@@ -118,7 +113,7 @@ describe('Audit Hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('entity_types=assignment')
+        expect.stringContaining('entityTypes=assignment')
       );
       expect(mockGet).toHaveBeenCalledWith(
         expect.stringContaining('actions=create')
@@ -162,10 +157,10 @@ describe('Audit Hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('start_date=2025-12-01')
+        expect.stringContaining('startDate=2025-12-01')
       );
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('end_date=2025-12-17')
+        expect.stringContaining('endDate=2025-12-17')
       );
     });
 
@@ -296,10 +291,10 @@ describe('Audit Hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('start_date=2025-12-01')
+        expect.stringContaining('startDate=2025-12-01')
       );
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('end_date=2025-12-17')
+        expect.stringContaining('endDate=2025-12-17')
       );
     });
   });
@@ -338,7 +333,7 @@ describe('Audit Hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('entity_types=assignment')
+        expect.stringContaining('entityTypes=assignment')
       );
     });
   });
@@ -361,10 +356,10 @@ describe('Audit Hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('entity_type=assignment')
+        expect.stringContaining('entityType=assignment')
       );
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('entity_id=assign-123')
+        expect.stringContaining('entityId=assign-123')
       );
     });
 
@@ -393,7 +388,7 @@ describe('Audit Hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('user_ids=user-1')
+        expect.stringContaining('userIds=user-1')
       );
     });
 
@@ -411,10 +406,10 @@ describe('Audit Hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('start_date=2025-12-01')
+        expect.stringContaining('startDate=2025-12-01')
       );
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('end_date=2025-12-17')
+        expect.stringContaining('endDate=2025-12-17')
       );
     });
 
@@ -523,7 +518,7 @@ describe('Audit Hooks', () => {
 
       expect(mockPost).toHaveBeenCalledWith('/audit/mark-reviewed', {
         ids: payload.ids,
-        reviewed_by: payload.reviewedBy,
+        reviewedBy: payload.reviewedBy,
         notes: payload.notes,
       });
     });

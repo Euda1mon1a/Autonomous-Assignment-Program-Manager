@@ -51,16 +51,16 @@ const createWrapper = () => {
 // Mock data
 const mockExistingRequirement = {
   id: 'req-1',
-  rotation_template_id: 'template-1',
-  fm_clinic_min_per_week: 2,
-  fm_clinic_max_per_week: 4,
+  rotationTemplateId: 'template-1',
+  fmClinic_min_per_week: 2,
+  fmClinic_max_per_week: 4,
   specialty_min_per_week: 1,
   specialty_max_per_week: 3,
   academics_required: true,
-  protected_slots: { wed_am: 'conference' as const },
+  protected_slots: { wedAm: 'conference' as const },
   allowed_clinic_days: [1, 2, 3, 4, 5] as (0 | 1 | 2 | 3 | 4 | 5 | 6)[],
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T00:00:00Z',
 };
 
 // ============================================================================
@@ -323,8 +323,8 @@ describe('WeeklyRequirementsEditor', () => {
         wrapper: createWrapper(),
       });
 
-      // Default has wed_am, so we need to test with empty slots
-      // The component should show the default with wed_am: conference
+      // Default has wedAm, so we need to test with empty slots
+      // The component should show the default with wedAm: conference
       expect(screen.getByText('Wed AM')).toBeInTheDocument();
     });
 

@@ -34,7 +34,7 @@ export interface ListResponse<T> {
   /** Current page number (optional for non-paginated responses) */
   page?: number
   /** Items per page (optional for non-paginated responses) */
-  page_size?: number
+  pageSize?: number
 }
 
 /**
@@ -42,13 +42,13 @@ export interface ListResponse<T> {
  */
 export interface AbsenceFilters {
   /** Filter by specific person ID */
-  person_id?: string
+  personId?: string
   /** Filter absences starting from this date (ISO 8601 format: YYYY-MM-DD) */
-  start_date?: string
+  startDate?: string
   /** Filter absences ending by this date (ISO 8601 format: YYYY-MM-DD) */
-  end_date?: string
+  endDate?: string
   /** Filter by specific absence type */
-  absence_type?: string | AbsenceType
+  absenceType?: string | AbsenceType
 }
 
 /**
@@ -70,9 +70,9 @@ export enum AbsenceStatus {
  */
 export interface LeaveBalance {
   /** ID of the person */
-  person_id: string
+  personId: string
   /** Name of the person */
-  person_name: string
+  personName: string
   /** Available vacation days remaining */
   vacation_days: number
   /** Available sick days remaining */
@@ -106,15 +106,15 @@ export interface AbsenceApprovalRequest {
  */
 export interface LeaveCalendarEntry {
   /** ID of the faculty/person */
-  faculty_id: string
+  facultyId: string
   /** Name of the faculty/person */
-  faculty_name: string
+  facultyName: string
   /** Type of leave */
   leave_type: string
   /** Start date of leave */
-  start_date: string
+  startDate: string
   /** End date of leave */
-  end_date: string
+  endDate: string
   /** Whether this leave blocks assignments */
   is_blocking: boolean
   /** Whether there's a conflict with FMIT */
@@ -126,13 +126,13 @@ export interface LeaveCalendarEntry {
  */
 export interface LeaveCalendarResponse {
   /** Start date of calendar period */
-  start_date: string
+  startDate: string
   /** End date of calendar period */
-  end_date: string
+  endDate: string
   /** Array of leave entries in the period */
   entries: LeaveCalendarEntry[]
   /** Total number of conflicts detected */
-  conflict_count: number
+  conflictCount: number
 }
 
 // ============================================================================
@@ -244,7 +244,7 @@ export function useAbsence(
  * ```tsx
  * // Fetch all absences for a specific person
  * function PersonAbsences({ personId }: Props) {
- *   const { data, isLoading } = useAbsenceList({ person_id: personId });
+ *   const { data, isLoading } = useAbsenceList({ personId: personId });
  *
  *   if (isLoading) return <Spinner />;
  *
@@ -262,9 +262,9 @@ export function useAbsence(
  * // Filter by date range and absence type
  * function VacationCalendar() {
  *   const { data } = useAbsenceList({
- *     start_date: '2024-01-01',
- *     end_date: '2024-12-31',
- *     absence_type: 'vacation',
+ *     startDate: '2024-01-01',
+ *     endDate: '2024-12-31',
+ *     absenceType: 'vacation',
  *   });
  *
  *   return <Calendar absences={data.items} />;
@@ -280,10 +280,10 @@ export function useAbsenceList(
   options?: Omit<UseQueryOptions<ListResponse<Absence>, ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const params = new URLSearchParams()
-  if (filters?.personId) params.set('person_id', filters.personId)
-  if (filters?.startDate) params.set('start_date', filters.startDate)
-  if (filters?.endDate) params.set('end_date', filters.endDate)
-  if (filters?.absenceType) params.set('absence_type', filters.absenceType.toString())
+  if (filters?.personId) params.set('personId', filters.personId)
+  if (filters?.startDate) params.set('startDate', filters.startDate)
+  if (filters?.endDate) params.set('endDate', filters.endDate)
+  if (filters?.absenceType) params.set('absenceType', filters.absenceType.toString())
   const queryString = params.toString()
 
   return useQuery<ListResponse<Absence>, ApiError>({
@@ -306,7 +306,7 @@ export function useAbsenceList(
  * @param options - Optional React Query configuration options
  * @returns Query result with absence list
  *
- * @deprecated Use `useAbsenceList({ person_id: personId })` for better type safety
+ * @deprecated Use `useAbsenceList({ personId: personId })` for better type safety
  *
  * @example
  * ```tsx
@@ -326,7 +326,7 @@ export function useAbsences(
   personId?: number,
   options?: Omit<UseQueryOptions<ListResponse<Absence>, ApiError>, 'queryKey' | 'queryFn'>
 ) {
-  const params = personId !== undefined ? `?person_id=${personId}` : ''
+  const params = personId !== undefined ? `?personId=${personId}` : ''
 
   return useQuery<ListResponse<Absence>, ApiError>({
     queryKey: ['absences', personId],
@@ -362,7 +362,7 @@ export function useAbsences(
  *   return (
  *     <Calendar
  *       entries={data.entries}
- *       conflicts={data.conflict_count}
+ *       conflicts={data.conflictCount}
  *       startDate={data.startDate}
  *       endDate={data.endDate}
  *     />
@@ -380,7 +380,7 @@ export function useLeaveCalendar(
   return useQuery<LeaveCalendarResponse, ApiError>({
     queryKey: absenceQueryKeys.calendar(startDate, endDate),
     queryFn: () => get<LeaveCalendarResponse>(
-      `/leave/calendar?start_date=${startDate}&end_date=${endDate}`
+      `/leave/calendar?startDate=${startDate}&endDate=${endDate}`
     ),
     staleTime: 2 * 60 * 1000, // 2 minutes (shorter for calendar views)
     gcTime: 10 * 60 * 1000, // 10 minutes
@@ -430,7 +430,7 @@ export function useMilitaryLeave(
   options?: Omit<UseQueryOptions<ListResponse<Absence>, ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const params = new URLSearchParams()
-  if (personId) params.set('person_id', personId)
+  if (personId) params.set('personId', personId)
   // Filter for military-specific absence types
   // Note: Backend should support comma-separated values or we fetch and filter client-side
   const queryString = params.toString()
@@ -569,11 +569,11 @@ export function useLeaveBalance(
  *
  *   const handleDeploy = () => {
  *     mutate({
- *       person_id: 'abc-123',
- *       start_date: '2024-03-01',
- *       end_date: '2024-09-01',
- *       absence_type: 'deployment',
- *       deployment_orders: true,
+ *       personId: 'abc-123',
+ *       startDate: '2024-03-01',
+ *       endDate: '2024-09-01',
+ *       absenceType: 'deployment',
+ *       deploymentOrders: true,
  *       notes: 'Overseas deployment',
  *     });
  *   };
@@ -856,7 +856,7 @@ export const awayComplianceQueryKeys = {
  *   return (
  *     <div>
  *       <h2>Away-From-Program Compliance ({data.academicYear})</h2>
- *       <StatusSummary counts={data.summary.by_status} />
+ *       <StatusSummary counts={data.summary.byStatus} />
  *       <ResidentTable residents={data.residents} />
  *     </div>
  *   );
@@ -867,7 +867,7 @@ export function useAwayComplianceDashboard(
   academicYear?: number,
   options?: Omit<UseQueryOptions<AllResidentsAwayStatus, ApiError>, 'queryKey' | 'queryFn'>
 ) {
-  const params = academicYear ? `?academic_year=${academicYear}` : ''
+  const params = academicYear ? `?academicYear=${academicYear}` : ''
 
   return useQuery<AllResidentsAwayStatus, ApiError>({
     queryKey: awayComplianceQueryKeys.dashboard(academicYear),
@@ -915,7 +915,7 @@ export function useAwayFromProgramSummary(
   academicYear?: number,
   options?: Omit<UseQueryOptions<AwayFromProgramSummary, ApiError>, 'queryKey' | 'queryFn'>
 ) {
-  const params = academicYear ? `?academic_year=${academicYear}` : ''
+  const params = academicYear ? `?academicYear=${academicYear}` : ''
 
   return useQuery<AwayFromProgramSummary, ApiError>({
     queryKey: awayComplianceQueryKeys.summary(personId, academicYear),
@@ -969,7 +969,7 @@ export function useAwayThresholdCheck(
 ) {
   const params = new URLSearchParams()
   if (additionalDays) params.set('additional_days', additionalDays.toString())
-  if (academicYear) params.set('academic_year', academicYear.toString())
+  if (academicYear) params.set('academicYear', academicYear.toString())
   const queryString = params.toString()
 
   return useQuery<AwayFromProgramCheck, ApiError>({

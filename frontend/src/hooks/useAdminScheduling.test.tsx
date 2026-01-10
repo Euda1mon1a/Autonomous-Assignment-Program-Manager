@@ -29,8 +29,8 @@ const mockedApi = api as jest.Mocked<typeof api>;
 // Test data
 const mockRunLogEntry = {
   id: 'run-123',
-  algorithm: 'genetic',
-  status: 'completed',
+  algorithm: 'hybrid' as const,
+  status: 'success' as const,
   metrics: {
     coverage: 0.95,
     utilization: 0.75,
@@ -38,7 +38,7 @@ const mockRunLogEntry = {
   },
   started_at: '2024-01-01T00:00:00Z',
   completed_at: '2024-01-01T00:05:00Z',
-  created_at: '2024-01-01T00:00:00Z',
+  createdAt: '2024-01-01T00:00:00Z',
 };
 
 // Create wrapper
@@ -84,8 +84,8 @@ describe('useScheduleRuns', () => {
     const { result } = renderHook(
       () =>
         useScheduleRuns({
-          algorithms: ['genetic'],
-          status: ['completed'],
+          algorithms: ['hybrid'],
+          status: ['success'],
         }),
       { wrapper: createWrapper() }
     );
@@ -115,7 +115,7 @@ describe('useGenerateScheduleRun', () => {
       result.current.mutate({
         blockRange: { start: 1, end: 365 },
         academicYear: '2024-2025',
-        algorithm: 'genetic',
+        algorithm: 'hybrid',
         timeoutSeconds: 300,
         dryRun: false,
         constraints: [],
@@ -135,9 +135,9 @@ describe('useLockedAssignments', () => {
     const mockLocks = [
       {
         id: 'lock-123',
-        assignment_id: 'assignment-456',
+        assignmentId: 'assignment-456',
         reason: 'VIP schedule',
-        locked_at: '2024-01-01T00:00:00Z',
+        lockedAt: '2024-01-01T00:00:00Z',
       },
     ];
     mockedApi.get.mockResolvedValueOnce(mockLocks);
@@ -158,9 +158,9 @@ describe('useLockAssignment', () => {
   it('locks assignment successfully', async () => {
     const mockLock = {
       id: 'lock-123',
-      assignment_id: 'assignment-456',
+      assignmentId: 'assignment-456',
       reason: 'VIP schedule',
-      locked_at: '2024-01-01T00:00:00Z',
+      lockedAt: '2024-01-01T00:00:00Z',
     };
     mockedApi.post.mockResolvedValueOnce(mockLock);
 

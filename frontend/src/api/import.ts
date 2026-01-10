@@ -16,12 +16,12 @@ const BASE_URL = "/import";
 
 export async function stageImport(
   data: FormData
-): Promise<{ batch_id: string }> {
+): Promise<{ batchId: string }> {
   // Use raw api instance with explicit multipart config.
   // The default axios client sets Content-Type: application/json which prevents
   // FormData auto-detection. Setting to 'multipart/form-data' lets axios
   // correctly append the boundary parameter for the FormData payload.
-  const response = await api.post<{ batch_id: string }>(`${BASE_URL}/stage`, data, {
+  const response = await api.post<{ batchId: string }>(`${BASE_URL}/stage`, data, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -31,12 +31,12 @@ export async function stageImport(
 
 export async function listBatches(
   page = 1,
-  page_size = 50,
+  pageSize = 50,
   status?: string
 ): Promise<ImportBatchListResponse> {
   const params = new URLSearchParams({
     page: page.toString(),
-    page_size: page_size.toString(),
+    pageSize: pageSize.toString(),
   });
   if (status) params.append("status", status);
 
@@ -52,11 +52,11 @@ export async function getBatch(batchId: string): Promise<ImportBatchResponse> {
 export async function getBatchPreview(
   batchId: string,
   page = 1,
-  page_size = 50
+  pageSize = 50
 ): Promise<ImportPreviewResponse> {
   const params = new URLSearchParams({
     page: page.toString(),
-    page_size: page_size.toString(),
+    pageSize: pageSize.toString(),
   });
   return get<ImportPreviewResponse>(
     `${BASE_URL}/batches/${batchId}/preview?${params.toString()}`
@@ -67,7 +67,7 @@ export async function applyBatch(
   batchId: string,
   options?: {
     conflict_resolution?: ConflictResolutionMode;
-    dry_run?: boolean;
+    dryRun?: boolean;
     validate_acgme?: boolean;
   }
 ): Promise<ImportApplyResponse> {

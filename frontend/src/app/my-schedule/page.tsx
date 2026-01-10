@@ -56,13 +56,13 @@ export default function MySchedulePage() {
   // Fetch data
   const { data: blocksData, isLoading: blocksLoading, error: blocksError } = useQuery<ListResponse<Block>>({
     queryKey: ['blocks', startDateStr, endDateStr],
-    queryFn: () => get<ListResponse<Block>>(`/blocks?start_date=${startDateStr}&end_date=${endDateStr}`),
+    queryFn: () => get<ListResponse<Block>>(`/blocks?startDate=${startDateStr}&endDate=${endDateStr}`),
     staleTime: 5 * 60 * 1000,
   })
 
   const { data: assignmentsData, isLoading: assignmentsLoading, error: assignmentsError } = useQuery<ListResponse<Assignment>>({
     queryKey: ['assignments', startDateStr, endDateStr],
-    queryFn: () => get<ListResponse<Assignment>>(`/assignments?start_date=${startDateStr}&end_date=${endDateStr}`),
+    queryFn: () => get<ListResponse<Assignment>>(`/assignments?startDate=${startDateStr}&endDate=${endDateStr}`),
     staleTime: 60 * 1000,
   })
 
@@ -73,7 +73,7 @@ export default function MySchedulePage() {
   const currentPerson = useMemo<Person | null>(() => {
     if (!user || !peopleData?.items) return null
 
-    // Match by email or by user ID (if person has user_id field)
+    // Match by email or by user ID (if person has userId field)
     return peopleData.items.find(
       (person) => person.email === user.email || person.id === user.id
     ) || null
@@ -106,7 +106,7 @@ export default function MySchedulePage() {
         assignments.push({
           id: assignment.id,
           date: block.date,
-          time_of_day: block.timeOfDay as 'AM' | 'PM',
+          timeOfDay: block.timeOfDay as 'AM' | 'PM',
           activity: template?.activityType || 'default',
           abbreviation:
             assignment.activityOverride ||

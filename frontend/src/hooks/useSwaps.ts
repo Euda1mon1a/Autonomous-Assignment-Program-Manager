@@ -36,7 +36,7 @@ export enum SwapStatus {
  * Type of swap being requested
  */
 export enum SwapType {
-  ONE_TO_ONE = "one_to_one",
+  ONE_TO_ONE = "oneToOne",
   ABSORB = "absorb",
 }
 
@@ -45,19 +45,19 @@ export enum SwapType {
  */
 export interface SwapRequest {
   id: string;
-  source_faculty_id: string;
-  source_faculty_name: string;
-  source_week: string;
-  target_faculty_id?: string;
-  target_faculty_name?: string;
-  target_week?: string;
-  swap_type: SwapType;
+  sourceFacultyId: string;
+  sourceFacultyName: string;
+  sourceWeek: string;
+  targetFacultyId?: string;
+  targetFacultyName?: string;
+  targetWeek?: string;
+  swapType: SwapType;
   status: SwapStatus;
-  requested_at: string;
-  requested_by_id?: string;
+  requestedAt: string;
+  requestedById?: string;
   approved_at?: string;
   approved_by_id?: string;
-  executed_at?: string;
+  executedAt?: string;
   executed_by_id?: string;
   reason?: string;
   notes?: string;
@@ -67,11 +67,11 @@ export interface SwapRequest {
  * Request data for creating a swap
  */
 export interface SwapCreateRequest {
-  source_faculty_id: string;
-  source_week: string;
-  target_faculty_id?: string;
-  target_week?: string;
-  swap_type: SwapType;
+  sourceFacultyId: string;
+  sourceWeek: string;
+  targetFacultyId?: string;
+  targetWeek?: string;
+  swapType: SwapType;
   reason?: string;
   auto_match?: boolean;
 }
@@ -81,16 +81,16 @@ export interface SwapCreateRequest {
  */
 export interface SwapCreateResponse {
   success: boolean;
-  request_id: string;
+  requestId: string;
   message: string;
-  candidates_notified?: number;
+  candidatesNotified?: number;
 }
 
 /**
  * Request data for approving a swap
  */
 export interface SwapApproveRequest {
-  swap_id: string;
+  swapId: string;
   notes?: string;
 }
 
@@ -100,14 +100,14 @@ export interface SwapApproveRequest {
 export interface SwapActionResponse {
   success: boolean;
   message: string;
-  swap_id: string;
+  swapId: string;
 }
 
 /**
  * Request data for rejecting a swap
  */
 export interface SwapRejectRequest {
-  swap_id: string;
+  swapId: string;
   notes?: string;
   reason?: string;
 }
@@ -116,8 +116,8 @@ export interface SwapRejectRequest {
  * Swap candidate data structure
  */
 export interface SwapCandidate {
-  faculty_id: string;
-  faculty_name: string;
+  facultyId: string;
+  facultyName: string;
   available_weeks: string[];
   compatibility_score: number;
   constraints_met: boolean;
@@ -128,10 +128,10 @@ export interface SwapCandidate {
  * Request data for auto-matching
  */
 export interface AutoMatchRequest {
-  source_faculty_id: string;
-  source_week: string;
+  sourceFacultyId: string;
+  sourceWeek: string;
   max_candidates?: number;
-  prefer_one_to_one?: boolean;
+  prefer_oneToOne?: boolean;
 }
 
 /**
@@ -149,11 +149,11 @@ export interface AutoMatchResponse {
  */
 export interface SwapFilters {
   status?: SwapStatus[];
-  swap_type?: SwapType[];
-  source_faculty_id?: string;
-  target_faculty_id?: string;
-  start_date?: string;
-  end_date?: string;
+  swapType?: SwapType[];
+  sourceFacultyId?: string;
+  targetFacultyId?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 // ============================================================================
@@ -244,7 +244,7 @@ export function useSwapRequest(
  * function PendingSwaps() {
  *   const { data, isLoading } = useSwapList({
  *     status: [SwapStatus.PENDING],
- *     target_faculty_id: currentUserId,
+ *     targetFacultyId: currentUserId,
  *   });
  *
  *   if (isLoading) return <LoadingSkeleton />;
@@ -264,8 +264,8 @@ export function useSwapRequest(
  * // Filter by date range
  * function UpcomingSwaps() {
  *   const { data } = useSwapList({
- *     start_date: '2024-01-01',
- *     end_date: '2024-06-30',
+ *     startDate: '2024-01-01',
+ *     endDate: '2024-06-30',
  *     status: [SwapStatus.APPROVED, SwapStatus.EXECUTED],
  *   });
  *
@@ -288,20 +288,20 @@ export function useSwapList(
   if (filters?.status) {
     filters.status.forEach((s) => params.append("status", s));
   }
-  if (filters?.swap_type) {
-    filters.swap_type.forEach((t) => params.append("swap_type", t));
+  if (filters?.swapType) {
+    filters.swapType.forEach((t) => params.append("swapType", t));
   }
-  if (filters?.source_faculty_id) {
-    params.set("source_faculty_id", filters.source_faculty_id);
+  if (filters?.sourceFacultyId) {
+    params.set("sourceFacultyId", filters.sourceFacultyId);
   }
-  if (filters?.target_faculty_id) {
-    params.set("target_faculty_id", filters.target_faculty_id);
+  if (filters?.targetFacultyId) {
+    params.set("targetFacultyId", filters.targetFacultyId);
   }
   if (filters?.startDate) {
-    params.set("start_date", filters.startDate);
+    params.set("startDate", filters.startDate);
   }
   if (filters?.endDate) {
-    params.set("end_date", filters.endDate);
+    params.set("endDate", filters.endDate);
   }
 
   const queryString = params.toString();
@@ -365,7 +365,7 @@ export function useSwapCandidates(
     queryKey: swapQueryKeys.candidates(sourceId, sourceWeek),
     queryFn: () =>
       get<ListResponse<SwapCandidate>>(
-        `/swaps/candidates?source_faculty_id=${sourceId}&source_week=${sourceWeek}`
+        `/swaps/candidates?sourceFacultyId=${sourceId}&sourceWeek=${sourceWeek}`
       ),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
@@ -402,9 +402,9 @@ export function useSwapCandidates(
  *   const handleSubmit = (formData: SwapCreateRequest) => {
  *     mutate(formData, {
  *       onSuccess: (result) => {
- *         toast.success(`Swap request created: ${result.request_id}`);
- *         if (result.candidates_notified) {
- *           toast.info(`Notified ${result.candidates_notified} candidates`);
+ *         toast.success(`Swap request created: ${result.requestId}`);
+ *         if (result.candidatesNotified) {
+ *           toast.info(`Notified ${result.candidatesNotified} candidates`);
  *         }
  *         navigate('/swaps/my-requests');
  *       },
@@ -423,11 +423,11 @@ export function useSwapCandidates(
  * // One-to-one swap with specific target
  * const createOneToOne = () => {
  *   mutate({
- *     source_faculty_id: 'faculty-123',
- *     source_week: '2024-03-01',
- *     target_faculty_id: 'faculty-456',
- *     target_week: '2024-03-08',
- *     swap_type: SwapType.ONE_TO_ONE,
+ *     sourceFacultyId: 'faculty-123',
+ *     sourceWeek: '2024-03-01',
+ *     targetFacultyId: 'faculty-456',
+ *     targetWeek: '2024-03-08',
+ *     swapType: SwapType.ONE_TO_ONE,
  *     reason: 'Family emergency',
  *   });
  * };
@@ -435,9 +435,9 @@ export function useSwapCandidates(
  * // Absorb swap with auto-matching
  * const createAbsorb = () => {
  *   mutate({
- *     source_faculty_id: 'faculty-123',
- *     source_week: '2024-03-01',
- *     swap_type: SwapType.ABSORB,
+ *     sourceFacultyId: 'faculty-123',
+ *     sourceWeek: '2024-03-01',
+ *     swapType: SwapType.ABSORB,
  *     auto_match: true,
  *   });
  * };
@@ -482,7 +482,7 @@ export function useSwapCreate() {
  *   const handleApprove = () => {
  *     mutate(
  *       {
- *         swap_id: swap.id,
+ *         swapId: swap.id,
  *         notes: 'Approved - coverage confirmed',
  *       },
  *       {
@@ -522,12 +522,12 @@ export function useSwapApprove() {
   const queryClient = useQueryClient();
 
   return useMutation<SwapActionResponse, ApiError, SwapApproveRequest>({
-    mutationFn: ({ swap_id, notes }) =>
-      post<SwapActionResponse>(`/swaps/${swap_id}/approve`, { notes }),
+    mutationFn: ({ swapId, notes }) =>
+      post<SwapActionResponse>(`/swaps/${swapId}/approve`, { notes }),
     onSuccess: (data) => {
       // Invalidate the specific swap and all lists
       queryClient.invalidateQueries({
-        queryKey: swapQueryKeys.detail(data.swap_id),
+        queryKey: swapQueryKeys.detail(data.swapId),
       });
       queryClient.invalidateQueries({ queryKey: swapQueryKeys.lists() });
       // Also invalidate schedule queries as the swap affects the schedule
@@ -562,7 +562,7 @@ export function useSwapApprove() {
  *   const handleReject = () => {
  *     mutate(
  *       {
- *         swap_id: swap.id,
+ *         swapId: swap.id,
  *         reason,
  *         notes: 'Coverage not available',
  *       },
@@ -595,12 +595,12 @@ export function useSwapReject() {
   const queryClient = useQueryClient();
 
   return useMutation<SwapActionResponse, ApiError, SwapRejectRequest>({
-    mutationFn: ({ swap_id, notes, reason }) =>
-      post<SwapActionResponse>(`/swaps/${swap_id}/reject`, { notes, reason }),
+    mutationFn: ({ swapId, notes, reason }) =>
+      post<SwapActionResponse>(`/swaps/${swapId}/reject`, { notes, reason }),
     onSuccess: (data) => {
       // Invalidate the specific swap and all lists
       queryClient.invalidateQueries({
-        queryKey: swapQueryKeys.detail(data.swap_id),
+        queryKey: swapQueryKeys.detail(data.swapId),
       });
       queryClient.invalidateQueries({ queryKey: swapQueryKeys.lists() });
     },
@@ -632,10 +632,10 @@ export function useSwapReject() {
  *   const handleAutoMatch = () => {
  *     mutate(
  *       {
- *         source_faculty_id: facultyId,
- *         source_week: week,
+ *         sourceFacultyId: facultyId,
+ *         sourceWeek: week,
  *         max_candidates: 10,
- *         prefer_one_to_one: true,
+ *         prefer_oneToOne: true,
  *       },
  *       {
  *         onSuccess: (result) => {
@@ -678,8 +678,8 @@ export function useAutoMatch() {
       // Invalidate candidates query for this source/week
       queryClient.invalidateQueries({
         queryKey: swapQueryKeys.candidates(
-          variables.source_faculty_id,
-          variables.source_week
+          variables.sourceFacultyId,
+          variables.sourceWeek
         ),
       });
     },
@@ -694,11 +694,11 @@ export function useAutoMatch() {
  * Request for executing a swap (admin force swap)
  */
 export interface SwapExecuteRequest {
-  source_faculty_id: string;
-  source_week: string; // ISO date
-  target_faculty_id: string;
-  target_week?: string; // ISO date, required for one-to-one
-  swap_type: SwapType;
+  sourceFacultyId: string;
+  sourceWeek: string; // ISO date
+  targetFacultyId: string;
+  targetWeek?: string; // ISO date, required for one-to-one
+  swapType: SwapType;
   reason?: string;
 }
 
@@ -709,8 +709,8 @@ export interface SwapValidationResult {
   valid: boolean;
   errors: string[];
   warnings: string[];
-  back_to_back_conflict: boolean;
-  external_conflict?: string;
+  backToBackConflict: boolean;
+  externalConflict?: string;
 }
 
 /**
@@ -718,7 +718,7 @@ export interface SwapValidationResult {
  */
 export interface SwapExecuteResponse {
   success: boolean;
-  swap_id: string | null;
+  swapId: string | null;
   message: string;
   validation: SwapValidationResult;
 }
@@ -727,7 +727,7 @@ export interface SwapExecuteResponse {
  * Request for rolling back a swap
  */
 export interface SwapRollbackRequest {
-  swap_id: string;
+  swapId: string;
   reason: string;
 }
 
@@ -737,7 +737,7 @@ export interface SwapRollbackRequest {
 export interface SwapRollbackResponse {
   success: boolean;
   message: string;
-  swap_id: string;
+  swapId: string;
 }
 
 // ============================================================================
@@ -758,10 +758,10 @@ export interface SwapRollbackResponse {
  *
  * const handleDryRun = () => {
  *   validate({
- *     source_faculty_id: 'uuid',
- *     source_week: '2024-03-01',
- *     target_faculty_id: 'uuid',
- *     swap_type: SwapType.ONE_TO_ONE,
+ *     sourceFacultyId: 'uuid',
+ *     sourceWeek: '2024-03-01',
+ *     targetFacultyId: 'uuid',
+ *     swapType: SwapType.ONE_TO_ONE,
  *   });
  * };
  *
@@ -791,15 +791,15 @@ export function useValidateSwap() {
  *
  * const handleExecute = () => {
  *   executeSwap({
- *     source_faculty_id: sourceFacultyId,
- *     source_week: '2024-03-01',
- *     target_faculty_id: targetFacultyId,
- *     target_week: '2024-03-08',
- *     swap_type: SwapType.ONE_TO_ONE,
+ *     sourceFacultyId: sourceFacultyId,
+ *     sourceWeek: '2024-03-01',
+ *     targetFacultyId: targetFacultyId,
+ *     targetWeek: '2024-03-08',
+ *     swapType: SwapType.ONE_TO_ONE,
  *     reason: 'Admin force swap',
  *   }, {
  *     onSuccess: (result) => {
- *       toast.success(`Swap executed: ${result.swap_id}`);
+ *       toast.success(`Swap executed: ${result.swapId}`);
  *     },
  *     onError: (error) => {
  *       toast.error(`Swap failed: ${error.message}`);
@@ -838,7 +838,7 @@ export function useExecuteSwap() {
  *
  * const handleRollback = () => {
  *   rollback({
- *     swap_id: swapId,
+ *     swapId: swapId,
  *     reason: 'Executed in error',
  *   }, {
  *     onSuccess: () => {
@@ -852,12 +852,12 @@ export function useRollbackSwap() {
   const queryClient = useQueryClient();
 
   return useMutation<SwapRollbackResponse, ApiError, SwapRollbackRequest>({
-    mutationFn: ({ swap_id, reason }) =>
-      post<SwapRollbackResponse>(`/swaps/${swap_id}/rollback`, { reason }),
+    mutationFn: ({ swapId, reason }) =>
+      post<SwapRollbackResponse>(`/swaps/${swapId}/rollback`, { reason }),
     onSuccess: (data) => {
       // Invalidate all related queries
       queryClient.invalidateQueries({
-        queryKey: swapQueryKeys.detail(data.swap_id),
+        queryKey: swapQueryKeys.detail(data.swapId),
       });
       queryClient.invalidateQueries({ queryKey: swapQueryKeys.lists() });
       queryClient.invalidateQueries({ queryKey: ["schedule"] });

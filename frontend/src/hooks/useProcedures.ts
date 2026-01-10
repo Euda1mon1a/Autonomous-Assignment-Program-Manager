@@ -41,13 +41,13 @@ export interface Procedure {
   description: string | null;
   category: string | null;
   specialty: string | null;
-  supervision_ratio: number;
-  requires_certification: boolean;
-  complexity_level: ProcedureComplexity;
-  min_pgy_level: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  supervisionRatio: number;
+  requiresCertification: boolean;
+  complexityLevel: ProcedureComplexity;
+  minPgyLevel: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
@@ -68,11 +68,11 @@ export interface ProcedureCreate {
   description?: string | null;
   category?: string | null;
   specialty?: string | null;
-  supervision_ratio?: number;
-  requires_certification?: boolean;
-  complexity_level?: ProcedureComplexity;
-  min_pgy_level?: number;
-  is_active?: boolean;
+  supervisionRatio?: number;
+  requiresCertification?: boolean;
+  complexityLevel?: ProcedureComplexity;
+  minPgyLevel?: number;
+  isActive?: boolean;
 }
 
 /**
@@ -83,11 +83,11 @@ export interface ProcedureUpdate {
   description?: string | null;
   category?: string | null;
   specialty?: string | null;
-  supervision_ratio?: number | null;
-  requires_certification?: boolean | null;
-  complexity_level?: ProcedureComplexity | null;
-  min_pgy_level?: number | null;
-  is_active?: boolean | null;
+  supervisionRatio?: number | null;
+  requiresCertification?: boolean | null;
+  complexityLevel?: ProcedureComplexity | null;
+  minPgyLevel?: number | null;
+  isActive?: boolean | null;
 }
 
 /**
@@ -95,20 +95,20 @@ export interface ProcedureUpdate {
  */
 export interface Credential {
   id: string;
-  person_id: string;
-  procedure_id: string;
+  personId: string;
+  procedureId: string;
   status: CredentialStatus;
-  competency_level: CompetencyLevel;
+  competencyLevel: CompetencyLevel;
   issued_date: string | null;
-  expiration_date: string | null;
+  expirationDate: string | null;
   last_verified_date: string | null;
   max_concurrent_residents: number | null;
   max_per_week: number | null;
-  max_per_academic_year: number | null;
+  max_per_academicYear: number | null;
   notes: string | null;
   is_valid: boolean;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
@@ -131,16 +131,16 @@ export interface PersonSummary {
  * Data required to create a new credential
  */
 export interface CredentialCreate {
-  person_id: string;
-  procedure_id: string;
+  personId: string;
+  procedureId: string;
   status?: CredentialStatus;
-  competency_level?: CompetencyLevel;
+  competencyLevel?: CompetencyLevel;
   issued_date?: string | null;
-  expiration_date?: string | null;
+  expirationDate?: string | null;
   last_verified_date?: string | null;
   max_concurrent_residents?: number | null;
   max_per_week?: number | null;
-  max_per_academic_year?: number | null;
+  max_per_academicYear?: number | null;
   notes?: string | null;
 }
 
@@ -149,12 +149,12 @@ export interface CredentialCreate {
  */
 export interface CredentialUpdate {
   status?: CredentialStatus | null;
-  competency_level?: CompetencyLevel | null;
-  expiration_date?: string | null;
+  competencyLevel?: CompetencyLevel | null;
+  expirationDate?: string | null;
   last_verified_date?: string | null;
   max_concurrent_residents?: number | null;
   max_per_week?: number | null;
-  max_per_academic_year?: number | null;
+  max_per_academicYear?: number | null;
   notes?: string | null;
 }
 
@@ -162,11 +162,11 @@ export interface CredentialUpdate {
  * Summary of a faculty member's credentials
  */
 export interface FacultyCredentialSummary {
-  person_id: string;
-  person_name: string;
-  total_credentials: number;
-  active_credentials: number;
-  expiring_soon: number;
+  personId: string;
+  personName: string;
+  totalCredentials: number;
+  activeCredentials: number;
+  expiringSoon: number;
   procedures: ProcedureSummary[];
 }
 
@@ -174,7 +174,7 @@ export interface FacultyCredentialSummary {
  * Response for qualified faculty lookup
  */
 export interface QualifiedFacultyResponse {
-  procedure_id: string;
+  procedureId: string;
   procedure_name: string;
   qualified_faculty: PersonSummary[];
   total: number;
@@ -194,18 +194,18 @@ export interface ListResponse<T> {
 export interface ProcedureFilters {
   specialty?: string;
   category?: string;
-  is_active?: boolean;
-  complexity_level?: ProcedureComplexity;
+  isActive?: boolean;
+  complexityLevel?: ProcedureComplexity;
 }
 
 /**
  * Filters for querying credentials
  */
 export interface CredentialFilters {
-  person_id?: string;
-  procedure_id?: string;
+  personId?: string;
+  procedureId?: string;
   status?: CredentialStatus;
-  include_expired?: boolean;
+  includeExpired?: boolean;
 }
 
 // ============================================================================
@@ -227,9 +227,9 @@ export const credentialKeys = {
   lists: () => [...credentialKeys.all, 'list'] as const,
   list: (filters?: CredentialFilters) => [...credentialKeys.lists(), filters] as const,
   detail: (id: string) => [...credentialKeys.all, 'detail', id] as const,
-  byPerson: (personId: string, filters?: { status?: string; include_expired?: boolean }) =>
+  byPerson: (personId: string, filters?: { status?: string; includeExpired?: boolean }) =>
     [...credentialKeys.all, 'by-person', personId, filters] as const,
-  byProcedure: (procedureId: string, filters?: { status?: string; include_expired?: boolean }) =>
+  byProcedure: (procedureId: string, filters?: { status?: string; includeExpired?: boolean }) =>
     [...credentialKeys.all, 'by-procedure', procedureId, filters] as const,
   qualified: (procedureId: string) => [...credentialKeys.all, 'qualified', procedureId] as const,
   summary: (personId: string) => [...credentialKeys.all, 'summary', personId] as const,
@@ -246,7 +246,7 @@ export const credentialKeys = {
  * This hook retrieves all procedures matching the provided filters,
  * supporting filtering by specialty, category, active status, and complexity level.
  *
- * @param filters - Optional filters for specialty, category, is_active, complexity_level
+ * @param filters - Optional filters for specialty, category, isActive, complexityLevel
  * @param options - Optional React Query configuration options
  * @returns Query result containing:
  *   - `data`: List response with procedures and total count
@@ -277,8 +277,8 @@ export function useProcedures(
   const params = new URLSearchParams();
   if (filters?.specialty) params.set('specialty', filters.specialty);
   if (filters?.category) params.set('category', filters.category);
-  if (filters?.isActive !== undefined) params.set('is_active', String(filters.isActive));
-  if (filters?.complexity_level) params.set('complexity_level', filters.complexity_level);
+  if (filters?.isActive !== undefined) params.set('isActive', String(filters.isActive));
+  if (filters?.complexityLevel) params.set('complexityLevel', filters.complexityLevel);
   const queryString = params.toString();
 
   return useQuery<ListResponse<Procedure>, ApiError>({
@@ -343,10 +343,10 @@ export function useProcedure(
  * Fetches credentials with optional filtering by person or procedure.
  *
  * This hook retrieves credentials based on the provided filters.
- * If person_id is provided, fetches credentials for that person.
- * If procedure_id is provided, fetches credentials for that procedure.
+ * If personId is provided, fetches credentials for that person.
+ * If procedureId is provided, fetches credentials for that procedure.
  *
- * @param filters - Optional filters for person_id, procedure_id, status, include_expired
+ * @param filters - Optional filters for personId, procedureId, status, includeExpired
  * @param options - Optional React Query configuration options
  * @returns Query result containing:
  *   - `data`: List response with credentials and total count
@@ -356,7 +356,7 @@ export function useProcedure(
  * @example
  * ```tsx
  * function CredentialList({ personId }: Props) {
- *   const { data, isLoading } = useCredentials({ person_id: personId });
+ *   const { data, isLoading } = useCredentials({ personId: personId });
  *
  *   if (isLoading) return <Spinner />;
  *
@@ -374,12 +374,12 @@ export function useCredentials(
 
   if (filters?.personId) {
     endpoint = `/credentials/by-person/${filters.personId}`;
-  } else if (filters?.procedure_id) {
-    endpoint = `/credentials/by-procedure/${filters.procedure_id}`;
+  } else if (filters?.procedureId) {
+    endpoint = `/credentials/by-procedure/${filters.procedureId}`;
   }
 
   if (filters?.status) params.set('status', filters.status);
-  if (filters?.include_expired !== undefined) params.set('include_expired', String(filters.include_expired));
+  if (filters?.includeExpired !== undefined) params.set('includeExpired', String(filters.includeExpired));
   const queryString = params.toString();
 
   return useQuery<ListResponse<Credential>, ApiError>({
@@ -438,7 +438,7 @@ export function useCredential(
  * and whether to include expired credentials.
  *
  * @param facultyId - The UUID of the faculty member (optional - if not provided, uses current user context)
- * @param filterOptions - Optional status filter and include_expired flag
+ * @param filterOptions - Optional status filter and includeExpired flag
  * @param options - Optional React Query configuration options
  * @returns Query result containing:
  *   - `data`: List response with credentials and total count
@@ -451,7 +451,7 @@ export function useCredential(
  *   const { data, isLoading } = useFacultyCredentials(facultyId);
  *
  *   const expiringSoon = data?.items.filter(
- *     cred => cred.expiration_date && new Date(cred.expiration_date) < addDays(new Date(), 30)
+ *     cred => cred.expirationDate && new Date(cred.expirationDate) < addDays(new Date(), 30)
  *   );
  *
  *   return (
@@ -469,12 +469,12 @@ export function useCredential(
  */
 export function useFacultyCredentials(
   facultyId?: string,
-  filterOptions?: { status?: CredentialStatus; include_expired?: boolean },
+  filterOptions?: { status?: CredentialStatus; includeExpired?: boolean },
   options?: Omit<UseQueryOptions<ListResponse<Credential>, ApiError>, 'queryKey' | 'queryFn'>
 ): UseQueryResult<ListResponse<Credential>, ApiError> {
   const params = new URLSearchParams();
   if (filterOptions?.status) params.set('status', filterOptions.status);
-  if (filterOptions?.include_expired !== undefined) params.set('include_expired', String(filterOptions.include_expired));
+  if (filterOptions?.includeExpired !== undefined) params.set('includeExpired', String(filterOptions.includeExpired));
   const queryString = params.toString();
 
   return useQuery<ListResponse<Credential>, ApiError>({
@@ -558,9 +558,9 @@ export function useQualifiedFaculty(
  *
  *   return (
  *     <div className="flex gap-2">
- *       <Badge variant="success">{data.active_credentials} Active</Badge>
- *       {data.expiring_soon > 0 && (
- *         <Badge variant="warning">{data.expiring_soon} Expiring Soon</Badge>
+ *       <Badge variant="success">{data.activeCredentials} Active</Badge>
+ *       {data.expiringSoon > 0 && (
+ *         <Badge variant="warning">{data.expiringSoon} Expiring Soon</Badge>
  *       )}
  *     </div>
  *   );
@@ -629,8 +629,8 @@ export function useCreateCredential(): UseMutationResult<Credential, ApiError, C
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: credentialKeys.all });
       queryClient.invalidateQueries({ queryKey: credentialKeys.byPerson(data.personId) });
-      queryClient.invalidateQueries({ queryKey: credentialKeys.byProcedure(data.procedure_id) });
-      queryClient.invalidateQueries({ queryKey: credentialKeys.qualified(data.procedure_id) });
+      queryClient.invalidateQueries({ queryKey: credentialKeys.byProcedure(data.procedureId) });
+      queryClient.invalidateQueries({ queryKey: credentialKeys.qualified(data.procedureId) });
       queryClient.invalidateQueries({ queryKey: credentialKeys.summary(data.personId) });
     },
   });
@@ -682,8 +682,8 @@ export function useUpdateCredential(): UseMutationResult<Credential, ApiError, {
       queryClient.invalidateQueries({ queryKey: credentialKeys.all });
       queryClient.invalidateQueries({ queryKey: credentialKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: credentialKeys.byPerson(data.personId) });
-      queryClient.invalidateQueries({ queryKey: credentialKeys.byProcedure(data.procedure_id) });
-      queryClient.invalidateQueries({ queryKey: credentialKeys.qualified(data.procedure_id) });
+      queryClient.invalidateQueries({ queryKey: credentialKeys.byProcedure(data.procedureId) });
+      queryClient.invalidateQueries({ queryKey: credentialKeys.qualified(data.procedureId) });
       queryClient.invalidateQueries({ queryKey: credentialKeys.summary(data.personId) });
     },
   });

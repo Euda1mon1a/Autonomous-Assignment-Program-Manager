@@ -48,7 +48,7 @@ export const weeklyRequirementsQueryKeys = {
  * ```ts
  * const { data, isLoading } = useResidentWeeklyRequirement(templateId);
  * if (data) {
- *   console.log(data.fm_clinic_min_per_week);
+ *   console.log(data.fmClinic_min_per_week);
  * }
  * ```
  */
@@ -120,9 +120,9 @@ export function useResidentWeeklyRequirementById(
  * const createMutation = useCreateResidentWeeklyRequirement();
  *
  * createMutation.mutate({
- *   rotation_template_id: templateId,
- *   fm_clinic_min_per_week: 2,
- *   fm_clinic_max_per_week: 4,
+ *   rotationTemplateId: templateId,
+ *   fmClinic_min_per_week: 2,
+ *   fmClinic_max_per_week: 4,
  *   specialty_min_per_week: 1,
  *   specialty_max_per_week: 3,
  * });
@@ -170,8 +170,8 @@ export function useCreateResidentWeeklyRequirement() {
  *   id: requirementId,
  *   templateId: templateId,
  *   data: {
- *     fm_clinic_min_per_week: 3,
- *     fm_clinic_max_per_week: 5,
+ *     fmClinic_min_per_week: 3,
+ *     fmClinic_max_per_week: 5,
  *   },
  * });
  * ```
@@ -276,7 +276,7 @@ export function useUpsertResidentWeeklyRequirement() {
     {
       templateId: string;
       existingId?: string;
-      data: Omit<ResidentWeeklyRequirementCreate, 'rotation_template_id'>;
+      data: Omit<ResidentWeeklyRequirementCreate, 'rotationTemplateId'>;
     }
   >({
     mutationFn: async ({ templateId, existingId, data }) => {
@@ -291,7 +291,7 @@ export function useUpsertResidentWeeklyRequirement() {
         // Create new
         return createMutation.mutateAsync({
           ...data,
-          rotation_template_id: templateId,
+          rotationTemplateId: templateId,
         });
       }
     },

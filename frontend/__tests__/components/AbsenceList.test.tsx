@@ -10,31 +10,31 @@ describe('AbsenceList', () => {
       id: 'person-1',
       name: 'Dr. John Smith',
       type: 'resident',
-      pgy_level: 2,
+      pgyLevel: 2,
     }),
     mockFactories.person({
       id: 'person-2',
       name: 'Dr. Jane Doe',
       type: 'faculty',
-      pgy_level: null,
+      pgyLevel: null,
     }),
   ]
 
   const mockAbsences: Absence[] = [
     mockFactories.absence({
       id: 'absence-1',
-      person_id: 'person-1',
-      start_date: '2024-02-05',
-      end_date: '2024-02-07',
-      absence_type: 'vacation',
+      personId: 'person-1',
+      startDate: '2024-02-05',
+      endDate: '2024-02-07',
+      absenceType: 'vacation',
       notes: 'Spring break',
     }),
     mockFactories.absence({
       id: 'absence-2',
-      person_id: 'person-2',
-      start_date: '2024-03-10',
-      end_date: '2024-03-15',
-      absence_type: 'deployment',
+      personId: 'person-2',
+      startDate: '2024-03-10',
+      endDate: '2024-03-15',
+      absenceType: 'deployment',
       notes: null,
     }),
   ]
@@ -193,8 +193,8 @@ describe('AbsenceList', () => {
       const absenceWithUnknownType: Absence[] = [
         mockFactories.absence({
           id: 'absence-1',
-          person_id: 'person-1',
-          absence_type: 'unknown_type' as any,
+          personId: 'person-1',
+          absenceType: 'unknown_type' as any,
         }),
       ]
 
@@ -216,8 +216,8 @@ describe('AbsenceList', () => {
       const absenceWithUnderscore: Absence[] = [
         mockFactories.absence({
           id: 'absence-1',
-          person_id: 'person-1',
-          absence_type: 'family_emergency',
+          personId: 'person-1',
+          absenceType: 'familyEmergency',
         }),
       ]
 
@@ -239,21 +239,21 @@ describe('AbsenceList', () => {
       const unsortedAbsences: Absence[] = [
         mockFactories.absence({
           id: 'absence-3',
-          person_id: 'person-1',
-          start_date: '2024-06-15',
-          end_date: '2024-06-20',
+          personId: 'person-1',
+          startDate: '2024-06-15',
+          endDate: '2024-06-20',
         }),
         mockFactories.absence({
           id: 'absence-1',
-          person_id: 'person-1',
-          start_date: '2024-01-15',
-          end_date: '2024-01-20',
+          personId: 'person-1',
+          startDate: '2024-01-15',
+          endDate: '2024-01-20',
         }),
         mockFactories.absence({
           id: 'absence-2',
-          person_id: 'person-2',
-          start_date: '2024-03-15',
-          end_date: '2024-03-20',
+          personId: 'person-2',
+          startDate: '2024-03-15',
+          endDate: '2024-03-20',
         }),
       ]
 
@@ -320,7 +320,7 @@ describe('AbsenceList', () => {
       expect(mockOnEdit).toHaveBeenCalledWith(
         expect.objectContaining({
           id: 'absence-1',
-          person_id: 'person-1',
+          personId: 'person-1',
         })
       )
     })
@@ -344,7 +344,7 @@ describe('AbsenceList', () => {
       expect(mockOnDelete).toHaveBeenCalledWith(
         expect.objectContaining({
           id: 'absence-2',
-          person_id: 'person-2',
+          personId: 'person-2',
         })
       )
     })
@@ -428,7 +428,7 @@ describe('AbsenceList', () => {
       const absenceWithUnknownPerson: Absence[] = [
         mockFactories.absence({
           id: 'absence-1',
-          person_id: 'unknown-person',
+          personId: 'unknown-person',
         }),
       ]
 

@@ -22,12 +22,12 @@ export interface CriticalSignal {
   value: number;
   threshold: number;
   description: string;
-  detected_at: string;
+  detectedAt: string;
 }
 
 export interface PhaseTransitionRequest {
   /** Schedule ID to analyze (optional) */
-  schedule_id?: string | null;
+  scheduleId?: string | null;
   /** Days of history to analyze */
   lookback_days?: number;
   /** Detection sensitivity multiplier */
@@ -36,7 +36,7 @@ export interface PhaseTransitionRequest {
 
 export interface PhaseTransitionResponse {
   /** Overall risk level: normal, elevated, high, critical, imminent */
-  overall_severity: string;
+  overallSeverity: string;
   /** Detected early warning signals */
   signals: CriticalSignal[];
   /** Estimated time until transition (hours) */
@@ -86,10 +86,10 @@ export const phaseTransitionQueryKeys = {
  *   const { data, isLoading } = usePhaseTransitionRisk();
  *
  *   if (isLoading) return null;
- *   if (data.overall_severity === 'normal') return null;
+ *   if (data.overallSeverity === 'normal') return null;
  *
  *   return (
- *     <Alert severity={data.overall_severity}>
+ *     <Alert severity={data.overallSeverity}>
  *       <AlertTitle>Phase Transition Warning</AlertTitle>
  *       <p>System approaching critical point</p>
  *       <p>Confidence: {(data.confidence * 100).toFixed(0)}%</p>
@@ -119,7 +119,7 @@ export function usePhaseTransitionRisk(
     queryKey: phaseTransitionQueryKeys.risk(scheduleId, lookbackDays),
     queryFn: async () => {
       const request: PhaseTransitionRequest = {
-        schedule_id: scheduleId || null,
+        scheduleId: scheduleId || null,
         lookback_days: lookbackDays,
         sensitivity: sensitivity,
       };

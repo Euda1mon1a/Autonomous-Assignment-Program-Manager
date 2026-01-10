@@ -18,10 +18,10 @@ interface AddAbsenceModalProps {
 }
 
 interface FormErrors {
-  person_id?: string;
-  start_date?: string;
-  end_date?: string;
-  absence_type?: string;
+  personId?: string;
+  startDate?: string;
+  endDate?: string;
+  absenceType?: string;
   general?: string;
 }
 
@@ -33,10 +33,10 @@ const absenceTypeOptions = [
   { value: 'sick', label: 'Sick' },
   { value: 'medical', label: 'Medical Leave' },
   { value: 'convalescent', label: 'Convalescent' },
-  { value: 'maternity_paternity', label: 'Parental Leave' },
+  { value: 'maternityPaternity', label: 'Parental Leave' },
   // Emergency (blocking - Hawaii reality: 7+ days travel)
-  { value: 'family_emergency', label: 'Family Emergency' },
-  { value: 'emergency_leave', label: 'Emergency Leave' },
+  { value: 'familyEmergency', label: 'Family Emergency' },
+  { value: 'emergencyLeave', label: 'Emergency Leave' },
   { value: 'bereavement', label: 'Bereavement' },
   // Military
   { value: 'deployment', label: 'Deployment' },
@@ -126,13 +126,13 @@ export function AddAbsenceModal({
     }
 
     const absenceData: AbsenceCreate = {
-      person_id: personId,
-      absence_type: absenceType,
-      start_date: startDate,
-      end_date: endDate,
-      is_away_from_program: isAwayFromProgram,
-      ...(absenceType === AbsenceType.DEPLOYMENT && { deployment_orders: deploymentOrders }),
-      ...(absenceType === AbsenceType.TDY && tdyLocation && { tdy_location: tdyLocation }),
+      personId: personId,
+      absenceType: absenceType,
+      startDate: startDate,
+      endDate: endDate,
+      isAwayFromProgram: isAwayFromProgram,
+      ...(absenceType === AbsenceType.DEPLOYMENT && { deploymentOrders: deploymentOrders }),
+      ...(absenceType === AbsenceType.TDY && tdyLocation && { tdyLocation: tdyLocation }),
       ...(notes && { notes }),
     };
 

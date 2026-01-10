@@ -64,32 +64,32 @@ global.WebSocket = MockWebSocket as any;
 
 // Test event data
 const mockScheduleUpdatedEvent = {
-  event_type: 'schedule_updated',
+  eventType: 'schedule_updated',
   timestamp: '2024-01-01T00:00:00Z',
-  schedule_id: 'schedule-123',
-  academic_year_id: 'year-2024',
-  user_id: 'user-456',
+  scheduleId: 'schedule-123',
+  academicYear_id: 'year-2024',
+  userId: 'user-456',
   update_type: 'generated',
   affected_blocks_count: 50,
   message: 'Schedule generated successfully',
 };
 
 const mockAssignmentChangedEvent = {
-  event_type: 'assignment_changed',
+  eventType: 'assignment_changed',
   timestamp: '2024-01-01T00:00:00Z',
-  assignment_id: 'assignment-789',
-  person_id: 'person-123',
-  block_id: 'block-456',
-  rotation_template_id: 'template-789',
+  assignmentId: 'assignment-789',
+  personId: 'person-123',
+  blockId: 'block-456',
+  rotationTemplateId: 'template-789',
   change_type: 'created',
   changed_by: 'user-123',
   message: 'Assignment created',
 };
 
 const mockConnectionAckEvent = {
-  event_type: 'connection_ack',
+  eventType: 'connection_ack',
   timestamp: '2024-01-01T00:00:00Z',
-  user_id: 'user-123',
+  userId: 'user-123',
   message: 'Connected successfully',
 };
 
@@ -196,7 +196,7 @@ describe('useWebSocket', () => {
     act(() => {
       result.current.send({
         action: 'subscribe_schedule',
-        schedule_id: 'schedule-123',
+        scheduleId: 'schedule-123',
       });
     });
 

@@ -35,31 +35,31 @@ const mockProcedure = {
   description: 'Arthroscopic knee procedure',
   category: 'Orthopedics',
   specialty: 'Sports Medicine',
-  supervision_ratio: 2,
-  requires_certification: true,
-  complexity_level: 'advanced' as const,
-  min_pgy_level: 2,
-  is_active: true,
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
+  supervisionRatio: 2,
+  requiresCertification: true,
+  complexityLevel: 'advanced' as const,
+  minPgyLevel: 2,
+  isActive: true,
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T00:00:00Z',
 };
 
 const mockCredential = {
   id: 'cred-123',
-  person_id: 'person-456',
-  procedure_id: 'proc-123',
+  personId: 'person-456',
+  procedureId: 'proc-123',
   status: 'active' as const,
-  competency_level: 'qualified' as const,
+  competencyLevel: 'qualified' as const,
   issued_date: '2024-01-01',
-  expiration_date: '2025-01-01',
+  expirationDate: '2025-01-01',
   last_verified_date: '2024-01-01',
   max_concurrent_residents: 2,
   max_per_week: 5,
-  max_per_academic_year: 200,
+  max_per_academicYear: 200,
   notes: null,
   is_valid: true,
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T00:00:00Z',
 };
 
 // Create wrapper with QueryClient
@@ -132,7 +132,7 @@ describe('useProcedures', () => {
       () =>
         useProcedures({
           category: 'Orthopedics',
-          complexity_level: 'advanced',
+          complexityLevel: 'advanced',
         }),
       { wrapper: createWrapper() }
     );
@@ -142,7 +142,7 @@ describe('useProcedures', () => {
     });
 
     expect(mockedApi.get).toHaveBeenCalledWith(
-      '/procedures?category=Orthopedics&complexity_level=advanced'
+      '/procedures?category=Orthopedics&complexityLevel=advanced'
     );
   });
 });
@@ -207,7 +207,7 @@ describe('useCredentials', () => {
     mockedApi.get.mockResolvedValueOnce(mockResponse);
 
     const { result } = renderHook(
-      () => useCredentials({ person_id: 'person-456' }),
+      () => useCredentials({ personId: 'person-456' }),
       { wrapper: createWrapper() }
     );
 
@@ -228,7 +228,7 @@ describe('useCredentials', () => {
     mockedApi.get.mockResolvedValueOnce(mockResponse);
 
     const { result } = renderHook(
-      () => useCredentials({ procedure_id: 'proc-123' }),
+      () => useCredentials({ procedureId: 'proc-123' }),
       { wrapper: createWrapper() }
     );
 
@@ -288,7 +288,7 @@ describe('useFacultyCredentials', () => {
 describe('useQualifiedFaculty', () => {
   it('fetches qualified faculty for procedure', async () => {
     const mockResponse = {
-      procedure_id: 'proc-123',
+      procedureId: 'proc-123',
       procedure_name: 'Knee Arthroscopy',
       qualified_faculty: [
         { id: 'faculty-1', name: 'Dr. Smith', type: 'FACULTY' },
@@ -393,9 +393,9 @@ describe('useCreateCredential', () => {
 
     await act(async () => {
       result.current.mutate({
-        person_id: 'person-456',
-        procedure_id: 'proc-123',
-        competency_level: 'qualified',
+        personId: 'person-456',
+        procedureId: 'proc-123',
+        competencyLevel: 'qualified',
       });
     });
 
@@ -411,7 +411,7 @@ describe('useUpdateCredential', () => {
   it('updates credential successfully', async () => {
     const updatedCredential = {
       ...mockCredential,
-      competency_level: 'expert' as const,
+      competencyLevel: 'expert' as const,
     };
     mockedApi.put.mockResolvedValueOnce(updatedCredential);
 
@@ -422,7 +422,7 @@ describe('useUpdateCredential', () => {
     await act(async () => {
       result.current.mutate({
         id: 'cred-123',
-        data: { competency_level: 'expert' },
+        data: { competencyLevel: 'expert' },
       });
     });
 

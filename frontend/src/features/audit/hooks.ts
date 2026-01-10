@@ -50,7 +50,7 @@ function buildQueryString(params?: AuditLogQueryParams): string {
   // Pagination
   const pagination = params.pagination || { page: 1, pageSize: DEFAULT_PAGE_SIZE };
   queryParams.set('page', String(pagination.page));
-  queryParams.set('page_size', String(pagination.pageSize));
+  queryParams.set('pageSize', String(pagination.pageSize));
 
   // Sort
   const sort = params.sort || DEFAULT_SORT;
@@ -62,19 +62,19 @@ function buildQueryString(params?: AuditLogQueryParams): string {
     const { filters } = params;
 
     if (filters.dateRange?.start) {
-      queryParams.set('start_date', filters.dateRange.start);
+      queryParams.set('startDate', filters.dateRange.start);
     }
     if (filters.dateRange?.end) {
-      queryParams.set('end_date', filters.dateRange.end);
+      queryParams.set('endDate', filters.dateRange.end);
     }
     if (filters.entityTypes?.length) {
-      queryParams.set('entity_types', filters.entityTypes.join(','));
+      queryParams.set('entityTypes', filters.entityTypes.join(','));
     }
     if (filters.actions?.length) {
       queryParams.set('actions', filters.actions.join(','));
     }
     if (filters.userIds?.length) {
-      queryParams.set('user_ids', filters.userIds.join(','));
+      queryParams.set('userIds', filters.userIds.join(','));
     }
     if (filters.severity?.length) {
       queryParams.set('severity', filters.severity.join(','));
@@ -83,7 +83,7 @@ function buildQueryString(params?: AuditLogQueryParams): string {
       queryParams.set('search', filters.searchQuery);
     }
     if (filters.entityId) {
-      queryParams.set('entity_id', filters.entityId);
+      queryParams.set('entityId', filters.entityId);
     }
     if (filters.acgmeOverridesOnly) {
       queryParams.set('acgme_overrides_only', 'true');
@@ -124,9 +124,9 @@ function getActionDescription(log: AuditLogEntry): string {
       return `Deleted ${log.entityType}`;
     case 'override':
       return log.acgmeJustification || 'ACGME rule override';
-    case 'schedule_generate':
+    case 'scheduleGenerate':
       return 'Generated schedule';
-    case 'bulk_import':
+    case 'bulkImport':
       return `Imported ${log.metadata?.count || 'multiple'} records`;
     default:
       return log.action.replace(/_/g, ' ');
@@ -180,8 +180,8 @@ export function useAuditStatistics(
   options?: Omit<UseQueryOptions<AuditStatistics, ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const params = new URLSearchParams();
-  if (dateRange?.start) params.set('start_date', dateRange.start);
-  if (dateRange?.end) params.set('end_date', dateRange.end);
+  if (dateRange?.start) params.set('startDate', dateRange.start);
+  if (dateRange?.end) params.set('endDate', dateRange.end);
   const queryString = params.toString();
 
   return useQuery<AuditStatistics, ApiError>({
@@ -231,7 +231,7 @@ export function useEntityAuditHistory(
     queryKey: auditQueryKeys.entityHistory(entityType, entityId),
     queryFn: async () => {
       const response = await get<AuditLogResponse>(
-        `/audit/logs?entity_type=${entityType}&entity_id=${entityId}&sort_by=timestamp&sort_direction=desc`
+        `/audit/logs?entityType=${entityType}&entityId=${entityId}&sort_by=timestamp&sort_direction=desc`
       );
       return response.items;
     },
@@ -251,9 +251,9 @@ export function useUserAuditActivity(
   options?: Omit<UseQueryOptions<AuditLogEntry[], ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const params = new URLSearchParams();
-  params.set('user_ids', userId);
-  if (dateRange?.start) params.set('start_date', dateRange.start);
-  if (dateRange?.end) params.set('end_date', dateRange.end);
+  params.set('userIds', userId);
+  if (dateRange?.start) params.set('startDate', dateRange.start);
+  if (dateRange?.end) params.set('endDate', dateRange.end);
   params.set('sort_by', 'timestamp');
   params.set('sort_direction', 'desc');
 
@@ -296,7 +296,7 @@ export function useMarkAuditReviewed() {
 
   return useMutation<void, ApiError, { ids: string[]; reviewedBy: string; notes?: string }>({
     mutationFn: async ({ ids, reviewedBy, notes }) => {
-      await post('/audit/mark-reviewed', { ids, reviewed_by: reviewedBy, notes });
+      await post('/audit/mark-reviewed', { ids, reviewedBy: reviewedBy, notes });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: auditQueryKeys.all });

@@ -355,7 +355,7 @@ describe('AuditTimeline', () => {
 
   describe('Special Event Types', () => {
     it('should render bulk import events', () => {
-      const bulkImportLog = mockAuditLogs.find((log) => log.action === 'bulk_import');
+      const bulkImportLog = mockAuditLogs.find((log) => log.action === 'bulkImport');
       if (bulkImportLog) {
         render(<AuditTimeline {...defaultProps} events={[bulkImportLog]} />);
 
@@ -365,7 +365,7 @@ describe('AuditTimeline', () => {
 
     it('should render schedule generation events', () => {
       const scheduleLog = mockAuditLogs.find(
-        (log) => log.action === 'schedule_generate'
+        (log) => log.action === 'scheduleGenerate'
       );
       if (scheduleLog) {
         render(<AuditTimeline {...defaultProps} events={[scheduleLog]} />);

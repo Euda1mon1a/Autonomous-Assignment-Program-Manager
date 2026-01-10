@@ -42,11 +42,11 @@ export function N1Analysis() {
         </div>
         <div className="text-right">
           <div className="text-lg font-bold text-white">
-            {data.n1_pass ? "PASSED" : "FAILED"}
+            {data.n1Pass ? "PASSED" : "FAILED"}
           </div>
           <div
             className={`text-xs uppercase font-medium ${
-              data.n1_pass ? "text-green-400" : "text-red-400"
+              data.n1Pass ? "text-green-400" : "text-red-400"
             }`}
           >
             Status
@@ -56,27 +56,27 @@ export function N1Analysis() {
 
       <div className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar">
         {/* Critical Roles (Most Critical Faculty) */}
-        {data.most_critical_faculty && data.most_critical_faculty.length > 0 ? (
+        {data.mostCriticalFaculty && data.mostCriticalFaculty.length > 0 ? (
           <div className="space-y-2">
             <h3 className="text-xs font-semibold text-red-400 uppercase tracking-wider flex items-center gap-2">
               <AlertTriangle className="w-3 h-3" />
               Critical Redundancy Risks
             </h3>
-            {data.most_critical_faculty.slice(0, 3).map((faculty, i) => (
+            {data.mostCriticalFaculty.slice(0, 3).map((faculty, i) => (
               <div
                 key={i}
                 className="bg-red-500/10 border border-red-500/20 rounded-lg p-3"
               >
                 <div className="flex justify-between items-start">
                   <span className="text-sm font-medium text-red-200">
-                    {faculty.faculty_name}
+                    {faculty.facultyName}
                   </span>
                   <span className="text-xs text-red-300 font-mono">
-                    Score: {faculty.centrality_score.toFixed(2)}
+                    Score: {faculty.centralityScore.toFixed(2)}
                   </span>
                 </div>
                 <p className="text-xs text-red-300/80 mt-1">
-                  Risk Level: {faculty.risk_level}
+                  Risk Level: {faculty.riskLevel}
                 </p>
               </div>
             ))}
@@ -101,8 +101,8 @@ export function N1Analysis() {
             Mitigation Strategies
           </h3>
           <ul className="space-y-2">
-            {data.recommended_actions && data.recommended_actions.length > 0 ? (
-              data.recommended_actions.slice(0, 3).map((rec, i) => (
+            {data.recommendedActions && data.recommendedActions.length > 0 ? (
+              data.recommendedActions.slice(0, 3).map((rec, i) => (
                 <li
                   key={i}
                   className="text-sm text-slate-300 flex items-start gap-2"

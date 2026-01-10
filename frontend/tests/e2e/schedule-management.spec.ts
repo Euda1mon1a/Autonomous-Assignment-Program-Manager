@@ -34,7 +34,7 @@ test.describe('Schedule Management', () => {
 
     // Fill assignment form
     await page.fill('[name="date"]', '2024-01-15');
-    await page.selectOption('[name="time_of_day"]', 'AM');
+    await page.selectOption('[name="timeOfDay"]', 'AM');
     await page.selectOption('[name="person"]', { index: 1 });
     await page.selectOption('[name="rotation"]', { index: 1 });
 

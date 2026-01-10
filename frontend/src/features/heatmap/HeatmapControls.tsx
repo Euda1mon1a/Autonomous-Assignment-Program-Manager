@@ -89,53 +89,53 @@ export function HeatmapControls({
   };
 
   const handlePersonSelect = (personId: string) => {
-    const currentPersonIds = filters.person_ids || [];
+    const currentPersonIds = filters.personIds || [];
     const newPersonIds = currentPersonIds.includes(personId)
       ? currentPersonIds.filter((id) => id !== personId)
       : [...currentPersonIds, personId];
 
     onFiltersChange({
       ...filters,
-      person_ids: newPersonIds,
+      personIds: newPersonIds,
     });
   };
 
   const handleRotationSelect = (rotationId: string) => {
-    const currentRotationIds = filters.rotation_ids || [];
+    const currentRotationIds = filters.rotationIds || [];
     const newRotationIds = currentRotationIds.includes(rotationId)
       ? currentRotationIds.filter((id) => id !== rotationId)
       : [...currentRotationIds, rotationId];
 
     onFiltersChange({
       ...filters,
-      rotation_ids: newRotationIds,
+      rotationIds: newRotationIds,
     });
   };
 
   const handleGroupByChange = (groupBy: HeatmapGroupBy) => {
     onFiltersChange({
       ...filters,
-      group_by: groupBy,
+      groupBy: groupBy,
     });
   };
 
   const handleIncludeFmitToggle = () => {
     onFiltersChange({
       ...filters,
-      include_fmit: !filters.include_fmit,
+      includeFmit: !filters.includeFmit,
     });
   };
 
   const clearFilters = () => {
     onFiltersChange({
-      group_by: 'person',
-      include_fmit: true,
+      groupBy: 'person',
+      includeFmit: true,
     });
   };
 
   const activeFilterCount = [
-    filters.person_ids?.length || 0,
-    filters.rotation_ids?.length || 0,
+    filters.personIds?.length || 0,
+    filters.rotationIds?.length || 0,
   ].reduce((sum, count) => sum + count, 0);
 
   return (
@@ -250,7 +250,7 @@ export function HeatmapControls({
           <RotateCw className="w-4 h-4 text-gray-500" />
           <label className="text-sm font-medium text-gray-700">Group by:</label>
           <select
-            value={filters.group_by || 'person'}
+            value={filters.groupBy || 'person'}
             onChange={(e) => handleGroupByChange(e.target.value as HeatmapGroupBy)}
             className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={isLoading}
@@ -267,7 +267,7 @@ export function HeatmapControls({
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
-            checked={filters.include_fmit ?? true}
+            checked={filters.includeFmit ?? true}
             onChange={handleIncludeFmitToggle}
             className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             disabled={isLoading}
@@ -314,9 +314,9 @@ export function HeatmapControls({
                   <Users className="w-4 h-4" />
                   People
                 </label>
-                {filters.person_ids && filters.person_ids.length > 0 && (
+                {filters.personIds && filters.personIds.length > 0 && (
                   <button
-                    onClick={() => onFiltersChange({ ...filters, person_ids: [] })}
+                    onClick={() => onFiltersChange({ ...filters, personIds: [] })}
                     className="text-xs text-blue-600 hover:text-blue-700"
                   >
                     Clear
@@ -334,7 +334,7 @@ export function HeatmapControls({
                     >
                       <input
                         type="checkbox"
-                        checked={filters.person_ids?.includes(person.id) || false}
+                        checked={filters.personIds?.includes(person.id) || false}
                         onChange={() => handlePersonSelect(person.id)}
                         className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />
@@ -352,9 +352,9 @@ export function HeatmapControls({
                   <RotateCw className="w-4 h-4" />
                   Rotations
                 </label>
-                {filters.rotation_ids && filters.rotation_ids.length > 0 && (
+                {filters.rotationIds && filters.rotationIds.length > 0 && (
                   <button
-                    onClick={() => onFiltersChange({ ...filters, rotation_ids: [] })}
+                    onClick={() => onFiltersChange({ ...filters, rotationIds: [] })}
                     className="text-xs text-blue-600 hover:text-blue-700"
                   >
                     Clear
@@ -372,7 +372,7 @@ export function HeatmapControls({
                     >
                       <input
                         type="checkbox"
-                        checked={filters.rotation_ids?.includes(rotation.id) || false}
+                        checked={filters.rotationIds?.includes(rotation.id) || false}
                         onChange={() => handleRotationSelect(rotation.id)}
                         className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />

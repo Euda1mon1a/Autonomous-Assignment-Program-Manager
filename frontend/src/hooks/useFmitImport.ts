@@ -32,13 +32,13 @@ async function parseBlockSchedule(
 ): Promise<BlockParseResponse> {
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('block_number', options.blockNumber.toString());
+  formData.append('blockNumber', options.blockNumber.toString());
 
   if (options.knownPeople && options.knownPeople.length > 0) {
     formData.append('known_people', JSON.stringify(options.knownPeople));
   }
 
-  formData.append('include_fmit', String(options.includeFmit ?? true));
+  formData.append('includeFmit', String(options.includeFmit ?? true));
 
   // Use axios client to get automatic snake_case → camelCase conversion
   const response = await api.post<BlockParseResponse>(
@@ -82,7 +82,7 @@ interface ParseBlockMutationVariables {
  * @example
  * ```tsx
  * const { parseBlock, isLoading, error } = useFmitImport({
- *   onSuccess: (data) => console.log('Parsed', data.total_residents, 'residents'),
+ *   onSuccess: (data) => console.log('Parsed', data.totalResidents, 'residents'),
  *   onError: (error) => console.error('Parse failed:', error.message),
  * });
  *

@@ -395,7 +395,7 @@ describe('AnalyticsDashboard', () => {
           '/analytics/export',
           expect.objectContaining({
             format: 'pdf',
-            include_charts: true,
+            includeCharts: true,
           }),
           expect.any(Object)
         );

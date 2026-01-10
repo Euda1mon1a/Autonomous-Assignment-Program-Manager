@@ -29,11 +29,6 @@ function createWrapper() {
       queries: { retry: false },
       mutations: { retry: false },
     },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
-    },
   });
 
   return ({ children }: { children: React.ReactNode }) => (
@@ -119,13 +114,13 @@ describe('useImport', () => {
       });
 
       await waitFor(() => {
-        expect(result.current.preview?.columns).toContain('person_name');
-        expect(result.current.preview?.columns).toContain('email_address');
+        expect(result.current.preview?.columns).toContain('personName');
+        expect(result.current.preview?.columns).toContain('emailAddress');
       });
     });
 
     it('should detect data type from CSV columns', async () => {
-      const csvContent = 'name,email,type,pgy_level\nJohn Doe,john@example.com,resident,2';
+      const csvContent = 'name,email,type,pgyLevel\nJohn Doe,john@example.com,resident,2';
       const mockFile = new File([csvContent], 'test.csv', { type: 'text/csv' });
 
       const { result } = renderHook(() => useImport(), {
@@ -242,8 +237,8 @@ describe('useImport', () => {
           success: true,
           rows: [{ name: 'John Doe', email: 'john@example.com' }],
           columns: ['name', 'email'],
-          total_rows: 1,
-          sheet_name: 'Sheet1',
+          totalRows: 1,
+          sheetName: 'Sheet1',
           warnings: [],
         }),
       });
@@ -310,8 +305,8 @@ describe('useImport', () => {
           success: true,
           rows: [{ name: 'John Doe' }],
           columns: ['name'],
-          total_rows: 1,
-          sheet_name: 'Sheet1',
+          totalRows: 1,
+          sheetName: 'Sheet1',
           warnings: ['Missing color formatting', 'Empty cells detected'],
         }),
       });
@@ -371,7 +366,7 @@ describe('useImport', () => {
     });
 
     it('should detect overlapping absences', async () => {
-      const csvContent = 'person_name,start_date,end_date,absence_type\nJohn,2024-01-01,2024-01-10,vacation\nJohn,2024-01-05,2024-01-15,vacation';
+      const csvContent = 'personName,startDate,endDate,absenceType\nJohn,2024-01-01,2024-01-10,vacation\nJohn,2024-01-05,2024-01-15,vacation';
       const mockFile = new File([csvContent], 'absences.csv', { type: 'text/csv' });
 
       const { result } = renderHook(() => useImport({ dataType: 'absences' }), {

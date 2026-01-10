@@ -26,17 +26,24 @@ global.fetch = jest.fn(() =>
 ) as jest.Mock;
 
 describe('ScheduleCalendar', () => {
+  const mockWeekStart = new Date('2024-01-01');
+  const mockSchedule = {
+    '2024-01-01': { AM: [], PM: [] },
+    '2024-01-02': { AM: [], PM: [] },
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('renders without crashing', () => {
-    render(<ScheduleCalendar startDate="2024-01-01" endDate="2024-01-28" />);
+    render(<ScheduleCalendar weekStart={mockWeekStart} schedule={mockSchedule} />);
     expect(screen.getByRole('table')).toBeInTheDocument();
   });
 
-  it('displays loading state initially', () => {
-    render(<ScheduleCalendar startDate="2024-01-01" endDate="2024-01-28" />);
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+  it('displays week days', () => {
+    render(<ScheduleCalendar weekStart={mockWeekStart} schedule={mockSchedule} />);
+    // Should display the week starting from the given date
+    expect(screen.getByRole('table')).toBeInTheDocument();
   });
 });

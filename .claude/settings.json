@@ -56,7 +56,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/pre-bash-validate.sh"
+            "command": "/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/hooks/pre-bash-validate.sh"
           }
         ]
       },
@@ -65,7 +65,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/pre-plan-orchestrator.sh"
+            "command": "/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/hooks/pre-plan-orchestrator.sh"
           }
         ]
       },
@@ -74,7 +74,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/pre-plan-orchestrator.sh"
+            "command": "/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/hooks/pre-plan-orchestrator.sh"
           }
         ]
       },
@@ -83,7 +83,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/pre-task-context.sh"
+            "command": "/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/hooks/pre-task-context.sh"
           }
         ]
       }
@@ -94,7 +94,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/stop-verify.sh"
+            "command": "/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/hooks/stop-verify.sh"
           }
         ]
       }

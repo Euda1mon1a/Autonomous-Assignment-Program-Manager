@@ -29,10 +29,10 @@ const typeColors: Record<string, { bg: string; border: string; text: string }> =
   sick: { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-700' },
   medical: { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-700' },
   convalescent: { bg: 'bg-red-200', border: 'border-red-600', text: 'text-red-800' },
-  maternity_paternity: { bg: 'bg-pink-100', border: 'border-pink-500', text: 'text-pink-700' },
+  maternityPaternity: { bg: 'bg-pink-100', border: 'border-pink-500', text: 'text-pink-700' },
   // Emergency (blocking - Hawaii reality)
-  family_emergency: { bg: 'bg-purple-100', border: 'border-purple-500', text: 'text-purple-700' },
-  emergency_leave: { bg: 'bg-purple-200', border: 'border-purple-600', text: 'text-purple-800' },
+  familyEmergency: { bg: 'bg-purple-100', border: 'border-purple-500', text: 'text-purple-700' },
+  emergencyLeave: { bg: 'bg-purple-200', border: 'border-purple-600', text: 'text-purple-800' },
   bereavement: { bg: 'bg-gray-200', border: 'border-gray-600', text: 'text-gray-800' },
   // Military
   deployment: { bg: 'bg-orange-100', border: 'border-orange-500', text: 'text-orange-700' },
@@ -131,7 +131,7 @@ export function AbsenceCalendar({ absences, people, onAbsenceClick }: AbsenceCal
     }
   }, [currentDate])
 
-  // Create a map of person_id to person for quick lookup
+  // Create a map of personId to person for quick lookup
   const personMap = useMemo(() => {
     const map = new Map<string, Person>()
     people.forEach((p) => map.set(p.id, p))

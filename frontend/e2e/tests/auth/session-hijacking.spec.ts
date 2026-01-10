@@ -10,7 +10,7 @@ test.describe('Session Hijacking Prevention', () => {
     await adminPage.goto('/dashboard');
 
     const cookies = await adminPage.context().cookies();
-    const sessionCookie = cookies.find((c) => c.name === 'session' || c.name === 'access_token');
+    const sessionCookie = cookies.find((c) => c.name === 'session' || c.name === 'accessToken');
 
     if (sessionCookie) {
       // Should be httpOnly to prevent JavaScript access
@@ -169,7 +169,7 @@ test.describe('Session Hijacking Prevention', () => {
     await adminPage.goto('/dashboard');
 
     const cookies = await adminPage.context().cookies();
-    const sessionCookie = cookies.find((c) => c.name === 'session' || c.name === 'access_token');
+    const sessionCookie = cookies.find((c) => c.name === 'session' || c.name === 'accessToken');
 
     if (sessionCookie) {
       const sessionId = sessionCookie.value;

@@ -12,9 +12,9 @@ describe("UtilizationChart", () => {
   const mockHealthData = {
     timestamp: new Date().toISOString(),
     overall_status: OverallStatus.HEALTHY,
-    defense_level: "PREVENTION" as any,
+    defenseLevel: "PREVENTION" as any,
     utilization: {
-      utilization_rate: 0.65,
+      utilizationRate: 0.65,
       level: UtilizationLevel.YELLOW,
       buffer_remaining: 3.5,
       wait_time_multiplier: 1.5,
@@ -23,18 +23,18 @@ describe("UtilizationChart", () => {
       theoretical_capacity: 100,
     },
     active_fallbacks: [],
-    n1_pass: true,
-    n2_pass: true,
-    phase_transition_risk: "low",
+    n1Pass: true,
+    n2Pass: true,
+    phaseTransitionRisk: "low",
     redundancy_status: [],
     load_shedding_level: "NORMAL" as any,
-    crisis_mode: false,
+    crisisMode: false,
     immediate_actions: [],
     watch_items: [],
   };
 
   const mockThresholdData = {
-    utilization_rate: 0.65,
+    utilizationRate: 0.65,
     level: "YELLOW",
     message: "Approaching threshold",
     recommendations: [
@@ -182,7 +182,7 @@ describe("UtilizationChart", () => {
       ...mockHealthData,
       utilization: {
         ...mockHealthData.utilization,
-        utilization_rate: 0.5,
+        utilizationRate: 0.5,
         level: UtilizationLevel.GREEN,
       },
     };
@@ -208,7 +208,7 @@ describe("UtilizationChart", () => {
       ...mockHealthData,
       utilization: {
         ...mockHealthData.utilization,
-        utilization_rate: 0.92,
+        utilizationRate: 0.92,
         level: UtilizationLevel.RED,
         wait_time_multiplier: 3.5,
       },

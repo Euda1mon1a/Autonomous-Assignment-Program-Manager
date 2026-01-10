@@ -1,7 +1,12 @@
 import { renderHook, waitFor } from '@testing-library/react'
-import { useGameTheory } from '@/hooks/useGameTheory'
+import { useStrategies, useGameTheorySummary } from '@/hooks/useGameTheory'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'
+import * as api from '@/lib/api'
+
+jest.mock('@/lib/api')
+
+const mockedApi = api as jest.Mocked<typeof api>
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,194 +20,77 @@ const wrapper = ({ children }: { children: ReactNode }) => (
   <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 )
 
-describe('useGameTheory', () => {
+describe('useGameTheory hooks', () => {
   beforeEach(() => {
     queryClient.clear()
-    global.fetch = jest.fn()
+    jest.clearAllMocks()
   })
 
-  describe('Shapley Values', () => {
-    it('should fetch shapley values for agents', async () => {
+  describe('useGameTheorySummary', () => {
+    it('should fetch game theory summary', async () => {
       const mockData = {
-        shapley_values: {
-          'agent-1': 0.35,
-          'agent-2': 0.25,
-          'agent-3': 0.40,
-        },
+        totalStrategies: 10,
+        totalTournaments: 25,
+        totalEvolutions: 5,
+        activeSimulations: 2,
+        recentWinners: ['Tit for Tat', 'Generous Tit for Tat'],
       }
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockData,
-      })
+      mockedApi.get.mockResolvedValueOnce(mockData)
 
-      const { result } = renderHook(() => useGameTheory(), { wrapper })
+      const { result } = renderHook(() => useGameTheorySummary(), { wrapper })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(result.current.data?.shapley_values).toEqual(
-        mockData.shapley_values
-      )
+      expect(result.current.data?.totalStrategies).toBe(10)
+      expect(result.current.data?.totalTournaments).toBe(25)
     })
 
-    it('should identify highest contributor', async () => {
-      const mockData = {
-        shapley_values: {
-          'agent-1': 0.2,
-          'agent-2': 0.5,
-          'agent-3': 0.3,
-        },
-      }
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockData,
-      })
-
-      const { result } = renderHook(() => useGameTheory(), { wrapper })
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(result.current.data?.shapley_values['agent-2']).toBe(0.5)
-    })
-  })
-
-  describe('Nash Equilibrium', () => {
-    it('should calculate nash equilibrium', async () => {
-      const mockData = {
-        nash_equilibrium: {
-          strategy: 'cooperate',
-          payoff: 5.0,
-        },
-      }
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockData,
-      })
-
-      const { result } = renderHook(() => useGameTheory(), { wrapper })
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(result.current.data?.nash_equilibrium).toBeDefined()
-    })
-
-    it('should detect multiple equilibria', async () => {
-      const mockData = {
-        nash_equilibria: [
-          { strategy: 'cooperate', payoff: 5.0 },
-          { strategy: 'defect', payoff: 3.0 },
-        ],
-      }
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockData,
-      })
-
-      const { result } = renderHook(() => useGameTheory(), { wrapper })
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(result.current.data?.nash_equilibria).toHaveLength(2)
-    })
-  })
-
-  describe('Evolutionary Strategies', () => {
-    it('should simulate strategy evolution', async () => {
-      const mockData = {
-        evolution: {
-          generations: 10,
-          final_distribution: {
-            'tit-for-tat': 0.7,
-            'always-cooperate': 0.2,
-            'always-defect': 0.1,
-          },
-        },
-      }
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockData,
-      })
-
-      const { result } = renderHook(() => useGameTheory(), { wrapper })
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(result.current.data?.evolution?.generations).toBe(10)
-    })
-
-    it('should track dominant strategy', async () => {
-      const mockData = {
-        evolution: {
-          dominant_strategy: 'tit-for-tat',
-          dominance_score: 0.85,
-        },
-      }
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockData,
-      })
-
-      const { result } = renderHook(() => useGameTheory(), { wrapper })
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(result.current.data?.evolution?.dominant_strategy).toBe(
-        'tit-for-tat'
-      )
-    })
-  })
-
-  describe('Payoff Matrix', () => {
-    it('should fetch payoff matrix', async () => {
-      const mockData = {
-        payoff_matrix: [
-          [3, 0],
-          [5, 1],
-        ],
-      }
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockData,
-      })
-
-      const { result } = renderHook(() => useGameTheory(), { wrapper })
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(result.current.data?.payoff_matrix).toEqual([[3, 0], [5, 1]])
-    })
-
-    it('should validate matrix dimensions', async () => {
-      const mockData = {
-        payoff_matrix: [[1, 2], [3, 4]],
-        dimensions: { rows: 2, cols: 2 },
-      }
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockData,
-      })
-
-      const { result } = renderHook(() => useGameTheory(), { wrapper })
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(result.current.data?.dimensions).toEqual({ rows: 2, cols: 2 })
-    })
-  })
-
-  describe('Error Handling', () => {
     it('should handle API errors', async () => {
-      ;(global.fetch as jest.Mock).mockRejectedValueOnce(
-        new Error('Game theory service unavailable')
-      )
+      const error = { message: 'Game theory service unavailable', status: 500 }
+      mockedApi.get.mockRejectedValueOnce(error)
 
-      const { result } = renderHook(() => useGameTheory(), { wrapper })
+      const { result } = renderHook(() => useGameTheorySummary(), { wrapper })
 
       await waitFor(() => expect(result.current.isError).toBe(true))
-      expect(result.current.error).toBeDefined()
+      expect(result.current.error).toEqual(error)
     })
+  })
 
-    it('should handle invalid data format', async () => {
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ invalid: 'format' }),
-      })
+  describe('useStrategies', () => {
+    it('should fetch active strategies by default', async () => {
+      const mockData = {
+        strategies: [
+          { id: '1', name: 'Tit for Tat', isActive: true },
+          { id: '2', name: 'Always Cooperate', isActive: true },
+        ],
+        total: 2,
+      }
+      mockedApi.get.mockResolvedValueOnce(mockData)
 
-      const { result } = renderHook(() => useGameTheory(), { wrapper })
+      const { result } = renderHook(() => useStrategies(), { wrapper })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(result.current.data).toBeDefined()
+      expect(result.current.data?.strategies).toHaveLength(2)
+      expect(mockedApi.get).toHaveBeenCalledWith(
+        '/v1/game-theory/strategies?active_only=true'
+      )
+    })
+
+    it('should fetch all strategies when activeOnly is false', async () => {
+      const mockData = {
+        strategies: [
+          { id: '1', name: 'Tit for Tat', isActive: true },
+          { id: '2', name: 'Inactive Strategy', isActive: false },
+        ],
+        total: 2,
+      }
+      mockedApi.get.mockResolvedValueOnce(mockData)
+
+      const { result } = renderHook(() => useStrategies(false), { wrapper })
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true))
+      expect(mockedApi.get).toHaveBeenCalledWith(
+        '/v1/game-theory/strategies?active_only=false'
+      )
     })
   })
 })

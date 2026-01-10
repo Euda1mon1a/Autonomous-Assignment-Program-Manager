@@ -55,7 +55,7 @@ const SEVERITY_OPTIONS: { value: ConflictSeverity; label: string }[] = [
 
 const TYPE_OPTIONS: { value: ConflictType; label: string }[] = [
   { value: 'scheduling_overlap', label: 'Scheduling Overlap' },
-  { value: 'acgme_violation', label: 'ACGME Violation' },
+  { value: 'acgmeViolation', label: 'ACGME Violation' },
   { value: 'supervision_missing', label: 'Missing Supervision' },
   { value: 'capacity_exceeded', label: 'Capacity Exceeded' },
   { value: 'absence_conflict', label: 'Absence Conflict' },
@@ -183,8 +183,8 @@ export function ConflictList({
     monthAgo.setMonth(monthAgo.getMonth() - 1);
 
     detectConflicts.mutate({
-      start_date: monthAgo.toISOString().split('T')[0],
-      end_date: today.toISOString().split('T')[0],
+      startDate: monthAgo.toISOString().split('T')[0],
+      endDate: today.toISOString().split('T')[0],
     });
   }, [detectConflicts]);
 

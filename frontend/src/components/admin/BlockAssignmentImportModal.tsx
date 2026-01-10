@@ -255,7 +255,7 @@ export function BlockAssignmentImportModal({
         <textarea
           value={csvContent}
           onChange={(e) => setCsvContent(e.target.value)}
-          placeholder="block_number,rotation_abbrev,resident_name&#10;1,HILO,Smith&#10;1,FMC,Jones"
+          placeholder="blockNumber,rotation_abbrev,residentName&#10;1,HILO,Smith&#10;1,FMC,Jones"
           rows={6}
           className="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />

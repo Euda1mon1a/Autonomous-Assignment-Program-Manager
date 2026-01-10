@@ -17,18 +17,18 @@ export interface ListResponse<T> {
 }
 
 export interface BlockFilters {
-  start_date?: string
-  end_date?: string
-  block_number?: number
+  startDate?: string
+  endDate?: string
+  blockNumber?: number
 }
 
 /**
  * Represents a block range with start and end dates
  */
 export interface BlockRange {
-  block_number: number
-  start_date: string
-  end_date: string
+  blockNumber: number
+  startDate: string
+  endDate: string
 }
 
 // ============================================================================
@@ -64,8 +64,8 @@ export const blockQueryKeys = {
  * ```tsx
  * function BlockList() {
  *   const { data, isLoading } = useBlocks({
- *     start_date: '2024-01-01',
- *     end_date: '2024-01-31'
+ *     startDate: '2024-01-01',
+ *     endDate: '2024-01-31'
  *   });
  *
  *   if (isLoading) return <Spinner />;
@@ -89,9 +89,9 @@ export function useBlocks(
   options?: Omit<UseQueryOptions<ListResponse<Block>, ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const params = new URLSearchParams()
-  if (filters?.startDate) params.set('start_date', filters.startDate)
-  if (filters?.endDate) params.set('end_date', filters.endDate)
-  if (filters?.blockNumber) params.set('block_number', filters.blockNumber.toString())
+  if (filters?.startDate) params.set('startDate', filters.startDate)
+  if (filters?.endDate) params.set('endDate', filters.endDate)
+  if (filters?.blockNumber) params.set('blockNumber', filters.blockNumber.toString())
   const queryString = params.toString()
 
   return useQuery<ListResponse<Block>, ApiError>({
@@ -122,13 +122,13 @@ export function useBlocks(
  * navigation components that need to jump between blocks or display block
  * date ranges.
  *
- * The hook queries the backend for all blocks, then groups them by block_number
+ * The hook queries the backend for all blocks, then groups them by blockNumber
  * to calculate the actual date ranges from the database rather than using
  * local date math.
  *
  * @param options - Optional React Query configuration options
  * @returns Query result containing:
- *   - `data`: Array of block ranges with block_number, start_date, end_date
+ *   - `data`: Array of block ranges with blockNumber, startDate, endDate
  *   - `isLoading`: Whether the fetch is in progress
  *   - `error`: Any error that occurred
  *   - `refetch`: Function to manually refetch block ranges
@@ -163,7 +163,7 @@ export function useBlockRanges(
       // Fetch all blocks (no date filter)
       const response = await get<ListResponse<Block>>('/blocks')
 
-      // Group blocks by block_number and calculate date ranges
+      // Group blocks by blockNumber and calculate date ranges
       const blockMap = new Map<number, { minDate: string; maxDate: string }>()
 
       response.items.forEach((block) => {
@@ -183,12 +183,12 @@ export function useBlockRanges(
         }
       })
 
-      // Convert to BlockRange array and sort by block_number
+      // Convert to BlockRange array and sort by blockNumber
       const ranges: BlockRange[] = Array.from(blockMap.entries())
-        .map(([block_number, { minDate, maxDate }]) => ({
-          block_number,
-          start_date: minDate,
-          end_date: maxDate,
+        .map(([blockNumber, { minDate, maxDate }]) => ({
+          blockNumber,
+          startDate: minDate,
+          endDate: maxDate,
         }))
         .sort((a, b) => a.blockNumber - b.blockNumber)
 

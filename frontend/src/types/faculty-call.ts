@@ -77,7 +77,7 @@ export interface CallAssignmentListResponse {
 // Filter & Sort Types
 // ============================================================================
 
-export type CallSortField = 'date' | 'person_name' | 'call_type';
+export type CallSortField = 'date' | 'personName' | 'callType';
 export type SortDirection = 'asc' | 'desc';
 
 export interface CallFilters {

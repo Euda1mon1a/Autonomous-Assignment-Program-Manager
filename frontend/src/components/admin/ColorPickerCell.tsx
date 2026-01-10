@@ -4,7 +4,7 @@
  * ColorPickerCell Component
  *
  * A click-to-edit color picker cell for inline editing of color values.
- * Supports font_color and background_color fields with preset colors and custom hex input.
+ * Supports fontColor and backgroundColor fields with preset colors and custom hex input.
  */
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Check, X, Loader2, Palette } from 'lucide-react';

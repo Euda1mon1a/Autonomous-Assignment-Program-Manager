@@ -103,7 +103,7 @@ export function ProcedureList({
                 </span>
               </td>
               <td className="px-6 py-4 text-slate-300">
-                1:{procedure.supervision_ratio}
+                1:{procedure.supervisionRatio}
               </td>
               <td className="px-6 py-4 text-right">
                 <div className="flex justify-end gap-2">

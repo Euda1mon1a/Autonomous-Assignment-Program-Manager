@@ -189,7 +189,7 @@ describe('QuickSwapButton', () => {
 
       await waitFor(() => {
         expect(mockPost).toHaveBeenCalledWith('/swaps/request', {
-          assignment_id: 'assignment-123',
+          assignmentId: 'assignment-123',
           reason: 'Family emergency',
         });
       });
@@ -207,7 +207,7 @@ describe('QuickSwapButton', () => {
 
       await waitFor(() => {
         expect(mockPost).toHaveBeenCalledWith('/swaps/request', {
-          assignment_id: 'assignment-123',
+          assignmentId: 'assignment-123',
           reason: undefined,
         });
       });

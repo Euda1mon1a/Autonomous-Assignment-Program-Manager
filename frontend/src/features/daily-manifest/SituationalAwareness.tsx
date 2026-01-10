@@ -14,13 +14,13 @@ const ABSENCE_LABELS: Record<string, string> = {
   deployment: 'DEPLOY',
   tdy: 'TDY',
   medical: 'MED',
-  family_emergency: 'EMERG',
+  familyEmergency: 'EMERG',
   conference: 'CONF',
   bereavement: 'BEREAV',
-  emergency_leave: 'EMERG',
+  emergencyLeave: 'EMERG',
   sick: 'SICK',
   convalescent: 'CONV',
-  maternity_paternity: 'PARENT',
+  maternityPaternity: 'PARENT',
 };
 
 /**
@@ -38,9 +38,9 @@ export function SituationalAwareness({ data, attending }: SituationalAwarenessPr
   const { fmitTeam, nightRotation, remoteAssignments, absences = [] } = data;
 
   // Check if we have any situational awareness data to show
-  const hasFMIT = fmit_team.attending || fmit_team.residents.length > 0;
-  const hasNights = night_rotation.length > 0;
-  const hasRemote = remote_assignments.length > 0;
+  const hasFMIT = fmitTeam.attending || fmitTeam.residents.length > 0;
+  const hasNights = nightRotation.length > 0;
+  const hasRemote = remoteAssignments.length > 0;
   const hasAbsences = absences.length > 0;
   const hasAttending = attending.am || attending.pm;
 
@@ -94,17 +94,17 @@ export function SituationalAwareness({ data, attending }: SituationalAwarenessPr
                 </h3>
               </div>
               <div className="space-y-2 text-sm">
-                {fmit_team.attending && (
+                {fmitTeam.attending && (
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 bg-amber-200 text-amber-800 rounded text-xs font-medium">
                       AT
                     </span>
                     <span className="font-medium text-amber-900">
-                      {fmit_team.attending.name}
+                      {fmitTeam.attending.name}
                     </span>
                   </div>
                 )}
-                {fmit_team.residents.map((resident) => (
+                {fmitTeam.residents.map((resident) => (
                   <div key={resident.id} className="flex items-center gap-2">
                     <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-xs font-medium">
                       PGY-{resident.pgyLevel}
@@ -125,7 +125,7 @@ export function SituationalAwareness({ data, attending }: SituationalAwarenessPr
               </div>
               <div className="space-y-2 text-sm">
                 {/* Night rotation */}
-                {night_rotation.map((call) => (
+                {nightRotation.map((call) => (
                   <div key={`night-${call.person.id}`} className="flex items-center gap-2">
                     <span className="px-2 py-0.5 bg-purple-200 text-purple-800 rounded text-xs font-medium">
                       {call.callType === 'nightFloat' ? 'NF' : 'Nights'}
@@ -137,7 +137,7 @@ export function SituationalAwareness({ data, attending }: SituationalAwarenessPr
                   </div>
                 ))}
                 {/* Remote assignments */}
-                {remote_assignments.map((remote) => (
+                {remoteAssignments.map((remote) => (
                   <div key={`remote-${remote.person.id}`} className="flex items-center gap-2">
                     <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-medium">
                       {remote.location}

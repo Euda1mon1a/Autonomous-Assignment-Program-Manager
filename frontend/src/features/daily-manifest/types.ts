@@ -50,15 +50,15 @@ export interface LocationManifest {
 
 export interface DailyManifestData {
   date: string;
-  time_of_day: 'AM' | 'PM' | 'ALL' | null;
+  timeOfDay: 'AM' | 'PM' | 'ALL' | null;
   locations: LocationManifest[];
   generatedAt: string;
   // Summary is computed client-side from locations, not returned by backend
   summary?: {
-    total_locations: number;
-    total_staff: number;
-    total_residents: number;
-    total_faculty: number;
+    totalLocations: number;
+    totalStaff: number;
+    totalResidents: number;
+    totalFaculty: number;
   };
 }
 
@@ -81,11 +81,11 @@ export interface ManifestFilters {
  */
 export interface ScheduleDateRange {
   /** Earliest date with schedule data (ISO format) */
-  start_date: string | null;
+  startDate: string | null;
   /** Latest date with schedule data (ISO format) */
-  end_date: string | null;
+  endDate: string | null;
   /** Whether any schedule data exists */
-  has_data: boolean;
+  hasData: boolean;
 }
 
 // ============================================================================

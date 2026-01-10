@@ -21,31 +21,30 @@ jest.mock('@/contexts/ToastContext', () => ({
 
 describe('GenerateScheduleDialog', () => {
   const mockOnClose = jest.fn();
-  const mockOnSuccess = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('renders when isOpen is true', () => {
-    render(<GenerateScheduleDialog isOpen={true} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+    render(<GenerateScheduleDialog isOpen={true} onClose={mockOnClose}  />);
     expect(screen.getByText(/generate schedule/i)).toBeInTheDocument();
   });
 
   it('does not render when isOpen is false', () => {
-    render(<GenerateScheduleDialog isOpen={false} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+    render(<GenerateScheduleDialog isOpen={false} onClose={mockOnClose}  />);
     expect(screen.queryByText(/generate schedule/i)).not.toBeInTheDocument();
   });
 
   it('calls onClose when cancel button clicked', () => {
-    render(<GenerateScheduleDialog isOpen={true} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+    render(<GenerateScheduleDialog isOpen={true} onClose={mockOnClose}  />);
     const cancelButton = screen.getByText(/cancel/i);
     fireEvent.click(cancelButton);
     expect(mockOnClose).toHaveBeenCalled();
   });
 
   it('has proper dialog structure', () => {
-    render(<GenerateScheduleDialog isOpen={true} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+    render(<GenerateScheduleDialog isOpen={true} onClose={mockOnClose}  />);
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 });

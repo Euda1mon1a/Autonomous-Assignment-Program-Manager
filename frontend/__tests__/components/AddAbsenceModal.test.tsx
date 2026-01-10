@@ -332,10 +332,10 @@ describe('AddAbsenceModal', () => {
 
       await waitFor(() => {
         expect(mockMutateAsync).toHaveBeenCalledWith({
-          person_id: 'person-1',
-          absence_type: 'vacation',
-          start_date: '2024-12-01',
-          end_date: '2024-12-07',
+          personId: 'person-1',
+          absenceType: 'vacation',
+          startDate: '2024-12-01',
+          endDate: '2024-12-07',
           notes: 'Holiday vacation',
         })
       })
@@ -366,8 +366,8 @@ describe('AddAbsenceModal', () => {
       await waitFor(() => {
         expect(mockMutateAsync).toHaveBeenCalledWith(
           expect.objectContaining({
-            absence_type: 'deployment',
-            deployment_orders: true,
+            absenceType: 'deployment',
+            deploymentOrders: true,
           })
         )
       })
@@ -401,8 +401,8 @@ describe('AddAbsenceModal', () => {
       await waitFor(() => {
         expect(mockMutateAsync).toHaveBeenCalledWith(
           expect.objectContaining({
-            absence_type: 'tdy',
-            tdy_location: 'Fort Bragg, NC',
+            absenceType: 'tdy',
+            tdyLocation: 'Fort Bragg, NC',
           })
         )
       })

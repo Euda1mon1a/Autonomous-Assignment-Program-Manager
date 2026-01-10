@@ -28,10 +28,10 @@ describe('PersonFilter', () => {
   });
 
   const mockPeople = [
-    { id: '1', name: 'Dr. Alice Smith', email: 'alice@example.com', type: 'resident' as const, pgy_level: 1 },
-    { id: '2', name: 'Dr. Bob Jones', email: 'bob@example.com', type: 'resident' as const, pgy_level: 2 },
-    { id: '3', name: 'Dr. Carol Lee', email: 'carol@example.com', type: 'resident' as const, pgy_level: 3 },
-    { id: '4', name: 'Dr. David Chen', email: 'david@example.com', type: 'faculty' as const, pgy_level: null },
+    { id: '1', name: 'Dr. Alice Smith', email: 'alice@example.com', type: 'resident' as const, pgyLevel: 1 },
+    { id: '2', name: 'Dr. Bob Jones', email: 'bob@example.com', type: 'resident' as const, pgyLevel: 2 },
+    { id: '3', name: 'Dr. Carol Lee', email: 'carol@example.com', type: 'resident' as const, pgyLevel: 3 },
+    { id: '4', name: 'Dr. David Chen', email: 'david@example.com', type: 'faculty' as const, pgyLevel: null },
   ];
 
   beforeEach(() => {
@@ -194,7 +194,7 @@ describe('PersonFilter', () => {
         name: `Dr. Person ${i}`,
         email: `person${i}@example.com`,
         type: 'resident' as const,
-        pgy_level: 1,
+        pgyLevel: 1,
       }));
 
       mockUsePeople.mockReturnValue({
@@ -214,7 +214,7 @@ describe('PersonFilter', () => {
         name: `Dr. Person ${i}`,
         email: `person${i}@example.com`,
         type: 'resident' as const,
-        pgy_level: 1,
+        pgyLevel: 1,
       }));
 
       mockUsePeople.mockReturnValue({
@@ -239,7 +239,7 @@ describe('PersonFilter', () => {
         name: `Dr. Person ${i}`,
         email: `person${i}@example.com`,
         type: 'resident' as const,
-        pgy_level: 1,
+        pgyLevel: 1,
       }));
 
       mockUsePeople.mockReturnValue({
@@ -262,7 +262,7 @@ describe('PersonFilter', () => {
         name: `Dr. Person ${i}`,
         email: `person${i}@example.com`,
         type: 'resident' as const,
-        pgy_level: 1,
+        pgyLevel: 1,
       }));
 
       mockUsePeople.mockReturnValue({

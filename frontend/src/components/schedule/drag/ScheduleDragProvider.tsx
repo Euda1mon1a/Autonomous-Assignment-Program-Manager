@@ -99,7 +99,7 @@ export function ScheduleDragProvider({
   // Mutation for updating assignment
   const updateAssignment = useMutation({
     mutationFn: async ({ assignmentId, newBlockId }: { assignmentId: string; newBlockId: string }) => {
-      return put<Assignment>(`/assignments/${assignmentId}`, { block_id: newBlockId })
+      return put<Assignment>(`/assignments/${assignmentId}`, { blockId: newBlockId })
     },
 
     // Optimistic update - update UI immediately
@@ -117,7 +117,7 @@ export function ScheduleDragProvider({
           ...old,
           items: old.items.map((assign: Assignment) =>
             assign.id === assignmentId
-              ? { ...assign, block_id: newBlockId }
+              ? { ...assign, blockId: newBlockId }
               : assign
           )
         }

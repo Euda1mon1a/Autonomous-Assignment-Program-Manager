@@ -186,11 +186,11 @@ export class SchedulePage extends BasePage {
     algorithm?: string;
   }): Promise<void> {
     if (data.startDate) {
-      const startInput = this.page.locator('input[name="start_date"], input[id*="start"]').first();
+      const startInput = this.page.locator('input[name="startDate"], input[id*="start"]').first();
       await startInput.fill(data.startDate);
     }
     if (data.endDate) {
-      const endInput = this.page.locator('input[name="end_date"], input[id*="end"]').first();
+      const endInput = this.page.locator('input[name="endDate"], input[id*="end"]').first();
       await endInput.fill(data.endDate);
     }
     if (data.algorithm) {

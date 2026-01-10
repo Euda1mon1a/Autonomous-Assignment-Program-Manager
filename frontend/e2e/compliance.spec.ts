@@ -473,7 +473,7 @@ test.describe('Compliance Page', () => {
             body: JSON.stringify({
               valid: true,
               violations: [],
-              coverage_rate: 100,
+              coverageRate: 100,
             }),
           });
         }
