@@ -206,6 +206,43 @@ Session 082-085 established a comprehensive hook ecosystem:
 
 **Hook work complete.** 23 phases covering all identified gaps. P2/P3 (security scanning) deferred to CI.
 
-**To push:** `git push origin main` (17+ commits pending)
+---
+
+## Session 085 Additions (Subagent Awareness)
+
+**Problem:** Subagents born blind - have MCP tools but don't know they exist.
+
+**Solution:**
+1. **CAPABILITIES.md** - Central reference (`.claude/Governance/CAPABILITIES.md`)
+   - 34+ MCP tools listed with descriptions
+   - 70+ skills categorized
+   - RAG doc_types documented
+2. **Boot Instruction** - All 55 identity cards now have:
+   ```
+   ## Boot Instruction (EXECUTE FIRST)
+   Read `.claude/Governance/CAPABILITIES.md` to discover your available tools and skills.
+   ```
+3. **Advisory Hook** - `pre-task-context.sh` warns on sparse context (never blocks)
+
+**Philosophy:** Auftragstaktik - commanders decide kit, subagents can self-discover.
+
+**Limitation Found:** Claude Code hooks can block/allow but CANNOT inject context into prompts.
+
+**PRs:**
+- PR #673: Hook ecosystem (23 phases) - MERGED
+- PR #674: Subagent capabilities awareness - OPEN
+
+---
+
+## Commits (Session 085)
+
+| Hash | Description |
+|------|-------------|
+| `8c73b89e` | Phase 22 performance regression hook |
+| `1e85b19a` | Phase 23 dependency version guard |
+| `b9cadc51` | Subagent capabilities (CAPABILITIES.md + hook + pointer) |
+| `868ceadf` | Refine to boot instruction (directive) |
+
+**Branch:** `feature/hook-ecosystem-expansion`
 
 o7
