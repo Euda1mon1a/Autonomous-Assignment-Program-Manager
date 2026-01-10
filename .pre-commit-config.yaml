@@ -327,6 +327,21 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
+  # PHASE 19: Test Coverage Validation (Session 084 - QA Domain)
+  # ============================================================================
+
+  # Test file existence and coverage reminder
+  - repo: local
+    hooks:
+      - id: test-coverage
+        name: Test Coverage Reminder
+        entry: scripts/validate-test-coverage.sh
+        language: script
+        pass_filenames: false
+        files: ^(backend/app/|frontend/src/).*\.(py|ts|tsx)$
+        stages: [pre-commit]
+
+  # ============================================================================
   # Configuration
   # ============================================================================
 
